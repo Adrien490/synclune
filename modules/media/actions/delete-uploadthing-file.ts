@@ -1,46 +1,43 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError, success, error } from "@/shared/lib/actions";
+import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { deleteUploadThingFileSchema } from "@/modules/media/schemas/uploadthing.schemas";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
 
 /**
- * Server Action pour supprimer un fichier d'UploadThing
- * Compatible avec useActionState de React 19
+ * Server Action to delete an UploadThing file.
+ * Compatible with React 19 useActionState.
  */
 export async function deleteUploadThingFile(
 	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérification des droits admin
+		// 1. Verify admin rights
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraction des données du FormData
+		// 2. Extract data from FormData
 		const rawData = {
 			fileUrl: formData.get("fileUrl") as string,
 		};
 
-		// 3. Validation avec Zod
-		const result = deleteUploadThingFileSchema.safeParse(rawData);
+		// 3. Validate with Zod
+		const validated = validateInput(deleteUploadThingFileSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return error(result.error.issues[0]?.message ?? "Erreur de validation");
-		}
+		const { fileUrl } = validated.data;
 
-		const { fileUrl } = result.data;
-
-		// 3. Extraire la cle de l'URL
+		// 3. Extract file key from URL
 		const fileKey = extractFileKeyFromUrl(fileUrl);
 		if (!fileKey) {
 			return error("Impossible d'extraire la cle du fichier depuis l'URL");
 		}
 
-		// 4. Supprimer le fichier via UTApi (instanciation par requete)
+		// 4. Delete file via UTApi (per-request instantiation)
 		const utapi = new UTApi();
 		await utapi.deleteFiles(fileKey);
 

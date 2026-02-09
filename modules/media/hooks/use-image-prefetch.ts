@@ -9,21 +9,21 @@ import {
 } from "../constants/image-config.constants";
 
 interface UsePrefetchImagesOptions {
-	/** URLs des images à prefetch */
+	/** Image URLs to prefetch */
 	imageUrls: string[];
-	/** Index actuel dans le carousel */
+	/** Current index in the carousel */
 	currentIndex: number;
-	/** Nombre d'images à prefetch avant et après l'index actuel */
+	/** Number of images to prefetch before and after the current index */
 	prefetchRange?: number;
-	/** Activer le prefetch (désactiver si préfère économiser la bande passante) */
+	/** Enable prefetch (disable to save bandwidth) */
 	enabled?: boolean;
 }
 
 /**
- * Polyfill pour requestIdleCallback (Safari, Edge < 79)
- * Utilise setTimeout comme fallback avec priorité basse
- * Respecte l'option timeout pour un comportement cohérent
- * Note: Dans le browser, setTimeout retourne un number, pas un NodeJS.Timeout
+ * Polyfill for requestIdleCallback (Safari, Edge < 79).
+ * Uses setTimeout as a low-priority fallback.
+ * Respects the timeout option for consistent behavior.
+ * Note: In the browser, setTimeout returns a number, not a NodeJS.Timeout.
  */
 const requestIdleCallbackPolyfill =
 	typeof window !== "undefined" && "requestIdleCallback" in window
@@ -46,9 +46,9 @@ const cancelIdleCallbackPolyfill =
 		: (id: number) => window.clearTimeout(id);
 
 /**
- * Détermine la taille optimale d'image à précharger selon le viewport
- * Mobile (<768px): 640px - correspond aux viewports 375-430px
- * Desktop (>=768px): 1080px - correspond aux viewports desktop
+ * Determines the optimal image size to prefetch based on viewport.
+ * Mobile (<768px): 640px - matches 375-430px viewports
+ * Desktop (>=768px): 1080px - matches desktop viewports
  */
 function getPrefetchImageSize(): number {
 	if (typeof window === "undefined") return PREFETCH_SIZE_DESKTOP;
@@ -56,15 +56,15 @@ function getPrefetchImageSize(): number {
 }
 
 /**
- * Hook pour prefetch intelligent des images dans un carousel
+ * Hook for intelligent image prefetching in a carousel.
  *
- * Stratégie de prefetch (Next.js 16 + React 19 best practices) :
- * 1. Prefetch images adjacentes (suivante + précédente)
- * 2. Utilise requestIdleCallback pour ne pas bloquer le main thread (avec polyfill Safari)
- * 3. Crée des éléments <link rel="prefetch"> dans le <head>
- * 4. Nettoie automatiquement les prefetch inutilisés
- * 5. Protection SSR (vérifie window)
- * 6. Sécurité XSS (pas d'injection dans querySelector)
+ * Prefetch strategy (Next.js 16 + React 19 best practices):
+ * 1. Prefetch adjacent images (next + previous)
+ * 2. Uses requestIdleCallback to avoid blocking the main thread (with Safari polyfill)
+ * 3. Creates <link rel="prefetch"> elements in the <head>
+ * 4. Automatically cleans up unused prefetch links
+ * 5. SSR protection (checks for window)
+ * 6. XSS security (no injection in querySelector)
  *
  * @example
  * usePrefetchImages({
@@ -80,61 +80,61 @@ export function usePrefetchImages({
 	enabled = true,
 }: UsePrefetchImagesOptions) {
 	useEffect(() => {
-		// Protection SSR : vérifier que window existe
+		// SSR protection: check that window exists
 		if (typeof window === "undefined") return;
 		if (!enabled || imageUrls.length === 0) return;
 
-		// Calculer les index à prefetch (avec wrap pour carousel circulaire)
+		// Calculate indices to prefetch (with wrapping for circular carousel)
 		const indicesToPrefetch: number[] = [];
 		for (let i = 1; i <= prefetchRange; i++) {
-			// Images suivantes
+			// Next images
 			indicesToPrefetch.push((currentIndex + i) % imageUrls.length);
-			// Images précédentes
+			// Previous images
 			indicesToPrefetch.push(
 				(currentIndex - i + imageUrls.length) % imageUrls.length
 			);
 		}
 
-		// Utiliser requestIdleCallback avec polyfill pour Safari
+		// Use requestIdleCallback with polyfill for Safari
 		const prefetchId = requestIdleCallbackPolyfill(
 			() => {
 				for (const index of indicesToPrefetch) {
 					const imageUrl = imageUrls[index];
 					if (!imageUrl) continue;
 
-					// Sécurité : vérifier si déjà prefetch sans injection SQL/XSS
-					// On récupère tous les links et on filtre en JS plutôt que via querySelector avec interpolation
+					// Security: check if already prefetched without SQL/XSS injection
+					// Retrieve all links and filter in JS rather than via querySelector with interpolation
 					const allGalleryLinks = Array.from(
 						document.querySelectorAll<HTMLLinkElement>(
 							'link[rel="prefetch"][data-prefetched-by="gallery"]'
 						)
 					);
 
-					// Comparer avec l'URL Next.js optimisée (taille adaptée au viewport)
+					// Compare with optimized Next.js URL (size adapted to viewport)
 					const prefetchSize = getPrefetchImageSize();
 					const optimizedUrl = nextImageUrl(imageUrl, prefetchSize, MAIN_IMAGE_QUALITY);
 					const existingLink = allGalleryLinks.find((link) => link.href === optimizedUrl);
 					if (existingLink) continue;
 
-					// Créer link prefetch avec URL Next.js optimisée
+					// Create prefetch link with optimized Next.js URL
 					const link = document.createElement("link");
 					link.rel = "prefetch";
 					link.as = "image";
-					// Utiliser l'URL Next.js optimisée (640px mobile, 1080px desktop)
+					// Use optimized Next.js URL (640px mobile, 1080px desktop)
 					link.href = optimizedUrl;
 					link.dataset.prefetchedBy = "gallery";
 
 					document.head.appendChild(link);
 				}
 
-				// Cleanup: supprimer les anciens prefetch qui ne sont plus adjacents
+				// Cleanup: remove old prefetch links that are no longer adjacent
 				const allPrefetchLinks = Array.from(
 					document.querySelectorAll<HTMLLinkElement>(
 						'link[rel="prefetch"][data-prefetched-by="gallery"]'
 					)
 				);
 
-				// Utiliser les URLs optimisées pour le cleanup (même taille que le prefetch)
+				// Use optimized URLs for cleanup (same size as prefetch)
 				const cleanupPrefetchSize = getPrefetchImageSize();
 				const currentUrls = new Set(
 					indicesToPrefetch
@@ -154,7 +154,7 @@ export function usePrefetchImages({
 
 		return () => {
 			cancelIdleCallbackPolyfill(prefetchId);
-			// Cleanup tous les links prefetch au unmount
+			// Cleanup all prefetch links on unmount
 			const allLinks = document.querySelectorAll<HTMLLinkElement>(
 				'link[rel="prefetch"][data-prefetched-by="gallery"]'
 			);

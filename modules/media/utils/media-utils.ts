@@ -1,29 +1,29 @@
 /**
- * Utilitaires pour la gestion des médias (images et vidéos)
+ * Utilities for media management (images and videos)
  */
 
 import type { MediaType } from "@/app/generated/prisma/client";
 
 /**
- * Vérifie si un média est une vidéo en utilisant le champ mediaType de la base de données
- * C'est la méthode RECOMMANDÉE car elle est fiable même avec des URLs sans extension (ex: UploadThing)
- * @param mediaType - Le type de média depuis la base de données
- * @returns true si le média est une vidéo, false sinon
+ * Checks if a media is a video using the database mediaType field.
+ * This is the RECOMMENDED method as it is reliable even with extensionless URLs (e.g. UploadThing).
+ * @param mediaType - The media type from the database
+ * @returns true if the media is a video, false otherwise
  */
 export function isVideo(mediaType: MediaType): boolean {
 	return mediaType === "VIDEO";
 }
 
 /**
- * Vérifie si un média est une image en utilisant le champ mediaType de la base de données
- * @param mediaType - Le type de média depuis la base de données
- * @returns true si le média est une image, false sinon
+ * Checks if a media is an image using the database mediaType field.
+ * @param mediaType - The media type from the database
+ * @returns true if the media is an image, false otherwise
  */
 export function isImage(mediaType: MediaType): boolean {
 	return mediaType === "IMAGE";
 }
 
-/** Mapping des extensions video vers types MIME */
+/** Video extension to MIME type mapping */
 const VIDEO_MIME_TYPES: Record<string, string> = {
 	webm: "video/webm",
 	ogg: "video/ogg",
@@ -35,17 +35,17 @@ const VIDEO_MIME_TYPES: Record<string, string> = {
 };
 
 /**
- * Obtient le type MIME d'une video a partir de son URL
- * Utilise une regex pour extraire l'extension en fin d'URL (avant query string)
- * @param url - L'URL de la video
- * @returns Le type MIME de la video
+ * Gets the MIME type of a video from its URL.
+ * Uses a regex to extract the extension at the end of the URL (before query string).
+ * @param url - The video URL
+ * @returns The video MIME type
  */
 export function getVideoMimeType(url: string): string {
-	// Extraire l'extension de fichier (avant query params)
+	// Extract file extension (before query params)
 	const extensionMatch = url.toLowerCase().match(/\.(\w+)(?:\?|#|$)/);
 	const extension = extensionMatch?.[1];
 
-	// URLs CDN sans extension (ex: UploadThing) - fallback vers mp4
+	// CDN URLs without extension (e.g. UploadThing) - fallback to mp4
 	if (!extension) {
 		return "video/mp4";
 	}
@@ -54,11 +54,11 @@ export function getVideoMimeType(url: string): string {
 }
 
 /**
- * Génère une liste de sources vidéo
- * Note: Ne génère pas de fallback WebM car les CDN (UploadThing, etc.)
- * ne créent pas automatiquement de versions alternatives
- * @param url - L'URL principale de la vidéo
- * @returns Array de sources avec types MIME
+ * Generates a list of video sources.
+ * Note: Does not generate WebM fallback since CDNs (UploadThing, etc.)
+ * do not automatically create alternative versions.
+ * @param url - The main video URL
+ * @returns Array of sources with MIME types
  */
 export function getVideoSources(url: string): Array<{ src: string; type: string }> {
 	return [{ src: url, type: getVideoMimeType(url) }];

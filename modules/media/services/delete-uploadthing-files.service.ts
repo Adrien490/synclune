@@ -3,16 +3,22 @@ import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key"
 import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
 
 /**
- * Service centralise pour supprimer des fichiers UploadThing depuis des URLs
+ * Shared service for deleting UploadThing files from URLs.
  *
- * Utilise pour le nettoyage des fichiers orphelins lors de:
- * - Suppression d'avis (ReviewMedia)
- * - Mise a jour d'avis (anciennes photos remplacees)
- * - Suppression de compte (avatar)
- * - Hard delete apres retention legale
+ * LAYER EXCEPTION: This service contains side effects (UTApi.deleteFiles mutations),
+ * unlike typical services/ which are pure functions. This is intentional — similar to
+ * the webhooks/services/ exception documented in CLAUDE.md. The service acts as a
+ * shared cleanup utility used across multiple modules (reviews, account deletion,
+ * hard deletes) and is not exposed as a Server Action.
  *
- * @param urls - Liste d'URLs de fichiers a supprimer
- * @returns Resultat avec nombre de fichiers supprimes et echecs
+ * Used for orphan file cleanup during:
+ * - Review deletion (ReviewMedia)
+ * - Review update (replaced photos)
+ * - Account deletion (avatar)
+ * - Hard delete after legal retention
+ *
+ * @param urls - List of file URLs to delete
+ * @returns Result with count of deleted files and failures
  */
 export async function deleteUploadThingFilesFromUrls(
 	urls: string[]
@@ -21,14 +27,14 @@ export async function deleteUploadThingFilesFromUrls(
 		return { deleted: 0, failed: 0 };
 	}
 
-	// Filtrer uniquement les URLs UploadThing valides (HTTPS + domaine autorise)
+	// Filter to valid UploadThing URLs only (HTTPS + allowed domain)
 	const uploadThingUrls = urls.filter(isValidUploadThingUrl);
 
 	if (uploadThingUrls.length === 0) {
 		return { deleted: 0, failed: 0 };
 	}
 
-	// Extraire les cles des fichiers
+	// Extract file keys from URLs
 	const { keys: fileKeys, failedUrls } = extractFileKeysFromUrls(uploadThingUrls);
 
 	if (failedUrls.length > 0) {
@@ -52,7 +58,7 @@ export async function deleteUploadThingFilesFromUrls(
 
 		return { deleted: fileKeys.length, failed: failedUrls.length };
 	} catch (error) {
-		// Log l'erreur mais ne bloque pas l'operation principale
+		// Log error but don't block the main operation
 		console.error(
 			"[deleteUploadThingFilesFromUrls] Erreur lors de la suppression des fichiers:",
 			error instanceof Error ? error.message : String(error)
@@ -63,11 +69,11 @@ export async function deleteUploadThingFilesFromUrls(
 }
 
 /**
- * Supprime un seul fichier UploadThing depuis son URL
- * Convenience wrapper autour de deleteUploadThingFilesFromUrls
+ * Delete a single UploadThing file from its URL.
+ * Convenience wrapper around deleteUploadThingFilesFromUrls.
  *
- * @param url - URL du fichier a supprimer (peut etre null/undefined)
- * @returns true si le fichier a ete supprime, false sinon
+ * @param url - File URL to delete (can be null/undefined)
+ * @returns true if the file was deleted, false otherwise
  */
 export async function deleteUploadThingFileFromUrl(
 	url: string | null | undefined

@@ -16,12 +16,12 @@ export type { VideoThumbnailOptions, VideoThumbnailResult };
 // FEATURE DETECTION
 // ============================================================================
 
-/** Cache pour la detection des features */
+/** Feature detection cache */
 let _canvasSupported: boolean | null = null;
 let _offscreenCanvasSupported: boolean | null = null;
 
 /**
- * Verifie si le navigateur supporte Canvas 2D
+ * Checks if the browser supports Canvas 2D
  */
 export function isThumbnailGenerationSupported(): boolean {
 	if (typeof document === "undefined") return false;
@@ -39,7 +39,7 @@ export function isThumbnailGenerationSupported(): boolean {
 }
 
 /**
- * Verifie si OffscreenCanvas est supporte (plus performant)
+ * Checks if OffscreenCanvas is supported (more performant)
  */
 function isOffscreenCanvasSupported(): boolean {
 	if (typeof OffscreenCanvas === "undefined") return false;
@@ -64,7 +64,7 @@ type CanvasType = HTMLCanvasElement | OffscreenCanvas;
 type ContextType = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
 /**
- * Cree un canvas (OffscreenCanvas si disponible, sinon HTMLCanvasElement)
+ * Creates a canvas (OffscreenCanvas if available, otherwise HTMLCanvasElement)
  */
 function createCanvas(width: number, height: number): { canvas: CanvasType; ctx: ContextType } {
 	if (isOffscreenCanvasSupported()) {
@@ -83,7 +83,7 @@ function createCanvas(width: number, height: number): { canvas: CanvasType; ctx:
 }
 
 /**
- * Genere un blur placeholder a partir d'un canvas
+ * Generates a blur placeholder from a canvas
  */
 function generateBlurFromCanvas(
 	sourceCanvas: CanvasType,
@@ -92,12 +92,12 @@ function generateBlurFromCanvas(
 ): string {
 	const { canvas: blurCanvas, ctx: blurCtx } = createCanvas(size, size);
 
-	// Dessiner l'image source reduite
+	// Draw the resized source image
 	blurCtx.drawImage(sourceCanvas as HTMLCanvasElement, 0, 0, size, size);
 
-	// Pour OffscreenCanvas, on doit convertir differemment
+	// For OffscreenCanvas, we need to convert differently
 	if (blurCanvas instanceof OffscreenCanvas) {
-		// Fallback: creer un canvas DOM pour toDataURL
+		// Fallback: create a DOM canvas for toDataURL
 		const tempCanvas = document.createElement("canvas");
 		tempCanvas.width = size;
 		tempCanvas.height = size;
@@ -112,7 +112,7 @@ function generateBlurFromCanvas(
 }
 
 /**
- * Verifie si une frame est exploitable (pas entierement noire/blanche)
+ * Checks if a frame is usable (not entirely black/white)
  */
 function isFrameValid(ctx: ContextType, width: number, height: number): boolean {
 	const sampleSize = Math.min(width, height, FRAME_VALIDATION.MAX_SAMPLE_SIZE);
@@ -138,7 +138,7 @@ function isFrameValid(ctx: ContextType, width: number, height: number): boolean 
 		}
 	}
 
-	// Frame valide si moins de 95% noire ou blanche
+	// Frame is valid if less than 95% black or white
 	const blackRatio = blackPixels / totalSamples;
 	const whiteRatio = whitePixels / totalSamples;
 
@@ -150,7 +150,7 @@ function isFrameValid(ctx: ContextType, width: number, height: number): boolean 
 // ============================================================================
 
 /**
- * Attend qu'un evenement video soit declenche avec gestion timeout et abort
+ * Waits for a video event to fire with timeout and abort handling
  */
 function waitForVideoEvent<K extends keyof HTMLVideoElementEventMap>(
 	video: HTMLVideoElement,
@@ -159,7 +159,7 @@ function waitForVideoEvent<K extends keyof HTMLVideoElementEventMap>(
 	signal?: AbortSignal
 ): Promise<void> {
 	return new Promise((resolve, reject) => {
-		// Verifier si deja aborte
+		// Check if already aborted
 		if (signal?.aborted) {
 			reject(new DOMException("Operation annulee", "AbortError"));
 			return;
@@ -200,7 +200,7 @@ function waitForVideoEvent<K extends keyof HTMLVideoElementEventMap>(
 }
 
 /**
- * Configure et charge une video pour extraction de frame
+ * Configures and loads a video for frame extraction
  */
 async function loadVideo(
 	videoFile: File,
@@ -209,13 +209,13 @@ async function loadVideo(
 	const video = document.createElement("video");
 	const objectUrl = URL.createObjectURL(videoFile);
 
-	// Configuration optimale pour extraction de frame
+	// Optimal configuration for frame extraction
 	video.preload = "auto";
 	video.muted = true;
 	video.playsInline = true;
 	video.crossOrigin = "anonymous";
 
-	// Desactiver la lecture automatique pour economiser les ressources
+	// Disable autoplay to conserve resources
 	video.autoplay = false;
 
 	video.src = objectUrl;
@@ -224,7 +224,7 @@ async function loadVideo(
 	try {
 		await waitForVideoEvent(video, "loadedmetadata", VIDEO_EVENT_TIMEOUTS.LOADED_METADATA_MS, signal);
 
-		// Verifier les dimensions
+		// Verify dimensions
 		if (video.videoWidth === 0 || video.videoHeight === 0) {
 			throw new Error(`Dimensions video invalides: ${video.videoWidth}x${video.videoHeight}`);
 		}
@@ -237,14 +237,14 @@ async function loadVideo(
 }
 
 /**
- * Capture une frame a une position donnee
+ * Captures a frame at a given position
  */
 async function captureFrameAtPosition(
 	video: HTMLVideoElement,
 	position: number,
 	signal?: AbortSignal
 ): Promise<{ canvas: CanvasType; ctx: ContextType; width: number; height: number } | null> {
-	// Calculer le temps de capture
+	// Calculate capture time
 	const captureTime = Math.min(
 		THUMBNAIL_CONFIG.maxCaptureTime,
 		Math.max(0.1, video.duration * position)
@@ -255,19 +255,19 @@ async function captureFrameAtPosition(
 	try {
 		await waitForVideoEvent(video, "seeked", VIDEO_EVENT_TIMEOUTS.SEEKED_MS, signal);
 
-		// Court delai pour s'assurer que la frame est decodee
+		// Short delay to ensure the frame is decoded
 		await new Promise(resolve => setTimeout(resolve, UI_DELAYS.VIDEO_FRAME_STABILIZATION_MS));
 
-		// Calculer les dimensions
+		// Calculate dimensions
 		const aspectRatio = video.videoHeight / video.videoWidth;
 		const width = CLIENT_THUMBNAIL_CONFIG.width;
 		const height = Math.round(width * aspectRatio);
 
-		// Creer le canvas et dessiner
+		// Create the canvas and draw
 		const { canvas, ctx } = createCanvas(width, height);
 		ctx.drawImage(video, 0, 0, width, height);
 
-		// Verifier si la frame est valide
+		// Check if the frame is valid
 		if (!isFrameValid(ctx, width, height)) {
 			return null;
 		}
@@ -283,20 +283,20 @@ async function captureFrameAtPosition(
 // ============================================================================
 
 /**
- * Genere un thumbnail a partir d'un fichier video en utilisant l'API Canvas
+ * Generates a thumbnail from a video file using the Canvas API
  *
- * Fonctionnalites:
- * - Essaie plusieurs positions de capture pour eviter les frames noires
- * - Utilise OffscreenCanvas si disponible pour de meilleures performances
- * - Supporte l'annulation via AbortSignal
- * - Genere automatiquement un blur placeholder
+ * Features:
+ * - Tries multiple capture positions to avoid black frames
+ * - Uses OffscreenCanvas if available for better performance
+ * - Supports cancellation via AbortSignal
+ * - Automatically generates a blur placeholder
  *
  * @example
  * const controller = new AbortController();
  * try {
  *   const result = await generateVideoThumbnail(videoFile, { signal: controller.signal });
  *   // Upload result.thumbnailFile
- *   // Utiliser result.blurDataUrl comme placeholder
+ *   // Use result.blurDataUrl as placeholder
  * } finally {
  *   URL.revokeObjectURL(result.previewUrl);
  * }
@@ -313,12 +313,12 @@ export async function generateVideoThumbnail(
 		signal,
 	} = options;
 
-	// Verifier le support
+	// Check browser support
 	if (!isThumbnailGenerationSupported()) {
 		throw new Error("Canvas 2D non supporte par ce navigateur");
 	}
 
-	// Verifier si aborte
+	// Check if aborted
 	if (signal?.aborted) {
 		throw new DOMException("Operation annulee", "AbortError");
 	}
@@ -326,7 +326,7 @@ export async function generateVideoThumbnail(
 	const { video, objectUrl } = await loadVideo(videoFile, signal);
 
 	try {
-		// Essayer plusieurs positions jusqu'a trouver une frame valide
+		// Try multiple positions until a valid frame is found
 		let capturedFrame: { canvas: CanvasType; ctx: ContextType; width: number; height: number } | null = null;
 		let capturedPosition = 0;
 
@@ -343,7 +343,7 @@ export async function generateVideoThumbnail(
 			}
 		}
 
-		// Si aucune frame valide, prendre la premiere position quand meme
+		// If no valid frame found, use the first position anyway
 		if (!capturedFrame) {
 			const firstPosition = capturePositions[0] || 0.1;
 			const captureTime = Math.min(maxCaptureTime, Math.max(0.1, video.duration * firstPosition));
@@ -362,10 +362,10 @@ export async function generateVideoThumbnail(
 
 		const { canvas, ctx } = capturedFrame;
 
-		// Generer le blur placeholder
+		// Generate the blur placeholder
 		const blurDataUrl = generateBlurFromCanvas(canvas, ctx);
 
-		// Convertir en blob
+		// Convert to blob
 		let blob: Blob;
 
 		if (canvas instanceof OffscreenCanvas) {
@@ -386,7 +386,7 @@ export async function generateVideoThumbnail(
 			});
 		}
 
-		// Creer le fichier thumbnail avec nom unique
+		// Create the thumbnail file with a unique name
 		const timestamp = Date.now();
 		const randomSuffix = Math.random().toString(36).substring(2, 8);
 		const thumbnailFile = new File(
@@ -395,7 +395,7 @@ export async function generateVideoThumbnail(
 			{ type: "image/jpeg" }
 		);
 
-		// Creer l'URL de preview
+		// Create the preview URL
 		const previewUrl = URL.createObjectURL(blob);
 
 		return {
@@ -405,10 +405,10 @@ export async function generateVideoThumbnail(
 			capturedAt: capturedPosition,
 		};
 	} finally {
-		// Cleanup: toujours revoquer l'URL de la video
+		// Cleanup: always revoke the video URL
 		URL.revokeObjectURL(objectUrl);
 
-		// Liberer les ressources video
+		// Release video resources
 		video.src = "";
 		video.load();
 	}

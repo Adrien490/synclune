@@ -1,11 +1,11 @@
 /**
- * Service de generation de ThumbHash placeholders pour les images
+ * Service for generating ThumbHash image placeholders.
  *
- * ThumbHash est le standard 2025 pour les placeholders d'images:
- * - Ultra-compact (~25 bytes vs ~200-300 bytes pour base64)
- * - Support de la transparence (alpha)
- * - Encode l'aspect ratio automatiquement
- * - Meilleure fidelite des couleurs que BlurHash/plaiceholder
+ * ThumbHash is the 2025 standard for image placeholders:
+ * - Ultra-compact (~25 bytes vs ~200-300 bytes for base64)
+ * - Transparency support (alpha)
+ * - Automatically encodes aspect ratio
+ * - Better color fidelity than BlurHash/plaiceholder
  *
  * @see https://evanw.github.io/thumbhash/
  * @module modules/media/services/generate-thumbhash
@@ -32,15 +32,15 @@ export type { GenerateThumbHashOptions, ThumbHashLogFn, ThumbHashResult };
 const defaultLogger: ThumbHashLogFn = (message) => console.warn(message);
 
 /**
- * Valide qu'un data URL ThumbHash est au format attendu
+ * Validates that a ThumbHash data URL has the expected format
  */
 function isValidThumbHashDataUrl(dataUrl: string): boolean {
 	return dataUrl.startsWith("data:image/png;base64,");
 }
 
 /**
- * Extrait les donnees RGBA d'un buffer image avec Sharp
- * Resize a max 100x100 (contrainte ThumbHash)
+ * Extracts RGBA data from an image buffer using Sharp.
+ * Resizes to max 100x100 (ThumbHash constraint).
  */
 async function extractRgbaData(
 	buffer: Buffer,
@@ -48,7 +48,7 @@ async function extractRgbaData(
 ): Promise<{ rgba: Uint8Array; width: number; height: number }> {
 	const image = sharp(buffer).ensureAlpha();
 
-	// Resize en gardant l'aspect ratio, max 100x100
+	// Resize maintaining aspect ratio, max 100x100
 	const resized = image.resize(maxSize, maxSize, {
 		fit: "inside",
 		withoutEnlargement: true,
@@ -68,11 +68,11 @@ async function extractRgbaData(
 // ============================================================================
 
 /**
- * Genere un ThumbHash pour une image
+ * Generates a ThumbHash for an image.
  *
- * @param imageUrl - URL de l'image source
- * @param options - Options de generation
- * @returns ThumbHash result ou undefined si echec
+ * @param imageUrl - Source image URL
+ * @param options - Generation options
+ * @returns ThumbHash result or undefined on failure
  *
  * @example
  * ```ts
@@ -88,7 +88,7 @@ export async function generateThumbHash(
 	const maxSize = options.maxSize ?? THUMBHASH_CONFIG.maxSize;
 	const log = options.logWarning ?? defaultLogger;
 
-	// Validation du domaine source (protection SSRF)
+	// Source domain validation (SSRF protection)
 	if (validateDomain && !isValidUploadThingUrl(imageUrl)) {
 		log("[ThumbHash] Domaine non autorise", { url: truncateUrl(imageUrl) });
 		return undefined;
@@ -103,12 +103,12 @@ export async function generateThumbHash(
 
 		const { rgba, width, height } = await extractRgbaData(buffer, maxSize);
 
-		// Generer le ThumbHash
+		// Generate the ThumbHash
 		const hashBytes = rgbaToThumbHash(width, height, rgba);
 		const hash = Buffer.from(hashBytes).toString("base64");
 		const dataUrl = thumbHashToDataURL(hashBytes);
 
-		// Validation du resultat
+		// Validate the result
 		if (!isValidThumbHashDataUrl(dataUrl)) {
 			log("[ThumbHash] Format invalide genere", { expected: "data:image/png;base64,..." });
 			return undefined;
@@ -130,12 +130,12 @@ export async function generateThumbHash(
 }
 
 /**
- * Genere un ThumbHash avec retry automatique
+ * Generates a ThumbHash with automatic retry.
  *
- * @param imageUrl - URL de l'image source
- * @param options - Options de generation
+ * @param imageUrl - Source image URL
+ * @param options - Generation options
  * @returns ThumbHash result
- * @throws {Error} Si toutes les tentatives echouent
+ * @throws {Error} If all attempts fail
  */
 export async function generateThumbHashWithRetry(
 	imageUrl: string,
@@ -144,7 +144,7 @@ export async function generateThumbHashWithRetry(
 	const validateDomain = options.validateDomain ?? true;
 	const maxSize = options.maxSize ?? THUMBHASH_CONFIG.maxSize;
 
-	// Validation du domaine source (protection SSRF)
+	// Source domain validation (SSRF protection)
 	if (validateDomain && !isValidUploadThingUrl(imageUrl)) {
 		throw new Error(`Domaine non autorise: ${new URL(imageUrl).hostname}`);
 	}
@@ -159,12 +159,12 @@ export async function generateThumbHashWithRetry(
 
 			const { rgba, width, height } = await extractRgbaData(buffer, maxSize);
 
-			// Generer le ThumbHash
+			// Generate the ThumbHash
 			const hashBytes = rgbaToThumbHash(width, height, rgba);
 			const hash = Buffer.from(hashBytes).toString("base64");
 			const dataUrl = thumbHashToDataURL(hashBytes);
 
-			// Validation du resultat
+			// Validate the result
 			if (!isValidThumbHashDataUrl(dataUrl)) {
 				throw new Error("Format de ThumbHash invalide genere (attendu: data:image/png;base64,...)");
 			}
@@ -179,10 +179,10 @@ export async function generateThumbHashWithRetry(
 }
 
 /**
- * Genere un ThumbHash depuis un buffer (pas de telechargement)
+ * Generates a ThumbHash from a buffer (no download needed).
  *
- * @param buffer - Buffer de l'image
- * @param options - Options de generation
+ * @param buffer - Image buffer
+ * @param options - Generation options
  * @returns ThumbHash result
  */
 export async function generateThumbHashFromBuffer(
@@ -200,12 +200,12 @@ export async function generateThumbHashFromBuffer(
 
 	const { rgba, width, height } = await extractRgbaData(buffer, maxSize);
 
-	// Generer le ThumbHash
+	// Generate the ThumbHash
 	const hashBytes = rgbaToThumbHash(width, height, rgba);
 	const hash = Buffer.from(hashBytes).toString("base64");
 	const dataUrl = thumbHashToDataURL(hashBytes);
 
-	// Validation du resultat
+	// Validate the result
 	if (!isValidThumbHashDataUrl(dataUrl)) {
 		throw new Error("Format de ThumbHash invalide genere (attendu: data:image/png;base64,...)");
 	}

@@ -1,26 +1,26 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError, success, error } from "@/shared/lib/actions";
+import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { deleteUploadThingFilesSchema } from "@/modules/media/schemas/uploadthing.schemas";
 import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key";
 
 /**
- * Server Action pour supprimer un ou plusieurs fichiers d'UploadThing
- * Compatible avec useActionState de React 19
+ * Server Action to delete one or more UploadThing files.
+ * Compatible with React 19 useActionState.
  */
 export async function deleteUploadThingFiles(
 	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérification des droits admin
+		// 1. Verify admin rights
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraction des donnees du FormData avec parsing JSON securise
+		// 2. Extract data from FormData with secure JSON parsing
 		const fileUrlsRaw = formData.get("fileUrls");
 
 		if (fileUrlsRaw === null || fileUrlsRaw === undefined) {
@@ -42,16 +42,13 @@ export async function deleteUploadThingFiles(
 			return error("Format JSON invalide pour les URLs de fichiers");
 		}
 
-		// 3. Validation avec Zod
-		const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: parsedFileUrls });
+		// 3. Validate with Zod
+		const validated = validateInput(deleteUploadThingFilesSchema, { fileUrls: parsedFileUrls });
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return error(result.error.issues[0]?.message ?? "Erreur de validation");
-		}
+		const { fileUrls } = validated.data;
 
-		const { fileUrls } = result.data;
-
-		// 4. Extraire les cles des URLs avec gestion d'erreur
+		// 4. Extract file keys from URLs with error handling
 		const { keys: fileKeys, failedUrls } = extractFileKeysFromUrls(fileUrls);
 
 		if (fileKeys.length === 0) {
@@ -65,7 +62,7 @@ export async function deleteUploadThingFiles(
 			);
 		}
 
-		// 5. Supprimer les fichiers via UTApi (instanciation par requete)
+		// 5. Delete files via UTApi (per-request instantiation)
 		const utapi = new UTApi();
 		await utapi.deleteFiles(fileKeys);
 

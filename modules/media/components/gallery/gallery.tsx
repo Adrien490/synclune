@@ -127,17 +127,17 @@ function GalleryContent({ product, title }: GalleryProps) {
 		dragFree: false,
 	});
 
-	// Type de produit pour les ALT descriptifs
+	// Product type for descriptive ALTs
 	const productType = product.type?.label;
 
-	// Extraire et valider les params URL pour les variants
+	// Extract and validate URL params for variants
 	const { color: colorSlug, material: materialSlug, size } = parseGalleryParams({
 		color: searchParams.get("color") || undefined,
 		material: searchParams.get("material") || undefined,
 		size: searchParams.get("size") || undefined,
 	});
 
-	// Construire la liste d'images selon les variants
+	// Build image list based on selected variants
 	const images: ProductMedia[] = buildGallery({
 		product,
 		selectedVariants: { colorSlug, materialSlug, size },
@@ -145,7 +145,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	const slides = buildLightboxSlides(images, prefersReduced);
 
-	// Connection-aware prefetch range avec fallback intelligent
+	// Connection-aware prefetch range with intelligent fallback
 	// Safari/Firefox ne supportent pas navigator.connection
 	// Computed once on mount to avoid DOM access on every render
 	const [prefetchRange, setPrefetchRange] = useState(PREFETCH_RANGE_FAST);
@@ -158,8 +158,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 		}
 	}, []);
 
-	// Prefetch intelligent des images adjacentes (Next.js 16 + React 19)
-	// Extraire les URLs pour éviter de recréer un tableau à chaque render
+	// Intelligent prefetch of adjacent images (Next.js 16 + React 19)
+	// Extract URLs to avoid recreating the array on every render
 	const imageUrls = images.map((img) => img.url);
 
 	usePrefetchImages({

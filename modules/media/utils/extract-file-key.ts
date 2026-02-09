@@ -1,17 +1,17 @@
 /**
- * Utilitaire pour extraire les cles de fichiers depuis les URLs UploadThing
+ * Utility for extracting file keys from UploadThing URLs.
  *
- * Centralise la logique d'extraction pour eviter la duplication
- * et garantir une gestion coherente des erreurs.
+ * Centralizes extraction logic to avoid duplication
+ * and ensure consistent error handling.
  *
  * @module modules/media/utils/extract-file-key
  */
 
 /**
- * Extrait la cle du fichier depuis une URL UploadThing
+ * Extracts the file key from an UploadThing URL.
  *
- * @param url - URL complete du fichier (ex: https://utfs.io/f/abc123.png)
- * @returns La cle du fichier ou null si extraction impossible
+ * @param url - Full file URL (e.g. https://utfs.io/f/abc123.png)
+ * @returns The file key or null if extraction fails
  *
  * @example
  * extractFileKeyFromUrl("https://utfs.io/f/abc123.png") // "abc123.png"
@@ -19,32 +19,32 @@
  */
 export function extractFileKeyFromUrl(url: string): string | null {
 	try {
-		// Format UploadThing: https://utfs.io/f/{fileKey}
-		// ou https://uploadthing-prod.s3.us-west-2.amazonaws.com/{fileKey}
-		// ou https://x1ain1wpub.ufs.sh/f/{fileKey}
+		// UploadThing format: https://utfs.io/f/{fileKey}
+		// or https://uploadthing-prod.s3.us-west-2.amazonaws.com/{fileKey}
+		// or https://x1ain1wpub.ufs.sh/f/{fileKey}
 		const urlObj = new URL(url);
 		const parts = urlObj.pathname.split("/");
-		// La cle est le dernier segment du path
+		// The key is the last segment of the path
 		const key = parts[parts.length - 1];
 
-		// Validation basique: la cle doit etre non-vide et ressembler a un identifiant
+		// Basic validation: key must be non-empty and resemble an identifier
 		if (!key || key === "" || key === "/") {
 			return null;
 		}
 
 		return key;
 	} catch {
-		// URL invalide
+		// Invalid URL
 		return null;
 	}
 }
 
 /**
- * Extrait les cles de fichiers depuis plusieurs URLs UploadThing
- * Filtre automatiquement les extractions echouees
+ * Extracts file keys from multiple UploadThing URLs.
+ * Automatically filters out failed extractions.
  *
- * @param urls - Liste d'URLs completes
- * @returns Objet avec les cles extraites et les URLs en echec
+ * @param urls - List of full URLs
+ * @returns Object with extracted keys and failed URLs
  */
 export function extractFileKeysFromUrls(urls: string[]): {
 	keys: string[];

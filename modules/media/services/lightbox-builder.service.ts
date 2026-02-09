@@ -3,9 +3,9 @@ import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { getVideoMimeType } from "../utils/media-utils";
 
 /**
- * Convertit les médias produit en slides pour la lightbox
- * - Images : format standard avec alt
- * - Vidéos : format vidéo avec autoplay conditionnel selon prefers-reduced-motion
+ * Converts product media into lightbox slides.
+ * - Images: standard format with alt
+ * - Videos: video format with conditional autoplay based on prefers-reduced-motion
  */
 export function buildLightboxSlides(
 	medias: ProductMedia[],

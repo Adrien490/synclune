@@ -4,13 +4,13 @@ import { useEffect, useRef } from "react";
 import type { ProductMedia } from "../types/product-media.types";
 
 interface UsePrefetchVideosOptions {
-	/** Médias de la galerie */
+	/** Gallery medias */
 	medias: ProductMedia[];
-	/** Index actuel dans le carousel */
+	/** Current index in the carousel */
 	currentIndex: number;
-	/** Nombre de slides à prefetch avant et après l'index actuel */
+	/** Number of slides to prefetch before and after the current index */
 	prefetchRange?: number;
-	/** Activer le prefetch */
+	/** Enable prefetching */
 	enabled?: boolean;
 }
 
@@ -35,7 +35,7 @@ export function usePrefetchVideos({
 		if (typeof window === "undefined") return;
 		if (!enabled || medias.length === 0) return;
 
-		// Calculer les index à prefetch (avec wrap pour carousel circulaire)
+		// Calculate indices to prefetch (with wrap for circular carousel)
 		const indicesToPrefetch: number[] = [];
 		for (let i = 1; i <= prefetchRange; i++) {
 			indicesToPrefetch.push((currentIndex + i) % medias.length);

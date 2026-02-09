@@ -33,7 +33,7 @@ export const useDeleteUploadThingFiles = (
 		undefined
 	);
 
-	// Helper function pour les composants qui ne peuvent pas utiliser <form> (nested forms)
+	// Helper function for components that cannot use <form> (nested forms)
 	const deleteFiles = (fileUrls: string | string[]) => {
 		const urls = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
 		const formData = new FormData();

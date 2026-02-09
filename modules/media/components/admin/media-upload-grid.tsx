@@ -174,7 +174,7 @@ export function MediaUploadGrid({
 			const oldIndex = media.findIndex((m) => m.url === active.id);
 			const newIndex = media.findIndex((m) => m.url === over.id);
 
-			// Calculer le nouveau tableau avant validation
+			// Compute the new array before validation
 			const newMedia = arrayMove(media, oldIndex, newIndex);
 
 			// Empêcher qu'une vidéo se retrouve en première position (couvre tous les cas)

@@ -37,7 +37,7 @@ const DEFAULT_VIDEO_CONCURRENCY = 2;
 // ============================================================================
 
 /**
- * Formate une taille en bytes en string lisible
+ * Formats a byte size into a human-readable string
  */
 function formatFileSize(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`;
@@ -46,14 +46,14 @@ function formatFileSize(bytes: number): string {
 }
 
 /**
- * Determine le type de media a partir du type MIME
+ * Determines the media type from the MIME type
  */
 function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
 	return file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
 }
 
 /**
- * Retry avec backoff exponentiel
+ * Retry with exponential backoff
  */
 async function retryWithBackoff<T>(
 	fn: () => Promise<T>,
@@ -73,17 +73,17 @@ async function retryWithBackoff<T>(
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error(String(error));
 
-			// Ne pas retry si c'est une erreur d'abort
+			// Don't retry abort errors
 			if (error instanceof DOMException && error.name === "AbortError") {
 				throw error;
 			}
 
-			// Derniere tentative, on throw
+			// Last attempt, throw
 			if (attempt === maxRetries) {
 				throw lastError;
 			}
 
-			// Attendre avec backoff exponentiel
+			// Wait with exponential backoff
 			const delay = baseDelay * Math.pow(2, attempt);
 			await new Promise(resolve => setTimeout(resolve, delay));
 		}
@@ -97,15 +97,15 @@ async function retryWithBackoff<T>(
 // ============================================================================
 
 /**
- * Hook production-ready pour l'upload de medias (images et videos)
+ * Production-ready hook for media uploads (images and videos)
  *
- * Fonctionnalites:
- * - Upload parallele des images en batch
- * - Generation de thumbnails client-side pour les videos (Canvas API)
- * - Retry avec backoff exponentiel
- * - Annulation via AbortController
- * - Progression en temps reel
- * - Validation des fichiers (taille, type, nombre)
+ * Features:
+ * - Parallel batch image upload
+ * - Client-side video thumbnail generation (Canvas API)
+ * - Retry with exponential backoff
+ * - Cancellation via AbortController
+ * - Real-time progress tracking
+ * - File validation (size, type, count)
  *
  * @example
  * ```tsx
@@ -117,7 +117,7 @@ async function retryWithBackoff<T>(
  *
  * const handleDrop = async (files: File[]) => {
  *   const results = await upload(files);
- *   // results contient les URLs des fichiers uploades
+ *   // results contains the uploaded file URLs
  * };
  * ```
  */
@@ -198,7 +198,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	// ========================================================================
 
 	/**
-	 * Upload une video avec generation de thumbnail
+	 * Uploads a video with thumbnail generation
 	 */
 	const uploadVideo = async (
 		videoFile: File,
@@ -208,13 +208,13 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		let blurDataUrl: string | undefined;
 		let thumbnailResult: VideoThumbnailResult | null = null;
 
-		// 1. Generer le thumbnail si supporte
+		// 1. Generate thumbnail if supported
 		if (isThumbnailGenerationSupported()) {
 			try {
 				thumbnailResult = await generateVideoThumbnail(videoFile, { signal });
 				blurDataUrl = thumbnailResult.blurDataUrl;
 
-				// 2. Upload le thumbnail avec retry
+				// 2. Upload the thumbnail with retry
 				const thumbUploadResult = await retryWithBackoff(
 					() => startUpload([thumbnailResult!.thumbnailFile]),
 					2,
@@ -226,7 +226,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 					thumbnailUrl = thumbUploadResult[0].serverData.url;
 				}
 			} catch (error) {
-				// Log mais continue sans thumbnail
+				// Log but continue without thumbnail
 				if (!(error instanceof DOMException && error.name === "AbortError")) {
 					console.warn("[useMediaUpload] Echec generation/upload thumbnail:", error);
 				} else {
@@ -240,7 +240,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			}
 		}
 
-		// 3. Upload la video avec retry
+		// 3. Upload the video with retry
 		const videoUploadResult = await retryWithBackoff(
 			() => startUpload([videoFile]),
 			2,
@@ -263,7 +263,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	};
 
 	/**
-	 * Upload des images en batch
+	 * Uploads images in batch
 	 */
 	const uploadImages = async (
 		imageFiles: File[],
@@ -301,7 +301,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	};
 
 	/**
-	 * Upload des videos en parallele avec limite de concurrence
+	 * Uploads videos in parallel with concurrency limit
 	 */
 	const uploadVideos = async (
 		videoFiles: File[],
@@ -311,7 +311,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		const results: MediaUploadResult[] = [];
 
-		// Traiter par lots pour limiter la concurrence
+		// Process in batches to limit concurrency
 		for (let i = 0; i < videoFiles.length; i += videoConcurrency) {
 			if (signal.aborted) {
 				throw new DOMException("Operation annulee", "AbortError");
@@ -345,12 +345,12 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	// ========================================================================
 
 	const upload = async (files: File[]): Promise<MediaUploadResult[]> => {
-		// Creer un nouveau AbortController
+		// Create a new AbortController
 		abortControllerRef.current?.abort();
 		abortControllerRef.current = new AbortController();
 		const signal = abortControllerRef.current.signal;
 
-		// Valider les fichiers
+		// Validate files
 		updateProgress({ phase: "validating", total: files.length, completed: 0 });
 		const validFiles = validateFiles(files);
 
@@ -359,7 +359,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			return [];
 		}
 
-		// Separer images et videos
+		// Separate images and videos
 		const images = validFiles.filter(f => getMediaType(f) === "IMAGE");
 		const videos = validFiles.filter(f => getMediaType(f) === "VIDEO");
 		const totalFiles = images.length + videos.length;
@@ -369,7 +369,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		const uploadResults: MediaUploadResult[] = [];
 
 		try {
-			// Upload des images en batch
+			// Upload images in batch
 			if (images.length > 0) {
 				updateProgress({ current: `${images.length} image(s)`, phase: "uploading" });
 				const imageResults = await uploadImages(images, signal);
@@ -377,7 +377,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				updateProgress({ completed: imageResults.length });
 			}
 
-			// Upload des videos
+			// Upload videos
 			if (videos.length > 0) {
 				updateProgress({ phase: "generating-thumbnails" });
 				const videoResults = await uploadVideos(videos, signal);
@@ -390,10 +390,10 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 			return uploadResults;
 		} catch (error) {
-			// Gerer l'annulation silencieusement
+			// Handle cancellation silently
 			if (error instanceof DOMException && error.name === "AbortError") {
 				setProgress(null);
-				return uploadResults; // Retourner ce qui a ete uploade
+				return uploadResults; // Return what was uploaded
 			}
 
 			const err = error instanceof Error ? error : new Error(String(error));
@@ -403,9 +403,9 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				description: err.message,
 			});
 
-			return uploadResults; // Retourner ce qui a ete uploade malgre l'erreur
+			return uploadResults; // Return what was uploaded despite the error
 		} finally {
-			// Reset progress apres un delai
+			// Reset progress after a delay
 			setTimeout(() => setProgress(null), 1000);
 		}
 	};

@@ -1,11 +1,11 @@
 /**
- * Utilitaires de detection du type de media base sur l'URL ou l'extension
+ * Utilities for detecting media type based on URL or extension
  */
 
 import { VIDEO_EXTENSIONS, IMAGE_EXTENSIONS } from "../constants/media.constants";
 
 /**
- * Verifie si une URL pointe vers une video basee sur son extension
+ * Checks if a URL points to a video based on its extension
  */
 export function isVideoUrl(url: string): boolean {
 	const lowercaseUrl = url.toLowerCase();
@@ -13,7 +13,7 @@ export function isVideoUrl(url: string): boolean {
 }
 
 /**
- * Verifie si une URL pointe vers une image basee sur son extension
+ * Checks if a URL points to an image based on its extension
  */
 export function isImageUrl(url: string): boolean {
 	const lowercaseUrl = url.toLowerCase();
@@ -21,14 +21,14 @@ export function isImageUrl(url: string): boolean {
 }
 
 /**
- * Detecte le type de media (IMAGE ou VIDEO) base sur l'URL
+ * Detects the media type (IMAGE or VIDEO) based on the URL
  */
 export function detectMediaType(url: string): "IMAGE" | "VIDEO" {
 	return isVideoUrl(url) ? "VIDEO" : "IMAGE";
 }
 
 /**
- * Obtient l'extension d'un fichier depuis son URL
+ * Gets the file extension from its URL
  */
 export function getFileExtension(url: string): string | null {
 	const match = url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);

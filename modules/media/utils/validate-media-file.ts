@@ -1,53 +1,53 @@
 /**
- * Constantes et utilitaires de validation des fichiers média
+ * Constants and utilities for media file validation.
  *
- * Centralise la logique de validation des tailles de fichiers
- * pour éviter la duplication entre les différents formulaires d'upload.
+ * Centralizes file size validation logic
+ * to avoid duplication across upload forms.
  */
 
 /**
- * Limites de taille des fichiers par type de média
+ * File size limits by media type
  */
 export const MEDIA_SIZE_LIMITS = {
-	/** Images: 16MB max (aligné sur UploadThing catalogMedia) */
+	/** Images: 16MB max (aligned with UploadThing catalogMedia) */
 	IMAGE: 16 * 1024 * 1024,
-	/** Vidéos: 512MB max */
+	/** Videos: 512MB max */
 	VIDEO: 512 * 1024 * 1024,
 } as const;
 
 /**
- * Types MIME considérés comme des vidéos
+ * MIME types considered as videos
  */
 export const VIDEO_MIME_PREFIXES = ["video/"] as const;
 
 /**
- * Résultat de la validation d'un fichier média
+ * Media file validation result
  */
 export interface MediaFileValidationResult {
-	/** true si le fichier est valide */
+	/** true if the file is valid */
 	valid: boolean;
-	/** Message d'erreur si invalide */
+	/** Error message if invalid */
 	error?: string;
-	/** Type de média détecté */
+	/** Detected media type */
 	mediaType: "IMAGE" | "VIDEO";
-	/** Taille du fichier en bytes */
+	/** File size in bytes */
 	fileSize: number;
-	/** Limite de taille applicable en bytes */
+	/** Applicable size limit in bytes */
 	sizeLimit: number;
 }
 
 /**
- * Détermine si un fichier est une vidéo basé sur son type MIME
+ * Determines if a file is a video based on its MIME type
  */
 export function isVideoFile(file: File): boolean {
 	return VIDEO_MIME_PREFIXES.some((prefix) => file.type.startsWith(prefix));
 }
 
 /**
- * Valide un fichier média (image ou vidéo) selon les limites de taille
+ * Validates a media file (image or video) against size limits.
  *
- * @param file - Le fichier à valider
- * @returns Résultat de la validation avec détails
+ * @param file - The file to validate
+ * @returns Validation result with details
  *
  * @example
  * const result = validateMediaFile(file);
@@ -82,10 +82,10 @@ export function validateMediaFile(file: File): MediaFileValidationResult {
 }
 
 /**
- * Valide un fichier destiné à être l'image principale (pas de vidéo autorisée)
+ * Validates a file intended to be the primary image (no video allowed).
  *
- * @param file - Le fichier à valider
- * @returns Résultat de la validation
+ * @param file - The file to validate
+ * @returns Validation result
  *
  * @example
  * const result = validatePrimaryImage(file);
@@ -111,18 +111,18 @@ export function validatePrimaryImage(file: File): MediaFileValidationResult {
 }
 
 /**
- * Valide plusieurs fichiers et retourne les fichiers valides + les erreurs
+ * Validates multiple files and returns valid files + errors.
  *
- * @param files - Les fichiers à valider
- * @param options - Options de validation
- * @returns Fichiers valides et erreurs rencontrées
+ * @param files - The files to validate
+ * @param options - Validation options
+ * @returns Valid files and encountered errors
  */
 export function validateMediaFiles(
 	files: File[],
 	options?: {
-		/** Si true, rejette les vidéos */
+		/** If true, rejects videos */
 		rejectVideos?: boolean;
-		/** Nombre maximum de fichiers à garder */
+		/** Maximum number of files to keep */
 		maxFiles?: number;
 	}
 ): {
@@ -158,16 +158,16 @@ export function validateMediaFiles(
 }
 
 // ============================================================================
-// VALIDATION HELPERS (utilisés par les scripts de migration)
+// VALIDATION HELPERS (used by migration scripts)
 // ============================================================================
 
-/** Pattern CUID (25 caractères alphanumériques commençant par 'c') */
+/** CUID pattern (25 alphanumeric characters starting with 'c') */
 const CUID_PATTERN = /^c[a-z0-9]{24}$/;
 
 /**
- * Domaines UploadThing autorisés (liste stricte)
- * - Domaines exacts pour les endpoints principaux
- * - Suffixes autorisés pour les sous-domaines CDN dynamiques
+ * Allowed UploadThing domains (strict list).
+ * - Exact domains for main endpoints
+ * - Allowed suffixes for dynamic CDN subdomains
  */
 const UPLOADTHING_EXACT_HOSTS: Set<string> = new Set([
 	"utfs.io",
@@ -176,42 +176,42 @@ const UPLOADTHING_EXACT_HOSTS: Set<string> = new Set([
 ]);
 
 /**
- * Suffixes autorisés pour les sous-domaines UploadThing
- * Ex: x1ain1wpub.ufs.sh, cdn.uploadthing.com
+ * Allowed suffixes for UploadThing subdomains.
+ * E.g. x1ain1wpub.ufs.sh, cdn.uploadthing.com
  */
 const UPLOADTHING_ALLOWED_SUFFIXES = [".ufs.sh", ".uploadthing.com"] as const;
 
 /**
- * Valide qu'un ID est un CUID valide
- * Empêche l'injection de commandes via des IDs malveillants
+ * Validates that an ID is a valid CUID.
+ * Prevents command injection via malicious IDs.
  */
 export function isValidCuid(id: string): boolean {
 	return CUID_PATTERN.test(id);
 }
 
 /**
- * Valide qu'une URL provient d'un domaine UploadThing autorise
- * - Enforce HTTPS uniquement
- * - Accepte les domaines exacts (utfs.io, uploadthing.com, ufs.sh)
- * - Accepte les sous-domaines (*.ufs.sh, *.uploadthing.com)
+ * Validates that a URL comes from an allowed UploadThing domain.
+ * - Enforces HTTPS only
+ * - Accepts exact domains (utfs.io, uploadthing.com, ufs.sh)
+ * - Accepts subdomains (*.ufs.sh, *.uploadthing.com)
  */
 export function isValidUploadThingUrl(url: string): boolean {
 	try {
 		const parsed = new URL(url);
 
-		// Securite: Enforce HTTPS uniquement
+		// Security: enforce HTTPS only
 		if (parsed.protocol !== "https:") {
 			return false;
 		}
 
 		const hostname = parsed.hostname;
 
-		// Verification exacte
+		// Exact match check
 		if (UPLOADTHING_EXACT_HOSTS.has(hostname)) {
 			return true;
 		}
 
-		// Verification des sous-domaines autorises
+		// Allowed subdomain check
 		return UPLOADTHING_ALLOWED_SUFFIXES.some((suffix) => hostname.endsWith(suffix));
 	} catch {
 		return false;
