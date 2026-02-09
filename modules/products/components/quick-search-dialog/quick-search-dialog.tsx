@@ -95,6 +95,7 @@ export function QuickSearchDialog({
 	const handleQuickTagClick = (label: string) => {
 		setInputValue(label)
 		resetActiveIndex()
+		router.replace(`?qs=${encodeURIComponent(label)}`, { scroll: false })
 	}
 
 	const handleClose = () => {

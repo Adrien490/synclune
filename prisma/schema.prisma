@@ -37,7 +37,7 @@ model User {
   image            String?   @db.VarChar(2048)
   stripeCustomerId String?   @unique
   createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @default(now()) @updatedAt
+  updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
   suspendedAt      DateTime? // Date de suspension du compte
 
@@ -63,12 +63,13 @@ model User {
   // Avis produits
   reviews ProductReview[]
 
-  @@index([suspendedAt])
+  // Demandes de personnalisation
+  customizationRequests CustomizationRequest[]
+
   @@index([name, id]) // Admin: tri par nom d'utilisateur
   @@index([createdAt, id])
   @@index([deletedAt, role]) // Admin: filtrer users actifs par role
   @@index([deletionRequestedAt])
-  @@index([anonymizedAt])
 }
 
 model Session {
@@ -113,7 +114,7 @@ model Verification {
   value      String   @db.VarChar(500)
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  updatedAt  DateTime @updatedAt
 
   @@index([identifier])
   @@index([expiresAt]) // cleanup-sessions cron: WHERE expiresAt < now()
@@ -124,14 +125,14 @@ model Address {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  firstName  String
-  lastName   String
-  address1   String
-  address2   String?
+  firstName  String  @db.VarChar(50)
+  lastName   String  @db.VarChar(50)
+  address1   String  @db.VarChar(255)
+  address2   String? @db.VarChar(255)
   postalCode String  @db.VarChar(10)
-  city       String
+  city       String  @db.VarChar(100)
   country    String  @default("FR") @db.VarChar(2)
-  phone      String
+  phone      String  @db.VarChar(20)
 
   isDefault Boolean @default(false)
 
@@ -311,7 +312,6 @@ model Product {
   // Wishlist
   wishlistItems WishlistItem[]
 
-  @@index([title, id])
   @@index([typeId])
   @@index([createdAt, id])
   @@index([deletedAt, status]) // Couvre aussi deletedAt seul
@@ -369,7 +369,7 @@ model SkuMedia {
   url          String  @db.VarChar(2048)
   thumbnailUrl String? @db.VarChar(2048) // Thumbnail pour videos (poster)
   blurDataUrl  String? @db.Text          // Base64 blur placeholder (~200 bytes)
-  altText      String?
+  altText      String?   @db.VarChar(255)
   mediaType    MediaType @default(IMAGE)
   isPrimary    Boolean   @default(false)
 
@@ -518,23 +518,23 @@ model Order {
   // === IDENTIFIANTS STRIPE (CRITIQUES) ===
   stripeCheckoutSessionId String? @unique // cs_xxx
   stripePaymentIntentId   String? @unique // pi_xxx
-  stripeChargeId          String? // ch_xxx
+  stripeChargeId          String? @unique // ch_xxx
   stripeCustomerId        String? // cus_xxx
 
   // === INFORMATIONS CLIENT ===
   customerEmail String @db.VarChar(255)
   customerName  String @db.VarChar(200)
-  customerPhone String?
+  customerPhone String? @db.VarChar(20)
 
   // === ADRESSE DE LIVRAISON (DENORMALISEE - SNAPSHOT) ===
-  shippingFirstName  String
-  shippingLastName   String
-  shippingAddress1   String
-  shippingAddress2   String?
+  shippingFirstName  String  @db.VarChar(50)
+  shippingLastName   String  @db.VarChar(50)
+  shippingAddress1   String  @db.VarChar(255)
+  shippingAddress2   String? @db.VarChar(255)
   shippingPostalCode String  @db.VarChar(10)
-  shippingCity       String
+  shippingCity       String  @db.VarChar(100)
   shippingCountry    String  @default("FR") @db.VarChar(2)
-  shippingPhone      String
+  shippingPhone      String  @db.VarChar(20)
 
   // === MONTANTS (EN CENTIMES) ===
   subtotal       Int
@@ -555,7 +555,7 @@ model Order {
   shippingCarrier   ShippingCarrier? // Transporteur
   shippingRateId    String? // ID du tarif Stripe utilise
   trackingNumber    String? @db.VarChar(50)
-  trackingUrl       String? // URL de suivi
+  trackingUrl       String? @db.VarChar(2048) // URL de suivi
   estimatedDelivery DateTime? // Date estimee de livraison
   actualDelivery    DateTime? // Date reelle de livraison
   shippedAt         DateTime? // Date d'expedition
@@ -659,14 +659,14 @@ model OrderItem {
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
 
   // Snapshot des donnees produit au moment de la commande
-  productTitle       String
+  productTitle       String  @db.VarChar(200)
   productDescription String? @db.Text
-  productImageUrl    String?
+  productImageUrl    String? @db.VarChar(2048)
 
-  skuColor    String?
-  skuMaterial String?
-  skuSize     String?
-  skuImageUrl String?
+  skuColor    String? @db.VarChar(100)
+  skuMaterial String? @db.VarChar(100)
+  skuSize     String? @db.VarChar(50)
+  skuImageUrl String? @db.VarChar(2048)
 
   // Prix et quantite
   price    Int // Prix unitaire FINAL sans TVA en centimes (micro-entreprise exoneree)
@@ -706,7 +706,6 @@ model OrderNote {
   deletedAt DateTime? // Soft delete pour audit trail
 
   @@index([orderId, createdAt(sort: Desc)])
-  @@index([deletedAt])
 }
 
 // ============================================================================
@@ -847,7 +846,7 @@ model Discount {
 model DiscountUsage {
   id         String   @id @default(cuid())
   discountId String
-  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Restrict)
 
   // Utilisateur (optionnel pour guest checkout)
   userId String?
@@ -862,9 +861,9 @@ model DiscountUsage {
 
   createdAt DateTime @default(now())
 
+  @@unique([discountId, orderId])
   @@index([orderId])
   @@index([discountId, userId]) // Pour verifier usage par utilisateur, couvre aussi discountId seul
-  @@index([userId, createdAt(sort: Desc)]) // Historique usage par user
 }
 
 // ============================================================================
@@ -880,7 +879,7 @@ enum NewsletterStatus {
 model NewsletterSubscriber {
   id               String  @id @default(cuid())
   email            String  @unique
-  unsubscribeToken String  @unique @default(cuid())
+  unsubscribeToken String  @unique
 
   // === STATUT NEWSLETTER ===
   status NewsletterStatus @default(PENDING)
@@ -1019,8 +1018,6 @@ model ReviewResponse {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete RGPD
 
-  // === INDEXES ===
-  @@index([authorId, createdAt(sort: Desc)])
 }
 
 /// Statistiques agregees des avis par produit
@@ -1046,8 +1043,6 @@ model ProductReviewStats {
   updatedAt DateTime @updatedAt
 
   // === INDEXES ===
-  // Index pour tri par note moyenne (best rated products)
-  @@index([averageRating(sort: Desc), totalCount(sort: Desc)])
   // Index pour filtrage produits avec avis
   @@index([totalCount])
 }
@@ -1100,6 +1095,10 @@ model CustomizationRequest {
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
 
+  // === UTILISATEUR CONNECTE (optionnel) ===
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   // === INFORMATIONS CONTACT ===
   firstName String @db.VarChar(50)
   email     String @db.VarChar(255)
@@ -1124,6 +1123,5 @@ model CustomizationRequest {
   @@index([status, createdAt(sort: Desc)])
   @@index([email])
   @@index([createdAt(sort: Desc)])
-  @@index([deletedAt])
   @@index([deletedAt, status])
 }

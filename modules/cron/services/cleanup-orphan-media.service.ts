@@ -5,6 +5,9 @@ import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
 // UploadThing API limite listFiles a 500 par requete
 const UPLOADTHING_LIST_LIMIT = 500;
 
+// Limit pages per run to avoid Vercel function timeout (5 pages × 500 = 2500 files max)
+const MAX_PAGES_PER_RUN = 5;
+
 /**
  * Service de nettoyage des fichiers UploadThing orphelins
  *
@@ -37,8 +40,9 @@ export async function cleanupOrphanMedia(): Promise<{
 		// 2. Lister les fichiers UploadThing avec pagination
 		let offset = 0;
 		let hasMore = true;
+		let pagesProcessed = 0;
 
-		while (hasMore) {
+		while (hasMore && pagesProcessed < MAX_PAGES_PER_RUN) {
 			const response = await utapi.listFiles({
 				limit: UPLOADTHING_LIST_LIMIT,
 				offset,
@@ -83,6 +87,7 @@ export async function cleanupOrphanMedia(): Promise<{
 
 			hasMore = files.length === UPLOADTHING_LIST_LIMIT;
 			offset += files.length;
+			pagesProcessed++;
 		}
 
 		console.log(

@@ -80,7 +80,13 @@ async function executeReviewRequestEmail(orderId: string): Promise<ActionState> 
 	// 4. URL vers la page "Mes avis"
 	const reviewUrl = `${SITE_URL}/mes-avis`
 
-	// 5. Envoyer l'email
+	// 5. Mark reviewRequestSentAt BEFORE sending (optimistic lock to prevent duplicates on crash/timeout)
+	await prisma.order.update({
+		where: { id: orderId },
+		data: { reviewRequestSentAt: new Date() },
+	})
+
+	// 6. Send email
 	const result = await sendReviewRequestEmail({
 		to: order.user.email,
 		customerName: order.user.name || "Cliente",
@@ -90,16 +96,13 @@ async function executeReviewRequestEmail(orderId: string): Promise<ActionState> 
 	})
 
 	if (!result.success) {
+		// Rollback on failure so the next cron run can retry
+		await prisma.order.update({
+			where: { id: orderId },
+			data: { reviewRequestSentAt: null },
+		})
 		return error(REVIEW_ERROR_MESSAGES.EMAIL_FAILED)
 	}
-
-	// 6. Marquer la commande comme ayant recu l'email de demande d'avis
-	await prisma.order.update({
-		where: { id: orderId },
-		data: {
-			reviewRequestSentAt: new Date(),
-		},
-	})
 
 	return success(`Email de demande d'avis envoye a ${order.user.email}`)
 }

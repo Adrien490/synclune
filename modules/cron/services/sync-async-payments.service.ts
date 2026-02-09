@@ -93,7 +93,7 @@ export async function syncAsyncPayments(): Promise<{
 		} catch (error) {
 			console.error(
 				`[CRON:sync-async-payments] Error checking order ${order.orderNumber}:`,
-				error
+				error instanceof Error ? error.message : String(error)
 			);
 			errors++;
 		}
