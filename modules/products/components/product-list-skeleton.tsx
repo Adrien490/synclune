@@ -5,7 +5,7 @@ import { cn } from "@/shared/utils/cn";
 export function ProductListSkeleton() {
 	return (
 		<div className="space-y-6">
-			{/* Compteur de résultats */}
+			{/* Compteur de resultats */}
 			<div className="flex items-center justify-between">
 				<Skeleton className="h-5 w-24 rounded" />
 			</div>
@@ -17,15 +17,15 @@ export function ProductListSkeleton() {
 						key={i}
 						className="product-item"
 						style={{
-							// Delai d'animation echelonne pour effet de vague
+							// Staggered animation delay for wave effect
 							animationDelay: `${i * 100}ms`,
 						}}
 					>
 						<article
 							className={cn(
-								"product-card grid relative overflow-hidden rounded-lg",
+								"product-card grid relative overflow-hidden rounded-lg gap-4",
 								"bg-card border-2 border-transparent shadow-sm",
-								// Animation d'entree echelonnee
+								// Staggered entrance animation
 								"motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4",
 								"motion-safe:duration-300"
 							)}
@@ -36,13 +36,17 @@ export function ProductListSkeleton() {
 								<Skeleton className="absolute inset-0 rounded-lg" />
 							</div>
 
-							{/* Contenu */}
-							<div className="flex flex-col gap-2.5 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
+							{/* Contenu — padding matches product-card.tsx (no padding-top) */}
+							<div className="flex flex-col gap-2.5 sm:gap-3 relative px-3 pb-3 sm:px-4 sm:pb-4 lg:px-5 lg:pb-5">
 								{/* Titre - line-clamp-1 sm:line-clamp-2 */}
 								<Skeleton className="h-5 sm:h-6 w-4/5 rounded" />
 
-								{/* Texte "X couleurs disponibles" */}
-								<Skeleton className="h-4 w-2/5 rounded" />
+								{/* Color swatches placeholder */}
+								<div className="flex gap-1.5">
+									<Skeleton className="size-4 sm:size-5 rounded-full" />
+									<Skeleton className="size-4 sm:size-5 rounded-full" />
+									<Skeleton className="size-4 sm:size-5 rounded-full" />
+								</div>
 
 								{/* Prix */}
 								<Skeleton className="h-6 w-1/3 rounded" />

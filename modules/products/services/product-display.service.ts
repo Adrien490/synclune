@@ -267,10 +267,19 @@ export function getProductCardData(
 	};
 
 	// Image principale (réutilise la logique existante mais avec le SKU déjà trouvé)
+	const activeSkus = skus.filter((s) => s.isActive);
 	const primaryImage = getPrimaryImageFromSku(
 		defaultSku,
 		product,
-		skus.filter((s) => s.isActive)
+		activeSkus
+	);
+
+	// Secondary image for hover effect (different from primary)
+	const secondaryImage = getSecondaryImage(
+		defaultSku,
+		activeSkus,
+		product.title,
+		primaryImage.id
 	);
 
 	return {
@@ -279,9 +288,49 @@ export function getProductCardData(
 		compareAtPrice,
 		stockInfo,
 		primaryImage,
+		secondaryImage,
 		colors: Array.from(colorMap.values()),
 		hasValidSku: defaultSku !== null && defaultSku.isActive,
 	};
+}
+
+/**
+ * Extracts a secondary image different from the primary one (for hover effect).
+ * Priority: non-primary image from default SKU, then image from another active SKU.
+ */
+function getSecondaryImage(
+	defaultSku: SkuFromList | null,
+	activeSkus: SkuFromList[],
+	productTitle: string,
+	primaryImageId: string
+): ExtractedImage | null {
+	// Priority 1: Another image from the default SKU
+	if (defaultSku?.images) {
+		const secondaryFromDefaultSku = defaultSku.images.find(
+			(img) => img.mediaType === "IMAGE" && img.id !== primaryImageId
+		);
+		if (secondaryFromDefaultSku) {
+			return {
+				id: secondaryFromDefaultSku.id,
+				url: secondaryFromDefaultSku.url,
+				mediaType: "IMAGE",
+				alt: truncateAltText(
+					secondaryFromDefaultSku.altText ||
+						`${productTitle} - Vue alternative`
+				),
+				blurDataUrl: secondaryFromDefaultSku.blurDataUrl ?? undefined,
+			};
+		}
+	}
+
+	// Priority 2: Primary image from a different active SKU
+	for (const sku of activeSkus) {
+		if (sku.id === defaultSku?.id) continue;
+		const image = extractImageFromSku(sku, productTitle);
+		if (image && image.id !== primaryImageId) return image;
+	}
+
+	return null;
 }
 
 /**

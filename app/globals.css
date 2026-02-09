@@ -687,6 +687,7 @@ textarea {
 	}
 
 	@media (prefers-reduced-motion: reduce) {
+		.animate-pulse,
 		.animate-sparkle-pulse,
 		.animate-wave {
 			animation: none;

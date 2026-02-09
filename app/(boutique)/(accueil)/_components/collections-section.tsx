@@ -1,6 +1,6 @@
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { extractCollectionImages } from "@/modules/collections/utils/collection-images.utils";
+import { extractCollectionImages, extractPriceRange } from "@/modules/collections/utils/collection-images.utils";
 import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -84,21 +84,15 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 											index={index}
 											className="pl-4 sm:pl-6 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
 										>
-											<div className="relative">
-												<CollectionCard
-													slug={collection.slug}
-													name={collection.name}
-													images={images}
-													index={index}
-													productCount={collection._count.products}
-												/>
-												{/* Description below the card */}
-												{collection.description && (
-													<p className="mt-2 text-xs text-muted-foreground text-center line-clamp-2 px-2">
-														{collection.description}
-													</p>
-												)}
-											</div>
+											<CollectionCard
+												slug={collection.slug}
+												name={collection.name}
+												images={images}
+												index={index}
+												productCount={collection._count.products}
+												description={collection.description}
+												priceRange={extractPriceRange(collection.products)}
+											/>
 										</CarouselItem>
 									);
 								})}

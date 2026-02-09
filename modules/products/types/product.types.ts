@@ -128,6 +128,14 @@ export interface ProductCardData {
 		mediaType: "IMAGE";
 		blurDataUrl?: string;
 	};
+	/** Image secondaire pour le hover (null si aucune disponible) */
+	secondaryImage: {
+		id: string;
+		url: string;
+		alt?: string;
+		mediaType: "IMAGE";
+		blurDataUrl?: string;
+	} | null;
 	/** Couleurs disponibles pour les swatches */
 	colors: ColorSwatch[];
 	/**

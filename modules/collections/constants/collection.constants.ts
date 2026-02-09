@@ -93,6 +93,7 @@ export const GET_COLLECTIONS_SELECT = {
 					skus: {
 						where: { isActive: true },
 						select: {
+							priceInclTax: true,
 							images: {
 								select: { url: true, altText: true, blurDataUrl: true },
 								orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],

@@ -68,7 +68,7 @@ export async function Footer() {
 
 			<div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${FOOTER_PADDING}`}>
 				{/* Navigation principale - Ordre: Logo, Navigation, Contact, Réseaux */}
-				<Fade y={10} duration={0.6} inView once>
+				<Fade y={10} duration={0.4} inView once>
 					<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-8">
 						{/* Colonne 1: Logo + phrase perso */}
 						<div className="order-1 space-y-4">
@@ -223,7 +223,7 @@ export async function Footer() {
 				</Fade>
 
 				{/* Reassurance - Baymard UX trust signals */}
-				<Fade y={10} duration={0.6} delay={0.15} inView once>
+				<Fade y={10} duration={0.4} delay={0.08} inView once>
 					<section aria-label="Engagements et garanties" className="mb-8">
 						<ul className="grid sm:grid-cols-3 gap-3">
 							{REASSURANCE_ITEMS.map((item) => (
@@ -239,7 +239,7 @@ export async function Footer() {
 				</Fade>
 
 				{/* Paiement sécurisé */}
-				<Fade y={10} duration={0.6} delay={0.3} inView once>
+				<Fade y={10} duration={0.4} delay={0.16} inView once>
 					<section className="flex flex-col items-center gap-3 pt-8 border-t border-border" aria-labelledby="footer-payment-title">
 						<h3 id="footer-payment-title" className="sr-only">Paiement sécurisé</h3>
 						<div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -258,7 +258,7 @@ export async function Footer() {
 				</Fade>
 
 				{/* Copyright + Liens légaux */}
-				<Fade y={10} duration={0.6} delay={0.45} inView once>
+				<Fade y={10} duration={0.4} delay={0.24} inView once>
 					<div className="flex flex-col items-center gap-4 pt-6">
 						<p className="text-sm/6 antialiased text-muted-foreground text-center">
 							© <CopyrightYear /> Synclune. Tous droits réservés.

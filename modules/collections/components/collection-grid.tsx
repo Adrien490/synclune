@@ -10,6 +10,7 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
+import { extractCollectionImages, extractPriceRange } from "@/modules/collections/utils/collection-images.utils";
 import { Gem } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
@@ -61,30 +62,18 @@ export function CollectionGrid({
 				delay={0.1}
 			>
 				{collections.map((collection, index) => {
-					const images = collection.products
-						.map((p) => p.product?.skus[0]?.images[0])
-						.filter(Boolean)
-						.map((img) => ({
-							url: img!.url,
-							blurDataUrl: img!.blurDataUrl,
-							alt: img!.altText,
-						}));
-
 					return (
 						<div key={collection.id} role="listitem">
 							<CollectionCard
 								slug={collection.slug}
 								name={collection.name}
-								images={images}
+								images={extractCollectionImages(collection.products)}
 								index={index}
 								headingLevel="h2"
 								productCount={collection._count.products}
+								description={collection.description}
+								priceRange={extractPriceRange(collection.products)}
 							/>
-							{collection.description && (
-								<p className="mt-2 text-xs text-muted-foreground text-center line-clamp-2 px-2">
-									{collection.description}
-								</p>
-							)}
 						</div>
 					);
 				})}
