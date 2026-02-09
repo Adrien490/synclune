@@ -18,8 +18,10 @@ export function useKeyboardNavigation() {
 		for (let i = 0; i < focusables.length; i++) {
 			if (i === activeIndex) {
 				focusables[i].setAttribute("data-active", "true")
+				focusables[i].setAttribute("aria-current", "true")
 			} else {
 				focusables[i].removeAttribute("data-active")
+				focusables[i].removeAttribute("aria-current")
 			}
 		}
 	}, [activeIndex])

@@ -39,24 +39,32 @@ export async function cleanupExpiredSessions(): Promise<{
 		`[CRON:cleanup-sessions] Deleted ${verificationsResult.count} expired verifications`
 	);
 
-	// 3. Nettoyer les tokens OAuth expirés (on ne supprime pas le compte, juste les tokens)
-	const tokensResult = await prisma.account.updateMany({
+	// 3. Clear expired access tokens (short-lived, don't touch refresh tokens)
+	const accessTokensResult = await prisma.account.updateMany({
 		where: {
-			OR: [
-				{ accessTokenExpiresAt: { lt: now } },
-				{ refreshTokenExpiresAt: { lt: now } },
-			],
+			accessTokenExpiresAt: { lt: now },
 		},
 		data: {
 			accessToken: null,
-			refreshToken: null,
 			accessTokenExpiresAt: null,
+		},
+	});
+
+	// 4. Clear expired refresh tokens (long-lived, separate from access tokens)
+	const refreshTokensResult = await prisma.account.updateMany({
+		where: {
+			refreshTokenExpiresAt: { lt: now },
+		},
+		data: {
+			refreshToken: null,
 			refreshTokenExpiresAt: null,
 		},
 	});
 
+	const tokensCleared = accessTokensResult.count + refreshTokensResult.count;
+
 	console.log(
-		`[CRON:cleanup-sessions] Cleared ${tokensResult.count} expired OAuth tokens`
+		`[CRON:cleanup-sessions] Cleared ${accessTokensResult.count} expired access tokens, ${refreshTokensResult.count} expired refresh tokens`
 	);
 
 	console.log("[CRON:cleanup-sessions] Cleanup completed");
@@ -64,6 +72,6 @@ export async function cleanupExpiredSessions(): Promise<{
 	return {
 		sessionsDeleted: sessionsResult.count,
 		verificationsDeleted: verificationsResult.count,
-		tokensCleared: tokensResult.count,
+		tokensCleared,
 	};
 }

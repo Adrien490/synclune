@@ -1,7 +1,7 @@
 "use client"
 
 import { use } from "react"
-import { ChevronRight, Search } from "lucide-react"
+import { ChevronRight, Lightbulb, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import ScrollFade from "@/shared/components/scroll-fade"
@@ -150,11 +150,36 @@ export function QuickSearchContent({
 
 					{/* Empty state */}
 					{showEmptyState && (
-						<div className="text-center py-8">
-							<Search className="size-10 text-muted-foreground/20 mx-auto mb-4" aria-hidden="true" />
+						<div className="text-center py-8 space-y-4">
+							<Search className="size-10 text-muted-foreground/20 mx-auto mb-2" aria-hidden="true" />
 							<p className="text-sm text-muted-foreground">
 								Aucun resultat pour &ldquo;{query}&rdquo;
 							</p>
+							<div className="space-y-3 pt-2">
+								<p className="text-xs text-muted-foreground/70 flex items-center justify-center gap-1.5">
+									<Lightbulb className="size-3.5" aria-hidden="true" />
+									Essayez avec moins de mots ou parcourez nos categories
+								</p>
+								{productTypes.length > 0 && (
+									<div className="flex flex-wrap justify-center gap-1.5">
+										{productTypes.map((type) => (
+											<button
+												key={type.slug}
+												type="button"
+												onClick={() => handleSuggestionClick(type.label)}
+												className={cn(
+													"rounded-full border bg-muted/30 hover:bg-muted",
+													"text-xs px-3 py-1.5",
+													"transition-colors",
+													"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+												)}
+											>
+												{type.label}
+											</button>
+										))}
+									</div>
+								)}
+							</div>
 						</div>
 					)}
 				</div>

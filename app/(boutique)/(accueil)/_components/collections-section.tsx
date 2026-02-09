@@ -52,7 +52,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 						<SectionTitle id="collections-title">
 							Les dernières collections
 						</SectionTitle>
-						<HandDrawnUnderline color="var(--secondary)" delay={0.3} className="mx-auto mt-2" />
+						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p

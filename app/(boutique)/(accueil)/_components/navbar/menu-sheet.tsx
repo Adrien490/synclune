@@ -190,15 +190,14 @@ export function MenuSheet({
 											<SheetClose asChild>
 												<Link
 													href={`/produits/${type.slug}`}
-													className={getLinkClass(`/produits/${type.slug}`, "gap-2")}
+													className={getLinkClass(`/produits/${type.slug}`)}
 													aria-current={
 														isMenuItemActive(`/produits/${type.slug}`)
 															? "page"
 															: undefined
 													}
 												>
-													<Gem className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
-													{type.label}
+														{type.label}
 												</Link>
 											</SheetClose>
 										</li>

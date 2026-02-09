@@ -236,17 +236,16 @@ export function QuickSearchDialog({
 					</div>
 				)}
 
-				{/* Screen reader announcements */}
+				{/* Screen reader announcements (search mode is announced by QuickSearchContent) */}
 				<div role="status" aria-live="polite" className="sr-only">
-					{isSearchMode
-						? "Recherche en cours..."
-						: <>
+					{!isSearchMode && (
+						<>
 							{searches.length > 0 &&
 								`${searches.length} recherche${searches.length > 1 ? "s" : ""} recente${searches.length > 1 ? "s" : ""}.`}
 							{collections.length > 0 && ` ${collections.length} collection${collections.length > 1 ? "s" : ""}.`}
 							{productTypes.length > 0 && ` ${productTypes.length} categorie${productTypes.length > 1 ? "s" : ""}.`}
 						</>
-					}
+					)}
 				</div>
 
 				{/* Content */}

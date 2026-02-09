@@ -39,7 +39,7 @@ export async function NewsletterSection() {
         <header className="mb-8 text-center lg:mb-12">
           <Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
             <SectionTitle id="newsletter-title">Ma newsletter</SectionTitle>
-            <HandDrawnUnderline color="var(--secondary)" delay={0.3} className="mx-auto mt-2" />
+            <HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
           </Fade>
           <Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
             <p

@@ -138,7 +138,7 @@ export function FaqSection() {
 				<header className="text-center mb-10 lg:mb-12">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="faq-title">Questions fréquentes</SectionTitle>
-						<HandDrawnUnderline color="var(--secondary)" delay={0.3} className="mx-auto mt-2" />
+						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-xl mx-auto">

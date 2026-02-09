@@ -15,6 +15,7 @@ export async function GET() {
 			reviewsDeleted: result.reviewsDeleted,
 			newsletterDeleted: result.newsletterDeleted,
 			customizationRequestsDeleted: result.customizationRequestsDeleted,
+			hasMore: result.hasMore,
 		});
 	} catch (error) {
 		return cronError(

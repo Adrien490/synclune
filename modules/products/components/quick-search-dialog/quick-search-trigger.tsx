@@ -52,6 +52,8 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 						className
 					)}
 					aria-label="Ouvrir la recherche rapide"
+					aria-expanded={isOpen}
+					aria-haspopup="dialog"
 				>
 					<Search className="size-5" />
 				</Button>

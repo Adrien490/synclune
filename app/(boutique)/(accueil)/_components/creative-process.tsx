@@ -10,21 +10,12 @@ import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { ActiveStepTracker } from "./active-step-tracker";
+import { CreativeProcessParallax } from "./creative-process-parallax";
+import { ImageScrollOverlay } from "./image-scroll-overlay";
 import { MobileStepCircle } from "./mobile-step-circle";
 import { ParallaxImage } from "./parallax-image";
-
-// Lazy-load below-fold motion components to defer ~20-30KB of motion/react bundle
-const CreativeProcessParallax = dynamic(
-	() => import("./creative-process-parallax").then(m => ({ default: m.CreativeProcessParallax })),
-);
-const ImageScrollOverlay = dynamic(
-	() => import("./image-scroll-overlay").then(m => ({ default: m.ImageScrollOverlay })),
-);
-const ScrollProgressLine = dynamic(
-	() => import("./scroll-progress-line").then(m => ({ default: m.ScrollProgressLine })),
-);
+import { ScrollProgressLine } from "./scroll-progress-line";
 
 interface ProcessStep {
 	id: string;
@@ -169,7 +160,7 @@ export async function CreativeProcess() {
 						<SectionTitle id="creative-process-title">
 							Comment je crée tes bijoux
 						</SectionTitle>
-						<HandDrawnUnderline color="var(--secondary)" delay={0.3} className="mx-auto mt-2" />
+						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto">

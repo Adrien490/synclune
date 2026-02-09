@@ -106,9 +106,10 @@ export function SearchInput({
 			const currentValue = form.getFieldValue("search")
 			if (urlValue !== currentValue) {
 				form.setFieldValue("search", urlValue)
+				onValueChange?.(urlValue)
 			}
 		}
-	}, [mode, searchParams, paramName, form])
+	}, [mode, searchParams, paramName, form, onValueChange])
 
 	const handleSearch = (searchValue: string) => {
 		const trimmed = searchValue.trim()

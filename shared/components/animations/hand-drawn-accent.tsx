@@ -106,7 +106,7 @@ export function HandDrawnAccent({
 	strokeWidth = 2,
 	width,
 	height,
-	duration = 0.8,
+	duration = 0.5,
 	delay = 0,
 	inView = true,
 	className,

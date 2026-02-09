@@ -167,7 +167,7 @@ export async function AtelierStory() {
 						>
 							— Léane
 						</footer>
-						<HandDrawnUnderline color="var(--secondary)" delay={0.4} className="mx-auto mt-2" />
+						<HandDrawnUnderline color="var(--secondary)" delay={0.2} className="mx-auto mt-2" />
 					</div>
 				</Fade>
 

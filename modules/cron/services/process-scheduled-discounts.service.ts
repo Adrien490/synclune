@@ -1,5 +1,6 @@
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
+import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 
 /**
  * Service d'activation/désactivation des promotions programmées
@@ -54,7 +55,7 @@ export async function processScheduledDiscounts(): Promise<{
 
 	// Invalider le cache des promotions si changements
 	if (activated.count > 0 || deactivated.count > 0) {
-		updateTag("discounts-list");
+		updateTag(DISCOUNT_CACHE_TAGS.LIST);
 	}
 
 	console.log(
