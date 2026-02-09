@@ -9,13 +9,60 @@ import { cn } from "@/shared/utils/cn";
 import { dancingScript } from "@/shared/styles/fonts";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
+import { PolaroidDoodles } from "./polaroid-doodles";
 
 
 const POLAROIDS = [
-	{ caption: "Les mains dans les perles !", label: "Mains de Léane assemblant un bijou", tilt: "left", washiColor: "pink", washiPosition: "top-left", glowClass: "hover:shadow-[0_0_20px_var(--color-glow-pink)]" },
-	{ caption: "Mes petits trésors", label: "Perles et matériaux colorés", tilt: "right", washiColor: "lavender", washiPosition: "top-right", glowClass: "hover:shadow-[0_0_20px_var(--color-glow-lavender)]" },
-	{ caption: "L'inspiration du jour", label: "Carnet d'inspiration avec croquis", tilt: "left", washiColor: "mint", washiPosition: "top-left", className: "hidden lg:block", glowClass: "hover:shadow-[0_0_20px_var(--color-glow-mint)]" },
-	{ caption: "Mon coin créatif", label: "Vue de l'atelier Synclune", tilt: "right", washiColor: "peach", washiPosition: "top-right", className: "hidden lg:block", glowClass: "hover:shadow-[0_0_20px_var(--color-glow-yellow)]" },
+	{
+		caption: "Les mains dans les perles !",
+		label: "Mains de Léane assemblant un bijou",
+		tiltDegree: -3,
+		washiColor: "pink",
+		washiPosition: "top-left",
+		captionColor: "#9d4b6e",
+		captionRotate: -1.5,
+		vintage: true,
+		scatterClass: "lg:-translate-y-2 lg:translate-x-1",
+		glowClass: "hover:shadow-[0_0_25px_var(--color-glow-pink),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	},
+	{
+		caption: "Mes petits trésors",
+		label: "Perles et matériaux colorés",
+		tiltDegree: 1.5,
+		washiColor: "lavender",
+		washiPosition: "top-right",
+		captionColor: "#6b4f8a",
+		captionRotate: 1,
+		vintage: true,
+		scatterClass: "lg:translate-y-3 lg:-translate-x-1",
+		glowClass: "hover:shadow-[0_0_25px_var(--color-glow-lavender),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	},
+	{
+		caption: "L'inspiration du jour",
+		label: "Carnet d'inspiration avec croquis",
+		tiltDegree: -1,
+		washiColor: "mint",
+		washiPosition: "top-left",
+		captionColor: "#3d7a5f",
+		captionRotate: -0.5,
+		vintage: true,
+		className: "hidden lg:block",
+		scatterClass: "lg:translate-y-1 lg:translate-x-2",
+		glowClass: "hover:shadow-[0_0_25px_var(--color-glow-mint),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	},
+	{
+		caption: "Mon coin créatif",
+		label: "Vue de l'atelier Synclune",
+		tiltDegree: 2.5,
+		washiColor: "peach",
+		washiPosition: "top-right",
+		captionColor: "#8a6b3d",
+		captionRotate: 0.8,
+		vintage: true,
+		className: "hidden lg:block",
+		scatterClass: "lg:-translate-y-3 lg:-translate-x-1",
+		glowClass: "hover:shadow-[0_0_25px_var(--color-glow-yellow),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	},
 ] as const;
 
 /**
@@ -107,28 +154,34 @@ export async function AtelierStory() {
 				{/* Polaroid gallery - 4 photos desktop, 2 mobile (via CSS) */}
 				<Reveal y={MOTION_CONFIG.section.grid.y} delay={0.3} duration={MOTION_CONFIG.section.title.duration} once>
 					<div className="mt-12 sm:mt-16">
-						{/* Polaroid scrapbook grid */}
+						{/* Polaroid scrapbook grid with doodles */}
 						<div
 							role="group"
 							aria-label="Galerie photos de l'atelier Synclune"
+							className="relative"
 						>
+							<PolaroidDoodles />
 							<Stagger
 								stagger={MOTION_CONFIG.stagger.slow}
 								y={MOTION_CONFIG.section.grid.y}
 								inView
 								once
-								className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto"
+								className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-2 max-w-5xl mx-auto"
 							>
 								{POLAROIDS.map((p) => (
 									<PolaroidFrame
 										key={p.caption}
-										tilt={p.tilt}
+										tiltDegree={p.tiltDegree}
 										caption={p.caption}
+										captionColor={p.captionColor}
+										captionRotate={p.captionRotate}
 										washiTape
 										washiColor={p.washiColor}
 										washiPosition={p.washiPosition}
+										vintage={p.vintage}
 										className={cn(
 											"className" in p ? p.className : undefined,
+											p.scatterClass,
 											"motion-safe:transition-shadow motion-safe:duration-300",
 											p.glowClass
 										)}
