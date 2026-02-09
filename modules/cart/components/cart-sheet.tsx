@@ -28,6 +28,7 @@ import { CartSheetItemRow } from "./cart-sheet-item-row";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import { CartPriceChangeAlert } from "./cart-price-change-alert";
 import type { GetCartReturn } from "../types/cart.types";
+import { hasCartItemIssue } from "../services/cart-item.service";
 import {
 	CartOptimisticContext,
 	type CartOptimisticAction,
@@ -85,12 +86,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 		: 0;
 
 	const itemsWithIssues = hasItems
-		? optimisticCart.items.filter(
-				(item) =>
-					item.sku.inventory < item.quantity ||
-					!item.sku.isActive ||
-					item.sku.product.status !== "PUBLIC"
-			)
+		? optimisticCart.items.filter(hasCartItemIssue)
 		: [];
 	const hasStockIssues = itemsWithIssues.length > 0;
 

@@ -177,6 +177,38 @@ describe("generateParticles", () => {
 			expect(p.size).toBe(20);
 		}
 	});
+
+	it("evicts oldest entry when cache exceeds MAX_CACHE_SIZE (50)", () => {
+		// Generate 51 unique configs to trigger cache eviction
+		const firstResult = generateParticles(1, [1, 1], [0.1, 0.1], ["red"], 0, false, ["circle"], 10);
+		for (let i = 1; i <= 50; i++) {
+			generateParticles(1, [1, 1], [0.1, 0.1], ["red"], 0, false, ["circle"], 10 + i);
+		}
+		// The first entry should have been evicted — re-generating returns a new reference
+		const reGenerated = generateParticles(1, [1, 1], [0.1, 0.1], ["red"], 0, false, ["circle"], 10);
+		expect(reGenerated).not.toBe(firstResult);
+		// But the values should still be identical (deterministic)
+		expect(reGenerated).toEqual(firstResult);
+	});
+
+	it("uses uniform duration multiplier when depthParallax is false", () => {
+		const particles = generate({
+			count: 10,
+			depthParallax: false,
+			blur: [5, 30],
+			size: [10, 60],
+		});
+		// With depthParallax=false, parallaxMultiplier is always 1.
+		// Particles with same seed offset for rand(5) and same baseDuration
+		// will only vary by the random component, not by depth.
+		// Verify no particle's depthFactor affects its duration:
+		// duration = baseDuration * 0.7 * 1 + rand(5) * baseDuration * 0.6 * 1
+		for (const p of particles) {
+			const rand5 = seededRandom(p.id * 1000 + 5);
+			const expected = defaults.baseDuration * 0.7 + rand5 * defaults.baseDuration * 0.6;
+			expect(p.duration).toBeCloseTo(expected, 10);
+		}
+	});
 });
 
 // ─── getShapeStyles ─────────────────────────────────────────────────
@@ -185,7 +217,7 @@ describe("getShapeStyles", () => {
 	it("returns borderRadius for circle shape", () => {
 		const styles = getShapeStyles("circle", 32, "red");
 		expect(styles).toHaveProperty("backgroundColor", "red");
-		expect(styles).toHaveProperty("borderRadius", "9999px");
+		expect(styles).toHaveProperty("borderRadius", "50%");
 	});
 
 	it("returns special gradient background for pearl shape", () => {

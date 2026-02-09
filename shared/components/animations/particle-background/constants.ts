@@ -11,7 +11,7 @@ export const DEFAULT_COLORS = [
 export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 	circle: {
 		type: "css",
-		styles: { borderRadius: "9999px" },
+		styles: { borderRadius: "50%" },
 	},
 	diamond: {
 		type: "css",
@@ -69,7 +69,7 @@ export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 	rise: (p) => ({
 		y: ["0%", "-25%", "-50%", "-25%", "0%"],
 		x: ["0%", "5%", "-3%", "-5%", "0%"],
-		opacity: [p.opacity, p.opacity * 1.1, p.opacity * 0.6, p.opacity * 1.1, p.opacity],
+		opacity: [p.opacity, Math.min(p.opacity * 1.1, 1), p.opacity * 0.6, Math.min(p.opacity * 1.1, 1), p.opacity],
 		...subtleRotate(p),
 	}),
 	orbit: (p) => ({

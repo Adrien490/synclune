@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock motion/react before importing the component
@@ -164,5 +164,41 @@ describe("ParticleBackground", () => {
 			).not.toThrow();
 			cleanup();
 		}
+	});
+
+	it("pauses particles when tab becomes hidden via visibilitychange", () => {
+		// useInView returns true, so particles are visible initially
+		vi.mocked(useInView).mockReturnValue(true);
+		const { container } = render(<ParticleBackground count={3} />);
+
+		// Particles should be rendered initially
+		const desktopWrapper = container.firstElementChild!.children[0];
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+
+		// Simulate tab going hidden
+		act(() => {
+			Object.defineProperty(document, "visibilityState", {
+				value: "hidden",
+				writable: true,
+				configurable: true,
+			});
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		// Particles should be hidden (isInView becomes false because tabVisible=false)
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(0);
+
+		// Simulate tab becoming visible again
+		act(() => {
+			Object.defineProperty(document, "visibilityState", {
+				value: "visible",
+				writable: true,
+				configurable: true,
+			});
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		// Particles should be visible again
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
 	});
 });

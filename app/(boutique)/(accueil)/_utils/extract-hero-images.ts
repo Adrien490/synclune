@@ -37,8 +37,8 @@ export function extractHeroImages(products: Product[]): HeroProductImage[] {
 		});
 	}
 
-	// Need at least 2 images for a balanced layout
-	if (images.length < 2) return [];
+	// Need all 4 images for the diamond layout to look balanced
+	if (images.length < 4) return [];
 
 	return images;
 }

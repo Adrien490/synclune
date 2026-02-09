@@ -68,7 +68,7 @@ export interface ParticleSetProps {
 	isInView: boolean;
 	reducedMotion: boolean | null;
 	animationStyle: AnimationStyle;
-	/** Mouse position as normalized -1..1 values for parallax (desktop only) */
+	/** Mouse position as pixel offset for parallax, range ±PARALLAX_STRENGTH (desktop only) */
 	mouseX?: MotionValue<number>;
 	mouseY?: MotionValue<number>;
 }

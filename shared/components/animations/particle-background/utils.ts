@@ -4,8 +4,6 @@ import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 import { seededRandom } from "@/shared/utils/seeded-random";
 
-export { seededRandom };
-
 /** Cache pour la memoization des particules générées */
 const particleCache = new Map<string, Particle[]>();
 const MAX_CACHE_SIZE = 50;
