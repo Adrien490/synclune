@@ -9,6 +9,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { updateProductTypeSchema } from "../schemas/product-type.schemas";
 
@@ -79,7 +80,7 @@ export async function updateProductType(
 
 		// 9. Invalider le cache des types de produits
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
-		updateTag("navbar-menu");
+		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		return success("Type de produit modifié avec succès");
 	} catch (e) {

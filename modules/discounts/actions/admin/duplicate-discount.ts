@@ -4,7 +4,8 @@ import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { handleActionError, success, error, notFound } from "@/shared/lib/actions";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
+import { getDiscountInvalidationTags } from "../../constants/cache";
 
 /**
  * Server Action ADMIN pour dupliquer un code promo
@@ -66,8 +67,8 @@ export async function duplicateDiscount(discountId: string): Promise<ActionState
 			},
 		});
 
-		// 5. Revalider
-		revalidatePath("/admin/marketing/promotions");
+		// 5. Invalider le cache
+		getDiscountInvalidationTags(duplicate.code).forEach(tag => updateTag(tag));
 
 		return success(`Code promo duplique: ${duplicate.code}`, { id: duplicate.id, code: duplicate.code });
 	} catch (e) {

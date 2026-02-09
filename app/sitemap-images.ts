@@ -1,5 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
 
 /**
@@ -23,7 +24,7 @@ interface SitemapImageEntry {
 async function fetchSitemapImages() {
 	"use cache";
 	cacheLife("products");
-	cacheTag("sitemap-images");
+	cacheTag(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
 
 	return prisma.product.findMany({
 		where: {

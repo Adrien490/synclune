@@ -13,6 +13,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
 import { CreativeProcess } from "./_components/creative-process";
+import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton";
 import { FaqSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
@@ -113,7 +114,7 @@ export default async function Page() {
       <AtelierStory />
 
       {/* 7. Creative Process - Step-by-step jewelry making */}
-      <Suspense>
+      <Suspense fallback={<CreativeProcessSkeleton />}>
         <CreativeProcess />
       </Suspense>
 

@@ -64,6 +64,20 @@ export const SHARED_CACHE_TAGS = {
 	 * Utilisé par : skus, dashboard
 	 */
 	SKUS_LIST: "skus-list",
+
+	/**
+	 * Menu de navigation (navbar)
+	 *
+	 * Utilisé par : collections, product-types
+	 */
+	NAVBAR_MENU: "navbar-menu",
+
+	/**
+	 * Images du sitemap
+	 *
+	 * Utilisé par : products, sitemap-images
+	 */
+	SITEMAP_IMAGES: "sitemap-images",
 } as const;
 
 // ============================================

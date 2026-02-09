@@ -202,6 +202,7 @@ export async function createRefund(
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 
 		return {
 			status: ActionStatus.SUCCESS,

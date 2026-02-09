@@ -7,6 +7,7 @@ import { validateInput, handleActionError, success, error } from "@/shared/lib/a
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { bulkDeleteProductTypesSchema } from "../schemas/product-type.schemas";
 
@@ -88,7 +89,7 @@ export async function bulkDeleteProductTypes(
 
 		// 6. Invalidation du cache
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
-		updateTag("navbar-menu");
+		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		// 7. Construire le message de retour
 		const skipped = systemTypes.length + typesWithProducts.length;

@@ -89,7 +89,7 @@ export function Logo({
 					className={cn(
 						cormorantGaramond.className,
 						textSizeClass,
-						"font-normal text-foreground tracking-wide",
+						"font-semibold text-foreground tracking-wide",
 						textClassName
 					)}
 				>

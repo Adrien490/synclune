@@ -9,7 +9,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { scheduleReviewRequestEmailsBulk } from "@/modules/webhooks/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { bulkMarkAsDeliveredSchema } from "../schemas/order.schemas";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -79,7 +79,6 @@ export async function bulkMarkAsDelivered(
 		});
 		// Toujours invalider la liste admin (même si pas d'userId)
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
-		revalidatePath("/admin/ventes/commandes");
 
 		return success(`${result.count} commande${result.count > 1 ? "s" : ""} marquee${result.count > 1 ? "s" : ""} comme livree${result.count > 1 ? "s" : ""}.`);
 	} catch (e) {

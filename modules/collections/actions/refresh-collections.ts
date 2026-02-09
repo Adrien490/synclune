@@ -19,7 +19,7 @@ export async function refreshCollections(
 		updateTag(COLLECTIONS_CACHE_TAGS.LIST);
 		updateTag(COLLECTIONS_CACHE_TAGS.COUNTS);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-		updateTag("navbar-menu");
+		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		return success("Collections rafraîchies");
 	} catch (e) {

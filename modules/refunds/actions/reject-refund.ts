@@ -52,6 +52,7 @@ export async function rejectRefund(
 				note: true,
 				order: {
 					select: {
+						id: true,
 						orderNumber: true,
 					},
 				},
@@ -100,6 +101,7 @@ export async function rejectRefund(
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
 
 		return {
 			status: ActionStatus.SUCCESS,

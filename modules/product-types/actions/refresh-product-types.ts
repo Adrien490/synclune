@@ -19,7 +19,7 @@ export async function refreshProductTypes(
 
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-		updateTag("navbar-menu");
+		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		return success("Types de produits rafraîchis");
 	} catch (e) {

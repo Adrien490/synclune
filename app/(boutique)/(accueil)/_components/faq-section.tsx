@@ -15,6 +15,7 @@ import {
 	Sparkles,
 	Truck,
 } from "lucide-react";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
@@ -109,7 +110,11 @@ const faqSchema = generateFaqSchema(faqItems);
  *
  * Server Component with client island for the Accordion.
  */
-export function FaqSection() {
+export async function FaqSection() {
+	"use cache";
+	cacheLife("reference");
+	cacheTag("faq-section");
+
 	const accordionItems = faqItems.map((item) => ({
 		question: item.question,
 		answer: renderAnswerWithLinks(item.answer, item.links),

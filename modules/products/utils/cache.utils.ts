@@ -79,7 +79,7 @@ export function getProductInvalidationTags(productSlug: string, productId?: stri
 		PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL(productSlug),
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
-		"sitemap-images",
+		SHARED_CACHE_TAGS.SITEMAP_IMAGES,
 	];
 
 	if (productId) {

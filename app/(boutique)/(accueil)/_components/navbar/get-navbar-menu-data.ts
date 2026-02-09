@@ -3,6 +3,7 @@ import type { Collection } from "@/modules/collections/types/collection.types"
 import { getCollections } from "@/modules/collections/data/get-collections"
 import { getProductTypes } from "@/modules/product-types/data/get-product-types"
 import { cacheLife, cacheTag } from "next/cache"
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 /**
  * Extract up to 4 product images from a collection for Bento Grid display.
@@ -24,7 +25,7 @@ export function extractCollectionImages(products: Collection["products"]) {
 export async function getNavbarMenuData() {
 	"use cache";
 	cacheLife("collections");
-	cacheTag("navbar-menu");
+	cacheTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 	const [collectionsData, productTypesData] = await Promise.all([
 		getCollections({

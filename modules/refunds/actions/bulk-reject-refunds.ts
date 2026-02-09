@@ -66,6 +66,7 @@ export async function bulkRejectRefunds(
 				note: true,
 				order: {
 					select: {
+						id: true,
 						orderNumber: true,
 					},
 				},
@@ -104,6 +105,8 @@ export async function bulkRejectRefunds(
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		const uniqueOrderIds = [...new Set(refunds.map(r => r.order.id))];
+		uniqueOrderIds.forEach(orderId => updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId)));
 
 		const totalAmount = refunds.reduce((sum, r) => sum + r.amount, 0);
 		const skipped = validated.data.ids.length - refunds.length;

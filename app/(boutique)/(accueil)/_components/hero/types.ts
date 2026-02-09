@@ -12,5 +12,6 @@ export interface FloatingImageProps {
 	scrollProgress: MotionValue<number>;
 	parallaxOpacity: MotionValue<number>;
 	shouldReduceMotion: boolean | null;
+	isInView: boolean;
 	index: number;
 }

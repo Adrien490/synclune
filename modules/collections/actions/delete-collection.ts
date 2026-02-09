@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
@@ -53,7 +54,7 @@ export async function deleteCollection(
 
 		// Invalider le cache
 		getCollectionInvalidationTags(existingCollection.slug).forEach(tag => updateTag(tag));
-		updateTag("navbar-menu");
+		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		// Message different selon si la collection avait des produits
 		const message =

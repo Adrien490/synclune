@@ -237,6 +237,7 @@ export async function processRefund(
 		// Invalider le cache commandes et badges (paymentStatus a changé)
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
 
 		// Invalider le cache d'inventaire si des articles ont été restockés
 		const restockedCount = refundData.items.filter((i) => i.restock).length;

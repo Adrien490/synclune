@@ -44,6 +44,9 @@ export default async function RootLayout({
 				<link rel="preconnect" href="https://utfs.io" crossOrigin="anonymous" />
 				<link rel="dns-prefetch" href="https://x1ain1wpub.ufs.sh" />
 				<link rel="preconnect" href="https://x1ain1wpub.ufs.sh" crossOrigin="anonymous" />
+				{/* Preconnect to Stripe for faster checkout initialization */}
+				<link rel="dns-prefetch" href="https://js.stripe.com" />
+				<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
 			</head>
 			<body
 				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}

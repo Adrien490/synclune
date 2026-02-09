@@ -1,6 +1,11 @@
 "use client";
 
-import { useReducedMotion, useScroll, useTransform } from "motion/react";
+import {
+	useInView,
+	useReducedMotion,
+	useScroll,
+	useTransform,
+} from "motion/react";
 import { useRef } from "react";
 import { FloatingImage } from "./floating-image";
 import { IMAGE_POSITIONS } from "./image-positions";
@@ -9,6 +14,7 @@ import type { HeroFloatingImagesProps } from "./types";
 export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const shouldReduceMotion = useReducedMotion();
+	const isInView = useInView(containerRef, { margin: "0px 0px -100px 0px" });
 
 	const { scrollYProgress } = useScroll({
 		target: containerRef,
@@ -44,6 +50,7 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 						scrollProgress={scrollYProgress}
 						parallaxOpacity={parallaxOpacity}
 						shouldReduceMotion={shouldReduceMotion}
+						isInView={isInView}
 						index={index}
 					/>
 				);

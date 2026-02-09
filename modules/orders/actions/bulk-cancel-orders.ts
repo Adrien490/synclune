@@ -5,7 +5,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { bulkCancelOrdersSchema } from "../schemas/order.schemas";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -118,8 +118,6 @@ export async function bulkCancelOrders(
 		});
 		// Toujours invalider la liste admin (même si pas d'userId)
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
-		revalidatePath("/admin/ventes/commandes");
-		revalidatePath("/admin/catalogue/inventaire");
 
 		const messages = [`${eligibleOrders.length} commande${eligibleOrders.length > 1 ? "s" : ""} annulee${eligibleOrders.length > 1 ? "s" : ""}.`];
 

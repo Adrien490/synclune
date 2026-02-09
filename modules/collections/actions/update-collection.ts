@@ -5,6 +5,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { sanitizeText } from "@/shared/lib/sanitize";
 
@@ -82,7 +83,7 @@ export async function updateCollection(
 
 		// Invalider le cache
 		getCollectionInvalidationTags(slug).forEach(tag => updateTag(tag));
-		updateTag("navbar-menu");
+		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		return success("Collection modifiée avec succès");
 	} catch (e) {

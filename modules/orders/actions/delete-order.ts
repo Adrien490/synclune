@@ -5,7 +5,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma, softDelete } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -74,7 +74,6 @@ export async function deleteOrder(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
-		revalidatePath("/admin/ventes/commandes");
 
 		return success(`Commande ${order.orderNumber} supprimee.`);
 	} catch (e) {

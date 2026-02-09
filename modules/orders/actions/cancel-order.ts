@@ -6,7 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -143,8 +143,6 @@ export async function cancelOrder(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
-		revalidatePath("/admin/ventes/commandes");
-		revalidatePath("/admin/catalogue/inventaire");
 
 		// Envoyer l'email de confirmation d'annulation au client
 		let emailSent = false;

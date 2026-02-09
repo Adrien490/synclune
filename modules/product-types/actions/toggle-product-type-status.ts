@@ -7,6 +7,7 @@ import { validateInput, handleActionError, success } from "@/shared/lib/actions"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { toggleProductTypeStatusSchema } from "../schemas/product-type.schemas";
 
@@ -36,7 +37,7 @@ export async function toggleProductTypeStatus(
 		});
 
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
-		updateTag("navbar-menu");
+		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		return success(`Type ${isActive ? "activé" : "désactivé"} avec succès`);
 	} catch (e) {

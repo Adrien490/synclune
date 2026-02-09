@@ -6,8 +6,7 @@ import { Inter, Petit_Formal_Script, Cormorant_Garamond } from "next/font/google
 export const cormorantGaramond = Cormorant_Garamond({
 	subsets: ["latin"],
 	display: "swap",
-	style: ["normal", "italic"],
-	weight: ["300", "400", "500", "600", "700"],
+	weight: ["400", "500", "600"],
 	variable: "--font-display", // Variable CSS pour les titres
 });
 

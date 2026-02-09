@@ -30,9 +30,6 @@ export const ORDERS_CACHE_TAGS = {
 
 	/** Remboursements d'une commande */
 	REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
-
-	/** Historique d'une commande (audit trail) */
-	HISTORY: (orderId: string) => `order-history-${orderId}`,
 } as const
 
 // ============================================

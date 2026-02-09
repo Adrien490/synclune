@@ -86,6 +86,7 @@ export async function approveRefund(
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
 
 		// Envoyer l'email de notification au client (non bloquant)
 		if (refund.order.user?.email) {

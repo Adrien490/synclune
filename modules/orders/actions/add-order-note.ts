@@ -6,7 +6,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { addOrderNoteSchema } from "../schemas/order.schemas";
 import { sanitizeText } from "@/shared/lib/sanitize";
-import { getOrderInvalidationTags } from "../constants/cache";
+import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
 import { updateTag } from "next/cache";
 
 /**
@@ -48,6 +48,7 @@ export async function addOrderNote(
 
 		// 6. Invalider le cache
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
+		updateTag(ORDERS_CACHE_TAGS.NOTES(orderId));
 
 		return success("Note ajoutee");
 	} catch (e) {
