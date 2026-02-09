@@ -14,16 +14,14 @@ import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { FOOTER_PADDING } from "@/shared/constants/spacing";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
-import { Truck, RotateCcw, ShieldCheck } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { CopyrightYear } from "./copyright-year";
 
-const REASSURANCE_ITEMS: { icon: LucideIcon; title: string; description: string }[] = [
-	{ icon: Truck, title: "Livraison France : 6€", description: "Expédition sous 2-3 jours" },
-	{ icon: RotateCcw, title: "Retours sous 14 jours", description: "Échange ou remboursement" },
-	{ icon: ShieldCheck, title: "Paiement sécurisé", description: "CB, PayPal, Apple Pay" },
+const REASSURANCE_ITEMS: { title: string; description: string }[] = [
+	{ title: "Livraison France : 6€", description: "Expédition sous 2-3 jours" },
+	{ title: "Retours sous 14 jours", description: "Échange ou remboursement" },
+	{ title: "Paiement sécurisé", description: "CB, PayPal, Apple Pay" },
 ];
 
 /**
@@ -229,10 +227,7 @@ export async function Footer() {
 					<section aria-label="Engagements et garanties" className="mb-8">
 						<ul className="grid sm:grid-cols-3 gap-3">
 							{REASSURANCE_ITEMS.map((item) => (
-								<li key={item.title} className="flex items-center gap-3 rounded-xl bg-card/30 border border-border/50 px-4 py-3">
-									<div className="flex items-center justify-center size-9 rounded-full bg-muted shrink-0">
-										<item.icon className="size-4 text-muted-foreground" aria-hidden="true" />
-									</div>
+								<li key={item.title} className="flex items-center rounded-xl bg-card/30 border border-border/50 px-4 py-3">
 									<div className="text-sm">
 										<p className="font-medium text-foreground">{item.title}</p>
 										<p className="text-muted-foreground">{item.description}</p>
