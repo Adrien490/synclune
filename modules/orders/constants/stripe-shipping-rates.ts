@@ -122,7 +122,7 @@ export function getShippingRateName(shippingRateId: string): string {
  * @param shippingRateId - ID du shipping rate Stripe (shr_xxx)
  * @returns La méthode de livraison (toujours STANDARD)
  */
-export function getShippingMethodFromRate(shippingRateId: string): "STANDARD" {
+export function getShippingMethodFromRate(shippingRateId: string): string {
 	return "STANDARD";
 }
 

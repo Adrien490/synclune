@@ -1,4 +1,4 @@
-import { Logo } from "@/shared/components/logo";
+import { LogoAnimated } from "@/shared/components/logo-animated";
 import { Button } from "@/shared/components/ui/button";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
 import { auth } from "@/modules/auth/lib/auth";
@@ -116,7 +116,7 @@ export default async function VerifyEmailPage({
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Logo size={44} preload href="/" />
+				<LogoAnimated size={44} preload href="/" />
 			</div>
 
 			{/* Contenu principal */}

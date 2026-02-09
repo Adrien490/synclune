@@ -2,6 +2,8 @@
 
 import { randomUUID } from "crypto";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_SKU_CREATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
@@ -24,6 +26,10 @@ export async function createProductSku(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
+		// 0. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_CREATE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		// 1. Verification des droits admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;

@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PaymentStatus, RefundStatus, CurrencyCode } from "@/app/generated/prisma/client";
+import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
@@ -9,19 +9,19 @@ import type { RefundSyncResult, RefundRecord } from "../types/webhook.types";
 // Re-export types for backwards compatibility
 export type { RefundSyncResult, RefundRecord };
 
-/** Valeurs valides de CurrencyCode */
-const VALID_CURRENCY_CODES: Set<string> = new Set(Object.values(CurrencyCode));
+/** Valid currency codes */
+const VALID_CURRENCY_CODES = new Set(["EUR"]);
 
 /**
- * Valide et retourne un CurrencyCode, avec fallback sur EUR si invalide
+ * Validates and returns a currency code string, defaulting to EUR if invalid
  */
-function validateCurrencyCode(currency: string | undefined | null): CurrencyCode {
+function validateCurrencyCode(currency: string | undefined | null): string {
 	const normalized = currency?.toUpperCase() || "EUR";
 	if (VALID_CURRENCY_CODES.has(normalized)) {
-		return normalized as CurrencyCode;
+		return normalized;
 	}
 	console.warn(`⚠️ [WEBHOOK] Unknown currency code: ${currency}, defaulting to EUR`);
-	return CurrencyCode.EUR;
+	return "EUR";
 }
 
 /**

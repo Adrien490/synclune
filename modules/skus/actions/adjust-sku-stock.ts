@@ -42,7 +42,38 @@ export async function adjustSkuStock(
 		});
 		if ("error" in validation) return validation.error;
 
-		// 3. Vérifier que le SKU existe
+		// 3. Atomic conditional update to prevent TOCTOU race condition
+		// A single UPDATE with a WHERE clause ensures stock never goes negative,
+		// even under concurrent requests.
+		if (adjustment < 0) {
+			const result = await prisma.$executeRaw`
+				UPDATE "ProductSku"
+				SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
+				WHERE "id" = ${skuId}
+				AND "inventory" + ${adjustment} >= 0
+			`;
+
+			if (result === 0) {
+				const sku = await prisma.productSku.findUnique({
+					where: { id: skuId },
+					select: { inventory: true },
+				});
+				if (!sku) return error("Variante non trouvee");
+				return error(`Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demande: ${adjustment}`);
+			}
+		} else {
+			const result = await prisma.$executeRaw`
+				UPDATE "ProductSku"
+				SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
+				WHERE "id" = ${skuId}
+			`;
+
+			if (result === 0) {
+				return error("Variante non trouvee");
+			}
+		}
+
+		// 4. Fetch updated SKU info for cache invalidation and response
 		const sku = await prisma.productSku.findUnique({
 			where: { id: skuId },
 			select: {
@@ -54,36 +85,17 @@ export async function adjustSkuStock(
 			},
 		});
 
-		if (!sku) {
-			return error("Variante non trouvee");
-		}
+		if (!sku) return error("Variante non trouvee");
 
-		// 4. Verifier que le stock ne devient pas negatif
-		const newInventory = sku.inventory + adjustment;
-		if (newInventory < 0) {
-			return error(`Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demande: ${adjustment}`);
-		}
-
-		// 5. Mettre à jour le stock avec opération atomique (évite les race conditions)
-		await prisma.productSku.update({
-			where: { id: skuId },
-			data: {
-				inventory:
-					adjustment > 0
-						? { increment: adjustment }
-						: { decrement: Math.abs(adjustment) },
-			},
-		});
-
-		// 6. Invalider le cache avec les tags appropriés
+		// 5. Invalider le cache avec les tags appropriés
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
 		tags.forEach((tag) => updateTag(tag));
 
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
-		return success(`Stock de ${sku.sku} ajuste (${adjustmentText}). Nouveau stock: ${newInventory}`, {
+		return success(`Stock de ${sku.sku} ajuste (${adjustmentText}). Nouveau stock: ${sku.inventory}`, {
 			skuId: sku.id,
-			previousInventory: sku.inventory,
-			newInventory,
+			previousInventory: sku.inventory - adjustment,
+			newInventory: sku.inventory,
 			adjustment,
 		});
 	} catch (e) {

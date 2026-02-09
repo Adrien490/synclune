@@ -62,8 +62,7 @@ export default async function AdminLayout({
 									size={40}
 									showText
 									className="gap-2"
-									imageClassName="rounded-lg"
-									textClassName="text-2xl"
+									rounded="lg"
 								/>
 							</Link>
 						</SidebarMenuButton>

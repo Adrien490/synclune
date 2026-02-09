@@ -1,7 +1,8 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -16,6 +17,10 @@ export async function bulkAdjustStock(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
+		// 0. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_BULK_OPERATIONS_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		// 1. Verification des droits admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
@@ -49,14 +54,70 @@ export async function bulkAdjustStock(
 			};
 		}
 
-		// Recuperer les infos des SKUs pour validation et invalidation
+		// Valider que la valeur absolue est positive
+		if (mode === "absolute" && value < 0) {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Le stock ne peut pas etre negatif",
+			};
+		}
+
+		// Appliquer les modifications avec atomic conditional update
+		if (mode === "absolute") {
+			await prisma.productSku.updateMany({
+				where: { id: { in: ids } },
+				data: { inventory: value },
+			});
+		} else if (value < 0) {
+			// Atomic conditional update to prevent TOCTOU race condition:
+			// only decrements rows where stock won't go negative
+			const updatedCount = await prisma.$executeRaw`
+				UPDATE "ProductSku"
+				SET "inventory" = "inventory" + ${value}, "updatedAt" = NOW()
+				WHERE "id" = ANY(${ids}::text[])
+				AND "inventory" + ${value} >= 0
+			`;
+
+			if (updatedCount !== ids.length) {
+				// Rollback the partial update
+				if (updatedCount > 0) {
+					await prisma.$executeRaw`
+						UPDATE "ProductSku"
+						SET "inventory" = "inventory" + ${-value}, "updatedAt" = NOW()
+						WHERE "id" = ANY(${ids}::text[])
+						AND "inventory" - ${value} >= "inventory"
+					`;
+				}
+				// Fetch current state for error message
+				const insufficientSkus = await prisma.productSku.findMany({
+					where: { id: { in: ids }, inventory: { lt: Math.abs(value) } },
+					select: { sku: true, inventory: true },
+				});
+				const details = insufficientSkus
+					.slice(0, 3)
+					.map((s) => `${s.sku} (stock: ${s.inventory})`)
+					.join(", ");
+				return {
+					status: ActionStatus.ERROR,
+					message: `Stock insuffisant pour ${insufficientSkus.length} variante(s): ${details}${insufficientSkus.length > 3 ? "..." : ""}. Operation annulee.`,
+				};
+			}
+		} else {
+			// Positive relative adjustment - no risk of negative stock
+			await prisma.$executeRaw`
+				UPDATE "ProductSku"
+				SET "inventory" = "inventory" + ${value}, "updatedAt" = NOW()
+				WHERE "id" = ANY(${ids}::text[])
+			`;
+		}
+
+		// Recuperer les infos des SKUs pour invalidation du cache
 		const skusData = await prisma.productSku.findMany({
 			where: { id: { in: ids } },
 			select: {
 				id: true,
 				sku: true,
 				productId: true,
-				inventory: true,
 				product: { select: { slug: true } },
 			},
 		});
@@ -66,40 +127,6 @@ export async function bulkAdjustStock(
 				status: ActionStatus.ERROR,
 				message: "Aucune variante trouvee",
 			};
-		}
-
-		// Valider que les stocks ne deviennent pas negatifs en mode relatif
-		if (mode === "relative" && value < 0) {
-			const invalidSkus = skusData.filter((sku) => sku.inventory + value < 0);
-			if (invalidSkus.length > 0) {
-				return {
-					status: ActionStatus.ERROR,
-					message: `${invalidSkus.length} variante(s) auraient un stock negatif. Operation annulee.`,
-				};
-			}
-		}
-
-		// Valider que la valeur absolue est positive
-		if (mode === "absolute" && value < 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Le stock ne peut pas etre negatif",
-			};
-		}
-
-		// Appliquer les modifications
-		if (mode === "absolute") {
-			await prisma.productSku.updateMany({
-				where: { id: { in: ids } },
-				data: { inventory: value },
-			});
-		} else {
-			// Single UPDATE for all SKUs instead of N individual queries
-			await prisma.$executeRaw`
-				UPDATE "ProductSku"
-				SET "inventory" = "inventory" + ${value}, "updatedAt" = NOW()
-				WHERE "id" = ANY(${ids}::text[])
-			`;
 		}
 
 		// Invalider le cache

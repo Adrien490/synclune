@@ -175,20 +175,12 @@ enum ReviewStatus {
 // CATALOGUE - ENUMS ADDITIONNELS
 // ============================================================================
 
-enum CurrencyCode {
-  EUR
-}
-
 enum ShippingCarrier {
   COLISSIMO
   CHRONOPOST
   MONDIAL_RELAY
   DPD
   OTHER
-}
-
-enum ShippingMethod {
-  STANDARD
 }
 
 /// Source d'une action sur une commande (audit trail)
@@ -492,10 +484,6 @@ enum PaymentStatus {
   REFUNDED
 }
 
-enum PaymentMethod {
-  CARD
-}
-
 enum FulfillmentStatus {
   UNFULFILLED
   PROCESSING
@@ -554,7 +542,7 @@ model Order {
   taxAmount      Int          @default(0) // Micro-entreprise : Toujours 0 (exoneree de TVA - art. 293 B du CGI)
   shippingCost   Int          @default(0) // Frais de livraison
   total          Int // Formule: MAX(0, subtotal - discountAmount + shippingCost + taxAmount)
-  currency       CurrencyCode @default(EUR)
+  currency       String       @default("EUR") @db.VarChar(3)
 
   // === ECHECS DE PAIEMENT ===
   // Stocke les codes d'erreur du dernier echec (historique complet dans WebhookEvent)
@@ -563,7 +551,7 @@ model Order {
   paymentFailureMessage String? // Message lisible pour debug
 
   // === LIVRAISON ===
-  shippingMethod    ShippingMethod?  // Type de livraison
+  shippingMethod    String?          @db.VarChar(20) // Type de livraison
   shippingCarrier   ShippingCarrier? // Transporteur
   shippingRateId    String? // ID du tarif Stripe utilise
   trackingNumber    String? @db.VarChar(50)
@@ -581,7 +569,7 @@ model Order {
   fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
 
   // === PAIEMENT ===
-  paymentMethod PaymentMethod @default(CARD)
+  paymentMethod String        @default("CARD") @db.VarChar(20)
   paidAt        DateTime?
 
   // === RELATIONS ===
@@ -755,7 +743,7 @@ model Refund {
 
   // Montants
   amount   Int          // Montant TOTAL rembourse en centimes
-  currency CurrencyCode @default(EUR)
+  currency String       @default("EUR") @db.VarChar(3)
 
   // Raison et Statut
   reason        RefundReason

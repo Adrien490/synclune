@@ -144,7 +144,7 @@ export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.Reac
 								href="/"
 								size={48}
 								className="hidden lg:flex min-w-0 max-w-full"
-								imageClassName="shadow-md hover:shadow-lg transition-shadow duration-300 ease-out"
+								shadow
 								sizes="64px"
 								showText
 								textClassName="text-xl lg:text-2xl text-foreground truncate"
@@ -158,7 +158,7 @@ export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.Reac
 								href="/"
 								size={44}
 								className="lg:hidden"
-								imageClassName="shadow-md hover:shadow-lg transition-shadow duration-300 ease-out"
+								shadow
 								sizes="44px"
 							/>
 							<DesktopNav navItems={desktopNavItems} />

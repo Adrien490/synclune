@@ -695,6 +695,68 @@ export const ADMIN_SKU_UPDATE_PRICE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1), // par minute
 };
 
+/**
+ * Limite pour la création de SKUs (admin)
+ */
+export const ADMIN_SKU_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la mise à jour de SKUs (admin)
+ */
+export const ADMIN_SKU_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression de SKUs (admin)
+ */
+export const ADMIN_SKU_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la duplication de SKUs (admin)
+ */
+export const ADMIN_SKU_DUPLICATE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le changement de statut/défaut de SKUs (admin)
+ */
+export const ADMIN_SKU_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour les opérations bulk sur SKUs (admin)
+ */
+export const ADMIN_SKU_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Toutes les limites admin SKUs
+ */
+export const ADMIN_SKU_LIMITS = {
+	ADJUST_STOCK: ADMIN_SKU_ADJUST_STOCK_LIMIT,
+	UPDATE_PRICE: ADMIN_SKU_UPDATE_PRICE_LIMIT,
+	CREATE: ADMIN_SKU_CREATE_LIMIT,
+	UPDATE: ADMIN_SKU_UPDATE_LIMIT,
+	DELETE: ADMIN_SKU_DELETE_LIMIT,
+	DUPLICATE: ADMIN_SKU_DUPLICATE_LIMIT,
+	TOGGLE_STATUS: ADMIN_SKU_TOGGLE_STATUS_LIMIT,
+	BULK_OPERATIONS: ADMIN_SKU_BULK_OPERATIONS_LIMIT,
+} as const;
+
 // ========================================
 // REMBOURSEMENTS (REFUNDS)
 // ========================================

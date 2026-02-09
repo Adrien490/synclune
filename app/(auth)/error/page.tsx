@@ -1,4 +1,4 @@
-import { Logo } from "@/shared/components/logo";
+import { LogoAnimated } from "@/shared/components/logo-animated";
 import { Button } from "@/shared/components/ui/button";
 import { getAuthErrorMessage } from "@/modules/auth/constants/error-messages";
 import { josefinSans } from "@/shared/styles/fonts";
@@ -40,7 +40,7 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Logo size={44} preload href="/" />
+				<LogoAnimated size={44} preload href="/" />
 			</div>
 
 			{/* Contenu principal */}

@@ -10,7 +10,7 @@ export const BRAND = {
 		"Créatrice de bijoux artisanaux faits main à Nantes - Créations uniques pour occasions particulières",
 
 	logo: {
-		url: "/logo.jpg",
+		url: "/logo.webp",
 		alt: "Logo Synclune - Créations artisanales faites main",
 	},
 

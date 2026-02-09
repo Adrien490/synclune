@@ -86,7 +86,7 @@ export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
 		legalName: BUSINESS_INFO.legalName,
 		description: BUSINESS_INFO.description,
 		url: SITE_URL,
-		logo: `${SITE_URL}/logo.jpg`,
+		logo: `${SITE_URL}/logo.webp`,
 		image: `${SITE_URL}/opengraph-image`,
 		email: BUSINESS_INFO.email,
 		address: {
@@ -128,7 +128,7 @@ export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
 		brand: {
 			"@type": "Brand",
 			name: BUSINESS_INFO.name,
-			logo: `${SITE_URL}/logo.jpg`,
+			logo: `${SITE_URL}/logo.webp`,
 		},
 		founder: {
 			"@type": "Person",
@@ -265,8 +265,8 @@ export function getOrganizationSchema() {
 		logo: {
 			"@type": "ImageObject",
 			"@id": `${SITE_URL}/#logo`,
-			url: `${SITE_URL}/logo.jpg`,
-			contentUrl: `${SITE_URL}/logo.jpg`,
+			url: `${SITE_URL}/logo.webp`,
+			contentUrl: `${SITE_URL}/logo.webp`,
 			caption: BUSINESS_INFO.name,
 		},
 		image: {

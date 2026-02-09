@@ -2,10 +2,13 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_SKU_DUPLICATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, success, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
+import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 import { updateTag } from "next/cache";
 
@@ -24,19 +27,21 @@ export async function duplicateSku(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
+		// 0. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_DUPLICATE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		// 1. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Extraction du skuId depuis FormData
-		const skuId = formData.get("skuId") as string;
+		// 2. Validation du skuId avec Zod (CUID2)
+		const validation = validateInput(deleteProductSkuSchema, {
+			skuId: formData.get("skuId") as string,
+		});
+		if ("error" in validation) return validation.error;
 
-		if (!skuId) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "ID de variante manquant",
-			};
-		}
+		const { skuId } = validation.data;
 
 		// 3. Récupérer le SKU original avec ses médias
 		const original = await prisma.productSku.findUnique({

@@ -1,4 +1,4 @@
-import { Logo } from "@/shared/components/logo";
+import { LogoAnimated } from "@/shared/components/logo-animated";
 import { RequestPasswordResetForm } from "@/modules/auth/components/request-password-reset-form";
 import { josefinSans } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Logo size={44} preload href="/" />
+				<LogoAnimated size={44} preload href="/" />
 			</div>
 
 			{/* Contenu principal */}

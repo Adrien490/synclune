@@ -4,9 +4,16 @@ import { josefinSans } from "@/shared/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
 
-// Blur placeholder minimal (SVG 10x10 gris encodé en base64)
+// Blur placeholder minimal (SVG 10x10 rose, proche du fond du logo)
 const BLUR_DATA_URL =
-	"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGZpbHRlciBpZD0iYiI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMiIvPjwvZmlsdGVyPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZTVlN2ViIiBmaWx0ZXI9InVybCgjYikiLz48L3N2Zz4=";
+	"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGZpbHRlciBpZD0iYiI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMiIvPjwvZmlsdGVyPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVhMGMwIiBmaWx0ZXI9InVybCgjYikiLz48L3N2Zz4=";
+
+const ROUNDED_CLASSES = {
+	full: "rounded-full",
+	lg: "rounded-lg",
+	md: "rounded-md",
+	none: "",
+} as const;
 
 interface LogoProps {
 	size?: number;
@@ -18,6 +25,8 @@ interface LogoProps {
 	showText?: boolean;
 	textClassName?: string;
 	imageClassName?: string;
+	rounded?: keyof typeof ROUNDED_CLASSES;
+	shadow?: boolean;
 }
 
 export function Logo({
@@ -30,9 +39,16 @@ export function Logo({
 	showText = false,
 	textClassName,
 	imageClassName,
+	rounded = "full",
+	shadow = false,
 }: LogoProps) {
 	// Taille du texte proportionnelle à la taille du logo
-	const textSizeClass = size >= 64 ? "text-3xl" : size >= 48 ? "text-2xl" : "text-xl";
+	const textSizeClass =
+		size >= 64 ? "text-3xl" :
+		size >= 56 ? "text-2xl" :
+		size >= 48 ? "text-xl" :
+		size >= 40 ? "text-lg" :
+		"text-base";
 
 	// Classes communes pour les liens (évite la duplication)
 	const linkClassName = cn(
@@ -47,7 +63,12 @@ export function Logo({
 	const logoContent = (
 		<div className={cn("inline-flex items-center gap-3", className)}>
 			<div
-				className={cn("relative rounded-full overflow-hidden", imageClassName)}
+				className={cn(
+					"relative overflow-hidden",
+					ROUNDED_CLASSES[rounded],
+					shadow && "shadow-md hover:shadow-lg transition-shadow duration-300 ease-out",
+					imageClassName,
+				)}
 				style={{ width: size, height: size }}
 			>
 				<Image
@@ -61,7 +82,6 @@ export function Logo({
 					placeholder="blur"
 					blurDataURL={BLUR_DATA_URL}
 					aria-hidden={showText ? true : undefined}
-					itemProp="image"
 				/>
 			</div>
 			{showText && (
@@ -89,7 +109,6 @@ export function Logo({
 			>
 				<Link
 					href={href}
-					rel="home"
 					itemProp="url"
 					className={linkClassName}
 					aria-label={`${BRAND.name} - Accueil`}
