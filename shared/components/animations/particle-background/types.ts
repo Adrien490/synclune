@@ -1,4 +1,4 @@
-import type { TargetAndTransition } from "motion/react";
+import type { MotionValue, TargetAndTransition } from "motion/react";
 
 /** Formes des particules */
 export type ParticleShape =
@@ -11,7 +11,7 @@ export type ParticleShape =
 	| "sparkle-4";
 
 /** Styles d'animation */
-export type AnimationStyle = "float" | "drift";
+export type AnimationStyle = "float" | "drift" | "rise" | "orbit" | "breathe";
 
 /** Props du composant ParticleBackground */
 export interface ParticleBackgroundProps {
@@ -33,6 +33,10 @@ export interface ParticleBackgroundProps {
 	animationStyle?: AnimationStyle;
 	/** Activer le parallax (particules floues bougent plus lentement) (défaut: true) */
 	depthParallax?: boolean;
+	/** Multiplicateur de vitesse d'animation (défaut: 1, plus bas = plus lent) */
+	speed?: number;
+	/** Désactiver sur appareils tactiles - rend null (défaut: false) */
+	disableOnTouch?: boolean;
 }
 
 /** Données d'une particule générée */
@@ -64,6 +68,9 @@ export interface ParticleSetProps {
 	isInView: boolean;
 	reducedMotion: boolean | null;
 	animationStyle: AnimationStyle;
+	/** Mouse position as normalized -1..1 values for parallax (desktop only) */
+	mouseX?: MotionValue<number>;
+	mouseY?: MotionValue<number>;
 }
 
 /** Type pour les presets d'animation */

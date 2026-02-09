@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_QUANTITY_PER_ORDER } from "../constants/cart";
 
 // ============================================================================
 // CART ITEM SCHEMAS
@@ -6,7 +7,7 @@ import { z } from "zod";
 
 export const addToCartSchema = z.object({
 	skuId: z.cuid2("ID SKU invalide"),
-	quantity: z.number().int().min(1, "Quantité minimale: 1").max(10, "Quantité maximale: 10").default(1),
+	quantity: z.number().int().min(1, "Quantité minimale: 1").max(MAX_QUANTITY_PER_ORDER, `Quantité maximale: ${MAX_QUANTITY_PER_ORDER}`).default(1),
 });
 
 // ============================================================================
@@ -22,7 +23,7 @@ export const updateCartItemSchema = z.object({
 		.number()
 		.int()
 		.min(1, "Quantité minimale: 1")
-		.max(99, "Quantité maximale: 99"),
+		.max(MAX_QUANTITY_PER_ORDER, `Quantité maximale: ${MAX_QUANTITY_PER_ORDER}`),
 });
 
 /**
@@ -47,7 +48,7 @@ export const validateSkuSchema = z.object({
 		.number()
 		.int()
 		.min(1, CART_ERROR_MESSAGES.QUANTITY_MIN)
-		.max(99, CART_ERROR_MESSAGES.QUANTITY_MAX),
+		.max(MAX_QUANTITY_PER_ORDER, CART_ERROR_MESSAGES.QUANTITY_MAX),
 });
 
 /**

@@ -1,13 +1,14 @@
 "use server";
 
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { filterUnavailableItems } from "@/modules/cart/services/item-availability.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCartSessionId } from "@/modules/cart/lib/cart-session";
+import { handleActionError } from "@/shared/lib/actions";
+import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action pour retirer tous les articles indisponibles du panier
@@ -24,10 +25,12 @@ export async function removeUnavailableItems(
 	__formData?: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Déterminer l'identifiant du panier (userId ou sessionId)
-		const session = await getSession();
-		const userId = session?.user?.id;
-		const sessionId = !userId ? await getCartSessionId() : null;
+		// 1. Rate limiting + récupération contexte
+		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.REMOVE);
+		if (!rateLimitResult.success) {
+			return rateLimitResult.errorState;
+		}
+		const { userId, sessionId } = rateLimitResult.context;
 
 		if (!userId && !sessionId) {
 			return { status: ActionStatus.ERROR, message: "Aucun panier trouvé" };
@@ -84,14 +87,20 @@ export async function removeUnavailableItems(
 			};
 		}
 
-		// 4. Supprimer les items indisponibles
-		const result = await prisma.cartItem.deleteMany({
-			where: {
-				id: {
-					in: unavailableItems.map((item) => item.id),
+		// 4. Supprimer les items indisponibles et mettre à jour le timestamp du panier
+		const [result] = await prisma.$transaction([
+			prisma.cartItem.deleteMany({
+				where: {
+					id: {
+						in: unavailableItems.map((item) => item.id),
+					},
 				},
-			},
-		});
+			}),
+			prisma.cart.update({
+				where: { id: cart.id },
+				data: { updatedAt: new Date() },
+			}),
+		]);
 
 		// 5. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
@@ -112,12 +121,6 @@ export async function removeUnavailableItems(
 			data: { deletedCount: result.count },
 		};
 	} catch (e) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de la suppression des articles indisponibles",
-		};
+		return handleActionError(e, "Erreur lors de la suppression des articles indisponibles");
 	}
 }

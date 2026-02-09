@@ -133,7 +133,11 @@ export async function checkMergeCartsRateLimit(
 			success: false,
 			errorState: {
 				status: ActionStatus.ERROR,
-				message: "Trop de requêtes. Veuillez réessayer plus tard.",
+				message: rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
+				data: {
+					retryAfter: rateLimit.retryAfter,
+					reset: rateLimit.reset,
+				},
 			},
 		};
 	}

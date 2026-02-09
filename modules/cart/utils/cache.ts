@@ -21,15 +21,6 @@ export function cacheCart(userId?: string, sessionId?: string) {
 }
 
 /**
- * Configure le cache pour le compteur de panier
- * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
- */
-export function cacheCartCount(userId?: string, sessionId?: string) {
-	cacheLife("cart");
-	cacheTag(CART_CACHE_TAGS.COUNT(userId, sessionId));
-}
-
-/**
  * Configure le cache pour le résumé du panier
  * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
  */

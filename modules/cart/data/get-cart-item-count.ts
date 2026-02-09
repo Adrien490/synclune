@@ -56,9 +56,16 @@ export async function fetchCartItemCount(
 	}
 
 	// Single query: agrégation directe sur CartItem via relation cart
+	// Exclude expired guest carts to stay consistent with getCart()
 	const result = await prisma.cartItem.aggregate({
 		where: {
-			cart: userId ? { userId } : { sessionId },
+			cart: {
+				...(userId ? { userId } : { sessionId }),
+				OR: [
+					{ expiresAt: null },
+					{ expiresAt: { gt: new Date() } },
+				],
+			},
 		},
 		_sum: {
 			quantity: true,

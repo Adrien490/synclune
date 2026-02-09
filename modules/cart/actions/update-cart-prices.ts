@@ -4,10 +4,10 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getCartWithSkuPrices } from "@/modules/cart/data/get-cart-with-sku-prices";
 import { handleActionError } from "@/shared/lib/actions";
+import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 
 /**
  * Met à jour les prix snapshot (priceAtAdd) de tous les articles du panier
@@ -23,10 +23,12 @@ export async function updateCartPrices(
 	__formData?: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Identifier le panier (utilisateur ou session)
-		const session = await getSession();
-		const userId = session?.user?.id;
-		const sessionId = !userId ? await getCartSessionId() : null;
+		// 1. Rate limiting + récupération contexte
+		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.UPDATE);
+		if (!rateLimitResult.success) {
+			return rateLimitResult.errorState;
+		}
+		const { userId, sessionId } = rateLimitResult.context;
 
 		if (!userId && !sessionId) {
 			return {

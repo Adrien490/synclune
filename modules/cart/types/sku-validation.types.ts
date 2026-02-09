@@ -66,21 +66,3 @@ export interface BatchSkuValidationResult {
 	productStatus: string;
 }
 
-/**
- * Resultat de validation pour un item du panier
- */
-export interface CartItemValidationResult {
-	skuId: string;
-	isValid: boolean;
-	error?: string;
-	availableStock?: number;
-}
-
-/**
- * Resultat de validation de plusieurs items du panier
- */
-export interface ValidateCartItemsResult {
-	success: boolean;
-	error?: string;
-	data?: CartItemValidationResult[];
-}

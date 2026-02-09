@@ -9,6 +9,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { getCartExpirationDate } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { updateCartItemSchema } from "../schemas/cart.schemas";
+import { CART_ERROR_MESSAGES } from "../constants/error-messages";
 
 /**
  * Server Action pour mettre à jour la quantité d'un article dans le panier
@@ -70,22 +71,34 @@ export async function updateCartItem(
 		// 7. Transaction: Mettre à jour l'item et le panier
 		await prisma.$transaction(async (tx) => {
 			// 7a. Verrouiller le SKU avec FOR UPDATE pour éviter les race conditions sur le stock
-			const skuRows = await tx.$queryRaw<Array<{ inventory: number; isActive: boolean }>>`
-				SELECT inventory, "isActive"
-				FROM "ProductSku"
-				WHERE id = ${cartItem.skuId}
-				FOR UPDATE
+			const skuRows = await tx.$queryRaw<Array<{
+				inventory: number;
+				isActive: boolean;
+				deletedAt: Date | null;
+				productStatus: string;
+				productDeletedAt: Date | null;
+			}>>`
+				SELECT s.inventory, s."isActive", s."deletedAt",
+					p.status AS "productStatus", p."deletedAt" AS "productDeletedAt"
+				FROM "ProductSku" s
+				JOIN "Product" p ON p.id = s."productId"
+				WHERE s.id = ${cartItem.skuId}
+				FOR UPDATE OF s
 			`;
 
 			const sku = skuRows[0];
-			if (!sku || !sku.isActive) {
-				throw new BusinessError("Ce produit n'est plus disponible");
+			if (!sku || !sku.isActive || sku.deletedAt) {
+				throw new BusinessError(CART_ERROR_MESSAGES.SKU_INACTIVE);
+			}
+
+			if (sku.productDeletedAt || sku.productStatus !== "PUBLIC") {
+				throw new BusinessError(CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 			}
 
 			// 7b. Si augmentation de quantité, vérifier le stock disponible
 			if (validatedData.quantity > sku.inventory) {
 				throw new BusinessError(
-					`Stock insuffisant. Disponible : ${sku.inventory} exemplaire${sku.inventory > 1 ? "s" : ""}.`
+					CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory)
 				);
 			}
 

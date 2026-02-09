@@ -28,7 +28,6 @@ export const CART_CACHE_TAGS = {
 // Re-exports pour retrocompatibilite
 export {
 	cacheCart,
-	cacheCartCount,
 	cacheCartSummary,
 	getCartInvalidationTags,
 } from "../utils/cache";

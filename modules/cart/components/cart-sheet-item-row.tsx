@@ -231,6 +231,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				<CartItemRemoveButton
 					cartItemId={item.id}
 					itemName={item.sku.product.title}
+					quantity={item.quantity}
 				/>
 			</div>
 		</article>

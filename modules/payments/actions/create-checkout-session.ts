@@ -3,6 +3,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
+import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -595,10 +596,8 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 		}
 
 		// Invalider le cache du panier après création de commande réussie
-		updateTag("cart-list");
-		if (userId) {
-			updateTag(`cart-${userId}`);
-		}
+		const cartTags = getCartInvalidationTags(userId || undefined, sessionId || undefined);
+		cartTags.forEach(tag => updateTag(tag));
 
 		return success("Session de paiement creee avec succes.", {
 			clientSecret: checkoutSession.client_secret, // EMBEDDED MODE : clientSecret pour initialiser le formulaire

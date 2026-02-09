@@ -4,7 +4,7 @@ import type { AnimationPreset, AnimationStyle, ParticleShape, ShapeConfig } from
 export const DEFAULT_COLORS = [
 	"var(--primary)",
 	"var(--secondary)",
-	"oklch(0.92 0.08 350)", // Blush pastel
+	"oklch(0.92 0.08 350)", // Blush pastel (intentionally without alpha, particles apply their own opacity)
 ];
 
 /** Configuration des formes de particules */
@@ -44,6 +44,13 @@ export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 	},
 };
 
+/** Shapes where rotation has no visible effect */
+const ROUND_SHAPES: Set<ParticleShape> = new Set(["circle", "pearl"]);
+
+/** Subtle rotation keyframes for non-circular shapes */
+const subtleRotate = (p: { shape: ParticleShape }) =>
+	ROUND_SHAPES.has(p.shape) ? {} : { rotate: [0, 8, -6, 0] };
+
 /** Presets d'animation par style (optimises pour GPU) */
 export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 	float: (p) => ({
@@ -51,10 +58,28 @@ export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 		opacity: [p.opacity, Math.min(p.opacity * 1.2, 1), p.opacity * 0.8, p.opacity],
 		x: ["0%", "8%", "-8%", "0%"],
 		y: ["0%", "-6%", "6%", "0%"],
+		...subtleRotate(p),
 	}),
 	drift: (p) => ({
 		x: ["0%", "15%", "-5%", "0%"],
 		y: ["0%", "-10%", "5%", "0%"],
 		opacity: [p.opacity, p.opacity * 0.9, p.opacity],
+		...subtleRotate(p),
+	}),
+	rise: (p) => ({
+		y: ["0%", "-25%", "-50%", "-25%", "0%"],
+		x: ["0%", "5%", "-3%", "-5%", "0%"],
+		opacity: [p.opacity, p.opacity * 1.1, p.opacity * 0.6, p.opacity * 1.1, p.opacity],
+		...subtleRotate(p),
+	}),
+	orbit: (p) => ({
+		x: ["0%", "20%", "0%", "-20%", "0%"],
+		y: ["0%", "-12%", "0%", "12%", "0%"],
+		opacity: [p.opacity, p.opacity * 0.85, p.opacity, p.opacity * 0.85, p.opacity],
+		...subtleRotate(p),
+	}),
+	breathe: (p) => ({
+		scale: [1, 1.3, 1, 0.85, 1],
+		opacity: [p.opacity, Math.min(p.opacity * 1.3, 1), p.opacity, p.opacity * 0.7, p.opacity],
 	}),
 };

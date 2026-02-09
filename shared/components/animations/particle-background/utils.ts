@@ -3,7 +3,7 @@ import type { Easing, Transition } from "motion/react";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 
-/** Générateur pseudo-aléatoire déterministe (seeded) */
+/** Deterministic pseudo-random generator (seeded) */
 export function seededRandom(seed: number): number {
 	const x = Math.sin(seed) * 10000;
 	return x - Math.floor(x);
@@ -43,9 +43,12 @@ export function generateParticles(
 		const particleOpacity = opacity[0] + rand(2) * (opacity[1] - opacity[0]);
 		const x = 5 + rand(3) * 90;
 		const y = 5 + rand(4) * 90;
-		const color = colors[i % colors.length];
+		const color = colors[Math.floor(rand(8) * colors.length)];
+
+		// Blur correlated inversely to size: large particles are sharp (close), small ones are blurry (far)
+		const sizeNorm = (particleSize - size[0]) / (size[1] - size[0] || 1);
 		const particleBlur = Array.isArray(blur)
-			? blur[0] + rand(7) * (blur[1] - blur[0])
+			? blur[0] + (1 - sizeNorm) * (blur[1] - blur[0])
 			: blur;
 
 		const depthFactor = maxBlur > 0 ? particleBlur / maxBlur : 0;
@@ -140,6 +143,7 @@ export function getTransition(particle: Particle): Transition {
 		delay: particle.delay,
 		ease: PARTICLE_EASINGS[particle.id % PARTICLE_EASINGS.length],
 		repeat: Infinity,
+		repeatType: "reverse" as const,
 		repeatDelay: particle.delay * 0.2,
 	};
 }

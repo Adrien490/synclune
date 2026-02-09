@@ -19,6 +19,7 @@ export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
 interface RemoveCartItemData {
 	cartItemId: string;
 	itemName: string;
+	quantity: number;
 	[key: string]: unknown;
 }
 
@@ -37,6 +38,7 @@ export function RemoveCartItemAlertDialog() {
 	const cartOptimistic = useCartOptimisticSafe();
 
 	const { action, isPending } = useRemoveFromCart({
+		quantity: removeDialog.data?.quantity ?? 1,
 		onSuccess: () => {
 			// 1. Fermer le dialog
 			removeDialog.close();

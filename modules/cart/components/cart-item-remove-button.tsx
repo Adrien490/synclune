@@ -8,6 +8,7 @@ import { Trash2 } from "lucide-react";
 interface CartItemRemoveButtonProps {
 	cartItemId: string;
 	itemName: string;
+	quantity: number;
 	isPending?: boolean;
 }
 
@@ -20,6 +21,7 @@ interface CartItemRemoveButtonProps {
 export function CartItemRemoveButton({
 	cartItemId,
 	itemName,
+	quantity,
 	isPending = false,
 }: CartItemRemoveButtonProps) {
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
@@ -28,6 +30,7 @@ export function CartItemRemoveButton({
 		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
 			cartItemId,
 			itemName,
+			quantity,
 		});
 	};
 

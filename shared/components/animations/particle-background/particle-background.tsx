@@ -1,25 +1,32 @@
 "use client";
 
+import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
-import { useInView, useReducedMotion } from "motion/react";
-import { useRef } from "react";
+import { useInView, useMotionValue, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";
 import type { ParticleBackgroundProps } from "./types";
 import { generateParticles } from "./utils";
 
+/** Max parallax offset in pixels for the closest particles */
+const PARALLAX_STRENGTH = 20;
+
+/** Duration in ms for the parallax lerp-to-zero reset */
+const LERP_RESET_DURATION = 600;
+
 /**
- * Système de particules décoratives avec effet de profondeur
+ * Systeme de particules decoratives avec effet de profondeur
  *
- * Utilise CSS media queries pour la détection mobile (pas de flash d'hydratation).
+ * Utilise CSS media queries pour la detection mobile (pas de flash d'hydratation).
  * Desktop: count particules, Mobile: count/2 particules.
  * CSS containment pour isoler les repaints.
  *
  * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4
- * **Animations** : float, drift
+ * **Animations** : float, drift, rise, orbit, breathe
  *
  * @example
- * // Défaut (couleurs primary/secondary/pastel)
+ * // Defaut (couleurs primary/secondary/pastel)
  * <ParticleBackground />
  *
  * @example
@@ -29,6 +36,10 @@ import { generateParticles } from "./utils";
  *   colors={["var(--secondary)", "oklch(0.9 0.1 80)"]}
  *   blur={[4, 15]}
  * />
+ *
+ * @example
+ * // Animation plus lente (speed < 1)
+ * <ParticleBackground speed={0.5} />
  */
 export function ParticleBackground({
 	count = 6,
@@ -40,22 +51,83 @@ export function ParticleBackground({
 	className,
 	animationStyle = "float",
 	depthParallax = true,
+	speed = 1,
+	disableOnTouch = false,
 }: ParticleBackgroundProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
-	const isInView = useInView(containerRef, { margin: "-100px" });
+	const viewportInView = useInView(containerRef, { margin: "-100px" });
+	const isTouchDevice = useIsTouchDevice();
+
+	// Pause when tab is hidden (save GPU/battery)
+	const [tabVisible, setTabVisible] = useState(true);
+	useEffect(() => {
+		function onVisibilityChange() {
+			setTabVisible(document.visibilityState === "visible");
+		}
+		document.addEventListener("visibilitychange", onVisibilityChange);
+		return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+	}, []);
+
+	const isInView = viewportInView && tabVisible;
+
+	// Mouse parallax: track cursor relative to container (desktop only)
+	const mouseX = useMotionValue(0);
+	const mouseY = useMotionValue(0);
+
+	useEffect(() => {
+		const el = containerRef.current;
+		if (!el) return;
+
+		function onMouseMove(e: MouseEvent) {
+			const rect = el!.getBoundingClientRect();
+			mouseX.set(((e.clientX - rect.left) / rect.width - 0.5) * 2 * PARALLAX_STRENGTH);
+			mouseY.set(((e.clientY - rect.top) / rect.height - 0.5) * 2 * PARALLAX_STRENGTH);
+		}
+
+		// Progressively lerp parallax back to 0 when mouse leaves the container
+		function onMouseLeave() {
+			const startX = mouseX.get();
+			const startY = mouseY.get();
+			const start = performance.now();
+
+			function step(now: number) {
+				const t = Math.min((now - start) / LERP_RESET_DURATION, 1);
+				const ease = 1 - (1 - t) * (1 - t); // easeOutQuad
+				mouseX.set(startX * (1 - ease));
+				mouseY.set(startY * (1 - ease));
+				if (t < 1) requestAnimationFrame(step);
+			}
+			requestAnimationFrame(step);
+		}
+
+		el.addEventListener("mousemove", onMouseMove, { passive: true });
+		el.addEventListener("mouseleave", onMouseLeave, { passive: true });
+		return () => {
+			el.removeEventListener("mousemove", onMouseMove);
+			el.removeEventListener("mouseleave", onMouseLeave);
+		};
+	}, [mouseX, mouseY]);
+
+	if (disableOnTouch && isTouchDevice) {
+		return null;
+	}
 
 	// Normalise shape en tableau
 	const shapes = Array.isArray(shape) ? shape : [shape];
 
-	// Blur réduit de 30% sur mobile
+	// Blur reduit de 30% sur mobile
 	const mobileBlur: [number, number] = Array.isArray(blur)
 		? [blur[0] * 0.7, blur[1] * 0.7]
 		: [blur * 0.7, blur * 0.7];
 
-	// Desktop: durée 20s, Mobile: durée 12s (économie batterie)
-	const desktopParticles = generateParticles(count, size, opacity, colors, blur, depthParallax, shapes, 20);
-	const mobileParticles = generateParticles(Math.ceil(count / 2), size, opacity, colors, mobileBlur, depthParallax, shapes, 12);
+	// Speed multiplier: higher speed = lower duration
+	const desktopDuration = 20 / speed;
+	const mobileDuration = 12 / speed;
+
+	// Desktop: duree 20s, Mobile: duree 12s (economie batterie)
+	const desktopParticles = generateParticles(count, size, opacity, colors, blur, depthParallax, shapes, desktopDuration);
+	const mobileParticles = generateParticles(Math.ceil(count / 2), size, opacity, colors, mobileBlur, depthParallax, shapes, mobileDuration);
 
 	const sharedProps = { isInView, reducedMotion, animationStyle };
 
@@ -67,7 +139,7 @@ export function ParticleBackground({
 			style={{ contain: "layout paint" }}
 		>
 			<div className="hidden md:contents">
-				<ParticleSet particles={desktopParticles} {...sharedProps} />
+				<ParticleSet particles={desktopParticles} mouseX={mouseX} mouseY={mouseY} {...sharedProps} />
 			</div>
 			<div className="contents md:hidden">
 				<ParticleSet particles={mobileParticles} {...sharedProps} />
