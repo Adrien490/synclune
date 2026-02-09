@@ -43,7 +43,7 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 							Stripe Payment Intent
 						</p>
 						<div className="flex items-center gap-2">
-							<code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono truncate max-w-[150px]">
+							<code className="text-xs bg-muted px-1.5 py-0.5 rounded tabular-nums truncate max-w-[150px]">
 								{order.stripePaymentIntentId}
 							</code>
 							<CopyButton

@@ -3,7 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
 import { auth } from "@/modules/auth/lib/auth";
 import { ajAuth } from "@/shared/lib/arcjet";
-import { josefinSans } from "@/shared/styles/fonts";
+import { cormorantGaramond } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { headers } from "next/headers";
@@ -125,7 +125,7 @@ export default async function VerifyEmailPage({
 					{/* Header */}
 					<div className="text-center space-y-7">
 						<div className="space-y-3">
-							<h1 className={cn("text-3xl font-semibold text-foreground", josefinSans.className)}>
+							<h1 className={cn("text-3xl font-semibold text-foreground", cormorantGaramond.className)}>
 								Vérification d'email
 							</h1>
 						</div>

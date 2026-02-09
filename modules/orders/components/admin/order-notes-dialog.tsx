@@ -69,7 +69,7 @@ export function OrderNotesDialog() {
 				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>Notes internes</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Commande: <span className="font-semibold font-mono">{data?.orderNumber}</span>
+						Commande: <span className="font-semibold tabular-nums">{data?.orderNumber}</span>
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 

@@ -131,7 +131,7 @@ export async function DiscountsDataTable({
 											/>
 										</TableCell>
 										<TableCell>
-										<code className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded">
+										<code className="text-sm font-semibold bg-muted px-2 py-1 rounded">
 											{discount.code}
 										</code>
 									</TableCell>

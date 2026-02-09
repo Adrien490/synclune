@@ -31,7 +31,7 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 				<div className="space-y-1 text-sm">
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">N° de commande</span>
-						<span className="font-mono font-medium">{order.orderNumber}</span>
+						<span className="tabular-nums font-medium">{order.orderNumber}</span>
 					</div>
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">Date</span>

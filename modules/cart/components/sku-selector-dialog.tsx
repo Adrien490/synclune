@@ -520,7 +520,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 													animate={{ opacity: 1, y: 0 }}
 													exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
 													transition={{ duration: shouldReduceMotion ? 0.1 : 0.2 }}
-													className="font-mono text-2xl font-bold text-foreground"
+													className="tabular-nums text-2xl font-bold text-foreground"
 													role="status"
 													aria-live="polite"
 												>

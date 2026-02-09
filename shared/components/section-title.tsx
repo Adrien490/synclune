@@ -1,4 +1,4 @@
-import { josefinSans } from "@/shared/styles/fonts";
+import { cormorantGaramond } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { SectionTitleProps } from "@/shared/types/component.types";
 
@@ -65,7 +65,7 @@ export function SectionTitle({
 			itemProp={itemProp}
 			className={cn(
 				// Police Josefin Sans - Sans-serif géométrique élégante
-				josefinSans.className,
+				cormorantGaramond.className,
 				// Style de base unifié
 				"text-foreground tracking-wide",
 				// Graisse

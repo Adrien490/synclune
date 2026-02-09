@@ -1,12 +1,13 @@
-import { Inter, Dancing_Script, JetBrains_Mono, Josefin_Sans } from "next/font/google";
+import { Inter, Petit_Formal_Script, Cormorant_Garamond } from "next/font/google";
 
-// Josefin Sans - Sans-serif géométrique élégante pour titres
-// Design moderne et épuré, parfait pour une marque de bijoux contemporaine
-// Police variable supportant les poids de 100 à 700
-export const josefinSans = Josefin_Sans({
+// Cormorant Garamond - Serif display élégant pour titres
+// Inspiré de Garamond du XVIe siècle, réimaginé pour l'écran
+// Contraste élevé, serifs fins, courbes élégantes — parfait pour les bijoux artisanaux
+export const cormorantGaramond = Cormorant_Garamond({
 	subsets: ["latin"],
 	display: "swap",
 	style: ["normal", "italic"],
+	weight: ["300", "400", "500", "600", "700"],
 	variable: "--font-display", // Variable CSS pour les titres
 });
 
@@ -21,19 +22,9 @@ export const inter = Inter({
 	variable: "--font-sans", // Variable CSS pour le texte principal
 });
 
-// JetBrains Mono - Monospace moderne pour prix et codes
-// Design technique et contemporain, excellent pour données numériques
-// Apporte un contraste moderne aux informations de prix
-export const jetBrainsMono = JetBrains_Mono({
-	subsets: ["latin"],
-	display: "swap",
-	weight: ["400", "500", "600", "700"], // Regular à Bold
-	variable: "--font-mono", // Variable CSS pour les prix et codes
-});
-
-// Dancing Script - Police cursive élégante pour signatures manuscrites
-// Douce et authentique, parfaite pour l'humanisation artisanale
-export const dancingScript = Dancing_Script({
+// Petit Formal Script - Police cursive sophistiquée pour signatures
+// Élégante et raffinée, positionnement luxe artisanal
+export const petitFormalScript = Petit_Formal_Script({
 	subsets: ["latin"],
 	display: "swap",
 	weight: ["400"],

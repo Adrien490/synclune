@@ -19,7 +19,7 @@ export function ProductPrice({
 
 	return (
 		<div className={`flex items-center gap-2 ${className}`}>
-			<span className="font-mono font-semibold text-foreground text-base sm:text-lg">
+			<span className="tabular-nums font-semibold text-foreground text-base sm:text-lg">
 				{formatEuro(price)}
 			</span>
 			{hasDiscount && (
@@ -29,7 +29,7 @@ export function ProductPrice({
 						Prix original : {formatEuro(compareAtPrice)}
 					</span>
 					<span
-						className="font-mono text-foreground/60 line-through text-sm"
+						className="tabular-nums text-foreground/60 line-through text-sm"
 						aria-hidden="true"
 					>
 						{formatEuro(compareAtPrice)}

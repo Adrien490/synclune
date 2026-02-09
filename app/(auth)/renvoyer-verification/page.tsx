@@ -1,7 +1,7 @@
 import { LogoAnimated } from "@/shared/components/logo-animated";
 import { Button } from "@/shared/components/ui/button";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
-import { josefinSans } from "@/shared/styles/fonts";
+import { cormorantGaramond } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
@@ -48,7 +48,7 @@ export default function ResendVerificationPage() {
 					{/* Header */}
 					<div className="text-center space-y-7">
 						<div className="space-y-3">
-							<h1 className={cn("text-3xl font-semibold text-foreground", josefinSans.className)}>
+							<h1 className={cn("text-3xl font-semibold text-foreground", cormorantGaramond.className)}>
 								Renvoyer l'email de vérification 
 							</h1>
 							<p className="text-muted-foreground">

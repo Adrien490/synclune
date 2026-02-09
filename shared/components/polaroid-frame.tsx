@@ -1,4 +1,4 @@
-import { dancingScript } from "@/shared/styles/fonts";
+import { petitFormalScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
@@ -155,7 +155,7 @@ export function PolaroidFrame({
 					className={cn(
 						"absolute bottom-2 sm:bottom-3 left-0 right-0 text-center text-sm sm:text-base italic",
 						captionColor ? undefined : "text-gray-600 dark:text-gray-400",
-						dancingScript.className
+						petitFormalScript.className
 					)}
 					style={{
 						...(captionColor ? { color: captionColor } : {}),

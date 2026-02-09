@@ -243,7 +243,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										<span
 											aria-busy={isPending}
 											aria-live="polite"
-											className="font-mono font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse"
+											className="tabular-nums font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse"
 										>
 											<AnimatedNumber value={subtotal} formatter={formatEuro} />
 										</span>

@@ -1,4 +1,4 @@
-import { inter, josefinSans } from "@/shared/styles/fonts";
+import { inter, cormorantGaramond } from "@/shared/styles/fonts";
 import type { Metadata } from "next";
 import "@/app/globals.css";
 
@@ -18,7 +18,7 @@ export default function OfflineLayout({
 	return (
 		<html lang="fr">
 			<body
-				className={`${inter.variable} ${inter.className} ${josefinSans.variable} antialiased`}
+				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} antialiased`}
 			>
 				{children}
 			</body>

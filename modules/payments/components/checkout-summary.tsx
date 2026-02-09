@@ -110,7 +110,7 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: Ch
 
 							{/* Prix */}
 							<div className="text-right">
-								<p className="font-mono font-medium text-sm">
+								<p className="tabular-nums font-medium text-sm">
 									{formatEuro(item.priceAtAdd * item.quantity)}
 								</p>
 								{item.quantity > 1 && (
@@ -143,7 +143,7 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: Ch
 						<span className="text-muted-foreground">
 							Sous-total ({totalItems} article{totalItems > 1 ? "s" : ""})
 						</span>
-						<span className="font-mono font-medium text-base/6">
+						<span className="tabular-nums font-medium text-base/6">
 							{formatEuro(subtotal)}
 						</span>
 					</div>
@@ -154,7 +154,7 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: Ch
 							<TruckIcon className="w-4 h-4" />
 							Livraison
 						</span>
-						<span className="font-mono font-medium text-base/6">
+						<span className="tabular-nums font-medium text-base/6">
 							{formatEuro(shipping)}
 						</span>
 					</div>
@@ -166,7 +166,7 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: Ch
 				<div className="space-y-2">
 					<div className="flex justify-between items-center text-lg/7 sm:text-xl/7 tracking-tight antialiased font-semibold">
 						<span>Total</span>
-						<span className="font-mono text-xl/7 sm:text-2xl/8">
+						<span className="tabular-nums text-xl/7 sm:text-2xl/8">
 							{formatEuro(total)}
 						</span>
 					</div>

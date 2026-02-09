@@ -87,7 +87,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 										<TableCell>
 											<Link
 												href={`/admin/ventes/commandes/${order.id}`}
-												className="font-mono text-sm font-medium text-foreground underline"
+												className="tabular-nums text-sm font-medium text-foreground underline"
 												aria-label={`Voir commande ${order.orderNumber}`}
 											>
 												{order.orderNumber}

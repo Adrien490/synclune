@@ -50,7 +50,7 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 							<p className="text-sm text-muted-foreground">
 								Numéro de suivi
 							</p>
-							<p className="font-mono font-medium">
+							<p className="tabular-nums font-medium">
 								{order.trackingNumber}
 							</p>
 							{order.shippingCarrier && (

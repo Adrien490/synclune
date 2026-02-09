@@ -3,7 +3,7 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { cn } from "@/shared/utils/cn";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
-import { dancingScript } from "@/shared/styles/fonts";
+import { petitFormalScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
 import { NewsletterForm } from "@/modules/newsletter/components/newsletter-form";
 import { cacheLife, cacheTag } from "next/cache";
@@ -66,7 +66,7 @@ export async function NewsletterSection() {
               1 à 2 emails par mois maximum. Désinscription en un clic.
             </p>
             <p
-              className={`${dancingScript.className} mt-2 text-lg text-foreground/70 italic`}
+              className={`${petitFormalScript.className} mt-2 text-lg text-foreground/70 italic`}
             >
               À très vite !
             </p>

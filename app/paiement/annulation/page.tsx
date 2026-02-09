@@ -83,7 +83,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 								<Alert>
 									<Info className="h-4 w-4" />
 									<AlertDescription>
-										Référence de commande : <span className="font-mono">{orderId}</span>
+										Référence de commande : <span className="tabular-nums">{orderId}</span>
 									</AlertDescription>
 								</Alert>
 							)}

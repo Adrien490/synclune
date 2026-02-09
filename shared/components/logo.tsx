@@ -1,6 +1,6 @@
 import { BRAND } from "@/shared/constants/brand";
 import { cn } from "@/shared/utils/cn";
-import { josefinSans } from "@/shared/styles/fonts";
+import { cormorantGaramond } from "@/shared/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -87,7 +87,7 @@ export function Logo({
 			{showText && (
 				<span
 					className={cn(
-						josefinSans.className,
+						cormorantGaramond.className,
 						textSizeClass,
 						"font-normal text-foreground tracking-wide",
 						textClassName

@@ -118,7 +118,7 @@ export async function CustomerOrdersTable({
 									<TableCell>
 										<Link
 											href={`/commandes/${order.orderNumber}`}
-											className="font-mono text-sm font-medium text-primary hover:underline"
+											className="tabular-nums text-sm font-medium text-primary hover:underline"
 										>
 											{order.orderNumber}
 										</Link>

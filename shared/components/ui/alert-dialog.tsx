@@ -5,7 +5,7 @@ import * as React from "react";
 
 import { buttonVariants } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
-import { josefinSans } from "@/shared/styles/fonts";
+import { cormorantGaramond } from "@/shared/styles/fonts";
 
 function AlertDialog({
 	...props
@@ -118,7 +118,7 @@ function AlertDialogTitle({
 			data-slot="alert-dialog-title"
 			className={cn(
 				"text-xl font-semibold text-foreground",
-				josefinSans.className,
+				cormorantGaramond.className,
 				className
 			)}
 			{...props}

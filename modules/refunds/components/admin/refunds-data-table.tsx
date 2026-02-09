@@ -94,7 +94,7 @@ export async function RefundsDataTable({
 									<TableCell>
 									<Link
 										href={`/admin/ventes/commandes/${refund.order.id}`}
-										className="font-mono text-sm font-medium text-foreground underline"
+										className="tabular-nums text-sm font-medium text-foreground underline"
 									>
 										{refund.order.orderNumber}
 									</Link>

@@ -6,7 +6,7 @@ import { SparklesDivider } from "@/shared/components/section-divider";
 import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
-import { dancingScript } from "@/shared/styles/fonts";
+import { petitFormalScript } from "@/shared/styles/fonts";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { PolaroidDoodles } from "./polaroid-doodles";
@@ -163,7 +163,7 @@ export async function AtelierStory() {
 
 						{/* Signature */}
 						<footer
-							className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic pt-4 text-center text-shadow-glow`}
+							className={`${petitFormalScript.className} text-2xl md:text-3xl text-foreground italic pt-4 text-center text-shadow-glow`}
 						>
 							— Léane
 						</footer>

@@ -11,7 +11,7 @@ import { ConditionalAnalytics } from "@/shared/components/conditional-analytics"
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
 import { SerwistProvider } from "@/shared/lib/serwist-client";
 import { RootProviders } from "@/shared/providers/root-providers";
-import { josefinSans, inter, jetBrainsMono, dancingScript } from "@/shared/styles/fonts";
+import { cormorantGaramond, inter, petitFormalScript } from "@/shared/styles/fonts";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import "./globals.css";
@@ -46,7 +46,7 @@ export default async function RootLayout({
 				<link rel="preconnect" href="https://x1ain1wpub.ufs.sh" crossOrigin="anonymous" />
 			</head>
 			<body
-				className={`${inter.variable} ${inter.className} ${josefinSans.variable} ${jetBrainsMono.variable} ${dancingScript.variable} antialiased`}
+				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}
 			>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />

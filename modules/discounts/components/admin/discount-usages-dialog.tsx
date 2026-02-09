@@ -71,7 +71,7 @@ export function DiscountUsagesDialog() {
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Utilisations du code promo</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Code: <span className="font-semibold font-mono">{data?.discountCode}</span>
+						Code: <span className="font-semibold tabular-nums">{data?.discountCode}</span>
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 

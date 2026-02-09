@@ -153,7 +153,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				{/* Prix final */}
 				<div
 					className={cn(
-						"font-mono font-medium text-sm",
+						"tabular-nums font-medium text-sm",
 						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:animate-pulse"
 					)}
 				>
