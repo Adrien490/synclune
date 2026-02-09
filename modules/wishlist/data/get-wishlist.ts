@@ -20,13 +20,7 @@ import type {
 	WishlistItem,
 } from "../types/wishlist.types";
 
-// Re-export pour compatibilité
-export {
-	GET_WISHLIST_SELECT,
-	GET_WISHLIST_ITEM_SELECT,
-	GET_WISHLIST_DEFAULT_PER_PAGE,
-	GET_WISHLIST_MAX_RESULTS_PER_PAGE,
-} from "../constants/wishlist.constants";
+// Re-export types for components that import from data/
 export type {
 	GetWishlistParams,
 	GetWishlistReturn,

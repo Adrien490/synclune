@@ -32,18 +32,17 @@ export function generateParticles(
 
 	const maxBlur = Array.isArray(blur) ? blur[1] : blur;
 
+	const safeColors = colors.length > 0 ? colors : ["currentColor"];
+
 	const particles = Array.from({ length: count }, (_, i) => {
 		const seed = i * 1000;
-		const rand = (offset: number) => {
-			const x = Math.sin(seed + offset) * 10000;
-			return x - Math.floor(x);
-		};
+		const rand = (offset: number) => seededRandom(seed + offset);
 
 		const particleSize = size[0] + rand(1) * (size[1] - size[0]);
 		const particleOpacity = opacity[0] + rand(2) * (opacity[1] - opacity[0]);
 		const x = 5 + rand(3) * 90;
 		const y = 5 + rand(4) * 90;
-		const color = colors[Math.floor(rand(8) * colors.length)];
+		const color = safeColors[Math.floor(rand(8) * safeColors.length)];
 
 		// Blur correlated inversely to size: large particles are sharp (close), small ones are blurry (far)
 		const sizeNorm = (particleSize - size[0]) / (size[1] - size[0] || 1);

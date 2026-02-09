@@ -1,53 +1,30 @@
 import { prisma } from "@/shared/lib/prisma";
-import { cacheWishlist } from "@/modules/wishlist/utils/cache.utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type GuestWishlistForMerge = Awaited<ReturnType<typeof fetchGuestWishlistForMerge>>;
-export type UserWishlistForMerge = Awaited<ReturnType<typeof fetchUserWishlistForMerge>>;
+export type GuestWishlistForMerge = Awaited<ReturnType<typeof getGuestWishlistForMerge>>;
+export type UserWishlistForMerge = Awaited<ReturnType<typeof getUserWishlistForMerge>>;
 
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
 
 /**
- * Récupère la wishlist visiteur pour la fusion avec include product status
+ * Recupere la wishlist visiteur pour la fusion avec product status
+ * No cache: data is immediately mutated/deleted by merge-wishlists
  *
  * @param sessionId - ID de session visiteur
  */
-export async function getGuestWishlistForMerge(
-	sessionId: string
-): Promise<GuestWishlistForMerge> {
-	return fetchGuestWishlistForMerge(sessionId);
-}
-
-/**
- * Récupère la wishlist utilisateur pour la fusion (items simples)
- *
- * @param userId - ID de l'utilisateur connecté
- */
-export async function getUserWishlistForMerge(
-	userId: string
-): Promise<UserWishlistForMerge> {
-	return fetchUserWishlistForMerge(userId);
-}
-
-// ============================================================================
-// FETCH FUNCTIONS (CACHED)
-// ============================================================================
-
-async function fetchGuestWishlistForMerge(sessionId: string) {
-	"use cache: private";
-
-	cacheWishlist(undefined, sessionId);
-
+export async function getGuestWishlistForMerge(sessionId: string) {
 	return prisma.wishlist.findUnique({
 		where: { sessionId },
-		include: {
+		select: {
+			id: true,
 			items: {
-				include: {
+				select: {
+					productId: true,
 					product: {
 						select: {
 							id: true,
@@ -60,14 +37,17 @@ async function fetchGuestWishlistForMerge(sessionId: string) {
 	});
 }
 
-async function fetchUserWishlistForMerge(userId: string) {
-	"use cache: private";
-
-	cacheWishlist(userId, undefined);
-
+/**
+ * Recupere la wishlist utilisateur pour la fusion (items simples)
+ * No cache: data is immediately mutated by merge-wishlists
+ *
+ * @param userId - ID de l'utilisateur connecte
+ */
+export async function getUserWishlistForMerge(userId: string) {
 	return prisma.wishlist.findUnique({
 		where: { userId },
-		include: {
+		select: {
+			id: true,
 			items: {
 				select: {
 					productId: true,

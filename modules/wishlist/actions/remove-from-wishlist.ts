@@ -1,148 +1,110 @@
-'use server'
+"use server";
 
-import { getSession } from "@/modules/auth/lib/get-current-session"
-import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache"
-import { updateTag } from "next/cache"
-import { prisma } from "@/shared/lib/prisma"
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit"
-import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config"
-import type { ActionState } from "@/shared/types/server-action"
-import { ActionStatus } from "@/shared/types/server-action";
-import { headers } from 'next/headers'
-import { revalidatePath } from 'next/cache'
-import { removeFromWishlistSchema } from '@/modules/wishlist/schemas/wishlist.schemas'
+import { getSession } from "@/modules/auth/lib/get-current-session";
+import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
+import { updateTag } from "next/cache";
+import { prisma } from "@/shared/lib/prisma";
+import { getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
+import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
+import type { ActionState } from "@/shared/types/server-action";
+import { headers } from "next/headers";
+import { removeFromWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
 import {
 	getWishlistSessionId,
 	getWishlistExpirationDate,
-} from "@/modules/wishlist/lib/wishlist-session"
-import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages"
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions"
+} from "@/modules/wishlist/lib/wishlist-session";
+import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import { validateInput, handleActionError, success, error, enforceRateLimit } from "@/shared/lib/actions";
 
 /**
  * Server Action pour retirer un article de la wishlist
  * Compatible avec useActionState de React 19
  *
- * Supporte les utilisateurs connectés ET les visiteurs (sessions invité)
- *
- * Pattern:
- * 1. Validation des données (Zod)
- * 2. Rate limiting (protection anti-spam)
- * 3. Récupération wishlist (user ou session)
- * 4. Transaction DB (delete wishlist item)
- * 5. Invalidation cache immédiate (read-your-own-writes)
+ * Supporte les utilisateurs connectes ET les visiteurs (sessions invite)
  */
 export async function removeFromWishlist(
 	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Récupérer l'authentification (user ou session invité)
-		const session = await getSession()
-		const userId = session?.user?.id
-		const sessionId = !userId ? await getWishlistSessionId() : null
+		// 1. Recuperer l'authentification (user ou session invite)
+		const session = await getSession();
+		const userId = session?.user?.id;
+		const sessionId = !userId ? await getWishlistSessionId() : null;
 
-		// Vérifier qu'on a soit un userId soit un sessionId
 		if (!userId && !sessionId) {
-			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND)
+			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND);
 		}
 
-		// 2. Extraction des données du FormData
-		const rawData = {
-			productId: formData.get('productId') as string,
-		}
+		// 2. Validation avec Zod
+		const validated = validateInput(removeFromWishlistSchema, {
+			productId: formData.get("productId") as string,
+		});
+		if ("error" in validated) return validated.error;
 
-		// 3. Validation avec Zod
-		const validated = validateInput(removeFromWishlistSchema, rawData)
-		if ("error" in validated) return validated.error
+		const validatedData = validated.data;
 
-		const validatedData = validated.data
+		// 3. Rate limiting (protection anti-spam)
+		const headersList = await headers();
+		const ipAddress = await getClientIp(headersList);
+		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
+		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.REMOVE);
+		if ("error" in rateCheck) return rateCheck.error;
 
-		// 4. Rate limiting (protection anti-spam)
-		const headersList = await headers()
-		const ipAddress = await getClientIp(headersList)
-
-		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress)
-		const rateLimit = await checkRateLimit(rateLimitId, WISHLIST_LIMITS.REMOVE)
-
-		if (!rateLimit.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: rateLimit.error || 'Trop de requêtes. Veuillez réessayer plus tard.',
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
-			}
-		}
-
-		// 5. Valider le produit (existence)
+		// 4. Valider le produit (existence)
 		const product = await prisma.product.findUnique({
 			where: { id: validatedData.productId },
 			select: { id: true },
-		})
+		});
 
 		if (!product) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
-			}
+			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 		}
 
-		// 6. Récupérer la wishlist de l'utilisateur ou visiteur
+		// 5. Recuperer la wishlist de l'utilisateur ou visiteur
 		const wishlist = await prisma.wishlist.findFirst({
 			where: userId ? { userId } : { sessionId },
 			select: { id: true },
-		})
+		});
 
 		if (!wishlist) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND,
-			}
+			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND);
 		}
 
-		// 7. Supprimer l'item de ce produit de la wishlist et mettre à jour le timestamp
+		// 6. Supprimer l'item et mettre a jour le timestamp
 		const deleteResult = await prisma.$transaction(async (tx) => {
 			const result = await tx.wishlistItem.deleteMany({
 				where: {
 					wishlistId: wishlist.id,
 					productId: validatedData.productId,
 				},
-			})
+			});
 
-			// Toujours mettre à jour le updatedAt et rafraîchir l'expiration pour les visiteurs
-			// (même si aucun item supprimé, l'activité utilisateur prolonge la session)
 			await tx.wishlist.update({
 				where: { id: wishlist.id },
 				data: {
 					updatedAt: new Date(),
 					expiresAt: userId ? null : getWishlistExpirationDate(),
 				},
-			})
+			});
 
-			return result
-		})
+			return result;
+		});
 
-		// 8. Invalidation cache immédiate (read-your-own-writes)
-		const tags = getWishlistInvalidationTags(userId, sessionId || undefined)
-		tags.forEach(tag => updateTag(tag))
+		// 7. Invalidation cache immediate (read-your-own-writes)
+		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
+		tags.forEach(tag => updateTag(tag));
 
-		// 9. Revalidation complète pour mise à jour du header (badge count)
-		revalidatePath('/', 'layout')
-
-		return {
-			status: ActionStatus.SUCCESS,
-			message: deleteResult.count > 0 ? 'Retiré de ta wishlist' : WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND,
-			data: {
+		return success(
+			deleteResult.count > 0
+				? "Retire de ta wishlist"
+				: WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND,
+			{
 				wishlistId: wishlist.id,
 				removed: deleteResult.count > 0,
 			},
-		}
+		);
 	} catch (e) {
-		console.error('[REMOVE_FROM_WISHLIST] Error:', e);
-		return {
-			status: ActionStatus.ERROR,
-			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
-		}
+		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}
 }

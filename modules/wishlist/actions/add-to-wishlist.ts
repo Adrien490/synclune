@@ -4,25 +4,17 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import {
-	checkRateLimit,
-	getClientIp,
-	getRateLimitIdentifier,
-} from "@/shared/lib/rate-limit";
+import { getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { addToWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
 import {
 	getOrCreateWishlistSessionId,
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session";
-import {
-	WISHLIST_ERROR_MESSAGES,
-	WISHLIST_SUCCESS_MESSAGES,
-} from "@/modules/wishlist/constants/error-messages";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import { validateInput, handleActionError, success, error, enforceRateLimit } from "@/shared/lib/actions";
 
 /**
  * Server Action pour ajouter un article à la wishlist
@@ -66,15 +58,9 @@ export async function addToWishlist(
 		// 4. Rate limiting (protection anti-spam)
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
-
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateLimit = await checkRateLimit(rateLimitId, WISHLIST_LIMITS.ADD);
-
-		if (!rateLimit.success) {
-			return error(
-				rateLimit.error || "Trop de requetes. Veuillez reessayer plus tard.",
-			);
-		}
+		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.ADD);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		// 5. Valider le produit (existence et status)
 		const product = await prisma.product.findUnique({
@@ -147,9 +133,6 @@ export async function addToWishlist(
 		// 7. Invalidation cache immédiate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
 		tags.forEach(tag => updateTag(tag));
-
-		// 8. Revalidation complète pour mise à jour du header (badge count)
-		revalidatePath("/", "layout");
 
 		return success(
 			transactionResult.alreadyExists

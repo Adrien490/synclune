@@ -79,14 +79,25 @@ export function ParticleBackground({
 		const el = containerRef.current;
 		if (!el) return;
 
-		function onMouseMove(e: MouseEvent) {
-			const rect = el!.getBoundingClientRect();
+		let lerpRafId: number | null = null;
+
+		function cancelLerp() {
+			if (lerpRafId !== null) {
+				cancelAnimationFrame(lerpRafId);
+				lerpRafId = null;
+			}
+		}
+
+		const onMouseMove = (e: MouseEvent) => {
+			cancelLerp();
+			const rect = el.getBoundingClientRect();
 			mouseX.set(((e.clientX - rect.left) / rect.width - 0.5) * 2 * PARALLAX_STRENGTH);
 			mouseY.set(((e.clientY - rect.top) / rect.height - 0.5) * 2 * PARALLAX_STRENGTH);
-		}
+		};
 
 		// Progressively lerp parallax back to 0 when mouse leaves the container
 		function onMouseLeave() {
+			cancelLerp();
 			const startX = mouseX.get();
 			const startY = mouseY.get();
 			const start = performance.now();
@@ -96,14 +107,19 @@ export function ParticleBackground({
 				const ease = 1 - (1 - t) * (1 - t); // easeOutQuad
 				mouseX.set(startX * (1 - ease));
 				mouseY.set(startY * (1 - ease));
-				if (t < 1) requestAnimationFrame(step);
+				if (t < 1) {
+					lerpRafId = requestAnimationFrame(step);
+				} else {
+					lerpRafId = null;
+				}
 			}
-			requestAnimationFrame(step);
+			lerpRafId = requestAnimationFrame(step);
 		}
 
 		el.addEventListener("mousemove", onMouseMove, { passive: true });
 		el.addEventListener("mouseleave", onMouseLeave, { passive: true });
 		return () => {
+			cancelLerp();
 			el.removeEventListener("mousemove", onMouseMove);
 			el.removeEventListener("mouseleave", onMouseLeave);
 		};
@@ -121,9 +137,10 @@ export function ParticleBackground({
 		? [blur[0] * 0.7, blur[1] * 0.7]
 		: [blur * 0.7, blur * 0.7];
 
-	// Speed multiplier: higher speed = lower duration
-	const desktopDuration = 20 / speed;
-	const mobileDuration = 12 / speed;
+	// Speed multiplier: higher speed = lower duration (clamp to avoid Infinity)
+	const safeSpeed = Math.max(speed, 0.01);
+	const desktopDuration = 20 / safeSpeed;
+	const mobileDuration = 12 / safeSpeed;
 
 	// Desktop: duree 20s, Mobile: duree 12s (economie batterie)
 	const desktopParticles = generateParticles(count, size, opacity, colors, blur, depthParallax, shapes, desktopDuration);

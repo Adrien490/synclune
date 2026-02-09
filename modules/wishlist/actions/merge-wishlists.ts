@@ -3,17 +3,14 @@
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
-import { success, error, handleActionError } from "@/shared/lib/actions";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { success, error, handleActionError, enforceRateLimit } from "@/shared/lib/actions";
+import { getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { MergeWishlistsResult } from "../types/wishlist.types";
 import { WISHLIST_ERROR_MESSAGES, WISHLIST_INFO_MESSAGES } from "@/modules/wishlist/constants/error-messages";
 import { getGuestWishlistForMerge, getUserWishlistForMerge } from "../data/get-wishlist-for-merge";
-
-// Re-export pour retrocompatibilite
-export type { MergeWishlistsResult } from "../types/wishlist.types";
 
 /**
  * Fusionne la wishlist visiteur avec la wishlist utilisateur après connexion
@@ -53,11 +50,8 @@ export async function mergeWishlists(
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-		const rateLimit = await checkRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE);
-
-		if (!rateLimit.success) {
-			return error("Trop de requetes. Veuillez reessayer plus tard.");
-		}
+		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		// 0c. Vérifier que l'utilisateur existe (protection contre appels directs)
 		const user = await prisma.user.findUnique({
@@ -89,9 +83,10 @@ export async function mergeWishlists(
 			targetWishlist = await prisma.wishlist.create({
 				data: {
 					userId,
-					expiresAt: null, // Pas d'expiration pour utilisateur connecté
+					expiresAt: null,
 				},
-				include: {
+				select: {
+					id: true,
 					items: {
 						select: {
 							productId: true,
@@ -101,46 +96,35 @@ export async function mergeWishlists(
 			});
 		}
 
-		// 4. Préparer les items à fusionner (stratégie UNION)
+		// 4. Preparer les items a fusionner (strategie UNION)
 		const userProductIds = new Set(targetWishlist.items.map((item) => item.productId));
 
-		let addedCount = 0;
-		let skippedCount = 0;
+		// Filter valid items to add (public, non-orphan, not already in user wishlist)
+		const itemsToAdd = guestWishlist.items.filter((guestItem) => {
+			if (!guestItem.productId || !guestItem.product) return false;
+			if (guestItem.product.status !== "PUBLIC") return false;
+			if (userProductIds.has(guestItem.productId)) return false;
+			return true;
+		});
+
+		const skippedCount = guestWishlist.items.length - itemsToAdd.length;
 
 		// 5. Fusionner les items dans une transaction atomique
 		await prisma.$transaction(async (tx) => {
-			for (const guestItem of guestWishlist.items) {
-				// Skip les items orphelins (produit archivé/supprimé)
-				if (!guestItem.productId || !guestItem.product) {
-					skippedCount++;
-					continue;
-				}
-
-				// Skip les produits non publics
-				if (guestItem.product.status !== "PUBLIC") {
-					skippedCount++;
-					continue;
-				}
-
-				// Skip si déjà dans la wishlist utilisateur
-				if (userProductIds.has(guestItem.productId)) {
-					skippedCount++;
-					continue;
-				}
-
-				// Ajouter l'item à la wishlist utilisateur
-				await tx.wishlistItem.create({
-					data: {
+			if (itemsToAdd.length > 0) {
+				await tx.wishlistItem.createMany({
+					data: itemsToAdd.map((item) => ({
 						wishlistId: targetWishlist.id,
-						productId: guestItem.productId,
-					},
+						productId: item.productId,
+					})),
 				});
-				addedCount++;
 			}
 
-			// 6. Supprimer la wishlist visiteur (dans la même transaction)
+			// 6. Supprimer la wishlist visiteur (dans la meme transaction)
 			await tx.wishlist.delete({ where: { id: guestWishlist.id } });
 		});
+
+		const addedCount = itemsToAdd.length;
 
 		// 7. Invalider les caches
 		const guestTags = getWishlistInvalidationTags(undefined, sessionId);
