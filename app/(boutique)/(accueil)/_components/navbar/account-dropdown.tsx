@@ -16,6 +16,7 @@ import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 interface AccountDropdownProps {
 	session: Session | null;
@@ -58,16 +59,17 @@ export function AccountDropdown({ session, isAdmin, className }: AccountDropdown
 	}
 
 	// Connecté: dropdown avec options
+	const [tooltipOpen, setTooltipOpen] = useState(false);
+
 	return (
-		<Tooltip>
-			<DropdownMenu>
+		<Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
+			<DropdownMenu onOpenChange={(open) => { if (open) setTooltipOpen(false); }}>
 				<TooltipTrigger asChild>
 					<DropdownMenuTrigger asChild>
 						<button
 							type="button"
 							className={cn(className, "cursor-pointer")}
 							aria-label={`Menu de ${session.user.name || "mon compte"}`}
-							aria-haspopup="menu"
 						>
 							<User
 								size={20}

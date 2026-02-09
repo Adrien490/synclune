@@ -25,7 +25,6 @@ import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
 import { Gem, Heart, LogIn, Menu, Settings } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CollectionMiniGrid } from "./collection-mini-grid";
 import { SectionHeader } from "./section-header";
@@ -61,7 +60,6 @@ export function MenuSheet({
 	session,
 }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
-	const pathname = usePathname();
 	const wishlistCount = useBadgeCountsStore((s) => s.wishlistCount);
 	const cartCount = useBadgeCountsStore((s) => s.cartCount);
 	const [isOpen, setIsOpen] = useState(false);
@@ -89,6 +87,10 @@ export function MenuSheet({
 		linkClassName,
 		"bg-primary/12 text-foreground font-semibold border-l-2 border-primary pl-5 shadow-sm"
 	);
+
+	function getLinkClass(href: string, extra?: string) {
+		return cn(isMenuItemActive(href) ? activeLinkClassName : linkClassName, extra);
+	}
 
 	return (
 		<Sheet direction="left" open={isOpen} onOpenChange={setIsOpen} preventScrollRestoration>
@@ -149,11 +151,7 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={homeItem.href}
-												className={
-													isMenuItemActive(homeItem.href)
-														? activeLinkClassName
-														: linkClassName
-												}
+												className={getLinkClass(homeItem.href)}
 												aria-current={
 													isMenuItemActive(homeItem.href) ? "page" : undefined
 												}
@@ -176,13 +174,9 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={ROUTES.SHOP.PRODUCTS}
-												className={
-													pathname === ROUTES.SHOP.PRODUCTS
-														? activeLinkClassName
-														: linkClassName
-												}
+												className={getLinkClass(ROUTES.SHOP.PRODUCTS)}
 												aria-current={
-													pathname === ROUTES.SHOP.PRODUCTS
+													isMenuItemActive(ROUTES.SHOP.PRODUCTS)
 														? "page"
 														: undefined
 												}
@@ -196,11 +190,7 @@ export function MenuSheet({
 											<SheetClose asChild>
 												<Link
 													href={`/produits/${type.slug}`}
-													className={
-														isMenuItemActive(`/produits/${type.slug}`)
-															? activeLinkClassName
-															: linkClassName
-													}
+													className={getLinkClass(`/produits/${type.slug}`)}
 													aria-current={
 														isMenuItemActive(`/produits/${type.slug}`)
 															? "page"
@@ -226,11 +216,7 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={ROUTES.SHOP.COLLECTIONS}
-												className={
-													isMenuItemActive(ROUTES.SHOP.COLLECTIONS)
-														? activeLinkClassName
-														: linkClassName
-												}
+												className={getLinkClass(ROUTES.SHOP.COLLECTIONS)}
 												aria-current={
 													isMenuItemActive(ROUTES.SHOP.COLLECTIONS)
 														? "page"
@@ -246,12 +232,8 @@ export function MenuSheet({
 											<SheetClose asChild>
 												<Link
 													href={`/collections/${collection.slug}`}
-													className={cn(
-														isMenuItemActive(
-															`/collections/${collection.slug}`
-														)
-															? activeLinkClassName
-															: linkClassName,
+													className={getLinkClass(
+														`/collections/${collection.slug}`,
 														"gap-3"
 													)}
 													aria-current={
@@ -293,11 +275,7 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={personalizationItem.href}
-												className={
-													isMenuItemActive(personalizationItem.href)
-														? activeLinkClassName
-														: linkClassName
-												}
+												className={getLinkClass(personalizationItem.href)}
 												aria-current={
 													isMenuItemActive(personalizationItem.href)
 														? "page"
@@ -335,11 +313,9 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={accountItem.href}
-												className={cn(
-													isMenuItemActive(accountItem.href)
-														? activeLinkClassName
-														: linkClassName,
-													!isLoggedIn && "gap-2"
+												className={getLinkClass(
+													accountItem.href,
+													!isLoggedIn ? "gap-2" : undefined
 												)}
 												aria-current={
 													isMenuItemActive(accountItem.href) ? "page" : undefined
@@ -358,15 +334,14 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={favoritesItem.href}
-												className={cn(
-													isMenuItemActive(favoritesItem.href)
-														? activeLinkClassName
-														: linkClassName,
+												className={getLinkClass(
+													favoritesItem.href,
 													"justify-between"
 												)}
 												aria-current={
 													isMenuItemActive(favoritesItem.href) ? "page" : undefined
 												}
+												aria-label={wishlistCount > 0 ? `Favoris (${wishlistCount})` : undefined}
 											>
 												{favoritesItem.label}
 												{wishlistCount > 0 && (
@@ -385,11 +360,7 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={ROUTES.ACCOUNT.ORDERS}
-												className={
-													isMenuItemActive(ROUTES.ACCOUNT.ORDERS)
-														? activeLinkClassName
-														: linkClassName
-												}
+												className={getLinkClass(ROUTES.ACCOUNT.ORDERS)}
 												aria-current={
 													isMenuItemActive(ROUTES.ACCOUNT.ORDERS) ? "page" : undefined
 												}
@@ -420,10 +391,8 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={ROUTES.AUTH.SIGN_UP}
-												className={cn(
-													isMenuItemActive(ROUTES.AUTH.SIGN_UP)
-														? activeLinkClassName
-														: linkClassName,
+												className={getLinkClass(
+													ROUTES.AUTH.SIGN_UP,
 													"text-muted-foreground hover:text-foreground"
 												)}
 												aria-current={

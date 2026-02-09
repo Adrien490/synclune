@@ -63,9 +63,9 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 				{/* Title (optional) + truncated content */}
 				<div className="space-y-1">
 					{review.title && (
-						<h4 className="font-medium text-foreground text-sm">
+						<h3 className="font-medium text-foreground text-sm">
 							{review.title}
-						</h4>
+						</h3>
 					)}
 					<p itemProp="reviewBody" className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
 						{review.content}

@@ -24,7 +24,7 @@ export function UserHeader({
 				<Link
 					href={ROUTES.ACCOUNT.ROOT}
 					className="block group"
-					aria-label="Accéder à mon compte"
+					aria-label={`Mon compte - ${firstName}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
 				>
 					<p className="text-base font-semibold text-foreground">
 						Bonjour {firstName}

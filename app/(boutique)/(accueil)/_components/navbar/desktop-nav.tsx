@@ -31,9 +31,10 @@ const linkClasses = cn(
 	"after:absolute after:bottom-0 after:left-1 after:right-1",
 	"after:h-0.5 after:bg-primary after:rounded-full",
 	"after:origin-center after:scale-x-0",
-	"after:transition-transform after:duration-200",
+	"motion-safe:after:transition-transform motion-safe:after:duration-200",
 	"hover:after:scale-x-100 data-[state=open]:after:scale-x-100",
 	"data-[active=true]:after:scale-x-100",
+	"motion-reduce:hover:after:scale-x-100 motion-reduce:data-[state=open]:after:scale-x-100",
 );
 
 export function DesktopNav({ navItems }: DesktopNavProps) {
@@ -55,6 +56,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 										href={item.href}
 										className={cn(navigationMenuTriggerStyle(), linkClasses)}
 										data-active={itemIsActive}
+										aria-current={itemIsActive ? "page" : undefined}
 									>
 										{item.label}
 									</Link>
@@ -70,9 +72,10 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 								showChevron
 								className={linkClasses}
 								data-active={itemIsActive}
+								aria-current={itemIsActive ? "page" : undefined}
 								onClick={(e) => {
-									// Navigate on direct click (not when opening the mega menu via hover)
-									if (!e.defaultPrevented) {
+									// Only navigate on mouse click, not keyboard activation
+									if (e.detail > 0 && !e.defaultPrevented) {
 										router.push(item.href);
 									}
 								}}

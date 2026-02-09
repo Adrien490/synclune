@@ -16,7 +16,7 @@ import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { AccountDropdown } from "./account-dropdown";
 import { DesktopNav } from "./desktop-nav";
-import { getNavbarMenuData } from "./get-navbar-menu-data";
+import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
 
@@ -58,13 +58,7 @@ export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.Reac
 			name: c.name,
 			productCount: c._count.products,
 			image: firstImage ? { url: firstImage.url, blurDataUrl: firstImage.blurDataUrl } : null,
-			images: c.products
-				.slice(0, 4)
-				.map((p) => {
-					const image = p.product?.skus[0]?.images[0];
-					return image ? { url: image.url, blurDataUrl: image.blurDataUrl, alt: image.altText } : null;
-				})
-				.filter((img): img is { url: string; blurDataUrl: string | null; alt: string | null } => img !== null),
+			images: extractCollectionImages(c.products),
 		};
 	});
 
@@ -91,13 +85,7 @@ export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.Reac
 		label: c.name,
 		description: c.description,
 		createdAt: c.createdAt,
-		images: c.products
-			.slice(0, 4)
-			.map((p) => {
-				const image = p.product?.skus[0]?.images[0];
-				return image ? { url: image.url, blurDataUrl: image.blurDataUrl, alt: image.altText } : null;
-			})
-			.filter((img): img is { url: string; blurDataUrl: string | null; alt: string | null } => img !== null),
+		images: extractCollectionImages(c.products),
 	}));
 
 	// Générer les items de navigation mobile en fonction de la session et statut admin

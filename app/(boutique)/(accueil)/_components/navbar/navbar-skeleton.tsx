@@ -11,7 +11,7 @@
 export function NavbarSkeleton() {
 	return (
 		<header
-			className="fixed top-0 inset-x-0 z-40 transition-all duration-300 ease-out border-b bg-transparent border-transparent"
+			className="fixed top-0 inset-x-0 z-40 transition-all duration-300 ease-out border-b bg-transparent border-transparent pt-[env(safe-area-inset-top)]"
 			aria-busy="true"
 			aria-label="Chargement de la navigation"
 		>
@@ -22,9 +22,12 @@ export function NavbarSkeleton() {
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					<div className="flex h-16 sm:h-20 items-center gap-4">
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
-						<div className="flex flex-1 items-center lg:flex-none">
+						<div className="flex flex-1 items-center lg:flex-none min-w-0">
 							{/* Menu burger skeleton (mobile uniquement) - size-11 = 44px matches real burger */}
 							<div className="lg:hidden size-11 animate-pulse bg-muted/60 rounded-xl" />
+
+							{/* Search icon skeleton (mobile only - between burger and logo) */}
+							<div className="sm:hidden size-11 animate-pulse bg-muted/60 rounded-xl" />
 
 							{/* Logo skeleton (desktop uniquement) */}
 							<div className="hidden lg:flex items-center gap-3">
@@ -50,7 +53,7 @@ export function NavbarSkeleton() {
 						</div>
 
 						{/* Section droite: Favoris + Recherche + Compte + Panier */}
-						<div className="flex flex-1 items-center justify-end">
+						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-2 sm:gap-3">
 								{/* Icône favoris skeleton (toujours visible) */}
 								<div className="size-11 animate-pulse bg-muted/60 rounded-xl" />
