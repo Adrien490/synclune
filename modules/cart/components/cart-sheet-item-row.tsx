@@ -19,6 +19,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 
+const LOW_STOCK_THRESHOLD = 3;
+
 interface CartSheetItemRowProps {
 	item: CartItem;
 	onClose?: () => void;
@@ -202,30 +204,28 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							</Badge>
 						)}
 					</div>
-				) : (
-					<Badge
-						variant="outline"
-						className="text-[10px] px-1.5 py-0 text-green-600 border-green-200 bg-green-50"
-					>
-						En stock
-					</Badge>
-				)}
+				) : item.sku.inventory <= LOW_STOCK_THRESHOLD ? (
+					<p className="text-xs text-orange-600">
+						Plus que {item.sku.inventory} en stock
+					</p>
+				) : null}
 			</div>
 
 			{/* Actions - à droite de l'image, sous le prix */}
-			<div
-				className={cn(
-					"flex items-center gap-2",
-					item.sku.inventory > 1 ? "justify-between" : "justify-end"
-				)}
-			>
+			<div className="flex items-center justify-between gap-2">
 				{/* Quantité - à gauche (rendu uniquement si inventory > 1) */}
-				<CartItemQuantitySelector
-					cartItemId={item.id}
-					currentQuantity={item.quantity}
-					maxQuantity={item.sku.inventory}
-					isInactive={isInactive}
-				/>
+				{item.sku.inventory === 1 && !hasIssue ? (
+					<span className="text-xs text-orange-600 font-medium">
+						Dernière pièce !
+					</span>
+				) : (
+					<CartItemQuantitySelector
+						cartItemId={item.id}
+						currentQuantity={item.quantity}
+						maxQuantity={item.sku.inventory}
+						isInactive={isInactive}
+					/>
+				)}
 
 				{/* Supprimer - à droite */}
 				<CartItemRemoveButton

@@ -13,8 +13,7 @@ import {
 import ScrollFade from "@/shared/components/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ShoppingBag, Truck, ShieldCheck, RotateCcw, Package } from "lucide-react";
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { ShoppingBag, ShieldCheck, RotateCcw, Package } from "lucide-react";
 import {
 	Empty,
 	EmptyContent,
@@ -24,6 +23,7 @@ import {
 } from "@/shared/components/ui/empty";
 import Link from "next/link";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
+import { AnimatedNumber } from "@/shared/components/animated-number";
 import { CartSheetItemRow } from "./cart-sheet-item-row";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import { CartPriceChangeAlert } from "./cart-price-change-alert";
@@ -143,7 +143,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 								</EmptyHeader>
 								<EmptyContent>
 									<p className="text-muted-foreground max-w-70">
-										Tu peux aller jeter un oeil à mes créations si tu le souhaites 😁
+										Chaque bijou est une pièce unique, fabriquée à la main avec amour. Trouve celui qui te correspond !
 									</p>
 									<Button
 										asChild
@@ -152,12 +152,19 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									>
 										<Link href="/produits" onClick={close}>Découvrir la boutique</Link>
 									</Button>
+									<Button
+										asChild
+										variant="link"
+										className="text-muted-foreground group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+									>
+										<Link href="/collections" onClick={close}>Voir les collections</Link>
+									</Button>
 								</EmptyContent>
 							</Empty>
 						</div>
 					) : (
 						<>
-							{/* Alerte stock EN HAUT - visible immédiatement */}
+							{/* Alertes critiques - toujours visibles */}
 							{hasStockIssues && (
 								<div
 									id="stock-issues-alert"
@@ -182,6 +189,12 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 											</li>
 										))}
 									</ul>
+								</div>
+							)}
+
+							{optimisticCart && (
+								<div className="shrink-0">
+									<CartPriceChangeAlert items={optimisticCart.items} />
 								</div>
 							)}
 
@@ -216,15 +229,12 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 												</motion.div>
 											))}
 										</AnimatePresence>
-
-										{/* Alerte changement de prix */}
-										{optimisticCart && <CartPriceChangeAlert items={optimisticCart.items} />}
 									</div>
 								</ScrollFade>
 							</div>
 
 							<SheetFooter className="px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
-								<div className="w-full space-y-3">
+								<div className="w-full space-y-2">
 									{/* Total */}
 									<div className="flex justify-between items-center">
 										<span className="font-semibold">
@@ -235,65 +245,52 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 											aria-live="polite"
 											className="font-mono font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse"
 										>
-											{formatEuro(subtotal)}
+											<AnimatedNumber value={subtotal} formatter={formatEuro} />
 										</span>
 									</div>
 
-									{/* CTAs */}
-									<div className="space-y-2">
-										{hasStockIssues ? (
-											<Button
-												size="lg"
-												className="w-full"
-												disabled
-												aria-disabled="true"
-												aria-describedby="stock-issues-alert"
-											>
-												Passer commande
-											</Button>
-										) : (
-											<Button
-												asChild
-												size="lg"
-												className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-											>
-												<Link href="/paiement" onClick={close}>Passer commande</Link>
-											</Button>
-										)}
-
+									{/* CTA principal */}
+									{hasStockIssues ? (
 										<Button
-											variant="secondary"
+											size="lg"
+											className="w-full"
+											disabled
+											aria-disabled="true"
+											aria-describedby="stock-issues-alert"
+										>
+											Passer commande
+										</Button>
+									) : (
+										<Button
+											asChild
 											size="lg"
 											className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+										>
+											<Link href="/paiement" onClick={close}>Passer commande</Link>
+										</Button>
+									)}
+
+									{/* Lien secondaire discret */}
+									<div className="text-center">
+										<button
+											type="button"
 											onClick={close}
+											className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 										>
 											Continuer mes achats
-										</Button>
+										</button>
 									</div>
 
-									{/* Estimation frais de port */}
-									<div className="flex items-center justify-between text-[11px] text-muted-foreground">
-										<span className="flex items-center gap-1">
-											<Truck className="w-3 h-3" />
-											Livraison : {formatEuro(SHIPPING_RATES.FR.amount)} - {formatEuro(SHIPPING_RATES.EU.amount)}
-										</span>
-										<span>France et UE</span>
-									</div>
-
-									{/* Trust badges */}
-									<div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground pt-1">
-										<span className="flex items-center gap-1">
-											<ShieldCheck className="w-3 h-3 text-green-600" />
-											Paiement securise
-										</span>
-										<span className="flex items-center gap-1">
-											<RotateCcw className="w-3 h-3 text-blue-600" />
-											Retours 14j
-										</span>
-										<span className="flex items-center gap-1">
-											<Package className="w-3 h-3" />
-											Suivi colis
-										</span>
+									{/* Trust badges - single inline line */}
+									<div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+										<ShieldCheck className="size-3 text-green-600 shrink-0" />
+										<span>Paiement sécurisé</span>
+										<span aria-hidden="true">·</span>
+										<RotateCcw className="size-3 text-blue-600 shrink-0" />
+										<span>Retours 14j</span>
+										<span aria-hidden="true">·</span>
+										<Package className="size-3 shrink-0" />
+										<span>Suivi colis</span>
 									</div>
 								</div>
 							</SheetFooter>
