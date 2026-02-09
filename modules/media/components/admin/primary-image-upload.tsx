@@ -11,13 +11,13 @@ import { DELETE_PRIMARY_IMAGE_DIALOG_ID } from "./delete-primary-image-alert-dia
 import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants";
 
 /**
- * Detecte le type de media a partir de l'URL si non fourni
- * Utilise VIDEO_EXTENSIONS de la config centralisee
+ * Detects the media type from URL if not provided.
+ * Uses VIDEO_EXTENSIONS from centralized config.
  */
 function detectMediaTypeFromUrl(url?: string): "IMAGE" | "VIDEO" | undefined {
 	if (!url) return undefined;
 	const lowerUrl = url.toLowerCase();
-	// Utilise les extensions video de la config centralisee
+	// Uses video extensions from centralized config
 	if (VIDEO_EXTENSIONS.some((ext) => lowerUrl.includes(ext))) {
 		return "VIDEO";
 	}
@@ -28,14 +28,14 @@ interface PrimaryImageUploadProps {
 	imageUrl?: string;
 	mediaType?: "IMAGE" | "VIDEO";
 	/**
-	 * URL de la miniature pour les vidéos (poster)
+	 * Thumbnail URL for videos (poster)
 	 */
 	thumbnailUrl?: string;
 	onRemove: () => void;
 	renderUploadZone: () => React.ReactNode;
 	/**
-	 * Si true, ne supprime pas via UTAPI immédiatement.
-	 * Utilisé pour le mode édition où la suppression est différée.
+	 * If true, don't delete via UTAPI immediately.
+	 * Used for edit mode where deletion is deferred.
 	 */
 	skipUtapiDelete?: boolean;
 }
@@ -51,7 +51,7 @@ export function PrimaryImageUpload({
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const deleteDialog = useAlertDialog(DELETE_PRIMARY_IMAGE_DIALOG_ID);
 
-	// Détection automatique du mediaType si non fourni
+	// Auto-detect mediaType if not provided
 	const effectiveMediaType = mediaType ?? detectMediaTypeFromUrl(imageUrl);
 
 	// Cleanup video element on unmount or when URL changes to prevent memory leaks
@@ -77,7 +77,7 @@ export function PrimaryImageUpload({
 
 	return (
 		<div className="space-y-3">
-			{/* Image uploadée */}
+			{/* Uploaded image */}
 			<AnimatePresence mode="wait">
 				{imageUrl ? (
 					<motion.div
@@ -105,7 +105,7 @@ export function PrimaryImageUpload({
 										playsInline
 										preload="none"
 										onMouseEnter={(e) => {
-											// Throttle: charger et jouer seulement si pas déjà en cours
+											// Throttle: load and play only if not already in progress
 											if (e.currentTarget.readyState === 0) {
 												e.currentTarget.load();
 											}
@@ -119,11 +119,11 @@ export function PrimaryImageUpload({
 									>
 										Ton navigateur ne supporte pas la lecture de vidéos.
 									</video>
-									{/* Badge VIDEO */}
+									{/* VIDEO badge */}
 									<div className="absolute top-2 right-2 z-10">
 										<MediaTypeBadge type="VIDEO" size="md" />
 									</div>
-									{/* Icône play au centre */}
+									{/* Centered play icon */}
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity">
 										<div className="bg-black/70 rounded-full p-4 shadow-xl">
 											<svg
@@ -147,7 +147,7 @@ export function PrimaryImageUpload({
 								/>
 							)}
 
-							{/* Badge Principal (toujours visible) */}
+							{/* Primary badge (always visible) */}
 							<div className="absolute top-2 left-2 z-10">
 								<div className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded-md shadow flex items-center gap-1">
 									<span>★</span>
@@ -155,7 +155,7 @@ export function PrimaryImageUpload({
 								</div>
 							</div>
 
-							{/* Overlay au hover/focus */}
+							{/* Hover/focus overlay */}
 							<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
 								<Button
 									type="button"

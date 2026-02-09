@@ -7,8 +7,8 @@ export async function UploadThingSSR() {
 	return (
 		<NextSSRPlugin
 			/**
-			 * Extrait uniquement les configurations des routes pour éviter
-			 * de divulguer des informations sensibles au client
+			 * Extracts only route configurations to avoid
+			 * leaking sensitive information to the client
 			 */
 			routerConfig={extractRouterConfig(ourFileRouter)}
 		/>

@@ -1,32 +1,32 @@
 /**
- * Image de fallback pour les produits sans photo
+ * Fallback image for products without photos
  *
- * SVG élégant avec le style girly et coloré de Synclune
- * Utilise les couleurs oklch du design system (rose, doré)
+ * Elegant SVG with Synclune's girly and colorful style.
+ * Uses oklch colors from the design system (pink, gold).
  *
- * Format: Data URI SVG optimisé (pas de fichier externe)
- * Taille: ~1KB (très léger, pas d'impact performance)
+ * Format: Optimized data URI SVG (no external file)
+ * Size: ~1KB (very lightweight, no performance impact)
  */
 
 /**
- * URL de l'image de fallback (data URI SVG)
+ * Fallback image URL (data URI SVG)
  *
  * @description
- * SVG responsive 400x500px (ratio 4:5 standard des product cards)
- * - Fond dégradé rose poudré → doré chaleureux
- * - Icône de diamant/bijou stylisée
- * - Texte "Photo à venir" en français
- * - Conforme au style coloré et girly de la boutique
+ * Responsive SVG 400x500px (4:5 ratio, standard for product cards)
+ * - Powder pink to warm gold gradient background
+ * - Stylized diamond/jewelry icon
+ * - "Photo a venir" text in French
+ * - Matches the colorful and girly boutique style
  *
  * @example
  * ```tsx
- * <Image src={FALLBACK_IMAGE_URL} alt="Photo à venir" fill />
+ * <Image src={FALLBACK_IMAGE_URL} alt="Photo a venir" fill />
  * ```
  */
 export const FALLBACK_IMAGE_URL = `data:image/svg+xml;base64,${Buffer.from(
 	`
 <svg width="400" height="500" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Dégradé de fond rose → doré (oklch colors from design system) -->
+  <!-- Background gradient pink to gold (oklch colors from design system) -->
   <defs>
     <linearGradient id="bg-linear" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:oklch(0.88 0.08 20);stop-opacity:0.6" />
@@ -34,7 +34,7 @@ export const FALLBACK_IMAGE_URL = `data:image/svg+xml;base64,${Buffer.from(
       <stop offset="100%" style="stop-color:oklch(0.75 0.12 75);stop-opacity:0.5" />
     </linearGradient>
 
-    <!-- Dégradé pour l'icône diamant -->
+    <!-- Gradient for the diamond icon -->
     <linearGradient id="diamond-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:oklch(0.57 0.20 5)" />
       <stop offset="100%" style="stop-color:oklch(0.75 0.12 75)" />
@@ -44,20 +44,20 @@ export const FALLBACK_IMAGE_URL = `data:image/svg+xml;base64,${Buffer.from(
   <!-- Background -->
   <rect width="400" height="500" fill="url(#bg-linear)" />
 
-  <!-- Icône diamant/bijou stylisée (centré) -->
+  <!-- Stylized diamond/jewelry icon (centered) -->
   <g transform="translate(200, 220)">
-    <!-- Corps du diamant -->
+    <!-- Diamond body -->
     <path
       d="M0,-50 L40,-10 L30,50 L-30,50 L-40,-10 Z"
       fill="url(#diamond-gradient)"
       opacity="0.9"
     />
-    <!-- Facettes pour effet de brillance -->
+    <!-- Facets for shine effect -->
     <path d="M0,-50 L0,50" stroke="white" stroke-width="2" opacity="0.5" />
     <path d="M-30,-20 L30,-20" stroke="white" stroke-width="1.5" opacity="0.4" />
     <path d="M-20,10 L20,10" stroke="white" stroke-width="1.5" opacity="0.4" />
 
-    <!-- Sparkles décoratifs autour (style girly) -->
+    <!-- Decorative sparkles around (girly style) -->
     <circle cx="-60" cy="-40" r="3" fill="oklch(0.75 0.12 75)" opacity="0.8">
       <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite" />
     </circle>
@@ -72,7 +72,7 @@ export const FALLBACK_IMAGE_URL = `data:image/svg+xml;base64,${Buffer.from(
     </circle>
   </g>
 
-  <!-- Texte "Photo à venir" -->
+  <!-- "Photo a venir" text -->
   <text
     x="200"
     y="330"
@@ -86,7 +86,7 @@ export const FALLBACK_IMAGE_URL = `data:image/svg+xml;base64,${Buffer.from(
     Photo à venir
   </text>
 
-  <!-- Sous-texte décoratif -->
+  <!-- Decorative subtext -->
   <text
     x="200"
     y="355"
@@ -104,13 +104,13 @@ export const FALLBACK_IMAGE_URL = `data:image/svg+xml;base64,${Buffer.from(
 ).toString("base64")}`;
 
 /**
- * Alt text par défaut pour l'image de fallback
+ * Default alt text for the fallback image
  */
 export const FALLBACK_IMAGE_ALT = "Photo du produit à venir - En préparation";
 
 /**
- * Objet complet pour l'image de fallback
- * Prêt à être utilisé dans getPrimaryImage() et buildGallery()
+ * Complete fallback image object.
+ * Ready to use in getPrimaryImage() and buildGallery().
  */
 export const FALLBACK_PRODUCT_IMAGE = {
 	id: "fallback-image",

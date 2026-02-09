@@ -50,7 +50,7 @@ function GalleryLoadingSkeleton() {
 	);
 }
 
-// Composant réutilisable pour éviter duplication desktop/mobile
+// Reusable component to avoid desktop/mobile duplication
 interface GalleryThumbnailListProps {
 	images: ProductMedia[];
 	current: number;
@@ -169,7 +169,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 		enabled: images.length > 1,
 	});
 
-	// Prefetch métadonnées des vidéos adjacentes
+	// Prefetch metadata of adjacent videos
 	usePrefetchVideos({
 		medias: images,
 		currentIndex: current,
@@ -177,14 +177,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 		enabled: images.length > 1,
 	});
 
-	// Effect Event pour gérer onSelect sans re-registration
+	// Effect Event for onSelect without re-registration
 	const onSelect = useEffectEvent(() => {
 		if (emblaApi) {
 			setCurrent(emblaApi.selectedScrollSnap());
 		}
 	});
 
-	// Sync index quand le carousel change
+	// Sync index when the carousel changes
 	useEffect(() => {
 		if (!emblaApi) return;
 
@@ -196,9 +196,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 		};
 	}, [emblaApi, onSelect]);
 
-	// Effect Event pour gérer la navigation clavier sans re-registration
+	// Effect Event for keyboard navigation without re-registration
 	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
-		// Ne pas capturer si focus dans un input/textarea
+		// Don't capture if focus is in an input/textarea
 		if (
 			e.target instanceof HTMLInputElement ||
 			e.target instanceof HTMLTextAreaElement
@@ -243,10 +243,10 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const scrollNext = () => emblaApi?.scrollNext();
 	const scrollTo = (index: number) => emblaApi?.scrollTo(index);
 
-	// Classes de transition conditionnelles (composables uniquement: transform, opacity)
+	// Conditional transition classes (composable only: transform, opacity)
 	const transitionClass = prefersReduced ? "" : "transition-[transform,opacity] duration-300";
 
-	// Cas limite : aucune image
+	// Edge case: no images
 	if (!images.length) {
 		return (
 			<div className="gallery-empty">
@@ -291,7 +291,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 				aria-label={`Galerie photos ${title}`}
 				aria-roledescription="carrousel"
 			>
-				{/* Annonce pour lecteurs d'écran (WCAG 4.1.3) */}
+				{/* Screen reader announcement (WCAG 4.1.3) */}
 				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
 					Image {current + 1} sur {images.length}
 				</div>
@@ -315,7 +315,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 						/>
 					)}
 
-					{/* Image principale avec Embla */}
+					{/* Main image with Embla */}
 					<div className="gallery-main relative group order-2">
 						<div
 							className={cn(
@@ -362,7 +362,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</div>
 							</div>
 
-							{/* Flèches navigation - Desktop uniquement */}
+							{/* Navigation arrows - Desktop only */}
 							{images.length > 1 && (
 								<GalleryNavigation onPrev={scrollPrev} onNext={scrollNext} />
 							)}

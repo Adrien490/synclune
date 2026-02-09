@@ -91,11 +91,11 @@ export function GallerySlide({
 	const [videoState, setVideoState] = useState<VideoState>("loading");
 	const prefersReduced = useReducedMotion();
 
-	// Détection desktop pour rendu conditionnel (évite double image dans DOM)
-	// Breakpoint md = 768px (cohérent avec la grille thumbnails)
+	// Desktop detection for conditional rendering (avoids double image in DOM)
+	// Breakpoint md = 768px (consistent with thumbnails grid)
 	const isDesktop = useMediaQuery("(min-width: 768px)");
 
-	// Autoplay vidéo quand active (respect prefers-reduced-motion)
+	// Autoplay video when active (respects prefers-reduced-motion)
 	useEffect(() => {
 		if (!videoRef.current || videoState === "error") return;
 
@@ -110,14 +110,14 @@ export function GallerySlide({
 		}
 	}, [isActive, prefersReduced, videoState, media.url]);
 
-	// Reset state si l'URL change
+	// Reset state if URL changes
 	useEffect(() => {
 		if (media.mediaType === "VIDEO") {
 			setVideoState("loading");
 		}
 	}, [media.url, media.mediaType]);
 
-	// Timeout pour éviter spinner infini
+	// Timeout to avoid infinite spinner
 	useEffect(() => {
 		if (media.mediaType !== "VIDEO" || videoState !== "loading") return;
 
@@ -137,7 +137,7 @@ export function GallerySlide({
 
 	const transitionClass = prefersReduced ? "" : "transition-opacity duration-300";
 
-	// Vidéo : même rendu mobile/desktop
+	// Video: same rendering mobile/desktop
 	if (media.mediaType === "VIDEO") {
 		return (
 			<div
@@ -179,7 +179,7 @@ export function GallerySlide({
 					aria-describedby={`video-desc-${index}`}
 				>
 					<source src={media.url} type="video/mp4" />
-					{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
+					{/* Empty track to satisfy WCAG - product videos without audio */}
 					<track kind="captions" srcLang="fr" label="Français" default />
 				</video>
 				<span id={`video-desc-${index}`} className="sr-only">
@@ -193,9 +193,9 @@ export function GallerySlide({
 		media.alt ||
 		PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType);
 
-	// Image : rendu conditionnel desktop/mobile
-	// Desktop → Zoom hover
-	// Mobile → Pinch-zoom natif
+	// Image: conditional rendering desktop/mobile
+	// Desktop → Hover zoom
+	// Mobile → Native pinch-zoom
 	if (isDesktop) {
 		return (
 			<div
@@ -218,7 +218,7 @@ export function GallerySlide({
 		);
 	}
 
-	// Mobile : Pinch-zoom natif (gère son propre onClick via onTap)
+	// Mobile: Native pinch-zoom (handles its own onClick via onTap)
 	return (
 		<div
 			className="flex-[0_0_100%] min-w-0 h-full relative"

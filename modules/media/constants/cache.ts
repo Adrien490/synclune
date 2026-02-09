@@ -9,13 +9,13 @@ import { cacheLife, cacheTag } from "next/cache"
 // ============================================
 
 export const MEDIAS_CACHE_TAGS = {
-	/** Liste des médias d'un produit */
+	/** Product media list */
 	PRODUCT_GALLERY: (productId: string) => `product-${productId}-gallery`,
 
-	/** Médias d'un SKU spécifique */
+	/** Media for a specific SKU */
 	SKU_MEDIA: (skuId: string) => `sku-${skuId}-media`,
 
-	/** Slides lightbox (données dérivées) */
+	/** Lightbox slides (derived data) */
 	LIGHTBOX_SLIDES: "lightbox-slides",
 } as const
 
@@ -24,9 +24,9 @@ export const MEDIAS_CACHE_TAGS = {
 // ============================================
 
 /**
- * Configure le cache pour la galerie d'un produit
- * - Utilisé pour : /creations/[slug] galerie
- * - Durée : 15min fraîche, 5min revalidation, 6h expiration
+ * Configures cache for a product gallery.
+ * - Used for: /creations/[slug] gallery
+ * - Duration: 15min fresh, 5min revalidation, 6h expiration
  */
 export function cacheProductGallery(productId: string) {
 	cacheLife("productDetail")
@@ -34,7 +34,7 @@ export function cacheProductGallery(productId: string) {
 }
 
 /**
- * Configure le cache pour les médias d'un SKU
+ * Configures cache for a SKU's media
  */
 export function cacheSkuMedia(skuId: string) {
 	cacheLife("productDetail")
@@ -46,14 +46,14 @@ export function cacheSkuMedia(skuId: string) {
 // ============================================
 
 /**
- * Tags à invalider lors de la modification des médias d'un produit
+ * Tags to invalidate when modifying a product's media
  */
 export function getProductGalleryInvalidationTags(productId: string): string[] {
 	return [MEDIAS_CACHE_TAGS.PRODUCT_GALLERY(productId)]
 }
 
 /**
- * Tags à invalider lors de la modification des médias d'un SKU
+ * Tags to invalidate when modifying a SKU's media
  */
 export function getSkuMediaInvalidationTags(skuId: string, productId?: string): string[] {
 	const tags = [MEDIAS_CACHE_TAGS.SKU_MEDIA(skuId)]

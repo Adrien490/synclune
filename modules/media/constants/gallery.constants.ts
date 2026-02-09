@@ -1,33 +1,33 @@
 /**
- * Configuration centralisée pour le composant Gallery
+ * Centralized configuration for the Gallery component
  */
 
 // ============================================
 // ZOOM DESKTOP (Hover)
 // ============================================
 
-/** Niveau de zoom pour le hover zoom desktop (2x ou 3x) */
+/** Zoom level for desktop hover zoom (2x or 3x) */
 export const GALLERY_ZOOM_LEVEL = 3 as const;
 
 // ============================================
 // ZOOM MOBILE (Pinch)
 // ============================================
 
-/** Configuration du pinch-to-zoom mobile (format camelCase pour shared/hooks/use-pinch-zoom) */
+/** Mobile pinch-to-zoom configuration (camelCase format for shared/hooks/use-pinch-zoom) */
 export const PINCH_ZOOM_CONFIG = {
-	/** Échelle minimum (1 = taille normale) */
+	/** Minimum scale (1 = normal size) */
 	minScale: 1,
-	/** Échelle maximum */
+	/** Maximum scale */
 	maxScale: 3,
-	/** Échelle appliquée au double-tap */
+	/** Scale applied on double-tap */
 	doubleTapScale: 2,
-	/** Délai pour détecter un double-tap (ms) */
+	/** Delay to detect a double-tap (ms) */
 	doubleTapDelay: 300,
-	/** Incrément de zoom au clavier (+/-) */
+	/** Keyboard zoom increment (+/-) */
 	keyboardZoomStep: 0.5,
-	/** Incrément de pan au clavier (flèches, px) */
+	/** Keyboard pan increment (arrows, px) */
 	keyboardPanStep: 50,
-	/** Distance minimale (px) avant d'invalider un double-tap */
+	/** Minimum distance (px) before invalidating a double-tap */
 	moveThreshold: 10,
 } as const;
 
@@ -35,15 +35,15 @@ export const PINCH_ZOOM_CONFIG = {
 // VIDEO
 // ============================================
 
-/** Timeout avant d'afficher une erreur si la vidéo ne charge pas (ms) */
+/** Timeout before showing an error if the video fails to load (ms) */
 export const VIDEO_LOAD_TIMEOUT = 30_000;
 
 // ============================================
 // PREFETCH
 // ============================================
 
-/** Nombre d'images adjacentes à prefetch sur connexion lente (2G/slow-2G) */
+/** Number of adjacent images to prefetch on slow connection (2G/slow-2G) */
 export const PREFETCH_RANGE_SLOW = 1;
 
-/** Nombre d'images adjacentes à prefetch sur connexion rapide */
+/** Number of adjacent images to prefetch on fast connection */
 export const PREFETCH_RANGE_FAST = 2;

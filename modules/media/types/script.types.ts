@@ -1,7 +1,7 @@
 /**
- * Types partagés pour les scripts de migration media
+ * Shared types for media migration scripts
  *
- * Ces types sont utilisés par:
+ * Used by:
  * - scripts/generate-blur-placeholders.ts
  * - scripts/generate-video-thumbnails.ts
  */
@@ -9,8 +9,8 @@
 import type { Prisma } from "../../../app/generated/prisma/client";
 
 /**
- * Media item à traiter (image ou vidéo)
- * Dérivé du modèle Prisma SkuMedia pour garantir la cohérence avec le schéma
+ * Media item to process (image or video).
+ * Derived from the Prisma SkuMedia model to ensure schema consistency.
  */
 export type MediaItem = Prisma.SkuMediaGetPayload<{
 	select: {
@@ -21,49 +21,49 @@ export type MediaItem = Prisma.SkuMediaGetPayload<{
 }>;
 
 /**
- * Métriques de performance pour le traitement d'un media
+ * Performance metrics for media processing
  */
 export interface ProcessMetrics {
-	/** Durée totale du traitement (ms) */
+	/** Total processing duration (ms) */
 	totalMs: number;
-	/** Durée du téléchargement (ms) */
+	/** Download duration (ms) */
 	downloadMs: number;
-	/** Durée de la validation (ms) */
+	/** Validation duration (ms) */
 	validationMs: number;
-	/** Durée de l'extraction/traitement (ms) */
+	/** Extraction/processing duration (ms) */
 	extractionMs: number;
-	/** Durée de génération blur (ms) */
+	/** Blur generation duration (ms) */
 	blurMs: number;
-	/** Durée de l'upload (ms) */
+	/** Upload duration (ms) */
 	uploadMs: number;
-	/** Durée de la mise à jour DB (ms) */
+	/** DB update duration (ms) */
 	dbUpdateMs: number;
 }
 
 /**
- * Résultat du traitement d'un media
+ * Media processing result
  */
 export interface ProcessResult {
-	/** ID du media traité */
+	/** Processed media ID */
 	id: string;
-	/** Succès du traitement */
+	/** Processing success */
 	success: boolean;
-	/** Message d'erreur si échec */
+	/** Error message if failed */
 	error?: string;
-	/** Métriques de performance (optionnel) */
+	/** Performance metrics (optional) */
 	metrics?: ProcessMetrics;
 }
 
 /**
- * Log structuré pour monitoring (Sentry-compatible)
+ * Structured log for monitoring (Sentry-compatible)
  */
 export interface StructuredLog {
-	/** Timestamp ISO 8601 */
+	/** ISO 8601 timestamp */
 	timestamp: string;
-	/** Niveau de log */
+	/** Log level */
 	level: "info" | "warn" | "error";
-	/** Nom de l'événement */
+	/** Event name */
 	event: string;
-	/** Données additionnelles */
+	/** Additional data */
 	data?: Record<string, unknown>;
 }

@@ -46,14 +46,14 @@ export function DeletePrimaryImageAlertDialog() {
 
 		if (!imageUrl) return;
 
-		// Si skipUtapiDelete, on supprime juste localement sans passer par UTAPI
+		// If skipUtapiDelete, just remove locally without calling UTAPI
 		if (skipUtapiDelete) {
 			onRemove?.();
 			deleteDialog.close();
 			return;
 		}
 
-		// Sinon, suppression immédiate via UTAPI
+		// Otherwise, immediate deletion via UTAPI
 		startTransition(() => {
 			deleteFiles(imageUrl);
 		});

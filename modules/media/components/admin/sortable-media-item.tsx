@@ -31,11 +31,11 @@ export interface SortableMediaItemProps {
 	onImageLoaded: (url: string) => void;
 	onOpenLightbox: (index: number) => void;
 	onOpenDeleteDialog: () => void;
-	/** WCAG 2.5.7: Alternative au drag pour monter l'élément */
+	/** WCAG 2.5.7: Alternative to drag for moving the item up */
 	onMoveUp?: () => void;
-	/** WCAG 2.5.7: Alternative au drag pour descendre l'élément */
+	/** WCAG 2.5.7: Alternative to drag for moving the item down */
 	onMoveDown?: () => void;
-	/** Nombre total d'éléments (pour déterminer si on peut descendre) */
+	/** Total number of items (to determine if we can move down) */
 	totalCount?: number;
 }
 
@@ -142,7 +142,7 @@ export function SortableMediaItem({
 										e.currentTarget.load();
 									}
 									e.currentTarget.play().catch(() => {
-										// Ignorer les erreurs d'autoplay (ex: user hasn't interacted yet)
+										// Ignore autoplay errors (e.g. user hasn't interacted yet)
 									});
 								}}
 								onMouseLeave={(e) => {
@@ -154,7 +154,7 @@ export function SortableMediaItem({
 								Ton navigateur ne supporte pas la lecture de vidéos.
 							</video>
 						)}
-						{/* Icône Play - cliquable pour ouvrir le lightbox */}
+						{/* Play icon - clickable to open lightbox */}
 						<button
 							type="button"
 							onClick={(e) => {
@@ -195,7 +195,7 @@ export function SortableMediaItem({
 				)}
 			</div>
 
-			{/* Badge principal */}
+			{/* Primary badge */}
 			{isPrimary && (
 				<div className="absolute bottom-2 left-2 sm:top-2 sm:bottom-auto sm:left-2 z-10 pointer-events-none">
 					<div className="flex items-center gap-1 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 rounded shadow-md">
@@ -206,7 +206,7 @@ export function SortableMediaItem({
 				</div>
 			)}
 
-			{/* Handle de drag */}
+			{/* Drag handle */}
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<button
@@ -234,7 +234,7 @@ export function SortableMediaItem({
 				</TooltipContent>
 			</Tooltip>
 
-			{/* Hint long-press mobile */}
+			{/* Long-press hint mobile */}
 			{showLongPressHint && (
 				<div
 					className={cn(
@@ -249,7 +249,7 @@ export function SortableMediaItem({
 				</div>
 			)}
 
-			{/* Actions Desktop */}
+			{/* Desktop actions */}
 			<div
 				className={cn(
 					"absolute bottom-2 right-2 z-20 flex items-center gap-1.5",
@@ -298,7 +298,7 @@ export function SortableMediaItem({
 				</Tooltip>
 			</div>
 
-			{/* Actions Mobile */}
+			{/* Mobile actions */}
 			<div className="absolute top-2 right-2 z-20 sm:hidden">
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -320,7 +320,7 @@ export function SortableMediaItem({
 							<Expand className="h-4 w-4" />
 							Agrandir
 						</DropdownMenuItem>
-						{/* WCAG 2.5.7: Alternatives au drag */}
+						{/* WCAG 2.5.7: Drag alternatives */}
 						{(canMoveUp || canMoveDown) && <DropdownMenuSeparator />}
 						{canMoveUp && (
 							<DropdownMenuItem

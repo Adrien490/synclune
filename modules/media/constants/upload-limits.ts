@@ -1,87 +1,87 @@
 /**
- * Configuration centralisée des limites d'upload
+ * Centralized upload rate limit configuration
  *
- * Ce fichier définit toutes les limites de rate limiting pour les uploads UploadThing.
- * Modifiez ces valeurs pour ajuster les limites sans toucher au code métier.
+ * This file defines all rate limiting thresholds for UploadThing uploads.
+ * Modify these values to adjust limits without touching business logic.
  *
- * 🎯 PHILOSOPHIE DES LIMITES :
- * - Admin: Limites plus permissives (actions légitimes et contrôlées)
- * - Utilisateurs connectés: Limites modérées
- * - Visiteurs: Limites strictes (risque d'abus)
+ * LIMIT PHILOSOPHY:
+ * - Admin: More permissive limits (legitimate, controlled actions)
+ * - Authenticated users: Moderate limits
+ * - Visitors: Strict limits (abuse risk)
  */
 
 import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 
 /**
- * Convertit des minutes en millisecondes
+ * Converts minutes to milliseconds
  */
 const minutes = (n: number) => n * 60 * 1000;
 
 // ========================================
-// 📸 UPLOADS ADMIN
+// ADMIN UPLOADS
 // ========================================
 
 /**
- * Limite pour les photos de témoignages (admin uniquement)
+ * Rate limit for testimonial photos (admin only)
  *
- * Contexte : Photos d'auteurs de témoignages
- * Limite modérée car admin = utilisateur de confiance
+ * Context: Testimonial author photos
+ * Moderate limit since admin = trusted user
  */
 export const UPLOAD_TESTIMONIAL_LIMIT: RateLimitConfig = {
 	limit: 5, // 5 uploads maximum
-	windowMs: minutes(1), // par minute
+	windowMs: minutes(1), // per minute
 };
 
 /**
- * Limite pour les médias du catalogue (admin uniquement)
+ * Rate limit for catalog media (admin only)
  *
- * Contexte : Images et vidéos de produits/SKUs
- * Plus permissif car workflow admin fréquent (ajout de produits)
+ * Context: Product/SKU images and videos
+ * More permissive due to frequent admin workflow (adding products)
  */
 export const UPLOAD_CATALOG_LIMIT: RateLimitConfig = {
 	limit: 10, // 10 uploads maximum
-	windowMs: minutes(1), // par minute
+	windowMs: minutes(1), // per minute
 };
 
 // ========================================
-// 📧 UPLOADS PUBLICS
+// PUBLIC UPLOADS
 // ========================================
 
 /**
- * Limite pour les pièces jointes du formulaire de contact
+ * Rate limit for contact form attachments
  *
- * TRÈS STRICT : Endpoint public, risque d'abus élevé
- * Protège contre :
- * - Spam de fichiers
- * - Saturation du stockage
- * - Utilisation malveillante
+ * VERY STRICT: Public endpoint, high abuse risk
+ * Protects against:
+ * - File spam
+ * - Storage saturation
+ * - Malicious usage
  */
 export const UPLOAD_CONTACT_ATTACHMENT_LIMIT: RateLimitConfig = {
 	limit: 3, // 3 uploads maximum
-	windowMs: minutes(10), // par 10 minutes
+	windowMs: minutes(10), // per 10 minutes
 };
 
 // ========================================
-// ⭐ UPLOADS UTILISATEURS
+// USER UPLOADS
 // ========================================
 
 /**
- * Limite pour les photos d'avis (utilisateurs connectés)
+ * Rate limit for review photos (authenticated users)
  *
- * Contexte : Photos accompagnant les avis produits
- * Modéré car utilisateurs authentifiés
+ * Context: Photos accompanying product reviews
+ * Moderate since users are authenticated
  */
 export const UPLOAD_REVIEW_MEDIA_LIMIT: RateLimitConfig = {
 	limit: 5, // 5 uploads maximum
-	windowMs: minutes(1), // par minute
+	windowMs: minutes(1), // per minute
 };
 
 // ========================================
-// 📊 EXPORT GROUPÉ
+// GROUPED EXPORT
 // ========================================
 
 /**
- * Toutes les limites d'upload groupées par contexte
+ * All upload limits grouped by context
  */
 export const UPLOAD_LIMITS = {
 	// Admin
@@ -89,6 +89,6 @@ export const UPLOAD_LIMITS = {
 	CATALOG: UPLOAD_CATALOG_LIMIT,
 	// Public
 	CONTACT_ATTACHMENT: UPLOAD_CONTACT_ATTACHMENT_LIMIT,
-	// Utilisateurs
+	// Users
 	REVIEW_MEDIA: UPLOAD_REVIEW_MEDIA_LIMIT,
 } as const;

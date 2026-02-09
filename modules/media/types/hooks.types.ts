@@ -1,5 +1,5 @@
 /**
- * Types pour les hooks du module media
+ * Types for the media module hooks
  *
  * @module modules/media/types/hooks.types
  */
@@ -9,62 +9,62 @@
 // ============================================================================
 
 export interface UseMediaUploadOptions {
-	/** Taille max pour les images en bytes (defaut: 16MB) */
+	/** Max size for images in bytes (default: 16MB) */
 	maxSizeImage?: number;
-	/** Taille max pour les videos en bytes (defaut: 512MB) */
+	/** Max size for videos in bytes (default: 512MB) */
 	maxSizeVideo?: number;
-	/** Nombre max de fichiers (defaut: 10) */
+	/** Max number of files (default: 10) */
 	maxFiles?: number;
-	/** Concurrence max pour les uploads de videos (defaut: 2) */
+	/** Max concurrency for video uploads (default: 2) */
 	videoConcurrency?: number;
-	/** Callback appele apres un upload reussi */
+	/** Callback called after a successful upload */
 	onSuccess?: (results: MediaUploadResult[]) => void;
-	/** Callback appele en cas d'erreur */
+	/** Callback called on error */
 	onError?: (error: Error) => void;
-	/** Callback appele avec la progression */
+	/** Callback called with progress updates */
 	onProgress?: (progress: UploadProgress) => void;
 }
 
 export interface MediaUploadResult {
-	/** URL du fichier uploade */
+	/** Uploaded file URL */
 	url: string;
-	/** Type de media */
+	/** Media type */
 	mediaType: "IMAGE" | "VIDEO";
-	/** Nom original du fichier */
+	/** Original file name */
 	fileName: string;
-	/** Blur placeholder en base64 (images et videos) */
+	/** Blur placeholder in base64 (images and videos) */
 	blurDataUrl?: string;
-	/** URL du thumbnail (videos uniquement) */
+	/** Thumbnail URL (videos only) */
 	thumbnailUrl?: string;
 }
 
 export interface UploadProgress {
-	/** Nombre total de fichiers */
+	/** Total number of files */
 	total: number;
-	/** Nombre de fichiers uploades */
+	/** Number of uploaded files */
 	completed: number;
-	/** Fichier en cours d'upload */
+	/** Currently uploading file */
 	current?: string;
-	/** Phase actuelle */
+	/** Current phase */
 	phase: "validating" | "generating-thumbnails" | "uploading" | "done";
 }
 
 export interface UseMediaUploadReturn {
-	/** Upload plusieurs fichiers avec validation */
+	/** Upload multiple files with validation */
 	upload: (files: File[]) => Promise<MediaUploadResult[]>;
-	/** Upload un seul fichier */
+	/** Upload a single file */
 	uploadSingle: (file: File) => Promise<MediaUploadResult | null>;
-	/** Valider des fichiers sans les uploader */
+	/** Validate files without uploading them */
 	validateFiles: (files: File[]) => File[];
-	/** Annuler l'upload en cours */
+	/** Cancel the current upload */
 	cancel: () => void;
-	/** Indique si un upload est en cours */
+	/** Whether an upload is in progress */
 	isUploading: boolean;
-	/** Progression actuelle */
+	/** Current progress */
 	progress: UploadProgress | null;
-	/** Utilitaire pour determiner le type de media */
+	/** Utility to determine the media type */
 	getMediaType: (file: File) => "IMAGE" | "VIDEO";
-	/** Utilitaire pour verifier si un fichier est trop gros */
+	/** Utility to check if a file is too large */
 	isOversized: (file: File) => boolean;
 }
 
@@ -73,25 +73,25 @@ export interface UseMediaUploadReturn {
 // ============================================================================
 
 export interface VideoThumbnailOptions {
-	/** Largeur du thumbnail en pixels (defaut: 480) */
+	/** Thumbnail width in pixels (default: 480) */
 	width?: number;
-	/** Qualite JPEG 0-1 (defaut: 0.8) */
+	/** JPEG quality 0-1 (default: 0.8) */
 	quality?: number;
-	/** Positions de capture en ratio de la duree (defaut: [0.1, 0.25, 0.5]) */
+	/** Capture positions as ratio of duration (default: [0.1, 0.25, 0.5]) */
 	capturePositions?: number[];
-	/** Temps max de capture en secondes (defaut: 1) */
+	/** Max capture time in seconds (default: 1) */
 	maxCaptureTime?: number;
-	/** Signal pour annuler l'operation */
+	/** Signal to cancel the operation */
 	signal?: AbortSignal;
 }
 
 export interface VideoThumbnailResult {
-	/** Thumbnail sous forme de File pret pour upload */
+	/** Thumbnail as a File ready for upload */
 	thumbnailFile: File;
-	/** URL de preview temporaire (doit etre revoquee) */
+	/** Temporary preview URL (must be revoked) */
 	previewUrl: string;
-	/** Blur placeholder en base64 data URL */
+	/** Blur placeholder as base64 data URL */
 	blurDataUrl: string;
-	/** Position de capture utilisee (ratio) */
+	/** Capture position used (ratio) */
 	capturedAt: number;
 }

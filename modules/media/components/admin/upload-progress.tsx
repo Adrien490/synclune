@@ -6,29 +6,29 @@ import { useReducedMotion } from "motion/react";
 import { Check, Loader2 } from "lucide-react";
 
 interface UploadProgressProps {
-	/** Pourcentage de progression (0-100) */
+	/** Progress percentage (0-100) */
 	progress: number;
-	/** Variante d'affichage */
+	/** Display variant */
 	variant?: "default" | "compact";
-	/** Classes CSS additionnelles */
+	/** Additional CSS classes */
 	className?: string;
-	/** Si true, affiche "Traitement..." même à 100% (traitement serveur en cours) */
+	/** If true, shows "Traitement..." even at 100% (server processing in progress) */
 	isProcessing?: boolean;
 }
 
 /**
- * Composant d'affichage de la progression d'upload.
- * Utilisé dans les zones de dépôt de médias.
+ * Upload progress display component.
+ * Used in media drop zones.
  *
- * Fonctionnalités:
- * - Accessibilité complète (aria-live, role, aria-busy)
- * - Support reduced-motion
- * - État de complétion à 100%
+ * Features:
+ * - Full accessibility (aria-live, role, aria-busy)
+ * - Reduced-motion support
+ * - Completion state at 100%
  * - Responsive mobile/desktop
  *
- * Variantes:
- * - default: Spinner + barre de progression + pourcentage (pour dropzone vide)
- * - compact: Spinner + pourcentage uniquement (pour zone miniature dans grille)
+ * Variants:
+ * - default: Spinner + progress bar + percentage (for empty dropzone)
+ * - compact: Spinner + percentage only (for thumbnail zone in grid)
  */
 export function UploadProgress({
 	progress,
@@ -37,11 +37,11 @@ export function UploadProgress({
 	isProcessing = false,
 }: UploadProgressProps) {
 	const shouldReduceMotion = useReducedMotion();
-	// Trois états: téléversement (0-99%), traitement (100% + isProcessing), terminé (100% + !isProcessing)
+	// Three states: uploading (0-99%), processing (100% + isProcessing), complete (100% + !isProcessing)
 	const isComplete = progress >= 100 && !isProcessing;
 	const isServerProcessing = progress >= 100 && isProcessing;
 
-	// Texte accessible pour les lecteurs d'écran
+	// Accessible text for screen readers
 	const srText = isComplete
 		? "Téléversement terminé"
 		: isServerProcessing
@@ -59,10 +59,10 @@ export function UploadProgress({
 					className
 				)}
 			>
-				{/* Texte pour lecteurs d'écran */}
+				{/* Screen reader text */}
 				<span className="sr-only">{srText}</span>
 
-				{/* Icône - Spinner ou Check */}
+				{/* Icon - Spinner or Check */}
 				{isComplete ? (
 					<div className="flex items-center justify-center h-7 w-7 sm:h-5 sm:w-5 rounded-full bg-emerald-500/20">
 						<Check
@@ -80,7 +80,7 @@ export function UploadProgress({
 					/>
 				)}
 
-				{/* Pourcentage ou état */}
+				{/* Percentage or state */}
 				<span
 					className={cn(
 						"text-sm sm:text-xs font-medium",
@@ -105,10 +105,10 @@ export function UploadProgress({
 				className
 			)}
 		>
-			{/* Texte pour lecteurs d'écran */}
+			{/* Screen reader text */}
 			<span className="sr-only">{srText}</span>
 
-			{/* Icône - Spinner ou Check */}
+			{/* Icon - Spinner or Check */}
 			{isComplete ? (
 				<div className="flex items-center justify-center h-12 w-12 sm:h-10 sm:w-10 rounded-full bg-emerald-500/20">
 					<Check
@@ -126,7 +126,7 @@ export function UploadProgress({
 				/>
 			)}
 
-			{/* Barre de progression + texte */}
+			{/* Progress bar + text */}
 			<div className="w-full space-y-2 sm:space-y-1.5">
 				<Progress
 					value={progress}

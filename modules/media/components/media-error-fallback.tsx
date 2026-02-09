@@ -4,14 +4,14 @@ import { RotateCcw } from "lucide-react";
 interface MediaErrorFallbackProps {
 	type: "image" | "video";
 	size?: "default" | "small";
-	/** Callback pour réessayer le chargement du média */
+	/** Callback to retry loading the media */
 	onRetry?: () => void;
 }
 
 /**
- * Composant d'affichage d'erreur pour les médias (images/vidéos)
- * Utilisé quand un média échoue au chargement
- * Supporte un bouton de retry optionnel
+ * Error display component for media (images/videos).
+ * Used when a media fails to load.
+ * Supports an optional retry button.
  */
 export function MediaErrorFallback({
 	type,

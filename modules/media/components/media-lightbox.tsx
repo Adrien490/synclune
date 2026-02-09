@@ -16,17 +16,17 @@ interface MediaLightboxProps {
 	close: () => void;
 	slides: Slide[];
 	index: number;
-	/** Callback appelé quand l'utilisateur navigue dans la lightbox */
+	/** Callback called when the user navigates in the lightbox */
 	onIndexChange?: (index: number) => void;
 }
 
 /**
- * Lightbox générique pour médias (images/vidéos)
+ * Generic lightbox for media (images/videos)
  * - Zoom plugin (pinch, double-tap, scroll)
- * - Counter plugin pour afficher la position
- * - Style premium personnalisé
- * - Navigation clavier (flèches, Esc)
- * - Synchronisation d'index avec le parent via onIndexChange
+ * - Counter plugin to show position
+ * - Custom premium styling
+ * - Keyboard navigation (arrows, Esc)
+ * - Index synchronization with parent via onIndexChange
  */
 export default function MediaLightbox({
 	open,

@@ -6,8 +6,8 @@ import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file
 // ============================================================================
 
 /**
- * Schema URL pour les fichiers UploadThing
- * Valide que l'URL est bien formee et provient d'un domaine UploadThing autorise
+ * URL schema for UploadThing files.
+ * Validates that the URL is well-formed and comes from an authorized UploadThing domain.
  */
 const uploadThingUrlSchema = z
 	.string()
@@ -17,14 +17,14 @@ const uploadThingUrlSchema = z
 	});
 
 /**
- * Schema pour supprimer un fichier UploadThing
+ * Schema for deleting a single UploadThing file
  */
 export const deleteUploadThingFileSchema = z.object({
 	fileUrl: uploadThingUrlSchema,
 });
 
 /**
- * Schema pour supprimer plusieurs fichiers UploadThing
+ * Schema for deleting multiple UploadThing files
  */
 export const deleteUploadThingFilesSchema = z.object({
 	fileUrls: z.array(uploadThingUrlSchema).min(1, "Au moins une URL est requise"),

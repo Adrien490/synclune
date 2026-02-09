@@ -31,7 +31,7 @@ import dynamic from "next/dynamic";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { UI_DELAYS } from "@/modules/media/constants/media.constants";
 
-// Lazy loading - lightbox charge uniquement a l'ouverture
+// Lazy loading - lightbox loaded only on open
 const MediaLightbox = dynamic(
 	() => import("@/modules/media/components/media-lightbox"),
 	{ ssr: false }
@@ -49,15 +49,15 @@ export interface MediaItem {
 }
 
 interface MediaUploadGridProps {
-	/** Liste des médias */
+	/** List of medias */
 	media: MediaItem[];
-	/** Callback appelé quand la liste change (réordonnement ou suppression) */
+	/** Callback called when the list changes (reorder or deletion) */
 	onChange: (media: MediaItem[]) => void;
-	/** Si true, ne supprime pas via UTAPI immédiatement (mode édition) */
+	/** If true, don't delete via UTAPI immediately (edit mode) */
 	skipUtapiDelete?: boolean;
-	/** Nombre maximum de médias autorisés */
+	/** Maximum number of medias allowed */
 	maxItems?: number;
-	/** Zone d'upload (rendu par le parent) */
+	/** Upload zone (rendered by parent) */
 	renderUploadZone?: () => React.ReactNode;
 }
 
@@ -71,34 +71,34 @@ export function MediaUploadGrid({
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
 	const shouldReduceMotion = useReducedMotion();
 
-	// État de chargement des images
+	// Image loading state
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
-	// État du lightbox (null = fermé, number = index ouvert)
+	// Lightbox state (null = closed, number = open index)
 	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-	// Etat du drag actif pour DragOverlay (index pour O(1) lookup)
+	// Active drag state for DragOverlay (index for O(1) lookup)
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
-	// Verification bounds: activeIndex pourrait etre hors limites si media change pendant drag
+	// Bounds check: activeIndex could be out of bounds if media changes during drag
 	const activeMedia =
 		activeIndex !== null && activeIndex < media.length ? media[activeIndex] : null;
 
-	// État pour les annonces accessibilité (aria-live)
+	// State for accessibility announcements (aria-live)
 	const [announcement, setAnnouncement] = useState<string>("");
 
-	// État pour l'indication long-press mobile (première visite)
+	// State for long-press mobile hint (first visit)
 	const [showLongPressHint, setShowLongPressHint] = useState(false);
 
-	// Condition pour afficher le hint (seulement quand on a au moins 2 médias)
+	// Condition to show the hint (only when there are at least 2 medias)
 	const hasMultipleMedia = media.length > 1;
 
-	// Afficher le hint long-press pour les nouveaux utilisateurs sur mobile (une seule fois)
+	// Show long-press hint for new users on mobile (once only)
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 		const hasSeenHint = localStorage.getItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN);
 		if (hasSeenHint) return;
 
-		// Afficher le hint seulement s'il y a au moins 2 médias
+		// Show the hint only if there are at least 2 medias
 		if (hasMultipleMedia) {
 			setShowLongPressHint(true);
 			const timer = setTimeout(() => {
@@ -109,7 +109,7 @@ export function MediaUploadGrid({
 		}
 	}, [hasMultipleMedia]);
 
-	// Sensors pour le drag & drop (desktop + mobile)
+	// Sensors for drag & drop (desktop + mobile)
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
@@ -127,7 +127,7 @@ export function MediaUploadGrid({
 		})
 	);
 
-	// Préparer les slides pour le lightbox
+	// Prepare slides for the lightbox
 	const slides: Slide[] = media.map((m) => {
 		if (m.mediaType === "VIDEO") {
 			return {
@@ -142,29 +142,29 @@ export function MediaUploadGrid({
 		};
 	});
 
-	// Marquer une image comme chargée
+	// Mark an image as loaded
 	const handleImageLoaded = (url: string) => {
 		setLoadedImages((prev) => new Set(prev).add(url));
 	};
 
-	// Ouvrir le lightbox
+	// Open the lightbox
 	const openLightbox = (index: number) => {
 		setLightboxIndex(index);
 	};
 
-	// Gestion du drag start
+	// Handle drag start
 	const handleDragStart = (event: DragStartEvent) => {
 		const draggedId = event.active.id as string;
 		const draggedIndex = media.findIndex((m) => m.url === draggedId);
 		setActiveIndex(draggedIndex);
 
-		// Annonce pour les lecteurs d'écran
+		// Screen reader announcement
 		const draggedMedia = media[draggedIndex];
 		const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
 		setAnnouncement(`${mediaType} ${draggedIndex + 1} sélectionnée. Utilisez les flèches pour déplacer.`);
 	};
 
-	// Gestion du drag end
+	// Handle drag end
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 
@@ -177,7 +177,7 @@ export function MediaUploadGrid({
 			// Compute the new array before validation
 			const newMedia = arrayMove(media, oldIndex, newIndex);
 
-			// Empêcher qu'une vidéo se retrouve en première position (couvre tous les cas)
+			// Prevent a video from ending up in first position (covers all cases)
 			if (newMedia[0]?.mediaType === "VIDEO") {
 				toast.error("La première position doit être une image, pas une vidéo.");
 				setAnnouncement("Impossible de placer une vidéo en première position.");
@@ -189,21 +189,21 @@ export function MediaUploadGrid({
 
 			onChange(newMedia);
 
-			// Feedback pour lecteur d'écran
+			// Screen reader feedback
 			setAnnouncement(`${mediaType} déplacée en position ${newIndex + 1}.`);
 		} else {
-			// Pas de changement
+			// No change
 			setAnnouncement("");
 		}
 	};
 
-	// Gestion du drag cancel
+	// Handle drag cancel
 	const handleDragCancel = () => {
 		setActiveIndex(null);
 		setAnnouncement("Déplacement annulé.");
 	};
 
-	// Ouvrir le dialog de suppression
+	// Open the delete dialog
 	const handleOpenDeleteDialog = (index: number) => {
 		deleteDialog.open({
 			index,
@@ -216,11 +216,11 @@ export function MediaUploadGrid({
 		});
 	};
 
-	// WCAG 2.5.7: Alternatives au drag pour réordonner
+	// WCAG 2.5.7: Drag alternatives for reordering
 	const handleMoveUp = (index: number) => {
 		if (index <= 0) return;
 		const newMedia = arrayMove(media, index, index - 1);
-		// Empêcher une vidéo en première position
+		// Prevent a video in first position
 		if (newMedia[0]?.mediaType === "VIDEO") {
 			toast.error("La première position doit être une image, pas une vidéo.");
 			return;
@@ -251,13 +251,13 @@ export function MediaUploadGrid({
 					items={media.map((m) => m.url)}
 					strategy={rectSortingStrategy}
 				>
-					{/* Instructions pour le drag & drop au clavier (screen readers) */}
+					{/* Keyboard drag & drop instructions (screen readers) */}
 					<span id="drag-instructions" className="sr-only">
 						Utilisez Espace ou Entrée pour saisir un élément, les flèches pour le déplacer,
 						Espace ou Entrée pour déposer, Échap pour annuler.
 					</span>
 
-					{/* Région aria-live pour les annonces de drag & drop */}
+					{/* aria-live region for drag & drop announcements */}
 					<div aria-live="polite" aria-atomic="true" className="sr-only">
 						{announcement}
 					</div>
@@ -290,7 +290,7 @@ export function MediaUploadGrid({
 							);
 						})}
 
-						{/* Zone d'upload */}
+						{/* Upload zone */}
 						{canAddMore && renderUploadZone && (
 							<div className="aspect-square rounded-lg overflow-hidden">
 								{renderUploadZone()}
@@ -299,7 +299,7 @@ export function MediaUploadGrid({
 					</div>
 				</SortableContext>
 
-				{/* DragOverlay pour un meilleur feedback visuel pendant le drag */}
+				{/* DragOverlay for better visual feedback during drag */}
 				<DragOverlay adjustScale={!shouldReduceMotion} modifiers={[snapCenterToCursor, restrictToWindowEdges]}>
 					{activeMedia ? (
 						<div className="aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-2xl bg-muted">
@@ -350,7 +350,7 @@ export function MediaUploadGrid({
 	);
 }
 
-// Wrapper avec ErrorBoundary
+// Wrapper with ErrorBoundary
 export function MediaUploadGridWithErrorBoundary(
 	props: MediaUploadGridProps
 ) {

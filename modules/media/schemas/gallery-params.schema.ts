@@ -1,8 +1,8 @@
 // ============================================================================
 // GALLERY URL PARAMS VALIDATION
 // ============================================================================
-// NOTE: Validation sans Zod pour éviter les erreurs HMR Turbopack dans les
-// composants client. Zod v4 n'est pas compatible avec "use client" + Turbopack.
+// NOTE: Validation without Zod to avoid HMR Turbopack errors in
+// client components. Zod v4 is not compatible with "use client" + Turbopack.
 
 export interface GalleryParams {
 	color?: string;
@@ -15,7 +15,7 @@ const MAX_SLUG_LENGTH = 50;
 const MAX_SIZE_LENGTH = 20;
 
 /**
- * Valide un slug de variante (color/material)
+ * Validates a variant slug (color/material)
  */
 function validateVariantSlug(value: string | undefined): string | undefined {
 	if (!value) return undefined;
@@ -25,7 +25,7 @@ function validateVariantSlug(value: string | undefined): string | undefined {
 }
 
 /**
- * Valide un paramètre size
+ * Validates a size parameter
  */
 function validateSize(value: string | undefined): string | undefined {
 	if (!value) return undefined;
@@ -34,8 +34,8 @@ function validateSize(value: string | undefined): string | undefined {
 }
 
 /**
- * Valide les paramètres de galerie (query params URL)
- * Retourne les valeurs validées ou undefined pour les valeurs invalides
+ * Validates gallery parameters (URL query params).
+ * Returns validated values or undefined for invalid values.
  */
 export function parseGalleryParams(params: {
 	color?: string;

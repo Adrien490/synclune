@@ -15,13 +15,13 @@ interface UsePrefetchVideosOptions {
 }
 
 /**
- * Hook pour prefetch intelligent des métadonnées vidéo dans un carousel
+ * Hook for intelligent prefetching of video metadata in a carousel
  *
- * Stratégie de prefetch :
- * 1. Identifie les vidéos adjacentes (N-1, N+1)
- * 2. Crée des éléments <video preload="metadata"> cachés
- * 3. Précharge uniquement les métadonnées (pas la vidéo complète)
- * 4. Nettoie automatiquement les vidéos non adjacentes
+ * Prefetch strategy:
+ * 1. Identifies adjacent videos (N-1, N+1)
+ * 2. Creates hidden <video preload="metadata"> elements
+ * 3. Preloads only metadata (not the full video)
+ * 4. Automatically cleans up non-adjacent videos
  */
 export function usePrefetchVideos({
 	medias,
@@ -42,7 +42,7 @@ export function usePrefetchVideos({
 			indicesToPrefetch.push((currentIndex - i + medias.length) % medias.length);
 		}
 
-		// URLs des vidéos à précharger
+		// URLs of videos to prefetch
 		const videoUrlsToPrefetch = new Set<string>();
 
 		for (const index of indicesToPrefetch) {
@@ -52,7 +52,7 @@ export function usePrefetchVideos({
 			}
 		}
 
-		// Créer les éléments video pour précharger les métadonnées
+		// Create video elements to preload metadata
 		for (const url of videoUrlsToPrefetch) {
 			if (prefetchedVideosRef.current.has(url)) continue;
 
@@ -63,11 +63,11 @@ export function usePrefetchVideos({
 			video.style.display = "none";
 			video.setAttribute("aria-hidden", "true");
 
-			// Pas besoin d'ajouter au DOM pour le preload
+			// No need to add to DOM for preload
 			prefetchedVideosRef.current.set(url, video);
 		}
 
-		// Cleanup: supprimer les vidéos qui ne sont plus adjacentes
+		// Cleanup: remove videos that are no longer adjacent
 		for (const [url, video] of prefetchedVideosRef.current) {
 			if (!videoUrlsToPrefetch.has(url)) {
 				video.src = "";
@@ -77,7 +77,7 @@ export function usePrefetchVideos({
 		}
 
 		return () => {
-			// Cleanup au unmount
+			// Cleanup on unmount
 			for (const [, video] of prefetchedVideosRef.current) {
 				video.src = "";
 				video.load();
