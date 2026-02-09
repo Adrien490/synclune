@@ -1,13 +1,23 @@
-import { Fade } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { dancingScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
-import { MessageCircle } from "lucide-react";
+import {
+	Clock,
+	Gem,
+	MessageCircle,
+	RotateCcw,
+	ShieldCheck,
+	Sparkles,
+	Truck,
+} from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
+import { FaqDoodles } from "./faq-doodles";
 
 interface FaqLink {
 	text: string;
@@ -17,6 +27,7 @@ interface FaqLink {
 interface FaqItemData {
 	question: string;
 	answer: string;
+	icon: ReactNode;
 	links?: FaqLink[];
 }
 
@@ -78,35 +89,41 @@ function getPlainTextAnswer(answer: string, links?: FaqLink[]): string {
 const faqItems: FaqItemData[] = [
 	{
 		question: "Combien de temps pour recevoir ma commande ?",
+		icon: <Truck className="size-4" />,
 		answer:
 			"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo te livre en 2-4 jours en France métropolitaine. Je t'envoie le numéro de suivi par email dès que ton colis part de mon atelier ! Tous les détails sont dans mes {{link0}}.",
 		links: [{ text: "conditions de vente", href: "/cgv" }],
 	},
 	{
 		question: "Je peux retourner un bijou si je change d'avis ?",
+		icon: <RotateCcw className="size-4" />,
 		answer:
 			"Bien sûr ! Tu as 14 jours après réception pour changer d'avis. Renvoie-moi le bijou dans son état d'origine, non porté, et je te rembourse. Écris-moi par email pour qu'on organise ça ensemble. Plus d'infos sur les retours dans mes {{link0}}.",
 		links: [{ text: "conditions de vente", href: "/cgv" }],
 	},
 	{
 		question: "En quoi sont faits tes bijoux ?",
+		icon: <Gem className="size-4" />,
 		answer:
 			"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles ! Découvre toutes mes {{link0}}.",
 		links: [{ text: "collections", href: "/collections" }],
 	},
 	{
 		question: "Comment je prends soin de mes bijoux ?",
+		icon: <ShieldCheck className="size-4" />,
 		answer:
 			"Évite le contact avec l'eau, les parfums et les crèmes. Range-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
 	},
 	{
 		question: "Tu fais des bijoux sur-mesure ?",
+		icon: <Sparkles className="size-4" />,
 		answer:
 			"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écris-moi via la {{link0}} et on discute de ton projet ensemble.",
 		links: [{ text: "page Personnalisation", href: "/personnalisation" }],
 	},
 	{
 		question: "C'est quoi le délai pour une création personnalisée ?",
+		icon: <Clock className="size-4" />,
 		answer:
 			"Compte environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que tu veux, de créer des esquisses qu'on validera ensemble, et de réaliser ton bijou avec tout le soin qu'il mérite.",
 	},
@@ -154,11 +171,16 @@ export function FaqSection() {
 	const accordionItems = faqItems.map((item) => ({
 		question: item.question,
 		answer: renderAnswerWithLinks(item.answer, item.links),
+		icon: item.icon,
 	}));
 
 	return (
 		<section
-			className={cn("bg-background", SECTION_SPACING.section)}
+			className={cn(
+				"relative overflow-hidden bg-muted/20",
+				"mask-t-from-90% mask-t-to-100% mask-b-from-90% mask-b-to-100%",
+				SECTION_SPACING.section,
+			)}
 			aria-labelledby="faq-title"
 		>
 			{/* JSON-LD Schema for SEO */}
@@ -174,6 +196,7 @@ export function FaqSection() {
 				<header className="text-center mb-10 lg:mb-12">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="faq-title">Questions fréquentes</SectionTitle>
+						<HandDrawnUnderline color="var(--secondary)" delay={0.3} className="mx-auto mt-2" />
 					</Fade>
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-xl mx-auto">
@@ -182,12 +205,18 @@ export function FaqSection() {
 					</Fade>
 				</header>
 
-				<FaqAccordion items={accordionItems} />
+				<div className="relative">
+					<FaqDoodles />
+					<FaqAccordion items={accordionItems} />
+				</div>
 
 				<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration} inView once>
-					<div className="mt-10 text-center">
-						<p className="text-muted-foreground mb-4">
-							Une autre question ? N'hésite pas à m'écrire directement !
+					<div className="mt-12 max-w-3xl mx-auto bg-primary/5 border border-primary/15 rounded-2xl p-6 sm:p-8 text-center">
+						<p className="text-muted-foreground mb-1 text-base">
+							Tu n'as pas trouvé ta réponse ?
+						</p>
+						<p className={cn(dancingScript.className, "text-lg text-foreground/60 italic mb-5")}>
+							Écris-moi, je réponds toujours !
 						</p>
 						<Button asChild variant="outline" size="lg" className="gap-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out">
 							<Link href="/contact">

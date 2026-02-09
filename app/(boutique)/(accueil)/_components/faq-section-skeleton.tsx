@@ -8,7 +8,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 export function FaqSectionSkeleton() {
 	return (
 		<section
-			className={`bg-background ${SECTION_SPACING.section}`}
+			className={`bg-muted/20 ${SECTION_SPACING.section}`}
 			aria-label="Chargement des questions frequentes"
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

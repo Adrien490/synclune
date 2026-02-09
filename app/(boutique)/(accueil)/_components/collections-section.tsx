@@ -1,7 +1,7 @@
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { extractCollectionImages } from "@/modules/collections/utils/collection-images.utils";
-import { Fade, Reveal } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
@@ -52,6 +52,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 						<SectionTitle id="collections-title">
 							Les dernières collections
 						</SectionTitle>
+						<HandDrawnUnderline color="var(--secondary)" delay={0.3} className="mx-auto mt-2" />
 					</Fade>
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p

@@ -1,4 +1,4 @@
-import { Fade, Stagger } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -44,6 +44,7 @@ export function LatestCreations({
             <SectionTitle id="latest-creations-title">
               Nouvelles créations
             </SectionTitle>
+            <HandDrawnUnderline color="var(--secondary)" delay={0.3} className="mx-auto mt-2" />
           </Fade>
           <Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
             <p

@@ -81,6 +81,13 @@ export function ParticleBackground({
 
 		let lerpRafId: number | null = null;
 
+		// Cache the bounding rect to avoid forced layout on every mousemove
+		let cachedRect = el.getBoundingClientRect();
+
+		function updateRect() {
+			cachedRect = el.getBoundingClientRect();
+		}
+
 		function cancelLerp() {
 			if (lerpRafId !== null) {
 				cancelAnimationFrame(lerpRafId);
@@ -90,9 +97,8 @@ export function ParticleBackground({
 
 		const onMouseMove = (e: MouseEvent) => {
 			cancelLerp();
-			const rect = el.getBoundingClientRect();
-			mouseX.set(((e.clientX - rect.left) / rect.width - 0.5) * 2 * PARALLAX_STRENGTH);
-			mouseY.set(((e.clientY - rect.top) / rect.height - 0.5) * 2 * PARALLAX_STRENGTH);
+			mouseX.set(((e.clientX - cachedRect.left) / cachedRect.width - 0.5) * 2 * PARALLAX_STRENGTH);
+			mouseY.set(((e.clientY - cachedRect.top) / cachedRect.height - 0.5) * 2 * PARALLAX_STRENGTH);
 		};
 
 		// Progressively lerp parallax back to 0 when mouse leaves the container
@@ -118,10 +124,12 @@ export function ParticleBackground({
 
 		el.addEventListener("mousemove", onMouseMove, { passive: true });
 		el.addEventListener("mouseleave", onMouseLeave, { passive: true });
+		window.addEventListener("resize", updateRect, { passive: true });
 		return () => {
 			cancelLerp();
 			el.removeEventListener("mousemove", onMouseMove);
 			el.removeEventListener("mouseleave", onMouseLeave);
+			window.removeEventListener("resize", updateRect);
 		};
 	}, [mouseX, mouseY]);
 
