@@ -36,6 +36,6 @@ export const jetBrainsMono = JetBrains_Mono({
 export const dancingScript = Dancing_Script({
 	subsets: ["latin"],
 	display: "swap",
-	weight: ["400", "500", "600", "700"], // Regular à Bold
-	variable: "--font-cursive", // Variable CSS pour les signatures
+	weight: ["400"],
+	variable: "--font-cursive",
 });
