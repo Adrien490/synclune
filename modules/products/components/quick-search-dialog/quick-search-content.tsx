@@ -69,6 +69,11 @@ export function QuickSearchContent({
 
 	return (
 		<>
+			{/* Screen reader announcement (replaces Suspense fallback "Recherche en cours...") */}
+			<div role="status" aria-live="polite" className="sr-only">
+				{totalCount} resultat{totalCount !== 1 ? "s" : ""} trouve{totalCount !== 1 ? "s" : ""}.
+			</div>
+
 			<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
 				<div className="px-4 py-4 space-y-4">
 					{/* Spell suggestion */}

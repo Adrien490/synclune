@@ -64,7 +64,6 @@ export function QuickSearchDialog({
 		setActiveIndex,
 		contentRef,
 		handleArrowNavigation,
-		handleMouseEnter,
 		resetActiveIndex,
 	} = useKeyboardNavigation()
 
@@ -280,7 +279,7 @@ export function QuickSearchDialog({
 									onRecentSearch={handleRecentSearch}
 									onRemoveSearch={remove}
 									onClearSearches={clear}
-									onMouseEnter={handleMouseEnter}
+									
 									isPending={isPending}
 								/>
 							</Fade>

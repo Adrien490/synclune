@@ -11,7 +11,7 @@ import type { QuickSearchProductType } from "./types"
 interface CategoryCardProps {
 	type: QuickSearchProductType
 	onSelect: () => void
-	onMouseEnter?: (element: HTMLElement) => void
+	
 	/** Compact variant for search results, full variant for idle */
 	variant?: "compact" | "full"
 }
@@ -19,7 +19,7 @@ interface CategoryCardProps {
 export function CategoryCard({
 	type,
 	onSelect,
-	onMouseEnter,
+
 	variant = "full",
 }: CategoryCardProps) {
 	const isCompact = variant === "compact"
@@ -29,7 +29,7 @@ export function CategoryCard({
 			<Link
 				href={`/produits/${type.slug}`}
 				onClick={onSelect}
-				onMouseEnter={(e) => onMouseEnter?.(e.currentTarget)}
+				
 				data-active={undefined}
 				className={cn(
 					"rounded-xl transition-all text-left font-medium",

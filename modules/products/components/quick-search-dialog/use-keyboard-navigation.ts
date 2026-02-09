@@ -91,14 +91,6 @@ export function useKeyboardNavigation() {
 		}
 	}
 
-	const handleMouseEnter = (element: HTMLElement) => {
-		const focusables = getFocusableElements()
-		const index = focusables.indexOf(element)
-		if (index !== -1) {
-			setActiveIndex(index)
-		}
-	}
-
 	const resetActiveIndex = () => setActiveIndex(-1)
 
 	return {
@@ -106,7 +98,6 @@ export function useKeyboardNavigation() {
 		setActiveIndex,
 		contentRef,
 		handleArrowNavigation,
-		handleMouseEnter,
 		resetActiveIndex,
 		getFocusableElements,
 	}

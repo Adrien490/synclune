@@ -73,7 +73,7 @@ export async function RelatedProducts({
 						align: "center",
 						containScroll: "trimSnaps",
 					}}
-					className="w-full"
+					className="w-full group/carousel"
 					aria-label="Carousel de produits similaires"
 				>
 					<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
@@ -95,11 +95,11 @@ export async function RelatedProducts({
 					{relatedProducts.length > 3 && (
 						<>
 							<CarouselPrevious
-								className="hidden md:flex left-4 top-[40%]"
+								className="hidden md:flex left-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 focus-visible:opacity-100 transition-opacity duration-300"
 								aria-label="Voir les produits précédents"
 							/>
 							<CarouselNext
-								className="hidden md:flex right-4 top-[40%]"
+								className="hidden md:flex right-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 focus-visible:opacity-100 transition-opacity duration-300"
 								aria-label="Voir les produits suivants"
 							/>
 						</>

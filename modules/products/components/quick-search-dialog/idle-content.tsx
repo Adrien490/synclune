@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, Clock, Eye, Layers, Search, Sparkles, X } from "lucide-react"
+import { ChevronRight, Clock, Eye, Layers, Search, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { Stagger } from "@/shared/components/animations/stagger"
@@ -11,7 +11,6 @@ import { cn } from "@/shared/utils/cn"
 import { formatEuro } from "@/shared/utils/format-euro"
 
 import { CollectionCard } from "./collection-card"
-import { CategoryCard } from "./category-card"
 import type { QuickSearchCollection, QuickSearchProductType, RecentlyViewedProduct } from "./types"
 
 interface IdleContentProps {
@@ -23,7 +22,6 @@ interface IdleContentProps {
 	onRecentSearch: (term: string) => void
 	onRemoveSearch: (term: string) => void
 	onClearSearches: () => void
-	onMouseEnter: (element: HTMLElement) => void
 	isPending: boolean
 }
 
@@ -36,10 +34,14 @@ export function IdleContent({
 	onRecentSearch,
 	onRemoveSearch,
 	onClearSearches,
-	onMouseEnter,
 	isPending,
 }: IdleContentProps) {
-	const hasContent = searches.length > 0 || collections.length > 0 || productTypes.length > 0 || recentlyViewed.length > 0
+	const hasContent = searches.length > 0 || collections.length > 0 || recentlyViewed.length > 0
+
+	// Defer dialog close to next frame so <Link> navigation starts first
+	const handleNavigateClose = () => {
+		requestAnimationFrame(() => onClose())
+	}
 
 	return (
 		<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
@@ -59,7 +61,7 @@ export function IdleContent({
 									<Tap key={product.slug} scale={0.97}>
 										<Link
 											href={`/creations/${product.slug}`}
-											onClick={onClose}
+											onClick={handleNavigateClose}
 											className={cn(
 												"flex flex-col items-center gap-2 w-24 shrink-0",
 												"rounded-xl p-2 transition-colors",
@@ -120,7 +122,6 @@ export function IdleContent({
 											type="button"
 											onClick={() => onRecentSearch(term)}
 											disabled={isPending}
-											onMouseEnter={(e) => onMouseEnter(e.currentTarget)}
 											data-active={undefined}
 											className={cn(
 												"w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-left font-medium",
@@ -163,8 +164,7 @@ export function IdleContent({
 								<div key={collection.slug} role="listitem">
 									<CollectionCard
 										collection={collection}
-										onSelect={onClose}
-										onMouseEnter={onMouseEnter}
+										onSelect={handleNavigateClose}
 									/>
 								</div>
 							))}
@@ -172,39 +172,13 @@ export function IdleContent({
 						<div className="mt-3 text-center">
 							<Link
 								href="/collections"
-								onClick={onClose}
+								onClick={handleNavigateClose}
 								className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none rounded-md px-2 py-1"
 							>
 								Voir toutes les collections
 								<ChevronRight className="size-4" aria-hidden="true" />
 							</Link>
 						</div>
-					</section>
-				)}
-
-				{/* Product Types */}
-				{productTypes.length > 0 && (
-					<section aria-labelledby="categories-heading">
-						<div className="flex items-center justify-between mb-3">
-							<h2 id="categories-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
-								<Sparkles className="size-5" aria-hidden="true" />
-								Categories
-							</h2>
-							<span className="text-xs text-muted-foreground/60">
-								{productTypes.length} type{productTypes.length > 1 ? "s" : ""}
-							</span>
-						</div>
-						<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.02} delay={0.04} y={8}>
-							{productTypes.map((type) => (
-								<div key={type.slug} role="listitem">
-									<CategoryCard
-										type={type}
-										onSelect={onClose}
-										onMouseEnter={onMouseEnter}
-									/>
-								</div>
-							))}
-						</Stagger>
 					</section>
 				)}
 

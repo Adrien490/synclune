@@ -51,16 +51,17 @@ export async function fetchWishlistItemCount(
 			return 0;
 		}
 
-		const wishlist = await prisma.wishlist.findFirst({
-			where: userId ? { userId } : { sessionId },
-			select: {
-				_count: {
-					select: { items: true },
+		const count = await prisma.wishlistItem.count({
+			where: {
+				wishlist: userId ? { userId } : { sessionId },
+				product: {
+					status: "PUBLIC",
+					deletedAt: null,
 				},
 			},
 		});
 
-		return wishlist?._count.items ?? 0;
+		return count;
 	} catch (error) {
 		return 0;
 	}
