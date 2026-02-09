@@ -1,5 +1,5 @@
 import { ParticleBackground, ScrollIndicator } from "@/shared/components/animations";
-import { HeroFloatingImages } from "./hero";
+import { HeroFloatingImages } from "./floating-images";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { LayoutTextFlip } from "@/shared/components/ui/layout-text-flip";
