@@ -16,6 +16,8 @@ import { duplicateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
 import { generateSkuCode } from "@/modules/skus/services/sku-generation.service";
 import { getProductForDuplication } from "../data/get-product-for-duplication";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_PRODUCT_DUPLICATE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action pour dupliquer un produit
@@ -30,6 +32,10 @@ export async function duplicateProduct(
 		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 1.1 Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_DUPLICATE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {

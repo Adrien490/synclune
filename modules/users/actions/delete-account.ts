@@ -93,7 +93,16 @@ export async function deleteAccount(
 				},
 			});
 
-			// 5.2 Supprimer les données non nécessaires à la comptabilité
+			// 5.2 Anonymiser le contenu des avis (texte libre potentiellement personnel)
+			await tx.productReview.updateMany({
+				where: { userId },
+				data: {
+					content: "Contenu supprimé suite à la suppression du compte.",
+					title: null,
+				},
+			});
+
+			// 5.3 Supprimer les données non nécessaires à la comptabilité
 			// Adresses
 			await tx.address.deleteMany({ where: { userId } });
 
@@ -109,7 +118,7 @@ export async function deleteAccount(
 			// Comptes OAuth
 			await tx.account.deleteMany({ where: { userId } });
 
-			// 5.3 Soft delete du compte utilisateur avec anonymisation RGPD
+			// 5.4 Soft delete du compte utilisateur avec anonymisation RGPD
 			await tx.user.update({
 				where: { id: userId },
 				data: {

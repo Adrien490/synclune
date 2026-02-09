@@ -9,6 +9,8 @@ import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
 import { validateProductForPublication } from "../services/product-validation.service";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action pour basculer le statut d'un produit
@@ -23,6 +25,10 @@ export async function toggleProductStatus(
 		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 1.1 Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {

@@ -8,6 +8,9 @@ import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, error, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { bulkDeleteProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
+import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_PRODUCT_BULK_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action pour soft-delete plusieurs produits
@@ -23,6 +26,10 @@ export async function bulkDeleteProducts(
 		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 1.1 Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_BULK_DELETE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
 		const productIdsRaw = formData.get("productIds") as string;
@@ -92,9 +99,22 @@ export async function bulkDeleteProducts(
 			);
 		}
 
-		// 6. Soft delete les produits et leurs SKUs dans une transaction
+		// 6. Find affected carts before deletion (for cache invalidation)
+		const affectedCarts = await prisma.cartItem.findMany({
+			where: { sku: { productId: { in: validatedProductIds } } },
+			select: { cart: { select: { userId: true, sessionId: true } } },
+			distinct: ["cartId"],
+		});
+
+		// 7. Soft delete les produits et leurs SKUs dans une transaction
+		// Also clean up CartItems referencing these products' SKUs
 		// Files are preserved on UploadThing until hard delete (10-year retention)
 		await prisma.$transaction(async (tx) => {
+			// Remove CartItems referencing these products' SKUs before soft-deleting
+			await tx.cartItem.deleteMany({
+				where: { sku: { productId: { in: validatedProductIds } } },
+			});
+
 			const now = new Date();
 			await tx.productSku.updateMany({
 				where: { productId: { in: validatedProductIds } },
@@ -106,7 +126,13 @@ export async function bulkDeleteProducts(
 			});
 		});
 
-		// 7. Invalidate cache tags pour tous les produits supprimes
+		// 8. Invalidate cart caches for affected users
+		for (const { cart } of affectedCarts) {
+			const cartTags = getCartInvalidationTags(cart.userId ?? undefined, cart.sessionId ?? undefined);
+			cartTags.forEach(tag => updateTag(tag));
+		}
+
+		// 9. Invalidate cache tags pour tous les produits supprimes
 		for (const product of existingProducts) {
 			const productTags = getProductInvalidationTags(product.slug, product.id);
 			productTags.forEach(tag => updateTag(tag));
@@ -120,7 +146,7 @@ export async function bulkDeleteProducts(
 			}
 		}
 
-		// 8. Success
+		// 10. Success
 		return success(
 			`${existingProducts.length} produit${existingProducts.length > 1 ? "s" : ""} supprimé${existingProducts.length > 1 ? "s" : ""} avec succès.`,
 			{

@@ -2,12 +2,15 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_PRODUCT_BULK_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { bulkChangeProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
+import { validateProductForPublication } from "../services/product-validation.service";
 
 /**
  * Server Action pour changer le statut de plusieurs produits entre DRAFT et PUBLIC
@@ -21,6 +24,10 @@ export async function bulkChangeProductStatus(
 		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 1.1 Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_BULK_STATUS_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
 		const productIdsRaw = formData.get("productIds") as string;
@@ -44,6 +51,7 @@ export async function bulkChangeProductStatus(
 		const validatedData = validation.data;
 
 		// 4. Verifier que tous les produits existent et ne sont pas archives
+		// Include SKU data for publication validation when targeting PUBLIC
 		const existingProducts = await prisma.product.findMany({
 			where: {
 				id: {
@@ -56,6 +64,17 @@ export async function bulkChangeProductStatus(
 				slug: true,
 				status: true,
 				collections: { select: { collection: { select: { slug: true } } } },
+				skus: {
+					select: {
+						id: true,
+						isActive: true,
+						inventory: true,
+						images: {
+							where: { isPrimary: true },
+							select: { id: true },
+						},
+					},
+				},
 			},
 		});
 
@@ -71,6 +90,22 @@ export async function bulkChangeProductStatus(
 			return validationError(
 				"Impossible de changer le statut de produits archives. Veuillez d'abord les restaurer."
 			);
+		}
+
+		// 5.1 Validation metier : Produits PUBLIC doivent avoir au moins 1 SKU actif avec stock et image
+		if (validatedData.targetStatus === "PUBLIC") {
+			const invalidProducts: string[] = [];
+			for (const product of existingProducts) {
+				const pubValidation = validateProductForPublication(product);
+				if (!pubValidation.isValid) {
+					invalidProducts.push(`"${product.title}"`);
+				}
+			}
+			if (invalidProducts.length > 0) {
+				return validationError(
+					`Impossible de publier ${invalidProducts.length} produit${invalidProducts.length > 1 ? "s" : ""} : ${invalidProducts.join(", ")}. Chaque produit doit avoir au moins un SKU actif avec du stock et une image.`
+				);
+			}
 		}
 
 		// 6. Mettre a jour le statut

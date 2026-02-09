@@ -13,6 +13,8 @@ import { createProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
 import { validateInput, success, error, validationError, handleActionError } from "@/shared/lib/actions";
 import { validatePublicProductCreation } from "../services/product-validation.service";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_PRODUCT_CREATE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action pour creer un produit
@@ -26,6 +28,10 @@ export async function createProduct(
     // 1. Verification des droits admin
     const admin = await requireAdmin();
     if ("error" in admin) return admin.error;
+
+    // 1.1 Rate limiting
+    const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_CREATE_LIMIT);
+    if ("error" in rateLimit) return rateLimit.error;
 
     // 2. Extraction des donnees du FormData
     // Helper pour parser JSON de maniere safe avec logging en dev

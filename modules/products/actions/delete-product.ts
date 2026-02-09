@@ -8,6 +8,9 @@ import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { deleteProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
+import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_PRODUCT_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action pour soft-delete un produit
@@ -23,6 +26,10 @@ export async function deleteProduct(
 		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 1.1 Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_DELETE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {
@@ -73,9 +80,22 @@ export async function deleteProduct(
 			);
 		}
 
-		// 6. Soft delete le produit et ses SKUs dans une transaction
+		// 6. Find affected carts before deletion (for cache invalidation)
+		const affectedCarts = await prisma.cartItem.findMany({
+			where: { sku: { productId } },
+			select: { cart: { select: { userId: true, sessionId: true } } },
+			distinct: ["cartId"],
+		});
+
+		// 7. Soft delete le produit et ses SKUs dans une transaction
+		// Also clean up CartItems referencing this product's SKUs
 		// Files are preserved on UploadThing until hard delete (10-year retention)
 		await prisma.$transaction(async (tx) => {
+			// Remove CartItems referencing this product's SKUs before soft-deleting
+			await tx.cartItem.deleteMany({
+				where: { sku: { productId } },
+			});
+
 			const now = new Date();
 			await tx.productSku.updateMany({
 				where: { productId },
@@ -87,7 +107,13 @@ export async function deleteProduct(
 			});
 		});
 
-		// 7. Invalidate cache tags (invalidation ciblee au lieu de revalidatePath global)
+		// 8. Invalidate cart caches for affected users
+		for (const { cart } of affectedCarts) {
+			const cartTags = getCartInvalidationTags(cart.userId ?? undefined, cart.sessionId ?? undefined);
+			cartTags.forEach(tag => updateTag(tag));
+		}
+
+		// 9. Invalidate cache tags (invalidation ciblee au lieu de revalidatePath global)
 		const productTags = getProductInvalidationTags(
 			existingProduct.slug,
 			existingProduct.id
@@ -102,7 +128,7 @@ export async function deleteProduct(
 			collectionTags.forEach(tag => updateTag(tag));
 		}
 
-		// 8. Success
+		// 10. Success
 		return success(`Produit "${existingProduct.title}" supprimé avec succès.`, {
 			productId,
 			title: existingProduct.title,

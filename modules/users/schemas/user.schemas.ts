@@ -216,4 +216,32 @@ export const exportUserDataResponseSchema = z.object({
 			usedAt: z.string().datetime(),
 		})
 	),
+	newsletter: z.object({
+		email: z.string(),
+		status: z.string(),
+		subscribedAt: z.string().datetime(),
+		confirmedAt: z.string().datetime().nullable(),
+		unsubscribedAt: z.string().datetime().nullable(),
+		consentSource: z.string().nullable(),
+		consentTimestamp: z.string().datetime(),
+		ipAddress: z.string().nullable(),
+	}).nullable(),
+	reviews: z.array(
+		z.object({
+			productTitle: z.string().nullable(),
+			rating: z.number(),
+			title: z.string().nullable(),
+			content: z.string(),
+			createdAt: z.string().datetime(),
+			updatedAt: z.string().datetime(),
+		})
+	),
+	sessions: z.array(
+		z.object({
+			ipAddress: z.string().nullable(),
+			userAgent: z.string().nullable(),
+			createdAt: z.string().datetime(),
+			expiresAt: z.string().datetime(),
+		})
+	),
 });

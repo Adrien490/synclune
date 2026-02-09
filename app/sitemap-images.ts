@@ -1,3 +1,4 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -19,9 +20,12 @@ interface SitemapImageEntry {
 	images: ImageEntry[];
 }
 
-export default async function sitemap(): Promise<SitemapImageEntry[]> {
-	// Récupérer tous les produits publics avec leurs images
-	const products = await prisma.product.findMany({
+async function fetchSitemapImages() {
+	"use cache";
+	cacheLife("products");
+	cacheTag("sitemap-images");
+
+	return prisma.product.findMany({
 		where: {
 			status: "PUBLIC",
 			deletedAt: null,
@@ -53,6 +57,10 @@ export default async function sitemap(): Promise<SitemapImageEntry[]> {
 			},
 		},
 	});
+}
+
+export default async function sitemap(): Promise<SitemapImageEntry[]> {
+	const products = await fetchSitemapImages();
 
 	// Construire les entrées du sitemap images
 	const entries: SitemapImageEntry[] = [];

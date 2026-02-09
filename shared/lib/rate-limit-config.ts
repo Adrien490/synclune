@@ -581,6 +581,97 @@ export const ADMIN_USER_LIMITS = {
 } as const;
 
 // ========================================
+// 📦 ADMIN PRODUCT OPERATIONS
+// ========================================
+
+/**
+ * Limite pour la création de produits (admin)
+ */
+export const ADMIN_PRODUCT_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la mise à jour de produits (admin)
+ */
+export const ADMIN_PRODUCT_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression de produits (admin)
+ */
+export const ADMIN_PRODUCT_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression en masse de produits (admin)
+ */
+export const ADMIN_PRODUCT_BULK_DELETE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour l'archivage en masse de produits (admin)
+ */
+export const ADMIN_PRODUCT_BULK_ARCHIVE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le changement de statut en masse de produits (admin)
+ */
+export const ADMIN_PRODUCT_BULK_STATUS_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le toggle de statut de produit (admin)
+ */
+export const ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la duplication de produits (admin)
+ */
+export const ADMIN_PRODUCT_DUPLICATE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la mise à jour des collections d'un produit (admin)
+ */
+export const ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Toutes les limites admin produits
+ */
+export const ADMIN_PRODUCT_LIMITS = {
+	CREATE: ADMIN_PRODUCT_CREATE_LIMIT,
+	UPDATE: ADMIN_PRODUCT_UPDATE_LIMIT,
+	DELETE: ADMIN_PRODUCT_DELETE_LIMIT,
+	BULK_DELETE: ADMIN_PRODUCT_BULK_DELETE_LIMIT,
+	BULK_ARCHIVE: ADMIN_PRODUCT_BULK_ARCHIVE_LIMIT,
+	BULK_STATUS: ADMIN_PRODUCT_BULK_STATUS_LIMIT,
+	TOGGLE_STATUS: ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT,
+	DUPLICATE: ADMIN_PRODUCT_DUPLICATE_LIMIT,
+	UPDATE_COLLECTIONS: ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT,
+} as const;
+
+// ========================================
 // 💰 ADMIN SKU OPERATIONS
 // ========================================
 

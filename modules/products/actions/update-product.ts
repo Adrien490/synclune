@@ -11,6 +11,8 @@ import type { ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { updateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_PRODUCT_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action pour modifier un produit existant
@@ -26,6 +28,10 @@ export async function updateProduct(
 		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 1.1 Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
 		// Helper pour parser JSON de maniere safe
@@ -309,9 +315,9 @@ export async function updateProduct(
 			try {
 				const utapi = new UTApi();
 				await utapi.deleteFiles(deletedImageUrls);
-			} catch {
-				// Silently ignore UploadThing deletion failures
-				// DB update already succeeded, orphaned files are acceptable
+			} catch (e) {
+				// DB update already succeeded, orphaned files will be cleaned by monthly cron
+				console.error("[update-product] Failed to delete UploadThing files:", deletedImageUrls, e);
 			}
 		}
 

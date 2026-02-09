@@ -74,7 +74,7 @@ model User {
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @db.VarChar(500)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -99,7 +99,7 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String?
+  password              String?   @db.VarChar(255)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -110,7 +110,7 @@ model Account {
 model Verification {
   id         String   @id
   identifier String
-  value      String
+  value      String   @db.VarChar(500)
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt

@@ -2019,6 +2019,7 @@ async function main(): Promise<void> {
       await prisma.newsletterSubscriber.create({
         data: {
           email,
+          unsubscribeToken: crypto.randomUUID(),
           status,
           emailVerified,
           confirmationToken,

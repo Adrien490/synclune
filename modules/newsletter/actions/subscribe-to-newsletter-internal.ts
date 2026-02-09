@@ -114,13 +114,14 @@ export async function subscribeToNewsletterInternal({
 		await prisma.newsletterSubscriber.create({
 			data: {
 				email,
+				unsubscribeToken: randomUUID(),
 				ipAddress,
 				userAgent,
 				consentSource,
 				consentTimestamp: new Date(),
 				confirmationToken,
 				confirmationSentAt: new Date(),
-				status: NewsletterStatus.PENDING, // Sera confirmé après validation email
+				status: NewsletterStatus.PENDING,
 			},
 		});
 

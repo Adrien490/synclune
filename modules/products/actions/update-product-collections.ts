@@ -13,6 +13,8 @@ import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { updateProductCollectionsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action ADMIN pour mettre à jour les collections d'un produit
@@ -27,6 +29,10 @@ export async function updateProductCollections(
 	// 1. Vérification admin
 	const adminCheck = await requireAdmin();
 	if ("error" in adminCheck) return adminCheck.error;
+
+	// 1.1 Rate limiting
+	const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT);
+	if ("error" in rateLimit) return rateLimit.error;
 
 	// 2. Parser les données du formulaire
 	const productId = formData.get("productId") as string;
