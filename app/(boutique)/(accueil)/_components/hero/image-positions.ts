@@ -3,7 +3,6 @@ export const IMAGE_POSITIONS = [
 	// Top-left — large anchor
 	{
 		className: "left-[2%] xl:left-[4%] top-[12%]",
-		rotate: -8,
 		width: 160,
 		height: 200,
 		widthClasses: "w-32 md:w-36 lg:w-40 xl:w-48 2xl:w-56",
@@ -20,7 +19,6 @@ export const IMAGE_POSITIONS = [
 	// Top-right — medium balance
 	{
 		className: "right-[3%] xl:right-[5%] top-[8%]",
-		rotate: 5,
 		width: 128,
 		height: 160,
 		widthClasses: "w-32 xl:w-40 2xl:w-48",
@@ -37,7 +35,6 @@ export const IMAGE_POSITIONS = [
 	// Bottom-left — small depth
 	{
 		className: "left-[12%] xl:left-[14%] bottom-[14%]",
-		rotate: 3,
 		width: 112,
 		height: 140,
 		widthClasses: "w-28 xl:w-34 2xl:w-40",
@@ -54,7 +51,6 @@ export const IMAGE_POSITIONS = [
 	// Bottom-right — medium balance
 	{
 		className: "right-[10%] xl:right-[12%] bottom-[18%]",
-		rotate: -4,
 		width: 128,
 		height: 160,
 		widthClasses: "w-32 md:w-34 lg:w-32 xl:w-38 2xl:w-44",

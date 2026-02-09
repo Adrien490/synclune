@@ -23,7 +23,6 @@ export function ImageScrollOverlay() {
 	});
 
 	const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 0.15, 0.15, 0]);
-	const gradientProgress = useTransform(scrollYProgress, [0, 1], [0, 100]);
 
 	// Disabled on mobile/touch or reduced-motion
 	if (isTouchDevice || shouldReduceMotion) {

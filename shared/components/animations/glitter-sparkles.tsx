@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useInView } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 import { useIsTouchDevice } from "@/shared/hooks";
-import { seededRandom } from "./particle-background/utils";
+import { seededRandom } from "@/shared/utils/seeded-random";
 import { MOTION_CONFIG } from "./motion.config";
 
 // ============================================================================

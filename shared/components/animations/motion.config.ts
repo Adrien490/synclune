@@ -56,6 +56,14 @@ export const MOTION_CONFIG = {
 			stiffness: 400,
 			mass: 0.5,
 		},
+
+		// Responsive hover spring (hero floating images)
+		hover: {
+			type: "spring" as const,
+			stiffness: 300,
+			damping: 25,
+			mass: 0.5,
+		},
 	},
 
 	// Default distances and transforms

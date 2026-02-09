@@ -4,10 +4,6 @@ import { motion, useScroll, useTransform, useReducedMotion } from "motion/react"
 import { useRef, useSyncExternalStore } from "react";
 import { useIsTouchDevice } from "@/shared/hooks";
 
-interface ScrollProgressLineProps {
-	className?: string;
-}
-
 // Hydration safety pattern (évite mismatch server/client)
 const subscribeNoop = () => () => {};
 const getClientSnapshot = () => true;
@@ -74,7 +70,7 @@ function AnimatedLine() {
  *
  * Respecte prefers-reduced-motion
  */
-export function ScrollProgressLine({ className }: ScrollProgressLineProps) {
+export function ScrollProgressLine() {
 	const prefersReducedMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
 

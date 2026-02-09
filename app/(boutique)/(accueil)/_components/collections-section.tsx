@@ -59,7 +59,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 							id="collections-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
-							Je rajoute une petite touche personnelle à chaque création <Heart className="inline size-4 text-primary fill-primary" aria-hidden="true" />
+							Je rajoute une petite touche personnelle à chaque création <Heart className="inline size-4 text-primary fill-primary" aria-hidden="true" /><span className="sr-only"> avec amour</span>
 						</p>
 					</Fade>
 				</header>
@@ -108,11 +108,11 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 							{showArrows && (
 								<>
 									<CarouselPrevious
-										className="hidden md:flex left-4 top-[40%] opacity-70 group-hover/carousel:opacity-100 transition-opacity duration-300"
+										className="hidden md:flex left-4 top-[40%] opacity-80 group-hover/carousel:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les collections précédentes"
 									/>
 									<CarouselNext
-										className="hidden md:flex right-4 top-[40%] opacity-70 group-hover/carousel:opacity-100 transition-opacity duration-300"
+										className="hidden md:flex right-4 top-[40%] opacity-80 group-hover/carousel:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les collections suivantes"
 									/>
 								</>
@@ -131,15 +131,11 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 						size="lg"
 						variant="outline"
 						className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
-						aria-describedby="collections-cta-description"
 					>
 						<Link href="/collections">
 							Explorer les collections
 						</Link>
 					</Button>
-					<span id="collections-cta-description" className="sr-only">
-						Découvrir toutes les collections
-					</span>
 					</Fade>
 				</div>
 			</div>

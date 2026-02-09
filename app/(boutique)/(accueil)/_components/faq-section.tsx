@@ -18,72 +18,39 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
 import { FaqDoodles } from "./faq-doodles";
+import type { AnswerSegment, FaqItemData } from "./faq-utils";
+import {
+	generateFaqSchema,
+	parseAnswerSegments,
+	validateFaqPlaceholders,
+} from "./faq-utils";
 
-interface FaqLink {
-	text: string;
-	href: string;
+function renderSegments(segments: AnswerSegment[]): ReactNode {
+	if (segments.length === 1 && segments[0].type === "text") {
+		return segments[0].value;
+	}
+
+	return (
+		<>
+			{segments.map((segment, i) =>
+				segment.type === "text" ? (
+					segment.value
+				) : (
+					<Link
+						key={i}
+						href={segment.href}
+						className="underline underline-offset-2 hover:text-primary transition-colors"
+					>
+						{segment.text}
+					</Link>
+				),
+			)}
+		</>
+	);
 }
 
-interface FaqItemData {
-	question: string;
-	answer: string;
-	icon: ReactNode;
-	links?: FaqLink[];
-}
-
-const LINK_PLACEHOLDER_REGEX = /\{\{link(\d+)\}\}/g;
-
-function renderAnswerWithLinks(answer: string, links?: FaqLink[]): ReactNode {
-	if (!links || links.length === 0) {
-		return answer;
-	}
-
-	const parts: ReactNode[] = [];
-	let lastIndex = 0;
-
-	for (const match of answer.matchAll(LINK_PLACEHOLDER_REGEX)) {
-		const matchIndex = match.index!;
-
-		if (matchIndex > lastIndex) {
-			parts.push(answer.slice(lastIndex, matchIndex));
-		}
-
-		const linkIndex = Number.parseInt(match[1], 10);
-		const link = links[linkIndex];
-
-		if (link) {
-			parts.push(
-				<Link
-					key={matchIndex}
-					href={link.href}
-					className="underline underline-offset-2 hover:text-foreground transition-colors"
-				>
-					{link.text}
-				</Link>,
-			);
-		} else {
-			// Skip silently — missing link placeholder should not be shown to users
-		}
-
-		lastIndex = matchIndex + match[0].length;
-	}
-
-	if (lastIndex < answer.length) {
-		parts.push(answer.slice(lastIndex));
-	}
-
-	return <>{parts}</>;
-}
-
-function getPlainTextAnswer(answer: string, links?: FaqLink[]): string {
-	if (!links || links.length === 0) {
-		return answer;
-	}
-
-	return answer.replace(LINK_PLACEHOLDER_REGEX, (_, index) => {
-		const link = links[Number.parseInt(index, 10)];
-		return link ? link.text : "";
-	});
+function renderAnswerWithLinks(answer: string, links?: FaqItemData["links"]): ReactNode {
+	return renderSegments(parseAnswerSegments(answer, links));
 }
 
 const faqItems: FaqItemData[] = [
@@ -131,33 +98,7 @@ const faqItems: FaqItemData[] = [
 
 // Dev-time validation: warn if any FAQ item has unmatched link placeholders
 if (process.env.NODE_ENV === "development") {
-	for (const item of faqItems) {
-		const matches = item.answer.matchAll(LINK_PLACEHOLDER_REGEX);
-		for (const match of matches) {
-			const idx = Number.parseInt(match[1], 10);
-			if (!item.links?.[idx]) {
-				console.warn(
-					`FAQ "${item.question}": placeholder {{link${idx}}} has no matching link`,
-				);
-			}
-		}
-	}
-}
-
-function generateFaqSchema(items: FaqItemData[]) {
-	return {
-		"@context": "https://schema.org",
-		"@type": "FAQPage",
-		inLanguage: "fr-FR",
-		mainEntity: items.map((item) => ({
-			"@type": "Question",
-			name: item.question,
-			acceptedAnswer: {
-				"@type": "Answer",
-				text: getPlainTextAnswer(item.answer, item.links),
-			},
-		})),
-	};
+	validateFaqPlaceholders(faqItems);
 }
 
 const faqSchema = generateFaqSchema(faqItems);

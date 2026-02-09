@@ -2,12 +2,9 @@ import type { CSSProperties } from "react";
 import type { Easing, Transition } from "motion/react";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
+import { seededRandom } from "@/shared/utils/seeded-random";
 
-/** Deterministic pseudo-random generator (seeded) */
-export function seededRandom(seed: number): number {
-	const x = Math.sin(seed) * 10000;
-	return x - Math.floor(x);
-}
+export { seededRandom };
 
 /** Cache pour la memoization des particules générées */
 const particleCache = new Map<string, Particle[]>();

@@ -639,6 +639,12 @@ textarea {
 		}
 	}
 
+	@media (prefers-reduced-motion: reduce) {
+		[style*="hero-idle-float"] {
+			animation: none !important;
+		}
+	}
+
 	/* Animation shimmer pour skeleton loading */
 	@keyframes shimmer {
 		0% {

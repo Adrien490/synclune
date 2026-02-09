@@ -15,12 +15,17 @@ const PARALLAX_STRENGTH = 20;
 /** Duration in ms for the parallax lerp-to-zero reset */
 const LERP_RESET_DURATION = 600;
 
+/** Upper bound for particle count to prevent excessive DOM nodes (desktop + mobile = count * 1.5) */
+const MAX_PARTICLES = 30;
+
 /**
  * Systeme de particules decoratives avec effet de profondeur
  *
  * Utilise CSS media queries pour la detection mobile (pas de flash d'hydratation).
  * Desktop: count particules, Mobile: count/2 particules.
  * CSS containment pour isoler les repaints.
+ *
+ * `count` is clamped to 30 max (both trees combined = count * 1.5 DOM nodes).
  *
  * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4
  * **Animations** : float, drift, rise, orbit, breathe
@@ -54,6 +59,7 @@ export function ParticleBackground({
 	speed = 1,
 	disableOnTouch = false,
 }: ParticleBackgroundProps) {
+	const safeCount = Math.min(count, MAX_PARTICLES);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
 	const viewportInView = useInView(containerRef, { margin: "-100px" });
@@ -85,7 +91,7 @@ export function ParticleBackground({
 		let cachedRect = el.getBoundingClientRect();
 
 		function updateRect() {
-			cachedRect = el.getBoundingClientRect();
+			cachedRect = el!.getBoundingClientRect();
 		}
 
 		function cancelLerp() {
@@ -151,8 +157,8 @@ export function ParticleBackground({
 	const mobileDuration = 12 / safeSpeed;
 
 	// Desktop: duree 20s, Mobile: duree 12s (economie batterie)
-	const desktopParticles = generateParticles(count, size, opacity, colors, blur, depthParallax, shapes, desktopDuration);
-	const mobileParticles = generateParticles(Math.ceil(count / 2), size, opacity, colors, mobileBlur, depthParallax, shapes, mobileDuration);
+	const desktopParticles = generateParticles(safeCount, size, opacity, colors, blur, depthParallax, shapes, desktopDuration);
+	const mobileParticles = generateParticles(Math.ceil(safeCount / 2), size, opacity, colors, mobileBlur, depthParallax, shapes, mobileDuration);
 
 	const sharedProps = { isInView, reducedMotion, animationStyle };
 

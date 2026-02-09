@@ -15,7 +15,7 @@ export const FLOAT_VARIANTS = {
 			scale: 1.08,
 			y: -6,
 			rotate: 0,
-			transition: { type: "spring", stiffness: 300, damping: 25, mass: 0.5 },
+			transition: MOTION_CONFIG.spring.hover,
 		},
 	},
 	whileTap: {

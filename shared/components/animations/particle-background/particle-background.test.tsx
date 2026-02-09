@@ -39,7 +39,7 @@ vi.mock("@/shared/hooks/use-touch-device", () => ({
 }));
 
 // Now import the component after mocks are set up
-const { useReducedMotion } = await import("motion/react");
+const { useReducedMotion, useInView } = await import("motion/react");
 const { useIsTouchDevice } = await import("@/shared/hooks/use-touch-device");
 const { ParticleBackground } = await import("./particle-background");
 
@@ -105,5 +105,64 @@ describe("ParticleBackground", () => {
 		const { container } = render(<ParticleBackground />);
 		const root = container.firstElementChild as HTMLElement;
 		expect(root.style.contain).toBe("layout paint");
+	});
+
+	it("renders nothing when not in view", () => {
+		vi.mocked(useInView).mockReturnValue(false);
+		const { container } = render(<ParticleBackground count={4} />);
+		// Desktop and mobile wrappers exist but should be empty (ParticleSet returns null)
+		const desktopWrapper = container.firstElementChild!.children[0];
+		const mobileWrapper = container.firstElementChild!.children[1];
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(0);
+		expect(mobileWrapper.querySelectorAll("span.absolute").length).toBe(0);
+		vi.mocked(useInView).mockReturnValue(true);
+	});
+
+	it("renders different particle counts for different speed values", () => {
+		// Speed doesn't change count, but it changes duration which affects generated particles
+		const { container: fast } = render(<ParticleBackground count={3} speed={2} />);
+		const { container: slow } = render(<ParticleBackground count={3} speed={0.5} />);
+		// Both should render the same number of particles
+		const fastSpans = fast.firstElementChild!.children[0].querySelectorAll("span.absolute");
+		const slowSpans = slow.firstElementChild!.children[0].querySelectorAll("span.absolute");
+		expect(fastSpans.length).toBe(3);
+		expect(slowSpans.length).toBe(3);
+	});
+
+	it("clamps speed to minimum 0.01 (speed=0 does not crash)", () => {
+		// Should not throw or produce Infinity durations
+		expect(() => render(<ParticleBackground count={2} speed={0} />)).not.toThrow();
+		expect(() => render(<ParticleBackground count={2} speed={-5} />)).not.toThrow();
+	});
+
+	it("renders mixed shapes when shape is an array", () => {
+		const { container } = render(
+			<ParticleBackground count={4} shape={["circle", "crescent"]} />,
+		);
+		const desktopWrapper = container.firstElementChild!.children[0];
+		// crescent is SVG, so we should find SVG elements
+		const svgs = desktopWrapper.querySelectorAll("svg");
+		expect(svgs.length).toBeGreaterThan(0);
+		// Also regular spans (circle shapes)
+		const spans = desktopWrapper.querySelectorAll("span.absolute");
+		expect(spans.length).toBe(4);
+	});
+
+	it("clamps count to MAX_PARTICLES (30)", () => {
+		const { container } = render(<ParticleBackground count={100} />);
+		const desktopWrapper = container.firstElementChild!.children[0];
+		const desktopSpans = desktopWrapper.querySelectorAll("span.absolute");
+		// Should be clamped to 30, not 100
+		expect(desktopSpans.length).toBe(30);
+	});
+
+	it("renders all animation styles without crashing", () => {
+		const styles = ["float", "drift", "rise", "orbit", "breathe"] as const;
+		for (const animationStyle of styles) {
+			expect(() =>
+				render(<ParticleBackground count={2} animationStyle={animationStyle} />),
+			).not.toThrow();
+			cleanup();
+		}
 	});
 });

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
+import { seededRandom } from "@/shared/utils/seeded-random";
 import {
 	generateParticles,
 	getShapeStyles,
 	getSvgConfig,
 	getTransition,
 	isSvgShape,
-	seededRandom,
 } from "./utils";
 
 // ─── seededRandom ───────────────────────────────────────────────────

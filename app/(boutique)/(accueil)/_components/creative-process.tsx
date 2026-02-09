@@ -4,6 +4,7 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
 import { STEP_COLORS } from "@/shared/constants/process-steps";
+import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
@@ -87,6 +88,37 @@ const STEP_INTENSITY = [
 	{ ring: "ring-2 ring-secondary/30", shadow: "shadow-lg shadow-secondary/40" },
 ] as const;
 
+// HowTo JSON-LD schema for SEO rich snippets
+const howToSchema = {
+	"@context": "https://schema.org",
+	"@type": "HowTo",
+	"@id": `${SITE_URL}/#how-to-create-jewelry`,
+	name: "Comment je crée tes bijoux",
+	description:
+		"De l'inspiration à la finition, découvrez les étapes de création de bijoux artisanaux en plastique fou peints à la main.",
+	image: IMAGES.ATELIER,
+	totalTime: "PT3H",
+	supply: [
+		{ "@type": "HowToSupply", name: "Plastique fou" },
+		{ "@type": "HowToSupply", name: "Peinture acrylique" },
+		{ "@type": "HowToSupply", name: "Vernis de protection" },
+		{ "@type": "HowToSupply", name: "Supports de bijoux (crochets, chaînes, fermoirs)" },
+		{ "@type": "HowToSupply", name: "Perles décoratives" },
+	],
+	tool: [
+		{ "@type": "HowToTool", name: "Pinceaux fins" },
+		{ "@type": "HowToTool", name: "Four ménager" },
+		{ "@type": "HowToTool", name: "Outils d'assemblage (pinces, anneaux)" },
+	],
+	step: processSteps.map((step, index) => ({
+		"@type": "HowToStep",
+		position: index + 1,
+		name: step.title,
+		text: step.description,
+		url: `${SITE_URL}/#creative-step-${step.id}`,
+	})),
+};
+
 /**
  * Creative Process section - Step-by-step jewelry making story.
  *
@@ -102,6 +134,15 @@ export async function CreativeProcess() {
 			className={cn("relative overflow-hidden bg-background", SECTION_SPACING.section)}
 			aria-labelledby="creative-process-title"
 		>
+			{/* HowTo JSON-LD Schema for SEO */}
+			<script
+				id="howto-schema"
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(howToSchema).replace(/</g, "\\u003c"),
+				}}
+			/>
+
 			{/* Skip link for accessibility */}
 			<a
 				href="#cta-personnalisation"
