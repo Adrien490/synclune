@@ -1,4 +1,5 @@
 import { Fade, Stagger } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { Heart, MapPin, Paintbrush, Sparkles } from "lucide-react";
@@ -89,7 +90,7 @@ export async function ValuePropositionBar() {
 	cacheTag("value-proposition-bar");
 
 	return (
-		<Fade y={10} duration={0.6}>
+		<Fade y={MOTION_CONFIG.section.subtitle.y} duration={MOTION_CONFIG.section.title.duration}>
 			<section
 				id="value-proposition"
 				aria-labelledby="value-proposition-title"
@@ -124,7 +125,7 @@ export async function ValuePropositionBar() {
 
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					<Stagger
-						stagger={0.1}
+						stagger={MOTION_CONFIG.stagger.slow}
 						y={15}
 						inView
 						once

@@ -1,3 +1,5 @@
+import { Fade } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
@@ -170,25 +172,31 @@ export function FaqSection() {
 
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="text-center mb-10 lg:mb-12">
-					<SectionTitle id="faq-title">Questions fréquentes</SectionTitle>
-					<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-xl mx-auto">
-						Retrouve ici les réponses aux questions les plus posées
-					</p>
+					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
+						<SectionTitle id="faq-title">Questions fréquentes</SectionTitle>
+					</Fade>
+					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
+						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-xl mx-auto">
+							Retrouve ici les réponses aux questions les plus posées
+						</p>
+					</Fade>
 				</header>
 
 				<FaqAccordion items={accordionItems} />
 
-				<div className="mt-10 text-center">
-					<p className="text-muted-foreground mb-4">
-						Une autre question ? N'hésite pas à m'écrire directement !
-					</p>
-					<Button asChild variant="outline" size="lg" className="gap-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out">
-						<Link href="/contact">
-							<MessageCircle className="w-4 h-4" aria-hidden="true" />
-							Me contacter
-						</Link>
-					</Button>
-				</div>
+				<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration} inView once>
+					<div className="mt-10 text-center">
+						<p className="text-muted-foreground mb-4">
+							Une autre question ? N'hésite pas à m'écrire directement !
+						</p>
+						<Button asChild variant="outline" size="lg" className="gap-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out">
+							<Link href="/contact">
+								<MessageCircle className="w-4 h-4" aria-hidden="true" />
+								Me contacter
+							</Link>
+						</Button>
+					</div>
+				</Fade>
 			</div>
 		</section>
 	);

@@ -1,4 +1,5 @@
 import { Fade, GlitterSparkles } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { cn } from "@/shared/utils/cn";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
@@ -36,10 +37,10 @@ export async function NewsletterSection() {
       <div className={cn("relative z-10", CONTAINER_CLASS)}>
         {/* Storytelling header */}
         <header className="mb-8 text-center lg:mb-12">
-          <Fade y={20} duration={0.6}>
+          <Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
             <SectionTitle id="newsletter-title">Ma newsletter</SectionTitle>
           </Fade>
-          <Fade y={10} delay={0.1} duration={0.6}>
+          <Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
             <p
               id="newsletter-subtitle"
               className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
@@ -51,14 +52,14 @@ export async function NewsletterSection() {
         </header>
 
         {/* Centered form */}
-        <Fade y={15} delay={0.2} duration={0.6}>
+        <Fade y={MOTION_CONFIG.section.cta.y} delay={0.2} duration={MOTION_CONFIG.section.title.duration}>
           <div className="max-w-md mx-auto">
             <NewsletterForm />
           </div>
         </Fade>
 
         {/* Anti-spam assurance + signature */}
-        <Fade y={10} delay={0.3} duration={0.6}>
+        <Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               1 à 2 emails par mois maximum. Désinscription en un clic.

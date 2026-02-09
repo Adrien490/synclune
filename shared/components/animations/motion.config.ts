@@ -78,6 +78,7 @@ export const MOTION_CONFIG = {
 		subtitle: { y: 10, delay: 0.1, duration: 0.6 },
 		grid: { stagger: 0.08, y: 25 },
 		cta: { y: 15, delay: 0.3, duration: 0.5 },
+		timeline: { stagger: 0.12, y: 30 },
 	},
 
 	// Background animation presets

@@ -179,8 +179,8 @@ export async function CreativeProcess() {
 								/>
 
 								<Stagger
-									stagger={0.12}
-									y={30}
+									stagger={MOTION_CONFIG.section.timeline.stagger}
+									y={MOTION_CONFIG.section.timeline.y}
 									delay={0}
 									inView
 									once={true}
@@ -250,7 +250,7 @@ export async function CreativeProcess() {
 						</ActiveStepTracker>
 
 						{/* CTA as natural continuation of the process */}
-						<Fade inView once y={15} delay={0.2}>
+						<Fade inView once y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration}>
 							<div id="cta-personnalisation" className="mt-4 flex items-start gap-4 group relative rounded-xl p-2 -m-2">
 								{/* Desktop: Icon in dashed circle */}
 								<div
