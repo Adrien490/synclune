@@ -30,8 +30,6 @@ import { CollectionMiniGrid } from "./collection-mini-grid";
 import { SectionHeader } from "./section-header";
 import { UserHeader } from "./user-header";
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
 // CSS stagger animation style for menu items
 const staggerItemClassName =
 	"motion-safe:animate-[menu-item-in_0.3s_ease-out_both]";
