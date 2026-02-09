@@ -163,17 +163,8 @@ export function CollectionCard({
 							</p>
 						)}
 
-						{/* Product count — hover reveal on desktop, always visible on mobile */}
 						{productCount !== undefined && productCount > 0 && (
-							<p
-								className={cn(
-									"mt-2 text-xs text-muted-foreground",
-									"transition-opacity duration-300",
-									// Always visible on mobile/touch, hover reveal on desktop
-									"can-hover:opacity-0 can-hover:group-hover:opacity-100",
-									"can-hover:group-focus-within:opacity-100",
-								)}
-							>
+							<p className="mt-2 text-xs text-muted-foreground">
 								{productCount} article{productCount > 1 ? "s" : ""}
 							</p>
 						)}

@@ -230,32 +230,37 @@ export function ProductCard({
 					</h3>
 				</Link>
 
-				{/* Color swatches — visual circles with availability indication */}
+				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (
-					<Link
-						href={productUrl}
-						className="flex items-center gap-1.5 group/swatches focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
+					<div
+						className="flex items-center gap-1.5"
 						aria-label={`${colors.length} couleurs disponibles pour ${title}`}
+						role="group"
 					>
 						{colors.slice(0, 5).map((color) => (
-							<span
+							<Link
 								key={color.slug}
+								href={`${productUrl}?color=${color.slug}`}
 								className={cn(
 									"size-4 sm:size-5 rounded-full border border-foreground/15 shrink-0",
-									"transition-transform duration-150 motion-safe:can-hover:group-hover/swatches:scale-110",
+									"transition-transform duration-150 motion-safe:can-hover:hover:scale-110",
+									"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 									!color.inStock && "opacity-40"
 								)}
 								style={{ backgroundColor: color.hex }}
 								title={color.name}
-								aria-label={color.name}
+								aria-label={`${title} en ${color.name}`}
 							/>
 						))}
 						{colors.length > 5 && (
-							<span className="text-xs text-muted-foreground">
+							<Link
+								href={productUrl}
+								className="text-xs text-muted-foreground"
+							>
 								+{colors.length - 5}
-							</span>
+							</Link>
 						)}
-					</Link>
+					</div>
 				)}
 
 				{/* Prix */}
