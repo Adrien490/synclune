@@ -686,6 +686,13 @@ textarea {
 		animation: draw-line 0.8s ease-out forwards;
 	}
 
+	.doodle-draw {
+		stroke-dashoffset: var(--path-length);
+		stroke-dasharray: var(--path-length);
+		animation: draw-line 0.8s ease-out forwards;
+		animation-delay: var(--draw-delay, 0s);
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.animate-pulse,
 		.animate-sparkle-pulse,
@@ -700,7 +707,8 @@ textarea {
 		}
 
 		/* Hand-drawn: afficher directement sans animation */
-		.hand-drawn-underline {
+		.hand-drawn-underline,
+		.doodle-draw {
 			animation: none;
 			stroke-dashoffset: 0;
 		}

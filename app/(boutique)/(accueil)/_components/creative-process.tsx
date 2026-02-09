@@ -10,12 +10,21 @@ import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ActiveStepTracker } from "./active-step-tracker";
-import { CreativeProcessParallax } from "./creative-process-parallax";
-import { ImageScrollOverlay } from "./image-scroll-overlay";
 import { MobileStepCircle } from "./mobile-step-circle";
 import { ParallaxImage } from "./parallax-image";
-import { ScrollProgressLine } from "./scroll-progress-line";
+
+// Lazy-load below-fold motion components to defer ~20-30KB of motion/react bundle
+const CreativeProcessParallax = dynamic(
+	() => import("./creative-process-parallax").then(m => ({ default: m.CreativeProcessParallax })),
+);
+const ImageScrollOverlay = dynamic(
+	() => import("./image-scroll-overlay").then(m => ({ default: m.ImageScrollOverlay })),
+);
+const ScrollProgressLine = dynamic(
+	() => import("./scroll-progress-line").then(m => ({ default: m.ScrollProgressLine })),
+);
 
 interface ProcessStep {
 	id: string;

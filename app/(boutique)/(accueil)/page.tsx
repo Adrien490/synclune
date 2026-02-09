@@ -8,7 +8,6 @@ import { NewsletterSection } from "@/app/(boutique)/(accueil)/_components/newsle
 import { getProducts } from "@/modules/products/data/get-products";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
-import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { StructuredData } from "@/shared/components/structured-data";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -58,7 +57,6 @@ export default async function Page() {
   // Stream review stats to avoid blocking page render
   const reviewStatsPromise = getGlobalReviewStats();
   const featuredReviewsPromise = getFeaturedReviews();
-  const wishlistIdsPromise = getWishlistProductIds();
 
   // Shared between HeroSection (floating images) and LatestCreations (product cards)
   const latestCreationsPromise = getProducts(
@@ -86,7 +84,6 @@ export default async function Page() {
       <Suspense fallback={<LatestCreationsSkeleton productsCount={4} />}>
         <LatestCreations
           productsPromise={latestCreationsPromise}
-          wishlistProductIdsPromise={wishlistIdsPromise}
         />
       </Suspense>
 

@@ -62,7 +62,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
                 <LayoutTextFlip
                   text="Des bijoux"
                   words={["colorés", "uniques", "joyeux"]}
-                  duration={2000}
+                  duration={3500}
                 />
               </SectionTitle>
               <p

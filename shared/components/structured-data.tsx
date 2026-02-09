@@ -3,6 +3,7 @@ import {
 	getLocalBusinessSchema,
 	getOrganizationSchema,
 	getWebSiteSchema,
+	SITE_URL,
 	type GlobalReviewStats,
 } from "@/shared/constants/seo-config";
 import { use } from "react";
@@ -29,6 +30,17 @@ export function StructuredData({ reviewStatsPromise }: StructuredDataProps) {
 	const graphSchemas: Record<string, unknown>[] = schemas.map(
 		({ "@context": _, ...rest }) => rest,
 	);
+
+	// BreadcrumbList for homepage
+	graphSchemas.push({
+		"@type": "BreadcrumbList",
+		itemListElement: [{
+			"@type": "ListItem",
+			position: 1,
+			name: "Accueil",
+			item: SITE_URL,
+		}],
+	});
 
 	// Article schema for the atelier story section (centralized here)
 	graphSchemas.push({

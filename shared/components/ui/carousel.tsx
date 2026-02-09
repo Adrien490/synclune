@@ -234,7 +234,7 @@ interface CarouselItemProps extends React.ComponentProps<"div"> {
 }
 
 function CarouselItem({ className, index, ...props }: CarouselItemProps) {
-	const { orientation, api } = useCarousel();
+	const { orientation, api, scrollSnaps } = useCarousel();
 	const [isVisible, setIsVisible] = React.useState(true);
 
 	// Effect Event pour gérer la visibilité sans re-registration
@@ -262,6 +262,10 @@ function CarouselItem({ className, index, ...props }: CarouselItemProps) {
 		<div
 			role="group"
 			aria-roledescription="slide"
+			aria-label={index !== undefined && scrollSnaps.length > 0
+				? `Diapositive ${index + 1} sur ${scrollSnaps.length}`
+				: undefined
+			}
 			aria-hidden={index !== undefined ? !isVisible : undefined}
 			data-slot="carousel-item"
 			className={cn(

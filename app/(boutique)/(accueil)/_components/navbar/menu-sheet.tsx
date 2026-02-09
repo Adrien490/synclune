@@ -300,7 +300,7 @@ export function MenuSheet({
 								<div className="w-full border-t border-border/80" />
 							</div>
 							<div className="relative bg-background/95 px-3 rounded-full">
-								<Heart className="h-4 w-4 text-muted-foreground/60 fill-muted-foreground/20" />
+								<Heart className="h-4 w-4 text-muted-foreground fill-muted-foreground/20" />
 							</div>
 						</div>
 
@@ -451,7 +451,7 @@ export function MenuSheet({
 					</div>
 
 					{/* Copyright */}
-					<p className="text-center text-xs text-muted-foreground/60 mt-3">
+					<p className="text-center text-xs text-muted-foreground mt-3">
 						© {new Date().getFullYear()} {BRAND.name}
 					</p>
 				</footer>

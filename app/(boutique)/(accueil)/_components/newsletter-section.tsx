@@ -66,7 +66,7 @@ export async function NewsletterSection() {
               1 à 2 emails par mois maximum. Désinscription en un clic.
             </p>
             <p
-              className={`${dancingScript.className} mt-2 text-lg text-foreground/60 italic`}
+              className={`${dancingScript.className} mt-2 text-lg text-foreground/70 italic`}
             >
               À très vite !
             </p>

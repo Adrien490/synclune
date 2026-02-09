@@ -5,30 +5,61 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
+import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
 import { use } from "react";
 
 interface LatestCreationsProps {
   productsPromise: Promise<GetProductsReturn>;
-  wishlistProductIdsPromise: Promise<Set<string>>;
 }
 
 /**
  * Latest Creations section - Grid of most recent jewelry.
  *
  * Accepts a Promise for streaming with React Suspense.
+ * Wishlist state is loaded client-side by WishlistButton to avoid
+ * cookies() forcing dynamic rendering on the homepage.
  */
 export function LatestCreations({
   productsPromise,
-  wishlistProductIdsPromise,
 }: LatestCreationsProps) {
   const { products } = use(productsPromise);
-  const wishlistProductIds = use(wishlistProductIdsPromise);
 
   // Don't render section with no products
   if (products.length === 0) {
     return null;
   }
+
+  // ItemList JSON-LD for latest creations (SEO rich snippets)
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    numberOfItems: products.length,
+    itemListElement: products.map((product, index) => {
+      const defaultSku = product.skus.find(s => s.isDefault) ?? product.skus[0];
+      const primaryImage = defaultSku?.images.find(img => img.isPrimary) ?? defaultSku?.images[0];
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "Product",
+          name: product.title,
+          url: `${SITE_URL}/creations/${product.slug}`,
+          ...(primaryImage && { image: primaryImage.url }),
+          ...(defaultSku && {
+            offers: {
+              "@type": "Offer",
+              price: (defaultSku.priceInclTax / 100).toFixed(2),
+              priceCurrency: "EUR",
+              availability: defaultSku.inventory > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+            },
+          }),
+        },
+      };
+    }),
+  };
 
   return (
     <section
@@ -37,6 +68,14 @@ export function LatestCreations({
       aria-labelledby="latest-creations-title"
       aria-describedby="latest-creations-subtitle"
     >
+      {/* ItemList JSON-LD for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(itemListSchema).replace(/</g, "\\u003c"),
+        }}
+      />
+
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
         <header className="mb-8 text-center lg:mb-12">
@@ -67,7 +106,7 @@ export function LatestCreations({
               key={product.id}
               product={product}
               index={index}
-              isInWishlist={wishlistProductIds.has(product.id)}
+              isInWishlist={undefined}
               sectionId="latest"
             />
           ))}
