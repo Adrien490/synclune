@@ -259,11 +259,6 @@ export function MenuSheet({
 														</div>
 													)}
 													<span className="flex-1">{collection.label}</span>
-													{collection.createdAt && Date.now() - new Date(collection.createdAt).getTime() < THIRTY_DAYS_MS && (
-														<Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-															Nouveau
-														</Badge>
-													)}
 												</Link>
 											</SheetClose>
 										</li>
