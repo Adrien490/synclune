@@ -155,6 +155,7 @@ export function ProductFilterSheet({
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onApply={() => form.handleSubmit()}
+			onClearAll={clearAllFilters}
 			isPending={isPending}
 			title="Filtres"
 			description="Affine ta recherche"

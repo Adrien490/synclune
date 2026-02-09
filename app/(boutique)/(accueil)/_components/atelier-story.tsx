@@ -1,7 +1,7 @@
 import { Fade, HandDrawnUnderline, Reveal, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
-import { PolaroidFrame } from "@/shared/components/polaroid-frame";
+import { PolaroidFrame, type WashiTapeColor, type WashiTapePosition } from "@/shared/components/polaroid-frame";
 import { SparklesDivider } from "@/shared/components/section-divider";
 import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
@@ -12,7 +12,27 @@ import Link from "next/link";
 import { PolaroidDoodles } from "./polaroid-doodles";
 
 
-const POLAROIDS = [
+type GlowColor = "pink" | "lavender" | "mint" | "yellow";
+
+interface PolaroidConfig {
+	caption: string;
+	label: string;
+	tiltDegree: number;
+	washiColor: WashiTapeColor;
+	washiPosition: WashiTapePosition;
+	captionColor: string;
+	captionRotate: number;
+	vintage: boolean;
+	glowColor: GlowColor;
+	scatterClass: string;
+	className?: string;
+}
+
+function glowClass(color: GlowColor) {
+	return `hover:shadow-[0_0_25px_var(--color-glow-${color}),0_12px_24px_-8px_rgba(0,0,0,0.15)]`;
+}
+
+const POLAROIDS: PolaroidConfig[] = [
 	{
 		caption: "Les mains dans les perles !",
 		label: "Mains de Léane assemblant un bijou",
@@ -22,8 +42,8 @@ const POLAROIDS = [
 		captionColor: "#9d4b6e",
 		captionRotate: -1.5,
 		vintage: true,
+		glowColor: "pink",
 		scatterClass: "lg:-translate-y-2 lg:translate-x-1",
-		glowClass: "hover:shadow-[0_0_25px_var(--color-glow-pink),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
 	},
 	{
 		caption: "Mes petits trésors",
@@ -34,8 +54,8 @@ const POLAROIDS = [
 		captionColor: "#6b4f8a",
 		captionRotate: 1,
 		vintage: true,
+		glowColor: "lavender",
 		scatterClass: "lg:translate-y-3 lg:-translate-x-1",
-		glowClass: "hover:shadow-[0_0_25px_var(--color-glow-lavender),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
 	},
 	{
 		caption: "L'inspiration du jour",
@@ -46,9 +66,9 @@ const POLAROIDS = [
 		captionColor: "#3d7a5f",
 		captionRotate: -0.5,
 		vintage: true,
-		className: "hidden lg:block",
+		glowColor: "mint",
 		scatterClass: "lg:translate-y-1 lg:translate-x-2",
-		glowClass: "hover:shadow-[0_0_25px_var(--color-glow-mint),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+		className: "hidden lg:block",
 	},
 	{
 		caption: "Mon coin créatif",
@@ -56,14 +76,14 @@ const POLAROIDS = [
 		tiltDegree: 2.5,
 		washiColor: "peach",
 		washiPosition: "top-right",
-		captionColor: "#8a6b3d",
+		captionColor: "#7a5b2d",
 		captionRotate: 0.8,
 		vintage: true,
-		className: "hidden lg:block",
+		glowColor: "yellow",
 		scatterClass: "lg:-translate-y-3 lg:-translate-x-1",
-		glowClass: "hover:shadow-[0_0_25px_var(--color-glow-yellow),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+		className: "hidden lg:block",
 	},
-] as const;
+];
 
 /**
  * Atelier story section - Personal storytelling with polaroid gallery.
@@ -112,7 +132,7 @@ export async function AtelierStory() {
 
 				{/* Confession text with staggered paragraphs */}
 				<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration} inView once>
-					<blockquote className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
+					<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
 						{/* Decorative badge (real h2 is sr-only above) */}
 						<span
 							className="inline-block text-sm uppercase tracking-[0.2em] text-muted-foreground font-medium"
@@ -148,7 +168,7 @@ export async function AtelierStory() {
 							— Léane
 						</footer>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.4} className="mx-auto mt-2" />
-					</blockquote>
+					</div>
 				</Fade>
 
 				{/* Polaroid gallery - 4 photos desktop, 2 mobile (via CSS) */}
@@ -180,10 +200,10 @@ export async function AtelierStory() {
 										washiPosition={p.washiPosition}
 										vintage={p.vintage}
 										className={cn(
-											"className" in p ? p.className : undefined,
+											p.className,
 											p.scatterClass,
 											"motion-safe:transition-shadow motion-safe:duration-300",
-											p.glowClass
+											glowClass(p.glowColor)
 										)}
 									>
 										<PlaceholderImage className="w-full h-full" label={p.label} />
@@ -204,7 +224,7 @@ export async function AtelierStory() {
 						<Button asChild size="lg" variant="outline"
 							className="shadow-md hover:shadow-xl motion-safe:hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-all motion-safe:duration-300"
 						>
-							<Link href="/produits">Découvrir les créations</Link>
+							<Link href="/produits">Découvrir les créations Synclune</Link>
 						</Button>
 					</Fade>
 				</div>

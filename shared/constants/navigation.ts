@@ -1,5 +1,5 @@
 import type { MinimalSession } from "@/shared/types/session.types"
-import type { NavItemChild, NavItemWithChildren } from "@/shared/types/navigation.types"
+import type { MegaMenuProduct, NavItemChild, NavItemWithChildren } from "@/shared/types/navigation.types"
 import { ROUTES } from "@/shared/constants/urls"
 
 export type {
@@ -16,18 +16,6 @@ export type {
  */
 export const MAX_COLLECTIONS_IN_MENU = 3
 
-/**
- * Collections disponibles - À synchroniser avec votre base de données
- * Structure permettant d'afficher les collections dans les menus dropdown/collapsible
- */
-export const COLLECTIONS_MENU_ITEMS: NavItemChild[] = [
-	{ href: ROUTES.SHOP.COLLECTIONS, label: "Toutes les collections", icon: "folder-open" },
-	// Exemples - À remplacer par vos vraies collections dynamiques
-	{ href: "/collections/nouveautes", label: "Nouveautés" },
-	{ href: "/collections/ete-2025", label: "Collection Été 2025" },
-	{ href: "/collections/mariage", label: "Collection Mariage" },
-	{ href: "/collections/minimaliste", label: "Collection Minimaliste" },
-] as const;
 
 /**
  * Navigation desktop - Toujours visible sur écran ≥1024px
@@ -111,7 +99,7 @@ export function getMobileNavItems(
 						blurDataUrl: collection.blurDataUrl,
 					})),
 			  ]
-			: COLLECTIONS_MENU_ITEMS, // Fallback sur les collections statiques
+			: undefined,
 	};
 
 	// Flow optimisé: Accueil → Créations → Collections → Personnaliser → Compte → Tableau de bord (admin)
@@ -163,6 +151,7 @@ export type MegaMenuCollection = {
 export type MegaMenuData = {
 	productTypes?: Array<{ slug: string; label: string }>;
 	collections?: MegaMenuCollection[];
+	featuredProducts?: MegaMenuProduct[];
 };
 
 /**

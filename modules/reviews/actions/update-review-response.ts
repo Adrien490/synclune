@@ -9,6 +9,7 @@ import {
 	validationError,
 	handleActionError,
 } from "@/shared/lib/actions"
+import { sanitizeText } from "@/shared/lib/sanitize"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
@@ -45,6 +46,9 @@ export async function updateReviewResponse(
 
 		const { id, content } = validation.data
 
+		// 2b. Sanitize text inputs
+		const sanitizedContent = sanitizeText(content)
+
 		// 3. Récupérer la réponse et l'avis associé
 		const response = await prisma.reviewResponse.findFirst({
 			where: {
@@ -69,7 +73,7 @@ export async function updateReviewResponse(
 		// 4. Mettre a jour la reponse
 		await prisma.reviewResponse.update({
 			where: { id },
-			data: { content },
+			data: { content: sanitizedContent },
 		})
 
 		// 5. Invalider le cache

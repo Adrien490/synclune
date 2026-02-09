@@ -44,6 +44,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 						"text-foreground",
 						"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 						"transition-colors duration-200 mb-4",
+						"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
 						isViewAllActive && "bg-accent font-semibold"
 					)}
 				>
@@ -54,12 +55,16 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 
 			{/* Collection cards - reproduces CollectionCard design */}
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-				{filteredCollections.map((collection) => {
+				{filteredCollections.map((collection, index) => {
 					const isActive = pathname === collection.href;
 					const displayImages = collection.images ?? [];
-
 					return (
-						<NavigationMenuLink key={collection.href} asChild>
+						<div
+							key={collection.href}
+							className="motion-safe:animate-[menu-item-in_0.25s_ease-out_both]"
+							style={{ animationDelay: `${(index + 1) * 50}ms` }}
+						>
+						<NavigationMenuLink asChild>
 							<Link
 								href={collection.href}
 								aria-current={isActive ? "page" : undefined}
@@ -70,7 +75,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 									"motion-reduce:transition-colors",
 									"motion-safe:can-hover:hover:border-primary/40",
 									"can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
-									"motion-safe:can-hover:hover:-translate-y-1 motion-safe:can-hover:hover:scale-[1.005]",
+									"motion-safe:can-hover:hover:-translate-y-1 motion-safe:can-hover:hover:scale-[1.02]",
 									"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 									"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
 									isActive && "border-primary/40"
@@ -89,7 +94,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 									</div>
 								)}
 
-								{/* Centered title with decorative line */}
+								{/* Centered title + description with decorative line */}
 								<div className="px-3 pb-3 text-center">
 									<div
 										className={cn(
@@ -108,9 +113,15 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 									)}>
 										{collection.label}
 									</span>
+									{collection.description && (
+										<p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+											{collection.description}
+										</p>
+									)}
 								</div>
 							</Link>
 						</NavigationMenuLink>
+						</div>
 					);
 				})}
 			</div>

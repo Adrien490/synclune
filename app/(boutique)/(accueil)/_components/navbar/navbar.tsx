@@ -91,6 +91,19 @@ export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.Reac
 	// Générer les items de navigation mobile en fonction de la session et statut admin
 	const mobileNavItems = getMobileNavItems(session, productTypes, menuCollections, userIsAdmin);
 
+	// Featured products for the mega menu (up to 3 recent products with images)
+	const featuredProducts = recentProducts.slice(0, 3).map((p) => {
+		const sku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
+		const image = sku?.images?.find((img) => img.isPrimary) ?? sku?.images?.[0];
+		return {
+			slug: p.slug,
+			title: p.title,
+			priceInclTax: sku?.priceInclTax ?? 0,
+			imageUrl: image?.url ?? "",
+			blurDataUrl: image?.blurDataUrl ?? null,
+		};
+	}).filter((p) => p.imageUrl);
+
 	// Générer les items de navigation desktop avec mega menus
 	const desktopNavItems = getDesktopNavItems({ productTypes, collections: menuCollections });
 
@@ -149,7 +162,7 @@ export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.Reac
 								shadow
 								sizes="44px"
 							/>
-							<DesktopNav navItems={desktopNavItems} />
+							<DesktopNav navItems={desktopNavItems} featuredProducts={featuredProducts} />
 						</div>
 
 						{/* Section droite: Favoris + Recherche + Compte (dropdown) + Panier */}

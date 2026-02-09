@@ -14,11 +14,13 @@ import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { MegaMenuProduct } from "@/shared/constants/navigation";
 import { MegaMenuCreations } from "./mega-menu-creations";
 import { MegaMenuCollections } from "./mega-menu-collections";
 
 interface DesktopNavProps {
 	navItems: NavItemWithChildren[];
+	featuredProducts?: MegaMenuProduct[];
 }
 
 const linkClasses = cn(
@@ -37,7 +39,7 @@ const linkClasses = cn(
 	"motion-reduce:hover:after:scale-x-100 motion-reduce:data-[state=open]:after:scale-x-100",
 );
 
-export function DesktopNav({ navItems }: DesktopNavProps) {
+export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const router = useRouter();
 
@@ -92,7 +94,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 							>
 								<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 									{item.dropdownType === "creations" && (
-										<MegaMenuCreations productTypes={item.children} />
+										<MegaMenuCreations productTypes={item.children} featuredProducts={featuredProducts} />
 									)}
 									{item.dropdownType === "collections" && (
 										<MegaMenuCollections collections={item.children} />

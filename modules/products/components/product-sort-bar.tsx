@@ -38,7 +38,7 @@ function ActiveBadge({ count, showDot = false }: ActiveBadgeProps) {
 	if (showDot && !count) {
 		return (
 			<span
-				className="absolute top-1.5 right-1/2 translate-x-5 size-2.5 bg-primary rounded-full ring-2 ring-background"
+				className="absolute top-1.5 right-1/2 translate-x-5 size-2.5 bg-primary rounded-full ring-2 ring-background animate-in zoom-in-50 duration-200"
 				aria-hidden="true"
 			/>
 		);
@@ -46,7 +46,7 @@ function ActiveBadge({ count, showDot = false }: ActiveBadgeProps) {
 	if (count && count > 0) {
 		return (
 			<span
-				className="absolute -top-0.5 right-1/2 translate-x-6 min-w-[18px] h-[18px] bg-primary text-primary-foreground rounded-full text-[11px] flex items-center justify-center font-semibold px-1 ring-2 ring-background"
+				className="absolute -top-0.5 right-1/2 translate-x-6 min-w-[18px] h-[18px] bg-primary text-primary-foreground rounded-full text-[11px] flex items-center justify-center font-semibold px-1 ring-2 ring-background animate-in zoom-in-50 duration-200"
 				aria-hidden="true"
 			>
 				{count > 9 ? "9+" : count}
@@ -143,16 +143,26 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		}
 	};
 
+	// Haptic feedback for button presses
+	const vibrate = () => {
+		if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+			navigator.vibrate(5);
+		}
+	};
+
 	// Style commun pour les boutons
-	const buttonClassName = cn(
-		"flex-1 min-w-18 flex flex-col items-center justify-center gap-1",
-		"h-full min-h-14", // 56px - Material Design 3 touch target
-		"text-muted-foreground hover:text-foreground",
-		"transition-colors duration-200",
-		"active:scale-95 active:bg-primary/10", // Couleur ajoutee pour feedback visuel
-		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
-		"relative"
-	);
+	const getButtonClassName = (isActive: boolean) =>
+		cn(
+			"flex-1 min-w-18 flex flex-col items-center justify-center gap-1",
+			"h-full min-h-14", // 56px - Material Design 3 touch target
+			"transition-colors duration-200",
+			"active:scale-95 active:bg-primary/10",
+			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+			"relative",
+			isActive
+				? "text-primary hover:text-primary"
+				: "text-muted-foreground hover:text-foreground"
+		);
 
 	const iconClassName = "size-5";
 	const labelClassName = "text-xs font-medium"; // 12px au lieu de 11px
@@ -181,16 +191,19 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 				<div
 					role="toolbar"
 					aria-label="Actions rapides"
-					className="flex items-stretch h-14"
+					className="flex items-stretch h-14 divide-x divide-border/30"
 				>
 					{/* Tri */}
 					<button
 						ref={sortButtonRef}
 						type="button"
-						onClick={() => setSortOpen(true)}
+						onClick={() => {
+							vibrate();
+							setSortOpen(true);
+						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
-						className={buttonClassName}
+						className={getButtonClassName(hasActiveSort)}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 					>
 						<ArrowUpDown className={iconClassName} aria-hidden="true" />
@@ -202,10 +215,13 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={searchButtonRef}
 						type="button"
-						onClick={() => openSearch()}
+						onClick={() => {
+							vibrate();
+							openSearch();
+						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
-						className={buttonClassName}
+						className={getButtonClassName(hasActiveSearch)}
 						aria-label={
 							hasActiveSearch
 								? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
@@ -221,10 +237,13 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={filterButtonRef}
 						type="button"
-						onClick={() => openFilter()}
+						onClick={() => {
+							vibrate();
+							openFilter();
+						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
-						className={buttonClassName}
+						className={getButtonClassName(hasActiveFilters)}
 						aria-label={
 							hasActiveFilters
 								? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}. Modifier les filtres`

@@ -12,6 +12,7 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions"
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config"
+import { sanitizeText } from "@/shared/lib/sanitize"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { getReviewInvalidationTags } from "../constants/cache"
@@ -66,6 +67,10 @@ export async function updateReview(
 
 		const { id, rating, title, content, media } = validation.data
 
+		// 4b. Sanitize text inputs
+		const sanitizedTitle = title ? sanitizeText(title) : null
+		const sanitizedContent = sanitizeText(content)
+
 		// 5. Vérifier que l'avis existe et appartient à l'utilisateur
 		const existingReview = await prisma.productReview.findFirst({
 			where: {
@@ -97,8 +102,8 @@ export async function updateReview(
 				where: { id },
 				data: {
 					rating,
-					title,
-					content,
+					title: sanitizedTitle,
+					content: sanitizedContent,
 				},
 				select: {
 					id: true,

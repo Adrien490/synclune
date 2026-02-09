@@ -83,7 +83,7 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 						<li
 							key={item.href}
 							className="motion-safe:animate-[menu-item-in_0.25s_ease-out_both]"
-							style={{ animationDelay: `${(index + 1) * 15}ms` }}
+							style={{ animationDelay: `${(index + 1) * 40}ms` }}
 						>
 							<NavigationMenuLink asChild>
 								<Link

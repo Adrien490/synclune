@@ -1,11 +1,13 @@
 "use server"
 
 import { updateTag } from "next/cache"
+import { Prisma } from "@/app/generated/prisma/client"
 import { prisma } from "@/shared/lib/prisma"
 import { requireAuth } from "@/modules/auth/lib/require-auth"
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
 import {
 	success,
+	error,
 	forbidden,
 	validationError,
 	handleActionError,
@@ -147,6 +149,13 @@ export async function createReview(
 
 		return success("Merci pour votre avis !", { id: review.id })
 	} catch (e) {
+		// Unique constraint violation (userId, productId) - race condition on double submit
+		if (
+			e instanceof Prisma.PrismaClientKnownRequestError &&
+			e.code === "P2002"
+		) {
+			return error(REVIEW_ERROR_MESSAGES.ALREADY_REVIEWED)
+		}
 		return handleActionError(e, REVIEW_ERROR_MESSAGES.CREATE_FAILED)
 	}
 }

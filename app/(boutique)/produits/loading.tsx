@@ -31,7 +31,7 @@ export default function BijouxHubLoading() {
 			</section>
 
 			{/* Bottom Action Bar Skeleton - Mobile only */}
-			<div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] bg-background/95 border-t border-border">
+			<div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] bg-background/95 border-t border-x border-border rounded-t-2xl">
 				<div className="flex items-stretch h-14">
 					{[0, 1, 2].map((i) => (
 						<div key={i} className="flex-1 flex flex-col items-center justify-center gap-1">

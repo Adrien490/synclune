@@ -30,6 +30,8 @@ import { CollectionMiniGrid } from "./collection-mini-grid";
 import { SectionHeader } from "./section-header";
 import { UserHeader } from "./user-header";
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
 // CSS stagger animation style for menu items
 const staggerItemClassName =
 	"motion-safe:animate-[menu-item-in_0.3s_ease-out_both]";
@@ -190,13 +192,14 @@ export function MenuSheet({
 											<SheetClose asChild>
 												<Link
 													href={`/produits/${type.slug}`}
-													className={getLinkClass(`/produits/${type.slug}`)}
+													className={getLinkClass(`/produits/${type.slug}`, "gap-2")}
 													aria-current={
 														isMenuItemActive(`/produits/${type.slug}`)
 															? "page"
 															: undefined
 													}
 												>
+													<Gem className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
 													{type.label}
 												</Link>
 											</SheetClose>
@@ -258,6 +261,11 @@ export function MenuSheet({
 														</div>
 													)}
 													<span className="flex-1">{collection.label}</span>
+													{collection.createdAt && Date.now() - new Date(collection.createdAt).getTime() < THIRTY_DAYS_MS && (
+														<Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+															Nouveau
+														</Badge>
+													)}
 												</Link>
 											</SheetClose>
 										</li>
