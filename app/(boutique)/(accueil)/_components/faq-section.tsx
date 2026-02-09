@@ -2,6 +2,7 @@ import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
+import { BRAND } from "@/shared/constants/brand";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
@@ -160,10 +161,10 @@ export function FaqSection() {
 							Écris-moi, je réponds toujours !
 						</p>
 						<Button asChild variant="outline" size="lg" className="gap-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out">
-							<Link href="/contact">
+							<a href={`mailto:${BRAND.contact.email}`}>
 								<MessageCircle className="w-4 h-4" aria-hidden="true" />
 								Me contacter
-							</Link>
+							</a>
 						</Button>
 					</div>
 				</Fade>
