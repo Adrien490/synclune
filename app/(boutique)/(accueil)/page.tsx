@@ -12,11 +12,14 @@ import { StructuredData } from "@/shared/components/structured-data";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
+import { AtelierStorySkeleton } from "./_components/atelier-story-skeleton";
 import { CreativeProcess } from "./_components/creative-process";
 import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton";
 import { FaqSection } from "./_components/faq-section";
+import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
+import { NewsletterSectionSkeleton } from "./_components/newsletter-section-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
@@ -88,7 +91,7 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 4. Collections - Thematic browsing with descriptions */}
+      {/* 3. Collections - Thematic browsing with descriptions */}
       <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
         <CollectionsSection
           collectionsPromise={getCollections({
@@ -102,7 +105,7 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 5. Reviews - Social proof with featured customer reviews */}
+      {/* 4. Reviews - Social proof with featured customer reviews */}
       <Suspense fallback={<ReviewsSectionSkeleton />}>
         <ReviewsSection
           reviewsPromise={featuredReviewsPromise}
@@ -110,19 +113,25 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 6. Atelier Story - Personal storytelling with polaroid gallery */}
-      <AtelierStory />
+      {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
+      <Suspense fallback={<AtelierStorySkeleton />}>
+        <AtelierStory />
+      </Suspense>
 
-      {/* 7. Creative Process - Step-by-step jewelry making */}
+      {/* 6. Creative Process - Step-by-step jewelry making */}
       <Suspense fallback={<CreativeProcessSkeleton />}>
         <CreativeProcess />
       </Suspense>
 
-      {/* 8. FAQ - Frequently asked questions with JSON-LD */}
-      <FaqSection />
+      {/* 7. FAQ - Frequently asked questions with JSON-LD */}
+      <Suspense fallback={<FaqSectionSkeleton />}>
+        <FaqSection />
+      </Suspense>
 
-      {/* 9. Newsletter - Subscription with gift incentive */}
-      <NewsletterSection />
+      {/* 8. Newsletter - Subscription with gift incentive */}
+      <Suspense fallback={<NewsletterSectionSkeleton />}>
+        <NewsletterSection />
+      </Suspense>
     </>
   );
 }

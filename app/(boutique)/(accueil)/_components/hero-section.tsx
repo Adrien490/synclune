@@ -108,7 +108,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 								<Heart
 									size={22}
 									fill="currentColor"
-									className="text-primary inline align-middle"
+									className="text-(--primary-text) inline align-middle"
 									aria-label="coeur"
 								/>
 							</p>

@@ -1,10 +1,10 @@
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
-import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { AtelierStorySkeleton } from "./_components/atelier-story-skeleton";
 import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton";
 import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
+import { NewsletterSectionSkeleton } from "./_components/newsletter-section-skeleton";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
 /**
@@ -46,21 +46,7 @@ export default function HomeLoading() {
 			<FaqSectionSkeleton />
 
 			{/* 8. Newsletter */}
-			<div className={`relative overflow-hidden bg-muted/20 ${SECTION_SPACING.section}`}>
-				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<header className="mb-8 text-center lg:mb-12">
-						<div className="h-10 w-48 mx-auto bg-muted animate-pulse rounded" />
-						<div className="mt-4 h-7 w-full max-w-md mx-auto bg-muted/50 animate-pulse rounded" />
-					</header>
-					<div className="max-w-md mx-auto">
-						<div className="h-12 w-full bg-muted animate-pulse rounded-md" />
-						<div className="mt-3 h-10 w-full bg-muted animate-pulse rounded-md" />
-					</div>
-					<div className="mt-6 text-center">
-						<div className="h-4 w-64 mx-auto bg-muted/50 animate-pulse rounded" />
-					</div>
-				</div>
-			</div>
+			<NewsletterSectionSkeleton />
 		</div>
 	);
 }

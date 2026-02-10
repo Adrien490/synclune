@@ -135,8 +135,9 @@ html {
 	/* ==========================================
 	   INTERACTIVE (Rose foncé accessible)
 	   ========================================== */
-	--primary: oklch(0.8593 0.097 340.78); /* Rose foncé - WCAG AA */
+	--primary: oklch(0.8593 0.097 340.78); /* Rose foncé - WCAG AA (as background with dark text) */
 	--primary-foreground: oklch(0.1 0 0);
+	--primary-text: oklch(0.50 0.15 340.78); /* Rose foncé pour texte sur fond clair - WCAG AA 4.5:1+ */
 
 	--secondary: oklch(0.9221 0.0871 86.29); /* Gris clair */
 	--secondary-foreground: oklch(0.13 0.01 270);

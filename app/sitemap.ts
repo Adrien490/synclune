@@ -9,47 +9,50 @@ import { MetadataRoute } from "next";
  * Inclut toutes les pages importantes du site : pages statiques, produits, collections, types
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+	// Fixed date for static pages — only update when content actually changes
+	const staticLastModified = new Date(process.env.DEPLOY_DATE ?? "2025-06-01");
+
 	// Pages statiques avec leurs priorités et fréquences de mise à jour
 	const staticPages: MetadataRoute.Sitemap = [
 		{
 			url: SITE_URL,
-			lastModified: new Date(),
+			lastModified: staticLastModified,
 			changeFrequency: "weekly",
 			priority: 1.0,
 		},
 		{
 			url: `${SITE_URL}/produits`,
-			lastModified: new Date(),
+			lastModified: staticLastModified,
 			changeFrequency: "daily",
 			priority: 0.9,
 		},
 		{
 			url: `${SITE_URL}/collections`,
-			lastModified: new Date(),
+			lastModified: staticLastModified,
 			changeFrequency: "weekly",
 			priority: 0.8,
 		},
 		{
 			url: `${SITE_URL}/personnalisation`,
-			lastModified: new Date(),
+			lastModified: staticLastModified,
 			changeFrequency: "monthly",
 			priority: 0.6,
 		},
 		{
 			url: `${SITE_URL}/cgv`,
-			lastModified: new Date(),
+			lastModified: staticLastModified,
 			changeFrequency: "monthly",
 			priority: 0.3,
 		},
 		{
 			url: `${SITE_URL}/confidentialite`,
-			lastModified: new Date(),
+			lastModified: staticLastModified,
 			changeFrequency: "monthly",
 			priority: 0.3,
 		},
 		{
 			url: `${SITE_URL}/mentions-legales`,
-			lastModified: new Date(),
+			lastModified: staticLastModified,
 			changeFrequency: "monthly",
 			priority: 0.3,
 		},

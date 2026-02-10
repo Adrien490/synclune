@@ -1,6 +1,13 @@
 import { ParticleBackground } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+	title: "Page introuvable",
+	description: "La page que vous recherchez n'existe pas ou a été déplacée. Découvrez nos bijoux artisanaux faits main.",
+	robots: { index: false },
+};
 
 export default function NotFound() {
 	return (

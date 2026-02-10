@@ -46,6 +46,8 @@ export function StructuredData({ reviewStatsPromise }: StructuredDataProps) {
 	graphSchemas.push({
 		"@type": "Article",
 		headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
+		datePublished: "2025-01-15",
+		dateModified: "2025-06-01",
 		author: {
 			"@type": "Person",
 			name: "Léane",

@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
 
   async headers() {
-    // CSP in report-only mode — enforce after validating no breakage
+    // CSP enforced — validated in staging
     const cspDirectives = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://va.vercel-scripts.com",
@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Content-Security-Policy-Report-Only", value: cspDirectives },
+          { key: "Content-Security-Policy", value: cspDirectives },
           {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
