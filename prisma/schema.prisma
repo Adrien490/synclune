@@ -176,14 +176,6 @@ enum ReviewStatus {
 // CATALOGUE - ENUMS ADDITIONNELS
 // ============================================================================
 
-enum ShippingCarrier {
-  COLISSIMO
-  CHRONOPOST
-  MONDIAL_RELAY
-  DPD
-  OTHER
-}
-
 /// Source d'une action sur une commande (audit trail)
 enum HistorySource {
   ADMIN
@@ -456,8 +448,9 @@ model WishlistItem {
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete for RGPD traceability
 
   // Un produit ne peut etre ajoute qu'une seule fois par wishlist
   // Note: Contrainte unique sur champ nullable - validation metier cote applicatif
@@ -524,7 +517,7 @@ model Order {
 
   // === INFORMATIONS CLIENT ===
   customerEmail String @db.VarChar(255)
-  customerName  String @db.VarChar(200)
+  customerName  String @db.VarChar(100)
   customerPhone String? @db.VarChar(20)
 
   // === ADRESSE DE LIVRAISON (DENORMALISEE - SNAPSHOT) ===
@@ -553,7 +546,7 @@ model Order {
 
   // === LIVRAISON ===
   shippingMethod    String?          @db.VarChar(20) // Type de livraison
-  shippingCarrier   ShippingCarrier? // Transporteur
+  shippingCarrier   String?          @db.VarChar(30) // Transporteur (valeurs: colissimo, chronopost, mondial_relay, dpd, lettre_suivie, autre)
   shippingRateId    String? // ID du tarif Stripe utilise
   trackingNumber    String? @db.VarChar(50)
   trackingUrl       String? @db.VarChar(2048) // URL de suivi
@@ -840,7 +833,7 @@ model Discount {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  @@index([code, isActive]) // Validation code promo actif, couvre aussi code seul
+  @@index([code, isActive, deletedAt]) // Validation code promo actif avec soft-delete
   @@index([isActive, startsAt, endsAt])
   @@index([deletedAt, isActive]) // Admin listing avec soft-delete
   @@index([createdAt, id])
@@ -858,6 +851,9 @@ model DiscountUsage {
   // Commande associee (Restrict pour protection comptable)
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  // Snapshot du code promo utilise (le code peut etre modifie apres usage)
+  discountCode String @db.VarChar(30)
 
   // Montant de la reduction appliquee (snapshot)
   amountApplied Int // En centimes
@@ -881,7 +877,7 @@ enum NewsletterStatus {
 
 model NewsletterSubscriber {
   id               String  @id @default(cuid())
-  email            String  @unique
+  email            String  @unique @db.VarChar(255)
   unsubscribeToken String  @unique
 
   // === STATUT NEWSLETTER ===
@@ -892,7 +888,6 @@ model NewsletterSubscriber {
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Double opt-in : Confirmation email obligatoire
-  emailVerified      Boolean   @default(false) // true apres clic sur lien confirmation
   confirmationToken  String?   @unique // Token unique pour confirmer l'inscription
   confirmationSentAt DateTime? // Date d'envoi de l'email de confirmation
   confirmedAt        DateTime? // Date de confirmation par l'utilisateur

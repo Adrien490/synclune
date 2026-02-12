@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NavItemChild } from "@/shared/constants/navigation";
@@ -34,6 +35,7 @@ interface MegaMenuColumnProps {
  * - Visual hierarchy: first item styled as primary CTA
  */
 export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuColumnProps) {
+	const headingId = useId();
 	const pathname = usePathname();
 
 	if (items.length === 0) {
@@ -44,8 +46,8 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 	const [primaryItem, ...restItems] = items;
 
 	return (
-		<div>
-			<h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+		<div role="group" aria-labelledby={headingId}>
+			<h3 id={headingId} className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 				{title}
 			</h3>
 

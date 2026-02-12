@@ -11,7 +11,7 @@ interface AddressSelectorProps {
 }
 
 /**
- * Compact radio-group style address selector
+ * Accessible radio-group address selector
  * Only rendered when the user has more than one saved address
  */
 export function AddressSelector({
@@ -24,26 +24,31 @@ export function AddressSelector({
 	return (
 		<fieldset className="space-y-2">
 			<legend className="text-sm font-medium">Adresses enregistrées</legend>
-			<div className="grid gap-2">
+			<div className="grid gap-2" role="radiogroup">
 				{addresses.map((address) => {
 					const isSelected = address.id === selectedAddressId
 					const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ")
 					const addressLine = [address.address1, address.city].filter(Boolean).join(", ")
 
 					return (
-						<button
+						<label
 							key={address.id}
-							type="button"
-							onClick={() => onSelectAddress(address)}
 							className={cn(
-								"flex items-start gap-3 rounded-lg border p-3 text-left text-sm transition-colors",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+								"flex items-start gap-3 rounded-lg border p-3 text-sm transition-colors cursor-pointer",
+								"has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50 hover:bg-muted/50"
 							)}
-							aria-pressed={isSelected}
 						>
+							<input
+								type="radio"
+								name="saved-address"
+								value={address.id}
+								checked={isSelected}
+								onChange={() => onSelectAddress(address)}
+								className="sr-only"
+							/>
 							<MapPin className={cn(
 								"w-4 h-4 mt-0.5 shrink-0",
 								isSelected ? "text-primary" : "text-muted-foreground"
@@ -57,7 +62,7 @@ export function AddressSelector({
 									Par défaut
 								</span>
 							)}
-						</button>
+						</label>
 					)
 				})}
 			</div>

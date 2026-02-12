@@ -1,4 +1,3 @@
-import { PageHeader } from "@/shared/components/page-header";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -46,15 +45,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 	const ErrorIcon = errorInfo.icon;
 	return (
 		<div className="min-h-screen">
-			<PageHeader
-				title={errorInfo.title}
-				breadcrumbs={[
-					{ label: "Paiement", href: "/paiement" },
-					{ label: "Annulation", href: "/paiement/annulation" },
-				]}
-			/>
-
-			<section className="bg-background py-12">
+			<section className="bg-background py-8 sm:py-10">
 				<div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
 					<Card className="border-2">
 						<CardHeader className="text-center space-y-4 pb-6">
@@ -136,6 +127,12 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									</p>
 								)}
 							</div>
+
+							{/* Reassurance message */}
+							<p className="text-sm text-muted-foreground text-center">
+								Ton panier et tes informations ont été sauvegardés.
+								Tu peux réessayer immédiatement.
+							</p>
 
 							{/* Actions */}
 							<div className="flex flex-col sm:flex-row gap-3 pt-4">

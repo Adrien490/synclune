@@ -1601,6 +1601,7 @@ async function main(): Promise<void> {
           discountId: discount.id,
           orderId: order.id,
           userId: order.userId,
+          discountCode: discount.code,
           amountApplied: Math.min(amountApplied, order.subtotal),
         },
       });
@@ -1997,20 +1998,17 @@ async function main(): Promise<void> {
     const email = newsletterEmails[i];
 
     let status: NewsletterStatus;
-    let emailVerified = false;
     let confirmedAt: Date | null = null;
     let unsubscribedAt: Date | null = null;
     const confirmationToken = i < 4 ? faker.string.alphanumeric(32) : null;
 
     if (i < 6) {
       status = NewsletterStatus.CONFIRMED;
-      emailVerified = true;
       confirmedAt = faker.date.past({ years: 0.5 });
     } else if (i < 10) {
       status = NewsletterStatus.PENDING;
     } else {
       status = NewsletterStatus.UNSUBSCRIBED;
-      emailVerified = true;
       confirmedAt = faker.date.past({ years: 1 });
       unsubscribedAt = faker.date.recent({ days: 30 });
     }
@@ -2021,7 +2019,6 @@ async function main(): Promise<void> {
           email,
           unsubscribeToken: crypto.randomUUID(),
           status,
-          emailVerified,
           confirmationToken,
           confirmedAt,
           unsubscribedAt,

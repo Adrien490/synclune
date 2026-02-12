@@ -29,7 +29,7 @@ export function ProductPrice({
 						Prix original : {formatEuro(compareAtPrice)}
 					</span>
 					<span
-						className="tabular-nums text-foreground/60 line-through text-sm"
+						className="tabular-nums text-foreground/70 line-through text-sm"
 						aria-hidden="true"
 					>
 						{formatEuro(compareAtPrice)}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { NavItemChild, MegaMenuProduct } from "@/shared/constants/navigation";
@@ -14,6 +15,8 @@ interface MegaMenuCreationsProps {
 }
 
 export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCreationsProps) {
+	const featuredHeadingId = useId();
+
 	if (!productTypes || productTypes.length === 0) {
 		return null;
 	}
@@ -30,15 +33,15 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 
 				{/* Right zone: featured products */}
 				{hasProducts && (
-					<div className="w-[320px] shrink-0 border-l border-border pl-8">
-						<h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+					<div className="w-[320px] shrink-0 border-l border-border pl-8" role="region" aria-labelledby={featuredHeadingId}>
+						<h3 id={featuredHeadingId} className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 							Nouveautés
 						</h3>
 						<div className="grid grid-cols-3 gap-3">
 							{featuredProducts.map((product, index) => (
 								<NavigationMenuLink key={product.slug} asChild>
 									<Link
-										href={`/produits/${product.slug}`}
+										href={`/creations/${product.slug}`}
 										className={cn(
 											"group/product flex flex-col gap-2",
 											"rounded-lg p-1.5",
@@ -72,7 +75,7 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 												{product.title}
 											</p>
 											<p className="text-xs text-muted-foreground">
-												{formatPrice(product.priceInclTax)}
+												{formatPrice(product.priceInclTax / 100)}
 											</p>
 										</div>
 									</Link>

@@ -12,7 +12,6 @@ export type { Carrier, CarrierInfo, DetectionResult } from "../types/carrier.typ
 export {
 	getTrackingUrl,
 	detectCarrierAndUrl,
-	toShippingCarrierEnum,
 } from "../services/carrier-detection.service";
 
 /**

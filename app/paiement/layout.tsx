@@ -16,7 +16,7 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 		<div className="min-h-screen bg-background flex flex-col">
 			{/* Header minimal */}
 			<header className="border-b bg-background/95 backdrop-blur-sm">
-				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					<div className="flex h-16 items-center justify-between">
 						<Logo href="/" size={40} showText />
 						<Link

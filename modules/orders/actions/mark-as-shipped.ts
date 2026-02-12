@@ -10,7 +10,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/utils/carrier.utils";
+import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -119,7 +119,7 @@ export async function markAsShipped(
 				fulfillmentStatus: FulfillmentStatus.SHIPPED,
 				trackingNumber: result.data.trackingNumber,
 				trackingUrl: finalTrackingUrl,
-				shippingCarrier: toShippingCarrierEnum(result.data.carrier),
+				shippingCarrier: result.data.carrier || null,
 				shippedAt: new Date(),
 			},
 		});

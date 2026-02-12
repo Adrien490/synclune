@@ -3,7 +3,6 @@
  * basé sur le format du numéro de suivi
  */
 
-import { ShippingCarrier } from "@/app/generated/prisma/client";
 import type { Carrier, DetectionResult } from "../types/carrier.types";
 import { CARRIER_TRACKING_URLS, CARRIER_PATTERNS } from "../constants/carrier-urls";
 
@@ -118,31 +117,3 @@ export function detectCarrierAndUrl(trackingNumber: string): DetectionResult {
 	};
 }
 
-/**
- * Convertit un Carrier (string local) vers l'enum Prisma ShippingCarrier
- *
- * @param carrier - Type de transporteur local
- * @returns Valeur enum Prisma ou null
- */
-export function toShippingCarrierEnum(
-	carrier: Carrier | string | undefined | null
-): ShippingCarrier | null {
-	if (!carrier) return null;
-
-	const mapping: Record<string, ShippingCarrier> = {
-		colissimo: "COLISSIMO",
-		lettre_suivie: "COLISSIMO", // Lettre suivie est géré par La Poste comme Colissimo
-		chronopost: "CHRONOPOST",
-		mondial_relay: "MONDIAL_RELAY",
-		dpd: "DPD",
-		autre: "OTHER",
-		// Support des valeurs déjà en majuscules
-		COLISSIMO: "COLISSIMO",
-		CHRONOPOST: "CHRONOPOST",
-		MONDIAL_RELAY: "MONDIAL_RELAY",
-		DPD: "DPD",
-		OTHER: "OTHER",
-	};
-
-	return mapping[carrier.toLowerCase()] || mapping[carrier] || "OTHER";
-}

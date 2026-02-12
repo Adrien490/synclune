@@ -16,7 +16,7 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
-import { deleteUploadThingFileFromUrl } from "@/modules/media/services/delete-uploadthing-files.service";
+import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { deleteAccountSchema } from "../schemas/user.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { USERS_CACHE_TAGS } from "../constants/cache";
@@ -75,6 +75,13 @@ export async function deleteAccount(
 		const stripeCustomerId = user.stripeCustomerId;
 		const userAvatar = user.image;
 
+		// 4b. Collect review media URLs for UploadThing cleanup after transaction
+		const reviewMedias = await prisma.reviewMedia.findMany({
+			where: { review: { userId } },
+			select: { url: true },
+		});
+		const reviewMediaUrls = reviewMedias.map((m) => m.url);
+
 		// 5. Transaction pour garantir l'intégrité des données
 		await prisma.$transaction(async (tx) => {
 			// 5.1 Anonymiser les commandes (conserver pour comptabilité)
@@ -93,7 +100,12 @@ export async function deleteAccount(
 				},
 			});
 
-			// 5.2 Anonymiser le contenu des avis (texte libre potentiellement personnel)
+			// 5.2 Supprimer les photos des avis (PII potentiel : visages, décor identifiable)
+			await tx.reviewMedia.deleteMany({
+				where: { review: { userId } },
+			});
+
+			// 5.3 Anonymiser le contenu des avis (texte libre potentiellement personnel)
 			await tx.productReview.updateMany({
 				where: { userId },
 				data: {
@@ -102,7 +114,7 @@ export async function deleteAccount(
 				},
 			});
 
-			// 5.3 Supprimer les données non nécessaires à la comptabilité
+			// 5.4 Supprimer les données non nécessaires à la comptabilité
 			// Adresses
 			await tx.address.deleteMany({ where: { userId } });
 
@@ -118,7 +130,7 @@ export async function deleteAccount(
 			// Comptes OAuth
 			await tx.account.deleteMany({ where: { userId } });
 
-			// 5.4 Soft delete du compte utilisateur avec anonymisation RGPD
+			// 5.5 Soft delete du compte utilisateur avec anonymisation RGPD
 			await tx.user.update({
 				where: { id: userId },
 				data: {
@@ -147,6 +159,13 @@ export async function deleteAccount(
 		if (userAvatar) {
 			deleteUploadThingFileFromUrl(userAvatar).catch((err) => {
 				console.error("[deleteAccount] Erreur suppression avatar UploadThing:", err);
+			});
+		}
+
+		// 7b. Supprimer les photos des avis sur UploadThing (RGPD: PII potentiel)
+		if (reviewMediaUrls.length > 0) {
+			deleteUploadThingFilesFromUrls(reviewMediaUrls).catch((err) => {
+				console.error("[deleteAccount] Erreur suppression review media UploadThing:", err);
 			});
 		}
 

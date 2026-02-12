@@ -130,10 +130,10 @@ export function getShippingMethodFromRate(shippingRateId: string): string {
  * Détermine le transporteur à partir du shipping rate ID
  *
  * @param shippingRateId - ID du shipping rate Stripe (shr_xxx)
- * @returns Le transporteur (enum ShippingCarrier)
+ * @returns Le transporteur (lowercase string matching Carrier type)
  */
-export function getShippingCarrierFromRate(shippingRateId: string): "COLISSIMO" | "CHRONOPOST" | "MONDIAL_RELAY" | "DPD" | "OTHER" {
+export function getShippingCarrierFromRate(shippingRateId: string): string {
 	// Par défaut, transporteur non spécifié
 	// Mapper ici selon l'ID si nécessaire
-	return "OTHER";
+	return "autre";
 }

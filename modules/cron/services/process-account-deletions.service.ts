@@ -1,7 +1,7 @@
 import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { deleteUploadThingFileFromUrl } from "@/modules/media/services/delete-uploadthing-files.service";
+import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 
@@ -53,6 +53,13 @@ export async function processAccountDeletions(): Promise<{
 			// Save avatar URL before transaction (will be deleted after success)
 			const avatarUrl = user.image;
 
+			// Collect review media URLs for UploadThing cleanup after transaction
+			const reviewMedias = await prisma.reviewMedia.findMany({
+				where: { review: { userId: user.id } },
+				select: { url: true },
+			});
+			const reviewMediaUrls = reviewMedias.map((m) => m.url);
+
 			const anonymizedEmail = `anonymized-${user.id}@deleted.local`;
 			const now = new Date();
 
@@ -96,6 +103,20 @@ export async function processAccountDeletions(): Promise<{
 					where: { userId: user.id },
 				});
 
+				// 7. Supprimer les photos des avis (PII potentiel : visages, décor identifiable)
+				await tx.reviewMedia.deleteMany({
+					where: { review: { userId: user.id } },
+				});
+
+				// 8. Anonymiser le contenu des avis
+				await tx.productReview.updateMany({
+					where: { userId: user.id },
+					data: {
+						content: "Contenu supprimé suite à la suppression du compte.",
+						title: null,
+					},
+				});
+
 				// Note: On ne supprime PAS les commandes (Order) ni les remboursements (Refund)
 				// Conservation légale 10 ans (Art. L123-22 Code de Commerce)
 				// userId reste dans Order pour traçabilité, mais les données personnelles
@@ -117,6 +138,20 @@ export async function processAccountDeletions(): Promise<{
 						avatarError instanceof Error
 							? avatarError.message
 							: String(avatarError)
+					);
+				}
+			}
+
+			// Delete review media from UploadThing AFTER successful transaction
+			if (reviewMediaUrls.length > 0) {
+				try {
+					await deleteUploadThingFilesFromUrls(reviewMediaUrls);
+				} catch (mediaError) {
+					console.warn(
+						`[CRON:process-account-deletions] Failed to delete review media for ${user.id}:`,
+						mediaError instanceof Error
+							? mediaError.message
+							: String(mediaError)
 					);
 				}
 			}

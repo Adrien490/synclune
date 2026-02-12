@@ -77,7 +77,7 @@ export function DiscountCodeInput({
 				<button
 					type="button"
 					onClick={handleRemove}
-					className="text-muted-foreground hover:text-foreground transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm p-0.5"
+					className="text-muted-foreground hover:text-foreground transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm p-2 min-h-11 min-w-11 flex items-center justify-center"
 					aria-label="Supprimer le code promo"
 				>
 					<X className="w-4 h-4" />

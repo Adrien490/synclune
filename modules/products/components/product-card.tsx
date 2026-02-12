@@ -21,7 +21,7 @@ interface ProductCardProps {
 }
 
 /**
- * Badge positionne en haut a gauche de la carte avec role status.
+ * Badge positionne en haut a gauche de la carte.
  * Utilise par les badges stock (rupture, urgence) et promotion.
  */
 function CardBadge({
@@ -37,7 +37,6 @@ function CardBadge({
 }) {
 	return (
 		<Badge
-			role="status"
 			aria-label={ariaLabel}
 			variant={variant}
 			className={cn("absolute top-2.5 left-2.5 z-20 rounded-full shadow-md", className)}
@@ -160,7 +159,7 @@ export function ProductCard({
 					productId={product.id}
 					isInWishlist={isInWishlist}
 					productTitle={title}
-					className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
+					className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 sm:has-[:focus-visible]:opacity-100 transition-opacity duration-200"
 				/>
 
 				{/* Primary image — stays visible under secondary on hover, or zooms if no secondary */}
@@ -170,13 +169,12 @@ export function ProductCard({
 					fill
 					className={cn(
 						"object-cover rounded-lg",
-						!secondaryImage && "transition-[transform] duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
+						!secondaryImage && "motion-safe:transition-[transform] motion-safe:duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
 					)}
 					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={primaryImage.blurDataUrl ?? undefined}
-					preload={isAboveFold}
+					priority={isAboveFold}
 					loading={isAboveFold ? undefined : "lazy"}
-					fetchPriority={isAboveFold ? "high" : undefined}
 					sizes={IMAGE_SIZES.PRODUCT_CARD}
 				/>
 
@@ -186,7 +184,7 @@ export function ProductCard({
 						src={secondaryImage.url}
 						alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 						fill
-						className="object-cover rounded-lg opacity-0 transition-opacity duration-300 ease-out can-hover:group-hover:opacity-100"
+						className="object-cover rounded-lg opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
 						loading="lazy"
 						sizes={IMAGE_SIZES.PRODUCT_CARD}
 					/>
@@ -229,35 +227,38 @@ export function ProductCard({
 
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (
-					<div
-						className="flex items-center gap-1.5"
+					<ul
+						className="flex items-center gap-1.5 list-none p-0 m-0"
 						aria-label={`${colors.length} couleurs disponibles pour ${title}`}
-						role="group"
 					>
 						{colors.slice(0, 5).map((color) => (
-							<Link
-								key={color.slug}
-								href={`${productUrl}?color=${color.slug}`}
-								className={cn(
-									"size-4 sm:size-5 rounded-full border border-foreground/15 shrink-0",
-									"transition-transform duration-150 motion-safe:can-hover:hover:scale-110",
-									"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-									!color.inStock && "opacity-40"
-								)}
-								style={{ backgroundColor: color.hex }}
-								title={color.name}
-								aria-label={`${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`}
-							/>
+							<li key={color.slug}>
+								<Link
+									href={`${productUrl}?color=${color.slug}`}
+									className={cn(
+										"block size-6 sm:size-7 rounded-full border border-foreground/15 shrink-0",
+										"transition-transform duration-150 motion-safe:can-hover:hover:scale-110",
+										"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+										!color.inStock && "opacity-40"
+									)}
+									style={{ backgroundColor: color.hex }}
+									title={color.name}
+									aria-label={`${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`}
+								/>
+							</li>
 						))}
 						{colors.length > 5 && (
-							<Link
-								href={productUrl}
-								className="text-xs text-muted-foreground"
-							>
-								+{colors.length - 5}
-							</Link>
+							<li>
+								<Link
+									href={productUrl}
+									className="text-xs text-muted-foreground"
+									aria-label={`Voir les ${colors.length} couleurs disponibles pour ${title}`}
+								>
+									+{colors.length - 5}
+								</Link>
+							</li>
 						)}
-					</div>
+					</ul>
 				)}
 
 				{/* Prix */}

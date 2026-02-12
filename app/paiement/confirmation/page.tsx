@@ -1,4 +1,3 @@
-import { PageHeader } from "@/shared/components/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -9,7 +8,8 @@ import {
 } from "@/shared/components/ui/card";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { CheckCircle2, Heart, Package, Sparkles } from "lucide-react";
+import { CheckCircle2, Heart, Package, Sparkles, UserPlus } from "lucide-react";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -50,8 +50,11 @@ export default async function CheckoutSuccessPage({
 		redirect("/");
 	}
 
-	// Fetch order by id + orderNumber (no auth required, secured by double lookup)
-	const order = await getOrderForConfirmation(orderId, orderNumber);
+	// Fetch order and session in parallel
+	const [order, session] = await Promise.all([
+		getOrderForConfirmation(orderId, orderNumber),
+		getSession(),
+	]);
 
 	// Accept both PENDING and PAID: Stripe already confirmed payment on the return page,
 	// but the webhook may not have processed yet (race condition)
@@ -61,15 +64,7 @@ export default async function CheckoutSuccessPage({
 
 	return (
 		<div className="min-h-screen">
-			<PageHeader
-				title="Commande confirmée"
-				breadcrumbs={[
-					{ label: "Paiement", href: "/paiement" },
-					{ label: "Confirmation", href: "/paiement/confirmation" },
-				]}
-			/>
-
-			<section className="bg-background py-12">
+			<section className="bg-background py-8 sm:py-10">
 				<div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
 					<Card className="border-2 border-primary/20 bg-linear-to-br from-primary/5 to-background">
@@ -245,6 +240,30 @@ export default async function CheckoutSuccessPage({
 									</div>
 								</div>
 							</div>
+
+							{/* Guest account creation CTA (Baymard: post-purchase account creation) */}
+							{!session && (
+								<Card className="border-dashed">
+									<CardContent className="flex items-start gap-4 p-4">
+										<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+											<UserPlus className="w-5 h-5 text-primary" />
+										</div>
+										<div className="space-y-2">
+											<h3 className="font-semibold">Crée ton compte pour suivre ta commande</h3>
+											<p className="text-sm text-muted-foreground">
+												Accède au suivi de ta commande, enregistre tes adresses et simplifie
+												tes prochains achats.
+											</p>
+											<Button asChild variant="outline" size="sm">
+												<Link href="/inscription">
+													<UserPlus className="w-4 h-4" />
+													Créer mon compte
+												</Link>
+											</Button>
+										</div>
+									</CardContent>
+								</Card>
+							)}
 
 							{/* Actions */}
 							<div className="flex flex-col sm:flex-row gap-3 pt-4">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NavItemChild } from "@/shared/constants/navigation";
@@ -14,6 +15,7 @@ interface MegaMenuCollectionsProps {
 }
 
 export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
+	const headingId = useId();
 	const pathname = usePathname();
 
 	// Exclude "Toutes les collections" from cards (shown as CTA instead)
@@ -28,8 +30,8 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 	const isViewAllActive = pathname === ROUTES.SHOP.COLLECTIONS;
 
 	return (
-		<div className="py-6">
-			<h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+		<div className="py-6" role="group" aria-labelledby={headingId}>
+			<h3 id={headingId} className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 				Collections
 			</h3>
 

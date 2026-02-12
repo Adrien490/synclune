@@ -492,6 +492,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 						discountId: appliedDiscountId,
 						orderId: newOrder.id,
 						userId: userId || null,
+						discountCode: appliedDiscountCode!, // 🔴 SNAPSHOT: Code au moment de l'achat
 						amountApplied: discountAmount, // 🔴 SNAPSHOT: Montant au moment de l'achat
 					},
 				});

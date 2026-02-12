@@ -17,6 +17,7 @@ import {
 	SkeletonGroup,
 } from "@/shared/components/ui/skeleton"
 import { AlertTriangle } from "lucide-react"
+import Link from "next/link"
 
 interface EmbeddedCheckoutWrapperProps {
 	clientSecret: string
@@ -53,16 +54,21 @@ class EmbeddedCheckoutErrorBoundary extends Component<
 					<AlertTitle>Erreur de chargement</AlertTitle>
 					<AlertDescription className="space-y-3">
 						<p>
-							Le formulaire de paiement n'a pas pu se charger. Cela peut etre du
-							a un bloqueur de publicites ou a un probleme de connexion.
+							Le formulaire de paiement n'a pas pu se charger.
 						</p>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={this.props.onRetry}
-						>
-							Recharger
-						</Button>
+						<ul className="text-sm space-y-1 list-disc pl-4">
+							<li>Désactive ton bloqueur de publicités sur cette page</li>
+							<li>Vérifie ta connexion internet</li>
+							<li>Essaie avec un autre navigateur</li>
+						</ul>
+						<div className="flex gap-2">
+							<Button variant="outline" size="sm" onClick={this.props.onRetry}>
+								Réessayer
+							</Button>
+							<Button variant="ghost" size="sm" asChild>
+								<Link href="/personnalisation">M'écrire</Link>
+							</Button>
+						</div>
 					</AlertDescription>
 				</Alert>
 			)
@@ -110,24 +116,33 @@ function EmbeddedCheckoutSkeleton() {
 /**
  * Wrapper for Stripe Embedded Checkout
  * Displays the Stripe payment form embedded directly on the site
- * with skeleton loading and error recovery without page reload
+ * with skeleton loading, timeout detection, and error recovery without page reload
  */
 export function EmbeddedCheckoutWrapper({
 	clientSecret,
 }: EmbeddedCheckoutWrapperProps) {
 	const [stripeKey, setStripeKey] = useState(0)
 	const [isReady, setIsReady] = useState(false)
+	const [loadTimedOut, setLoadTimedOut] = useState(false)
 	const containerRef = useRef<HTMLDivElement>(null)
 
 	// Observe the container for Stripe iframe injection to detect readiness
 	useEffect(() => {
 		setIsReady(false)
+		setLoadTimedOut(false)
 		const container = containerRef.current
 		if (!container) return
+
+		let timedOut = false
+		const timeoutId = setTimeout(() => {
+			timedOut = true
+			setLoadTimedOut(true)
+		}, 15_000)
 
 		const observer = new MutationObserver(() => {
 			const iframe = container.querySelector("iframe")
 			if (iframe) {
+				clearTimeout(timeoutId)
 				setIsReady(true)
 				observer.disconnect()
 			}
@@ -137,11 +152,15 @@ export function EmbeddedCheckoutWrapper({
 
 		// Check if iframe already exists
 		if (container.querySelector("iframe")) {
+			clearTimeout(timeoutId)
 			setIsReady(true)
 			observer.disconnect()
 		}
 
-		return () => observer.disconnect()
+		return () => {
+			clearTimeout(timeoutId)
+			observer.disconnect()
+		}
 	}, [stripeKey])
 
 	const handleRetry = () => {
@@ -152,6 +171,17 @@ export function EmbeddedCheckoutWrapper({
 		<EmbeddedCheckoutErrorBoundary key={stripeKey} onRetry={handleRetry}>
 			<div role="region" aria-label="Formulaire de paiement securise">
 				{!isReady && <EmbeddedCheckoutSkeleton />}
+				{loadTimedOut && !isReady && (
+					<div className="text-center space-y-3 p-4">
+						<p className="text-sm text-muted-foreground">
+							Le formulaire de paiement prend plus de temps que prévu.
+							Si tu utilises un bloqueur de publicités, essaie de le désactiver.
+						</p>
+						<Button variant="outline" size="sm" onClick={handleRetry}>
+							Réessayer
+						</Button>
+					</div>
+				)}
 				<div ref={containerRef} className={isReady ? "" : "hidden"}>
 					<EmbeddedCheckoutProvider
 						stripe={getStripe()}

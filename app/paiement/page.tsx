@@ -1,4 +1,3 @@
-import { PageHeader } from "@/shared/components/page-header";
 import {
 	Alert,
 	AlertDescription,
@@ -56,12 +55,13 @@ export default async function CheckoutPage() {
 	if (validation.issues.length > 0) {
 		return (
 			<div className="min-h-screen">
-				<PageHeader
-					title="Finaliser ma commande"
-				/>
-
-				<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">
-					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+				<section className="bg-background py-8 sm:py-10">
+					<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+						<div className="mb-6 sm:mb-8">
+							<h1 className="text-xl sm:text-2xl font-display font-medium tracking-tight">
+								Finaliser ma commande
+							</h1>
+						</div>
 						<Alert variant="destructive" className="mb-6">
 							<AlertTriangle className="h-4 w-4" />
 							<AlertTitle>
@@ -108,13 +108,16 @@ export default async function CheckoutPage() {
 
 	return (
 		<div className="min-h-screen">
-			<PageHeader
-				title="Finaliser ma commande"
-				description="Vérifie tes informations et procède au paiement sécurisé"
-			/>
-
-			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+			<section className="bg-background py-8 sm:py-10">
+				<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div className="mb-6 sm:mb-8">
+						<h1 className="text-xl sm:text-2xl font-display font-medium tracking-tight">
+							Finaliser ma commande
+						</h1>
+						<p className="mt-1 text-sm text-muted-foreground">
+							Paiement sécurisé et livraison rapide
+						</p>
+					</div>
 					<CheckoutForm
 						cart={cart}
 						session={session}
