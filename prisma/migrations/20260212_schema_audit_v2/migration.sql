@@ -1,6 +1,6 @@
 -- Schema audit v2 migration
 -- Fixes from comprehensive Prisma schema audit (Feb 2026)
--- Covers: C1 (ShippingCarrier), I1-I4, M1-M5
+-- Covers: C1 (ShippingCarrier), I1-I4, M1-M8
 
 -- ============================================================================
 -- C1. Convert ShippingCarrier from enum to VARCHAR(30) with lowercase values
@@ -158,3 +158,38 @@ WHERE "discountCode" IS NULL;
 
 -- Make column non-nullable
 ALTER TABLE "DiscountUsage" ALTER COLUMN "discountCode" SET NOT NULL;
+
+-- ============================================================================
+-- M6. CHECK constraint: Cart must have at least userId OR sessionId
+-- Prevents orphan carts with no owner (neither logged-in user nor guest session)
+-- ============================================================================
+
+ALTER TABLE "Cart"
+  ADD CONSTRAINT "Cart_owner_required"
+  CHECK ("userId" IS NOT NULL OR "sessionId" IS NOT NULL);
+
+-- ============================================================================
+-- M7. CHECK constraint: Wishlist must have at least userId OR sessionId
+-- Same rationale as Cart - prevents orphan wishlists
+-- ============================================================================
+
+ALTER TABLE "Wishlist"
+  ADD CONSTRAINT "Wishlist_owner_required"
+  CHECK ("userId" IS NOT NULL OR "sessionId" IS NOT NULL);
+
+-- ============================================================================
+-- M8. VarChar constraints on IP address and user agent fields
+-- IP: VarChar(45) supports IPv6 mapped addresses (max 45 chars)
+-- User agent / tokens: VarChar(500) prevents unbounded TEXT storage
+-- ============================================================================
+
+ALTER TABLE "Session" ALTER COLUMN "ipAddress" TYPE VARCHAR(45);
+ALTER TABLE "Session" ALTER COLUMN "userAgent" TYPE VARCHAR(500);
+
+ALTER TABLE "Account" ALTER COLUMN "accessToken" TYPE VARCHAR(500);
+ALTER TABLE "Account" ALTER COLUMN "refreshToken" TYPE VARCHAR(500);
+ALTER TABLE "Account" ALTER COLUMN "idToken" TYPE VARCHAR(500);
+
+ALTER TABLE "NewsletterSubscriber" ALTER COLUMN "ipAddress" TYPE VARCHAR(45);
+ALTER TABLE "NewsletterSubscriber" ALTER COLUMN "confirmationIpAddress" TYPE VARCHAR(45);
+ALTER TABLE "NewsletterSubscriber" ALTER COLUMN "userAgent" TYPE VARCHAR(500);

@@ -87,7 +87,7 @@ export const colorNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Le nom est requis")
-	.max(50, "Le nom ne peut pas depasser 50 caracteres");
+	.max(100, "Le nom ne peut pas depasser 100 caracteres");
 
 export const createColorSchema = z.object({
 	name: colorNameSchema,
