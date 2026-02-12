@@ -24,7 +24,7 @@ export const CustomizationConfirmationEmail = ({
 				<Text style={EMAIL_STYLES.heading.h2}>Demande reçue</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
 					Bonjour {firstName}, ta demande de {productTypeLabel} personnalisé
-					est bien enregistrée. Je te recontacte sous 48h.
+					est bien enregistrée. Je reviens vers toi dès que possible.
 				</Text>
 			</Section>
 
