@@ -95,7 +95,9 @@ export function QuickSearchDialog({
 	const handleQuickTagClick = (label: string) => {
 		setInputValue(label)
 		resetActiveIndex()
-		router.replace(`?qs=${encodeURIComponent(label)}`, { scroll: false })
+		startTransition(() => {
+			router.replace(`?qs=${encodeURIComponent(label)}`, { scroll: false })
+		})
 	}
 
 	const handleClose = () => {
@@ -188,7 +190,7 @@ export function QuickSearchDialog({
 						// Enter on input: navigate to full search page
 						if (e.key === "Enter" && e.target instanceof HTMLInputElement && activeIndex < 0) {
 							e.preventDefault()
-							handleEnterKey(inputValue)
+							handleEnterKey((e.target as HTMLInputElement).value)
 							return
 						}
 						if (e.key === "ArrowDown" && e.target instanceof HTMLInputElement) {
@@ -274,7 +276,6 @@ export function QuickSearchDialog({
 									recentlyViewed={recentlyViewed}
 									searches={searches}
 									collections={collections}
-									productTypes={productTypes}
 									onClose={handleClose}
 									onRecentSearch={handleRecentSearch}
 									onRemoveSearch={remove}

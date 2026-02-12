@@ -1,13 +1,11 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import {
 	type FabKey,
 	FAB_COOKIE_MAX_AGE,
 	getFabCookieName,
 } from "@/shared/constants/fab";
-import { getFabInvalidationTags } from "@/shared/constants/fab-cache";
 
 /**
  * Server Action pour basculer la visibilité d'un FAB
@@ -34,10 +32,6 @@ export async function toggleFabVisibility(
 	} else {
 		cookieStore.delete(cookieName);
 	}
-
-	// Invalider le cache de visibilité
-	const tags = getFabInvalidationTags(key);
-	tags.forEach((tag) => updateTag(tag));
 
 	return { success: true, isHidden };
 }

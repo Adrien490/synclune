@@ -128,6 +128,9 @@ export function SearchInput({
 			})
 		} else {
 			// Live mode: update URL param in place
+			const currentQs = searchParams.get(paramName) || ""
+			if (trimmed === currentQs.trim()) return
+
 			const newSearchParams = new URLSearchParams(searchParams.toString())
 
 			if (trimmed) {

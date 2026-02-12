@@ -153,7 +153,7 @@ export function PolaroidFrame({
 			{caption && (
 				<figcaption
 					className={cn(
-						"absolute bottom-2 sm:bottom-3 left-0 right-0 text-center text-sm sm:text-base italic",
+						"absolute bottom-2 sm:bottom-3 left-0 right-0 text-center text-xs sm:text-sm italic",
 						captionColor ? undefined : "text-gray-600 dark:text-gray-400",
 						petitFormalScript.className
 					)}

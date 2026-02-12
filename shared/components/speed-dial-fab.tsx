@@ -18,8 +18,6 @@ import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import type { SpeedDialAction, SpeedDialFabProps } from "@/shared/types/fab.types";
 import Link from "next/link";
 
-export type { SpeedDialAction, SpeedDialFabProps, FabTooltipContent } from "@/shared/types/fab.types";
-
 /**
  * Speed Dial FAB - Menu d'actions rapides flottant
  *

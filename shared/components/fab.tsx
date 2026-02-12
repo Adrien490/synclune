@@ -17,8 +17,6 @@ import {
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import type { FabProps } from "@/shared/types/fab.types";
 
-export type { FabProps, FabTooltipContent } from "@/shared/types/fab.types";
-
 /**
  * Floating Action Button générique avec système de visibilité
  *
@@ -53,8 +51,12 @@ export function Fab({
 	hideTooltip = "Masquer",
 	hideOnMobile = true,
 	className,
+	containerClassName,
+	ariaHasPopup,
+	href,
 	onClick,
 }: FabProps) {
+	const containerRef = useRef<HTMLDivElement>(null);
 	const toggleButtonRef = useRef<HTMLButtonElement>(null);
 	const mainButtonRef = useRef<HTMLButtonElement>(null);
 	const statusRef = useRef<HTMLDivElement>(null);
@@ -113,12 +115,17 @@ export function Fab({
 		},
 	});
 
-	// Handler ESC pour masquer le FAB
+	// Handler ESC pour masquer le FAB (scoped au container)
 	useEffect(() => {
 		if (isHidden) return;
 
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === "Escape" && !isPending) {
+			if (
+				e.key === "Escape" &&
+				!isPending &&
+				e.target instanceof Node &&
+				containerRef.current?.contains(e.target)
+			) {
 				toggle();
 			}
 		};
@@ -146,7 +153,7 @@ export function Fab({
 						animate={{ opacity: 1, x: 0 }}
 						exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 20 }}
 						transition={transition}
-						className={cn(visibilityClass, "fixed z-45 bottom-6 right-0")}
+						className={cn(visibilityClass, "fixed z-45 bottom-6 right-0", containerClassName)}
 					>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -185,12 +192,13 @@ export function Fab({
 				) : (
 					<motion.div
 						key="fab-visible"
+						ref={containerRef}
 						data-fab-container
 						initial={shouldAnimate ? { opacity: 0, x: 20 } : false}
 						animate={{ opacity: 1, x: 0 }}
 						exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -20 }}
 						transition={transition}
-						className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6")}
+						className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6", containerClassName)}
 					>
 						{/* Bouton pour cacher le FAB */}
 						<Tooltip>
@@ -234,32 +242,65 @@ export function Fab({
 						{/* Bouton principal avec tooltip */}
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<Button
-									ref={mainButtonRef}
-									onClick={onClick}
-									size="lg"
-									className={cn(
-										"relative rounded-full shadow-lg cursor-pointer",
-										"bg-primary hover:bg-primary/90",
-										"flex items-center justify-center",
-										"size-14 p-0",
-										"hover:shadow-xl hover:shadow-primary/25",
-										"active:scale-95",
-										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-										"focus-visible:outline-none",
-										className
-									)}
-									aria-label={ariaLabel}
-									aria-haspopup="dialog"
-									aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
-								>
-									{icon}
-									{badge && (
-										<div className="absolute -top-1 -right-1 pointer-events-none">
-											{badge}
-										</div>
-									)}
-								</Button>
+								{href ? (
+									<Button
+										ref={mainButtonRef}
+										asChild
+										size="lg"
+										className={cn(
+											"relative rounded-full shadow-lg cursor-pointer",
+											"bg-primary hover:bg-primary/90",
+											"flex items-center justify-center",
+											"size-14 p-0",
+											"hover:shadow-xl hover:shadow-primary/25",
+											"active:scale-95",
+											"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+											"focus-visible:outline-none",
+											className
+										)}
+									>
+										<a
+											href={href}
+											aria-label={ariaLabel}
+											aria-haspopup={ariaHasPopup}
+											aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
+										>
+											{icon}
+											{badge && (
+												<div className="absolute -top-1.5 -right-1.5 pointer-events-none">
+													{badge}
+												</div>
+											)}
+										</a>
+									</Button>
+								) : (
+									<Button
+										ref={mainButtonRef}
+										onClick={onClick}
+										size="lg"
+										className={cn(
+											"relative rounded-full shadow-lg cursor-pointer",
+											"bg-primary hover:bg-primary/90",
+											"flex items-center justify-center",
+											"size-14 p-0",
+											"hover:shadow-xl hover:shadow-primary/25",
+											"active:scale-95",
+											"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+											"focus-visible:outline-none",
+											className
+										)}
+										aria-label={ariaLabel}
+										aria-haspopup={ariaHasPopup}
+										aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
+									>
+										{icon}
+										{badge && (
+											<div className="absolute -top-1.5 -right-1.5 pointer-events-none">
+												{badge}
+											</div>
+										)}
+									</Button>
+								)}
 							</TooltipTrigger>
 							<TooltipContent side="left" sideOffset={12}>
 								<p className="font-medium">{tooltip.title}</p>

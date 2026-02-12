@@ -12,7 +12,7 @@ interface UseFabVisibilityOptions {
 	key: FabKey;
 	/** Etat initial de visibilité (depuis le cookie serveur) */
 	initialHidden?: boolean;
-	/** Callback appelé après un toggle réussi */
+	/** Callback appelé immédiatement après un toggle (avant réponse serveur) */
 	onToggle?: (isHidden: boolean) => void;
 }
 
@@ -44,15 +44,6 @@ export function useFabVisibility(options: UseFabVisibilityOptions) {
 
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(setFabVisibility, {
-			onSuccess: (result) => {
-				if (
-					result?.data &&
-					typeof result.data === "object" &&
-					"isHidden" in result.data
-				) {
-					onToggle?.(result.data.isHidden as boolean);
-				}
-			},
 			onError: () => {
 				// Rollback de l'état optimiste en cas d'erreur
 				setOptimisticHidden(initialHidden);
@@ -67,6 +58,9 @@ export function useFabVisibility(options: UseFabVisibilityOptions) {
 	 */
 	const toggle = () => {
 		const newHiddenState = !optimisticHidden;
+
+		// Fire onToggle immediately for instant SR announcements and focus management
+		onToggle?.(newHiddenState);
 
 		startTransition(() => {
 			// Mise à jour optimiste immédiate (doit être dans la transition)

@@ -38,6 +38,12 @@ export interface FabProps {
 	hideOnMobile?: boolean;
 	/** Classes CSS additionnelles pour le bouton principal */
 	className?: string;
+	/** Classes CSS additionnelles pour le container (positionnement) */
+	containerClassName?: string;
+	/** Valeur aria-haspopup du bouton principal (defaut: undefined = pas d'attribut) */
+	ariaHasPopup?: React.AriaAttributes["aria-haspopup"];
+	/** Lien pour le bouton principal (rend un <a> au lieu d'un <button>) */
+	href?: string;
 	/** Callback appele au click sur le bouton principal */
 	onClick?: () => void;
 }

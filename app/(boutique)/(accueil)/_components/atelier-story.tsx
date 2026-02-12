@@ -163,7 +163,7 @@ export async function AtelierStory() {
 
 						{/* Signature */}
 						<footer
-							className={`${petitFormalScript.className} text-2xl md:text-3xl text-foreground italic pt-4 text-center text-shadow-glow`}
+							className={`${petitFormalScript.className} text-lg md:text-xl text-foreground italic pt-4 text-center text-shadow-glow`}
 						>
 							— Léane
 						</footer>

@@ -11,13 +11,12 @@ import { cn } from "@/shared/utils/cn"
 import { formatEuro } from "@/shared/utils/format-euro"
 
 import { CollectionCard } from "./collection-card"
-import type { QuickSearchCollection, QuickSearchProductType, RecentlyViewedProduct } from "./types"
+import type { QuickSearchCollection, RecentlyViewedProduct } from "./types"
 
 interface IdleContentProps {
 	recentlyViewed: RecentlyViewedProduct[]
 	searches: string[]
 	collections: QuickSearchCollection[]
-	productTypes: QuickSearchProductType[]
 	onClose: () => void
 	onRecentSearch: (term: string) => void
 	onRemoveSearch: (term: string) => void
@@ -29,7 +28,6 @@ export function IdleContent({
 	recentlyViewed,
 	searches,
 	collections,
-	productTypes,
 	onClose,
 	onRecentSearch,
 	onRemoveSearch,

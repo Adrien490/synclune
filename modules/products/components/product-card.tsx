@@ -163,17 +163,14 @@ export function ProductCard({
 					className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
 				/>
 
-				{/* Primary image — crossfades to secondary on hover, or zooms if no secondary */}
+				{/* Primary image — stays visible under secondary on hover, or zooms if no secondary */}
 				<Image
 					src={primaryImage.url}
 					alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 					fill
 					className={cn(
 						"object-cover rounded-lg",
-						"transition-[transform,opacity] duration-300 ease-out",
-						secondaryImage
-							? "motion-safe:can-hover:group-hover:opacity-0"
-							: "motion-safe:can-hover:group-hover:scale-[1.08]"
+						!secondaryImage && "transition-[transform] duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
 					)}
 					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={primaryImage.blurDataUrl ?? undefined}
