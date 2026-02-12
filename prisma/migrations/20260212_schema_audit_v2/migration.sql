@@ -32,7 +32,8 @@ DROP TYPE IF EXISTS "ShippingCarrier";
 
 -- ============================================================================
 -- I1. CHECK constraint: Order.total must equal the formula
--- Formula: total = MAX(0, subtotal - discountAmount + shippingCost + taxAmount)
+-- Formula: total = MAX(0, subtotal - discountAmount + shippingCost)
+-- Note: taxAmount is extracted FROM the TTC total, not added on top (prices are TTC)
 -- ============================================================================
 
 -- Validate no existing data violates the constraint
@@ -40,7 +41,7 @@ DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM "Order"
-    WHERE "total" != GREATEST(0, "subtotal" - "discountAmount" + "shippingCost" + "taxAmount")
+    WHERE "total" != GREATEST(0, "subtotal" - "discountAmount" + "shippingCost")
     LIMIT 1
   ) THEN
     RAISE EXCEPTION 'Order contains rows where total does not match formula';
@@ -49,7 +50,7 @@ END $$;
 
 ALTER TABLE "Order"
   ADD CONSTRAINT "Order_total_formula"
-  CHECK ("total" = GREATEST(0, "subtotal" - "discountAmount" + "shippingCost" + "taxAmount"));
+  CHECK ("total" = GREATEST(0, "subtotal" - "discountAmount" + "shippingCost"));
 
 -- ============================================================================
 -- I2. CHECK constraint: Discount.usageCount must not exceed maxUsageCount
