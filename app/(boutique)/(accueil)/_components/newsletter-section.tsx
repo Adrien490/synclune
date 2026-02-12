@@ -1,4 +1,4 @@
-import { Fade, GlitterSparkles, HandDrawnUnderline } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { cn } from "@/shared/utils/cn";
@@ -29,12 +29,7 @@ export async function NewsletterSection() {
 				SECTION_SPACING.section,
 			)}
 		>
-			{/* Subtle animated background - hidden on mobile for performance */}
-			<div className="hidden md:block absolute inset-0 pointer-events-none" aria-hidden="true">
-				<GlitterSparkles count={12} sizeRange={[4, 8]} glowIntensity={0.6} />
-			</div>
-
-			<div className={cn("relative z-10", CONTAINER_CLASS)}>
+			<div className={cn(CONTAINER_CLASS)}>
 				{/* Storytelling header */}
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
