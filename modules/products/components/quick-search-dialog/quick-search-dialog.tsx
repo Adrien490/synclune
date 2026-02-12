@@ -26,8 +26,6 @@ import { SearchResultsSkeleton } from "./search-results-skeleton"
 import { useKeyboardNavigation } from "./use-keyboard-navigation"
 import type { QuickSearchCollection, QuickSearchProductType, RecentlyViewedProduct } from "./types"
 
-const KBD_STYLES = "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded border border-border bg-muted/50 text-[10px] font-mono"
-
 interface QuickSearchDialogProps {
 	recentSearches?: string[]
 	collections: QuickSearchCollection[]
@@ -286,27 +284,6 @@ export function QuickSearchDialog({
 							</Fade>
 						)}
 					</AnimatePresence>
-				</div>
-
-				{/* Keyboard shortcuts footer (desktop only) */}
-				<div className={cn(
-					"hidden md:flex items-center justify-center gap-4",
-					"px-4 py-2 border-t border-border bg-background shrink-0",
-					"text-xs text-muted-foreground/50"
-				)}>
-					<span className="flex items-center gap-1">
-						<kbd className={KBD_STYLES}>↑</kbd>
-						<kbd className={KBD_STYLES}>↓</kbd>
-						<span className="ml-0.5">Naviguer</span>
-					</span>
-					<span className="flex items-center gap-1">
-						<kbd className={KBD_STYLES}>↵</kbd>
-						<span className="ml-0.5">Selectionner</span>
-					</span>
-					<span className="flex items-center gap-1">
-						<kbd className={KBD_STYLES}>Esc</kbd>
-						<span className="ml-0.5">Fermer</span>
-					</span>
 				</div>
 
 				{/* Safe area bottom spacer */}
