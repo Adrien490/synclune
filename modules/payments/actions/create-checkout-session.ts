@@ -23,12 +23,10 @@ import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
-import { getInvoiceFooter } from "@/shared/lib/stripe";
+import { stripe, getInvoiceFooter } from "@/shared/lib/stripe";
 import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { validateInput, handleActionError, success, error, BusinessError } from "@/shared/lib/actions";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export const createCheckoutSession = async (_prevState: ActionState | undefined, formData: FormData) => {
 	try {
@@ -170,6 +168,20 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 		const failedSkus = skuDetailsResults.filter((result) => !result.success);
 		if (failedSkus.length > 0) {
 			return error("Certains articles ne sont plus disponibles.");
+		}
+
+		// 6b. Vérifier la cohérence des prix (panier vs prix actuel)
+		for (const cartItem of validatedData.cartItems) {
+			const skuResult = skuDetailsResults.find(
+				(r) => r.success && r.data?.sku.id === cartItem.skuId
+			);
+			if (!skuResult?.success || !skuResult.data) continue;
+
+			if (cartItem.priceAtAdd !== skuResult.data.sku.priceInclTax) {
+				return error(
+					"Les prix de certains articles ont changé. Actualise ton panier avant de procéder au paiement."
+				);
+			}
 		}
 
 		// 7. Préparer les line items Stripe (sans vérification stock pour l'instant)
@@ -320,6 +332,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 						"usageCount", "startsAt", "endsAt", "isActive"
 					FROM "Discount"
 					WHERE code = ${validatedData.discountCode.toUpperCase()}
+					AND "deletedAt" IS NULL
 					FOR UPDATE
 				`;
 

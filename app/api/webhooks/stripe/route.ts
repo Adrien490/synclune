@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { stripe } from "@/shared/lib/stripe";
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { ANTI_REPLAY_WINDOW_SECONDS } from "@/modules/webhooks/constants/webhook.constants";
@@ -34,7 +35,6 @@ export async function POST(req: Request) {
 			);
 		}
 
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 		const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 		const body = await req.text();

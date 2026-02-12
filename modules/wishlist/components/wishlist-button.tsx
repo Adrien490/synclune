@@ -57,6 +57,10 @@ export function WishlistButton({
 			? `Ajouter ${productTitle} à la wishlist`
 			: "Ajouter à la wishlist";
 
+	const tooltipText = isInWishlist
+		? "Retirer des favoris"
+		: "Enregistrer dans mes favoris";
+
 	return (
 		<form action={action} className={className}>
 			<input type="hidden" name="productId" value={productId} />
@@ -75,6 +79,7 @@ export function WishlistButton({
 				aria-label={ariaLabel}
 				aria-pressed={isInWishlist}
 				aria-busy={isPending}
+				title={tooltipText}
 			>
 				<HeartIcon
 					variant={isInWishlist ? "filled" : "outline"}

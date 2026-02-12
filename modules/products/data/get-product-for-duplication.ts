@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import { cacheProductDetail } from "@/modules/products/constants/cache";
+import { cacheProductDetail } from "@/modules/products/utils/cache.utils";
 
 // ============================================================================
 // TYPES
@@ -69,6 +69,7 @@ async function fetchProductForDuplication(productId: string) {
 							altText: true,
 							mediaType: true,
 							isPrimary: true,
+							position: true,
 						},
 					},
 				},

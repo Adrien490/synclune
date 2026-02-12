@@ -7,7 +7,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { bulkArchiveProductsSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { getProductInvalidationTags } from "../constants/cache";
+import { getProductInvalidationTags } from "../utils/cache.utils";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_BULK_ARCHIVE_LIMIT } from "@/shared/lib/rate-limit-config";
 

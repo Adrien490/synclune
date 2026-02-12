@@ -1,6 +1,6 @@
 "use client"
 
-import { Component, type ReactNode } from "react"
+import { Component, type ReactNode, useState, useRef, useEffect } from "react"
 import {
 	EmbeddedCheckout,
 	EmbeddedCheckoutProvider,
@@ -12,10 +12,19 @@ import {
 	AlertTitle,
 } from "@/shared/components/ui/alert"
 import { Button } from "@/shared/components/ui/button"
+import {
+	Skeleton,
+	SkeletonGroup,
+} from "@/shared/components/ui/skeleton"
 import { AlertTriangle } from "lucide-react"
 
 interface EmbeddedCheckoutWrapperProps {
 	clientSecret: string
+}
+
+interface ErrorBoundaryProps {
+	children: ReactNode
+	onRetry: () => void
 }
 
 interface ErrorBoundaryState {
@@ -23,11 +32,11 @@ interface ErrorBoundaryState {
 }
 
 /**
- * Error boundary pour capturer les erreurs de chargement Stripe
- * (bloqueurs de pub, erreurs reseau, etc.)
+ * Error boundary to catch Stripe loading errors
+ * (ad blockers, network errors, etc.)
  */
 class EmbeddedCheckoutErrorBoundary extends Component<
-	{ children: ReactNode },
+	ErrorBoundaryProps,
 	ErrorBoundaryState
 > {
 	state: ErrorBoundaryState = { hasError: false }
@@ -50,9 +59,9 @@ class EmbeddedCheckoutErrorBoundary extends Component<
 						<Button
 							variant="outline"
 							size="sm"
-							onClick={() => window.location.reload()}
+							onClick={this.props.onRetry}
 						>
-							Recharger la page
+							Recharger
 						</Button>
 					</AlertDescription>
 				</Alert>
@@ -63,21 +72,94 @@ class EmbeddedCheckoutErrorBoundary extends Component<
 }
 
 /**
- * Composant wrapper pour Stripe Embedded Checkout
- * Affiche le formulaire de paiement Stripe integre directement sur le site
+ * Skeleton displayed while Stripe Embedded Checkout is loading
+ */
+function EmbeddedCheckoutSkeleton() {
+	return (
+		<SkeletonGroup label="Chargement du formulaire de paiement" className="p-6 space-y-6">
+			{/* Email field */}
+			<div className="space-y-2">
+				<Skeleton className="h-4 w-24" />
+				<Skeleton className="h-10 w-full" shape="rounded" />
+			</div>
+
+			{/* Card details */}
+			<div className="space-y-2">
+				<Skeleton className="h-4 w-40" />
+				<Skeleton className="h-10 w-full" shape="rounded" />
+			</div>
+
+			{/* Expiry + CVC row */}
+			<div className="grid grid-cols-2 gap-4">
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-20" />
+					<Skeleton className="h-10 w-full" shape="rounded" />
+				</div>
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-12" />
+					<Skeleton className="h-10 w-full" shape="rounded" />
+				</div>
+			</div>
+
+			{/* Pay button */}
+			<Skeleton className="h-12 w-full" shape="rounded" />
+		</SkeletonGroup>
+	)
+}
+
+/**
+ * Wrapper for Stripe Embedded Checkout
+ * Displays the Stripe payment form embedded directly on the site
+ * with skeleton loading and error recovery without page reload
  */
 export function EmbeddedCheckoutWrapper({
 	clientSecret,
 }: EmbeddedCheckoutWrapperProps) {
+	const [stripeKey, setStripeKey] = useState(0)
+	const [isReady, setIsReady] = useState(false)
+	const containerRef = useRef<HTMLDivElement>(null)
+
+	// Observe the container for Stripe iframe injection to detect readiness
+	useEffect(() => {
+		setIsReady(false)
+		const container = containerRef.current
+		if (!container) return
+
+		const observer = new MutationObserver(() => {
+			const iframe = container.querySelector("iframe")
+			if (iframe) {
+				setIsReady(true)
+				observer.disconnect()
+			}
+		})
+
+		observer.observe(container, { childList: true, subtree: true })
+
+		// Check if iframe already exists
+		if (container.querySelector("iframe")) {
+			setIsReady(true)
+			observer.disconnect()
+		}
+
+		return () => observer.disconnect()
+	}, [stripeKey])
+
+	const handleRetry = () => {
+		setStripeKey((k) => k + 1)
+	}
+
 	return (
-		<EmbeddedCheckoutErrorBoundary>
+		<EmbeddedCheckoutErrorBoundary key={stripeKey} onRetry={handleRetry}>
 			<div role="region" aria-label="Formulaire de paiement securise">
-				<EmbeddedCheckoutProvider
-					stripe={getStripe()}
-					options={{ clientSecret }}
-				>
-					<EmbeddedCheckout />
-				</EmbeddedCheckoutProvider>
+				{!isReady && <EmbeddedCheckoutSkeleton />}
+				<div ref={containerRef} className={isReady ? "" : "hidden"}>
+					<EmbeddedCheckoutProvider
+						stripe={getStripe()}
+						options={{ clientSecret }}
+					>
+						<EmbeddedCheckout />
+					</EmbeddedCheckoutProvider>
+				</div>
 			</div>
 		</EmbeddedCheckoutErrorBoundary>
 	)

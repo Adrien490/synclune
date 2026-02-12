@@ -83,14 +83,3 @@ export function getRecentSearchesInvalidationTags(): string[] {
 	return [RECENT_SEARCHES_CACHE_TAGS.LIST]
 }
 
-// Re-exports pour retrocompatibilite
-export {
-	cacheProducts,
-	cacheProductDetail,
-	cacheProductSkus,
-	cacheSkuDetail,
-	getProductInvalidationTags,
-	getSkuInvalidationTags,
-	getInventoryInvalidationTags,
-	getSkuStockInvalidationTags,
-} from "../utils/cache.utils";

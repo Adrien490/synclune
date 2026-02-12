@@ -372,11 +372,12 @@ model SkuMedia {
   altText      String?   @db.VarChar(255)
   mediaType    MediaType @default(IMAGE)
   isPrimary    Boolean   @default(false)
+  position     Int       @default(0) // Position pour ordre d'affichage
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([skuId, isPrimary])
+  @@index([skuId, position])
   @@index([skuId, mediaType]) // Filtrage video/image
 }
 
@@ -837,9 +838,11 @@ model Discount {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   @@index([code, isActive]) // Validation code promo actif, couvre aussi code seul
   @@index([isActive, startsAt, endsAt])
+  @@index([deletedAt, isActive]) // Admin listing avec soft-delete
   @@index([createdAt, id])
 }
 
@@ -1124,4 +1127,5 @@ model CustomizationRequest {
   @@index([email])
   @@index([createdAt(sort: Desc)])
   @@index([deletedAt, status])
+  @@index([userId, status]) // Page "Mes demandes" : demandes par statut
 }

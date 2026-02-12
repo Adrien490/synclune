@@ -19,6 +19,7 @@ import {
 	getProductCollections,
 } from "@/modules/products/data/get-product-collections";
 import { Loader2, FolderOpen } from "lucide-react";
+import { toast } from "sonner";
 
 export const MANAGE_COLLECTIONS_DIALOG_ID = "manage-product-collections";
 
@@ -53,8 +54,8 @@ export function ManageCollectionsDialog() {
 					setCollections(allCollections);
 					setSelectedIds(new Set(productCollections.map((c) => c.id)));
 				})
-				.catch((error) => {
-					console.error("Error loading collections:", error);
+				.catch(() => {
+					toast.error("Erreur lors du chargement des collections");
 				})
 				.finally(() => {
 					setIsLoading(false);

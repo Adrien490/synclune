@@ -38,8 +38,8 @@ async function fetchDiscountByCode(
 	cacheDiscountDetail(params.code);
 
 	try {
-		const discount = await prisma.discount.findUnique({
-			where: { code: params.code },
+		const discount = await prisma.discount.findFirst({
+			where: { code: params.code, deletedAt: null },
 			select: GET_DISCOUNT_VALIDATION_SELECT,
 		});
 

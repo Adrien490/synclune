@@ -13,7 +13,7 @@ import {
 } from "@/shared/lib/actions";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { duplicateProductSchema } from "../schemas/product.schemas";
-import { getProductInvalidationTags } from "../constants/cache";
+import { getProductInvalidationTags } from "../utils/cache.utils";
 import { generateSkuCode } from "@/modules/skus/services/sku-generation.service";
 import { getProductForDuplication } from "../data/get-product-for-duplication";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -123,6 +123,7 @@ export async function duplicateProduct(
 							altText: sourceImage.altText,
 							mediaType: sourceImage.mediaType,
 							isPrimary: sourceImage.isPrimary,
+							position: sourceImage.position,
 						},
 					});
 				}

@@ -11,7 +11,7 @@ import type { GetDiscountsParams } from "../types/discount.types";
 export function buildDiscountWhereClause(
 	params: GetDiscountsParams
 ): Prisma.DiscountWhereInput {
-	const where: Prisma.DiscountWhereInput = {};
+	const where: Prisma.DiscountWhereInput = { deletedAt: null };
 	const AND: Prisma.DiscountWhereInput[] = [];
 
 	// Recherche textuelle

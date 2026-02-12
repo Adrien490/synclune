@@ -26,7 +26,7 @@ import {
 	SUGGESTION_THRESHOLD_RESULTS,
 } from "./spell-suggestion";
 import { sortProducts, orderByIds } from "../services/product-list-sorting.service";
-import { cacheProducts } from "../constants/cache";
+import { cacheProducts } from "../utils/cache.utils";
 import { serializeProduct } from "../utils/serialize-product";
 
 // Re-export pour compatibilité
@@ -221,7 +221,9 @@ async function fetchProducts(
 			totalCount: sortedProducts.length,
 		};
 	} catch (error) {
-		console.error("[fetchProducts] Error:", error);
+		if (process.env.NODE_ENV === "development") {
+			console.error("[fetchProducts] Error:", error);
+		}
 		const baseReturn = {
 			products: [],
 			pagination: {

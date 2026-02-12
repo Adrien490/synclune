@@ -12,18 +12,22 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
-import { Pencil, Shield, ShoppingBag, TruckIcon } from "lucide-react";
+import { Pencil, Shield, ShoppingBag, Tag, TruckIcon } from "lucide-react";
 import {
 	VisaIcon,
 	MastercardIcon,
 	CBIcon,
 } from "@/shared/components/icons/payment-icons";
+import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import Image from "next/image";
+
+type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
 
 interface CheckoutSummaryProps {
 	cart: NonNullable<GetCartReturn>;
 	selectedCountry?: ShippingCountry;
 	postalCode?: string;
+	appliedDiscount?: AppliedDiscount | null;
 }
 
 /**
@@ -31,7 +35,7 @@ interface CheckoutSummaryProps {
  * Affiche le récapitulatif des articles, frais de port et total
  * Détecte automatiquement la Corse via le code postal pour afficher les bons frais
  */
-export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: CheckoutSummaryProps) {
+export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appliedDiscount }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
 
 	// Calculer le nombre total d'articles
@@ -45,8 +49,11 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: Ch
 	// Frais de port (dynamique selon le pays et code postal pour la Corse)
 	const shipping = calculateShipping(selectedCountry, postalCode);
 
+	// Discount
+	const discountAmount = appliedDiscount?.discountAmount ?? 0;
+
 	// Total
-	const total = subtotal + shipping;
+	const total = subtotal - discountAmount + shipping;
 
 	return (
 		<Card className="rounded-xl shadow-sm border-2 sticky top-24">
@@ -128,6 +135,7 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: Ch
 					<button
 						type="button"
 						onClick={openCart}
+						aria-label="Modifier mon panier"
 						className="text-xs text-foreground underline hover:no-underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
 					>
 						<Pencil className="w-3 h-3" />
@@ -147,6 +155,19 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: Ch
 							{formatEuro(subtotal)}
 						</span>
 					</div>
+
+					{/* Discount line */}
+					{appliedDiscount && discountAmount > 0 && (
+						<div className="flex justify-between items-center">
+							<span className="text-green-600 dark:text-green-400 flex items-center gap-1.5">
+								<Tag className="w-4 h-4" />
+								Réduction ({appliedDiscount.code})
+							</span>
+							<span className="tabular-nums font-medium text-base/6 text-green-600 dark:text-green-400">
+								-{formatEuro(discountAmount)}
+							</span>
+						</div>
+					)}
 
 					{/* Frais de port */}
 					<div className="flex justify-between items-center">

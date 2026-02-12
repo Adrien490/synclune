@@ -86,6 +86,7 @@ export async function createProductSku(
 			altText?: string | null;
 			mediaType?: "IMAGE" | "VIDEO";
 			isPrimary: boolean;
+			position: number;
 		}> = [];
 		if (validatedData.primaryImage) {
 			// VALIDATION: Le media principal DOIT etre une IMAGE (jamais une VIDEO)
@@ -100,13 +101,15 @@ export async function createProductSku(
 				...validatedData.primaryImage,
 				mediaType: "IMAGE", // Force IMAGE type for primary media
 				isPrimary: true,
+				position: 0,
 			});
 		}
 		if (validatedData.galleryMedia) {
 			allMedia.push(
-				...validatedData.galleryMedia.map((media) => ({
+				...validatedData.galleryMedia.map((media, index) => ({
 					...media,
 					isPrimary: false,
+					position: index + 1,
 				}))
 			);
 		}
@@ -237,6 +240,7 @@ export async function createProductSku(
 							altText: media.altText || null,
 							mediaType: media.mediaType || detectMediaType(media.url),
 							isPrimary: media.isPrimary,
+							position: media.position,
 						},
 					});
 				}

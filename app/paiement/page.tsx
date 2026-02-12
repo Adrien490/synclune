@@ -37,11 +37,12 @@ export const metadata: Metadata = {
  * - Redirection vers Stripe Checkout après validation
  */
 export default async function CheckoutPage() {
-	// Charger en parallèle
-	const [cart, session] = await Promise.all([getCart(), getSession()]);
-
-	// Charger les adresses si l'utilisateur est connecté
-	const addresses = session?.user ? await getUserAddresses() : null;
+	// Charger en parallèle (getUserAddresses retourne null si non authentifié)
+	const [cart, session, addresses] = await Promise.all([
+		getCart(),
+		getSession(),
+		getUserAddresses(),
+	]);
 
 	// Vérifier que le panier existe et n'est pas vide
 	if (!cart || cart.items.length === 0) {

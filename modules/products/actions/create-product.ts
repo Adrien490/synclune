@@ -10,7 +10,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { createProductSchema } from "../schemas/product.schemas";
-import { getProductInvalidationTags } from "../constants/cache";
+import { getProductInvalidationTags } from "../utils/cache.utils";
 import { validateInput, success, error, validationError, handleActionError } from "@/shared/lib/actions";
 import { validatePublicProductCreation } from "../services/product-validation.service";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -116,6 +116,7 @@ export async function createProduct(
       ...media,
       mediaType: index === 0 ? ("IMAGE" as const) : media.mediaType, // Force IMAGE for first
       isPrimary: index === 0,
+      position: index,
     }));
 
     // 7. Create product in transaction
@@ -238,6 +239,7 @@ export async function createProduct(
             altText: image.altText || null,
             mediaType: image.mediaType || detectMediaType(image.url),
             isPrimary: image.isPrimary,
+            position: image.position,
           };
 
           await tx.skuMedia.create({

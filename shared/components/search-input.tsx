@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useTransition } from "react"
+import { useEffect, useId, useRef, useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { Search, X } from "lucide-react"
@@ -39,6 +39,8 @@ type SearchInputProps = {
 	preventMobileBlur?: boolean
 	/** Callback on every input value change (for live search debouncing in parent) */
 	onValueChange?: (value: string) => void
+	/** Number of search results for screen reader announcement (live mode) */
+	resultCount?: number
 }
 
 const sizeStyles = {
@@ -83,10 +85,13 @@ export function SearchInput({
 	onEscape,
 	onValueChange,
 	preventMobileBlur = false,
+	resultCount,
 }: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [internalPending, startTransition] = useTransition()
+	const [maxLengthFlash, setMaxLengthFlash] = useState(false)
 	const shouldReduceMotion = useReducedMotion()
+	const statusId = useId()
 	const styles = sizeStyles[size]
 
 	const searchParams = useSearchParams()
@@ -105,11 +110,13 @@ export function SearchInput({
 	const urlValue = mode === "live" ? searchParams.get(paramName) || "" : ""
 
 	useEffect(() => {
+		if (mode !== "live") return
 		if (urlValue !== lastSyncedUrl.current) {
 			lastSyncedUrl.current = urlValue
 			form.setFieldValue("search", urlValue)
+			onValueChange?.(urlValue)
 		}
-	}, [urlValue, form])
+	}, [urlValue, form, mode, onValueChange])
 
 	const handleSearch = (searchValue: string) => {
 		const trimmed = searchValue.trim()
@@ -161,14 +168,18 @@ export function SearchInput({
 		e.preventDefault()
 		if (mode === "submit") {
 			handleSearch(form.getFieldValue("search"))
+		} else if (onSubmit) {
+			// Live mode: let consumers handle Enter (e.g. navigate to full results page)
+			onSubmit(form.getFieldValue("search"))
 		}
 	}
 
 	const handleClear = () => {
 		form.setFieldValue("search", "")
 		onValueChange?.("")
-		// In live mode, also clear the URL param
+		// In live mode, also clear the URL param and reset sync guard
 		if (mode === "live") {
+			lastSyncedUrl.current = ""
 			handleSearch("")
 		}
 		inputRef.current?.focus()
@@ -187,6 +198,17 @@ export function SearchInput({
 			}
 			// If no content and no onEscape, let event propagate
 		}
+
+		// Flash border when maxLength reached
+		if (
+			currentValue.length >= 200 &&
+			e.key.length === 1 &&
+			!e.ctrlKey &&
+			!e.metaKey
+		) {
+			setMaxLengthFlash(true)
+			setTimeout(() => setMaxLengthFlash(false), 150)
+		}
 	}
 
 	return (
@@ -200,10 +222,11 @@ export function SearchInput({
 				className={cn(
 					"relative flex flex-1 items-center overflow-hidden",
 					"bg-background border border-input",
-					"hover:border-muted-foreground/25",
+					"hover:border-muted-foreground/40",
 					"focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30",
 					"transition-all duration-200",
-					isPending && "opacity-70",
+					isPending && "border-ring/50 animate-pulse",
+					maxLengthFlash && "ring-2 ring-destructive/50",
 					styles.container
 				)}
 			>
@@ -213,11 +236,29 @@ export function SearchInput({
 						styles.iconLeft
 					)}
 				>
-					{isPending && mode === "live" ? (
-						<MiniDotsLoader size="sm" color="primary" />
-					) : (
-						<Search className="size-4" />
-					)}
+					<AnimatePresence mode="wait">
+						{isPending && mode === "live" ? (
+							<motion.span
+								key="loader"
+								initial={shouldReduceMotion ? false : { opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={shouldReduceMotion ? undefined : { opacity: 0 }}
+								transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+							>
+								<MiniDotsLoader size="sm" color="primary" />
+							</motion.span>
+						) : (
+							<motion.span
+								key="search"
+								initial={shouldReduceMotion ? false : { opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={shouldReduceMotion ? undefined : { opacity: 0 }}
+								transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+							>
+								<Search className="size-4" />
+							</motion.span>
+						)}
+					</AnimatePresence>
 				</div>
 
 				<form.AppField
@@ -243,6 +284,7 @@ export function SearchInput({
 								type="search"
 								inputMode="search"
 								enterKeyHint="search"
+								maxLength={200}
 								value={field.state.value}
 								onChange={(e) => {
 									field.handleChange(e.target.value)
@@ -259,7 +301,8 @@ export function SearchInput({
 								)}
 								placeholder={placeholder}
 								aria-label={ariaLabel || placeholder}
-								aria-describedby="search-status"
+								aria-busy={isPending}
+								aria-describedby={statusId}
 							/>
 
 							<AnimatePresence mode="wait">
@@ -320,12 +363,18 @@ export function SearchInput({
 
 			{/* Live region for screen readers */}
 			<span
-				id="search-status"
+				id={statusId}
 				role="status"
 				aria-live="polite"
 				className="sr-only"
 			>
-				{isPending ? "Recherche en cours..." : ""}
+				{isPending
+					? "Recherche en cours..."
+					: resultCount !== undefined
+						? resultCount === 0
+							? "Aucun resultat"
+							: `${resultCount} resultat${resultCount > 1 ? "s" : ""}`
+						: ""}
 			</span>
 		</form>
 	)

@@ -52,8 +52,9 @@ export async function bulkDeleteDiscounts(
 			return error("Aucun code ne peut être supprimé (tous ont des utilisations)");
 		}
 
-		await prisma.discount.deleteMany({
+		await prisma.discount.updateMany({
 			where: { id: { in: deletableIds } },
+			data: { deletedAt: new Date() },
 		});
 
 		// Invalider le cache pour chaque discount supprimé

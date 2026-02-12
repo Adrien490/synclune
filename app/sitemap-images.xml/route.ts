@@ -38,7 +38,7 @@ export async function GET() {
 							isPrimary: true,
 						},
 						orderBy: {
-							isPrimary: "desc",
+							position: "asc",
 						},
 					},
 				},

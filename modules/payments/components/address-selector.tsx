@@ -1,0 +1,66 @@
+"use client"
+
+import type { UserAddress } from "@/modules/addresses/types/user-addresses.types"
+import { cn } from "@/shared/utils/cn"
+import { MapPin } from "lucide-react"
+
+interface AddressSelectorProps {
+	addresses: UserAddress[]
+	selectedAddressId: string | null
+	onSelectAddress: (address: UserAddress) => void
+}
+
+/**
+ * Compact radio-group style address selector
+ * Only rendered when the user has more than one saved address
+ */
+export function AddressSelector({
+	addresses,
+	selectedAddressId,
+	onSelectAddress,
+}: AddressSelectorProps) {
+	if (addresses.length <= 1) return null
+
+	return (
+		<fieldset className="space-y-2">
+			<legend className="text-sm font-medium">Adresses enregistrées</legend>
+			<div className="grid gap-2">
+				{addresses.map((address) => {
+					const isSelected = address.id === selectedAddressId
+					const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ")
+					const addressLine = [address.address1, address.city].filter(Boolean).join(", ")
+
+					return (
+						<button
+							key={address.id}
+							type="button"
+							onClick={() => onSelectAddress(address)}
+							className={cn(
+								"flex items-start gap-3 rounded-lg border p-3 text-left text-sm transition-colors",
+								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+								isSelected
+									? "border-primary bg-primary/5"
+									: "border-border hover:border-primary/50 hover:bg-muted/50"
+							)}
+							aria-pressed={isSelected}
+						>
+							<MapPin className={cn(
+								"w-4 h-4 mt-0.5 shrink-0",
+								isSelected ? "text-primary" : "text-muted-foreground"
+							)} />
+							<div className="min-w-0 flex-1">
+								<p className="font-medium truncate">{fullName}</p>
+								<p className="text-muted-foreground truncate">{addressLine}</p>
+							</div>
+							{address.isDefault && (
+								<span className="text-xs text-muted-foreground shrink-0 mt-0.5">
+									Par défaut
+								</span>
+							)}
+						</button>
+					)
+				})}
+			</div>
+		</fieldset>
+	)
+}

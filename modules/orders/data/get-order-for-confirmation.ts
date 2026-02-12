@@ -7,6 +7,7 @@ const CONFIRMATION_ORDER_SELECT = {
 	orderNumber: true,
 	subtotal: true,
 	shippingCost: true,
+	discountAmount: true,
 	total: true,
 	paymentStatus: true,
 	shippingFirstName: true,
@@ -16,6 +17,18 @@ const CONFIRMATION_ORDER_SELECT = {
 	shippingPostalCode: true,
 	shippingCity: true,
 	shippingPhone: true,
+	items: {
+		select: {
+			id: true,
+			productTitle: true,
+			skuColor: true,
+			skuMaterial: true,
+			skuSize: true,
+			skuImageUrl: true,
+			price: true,
+			quantity: true,
+		},
+	},
 } as const;
 
 const confirmationParamsSchema = z.object({

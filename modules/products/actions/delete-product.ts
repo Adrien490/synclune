@@ -7,7 +7,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { deleteProductSchema } from "../schemas/product.schemas";
-import { getProductInvalidationTags } from "../constants/cache";
+import { getProductInvalidationTags } from "../utils/cache.utils";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";

@@ -185,12 +185,6 @@ export function QuickSearchDialog({
 					className="px-4 py-3 bg-background shrink-0"
 					data-pending={isPending ? "" : undefined}
 					onKeyDown={(e) => {
-						// Enter on input: navigate to full search page
-						if (e.key === "Enter" && e.target instanceof HTMLInputElement && activeIndex < 0) {
-							e.preventDefault()
-							handleEnterKey((e.target as HTMLInputElement).value)
-							return
-						}
 						if (e.key === "ArrowDown" && e.target instanceof HTMLInputElement) {
 							e.preventDefault()
 							setActiveIndex(0)
@@ -211,6 +205,7 @@ export function QuickSearchDialog({
 						preventMobileBlur
 						onEscape={handleClose}
 						onValueChange={handleInputValueChange}
+						onSubmit={handleEnterKey}
 					/>
 				</div>
 

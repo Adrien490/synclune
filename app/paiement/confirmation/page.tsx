@@ -11,6 +11,7 @@ import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-con
 import { formatEuro } from "@/shared/utils/format-euro";
 import { CheckCircle2, Heart, Package, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 	title: "Commande confirmée | Synclune",
 	description: "Ta commande a été confirmée avec succès. Merci pour ta confiance !",
 	robots: {
-		index: false, // Ne pas indexer les pages de confirmation de commande
+		index: false,
 		follow: false,
 	},
 };
@@ -91,7 +92,50 @@ export default async function CheckoutSuccessPage({
 						</CardHeader>
 
 						<CardContent className="space-y-6">
-							{/* Récapitulatif de la commande */}
+							{/* Articles commandés */}
+							{order.items.length > 0 && (
+								<div className="bg-muted/50 rounded-lg p-4 space-y-3">
+									<h3 className="font-semibold text-base">Articles commandés</h3>
+									<div className="space-y-3">
+										{order.items.map((item) => (
+											<div key={item.id} className="flex gap-3 text-sm">
+												<div className="relative w-14 h-14 shrink-0 rounded-md overflow-hidden bg-muted border">
+													{item.skuImageUrl ? (
+														<Image
+															src={item.skuImageUrl}
+															alt={item.productTitle}
+															fill
+															sizes="56px"
+															quality={70}
+															className="object-cover"
+														/>
+													) : (
+														<div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+															N/A
+														</div>
+													)}
+												</div>
+												<div className="flex-1 min-w-0">
+													<p className="font-medium line-clamp-1">{item.productTitle}</p>
+													<div className="text-xs text-muted-foreground space-x-2">
+														{item.skuSize && <span>Taille: {item.skuSize}</span>}
+														{item.skuColor && <span>Couleur: {item.skuColor}</span>}
+														{item.skuMaterial && <span>Matière: {item.skuMaterial}</span>}
+													</div>
+													<p className="text-xs text-muted-foreground">Qté: {item.quantity}</p>
+												</div>
+												<div className="text-right shrink-0">
+													<p className="tabular-nums font-medium">
+														{formatEuro(item.price * item.quantity)}
+													</p>
+												</div>
+											</div>
+										))}
+									</div>
+								</div>
+							)}
+
+							{/* Récapitulatif montants */}
 							<div className="bg-muted/50 rounded-lg p-4 space-y-3">
 								<h3 className="font-semibold text-base">Récapitulatif</h3>
 								<div className="space-y-2 text-sm">
@@ -99,6 +143,12 @@ export default async function CheckoutSuccessPage({
 										<span className="text-muted-foreground">Sous-total</span>
 										<span>{formatEuro(order.subtotal)}</span>
 									</div>
+									{order.discountAmount > 0 && (
+										<div className="flex justify-between text-green-600 dark:text-green-400">
+											<span>Réduction</span>
+											<span>-{formatEuro(order.discountAmount)}</span>
+										</div>
+									)}
 									<div className="flex justify-between">
 										<span className="text-muted-foreground">Livraison</span>
 										<span>{formatEuro(order.shippingCost)}</span>
@@ -107,8 +157,6 @@ export default async function CheckoutSuccessPage({
 										<span>Total</span>
 										<span>{formatEuro(order.total)}</span>
 									</div>
-									<p className="text-xs text-muted-foreground text-right">
-									</p>
 								</div>
 							</div>
 
@@ -124,14 +172,18 @@ export default async function CheckoutSuccessPage({
 									<p>
 										{order.shippingPostalCode} {order.shippingCity}
 									</p>
-									<p className="mt-1 text-xs">📞 {order.shippingPhone}</p>
+									<p className="mt-1 text-xs">
+										<span aria-hidden="true">📞</span> {order.shippingPhone}
+									</p>
 								</div>
 							</div>
 
 							{/* Message personnalisé */}
 							<Alert>
 								<Heart />
-								<AlertTitle>Merci du fond du cœur 💕</AlertTitle>
+								<AlertTitle>
+									Merci du fond du cœur <span aria-hidden="true">💕</span>
+								</AlertTitle>
 								<AlertDescription>
 									Je vais préparer ta commande avec le plus grand soin ! Chaque bijou
 									est emballé avec amour dans mon atelier.
@@ -156,7 +208,8 @@ export default async function CheckoutSuccessPage({
 											<p className="font-medium">Email de confirmation</p>
 											<p className="text-sm text-muted-foreground">
 												Tu vas recevoir un email récapitulatif dans
-												quelques instants.
+												les prochaines minutes. Pense à vérifier tes spams
+												si tu ne le reçois pas.
 											</p>
 										</div>
 									</div>
@@ -214,7 +267,7 @@ export default async function CheckoutSuccessPage({
 							Une question sur ta commande ?
 						</p>
 						<Button asChild variant="link">
-							<Link href="/personnalisation">Contacte-nous</Link>
+							<Link href="/personnalisation">Écris-moi</Link>
 						</Button>
 					</div>
 				</div>

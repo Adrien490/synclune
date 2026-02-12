@@ -7,7 +7,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { getProductInvalidationTags } from "../constants/cache";
+import { getProductInvalidationTags } from "../utils/cache.utils";
 import { validateProductForPublication } from "../services/product-validation.service";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";

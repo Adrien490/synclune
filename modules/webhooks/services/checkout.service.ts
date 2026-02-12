@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { stripe } from "@/shared/lib/stripe";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
@@ -103,8 +104,6 @@ async function validateWithTimeout(
 export async function extractShippingInfo(
 	session: Stripe.Checkout.Session
 ): Promise<{ shippingCost: number; shippingMethod: string; shippingRateId: string | undefined }> {
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 	const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
 		expand: ["shipping_cost.shipping_rate"],
 	});
@@ -389,6 +388,25 @@ export async function cancelExpiredOrder(orderId: string): Promise<{ cancelled: 
 			`ℹ️  [WEBHOOK] Order ${orderId} already processed (status: ${order.paymentStatus}), skipping expiration`
 		);
 		return { cancelled: false, orderNumber: order.orderNumber };
+	}
+
+	// Release discount usages before cancelling the order
+	const discountUsages = await prisma.discountUsage.findMany({
+		where: { orderId },
+		select: { id: true, discountId: true },
+	});
+
+	if (discountUsages.length > 0) {
+		await prisma.$transaction([
+			...discountUsages.map((usage) =>
+				prisma.discount.update({
+					where: { id: usage.discountId },
+					data: { usageCount: { decrement: 1 } },
+				})
+			),
+			prisma.discountUsage.deleteMany({ where: { orderId } }),
+		]);
+		console.log(`🔓 [WEBHOOK] Released ${discountUsages.length} discount usage(s) for expired order ${orderId}`);
 	}
 
 	await prisma.order.update({

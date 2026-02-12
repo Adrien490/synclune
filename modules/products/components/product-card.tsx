@@ -246,7 +246,7 @@ export function ProductCard({
 								)}
 								style={{ backgroundColor: color.hex }}
 								title={color.name}
-								aria-label={`${title} en ${color.name}`}
+								aria-label={`${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`}
 							/>
 						))}
 						{colors.length > 5 && (

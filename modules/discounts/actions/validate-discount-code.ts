@@ -73,8 +73,8 @@ export async function validateDiscountCode(
 				} = retryValidation.data;
 
 				// Rechercher le code promo
-				const discount = await prisma.discount.findUnique({
-					where: { code: validatedCode },
+				const discount = await prisma.discount.findFirst({
+					where: { code: validatedCode, deletedAt: null },
 					select: GET_DISCOUNT_VALIDATION_SELECT,
 				});
 
@@ -124,8 +124,8 @@ export async function validateDiscountCode(
 		} = validation.data;
 
 		// 2. Rechercher le code promo
-		const discount = await prisma.discount.findUnique({
-			where: { code: validatedCode },
+		const discount = await prisma.discount.findFirst({
+			where: { code: validatedCode, deletedAt: null },
 			select: GET_DISCOUNT_VALIDATION_SELECT,
 		});
 

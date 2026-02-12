@@ -96,7 +96,7 @@ export const GET_COLLECTIONS_SELECT = {
 							priceInclTax: true,
 							images: {
 								select: { url: true, altText: true, blurDataUrl: true },
-								orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+								orderBy: { position: "asc" },
 								take: 1,
 							},
 						},
@@ -142,7 +142,7 @@ export const GET_COLLECTIONS_PREVIEW_SELECT = {
 						select: {
 							images: {
 								select: { url: true, blurDataUrl: true },
-								orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+								orderBy: { position: "asc" },
 								take: 1,
 							},
 						},

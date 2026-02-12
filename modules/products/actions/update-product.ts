@@ -10,7 +10,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { updateProductSchema } from "../schemas/product.schemas";
-import { getProductInvalidationTags } from "../constants/cache";
+import { getProductInvalidationTags } from "../utils/cache.utils";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 
@@ -171,6 +171,7 @@ export async function updateProduct(
 			...media,
 			mediaType: index === 0 ? ("IMAGE" as const) : media.mediaType, // Force IMAGE for first
 			isPrimary: index === 0,
+			position: index,
 		}));
 
 		// 9. Update product in transaction
@@ -277,6 +278,7 @@ export async function updateProduct(
 							mediaType:
 								image.mediaType || detectMediaType(image.url),
 							isPrimary: image.isPrimary,
+							position: image.position,
 						},
 					});
 				}
@@ -317,7 +319,9 @@ export async function updateProduct(
 				await utapi.deleteFiles(deletedImageUrls);
 			} catch (e) {
 				// DB update already succeeded, orphaned files will be cleaned by monthly cron
-				console.error("[update-product] Failed to delete UploadThing files:", deletedImageUrls, e);
+				if (process.env.NODE_ENV === "development") {
+					console.error("[update-product] Failed to delete UploadThing files:", deletedImageUrls, e);
+				}
 			}
 		}
 

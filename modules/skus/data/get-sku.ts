@@ -101,7 +101,7 @@ async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 						mediaType: true,
 						isPrimary: true,
 					},
-					orderBy: { isPrimary: "desc" },
+					orderBy: { position: "asc" },
 				},
 			},
 		});

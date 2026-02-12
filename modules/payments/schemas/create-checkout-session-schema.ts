@@ -27,6 +27,7 @@ export const createCheckoutSessionSchema = z.object({
 			z.object({
 				skuId: z.string(),
 				quantity: z.number().int().positive().max(100, "Maximum 100 unités par article"),
+				priceAtAdd: z.number().int().positive(),
 			})
 		)
 		.min(1, "Le panier doit contenir au moins un article"),

@@ -134,7 +134,7 @@ export const GET_PRODUCT_SELECT = {
 					isPrimary: true,
 				},
 				orderBy: {
-					isPrimary: "desc" as const,
+					position: "asc" as const,
 				},
 			},
 		},
@@ -215,7 +215,7 @@ export const GET_PRODUCTS_SELECT = {
 					isPrimary: true,
 				},
 				orderBy: {
-					createdAt: "asc",
+					position: "asc",
 				},
 			},
 			material: {
@@ -341,10 +341,6 @@ export const PRODUCTS_SORT_LABELS = {
 	[PRODUCTS_SORT_OPTIONS.CREATED_ASC]: "Plus anciens",
 	[PRODUCTS_SORT_OPTIONS.CREATED_DESC]: "Plus récents",
 } as const;
-
-// Aliases pour compatibilité
-export const SORT_OPTIONS = PRODUCTS_SORT_OPTIONS;
-export const SORT_LABELS = PRODUCTS_SORT_LABELS;
 
 // ============================================================================
 // ADMIN SORT LABELS

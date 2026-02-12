@@ -137,10 +137,7 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			isPrimary: true,
 			mediaType: true,
 		},
-		orderBy: [
-			{ isPrimary: "desc" as const },
-			{ createdAt: "asc" as const },
-		],
+		orderBy: { position: "asc" as const },
 	},
 
 	// Comptage des relations

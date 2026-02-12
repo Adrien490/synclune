@@ -6,7 +6,7 @@ import type {
 	GetProductParams,
 	GetProductReturn,
 } from "../types/product.types";
-import { cacheProductDetail } from "../constants/cache";
+import { cacheProductDetail } from "../utils/cache.utils";
 
 // Re-export pour compatibilité
 export type {
@@ -54,7 +54,9 @@ async function fetchProduct(
 
 		return product;
 	} catch (error) {
-		console.error("[GET_PRODUCT]", error);
+		if (process.env.NODE_ENV === "development") {
+			console.error("[GET_PRODUCT]", error);
+		}
 		return null;
 	}
 }

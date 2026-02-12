@@ -99,7 +99,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 								{/* Conseils spécifiques selon le type d'erreur */}
 								{reason === "card_declined" && (
 									<p className="flex items-start gap-2">
-										<span className="mt-0.5">💡</span>
+										<span className="mt-0.5" aria-hidden="true">💡</span>
 										<span>
 											<strong>Que faire ?</strong> Vérifie que ta carte est activée pour les paiements en ligne,
 											ou contacte ta banque si le problème persiste.
@@ -109,7 +109,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 
 								{reason === "insufficient_funds" && (
 									<p className="flex items-start gap-2">
-										<span className="mt-0.5">💡</span>
+										<span className="mt-0.5" aria-hidden="true">💡</span>
 										<span>
 											<strong>Que faire ?</strong> Vérifie ton solde ou utilise une autre carte bancaire.
 										</span>
@@ -118,7 +118,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 
 								{reason === "authentication_failed" && (
 									<p className="flex items-start gap-2">
-										<span className="mt-0.5">💡</span>
+										<span className="mt-0.5" aria-hidden="true">💡</span>
 										<span>
 											<strong>Que faire ?</strong> Assure-toi d'avoir accès à ton application bancaire
 											ou SMS pour valider l'authentification 3D Secure.
@@ -128,7 +128,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 
 								{(!reason || reason === "canceled") && (
 									<p className="flex items-start gap-2">
-										<span className="mt-0.5">💡</span>
+										<span className="mt-0.5" aria-hidden="true">💡</span>
 										<span>
 											Si tu as rencontré un problème lors du paiement,
 											n'hésite pas à me contacter !
@@ -146,7 +146,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									</Link>
 								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href="/personnalisation">Nous contacter</Link>
+									<Link href="/personnalisation">M'écrire</Link>
 								</Button>
 							</div>
 						</CardContent>

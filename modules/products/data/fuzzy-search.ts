@@ -120,7 +120,9 @@ export async function fuzzySearchProductIds(
 			totalCount: results.length > 0 ? Number(results[0].totalCount) : 0,
 		};
 	} catch (error) {
-		console.error("[fuzzySearch] Failed:", error instanceof Error ? error.message : error);
+		if (process.env.NODE_ENV === "development") {
+			console.error("[fuzzySearch] Failed:", error instanceof Error ? error.message : error);
+		}
 		return { ids: [], totalCount: 0 };
 	}
 }

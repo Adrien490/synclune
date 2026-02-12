@@ -43,6 +43,7 @@ export function AddressSummary({ address, onEdit }: AddressSummaryProps) {
 				<button
 					type="button"
 					onClick={onEdit}
+					aria-label="Modifier l'adresse de livraison"
 					className="text-sm text-muted-foreground hover:text-foreground underline hover:no-underline inline-flex items-center gap-1 transition-colors"
 				>
 					<Pencil className="w-3 h-3" />

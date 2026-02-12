@@ -94,10 +94,11 @@ export async function duplicateSku(
 				isDefault: false, // Jamais par défaut
 				// Dupliquer les images
 				images: {
-					create: original.images.map((img) => ({
+					create: original.images.map((img, index) => ({
 						url: img.url,
 						altText: img.altText,
 						isPrimary: img.isPrimary,
+						position: img.position ?? index,
 						mediaType: img.mediaType,
 						thumbnailUrl: img.thumbnailUrl,
 					})),

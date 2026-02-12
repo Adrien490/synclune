@@ -7,8 +7,8 @@ import type { Color } from "@/modules/colors/types/color.types";
 import type { MaterialOption } from "@/modules/materials/types/materials.types";
 
 import {
-	SORT_LABELS,
-	SORT_OPTIONS,
+	PRODUCTS_SORT_LABELS,
+	PRODUCTS_SORT_OPTIONS,
 } from "@/modules/products/constants/product.constants";
 
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
@@ -92,9 +92,9 @@ export function ProductCatalog({
 		: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
 
 	// Sort options for mobile drawer
-	const sortOptions = Object.values(SORT_OPTIONS).map((option) => ({
+	const sortOptions = Object.values(PRODUCTS_SORT_OPTIONS).map((option) => ({
 		value: option,
-		label: SORT_LABELS[option as keyof typeof SORT_LABELS],
+		label: PRODUCTS_SORT_LABELS[option as keyof typeof PRODUCTS_SORT_LABELS],
 	}));
 
 	const searchPlaceholder = activeProductType
@@ -145,9 +145,9 @@ export function ProductCatalog({
 						<SelectFilter
 							filterKey="sortBy"
 							label="Trier par"
-							options={Object.values(SORT_OPTIONS).map((option) => ({
+							options={Object.values(PRODUCTS_SORT_OPTIONS).map((option) => ({
 								value: option,
-								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
+								label: PRODUCTS_SORT_LABELS[option as keyof typeof PRODUCTS_SORT_LABELS],
 							}))}
 							placeholder="Trier par"
 							noPrefix

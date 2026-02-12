@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, softDelete } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { deleteDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
@@ -48,7 +48,7 @@ export async function deleteDiscount(
 			return error(DISCOUNT_ERROR_MESSAGES.HAS_USAGES);
 		}
 
-		await prisma.discount.delete({ where: { id } });
+		await softDelete.discount(id);
 
 		getDiscountInvalidationTags(discount.code).forEach(tag => updateTag(tag));
 

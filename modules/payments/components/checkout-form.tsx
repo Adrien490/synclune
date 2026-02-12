@@ -8,7 +8,8 @@ import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { AlertCircle, CreditCard, Info, Loader2, Lock, Mail, Shield } from "lucide-react";
+import { AlertCircle, CreditCard, Info, Loader2, Lock, Mail, MapPin, Shield } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import {
 	VisaIcon,
 	MastercardIcon,
@@ -27,8 +28,12 @@ import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { EmbeddedCheckoutWrapper } from "./embedded-checkout";
 import { AddressSummary, type SubmittedAddress } from "./address-summary";
 import { CheckoutSummary } from "./checkout-summary";
+import { DiscountCodeInput } from "./discount-code-input";
+import { AddressSelector } from "./address-selector";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import type { CreateCheckoutSessionResult } from "../types/checkout.types";
+import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
+import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
 
 // Options pour le select des pays
 const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
@@ -75,6 +80,20 @@ export function CheckoutForm({
 	const [submittedAddress, setSubmittedAddress] =
 		useState<SubmittedAddress | null>(null);
 
+	// State for discount code
+	const [appliedDiscount, setAppliedDiscount] = useState<
+		NonNullable<ValidateDiscountCodeReturn["discount"]> | null
+	>(null);
+
+	// State for address selector
+	const defaultAddress = addresses?.find((a) => a.isDefault) ?? addresses?.[0] ?? null;
+	const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+		defaultAddress?.id ?? null
+	);
+
+	// Ref for focus management
+	const headingRef = useRef<HTMLHeadingElement>(null);
+
 	// Référence pour capturer les valeurs du formulaire avant soumission
 	const formValuesRef = useRef<{
 		email?: string;
@@ -107,11 +126,36 @@ export function CheckoutForm({
 				email: isGuest ? formValuesRef.current.email : undefined,
 			});
 		}
+
+		// Scroll to top and focus the heading for screen readers
+		window.scrollTo({ top: 0, behavior: "smooth" });
+		requestAnimationFrame(() => headingRef.current?.focus());
 	};
 
 	const handleEdit = () => {
 		setClientSecret(null);
-		// On garde submittedAddress pour pré-remplir si besoin
+		// Focus first form field after transition
+		requestAnimationFrame(() => {
+			const firstInput = document.querySelector<HTMLInputElement>(
+				'input[name="email"], input[name="shipping.fullName"]'
+			);
+			firstInput?.focus();
+		});
+	};
+
+	const handleSelectAddress = (address: UserAddress) => {
+		setSelectedAddressId(address.id);
+		const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ");
+		form.setFieldValue("shipping.fullName", fullName);
+		form.setFieldValue("shipping.addressLine1", address.address1 ?? "");
+		form.setFieldValue("shipping.addressLine2", address.address2 ?? "");
+		form.setFieldValue("shipping.city", address.city ?? "");
+		form.setFieldValue("shipping.postalCode", address.postalCode ?? "");
+		form.setFieldValue("shipping.country", address.country ?? "FR");
+		form.setFieldValue("shipping.phoneNumber", address.phone ?? "");
+		// Show progressive disclosure fields if needed
+		if (address.country && address.country !== "FR") setShowCountrySelect(true);
+		if (address.address2) setShowAddressLine2(true);
 	};
 
 	// Form hook
@@ -139,18 +183,31 @@ export function CheckoutForm({
 		return sum + item.priceAtAdd * item.quantity;
 	}, 0);
 	const shipping = calculateShipping(country, postalCode);
-	const total = subtotal + shipping;
+	const discountAmount = appliedDiscount?.discountAmount ?? 0;
+	const total = subtotal - discountAmount + shipping;
+
+	const fadeSlide = {
+		initial: { opacity: 0, y: 10 },
+		animate: { opacity: 1, y: 0 },
+		exit: { opacity: 0, y: -10 },
+		transition: { duration: 0.25 },
+	};
 
 	return (
 		<div className="grid lg:grid-cols-3 gap-8">
 			{/* Formulaire / Paiement - 2/3 de la largeur */}
 			<div className="lg:col-span-2">
+				{/* Accessible heading for focus management */}
+				<h1 ref={headingRef} tabIndex={-1} className="sr-only">
+					Paiement sécurisé
+				</h1>
 				<ErrorBoundary
 					errorMessage="Impossible de charger le formulaire"
 					className="p-8 rounded-lg border bg-muted/50"
 				>
+					<AnimatePresence mode="wait">
 					{clientSecret && submittedAddress ? (
-						<div className="space-y-6">
+						<motion.div key="payment" className="space-y-6" {...fadeSlide}>
 							{/* Résumé de l'adresse de livraison (Baymard: toujours visible) */}
 							<AddressSummary address={submittedAddress} onEdit={handleEdit} />
 
@@ -220,9 +277,11 @@ export function CheckoutForm({
 									Commande n°{orderInfo.orderNumber}
 								</p>
 							)}
-						</div>
+						</motion.div>
 					) : (
-						<form
+						<motion.form
+							key="address"
+							{...fadeSlide}
 							action={action}
 							className="space-y-5 sm:space-y-6"
 							onSubmit={() => {
@@ -242,6 +301,17 @@ export function CheckoutForm({
 								void form.handleSubmit();
 							}}
 						>
+							{/* Step 1 indicator */}
+							<div className="flex items-center gap-2">
+								<div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+									1
+								</div>
+								<h2 className="text-lg font-semibold flex items-center gap-2">
+									<MapPin className="w-5 h-5" />
+									Adresse de livraison
+								</h2>
+							</div>
+
 							{/* Légende champs obligatoires (Baymard: 94% des sites échouent à clarifier) */}
 							<p className="text-sm text-muted-foreground">
 								Les champs marqués d'un <span className="text-destructive">*</span> sont
@@ -256,6 +326,7 @@ export function CheckoutForm({
 									cart.items.map((item) => ({
 										skuId: item.sku.id,
 										quantity: item.quantity,
+										priceAtAdd: item.priceAtAdd,
 									}))
 								)}
 							/>
@@ -288,6 +359,11 @@ export function CheckoutForm({
 													value={(v?.email as string) || ""}
 												/>
 											)}
+											<input
+												type="hidden"
+												name="discountCode"
+												value={appliedDiscount?.code ?? ""}
+											/>
 										</>
 									);
 								}}
@@ -429,12 +505,20 @@ export function CheckoutForm({
 
 							{/* Email affiché pour utilisateurs connectés */}
 							{!isGuest && session?.user?.email && (
-								<Alert>
-									<Mail className="h-4 w-4" />
-									<AlertDescription>
-										Email de contact : <strong>{session.user.email}</strong>
-									</AlertDescription>
-								</Alert>
+								<div className="flex items-center gap-2 text-sm p-3 bg-muted/50 rounded-lg">
+									<Mail className="w-4 h-4 text-muted-foreground" />
+									<span className="text-muted-foreground">Email :</span>
+									<span className="font-medium">{session.user.email}</span>
+								</div>
+							)}
+
+							{/* Address selector for logged-in users with multiple addresses */}
+							{!isGuest && addresses && addresses.length > 1 && (
+								<AddressSelector
+									addresses={addresses}
+									selectedAddressId={selectedAddressId}
+									onSelectAddress={handleSelectAddress}
+								/>
 							)}
 
 							{/* Nom complet (Baymard: champ unique réduit friction) */}
@@ -609,6 +693,15 @@ export function CheckoutForm({
 								)}
 							</form.AppField>
 
+							{/* Code promo */}
+							<DiscountCodeInput
+								subtotal={subtotal}
+								userId={session?.user?.id}
+								email={isGuest ? (form.state.values.email as string | undefined) : session?.user?.email}
+								appliedDiscount={appliedDiscount}
+								onDiscountApplied={setAppliedDiscount}
+							/>
+
 							{/* CGV */}
 							<form.AppField
 								name="termsAccepted"
@@ -664,8 +757,9 @@ export function CheckoutForm({
 									</Button>
 								)}
 							</form.Subscribe>
-						</form>
+						</motion.form>
 					)}
+					</AnimatePresence>
 				</ErrorBoundary>
 			</div>
 
@@ -675,6 +769,7 @@ export function CheckoutForm({
 					cart={cart}
 					selectedCountry={country}
 					postalCode={postalCode}
+					appliedDiscount={appliedDiscount}
 				/>
 			</div>
 		</div>

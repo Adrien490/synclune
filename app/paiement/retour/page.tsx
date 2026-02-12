@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation"
-import Stripe from "stripe"
 import type { Metadata } from "next"
 import { z } from "zod"
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+import { stripe } from "@/shared/lib/stripe"
 
 const searchParamsSchema = z.object({
 	session_id: z.string().min(1),

@@ -44,7 +44,9 @@ export async function addRecentSearch(
 				}
 			} catch (parseError) {
 				// Cookie corrompu - reset silencieux mais loggé
-				console.error("[addRecentSearch] Cookie corrompu, reset:", parseError)
+				if (process.env.NODE_ENV === "development") {
+					console.error("[addRecentSearch] Cookie corrompu, reset:", parseError)
+				}
 			}
 		}
 

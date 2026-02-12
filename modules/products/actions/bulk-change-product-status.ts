@@ -9,7 +9,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { bulkChangeProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { getProductInvalidationTags } from "../constants/cache";
+import { getProductInvalidationTags } from "../utils/cache.utils";
 import { validateProductForPublication } from "../services/product-validation.service";
 
 /**

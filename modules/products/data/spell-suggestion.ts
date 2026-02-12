@@ -167,7 +167,9 @@ export async function getSpellSuggestion(
 			source: best.source as SpellSuggestion["source"],
 		};
 	} catch (error) {
-		console.error("[spellSuggestion] Failed:", error instanceof Error ? error.message : error);
+		if (process.env.NODE_ENV === "development") {
+			console.error("[spellSuggestion] Failed:", error instanceof Error ? error.message : error);
+		}
 		return null;
 	}
 }

@@ -53,6 +53,11 @@ export function NewsletterForm() {
 	// L'inscription est considérée réussie si optimistic OU state.status === SUCCESS
 	const isSuccess = optimisticSubmitted || state?.status === ActionStatus.SUCCESS;
 
+	// Server-side error from the action (email already subscribed, rate limit, etc.)
+	const hasServerError =
+		state?.status === ActionStatus.ERROR || state?.status === ActionStatus.CONFLICT;
+	const serverErrorId = "newsletter-server-error";
+
 	return (
 		<form
 			action={action}
@@ -69,13 +74,13 @@ export function NewsletterForm() {
 			)}
 
 			{/* Error message (email already subscribed, etc.) - Skip validation errors */}
-			{(state?.status === ActionStatus.ERROR ||
-				state?.status === ActionStatus.CONFLICT) &&
-				state?.message && (
-					<Alert variant="destructive">
-						<AlertDescription>{state.message}</AlertDescription>
-					</Alert>
-				)}
+			{hasServerError && state?.message && (
+				<Alert variant="destructive">
+					<AlertDescription id={serverErrorId} role="alert">
+						{state.message}
+					</AlertDescription>
+				</Alert>
+			)}
 
 			<FieldSet>
 				<legend className="sr-only">Inscription à la newsletter</legend>
@@ -113,6 +118,8 @@ export function NewsletterForm() {
 											disabled={isPending || isSuccess}
 											className="h-12 text-base bg-background/80 backdrop-blur-sm border-2 focus:border-primary"
 											aria-label="Ton adresse email pour la newsletter"
+											aria-invalid={hasServerError || undefined}
+											aria-describedby={hasServerError ? serverErrorId : undefined}
 											required
 										/>
 									</div>
