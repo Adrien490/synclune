@@ -221,7 +221,7 @@ export function ProductCard({
 				>
 					<h3
 						id={titleId}
-						className="font-sans text-foreground text-base sm:text-lg tracking-normal line-clamp-1 sm:line-clamp-2"
+						className="font-sans text-foreground text-base sm:text-lg tracking-normal"
 					>
 						{title}
 					</h3>
