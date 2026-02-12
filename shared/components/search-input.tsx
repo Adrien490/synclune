@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useTransition } from "react"
+import { useEffect, useRef, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { Search, X } from "lucide-react"
@@ -99,14 +99,17 @@ export function SearchInput({
 		defaultValues: { search: initialValue },
 	})
 
-	// Render-time sync URL → form (live mode only)
+	// Sync URL → form (live mode only)
 	// Uses a ref guard to avoid resetting the input during typing (before debounce fires)
 	const lastSyncedUrl = useRef(initialValue)
 	const urlValue = mode === "live" ? searchParams.get(paramName) || "" : ""
-	if (urlValue !== lastSyncedUrl.current) {
-		lastSyncedUrl.current = urlValue
-		form.setFieldValue("search", urlValue)
-	}
+
+	useEffect(() => {
+		if (urlValue !== lastSyncedUrl.current) {
+			lastSyncedUrl.current = urlValue
+			form.setFieldValue("search", urlValue)
+		}
+	}, [urlValue, form])
 
 	const handleSearch = (searchValue: string) => {
 		const trimmed = searchValue.trim()
