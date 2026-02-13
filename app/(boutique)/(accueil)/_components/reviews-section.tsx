@@ -12,8 +12,10 @@ import {
 } from "@/shared/components/ui/carousel"
 import { SectionTitle } from "@/shared/components/section-title"
 import { RatingStars } from "@/shared/components/rating-stars"
+import { ResponsiveLayout } from "@/shared/components/responsive-layout"
 import { SECTION_SPACING } from "@/shared/constants/spacing"
 import { formatRating } from "@/shared/utils/rating-utils"
+import { formatRelativeDate } from "@/shared/utils/dates"
 import { HomepageReviewCard } from "@/modules/reviews/components/homepage-review-card"
 
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types"
@@ -41,6 +43,12 @@ export function ReviewsSection({
 		return null
 	}
 
+	// Pre-compute relative dates on the server to avoid client-side Date() calls
+	const reviewsWithDates = reviews.map((review) => ({
+		review,
+		relativeDate: formatRelativeDate(review.createdAt),
+	}))
+
 	return (
 		<section
 			id="reviews"
@@ -59,13 +67,13 @@ export function ReviewsSection({
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Header */}
 				<header className="mb-8 text-center lg:mb-12">
-					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
+					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} disableOnTouch>
 						<SectionTitle id="reviews-title">
 							Ce que disent nos clientes
 						</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
-					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
+					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration} disableOnTouch>
 						<p
 							id="reviews-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
@@ -76,13 +84,17 @@ export function ReviewsSection({
 
 					{/* Aggregate rating */}
 					{stats.totalReviews > 0 && (
-						<Fade y={10} delay={0.2} duration={0.6}>
-							<div className="mt-4 flex items-center justify-center gap-2">
+						<Fade y={10} delay={0.2} duration={0.6} disableOnTouch>
+							<div
+								className="mt-4 flex items-center justify-center gap-2"
+								role="img"
+								aria-label={`Note moyenne : ${formatRating(stats.averageRating)} sur 5 basée sur ${stats.totalReviews} avis`}
+							>
 								<RatingStars rating={stats.averageRating} size="sm" />
-								<span className="text-sm font-medium text-foreground">
+								<span className="text-sm font-medium text-foreground" aria-hidden="true">
 									{formatRating(stats.averageRating)}
 								</span>
-								<span className="text-sm text-muted-foreground">
+								<span className="text-sm text-muted-foreground" aria-hidden="true">
 									({stats.totalReviews} avis)
 								</span>
 							</div>
@@ -90,45 +102,50 @@ export function ReviewsSection({
 					)}
 				</header>
 
-				{/* Mobile: Carousel */}
-				<div className="lg:hidden mb-6 sm:mb-8">
-					<Reveal delay={0.2} duration={0.8} y={20} once={true}>
-						<Carousel
-							opts={{
-								align: "center",
-								containScroll: "trimSnaps",
-							}}
-							className="w-full"
-							aria-label="Carrousel d'avis clients"
+				{/* Responsive: only one layout stays in the DOM after mount */}
+				<ResponsiveLayout
+					mobile={
+						<div className="mb-6 sm:mb-8">
+							<Reveal delay={0.2} duration={0.8} y={20} once={true} disableOnTouch>
+								<Carousel
+									opts={{
+										align: "center",
+										containScroll: "trimSnaps",
+									}}
+									className="w-full"
+									aria-label="Carrousel d'avis clients"
+								>
+									<CarouselContent className="-ml-4 py-4" showFade>
+										{reviewsWithDates.map(({ review, relativeDate }, index) => (
+											<CarouselItem
+												key={review.id}
+												index={index}
+												className="pl-4 basis-[clamp(260px,80vw,340px)]"
+											>
+												<HomepageReviewCard review={review} relativeDate={relativeDate} className="h-full" />
+											</CarouselItem>
+										))}
+									</CarouselContent>
+									<CarouselDots />
+								</Carousel>
+							</Reveal>
+						</div>
+					}
+					desktop={
+						<Stagger
+							className="grid grid-cols-3 gap-6 mb-12"
+							stagger={MOTION_CONFIG.section.grid.stagger}
+							y={MOTION_CONFIG.section.grid.y}
+							inView
+							once={true}
+							disableOnTouch
 						>
-							<CarouselContent className="-ml-4 py-4" showFade>
-								{reviews.map((review, index) => (
-									<CarouselItem
-										key={review.id}
-										index={index}
-										className="pl-4 basis-[clamp(260px,80vw,340px)]"
-									>
-										<HomepageReviewCard review={review} className="h-full" />
-									</CarouselItem>
-								))}
-							</CarouselContent>
-							<CarouselDots />
-						</Carousel>
-					</Reveal>
-				</div>
-
-				{/* Desktop: Stagger grid */}
-				<Stagger
-					className="hidden lg:grid grid-cols-3 gap-6 mb-12"
-					stagger={MOTION_CONFIG.section.grid.stagger}
-					y={MOTION_CONFIG.section.grid.y}
-					inView
-					once={true}
-				>
-					{reviews.map((review) => (
-						<HomepageReviewCard key={review.id} review={review} />
-					))}
-				</Stagger>
+							{reviewsWithDates.map(({ review, relativeDate }) => (
+								<HomepageReviewCard key={review.id} review={review} relativeDate={relativeDate} />
+							))}
+						</Stagger>
+					}
+				/>
 
 				{/* CTA */}
 				<div id="reviews-cta">
@@ -139,6 +156,7 @@ export function ReviewsSection({
 						inView
 						once
 						className="text-center"
+						disableOnTouch
 					>
 						<Button
 							asChild

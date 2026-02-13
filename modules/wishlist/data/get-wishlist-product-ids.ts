@@ -47,6 +47,7 @@ async function fetchWishlistProductIds(
 			productId: { not: null }, // Exclure les items dont le produit a été archivé
 			product: {
 				status: "PUBLIC",
+				deletedAt: null,
 			},
 		},
 		select: { productId: true },

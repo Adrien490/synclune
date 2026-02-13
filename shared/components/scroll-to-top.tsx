@@ -6,9 +6,9 @@ import { ChevronUp } from "lucide-react";
 import {
 	AnimatePresence,
 	motion,
+	useMotionValueEvent,
 	useReducedMotion,
 	useScroll,
-	useTransform,
 } from "motion/react";
 import {
 	MOTION_CONFIG,
@@ -17,8 +17,51 @@ import {
 
 const SCROLL_THRESHOLD = 1200;
 
+// Extracted sub-component to avoid instantiating motion values when reducedMotion is true
+function ScrollRing() {
+	const { scrollYProgress } = useScroll();
+
+	const ringSize = 44;
+	const strokeWidth = 2;
+	const radius = (ringSize - strokeWidth) / 2;
+
+	return (
+		<svg
+			width={ringSize}
+			height={ringSize}
+			viewBox={`0 0 ${ringSize} ${ringSize}`}
+			className="absolute inset-0 -rotate-90 pointer-events-none"
+			aria-hidden="true"
+		>
+			{/* Track */}
+			<circle
+				cx={ringSize / 2}
+				cy={ringSize / 2}
+				r={radius}
+				fill="none"
+				stroke="currentColor"
+				strokeWidth={strokeWidth}
+				className="text-primary/10"
+			/>
+			{/* Progress */}
+			<motion.circle
+				cx={ringSize / 2}
+				cy={ringSize / 2}
+				r={radius}
+				fill="none"
+				stroke="currentColor"
+				strokeWidth={strokeWidth}
+				strokeLinecap="round"
+				className="text-primary"
+				style={{ pathLength: scrollYProgress }}
+			/>
+		</svg>
+	);
+}
+
 export function ScrollToTop() {
 	const [visible, setVisible] = useState(false);
+	const visibleRef = useRef(false);
 	const statusRef = useRef<HTMLDivElement>(null);
 	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -29,30 +72,17 @@ export function ScrollToTop() {
 		reducedMotion,
 	);
 
-	// Scroll progress for the SVG ring
-	const { scrollYProgress } = useScroll();
-	const pathLength = useTransform(scrollYProgress, [0, 1], [0, 1]);
-
-	// Throttled scroll listener with rAF
-	useEffect(() => {
-		let ticking = false;
-
-		function onScroll() {
-			if (!ticking) {
-				requestAnimationFrame(() => {
-					setVisible(window.scrollY > SCROLL_THRESHOLD);
-					ticking = false;
-				});
-				ticking = true;
-			}
+	// Unified scroll tracking via Framer Motion
+	const { scrollY } = useScroll();
+	useMotionValueEvent(scrollY, "change", (latest) => {
+		const next = latest > SCROLL_THRESHOLD;
+		if (visibleRef.current !== next) {
+			visibleRef.current = next;
+			setVisible(next);
 		}
+	});
 
-		onScroll();
-		window.addEventListener("scroll", onScroll, { passive: true });
-		return () => window.removeEventListener("scroll", onScroll);
-	}, []);
-
-	// Announce visibility changes to screen readers
+	// SR announcements + cleanup in a single effect
 	useEffect(() => {
 		if (statusRef.current) {
 			statusRef.current.textContent = visible
@@ -66,16 +96,13 @@ export function ScrollToTop() {
 				if (statusRef.current) statusRef.current.textContent = "";
 			}, 1000);
 		}
-	}, [visible]);
 
-	// Cleanup timeout on unmount
-	useEffect(() => {
 		return () => {
 			if (statusTimeoutRef.current) {
 				clearTimeout(statusTimeoutRef.current);
 			}
 		};
-	}, []);
+	}, [visible]);
 
 	function scrollToTop() {
 		window.scrollTo({
@@ -83,11 +110,6 @@ export function ScrollToTop() {
 			behavior: reducedMotion ? "instant" : "smooth",
 		});
 	}
-
-	// SVG ring dimensions
-	const ringSize = 44;
-	const strokeWidth = 2;
-	const radius = (ringSize - strokeWidth) / 2;
 
 	return (
 		<>
@@ -125,45 +147,13 @@ export function ScrollToTop() {
 						whileTap={reducedMotion ? undefined : { scale: 0.95 }}
 						className={cn(
 							"fixed bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] md:bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] z-40",
-							"size-11 rounded-full bg-background/90 backdrop-blur-md shadow-md",
+							"size-12 rounded-full bg-background/90 backdrop-blur-md shadow-md",
 							"flex items-center justify-center cursor-pointer",
 							"hover:bg-background hover:shadow-lg",
 							"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
 						)}
 					>
-						{/* Scroll progress ring */}
-						{!reducedMotion && (
-							<svg
-								width={ringSize}
-								height={ringSize}
-								viewBox={`0 0 ${ringSize} ${ringSize}`}
-								className="absolute inset-0 -rotate-90 pointer-events-none"
-								aria-hidden="true"
-							>
-								{/* Track */}
-								<circle
-									cx={ringSize / 2}
-									cy={ringSize / 2}
-									r={radius}
-									fill="none"
-									stroke="currentColor"
-									strokeWidth={strokeWidth}
-									className="text-primary/10"
-								/>
-								{/* Progress */}
-								<motion.circle
-									cx={ringSize / 2}
-									cy={ringSize / 2}
-									r={radius}
-									fill="none"
-									stroke="currentColor"
-									strokeWidth={strokeWidth}
-									strokeLinecap="round"
-									className="text-primary"
-									style={{ pathLength }}
-								/>
-							</svg>
-						)}
+						{!reducedMotion && <ScrollRing />}
 						<ChevronUp className="size-5" />
 					</motion.button>
 				)}

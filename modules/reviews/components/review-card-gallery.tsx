@@ -15,6 +15,7 @@ interface ReviewMedia {
 	id: string;
 	url: string;
 	altText: string | null;
+	blurDataUrl: string | null;
 }
 
 interface ReviewCardGalleryProps {
@@ -46,8 +47,8 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 						aria-label={`Voir la photo ${index + 1} de l'avis`}
 						className="relative size-20 md:size-24 rounded-lg overflow-hidden group cursor-zoom-in"
 					>
-						{/* Skeleton shimmer pendant chargement */}
-						{!loadedImages.has(media.id) && (
+						{/* Skeleton shimmer while loading (only when no blur placeholder) */}
+						{!loadedImages.has(media.id) && !media.blurDataUrl && (
 							<div className="absolute inset-0 animate-shimmer rounded-lg" />
 						)}
 						<Image
@@ -59,6 +60,8 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 								"object-cover motion-safe:transition-[transform,opacity] motion-safe:duration-300 motion-safe:group-hover:scale-105",
 								loadedImages.has(media.id) ? "opacity-100" : "opacity-0"
 							)}
+							placeholder={media.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={media.blurDataUrl ?? undefined}
 							sizes="(min-width: 768px) 96px, 80px"
 							quality={75}
 						/>

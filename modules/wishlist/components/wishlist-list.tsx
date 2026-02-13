@@ -49,7 +49,7 @@ export async function WishlistList({
 						<Button asChild variant="primary" size="lg">
 							<Link href="/produits">Découvrir nos créations</Link>
 						</Button>
-						<Button asChild variant="primary" size="lg">
+						<Button asChild variant="outline" size="lg">
 							<Link href="/collections">Voir les collections</Link>
 						</Button>
 					</div>

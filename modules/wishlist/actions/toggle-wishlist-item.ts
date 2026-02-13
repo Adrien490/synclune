@@ -14,6 +14,7 @@ import {
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { validateInput, handleActionError, success, error, enforceRateLimit } from "@/shared/lib/actions";
 import { getClientIp } from "@/shared/lib/rate-limit";
 
@@ -85,6 +86,11 @@ export async function toggleWishlistItem(
 				select: { id: true },
 			});
 
+			// Check max items limit before adding
+			const itemCount = await tx.wishlistItem.count({
+				where: { wishlistId: wishlist.id },
+			});
+
 			// Verifier si ce produit est deja dans la wishlist
 			const existingItem = await tx.wishlistItem.findFirst({
 				where: {
@@ -109,6 +115,10 @@ export async function toggleWishlistItem(
 					wishlistItemId: undefined,
 				};
 			} else {
+				if (itemCount >= WISHLIST_MAX_ITEMS) {
+					throw new Error("WISHLIST_FULL");
+				}
+
 				const wishlistItem = await tx.wishlistItem.create({
 					data: {
 						wishlistId: wishlist.id,
@@ -145,6 +155,9 @@ export async function toggleWishlistItem(
 			},
 		);
 	} catch (e) {
+		if (e instanceof Error && e.message === "WISHLIST_FULL") {
+			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
+		}
 		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}
 }

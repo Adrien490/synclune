@@ -8,16 +8,20 @@ import {
 } from "@/shared/constants/seo-config";
 import { use } from "react";
 
+import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
+
 interface StructuredDataProps {
 	reviewStatsPromise: Promise<GlobalReviewStats | undefined>;
+	reviewsPromise?: Promise<ReviewHomepage[]>;
 }
 
 /**
  * Consolidates all JSON-LD schemas into a single @graph script.
- * Accepts a Promise for review stats to enable streaming with Suspense.
+ * Accepts Promises for review data to enable streaming with Suspense.
  */
-export function StructuredData({ reviewStatsPromise }: StructuredDataProps) {
+export function StructuredData({ reviewStatsPromise, reviewsPromise }: StructuredDataProps) {
 	const reviewStats = use(reviewStatsPromise);
+	const reviews = reviewsPromise ? use(reviewsPromise) : [];
 
 	const schemas = [
 		getOrganizationSchema(),
@@ -71,6 +75,34 @@ export function StructuredData({ reviewStatsPromise }: StructuredDataProps) {
 			description: "Bijoux artisanaux faits main à Nantes",
 		},
 	});
+
+	// Individual Review schemas for rich snippets
+	for (const review of reviews) {
+		graphSchemas.push({
+			"@type": "Review",
+			author: {
+				"@type": "Person",
+				name: review.user.name || "Anonyme",
+			},
+			datePublished: new Date(review.createdAt).toISOString(),
+			reviewBody: review.content,
+			...(review.title && { name: review.title }),
+			reviewRating: {
+				"@type": "Rating",
+				ratingValue: review.rating,
+				bestRating: 5,
+				worstRating: 1,
+			},
+			itemReviewed: {
+				"@type": "Product",
+				name: review.product.title,
+				url: `${SITE_URL}/creations/${review.product.slug}`,
+			},
+			publisher: {
+				"@id": `${SITE_URL}/#organization`,
+			},
+		});
+	}
 
 	const jsonLd = {
 		"@context": "https://schema.org",

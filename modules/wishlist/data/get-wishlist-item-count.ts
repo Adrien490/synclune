@@ -62,7 +62,8 @@ export async function fetchWishlistItemCount(
 		});
 
 		return count;
-	} catch (error) {
+	} catch (e) {
+		console.error("[GET_WISHLIST_ITEM_COUNT]", e);
 		return 0;
 	}
 }

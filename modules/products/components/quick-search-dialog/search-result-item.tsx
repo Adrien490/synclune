@@ -64,7 +64,8 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 							width={48}
 							height={48}
 							className="size-full object-cover"
-							{...(image.blurDataUrl ? { placeholder: "blur", blurDataURL: image.blurDataUrl } : {})}
+							placeholder={image.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={image.blurDataUrl ?? undefined}
 						/>
 					) : (
 						<div className="size-full bg-muted" />

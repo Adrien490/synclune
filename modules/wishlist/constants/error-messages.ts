@@ -11,6 +11,7 @@ export const WISHLIST_ERROR_MESSAGES = {
 	// Erreurs liées aux articles
 	ITEM_NOT_FOUND: "Cet article n'est pas dans ta wishlist",
 	ITEM_ALREADY_IN_WISHLIST: "Cet article est déjà dans ta wishlist",
+	WISHLIST_FULL: "Ta wishlist est pleine (500 articles max)",
 
 	// Erreurs liées au produit/SKU
 	SKU_NOT_FOUND: "Produit introuvable",

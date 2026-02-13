@@ -14,6 +14,7 @@ import {
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { validateInput, handleActionError, success, error, enforceRateLimit } from "@/shared/lib/actions";
 
 /**
@@ -96,7 +97,15 @@ export async function addToWishlist(
 				},
 			});
 
-			// 6b. Vérifier si ce produit est déjà dans la wishlist
+			// 6b. Check max items limit
+			const itemCount = await tx.wishlistItem.count({
+				where: { wishlistId: wishlist.id },
+			});
+			if (itemCount >= WISHLIST_MAX_ITEMS) {
+				throw new Error("WISHLIST_FULL");
+			}
+
+			// 6c. Vérifier si ce produit est déjà dans la wishlist
 			const existingItem = await tx.wishlistItem.findFirst({
 				where: {
 					wishlistId: wishlist.id,
@@ -112,7 +121,7 @@ export async function addToWishlist(
 				};
 			}
 
-			// 6c. Créer le wishlist item
+			// 6d. Créer le wishlist item
 			const wishlistItem = await tx.wishlistItem.create({
 				data: {
 					wishlistId: wishlist.id,
@@ -136,7 +145,7 @@ export async function addToWishlist(
 
 		return success(
 			transactionResult.alreadyExists
-				? WISHLIST_ERROR_MESSAGES.ITEM_ALREADY_IN_WISHLIST
+				? "Deja dans ta wishlist"
 				: "Ajoute a ta wishlist",
 			{
 				wishlistItemId: transactionResult.wishlistItem.id,
@@ -144,6 +153,9 @@ export async function addToWishlist(
 			},
 		);
 	} catch (e) {
+		if (e instanceof Error && e.message === "WISHLIST_FULL") {
+			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
+		}
 		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}
 }

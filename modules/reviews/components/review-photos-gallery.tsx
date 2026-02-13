@@ -88,7 +88,7 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 							alt={photo.altText || `Photo ${index + 1}`}
 							fill
 							placeholder={photo.blurDataUrl ? "blur" : "empty"}
-							blurDataURL={photo.blurDataUrl || undefined}
+							blurDataURL={photo.blurDataUrl ?? undefined}
 							className="object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-105"
 							sizes="80px"
 							quality={75}

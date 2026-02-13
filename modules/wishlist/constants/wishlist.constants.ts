@@ -40,6 +40,7 @@ export const GET_WISHLIST_SELECT = {
 						where: { isActive: true },
 						select: {
 							id: true,
+							sku: true,
 							priceInclTax: true,
 							compareAtPrice: true,
 							inventory: true,
@@ -61,14 +62,17 @@ export const GET_WISHLIST_SELECT = {
 							},
 							size: true,
 							images: {
-								where: { isPrimary: true },
-								take: 1,
 								select: {
+									id: true,
 									url: true,
+									thumbnailUrl: true,
 									blurDataUrl: true,
 									altText: true,
 									mediaType: true,
 									isPrimary: true,
+								},
+								orderBy: {
+									position: "asc" as const,
 								},
 							},
 						},
@@ -85,6 +89,13 @@ export const GET_WISHLIST_SELECT = {
 } as const satisfies Prisma.WishlistSelect;
 
 export const GET_WISHLIST_ITEM_SELECT = GET_WISHLIST_SELECT.items.select;
+
+// ============================================================================
+// LIMITS
+// ============================================================================
+
+/** Maximum number of items per wishlist to prevent unbounded growth */
+export const WISHLIST_MAX_ITEMS = 500;
 
 // ============================================================================
 // PAGINATION

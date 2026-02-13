@@ -68,7 +68,7 @@ export function CollectionImageItem({
 			preload={isAboveFold}
 			loading={isAboveFold ? undefined : "lazy"}
 			placeholder={image.blurDataUrl ? "blur" : "empty"}
-			blurDataURL={image.blurDataUrl || undefined}
+			blurDataURL={image.blurDataUrl ?? undefined}
 			quality={index === 0 ? COLLECTION_IMAGE_QUALITY : SECONDARY_IMAGE_QUALITY}
 		/>
 	);

@@ -1,5 +1,3 @@
-"use client"
-
 import { BadgeCheck } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -8,20 +6,21 @@ import { Badge } from "@/shared/components/ui/badge"
 import { CardContent } from "@/shared/components/ui/card"
 import { RatingStars } from "@/shared/components/rating-stars"
 import { cn } from "@/shared/utils/cn"
-import { formatRelativeDate } from "@/shared/utils/dates"
 
 import type { ReviewHomepage } from "../types/review.types"
 
 interface HomepageReviewCardProps {
 	review: ReviewHomepage
+	/** Pre-computed relative date string (e.g. "Il y a 3 jours") */
+	relativeDate: string
 	className?: string
 }
 
 /**
  * Simplified review card for homepage social proof section.
- * Client Component because formatRelativeDate uses new Date().
+ * Server component — relative date is pre-computed by the parent.
  */
-export function HomepageReviewCard({ review, className }: HomepageReviewCardProps) {
+export function HomepageReviewCard({ review, relativeDate, className }: HomepageReviewCardProps) {
 	const productImage = review.product.skus[0]?.images[0] ?? null
 
 	return (
@@ -55,7 +54,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 					<div className="flex items-center gap-2 mt-0.5">
 						<RatingStars rating={review.rating} size="sm" />
 						<span className="text-xs text-muted-foreground">
-							{formatRelativeDate(review.createdAt)}
+							{relativeDate}
 						</span>
 					</div>
 				</div>
@@ -82,10 +81,10 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 								alt={media.altText || "Photo de l'avis"}
 								width={64}
 								height={64}
+								sizes="64px"
 								className="size-16 rounded object-cover"
-								{...(media.blurDataUrl
-									? { placeholder: "blur", blurDataURL: media.blurDataUrl }
-									: {})}
+								placeholder={media.blurDataUrl ? "blur" : "empty"}
+								blurDataURL={media.blurDataUrl ?? undefined}
 							/>
 						))}
 					</div>
@@ -96,6 +95,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 					<Link
 						href={`/creations/${review.product.slug}`}
 						className="flex items-center gap-2 group"
+						aria-label={`Voir le produit : ${review.product.title}`}
 					>
 						{productImage && (
 							<Image
@@ -103,10 +103,10 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 								alt={productImage.altText || review.product.title}
 								width={32}
 								height={32}
+								sizes="32px"
 								className="size-8 rounded object-cover"
-								{...(productImage.blurDataUrl
-									? { placeholder: "blur", blurDataURL: productImage.blurDataUrl }
-									: {})}
+								placeholder={productImage.blurDataUrl ? "blur" : "empty"}
+								blurDataURL={productImage.blurDataUrl ?? undefined}
 							/>
 						)}
 						<span className="text-xs text-foreground group-hover:underline truncate">

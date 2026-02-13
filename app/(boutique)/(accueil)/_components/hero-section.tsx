@@ -92,7 +92,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 								<span className="inline-flex items-center gap-[0.35em] flex-wrap justify-center">
 									Des bijoux{" "}
 									<RotatingWord
-										words={["colorés", "uniques", "joyeux"]}
+										words={["colorés", "uniques"]}
 										duration={3500}
 									/>
 								</span>

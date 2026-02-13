@@ -44,7 +44,8 @@ export function CollectionCard({
 									width={32}
 									height={32}
 									className="size-full object-cover"
-									{...(collection.image.blurDataUrl ? { placeholder: "blur", blurDataURL: collection.image.blurDataUrl } : {})}
+									placeholder={collection.image.blurDataUrl ? "blur" : "empty"}
+									blurDataURL={collection.image.blurDataUrl ?? undefined}
 								/>
 							</div>
 						) : (
@@ -83,7 +84,8 @@ export function CollectionCard({
 							width={40}
 							height={40}
 							className="size-full object-cover"
-							{...(collection.image.blurDataUrl ? { placeholder: "blur", blurDataURL: collection.image.blurDataUrl } : {})}
+							placeholder={collection.image.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={collection.image.blurDataUrl ?? undefined}
 						/>
 					</div>
 				) : (

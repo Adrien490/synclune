@@ -64,10 +64,8 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 												fill
 												sizes="90px"
 												className="object-cover"
-												{...(product.blurDataUrl ? {
-													placeholder: "blur",
-													blurDataURL: product.blurDataUrl,
-												} : {})}
+												placeholder={product.blurDataUrl ? "blur" : "empty"}
+												blurDataURL={product.blurDataUrl ?? undefined}
 											/>
 										</div>
 										<div className="min-w-0">

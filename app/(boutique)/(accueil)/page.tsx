@@ -73,9 +73,9 @@ export default async function Page() {
 
   return (
     <>
-      {/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article */}
+      {/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
       <Suspense>
-        <StructuredData reviewStatsPromise={reviewStatsPromise} />
+        <StructuredData reviewStatsPromise={reviewStatsPromise} reviewsPromise={featuredReviewsPromise} />
       </Suspense>
 
       {/* 1. Hero - Attention capture + rotating tagline + floating product images */}

@@ -75,7 +75,8 @@ export function IdleContent({
 														width={80}
 														height={80}
 														className="size-full object-cover"
-														{...(product.image.blurDataUrl ? { placeholder: "blur", blurDataURL: product.image.blurDataUrl } : {})}
+														placeholder={product.image.blurDataUrl ? "blur" : "empty"}
+														blurDataURL={product.image.blurDataUrl ?? undefined}
 													/>
 												) : (
 													<div className="size-full bg-muted" />

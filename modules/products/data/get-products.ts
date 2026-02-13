@@ -221,9 +221,7 @@ async function fetchProducts(
 			totalCount: sortedProducts.length,
 		};
 	} catch (error) {
-		if (process.env.NODE_ENV === "development") {
-			console.error("[fetchProducts] Error:", error);
-		}
+		console.warn("[fetchProducts] Error:", error instanceof Error ? error.message : error);
 		const baseReturn = {
 			products: [],
 			pagination: {

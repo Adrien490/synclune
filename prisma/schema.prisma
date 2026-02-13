@@ -75,11 +75,11 @@ model User {
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String   @db.VarChar(500)
+  token     String   @db.VarChar(1000)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String? @db.VarChar(45)
-  userAgent String? @db.VarChar(500)
+  userAgent String? @db.VarChar(1000)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -94,9 +94,9 @@ model Account {
   providerId            String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?   @db.VarChar(500)
-  refreshToken          String?   @db.VarChar(500)
-  idToken               String?   @db.VarChar(500)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
@@ -111,7 +111,7 @@ model Account {
 model Verification {
   id         String   @id
   identifier String
-  value      String   @db.VarChar(500)
+  value      String   @db.VarChar(1000)
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -895,7 +895,7 @@ model NewsletterSubscriber {
   // Champs de tracabilite RGPD
   ipAddress             String? @db.VarChar(45) // IP inscription
   confirmationIpAddress String? @db.VarChar(45) // IP confirmation (preuve RGPD)
-  userAgent             String? @db.VarChar(500)
+  userAgent             String? @db.VarChar(1000)
   consentSource         String? @default("newsletter_form")
   consentTimestamp      DateTime @default(now())
 

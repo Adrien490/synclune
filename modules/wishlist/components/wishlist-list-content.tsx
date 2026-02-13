@@ -4,6 +4,7 @@ import { useOptimistic } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
+import { ClearWishlistButton } from "./clear-wishlist-button";
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
 import type { Product } from "@/modules/products/types/product.types";
 import {
@@ -55,6 +56,16 @@ export function WishlistListContent({
 	return (
 		<WishlistListOptimisticContext.Provider value={contextValue}>
 			<div className="space-y-8">
+				{/* Header with count and clear button */}
+				<div className="flex items-center justify-between">
+					<p className="text-sm text-muted-foreground">
+						{totalCount} article{totalCount > 1 ? "s" : ""}
+					</p>
+					{optimisticItems.length > 0 && (
+						<ClearWishlistButton itemCount={optimisticItems.length} />
+					)}
+				</div>
+
 				{/* Grid des items de wishlist avec animation */}
 				<div
 					className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
@@ -69,10 +80,13 @@ export function WishlistListContent({
 								exit={{ opacity: 0, scale: 0.9 }}
 								transition={{
 									duration: 0.2,
-									delay: index * 0.05,
+									delay: Math.min(index * 0.05, 0.3),
 									ease: [0.4, 0, 0.2, 1],
 								}}
 							>
+									{/* WishlistItem.product is a subset of Product (missing description,
+									reviewStats, _count, collections) but includes all fields that
+									ProductCard and getProductCardData actually access at runtime */}
 								<ProductCard
 									product={item.product as Product}
 									index={index}
