@@ -64,7 +64,9 @@ export default async function PrivacyPolicyPage() {
                 2. Responsable du traitement
               </h2>
               <p>
-                <strong>Synclune</strong>
+                <strong>Synclune</strong> — TADDEI LEANE
+                <br />
+                77 Boulevard du Tertre, 44100 Nantes, France
                 <br />
                 Email :{" "}
                 <a
@@ -214,6 +216,7 @@ export default async function PrivacyPolicyPage() {
                   <ul className="list-circle list-inside ml-8 mt-2 space-y-1">
                     <li>Stripe (paiement)</li>
                     <li>Vercel/Neon (hébergement site et base de données)</li>
+                    <li>Resend (envoi d'emails transactionnels et newsletters)</li>
                   </ul>
                 </li>
                 <li>
@@ -247,6 +250,12 @@ export default async function PrivacyPolicyPage() {
                   Vercel applique des{" "}
                   <strong>Clauses Contractuelles Types (CCT)</strong> et
                   garantit un niveau de protection équivalent au RGPD.
+                </li>
+                <li>
+                  <strong>Resend (États-Unis) :</strong> envoi d'emails
+                  transactionnels et newsletters - Resend applique des{" "}
+                  <strong>Clauses Contractuelles Types (CCT)</strong> et
+                  s'engage à protéger les données conformément au RGPD.
                 </li>
               </ul>
               <p className="mt-2">
@@ -301,7 +310,7 @@ export default async function PrivacyPolicyPage() {
                       Wishlist visiteur
                     </td>
                     <td className="border border-gray-300 dark:border-gray-700 p-3">
-                      30 jours après création (conforme RGPD 2025)
+                      30 jours après création
                     </td>
                   </tr>
                   <tr>
@@ -362,6 +371,12 @@ export default async function PrivacyPolicyPage() {
                   <strong>Droit de limitation :</strong> restreindre
                   temporairement le traitement
                 </li>
+                <li>
+                  <strong>Droit aux directives post-mortem :</strong>{" "}
+                  conformément à l'article 85 de la Loi Informatique et
+                  Libertés, vous pouvez définir des directives relatives au
+                  sort de vos données après votre décès
+                </li>
               </ul>
 
               <p>
@@ -385,8 +400,23 @@ export default async function PrivacyPolicyPage() {
               <p>
                 Vous pouvez également introduire une réclamation auprès de la{" "}
                 <strong>CNIL</strong> (Commission Nationale de l'Informatique et
-                des Libertés).
+                des Libertés) :
               </p>
+              <div className="ml-4 text-sm space-y-1">
+                <p>3 Place de Fontenoy, TSA 80715</p>
+                <p>75334 Paris Cedex 07</p>
+                <p>
+                  Site web :{" "}
+                  <a
+                    href="https://www.cnil.fr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    www.cnil.fr
+                  </a>
+                </p>
+              </div>
             </section>
 
             <section className="space-y-4">
@@ -412,7 +442,7 @@ export default async function PrivacyPolicyPage() {
                   <strong>wishlist_session :</strong> identifiant de wishlist
                   visiteur - Créé uniquement lors de l'ajout d'un produit à
                   votre wishlist. Durée : 30 jours (httpOnly, secure, conforme
-                  RGPD 2025). Stocke uniquement un UUID pour récupérer votre
+                  RGPD). Stocke uniquement un UUID pour récupérer votre
                   wishlist en base de données.
                 </li>
                 <li>
@@ -486,7 +516,20 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold">10. Sécurité</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">
+                10. Décisions automatisées et profilage
+              </h2>
+              <p>
+                Conformément à l'article 22 du RGPD, Synclune{" "}
+                <strong>n'utilise aucune prise de décision automatisée</strong>{" "}
+                ni profilage produisant des effets juridiques ou significatifs
+                à votre égard. Aucun algorithme n'est utilisé pour
+                personnaliser les prix ou filtrer l'accès à nos services.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-xl sm:text-2xl font-semibold">11. Sécurité</h2>
               <p>Nous mettons en œuvre les mesures de sécurité suivantes :</p>
               <ul className="list-disc list-inside ml-4 space-y-2">
                 <li>Chiffrement HTTPS (SSL/TLS)</li>
@@ -498,7 +541,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold">11. Contact</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">12. Contact</h2>
               <p>
                 Pour toute question relative à la protection de vos données
                 personnelles :
@@ -511,6 +554,10 @@ export default async function PrivacyPolicyPage() {
                 </a>
               </p>
             </section>
+
+            <p className="text-xs text-muted-foreground text-center pt-8 italic">
+              Dernière mise à jour : 13 février 2026
+            </p>
           </div>
         </div>
       </section>

@@ -326,7 +326,7 @@ export default async function AccessibilityPage() {
                   <li>
                     <strong>Formulaire de contact :</strong>{" "}
                     <Link href="/personnalisation" className="underline">
-                      Page contact
+                      Page personnalisation
                     </Link>
                   </li>
                 </ul>
@@ -355,8 +355,8 @@ export default async function AccessibilityPage() {
                   </a>
                 </li>
                 <li>
-                  • RGAA (Référentiel Général d'Amélioration de l'Accessibilité)
-                  -{" "}
+                  • RGAA 4.1.2 (Référentiel Général d'Amélioration de
+                  l'Accessibilité) -{" "}
                   <a
                     href="https://accessibilite.numerique.gouv.fr/"
                     target="_blank"
@@ -379,6 +379,44 @@ export default async function AccessibilityPage() {
                 </li>
               </ul>
             </section>
+
+            <section className="space-y-4">
+              <h2 className="text-xl sm:text-2xl font-semibold">
+                Voies de recours
+              </h2>
+              <p>
+                Si vous constatez un défaut d'accessibilité vous empêchant
+                d'accéder à un contenu ou une fonctionnalité du site, que vous
+                nous le signalez et que vous ne parvenez pas à obtenir une
+                réponse satisfaisante, vous êtes en droit de :
+              </p>
+              <ul className="list-disc list-inside ml-4 space-y-2">
+                <li>
+                  Écrire un message au{" "}
+                  <a
+                    href="https://formulaire.defenseurdesdroits.fr/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    Défenseur des droits
+                  </a>
+                </li>
+                <li>
+                  Contacter le délégué du Défenseur des droits dans votre
+                  région
+                </li>
+                <li>
+                  Envoyer un courrier (gratuit, ne pas mettre de timbre) à :{" "}
+                  Défenseur des droits, Libre réponse 71120, 75342 Paris
+                  Cedex 07
+                </li>
+              </ul>
+            </section>
+
+            <p className="text-xs text-muted-foreground text-center pt-8 italic">
+              Dernière mise à jour : 13 février 2026
+            </p>
           </div>
         </div>
       </section>

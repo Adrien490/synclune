@@ -54,6 +54,8 @@ type SuggestionOptions = {
  * - Noms de couleurs
  * - Noms de matériaux
  *
+ * Uses immutable_unaccent() for accent-insensitive matching.
+ *
  * @param searchTerm - Terme de recherche original
  * @param options - Options de filtrage
  * @returns La meilleure suggestion ou null si aucune trouvée
@@ -88,53 +90,53 @@ export async function getSpellSuggestion(
 					-- Titres de produits
 					SELECT DISTINCT
 						p.title as term,
-						similarity(LOWER(p.title), ${term}) as similarity,
+						similarity(immutable_unaccent(LOWER(p.title)), immutable_unaccent(${term})) as similarity,
 						'product'::text as source
 					FROM "Product" p
 					WHERE
 						p."deletedAt" IS NULL
 						${statusCondition}
-						AND LOWER(p.title) % ${term}
-						AND LOWER(p.title) != ${term}
+						AND immutable_unaccent(LOWER(p.title)) % immutable_unaccent(${term})
+						AND immutable_unaccent(LOWER(p.title)) != immutable_unaccent(${term})
 
 					UNION ALL
 
 					-- Noms de collections
 					SELECT DISTINCT
 						c.name as term,
-						similarity(LOWER(c.name), ${term}) as similarity,
+						similarity(immutable_unaccent(LOWER(c.name)), immutable_unaccent(${term})) as similarity,
 						'collection'::text as source
 					FROM "Collection" c
 					WHERE
 						c.status = 'PUBLIC'
-						AND LOWER(c.name) % ${term}
-						AND LOWER(c.name) != ${term}
+						AND immutable_unaccent(LOWER(c.name)) % immutable_unaccent(${term})
+						AND immutable_unaccent(LOWER(c.name)) != immutable_unaccent(${term})
 
 					UNION ALL
 
 					-- Noms de couleurs
 					SELECT DISTINCT
 						col.name as term,
-						similarity(LOWER(col.name), ${term}) as similarity,
+						similarity(immutable_unaccent(LOWER(col.name)), immutable_unaccent(${term})) as similarity,
 						'color'::text as source
 					FROM "Color" col
 					WHERE
 						col."isActive" = true
-						AND LOWER(col.name) % ${term}
-						AND LOWER(col.name) != ${term}
+						AND immutable_unaccent(LOWER(col.name)) % immutable_unaccent(${term})
+						AND immutable_unaccent(LOWER(col.name)) != immutable_unaccent(${term})
 
 					UNION ALL
 
 					-- Noms de matériaux
 					SELECT DISTINCT
 						m.name as term,
-						similarity(LOWER(m.name), ${term}) as similarity,
+						similarity(immutable_unaccent(LOWER(m.name)), immutable_unaccent(${term})) as similarity,
 						'material'::text as source
 					FROM "Material" m
 					WHERE
 						m."isActive" = true
-						AND LOWER(m.name) % ${term}
-						AND LOWER(m.name) != ${term}
+						AND immutable_unaccent(LOWER(m.name)) % immutable_unaccent(${term})
+						AND immutable_unaccent(LOWER(m.name)) != immutable_unaccent(${term})
 				)
 				SELECT term, similarity, source
 				FROM suggestions

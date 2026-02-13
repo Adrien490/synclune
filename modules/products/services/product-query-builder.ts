@@ -5,6 +5,7 @@ import type { SearchResult } from "../types/product-services.types";
 
 import { FUZZY_MIN_LENGTH } from "../constants/search.constants";
 import { fuzzySearchProductIds } from "../data/fuzzy-search";
+import { splitSearchTerms } from "../utils/search-helpers";
 
 export type { SearchResult } from "../types/product-services.types";
 
@@ -17,6 +18,8 @@ export type { SearchResult } from "../types/product-services.types";
  *
  * - >= 3 caracteres : fuzzy sur title/description + exact sur autres champs
  * - < 3 caracteres : exact seulement sur tous les champs
+ *
+ * Multi-word queries use AND logic: each word must match independently.
  *
  * Note: Le rate limiting doit etre gere au niveau data/ (get-products.ts)
  *
@@ -31,11 +34,14 @@ export async function buildSearchConditions(
 	const term = search.trim();
 	if (!term) return { fuzzyIds: null, exactConditions: [] };
 
+	const words = splitSearchTerms(term);
+	if (words.length === 0) return { fuzzyIds: null, exactConditions: [] };
+
 	// Recherche courte (< 3 chars) : exact seulement sur tous les champs
 	if (term.length < FUZZY_MIN_LENGTH) {
 		return {
 			fuzzyIds: null,
-			exactConditions: buildFullExactSearchConditions(term),
+			exactConditions: buildFullExactSearchConditions(words),
 		};
 	}
 
@@ -45,7 +51,7 @@ export async function buildSearchConditions(
 	});
 
 	// Conditions exactes pour les autres champs (SKU, couleurs, etc.)
-	const exactConditions = buildRelatedFieldsSearchConditions(term);
+	const exactConditions = buildRelatedFieldsSearchConditions(words);
 
 	return { fuzzyIds, exactConditions };
 }
@@ -57,120 +63,143 @@ export async function buildSearchConditions(
 export function buildExactSearchConditions(search: string): SearchResult {
 	const term = search.trim();
 	if (!term) return { fuzzyIds: null, exactConditions: [] };
+
+	const words = splitSearchTerms(term);
+	if (words.length === 0) return { fuzzyIds: null, exactConditions: [] };
+
 	return {
 		fuzzyIds: null,
-		exactConditions: buildFullExactSearchConditions(term),
+		exactConditions: buildFullExactSearchConditions(words),
 	};
 }
 
 /**
- * Recherche exacte sur tous les champs (fallback pour termes courts)
- * Inclut title et description
+ * Build OR conditions for a single word across all fields (title, description, related)
  */
-function buildFullExactSearchConditions(
-	searchTerm: string
-): Prisma.ProductWhereInput[] {
-	if (!searchTerm) return [];
-
-	return [
-		{
-			OR: [
-				{
-					title: {
-						contains: searchTerm,
-						mode: Prisma.QueryMode.insensitive,
-					},
+function buildPerWordOrConditions(
+	word: string
+): Prisma.ProductWhereInput {
+	return {
+		OR: [
+			{
+				title: {
+					contains: word,
+					mode: Prisma.QueryMode.insensitive,
 				},
-				{
-					description: {
-						contains: searchTerm,
-						mode: Prisma.QueryMode.insensitive,
-					},
+			},
+			{
+				description: {
+					contains: word,
+					mode: Prisma.QueryMode.insensitive,
 				},
-				...buildRelatedFieldsSearchConditions(searchTerm)[0]?.OR ?? [],
-			],
-		},
-	];
+			},
+			...buildPerWordRelatedConditions(word),
+		],
+	};
 }
 
 /**
- * Recherche exacte sur les champs liés (SKU, couleurs, matériaux, collections)
- * N'inclut PAS title/description (gérés par fuzzy search)
+ * Build OR conditions for a single word across related fields only
+ * (SKU, color, material, collection)
  */
-function buildRelatedFieldsSearchConditions(
-	searchTerm: string
+function buildPerWordRelatedConditions(
+	word: string
 ): Prisma.ProductWhereInput[] {
-	if (!searchTerm) return [];
-
 	return [
 		{
-			OR: [
-				{
-					skus: {
-						some: {
-							OR: [
-								{
-									sku: {
-										contains: searchTerm,
-										mode: Prisma.QueryMode.insensitive,
-									},
-								},
-								{
-									color: {
-										OR: [
-											{
-												name: {
-													contains: searchTerm,
-													mode: Prisma.QueryMode.insensitive,
-												},
-											},
-											{
-												hex: {
-													contains: searchTerm,
-													mode: Prisma.QueryMode.insensitive,
-												},
-											},
-										],
-									},
-								},
-								{
-									material: {
-										name: {
-											contains: searchTerm,
-											mode: Prisma.QueryMode.insensitive,
-										},
-									},
-								},
-							],
-							isActive: true,
+			skus: {
+				some: {
+					OR: [
+						{
+							sku: {
+								contains: word,
+								mode: Prisma.QueryMode.insensitive,
+							},
 						},
-					},
-				},
-				{
-					collections: {
-						some: {
-							collection: {
+						{
+							color: {
 								OR: [
 									{
 										name: {
-											contains: searchTerm,
+											contains: word,
 											mode: Prisma.QueryMode.insensitive,
 										},
 									},
 									{
-										slug: {
-											contains: searchTerm,
+										hex: {
+											contains: word,
 											mode: Prisma.QueryMode.insensitive,
 										},
 									},
 								],
 							},
 						},
+						{
+							material: {
+								name: {
+									contains: word,
+									mode: Prisma.QueryMode.insensitive,
+								},
+							},
+						},
+					],
+					isActive: true,
+				},
+			},
+		},
+		{
+			collections: {
+				some: {
+					collection: {
+						OR: [
+							{
+								name: {
+									contains: word,
+									mode: Prisma.QueryMode.insensitive,
+								},
+							},
+							{
+								slug: {
+									contains: word,
+									mode: Prisma.QueryMode.insensitive,
+								},
+							},
+						],
 					},
 				},
-			],
+			},
 		},
 	];
+}
+
+/**
+ * Recherche exacte sur tous les champs (fallback pour termes courts)
+ * Inclut title et description.
+ * AND logic: each word must match at least one field.
+ */
+function buildFullExactSearchConditions(
+	words: string[]
+): Prisma.ProductWhereInput[] {
+	if (words.length === 0) return [];
+
+	// Each word must match at least one field (AND of per-word ORs)
+	return words.map(buildPerWordOrConditions);
+}
+
+/**
+ * Recherche exacte sur les champs liés (SKU, couleurs, matériaux, collections)
+ * N'inclut PAS title/description (gérés par fuzzy search).
+ * AND logic: each word must match at least one related field.
+ */
+function buildRelatedFieldsSearchConditions(
+	words: string[]
+): Prisma.ProductWhereInput[] {
+	if (words.length === 0) return [];
+
+	// Each word must match at least one related field
+	return words.map((word) => ({
+		OR: buildPerWordRelatedConditions(word),
+	}));
 }
 
 export function buildProductFilterConditions(
@@ -414,9 +443,13 @@ export function buildProductWhereClause(
 			// Recherche fuzzy active : combiner IDs fuzzy OU conditions exactes
 			// Cela permet de trouver des produits via fuzzy (title/desc)
 			// OU via match exact (SKU, couleurs, etc.)
+			// exactConditions are per-word AND conditions, so wrap in AND
 			if (exactConditions.length > 0) {
 				andConditions.push({
-					OR: [{ id: { in: fuzzyIds } }, ...exactConditions],
+					OR: [
+						{ id: { in: fuzzyIds } },
+						{ AND: exactConditions },
+					],
 				});
 			} else {
 				andConditions.push({ id: { in: fuzzyIds } });

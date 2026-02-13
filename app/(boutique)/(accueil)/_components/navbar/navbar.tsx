@@ -58,7 +58,6 @@ export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.Reac
 			name: c.name,
 			productCount: c._count.products,
 			image: firstImage ? { url: firstImage.url, blurDataUrl: firstImage.blurDataUrl } : null,
-			images: extractCollectionImages(c.products),
 		};
 	});
 

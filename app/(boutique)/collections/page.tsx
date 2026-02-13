@@ -5,6 +5,7 @@ import { CollectionGrid } from "@/modules/collections/components/collection-grid
 import { CollectionGridSkeleton } from "@/modules/collections/components/collection-grid-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { GET_COLLECTIONS_DEFAULT_PER_PAGE } from "@/modules/collections/data/get-collections";
+import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
@@ -69,10 +70,10 @@ export default async function CollectionsPage({
 	const params = await searchParams;
 
 	// Récupérer les collections avec filtres
-	const cursor = typeof params.cursor === "string" ? params.cursor : undefined;
-	const direction = (
-		typeof params.direction === "string" ? params.direction : "forward"
-	) as "forward" | "backward";
+	const cursor = getFirstParam(params.cursor);
+	const direction = (getFirstParam(params.direction) || "forward") as
+		| "forward"
+		| "backward";
 	const perPage = Number(params.perPage) || GET_COLLECTIONS_DEFAULT_PER_PAGE;
 
 	// Récupérer les collections (uniquement celles publiées avec des produits)

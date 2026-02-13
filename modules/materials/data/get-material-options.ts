@@ -30,6 +30,13 @@ async function fetchMaterialOptions(): Promise<MaterialOption[]> {
 				id: true,
 				name: true,
 				slug: true,
+				_count: {
+					select: {
+						skus: {
+							where: { isActive: true },
+						},
+					},
+				},
 			},
 			orderBy: { name: "asc" },
 		});

@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { z } from "zod";
-import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
+import { PaginationInfo } from "@/shared/lib/pagination";
 import {
 	GET_MATERIALS_SELECT,
 	GET_MATERIAL_SELECT,
@@ -75,4 +75,7 @@ export type MaterialOption = {
 	id: string;
 	name: string;
 	slug: string;
+	_count?: {
+		skus: number;
+	};
 };

@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 
-import { extractCollectionImages, getNavbarMenuData } from "@/app/(boutique)/(accueil)/_components/navbar/get-navbar-menu-data"
+import { getNavbarMenuData } from "@/app/(boutique)/(accueil)/_components/navbar/get-navbar-menu-data"
 import { quickSearchProducts } from "@/modules/products/data/quick-search-products"
 import { QuickSearchContent } from "@/modules/products/components/quick-search-dialog/quick-search-content"
 import { SearchResultsSkeleton } from "@/modules/products/components/quick-search-dialog/search-results-skeleton"
@@ -31,7 +31,6 @@ export default async function QuickSearchSlot({ searchParams }: Props) {
 			image: firstImage
 				? { url: firstImage.url, blurDataUrl: firstImage.blurDataUrl }
 				: null,
-			images: extractCollectionImages(c.products),
 		}
 	})
 

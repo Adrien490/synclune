@@ -118,7 +118,7 @@ export default async function CookiesPage() {
                   <span className="text-green-600 dark:text-green-400 font-medium">
                     uniquement lors de l'ajout d'un produit à votre wishlist
                   </span>
-                  . Durée : 30 jours (httpOnly, secure, conforme RGPD 2025).
+                  . Durée : 30 jours (httpOnly, secure, conforme RGPD).
                   Stocke uniquement un identifiant pour retrouver votre wishlist
                   en base de données. Aucun contenu de la wishlist n'est stocké
                   dans ce cookie.
@@ -151,6 +151,12 @@ export default async function CookiesPage() {
                 Certaines données sont stockées localement dans votre navigateur
                 via LocalStorage. Ces données sont accessibles uniquement par
                 notre site et restent sur votre appareil.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Votre consentement est conservé pendant{" "}
+                <strong>6 mois</strong>, conformément aux recommandations de la
+                CNIL (durée maximale de 13 mois). Passé ce délai, votre choix
+                vous sera à nouveau demandé.
               </p>
               <ul className="list-disc list-inside ml-4 space-y-2">
                 <li>
@@ -240,6 +246,19 @@ export default async function CookiesPage() {
                 .
               </p>
               <p>
+                Pour en savoir plus sur les cookies et vos droits, consultez
+                les{" "}
+                <a
+                  href="https://www.cnil.fr/fr/cookies-et-autres-traceurs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  recommandations de la CNIL sur les cookies et traceurs
+                </a>
+                .
+              </p>
+              <p>
                 Pour toute question, contactez-nous à{" "}
                 <a
                   href={`mailto:${process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}`}
@@ -250,6 +269,10 @@ export default async function CookiesPage() {
                 .
               </p>
             </section>
+
+            <p className="text-xs text-muted-foreground text-center pt-8 italic">
+              Dernière mise à jour : 13 février 2026
+            </p>
           </div>
         </div>
       </section>

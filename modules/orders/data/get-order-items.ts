@@ -4,7 +4,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import {
 	buildCursorPagination,
 	processCursorResults,
-} from "@/shared/components/cursor-pagination/pagination";
+} from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard } from "../constants/cache";
 import { z } from "zod";

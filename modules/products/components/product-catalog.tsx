@@ -168,11 +168,6 @@ export function ProductCatalog({
 							productsPromise={productsPromise}
 							perPage={perPage}
 							searchTerm={searchTerm}
-							baseResetUrl={
-								activeProductType
-									? `/produits/${activeProductType.slug}`
-									: "/produits"
-							}
 						/>
 					</Suspense>
 				</div>
@@ -184,6 +179,7 @@ export function ProductCatalog({
 				productTypes={productTypes.map((t) => ({
 					slug: t.slug,
 					label: t.label,
+					_count: t._count,
 				}))}
 				maxPriceInEuros={maxPriceInEuros}
 				activeProductTypeSlug={activeProductType?.slug}

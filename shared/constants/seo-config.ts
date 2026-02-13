@@ -289,6 +289,13 @@ export function getOrganizationSchema() {
 			postalCode: BUSINESS_INFO.location.postalCode,
 			addressCountry: BUSINESS_INFO.location.countryCode,
 		},
+		contactPoint: {
+			"@type": "ContactPoint",
+			contactType: "customer service",
+			email: BUSINESS_INFO.email,
+			availableLanguage: "French",
+		},
+		paymentAccepted: "Visa, Mastercard, CB, PayPal, Apple Pay",
 	};
 }
 

@@ -1,6 +1,6 @@
 import { Prisma, DiscountType } from "@/app/generated/prisma/client";
 import { z } from "zod";
-import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
+import { PaginationInfo } from "@/shared/lib/pagination";
 import {
 	GET_DISCOUNT_SELECT,
 	GET_DISCOUNTS_SELECT,

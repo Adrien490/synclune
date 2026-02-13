@@ -1,5 +1,6 @@
 import { Fade } from "@/shared/components/animations/fade";
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import {
 	ApplePayIcon,
@@ -38,25 +39,7 @@ export async function Footer() {
 		<footer
 			className="relative bg-gradient-to-b from-muted/20 via-background to-background overflow-hidden"
 			aria-label="Informations de contact et navigation du site"
-			data-voice-queries="contact Synclune,créatrice bijoux artisanaux,bijoux faits main"
-			data-content-type="footer-business"
-			data-ai-category="jewelry-artisan-footer"
-			itemScope
-			itemType="https://schema.org/Organization"
 		>
-			{/* Organization structured data - SEO */}
-			<meta itemProp="name" content={BRAND.name} />
-			<meta itemProp="url" content={BRAND.website.url} />
-			<link itemProp="logo" href={`${BRAND.website.url}${BRAND.logo.url}`} />
-			<meta itemProp="description" content={BRAND.description} />
-
-			{/* Contenu sr-only pour voice search */}
-			<p className="sr-only">
-				Footer du site de Synclune, créatrice de bijoux faits main avec amour.
-				Retrouvez les coordonnées de contact, navigation du site et informations
-				légales.
-			</p>
-
 			{/* Titre sr-only pour hiérarchie des headings */}
 			<h2 className="sr-only">Informations et liens utiles</h2>
 
@@ -68,7 +51,7 @@ export async function Footer() {
 
 			<div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${FOOTER_PADDING}`}>
 				{/* Navigation principale - Ordre: Logo, Navigation, Contact, Réseaux */}
-				<Fade y={10} duration={0.4} inView once>
+				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} inView once>
 					<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-8">
 						{/* Colonne 1: Logo + phrase perso */}
 						<div className="order-1 space-y-4">
@@ -125,43 +108,19 @@ export async function Footer() {
 							<h3 id="footer-contact-title" className="text-base/6 font-medium antialiased text-foreground mb-4">
 								Contact
 							</h3>
-							<div
-								itemProp="contactPoint"
-								itemScope
-								itemType="https://schema.org/ContactPoint"
-								className="space-y-3"
-							>
-								<meta itemProp="contactType" content="customer service" />
-								<meta itemProp="availableLanguage" content="French" />
+							<div className="space-y-3">
 								{/* Email - CTA principal avec style proéminent */}
 								<a
 									href={`mailto:${BRAND.contact.email}`}
-									itemProp="email"
 									className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 wrap-break-words focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 									aria-label="Envoyer un email à Synclune"
 								>
 									{BRAND.contact.email}
 								</a>
 
-								<div
-									itemProp="areaServed"
-									itemScope
-									itemType="https://schema.org/Place"
-								>
-									<div
-										itemProp="address"
-										itemScope
-										itemType="https://schema.org/PostalAddress"
-										className="text-sm/6 antialiased text-muted-foreground px-3"
-									>
-										<span>Atelier basé à </span>
-										<span itemProp="addressLocality">Nantes</span>
-										<span>, </span>
-										<span itemProp="addressRegion">Loire-Atlantique</span>
-										<span>, </span>
-										<span itemProp="addressCountry">France</span>
-									</div>
-								</div>
+								<p className="text-sm/6 antialiased text-muted-foreground px-3">
+									Atelier basé à Nantes, Loire-Atlantique, France
+								</p>
 							</div>
 						</section>
 
@@ -180,7 +139,6 @@ export async function Footer() {
 								<li>
 									<Link
 										href={BRAND.social.instagram.url}
-										itemProp="sameAs"
 										target="_blank"
 										rel="noopener noreferrer"
 										prefetch={false}
@@ -200,7 +158,6 @@ export async function Footer() {
 								<li>
 									<Link
 										href={BRAND.social.tiktok.url}
-										itemProp="sameAs"
 										target="_blank"
 										rel="noopener noreferrer"
 										prefetch={false}
@@ -223,7 +180,7 @@ export async function Footer() {
 				</Fade>
 
 				{/* Reassurance - Baymard UX trust signals */}
-				<Fade y={10} duration={0.4} delay={0.08} inView once>
+				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} delay={MOTION_CONFIG.section.footer.stagger} inView once>
 					<section aria-label="Engagements et garanties" className="mb-8">
 						<ul className="grid sm:grid-cols-3 gap-3">
 							{REASSURANCE_ITEMS.map((item) => (
@@ -239,14 +196,13 @@ export async function Footer() {
 				</Fade>
 
 				{/* Paiement sécurisé */}
-				<Fade y={10} duration={0.4} delay={0.16} inView once>
+				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} delay={MOTION_CONFIG.section.footer.stagger * 2} inView once>
 					<section className="flex flex-col items-center gap-3 pt-8 border-t border-border" aria-labelledby="footer-payment-title">
 						<h3 id="footer-payment-title" className="sr-only">Paiement sécurisé</h3>
 						<div className="flex items-center gap-2 text-sm text-muted-foreground">
 							<span>Sécurisé par</span>
 							<StripeWordmark className="text-muted-foreground hover:text-foreground transition-colors duration-200" />
 						</div>
-						<meta itemProp="paymentAccepted" content="Visa, Mastercard, CB, PayPal, Apple Pay" />
 						<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
 							<li><VisaIcon aria-label="Visa accepté" className="text-muted-foreground hover:text-foreground transition-colors duration-200" /></li>
 							<li><MastercardIcon aria-label="Mastercard accepté" className="text-muted-foreground hover:text-foreground transition-colors duration-200" /></li>
@@ -258,7 +214,7 @@ export async function Footer() {
 				</Fade>
 
 				{/* Copyright + Liens légaux */}
-				<Fade y={10} duration={0.4} delay={0.24} inView once>
+				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} delay={MOTION_CONFIG.section.footer.stagger * 3} inView once>
 					<div className="flex flex-col items-center gap-4 pt-6">
 						<p className="text-sm/6 antialiased text-muted-foreground text-center">
 							© <CopyrightYear /> Synclune. Tous droits réservés.

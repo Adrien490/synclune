@@ -646,6 +646,16 @@ textarea {
 		}
 	}
 
+	/* Progress bar indeterminate for filter sheet */
+	@keyframes progress-indeterminate {
+		0% {
+			transform: translateX(-100%);
+		}
+		100% {
+			transform: translateX(400%);
+		}
+	}
+
 	/* Animation shimmer pour skeleton loading */
 	@keyframes shimmer {
 		0% {

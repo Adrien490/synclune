@@ -101,8 +101,8 @@ export default async function LegalPage() {
 			<section className={`bg-background ${SECTION_SPACING.default}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					{/* Introduction */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg mb-8">
-						<h2 className="text-xl sm:text-2xl font-semibold text-charcoal mb-4">
+					<div className="bg-background/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border mb-8">
+						<h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-4">
 							Transparence et conformité
 						</h2>
 						<p className="text-base/7 tracking-normal antialiased text-muted-foreground">
@@ -119,7 +119,7 @@ export default async function LegalPage() {
 							return (
 								<Card
 									key={page.href}
-									className="bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow"
+									className="bg-background/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow"
 								>
 									<CardHeader>
 										<div className="flex items-center gap-3 mb-2">
@@ -143,8 +143,8 @@ export default async function LegalPage() {
 					</div>
 
 					{/* Informations rapides */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg mb-8">
-						<h2 className="text-lg sm:text-xl font-semibold text-charcoal mb-6">
+					<div className="bg-background/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border mb-8">
+						<h2 className="text-lg sm:text-xl font-semibold text-foreground mb-6">
 							Informations essentielles
 						</h2>
 						<div className="grid md:grid-cols-2 gap-6">
@@ -207,8 +207,8 @@ export default async function LegalPage() {
 					</div>
 
 					{/* Contact et boutons d'action */}
-					<div className="bg-linear-to-r from-rose-50/50 to-gold-50/50 rounded-xl p-6 text-center">
-						<h3 className="text-lg font-semibold text-charcoal mb-3">
+					<div className="bg-linear-to-r from-rose-50/50 to-gold-50/50 dark:from-rose-950/30 dark:to-amber-950/30 rounded-xl p-6 text-center">
+						<h3 className="text-lg font-semibold text-foreground mb-3">
 							Une question sur vos droits ?
 						</h3>
 						<p className="text-sm text-muted-foreground mb-4">
@@ -217,9 +217,9 @@ export default async function LegalPage() {
 						</p>
 						<div className="flex flex-col sm:flex-row gap-4 justify-center">
 							<Button asChild size="lg">
-								<Link href="/personnalisation" className="flex items-center gap-2">
+								<a href={`mailto:${contactEmail}`} className="flex items-center gap-2">
 									Nous contacter
-								</Link>
+								</a>
 							</Button>
 							<Button asChild variant="outline" size="lg">
 								<Link href="/" className="flex items-center gap-2">
@@ -232,7 +232,7 @@ export default async function LegalPage() {
 					{/* Dernière mise à jour */}
 					<div className="mt-8 text-center">
 						<p className="text-sm/6 tracking-normal antialiased text-muted-foreground italic">
-							Dernière mise à jour : 1er novembre 2025
+							Dernière mise à jour : 13 février 2026
 						</p>
 					</div>
 				</div>

@@ -7,6 +7,7 @@ import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-prod
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 import { SearchFallbackSuggestions, SearchFallbackSuggestionsSkeleton } from "./search-fallback-suggestions";
 import { SearchCorrectionSuggestion } from "./search-correction-suggestion";
@@ -16,15 +17,12 @@ interface ProductListProps {
 	perPage: number;
 	/** Terme de recherche actuel */
 	searchTerm?: string;
-	/** URL de base pour reset (defaut: /produits) */
-	baseResetUrl?: string;
 }
 
 export function ProductList({
 	productsPromise,
 	perPage,
 	searchTerm,
-	baseResetUrl = "/produits",
 }: ProductListProps) {
 	const result = use(productsPromise);
 	const { products, pagination, totalCount, suggestion } = result;
@@ -50,7 +48,6 @@ export function ProductList({
 				<SearchFallbackSuggestions
 					searchTerm={searchTerm}
 					suggestion={suggestion}
-					baseResetUrl={baseResetUrl}
 				/>
 			</Suspense>
 		);
@@ -58,9 +55,30 @@ export function ProductList({
 
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
 
+	// ItemList JSON-LD for rich snippets (carousel-style SERPs)
+	const itemListJsonLd = {
+		"@context": "https://schema.org",
+		"@type": "ItemList",
+		numberOfItems: totalCount,
+		itemListElement: products.map((product, index) => ({
+			"@type": "ListItem",
+			position: index + 1,
+			url: `${SITE_URL}/creations/${product.slug}`,
+			name: product.title,
+		})),
+	};
+
 	// Layout Grid par defaut
 	return (
 		<div className="space-y-6">
+			{/* ItemList structured data for product grid */}
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c"),
+				}}
+			/>
+
 			{/* Suggestion de correction si peu de resultats */}
 			{suggestion && (
 				<SearchCorrectionSuggestion suggestion={suggestion} />

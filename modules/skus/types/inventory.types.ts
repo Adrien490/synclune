@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
+import { PaginationInfo } from "@/shared/lib/pagination";
 import { z } from "zod";
 import { GET_INVENTORY_SELECT } from "../constants/inventory.constants";
 import { getSkuStocksSchema, inventoryFiltersSchema } from "../schemas/inventory.schemas";

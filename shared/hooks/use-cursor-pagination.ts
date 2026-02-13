@@ -1,7 +1,7 @@
 "use client"
 
-import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination"
-import { useRouter, useSearchParams } from "next/navigation"
+import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 // Note: useEffectEvent is a React 19 feature for stable event handlers in effects
 // See: https://react.dev/reference/react/useEffectEvent
 import { useEffect, useRef, useTransition, useEffectEvent } from "react"
@@ -26,9 +26,13 @@ export function useCursorPagination({
 	enableKeyboardShortcuts = true,
 }: UseCursorPaginationProps) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
-	const previousCursorRef = useRef<string | undefined>(undefined);
+	// Sentinel to distinguish "not yet initialized" from "cursor is undefined"
+	// Avoids spurious scroll-to-top on first render when cursor is also undefined
+	const UNINITIALIZED = useRef(Symbol("uninitialized")).current
+	const previousCursorRef = useRef<string | symbol | undefined>(UNINITIALIZED);
 
 	const perPage = Number(searchParams.get("perPage")) || DEFAULT_PER_PAGE;
 	const cursor = searchParams.get("cursor") || undefined;
@@ -127,6 +131,22 @@ export function useCursorPagination({
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [enableKeyboardShortcuts, onKeyDown]);
 
+	// Prefetch next/prev pages for faster perceived navigation
+	// Only depends on cursor values — searchParams changes (filters, etc.) don't affect prefetch URLs
+	const searchParamsString = searchParams.toString();
+	useEffect(() => {
+		const prefetch = (pCursor: string | null, direction: string) => {
+			if (!pCursor) return;
+			const params = new URLSearchParams(searchParamsString);
+			params.set("cursor", pCursor);
+			params.set("direction", direction);
+			router.prefetch("?" + params.toString());
+		};
+		prefetch(nextCursor, "forward");
+		prefetch(prevCursor, "backward");
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [nextCursor, prevCursor, router]);
+
 	const handleNext = () => navigateNext(nextCursor);
 	const handlePrevious = () => navigatePrevious(prevCursor);
 
@@ -156,6 +176,8 @@ export function useCursorPagination({
 	return {
 		perPage,
 		cursor,
+		pathname,
+		searchParams,
 		isPending,
 		handleNext,
 		handlePrevious,

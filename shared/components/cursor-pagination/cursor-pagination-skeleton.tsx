@@ -5,7 +5,12 @@ import {
 	RESET_BUTTON_SIZE,
 } from "./constants";
 
-export function CursorPaginationSkeleton() {
+export function CursorPaginationSkeleton({
+	showNavigation = true,
+}: {
+	/** Whether to show navigation button skeletons. Set to false when the dataset is known to fit on one page. */
+	showNavigation?: boolean;
+} = {}) {
 	return (
 		<div
 			role="status"
@@ -21,23 +26,25 @@ export function CursorPaginationSkeleton() {
 				<Skeleton className="h-4 w-8 sm:w-24" />
 			</div>
 
-			{/* Contrôles de pagination */}
-			<div className="flex items-center gap-2">
-				{/* Bouton retour au début */}
-				<Skeleton className={RESET_BUTTON_SIZE} />
+			{/* Contrôles de pagination — conditionally shown to match CursorPagination's canNavigate */}
+			{showNavigation && (
+				<div className="flex items-center gap-2">
+					{/* Bouton retour au début */}
+					<Skeleton className={RESET_BUTTON_SIZE} />
 
-				{/* Groupe de boutons */}
-				<div className="flex items-center">
-					{/* Bouton précédent */}
-					<Skeleton className={`${NAV_BUTTON_SIZE} rounded-r-none`} />
+					{/* Groupe de boutons */}
+					<div className="flex items-center">
+						{/* Bouton précédent */}
+						<Skeleton className={`${NAV_BUTTON_SIZE} rounded-r-none`} />
 
-					{/* Indicateur de page */}
-					<Skeleton className={`${PAGE_INDICATOR_SIZE} rounded-none`} />
+						{/* Indicateur de page */}
+						<Skeleton className={`${PAGE_INDICATOR_SIZE} rounded-none`} />
 
-					{/* Bouton suivant */}
-					<Skeleton className={`${NAV_BUTTON_SIZE} rounded-l-none`} />
+						{/* Bouton suivant */}
+						<Skeleton className={`${NAV_BUTTON_SIZE} rounded-l-none`} />
+					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 }

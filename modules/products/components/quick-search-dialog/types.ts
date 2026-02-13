@@ -10,7 +10,6 @@ export type QuickSearchCollection = {
 	name: string
 	productCount: number
 	image: { url: string; blurDataUrl: string | null } | null
-	images: { url: string; blurDataUrl?: string | null; alt?: string | null }[]
 }
 
 export type QuickSearchProductType = {

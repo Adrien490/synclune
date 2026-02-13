@@ -20,8 +20,9 @@ import { useRecentSearches } from "@/modules/products/hooks/use-recent-searches"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
-import { FOCUSABLE_SELECTOR, QUICK_SEARCH_DIALOG_ID } from "./constants"
+import { FOCUSABLE_SELECTOR, QUICK_SEARCH_DIALOG_ID, SEARCH_DEBOUNCE_MS } from "./constants"
 import { IdleContent } from "./idle-content"
+import { QuickTagPills } from "./quick-tag-pills"
 import { SearchResultsSkeleton } from "./search-results-skeleton"
 import { useKeyboardNavigation } from "./use-keyboard-navigation"
 import type { QuickSearchCollection, QuickSearchProductType, RecentlyViewedProduct } from "./types"
@@ -198,7 +199,7 @@ export function QuickSearchDialog({
 					<SearchInput
 						paramName="qs"
 						mode="live"
-						debounceMs={300}
+						debounceMs={SEARCH_DEBOUNCE_MS}
 						size="md"
 						placeholder="Rechercher un bijou..."
 						autoFocus
@@ -212,23 +213,11 @@ export function QuickSearchDialog({
 				{/* Quick suggestion tags (idle only) */}
 				{!isSearchMode && productTypes.length > 0 && (
 					<div className="px-4 pb-2 bg-background shrink-0">
-						<div className="flex flex-wrap gap-1.5">
-							{productTypes.map((type) => (
-								<button
-									key={type.slug}
-									type="button"
-									onClick={() => handleQuickTagClick(type.label)}
-									className={cn(
-										"rounded-full border bg-muted/30 hover:bg-muted",
-										"text-sm px-3 py-1.5",
-										"transition-colors",
-										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-									)}
-								>
-									{type.label}
-								</button>
-							))}
-						</div>
+						<QuickTagPills
+							productTypes={productTypes}
+							onSelect={handleQuickTagClick}
+							size="sm"
+						/>
 					</div>
 				)}
 
@@ -273,7 +262,6 @@ export function QuickSearchDialog({
 									onRecentSearch={handleRecentSearch}
 									onRemoveSearch={remove}
 									onClearSearches={clear}
-									
 									isPending={isPending}
 								/>
 							</Fade>

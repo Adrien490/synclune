@@ -12,7 +12,8 @@ import { cn } from "@/shared/utils/cn"
 import type { QuickSearchResult } from "../../data/quick-search-products"
 import { CollectionCard } from "./collection-card"
 import { CategoryCard } from "./category-card"
-import { QUICK_SEARCH_DIALOG_ID } from "./constants"
+import { MAX_MATCHED_COLLECTIONS, MAX_MATCHED_TYPES, QUICK_SEARCH_DIALOG_ID } from "./constants"
+import { QuickTagPills } from "./quick-tag-pills"
 import { SearchResultItem } from "./search-result-item"
 import type { QuickSearchCollection, QuickSearchProductType } from "./types"
 
@@ -38,10 +39,10 @@ export function QuickSearchContent({
 	const lowerQuery = query.toLowerCase()
 	const matchedCollections = collections
 		.filter((c) => matchesWordStart(c.name, lowerQuery))
-		.slice(0, 2)
+		.slice(0, MAX_MATCHED_COLLECTIONS)
 	const matchedTypes = productTypes
 		.filter((t) => matchesWordStart(t.label, lowerQuery))
-		.slice(0, 2)
+		.slice(0, MAX_MATCHED_TYPES)
 
 	const hasSearchResults = products.length > 0
 	const hasMatchedNav = matchedCollections.length > 0 || matchedTypes.length > 0
@@ -160,25 +161,12 @@ export function QuickSearchContent({
 									<Lightbulb className="size-3.5" aria-hidden="true" />
 									Essayez avec moins de mots ou parcourez nos categories
 								</p>
-								{productTypes.length > 0 && (
-									<div className="flex flex-wrap justify-center gap-1.5">
-										{productTypes.map((type) => (
-											<button
-												key={type.slug}
-												type="button"
-												onClick={() => handleSuggestionClick(type.label)}
-												className={cn(
-													"rounded-full border bg-muted/30 hover:bg-muted",
-													"text-xs px-3 py-1.5",
-													"transition-colors",
-													"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-												)}
-											>
-												{type.label}
-											</button>
-										))}
-									</div>
-								)}
+								<QuickTagPills
+									productTypes={productTypes}
+									onSelect={handleSuggestionClick}
+									size="xs"
+									centered
+								/>
 							</div>
 						</div>
 					)}
@@ -210,7 +198,7 @@ export function QuickSearchContent({
 }
 
 /** Match query against word starts in text (e.g. "or" matches "Oreilles" but not "Colorees") */
-function matchesWordStart(text: string, query: string): boolean {
+export function matchesWordStart(text: string, query: string): boolean {
 	const lowerText = text.toLowerCase()
 	// Full-text match: text starts with query OR query starts with text
 	if (lowerText.startsWith(query) || query.startsWith(lowerText)) return true

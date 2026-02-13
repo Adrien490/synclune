@@ -169,12 +169,25 @@ export default async function CGVPage() {
                 après confirmation de paiement.
               </p>
               <p>
-                En cas de dépassement supérieur à 7 jours, le client peut
-                annuler sa commande et obtenir le remboursement intégral des
-                sommes versées.
+                Conformément à l'article L216-1 du Code de la consommation, à
+                défaut de délai convenu, le vendeur livre le bien dans un
+                délai maximal de <strong>30 jours</strong> suivant la commande.
+                En cas de dépassement de ce délai, le client peut annuler sa
+                commande et obtenir le remboursement intégral des sommes
+                versées.
               </p>
 
-              <h3 className="text-lg sm:text-xl font-medium">5.3 Modalités</h3>
+              <h3 className="text-lg sm:text-xl font-medium">
+                5.3 Transfert des risques
+              </h3>
+              <p>
+                Conformément à l'article L216-4 du Code de la consommation, le
+                risque de perte ou d'endommagement des biens est transféré au
+                client au moment où celui-ci, ou un tiers désigné par lui,
+                prend physiquement possession des biens.
+              </p>
+
+              <h3 className="text-lg sm:text-xl font-medium">5.4 Modalités</h3>
               <p>
                 La livraison est effectuée à l'adresse indiquée lors de la
                 commande. Il appartient au client de vérifier l'exactitude de
@@ -243,11 +256,15 @@ export default async function CGVPage() {
 
               <h3 className="text-lg sm:text-xl font-medium">6.4 Remboursement</h3>
               <p>
-                Nous procéderons au remboursement dans un délai de{" "}
-                <strong>14 jours</strong> suivant la réception du produit
-                retourné ou la preuve d'expédition, par le même moyen de
-                paiement que celui utilisé lors de l'achat, sauf accord exprès
-                de votre part pour un autre moyen de paiement.
+                Nous procéderons au remboursement de la totalité des sommes
+                versées, <strong>y compris les frais de livraison initiaux</strong>{" "}
+                (correspondant au mode de livraison standard), dans un délai
+                de <strong>14 jours</strong> suivant la réception du produit
+                retourné ou la preuve d'expédition, conformément à l'article
+                L221-24 du Code de la consommation. Le remboursement est
+                effectué par le même moyen de paiement que celui utilisé lors
+                de l'achat, sauf accord exprès de votre part pour un autre
+                moyen de paiement.
               </p>
 
               <h3 className="text-lg sm:text-xl font-medium">6.5 Exceptions</h3>
@@ -265,7 +282,7 @@ export default async function CGVPage() {
                 7.1 Garantie légale de conformité
               </h3>
               <p>
-                Conformément aux articles L217-4 à L217-14 du Code de la
+                Conformément aux articles L217-1 à L217-32 du Code de la
                 consommation, vous bénéficiez d'une garantie légale de
                 conformité de <strong>24 mois</strong> à compter de la
                 délivrance du bien.
@@ -306,21 +323,22 @@ export default async function CGVPage() {
                   Extraits du Code de la consommation :
                 </p>
                 <p className="italic mb-2">
-                  <strong>Article L217-4</strong> : "Le vendeur livre un bien
-                  conforme au contrat et répond des défauts de conformité
-                  existant lors de la délivrance. Il répond également des
-                  défauts de conformité résultant de l'emballage, des
-                  instructions de montage ou de l'installation lorsque celle-ci
-                  a été mise à sa charge par le contrat ou a été réalisée sous
-                  sa responsabilité."
+                  <strong>Article L217-3</strong> : "Le vendeur délivre un
+                  bien conforme au contrat ainsi qu'aux critères énoncés à
+                  l'article L. 217-5. Il répond des défauts de conformité
+                  existant au moment de la délivrance du bien [...], ainsi que
+                  des défauts de conformité résultant de l'emballage, des
+                  instructions de montage, ou de l'installation lorsque
+                  celle-ci a été mise à sa charge par le contrat ou a été
+                  réalisée sous sa responsabilité."
                 </p>
                 <p className="italic">
                   <strong>Article L217-5</strong> : "Le bien est conforme au
                   contrat s'il répond notamment, le cas échéant, aux critères
-                  suivants : il correspond à la description, au type, à la
+                  suivants : 1° Il correspond à la description, au type, à la
                   quantité et à la qualité, notamment en ce qui concerne la
-                  fonctionnalité, la compatibilité, l'interopérabilité, ou toute
-                  autre caractéristique prévues au contrat..."
+                  fonctionnalité, la compatibilité, l'interopérabilité, ou
+                  toute autre caractéristique prévues au contrat..."
                 </p>
               </div>
 
@@ -494,7 +512,32 @@ export default async function CGVPage() {
               </p>
 
               <h3 className="text-lg sm:text-xl font-medium">
-                11.3 Droit applicable et juridiction
+                11.3 Résolution en ligne des litiges
+              </h3>
+              <p>
+                Conformément au Règlement européen n°524/2013, la Commission
+                Européenne met à disposition une plateforme de résolution en
+                ligne des litiges :{" "}
+                <a
+                  href="https://ec.europa.eu/consumers/odr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  https://ec.europa.eu/consumers/odr
+                </a>
+                .
+              </p>
+              <p>
+                Notre adresse email pour les réclamations :{" "}
+                <a href={`mailto:${contactEmail}`} className="underline">
+                  {contactEmail}
+                </a>
+                .
+              </p>
+
+              <h3 className="text-lg sm:text-xl font-medium">
+                11.4 Droit applicable et juridiction
               </h3>
               <p>
                 Les présentes CGV sont régies par le droit français. À défaut de
@@ -526,6 +569,10 @@ export default async function CGVPage() {
                 </li>
               </ul>
             </section>
+
+            <p className="text-xs text-muted-foreground text-center pt-8 italic">
+              Dernière mise à jour : 13 février 2026
+            </p>
           </div>
         </div>
       </section>

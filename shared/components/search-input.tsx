@@ -225,14 +225,14 @@ export function SearchInput({
 					"hover:border-muted-foreground/40",
 					"focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30",
 					"transition-all duration-200",
-					isPending && "border-ring/50 animate-pulse",
+					isPending && "border-ring/50",
 					maxLengthFlash && "ring-2 ring-destructive/50",
 					styles.container
 				)}
 			>
 				<div
 					className={cn(
-						"absolute flex items-center text-muted-foreground pointer-events-none",
+						"absolute inset-y-0 flex items-center text-muted-foreground pointer-events-none",
 						styles.iconLeft
 					)}
 				>
@@ -240,6 +240,7 @@ export function SearchInput({
 						{isPending && mode === "live" ? (
 							<motion.span
 								key="loader"
+								className="flex items-center"
 								initial={shouldReduceMotion ? false : { opacity: 0 }}
 								animate={{ opacity: 1 }}
 								exit={shouldReduceMotion ? undefined : { opacity: 0 }}

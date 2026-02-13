@@ -2,7 +2,7 @@ import { Prisma, PaymentStatus } from "@/app/generated/prisma/client";
 import {
 	buildCursorPagination,
 	processCursorResults,
-} from "@/shared/components/cursor-pagination/pagination";
+} from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import {

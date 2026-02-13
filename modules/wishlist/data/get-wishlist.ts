@@ -2,7 +2,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import {
 	buildCursorPagination,
 	processCursorResults,
-} from "@/shared/components/cursor-pagination/pagination";
+} from "@/shared/lib/pagination";
 import { cacheWishlist } from "@/modules/wishlist/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";

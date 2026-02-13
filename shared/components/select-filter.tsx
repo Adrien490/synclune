@@ -12,10 +12,9 @@ import {
 import { cn } from "@/shared/utils/cn"
 import { ArrowUpDown, X } from "lucide-react"
 import { useSelectFilter } from "@/shared/hooks/use-select-filter"
-import type { FilterOption } from "@/shared/types/pagination.types"
-import type { SelectFilterProps } from "@/shared/types/component.types"
+import type { FilterOption, SelectFilterProps } from "@/shared/types/component.types"
 
-export type { FilterOption } from "@/shared/types/pagination.types"
+export type { FilterOption } from "@/shared/types/component.types"
 export type { SelectFilterProps };
 
 export function SelectFilter({

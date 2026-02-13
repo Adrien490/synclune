@@ -184,7 +184,7 @@ export function ColorSwatches({
 					onKeyDown={(e) => handleKeyDown(e, index, inPopover)}
 					disabled={isDisabled}
 					className={cn(
-						"rounded-full border-2 motion-safe:transition-all motion-safe:active:scale-90 motion-safe:active:ring-4 motion-safe:active:ring-primary/20",
+						"relative rounded-full border-2 motion-safe:transition-all motion-safe:active:scale-90 motion-safe:active:ring-4 motion-safe:active:ring-primary/20",
 						sizeClasses[swatchSize],
 						"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 						isSelected
@@ -200,24 +200,41 @@ export function ColorSwatches({
 						colorName={color.name}
 						className="size-full rounded-full"
 					/>
+					{!color.inStock && (
+						<span
+							aria-hidden="true"
+							className="absolute inset-0 flex items-center justify-center"
+						>
+							<span className="block w-[130%] h-0.5 bg-foreground/70 rotate-[-45deg] rounded-full" />
+						</span>
+					)}
 				</button>
 			);
 		}
 
 		// Mode décoratif - React Aria ColorSwatch avec accessibilité intégrée
 		return (
-			<AriaColorSwatch
-				key={color.slug}
-				color={color.hex}
-				colorName={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
-				className={cn(
-					"rounded-full border border-border/50 shadow-sm motion-safe:transition-opacity",
-					sizeClasses[swatchSize],
-					!color.inStock && "opacity-40",
-					// Contraste pour couleurs très claires (blanc, jaune pâle...)
-					isLightColor(color.hex, 0.85) && "ring-1 ring-border/30"
+			<span key={color.slug} className="relative inline-flex">
+				<AriaColorSwatch
+					color={color.hex}
+					colorName={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
+					className={cn(
+						"rounded-full border border-border/50 shadow-sm motion-safe:transition-opacity",
+						sizeClasses[swatchSize],
+						!color.inStock && "opacity-40",
+						// Contraste pour couleurs très claires (blanc, jaune pâle...)
+						isLightColor(color.hex, 0.85) && "ring-1 ring-border/30"
+					)}
+				/>
+				{!color.inStock && (
+					<span
+						aria-hidden="true"
+						className="absolute inset-0 flex items-center justify-center"
+					>
+						<span className="block w-[130%] h-0.5 bg-foreground/70 rotate-[-45deg] rounded-full" />
+					</span>
 				)}
-			/>
+			</span>
 		);
 	};
 

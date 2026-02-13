@@ -15,7 +15,7 @@ import type {
 	GET_COLORS_SELECT,
 	GET_COLOR_SELECT,
 } from "../constants/color.constants";
-import type { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
+import type { PaginationInfo } from "@/shared/lib/pagination";
 
 // ============================================================================
 // COLOR OPTIONS (pour selects/filtres)

@@ -37,6 +37,11 @@ export function buildCursorPagination(params: CursorPaginationParams): {
 } {
 	const { cursor, direction, take } = params;
 
+	// Guard against invalid take values (defense in depth — Zod validates upstream)
+	if (take <= 0) {
+		throw new Error(`take must be positive, got ${take}`)
+	}
+
 	// Première page : pas de cursor
 	if (!cursor) {
 		// +1 pour détecter s'il y a une page suivante
@@ -81,6 +86,11 @@ export function processCursorResults<T extends { id: string }>(
 	direction: "forward" | "backward" = "forward",
 	currentCursor?: string
 ): CursorPaginationResult<T> {
+	// Guard against invalid take values that would break hasMore detection
+	if (requestedTake <= 0) {
+		throw new Error(`requestedTake must be positive, got ${requestedTake}`)
+	}
+
 	// Pas de résultats
 	if (items.length === 0) {
 		return {

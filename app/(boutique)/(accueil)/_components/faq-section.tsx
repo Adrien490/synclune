@@ -3,7 +3,7 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
-import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { petitFormalScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import {
@@ -130,6 +130,14 @@ export async function FaqSection() {
 			)}
 			aria-labelledby="faq-title"
 		>
+			{/* Skip link for keyboard navigation */}
+			<a
+				href="#faq-cta-contact"
+				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-secondary focus:text-secondary-foreground focus:rounded-md focus:shadow-md"
+			>
+				Passer au contact
+			</a>
+
 			{/* JSON-LD Schema for SEO */}
 			<script
 				id="faq-schema"
@@ -139,7 +147,7 @@ export async function FaqSection() {
 				}}
 			/>
 
-			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+			<div className={CONTAINER_CLASS}>
 				<header className="text-center mb-10 lg:mb-12">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="faq-title">Questions fréquentes</SectionTitle>
@@ -158,7 +166,7 @@ export async function FaqSection() {
 				</div>
 
 				<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration} inView once>
-					<div className="mt-12 max-w-3xl mx-auto bg-primary/5 border border-primary/15 rounded-2xl p-6 sm:p-8 text-center">
+					<div id="faq-cta-contact" className="mt-12 max-w-3xl mx-auto bg-primary/5 border border-primary/15 rounded-2xl p-6 sm:p-8 text-center">
 						<p className="text-muted-foreground mb-1 text-base">
 							Tu n'as pas trouvé ta réponse ?
 						</p>

@@ -30,6 +30,12 @@ export const MAX_SEARCH_LENGTH = 100;
 export const FUZZY_MAX_RESULTS = 200;
 
 /**
+ * Nombre maximum de mots dans un terme de recherche multi-mots
+ * Limite la complexité de la requête SQL générée
+ */
+export const FUZZY_MAX_WORDS = 5;
+
+/**
  * Timeout pour les requêtes fuzzy (ms)
  * Évite les requêtes longues sur gros catalogues
  */

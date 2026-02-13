@@ -150,72 +150,42 @@ export function PageHeader({
 							</div>
 						)}
 
-						{/* Desktop : Breadcrumb complet avec schema.org (≥640px) */}
+						{/* Desktop : Breadcrumb complet (≥640px) — structured data via JSON-LD in page */}
 						{breadcrumbs.length > 0 && (
 							<nav
 								aria-label="Fil d'Ariane"
 								className="hidden sm:block text-sm leading-normal text-muted-foreground mb-2"
-								itemScope
-								itemType="https://schema.org/BreadcrumbList"
 							>
 								<ol className="flex items-center gap-2 list-none p-0 m-0">
-									{/* Accueil (position 1) */}
-									<li
-										itemProp="itemListElement"
-										itemScope
-										itemType="https://schema.org/ListItem"
-									>
+									<li>
 										<Link
 											href="/"
 											className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-											itemProp="item"
 										>
-											<span itemProp="name">Accueil</span>
+											Accueil
 										</Link>
-										<meta itemProp="position" content="1" />
 									</li>
 
-									{/* Breadcrumbs dynamiques (position 2+) */}
 									{breadcrumbs.map((item, index) => (
 										<li
 											key={item.href}
 											className="flex items-center gap-2"
-											itemProp="itemListElement"
-											itemScope
-											itemType="https://schema.org/ListItem"
 										>
 											<span aria-hidden="true">/</span>
 											{index === breadcrumbs.length - 1 ? (
-												// Dernier élément = page active (pas de lien, mais schema.org complet)
-												<>
-													<span
-														className="text-foreground font-medium"
-														aria-current="page"
-														itemProp="name"
-													>
-														{item.label}
-													</span>
-													<meta itemProp="item" content={item.href} />
-													<meta
-														itemProp="position"
-														content={String(index + 2)}
-													/>
-												</>
+												<span
+													className="text-foreground font-medium"
+													aria-current="page"
+												>
+													{item.label}
+												</span>
 											) : (
-												// Éléments intermédiaires = liens avec schema.org
-												<>
-													<Link
-														href={item.href}
-														className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-														itemProp="item"
-													>
-														<span itemProp="name">{item.label}</span>
-													</Link>
-													<meta
-														itemProp="position"
-														content={String(index + 2)}
-													/>
-												</>
+												<Link
+													href={item.href}
+													className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+												>
+													{item.label}
+												</Link>
 											)}
 										</li>
 									))}

@@ -6,6 +6,7 @@ import { Info, Mail } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PrintButton } from "./_components/print-button";
 
 export const metadata: Metadata = {
 	title: "Formulaire de rétractation | Synclune",
@@ -294,6 +295,14 @@ export default async function RetractationPage() {
               </div>
             </section>
 
+            {/* Actions */}
+            <section className="bg-muted/30 rounded-lg p-6 space-y-4">
+              <h3 className="text-lg font-semibold">Actions</h3>
+              <div className="flex flex-wrap gap-3">
+                <PrintButton />
+              </div>
+            </section>
+
             {/* Liens utiles */}
             <section className="bg-muted/30 rounded-lg p-6 space-y-4">
               <h3 className="text-lg font-semibold">Documents connexes</h3>
@@ -307,7 +316,7 @@ export default async function RetractationPage() {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/personnalisation">Nous contacter</Link>
+                  <a href={`mailto:${contactEmail}`}>Nous contacter</a>
                 </Button>
               </div>
             </section>
@@ -316,6 +325,9 @@ export default async function RetractationPage() {
             <p className="text-xs text-muted-foreground text-center pt-8">
               Formulaire conforme à l'annexe de l'article R221-1 du Code de la
               consommation
+            </p>
+            <p className="text-xs text-muted-foreground text-center pt-2 italic">
+              Dernière mise à jour : 13 février 2026
             </p>
           </div>
         </div>

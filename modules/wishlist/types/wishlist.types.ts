@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
+import { PaginationInfo } from "@/shared/lib/pagination";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	GET_WISHLIST_SELECT,

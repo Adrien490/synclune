@@ -15,17 +15,28 @@ import {
 	ChevronsLeft,
 	Loader2,
 } from "lucide-react";
+import { useId } from "react";
 import { Button } from "../ui/button";
 import {
 	NAV_BUTTON_SIZE,
 	PAGE_INDICATOR_SIZE,
 	RESET_BUTTON_SIZE,
 } from "./constants";
-import { PER_PAGE_OPTIONS } from "./pagination";
+import { PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
 
 export type { CursorPaginationProps };
+
+const PAGINATION_BUTTON_CLASSES = [
+	"backdrop-blur-sm",
+	"border-primary/20",
+	"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+	"motion-safe:hover:scale-[1.02]",
+	"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+	"motion-safe:active:scale-[0.98]",
+	"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none",
+] as const;
 
 export function CursorPagination({
 	perPage,
@@ -37,8 +48,11 @@ export function CursorPagination({
 	perPageOptions = PER_PAGE_OPTIONS,
 	focusTargetRef,
 }: CursorPaginationProps) {
+	const perPageId = useId();
 	const {
 		cursor,
+		pathname,
+		searchParams,
 		isPending,
 		handleNext,
 		handlePrevious,
@@ -48,6 +62,18 @@ export function CursorPagination({
 
 	const isFirstPage = !cursor;
 	const canNavigate = hasNextPage || hasPreviousPage;
+
+	// Build rel="prev"/"next" URLs for SEO crawl hints
+	const buildPaginationUrl = (paginationCursor: string | null, direction: string) => {
+		if (!paginationCursor) return null;
+		const params = new URLSearchParams(searchParams.toString());
+		params.set("cursor", paginationCursor);
+		params.set("direction", direction);
+		return `${pathname}?${params.toString()}`;
+	};
+
+	const prevUrl = hasPreviousPage ? buildPaginationUrl(prevCursor, "backward") : null;
+	const nextUrl = hasNextPage ? buildPaginationUrl(nextCursor, "forward") : null;
 
 	// Message pour les screen readers
 	const ariaLiveMessage = (() => {
@@ -85,6 +111,9 @@ export function CursorPagination({
 					"opacity-80 pointer-events-none transition-opacity duration-200"
 			)}
 		>
+			{/* SEO crawl hints — React 19 hoists these to <head> */}
+			{prevUrl && <link rel="prev" href={prevUrl} />}
+			{nextUrl && <link rel="next" href={nextUrl} />}
 			{/* Live region pour screen readers */}
 			<div
 				role="status"
@@ -98,7 +127,7 @@ export function CursorPagination({
 			<div className="flex items-center gap-2 sm:gap-3 text-sm">
 				<div className="flex items-center gap-1.5 sm:gap-2">
 					<label
-						htmlFor="perPage-select"
+						htmlFor={perPageId}
 						className="hidden sm:block text-xs text-muted-foreground"
 					>
 						Par page
@@ -108,7 +137,11 @@ export function CursorPagination({
 						onValueChange={(value) => handlePerPageChange(Number(value))}
 						disabled={isPending}
 					>
-						<SelectTrigger id="perPage-select" className="w-20 h-9">
+						<SelectTrigger
+							id={perPageId}
+							className="w-20 h-9"
+							aria-label="Nombre de résultats par page"
+						>
 							<SelectValue>{perPage}</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
@@ -158,13 +191,7 @@ export function CursorPagination({
 						className={cn(
 							RESET_BUTTON_SIZE,
 							"gap-1 cursor-pointer",
-							"backdrop-blur-sm",
-							"border-primary/20",
-							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-							"motion-safe:hover:scale-[1.02]",
-							"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-							"motion-safe:active:scale-[0.98]",
-							"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none"
+							...PAGINATION_BUTTON_CLASSES
 						)}
 						aria-label="Retour au début"
 					>
@@ -186,13 +213,7 @@ export function CursorPagination({
 							className={cn(
 								NAV_BUTTON_SIZE,
 								"cursor-pointer",
-								"backdrop-blur-sm",
-								"border-primary/20",
-								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-								"motion-safe:hover:scale-[1.02]",
-								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-								"motion-safe:active:scale-[0.98]",
-								"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none"
+								...PAGINATION_BUTTON_CLASSES
 							)}
 							aria-label="Page précédente"
 						>
@@ -227,13 +248,7 @@ export function CursorPagination({
 							className={cn(
 								NAV_BUTTON_SIZE,
 								"cursor-pointer",
-								"backdrop-blur-sm",
-								"border-primary/20",
-								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-								"motion-safe:hover:scale-[1.02]",
-								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-								"motion-safe:active:scale-[0.98]",
-								"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none"
+								...PAGINATION_BUTTON_CLASSES
 							)}
 							aria-label="Page suivante"
 						>
@@ -252,9 +267,9 @@ export {
 	DEFAULT_DIRECTION,
 	buildCursorPagination,
 	processCursorResults,
-} from "./pagination";
+} from "@/shared/lib/pagination";
 export type {
 	CursorPaginationParams,
 	PaginationInfo,
 	CursorPaginationResult,
-} from "./pagination";
+} from "@/shared/lib/pagination";

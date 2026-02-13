@@ -1,4 +1,4 @@
-import { Fade, GlitterSparkles, HandDrawnUnderline, Reveal, Stagger } from "@/shared/components/animations";
+import { Fade, GlitterSparkles, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
@@ -11,6 +11,7 @@ import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { ActiveStepTracker } from "./active-step-tracker";
+import { AnimatedStepItem } from "./animated-step-item";
 import { CreativeProcessParallax } from "./creative-process-parallax";
 import { ImageScrollOverlay } from "./image-scroll-overlay";
 import { MobileStepCircle } from "./mobile-step-circle";
@@ -210,7 +211,7 @@ export async function CreativeProcess() {
 					{/* Process timeline */}
 					<div className="relative order-2">
 						<ActiveStepTracker>
-							<ol className="relative space-y-8 sm:space-y-12 lg:space-y-16 list-none">
+							<div className="relative">
 								{/* Scroll-animated vertical line (desktop) */}
 								<ScrollProgressLine />
 
@@ -220,16 +221,11 @@ export async function CreativeProcess() {
 									aria-hidden="true"
 								/>
 
-								<Stagger
-									stagger={MOTION_CONFIG.section.timeline.stagger}
-									y={MOTION_CONFIG.section.timeline.y}
-									delay={0}
-									inView
-									once={true}
-								>
+								<ol className="space-y-8 sm:space-y-12 lg:space-y-16 list-none">
 									{processSteps.map((step, index) => (
-										<li
+										<AnimatedStepItem
 											key={step.id}
+											index={index}
 											className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:bg-muted/30 motion-safe:hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
 											data-step-index={index}
 											style={{ opacity: `var(--step-${index}-opacity, 1)` }}
@@ -284,10 +280,10 @@ export async function CreativeProcess() {
 													{step.description}
 												</p>
 											</div>
-										</li>
+										</AnimatedStepItem>
 									))}
-								</Stagger>
-							</ol>
+								</ol>
+							</div>
 						</ActiveStepTracker>
 
 						{/* CTA as natural continuation of the process */}

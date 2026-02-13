@@ -1,6 +1,6 @@
 import { Prisma, RefundReason } from "@/app/generated/prisma/client";
 import { z } from "zod";
-import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
+import { PaginationInfo } from "@/shared/lib/pagination";
 import {
 	GET_REFUND_SELECT,
 	GET_REFUNDS_SELECT,

@@ -236,7 +236,7 @@ export function ProductCard({
 								<Link
 									href={`${productUrl}?color=${color.slug}`}
 									className={cn(
-										"block size-6 sm:size-7 rounded-full border border-foreground/15 shrink-0",
+										"relative block size-6 sm:size-7 rounded-full border border-foreground/15 shrink-0",
 										"transition-transform duration-150 motion-safe:can-hover:hover:scale-110",
 										"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 										!color.inStock && "opacity-40"
@@ -244,7 +244,16 @@ export function ProductCard({
 									style={{ backgroundColor: color.hex }}
 									title={color.name}
 									aria-label={`${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`}
-								/>
+								>
+									{!color.inStock && (
+										<span
+											aria-hidden="true"
+											className="absolute inset-0 flex items-center justify-center"
+										>
+											<span className="block w-[130%] h-0.5 bg-foreground/70 rotate-[-45deg] rounded-full" />
+										</span>
+									)}
+								</Link>
 							</li>
 						))}
 						{colors.length > 5 && (

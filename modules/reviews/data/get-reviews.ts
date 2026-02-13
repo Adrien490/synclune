@@ -2,7 +2,7 @@ import { isAdmin } from "@/modules/auth/utils/guards"
 import {
 	buildCursorPagination,
 	processCursorResults,
-} from "@/shared/components/cursor-pagination/pagination"
+} from "@/shared/lib/pagination"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
 
 import {

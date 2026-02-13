@@ -5,7 +5,6 @@ import {
 	useHasConsented,
 } from "@/shared/providers/cookie-consent-store-provider";
 import { Button } from "./ui/button";
-import { Cookie } from "lucide-react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { FocusScope } from "@radix-ui/react-focus-scope";
@@ -87,17 +86,9 @@ export function CookieBanner() {
 				>
 					<FocusScope trapped loop>
 						<div className="bg-background/95 backdrop-blur-md border border-primary/15 shadow-lg rounded-xl p-4 md:p-6 space-y-3 md:space-y-4">
-							{/* Header avec icône */}
-							<div className="flex items-center gap-2.5">
-								<Cookie
-									size={20}
-									className="shrink-0 text-primary"
-									aria-hidden="true"
-								/>
-								<p className="text-base font-semibold text-foreground">
-									Cookies
-								</p>
-							</div>
+							<p className="text-base font-semibold text-foreground">
+								Cookies
+							</p>
 
 							{/* Message */}
 							<p id="cookie-description" className="text-sm text-muted-foreground leading-relaxed">

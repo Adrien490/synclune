@@ -1,4 +1,4 @@
-import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
+import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";

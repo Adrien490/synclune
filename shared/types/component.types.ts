@@ -1,6 +1,10 @@
 import type { ReactNode, RefObject } from "react";
 import type { SortOption } from "@/shared/types/sort.types";
-import type { FilterOption } from "@/shared/types/pagination.types";
+
+export type FilterOption = {
+	value: string;
+	label: string;
+};
 
 /**
  * Props pour le composant CursorPagination

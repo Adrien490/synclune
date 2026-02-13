@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
+import { PaginationInfo } from "@/shared/lib/pagination";
 import { z } from "zod";
 import { GET_ORDERS_DEFAULT_SELECT } from "../constants/order.constants";
 import { getOrdersSchema } from "../schemas/order.schemas";

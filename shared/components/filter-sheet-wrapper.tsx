@@ -100,7 +100,7 @@ export function FilterSheetWrapper({
 				onKeyDown={handleKeyDown}
 			>
 				<SheetHeader
-					className="px-6 py-5 border-b border-primary/10 bg-linear-to-r from-background via-primary/[0.02] to-background shrink-0"
+					className="relative px-6 py-5 border-b border-primary/10 bg-linear-to-r from-background via-primary/[0.02] to-background shrink-0"
 					role="banner"
 					aria-labelledby="filter-sheet-title"
 				>
@@ -130,6 +130,17 @@ export function FilterSheetWrapper({
 							</Button>
 						)}
 					</div>
+
+					{/* Indeterminate progress bar */}
+					{isPending && (
+						<div
+							className="absolute bottom-0 left-0 right-0 h-0.5 overflow-hidden"
+							role="progressbar"
+							aria-label="Chargement des filtres"
+						>
+							<div className="h-full w-1/3 bg-primary animate-[progress-indeterminate_1.5s_ease-in-out_infinite]" />
+						</div>
+					)}
 				</SheetHeader>
 
 				<ScrollArea className="flex-1 min-h-0">

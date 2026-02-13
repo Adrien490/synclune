@@ -23,12 +23,3 @@ export interface CursorPaginationResult<T> {
 	items: T[]
 	pagination: PaginationInfo
 }
-
-// =============================================================================
-// FILTER TYPES
-// =============================================================================
-
-export type FilterOption = {
-	value: string
-	label: string
-}

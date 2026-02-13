@@ -3,7 +3,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import {
 	buildCursorPagination,
 	processCursorResults,
-} from "@/shared/components/cursor-pagination/pagination";
+} from "@/shared/lib/pagination";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";

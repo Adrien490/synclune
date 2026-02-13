@@ -153,7 +153,13 @@ export default async function MentionsLegalesPage() {
 
               <h3 className="text-lg sm:text-xl font-medium">3.2 Base de données</h3>
               <p>
-                <strong>Neon (Neon Postgres)</strong>
+                <strong>Neon Inc.</strong>
+                <br />
+                589 8th Avenue, 31st Floor
+                <br />
+                New York, NY 10018
+                <br />
+                États-Unis
                 <br />
                 Site web :{" "}
                 <a
@@ -277,6 +283,10 @@ export default async function MentionsLegalesPage() {
                 </a>
               </p>
             </section>
+
+            <p className="text-xs text-muted-foreground text-center pt-8 italic">
+              Dernière mise à jour : 13 février 2026
+            </p>
           </div>
         </div>
       </section>

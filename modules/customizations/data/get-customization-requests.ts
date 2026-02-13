@@ -3,7 +3,7 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 	DEFAULT_PER_PAGE,
-} from "@/shared/components/cursor-pagination/pagination";
+} from "@/shared/lib/pagination";
 
 import { cacheCustomizationList } from "../constants/cache";
 import type {

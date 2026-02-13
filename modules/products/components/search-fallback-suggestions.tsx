@@ -15,15 +15,11 @@ import {
 } from "@/shared/components/ui/empty";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-import { NoResultsFilters } from "./no-results-filters";
-
 interface SearchFallbackSuggestionsProps {
 	/** Terme de recherche actuel (pour l'echo) */
 	searchTerm?: string;
 	/** Suggestion de correction orthographique */
 	suggestion?: string;
-	/** URL de base pour le reset des filtres */
-	baseResetUrl?: string;
 }
 
 /**
@@ -38,7 +34,6 @@ interface SearchFallbackSuggestionsProps {
 export async function SearchFallbackSuggestions({
 	searchTerm,
 	suggestion,
-	baseResetUrl = "/produits",
 }: SearchFallbackSuggestionsProps) {
 	// Fetch en parallele les dernieres creations, categories et wishlist
 	const [latestResult, productTypesResult, wishlistProductIds] =
@@ -87,9 +82,7 @@ export async function SearchFallbackSuggestions({
 					</EmptyDescription>
 				</EmptyHeader>
 
-				{/* Filtres actifs avec suppression individuelle et bouton reset (Client Component) */}
-				<NoResultsFilters resetUrl={baseResetUrl} />
-			</Empty>
+				</Empty>
 
 			{/* Dernières créations */}
 			{latestProducts.length > 0 && (
