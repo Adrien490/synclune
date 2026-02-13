@@ -41,14 +41,14 @@ export function AnimatedStepItem({
 	return (
 		<motion.li
 			className={className}
-			style={style}
+			style={{ willChange: "transform, opacity", ...style }}
 			initial={{ opacity: 0, y: MOTION_CONFIG.section.timeline.y }}
 			whileInView={{ opacity: 1, y: 0 }}
 			viewport={{ once: true, amount: 0.2 }}
 			transition={{
-				duration: MOTION_CONFIG.duration.normal,
+				duration: MOTION_CONFIG.duration.slower,
 				ease: MOTION_CONFIG.easing.easeOut,
-				delay: index * MOTION_CONFIG.section.timeline.stagger,
+				delay: index * 0.15,
 			}}
 			{...rest}
 		>

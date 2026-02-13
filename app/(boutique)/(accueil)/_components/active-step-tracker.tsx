@@ -1,7 +1,7 @@
 "use client";
 
 import { useScroll, useMotionValueEvent, useReducedMotion } from "motion/react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { PROCESS_STEPS_COUNT } from "@/shared/constants/process-steps";
 
@@ -16,16 +16,14 @@ interface ActiveStepTrackerProps {
  * Desktop only - disabled on touch devices for performance.
  * Respects prefers-reduced-motion.
  *
- * Applies CSS classes via data-active-step attribute on the container,
- * allowing children to style themselves with CSS selectors:
- * - [data-step-index="N"] within [data-active-step="N"] gets highlighted
- * - Past steps get reduced opacity
+ * Uses direct DOM manipulation instead of React state to avoid
+ * re-renders during scroll, which would interrupt Framer Motion animations.
  */
 export function ActiveStepTracker({ children }: ActiveStepTrackerProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
-	const [activeStep, setActiveStep] = useState(-1);
+	const lastStepRef = useRef(-1);
 
 	const { scrollYProgress } = useScroll({
 		target: containerRef,
@@ -35,19 +33,40 @@ export function ActiveStepTracker({ children }: ActiveStepTrackerProps) {
 	useMotionValueEvent(scrollYProgress, "change", (value) => {
 		if (isTouchDevice || shouldReduceMotion) return;
 
-		// Divide scroll progress into equal segments for each step
-		const stepIndex = Math.min(
-			Math.floor(value * PROCESS_STEPS_COUNT),
-			PROCESS_STEPS_COUNT - 1,
-		);
+		const el = containerRef.current;
+		if (!el) return;
 
-		// Only before the section is visible, keep -1
+		let stepIndex: number;
+
 		if (value <= 0) {
-			setActiveStep(-1);
-			return;
+			stepIndex = -1;
+		} else {
+			stepIndex = Math.min(
+				Math.floor(value * PROCESS_STEPS_COUNT),
+				PROCESS_STEPS_COUNT - 1,
+			);
 		}
 
-		setActiveStep(stepIndex);
+		// Skip DOM writes if nothing changed
+		if (stepIndex === lastStepRef.current) return;
+		lastStepRef.current = stepIndex;
+
+		el.dataset.activeStep = String(stepIndex);
+
+		// Update CSS custom properties directly on the DOM node
+		for (let i = 0; i < PROCESS_STEPS_COUNT; i++) {
+			let opacity: string;
+			if (stepIndex < 0) {
+				opacity = "1";
+			} else if (i === stepIndex) {
+				opacity = "1";
+			} else if (i < stepIndex) {
+				opacity = "0.6";
+			} else {
+				opacity = "0.8";
+			}
+			el.style.setProperty(`--step-${i}-opacity`, opacity);
+		}
 	});
 
 	// On touch/reduced-motion: render without tracking
@@ -58,20 +77,8 @@ export function ActiveStepTracker({ children }: ActiveStepTrackerProps) {
 	return (
 		<div
 			ref={containerRef}
-			data-active-step={activeStep}
+			data-active-step="-1"
 			className="[&_[data-step-index]]:motion-safe:transition-opacity [&_[data-step-index]]:motion-safe:duration-300"
-			style={{
-				// CSS-driven highlighting: dim past steps, highlight active
-				...Object.fromEntries(
-					Array.from({ length: PROCESS_STEPS_COUNT }, (_, i) => {
-						const selector = `--step-${i}-opacity`;
-						if (activeStep < 0) return [selector, "1"];
-						if (i === activeStep) return [selector, "1"];
-						if (i < activeStep) return [selector, "0.6"];
-						return [selector, "0.8"];
-					}),
-				),
-			} as React.CSSProperties}
 		>
 			{children}
 		</div>
