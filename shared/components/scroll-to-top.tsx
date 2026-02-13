@@ -21,7 +21,7 @@ const SCROLL_THRESHOLD = 1200;
 function ScrollRing() {
 	const { scrollYProgress } = useScroll();
 
-	const ringSize = 44;
+	const ringSize = 48;
 	const strokeWidth = 2;
 	const radius = (ringSize - strokeWidth) / 2;
 
