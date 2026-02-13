@@ -58,15 +58,15 @@ export function CreativeProcessParallax() {
       {/* Couche 1: Blobs colorés flous (lent) - animation pausée si off-screen */}
       <motion.div className="absolute inset-0" style={{ y: layer1Y }}>
         <div
-          className="absolute top-[10%] left-[5%] w-32 h-32 rounded-full bg-primary/10 blur-3xl animate-[blob-float-1_20s_ease-in-out_infinite]"
+          className="absolute top-[10%] left-[5%] w-32 h-32 rounded-full bg-primary/10 blur-2xl animate-[blob-float-1_20s_ease-in-out_infinite]"
           style={{ animationPlayState: isInView ? "running" : "paused" }}
         />
         <div
-          className="absolute top-[60%] right-[10%] w-40 h-40 rounded-full bg-secondary/15 blur-3xl animate-[blob-float-2_25s_ease-in-out_infinite]"
+          className="absolute top-[60%] right-[10%] w-40 h-40 rounded-full bg-secondary/15 blur-2xl animate-[blob-float-2_25s_ease-in-out_infinite]"
           style={{ animationPlayState: isInView ? "running" : "paused" }}
         />
         <div
-          className="absolute bottom-[20%] left-[15%] w-28 h-28 rounded-full bg-[oklch(0.75_0.12_280/0.12)] blur-3xl animate-[blob-float-3_22s_ease-in-out_infinite]"
+          className="absolute bottom-[20%] left-[15%] w-28 h-28 rounded-full bg-[oklch(0.75_0.12_280/0.12)] blur-2xl animate-[blob-float-3_22s_ease-in-out_infinite]"
           style={{ animationPlayState: isInView ? "running" : "paused" }}
         />
       </motion.div>
@@ -177,9 +177,9 @@ function Sparkle({
 function StaticDecorations() {
   return (
     <>
-      <div className="absolute top-[10%] left-[5%] w-32 h-32 rounded-full bg-primary/10 blur-3xl" />
-      <div className="absolute top-[60%] right-[10%] w-40 h-40 rounded-full bg-secondary/15 blur-3xl" />
-      <div className="absolute bottom-[20%] left-[15%] w-28 h-28 rounded-full bg-[oklch(0.75_0.12_280/0.12)] blur-3xl" />
+      <div className="absolute top-[10%] left-[5%] w-32 h-32 rounded-full bg-primary/10 blur-2xl" />
+      <div className="absolute top-[60%] right-[10%] w-40 h-40 rounded-full bg-secondary/15 blur-2xl" />
+      <div className="absolute bottom-[20%] left-[15%] w-28 h-28 rounded-full bg-[oklch(0.75_0.12_280/0.12)] blur-2xl" />
     </>
   );
 }

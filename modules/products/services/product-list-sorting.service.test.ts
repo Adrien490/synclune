@@ -40,7 +40,7 @@ describe("sortProducts", () => {
 			createdAt: new Date("2025-01-10"),
 			updatedAt: new Date("2025-02-01"),
 			skus: [{ isActive: true, priceInclTax: 3500 }] as Product["skus"],
-			reviewStats: { averageRating: 4.5, totalCount: 10 },
+			reviewStats: { averageRating: 4.5, totalCount: 10 } as unknown as Product["reviewStats"],
 		}),
 		makeProduct({
 			id: "p2",
@@ -48,7 +48,7 @@ describe("sortProducts", () => {
 			createdAt: new Date("2025-01-20"),
 			updatedAt: new Date("2025-01-15"),
 			skus: [{ isActive: true, priceInclTax: 1500 }] as Product["skus"],
-			reviewStats: { averageRating: 4.8, totalCount: 5 },
+			reviewStats: { averageRating: 4.8, totalCount: 5 } as unknown as Product["reviewStats"],
 		}),
 		makeProduct({
 			id: "p3",
@@ -56,7 +56,7 @@ describe("sortProducts", () => {
 			createdAt: new Date("2025-01-05"),
 			updatedAt: new Date("2025-03-01"),
 			skus: [{ isActive: true, priceInclTax: 2500 }] as Product["skus"],
-			reviewStats: { averageRating: 4.5, totalCount: 20 },
+			reviewStats: { averageRating: 4.5, totalCount: 20 } as unknown as Product["reviewStats"],
 		}),
 	];
 

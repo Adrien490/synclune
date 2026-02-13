@@ -4,16 +4,10 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { cn } from "@/shared/utils/cn";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { petitFormalScript } from "@/shared/styles/fonts";
-import { Sparkles } from "lucide-react";
 import { NewsletterForm } from "@/modules/newsletter/components/newsletter-form";
 import { cacheLife, cacheTag } from "next/cache";
 
-/**
- * Homepage newsletter section.
- *
- * Features personal storytelling headline, content preview,
- * gift incentive, and subtle GlitterSparkles background.
- */
+/** Homepage newsletter subscription section with animated form. */
 export async function NewsletterSection() {
 	"use cache";
 	cacheLife("reference");
@@ -29,7 +23,7 @@ export async function NewsletterSection() {
 				SECTION_SPACING.section,
 			)}
 		>
-			<div className={cn(CONTAINER_CLASS)}>
+			<div className={CONTAINER_CLASS}>
 				{/* Storytelling header */}
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
@@ -48,7 +42,7 @@ export async function NewsletterSection() {
 				</header>
 
 				{/* Centered form */}
-				<Fade y={MOTION_CONFIG.section.cta.y} delay={0.2} duration={MOTION_CONFIG.section.title.duration}>
+				<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration}>
 					<div className="max-w-md mx-auto">
 						<NewsletterForm />
 					</div>

@@ -28,9 +28,12 @@ interface PolaroidConfig {
 	className?: string;
 }
 
-function glowClass(color: GlowColor) {
-	return `hover:shadow-[0_0_25px_var(--color-glow-${color}),0_12px_24px_-8px_rgba(0,0,0,0.15)]`;
-}
+const GLOW_CLASSES: Record<GlowColor, string> = {
+	pink: "hover:shadow-[0_0_25px_var(--color-glow-pink),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	lavender: "hover:shadow-[0_0_25px_var(--color-glow-lavender),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	mint: "hover:shadow-[0_0_25px_var(--color-glow-mint),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	yellow: "hover:shadow-[0_0_25px_var(--color-glow-yellow),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+};
 
 const POLAROIDS: PolaroidConfig[] = [
 	{
@@ -156,17 +159,17 @@ export async function AtelierStory() {
 						>
 							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
 							<p>
-								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span role="img" aria-label="visage qui rit aux larmes">😂</span>
+								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span role="img" aria-label="rire">😂</span>
 							</p>
 							<p>Chaque bijou que tu vois ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
 						</Stagger>
 
 						{/* Signature */}
-						<footer
+						<p
 							className={`${petitFormalScript.className} text-lg md:text-xl text-foreground italic pt-4 text-center text-shadow-glow`}
 						>
 							— Léane
-						</footer>
+						</p>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.2} className="mx-auto mt-2" />
 					</div>
 				</Fade>
@@ -203,7 +206,7 @@ export async function AtelierStory() {
 											p.className,
 											p.scatterClass,
 											"motion-safe:transition-shadow motion-safe:duration-300",
-											glowClass(p.glowColor)
+											GLOW_CLASSES[p.glowColor]
 										)}
 									>
 										<PlaceholderImage className="w-full h-full" label={p.label} />

@@ -3,12 +3,11 @@
 import { useScroll, useMotionValueEvent, useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
 import { useIsTouchDevice } from "@/shared/hooks";
+import { PROCESS_STEPS_COUNT } from "@/shared/constants/process-steps";
 
 interface ActiveStepTrackerProps {
 	children: React.ReactNode;
 }
-
-const TOTAL_STEPS = 4;
 
 /**
  * Tracks scroll progress through the creative process steps
@@ -38,8 +37,8 @@ export function ActiveStepTracker({ children }: ActiveStepTrackerProps) {
 
 		// Divide scroll progress into equal segments for each step
 		const stepIndex = Math.min(
-			Math.floor(value * TOTAL_STEPS),
-			TOTAL_STEPS - 1,
+			Math.floor(value * PROCESS_STEPS_COUNT),
+			PROCESS_STEPS_COUNT - 1,
 		);
 
 		// Only before the section is visible, keep -1
@@ -64,7 +63,7 @@ export function ActiveStepTracker({ children }: ActiveStepTrackerProps) {
 			style={{
 				// CSS-driven highlighting: dim past steps, highlight active
 				...Object.fromEntries(
-					Array.from({ length: TOTAL_STEPS }, (_, i) => {
+					Array.from({ length: PROCESS_STEPS_COUNT }, (_, i) => {
 						const selector = `--step-${i}-opacity`;
 						if (activeStep < 0) return [selector, "1"];
 						if (i === activeStep) return [selector, "1"];

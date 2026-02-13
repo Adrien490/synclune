@@ -1,13 +1,13 @@
-import { ParticleBackground, ScrollIndicator } from "@/shared/components/animations";
 import { HeroFloatingImages } from "./floating-images";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
-import { LayoutTextFlip } from "@/shared/components/ui/layout-text-flip";
+import { RotatingWord } from "@/shared/components/ui/rotating-word";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { Suspense, use } from "react";
+import { ParticleBackground, ScrollIndicator } from "./hero-decorations";
 
 interface HeroSectionProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -35,8 +35,9 @@ function HeroFloatingImagesAsync({
  * and particle background. Products come from the shared latest
  * creations fetch (no extra query).
  *
- * Text and CTA render immediately — floating images stream in
- * once the products query resolves.
+ * "Des bijoux" renders server-side for instant LCP — only the
+ * rotating word requires client JS. Decorative animations
+ * (particles, scroll indicator) are dynamically imported.
  */
 export function HeroSection({ productsPromise }: HeroSectionProps) {
 	return (
@@ -47,7 +48,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 			aria-describedby="hero-subtitle"
 			className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
 		>
-			{/* Particle background */}
+			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-0 -z-10" aria-hidden="true">
 				<ParticleBackground
 					shape={["heart", "pearl"]}
@@ -77,7 +78,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 				<div className="flex flex-col items-center">
 					{/* Centered content */}
 					<div className="space-y-5 sm:space-y-7 md:space-y-10 flex flex-col items-center">
-						{/* Main title - Immediate render for LCP */}
+						{/* Main title - "Des bijoux" is server-rendered for LCP */}
 						<div className="space-y-4 sm:space-y-6 text-center w-full">
 							<SectionTitle
 								as="h1"
@@ -88,11 +89,13 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 								className="text-foreground"
 								itemProp="headline"
 							>
-								<LayoutTextFlip
-									text="Des bijoux"
-									words={["colorés", "uniques", "joyeux"]}
-									duration={3500}
-								/>
+								<span className="inline-flex items-center gap-[0.35em] flex-wrap justify-center">
+									Des bijoux{" "}
+									<RotatingWord
+										words={["colorés", "uniques", "joyeux"]}
+										duration={3500}
+									/>
+								</span>
 							</SectionTitle>
 							<p
 								id="hero-subtitle"
@@ -109,7 +112,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 									size={22}
 									fill="currentColor"
 									className="text-primary inline align-middle"
-									aria-label="coeur"
+									aria-hidden="true"
 								/>
 							</p>
 						</div>
@@ -147,7 +150,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 				</div>
 			</div>
 
-			{/* Scroll indicator */}
+			{/* Scroll indicator - dynamically imported (decorative) */}
 			<ScrollIndicator
 				targetIds={[
 					"latest-creations",

@@ -36,6 +36,8 @@ interface AccountDropdownProps {
  * Non connecté: lien simple vers /connexion
  */
 export function AccountDropdown({ session, isAdmin, className }: AccountDropdownProps) {
+	const [tooltipOpen, setTooltipOpen] = useState(false);
+
 	// Non connecté: lien simple vers connexion
 	if (!session?.user) {
 		return (
@@ -59,7 +61,6 @@ export function AccountDropdown({ session, isAdmin, className }: AccountDropdown
 	}
 
 	// Connecté: dropdown avec options
-	const [tooltipOpen, setTooltipOpen] = useState(false);
 
 	return (
 		<Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>

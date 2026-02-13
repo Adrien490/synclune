@@ -84,7 +84,11 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 							>
 								{item.label}
 							</NavigationMenuTrigger>
-							<NavigationMenuContent
+							{/* !important overrides needed to break out of Radix NavigationMenu's
+						   absolute positioning and render a full-width mega menu anchored
+						   below the navbar. Without these, the dropdown renders relative to
+						   its trigger with default padding/border/rounding. */}
+						<NavigationMenuContent
 								className={cn(
 									"fixed! left-0! right-0! w-screen!",
 									"top-[var(--navbar-height)]!",

@@ -18,7 +18,6 @@ import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton
 import { FaqSection } from "./_components/faq-section";
 import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
 import { HeroSection } from "./_components/hero-section";
-import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { NewsletterSectionSkeleton } from "./_components/newsletter-section-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
@@ -80,9 +79,7 @@ export default async function Page() {
       </Suspense>
 
       {/* 1. Hero - Attention capture + rotating tagline + floating product images */}
-      <Suspense fallback={<HeroSectionSkeleton />}>
-        <HeroSection productsPromise={latestCreationsPromise} />
-      </Suspense>
+      <HeroSection productsPromise={latestCreationsPromise} />
 
       {/* 2. Latest Creations - 4 most recent products */}
       <Suspense fallback={<LatestCreationsSkeleton productsCount={4} />}>

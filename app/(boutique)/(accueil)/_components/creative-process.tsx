@@ -93,6 +93,7 @@ const howToSchema = {
 	"@context": "https://schema.org",
 	"@type": "HowTo",
 	"@id": `${SITE_URL}/#how-to-create-jewelry`,
+	inLanguage: "fr-FR",
 	name: "Comment je crée tes bijoux",
 	description:
 		"De l'inspiration à la finition, découvrez les étapes de création de bijoux artisanaux en plastique fou peints à la main.",
@@ -209,7 +210,7 @@ export async function CreativeProcess() {
 					{/* Process timeline */}
 					<div className="relative order-2">
 						<ActiveStepTracker>
-							<div className="relative space-y-8 sm:space-y-12 lg:space-y-16" role="list">
+							<ol className="relative space-y-8 sm:space-y-12 lg:space-y-16 list-none">
 								{/* Scroll-animated vertical line (desktop) */}
 								<ScrollProgressLine />
 
@@ -227,9 +228,8 @@ export async function CreativeProcess() {
 									once={true}
 								>
 									{processSteps.map((step, index) => (
-										<div
+										<li
 											key={step.id}
-											role="listitem"
 											className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:bg-muted/30 motion-safe:hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
 											data-step-index={index}
 											style={{ opacity: `var(--step-${index}-opacity, 1)` }}
@@ -255,7 +255,7 @@ export async function CreativeProcess() {
 											>
 												{step.icon}
 												{/* GlitterSparkles on final step (climax) */}
-												{index === 3 && (
+												{index === processSteps.length - 1 && (
 													<div className="hidden sm:block">
 														<GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />
 													</div>
@@ -273,7 +273,7 @@ export async function CreativeProcess() {
 													</span>
 													{step.title}
 													{/* Sparkles on final step (climax) */}
-													{index === 3 && (
+													{index === processSteps.length - 1 && (
 														<Sparkles
 															className="inline-block w-4 h-4 ml-1.5 text-secondary opacity-70 motion-safe:transition-opacity group-hover:opacity-100"
 															aria-hidden="true"
@@ -284,10 +284,10 @@ export async function CreativeProcess() {
 													{step.description}
 												</p>
 											</div>
-										</div>
+										</li>
 									))}
 								</Stagger>
-							</div>
+							</ol>
 						</ActiveStepTracker>
 
 						{/* CTA as natural continuation of the process */}

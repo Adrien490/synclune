@@ -19,8 +19,6 @@ interface CollectionCardProps {
 	productCount?: number;
 	/** Description courte de la collection */
 	description?: string | null;
-	/** Badge optionnel (ex: "Nouveau", "Best-seller") */
-	badge?: string;
 	/** Fourchette de prix de la collection */
 	priceRange?: { min: number; max: number };
 }
@@ -45,7 +43,6 @@ export function CollectionCard({
 	headingLevel: HeadingTag = "h3",
 	productCount,
 	description,
-	badge,
 	priceRange,
 }: CollectionCardProps) {
 	const uniqueSuffix = `${slug}-${index ?? 0}`;
@@ -60,7 +57,7 @@ export function CollectionCard({
 				href={`/collections/${slug}`}
 				className={cn(
 					"group block min-w-0",
-					"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:rounded-lg",
+					"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:rounded-lg",
 				)}
 			>
 				<div
@@ -85,15 +82,6 @@ export function CollectionCard({
 						"can-hover:group-hover:will-change-transform",
 					)}
 				>
-					{/* Badge optionnel */}
-					{badge && (
-						<div className="absolute top-2.5 right-2.5 z-10">
-							<span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full shadow-sm">
-								{badge}
-							</span>
-						</div>
-					)}
-
 					{/* Images Bento Grid avec animation scroll */}
 					{displayImages.length > 0 ? (
 						<Reveal y={8} once amount={0.2}>
@@ -113,7 +101,7 @@ export function CollectionCard({
 								className="w-12 h-12 sm:w-16 sm:h-16 text-primary/30 animate-pulse"
 								aria-hidden="true"
 							/>
-							<span className="text-xs text-muted-foreground">
+							<span className="text-xs text-muted-foreground" aria-hidden="true">
 								Bientôt disponible
 							</span>
 						</div>
@@ -157,6 +145,7 @@ export function CollectionCard({
 						{/* Price range */}
 						{priceRange && (
 							<p className="mt-1.5 text-xs font-medium text-foreground/80">
+								<span className="sr-only">Prix : </span>
 								{priceRange.min === priceRange.max
 									? `${formatEuro(priceRange.min, { compact: true })}`
 									: `${formatEuro(priceRange.min, { compact: true })} – ${formatEuro(priceRange.max, { compact: true })}`}
