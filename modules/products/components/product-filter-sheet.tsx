@@ -9,7 +9,6 @@ import {
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
@@ -144,63 +143,6 @@ function SectionSearch({
 }
 
 // ============================================================================
-// PRESETS
-// ============================================================================
-
-interface FilterPreset {
-	label: string;
-	apply: (setField: (name: keyof FilterFormData, value: unknown) => void) => void;
-	isActive: (values: FilterFormData) => boolean;
-	reset: (setField: (name: keyof FilterFormData, value: unknown) => void, defaultPriceRange: [number, number]) => void;
-}
-
-function getPresets(): FilterPreset[] {
-	return [
-		{
-			label: "Petits prix",
-			apply: (setField) => {
-				setField("priceRange", [0, 30]);
-			},
-			isActive: (values) =>
-				values.priceRange[0] === 0 && values.priceRange[1] === 30,
-			reset: (setField, defaultPriceRange) => {
-				setField("priceRange", defaultPriceRange);
-			},
-		},
-		{
-			label: "Les mieux notés",
-			apply: (setField) => {
-				setField("ratingMin", 4);
-			},
-			isActive: (values) => values.ratingMin === 4,
-			reset: (setField) => {
-				setField("ratingMin", null);
-			},
-		},
-		{
-			label: "En promo",
-			apply: (setField) => {
-				setField("onSale", true);
-			},
-			isActive: (values) => values.onSale === true,
-			reset: (setField) => {
-				setField("onSale", false);
-			},
-		},
-		{
-			label: "En stock",
-			apply: (setField) => {
-				setField("inStockOnly", true);
-			},
-			isActive: (values) => values.inStockOnly === true,
-			reset: (setField) => {
-				setField("inStockOnly", false);
-			},
-		},
-	];
-}
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -328,12 +270,6 @@ export function ProductFilterSheet({
 		return sections;
 	})();
 
-	// Presets
-	const presets = getPresets();
-	const setField = (name: keyof FilterFormData, value: unknown) => {
-		form.setFieldValue(name, value as never);
-	};
-
 	return (
 		<FilterSheetWrapper
 			open={isOpen}
@@ -354,31 +290,6 @@ export function ProductFilterSheet({
 					form.handleSubmit();
 				}}
 			>
-				{/* Quick presets */}
-				<div className="flex gap-2 overflow-x-auto pb-3 mb-1 border-b border-border/50 scrollbar-none">
-					{presets.map((preset) => {
-						const isActive = preset.isActive(form.state.values);
-						return (
-							<Button
-								key={preset.label}
-								type="button"
-								variant={isActive ? "default" : "outline"}
-								size="sm"
-								className="rounded-full shrink-0 text-xs h-8"
-								onClick={() => {
-									if (isActive) {
-										preset.reset(setField, DEFAULT_PRICE_RANGE);
-									} else {
-										preset.apply(setField);
-									}
-								}}
-							>
-								{preset.label}
-							</Button>
-						);
-					})}
-				</div>
-
 				<Accordion
 					type="multiple"
 					defaultValue={defaultOpenSections}

@@ -15,7 +15,6 @@ import { RatingStars } from "@/shared/components/rating-stars"
 import { ResponsiveLayout } from "@/shared/components/responsive-layout"
 import { SECTION_SPACING } from "@/shared/constants/spacing"
 import { formatRating } from "@/shared/utils/rating-utils"
-import { formatRelativeDate } from "@/shared/utils/dates"
 import { HomepageReviewCard } from "@/modules/reviews/components/homepage-review-card"
 
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types"
@@ -43,11 +42,6 @@ export function ReviewsSection({
 		return null
 	}
 
-	// Pre-compute relative dates on the server to avoid client-side Date() calls
-	const reviewsWithDates = reviews.map((review) => ({
-		review,
-		relativeDate: formatRelativeDate(review.createdAt),
-	}))
 
 	return (
 		<section
@@ -116,13 +110,13 @@ export function ReviewsSection({
 									aria-label="Carrousel d'avis clients"
 								>
 									<CarouselContent className="-ml-4 py-4" showFade>
-										{reviewsWithDates.map(({ review, relativeDate }, index) => (
+										{reviews.map((review, index) => (
 											<CarouselItem
 												key={review.id}
 												index={index}
 												className="pl-4 basis-[clamp(260px,80vw,340px)]"
 											>
-												<HomepageReviewCard review={review} relativeDate={relativeDate} className="h-full" />
+												<HomepageReviewCard review={review} className="h-full" />
 											</CarouselItem>
 										))}
 									</CarouselContent>
@@ -140,8 +134,8 @@ export function ReviewsSection({
 							once={true}
 							disableOnTouch
 						>
-							{reviewsWithDates.map(({ review, relativeDate }) => (
-								<HomepageReviewCard key={review.id} review={review} relativeDate={relativeDate} />
+							{reviews.map((review) => (
+								<HomepageReviewCard key={review.id} review={review} />
 							))}
 						</Stagger>
 					}

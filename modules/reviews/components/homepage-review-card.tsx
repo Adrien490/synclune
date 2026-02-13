@@ -6,21 +6,21 @@ import { Badge } from "@/shared/components/ui/badge"
 import { CardContent } from "@/shared/components/ui/card"
 import { RatingStars } from "@/shared/components/rating-stars"
 import { cn } from "@/shared/utils/cn"
+import { RelativeDate } from "@/shared/components/relative-date"
 
 import type { ReviewHomepage } from "../types/review.types"
 
 interface HomepageReviewCardProps {
 	review: ReviewHomepage
-	/** Pre-computed relative date string (e.g. "Il y a 3 jours") */
-	relativeDate: string
 	className?: string
 }
 
 /**
  * Simplified review card for homepage social proof section.
- * Server component — relative date is pre-computed by the parent.
+ * Relative date is computed on the client via RelativeDate to avoid
+ * new Date() during prerendering.
  */
-export function HomepageReviewCard({ review, relativeDate, className }: HomepageReviewCardProps) {
+export function HomepageReviewCard({ review, className }: HomepageReviewCardProps) {
 	const productImage = review.product.skus[0]?.images[0] ?? null
 
 	return (
@@ -53,9 +53,7 @@ export function HomepageReviewCard({ review, relativeDate, className }: Homepage
 					</div>
 					<div className="flex items-center gap-2 mt-0.5">
 						<RatingStars rating={review.rating} size="sm" />
-						<span className="text-xs text-muted-foreground">
-							{relativeDate}
-						</span>
+						<RelativeDate date={review.createdAt} className="text-xs text-muted-foreground" />
 					</div>
 				</div>
 
