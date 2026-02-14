@@ -1,16 +1,11 @@
-"use client"
+import { ParticleBackground } from "@/shared/components/animations";
+import { Button } from "@/shared/components/ui/button";
+import Link from "next/link";
 
-import { ParticleBackground } from "@/shared/components/animations"
-import { Button } from "@/shared/components/ui/button"
-import type { ErrorPageProps } from "@/shared/types/error.types"
-import Link from "next/link"
-
-export default function ProductError({ error, reset }: ErrorPageProps) {
+export default function ProductNotFound() {
 	return (
 		<main
 			className="relative min-h-screen bg-linear-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center px-4"
-			role="alert"
-			aria-live="assertive"
 		>
 			<ParticleBackground
 				count={6}
@@ -25,29 +20,23 @@ export default function ProductError({ error, reset }: ErrorPageProps) {
 						💎
 					</p>
 					<h1 className="text-3xl md:text-4xl font-display font-semibold text-foreground">
-						Impossible de charger ce produit
+						Ce bijou n'existe plus
 					</h1>
 					<p className="text-lg md:text-xl text-muted-foreground">
-						Ce bijou joue les timides ! Réessayez dans quelques instants ou
-						découvrez nos autres créations.
+						Cette création a peut-être été retirée ou n'est plus disponible.
+						Découvrez nos autres bijoux artisanaux faits main !
 					</p>
 				</div>
 
 				<div className="flex flex-col sm:flex-row gap-4 justify-center">
-					<Button onClick={reset} size="lg">
-						Réessayer
+					<Button asChild size="lg">
+						<Link href="/produits">Découvrir nos créations</Link>
 					</Button>
 					<Button asChild variant="secondary" size="lg">
-						<Link href="/creations">Voir toutes les créations</Link>
+						<Link href="/">Retour à l'accueil</Link>
 					</Button>
 				</div>
-
-				{error.digest && (
-					<p className="text-xs text-muted-foreground/60">
-						Code : {error.digest}
-					</p>
-				)}
 			</div>
 		</main>
-	)
+	);
 }

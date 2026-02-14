@@ -70,6 +70,7 @@ export async function generateProductMetadata({
 		return {
 			title: "Produit non trouvé - Synclune",
 			description: "Ce produit n'existe pas ou n'est plus disponible.",
+			robots: { index: false, follow: false },
 		};
 	}
 

@@ -139,6 +139,10 @@ export default async function ProductPage({
 	// Vérifier si le produit est dans la wishlist (lookup O(1) local)
 	const isInWishlist = wishlistProductIds.has(product.id);
 
+	// Validate ratingFilter bounds (1-5)
+	const parsedRating = urlParams.ratingFilter ? parseInt(urlParams.ratingFilter, 10) : NaN;
+	const ratingFilter = parsedRating >= 1 && parsedRating <= 5 ? parsedRating : undefined;
+
 	return (
 		<div className="min-h-screen relative">
 			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
@@ -202,7 +206,7 @@ export default async function ProductPage({
 								<ProductReviewsSection
 									productId={product.id}
 									productSlug={product.slug}
-									ratingFilter={urlParams.ratingFilter ? parseInt(urlParams.ratingFilter, 10) : undefined}
+									ratingFilter={ratingFilter}
 								/>
 							</Suspense>
 

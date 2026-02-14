@@ -6,14 +6,13 @@ import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
-	SheetFooter,
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ShoppingBag, ShieldCheck, RotateCcw, Package } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import {
 	Empty,
 	EmptyContent,
@@ -23,18 +22,19 @@ import {
 } from "@/shared/components/ui/empty";
 import Link from "next/link";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
-import { AnimatedNumber } from "@/shared/components/animated-number";
 import { CartSheetItemRow } from "./cart-sheet-item-row";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import { CartPriceChangeAlert } from "./cart-price-change-alert";
+import { CartSheetFooter } from "./cart-sheet-footer";
 import type { GetCartReturn } from "../types/cart.types";
-import { hasCartItemIssue } from "../services/cart-item.service";
+import { hasCartItemIssue, getCartItemSubtotal } from "../services/cart-item.service";
 import {
 	CartOptimisticContext,
 	type CartOptimisticAction,
 } from "../contexts/cart-optimistic-context";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
-// Reducer extrait pour éviter la recréation à chaque render
+// Extracted outside component to avoid recreation on each render
 function cartReducer(
 	state: GetCartReturn,
 	action: CartOptimisticAction
@@ -55,6 +55,10 @@ function cartReducer(
 						: item
 				),
 			};
+		default: {
+			const _exhaustiveCheck: never = action;
+			return _exhaustiveCheck;
+		}
 	}
 }
 
@@ -68,7 +72,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 	const shouldReduceMotion = useReducedMotion();
 	const [isPending, startTransition] = useTransition();
 
-	// Optimistic state pour la liste d'items et leurs quantités
+	// Optimistic state for items list and quantities
 	const [optimisticCart, updateOptimisticCart] = useOptimistic(
 		cart,
 		cartReducer
@@ -76,13 +80,13 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 
 	const hasItems = optimisticCart && optimisticCart.items.length > 0;
 
-	// Calculs pour le résumé - basés sur l'état optimiste
+	// Summary calculations based on optimistic state
 	const totalItems = hasItems
 		? optimisticCart.items.reduce((sum, item) => sum + item.quantity, 0)
 		: 0;
 
 	const subtotal = hasItems
-		? optimisticCart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0)
+		? optimisticCart.items.reduce((sum, item) => sum + getCartItemSubtotal(item), 0)
 		: 0;
 
 	const itemsWithIssues = hasItems
@@ -90,7 +94,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 		: [];
 	const hasStockIssues = itemsWithIssues.length > 0;
 
-	// Valeur du contexte optimiste
+	// Optimistic context value
 	const cartOptimisticValue = {
 		updateOptimisticCart,
 		isPending,
@@ -108,8 +112,6 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 							Mon panier
 							{hasItems && (
 								<span
-									aria-live="polite"
-									aria-atomic="true"
 									className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
 								>
 									{" "}({totalItems})
@@ -121,7 +123,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 						</SheetDescription>
 					</SheetHeader>
 
-					{/* Live region pour les lecteurs d'écran */}
+					{/* Screen reader live region */}
 					<div aria-live="polite" aria-atomic="true" className="sr-only">
 						{hasItems
 							? `${totalItems} article${totalItems > 1 ? "s" : ""} dans le panier, sous-total ${formatEuro(subtotal)}`
@@ -160,7 +162,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 						</div>
 					) : (
 						<>
-							{/* Alertes critiques - toujours visibles */}
+							{/* Critical alerts - always visible */}
 							{hasStockIssues && (
 								<div
 									id="stock-issues-alert"
@@ -212,12 +214,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 													transition={
 														shouldReduceMotion
 															? { duration: 0 }
-															: {
-																	type: "spring",
-																	stiffness: 400,
-																	damping: 30,
-																	mass: 1,
-																}
+															: MOTION_CONFIG.spring.list
 													}
 													className="overflow-hidden origin-top"
 												>
@@ -229,67 +226,13 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 								</ScrollFade>
 							</div>
 
-							<SheetFooter className="px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
-								<div className="w-full space-y-2">
-									{/* Total */}
-									<div className="flex justify-between items-center">
-										<span className="font-semibold">
-											Sous-total ({totalItems} article{totalItems > 1 ? "s" : ""})
-										</span>
-										<span
-											aria-busy={isPending}
-											aria-live="polite"
-											className="tabular-nums font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse"
-										>
-											<AnimatedNumber value={subtotal} formatter={formatEuro} />
-										</span>
-									</div>
-
-									{/* CTA principal */}
-									{hasStockIssues ? (
-										<Button
-											size="lg"
-											className="w-full"
-											disabled
-											aria-disabled="true"
-											aria-describedby="stock-issues-alert"
-										>
-											Passer commande
-										</Button>
-									) : (
-										<Button
-											asChild
-											size="lg"
-											className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-										>
-											<Link href="/paiement" onClick={close}>Passer commande</Link>
-										</Button>
-									)}
-
-									{/* Lien secondaire discret */}
-									<div className="text-center">
-										<button
-											type="button"
-											onClick={close}
-											className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-										>
-											Continuer mes achats
-										</button>
-									</div>
-
-									{/* Trust badges - single inline line */}
-									<div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-										<ShieldCheck className="size-3 text-green-600 shrink-0" />
-										<span>Paiement sécurisé</span>
-										<span aria-hidden="true">·</span>
-										<RotateCcw className="size-3 text-blue-600 shrink-0" />
-										<span>Retours 14j</span>
-										<span aria-hidden="true">·</span>
-										<Package className="size-3 shrink-0" />
-										<span>Suivi colis</span>
-									</div>
-								</div>
-							</SheetFooter>
+							<CartSheetFooter
+								totalItems={totalItems}
+								subtotal={subtotal}
+								isPending={isPending}
+								hasStockIssues={hasStockIssues}
+								onClose={close}
+							/>
 						</>
 					)}
 				</SheetContent>

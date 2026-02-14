@@ -6,6 +6,7 @@ import {
 } from "@/shared/lib/pagination";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 
@@ -61,7 +62,19 @@ export async function getUsers(
 			};
 		}
 
-		return await fetchUsers(validatedParams);
+		// Fuzzy search on name/email for typo tolerance
+		let fuzzyIds: string[] | null = null;
+		if (validatedParams.search && validatedParams.search.trim().length >= 3) {
+			fuzzyIds = await fuzzySearchIds(validatedParams.search, {
+				columns: [
+					{ table: "User", column: "name", nullable: true },
+					{ table: "User", column: "email" },
+				],
+				baseCondition: Prisma.sql`AND "User"."deletedAt" IS NULL`,
+			});
+		}
+
+		return await fetchUsers(validatedParams, fuzzyIds);
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			throw new Error("Invalid parameters");
@@ -76,7 +89,8 @@ export async function getUsers(
  * Accès admin uniquement
  */
 async function fetchUsers(
-	params: GetUsersParams
+	params: GetUsersParams,
+	fuzzyIds?: string[] | null
 ): Promise<GetUsersReturn> {
 	"use cache";
 	cacheDashboard(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
@@ -85,7 +99,7 @@ async function fetchUsers(
 		GET_USERS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
 
 	try {
-		const where = buildUserWhereClause(params);
+		const where = buildUserWhereClause(params, fuzzyIds);
 
 		const orderBy: Prisma.UserOrderByWithRelationInput[] = [
 			{

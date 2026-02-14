@@ -120,8 +120,14 @@ export function buildUserFilterConditions(
 	return conditions;
 }
 
+/**
+ * Build the complete WHERE clause for users.
+ * @param params - Query params with search, filters, etc.
+ * @param fuzzyIds - Optional array of user IDs from fuzzy search (OR'd with exact search)
+ */
 export function buildUserWhereClause(
-	params: GetUsersParams
+	params: GetUsersParams,
+	fuzzyIds?: string[] | null
 ): Prisma.UserWhereInput {
 	const whereClause: Prisma.UserWhereInput = {
 		// Soft delete: exclude deleted users unless includeDeleted is set
@@ -132,7 +138,7 @@ export function buildUserWhereClause(
 
 	if (typeof params.search === "string" && params.search.trim()) {
 		const searchTerm = params.search.trim();
-		whereClause.OR = [
+		const exactConditions: Prisma.UserWhereInput[] = [
 			{
 				name: {
 					contains: searchTerm,
@@ -146,6 +152,18 @@ export function buildUserWhereClause(
 				},
 			},
 		];
+
+		if (fuzzyIds && fuzzyIds.length > 0) {
+			// Combine fuzzy IDs with exact search (OR)
+			andConditions.push({
+				OR: [
+					{ id: { in: fuzzyIds } },
+					...exactConditions,
+				],
+			});
+		} else {
+			whereClause.OR = exactConditions;
+		}
 	}
 
 	const filterConditions = buildUserFilterConditions(filters);

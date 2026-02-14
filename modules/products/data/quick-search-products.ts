@@ -78,6 +78,11 @@ export async function quickSearchProducts(
 		.map((id) => productMap.get(id))
 		.filter((p): p is QuickSearchProduct => p !== undefined)
 
+	// Structured logging for search analytics (picked up by log aggregator)
+	if (totalCount === 0) {
+		console.log(`[SEARCH] zero-result | term="${term}" | suggestion="${spellResult?.term ?? "none"}"`)
+	}
+
 	return {
 		products: orderedProducts,
 		suggestion: spellResult?.term ?? null,

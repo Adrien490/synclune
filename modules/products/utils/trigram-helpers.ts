@@ -5,9 +5,9 @@ import type { PrismaClient } from "@/app/generated/prisma/client";
 // ============================================================================
 
 /**
- * Type pour une transaction Prisma (ou PrismaClient)
- * Exclut les méthodes de connexion/transaction car elles ne sont pas disponibles
- * dans le contexte d'une transaction interactive
+ * Type for a Prisma transaction (or PrismaClient).
+ * Excludes connection/transaction methods unavailable
+ * within an interactive transaction context.
  */
 type PrismaTransaction = Omit<
 	PrismaClient,
@@ -15,20 +15,20 @@ type PrismaTransaction = Omit<
 >;
 
 /**
- * Configure le seuil de similarité pg_trgm pour une transaction
+ * Set the pg_trgm similarity threshold for a transaction.
  *
- * Utilise SET LOCAL pour isoler le changement à la transaction courante,
- * évitant ainsi d'affecter d'autres requêtes avec le connection pooling.
+ * Uses SET LOCAL to isolate the change to the current transaction,
+ * preventing interference with other queries via connection pooling.
  *
  * SECURITY NOTE:
- * - La valeur est convertie en Number() (pas de string injection)
- * - Math.max(0, Math.min(1, ...)) borne la valeur entre 0 et 1
- * - Number.isFinite() rejette NaN et Infinity
- * - Seul un float valide entre 0.0 et 1.0 peut être interpolé
+ * - Value is converted via Number() (no string injection)
+ * - Math.max(0, Math.min(1, ...)) clamps the value between 0 and 1
+ * - Number.isFinite() rejects NaN and Infinity
+ * - Only a valid float between 0.0 and 1.0 can be interpolated
  *
- * @param tx - Client Prisma ou transaction
- * @param threshold - Seuil de similarité (0.0 - 1.0)
- * @throws Error si le threshold n'est pas un nombre valide
+ * @param tx - Prisma client or transaction
+ * @param threshold - Similarity threshold (0.0 - 1.0)
+ * @throws Error if threshold is not a valid number
  */
 export async function setTrigramThreshold(
 	tx: PrismaTransaction,

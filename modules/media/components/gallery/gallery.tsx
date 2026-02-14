@@ -17,7 +17,6 @@ import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.s
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { GalleryCounter } from "@/shared/components/gallery/counter";
 import { GalleryNavigation } from "@/shared/components/gallery/navigation";
-import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
 import { useLightbox } from "@/shared/hooks";
 import dynamic from "next/dynamic";
 import { GallerySlide } from "./slide";
@@ -274,8 +273,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 		);
 	}
 
-	const currentMedia = images[current];
-
 	return (
 		<>
 			<div
@@ -337,12 +334,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 							{images.length > 1 && (
 								<GalleryCounter current={current} total={images.length} />
 							)}
-
-							{/* Bouton zoom - Desktop uniquement */}
-							{currentMedia?.mediaType === "IMAGE" && (
-								<GalleryZoomButton onOpen={open} />
-							)}
-
 
 							{/* Embla viewport */}
 							<div ref={emblaRef} className="absolute inset-0 overflow-hidden">

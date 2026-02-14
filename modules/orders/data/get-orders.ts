@@ -4,6 +4,7 @@ import {
 	processCursorResults,
 } from "@/shared/lib/pagination";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { z } from "zod";
@@ -57,7 +58,20 @@ export async function getOrders(
 			);
 		}
 
-		return await fetchOrders(validation.data);
+		// Fuzzy search on customer name/email for typo tolerance
+		const validatedParams = validation.data;
+		let fuzzyIds: string[] | null = null;
+		if (validatedParams.search && validatedParams.search.trim().length >= 3) {
+			fuzzyIds = await fuzzySearchIds(validatedParams.search, {
+				columns: [
+					{ table: "Order", column: "customerName" },
+					{ table: "Order", column: "customerEmail" },
+				],
+				baseCondition: Prisma.sql`AND "Order"."deletedAt" IS NULL`,
+			});
+		}
+
+		return await fetchOrders(validatedParams, fuzzyIds);
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			throw new Error("Invalid parameters");
@@ -71,13 +85,14 @@ export async function getOrders(
  * Récupère les commandes depuis la DB avec cache
  */
 async function fetchOrders(
-	params: GetOrdersParams
+	params: GetOrdersParams,
+	fuzzyIds?: string[] | null
 ): Promise<GetOrdersReturn> {
 	"use cache";
 	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 
 	try {
-		const where = buildOrderWhereClause(params);
+		const where = buildOrderWhereClause(params, fuzzyIds);
 		const direction = getSortDirection(params.sortBy);
 
 		const orderBy: Prisma.OrderOrderByWithRelationInput[] =

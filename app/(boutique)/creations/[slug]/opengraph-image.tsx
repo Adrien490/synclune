@@ -11,8 +11,8 @@ export const size = {
 export const contentType = "image/png";
 
 /**
- * Génère dynamiquement une image Open Graph pour chaque produit
- * Utilisé pour les partages sur réseaux sociaux (Twitter, Facebook, LinkedIn, etc.)
+ * Generates a dynamic Open Graph image for each product.
+ * Displays the product photo alongside title, price, and branding.
  */
 export default async function Image({
 	params,
@@ -22,7 +22,7 @@ export default async function Image({
 	const { slug } = await params;
 	const product = await getProductBySlug({ slug });
 
-	// Fallback si produit non trouvé
+	// Fallback if product not found
 	if (!product) {
 		return new ImageResponse(
 			(
@@ -46,11 +46,15 @@ export default async function Image({
 		);
 	}
 
-	// ✅ SIMPLE : product.skus[0] = SKU principal
 	const primarySku = product.skus[0];
 	const price = primarySku?.priceInclTax
 		? `${(primarySku.priceInclTax / 100).toFixed(2)}€`
 		: null;
+
+	// Get the main product image URL
+	const mainImage =
+		primarySku?.images?.find((img) => img.isPrimary)?.url ||
+		primarySku?.images?.[0]?.url;
 
 	return new ImageResponse(
 		(
@@ -60,88 +64,122 @@ export default async function Image({
 					width: "100%",
 					height: "100%",
 					display: "flex",
-					flexDirection: "column",
-					alignItems: "center",
-					justifyContent: "center",
-					padding: "80px",
 					fontFamily: "sans-serif",
 					color: "white",
 				}}
 			>
-				{/* Badge type de produit */}
-				{product.type && (
+				{/* Product image - left side */}
+				{mainImage ? (
 					<div
 						style={{
-							fontSize: 28,
-							fontWeight: 500,
-							textTransform: "uppercase",
-							letterSpacing: "0.1em",
-							marginBottom: "20px",
-							opacity: 0.9,
+							width: "50%",
+							height: "100%",
 							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							padding: "40px",
 						}}
 					>
-						{product.type.label}
+						{/* eslint-disable-next-line @next/next/no-img-element */}
+						<img
+							src={mainImage}
+							alt={product.title}
+							width={460}
+							height={460}
+							style={{
+								objectFit: "contain",
+								borderRadius: "16px",
+							}}
+						/>
 					</div>
-				)}
+				) : null}
 
-				{/* Titre du produit */}
+				{/* Text content - right side (or centered if no image) */}
 				<div
 					style={{
-						fontSize: 72,
-						fontWeight: 700,
-						textAlign: "center",
-						marginBottom: "30px",
-						lineHeight: 1.2,
-						maxWidth: "900px",
-						display: "flex",
-					}}
-				>
-					{product.title}
-				</div>
-
-				{/* Description courte ou prix */}
-				{price && (
-					<div
-						style={{
-							fontSize: 48,
-							fontWeight: 600,
-							marginBottom: "40px",
-							display: "flex",
-						}}
-					>
-						{price}
-					</div>
-				)}
-
-				{/* Marque et tagline */}
-				<div
-					style={{
+						width: mainImage ? "50%" : "100%",
+						height: "100%",
 						display: "flex",
 						flexDirection: "column",
-						alignItems: "center",
-						gap: "10px",
+						alignItems: mainImage ? "flex-start" : "center",
+						justifyContent: "center",
+						padding: mainImage ? "60px 60px 60px 20px" : "80px",
+						textAlign: mainImage ? "left" : "center",
 					}}
 				>
+					{/* Product type badge */}
+					{product.type && (
+						<div
+							style={{
+								fontSize: 24,
+								fontWeight: 500,
+								textTransform: "uppercase",
+								letterSpacing: "0.1em",
+								marginBottom: "16px",
+								opacity: 0.9,
+								display: "flex",
+							}}
+						>
+							{product.type.label}
+						</div>
+					)}
+
+					{/* Product title */}
 					<div
 						style={{
-							fontSize: 36,
+							fontSize: mainImage ? 48 : 72,
 							fontWeight: 700,
-							letterSpacing: "0.05em",
+							marginBottom: "24px",
+							lineHeight: 1.2,
+							maxWidth: "500px",
 							display: "flex",
 						}}
 					>
-						Synclune
+						{product.title}
 					</div>
+
+					{/* Price */}
+					{price && (
+						<div
+							style={{
+								fontSize: 40,
+								fontWeight: 600,
+								marginBottom: "32px",
+								display: "flex",
+							}}
+						>
+							{price}
+						</div>
+					)}
+
+					{/* Brand */}
 					<div
 						style={{
-							fontSize: 24,
-							fontWeight: 400,
-							opacity: 0.9,
 							display: "flex",
+							flexDirection: "column",
+							gap: "6px",
 						}}
 					>
-						Créations artisanales faites main à Nantes
+						<div
+							style={{
+								fontSize: 28,
+								fontWeight: 700,
+								letterSpacing: "0.05em",
+								display: "flex",
+							}}
+						>
+							Synclune
+						</div>
+						<div
+							style={{
+								fontSize: 18,
+								fontWeight: 400,
+								opacity: 0.9,
+								display: "flex",
+							}}
+						>
+							Créations artisanales faites main
+						</div>
 					</div>
 				</div>
 			</div>

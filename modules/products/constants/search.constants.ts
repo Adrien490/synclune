@@ -3,62 +3,62 @@
 // ============================================================================
 
 /**
- * Seuil de similarité trigram (0.0 - 1.0)
- * Plus bas = plus tolérant aux fautes, plus haut = plus strict
- * 0.3 est un bon équilibre pour la tolérance aux fautes de frappe
+ * Trigram similarity threshold (0.0 - 1.0).
+ * Lower = more tolerant of typos, higher = stricter.
+ * 0.3 is a good balance for typo tolerance.
  */
 export const FUZZY_SIMILARITY_THRESHOLD = 0.3;
 
 /**
- * Longueur minimale pour activer la recherche fuzzy
- * Les trigrams nécessitent au moins 3 caractères pour être efficaces
- * En dessous, on utilise la recherche exacte
+ * Minimum length to activate fuzzy search.
+ * Trigrams need at least 3 characters to be effective.
+ * Below this, exact search is used instead.
  */
 export const FUZZY_MIN_LENGTH = 3;
 
 /**
- * Longueur maximale du terme de recherche
- * pg_trgm doit calculer les trigrammes pour chaque caractère
- * Protège contre les attaques DoS avec des termes très longs
+ * Maximum search term length.
+ * pg_trgm must compute trigrams for each character.
+ * Protects against DoS attacks with very long terms.
  */
 export const MAX_SEARCH_LENGTH = 100;
 
 /**
- * Limite de résultats pour la recherche fuzzy
- * Correspond à GET_PRODUCTS_MAX_RESULTS_PER_PAGE
+ * Result limit for fuzzy search.
+ * Matches GET_PRODUCTS_MAX_RESULTS_PER_PAGE.
  */
 export const FUZZY_MAX_RESULTS = 200;
 
 /**
- * Nombre maximum de mots dans un terme de recherche multi-mots
- * Limite la complexité de la requête SQL générée
+ * Maximum number of words in a multi-word search term.
+ * Limits the complexity of the generated SQL query.
  */
 export const FUZZY_MAX_WORDS = 5;
 
 /**
- * Timeout pour les requêtes fuzzy (ms)
- * Évite les requêtes longues sur gros catalogues
+ * Timeout for fuzzy search queries (ms).
+ * Prevents long-running queries on large catalogs.
  */
 export const FUZZY_TIMEOUT_MS = 2000;
 
 /**
- * Timeout pour les suggestions orthographiques (ms)
- * Moins critique que la recherche principale
+ * Timeout for spell suggestions (ms).
+ * Less critical than the main search.
  */
 export const SPELL_SUGGESTION_TIMEOUT_MS = 1500;
 
 /**
- * Poids de pertinence par type de correspondance
- * Utilisés pour trier les résultats par pertinence
+ * Relevance weights by match type.
+ * Used to sort results by relevance.
  */
 export const RELEVANCE_WEIGHTS = {
-	/** Match exact (substring) dans le titre - priorité maximale */
+	/** Exact match (substring) in title — maximum priority */
 	exactTitle: 10,
-	/** Match fuzzy (trigram) dans le titre */
+	/** Fuzzy match (trigram) in title */
 	fuzzyTitle: 5,
-	/** Match exact (substring) dans la description */
+	/** Exact match (substring) in description */
 	exactDescription: 3,
-	/** Match fuzzy (trigram) dans la description */
+	/** Fuzzy match (trigram) in description */
 	fuzzyDescription: 2,
 } as const;
 
@@ -67,12 +67,12 @@ export const RELEVANCE_WEIGHTS = {
 // ============================================================================
 
 /**
- * Limites de requêtes pour la recherche
- * Protège contre le scraping et les abus
+ * Search request rate limits.
+ * Protects against scraping and abuse.
  */
 export const SEARCH_RATE_LIMITS = {
-	/** Limite pour utilisateurs authentifiés */
+	/** Limit for authenticated users */
 	authenticated: { limit: 30, windowMs: 60_000 },
-	/** Limite pour visiteurs non authentifiés */
+	/** Limit for unauthenticated visitors */
 	guest: { limit: 15, windowMs: 60_000 },
 } as const;

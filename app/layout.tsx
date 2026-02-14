@@ -2,6 +2,7 @@ import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton
 import { getCart } from "@/modules/cart/data/get-cart";
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { CookieBanner } from "@/shared/components/cookie-banner";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
@@ -62,9 +63,11 @@ export default async function RootLayout({
 							<ConditionalAnalytics />
 							{children}
 
-							<Suspense fallback={<CartSheetSkeleton />}>
-								<CartSheet cartPromise={cartPromise} />
-							</Suspense>
+							<ErrorBoundary fallback={null}>
+								<Suspense fallback={<CartSheetSkeleton />}>
+									<CartSheet cartPromise={cartPromise} />
+								</Suspense>
+							</ErrorBoundary>
 							<Suspense fallback={null}>
 								<SkuSelectorDialog cartPromise={cartPromise} />
 							</Suspense>

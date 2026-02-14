@@ -64,6 +64,14 @@ export const MOTION_CONFIG = {
 			damping: 25,
 			mass: 0.5,
 		},
+
+		// Smooth list item transitions (cart, lists)
+		list: {
+			type: "spring" as const,
+			stiffness: 400,
+			damping: 30,
+			mass: 1,
+		},
 	},
 
 	// Default distances and transforms

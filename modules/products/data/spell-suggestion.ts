@@ -12,14 +12,14 @@ import { setTrigramThreshold } from "../utils/trigram-helpers";
 // ============================================================================
 
 /**
- * Seuil minimum de similarité pour proposer une suggestion
- * Plus bas = suggestions plus larges, plus haut = suggestions plus strictes
+ * Minimum similarity threshold for suggesting a correction.
+ * Lower = broader suggestions, higher = stricter suggestions.
  */
 const SUGGESTION_MIN_SIMILARITY = 0.2;
 
 /**
- * Nombre minimum de résultats avant de proposer une suggestion
- * Si on a plus de ce nombre de résultats, pas besoin de suggérer
+ * Minimum number of results before suggesting a correction.
+ * If we have more results than this, no suggestion needed.
  */
 export const SUGGESTION_THRESHOLD_RESULTS = 3;
 
@@ -28,16 +28,16 @@ export const SUGGESTION_THRESHOLD_RESULTS = 3;
 // ============================================================================
 
 type SpellSuggestion = {
-	/** Le terme suggéré */
+	/** The suggested term */
 	term: string;
-	/** Score de similarité (0-1) */
+	/** Similarity score (0-1) */
 	similarity: number;
-	/** Source de la suggestion */
+	/** Source of the suggestion */
 	source: "product" | "collection" | "color" | "material";
 };
 
 type SuggestionOptions = {
-	/** Statut des produits à considérer */
+	/** Product status to consider */
 	status?: ProductStatus;
 };
 
@@ -46,19 +46,19 @@ type SuggestionOptions = {
 // ============================================================================
 
 /**
- * Trouve une suggestion de correction orthographique pour un terme de recherche
+ * Find a spell correction suggestion for a search term.
  *
- * Utilise pg_trgm pour trouver le terme le plus similaire parmi:
- * - Titres de produits
- * - Noms de collections
- * - Noms de couleurs
- * - Noms de matériaux
+ * Uses pg_trgm to find the most similar term among:
+ * - Product titles
+ * - Collection names
+ * - Color names
+ * - Material names
  *
  * Uses immutable_unaccent() for accent-insensitive matching.
  *
- * @param searchTerm - Terme de recherche original
- * @param options - Options de filtrage
- * @returns La meilleure suggestion ou null si aucune trouvée
+ * @param searchTerm - Original search term
+ * @param options - Filter options
+ * @returns Best suggestion or null if none found
  */
 export async function getSpellSuggestion(
 	searchTerm: string,
@@ -72,22 +72,22 @@ export async function getSpellSuggestion(
 	if (term.length > MAX_SEARCH_LENGTH) return null;
 
 	try {
-		// Construire la condition de statut
+		// Build status condition
 		const statusCondition = status
 			? Prisma.sql`AND p.status = ${status}::"ProductStatus"`
 			: Prisma.empty;
 
-		// Transaction avec SET LOCAL pour isoler le seuil de similarité
-		// SET LOCAL scope le changement à la transaction courante,
-		// évitant d'affecter d'autres requêtes avec le connection pooling
+		// Transaction with SET LOCAL to isolate the similarity threshold.
+		// SET LOCAL scopes the change to the current transaction,
+		// avoiding interference with other queries via connection pooling.
 		const queryPromise = prisma.$transaction(async (tx) => {
 			await setTrigramThreshold(tx, SUGGESTION_MIN_SIMILARITY);
 
-			// Recherche unifiée dans toutes les sources avec UNION ALL
-			// Retourne le terme le plus similaire avec sa source
+			// Unified search across all sources with UNION ALL.
+			// Returns the most similar term with its source.
 			return tx.$queryRaw<SpellSuggestion[]>`
 				WITH suggestions AS (
-					-- Titres de produits
+					-- Product titles
 					SELECT DISTINCT
 						p.title as term,
 						similarity(immutable_unaccent(LOWER(p.title)), immutable_unaccent(${term})) as similarity,
@@ -101,7 +101,7 @@ export async function getSpellSuggestion(
 
 					UNION ALL
 
-					-- Noms de collections
+					-- Collection names
 					SELECT DISTINCT
 						c.name as term,
 						similarity(immutable_unaccent(LOWER(c.name)), immutable_unaccent(${term})) as similarity,
@@ -114,7 +114,7 @@ export async function getSpellSuggestion(
 
 					UNION ALL
 
-					-- Noms de couleurs
+					-- Color names
 					SELECT DISTINCT
 						col.name as term,
 						similarity(immutable_unaccent(LOWER(col.name)), immutable_unaccent(${term})) as similarity,
@@ -127,7 +127,7 @@ export async function getSpellSuggestion(
 
 					UNION ALL
 
-					-- Noms de matériaux
+					-- Material names
 					SELECT DISTINCT
 						m.name as term,
 						similarity(immutable_unaccent(LOWER(m.name)), immutable_unaccent(${term})) as similarity,
@@ -145,7 +145,7 @@ export async function getSpellSuggestion(
 			`;
 		});
 
-		// Timeout pour éviter les requêtes longues
+		// Timeout to avoid long-running queries
 		const timeoutPromise = new Promise<never>((_, reject) =>
 			setTimeout(
 				() => reject(new Error("Spell suggestion timeout")),
@@ -159,8 +159,8 @@ export async function getSpellSuggestion(
 
 		const best = results[0];
 
-		// Vérifier que la suggestion est suffisamment différente mais pas trop
-		// Éviter de suggérer le même mot avec une casse différente
+		// Ensure suggestion is sufficiently different.
+		// Avoid suggesting the same word with different casing.
 		if (best.term.toLowerCase() === term) return null;
 
 		return {

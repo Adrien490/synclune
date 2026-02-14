@@ -4,6 +4,7 @@ import type { GetProductsParams, ProductFilters } from "../types/product.types";
 import type { SearchResult } from "../types/product-services.types";
 
 import { FUZZY_MIN_LENGTH } from "../constants/search.constants";
+import { SEARCH_SYNONYMS } from "../constants/search-synonyms";
 import { fuzzySearchProductIds } from "../data/fuzzy-search";
 import { splitSearchTerms } from "../utils/search-helpers";
 
@@ -74,27 +75,36 @@ export function buildExactSearchConditions(search: string): SearchResult {
 }
 
 /**
- * Build OR conditions for a single word across all fields (title, description, related)
+ * Get word variants (original + synonyms) for a search word.
+ */
+function getWordVariants(word: string): string[] {
+	const synonyms = SEARCH_SYNONYMS.get(word.toLowerCase());
+	return synonyms ? [word, ...synonyms] : [word];
+}
+
+/**
+ * Build OR conditions for a single word (+ synonyms) across all fields (title, description, related)
  */
 function buildPerWordOrConditions(
 	word: string
 ): Prisma.ProductWhereInput {
+	const variants = getWordVariants(word);
 	return {
-		OR: [
+		OR: variants.flatMap((variant) => [
 			{
 				title: {
-					contains: word,
+					contains: variant,
 					mode: Prisma.QueryMode.insensitive,
 				},
 			},
 			{
 				description: {
-					contains: word,
+					contains: variant,
 					mode: Prisma.QueryMode.insensitive,
 				},
 			},
-			...buildPerWordRelatedConditions(word),
-		],
+			...buildPerWordRelatedConditions(variant),
+		]),
 	};
 }
 
@@ -190,16 +200,20 @@ function buildFullExactSearchConditions(
  * Recherche exacte sur les champs liés (SKU, couleurs, matériaux, collections)
  * N'inclut PAS title/description (gérés par fuzzy search).
  * AND logic: each word must match at least one related field.
+ * Expanded with synonyms for each word.
  */
 function buildRelatedFieldsSearchConditions(
 	words: string[]
 ): Prisma.ProductWhereInput[] {
 	if (words.length === 0) return [];
 
-	// Each word must match at least one related field
-	return words.map((word) => ({
-		OR: buildPerWordRelatedConditions(word),
-	}));
+	// Each word (+ synonyms) must match at least one related field
+	return words.map((word) => {
+		const variants = getWordVariants(word);
+		return {
+			OR: variants.flatMap(buildPerWordRelatedConditions),
+		};
+	});
 }
 
 export function buildProductFilterConditions(

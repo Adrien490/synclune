@@ -7,6 +7,7 @@ import {
 	FUZZY_TIMEOUT_MS,
 	RELEVANCE_WEIGHTS,
 } from "../constants/search.constants";
+import { SEARCH_SYNONYMS } from "../constants/search-synonyms";
 import { splitSearchTerms } from "../utils/search-helpers";
 import { setTrigramThreshold } from "../utils/trigram-helpers";
 
@@ -15,11 +16,11 @@ import { setTrigramThreshold } from "../utils/trigram-helpers";
 // ============================================================================
 
 type FuzzySearchOptions = {
-	/** Seuil de similarité (défaut: FUZZY_SIMILARITY_THRESHOLD) */
+	/** Similarity threshold (default: FUZZY_SIMILARITY_THRESHOLD) */
 	threshold?: number;
-	/** Nombre max de résultats (défaut: FUZZY_MAX_RESULTS) */
+	/** Max results (default: FUZZY_MAX_RESULTS) */
 	limit?: number;
-	/** Filtrer par statut du produit */
+	/** Filter by product status */
 	status?: ProductStatus;
 };
 
@@ -53,6 +54,21 @@ function buildWordWhereFragment(word: string): Prisma.Sql {
 }
 
 /**
+ * Build a WHERE fragment for a word and its synonyms (OR between variants).
+ * Each variant is checked via ILIKE + trigram similarity.
+ */
+function buildWordGroupWhereFragment(word: string): Prisma.Sql {
+	const synonyms = SEARCH_SYNONYMS.get(word.toLowerCase());
+	if (!synonyms || synonyms.length === 0) {
+		return buildWordWhereFragment(word);
+	}
+
+	const variants = [word, ...synonyms];
+	const fragments = variants.map(buildWordWhereFragment);
+	return Prisma.sql`(${Prisma.join(fragments, " OR ")})`;
+}
+
+/**
  * Build a relevance score fragment for a single word.
  * Returns the best score between title and description matches.
  */
@@ -70,24 +86,39 @@ function buildWordScoreFragment(word: string): Prisma.Sql {
 	)`;
 }
 
+/**
+ * Build a relevance score fragment for a word and its synonyms.
+ * Returns the best score across all variants.
+ */
+function buildWordGroupScoreFragment(word: string): Prisma.Sql {
+	const synonyms = SEARCH_SYNONYMS.get(word.toLowerCase());
+	if (!synonyms || synonyms.length === 0) {
+		return buildWordScoreFragment(word);
+	}
+
+	const variants = [word, ...synonyms];
+	const fragments = variants.map(buildWordScoreFragment);
+	return Prisma.sql`GREATEST(${Prisma.join(fragments, ", ")})`;
+}
+
 // ============================================================================
 // FUZZY SEARCH SERVICE
 // ============================================================================
 
 /**
- * Recherche fuzzy sur title et description avec PostgreSQL pg_trgm
- * Retourne les IDs de produits triés par pertinence (score décroissant)
+ * Fuzzy search on title and description using PostgreSQL pg_trgm.
+ * Returns product IDs sorted by relevance (descending score).
  *
- * Fonctionnement:
- * 1. Le terme est splitté en mots individuels (AND logic)
- * 2. Match exact (ILIKE) a priorité maximale
- * 3. Match fuzzy (similarity) utilisé sinon
- * 4. immutable_unaccent() pour ignorer les accents
- * 5. Les poids de pertinence favorisent: titre exact > titre fuzzy > desc exact > desc fuzzy
+ * How it works:
+ * 1. Search term is split into individual words (AND logic)
+ * 2. Exact match (ILIKE) gets maximum priority
+ * 3. Fuzzy match (similarity) used otherwise
+ * 4. immutable_unaccent() for accent-insensitive matching
+ * 5. Relevance weights favor: exact title > fuzzy title > exact desc > fuzzy desc
  *
- * @param searchTerm - Terme de recherche (min 3 caractères recommandé)
- * @param options - Options de recherche
- * @returns Liste d'IDs de produits triés par pertinence
+ * @param searchTerm - Search term (min 3 characters recommended)
+ * @param options - Search options
+ * @returns Product IDs sorted by relevance
  */
 export async function fuzzySearchProductIds(
 	searchTerm: string,
@@ -104,11 +135,12 @@ export async function fuzzySearchProductIds(
 
 	try {
 		// Build per-word WHERE fragments (AND: every word must match)
-		const whereFragments = words.map(buildWordWhereFragment);
+		// Each word is expanded with synonyms (OR between variants)
+		const whereFragments = words.map(buildWordGroupWhereFragment);
 		const whereClause = Prisma.join(whereFragments, " AND ");
 
 		// Build per-word SCORE fragments (sum of per-word best scores)
-		const scoreFragments = words.map(buildWordScoreFragment);
+		const scoreFragments = words.map(buildWordGroupScoreFragment);
 		const scoreExpr =
 			scoreFragments.length === 1
 				? scoreFragments[0]

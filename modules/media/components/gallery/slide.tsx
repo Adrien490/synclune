@@ -4,12 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
-import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
-import { GALLERY_ZOOM_LEVEL, VIDEO_LOAD_TIMEOUT } from "@/modules/media/constants/gallery.constants";
+import { useReducedMotion } from "@/shared/hooks";
+import { MAIN_IMAGE_QUALITY, GALLERY_MAIN_SIZES } from "@/modules/media/constants/image-config.constants";
+import { VIDEO_LOAD_TIMEOUT } from "@/modules/media/constants/gallery.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
-import { GalleryHoverZoom } from "@/shared/components/gallery/hover-zoom";
-import { GalleryPinchZoom } from "./pinch-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
 interface GallerySlideProps {
@@ -90,10 +88,6 @@ export function GallerySlide({
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [videoState, setVideoState] = useState<VideoState>("loading");
 	const prefersReduced = useReducedMotion();
-
-	// Desktop detection for conditional rendering (avoids double image in DOM)
-	// Breakpoint md = 768px (consistent with thumbnails grid)
-	const isDesktop = useMediaQuery("(min-width: 768px)");
 
 	// Autoplay video when active (respects prefers-reduced-motion)
 	useEffect(() => {
@@ -193,44 +187,28 @@ export function GallerySlide({
 		media.alt ||
 		PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType);
 
-	// Image: conditional rendering desktop/mobile
-	// Desktop → Hover zoom
-	// Mobile → Native pinch-zoom
-	if (isDesktop) {
-		return (
-			<div
-				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
-				onClick={onOpen}
-				role="button"
-				tabIndex={0}
-				onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
-				aria-label="Ouvrir l'image en plein écran"
-			>
-				<GalleryHoverZoom
-					src={media.url}
-					alt={alt}
-					blurDataUrl={media.blurDataUrl}
-					zoomLevel={GALLERY_ZOOM_LEVEL}
-					preload={index === 0}
-					quality={MAIN_IMAGE_QUALITY}
-				/>
-			</div>
-		);
-	}
-
-	// Mobile: Native pinch-zoom (handles its own onClick via onTap)
+	// Image: click opens lightbox (zoom handled by lightbox)
 	return (
 		<div
-			className="flex-[0_0_100%] min-w-0 h-full relative"
-			role="presentation"
+			className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
+			onClick={onOpen}
+			role="button"
+			tabIndex={0}
+			onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
+			aria-label="Ouvrir l'image en plein écran"
 		>
-			<GalleryPinchZoom
+			<Image
 				src={media.url}
 				alt={alt}
-				blurDataUrl={media.blurDataUrl}
-				isActive={isActive}
-				onTap={onOpen}
+				fill
+				className="object-cover"
 				preload={index === 0}
+				loading={index === 0 ? undefined : "lazy"}
+				quality={MAIN_IMAGE_QUALITY}
+				sizes={GALLERY_MAIN_SIZES}
+				placeholder={media.blurDataUrl ? "blur" : "empty"}
+				blurDataURL={media.blurDataUrl}
+				draggable={false}
 			/>
 		</div>
 	);

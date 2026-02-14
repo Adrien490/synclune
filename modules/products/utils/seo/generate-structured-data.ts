@@ -149,6 +149,7 @@ export function generateStructuredData({
 					priceCurrency: "EUR",
 					offerCount: activeSkuCount,
 					availability,
+					itemCondition: "https://schema.org/NewCondition",
 					url: `${SITE_URL}/creations/${product.slug}`,
 					seller: {
 						"@type": "Organization",
@@ -162,6 +163,7 @@ export function generateStructuredData({
 					price,
 					priceCurrency: "EUR",
 					availability,
+					itemCondition: "https://schema.org/NewCondition",
 					url: `${SITE_URL}/creations/${product.slug}`,
 					seller: {
 						"@type": "Organization",

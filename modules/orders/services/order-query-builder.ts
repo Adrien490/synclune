@@ -115,8 +115,14 @@ export function buildOrderFilterConditions(
 	return conditions;
 }
 
+/**
+ * Build the complete WHERE clause for orders.
+ * @param params - Query params with search, filters, etc.
+ * @param fuzzyIds - Optional array of order IDs from fuzzy search (OR'd with exact search)
+ */
 export function buildOrderWhereClause(
-	params: GetOrdersParams
+	params: GetOrdersParams,
+	fuzzyIds?: string[] | null
 ): Prisma.OrderWhereInput {
 	const whereClause: Prisma.OrderWhereInput = {
 		// Soft delete: exclure les commandes supprimées par défaut
@@ -131,9 +137,20 @@ export function buildOrderWhereClause(
 	andConditions.push(filterConditions);
 
 	if (params.search) {
-		const searchConditions = buildOrderSearchConditions(params.search);
-		if (searchConditions) {
-			andConditions.push(searchConditions);
+		const exactConditions = buildOrderSearchConditions(params.search);
+
+		if (fuzzyIds && fuzzyIds.length > 0 && exactConditions) {
+			// Combine fuzzy IDs with exact search (OR)
+			andConditions.push({
+				OR: [
+					{ id: { in: fuzzyIds } },
+					exactConditions,
+				],
+			});
+		} else if (fuzzyIds && fuzzyIds.length > 0) {
+			andConditions.push({ id: { in: fuzzyIds } });
+		} else if (exactConditions) {
+			andConditions.push(exactConditions);
 		}
 	}
 
