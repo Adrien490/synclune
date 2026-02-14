@@ -1033,13 +1033,8 @@ function SkuSelectorFormContent({
 		? Math.min(availableToAdd, MAX_QUANTITY_PER_ORDER)
 		: MAX_QUANTITY_PER_ORDER;
 
-	// m1: Clamp quantity when maxQuantity decreases (e.g. SKU change)
+	// m1: Clamp quantity inline - the hidden input and all UI already use this clamped value
 	const quantity = Math.min(values.quantity, maxQuantity || 1);
-	useEffect(() => {
-		if (values.quantity > maxQuantity && maxQuantity > 0) {
-			onQuantityChange(maxQuantity);
-		}
-	}, [values.quantity, maxQuantity, onQuantityChange]);
 
 	return (
 		<>

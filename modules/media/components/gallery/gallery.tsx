@@ -2,7 +2,7 @@
 
 import useEmblaCarousel from "embla-carousel-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useEffectEvent, useRef } from "react";
+import { Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { useReducedMotion } from "@/shared/hooks";
@@ -146,16 +146,15 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	// Connection-aware prefetch range with intelligent fallback
 	// Safari/Firefox ne supportent pas navigator.connection
-	// Computed once on mount to avoid DOM access on every render
-	const [prefetchRange, setPrefetchRange] = useState(PREFETCH_RANGE_FAST);
-	useEffect(() => {
-		const connection = (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType;
-		if (connection === "slow-2g" || connection === "2g") {
-			setPrefetchRange(PREFETCH_RANGE_SLOW);
-		} else if (window.innerWidth < 768) {
-			setPrefetchRange(PREFETCH_RANGE_SLOW);
-		}
-	}, []);
+	// Lazy initializer: computed once on first client render, no effect needed
+	const [prefetchRange] = useState(() => {
+		if (typeof window === "undefined") return PREFETCH_RANGE_FAST;
+		const connection = (navigator as Navigator & { connection?: { effectiveType?: string } })
+			.connection?.effectiveType;
+		if (connection === "slow-2g" || connection === "2g") return PREFETCH_RANGE_SLOW;
+		if (window.innerWidth < 768) return PREFETCH_RANGE_SLOW;
+		return PREFETCH_RANGE_FAST;
+	});
 
 	// Intelligent prefetch of adjacent images (Next.js 16 + React 19)
 	// Extract URLs to avoid recreating the array on every render

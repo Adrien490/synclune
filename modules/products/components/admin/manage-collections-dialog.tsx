@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
@@ -37,7 +37,7 @@ export function ManageCollectionsDialog() {
 	);
 	const [collections, setCollections] = useState<Collection[]>([]);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-	const [isLoading, setIsLoading] = useState(false);
+	const [isLoadingDataData, startLoadTransition] = useTransition();
 
 	const { update, isPending } = useUpdateProductCollections({
 		onSuccess: () => {
@@ -48,18 +48,18 @@ export function ManageCollectionsDialog() {
 	// Load collections and current product collections when dialog opens
 	useEffect(() => {
 		if (isOpen && data) {
-			setIsLoading(true);
-			Promise.all([getAllCollections(), getProductCollections(data.productId)])
-				.then(([allCollections, productCollections]) => {
+			startLoadTransition(async () => {
+				try {
+					const [allCollections, productCollections] = await Promise.all([
+						getAllCollections(),
+						getProductCollections(data.productId),
+					]);
 					setCollections(allCollections);
 					setSelectedIds(new Set(productCollections.map((c) => c.id)));
-				})
-				.catch(() => {
+				} catch {
 					toast.error("Erreur lors du chargement des collections");
-				})
-				.finally(() => {
-					setIsLoading(false);
-				});
+				}
+			});
 		}
 	}, [isOpen, data]);
 
@@ -93,7 +93,7 @@ export function ManageCollectionsDialog() {
 					</ResponsiveDialogHeader>
 
 					<div className="py-6">
-						{isLoading ? (
+						{isLoadingData ? (
 							<div className="flex items-center justify-center py-8">
 								<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
 							</div>
@@ -133,11 +133,11 @@ export function ManageCollectionsDialog() {
 							type="button"
 							variant="outline"
 							onClick={close}
-							disabled={isPending || isLoading}
+							disabled={isPending || isLoadingData}
 						>
 							Annuler
 						</Button>
-						<Button type="submit" disabled={isPending || isLoading}>
+						<Button type="submit" disabled={isPending || isLoadingData}>
 							{isPending ? "Enregistrement..." : "Enregistrer"}
 						</Button>
 					</ResponsiveDialogFooter>

@@ -104,13 +104,6 @@ export function GallerySlide({
 		}
 	}, [isActive, prefersReduced, videoState, media.url]);
 
-	// Reset state if URL changes
-	useEffect(() => {
-		if (media.mediaType === "VIDEO") {
-			setVideoState("loading");
-		}
-	}, [media.url, media.mediaType]);
-
 	// Timeout to avoid infinite spinner
 	useEffect(() => {
 		if (media.mediaType !== "VIDEO" || videoState !== "loading") return;
