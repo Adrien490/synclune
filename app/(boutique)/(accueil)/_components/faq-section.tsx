@@ -155,7 +155,7 @@ export async function FaqSection() {
 						<p className="text-muted-foreground mb-1 text-base">
 							Tu n'as pas trouvé ta réponse ?
 						</p>
-						<p className={cn(petitFormalScript.className, "text-base text-foreground/70 italic mb-5")}>
+						<p className={cn(petitFormalScript.className, "text-sm text-foreground/70 italic mb-5")}>
 							Écris-moi, je réponds toujours !
 						</p>
 						<Button asChild variant="outline" size="lg" className="gap-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out">

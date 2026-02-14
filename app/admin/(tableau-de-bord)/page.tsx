@@ -108,14 +108,14 @@ export default async function AdminDashboardPage() {
  * Wrapper async pour le graphique des revenus
  */
 async function RevenueChartWrapper() {
-	const chartDataPromise = fetchDashboardRevenueChart();
-	return <RevenueChart chartDataPromise={chartDataPromise} />;
+	const chartData = await fetchDashboardRevenueChart();
+	return <RevenueChart chartData={chartData} />;
 }
 
 /**
  * Wrapper async pour les commandes récentes
  */
 async function RecentOrdersWrapper() {
-	const listDataPromise = fetchDashboardRecentOrders();
-	return <RecentOrdersList listDataPromise={listDataPromise} />;
+	const listData = await fetchDashboardRecentOrders();
+	return <RecentOrdersList listData={listData} />;
 }

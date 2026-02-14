@@ -12,7 +12,7 @@ import type { GetRecentOrdersReturn, RecentOrderItem } from "@/modules/dashboard
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
-import { use } from "react";
+
 import {
 	ORDER_STATUS_LABELS,
 	ORDER_STATUS_VARIANTS,
@@ -21,11 +21,11 @@ import {
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RecentOrdersListProps {
-	listDataPromise: Promise<GetRecentOrdersReturn>;
+	listData: GetRecentOrdersReturn;
 }
 
-export function RecentOrdersList({ listDataPromise }: RecentOrdersListProps) {
-	const { orders } = use(listDataPromise);
+export function RecentOrdersList({ listData }: RecentOrdersListProps) {
+	const { orders } = listData;
 
 	return (
 		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>

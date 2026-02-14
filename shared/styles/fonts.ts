@@ -8,6 +8,7 @@ export const cormorantGaramond = Cormorant_Garamond({
 	display: "swap",
 	weight: ["400", "500", "600"],
 	variable: "--font-display", // Variable CSS pour les titres
+	preload: false, // Only used below-the-fold (section titles)
 });
 
 // Inter - Sans-serif moderne et polyvalente pour corps de texte et UI
@@ -28,4 +29,5 @@ export const petitFormalScript = Petit_Formal_Script({
 	display: "swap",
 	weight: ["400"],
 	variable: "--font-cursive",
+	preload: false, // Only used below-the-fold (signatures)
 });

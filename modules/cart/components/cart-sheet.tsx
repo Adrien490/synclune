@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
 	Sheet,
@@ -63,12 +63,11 @@ function cartReducer(
 }
 
 interface CartSheetProps {
-	cartPromise: Promise<GetCartReturn>;
+	cart: GetCartReturn;
 }
 
-export function CartSheet({ cartPromise }: CartSheetProps) {
+export function CartSheet({ cart }: CartSheetProps) {
 	const { isOpen, close } = useSheet("cart");
-	const cart = use(cartPromise);
 	const shouldReduceMotion = useReducedMotion();
 	const [isPending, startTransition] = useTransition();
 

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, use, useState } from "react";
+import { useEffect, useState } from "react";
 import type { GetCartReturn } from "@/modules/cart/types/cart.types";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Check, Minus, Plus } from "lucide-react";
@@ -631,20 +631,19 @@ function SizeSelectorGroup({
 // ============================================================================
 
 interface SkuSelectorDialogProps {
-	/** Promise du panier pour v\u00e9rifier les quantit\u00e9s disponibles */
-	cartPromise: Promise<GetCartReturn>;
+	/** Cart data for checking available quantities */
+	cart: GetCartReturn;
 }
 
 /**
- * Dialog de s\u00e9lection de variante pour ajout rapide au panier
+ * Dialog de sélection de variante pour ajout rapide au panier
  *
  * S'affiche quand l'utilisateur clique sur "Ajouter au panier"
  * sur une ProductCard avec plusieurs variantes.
  *
  * Utilise TanStack Form (useAppForm) pour la gestion du formulaire
  */
-export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
-	const cart = use(cartPromise);
+export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 	const cartItems =
 		cart?.items?.map((item) => ({
 			skuId: item.sku.id,

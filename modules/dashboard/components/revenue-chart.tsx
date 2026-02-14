@@ -16,14 +16,14 @@ import {
 	type ChartConfig,
 } from "@/shared/components/ui/chart";
 import type { GetRevenueChartReturn, RevenueDataPoint } from "@/modules/dashboard/data/get-revenue-chart";
-import { use } from "react";
+
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import { ChartEmpty } from "./chart-empty";
 import { ChartScrollContainer } from "./chart-scroll-container";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RevenueChartProps {
-	chartDataPromise: Promise<GetRevenueChartReturn>;
+	chartData: GetRevenueChartReturn;
 }
 
 /**
@@ -37,11 +37,11 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function RevenueChart({ chartDataPromise }: RevenueChartProps) {
-	const { data } = use(chartDataPromise);
+export function RevenueChart({ chartData }: RevenueChartProps) {
+	const { data } = chartData;
 
 	// Formater les données pour le chart
-	const chartData = data.map((item: RevenueDataPoint) => ({
+	const formattedData = data.map((item: RevenueDataPoint) => ({
 		date: new Date(item.date).toLocaleDateString("fr-FR", {
 			day: "2-digit",
 			month: "short",
@@ -50,7 +50,7 @@ export function RevenueChart({ chartDataPromise }: RevenueChartProps) {
 	}));
 
 	// Verifier s'il y a des donnees avec du revenu
-	const hasRevenue = chartData.some((item) => item.revenue > 0);
+	const hasRevenue = formattedData.some((item) => item.revenue > 0);
 
 	return (
 		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
@@ -72,7 +72,7 @@ export function RevenueChart({ chartDataPromise }: RevenueChartProps) {
 							<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
 								<LineChart
 								accessibilityLayer
-								data={chartData}
+								data={formattedData}
 								margin={{ top: 5, right: 10, bottom: 5, left: -10 }}
 							>
 								<CartesianGrid vertical={false} />

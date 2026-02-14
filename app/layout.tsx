@@ -34,9 +34,6 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	// Dedupliquer l'appel getCart() pour CartSheet et SkuSelectorDialog
-	const cartPromise = getCart();
-
 	return (
 		<html lang="fr" data-scroll-behavior="smooth">
 			<head>
@@ -65,11 +62,11 @@ export default async function RootLayout({
 
 							<ErrorBoundary fallback={null}>
 								<Suspense fallback={<CartSheetSkeleton />}>
-									<CartSheet cartPromise={cartPromise} />
+									<CartSheetLoader />
 								</Suspense>
 							</ErrorBoundary>
 							<Suspense fallback={null}>
-								<SkuSelectorDialog cartPromise={cartPromise} />
+								<SkuSelectorDialogLoader />
 							</Suspense>
 							<UnsavedChangesDialog />
 							<CookieBanner />
@@ -84,4 +81,14 @@ export default async function RootLayout({
 			</body>
 		</html>
 	);
+}
+
+async function CartSheetLoader() {
+	const cart = await getCart();
+	return <CartSheet cart={cart} />;
+}
+
+async function SkuSelectorDialogLoader() {
+	const cart = await getCart();
+	return <SkuSelectorDialog cart={cart} />;
 }

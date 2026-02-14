@@ -55,9 +55,9 @@ export async function NewsletterSection() {
 							1 à 2 emails par mois maximum. Désinscription en un clic.
 						</p>
 						<p
-							className={`${petitFormalScript.className} mt-2 text-base text-foreground/70 italic`}
+							className={`${petitFormalScript.className} mt-2 text-sm text-foreground/70 italic`}
 						>
-							À très vite !
+							Bye !
 						</p>
 					</div>
 				</Fade>
