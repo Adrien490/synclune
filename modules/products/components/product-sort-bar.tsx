@@ -47,12 +47,14 @@ function ActiveDot() {
  * - Touch targets 56px minimum (Material Design 3)
  */
 export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) {
-	useBottomBarHeight(56);
-
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
 	const { open: openSearch, close: closeSearch, isOpen: isSearchOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const { open: openFilter, close: closeFilter, isOpen: isFilterOpen } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+
+	const isHidden = isSearchOpen || isFilterOpen || sortOpen;
+
+	useBottomBarHeight(56, !isHidden);
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
 
@@ -154,7 +156,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		<>
 			<motion.div
 				initial={prefersReducedMotion ? false : { y: 100, opacity: 0 }}
-				animate={{ y: 0, opacity: 1 }}
+				animate={isHidden ? { y: 100, opacity: 0 } : { y: 0, opacity: 1 }}
 				transition={MOTION_CONFIG.spring.bar}
 				className={cn(
 					"md:hidden",
@@ -164,6 +166,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					"border-t border-x border-border",
 					"rounded-t-2xl",
 					"shadow-[0_-4px_20px_rgba(0,0,0,0.08)]",
+					isHidden && "pointer-events-none",
 					className
 				)}
 			>

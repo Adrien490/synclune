@@ -12,8 +12,8 @@ import {
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { Menu } from "lucide-react";
-import { useState } from "react";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
 
@@ -42,10 +42,10 @@ export function MenuSheet({
 	isAdmin = false,
 	session,
 }: MenuSheetProps) {
-	const [isOpen, setIsOpen] = useState(false);
+	const { isOpen, open: openMenu, close: closeMenu } = useDialog("menu-sheet");
 
 	return (
-		<Sheet direction="left" open={isOpen} onOpenChange={setIsOpen} preventScrollRestoration>
+		<Sheet direction="left" open={isOpen} onOpenChange={(open) => (open ? openMenu() : closeMenu())} preventScrollRestoration>
 			<SheetTrigger asChild>
 				<button
 					type="button"
