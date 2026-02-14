@@ -20,7 +20,7 @@ import { useRecentSearches } from "@/modules/products/hooks/use-recent-searches"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
-import { FOCUSABLE_SELECTOR, QUICK_SEARCH_DIALOG_ID, SEARCH_DEBOUNCE_MS } from "./constants"
+import { QUICK_SEARCH_DIALOG_ID, SEARCH_DEBOUNCE_MS } from "./constants"
 import { IdleContent } from "./idle-content"
 import { QuickSearchContent } from "./quick-search-content"
 import { QuickTagPills } from "./quick-tag-pills"
@@ -58,10 +58,9 @@ export function QuickSearchDialog({
 	})
 
 	const {
-		activeIndex,
-		setActiveIndex,
 		contentRef,
 		handleArrowNavigation,
+		focusFirst,
 		resetActiveIndex,
 		activeDescendantId,
 	} = useKeyboardNavigation()
@@ -77,22 +76,23 @@ export function QuickSearchDialog({
 		reset,
 	} = useQuickSearch({ searchInputRef, resetActiveIndex })
 
-	const handleEnterKey = (term: string) => {
-		const trimmed = term.trim()
-		if (!trimmed || isPending) return
-
-		add(trimmed)
-		startTransition(() => {
-			router.push(`/produits?search=${encodeURIComponent(trimmed)}`)
-			close()
-		})
-	}
-
-	const handleRecentSearch = (term: string) => {
+	const navigateToSearch = (term: string, { saveToRecent = true } = {}) => {
+		if (isPending) return
+		if (saveToRecent) add(term)
 		startTransition(() => {
 			router.push(`/produits?search=${encodeURIComponent(term)}`)
 			close()
 		})
+	}
+
+	const handleEnterKey = (term: string) => {
+		const trimmed = term.trim()
+		if (!trimmed) return
+		navigateToSearch(trimmed)
+	}
+
+	const handleRecentSearch = (term: string) => {
+		navigateToSearch(term, { saveToRecent: false })
 	}
 
 	const handleQuickTagClick = (label: string) => {
@@ -106,11 +106,7 @@ export function QuickSearchDialog({
 	}
 
 	const handleViewAllResults = () => {
-		add(searchQuery)
-		startTransition(() => {
-			router.push(`/produits?search=${encodeURIComponent(searchQuery)}`)
-			close()
-		})
+		navigateToSearch(searchQuery)
 	}
 
 	const handleClose = () => {
@@ -193,11 +189,7 @@ export function QuickSearchDialog({
 					onKeyDown={(e) => {
 						if (e.key === "ArrowDown" && e.target instanceof HTMLInputElement) {
 							e.preventDefault()
-							setActiveIndex(0)
-							const firstFocusable = contentRef.current?.querySelector<HTMLElement>(
-								FOCUSABLE_SELECTOR
-							)
-							firstFocusable?.scrollIntoView({ block: "nearest" })
+							focusFirst()
 						}
 					}}
 				>

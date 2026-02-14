@@ -4,6 +4,8 @@ import { quickSearch } from "@/modules/products/actions/quick-search"
 import type { QuickSearchResult } from "@/modules/products/data/quick-search-products"
 import type { SearchInputHandle } from "@/shared/components/search-input"
 
+import { MIN_SEARCH_LENGTH } from "./constants"
+
 interface UseQuickSearchParams {
 	searchInputRef: React.RefObject<SearchInputHandle | null>
 	resetActiveIndex: () => void
@@ -24,7 +26,7 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 
 	const handleLiveSearch = (query: string) => {
 		const trimmed = query.trim()
-		if (!trimmed || trimmed.length < 2) {
+		if (!trimmed || trimmed.length < MIN_SEARCH_LENGTH) {
 			setSearchResults(null)
 			setSearchQuery("")
 			return

@@ -52,17 +52,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 				<ParticleBackground
 					disableOnTouch={false}
 					shape={["heart", "pearl", "drop", "diamond", "circle"]}
-					colors={[
-						"var(--primary)",
-						"var(--primary)",
-						"var(--primary)",
-						"var(--secondary)",
-						"var(--secondary)",
-						"var(--secondary)",
-						"var(--color-glow-pink)",
-						"var(--color-glow-lavender)",
-						"var(--color-glow-mint)",
-					]}
+					colors={["var(--primary)", "var(--secondary)"]}
 					count={10}
 					size={[25, 90]}
 					opacity={[0.3, 0.7]}

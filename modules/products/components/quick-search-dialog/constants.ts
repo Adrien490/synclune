@@ -13,5 +13,8 @@ export const MAX_MATCHED_TYPES = 2
 /** Number of skeleton rows in the loading state */
 export const SKELETON_ROWS = 4
 
+/** Minimum query length to trigger a search */
+export const MIN_SEARCH_LENGTH = 2
+
 /** Debounce delay (ms) for the live search input */
 export const SEARCH_DEBOUNCE_MS = 300

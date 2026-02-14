@@ -197,7 +197,6 @@ const jewelryImages = {
     "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&h=800&fit=crop&crop=center",
     "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&h=800&fit=crop&crop=center",
     "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=800&h=800&fit=crop&crop=center",
-    "https://images.unsplash.com/photo-1618215228621-b48c42f8a2dd?w=800&h=800&fit=crop&crop=center",
   ],
   bagues: [
     "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&h=800&fit=crop&crop=center",
@@ -211,16 +210,13 @@ const jewelryImages = {
     "https://images.unsplash.com/photo-1610694955371-d4a3e0ce4b52?w=800&h=800&fit=crop&crop=center",
   ],
   papilloux: [
-    "https://images.unsplash.com/photo-1594736797933-d0d8aa06a2d8?w=800&h=800&fit=crop&crop=center",
     "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&h=800&fit=crop&crop=center",
-    "https://images.unsplash.com/photo-1576022162028-3bf61f2f7b8e?w=800&h=800&fit=crop&crop=center",
   ],
   chainesCheveux: [
     "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&h=800&fit=crop&crop=center",
     "https://images.unsplash.com/photo-1590548784585-643d2b9f2925?w=800&h=800&fit=crop&crop=center",
   ],
   porteCles: [
-    "https://images.unsplash.com/photo-1558618047-8c90d7e75e03?w=800&h=800&fit=crop&crop=center",
     "https://images.unsplash.com/photo-1634712282287-14ed57b9cc89?w=800&h=800&fit=crop&crop=center",
   ],
 };

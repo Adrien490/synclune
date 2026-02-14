@@ -16,7 +16,11 @@ export function useKeyboardNavigation() {
 		)
 
 		for (let i = 0; i < focusables.length; i++) {
-			focusables[i].id = `qs-nav-${i}`
+			focusables[i].dataset.qsNavId = String(i)
+			// Only assign id if none exists to avoid overwriting semantic IDs
+			if (!focusables[i].id) {
+				focusables[i].id = `qs-nav-${i}`
+			}
 			if (i === activeIndex) {
 				focusables[i].setAttribute("data-active", "true")
 				focusables[i].setAttribute("aria-current", "true")
@@ -54,6 +58,12 @@ export function useKeyboardNavigation() {
 		const container = contentRef.current
 		if (!container) return []
 		return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+	}
+
+	const focusFirst = () => {
+		setActiveIndex(0)
+		const firstFocusable = contentRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+		firstFocusable?.scrollIntoView({ block: "nearest" })
 	}
 
 	const handleArrowNavigation = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -96,15 +106,17 @@ export function useKeyboardNavigation() {
 
 	const resetActiveIndex = () => setActiveIndex(-1)
 
-	const activeDescendantId = activeIndex >= 0 ? `qs-nav-${activeIndex}` : undefined
+	const activeDescendantId = (() => {
+		if (activeIndex < 0) return undefined
+		const el = contentRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)[activeIndex]
+		return el?.id || `qs-nav-${activeIndex}`
+	})()
 
 	return {
-		activeIndex,
-		setActiveIndex,
 		contentRef,
 		handleArrowNavigation,
+		focusFirst,
 		resetActiveIndex,
-		getFocusableElements,
 		activeDescendantId,
 	}
 }
