@@ -45,10 +45,12 @@ type SuggestionOptions = {
 	status?: ProductStatus;
 };
 
-type WordMatch = {
-	word: string;
-	similarity: number;
-	source: string;
+type BatchResult = {
+	inputWord: string;
+	position: number;
+	matchWord: string | null;
+	similarity: number | null;
+	source: string | null;
 };
 
 // ============================================================================
@@ -62,8 +64,8 @@ type WordMatch = {
  * individual words from the catalog vocabulary (product titles, collection
  * names, color names, material names), then reconstructs the corrected search.
  *
- * For single-word searches, also compares against full entity names
- * (e.g. collection "Lune d'Or" as a whole) in addition to individual words.
+ * Uses a single batched query with LATERAL JOIN to find the best correction
+ * for all words at once (vocabulary CTE is scanned only once).
  *
  * Uses immutable_unaccent() for accent-insensitive matching.
  *
@@ -89,10 +91,27 @@ export async function getSpellSuggestion(
 	const words = term.split(/\s+/).filter(Boolean).slice(0, FUZZY_MAX_WORDS);
 	if (words.length === 0) return null;
 
+	// Separate eligible words (>= 2 chars) from short ones that are kept as-is
+	const wordEntries = words.map((word, index) => ({
+		word,
+		index,
+		eligible: word.length >= 2,
+	}));
+	const eligibleWords = wordEntries.filter((e) => e.eligible);
+
+	// No words eligible for correction
+	if (eligibleWords.length === 0) return null;
+
 	try {
 		const statusCondition = status
 			? Prisma.sql`AND p.status = ${status}::"ProductStatus"`
 			: Prisma.empty;
+
+		// Build VALUES clause for all eligible words at once
+		const valuesFragments = eligibleWords.map((e) =>
+			Prisma.sql`(${e.word}, ${e.index})`
+		);
+		const valuesClause = Prisma.join(valuesFragments, ", ");
 
 		// Transaction with SET LOCAL to isolate the similarity threshold
 		// and statement_timeout to cancel runaway queries server-side.
@@ -100,65 +119,62 @@ export async function getSpellSuggestion(
 			await setTrigramThreshold(tx, SUGGESTION_MIN_SIMILARITY);
 			await setStatementTimeout(tx, SPELL_SUGGESTION_TIMEOUT_MS);
 
-			// Find the best correction for each word by comparing against
-			// individual words extracted from catalog vocabulary.
-			const corrections: { original: string; match: WordMatch | null }[] = [];
+			// Single batched query: vocabulary CTE built once, LATERAL JOIN
+			// finds the best match for each input word in one pass.
+			return tx.$queryRaw<BatchResult[]>`
+				WITH vocabulary AS (
+					-- Individual words from product titles
+					SELECT DISTINCT
+						unnest(regexp_split_to_array(LOWER(p.title), '\s+')) as word,
+						'product'::text as source
+					FROM "Product" p
+					WHERE p."deletedAt" IS NULL ${statusCondition}
 
-			for (const word of words) {
-				if (word.length < 2) {
-					corrections.push({ original: word, match: null });
-					continue;
-				}
+					UNION
 
-				const results = await tx.$queryRaw<WordMatch[]>`
-					WITH vocabulary AS (
-						-- Individual words from product titles
-						SELECT DISTINCT
-							unnest(regexp_split_to_array(LOWER(p.title), '\s+')) as word,
-							'product'::text as source
-						FROM "Product" p
-						WHERE p."deletedAt" IS NULL ${statusCondition}
+					-- Collection names (as single words)
+					SELECT DISTINCT LOWER(c.name) as word, 'collection'::text as source
+					FROM "Collection" c
+					WHERE c.status = 'PUBLIC'
 
-						UNION
+					UNION
 
-						-- Collection names (as single words)
-						SELECT DISTINCT LOWER(c.name) as word, 'collection'::text as source
-						FROM "Collection" c
-						WHERE c.status = 'PUBLIC'
+					-- Color names
+					SELECT DISTINCT LOWER(col.name) as word, 'color'::text as source
+					FROM "Color" col
+					WHERE col."isActive" = true
 
-						UNION
+					UNION
 
-						-- Color names
-						SELECT DISTINCT LOWER(col.name) as word, 'color'::text as source
-						FROM "Color" col
-						WHERE col."isActive" = true
-
-						UNION
-
-						-- Material names
-						SELECT DISTINCT LOWER(m.name) as word, 'material'::text as source
-						FROM "Material" m
-						WHERE m."isActive" = true
-					)
+					-- Material names
+					SELECT DISTINCT LOWER(m.name) as word, 'material'::text as source
+					FROM "Material" m
+					WHERE m."isActive" = true
+				),
+				input_words(word, position) AS (
+					VALUES ${valuesClause}
+				)
+				SELECT
+					iw.word as "inputWord",
+					iw.position,
+					best.word as "matchWord",
+					best.similarity,
+					best.source
+				FROM input_words iw
+				LEFT JOIN LATERAL (
 					SELECT
 						v.word,
-						similarity(immutable_unaccent(v.word), immutable_unaccent(${word})) as similarity,
+						similarity(immutable_unaccent(v.word), immutable_unaccent(iw.word)) as similarity,
 						v.source
 					FROM vocabulary v
 					WHERE length(v.word) >= 2
-						AND immutable_unaccent(v.word) % immutable_unaccent(${word})
-						AND immutable_unaccent(v.word) != immutable_unaccent(${word})
+						AND immutable_unaccent(v.word) % immutable_unaccent(iw.word)
+						AND immutable_unaccent(v.word) != immutable_unaccent(iw.word)
 					ORDER BY similarity DESC
 					LIMIT 1
-				`;
-
-				corrections.push({
-					original: word,
-					match: results.length > 0 ? results[0] : null,
-				});
-			}
-
-			return corrections;
+				) best ON true
+				ORDER BY iw.position
+			`;
 		});
 
 		// Timeout to avoid long-running queries
@@ -169,7 +185,22 @@ export async function getSpellSuggestion(
 			)
 		);
 
-		const corrections = await Promise.race([queryPromise, timeoutPromise]);
+		const batchResults = await Promise.race([queryPromise, timeoutPromise]);
+
+		// Merge batch results back with the full word list (including short words)
+		const matchByIndex = new Map(
+			batchResults.map((r) => [
+				r.position,
+				r.matchWord
+					? { word: r.matchWord, similarity: Number(r.similarity), source: r.source! }
+					: null,
+			])
+		);
+
+		const corrections = wordEntries.map((entry) => ({
+			original: entry.word,
+			match: entry.eligible ? (matchByIndex.get(entry.index) ?? null) : null,
+		}));
 
 		// Check if any word was corrected
 		const hasCorrection = corrections.some((c) => c.match !== null);

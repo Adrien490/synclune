@@ -6,15 +6,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { petitFormalScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
-import {
-	Clock,
-	Gem,
-	MessageCircle,
-	RotateCcw,
-	ShieldCheck,
-	Sparkles,
-	Truck,
-} from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -58,41 +50,35 @@ function renderAnswerWithLinks(answer: string, links?: FaqItemData["links"]): Re
 const faqItems: FaqItemData[] = [
 	{
 		question: "Combien de temps pour recevoir ma commande ?",
-		icon: <Truck className="size-4" />,
 		answer:
 			"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo te livre en 2-4 jours en France métropolitaine. Je t'envoie le numéro de suivi par email dès que ton colis part de mon atelier ! Tous les détails sont dans mes {{link0}}.",
 		links: [{ text: "conditions de vente", href: "/cgv" }],
 	},
 	{
 		question: "Je peux retourner un bijou si je change d'avis ?",
-		icon: <RotateCcw className="size-4" />,
 		answer:
 			"Bien sûr ! Tu as 14 jours après réception pour changer d'avis. Renvoie-moi le bijou dans son état d'origine, non porté, et je te rembourse. Écris-moi par email pour qu'on organise ça ensemble. Plus d'infos sur les retours dans mes {{link0}}.",
 		links: [{ text: "conditions de vente", href: "/cgv" }],
 	},
 	{
 		question: "En quoi sont faits tes bijoux ?",
-		icon: <Gem className="size-4" />,
 		answer:
 			"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles ! Découvre toutes mes {{link0}}.",
 		links: [{ text: "collections", href: "/collections" }],
 	},
 	{
 		question: "Comment je prends soin de mes bijoux ?",
-		icon: <ShieldCheck className="size-4" />,
 		answer:
 			"Évite le contact avec l'eau, les parfums et les crèmes. Range-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
 	},
 	{
 		question: "Tu fais des bijoux sur-mesure ?",
-		icon: <Sparkles className="size-4" />,
 		answer:
 			"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écris-moi via la {{link0}} et on discute de ton projet ensemble.",
 		links: [{ text: "page Personnalisation", href: "/personnalisation" }],
 	},
 	{
 		question: "C'est quoi le délai pour une création personnalisée ?",
-		icon: <Clock className="size-4" />,
 		answer:
 			"Compte environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que tu veux, de créer des esquisses qu'on validera ensemble, et de réaliser ton bijou avec tout le soin qu'il mérite.",
 	},
@@ -118,7 +104,6 @@ export async function FaqSection() {
 	const accordionItems = faqItems.map((item) => ({
 		question: item.question,
 		answer: renderAnswerWithLinks(item.answer, item.links),
-		icon: item.icon,
 	}));
 
 	return (

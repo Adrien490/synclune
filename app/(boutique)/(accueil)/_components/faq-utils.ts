@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 export interface FaqLink {
 	text: string;
 	href: string;
@@ -8,7 +6,6 @@ export interface FaqLink {
 export interface FaqItemData {
 	question: string;
 	answer: string;
-	icon: ReactNode;
 	links?: FaqLink[];
 }
 

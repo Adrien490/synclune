@@ -10,7 +10,6 @@ import type { ReactNode } from "react";
 interface FaqItem {
 	question: string;
 	answer: ReactNode;
-	icon: ReactNode;
 }
 
 interface FaqAccordionProps {
@@ -31,9 +30,6 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
 							className="text-base font-medium text-left py-5 gap-3 hover:no-underline [&[data-state=open]>svg]:text-primary"
 							headingLevel={3}
 						>
-							<span className="shrink-0 text-muted-foreground [[data-state=open]_&]:text-primary motion-safe:transition-colors motion-safe:duration-300" aria-hidden="true">
-								{item.icon}
-							</span>
 							{item.question}
 						</AccordionTrigger>
 						<AccordionContent className="text-muted-foreground text-base/7 pb-5">
