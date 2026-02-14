@@ -4,7 +4,7 @@ import { useOptimistic } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
-import { ClearWishlistButton } from "./clear-wishlist-button";
+
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
 import type { Product } from "@/modules/products/types/product.types";
 import {
@@ -56,15 +56,10 @@ export function WishlistListContent({
 	return (
 		<WishlistListOptimisticContext.Provider value={contextValue}>
 			<div className="space-y-8">
-				{/* Header with count and clear button */}
-				<div className="flex items-center justify-between">
-					<p className="text-sm text-muted-foreground">
-						{totalCount} article{totalCount > 1 ? "s" : ""}
-					</p>
-					{optimisticItems.length > 0 && (
-						<ClearWishlistButton itemCount={optimisticItems.length} />
-					)}
-				</div>
+				{/* Header with count */}
+				<p className="text-sm text-muted-foreground">
+					{totalCount} article{totalCount > 1 ? "s" : ""}
+				</p>
 
 				{/* Grid des items de wishlist avec animation */}
 				<div

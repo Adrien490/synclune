@@ -32,13 +32,6 @@ export const addToWishlistSchema = z.object({
 
 export type AddToWishlistInput = z.infer<typeof addToWishlistSchema>;
 
-/**
- * Schéma de validation pour vider la wishlist
- * Aucune donnée requise car on vide toute la wishlist de l'utilisateur
- */
-export const clearWishlistSchema = z.object({});
-
-export type ClearWishlistInput = z.infer<typeof clearWishlistSchema>;
 
 /**
  * Schéma de validation pour le retrait de la wishlist

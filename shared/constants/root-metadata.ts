@@ -1,30 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { BUSINESS_INFO, SEO_DEFAULTS, SITE_URL } from "./seo-config";
+import { SEO_DEFAULTS, SITE_URL } from "./seo-config";
 import { ICONS_CONFIG } from "./icons-config";
 
 export const rootMetadata: Metadata = {
 	title: {
-		default: "Synclune - Bijoux artisanaux faits main à Nantes (44) - Loire-Atlantique",
-		template: "%s | Synclune Nantes",
+		default: "Synclune - Bijoux artisanaux faits main",
+		template: "%s | Synclune",
 	},
 	description:
-		"Bijoux artisanaux faits main à Nantes. Boucles d'oreilles, colliers, bracelets colorés. Éditions limitées uniques en Loire-Atlantique.",
+		"Bijoux artisanaux faits main. Boucles d'oreilles, colliers, bracelets colorés. Créations uniques en éditions limitées.",
 	keywords: [
-		"bijoux faits main Nantes",
-		"bijoux artisanaux Nantes",
-		"créatrice bijoux Nantes",
-		"bijoux colorés Nantes",
-		"boucles d'oreilles Nantes",
-		"colliers Nantes",
-		"bracelets Nantes",
-		"bijoux Loire-Atlantique",
-		"atelier bijoux Nantes 44",
-		"bijoux originaux Nantes",
-		"Synclune",
+		"bijoux faits main",
+		"bijoux artisanaux",
+		"bijoux colorés",
+		"boucles d'oreilles faites main",
+		"colliers artisanaux",
+		"bracelets faits main",
 		"bijoux français",
 		"création artisanale",
-		"bijoux personnalisés Nantes",
-		...BUSINESS_INFO.localKeywords,
+		"bijoux originaux",
+		"Synclune",
 	],
 	authors: [{ name: "Synclune" }],
 	creator: "Synclune",
@@ -47,23 +42,23 @@ export const rootMetadata: Metadata = {
 		locale: SEO_DEFAULTS.locale,
 		url: SITE_URL,
 		siteName: SEO_DEFAULTS.siteName,
-		title: "Synclune - Bijoux artisanaux faits main à Nantes (44)",
+		title: "Synclune - Bijoux artisanaux faits main",
 		description:
-			"Bijoux artisanaux faits main à Nantes. Boucles d'oreilles, colliers, bracelets colorés. Éditions limitées uniques en Loire-Atlantique.",
+			"Bijoux artisanaux faits main. Boucles d'oreilles, colliers, bracelets colorés. Créations uniques en éditions limitées.",
 		images: [
 			{
 				url: SEO_DEFAULTS.images.default,
 				width: SEO_DEFAULTS.images.width,
 				height: SEO_DEFAULTS.images.height,
-				alt: "Synclune - Bijoux artisanaux faits main à Nantes (44) Loire-Atlantique",
+				alt: "Synclune - Bijoux artisanaux faits main",
 			},
 		],
 	},
 	twitter: {
 		card: SEO_DEFAULTS.twitter.card,
-		title: "Synclune - Bijoux artisanaux faits main à Nantes (44)",
+		title: "Synclune - Bijoux artisanaux faits main",
 		description:
-			"Bijoux colorés faits main à Nantes. Boucles d'oreilles, colliers, bracelets. Créations uniques en Loire-Atlantique.",
+			"Bijoux colorés faits main. Boucles d'oreilles, colliers, bracelets. Créations uniques en éditions limitées.",
 		images: [SEO_DEFAULTS.images.default],
 	},
 	robots: {
