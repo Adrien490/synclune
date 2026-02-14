@@ -8,8 +8,8 @@ import {
 	RELEVANCE_WEIGHTS,
 } from "../constants/search.constants";
 import { SEARCH_SYNONYMS } from "../constants/search-synonyms";
-import { splitSearchTerms } from "../utils/search-helpers";
-import { setTrigramThreshold } from "../utils/trigram-helpers";
+import { escapeLikePattern, splitSearchTerms } from "../utils/search-helpers";
+import { setStatementTimeout, setTrigramThreshold } from "../utils/trigram-helpers";
 
 // ============================================================================
 // TYPES
@@ -42,14 +42,18 @@ type FuzzySearchReturn = {
  * Build a WHERE fragment for a single word.
  * The word must match title OR description (via ILIKE or trigram similarity),
  * with immutable_unaccent() applied for accent-insensitive matching.
+ *
+ * Uses % (similarity) for title and <% (word_similarity) for description.
+ * word_similarity checks if any substring of the long text is similar to the
+ * search term, which is much more effective for long description text.
  */
 function buildWordWhereFragment(word: string): Prisma.Sql {
-	const like = `%${word}%`;
+	const like = `%${escapeLikePattern(word)}%`;
 	return Prisma.sql`(
 		immutable_unaccent(p.title) ILIKE immutable_unaccent(${like})
 		OR immutable_unaccent(COALESCE(p.description, '')) ILIKE immutable_unaccent(${like})
 		OR immutable_unaccent(p.title) % immutable_unaccent(${word})
-		OR immutable_unaccent(COALESCE(p.description, '')) % immutable_unaccent(${word})
+		OR immutable_unaccent(${word}) <% immutable_unaccent(COALESCE(p.description, ''))
 	)`;
 }
 
@@ -71,9 +75,13 @@ function buildWordGroupWhereFragment(word: string): Prisma.Sql {
 /**
  * Build a relevance score fragment for a single word.
  * Returns the best score between title and description matches.
+ *
+ * Uses similarity() for title (good for short text vs short query)
+ * and word_similarity() for description (compares query against best
+ * matching substring of the long text, much more effective).
  */
 function buildWordScoreFragment(word: string): Prisma.Sql {
-	const like = `%${word}%`;
+	const like = `%${escapeLikePattern(word)}%`;
 	return Prisma.sql`GREATEST(
 		CASE WHEN immutable_unaccent(p.title) ILIKE immutable_unaccent(${like})
 			THEN ${RELEVANCE_WEIGHTS.exactTitle}::float
@@ -81,7 +89,7 @@ function buildWordScoreFragment(word: string): Prisma.Sql {
 		END,
 		CASE WHEN immutable_unaccent(COALESCE(p.description, '')) ILIKE immutable_unaccent(${like})
 			THEN ${RELEVANCE_WEIGHTS.exactDescription}::float
-			ELSE COALESCE(similarity(immutable_unaccent(p.description), immutable_unaccent(${word})), 0) * ${RELEVANCE_WEIGHTS.fuzzyDescription}::float
+			ELSE COALESCE(word_similarity(immutable_unaccent(${word}), immutable_unaccent(COALESCE(p.description, ''))), 0) * ${RELEVANCE_WEIGHTS.fuzzyDescription}::float
 		END
 	)`;
 }
@@ -147,8 +155,10 @@ export async function fuzzySearchProductIds(
 				: Prisma.sql`(${Prisma.join(scoreFragments, " + ")})`;
 
 		// Transaction with SET LOCAL to isolate the similarity threshold
+		// and statement_timeout to cancel runaway queries server-side
 		const queryPromise = prisma.$transaction(async (tx) => {
 			await setTrigramThreshold(tx, threshold);
+			await setStatementTimeout(tx, FUZZY_TIMEOUT_MS);
 
 			type ResultWithCount = FuzzySearchResult & { totalCount: bigint };
 			return tx.$queryRaw<ResultWithCount[]>`
@@ -162,7 +172,7 @@ export async function fuzzySearchProductIds(
 						${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
 						AND ${whereClause}
 				)
-				SELECT "productId", score, (SELECT COUNT(*) FROM matched) as "totalCount"
+				SELECT "productId", score, COUNT(*) OVER() as "totalCount"
 				FROM matched
 				ORDER BY score DESC
 				LIMIT ${limit}

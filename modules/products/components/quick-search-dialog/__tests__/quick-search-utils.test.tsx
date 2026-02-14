@@ -159,6 +159,40 @@ describe("HighlightMatch", () => {
 		expect(marks).toHaveLength(3)
 		expect(spans).toHaveLength(4) // Empty spans before/after + 2 " et " spans
 	})
+
+	it("highlights synonym terms", () => {
+		const { container } = render(
+			<HighlightMatch text="Bague Lune en Argent" query="anneau" synonyms={["bague", "alliance"]} />
+		)
+		const marks = container.querySelectorAll("mark")
+		expect(marks).toHaveLength(1)
+		expect(marks[0]?.textContent).toBe("Bague")
+	})
+
+	it("highlights both query and synonym matches", () => {
+		const { container } = render(
+			<HighlightMatch text="Bague Anneau Lune" query="anneau" synonyms={["bague"]} />
+		)
+		const marks = container.querySelectorAll("mark")
+		expect(marks).toHaveLength(2)
+	})
+
+	it("handles empty synonyms array", () => {
+		const { container } = render(
+			<HighlightMatch text="Bague Lune" query="Bague" synonyms={[]} />
+		)
+		const marks = container.querySelectorAll("mark")
+		expect(marks).toHaveLength(1)
+		expect(marks[0]?.textContent).toBe("Bague")
+	})
+
+	it("handles undefined synonyms", () => {
+		const { container } = render(
+			<HighlightMatch text="Bague Lune" query="Bague" synonyms={undefined} />
+		)
+		const marks = container.querySelectorAll("mark")
+		expect(marks).toHaveLength(1)
+	})
 })
 
 // ─── FOCUSABLE_SELECTOR ──────────────────────────────────────────

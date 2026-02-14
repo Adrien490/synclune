@@ -5,7 +5,7 @@ import {
 	MAX_SEARCH_LENGTH,
 	SPELL_SUGGESTION_TIMEOUT_MS,
 } from "../constants/search.constants";
-import { setTrigramThreshold } from "../utils/trigram-helpers";
+import { setStatementTimeout, setTrigramThreshold } from "../utils/trigram-helpers";
 
 // ============================================================================
 // CONFIGURATION
@@ -77,11 +77,13 @@ export async function getSpellSuggestion(
 			? Prisma.sql`AND p.status = ${status}::"ProductStatus"`
 			: Prisma.empty;
 
-		// Transaction with SET LOCAL to isolate the similarity threshold.
+		// Transaction with SET LOCAL to isolate the similarity threshold
+		// and statement_timeout to cancel runaway queries server-side.
 		// SET LOCAL scopes the change to the current transaction,
 		// avoiding interference with other queries via connection pooling.
 		const queryPromise = prisma.$transaction(async (tx) => {
 			await setTrigramThreshold(tx, SUGGESTION_MIN_SIMILARITY);
+			await setStatementTimeout(tx, SPELL_SUGGESTION_TIMEOUT_MS);
 
 			// Unified search across all sources with UNION ALL.
 			// Returns the most similar term with its source.

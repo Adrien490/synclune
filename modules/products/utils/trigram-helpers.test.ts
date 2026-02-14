@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { setTrigramThreshold } from "./trigram-helpers"
+import { setStatementTimeout, setTrigramThreshold } from "./trigram-helpers"
 
 function createMockTx() {
 	return {
@@ -9,11 +9,15 @@ function createMockTx() {
 }
 
 describe("setTrigramThreshold", () => {
-	it("executes SET LOCAL with a valid threshold", async () => {
+	it("sets both similarity and word_similarity thresholds", async () => {
 		const tx = createMockTx()
 		await setTrigramThreshold(tx as any, 0.3)
+		expect(tx.$executeRawUnsafe).toHaveBeenCalledTimes(2)
 		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
 			"SET LOCAL pg_trgm.similarity_threshold = 0.3"
+		)
+		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
+			"SET LOCAL pg_trgm.word_similarity_threshold = 0.3"
 		)
 	})
 
@@ -22,6 +26,9 @@ describe("setTrigramThreshold", () => {
 		await setTrigramThreshold(tx as any, 1.5)
 		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
 			"SET LOCAL pg_trgm.similarity_threshold = 1"
+		)
+		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
+			"SET LOCAL pg_trgm.word_similarity_threshold = 1"
 		)
 	})
 
@@ -78,6 +85,50 @@ describe("setTrigramThreshold", () => {
 		await setTrigramThreshold(tx as any, -Infinity)
 		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
 			"SET LOCAL pg_trgm.similarity_threshold = 0"
+		)
+	})
+})
+
+// ─── setStatementTimeout ──────────────────────────────────────────
+
+describe("setStatementTimeout", () => {
+	it("sets statement_timeout with valid milliseconds", async () => {
+		const tx = createMockTx()
+		await setStatementTimeout(tx as any, 2000)
+		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
+			"SET LOCAL statement_timeout = '2000ms'"
+		)
+	})
+
+	it("rounds fractional milliseconds", async () => {
+		const tx = createMockTx()
+		await setStatementTimeout(tx as any, 1500.7)
+		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
+			"SET LOCAL statement_timeout = '1501ms'"
+		)
+	})
+
+	it("clamps negative values to 0", async () => {
+		const tx = createMockTx()
+		await setStatementTimeout(tx as any, -100)
+		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
+			"SET LOCAL statement_timeout = '0ms'"
+		)
+	})
+
+	it("throws for NaN", async () => {
+		const tx = createMockTx()
+		await expect(setStatementTimeout(tx as any, NaN)).rejects.toThrow(
+			"Invalid statement timeout value"
+		)
+		expect(tx.$executeRawUnsafe).not.toHaveBeenCalled()
+	})
+
+	it("handles zero timeout", async () => {
+		const tx = createMockTx()
+		await setStatementTimeout(tx as any, 0)
+		expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(
+			"SET LOCAL statement_timeout = '0ms'"
 		)
 	})
 })

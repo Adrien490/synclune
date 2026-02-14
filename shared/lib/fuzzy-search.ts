@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client"
-import { setTrigramThreshold } from "@/modules/products/utils/trigram-helpers"
+import { setStatementTimeout, setTrigramThreshold } from "@/modules/products/utils/trigram-helpers"
 import { prisma } from "@/shared/lib/prisma"
 
 /**
@@ -50,7 +50,8 @@ export async function fuzzySearchIds(
 	const { columns, baseCondition, limit = ADMIN_FUZZY_MAX_RESULTS } = options
 
 	// Build OR conditions across all columns
-	const like = `%${term}%`
+	// Escape LIKE wildcards to prevent user input from being interpreted as patterns
+	const like = `%${term.replace(/[%_\\]/g, "\\$&")}%`
 	const columnFragments = columns.map(({ table, column, nullable }) => {
 		const col = nullable
 			? Prisma.sql`COALESCE(${Prisma.raw(`"${table}"."${column}"`)}, '')`
@@ -69,6 +70,7 @@ export async function fuzzySearchIds(
 	try {
 		const queryPromise = prisma.$transaction(async (tx) => {
 			await setTrigramThreshold(tx, ADMIN_FUZZY_THRESHOLD)
+			await setStatementTimeout(tx, ADMIN_FUZZY_TIMEOUT_MS)
 
 			return tx.$queryRaw<{ id: string }[]>`
 				SELECT ${mainTable}.id

@@ -1,18 +1,13 @@
-import { MessageSquare, MessagesSquare, Sparkles } from "lucide-react";
-
 const steps = [
 	{
-		icon: MessageSquare,
 		title: "Décris ton idée",
 		description: "Remplis le formulaire avec ton projet, même si c'est encore flou.",
 	},
 	{
-		icon: MessagesSquare,
 		title: "On échange ensemble",
 		description: "Je te recontacte pour affiner les détails et te proposer un devis.",
 	},
 	{
-		icon: Sparkles,
 		title: "Je crée ton bijou",
 		description: "Une fois validé, je réalise ta pièce unique à la main.",
 	},
@@ -27,12 +22,11 @@ export function CustomizationSidebar() {
 				<ol className="space-y-5" aria-label="Étapes du processus">
 					{steps.map((step, index) => (
 						<li key={index} className="flex gap-4">
-							<div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
-								<step.icon className="size-4" aria-hidden="true" />
+							<div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground">
+								{index + 1}
 							</div>
 							<div className="space-y-0.5">
 								<p className="text-sm font-medium leading-none">
-									<span className="text-muted-foreground mr-1.5">{index + 1}.</span>
 									{step.title}
 								</p>
 								<p className="text-sm text-muted-foreground leading-relaxed">

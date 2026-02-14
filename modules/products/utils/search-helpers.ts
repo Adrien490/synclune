@@ -1,6 +1,14 @@
 import { FUZZY_MAX_WORDS, MAX_SEARCH_LENGTH } from "../constants/search.constants";
 
 /**
+ * Escape LIKE pattern special characters (%, _, \) in a search term.
+ * Prevents user input from being interpreted as LIKE wildcards.
+ */
+export function escapeLikePattern(word: string): string {
+	return word.replace(/[%_\\]/g, "\\$&");
+}
+
+/**
  * Split a search term into individual words for AND-logic matching.
  * Deduplicates (case-insensitive) and caps at FUZZY_MAX_WORDS.
  */

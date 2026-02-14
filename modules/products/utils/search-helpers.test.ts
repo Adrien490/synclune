@@ -1,7 +1,43 @@
 import { describe, expect, it } from "vitest"
 
-import { splitSearchTerms } from "./search-helpers"
+import { escapeLikePattern, splitSearchTerms } from "./search-helpers"
 import { FUZZY_MAX_WORDS, MAX_SEARCH_LENGTH } from "../constants/search.constants"
+
+// ─── escapeLikePattern ──────────────────────────────────────────
+
+describe("escapeLikePattern", () => {
+	it("returns unchanged string when no special characters", () => {
+		expect(escapeLikePattern("bague")).toBe("bague")
+	})
+
+	it("escapes percent sign", () => {
+		expect(escapeLikePattern("100%")).toBe("100\\%")
+	})
+
+	it("escapes underscore", () => {
+		expect(escapeLikePattern("_test")).toBe("\\_test")
+	})
+
+	it("escapes backslash", () => {
+		expect(escapeLikePattern("path\\to")).toBe("path\\\\to")
+	})
+
+	it("escapes multiple special characters", () => {
+		expect(escapeLikePattern("%_\\")).toBe("\\%\\_\\\\")
+	})
+
+	it("handles empty string", () => {
+		expect(escapeLikePattern("")).toBe("")
+	})
+
+	it("preserves other special characters", () => {
+		expect(escapeLikePattern("bague+or (rose)")).toBe("bague+or (rose)")
+	})
+
+	it("escapes percent in the middle of text", () => {
+		expect(escapeLikePattern("50% off")).toBe("50\\% off")
+	})
+})
 
 describe("splitSearchTerms", () => {
 	it("splits a simple multi-word query", () => {

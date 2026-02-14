@@ -7,6 +7,7 @@ import { Tap } from "@/shared/components/animations/tap"
 import { formatEuro } from "@/shared/utils/format-euro"
 import { cn } from "@/shared/utils/cn"
 
+import { SEARCH_SYNONYMS } from "../../constants/search-synonyms"
 import type { QuickSearchProduct } from "../../data/quick-search-products"
 import { HighlightMatch } from "./highlight-match"
 
@@ -28,6 +29,13 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 
 	const image = defaultSku.images[0]
 	const isOutOfStock = product.skus.every((s) => s.inventory <= 0)
+
+	// Expand query words with synonyms for highlighting
+	// (e.g. searching "anneau" also highlights "bague" in the title)
+	const synonymTerms = query
+		.split(/\s+/)
+		.filter(Boolean)
+		.flatMap((word) => SEARCH_SYNONYMS.get(word.toLowerCase()) ?? [])
 
 	// Collect unique colors
 	const seen = new Set<string>()
@@ -75,7 +83,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				{/* Content */}
 				<div className="flex-1 min-w-0">
 					<p className="text-sm font-medium truncate">
-						<HighlightMatch text={product.title} query={query} />
+						<HighlightMatch text={product.title} query={query} synonyms={synonymTerms} />
 					</p>
 					<div className="flex items-center gap-2 mt-0.5">
 						{/* Price */}
