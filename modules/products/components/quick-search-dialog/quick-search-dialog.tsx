@@ -3,11 +3,9 @@
 import { AnimatePresence } from "motion/react"
 import { X } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useRef, useState, useTransition } from "react"
+import { useRef, useTransition } from "react"
 import { toast } from "sonner"
 
-import { quickSearch } from "@/modules/products/actions/quick-search"
-import type { QuickSearchResult } from "@/modules/products/data/quick-search-products"
 import { Fade } from "@/shared/components/animations/fade"
 import { SearchInput, type SearchInputHandle } from "@/shared/components/search-input"
 import { Button } from "@/shared/components/ui/button"
@@ -29,6 +27,7 @@ import { QuickTagPills } from "./quick-tag-pills"
 import { SearchErrorFallback } from "./search-error-fallback"
 import { SearchResultsSkeleton } from "./search-results-skeleton"
 import { useKeyboardNavigation } from "./use-keyboard-navigation"
+import { useQuickSearch } from "./use-quick-search"
 import type { QuickSearchCollection, QuickSearchProductType, RecentlyViewedProduct } from "./types"
 
 interface QuickSearchDialogProps {
@@ -58,12 +57,6 @@ export function QuickSearchDialog({
 		onClearError: () => toast.error("Erreur lors de la suppression"),
 	})
 
-	// Local input value for immediate idle/search switch
-	const [inputValue, setInputValue] = useState("")
-	const [searchResults, setSearchResults] = useState<QuickSearchResult | "error" | null>(null)
-	const [searchQuery, setSearchQuery] = useState("")
-	const [isSearching, startSearch] = useTransition()
-
 	const {
 		activeIndex,
 		setActiveIndex,
@@ -73,36 +66,16 @@ export function QuickSearchDialog({
 		activeDescendantId,
 	} = useKeyboardNavigation()
 
-	const isSearchMode = inputValue.trim().length > 0
-
-	const handleInputValueChange = (value: string) => {
-		setInputValue(value)
-		resetActiveIndex()
-	}
-
-	const handleLiveSearch = (query: string) => {
-		const trimmed = query.trim()
-		if (!trimmed || trimmed.length < 2) {
-			setSearchResults(null)
-			setSearchQuery("")
-			return
-		}
-		setSearchQuery(trimmed)
-		startSearch(async () => {
-			try {
-				const results = await quickSearch(trimmed)
-				setSearchResults(results)
-			} catch {
-				setSearchResults("error")
-			}
-		})
-	}
-
-	const handleSearchFromSuggestion = (term: string) => {
-		searchInputRef.current?.setValue(term)
-		setInputValue(term)
-		handleLiveSearch(term)
-	}
+	const {
+		searchResults,
+		searchQuery,
+		isSearching,
+		isSearchMode,
+		handleInputValueChange,
+		handleLiveSearch,
+		handleSearchFromSuggestion,
+		reset,
+	} = useQuickSearch({ searchInputRef, resetActiveIndex })
 
 	const handleEnterKey = (term: string) => {
 		const trimmed = term.trim()
@@ -142,10 +115,7 @@ export function QuickSearchDialog({
 
 	const handleClose = () => {
 		close()
-		setInputValue("")
-		setSearchResults(null)
-		setSearchQuery("")
-		resetActiveIndex()
+		reset()
 	}
 
 	return (
