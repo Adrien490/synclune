@@ -34,11 +34,8 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 			itemType="https://schema.org/Review"
 			className={cn(
 				"overflow-hidden rounded-lg border-2 border-transparent bg-card text-card-foreground",
-				"shadow-sm transition-[shadow,border-color,transform] duration-300 ease-out",
+				"shadow-sm transition-[shadow,border-color] duration-300 ease-out",
 				"motion-reduce:transition-colors",
-				"can-hover:hover:border-primary/40",
-				"can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
-				"motion-safe:can-hover:hover:scale-[1.01]",
 				"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
 				className,
 			)}

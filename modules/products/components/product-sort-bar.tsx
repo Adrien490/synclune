@@ -21,42 +21,13 @@ interface ProductSortBarProps {
 	className?: string;
 }
 
-/** Short labels for sort options displayed under "Trier" */
-const SORT_SHORT_LABELS: Record<string, string> = {
-	"rating-descending": "Notes",
-	"title-ascending": "A-Z",
-	"title-descending": "Z-A",
-	"price-ascending": "Prix \u2191",
-	"price-descending": "Prix \u2193",
-	"created-ascending": "Anciens",
-	"created-descending": "R\u00e9cents",
-};
-
-interface ActiveBadgeProps {
-	count?: number;
-	showDot?: boolean;
-}
-
-function ActiveBadge({ count, showDot = false }: ActiveBadgeProps) {
-	if (showDot && !count) {
-		return (
-			<span
-				className="absolute top-1.5 right-1/2 translate-x-5 size-2.5 bg-primary rounded-full ring-2 ring-background animate-in zoom-in-50 duration-200"
-				aria-hidden="true"
-			/>
-		);
-	}
-	if (count && count > 0) {
-		return (
-			<span
-				className="absolute -top-0.5 right-1/2 translate-x-6 min-w-[18px] h-[18px] bg-primary text-primary-foreground rounded-full text-[11px] flex items-center justify-center font-semibold px-1 ring-2 ring-background animate-in zoom-in-50 duration-200"
-				aria-hidden="true"
-			>
-				{count > 9 ? "9+" : count}
-			</span>
-		);
-	}
-	return null;
+function ActiveDot() {
+	return (
+		<span
+			className="absolute -top-0.5 left-1/2 -translate-x-1/2 size-1.5 bg-primary rounded-full animate-in zoom-in-50 duration-200"
+			aria-hidden="true"
+		/>
+	);
 }
 
 /**
@@ -73,7 +44,7 @@ function ActiveBadge({ count, showDot = false }: ActiveBadgeProps) {
  * Accessibilité:
  * - role="toolbar" avec navigation par flèches gauche/droite
  * - Live region pour annoncer les changements d'état
- * - Touch targets 72px minimum (WCAG 2.5.8)
+ * - Touch targets 56px minimum (Material Design 3)
  */
 export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) {
 	useBottomBarHeight(56);
@@ -97,10 +68,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 	const hasActiveSort = !!sortByValue;
 	const { activeFiltersCount, hasActiveFilters } = countActiveFilters(searchParams);
 
-	// Short label for active sort (B2)
-	const sortShortLabel = sortByValue ? SORT_SHORT_LABELS[sortByValue] : null;
-
-	// Event-driven live region (B6c)
+	// Live region for screen reader announcements
 	const announcementRef = useRef<HTMLSpanElement>(null);
 	const prevStateRef = useRef({ hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, search: searchParams.get("search") });
 
@@ -136,32 +104,6 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		return () => clearTimeout(timer);
 	}, [hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, searchParams, sortByValue]);
 
-	// Focus restoration after panel close (B6d)
-	const prevSortOpenRef = useRef(sortOpen);
-	const prevSearchOpenRef = useRef(isSearchOpen);
-	const prevFilterOpenRef = useRef(isFilterOpen);
-
-	useEffect(() => {
-		if (prevSortOpenRef.current && !sortOpen) {
-			sortButtonRef.current?.focus();
-		}
-		prevSortOpenRef.current = sortOpen;
-	}, [sortOpen]);
-
-	useEffect(() => {
-		if (prevSearchOpenRef.current && !isSearchOpen) {
-			searchButtonRef.current?.focus();
-		}
-		prevSearchOpenRef.current = isSearchOpen;
-	}, [isSearchOpen]);
-
-	useEffect(() => {
-		if (prevFilterOpenRef.current && !isFilterOpen) {
-			filterButtonRef.current?.focus();
-		}
-		prevFilterOpenRef.current = isFilterOpen;
-	}, [isFilterOpen]);
-
 	// Keyboard navigation for toolbar (arrow keys)
 	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
 		const buttonCount = 3;
@@ -194,18 +136,15 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		}
 	};
 
-	// Common button styles (B5: scale-[0.98] instead of scale-95)
-	const getButtonClassName = (isActive: boolean) =>
+	const getButtonClassName = () =>
 		cn(
 			"flex-1 min-w-18 flex flex-col items-center justify-center gap-1",
-			"h-full min-h-14", // 56px - Material Design 3 touch target
+			"h-full min-h-14",
 			"transition-colors duration-200",
 			"active:scale-[0.98] active:bg-primary/10",
 			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
 			"relative",
-			isActive
-				? "text-primary hover:text-primary"
-				: "text-muted-foreground hover:text-foreground"
+			"text-muted-foreground hover:text-foreground"
 		);
 
 	const iconClassName = "size-5";
@@ -218,13 +157,9 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 				animate={{ y: 0, opacity: 1 }}
 				transition={MOTION_CONFIG.spring.bar}
 				className={cn(
-					// Mobile only
 					"md:hidden",
-					// Position fixe en bas
 					"fixed bottom-0 left-0 right-0 z-50",
-					// Safe area pour iPhone X+
 					"pb-[env(safe-area-inset-bottom)]",
-					// Style
 					"bg-background/95 backdrop-blur-md",
 					"border-t border-x border-border",
 					"rounded-t-2xl",
@@ -246,18 +181,12 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
-						className={getButtonClassName(hasActiveSort)}
+						className={getButtonClassName()}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 					>
+						{hasActiveSort && <ActiveDot />}
 						<ArrowUpDown className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Trier</span>
-						{sortShortLabel ? (
-							<span className="text-[10px] text-primary truncate max-w-16 leading-none">
-								{sortShortLabel}
-							</span>
-						) : (
-							<ActiveBadge showDot={hasActiveSort} />
-						)}
 					</button>
 
 					{/* Recherche */}
@@ -268,16 +197,16 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
-						className={getButtonClassName(hasActiveSearch)}
+						className={getButtonClassName()}
 						aria-label={
 							hasActiveSearch
 								? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
 								: "Ouvrir la recherche"
 						}
 					>
+						{hasActiveSearch && <ActiveDot />}
 						<Search className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Rechercher</span>
-						<ActiveBadge showDot={hasActiveSearch} />
 					</button>
 
 					{/* Filtres */}
@@ -288,16 +217,16 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
-						className={getButtonClassName(hasActiveFilters)}
+						className={getButtonClassName()}
 						aria-label={
 							hasActiveFilters
 								? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}. Modifier les filtres`
 								: "Ouvrir les filtres"
 						}
 					>
+						{hasActiveFilters && <ActiveDot />}
 						<SlidersHorizontal className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Filtrer</span>
-						<ActiveBadge count={activeFiltersCount} />
 					</button>
 
 				</div>
