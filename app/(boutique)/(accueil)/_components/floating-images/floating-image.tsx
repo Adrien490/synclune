@@ -83,7 +83,7 @@ export function FloatingImage({
         >
           <Link
             href={`/creations/${image.slug}`}
-            aria-label={`Voir ${image.title}`}
+            aria-label={`Voir la création ${image.title}`}
             className="group relative block overflow-hidden rounded-2xl border border-white/20 backdrop-blur-sm shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] hover:ring-1 hover:ring-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             style={{ "--img-glow": position.glowColor } as React.CSSProperties}
           >

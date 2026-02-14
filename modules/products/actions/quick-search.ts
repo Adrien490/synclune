@@ -11,5 +11,12 @@ export async function quickSearch(query: string): Promise<QuickSearchResult> {
 	const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_SEARCH_LIMIT)
 	if ("error" in rateCheck) return EMPTY_RESULT
 
-	return quickSearchProducts(query)
+	const result = await quickSearchProducts(query)
+
+	// Structured logging for search analytics (picked up by log aggregator)
+	if (result.totalCount === 0) {
+		console.log(`[SEARCH] zero-result | term="${query.trim()}" | suggestion="${result.suggestion ?? "none"}"`)
+	}
+
+	return result
 }

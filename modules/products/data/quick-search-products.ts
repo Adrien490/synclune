@@ -1,8 +1,9 @@
-import "server-only"
+import { cacheLife, cacheTag } from "next/cache"
 
 import { ProductStatus } from "@/app/generated/prisma/client"
 import { prisma } from "@/shared/lib/prisma"
 
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache"
 import { QUICK_SEARCH_SELECT } from "../constants/product.constants"
 import { SUGGESTION_THRESHOLD_RESULTS } from "./spell-suggestion"
 import { fuzzySearchProductIds } from "./fuzzy-search"
@@ -46,6 +47,10 @@ const QUICK_SEARCH_LIMIT = 6
 export async function quickSearchProducts(
 	searchTerm: string
 ): Promise<QuickSearchResult> {
+	"use cache"
+	cacheLife("products")
+	cacheTag(PRODUCTS_CACHE_TAGS.LIST)
+
 	const term = searchTerm.trim()
 	if (!term || term.length < 2) {
 		return { products: [], suggestion: null, totalCount: 0 }
@@ -77,11 +82,6 @@ export async function quickSearchProducts(
 	const orderedProducts = productIds
 		.map((id) => productMap.get(id))
 		.filter((p): p is QuickSearchProduct => p !== undefined)
-
-	// Structured logging for search analytics (picked up by log aggregator)
-	if (totalCount === 0) {
-		console.log(`[SEARCH] zero-result | term="${term}" | suggestion="${spellResult?.term ?? "none"}"`)
-	}
 
 	return {
 		products: orderedProducts,

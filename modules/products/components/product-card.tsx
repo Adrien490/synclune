@@ -9,6 +9,7 @@ import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-
 import type { Product } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
 import type { ComponentProps, ReactNode } from "react";
+import type { ColorSwatch } from "@/modules/products/types/product-list.types";
 
 interface ProductCardProps {
 	product: Product;
@@ -22,27 +23,83 @@ interface ProductCardProps {
 
 /**
  * Badge positionne en haut a gauche de la carte.
- * Utilise par les badges stock (rupture, urgence) et promotion.
+ * Marque aria-hidden car l'information est transmise via le sr-only span
+ * associe a l'article (aria-describedby).
  */
 function CardBadge({
-	ariaLabel,
 	variant,
 	className,
 	children,
 }: {
-	ariaLabel: string;
 	variant: ComponentProps<typeof Badge>["variant"];
 	className?: string;
 	children: ReactNode;
 }) {
 	return (
 		<Badge
-			aria-label={ariaLabel}
+			aria-hidden="true"
 			variant={variant}
 			className={cn("absolute top-2.5 left-2.5 z-20 rounded-full shadow-md", className)}
 		>
 			{children}
 		</Badge>
+	);
+}
+
+/**
+ * Liste de pastilles couleur avec liens vers la page produit filtree par couleur.
+ */
+function ColorSwatchList({
+	colors,
+	productUrl,
+	title,
+}: {
+	colors: ColorSwatch[];
+	productUrl: string;
+	title: string;
+}) {
+	return (
+		<ul
+			className="relative z-30 flex items-center gap-1.5 list-none p-0 m-0"
+			aria-label={`${colors.length} couleurs disponibles pour ${title}`}
+		>
+			{colors.slice(0, 5).map((color) => (
+				<li key={color.slug}>
+					<Link
+						href={`${productUrl}?color=${color.slug}`}
+						className={cn(
+							"relative block size-6 sm:size-7 rounded-full border border-foreground/15 shrink-0",
+							"transition-transform duration-150 motion-safe:can-hover:hover:scale-110",
+							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+							!color.inStock && "opacity-50"
+						)}
+						style={{ backgroundColor: color.hex }}
+						title={color.name}
+						aria-label={`${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`}
+					>
+						{!color.inStock && (
+							<span
+								aria-hidden="true"
+								className="absolute inset-0 flex items-center justify-center"
+							>
+								<span className="block w-[130%] h-[3px] bg-foreground rotate-[-45deg] rounded-full shadow-[0_0_0_1.5px_white]" />
+							</span>
+						)}
+					</Link>
+				</li>
+			))}
+			{colors.length > 5 && (
+				<li>
+					<Link
+						href={productUrl}
+						className="relative z-30 text-xs text-muted-foreground"
+						aria-label={`Voir les ${colors.length} couleurs disponibles pour ${title}`}
+					>
+						+{colors.length - 5}
+					</Link>
+				</li>
+			)}
+		</ul>
 	);
 }
 
@@ -60,9 +117,9 @@ function CardBadge({
  * (pas de microdata dans les grilles pour eviter la redondance)
  *
  * z-index stack (documented):
- * - z-10: Link overlay (clickable image)
+ * - z-10: Stretched link (title link ::after covers the entire card)
  * - z-20: Badges (stock, promo)
- * - z-30: Interactive buttons (wishlist, add to cart)
+ * - z-30: Interactive buttons (wishlist, add to cart, color swatches)
  *
  * @example
  * ```tsx
@@ -105,9 +162,26 @@ export function ProductCard({
 
 	const isAboveFold = index !== undefined && index < 4;
 
+	// Build sr-only description for screen readers (badges info)
+	const badgeDescriptions: string[] = [];
+	if (stockStatus === "out_of_stock") {
+		badgeDescriptions.push(stockMessage);
+	} else if (showUrgencyBadge) {
+		badgeDescriptions.push(
+			`Stock limité : plus que ${inventory} exemplaire${inventory > 1 ? "s" : ""} disponible${inventory > 1 ? "s" : ""}`
+		);
+	}
+	if (showPromoBadge) {
+		badgeDescriptions.push(`Promotion : -${discountPercent}%`);
+	}
+	const badgeDescId = badgeDescriptions.length > 0
+		? sectionId ? `product-badges-${sectionId}-${product.id}` : `product-badges-${product.id}`
+		: undefined;
+
 	return (
 		<article
 			aria-labelledby={titleId}
+			aria-describedby={badgeDescId}
 			className={cn(
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
 				"transition-transform duration-300 ease-out",
@@ -123,6 +197,13 @@ export function ProductCard({
 				"can-hover:group-hover:will-change-transform"
 			)}
 		>
+			{/* sr-only badge descriptions for screen readers */}
+			{badgeDescId && (
+				<span id={badgeDescId} className="sr-only">
+					{badgeDescriptions.join(". ")}
+				</span>
+			)}
+
 			{/* Image container with interactive buttons */}
 			{/* bg-muted acts as CSS-only fallback if image fails to load */}
 			<div className="product-card-media relative aspect-square sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
@@ -130,7 +211,6 @@ export function ProductCard({
 				{/* Status badges — stock badges take priority over promo (same position) */}
 				{stockStatus === "out_of_stock" && (
 					<CardBadge
-						ariaLabel={`${stockMessage} pour ${title}`}
 						variant="secondary"
 						className="backdrop-blur-sm bg-foreground/80 text-background border-0"
 					>
@@ -138,18 +218,12 @@ export function ProductCard({
 					</CardBadge>
 				)}
 				{showUrgencyBadge && (
-					<CardBadge
-						ariaLabel={`Stock limite pour ${title} : plus que ${inventory} exemplaire${inventory > 1 ? "s" : ""} disponible${inventory > 1 ? "s" : ""}`}
-						variant="warning"
-					>
+					<CardBadge variant="warning">
 						{stockMessage}
 					</CardBadge>
 				)}
 				{showPromoBadge && (
-					<CardBadge
-						ariaLabel={`Promotion : ${discountPercent}% de reduction sur ${title}`}
-						variant="destructive"
-					>
+					<CardBadge variant="destructive">
 						-{discountPercent}%
 					</CardBadge>
 				)}
@@ -190,14 +264,6 @@ export function ProductCard({
 					/>
 				)}
 
-				{/* Decorative link overlay for clickable image area (excluded from a11y tree) */}
-				<Link
-					href={productUrl}
-					className="absolute inset-0 z-10"
-					tabIndex={-1}
-					aria-hidden="true"
-				/>
-
 				{/* Add to cart button - Desktop (client island) */}
 				{defaultSku && stockStatus !== "out_of_stock" && (
 					<AddToCartCardButton
@@ -209,13 +275,13 @@ export function ProductCard({
 				)}
 			</div>
 
-			{/* Card content */}
-			<div className="flex flex-col gap-2.5 sm:gap-3 relative px-3 pb-3 sm:px-4 sm:pb-4 lg:px-5 lg:pb-5 overflow-hidden">
-				{/* Clickable title with truncation for grid alignment */}
+			{/* Card content — no position:relative so stretched link ::after reaches the article */}
+			<div className="flex flex-col gap-2.5 sm:gap-3 px-3 pb-3 sm:px-4 sm:pb-4 lg:px-5 lg:pb-5 overflow-hidden">
+				{/* Stretched link: title link with ::after covering the entire card */}
 				<Link
 					href={productUrl}
 					title={title}
-					className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
+					className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm after:absolute after:inset-0 after:z-10"
 				>
 					<h3
 						id={titleId}
@@ -227,47 +293,11 @@ export function ProductCard({
 
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (
-					<ul
-						className="flex items-center gap-1.5 list-none p-0 m-0"
-						aria-label={`${colors.length} couleurs disponibles pour ${title}`}
-					>
-						{colors.slice(0, 5).map((color) => (
-							<li key={color.slug}>
-								<Link
-									href={`${productUrl}?color=${color.slug}`}
-									className={cn(
-										"relative block size-6 sm:size-7 rounded-full border border-foreground/15 shrink-0",
-										"transition-transform duration-150 motion-safe:can-hover:hover:scale-110",
-										"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-										!color.inStock && "opacity-40"
-									)}
-									style={{ backgroundColor: color.hex }}
-									title={color.name}
-									aria-label={`${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`}
-								>
-									{!color.inStock && (
-										<span
-											aria-hidden="true"
-											className="absolute inset-0 flex items-center justify-center"
-										>
-											<span className="block w-[130%] h-0.5 bg-foreground/70 rotate-[-45deg] rounded-full" />
-										</span>
-									)}
-								</Link>
-							</li>
-						))}
-						{colors.length > 5 && (
-							<li>
-								<Link
-									href={productUrl}
-									className="text-xs text-muted-foreground"
-									aria-label={`Voir les ${colors.length} couleurs disponibles pour ${title}`}
-								>
-									+{colors.length - 5}
-								</Link>
-							</li>
-						)}
-					</ul>
+					<ColorSwatchList
+						colors={colors}
+						productUrl={productUrl}
+						title={title}
+					/>
 				)}
 
 				{/* Prix */}
@@ -280,7 +310,7 @@ export function ProductCard({
 						productTitle={title}
 						product={product}
 						variant="mobile-full"
-						className="sm:hidden"
+						className="relative z-30 sm:hidden"
 					/>
 				)}
 			</div>

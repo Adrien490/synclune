@@ -43,7 +43,6 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 	return (
 		<section
 			id="hero-section"
-			role="region"
 			aria-labelledby="hero-title"
 			aria-describedby="hero-subtitle"
 			className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
@@ -51,22 +50,23 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-0 -z-10" aria-hidden="true">
 				<ParticleBackground
+					disableOnTouch={true}
 					shape={["heart", "pearl"]}
 					colors={[
 						"var(--primary)",
 						"var(--secondary)",
-						"oklch(0.78 0.15 340)",
-						"oklch(0.75 0.12 280)",
-						"oklch(0.82 0.14 160)",
+						"var(--color-glow-pink)",
+						"var(--color-glow-lavender)",
+						"var(--color-glow-mint)",
 					]}
-					count={10}
+					count={8}
 					size={[40, 80]}
-					opacity={[0.25, 0.45]}
-					blur={[5, 14]}
+					opacity={[0.35, 0.55]}
+					blur={[4, 12]}
 					animationStyle="drift"
 					depthParallax={true}
 				/>
-				<div className="absolute inset-0 bg-background/20" />
+				<div className="absolute inset-0 bg-background/10" />
 			</div>
 
 			{/* Floating product images - Desktop only, streams in after products load */}
@@ -108,6 +108,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 									Créés à la main pour des occasions particulières, ou pour
 									sublimer votre quotidien{" "}
 								</span>
+								<span className="sr-only">avec amour</span>
 								<Heart
 									size={22}
 									fill="currentColor"

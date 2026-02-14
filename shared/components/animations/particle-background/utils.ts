@@ -21,7 +21,10 @@ export function generateParticles(
 	shapes: ParticleShape[] = ["circle"],
 	baseDuration: number = DEFAULT_DURATION
 ): Particle[] {
-	const cacheKey = JSON.stringify([count, size, opacity, colors, blur, depthParallax, shapes, baseDuration]);
+	// Normalize tuples so min <= max
+	const safeSize: [number, number] = [Math.min(size[0], size[1]), Math.max(size[0], size[1])];
+
+	const cacheKey = JSON.stringify([count, safeSize, opacity, colors, blur, depthParallax, shapes, baseDuration]);
 	const cached = particleCache.get(cacheKey);
 	if (cached) return cached;
 
@@ -33,14 +36,14 @@ export function generateParticles(
 		const seed = i * 1000;
 		const rand = (offset: number) => seededRandom(seed + offset);
 
-		const particleSize = size[0] + rand(1) * (size[1] - size[0]);
+		const particleSize = safeSize[0] + rand(1) * (safeSize[1] - safeSize[0]);
 		const particleOpacity = opacity[0] + rand(2) * (opacity[1] - opacity[0]);
 		const x = 5 + rand(3) * 90;
 		const y = 5 + rand(4) * 90;
 		const color = safeColors[Math.floor(rand(8) * safeColors.length)];
 
 		// Blur correlated inversely to size: large particles are sharp (close), small ones are blurry (far)
-		const sizeNorm = (particleSize - size[0]) / (size[1] - size[0] || 1);
+		const sizeNorm = (particleSize - safeSize[0]) / (safeSize[1] - safeSize[0] || 1);
 		const particleBlur = Array.isArray(blur)
 			? blur[0] + (1 - sizeNorm) * (blur[1] - blur[0])
 			: blur;

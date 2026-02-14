@@ -45,7 +45,7 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 						type="button"
 						onClick={() => openLightbox(index)}
 						aria-label={`Voir la photo ${index + 1} de l'avis`}
-						className="relative size-20 md:size-24 rounded-lg overflow-hidden group cursor-zoom-in"
+						className="relative size-20 md:size-24 rounded-lg overflow-hidden group cursor-zoom-in focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 					>
 						{/* Skeleton shimmer while loading (only when no blur placeholder) */}
 						{!loadedImages.has(media.id) && !media.blurDataUrl && (

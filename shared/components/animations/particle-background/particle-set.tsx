@@ -56,7 +56,7 @@ function AnimatedParticle({
 	) : (
 		<motion.span
 			className="block w-full h-full"
-			style={shapeStyles}
+			style={{ ...shapeStyles, opacity: p.opacity }}
 			animate={ANIMATION_PRESETS[animationStyle](p)}
 			transition={getTransition(p)}
 		/>

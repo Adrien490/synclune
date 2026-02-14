@@ -47,9 +47,21 @@ export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 /** Shapes where rotation has no visible effect */
 const ROUND_SHAPES: Set<ParticleShape> = new Set(["circle", "pearl"]);
 
-/** Subtle rotation keyframes for non-circular shapes */
-const subtleRotate = (p: { shape: ParticleShape }) =>
-	ROUND_SHAPES.has(p.shape) ? {} : { rotate: [0, 8, -6, 0] };
+/** Base rotation offset from shape styles (e.g. diamond = 45deg) */
+function getBaseRotation(shape: ParticleShape): number {
+	const config = SHAPE_CONFIGS[shape];
+	if (config.type === "css" && typeof config.styles.rotate === "string") {
+		return parseFloat(config.styles.rotate) || 0;
+	}
+	return 0;
+}
+
+/** Subtle rotation keyframes for non-circular shapes, preserving base rotation */
+const subtleRotate = (p: { shape: ParticleShape }) => {
+	if (ROUND_SHAPES.has(p.shape)) return {};
+	const base = getBaseRotation(p.shape);
+	return { rotate: [base, base + 8, base - 6, base] };
+};
 
 /** Presets d'animation par style (optimises pour GPU) */
 export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {

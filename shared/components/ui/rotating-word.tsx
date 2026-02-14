@@ -67,6 +67,7 @@ export function RotatingWord({
 		<span
 			className={pillStyles}
 			style={{ contain: "layout paint" }}
+			lang="fr"
 			aria-live="polite"
 			aria-atomic="true"
 		>

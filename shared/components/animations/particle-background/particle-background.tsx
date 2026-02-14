@@ -82,6 +82,7 @@ export function ParticleBackground({
 	const mouseY = useMotionValue(0);
 
 	useEffect(() => {
+		if (disableOnTouch && isTouchDevice) return;
 		const el = containerRef.current;
 		if (!el) return;
 
@@ -103,6 +104,7 @@ export function ParticleBackground({
 
 		const onMouseMove = (e: MouseEvent) => {
 			cancelLerp();
+			cachedRect = el!.getBoundingClientRect();
 			mouseX.set(((e.clientX - cachedRect.left) / cachedRect.width - 0.5) * 2 * PARALLAX_STRENGTH);
 			mouseY.set(((e.clientY - cachedRect.top) / cachedRect.height - 0.5) * 2 * PARALLAX_STRENGTH);
 		};
@@ -137,7 +139,7 @@ export function ParticleBackground({
 			el.removeEventListener("mouseleave", onMouseLeave);
 			window.removeEventListener("resize", updateRect);
 		};
-	}, [mouseX, mouseY]);
+	}, [mouseX, mouseY, disableOnTouch, isTouchDevice]);
 
 	if (disableOnTouch && isTouchDevice) {
 		return null;

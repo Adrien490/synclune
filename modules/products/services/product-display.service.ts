@@ -26,6 +26,9 @@ import {
 } from "@/modules/skus/services/sku-selection.service";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
+/** Validates hex color format at display time (defense in depth) */
+const HEX_PATTERN = /^#[0-9A-Fa-f]{6}$/;
+
 /**
  * Tronque le texte alternatif pour SEO (max 120 caractères par défaut)
  */
@@ -218,8 +221,8 @@ export function getProductCardData(
 		totalInventory += sku.inventory;
 		if (sku.inventory > 0) availableSkus++;
 
-		// Couleurs
-		if (sku.color?.slug && sku.color?.hex) {
+		// Couleurs (hex validated at display time to prevent style injection)
+		if (sku.color?.slug && sku.color?.hex && HEX_PATTERN.test(sku.color.hex)) {
 			const existing = colorMap.get(sku.color.slug);
 			const inStock = existing?.inStock || sku.inventory > 0;
 			colorMap.set(sku.color.slug, {
