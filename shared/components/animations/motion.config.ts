@@ -103,6 +103,8 @@ export const MOTION_CONFIG = {
 		cta: { y: 15, delay: 0.3, duration: 0.5 },
 		timeline: { stagger: 0.12, y: 30 },
 		footer: { y: 10, duration: 0.4, stagger: 0.08 },
+		carousel: { y: 20, duration: 0.8, delay: 0.2 },
+		content: { y: 20, duration: 0.6, delay: 0.2 },
 	},
 
 	// Background animation presets

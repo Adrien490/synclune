@@ -42,14 +42,14 @@ export async function NewsletterSection() {
 				</header>
 
 				{/* Centered form */}
-				<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration}>
+				<Fade inView once y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration}>
 					<div className="max-w-md mx-auto">
 						<NewsletterForm />
 					</div>
 				</Fade>
 
 				{/* Anti-spam assurance + signature */}
-				<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
+				<Fade inView once y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 					<div className="mt-6 text-center">
 						<p className="text-sm text-muted-foreground">
 							1 à 2 emails par mois maximum. Désinscription en un clic.

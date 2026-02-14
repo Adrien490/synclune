@@ -65,7 +65,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 				</header>
 
 				<div className="mb-8 lg:mb-12">
-					<Reveal delay={0.2} duration={0.8} y={20} once={true}>
+					<Reveal y={MOTION_CONFIG.section.carousel.y} delay={MOTION_CONFIG.section.carousel.delay} duration={MOTION_CONFIG.section.carousel.duration} once>
 						<Carousel
 							opts={{
 								align: "center",

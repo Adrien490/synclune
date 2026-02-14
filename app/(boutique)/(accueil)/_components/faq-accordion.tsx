@@ -1,4 +1,5 @@
 import { Stagger } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import {
 	Accordion,
 	AccordionContent,
@@ -19,7 +20,7 @@ interface FaqAccordionProps {
 export function FaqAccordion({ items }: FaqAccordionProps) {
 	return (
 		<Accordion type="single" collapsible className="max-w-3xl mx-auto">
-			<Stagger stagger={0.06} y={20} inView once className="space-y-3">
+			<Stagger stagger={MOTION_CONFIG.stagger.normal} y={20} inView once className="space-y-3">
 				{items.map((item, idx) => (
 					<AccordionItem
 						key={idx}

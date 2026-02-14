@@ -61,13 +61,13 @@ export function ReviewsSection({
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Header */}
 				<header className="mb-8 text-center lg:mb-12">
-					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} disableOnTouch>
+					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="reviews-title">
 							Ce que disent nos clientes
 						</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
-					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration} disableOnTouch>
+					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p
 							id="reviews-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
@@ -78,7 +78,7 @@ export function ReviewsSection({
 
 					{/* Aggregate rating */}
 					{stats.totalReviews > 0 && (
-						<Fade y={10} delay={0.2} duration={0.6} disableOnTouch>
+						<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 							<div
 								className="mt-4 flex items-center justify-center gap-2"
 								role="img"
@@ -100,7 +100,7 @@ export function ReviewsSection({
 				<ResponsiveLayout
 					mobile={
 						<div className="mb-6 sm:mb-8">
-							<Reveal delay={0.2} duration={0.8} y={20} once={true} disableOnTouch>
+							<Reveal y={MOTION_CONFIG.section.carousel.y} delay={MOTION_CONFIG.section.carousel.delay} duration={MOTION_CONFIG.section.carousel.duration} once>
 								<Carousel
 									opts={{
 										align: "center",
@@ -131,8 +131,7 @@ export function ReviewsSection({
 							stagger={MOTION_CONFIG.section.grid.stagger}
 							y={MOTION_CONFIG.section.grid.y}
 							inView
-							once={true}
-							disableOnTouch
+							once
 						>
 							{reviews.map((review) => (
 								<HomepageReviewCard key={review.id} review={review} />
@@ -150,7 +149,6 @@ export function ReviewsSection({
 						inView
 						once
 						className="text-center"
-						disableOnTouch
 					>
 						<Button
 							asChild

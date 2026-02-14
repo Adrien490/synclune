@@ -174,9 +174,9 @@ export async function CreativeProcess() {
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
 					{/* Atelier placeholder - Image first on mobile */}
 					<Reveal
-						y={20}
-						duration={0.6}
-						delay={0.2}
+						y={MOTION_CONFIG.section.content.y}
+						duration={MOTION_CONFIG.section.content.duration}
+						delay={MOTION_CONFIG.section.content.delay}
 						className="relative order-1 h-56 sm:h-80 lg:h-full"
 					>
 						<PlaceholderImage className="h-full w-full rounded-2xl" label="Photo de l'atelier à venir" />
@@ -194,7 +194,7 @@ export async function CreativeProcess() {
 								aria-hidden="true"
 							/>
 
-							<Fade inView once y={20}>
+							<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
 								<ol className="space-y-8 sm:space-y-12 lg:space-y-16 list-none">
 									{processSteps.map((step, index) => (
 										<li
