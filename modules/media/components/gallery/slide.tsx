@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "@/shared/hooks";
-import { MAIN_IMAGE_QUALITY, GALLERY_MAIN_SIZES } from "@/modules/media/constants/image-config.constants";
-import { VIDEO_LOAD_TIMEOUT } from "@/modules/media/constants/gallery.constants";
+import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
+import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
+import { GALLERY_ZOOM_LEVEL, VIDEO_LOAD_TIMEOUT } from "@/modules/media/constants/gallery.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
+import { GalleryHoverZoom } from "@/shared/components/gallery/hover-zoom";
+import { GalleryPinchZoom } from "./pinch-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
 interface GallerySlideProps {
@@ -89,7 +91,11 @@ export function GallerySlide({
 	const [videoState, setVideoState] = useState<VideoState>("loading");
 	const prefersReduced = useReducedMotion();
 
-	// Autoplay video when active (respects prefers-reduced-motion)
+	// Détection desktop pour rendu conditionnel (évite double image dans DOM)
+	// Breakpoint md = 768px (cohérent avec la grille thumbnails)
+	const isDesktop = useMediaQuery("(min-width: 768px)");
+
+	// Autoplay vidéo quand active (respect prefers-reduced-motion)
 	useEffect(() => {
 		if (!videoRef.current || videoState === "error") return;
 
@@ -104,7 +110,14 @@ export function GallerySlide({
 		}
 	}, [isActive, prefersReduced, videoState, media.url]);
 
-	// Timeout to avoid infinite spinner
+	// Reset state si l'URL change
+	useEffect(() => {
+		if (media.mediaType === "VIDEO") {
+			setVideoState("loading");
+		}
+	}, [media.url, media.mediaType]);
+
+	// Timeout pour éviter spinner infini
 	useEffect(() => {
 		if (media.mediaType !== "VIDEO" || videoState !== "loading") return;
 
@@ -124,7 +137,7 @@ export function GallerySlide({
 
 	const transitionClass = prefersReduced ? "" : "transition-opacity duration-300";
 
-	// Video: same rendering mobile/desktop
+	// Vidéo : même rendu mobile/desktop
 	if (media.mediaType === "VIDEO") {
 		return (
 			<div
@@ -166,7 +179,7 @@ export function GallerySlide({
 					aria-describedby={`video-desc-${index}`}
 				>
 					<source src={media.url} type="video/mp4" />
-					{/* Empty track to satisfy WCAG - product videos without audio */}
+					{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
 					<track kind="captions" srcLang="fr" label="Français" default />
 				</video>
 				<span id={`video-desc-${index}`} className="sr-only">
@@ -180,28 +193,44 @@ export function GallerySlide({
 		media.alt ||
 		PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType);
 
-	// Image: click opens lightbox (zoom handled by lightbox)
+	// Image : rendu conditionnel desktop/mobile
+	// Desktop → Zoom hover
+	// Mobile → Pinch-zoom natif
+	if (isDesktop) {
+		return (
+			<div
+				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
+				onClick={onOpen}
+				role="button"
+				tabIndex={0}
+				onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
+				aria-label="Ouvrir l'image en plein écran"
+			>
+				<GalleryHoverZoom
+					src={media.url}
+					alt={alt}
+					blurDataUrl={media.blurDataUrl}
+					zoomLevel={GALLERY_ZOOM_LEVEL}
+					priority={index === 0}
+					quality={MAIN_IMAGE_QUALITY}
+				/>
+			</div>
+		);
+	}
+
+	// Mobile : Pinch-zoom natif (gère son propre onClick via onTap)
 	return (
 		<div
-			className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
-			onClick={onOpen}
-			role="button"
-			tabIndex={0}
-			onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
-			aria-label="Ouvrir l'image en plein écran"
+			className="flex-[0_0_100%] min-w-0 h-full relative"
+			role="presentation"
 		>
-			<Image
+			<GalleryPinchZoom
 				src={media.url}
 				alt={alt}
-				fill
-				className="object-cover"
-				preload={index === 0}
-				loading={index === 0 ? undefined : "lazy"}
-				quality={MAIN_IMAGE_QUALITY}
-				sizes={GALLERY_MAIN_SIZES}
-				placeholder={media.blurDataUrl ? "blur" : "empty"}
-				blurDataURL={media.blurDataUrl}
-				draggable={false}
+				blurDataUrl={media.blurDataUrl}
+				isActive={isActive}
+				onTap={onOpen}
+				priority={index === 0}
 			/>
 		</div>
 	);

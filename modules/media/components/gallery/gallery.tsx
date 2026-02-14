@@ -17,6 +17,7 @@ import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.s
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { GalleryCounter } from "@/shared/components/gallery/counter";
 import { GalleryNavigation } from "@/shared/components/gallery/navigation";
+import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
 import { useLightbox } from "@/shared/hooks";
 import dynamic from "next/dynamic";
 import { GallerySlide } from "./slide";
@@ -49,7 +50,7 @@ function GalleryLoadingSkeleton() {
 	);
 }
 
-// Reusable component to avoid desktop/mobile duplication
+// Composant réutilisable pour éviter duplication desktop/mobile
 interface GalleryThumbnailListProps {
 	images: ProductMedia[];
 	current: number;
@@ -126,17 +127,17 @@ function GalleryContent({ product, title }: GalleryProps) {
 		dragFree: false,
 	});
 
-	// Product type for descriptive ALTs
+	// Type de produit pour les ALT descriptifs
 	const productType = product.type?.label;
 
-	// Extract and validate URL params for variants
+	// Extraire et valider les params URL pour les variants
 	const { color: colorSlug, material: materialSlug, size } = parseGalleryParams({
 		color: searchParams.get("color") || undefined,
 		material: searchParams.get("material") || undefined,
 		size: searchParams.get("size") || undefined,
 	});
 
-	// Build image list based on selected variants
+	// Construire la liste d'images selon les variants
 	const images: ProductMedia[] = buildGallery({
 		product,
 		selectedVariants: { colorSlug, materialSlug, size },
@@ -144,20 +145,32 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	const slides = buildLightboxSlides(images, prefersReduced);
 
-	// Connection-aware prefetch range with intelligent fallback
+	// Connection-aware prefetch range avec fallback intelligent
 	// Safari/Firefox ne supportent pas navigator.connection
-	// Lazy initializer: computed once on first client render, no effect needed
-	const [prefetchRange] = useState(() => {
-		if (typeof window === "undefined") return PREFETCH_RANGE_FAST;
-		const connection = (navigator as Navigator & { connection?: { effectiveType?: string } })
-			.connection?.effectiveType;
-		if (connection === "slow-2g" || connection === "2g") return PREFETCH_RANGE_SLOW;
-		if (window.innerWidth < 768) return PREFETCH_RANGE_SLOW;
-		return PREFETCH_RANGE_FAST;
-	});
+	// Fallback: mobile viewport sans connection API = traiter comme connexion modérée
+	const getEffectivePrefetchRange = (): number => {
+		const connection = typeof navigator !== "undefined"
+			? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
+			: undefined;
 
-	// Intelligent prefetch of adjacent images (Next.js 16 + React 19)
-	// Extract URLs to avoid recreating the array on every render
+		// Si connection API disponible, l'utiliser
+		if (connection) {
+			return connection === "slow-2g" || connection === "2g"
+				? PREFETCH_RANGE_SLOW
+				: PREFETCH_RANGE_FAST;
+		}
+
+		// Fallback: mobile sans connection API = prudent (Safari iOS ~25% trafic FR)
+		if (typeof window !== "undefined" && window.innerWidth < 768) {
+			return PREFETCH_RANGE_SLOW;
+		}
+
+		return PREFETCH_RANGE_FAST;
+	};
+	const prefetchRange = getEffectivePrefetchRange();
+
+	// Prefetch intelligent des images adjacentes (Next.js 16 + React 19)
+	// Extraire les URLs pour éviter de recréer un tableau à chaque render
 	const imageUrls = images.map((img) => img.url);
 
 	usePrefetchImages({
@@ -167,7 +180,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 		enabled: images.length > 1,
 	});
 
-	// Prefetch metadata of adjacent videos
+	// Prefetch métadonnées des vidéos adjacentes
 	usePrefetchVideos({
 		medias: images,
 		currentIndex: current,
@@ -175,14 +188,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 		enabled: images.length > 1,
 	});
 
-	// Effect Event for onSelect without re-registration
+	// Effect Event pour gérer onSelect sans re-registration
 	const onSelect = useEffectEvent(() => {
 		if (emblaApi) {
 			setCurrent(emblaApi.selectedScrollSnap());
 		}
 	});
 
-	// Sync index when the carousel changes
+	// Sync index quand le carousel change
 	useEffect(() => {
 		if (!emblaApi) return;
 
@@ -194,9 +207,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 		};
 	}, [emblaApi, onSelect]);
 
-	// Effect Event for keyboard navigation without re-registration
+	// Effect Event pour gérer la navigation clavier sans re-registration
 	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
-		// Don't capture if focus is in an input/textarea
+		// Ne pas capturer si focus dans un input/textarea
 		if (
 			e.target instanceof HTMLInputElement ||
 			e.target instanceof HTMLTextAreaElement
@@ -226,14 +239,12 @@ function GalleryContent({ product, title }: GalleryProps) {
 		}
 	});
 
-	// Navigation clavier scoped to gallery element (WCAG 2.1.1)
+	// Navigation clavier (WCAG 2.1.1)
 	useEffect(() => {
 		if (!emblaApi || images.length <= 1) return;
-		const el = galleryRef.current;
-		if (!el) return;
-		if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
-		el.addEventListener("keydown", onKeyDown);
-		return () => el.removeEventListener("keydown", onKeyDown);
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [emblaApi, images.length, onKeyDown]);
 
 	// Navigation
@@ -241,10 +252,10 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const scrollNext = () => emblaApi?.scrollNext();
 	const scrollTo = (index: number) => emblaApi?.scrollTo(index);
 
-	// Conditional transition classes (composable only: transform, opacity)
+	// Classes de transition conditionnelles (composables uniquement: transform, opacity)
 	const transitionClass = prefersReduced ? "" : "transition-[transform,opacity] duration-300";
 
-	// Edge case: no images
+	// Cas limite : aucune image
 	if (!images.length) {
 		return (
 			<div className="gallery-empty">
@@ -272,6 +283,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 		);
 	}
 
+	const currentMedia = images[current];
+
 	return (
 		<>
 			<div
@@ -279,15 +292,15 @@ function GalleryContent({ product, title }: GalleryProps) {
 				className={cn(
 					"product-gallery w-full",
 					transitionClass,
-					"motion-safe:group-has-[[data-pending]]/product-details:blur-[1px]",
-					"motion-safe:group-has-[[data-pending]]/product-details:scale-[0.99]",
+					"group-has-[[data-pending]]/product-details:blur-[1px]",
+					"group-has-[[data-pending]]/product-details:scale-[0.99]",
 					"group-has-[[data-pending]]/product-details:pointer-events-none"
 				)}
 				role="region"
 				aria-label={`Galerie photos ${title}`}
 				aria-roledescription="carrousel"
 			>
-				{/* Screen reader announcement (WCAG 4.1.3) */}
+				{/* Annonce pour lecteurs d'écran (WCAG 4.1.3) */}
 				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
 					Image {current + 1} sur {images.length}
 				</div>
@@ -311,7 +324,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 						/>
 					)}
 
-					{/* Main image with Embla */}
+					{/* Image principale avec Embla */}
 					<div className="gallery-main relative group order-2">
 						<div
 							className={cn(
@@ -334,6 +347,12 @@ function GalleryContent({ product, title }: GalleryProps) {
 								<GalleryCounter current={current} total={images.length} />
 							)}
 
+							{/* Bouton zoom - Desktop uniquement */}
+							{currentMedia?.mediaType === "IMAGE" && (
+								<GalleryZoomButton onOpen={open} />
+							)}
+
+
 							{/* Embla viewport */}
 							<div ref={emblaRef} className="absolute inset-0 overflow-hidden">
 								<div className="flex h-full">
@@ -352,7 +371,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</div>
 							</div>
 
-							{/* Navigation arrows - Desktop only */}
+							{/* Flèches navigation - Desktop uniquement */}
 							{images.length > 1 && (
 								<GalleryNavigation onPrev={scrollPrev} onNext={scrollNext} />
 							)}

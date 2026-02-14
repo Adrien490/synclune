@@ -29,5 +29,8 @@ export { useLightbox } from "./use-lightbox"
 // Animation hooks
 export { usePulseOnChange } from "./use-pulse-on-change"
 
+// Gesture hooks
+export { usePinchZoom } from "./use-pinch-zoom"
+
 // Accessibility hooks (re-exported from framer-motion)
 export { useReducedMotion } from "motion/react"

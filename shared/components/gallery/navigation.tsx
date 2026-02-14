@@ -28,7 +28,6 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 					"hover:bg-primary/90",
 					scaleClass,
 					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
-					"focus-visible:opacity-100",
 					transitionClass
 				)}
 				onClick={onPrev}
@@ -46,7 +45,6 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 					"hover:bg-primary/90",
 					scaleClass,
 					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
-					"focus-visible:opacity-100",
 					transitionClass
 				)}
 				onClick={onNext}

@@ -24,7 +24,7 @@ interface GalleryThumbnailProps {
 }
 
 /**
- * Clickable thumbnail for the product gallery (image or video)
+ * Thumbnail cliquable pour la galerie produit (image ou vidéo)
  */
 export function GalleryThumbnail({
 	media,
@@ -83,7 +83,7 @@ export function GalleryThumbnail({
 					{isVideo && <VideoPlayBadge />}
 				</>
 			) : isVideo ? (
-				// Fallback for video without thumbnail
+				// Fallback pour vidéo sans thumbnail
 				<div
 					className="w-full h-full bg-muted"
 					role="img"
