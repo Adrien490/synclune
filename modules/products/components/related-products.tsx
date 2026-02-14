@@ -80,7 +80,7 @@ export async function RelatedProducts({
 						{relatedProducts.map((product, index) => (
 							<CarouselItem
 								key={product.id}
-								className="pl-4 sm:pl-6 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
+								className="pl-4 sm:pl-6 basis-[47%] sm:basis-[clamp(200px,48vw,280px)] md:basis-1/3 lg:basis-1/4"
 							>
 								<ProductCard
 									product={product}
