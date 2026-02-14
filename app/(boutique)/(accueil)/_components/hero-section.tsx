@@ -49,22 +49,43 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute top-0 inset-x-0 bottom-0 -z-10" aria-hidden="true">
-				<ParticleBackground
-					disableOnTouch={false}
-					shape={["heart", "pearl", "drop", "diamond", "circle"]}
-					colors={[
-						"var(--primary)",
-						"var(--secondary)",
-						"oklch(0.92 0.08 350)",
-						"oklch(0.75 0.12 280)",
-					]}
-					count={10}
-					size={[25, 90]}
-					opacity={[0.3, 0.7]}
-					blur={[4, 12]}
-					animationStyle="drift"
-					depthParallax={true}
-				/>
+				{/* Desktop particles */}
+				<div className="hidden md:block absolute inset-0">
+					<ParticleBackground
+						disableOnTouch={false}
+						shape={["heart", "pearl", "drop", "diamond", "circle"]}
+						colors={[
+							"var(--primary)",
+							"var(--secondary)",
+							"oklch(0.92 0.08 350)",
+							"oklch(0.75 0.12 280)",
+						]}
+						count={10}
+						size={[25, 90]}
+						opacity={[0.3, 0.7]}
+						blur={[4, 12]}
+						animationStyle="drift"
+						depthParallax={true}
+					/>
+				</div>
+				{/* Mobile particles - smaller, subtler, fewer shapes */}
+				<div className="md:hidden absolute inset-0">
+					<ParticleBackground
+						shape={["heart", "pearl", "circle"]}
+						colors={[
+							"var(--primary)",
+							"var(--secondary)",
+							"oklch(0.92 0.08 350)",
+							"oklch(0.75 0.12 280)",
+						]}
+						count={6}
+						size={[15, 50]}
+						opacity={[0.2, 0.5]}
+						blur={[3, 10]}
+						animationStyle="drift"
+						depthParallax={true}
+					/>
+				</div>
 				<div className="absolute inset-0 bg-background/10" />
 			</div>
 
