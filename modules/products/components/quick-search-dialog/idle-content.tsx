@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, Clock, Eye, Layers, Search, X } from "lucide-react"
+import { ChevronRight, Clock, Search, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { Stagger } from "@/shared/components/animations/stagger"
@@ -48,8 +48,7 @@ export function IdleContent({
 				{recentlyViewed.length > 0 && (
 					<section aria-labelledby="recently-viewed-heading">
 						<div className="flex items-center mb-3">
-							<h2 id="recently-viewed-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
-								<Eye className="size-5" aria-hidden="true" />
+							<h2 id="recently-viewed-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide">
 								Vus recemment
 							</h2>
 						</div>
@@ -153,8 +152,7 @@ export function IdleContent({
 				{collections.length > 0 && (
 					<section aria-labelledby="collections-heading">
 						<div className="flex items-center mb-3">
-							<h2 id="collections-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
-								<Layers className="size-5" aria-hidden="true" />
+							<h2 id="collections-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide">
 								Collections
 							</h2>
 						</div>

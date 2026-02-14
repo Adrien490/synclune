@@ -72,6 +72,13 @@ export const MOTION_CONFIG = {
 			damping: 30,
 			mass: 1,
 		},
+
+		// Fixed bottom bar entrance (sort bar, cart CTA)
+		bar: {
+			type: "spring" as const,
+			damping: 25,
+			stiffness: 300,
+		},
 	},
 
 	// Default distances and transforms

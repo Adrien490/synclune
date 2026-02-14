@@ -8,6 +8,7 @@ import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { useBottomBarHeight } from "@/shared/hooks";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -109,7 +110,7 @@ export function StickyCartCTA({
 					initial="hidden"
 					animate="visible"
 					exit="exit"
-					transition={{ type: "spring", damping: 25, stiffness: 300 }}
+					transition={MOTION_CONFIG.spring.bar}
 					className={cn(
 						// Mobile only
 						"sm:hidden",

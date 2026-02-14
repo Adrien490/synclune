@@ -15,6 +15,7 @@ import {
 } from "@/shared/components/ui/drawer";
 import type { SortOption } from "@/shared/types/sort.types";
 import { cn } from "@/shared/utils/cn";
+import { hapticLight } from "@/shared/utils/haptic";
 
 export type { SortOption };
 
@@ -112,10 +113,7 @@ export function SortDrawer({
 			router.push(`?${params.toString()}`, { scroll: false });
 		});
 
-		// Vibration feedback pour mobile
-		if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-			navigator.vibrate(10);
-		}
+		hapticLight();
 
 		if (autoCloseOnSelect) {
 			// Délai pour voir la confirmation visuelle avant fermeture

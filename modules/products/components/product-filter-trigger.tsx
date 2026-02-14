@@ -7,6 +7,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { cn } from "@/shared/utils/cn";
+import { countActiveFilters } from "@/modules/products/services/product-filter-params.service";
 
 interface ProductFilterTriggerProps {
 	className?: string;
@@ -37,25 +38,7 @@ export function ProductFilterTrigger({ className, variant = "full" }: ProductFil
 	const { open } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const searchParams = useSearchParams();
 
-	// Calculer le nombre de filtres actifs depuis l'URL
-	const activeFiltersCount = (() => {
-		let count = 0;
-		searchParams.forEach((_, key) => {
-			if (["page", "perPage", "sortBy", "search", "cursor", "direction"].includes(key)) {
-				return;
-			}
-			if (key === "type" || key === "color" || key === "material") {
-				count += 1;
-			} else if (key === "priceMin") {
-				count += 1;
-			} else if (key === "rating") {
-				count += 1;
-			}
-		});
-		return count;
-	})();
-
-	const hasActiveFilters = activeFiltersCount > 0;
+	const { activeFiltersCount, hasActiveFilters } = countActiveFilters(searchParams);
 
 	// Variante icon (mobile) - meme style que SortDrawerTrigger
 	if (variant === "icon") {

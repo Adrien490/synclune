@@ -2,7 +2,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing"
 
 function ReviewCardSkeleton() {
 	return (
-		<div className="overflow-hidden rounded-lg border bg-card shadow-sm p-4 space-y-3">
+		<div className="overflow-hidden rounded-lg border-2 border-transparent bg-card shadow-sm p-4 space-y-3">
 			{/* Name + badge */}
 			<div className="flex items-center gap-2">
 				<div className="h-5 w-24 bg-muted animate-pulse rounded" />
@@ -20,7 +20,7 @@ function ReviewCardSkeleton() {
 			</div>
 			{/* Product thumbnail + link */}
 			<div className="flex items-center gap-2 pt-1">
-				<div className="size-8 rounded bg-muted animate-pulse" />
+				<div className="size-10 rounded-md bg-muted animate-pulse" />
 				<div className="h-3 w-28 bg-muted/40 animate-pulse rounded" />
 			</div>
 		</div>

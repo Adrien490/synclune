@@ -17,7 +17,7 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 	const [searchQuery, setSearchQuery] = useState("")
 	const [isSearching, startSearch] = useTransition()
 
-	const isSearchMode = inputValue.trim().length > 0
+	const isSearchMode = inputValue.trim().length >= MIN_SEARCH_LENGTH
 
 	const handleInputValueChange = (value: string) => {
 		setInputValue(value)
@@ -56,6 +56,7 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 	}
 
 	return {
+		inputValue,
 		searchResults,
 		searchQuery,
 		isSearching,

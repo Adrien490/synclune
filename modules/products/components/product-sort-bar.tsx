@@ -1,15 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
-import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
+import { PRODUCT_FILTER_DIALOG_ID, PRODUCTS_SORT_LABELS } from "@/modules/products/constants/product.constants";
+import { countActiveFilters } from "@/modules/products/services/product-filter-params.service";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { cn } from "@/shared/utils/cn";
+import { hapticLight } from "@/shared/utils/haptic";
 import { useBottomBarHeight } from "@/shared/hooks";
 
 interface ProductSortBarProps {
@@ -19,15 +22,16 @@ interface ProductSortBarProps {
 	className?: string;
 }
 
-/** Parametres URL ignores pour le comptage des filtres actifs */
-const IGNORED_FILTER_PARAMS = [
-	"page",
-	"perPage",
-	"sortBy",
-	"search",
-	"cursor",
-	"direction",
-] as const;
+/** Short labels for sort options displayed under "Trier" */
+const SORT_SHORT_LABELS: Record<string, string> = {
+	"rating-descending": "Notes",
+	"title-ascending": "A-Z",
+	"title-descending": "Z-A",
+	"price-ascending": "Prix \u2191",
+	"price-descending": "Prix \u2193",
+	"created-ascending": "Anciens",
+	"created-descending": "R\u00e9cents",
+};
 
 interface ActiveBadgeProps {
 	count?: number;
@@ -77,41 +81,87 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
-	const { open: openSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);
-	const { open: openFilter } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+	const { open: openSearch, isOpen: isSearchOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
+	const { open: openFilter, isOpen: isFilterOpen } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
 
-	// Refs individuelles pour les boutons (ordre: Tri, Recherche, Filtres)
+	// Refs for toolbar buttons (order: Sort, Search, Filters)
 	const sortButtonRef = useRef<HTMLButtonElement>(null);
 	const searchButtonRef = useRef<HTMLButtonElement>(null);
 	const filterButtonRef = useRef<HTMLButtonElement>(null);
 	const buttonRefs = [sortButtonRef, searchButtonRef, filterButtonRef];
 
-	// Calculer si recherche active
+	// Active states
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
+	const sortByValue = searchParams.get("sortBy");
+	const hasActiveSort = !!sortByValue;
+	const { activeFiltersCount, hasActiveFilters } = countActiveFilters(searchParams);
 
-	// Calculer si tri actif
-	const hasActiveSort = searchParams.has("sortBy");
+	// Short label for active sort (B2)
+	const sortShortLabel = sortByValue ? SORT_SHORT_LABELS[sortByValue] : null;
 
-	// Calculer le nombre de filtres actifs (compte toutes les valeurs, pas seulement les clés)
-	const activeFiltersCount = Array.from(searchParams.entries()).filter(
-		([key]) => !IGNORED_FILTER_PARAMS.includes(key as (typeof IGNORED_FILTER_PARAMS)[number])
-	).length;
+	// Event-driven live region (B6c)
+	const [announcement, setAnnouncement] = useState("");
+	const prevStateRef = useRef({ hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, search: searchParams.get("search") });
 
-	const hasActiveFilters = activeFiltersCount > 0;
+	useEffect(() => {
+		const prev = prevStateRef.current;
+		const currentSearch = searchParams.get("search");
+		const changed =
+			prev.hasActiveSearch !== hasActiveSearch ||
+			prev.hasActiveSort !== hasActiveSort ||
+			prev.hasActiveFilters !== hasActiveFilters ||
+			prev.activeFiltersCount !== activeFiltersCount ||
+			prev.search !== currentSearch;
 
-	// Annonce pour screen readers (calculee directement)
-	const announcement = [
-		hasActiveSearch && `Recherche "${searchParams.get("search")}" active`,
-		hasActiveSort && "Tri actif",
-		hasActiveFilters &&
-			`${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}`,
-	]
-		.filter(Boolean)
-		.join(". ");
+		if (!changed) return;
 
-	// Navigation clavier pour toolbar (flèches gauche/droite)
+		prevStateRef.current = { hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, search: currentSearch };
+
+		const parts = [
+			hasActiveSearch && `Recherche "${currentSearch}" active`,
+			hasActiveSort && `Tri : ${sortByValue ? (PRODUCTS_SORT_LABELS[sortByValue as keyof typeof PRODUCTS_SORT_LABELS] ?? "actif") : "actif"}`,
+			hasActiveFilters &&
+				`${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}`,
+		]
+			.filter(Boolean)
+			.join(". ");
+
+		setAnnouncement(parts);
+
+		// Clear after 3s to avoid re-announcements
+		const timer = setTimeout(() => setAnnouncement(""), 3000);
+		return () => clearTimeout(timer);
+	}, [hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, searchParams, sortByValue]);
+
+	// Focus restoration after panel close (B6d)
+	const prevSortOpenRef = useRef(sortOpen);
+	const prevSearchOpenRef = useRef(isSearchOpen);
+	const prevFilterOpenRef = useRef(isFilterOpen);
+
+	useEffect(() => {
+		if (prevSortOpenRef.current && !sortOpen) {
+			sortButtonRef.current?.focus();
+		}
+		prevSortOpenRef.current = sortOpen;
+	}, [sortOpen]);
+
+	useEffect(() => {
+		if (prevSearchOpenRef.current && !isSearchOpen) {
+			searchButtonRef.current?.focus();
+		}
+		prevSearchOpenRef.current = isSearchOpen;
+	}, [isSearchOpen]);
+
+	useEffect(() => {
+		if (prevFilterOpenRef.current && !isFilterOpen) {
+			filterButtonRef.current?.focus();
+		}
+		prevFilterOpenRef.current = isFilterOpen;
+	}, [isFilterOpen]);
+
+	// Keyboard navigation for toolbar (arrow keys)
 	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
 		const buttonCount = 3;
 		let nextIndex: number | null = null;
@@ -143,20 +193,13 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		}
 	};
 
-	// Haptic feedback for button presses
-	const vibrate = () => {
-		if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-			navigator.vibrate(5);
-		}
-	};
-
-	// Style commun pour les boutons
+	// Common button styles (B5: scale-[0.98] instead of scale-95)
 	const getButtonClassName = (isActive: boolean) =>
 		cn(
 			"flex-1 min-w-18 flex flex-col items-center justify-center gap-1",
 			"h-full min-h-14", // 56px - Material Design 3 touch target
 			"transition-colors duration-200",
-			"active:scale-95 active:bg-primary/10",
+			"active:scale-[0.98] active:bg-primary/10",
 			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
 			"relative",
 			isActive
@@ -165,14 +208,14 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		);
 
 	const iconClassName = "size-5";
-	const labelClassName = "text-xs font-medium"; // 12px au lieu de 11px
+	const labelClassName = "text-xs font-medium";
 
 	return (
 		<>
 			<motion.div
 				initial={prefersReducedMotion ? false : { y: 100, opacity: 0 }}
 				animate={{ y: 0, opacity: 1 }}
-				transition={{ type: "spring", damping: 25, stiffness: 300 }}
+				transition={MOTION_CONFIG.spring.bar}
 				className={cn(
 					// Mobile only
 					"md:hidden",
@@ -190,25 +233,33 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 			>
 				<div
 					role="toolbar"
+					aria-orientation="horizontal"
 					aria-label="Actions rapides"
-					className="flex items-stretch h-14 divide-x divide-border/30"
+					className="flex items-stretch h-14 divide-x divide-border/50"
 				>
 					{/* Tri */}
 					<button
 						ref={sortButtonRef}
 						type="button"
 						onClick={() => {
-							vibrate();
+							hapticLight();
 							setSortOpen(true);
 						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
+						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
 						className={getButtonClassName(hasActiveSort)}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 					>
 						<ArrowUpDown className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Trier</span>
-						<ActiveBadge showDot={hasActiveSort} />
+						{sortShortLabel ? (
+							<span className="text-[10px] text-primary truncate max-w-16 leading-none">
+								{sortShortLabel}
+							</span>
+						) : (
+							<ActiveBadge showDot={hasActiveSort} />
+						)}
 					</button>
 
 					{/* Recherche */}
@@ -216,10 +267,11 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						ref={searchButtonRef}
 						type="button"
 						onClick={() => {
-							vibrate();
+							hapticLight();
 							openSearch();
 						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
+						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
 						className={getButtonClassName(hasActiveSearch)}
 						aria-label={
@@ -238,10 +290,11 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						ref={filterButtonRef}
 						type="button"
 						onClick={() => {
-							vibrate();
+							hapticLight();
 							openFilter();
 						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
+						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
 						className={getButtonClassName(hasActiveFilters)}
 						aria-label={

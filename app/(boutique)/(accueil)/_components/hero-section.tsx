@@ -48,11 +48,16 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 			className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
-			<div className="absolute -top-20 inset-x-0 bottom-0 -z-10" aria-hidden="true">
+			<div className="absolute top-0 inset-x-0 bottom-0 -z-10" aria-hidden="true">
 				<ParticleBackground
 					disableOnTouch={false}
 					shape={["heart", "pearl", "drop", "diamond", "circle"]}
-					colors={["var(--primary)", "var(--secondary)"]}
+					colors={[
+						"var(--primary)",
+						"var(--secondary)",
+						"oklch(0.92 0.08 350)",
+						"oklch(0.75 0.12 280)",
+					]}
 					count={10}
 					size={[25, 90]}
 					opacity={[0.3, 0.7]}

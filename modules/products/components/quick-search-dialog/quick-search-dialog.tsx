@@ -66,6 +66,7 @@ export function QuickSearchDialog({
 	} = useKeyboardNavigation()
 
 	const {
+		inputValue,
 		searchResults,
 		searchQuery,
 		isSearching,
@@ -75,6 +76,8 @@ export function QuickSearchDialog({
 		handleSearchFromSuggestion,
 		reset,
 	} = useQuickSearch({ searchInputRef, resetActiveIndex })
+
+	const hasPartialInput = inputValue.trim().length > 0 && !isSearchMode
 
 	const navigateToSearch = (term: string, { saveToRecent = true } = {}) => {
 		if (isPending) return
@@ -221,6 +224,13 @@ export function QuickSearchDialog({
 							size="sm"
 						/>
 					</div>
+				)}
+
+				{/* Hint when input is too short */}
+				{hasPartialInput && (
+					<p className="text-xs text-muted-foreground px-4 pb-2">
+						Tapez au moins 2 caractères pour rechercher
+					</p>
 				)}
 
 				{/* Screen reader announcements (search mode is announced by QuickSearchContent) */}

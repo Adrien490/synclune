@@ -16,7 +16,7 @@ export function ExpandableReviewContent({ content, clampLines = 5 }: ExpandableR
 
 	return (
 		<details className="group">
-			<summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer focus-visible:outline-none">
+			<summary className="list-none [&::-webkit-details-marker]:hidden cursor-pointer focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm">
 				<span itemProp="reviewBody" className={`text-sm text-muted-foreground leading-relaxed group-open:line-clamp-none ${clampLines === 3 ? "line-clamp-3" : "line-clamp-5"}`}>
 					{content}
 				</span>
