@@ -36,12 +36,6 @@ export function CustomizationSidebar() {
 						</li>
 					))}
 				</ol>
-
-				<hr className="border-border" />
-
-				<p className="text-sm text-muted-foreground">
-					Réponse sous 24-48h
-				</p>
 			</div>
 		</aside>
 	);

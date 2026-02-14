@@ -165,10 +165,10 @@ export function QuickSearchContent({
 						data-active={undefined}
 						className={cn(
 							"w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl",
-							"text-sm font-medium text-primary",
-							"hover:bg-primary/5 transition-colors",
+							"text-sm font-medium text-foreground underline",
+							"hover:bg-accent transition-colors",
 							"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
-							"data-[active=true]:bg-primary/5"
+							"data-[active=true]:bg-accent"
 						)}
 					>
 						Voir les {totalCount} resultat{totalCount > 1 ? "s" : ""}
