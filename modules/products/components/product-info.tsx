@@ -1,7 +1,6 @@
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
-import { Crown } from "lucide-react";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { ReviewRatingLink } from "@/modules/reviews/components/review-rating-link";
 
@@ -56,7 +55,6 @@ export function ProductInfo({
 						variant="outline"
 						className="text-xs/5 sm:text-sm/6 tracking-normal antialiased font-medium px-3 py-1.5 sm:py-1 rounded-full border-primary/30"
 					>
-						<Crown className="w-3.5 h-3.5 sm:w-3 sm:h-3" aria-hidden="true" />
 						{product.type.label}
 					</Badge>
 				)}

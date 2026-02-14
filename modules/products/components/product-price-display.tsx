@@ -10,7 +10,6 @@ import {
 	hasActiveDiscount,
 	getSchemaOrgAvailabilityUrl,
 } from "@/modules/products/services/product-pricing.service";
-import { AlertCircle, CheckCircle, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { addBusinessDays, format } from "date-fns";
@@ -147,7 +146,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 						role="status"
 						aria-label="Produit en stock"
 					>
-						<CheckCircle className="w-3 h-3" aria-hidden="true" />
+						<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
 						En stock
 					</Badge>
 				)}
@@ -173,7 +172,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 						role="status"
 						aria-label="Produit en rupture de stock"
 					>
-						<AlertCircle className="w-3 h-3" aria-hidden="true" />
+						<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
 						Rupture de stock
 					</Badge>
 				)}
@@ -219,7 +218,6 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 						className="text-xs/5 tracking-normal antialiased text-destructive p-2 bg-destructive/10 rounded border border-destructive/20 flex items-start gap-2"
 						role="alert"
 					>
-						<Sparkles className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
 						<p>Cette petite merveille sera bientôt disponible !</p>
 					</div>
 				</div>
