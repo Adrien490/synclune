@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn"
 
-import type { QuickSearchProductType } from "./types"
+import type { QuickSearchProductType } from "./constants"
 
 interface QuickTagPillsProps {
 	productTypes: QuickSearchProductType[]

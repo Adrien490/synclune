@@ -15,7 +15,7 @@ const PARALLAX_STRENGTH = 20;
 /** Duration in ms for the parallax lerp-to-zero reset */
 const LERP_RESET_DURATION = 600;
 
-/** Upper bound for particle count to prevent excessive DOM nodes (desktop + mobile = count * 1.5) */
+/** Upper bound for particle count to prevent excessive DOM nodes (desktop + mobile ≈ count * 3 spans) */
 const MAX_PARTICLES = 30;
 
 /**
@@ -25,7 +25,7 @@ const MAX_PARTICLES = 30;
  * Desktop: count particules, Mobile: count/2 particules.
  * CSS containment pour isoler les repaints.
  *
- * `count` is clamped to 30 max (both trees combined = count * 1.5 DOM nodes).
+ * `count` is clamped to 30 max (both trees: count*2 desktop + ceil(count/2)*2 mobile ≈ count*3 spans).
  *
  * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4
  * **Animations** : float, drift, rise, orbit, breathe, sparkle
@@ -123,8 +123,13 @@ export function ParticleBackground({
 		// Cache the bounding rect to avoid forced layout on every mousemove
 		let cachedRect = el.getBoundingClientRect();
 
+		let rectRafId: number | null = null;
 		function updateRect() {
-			cachedRect = el!.getBoundingClientRect();
+			if (rectRafId !== null) return;
+			rectRafId = requestAnimationFrame(() => {
+				cachedRect = el!.getBoundingClientRect();
+				rectRafId = null;
+			});
 		}
 
 		function cancelLerp() {
@@ -167,6 +172,7 @@ export function ParticleBackground({
 		window.addEventListener("scroll", updateRect, { passive: true });
 		return () => {
 			cancelLerp();
+			if (rectRafId !== null) cancelAnimationFrame(rectRafId);
 			el.removeEventListener("mousemove", onMouseMove);
 			el.removeEventListener("mouseleave", onMouseLeave);
 			window.removeEventListener("resize", updateRect);

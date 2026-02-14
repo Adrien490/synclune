@@ -101,7 +101,7 @@ function StaticParticle({
 	const opacity = effectiveOpacity(p, highContrast);
 
 	const inner = isSvg && svgConfig ? (
-		<span className="contents" style={{ opacity }}>
+		<span className="block w-full h-full" style={{ opacity }}>
 			<svg viewBox={svgConfig.viewBox} className="w-full h-full" fill={p.color} aria-hidden="true" role="presentation">
 				<path d={svgConfig.path} fillRule={svgConfig.fillRule} />
 			</svg>

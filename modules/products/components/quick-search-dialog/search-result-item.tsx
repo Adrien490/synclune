@@ -4,12 +4,17 @@ import Image from "next/image"
 import Link from "next/link"
 
 import { Tap } from "@/shared/components/animations/tap"
+import {
+	Skeleton,
+	SkeletonGroup,
+	SkeletonText,
+} from "@/shared/components/ui/skeleton"
 import { formatEuro } from "@/shared/utils/format-euro"
 import { cn } from "@/shared/utils/cn"
 
 import { SEARCH_SYNONYMS } from "../../constants/search-synonyms"
 import type { QuickSearchProduct } from "../../data/quick-search-products"
-import { HighlightMatch } from "./highlight-match"
+import { SKELETON_ROWS } from "./constants"
 
 interface SearchResultItemProps {
 	product: QuickSearchProduct
@@ -126,5 +131,72 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				)}
 			</Link>
 		</Tap>
+	)
+}
+
+/**
+ * Skeleton for quick search results matching the SearchResultItem layout.
+ */
+export function SearchResultsSkeleton() {
+	return (
+		<SkeletonGroup label="Chargement des resultats..." className="space-y-2 px-4">
+			{Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+				<div key={i} className="flex items-center gap-3 py-2">
+					<Skeleton shape="rounded" className="size-12 shrink-0" />
+					<div className="flex-1 min-w-0">
+						<SkeletonText lines={2} />
+					</div>
+				</div>
+			))}
+		</SkeletonGroup>
+	)
+}
+
+/**
+ * Highlights matching substrings in text by wrapping them in <mark>.
+ * Case-insensitive, escapes regex special characters.
+ * Uses index-based alternation: odd indices from split(/(pattern)/) are matches.
+ *
+ * Accepts optional synonyms to highlight terms that matched via synonym expansion
+ * (e.g. searching "anneau" highlights "Bague" in "Bague Lune").
+ */
+export function HighlightMatch({
+	text,
+	query,
+	synonyms,
+}: {
+	text: string
+	query: string
+	synonyms?: string[]
+}) {
+	const allTerms = [query, ...(synonyms ?? [])]
+		.map((t) => t.trim())
+		.filter(Boolean)
+
+	if (allTerms.length === 0) {
+		return <>{text}</>
+	}
+
+	const escaped = allTerms.map((t) =>
+		t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+	)
+	const regex = new RegExp(`(${escaped.join("|")})`, "gi")
+	const parts = text.split(regex)
+
+	return (
+		<>
+			{parts.map((part, i) =>
+				i % 2 === 1 ? (
+					<mark
+						key={i}
+						className="bg-primary/15 text-foreground font-medium rounded-sm"
+					>
+						{part}
+					</mark>
+				) : (
+					<span key={i}>{part}</span>
+				)
+			)}
+		</>
 	)
 }

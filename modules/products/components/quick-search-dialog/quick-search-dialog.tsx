@@ -7,6 +7,7 @@ import { useRef, useTransition } from "react"
 import { toast } from "sonner"
 
 import { Fade } from "@/shared/components/animations/fade"
+import { ErrorBoundary } from "@/shared/components/error-boundary"
 import { SearchInput, type SearchInputHandle } from "@/shared/components/search-input"
 import { Button } from "@/shared/components/ui/button"
 import {
@@ -21,14 +22,13 @@ import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
 import { QUICK_SEARCH_DIALOG_ID, SEARCH_DEBOUNCE_MS } from "./constants"
+import type { QuickSearchCollection, QuickSearchProductType, RecentlyViewedProduct } from "./constants"
 import { IdleContent } from "./idle-content"
 import { QuickSearchContent } from "./quick-search-content"
 import { QuickTagPills } from "./quick-tag-pills"
-import { SearchErrorFallback } from "./search-error-fallback"
-import { SearchResultsSkeleton } from "./search-results-skeleton"
+import { SearchResultsSkeleton } from "./search-result-item"
 import { useKeyboardNavigation } from "./use-keyboard-navigation"
 import { useQuickSearch } from "./use-quick-search"
-import type { QuickSearchCollection, QuickSearchProductType, RecentlyViewedProduct } from "./types"
 
 interface QuickSearchDialogProps {
 	recentSearches?: string[]
@@ -266,7 +266,10 @@ export function QuickSearchDialog({
 										</Button>
 									</div>
 								) : searchResults ? (
-									<SearchErrorFallback>
+									<ErrorBoundary
+										errorMessage="La recherche est temporairement indisponible."
+										className="flex-1 flex items-center justify-center"
+									>
 										<QuickSearchContent
 											results={searchResults}
 											query={searchQuery}
@@ -277,7 +280,7 @@ export function QuickSearchDialog({
 											onSelectResult={handleSelectResult}
 											onViewAllResults={handleViewAllResults}
 										/>
-									</SearchErrorFallback>
+									</ErrorBoundary>
 								) : (
 									<SearchResultsSkeleton />
 								)}

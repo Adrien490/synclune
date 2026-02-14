@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest"
 import { cleanup, render, screen } from "@testing-library/react"
 import { matchesWordStart } from "@/modules/products/utils/match-word-start"
-import { HighlightMatch } from "@/modules/products/components/quick-search-dialog/highlight-match"
+import { HighlightMatch } from "@/modules/products/components/quick-search-dialog/search-result-item"
 import { FOCUSABLE_SELECTOR } from "@/modules/products/components/quick-search-dialog/constants"
 
 afterEach(() => {

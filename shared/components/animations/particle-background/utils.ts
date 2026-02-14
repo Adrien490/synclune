@@ -40,6 +40,7 @@ export function generateParticles(
 		const particleOpacity = opacity[0] + rand(2) * (opacity[1] - opacity[0]);
 		const x = 5 + rand(3) * 90;
 		const y = 5 + rand(4) * 90;
+		// Offset 7 intentionally skipped to keep color selection independent from delay (offset 6)
 		const color = safeColors[Math.floor(rand(8) * safeColors.length)];
 
 		// Blur correlated inversely to size: large particles are sharp (close), small ones are blurry (far)

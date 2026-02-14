@@ -11,7 +11,7 @@ import { cn } from "@/shared/utils/cn"
 import { formatEuro } from "@/shared/utils/format-euro"
 
 import { CollectionCard } from "./collection-card"
-import type { QuickSearchCollection, RecentlyViewedProduct } from "./types"
+import type { QuickSearchCollection, RecentlyViewedProduct } from "./constants"
 
 interface IdleContentProps {
 	recentlyViewed: RecentlyViewedProduct[]

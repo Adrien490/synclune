@@ -7,7 +7,7 @@ import { Layers } from "lucide-react"
 import { Tap } from "@/shared/components/animations/tap"
 import { cn } from "@/shared/utils/cn"
 
-import type { QuickSearchCollection } from "./types"
+import type { QuickSearchCollection } from "./constants"
 
 interface CollectionCardProps {
 	collection: QuickSearchCollection

@@ -45,10 +45,10 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 			id="hero-section"
 			aria-labelledby="hero-title"
 			aria-describedby="hero-subtitle"
-			className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
+			className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
-			<div className="absolute inset-0 -z-10" aria-hidden="true">
+			<div className="absolute -top-20 inset-x-0 bottom-0 -z-10" aria-hidden="true">
 				<ParticleBackground
 					disableOnTouch={false}
 					shape={["heart", "pearl", "drop", "diamond", "circle"]}

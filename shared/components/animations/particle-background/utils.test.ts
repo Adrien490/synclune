@@ -359,6 +359,116 @@ describe("ANIMATION_PRESETS", () => {
 		expect(result.rotate).toBeUndefined();
 	});
 
+	// ─── float ──────────────────────────────────────────────────────
+
+	it("float preset animates scale, opacity, x, and y", () => {
+		const p = makeParticle({ opacity: 0.3 });
+		const result = ANIMATION_PRESETS.float(p);
+		expect(result.scale).toEqual([1, 1.4, 0.8, 1]);
+		expect(result.x).toEqual(["0%", "8%", "-8%", "0%"]);
+		expect(result.y).toEqual(["0%", "-6%", "6%", "0%"]);
+		expect(result.opacity).toEqual([0.3, Math.min(0.3 * 1.2, 1), 0.3 * 0.8, 0.3]);
+	});
+
+	it("float preset clamps boosted opacity to 1", () => {
+		const p = makeParticle({ opacity: 0.9 });
+		const result = ANIMATION_PRESETS.float(p);
+		expect((result.opacity as number[])[1]).toBe(1);
+	});
+
+	it("float preset adds rotation for non-round shapes", () => {
+		const result = ANIMATION_PRESETS.float(makeParticle({ shape: "heart" }));
+		expect(result.rotate).toBeDefined();
+	});
+
+	it("float preset omits rotation for round shapes", () => {
+		const result = ANIMATION_PRESETS.float(makeParticle({ shape: "pearl" }));
+		expect(result.rotate).toBeUndefined();
+	});
+
+	// ─── drift ─────────────────────────────────────────────────────
+
+	it("drift preset animates x and y with wider lateral range", () => {
+		const p = makeParticle({ opacity: 0.4 });
+		const result = ANIMATION_PRESETS.drift(p);
+		expect(result.x).toEqual(["0%", "15%", "-5%", "0%"]);
+		expect(result.y).toEqual(["0%", "-10%", "5%", "0%"]);
+		expect(result.opacity).toEqual([0.4, 0.4 * 0.9, 0.4]);
+	});
+
+	it("drift preset adds rotation for non-round shapes", () => {
+		const result = ANIMATION_PRESETS.drift(makeParticle({ shape: "sparkle-4" }));
+		expect(result.rotate).toBeDefined();
+	});
+
+	// ─── rise ──────────────────────────────────────────────────────
+
+	it("rise preset has 5-keyframe vertical movement", () => {
+		const p = makeParticle({ opacity: 0.3 });
+		const result = ANIMATION_PRESETS.rise(p);
+		expect(result.y).toEqual(["0%", "-25%", "-50%", "-25%", "0%"]);
+		expect(result.x).toEqual(["0%", "5%", "-3%", "-5%", "0%"]);
+		expect((result.opacity as number[])).toHaveLength(5);
+	});
+
+	it("rise preset fades at mid-point and clamps peak opacity", () => {
+		const p = makeParticle({ opacity: 0.9 });
+		const result = ANIMATION_PRESETS.rise(p);
+		// Mid-point opacity is reduced
+		expect((result.opacity as number[])[2]).toBe(0.9 * 0.6);
+		// Peak opacity: min(0.9 * 1.1, 1) = 0.99
+		expect((result.opacity as number[])[1]).toBe(Math.min(0.9 * 1.1, 1));
+
+		// With opacity high enough to trigger clamping
+		const pHigh = makeParticle({ opacity: 1 });
+		const resultHigh = ANIMATION_PRESETS.rise(pHigh);
+		expect((resultHigh.opacity as number[])[1]).toBe(1);
+	});
+
+	// ─── orbit ─────────────────────────────────────────────────────
+
+	it("orbit preset creates a looping elliptical path", () => {
+		const p = makeParticle({ opacity: 0.3 });
+		const result = ANIMATION_PRESETS.orbit(p);
+		expect(result.x).toEqual(["0%", "20%", "0%", "-20%", "0%"]);
+		expect(result.y).toEqual(["0%", "-12%", "0%", "12%", "0%"]);
+		// Opacity dips at 90° and 270°
+		expect((result.opacity as number[])[1]).toBe(0.3 * 0.85);
+		expect((result.opacity as number[])[3]).toBe(0.3 * 0.85);
+		// Opacity returns at 0° and 180°
+		expect((result.opacity as number[])[0]).toBe(0.3);
+		expect((result.opacity as number[])[2]).toBe(0.3);
+	});
+
+	// ─── breathe ───────────────────────────────────────────────────
+
+	it("breathe preset animates scale and opacity without movement", () => {
+		const p = makeParticle({ opacity: 0.3 });
+		const result = ANIMATION_PRESETS.breathe(p);
+		expect(result.scale).toEqual([1, 1.3, 1, 0.85, 1]);
+		expect(result.opacity).toEqual([
+			0.3,
+			Math.min(0.3 * 1.3, 1),
+			0.3,
+			0.3 * 0.7,
+			0.3,
+		]);
+		// No x/y movement
+		expect(result.x).toBeUndefined();
+		expect(result.y).toBeUndefined();
+	});
+
+	it("breathe preset clamps boosted opacity to 1", () => {
+		const p = makeParticle({ opacity: 0.9 });
+		const result = ANIMATION_PRESETS.breathe(p);
+		expect((result.opacity as number[])[1]).toBe(1);
+	});
+
+	it("breathe preset does not add rotation (pure scale animation)", () => {
+		const result = ANIMATION_PRESETS.breathe(makeParticle({ shape: "diamond" }));
+		expect(result.rotate).toBeUndefined();
+	});
+
 	it("all presets return valid TargetAndTransition objects", () => {
 		const p = makeParticle();
 		for (const [name, preset] of Object.entries(ANIMATION_PRESETS)) {

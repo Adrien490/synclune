@@ -1,18 +1,19 @@
 "use client"
 
-import { ChevronRight, Lightbulb, Search } from "lucide-react"
+import Link from "next/link"
+import { ChevronRight, Lightbulb, Search, Sparkles } from "lucide-react"
 
+import { Tap } from "@/shared/components/animations/tap"
 import ScrollFade from "@/shared/components/scroll-fade"
 import { cn } from "@/shared/utils/cn"
 import { matchesWordStart } from "@/modules/products/utils/match-word-start"
 
 import type { QuickSearchResult } from "../../data/quick-search-products"
 import { CollectionCard } from "./collection-card"
-import { CategoryCard } from "./category-card"
 import { MAX_MATCHED_COLLECTIONS, MAX_MATCHED_TYPES } from "./constants"
+import type { QuickSearchCollection, QuickSearchProductType } from "./constants"
 import { QuickTagPills } from "./quick-tag-pills"
 import { SearchResultItem } from "./search-result-item"
-import type { QuickSearchCollection, QuickSearchProductType } from "./types"
 
 interface QuickSearchContentProps {
 	results: QuickSearchResult
@@ -176,5 +177,44 @@ export function QuickSearchContent({
 				</div>
 			)}
 		</>
+	)
+}
+
+function CategoryCard({
+	type,
+	onSelect,
+	variant = "full",
+}: {
+	type: QuickSearchProductType
+	onSelect: () => void
+	variant?: "compact" | "full"
+}) {
+	const isCompact = variant === "compact"
+
+	return (
+		<Tap scale={0.97}>
+			<Link
+				href={`/produits/${type.slug}`}
+				onClick={onSelect}
+				data-active={undefined}
+				className={cn(
+					"rounded-xl transition-all text-left font-medium",
+					"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
+					"data-[active=true]:bg-muted",
+					isCompact
+						? "flex items-center gap-2 px-3 py-2.5 hover:bg-muted"
+						: cn(
+								"block px-4 py-3 min-h-12",
+								"bg-muted/40 hover:bg-muted border border-transparent hover:border-border",
+								"data-[active=true]:border-border"
+							)
+				)}
+			>
+				{isCompact && (
+					<Sparkles className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
+				)}
+				<span className={isCompact ? "truncate" : undefined}>{type.label}</span>
+			</Link>
+		</Tap>
 	)
 }
