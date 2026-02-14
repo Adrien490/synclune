@@ -1,7 +1,11 @@
+import { cacheLife, cacheTag } from "next/cache";
+
 import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import {
+	FUZZY_MAX_WORDS,
 	MAX_SEARCH_LENGTH,
 	SPELL_SUGGESTION_TIMEOUT_MS,
 } from "../constants/search.constants";
@@ -28,17 +32,23 @@ export const SUGGESTION_THRESHOLD_RESULTS = 3;
 // ============================================================================
 
 type SpellSuggestion = {
-	/** The suggested term */
+	/** The suggested corrected search term */
 	term: string;
-	/** Similarity score (0-1) */
+	/** Average similarity score of corrected words (0-1) */
 	similarity: number;
-	/** Source of the suggestion */
+	/** Source of the best correction */
 	source: "product" | "collection" | "color" | "material";
 };
 
 type SuggestionOptions = {
 	/** Product status to consider */
 	status?: ProductStatus;
+};
+
+type WordMatch = {
+	word: string;
+	similarity: number;
+	source: string;
 };
 
 // ============================================================================
@@ -48,11 +58,12 @@ type SuggestionOptions = {
 /**
  * Find a spell correction suggestion for a search term.
  *
- * Uses pg_trgm to find the most similar term among:
- * - Product titles
- * - Collection names
- * - Color names
- * - Material names
+ * For multi-word searches, corrects each word independently against
+ * individual words from the catalog vocabulary (product titles, collection
+ * names, color names, material names), then reconstructs the corrected search.
+ *
+ * For single-word searches, also compares against full entity names
+ * (e.g. collection "Lune d'Or" as a whole) in addition to individual words.
  *
  * Uses immutable_unaccent() for accent-insensitive matching.
  *
@@ -64,6 +75,10 @@ export async function getSpellSuggestion(
 	searchTerm: string,
 	options: SuggestionOptions = {}
 ): Promise<SpellSuggestion | null> {
+	"use cache";
+	cacheLife("products");
+	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
+
 	const { status } = options;
 	const term = searchTerm.trim().toLowerCase();
 
@@ -71,80 +86,79 @@ export async function getSpellSuggestion(
 	if (!term || term.length < 2) return null;
 	if (term.length > MAX_SEARCH_LENGTH) return null;
 
+	const words = term.split(/\s+/).filter(Boolean).slice(0, FUZZY_MAX_WORDS);
+	if (words.length === 0) return null;
+
 	try {
-		// Build status condition
 		const statusCondition = status
 			? Prisma.sql`AND p.status = ${status}::"ProductStatus"`
 			: Prisma.empty;
 
 		// Transaction with SET LOCAL to isolate the similarity threshold
 		// and statement_timeout to cancel runaway queries server-side.
-		// SET LOCAL scopes the change to the current transaction,
-		// avoiding interference with other queries via connection pooling.
 		const queryPromise = prisma.$transaction(async (tx) => {
 			await setTrigramThreshold(tx, SUGGESTION_MIN_SIMILARITY);
 			await setStatementTimeout(tx, SPELL_SUGGESTION_TIMEOUT_MS);
 
-			// Unified search across all sources with UNION ALL.
-			// Returns the most similar term with its source.
-			return tx.$queryRaw<SpellSuggestion[]>`
-				WITH suggestions AS (
-					-- Product titles
-					SELECT DISTINCT
-						p.title as term,
-						similarity(immutable_unaccent(LOWER(p.title)), immutable_unaccent(${term})) as similarity,
-						'product'::text as source
-					FROM "Product" p
-					WHERE
-						p."deletedAt" IS NULL
-						${statusCondition}
-						AND immutable_unaccent(LOWER(p.title)) % immutable_unaccent(${term})
-						AND immutable_unaccent(LOWER(p.title)) != immutable_unaccent(${term})
+			// Find the best correction for each word by comparing against
+			// individual words extracted from catalog vocabulary.
+			const corrections: { original: string; match: WordMatch | null }[] = [];
 
-					UNION ALL
+			for (const word of words) {
+				if (word.length < 2) {
+					corrections.push({ original: word, match: null });
+					continue;
+				}
 
-					-- Collection names
-					SELECT DISTINCT
-						c.name as term,
-						similarity(immutable_unaccent(LOWER(c.name)), immutable_unaccent(${term})) as similarity,
-						'collection'::text as source
-					FROM "Collection" c
-					WHERE
-						c.status = 'PUBLIC'
-						AND immutable_unaccent(LOWER(c.name)) % immutable_unaccent(${term})
-						AND immutable_unaccent(LOWER(c.name)) != immutable_unaccent(${term})
+				const results = await tx.$queryRaw<WordMatch[]>`
+					WITH vocabulary AS (
+						-- Individual words from product titles
+						SELECT DISTINCT
+							unnest(regexp_split_to_array(LOWER(p.title), '\s+')) as word,
+							'product'::text as source
+						FROM "Product" p
+						WHERE p."deletedAt" IS NULL ${statusCondition}
 
-					UNION ALL
+						UNION
 
-					-- Color names
-					SELECT DISTINCT
-						col.name as term,
-						similarity(immutable_unaccent(LOWER(col.name)), immutable_unaccent(${term})) as similarity,
-						'color'::text as source
-					FROM "Color" col
-					WHERE
-						col."isActive" = true
-						AND immutable_unaccent(LOWER(col.name)) % immutable_unaccent(${term})
-						AND immutable_unaccent(LOWER(col.name)) != immutable_unaccent(${term})
+						-- Collection names (as single words)
+						SELECT DISTINCT LOWER(c.name) as word, 'collection'::text as source
+						FROM "Collection" c
+						WHERE c.status = 'PUBLIC'
 
-					UNION ALL
+						UNION
 
-					-- Material names
-					SELECT DISTINCT
-						m.name as term,
-						similarity(immutable_unaccent(LOWER(m.name)), immutable_unaccent(${term})) as similarity,
-						'material'::text as source
-					FROM "Material" m
-					WHERE
-						m."isActive" = true
-						AND immutable_unaccent(LOWER(m.name)) % immutable_unaccent(${term})
-						AND immutable_unaccent(LOWER(m.name)) != immutable_unaccent(${term})
-				)
-				SELECT term, similarity, source
-				FROM suggestions
-				ORDER BY similarity DESC
-				LIMIT 1
-			`;
+						-- Color names
+						SELECT DISTINCT LOWER(col.name) as word, 'color'::text as source
+						FROM "Color" col
+						WHERE col."isActive" = true
+
+						UNION
+
+						-- Material names
+						SELECT DISTINCT LOWER(m.name) as word, 'material'::text as source
+						FROM "Material" m
+						WHERE m."isActive" = true
+					)
+					SELECT
+						v.word,
+						similarity(immutable_unaccent(v.word), immutable_unaccent(${word})) as similarity,
+						v.source
+					FROM vocabulary v
+					WHERE length(v.word) >= 2
+						AND immutable_unaccent(v.word) % immutable_unaccent(${word})
+						AND immutable_unaccent(v.word) != immutable_unaccent(${word})
+					ORDER BY similarity DESC
+					LIMIT 1
+				`;
+
+				corrections.push({
+					original: word,
+					match: results.length > 0 ? results[0] : null,
+				});
+			}
+
+			return corrections;
 		});
 
 		// Timeout to avoid long-running queries
@@ -155,20 +169,29 @@ export async function getSpellSuggestion(
 			)
 		);
 
-		const results = await Promise.race([queryPromise, timeoutPromise]);
+		const corrections = await Promise.race([queryPromise, timeoutPromise]);
 
-		if (results.length === 0) return null;
+		// Check if any word was corrected
+		const hasCorrection = corrections.some((c) => c.match !== null);
+		if (!hasCorrection) return null;
 
-		const best = results[0];
+		// Reconstruct the search term with corrections
+		const correctedTerm = corrections
+			.map((c) => c.match?.word ?? c.original)
+			.join(" ");
 
-		// Ensure suggestion is sufficiently different.
-		// Avoid suggesting the same word with different casing.
-		if (best.term.toLowerCase() === term) return null;
+		// Don't suggest if it's the same as the original
+		if (correctedTerm === term) return null;
+
+		// Use the similarity of the best correction
+		const bestMatch = corrections
+			.filter((c) => c.match !== null)
+			.sort((a, b) => Number(b.match!.similarity) - Number(a.match!.similarity))[0];
 
 		return {
-			term: best.term,
-			similarity: Number(best.similarity),
-			source: best.source as SpellSuggestion["source"],
+			term: correctedTerm,
+			similarity: Number(bestMatch.match!.similarity),
+			source: bestMatch.match!.source as SpellSuggestion["source"],
 		};
 	} catch (error) {
 		console.warn("[spellSuggestion] Failed:", error instanceof Error ? error.message : error);

@@ -49,7 +49,11 @@ export async function fuzzySearchIds(
 
 	const { columns, baseCondition, limit = ADMIN_FUZZY_MAX_RESULTS } = options
 
-	// Build OR conditions across all columns
+	// Build OR conditions across all columns.
+	// SECURITY NOTE: table/column names are interpolated via Prisma.raw() but are
+	// safe because they come from hardcoded caller code (e.g. "User", "email"),
+	// never from user input. Only `term` is user-supplied and is always passed
+	// through parameterized queries (Prisma.sql tagged template).
 	// Escape LIKE wildcards to prevent user input from being interpreted as patterns
 	const like = `%${term.replace(/[%_\\]/g, "\\$&")}%`
 	const columnFragments = columns.map(({ table, column, nullable }) => {
@@ -66,6 +70,8 @@ export async function fuzzySearchIds(
 
 	// Use the first column's table as the main table
 	const mainTable = Prisma.raw(`"${columns[0].table}"`)
+
+	const startTime = performance.now()
 
 	try {
 		const queryPromise = prisma.$transaction(async (tx) => {
@@ -86,9 +92,20 @@ export async function fuzzySearchIds(
 		)
 
 		const results = await Promise.race([queryPromise, timeoutPromise])
+		const durationMs = Math.round(performance.now() - startTime)
+
+		if (durationMs > 500) {
+			console.warn(
+				`[SEARCH] slow-admin-fuzzy | term="${term}" | table="${columns[0].table}" | results=${results.length} | duration=${durationMs}ms`
+			)
+		}
+
 		return results.map((r) => r.id)
 	} catch (error) {
-		console.warn("[adminFuzzySearch] Failed:", error instanceof Error ? error.message : error)
+		const durationMs = Math.round(performance.now() - startTime)
+		console.warn(
+			`[SEARCH] admin-fuzzy-error | term="${term}" | table="${columns[0].table}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`
+		)
 		return null
 	}
 }

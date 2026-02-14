@@ -1,5 +1,6 @@
 import { Fade, GlitterSparkles, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
@@ -13,9 +14,7 @@ import Link from "next/link";
 import { ActiveStepTracker } from "./active-step-tracker";
 import { AnimatedStepItem } from "./animated-step-item";
 import { CreativeProcessParallax } from "./creative-process-parallax";
-import { ImageScrollOverlay } from "./image-scroll-overlay";
 import { MobileStepCircle } from "./mobile-step-circle";
-import { ParallaxImage } from "./parallax-image";
 import { ScrollProgressLine } from "./scroll-progress-line";
 
 interface ProcessStep {
@@ -175,37 +174,14 @@ export async function CreativeProcess() {
 				</header>
 
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
-					{/* Atelier image with entrance animation - Image first on mobile */}
+					{/* Atelier placeholder - Image first on mobile */}
 					<Reveal
 						y={20}
 						duration={0.6}
 						delay={0.2}
 						className="relative order-1 h-56 sm:h-80 lg:h-full"
 					>
-						<div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-xl">
-							<ParallaxImage
-								src={IMAGES.ATELIER}
-								alt="Atelier de création de bijoux artisanaux à Nantes : table de travail avec pinceaux, peintures acryliques colorées et plastique fou prêt à être façonné"
-								blurDataURL={IMAGES.ATELIER_BLUR}
-								sizes="(max-width: 1024px) 100vw, 50vw"
-								quality={80}
-								className="object-cover object-center saturate-[1.05] brightness-[1.02]"
-							/>
-
-							{/* Scroll-linked gradient overlay (desktop) */}
-							<ImageScrollOverlay />
-
-							{/* Handmade badge - WCAG AA contrast */}
-							<div
-								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary/95 backdrop-blur-md border-2 border-white/30 rounded-full shadow-lg drop-shadow-md"
-								aria-hidden="true"
-							>
-								<span className="text-xs/5 font-bold tracking-wider antialiased text-secondary-foreground">
-									Fait main à Nantes
-								</span>
-							</div>
-
-						</div>
+						<PlaceholderImage className="h-full w-full rounded-2xl" label="Photo de l'atelier à venir" />
 					</Reveal>
 
 					{/* Process timeline */}

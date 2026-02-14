@@ -2,7 +2,7 @@
 
 import useEmblaCarousel from "embla-carousel-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
+import { Suspense, useEffect, useEffectEvent, useRef } from "react";
 
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { useReducedMotion } from "@/shared/hooks";

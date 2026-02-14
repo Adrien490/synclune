@@ -1,6 +1,9 @@
+import { cacheLife, cacheTag } from "next/cache";
+
 import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import {
 	FUZZY_MAX_RESULTS,
 	FUZZY_SIMILARITY_THRESHOLD,
@@ -132,6 +135,10 @@ export async function fuzzySearchProductIds(
 	searchTerm: string,
 	options: FuzzySearchOptions = {}
 ): Promise<FuzzySearchReturn> {
+	"use cache";
+	cacheLife("products");
+	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
+
 	const {
 		threshold = FUZZY_SIMILARITY_THRESHOLD,
 		limit = FUZZY_MAX_RESULTS,
@@ -140,6 +147,8 @@ export async function fuzzySearchProductIds(
 
 	const words = splitSearchTerms(searchTerm);
 	if (words.length === 0) return { ids: [], totalCount: 0 };
+
+	const startTime = performance.now();
 
 	try {
 		// Build per-word WHERE fragments (AND: every word must match)
@@ -185,13 +194,24 @@ export async function fuzzySearchProductIds(
 		);
 
 		const results = await Promise.race([queryPromise, timeoutPromise]);
+		const durationMs = Math.round(performance.now() - startTime);
+		const totalCount = results.length > 0 ? Number(results[0].totalCount) : 0;
+
+		if (durationMs > 500) {
+			console.warn(
+				`[SEARCH] slow-fuzzy | term="${searchTerm}" | results=${totalCount} | duration=${durationMs}ms`
+			);
+		}
 
 		return {
 			ids: results.map((r) => r.productId),
-			totalCount: results.length > 0 ? Number(results[0].totalCount) : 0,
+			totalCount,
 		};
 	} catch (error) {
-		console.warn("[fuzzySearch] Failed:", error instanceof Error ? error.message : error);
+		const durationMs = Math.round(performance.now() - startTime);
+		console.warn(
+			`[SEARCH] fuzzy-error | term="${searchTerm}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`
+		);
 		return { ids: [], totalCount: 0 };
 	}
 }
