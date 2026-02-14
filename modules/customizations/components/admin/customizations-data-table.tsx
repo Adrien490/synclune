@@ -1,5 +1,3 @@
-"use client";
-
 import { use } from "react";
 import type { CustomizationRequestStatus } from "../../types/customization.types";
 import { CursorPagination } from "@/shared/components/cursor-pagination";

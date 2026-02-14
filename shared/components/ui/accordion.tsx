@@ -77,7 +77,7 @@ function AccordionContent({
 		<AccordionPrimitive.Content
 			data-slot="accordion-content"
 			forceMount
-			className="grid text-sm transition-[grid-template-rows] duration-200 ease-out data-[state=closed]:grid-rows-[0fr] data-[state=open]:grid-rows-[1fr]"
+			className="grid text-sm motion-safe:[transition:grid-template-rows_280ms_cubic-bezier(0.25,0.1,0.25,1)] data-[state=closed]:grid-rows-[0fr] data-[state=open]:grid-rows-[1fr]"
 			{...props}
 		>
 			<div className="overflow-hidden min-h-0">
