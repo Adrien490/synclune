@@ -15,7 +15,6 @@ import {
 } from "@/shared/components/ui/drawer";
 import type { SortOption } from "@/shared/types/sort.types";
 import { cn } from "@/shared/utils/cn";
-import { hapticLight } from "@/shared/utils/haptic";
 
 export type { SortOption };
 
@@ -112,8 +111,6 @@ export function SortDrawer({
 			setOptimisticValue(value);
 			router.push(`?${params.toString()}`, { scroll: false });
 		});
-
-		hapticLight();
 
 		if (autoCloseOnSelect) {
 			// Délai pour voir la confirmation visuelle avant fermeture

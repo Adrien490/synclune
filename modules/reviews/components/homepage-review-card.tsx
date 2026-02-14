@@ -1,4 +1,4 @@
-import { BadgeCheck, Store } from "lucide-react"
+import { BadgeCheck } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -90,12 +90,9 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 				{review.response && (
 					<div className="pt-2 border-t border-border">
 						<div className="bg-muted/50 rounded-md p-2.5 border-l-2 border-primary/30">
-							<div className="flex items-center gap-1.5 mb-1">
-								<Store className="size-3 text-primary shrink-0" aria-hidden="true" />
-								<span className="text-xs font-medium text-foreground">
-									Réponse de {review.response.authorName}
-								</span>
-							</div>
+							<span className="text-xs font-medium text-foreground mb-1">
+								Synclune
+							</span>
 							<p className="text-xs text-muted-foreground line-clamp-2">
 								{review.response.content}
 							</p>

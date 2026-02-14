@@ -12,7 +12,6 @@ import { countActiveFilters } from "@/modules/products/services/product-filter-p
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { cn } from "@/shared/utils/cn";
-import { hapticLight } from "@/shared/utils/haptic";
 import { useBottomBarHeight } from "@/shared/hooks";
 
 interface ProductSortBarProps {
@@ -102,7 +101,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 	const sortShortLabel = sortByValue ? SORT_SHORT_LABELS[sortByValue] : null;
 
 	// Event-driven live region (B6c)
-	const [announcement, setAnnouncement] = useState("");
+	const announcementRef = useRef<HTMLSpanElement>(null);
 	const prevStateRef = useRef({ hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, search: searchParams.get("search") });
 
 	useEffect(() => {
@@ -128,10 +127,12 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 			.filter(Boolean)
 			.join(". ");
 
-		setAnnouncement(parts);
+		if (announcementRef.current) announcementRef.current.textContent = parts;
 
 		// Clear after 3s to avoid re-announcements
-		const timer = setTimeout(() => setAnnouncement(""), 3000);
+		const timer = setTimeout(() => {
+			if (announcementRef.current) announcementRef.current.textContent = "";
+		}, 3000);
 		return () => clearTimeout(timer);
 	}, [hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, searchParams, sortByValue]);
 
@@ -241,10 +242,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={sortButtonRef}
 						type="button"
-						onClick={() => {
-							hapticLight();
-							setSortOpen(true);
-						}}
+						onClick={() => setSortOpen(true)}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
@@ -266,10 +264,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={searchButtonRef}
 						type="button"
-						onClick={() => {
-							hapticLight();
-							openSearch();
-						}}
+						onClick={() => openSearch()}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
@@ -289,10 +284,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={filterButtonRef}
 						type="button"
-						onClick={() => {
-							hapticLight();
-							openFilter();
-						}}
+						onClick={() => openFilter()}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
@@ -311,9 +303,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 				</div>
 
 				{/* Live region pour screen readers */}
-				<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-					{announcement}
-				</span>
+				<span ref={announcementRef} role="status" aria-live="polite" aria-atomic="true" className="sr-only" />
 			</motion.div>
 
 			{/* SortDrawer */}
