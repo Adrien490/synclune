@@ -116,7 +116,7 @@ export function ReviewsSection({
 												index={index}
 												className="pl-4 basis-[clamp(260px,80vw,340px)]"
 											>
-												<HomepageReviewCard review={review} className="h-full" />
+												<HomepageReviewCard review={review} />
 											</CarouselItem>
 										))}
 									</CarouselContent>

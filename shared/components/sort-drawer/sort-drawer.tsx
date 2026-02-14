@@ -178,7 +178,7 @@ export function SortDrawer({
 						<X className="size-4" />
 					</Button>
 				</DrawerHeader>
-				<DrawerBody className="pb-6">
+				<DrawerBody className="pb-20">
 					<div
 						role="radiogroup"
 						aria-label={title}

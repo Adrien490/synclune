@@ -51,8 +51,8 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
-	const { open: openSearch, isOpen: isSearchOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
-	const { open: openFilter, isOpen: isFilterOpen } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+	const { open: openSearch, close: closeSearch, isOpen: isSearchOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
+	const { open: openFilter, close: closeFilter, isOpen: isFilterOpen } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
 
@@ -158,7 +158,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 				transition={MOTION_CONFIG.spring.bar}
 				className={cn(
 					"md:hidden",
-					"fixed bottom-0 left-0 right-0 z-50",
+					"fixed bottom-0 left-0 right-0 z-[75]",
 					"pb-[env(safe-area-inset-bottom)]",
 					"bg-background/95 backdrop-blur-md",
 					"border-t border-x border-border",
@@ -177,7 +177,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={sortButtonRef}
 						type="button"
-						onClick={() => setSortOpen(true)}
+						onClick={() => { closeSearch(); closeFilter(); setSortOpen(true); }}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
@@ -193,7 +193,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={searchButtonRef}
 						type="button"
-						onClick={() => openSearch()}
+						onClick={() => { setSortOpen(false); openSearch(); }}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
@@ -213,7 +213,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={filterButtonRef}
 						type="button"
-						onClick={() => openFilter()}
+						onClick={() => { setSortOpen(false); openFilter(); }}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
