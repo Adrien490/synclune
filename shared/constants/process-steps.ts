@@ -14,6 +14,3 @@ export const STEP_COLORS = {
 	accent:
 		"bg-accent text-accent-foreground border-accent group-hover:border-accent/80",
 } as const;
-
-/** Number of steps in the creative process (used by ActiveStepTracker) */
-export const PROCESS_STEPS_COUNT = 4;

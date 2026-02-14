@@ -11,8 +11,6 @@ import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
-import { ActiveStepTracker } from "./active-step-tracker";
-import { AnimatedStepItem } from "./animated-step-item";
 import { CreativeProcessParallax } from "./creative-process-parallax";
 import { MobileStepCircle } from "./mobile-step-circle";
 import { ScrollProgressLine } from "./scroll-progress-line";
@@ -186,25 +184,22 @@ export async function CreativeProcess() {
 
 					{/* Process timeline */}
 					<div className="relative order-2">
-						<ActiveStepTracker>
-							<div className="relative">
-								{/* Scroll-animated vertical line (desktop) */}
-								<ScrollProgressLine />
+						<div className="relative">
+							{/* Scroll-animated vertical line (desktop) */}
+							<ScrollProgressLine />
 
-								{/* Simplified vertical line (mobile) - centered on 48px */}
-								<div
-									className="absolute left-[24px] top-8 bottom-8 w-px bg-secondary/50 sm:hidden motion-safe:transition-colors motion-safe:duration-300"
-									aria-hidden="true"
-								/>
+							{/* Simplified vertical line (mobile) - centered on 48px */}
+							<div
+								className="absolute left-[24px] top-8 bottom-8 w-px bg-secondary/50 sm:hidden motion-safe:transition-colors motion-safe:duration-300"
+								aria-hidden="true"
+							/>
 
+							<Fade inView once y={20}>
 								<ol className="space-y-8 sm:space-y-12 lg:space-y-16 list-none">
 									{processSteps.map((step, index) => (
-										<AnimatedStepItem
+										<li
 											key={step.id}
-											index={index}
 											className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:bg-muted/30 motion-safe:hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
-											data-step-index={index}
-											style={{ opacity: `var(--step-${index}-opacity, 1)` }}
 										>
 											{/* Accessibility: step number for screen readers */}
 											<span className="sr-only">Étape {index + 1} :</span>
@@ -256,11 +251,11 @@ export async function CreativeProcess() {
 													{step.description}
 												</p>
 											</div>
-										</AnimatedStepItem>
+										</li>
 									))}
 								</ol>
-							</div>
-						</ActiveStepTracker>
+							</Fade>
+						</div>
 
 						{/* CTA as natural continuation of the process */}
 						<Fade inView once y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration}>

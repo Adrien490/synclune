@@ -34,24 +34,36 @@ import { getSpellSuggestion, SUGGESTION_THRESHOLD_RESULTS } from "./spell-sugges
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
-type WordMatch = { word: string; similarity: number; source: string };
+type BatchResult = {
+	inputWord: string;
+	position: number;
+	matchWord: string | null;
+	similarity: number | null;
+	source: string | null;
+};
 
 /**
- * Setup transaction mock to return specific results for each word query.
- * Results are returned in order: first $queryRaw call for first word, etc.
+ * Setup transaction mock to return batch results from a single $queryRaw call.
+ * The batched query returns all word corrections in one result set.
  */
-function setupTransaction(resultsByWord: WordMatch[][]) {
+function setupTransaction(batchResults: BatchResult[]) {
 	mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-		let callIndex = 0;
 		const tx = {
-			$queryRaw: vi.fn().mockImplementation(() => {
-				const results = resultsByWord[callIndex] ?? [];
-				callIndex++;
-				return Promise.resolve(results);
-			}),
+			$queryRaw: vi.fn().mockResolvedValue(batchResults),
 		};
 		return fn(tx);
 	});
+}
+
+/** Helper to build a batch result row */
+function matchRow(
+	inputWord: string,
+	position: number,
+	matchWord: string | null,
+	similarity: number | null = null,
+	source: string | null = null
+): BatchResult {
+	return { inputWord, position, matchWord, similarity, source };
 }
 
 // ─── Tests ──────────────────────────────────────────────────────
@@ -81,10 +93,15 @@ describe("getSpellSuggestion", () => {
 		expect(await getSpellSuggestion("a".repeat(101))).toBeNull();
 	});
 
+	it("returns null when all words are too short", async () => {
+		expect(await getSpellSuggestion("a b c")).toBeNull();
+		expect(mockTransaction).not.toHaveBeenCalled();
+	});
+
 	// ─── Transaction setup ──────────────────────────────────────
 
 	it("sets suggestion-specific similarity threshold (0.2)", async () => {
-		setupTransaction([[]]);
+		setupTransaction([]);
 		await getSpellSuggestion("colier");
 
 		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(
@@ -94,7 +111,7 @@ describe("getSpellSuggestion", () => {
 	});
 
 	it("sets dedicated timeout for suggestions", async () => {
-		setupTransaction([[]]);
+		setupTransaction([]);
 		await getSpellSuggestion("colier");
 
 		expect(mockSetStatementTimeout).toHaveBeenCalledWith(
@@ -107,7 +124,7 @@ describe("getSpellSuggestion", () => {
 
 	it("returns correction for a single misspelled word", async () => {
 		setupTransaction([
-			[{ word: "collier", similarity: 0.7, source: "product" }],
+			matchRow("colier", 0, "collier", 0.7, "product"),
 		]);
 
 		const result = await getSpellSuggestion("colier");
@@ -118,18 +135,20 @@ describe("getSpellSuggestion", () => {
 	});
 
 	it("returns null when no correction found", async () => {
-		setupTransaction([[]]);
+		setupTransaction([
+			matchRow("xyzxyz", 0, null),
+		]);
 
 		const result = await getSpellSuggestion("xyzxyz");
 		expect(result).toBeNull();
 	});
 
-	// ─── Multi-word suggestion ──────────────────────────────────
+	// ─── Multi-word suggestion (batched query) ──────────────────
 
-	it("corrects individual words in multi-word searches", async () => {
+	it("corrects individual words in multi-word searches with single query", async () => {
 		setupTransaction([
-			[{ word: "collier", similarity: 0.7, source: "product" }],
-			[{ word: "argent", similarity: 0.6, source: "material" }],
+			matchRow("colier", 0, "collier", 0.7, "product"),
+			matchRow("argnt", 1, "argent", 0.6, "material"),
 		]);
 
 		const result = await getSpellSuggestion("colier argnt");
@@ -139,8 +158,8 @@ describe("getSpellSuggestion", () => {
 
 	it("preserves correct words in multi-word searches", async () => {
 		setupTransaction([
-			[{ word: "collier", similarity: 0.7, source: "product" }],
-			[], // "argent" has no better match
+			matchRow("colier", 0, "collier", 0.7, "product"),
+			matchRow("argent", 1, null), // "argent" has no better match
 		]);
 
 		const result = await getSpellSuggestion("colier argent");
@@ -150,8 +169,8 @@ describe("getSpellSuggestion", () => {
 
 	it("returns null when no words need correction", async () => {
 		setupTransaction([
-			[], // "collier" has no better match
-			[], // "argent" has no better match
+			matchRow("collier", 0, null),
+			matchRow("argent", 1, null),
 		]);
 
 		const result = await getSpellSuggestion("collier argent");
@@ -160,8 +179,8 @@ describe("getSpellSuggestion", () => {
 
 	it("uses best similarity score for multi-word result", async () => {
 		setupTransaction([
-			[{ word: "collier", similarity: 0.8, source: "product" }],
-			[{ word: "argent", similarity: 0.5, source: "material" }],
+			matchRow("colier", 0, "collier", 0.8, "product"),
+			matchRow("argnt", 1, "argent", 0.5, "material"),
 		]);
 
 		const result = await getSpellSuggestion("colier argnt");
@@ -169,12 +188,27 @@ describe("getSpellSuggestion", () => {
 		expect(result!.source).toBe("product");
 	});
 
+	it("executes only one $queryRaw call for multi-word search", async () => {
+		let queryRawMock: ReturnType<typeof vi.fn>;
+		mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+			queryRawMock = vi.fn().mockResolvedValue([
+				matchRow("colier", 0, "collier", 0.7, "product"),
+				matchRow("argnt", 1, "argent", 0.6, "material"),
+			]);
+			const tx = { $queryRaw: queryRawMock };
+			return fn(tx);
+		});
+
+		await getSpellSuggestion("colier argnt");
+		expect(queryRawMock!).toHaveBeenCalledTimes(1);
+	});
+
 	// ─── Short words handling ──────────────────────────────────
 
 	it("skips correction for very short words (< 2 chars)", async () => {
+		// Only "colier" is eligible, "a" is skipped
 		setupTransaction([
-			// Only one query for "colier" — "a" is skipped
-			[{ word: "collier", similarity: 0.7, source: "product" }],
+			matchRow("colier", 1, "collier", 0.7, "product"),
 		]);
 
 		const result = await getSpellSuggestion("a colier");
@@ -203,7 +237,7 @@ describe("getSpellSuggestion", () => {
 	// ─── Options ──────────────────────────────────────
 
 	it("passes status option through", async () => {
-		setupTransaction([[]]);
+		setupTransaction([]);
 		await getSpellSuggestion("colier", { status: "PUBLIC" });
 		expect(mockTransaction).toHaveBeenCalledTimes(1);
 	});
