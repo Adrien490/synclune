@@ -29,7 +29,7 @@ const iconButtonClassName = cn(
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 );
 
-export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.ReactNode }) {
+export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
 	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
 	const [session, cartCount, wishlistCount, recentSearches, menuData, recentProducts] = await Promise.all([
@@ -185,7 +185,7 @@ export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.Reac
 									collections={collections}
 									productTypes={productTypes}
 									recentlyViewed={recentlyViewed}
-									quickSearchSlot={quickSearchSlot}
+	
 								/>
 
 								{/* Dropdown compte (visible sur desktop seulement) */}

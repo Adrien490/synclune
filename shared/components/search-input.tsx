@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState, useTransition } from "react"
+import { useEffect, useId, useImperativeHandle, useRef, useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { Search, X } from "lucide-react"
@@ -11,6 +11,10 @@ import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
 import { Spinner } from "@/shared/components/ui/spinner"
 import { cn } from "@/shared/utils/cn"
+
+export interface SearchInputHandle {
+	setValue: (value: string) => void
+}
 
 type SearchInputProps = {
 	/** URL param name - manages URL state automatically */
@@ -41,6 +45,10 @@ type SearchInputProps = {
 	onValueChange?: (value: string) => void
 	/** Number of search results for screen reader announcement (live mode) */
 	resultCount?: number
+	/** In live mode, call this instead of updating URL */
+	onLiveSearch?: (value: string) => void
+	/** Imperative handle ref */
+	ref?: React.Ref<SearchInputHandle>
 }
 
 const sizeStyles = {
@@ -86,6 +94,8 @@ export function SearchInput({
 	onValueChange,
 	preventMobileBlur = false,
 	resultCount,
+	onLiveSearch,
+	ref,
 }: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [internalPending, startTransition] = useTransition()
@@ -103,6 +113,13 @@ export function SearchInput({
 	const form = useAppForm({
 		defaultValues: { search: initialValue },
 	})
+
+	useImperativeHandle(ref, () => ({
+		setValue: (value: string) => {
+			form.setFieldValue("search", value)
+			onValueChange?.(value)
+		},
+	}))
 
 	// Sync URL → form (live mode only)
 	// Uses a ref guard to avoid resetting the input during typing (before debounce fires)
@@ -136,6 +153,10 @@ export function SearchInput({
 				newSearchParams.delete("direction")
 				router.push(`/produits?${newSearchParams.toString()}`)
 			})
+		} else if (onLiveSearch) {
+			// Live mode with callback: bypass URL
+			onLiveSearch(trimmed)
+			return
 		} else {
 			// Live mode: update URL param in place
 			const currentQs = searchParams.get(paramName) || ""
@@ -177,10 +198,13 @@ export function SearchInput({
 	const handleClear = () => {
 		form.setFieldValue("search", "")
 		onValueChange?.("")
-		// In live mode, also clear the URL param and reset sync guard
 		if (mode === "live") {
 			lastSyncedUrl.current = ""
-			handleSearch("")
+			if (onLiveSearch) {
+				onLiveSearch("")
+			} else {
+				handleSearch("")
+			}
 		}
 		inputRef.current?.focus()
 	}

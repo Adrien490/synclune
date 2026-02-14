@@ -1,6 +1,5 @@
 "use client"
 
-import { use } from "react"
 import { ChevronRight, Lightbulb, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -18,19 +17,21 @@ import { SearchResultItem } from "./search-result-item"
 import type { QuickSearchCollection, QuickSearchProductType } from "./types"
 
 interface QuickSearchContentProps {
-	resultsPromise: Promise<QuickSearchResult>
+	results: QuickSearchResult
 	query: string
 	collections: QuickSearchCollection[]
 	productTypes: QuickSearchProductType[]
+	onSearch: (query: string) => void
 }
 
 export function QuickSearchContent({
-	resultsPromise,
+	results,
 	query,
 	collections,
 	productTypes,
+	onSearch,
 }: QuickSearchContentProps) {
-	const { products, suggestion, totalCount } = use(resultsPromise)
+	const { products, suggestion, totalCount } = results
 	const { close } = useDialog(QUICK_SEARCH_DIALOG_ID)
 	const router = useRouter()
 	const { add } = useAddRecentSearch()
@@ -49,7 +50,7 @@ export function QuickSearchContent({
 	const showEmptyState = !hasSearchResults && !hasMatchedNav && !suggestion
 
 	const handleSuggestionClick = (term: string) => {
-		router.replace(`?qs=${encodeURIComponent(term)}`, { scroll: false })
+		onSearch(term)
 	}
 
 	const handleSelectResult = () => {

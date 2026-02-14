@@ -37,7 +37,7 @@ export function ManageCollectionsDialog() {
 	);
 	const [collections, setCollections] = useState<Collection[]>([]);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-	const [isLoadingDataData, startLoadTransition] = useTransition();
+	const [isLoadingData, startLoadTransition] = useTransition();
 
 	const { update, isPending } = useUpdateProductCollections({
 		onSuccess: () => {

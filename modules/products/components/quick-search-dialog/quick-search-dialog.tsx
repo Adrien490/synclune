@@ -3,11 +3,13 @@
 import { AnimatePresence } from "motion/react"
 import { X } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
+import { quickSearch } from "@/modules/products/actions/quick-search"
+import type { QuickSearchResult } from "@/modules/products/data/quick-search-products"
 import { Fade } from "@/shared/components/animations/fade"
-import { SearchInput } from "@/shared/components/search-input"
+import { SearchInput, type SearchInputHandle } from "@/shared/components/search-input"
 import { Button } from "@/shared/components/ui/button"
 import {
 	Dialog,
@@ -22,7 +24,9 @@ import { cn } from "@/shared/utils/cn"
 
 import { FOCUSABLE_SELECTOR, QUICK_SEARCH_DIALOG_ID, SEARCH_DEBOUNCE_MS } from "./constants"
 import { IdleContent } from "./idle-content"
+import { QuickSearchContent } from "./quick-search-content"
 import { QuickTagPills } from "./quick-tag-pills"
+import { SearchErrorFallback } from "./search-error-fallback"
 import { SearchResultsSkeleton } from "./search-results-skeleton"
 import { useKeyboardNavigation } from "./use-keyboard-navigation"
 import type { QuickSearchCollection, QuickSearchProductType, RecentlyViewedProduct } from "./types"
@@ -32,7 +36,6 @@ interface QuickSearchDialogProps {
 	collections: QuickSearchCollection[]
 	productTypes: QuickSearchProductType[]
 	recentlyViewed?: RecentlyViewedProduct[]
-	quickSearchSlot?: React.ReactNode
 }
 
 export function QuickSearchDialog({
@@ -40,11 +43,11 @@ export function QuickSearchDialog({
 	collections,
 	productTypes,
 	recentlyViewed = [],
-	quickSearchSlot,
 }: QuickSearchDialogProps) {
 	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID)
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
+	const searchInputRef = useRef<SearchInputHandle>(null)
 
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),
@@ -55,8 +58,11 @@ export function QuickSearchDialog({
 		onClearError: () => toast.error("Erreur lors de la suppression"),
 	})
 
-	// Local input value for immediate idle/search switch (URL debounce has 300ms latency)
+	// Local input value for immediate idle/search switch
 	const [inputValue, setInputValue] = useState("")
+	const [searchResults, setSearchResults] = useState<QuickSearchResult | null>(null)
+	const [searchQuery, setSearchQuery] = useState("")
+	const [isSearching, startSearch] = useTransition()
 
 	const {
 		activeIndex,
@@ -71,6 +77,26 @@ export function QuickSearchDialog({
 	const handleInputValueChange = (value: string) => {
 		setInputValue(value)
 		resetActiveIndex()
+	}
+
+	const handleLiveSearch = (query: string) => {
+		const trimmed = query.trim()
+		if (!trimmed || trimmed.length < 2) {
+			setSearchResults(null)
+			setSearchQuery("")
+			return
+		}
+		setSearchQuery(trimmed)
+		startSearch(async () => {
+			const results = await quickSearch(trimmed)
+			setSearchResults(results)
+		})
+	}
+
+	const handleSearchFromSuggestion = (term: string) => {
+		searchInputRef.current?.setValue(term)
+		setInputValue(term)
+		handleLiveSearch(term)
 	}
 
 	const handleEnterKey = (term: string) => {
@@ -92,25 +118,16 @@ export function QuickSearchDialog({
 	}
 
 	const handleQuickTagClick = (label: string) => {
-		setInputValue(label)
 		resetActiveIndex()
-		startTransition(() => {
-			router.replace(`?qs=${encodeURIComponent(label)}`, { scroll: false })
-		})
+		handleSearchFromSuggestion(label)
 	}
 
 	const handleClose = () => {
 		close()
 		setInputValue("")
+		setSearchResults(null)
+		setSearchQuery("")
 		resetActiveIndex()
-
-		// Clean up qs param from URL
-		const params = new URLSearchParams(window.location.search)
-		if (params.has("qs")) {
-			params.delete("qs")
-			const newSearch = params.toString()
-			router.replace(newSearch ? `?${newSearch}` : window.location.pathname, { scroll: false })
-		}
 	}
 
 	return (
@@ -197,6 +214,7 @@ export function QuickSearchDialog({
 					}}
 				>
 					<SearchInput
+						ref={searchInputRef}
 						paramName="qs"
 						mode="live"
 						debounceMs={SEARCH_DEBOUNCE_MS}
@@ -204,6 +222,8 @@ export function QuickSearchDialog({
 						placeholder="Rechercher un bijou..."
 						autoFocus
 						preventMobileBlur
+						isPending={isSearching}
+						onLiveSearch={handleLiveSearch}
 						onEscape={handleClose}
 						onValueChange={handleInputValueChange}
 						onSubmit={handleEnterKey}
@@ -247,9 +267,22 @@ export function QuickSearchDialog({
 				>
 					<AnimatePresence mode="wait">
 						{isSearchMode ? (
-							/* ====== SEARCH MODE (server-rendered via parallel route) ====== */
 							<Fade key="search-results" y={6} className="h-full">
-								{quickSearchSlot ?? <SearchResultsSkeleton />}
+								{isSearching && !searchResults ? (
+									<SearchResultsSkeleton />
+								) : searchResults ? (
+									<SearchErrorFallback>
+										<QuickSearchContent
+											results={searchResults}
+											query={searchQuery}
+											collections={collections}
+											productTypes={productTypes}
+											onSearch={handleSearchFromSuggestion}
+										/>
+									</SearchErrorFallback>
+								) : (
+									<SearchResultsSkeleton />
+								)}
 							</Fade>
 						) : (
 							/* ====== IDLE MODE ====== */
