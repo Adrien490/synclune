@@ -103,6 +103,7 @@ export function CookieBanner() {
 								<Link
 									href="/cookies"
 									className="text-foreground underline hover:no-underline py-1"
+									aria-label="En savoir plus sur les cookies"
 								>
 									En savoir plus
 								</Link>

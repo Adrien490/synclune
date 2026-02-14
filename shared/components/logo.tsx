@@ -99,24 +99,16 @@ export function Logo({
 		</div>
 	);
 
-	// Homepage logo avec Schema.org Organization
+	// Homepage logo
 	if (href === "/") {
 		return (
-			<div
-				itemScope
-				itemType="https://schema.org/Organization"
-				className="inline-flex"
+			<Link
+				href={href}
+				className={linkClassName}
+				aria-label={`${BRAND.name} - Accueil`}
 			>
-				<Link
-					href={href}
-					itemProp="url"
-					className={linkClassName}
-					aria-label={`${BRAND.name} - Accueil`}
-				>
-					<div itemProp="logo">{logoContent}</div>
-				</Link>
-				<meta itemProp="name" content={BRAND.name} />
-			</div>
+				{logoContent}
+			</Link>
 		);
 	}
 

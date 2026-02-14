@@ -48,7 +48,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 			<CardContent>
 				<OrdersSelectionToolbar orderIds={orderIds} />
 				<TableScrollContainer>
-					<Table aria-label="Liste des commandes" striped className="min-w-full table-fixed">
+					<Table caption="Liste des commandes" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">

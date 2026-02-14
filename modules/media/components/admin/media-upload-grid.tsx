@@ -24,6 +24,7 @@ import { useReducedMotion } from "motion/react";
 import { Play } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useLightbox } from "@/shared/hooks";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
@@ -74,8 +75,9 @@ export function MediaUploadGrid({
 	// Image loading state
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
-	// Lightbox state (null = closed, number = open index)
-	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+	// Lightbox state with back-button + focus-restore support
+	const { isOpen: lightboxOpen, open: openLightboxHook, close: closeLightbox } = useLightbox();
+	const [lightboxIndex, setLightboxIndex] = useState(0);
 
 	// Active drag state for DragOverlay (index for O(1) lookup)
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -150,6 +152,7 @@ export function MediaUploadGrid({
 	// Open the lightbox
 	const openLightbox = (index: number) => {
 		setLightboxIndex(index);
+		openLightboxHook();
 	};
 
 	// Handle drag start
@@ -340,10 +343,10 @@ export function MediaUploadGrid({
 
 			{/* Lightbox */}
 			<MediaLightbox
-				open={lightboxIndex !== null}
-				close={() => setLightboxIndex(null)}
+				open={lightboxOpen}
+				close={closeLightbox}
 				slides={slides}
-				index={lightboxIndex ?? 0}
+				index={lightboxIndex}
 				onIndexChange={setLightboxIndex}
 			/>
 		</>

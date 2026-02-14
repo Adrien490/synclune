@@ -66,7 +66,7 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 		}
 	}
 
-	const slides = allPhotos.map((photo) => ({ src: photo.url }))
+	const slides = allPhotos.map((photo) => ({ src: photo.url, alt: photo.altText || "Photo client" }))
 
 	return (
 		<section aria-labelledby="customer-photos-heading" className="space-y-3">

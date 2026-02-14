@@ -39,8 +39,12 @@ export default async function CGVPage() {
   cacheTag("legal-terms");
 
   // Récupérer l'URL du site depuis les variables d'environnement
-  const siteUrl = process.env.BETTER_AUTH_URL!;
-  const contactEmail = process.env.RESEND_CONTACT_EMAIL!;
+  const siteUrl =
+    process.env.BETTER_AUTH_URL ||
+    process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
+    "https://synclune.fr";
+  const contactEmail =
+    process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr";
 
   return (
     <>
@@ -147,6 +151,15 @@ export default async function CGVPage() {
                 Un email de confirmation est envoyé automatiquement après
                 validation du paiement, récapitulant les détails de la commande.
               </p>
+
+              <h3 className="text-lg sm:text-xl font-medium">
+                4.4 Facturation
+              </h3>
+              <p>
+                Conformément à l'article L441-9 du Code de commerce, une facture
+                est émise pour chaque commande. Elle est accessible depuis votre
+                espace client et jointe à l'email de confirmation de commande.
+              </p>
             </section>
 
             <section className="space-y-4">
@@ -154,7 +167,11 @@ export default async function CGVPage() {
               <h3 className="text-lg sm:text-xl font-medium">5.1 Zone de livraison</h3>
               <p>
                 Les livraisons sont effectuées en{" "}
-                <strong>France métropolitaine et Union Européenne</strong>.
+                <strong>
+                  France métropolitaine (hors DOM-TOM/DROM-COM) et Union
+                  Européenne
+                </strong>
+                .
               </p>
 
               <h3 className="text-lg sm:text-xl font-medium">

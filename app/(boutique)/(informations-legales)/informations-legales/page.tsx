@@ -9,6 +9,7 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { Cookie, Eye, FileText, RotateCcw, Scale, Shield } from "lucide-react";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -42,6 +43,9 @@ export const metadata: Metadata = {
 };
 
 export default async function LegalPage() {
+	"use cache";
+	cacheLife("reference");
+	cacheTag("legal-hub");
 	const legalPages = [
 		{
 			title: "Mentions légales",

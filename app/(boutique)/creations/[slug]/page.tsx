@@ -165,8 +165,6 @@ export default async function ProductPage({
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article
 							id="product-main"
-							itemScope
-							itemType="https://schema.org/Product"
 							className="space-y-12"
 						>
 							{/* Section principale - Galerie fixe et Informations scrollables */}

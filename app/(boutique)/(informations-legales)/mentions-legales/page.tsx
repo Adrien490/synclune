@@ -96,6 +96,10 @@ export default async function MentionsLegalesPage() {
                 <br />
                 <strong>Numéro de TVA intracommunautaire :</strong>{" "}
                 FR35839183027
+                <br />
+                <span className="text-sm text-muted-foreground">
+                  TVA non applicable, art. 293 B du CGI (franchise en base)
+                </span>
               </p>
               <p>
                 <strong>Activité :</strong> Artisanat de bijoux fantaisie

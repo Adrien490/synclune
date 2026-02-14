@@ -56,6 +56,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			changeFrequency: "monthly",
 			priority: 0.3,
 		},
+		{
+			url: `${SITE_URL}/informations-legales`,
+			lastModified: staticLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/accessibilite`,
+			lastModified: staticLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/cookies`,
+			lastModified: staticLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/retractation`,
+			lastModified: staticLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
 	];
 
 	// Récupérer tous les produits publics (pagination pour respecter la limite de 200)

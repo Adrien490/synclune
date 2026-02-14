@@ -43,7 +43,8 @@ export default async function RetractationPage() {
   cacheTag("legal-retractation");
 
   // Récupérer l'email de contact depuis les variables d'environnement
-  const contactEmail = process.env.RESEND_CONTACT_EMAIL!;
+  const contactEmail =
+    process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr";
 
   return (
     <>

@@ -22,13 +22,10 @@ interface HomepageReviewCardProps {
 export function HomepageReviewCard({ review, className }: HomepageReviewCardProps) {
 	const productImage = review.product.skus[0]?.images[0] ?? null
 	const userName = review.user.name || "Anonyme"
-	const reviewIso = new Date(review.createdAt).toISOString()
 
 	return (
 		<article
 			aria-label={`Avis de ${userName} — ${review.rating} sur 5 étoiles`}
-			itemScope
-			itemType="https://schema.org/Review"
 			className={cn(
 				"overflow-hidden rounded-lg border-2 border-transparent bg-card text-card-foreground",
 				"shadow-sm transition-[shadow,border-color] duration-300 ease-out",
@@ -37,15 +34,6 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 				className,
 			)}
 		>
-			<meta itemProp="author" content={userName} />
-			<meta itemProp="datePublished" content={reviewIso} />
-			<div itemProp="itemReviewed" itemScope itemType="https://schema.org/Product" className="hidden">
-				<meta itemProp="name" content={review.product.title} />
-			</div>
-			<div itemProp="reviewRating" itemScope itemType="https://schema.org/Rating" className="hidden">
-				<meta itemProp="ratingValue" content={String(review.rating)} />
-				<meta itemProp="bestRating" content="5" />
-			</div>
 
 			<CardContent className="py-4 space-y-3">
 				{/* Header: name + verified badge */}

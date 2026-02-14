@@ -1,8 +1,9 @@
 import { updateTag } from "next/cache";
-import { AccountStatus } from "@/app/generated/prisma/client";
+import { AccountStatus, NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
+import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 
 /**
@@ -117,6 +118,17 @@ export async function processAccountDeletions(): Promise<{
 					},
 				});
 
+				// 9. Désabonner et anonymiser la newsletter
+				await tx.newsletterSubscriber.updateMany({
+					where: { userId: user.id },
+					data: {
+						status: NewsletterStatus.UNSUBSCRIBED,
+						email: anonymizedEmail,
+						unsubscribedAt: now,
+						deletedAt: now,
+					},
+				});
+
 				// Note: On ne supprime PAS les commandes (Order) ni les remboursements (Refund)
 				// Conservation légale 10 ans (Art. L123-22 Code de Commerce)
 				// userId reste dans Order pour traçabilité, mais les données personnelles
@@ -124,6 +136,7 @@ export async function processAccountDeletions(): Promise<{
 			});
 
 			// Invalidate user-related caches
+			updateTag(NEWSLETTER_CACHE_TAGS.LIST);
 			updateTag(REVIEWS_CACHE_TAGS.USER(user.id));
 			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(user.id));
 

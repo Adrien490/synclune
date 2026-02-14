@@ -29,17 +29,8 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 		<article
 			id={`review-${review.id}`}
 			aria-label={`Avis de ${userName} — ${review.rating} sur 5 étoiles`}
-			itemScope
-			itemType="https://schema.org/Review"
 			className={cn("overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm", className)}
 		>
-			{/* Schema.org Review microdata */}
-			<meta itemProp="author" content={userName} />
-			<meta itemProp="datePublished" content={reviewIso} />
-			<div itemProp="reviewRating" itemScope itemType="https://schema.org/Rating" className="hidden">
-				<meta itemProp="ratingValue" content={String(review.rating)} />
-				<meta itemProp="bestRating" content="5" />
-			</div>
 
 			<CardContent className="py-4 space-y-4">
 				{/* En-tête: nom, date, étoiles */}

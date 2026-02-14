@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { cn } from "@/shared/utils/cn";
+import { useLightbox } from "@/shared/hooks";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
 const MediaLightbox = dynamic(
@@ -27,13 +28,13 @@ interface ReviewCardGalleryProps {
  * Gère l'état du lightbox et le chargement des images
  */
 export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
-	const [lightboxOpen, setLightboxOpen] = useState(false);
+	const { isOpen, open, close } = useLightbox();
 	const [lightboxIndex, setLightboxIndex] = useState(0);
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
 	const openLightbox = (index: number) => {
 		setLightboxIndex(index);
-		setLightboxOpen(true);
+		open();
 	};
 
 	return (
@@ -69,9 +70,9 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 				))}
 			</div>
 			<MediaLightbox
-				open={lightboxOpen}
-				close={() => setLightboxOpen(false)}
-				slides={medias.map((m) => ({ src: m.url }))}
+				open={isOpen}
+				close={close}
+				slides={medias.map((m) => ({ src: m.url, alt: m.altText || `Photo de l'avis` }))}
 				index={lightboxIndex}
 			/>
 		</>

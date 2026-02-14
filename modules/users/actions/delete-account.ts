@@ -1,6 +1,6 @@
 "use server";
 
-import { AccountStatus, OrderStatus } from "@/app/generated/prisma/client";
+import { AccountStatus, NewsletterStatus, OrderStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";
 import type { ActionState } from "@/shared/types/server-action";
@@ -19,6 +19,7 @@ import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { deleteAccountSchema } from "../schemas/user.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { USERS_CACHE_TAGS } from "../constants/cache";
 
 /**
@@ -130,7 +131,18 @@ export async function deleteAccount(
 			// Comptes OAuth
 			await tx.account.deleteMany({ where: { userId } });
 
-			// 5.5 Soft delete du compte utilisateur avec anonymisation RGPD
+			// 5.5 Désabonner et anonymiser la newsletter
+			await tx.newsletterSubscriber.updateMany({
+				where: { userId },
+				data: {
+					status: NewsletterStatus.UNSUBSCRIBED,
+					email: anonymizedEmail,
+					unsubscribedAt: new Date(),
+					deletedAt: new Date(),
+				},
+			});
+
+			// 5.6 Soft delete du compte utilisateur avec anonymisation RGPD
 			await tx.user.update({
 				where: { id: userId },
 				data: {
@@ -179,6 +191,8 @@ export async function deleteAccount(
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
+		updateTag(NEWSLETTER_CACHE_TAGS.LIST);
+		updateTag(NEWSLETTER_CACHE_TAGS.USER_STATUS(userId));
 
 		return success(
 			"Votre compte a été supprimé. Vos données personnelles ont été effacées conformément au RGPD."

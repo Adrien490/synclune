@@ -9,8 +9,8 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  * Structure exacte : PageHeader → Gallery + ProductInfo/ProductDetails → Reviews → RecentlyViewed → Related
  *
  * IMPORTANT: L'ordre des composants doit correspondre exactement à page.tsx pour éviter le CLS
- * ProductInfo: Titre → Prix mobile → Badge type → Description
- * ProductDetails: Prix → VariantSelector → AddToCart → Reassurance → Characteristics → CareInfo
+ * ProductInfo: Titre → ReviewRatingLink → Badge type → WishlistButton
+ * ProductDetails: Prix → VariantSelector → AddToCart → Reassurance → Characteristics → Highlights → Description → CareInfo
  */
 export default function ProductDetailLoading() {
 	return (
@@ -40,16 +40,18 @@ export default function ProductDetailLoading() {
 							<div className="grid gap-6 lg:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 								{/* Gallery Section - Left (sticky on desktop) */}
 								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
-									{/* Grid layout matching gallery.tsx - affiché avec thumbnails (worst case) */}
-									<div className="grid gap-3 lg:gap-4 grid-cols-1 lg:grid-cols-[80px_1fr]">
+									{/* Grid layout matching gallery.tsx */}
+									<div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-[60px_1fr] lg:grid-cols-[80px_1fr]">
 										{/* Thumbnails verticales - Desktop uniquement */}
-										<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[min(500px,60vh)] overflow-y-auto">
-											{Array.from({ length: 4 }).map((_, i) => (
-												<Skeleton
-													key={i}
-													className="h-20 w-20 rounded-lg bg-muted/40"
-												/>
-											))}
+										<div className="hidden md:block order-1 max-h-[min(500px,60vh)] overflow-y-auto">
+											<div className="flex flex-col gap-2">
+												{Array.from({ length: 4 }).map((_, i) => (
+													<Skeleton
+														key={i}
+														className="h-20 w-20 rounded-lg bg-muted/40"
+													/>
+												))}
+											</div>
 										</div>
 
 										{/* Main image */}
@@ -65,13 +67,15 @@ export default function ProductDetailLoading() {
 										</div>
 
 										{/* Thumbnails horizontales - Mobile uniquement */}
-										<div className="flex gap-2 overflow-x-auto py-2 lg:hidden order-3">
-											{Array.from({ length: 4 }).map((_, i) => (
-												<Skeleton
-													key={i}
-													className="h-16 w-16 shrink-0 rounded-lg bg-muted/40"
-												/>
-											))}
+										<div className="md:hidden order-3 mt-3">
+											<div className="flex flex-wrap gap-2">
+												{Array.from({ length: 4 }).map((_, i) => (
+													<Skeleton
+														key={i}
+														className="w-14 h-14 shrink-0 rounded-lg bg-muted/40"
+													/>
+												))}
+											</div>
 										</div>
 									</div>
 								</section>
@@ -89,39 +93,32 @@ export default function ProductDetailLoading() {
 											<Skeleton className="h-10 w-10 rounded-full bg-muted/30 shrink-0" />
 										</div>
 
-										{/* Prix compact - Mobile uniquement (sm:hidden) */}
-										<div className="sm:hidden">
-											<Skeleton className="h-8 w-24 bg-muted/50" />
-										</div>
+										{/* ReviewRatingLink - Mobile (sm:hidden) */}
+										<Skeleton className="h-5 w-28 bg-muted/30 sm:hidden" />
 
-										{/* Badges (type + wishlist desktop) */}
+										{/* Badges (type + ReviewRatingLink desktop + wishlist desktop) */}
 										<div className="flex flex-wrap items-center gap-2">
 											<Skeleton className="h-7 w-24 rounded-full bg-muted/30" />
+											{/* ReviewRatingLink - Desktop uniquement */}
+											<Skeleton className="hidden sm:block h-5 w-28 bg-muted/30" />
 											{/* Bouton wishlist - Desktop uniquement, aligné à droite */}
 											<Skeleton className="hidden sm:block h-10 w-10 rounded-full bg-muted/30 ml-auto" />
-										</div>
-
-										{/* Description */}
-										<div className="space-y-2">
-											<Skeleton className="h-5 w-full bg-muted/30" />
-											<Skeleton className="h-5 w-full bg-muted/30" />
-											<Skeleton className="h-5 w-3/4 bg-muted/30" />
 										</div>
 									</div>
 
 									{/* Separator (entre ProductInfo et ProductDetails) */}
 									<div className="h-px bg-border" />
 
-									{/* ===== 2. ProductPriceDisplay - Card ===== */}
-									<div className="rounded-xl border border-primary/10 shadow-sm">
-										<div className="p-6 space-y-3">
-											{/* Prix */}
-											<div className="flex items-baseline gap-3">
-												<Skeleton className="h-10 w-28 bg-primary/20" />
-											</div>
-											{/* Badge disponibilité */}
-											<Skeleton className="h-6 w-24 rounded-full bg-muted/30" />
+									{/* ===== 2. ProductPriceDisplay ===== */}
+									<div className="space-y-3">
+										{/* Prix */}
+										<div className="flex items-baseline gap-3">
+											<Skeleton className="h-10 w-28 bg-primary/20" />
 										</div>
+										{/* Badge disponibilité */}
+										<Skeleton className="h-6 w-24 rounded-full bg-muted/30" />
+										{/* Livraison estimée */}
+										<Skeleton className="h-5 w-44 bg-muted/30" />
 									</div>
 
 									{/* ===== 3. VariantSelector - Card ===== */}
@@ -199,24 +196,13 @@ export default function ProductDetailLoading() {
 									<div className="rounded-xl border-transparent bg-muted/30">
 										{/* CardHeader */}
 										<div className="p-6 pb-0 space-y-2">
-											<div className="flex items-center gap-2">
-												<Skeleton className="h-4 w-4 rounded-full bg-primary/30" />
-												<Skeleton className="h-4 w-32 bg-muted/40" />
-											</div>
-											<Skeleton className="h-4 w-40 bg-muted/30" />
+											<Skeleton className="h-4 w-36 bg-muted/40" />
+											<Skeleton className="h-4 w-52 bg-muted/30" />
 										</div>
-										{/* CardContent - Grille 2 colonnes avec 2 items */}
-										<div className="p-6 pt-4">
-											<div className="grid gap-5 sm:gap-4 sm:grid-cols-2">
-												{Array.from({ length: 2 }).map((_, i) => (
-													<div key={i} className="flex items-center gap-3">
-														<Skeleton className="shrink-0 w-8 h-8 rounded-full bg-primary/10" />
-														<div className="space-y-1.5 flex-1">
-															<Skeleton className="h-4 w-24 bg-muted/40" />
-															<Skeleton className="h-3 w-20 bg-muted/30" />
-														</div>
-													</div>
-												))}
+										{/* CardContent - Simple size display */}
+										<div className="p-6 pt-4 space-y-3">
+											<div className="p-2 bg-muted/50 rounded-lg">
+												<Skeleton className="h-5 w-32 bg-muted/40" />
 											</div>
 										</div>
 									</div>
@@ -224,7 +210,27 @@ export default function ProductDetailLoading() {
 									{/* Separator */}
 									<div className="h-px bg-border" />
 
-									{/* ===== 7. ProductCareInfo - Accordion fermé ===== */}
+									{/* ===== 7. ProductHighlights ===== */}
+									<ul className="grid gap-4 sm:grid-cols-2">
+										{Array.from({ length: 4 }).map((_, i) => (
+											<li key={i} className="flex items-start gap-2">
+												<span className="text-primary mt-1" aria-hidden="true">•</span>
+												<div className="min-w-0 space-y-1">
+													<Skeleton className="h-5 w-32 bg-muted/40" />
+													<Skeleton className="h-4 w-44 bg-muted/30" />
+												</div>
+											</li>
+										))}
+									</ul>
+
+									{/* ===== 8. Product description ===== */}
+									<div className="space-y-3 max-w-prose">
+										<Skeleton className="h-5 w-full bg-muted/30" />
+										<Skeleton className="h-5 w-full bg-muted/30" />
+										<Skeleton className="h-5 w-3/4 bg-muted/30" />
+									</div>
+
+									{/* ===== 9. ProductCareInfo - Accordion fermé ===== */}
 									<div className="space-y-0">
 										{/* Accordion Item 1 - Livraison */}
 										<div className="border-b py-4">

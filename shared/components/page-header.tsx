@@ -140,7 +140,7 @@ export function PageHeader({
 								>
 									<ChevronLeft className="size-5" />
 								</Link>
-								<span className="text-2xl font-display font-medium text-foreground tracking-normal truncate flex-1 min-w-0">
+								<span aria-hidden="true" className="text-2xl font-display font-medium text-foreground tracking-normal flex-1 min-w-0 wrap-break-words">
 									{title}
 								</span>
 								{/* Actions mobile - alignées à droite */}
@@ -193,12 +193,12 @@ export function PageHeader({
 							</nav>
 						)}
 
-						{/* Titre principal - SEO: h1 unique toujours présent dans le DOM */}
+						{/* Titre principal - SEO: h1 always in the DOM for mobile-first indexing */}
 						<h1
 							id="page-title"
 							className={cn(
 								"text-2xl sm:text-3xl lg:text-4xl font-display font-medium text-foreground tracking-normal wrap-break-words",
-								breadcrumbs.length > 0 && "hidden sm:block"
+								breadcrumbs.length > 0 && "sr-only sm:not-sr-only"
 							)}
 						>
 							{title}

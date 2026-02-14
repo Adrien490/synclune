@@ -8,7 +8,6 @@ import {
 	determineStockStatus,
 	calculateDiscountPercent,
 	hasActiveDiscount,
-	getSchemaOrgAvailabilityUrl,
 } from "@/modules/products/services/product-pricing.service";
 import { motion, useReducedMotion } from "motion/react";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
@@ -89,29 +88,18 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 		);
 	}
 
-	// URL Schema.org pour la disponibilité
-	const availabilityUrl = getSchemaOrgAvailabilityUrl(stockStatus);
-
 	return (
 		<div
 			role="region"
 			aria-labelledby="product-price-selected"
-			itemScope
-			itemType="https://schema.org/Offer"
-			itemProp="offers"
 			className="space-y-3 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 		>
-			{/* Microdata Schema.org cachées */}
-			<meta itemProp="priceCurrency" content="EUR" />
-			<link itemProp="availability" href={availabilityUrl} />
 
 			<div className="flex items-baseline gap-3 flex-wrap">
 				{/* Prix principal */}
 				<p
 					id="product-price-selected"
 					className="text-3xl sm:text-2xl font-bold tracking-tight text-foreground"
-					itemProp="price"
-					content={String(selectedSku.priceInclTax / 100)}
 					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
 				>
 					{formatEuro(selectedSku.priceInclTax)}

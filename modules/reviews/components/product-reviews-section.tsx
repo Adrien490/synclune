@@ -43,18 +43,7 @@ export async function ProductReviewsSection({
 			id="reviews"
 			className="scroll-mt-20"
 			aria-labelledby="reviews-title"
-			itemScope
-			itemType="https://schema.org/AggregateRating"
 		>
-			{/* Schema.org AggregateRating microdata */}
-			{stats.totalCount > 0 && (
-				<>
-					<meta itemProp="ratingValue" content={String(stats.averageRating)} />
-					<meta itemProp="reviewCount" content={String(stats.totalCount)} />
-					<meta itemProp="bestRating" content="5" />
-					<meta itemProp="worstRating" content="1" />
-				</>
-			)}
 
 			{/* En-tête de section */}
 			<div className="flex items-center justify-between mb-6">
