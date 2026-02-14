@@ -11,7 +11,7 @@ export function ProductListSkeleton() {
 			</div>
 
 			{/* Grille des produits */}
-			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
 				{Array.from({ length: 8 }).map((_, i) => (
 					<div
 						key={i}

@@ -29,6 +29,13 @@ export function FaqSectionSkeleton() {
 						</div>
 					))}
 				</div>
+
+				{/* CTA contact card */}
+				<div className="mt-12 max-w-3xl mx-auto bg-primary/5 border border-primary/15 rounded-2xl p-6 sm:p-8 text-center space-y-3">
+					<Skeleton className="h-5 w-56 mx-auto bg-muted/30" />
+					<Skeleton className="h-4 w-44 mx-auto bg-muted/20" />
+					<Skeleton className="h-11 w-40 mx-auto rounded-md bg-muted/30 mt-2" />
+				</div>
 			</div>
 		</section>
 	);

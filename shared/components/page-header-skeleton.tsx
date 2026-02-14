@@ -53,8 +53,8 @@ export function PageHeaderSkeleton({
 			aria-busy="true"
 			aria-label="Chargement de l'en-tête"
 		>
-			<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-32 pb-6 animate-pulse">
-				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6">
+			<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-32 pb-2 sm:pb-4 animate-pulse">
+				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
 					<div className="min-w-0 flex-1 space-y-2">
 						{/* Breadcrumb mobile */}
 						<div className="sm:hidden h-5 w-20 bg-muted rounded" />

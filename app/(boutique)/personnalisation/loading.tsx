@@ -1,3 +1,4 @@
+import { PageHeaderSkeleton } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 
@@ -13,29 +14,7 @@ export default function CustomizationLoading() {
 		<div className="relative min-h-screen" role="status" aria-busy="true" aria-label="Chargement du formulaire de personnalisation">
 			<span className="sr-only">Chargement du formulaire de personnalisation...</span>
 
-			{/* Page Header Skeleton */}
-			<div className="pt-16">
-				<section className="bg-background border-b border-border">
-					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-						<div className="space-y-2">
-							{/* Breadcrumbs */}
-							<nav className="text-sm">
-								<div className="flex items-center gap-2">
-									<Skeleton className="h-4 w-16 bg-muted/40" />
-									<span className="text-muted-foreground">/</span>
-									<Skeleton className="h-4 w-32 bg-muted/40" />
-								</div>
-							</nav>
-
-							{/* Title */}
-							<Skeleton className="h-8 sm:h-9 w-80 bg-muted/50" />
-
-							{/* Description */}
-							<Skeleton className="h-5 w-full max-w-sm bg-muted/30" />
-						</div>
-					</div>
-				</section>
-			</div>
+			<PageHeaderSkeleton hasDescription />
 
 			{/* Main Content */}
 			<section className={`bg-background ${SECTION_SPACING.compact} relative z-10`}>

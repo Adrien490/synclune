@@ -68,10 +68,11 @@ export function AtelierStorySkeleton() {
 
 				{/* Section images secondaires */}
 				<div className="mt-12 sm:mt-16 space-y-8">
-					{/* Grid 2 images - PolaroidFrame style */}
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
+					<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-2 max-w-5xl mx-auto">
 						<Skeleton className="w-full aspect-4/3 rounded-xl bg-muted/40" />
 						<Skeleton className="w-full aspect-4/3 rounded-xl bg-muted/40" />
+						<Skeleton className="hidden lg:block w-full aspect-4/3 rounded-xl bg-muted/40" />
+						<Skeleton className="hidden lg:block w-full aspect-4/3 rounded-xl bg-muted/40" />
 					</div>
 
 					{/* CTA skeleton */}
