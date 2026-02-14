@@ -1,8 +1,5 @@
-import { BadgeCheck } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-
-import { Badge } from "@/shared/components/ui/badge"
 import { CardContent } from "@/shared/components/ui/card"
 import { RatingStars } from "@/shared/components/rating-stars"
 import { cn } from "@/shared/utils/cn"
@@ -53,15 +50,9 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 			<CardContent className="py-4 space-y-3">
 				{/* Header: name + verified badge */}
 				<div>
-					<div className="flex items-center gap-2">
-						<span className="font-medium text-foreground truncate">
-							{userName}
-						</span>
-						<Badge variant="outline" className="text-xs gap-1 px-1.5 py-0 h-5 shrink-0 text-muted-foreground">
-							<BadgeCheck className="size-3" aria-hidden="true" />
-							Achat vérifié
-						</Badge>
-					</div>
+					<span className="font-medium text-foreground truncate">
+						{userName}
+					</span>
 					<div className="flex items-center gap-2 mt-0.5">
 						<RatingStars rating={review.rating} size="sm" />
 						<RelativeDate date={review.createdAt} className="text-xs text-muted-foreground" />

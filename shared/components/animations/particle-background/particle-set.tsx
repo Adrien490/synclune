@@ -44,7 +44,7 @@ function AnimatedParticle({
 }) {
 	const isSvg = isSvgShape(p.shape);
 	const svgConfig = isSvg ? getSvgConfig(p.shape) : null;
-	const shapeStyles = getShapeStyles(p.shape, p.size, p.color);
+	const shapeStyles = isSvg ? undefined : getShapeStyles(p.shape, p.size, p.color);
 	const style = particleStyle(p, highContrast);
 
 	// Build a particle copy with adjusted opacity for the animation preset
@@ -55,12 +55,10 @@ function AnimatedParticle({
 	const px = useTransform(mouseX, (v) => v * strength);
 	const py = useTransform(mouseY, (v) => v * strength);
 
-	const opacity = effectiveOpacity(p, highContrast);
-
+	// Opacity is handled by the animation preset via adjustedP — no need for style.opacity
 	const content = isSvg && svgConfig ? (
 		<motion.span
 			className="block w-full h-full"
-			style={{ opacity }}
 			animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
 			transition={getTransition(p)}
 		>
@@ -71,7 +69,7 @@ function AnimatedParticle({
 	) : (
 		<motion.span
 			className="block w-full h-full"
-			style={{ ...shapeStyles, opacity }}
+			style={shapeStyles}
 			animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
 			transition={getTransition(p)}
 		/>
@@ -96,7 +94,7 @@ function StaticParticle({
 }) {
 	const isSvg = isSvgShape(p.shape);
 	const svgConfig = isSvg ? getSvgConfig(p.shape) : null;
-	const shapeStyles = getShapeStyles(p.shape, p.size, p.color);
+	const shapeStyles = isSvg ? undefined : getShapeStyles(p.shape, p.size, p.color);
 	const style = particleStyle(p, highContrast);
 	const opacity = effectiveOpacity(p, highContrast);
 
