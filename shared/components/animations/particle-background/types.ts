@@ -11,7 +11,7 @@ export type ParticleShape =
 	| "sparkle-4";
 
 /** Styles d'animation */
-export type AnimationStyle = "float" | "drift" | "rise" | "orbit" | "breathe";
+export type AnimationStyle = "float" | "drift" | "rise" | "orbit" | "breathe" | "sparkle";
 
 /** Props du composant ParticleBackground */
 export interface ParticleBackgroundProps {
@@ -37,6 +37,8 @@ export interface ParticleBackgroundProps {
 	speed?: number;
 	/** Désactiver sur appareils tactiles - rend null (défaut: false) */
 	disableOnTouch?: boolean;
+	/** Fade progressif des particules au scroll au lieu du on/off binaire (défaut: false) */
+	scrollFade?: boolean;
 }
 
 /** Données d'une particule générée */
@@ -71,6 +73,10 @@ export interface ParticleSetProps {
 	/** Mouse position as pixel offset for parallax, range ±PARALLAX_STRENGTH (desktop only) */
 	mouseX?: MotionValue<number>;
 	mouseY?: MotionValue<number>;
+	/** High contrast mode: reduce opacity 50%, increase blur 50% */
+	highContrast?: boolean;
+	/** Scroll-linked opacity (0-1) for progressive fade. When provided, multiplies particle opacity. */
+	scrollOpacity?: MotionValue<number>;
 }
 
 /** Type pour les presets d'animation */

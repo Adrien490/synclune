@@ -60,7 +60,7 @@ export function QuickSearchDialog({
 
 	// Local input value for immediate idle/search switch
 	const [inputValue, setInputValue] = useState("")
-	const [searchResults, setSearchResults] = useState<QuickSearchResult | null>(null)
+	const [searchResults, setSearchResults] = useState<QuickSearchResult | "error" | null>(null)
 	const [searchQuery, setSearchQuery] = useState("")
 	const [isSearching, startSearch] = useTransition()
 
@@ -70,6 +70,7 @@ export function QuickSearchDialog({
 		contentRef,
 		handleArrowNavigation,
 		resetActiveIndex,
+		activeDescendantId,
 	} = useKeyboardNavigation()
 
 	const isSearchMode = inputValue.trim().length > 0
@@ -88,8 +89,12 @@ export function QuickSearchDialog({
 		}
 		setSearchQuery(trimmed)
 		startSearch(async () => {
-			const results = await quickSearch(trimmed)
-			setSearchResults(results)
+			try {
+				const results = await quickSearch(trimmed)
+				setSearchResults(results)
+			} catch {
+				setSearchResults("error")
+			}
 		})
 	}
 
@@ -120,6 +125,19 @@ export function QuickSearchDialog({
 	const handleQuickTagClick = (label: string) => {
 		resetActiveIndex()
 		handleSearchFromSuggestion(label)
+	}
+
+	const handleSelectResult = () => {
+		add(searchQuery)
+		close()
+	}
+
+	const handleViewAllResults = () => {
+		add(searchQuery)
+		startTransition(() => {
+			router.push(`/produits?search=${encodeURIComponent(searchQuery)}`)
+			close()
+		})
 	}
 
 	const handleClose = () => {
@@ -227,6 +245,8 @@ export function QuickSearchDialog({
 						onEscape={handleClose}
 						onValueChange={handleInputValueChange}
 						onSubmit={handleEnterKey}
+						activeDescendantId={activeDescendantId}
+						ariaExpanded={isSearchMode}
 					/>
 				</div>
 
@@ -268,8 +288,21 @@ export function QuickSearchDialog({
 					<AnimatePresence mode="wait">
 						{isSearchMode ? (
 							<Fade key="search-results" y={6} className="h-full">
-								{isSearching && !searchResults ? (
+								{isSearching && (!searchResults || searchResults === "error") ? (
 									<SearchResultsSkeleton />
+								) : searchResults === "error" ? (
+									<div className="flex flex-col items-center justify-center h-full gap-3 px-4 py-8">
+										<p className="text-sm text-muted-foreground">
+											La recherche est temporairement indisponible.
+										</p>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={() => handleLiveSearch(searchQuery)}
+										>
+											Reessayer
+										</Button>
+									</div>
 								) : searchResults ? (
 									<SearchErrorFallback>
 										<QuickSearchContent
@@ -278,6 +311,9 @@ export function QuickSearchDialog({
 											collections={collections}
 											productTypes={productTypes}
 											onSearch={handleSearchFromSuggestion}
+											onClose={handleClose}
+											onSelectResult={handleSelectResult}
+											onViewAllResults={handleViewAllResults}
 										/>
 									</SearchErrorFallback>
 								) : (

@@ -1,7 +1,7 @@
 "use client";
 
-import type { Session } from "@/modules/auth/lib/auth";
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
+import type { NavbarSessionData } from "@/shared/types/session.types";
 import ScrollFade from "@/shared/components/scroll-fade";
 import {
 	Sheet,
@@ -17,6 +17,11 @@ import { useState } from "react";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
 
+/**
+ * navItems (flat list from getMobileNavItems) drives the mobile sheet's link rendering,
+ * while productTypes/collections provide hierarchical data for sectioned display.
+ * Both are needed because the flat list lacks the grouping structure required by sections.
+ */
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: Array<{ slug: string; label: string }>;
@@ -27,7 +32,7 @@ interface MenuSheetProps {
 		createdAt?: Date;
 	}>;
 	isAdmin?: boolean;
-	session?: Session | null;
+	session?: NavbarSessionData | null;
 }
 
 export function MenuSheet({
@@ -44,13 +49,13 @@ export function MenuSheet({
 			<SheetTrigger asChild>
 				<button
 					type="button"
-					className="relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+					className="relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-[transform,color,background-color] duration-300 ease-out motion-safe:hover:scale-105 motion-safe:active:scale-95 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 					aria-label="Ouvrir le menu de navigation"
 					aria-controls="mobile-menu-synclune"
 				>
 					<Menu
 						size={20}
-						className="transition-all duration-300 group-hover:rotate-6"
+						className="transition-transform duration-300 motion-safe:group-hover:rotate-6"
 						aria-hidden="true"
 					/>
 				</button>

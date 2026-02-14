@@ -60,25 +60,10 @@ describe("AccountDropdown", () => {
 	describe("when logged in", () => {
 		const session = {
 			user: {
-				id: "user-1",
 				name: "Alice Dupont",
 				email: "alice@example.com",
 				role: "USER" as const,
 				image: null,
-				emailVerified: true,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			},
-			session: {
-				id: "session-1",
-				token: "token",
-				userId: "user-1",
-				expiresAt: new Date(),
-				createdAt: new Date(),
-				updatedAt: new Date(),
-				ipAddress: null,
-				userAgent: null,
-				impersonatedBy: null,
 			},
 		};
 

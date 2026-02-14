@@ -7,6 +7,8 @@ import { CardContent } from "@/shared/components/ui/card"
 import { RatingStars } from "@/shared/components/rating-stars"
 import { cn } from "@/shared/utils/cn"
 import { RelativeDate } from "@/shared/components/relative-date"
+import { ReviewCardGallery } from "./review-card-gallery"
+import { ExpandableReviewContent } from "./expandable-review-content"
 
 import type { ReviewHomepage } from "../types/review.types"
 
@@ -28,7 +30,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 			itemScope
 			itemType="https://schema.org/Review"
 			className={cn(
-				"overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm",
+				"overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow duration-300 hover:shadow-md",
 				className,
 			)}
 		>
@@ -64,28 +66,12 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 							{review.title}
 						</h3>
 					)}
-					<p itemProp="reviewBody" className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-						{review.content}
-					</p>
+					<ExpandableReviewContent content={review.content} clampLines={3} />
 				</div>
 
-				{/* User-uploaded review photos */}
+				{/* User-uploaded review photos with lightbox */}
 				{review.medias.length > 0 && (
-					<div className="flex gap-2">
-						{review.medias.slice(0, 3).map((media) => (
-							<Image
-								key={media.id}
-								src={media.url}
-								alt={media.altText || "Photo de l'avis"}
-								width={64}
-								height={64}
-								sizes="64px"
-								className="size-16 rounded object-cover"
-								placeholder={media.blurDataUrl ? "blur" : "empty"}
-								blurDataURL={media.blurDataUrl ?? undefined}
-							/>
-						))}
-					</div>
+					<ReviewCardGallery medias={review.medias} />
 				)}
 
 				{/* Product link with thumbnail */}

@@ -25,7 +25,7 @@ interface DesktopNavProps {
 
 const linkClasses = cn(
 	"relative h-auto px-3 py-2 rounded-sm text-sm font-medium",
-	"text-foreground/80 hover:text-foreground",
+	"text-foreground/85 hover:text-foreground",
 	"data-[active=true]:text-foreground",
 	"transition-colors duration-200",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

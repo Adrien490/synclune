@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SHAPE_CONFIGS } from "./constants";
+import { ANIMATION_PRESETS, SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 import { seededRandom } from "@/shared/utils/seeded-random";
 import {
@@ -307,5 +307,66 @@ describe("getTransition", () => {
 	it("sets repeatDelay as fraction of delay", () => {
 		const t = getTransition(makeParticle({ delay: 5 }));
 		expect(t.repeatDelay).toBe(1); // 5 * 0.2
+	});
+});
+
+// ─── ANIMATION_PRESETS ───────────────────────────────────────────────
+
+describe("ANIMATION_PRESETS", () => {
+	const makeParticle = (overrides: Partial<Particle> = {}): Particle => ({
+		id: 0,
+		size: 32,
+		opacity: 0.3,
+		x: 50,
+		y: 50,
+		color: "red",
+		duration: 15,
+		delay: 2,
+		blur: 10,
+		depthFactor: 0.5,
+		shape: "circle",
+		...overrides,
+	});
+
+	it("sparkle preset produces twinkle in/out scale pattern", () => {
+		const result = ANIMATION_PRESETS.sparkle(makeParticle());
+		expect(result.scale).toEqual([0.3, 0.3, 1.2, 1.2, 0.3]);
+	});
+
+	it("sparkle preset fades from 0 to boosted opacity and back", () => {
+		const p = makeParticle({ opacity: 0.3 });
+		const result = ANIMATION_PRESETS.sparkle(p);
+		const peak = Math.min(0.3 * 1.5, 1);
+		expect(result.opacity).toEqual([0, 0, peak, peak, 0]);
+	});
+
+	it("sparkle preset clamps opacity to 1", () => {
+		const p = makeParticle({ opacity: 0.8 });
+		const result = ANIMATION_PRESETS.sparkle(p);
+		// 0.8 * 1.5 = 1.2, should be clamped to 1
+		expect(result.opacity).toEqual([0, 0, 1, 1, 0]);
+	});
+
+	it("sparkle preset adds rotation for non-round shapes", () => {
+		const p = makeParticle({ shape: "diamond" });
+		const result = ANIMATION_PRESETS.sparkle(p);
+		expect(result.rotate).toBeDefined();
+	});
+
+	it("sparkle preset omits rotation for round shapes", () => {
+		const p = makeParticle({ shape: "circle" });
+		const result = ANIMATION_PRESETS.sparkle(p);
+		expect(result.rotate).toBeUndefined();
+	});
+
+	it("all presets return valid TargetAndTransition objects", () => {
+		const p = makeParticle();
+		for (const [name, preset] of Object.entries(ANIMATION_PRESETS)) {
+			const result = preset(p);
+			expect(result).toBeDefined();
+			// Every preset should have at least opacity or scale
+			const hasAnimatableProperty = "opacity" in result || "scale" in result || "x" in result || "y" in result;
+			expect(hasAnimatableProperty).toBe(true);
+		}
 	});
 });

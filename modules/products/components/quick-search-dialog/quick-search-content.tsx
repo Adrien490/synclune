@@ -1,17 +1,14 @@
 "use client"
 
 import { ChevronRight, Lightbulb, Search } from "lucide-react"
-import { useRouter } from "next/navigation"
 
 import ScrollFade from "@/shared/components/scroll-fade"
-import { useAddRecentSearch } from "@/modules/products/hooks/use-add-recent-search"
-import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
 import type { QuickSearchResult } from "../../data/quick-search-products"
 import { CollectionCard } from "./collection-card"
 import { CategoryCard } from "./category-card"
-import { MAX_MATCHED_COLLECTIONS, MAX_MATCHED_TYPES, QUICK_SEARCH_DIALOG_ID } from "./constants"
+import { MAX_MATCHED_COLLECTIONS, MAX_MATCHED_TYPES } from "./constants"
 import { QuickTagPills } from "./quick-tag-pills"
 import { SearchResultItem } from "./search-result-item"
 import type { QuickSearchCollection, QuickSearchProductType } from "./types"
@@ -22,6 +19,9 @@ interface QuickSearchContentProps {
 	collections: QuickSearchCollection[]
 	productTypes: QuickSearchProductType[]
 	onSearch: (query: string) => void
+	onClose: () => void
+	onSelectResult: () => void
+	onViewAllResults: () => void
 }
 
 export function QuickSearchContent({
@@ -30,11 +30,11 @@ export function QuickSearchContent({
 	collections,
 	productTypes,
 	onSearch,
+	onClose,
+	onSelectResult,
+	onViewAllResults,
 }: QuickSearchContentProps) {
 	const { products, suggestion, totalCount } = results
-	const { close } = useDialog(QUICK_SEARCH_DIALOG_ID)
-	const router = useRouter()
-	const { add } = useAddRecentSearch()
 
 	// Client-side filtering of collections/categories (word-start match)
 	const lowerQuery = query.toLowerCase()
@@ -48,26 +48,6 @@ export function QuickSearchContent({
 	const hasSearchResults = products.length > 0
 	const hasMatchedNav = matchedCollections.length > 0 || matchedTypes.length > 0
 	const showEmptyState = !hasSearchResults && !hasMatchedNav && !suggestion
-
-	const handleSuggestionClick = (term: string) => {
-		onSearch(term)
-	}
-
-	const handleSelectResult = () => {
-		// Save search term when user clicks a product result
-		add(query)
-		close()
-	}
-
-	const handleSelectNav = () => {
-		close()
-	}
-
-	const handleViewAllResults = () => {
-		add(query)
-		router.push(`/produits?search=${encodeURIComponent(query)}`)
-		close()
-	}
 
 	return (
 		<>
@@ -84,7 +64,7 @@ export function QuickSearchContent({
 							Vouliez-vous dire{" "}
 							<button
 								type="button"
-								onClick={() => handleSuggestionClick(suggestion)}
+								onClick={() => onSearch(suggestion)}
 								className="font-medium text-foreground underline underline-offset-4 decoration-primary/40 hover:decoration-primary transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none rounded-sm"
 							>
 								{suggestion}
@@ -104,7 +84,7 @@ export function QuickSearchContent({
 									<CollectionCard
 										key={collection.slug}
 										collection={collection}
-										onSelect={handleSelectNav}
+										onSelect={onClose}
 										variant="compact"
 									/>
 								))}
@@ -123,7 +103,7 @@ export function QuickSearchContent({
 									<CategoryCard
 										key={type.slug}
 										type={type}
-										onSelect={handleSelectNav}
+										onSelect={onClose}
 										variant="compact"
 									/>
 								))}
@@ -143,7 +123,7 @@ export function QuickSearchContent({
 										key={product.id}
 										product={product}
 										query={query}
-										onSelect={handleSelectResult}
+										onSelect={onSelectResult}
 									/>
 								))}
 							</div>
@@ -164,7 +144,7 @@ export function QuickSearchContent({
 								</p>
 								<QuickTagPills
 									productTypes={productTypes}
-									onSelect={handleSuggestionClick}
+									onSelect={onSearch}
 									size="xs"
 									centered
 								/>
@@ -179,7 +159,7 @@ export function QuickSearchContent({
 				<div className="sticky bottom-0 px-4 py-3 border-t border-border bg-background/95 backdrop-blur-sm">
 					<button
 						type="button"
-						onClick={handleViewAllResults}
+						onClick={onViewAllResults}
 						data-active={undefined}
 						className={cn(
 							"w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl",

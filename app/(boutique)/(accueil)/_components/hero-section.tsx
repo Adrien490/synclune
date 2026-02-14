@@ -50,18 +50,22 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-0 -z-10" aria-hidden="true">
 				<ParticleBackground
-					disableOnTouch={true}
-					shape={["heart", "pearl"]}
+					disableOnTouch={false}
+					shape={["heart", "pearl", "drop", "diamond", "circle"]}
 					colors={[
 						"var(--primary)",
+						"var(--primary)",
+						"var(--primary)",
+						"var(--secondary)",
+						"var(--secondary)",
 						"var(--secondary)",
 						"var(--color-glow-pink)",
 						"var(--color-glow-lavender)",
 						"var(--color-glow-mint)",
 					]}
-					count={8}
-					size={[40, 80]}
-					opacity={[0.35, 0.55]}
+					count={10}
+					size={[25, 90]}
+					opacity={[0.3, 0.7]}
 					blur={[4, 12]}
 					animationStyle="drift"
 					depthParallax={true}

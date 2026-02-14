@@ -1,5 +1,5 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock motion/react before importing the component
 vi.mock("motion/react", () => {
@@ -12,9 +12,16 @@ vi.mock("motion/react", () => {
 			get: () => initial,
 			set: vi.fn(),
 		})),
-		useTransform: vi.fn((_mv: unknown, fn: (v: number) => number) => ({
-			get: () => fn(0),
-			set: vi.fn(),
+		useTransform: vi.fn((_mv: unknown, fnOrInput: unknown, _output?: unknown) => {
+			// Handle both signatures: useTransform(mv, fn) and useTransform(mv, input[], output[])
+			if (typeof fnOrInput === "function") {
+				return { get: () => fnOrInput(0), set: vi.fn() };
+			}
+			// Array form: return a MotionValue-like object
+			return { get: () => 1, set: vi.fn() };
+		}),
+		useScroll: vi.fn(() => ({
+			scrollYProgress: { get: () => 0.5, set: vi.fn() },
 		})),
 		motion: new Proxy(
 			{},
@@ -43,7 +50,40 @@ const { useReducedMotion, useInView } = await import("motion/react");
 const { useIsTouchDevice } = await import("@/shared/hooks/use-touch-device");
 const { ParticleBackground } = await import("./particle-background");
 
+// Helper to mock matchMedia for high contrast / forced-colors tests
+function mockMatchMedia(queries: Record<string, boolean>) {
+	const listeners = new Map<string, Set<(e: MediaQueryListEvent) => void>>();
+
+	window.matchMedia = vi.fn((query: string) => {
+		if (!listeners.has(query)) listeners.set(query, new Set());
+		return {
+			matches: queries[query] ?? false,
+			media: query,
+			addEventListener: (_event: string, fn: (e: MediaQueryListEvent) => void) => {
+				listeners.get(query)!.add(fn);
+			},
+			removeEventListener: (_event: string, fn: (e: MediaQueryListEvent) => void) => {
+				listeners.get(query)!.delete(fn);
+			},
+			dispatchEvent: () => true,
+			onchange: null,
+			addListener: () => {},
+			removeListener: () => {},
+		} as MediaQueryList;
+	});
+
+	return listeners;
+}
+
 afterEach(cleanup);
+
+// Ensure matchMedia is always available with default values
+beforeEach(() => {
+	mockMatchMedia({
+		"(prefers-contrast: more)": false,
+		"(forced-colors: active)": false,
+	});
+});
 
 describe("ParticleBackground", () => {
 	it("renders an aria-hidden container", () => {
@@ -157,7 +197,7 @@ describe("ParticleBackground", () => {
 	});
 
 	it("renders all animation styles without crashing", () => {
-		const styles = ["float", "drift", "rise", "orbit", "breathe"] as const;
+		const styles = ["float", "drift", "rise", "orbit", "breathe", "sparkle"] as const;
 		for (const animationStyle of styles) {
 			expect(() =>
 				render(<ParticleBackground count={2} animationStyle={animationStyle} />),
@@ -199,6 +239,43 @@ describe("ParticleBackground", () => {
 		});
 
 		// Particles should be visible again
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+	});
+
+	it("renders null when forced-colors mode is active", () => {
+		mockMatchMedia({
+			"(prefers-contrast: more)": false,
+			"(forced-colors: active)": true,
+		});
+		const { container } = render(<ParticleBackground count={3} />);
+		expect(container.firstElementChild).toBeNull();
+	});
+
+	it("renders particles when prefers-contrast: more is active (with reduced visual impact)", () => {
+		mockMatchMedia({
+			"(prefers-contrast: more)": true,
+			"(forced-colors: active)": false,
+		});
+		const { container } = render(<ParticleBackground count={3} />);
+		// Should still render particles, but with adjusted opacity/blur
+		const root = container.firstElementChild;
+		expect(root).toBeTruthy();
+		const desktopWrapper = root!.children[0];
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+	});
+
+	it("renders with scrollFade prop without crashing", () => {
+		expect(() =>
+			render(<ParticleBackground count={3} scrollFade />),
+		).not.toThrow();
+		// Should render particles normally
+	});
+
+	it("renders sparkle animation style", () => {
+		const { container } = render(
+			<ParticleBackground count={3} animationStyle="sparkle" />,
+		);
+		const desktopWrapper = container.firstElementChild!.children[0];
 		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
 	});
 });

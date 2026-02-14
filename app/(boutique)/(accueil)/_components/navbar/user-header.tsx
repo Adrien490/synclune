@@ -1,4 +1,4 @@
-import type { Session } from "@/modules/auth/lib/auth";
+import type { NavbarSessionData } from "@/shared/types/session.types";
 import { SheetClose } from "@/shared/components/ui/sheet";
 import { ROUTES } from "@/shared/constants/urls";
 import Link from "next/link";
@@ -12,7 +12,7 @@ export function UserHeader({
 	wishlistCount,
 	cartCount,
 }: {
-	session: Session;
+	session: NavbarSessionData;
 	wishlistCount: number;
 	cartCount: number;
 }) {

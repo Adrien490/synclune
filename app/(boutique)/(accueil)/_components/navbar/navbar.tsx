@@ -24,8 +24,8 @@ import { NavbarWrapper } from "./navbar-wrapper";
 const iconButtonClassName = cn(
 	"relative items-center justify-center size-11 rounded-xl group",
 	"text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-	"transition-all duration-300 ease-out",
-	"hover:scale-105 active:scale-95",
+	"transition-[transform,color,background-color] duration-300 ease-out",
+	"motion-safe:hover:scale-105 motion-safe:active:scale-95",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 );
 
@@ -66,14 +66,20 @@ export async function Navbar() {
 		label: t.label,
 	}));
 
+	// Extract primary image from a product's default SKU
+	function extractProductImage(p: (typeof recentProducts)[number]) {
+		const sku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
+		const image = sku?.images?.find((img) => img.isPrimary) ?? sku?.images?.[0];
+		return { sku, image };
+	}
+
 	// Lightweight recently viewed products for the quick search dialog
 	const recentlyViewed = recentProducts.map((p) => {
-		const defaultSku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
-		const image = defaultSku?.images?.find((img) => img.isPrimary) ?? defaultSku?.images?.[0];
+		const { sku, image } = extractProductImage(p);
 		return {
 			slug: p.slug,
 			title: p.title,
-			price: defaultSku?.priceInclTax ?? 0,
+			price: sku?.priceInclTax ?? 0,
 			image: image ? { url: image.url, blurDataUrl: image.blurDataUrl } : null,
 		};
 	});
@@ -92,8 +98,7 @@ export async function Navbar() {
 
 	// Featured products for the mega menu (up to 3 recent products with images)
 	const featuredProducts = recentProducts.slice(0, 3).map((p) => {
-		const sku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
-		const image = sku?.images?.find((img) => img.isPrimary) ?? sku?.images?.[0];
+		const { sku, image } = extractProductImage(p);
 		return {
 			slug: p.slug,
 			title: p.title,
@@ -102,6 +107,16 @@ export async function Navbar() {
 			blurDataUrl: image?.blurDataUrl ?? null,
 		};
 	}).filter((p) => p.imageUrl);
+
+	// Restrict session data passed to client components (exclude token, ipAddress, userAgent)
+	const sessionData = session ? {
+		user: {
+			name: session.user.name,
+			email: session.user.email,
+			image: session.user.image ?? null,
+			role: session.user.role,
+		}
+	} : null;
 
 	// Générer les items de navigation desktop avec mega menus
 	const desktopNavItems = getDesktopNavItems({ productTypes, collections: menuCollections });
@@ -126,7 +141,7 @@ export async function Navbar() {
 								productTypes={productTypes}
 								collections={menuCollections}
 								isAdmin={userIsAdmin}
-								session={session}
+								session={sessionData}
 							/>
 
 							{/* Recherche mobile (juste à droite du menu) */}
@@ -190,7 +205,7 @@ export async function Navbar() {
 
 								{/* Dropdown compte (visible sur desktop seulement) */}
 								<AccountDropdown
-									session={session}
+									session={sessionData}
 									isAdmin={userIsAdmin}
 									className={cn("hidden sm:inline-flex", iconButtonClassName)}
 								/>

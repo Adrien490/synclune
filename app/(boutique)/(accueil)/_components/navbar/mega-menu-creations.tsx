@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { NavItemChild, MegaMenuProduct } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { formatPrice } from "@/modules/products/utils/format-price";
+import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { MegaMenuColumn } from "./mega-menu-column";
 
@@ -41,7 +42,7 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 							{featuredProducts.map((product, index) => (
 								<NavigationMenuLink key={product.slug} asChild>
 									<Link
-										href={`/creations/${product.slug}`}
+										href={ROUTES.SHOP.PRODUCT(product.slug)}
 										className={cn(
 											"group/product flex flex-col gap-2",
 											"rounded-lg p-1.5",

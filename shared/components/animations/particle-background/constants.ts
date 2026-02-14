@@ -94,4 +94,9 @@ export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 		scale: [1, 1.3, 1, 0.85, 1],
 		opacity: [p.opacity, Math.min(p.opacity * 1.3, 1), p.opacity, p.opacity * 0.7, p.opacity],
 	}),
+	sparkle: (p) => ({
+		scale: [0.3, 0.3, 1.2, 1.2, 0.3],
+		opacity: [0, 0, Math.min(p.opacity * 1.5, 1), Math.min(p.opacity * 1.5, 1), 0],
+		...subtleRotate(p),
+	}),
 };

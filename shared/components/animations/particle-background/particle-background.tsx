@@ -2,7 +2,7 @@
 
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
-import { useInView, useMotionValue, useReducedMotion } from "motion/react";
+import { useInView, useMotionValue, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";
@@ -28,7 +28,7 @@ const MAX_PARTICLES = 30;
  * `count` is clamped to 30 max (both trees combined = count * 1.5 DOM nodes).
  *
  * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4
- * **Animations** : float, drift, rise, orbit, breathe
+ * **Animations** : float, drift, rise, orbit, breathe, sparkle
  *
  * @example
  * // Defaut (couleurs primary/secondary/pastel)
@@ -58,6 +58,7 @@ export function ParticleBackground({
 	depthParallax = true,
 	speed = 1,
 	disableOnTouch = false,
+	scrollFade = false,
 }: ParticleBackgroundProps) {
 	const safeCount = Math.min(count, MAX_PARTICLES);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -75,7 +76,38 @@ export function ParticleBackground({
 		return () => document.removeEventListener("visibilitychange", onVisibilityChange);
 	}, []);
 
+	// Detect high contrast mode: reduce opacity 50%, increase blur 50%
+	const [highContrast, setHighContrast] = useState(false);
+	useEffect(() => {
+		const mql = window.matchMedia("(prefers-contrast: more)");
+		setHighContrast(mql.matches);
+		function onChange(e: MediaQueryListEvent) {
+			setHighContrast(e.matches);
+		}
+		mql.addEventListener("change", onChange);
+		return () => mql.removeEventListener("change", onChange);
+	}, []);
+
+	// Detect forced-colors mode: hide particles entirely (colors are overridden)
+	const [forcedColors, setForcedColors] = useState(false);
+	useEffect(() => {
+		const mql = window.matchMedia("(forced-colors: active)");
+		setForcedColors(mql.matches);
+		function onChange(e: MediaQueryListEvent) {
+			setForcedColors(e.matches);
+		}
+		mql.addEventListener("change", onChange);
+		return () => mql.removeEventListener("change", onChange);
+	}, []);
+
 	const isInView = viewportInView && tabVisible;
+
+	// Scroll-linked opacity: fade particles in/out as container scrolls through viewport
+	const { scrollYProgress } = useScroll({
+		target: containerRef,
+		offset: ["start end", "end start"],
+	});
+	const scrollOpacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
 
 	// Mouse parallax: track cursor relative to container (desktop only)
 	const mouseX = useMotionValue(0);
@@ -104,7 +136,6 @@ export function ParticleBackground({
 
 		const onMouseMove = (e: MouseEvent) => {
 			cancelLerp();
-			cachedRect = el!.getBoundingClientRect();
 			mouseX.set(((e.clientX - cachedRect.left) / cachedRect.width - 0.5) * 2 * PARALLAX_STRENGTH);
 			mouseY.set(((e.clientY - cachedRect.top) / cachedRect.height - 0.5) * 2 * PARALLAX_STRENGTH);
 		};
@@ -133,15 +164,17 @@ export function ParticleBackground({
 		el.addEventListener("mousemove", onMouseMove, { passive: true });
 		el.addEventListener("mouseleave", onMouseLeave, { passive: true });
 		window.addEventListener("resize", updateRect, { passive: true });
+		window.addEventListener("scroll", updateRect, { passive: true });
 		return () => {
 			cancelLerp();
 			el.removeEventListener("mousemove", onMouseMove);
 			el.removeEventListener("mouseleave", onMouseLeave);
 			window.removeEventListener("resize", updateRect);
+			window.removeEventListener("scroll", updateRect);
 		};
 	}, [mouseX, mouseY, disableOnTouch, isTouchDevice]);
 
-	if (disableOnTouch && isTouchDevice) {
+	if ((disableOnTouch && isTouchDevice) || forcedColors) {
 		return null;
 	}
 
@@ -162,7 +195,13 @@ export function ParticleBackground({
 	const desktopParticles = generateParticles(safeCount, size, opacity, colors, blur, depthParallax, shapes, desktopDuration);
 	const mobileParticles = generateParticles(Math.ceil(safeCount / 2), size, opacity, colors, mobileBlur, depthParallax, shapes, mobileDuration);
 
-	const sharedProps = { isInView, reducedMotion, animationStyle };
+	const sharedProps = {
+		isInView,
+		reducedMotion,
+		animationStyle,
+		highContrast,
+		...(scrollFade ? { scrollOpacity } : {}),
+	};
 
 	return (
 		<div

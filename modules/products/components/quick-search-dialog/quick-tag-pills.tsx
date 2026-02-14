@@ -19,7 +19,7 @@ export function QuickTagPills({
 	if (productTypes.length === 0) return null
 
 	return (
-		<div className={cn("flex flex-wrap gap-1.5", centered && "justify-center")}>
+		<div role="group" aria-label="Suggestions de categories" className={cn("flex flex-wrap gap-1.5", centered && "justify-center")}>
 			{productTypes.map((type) => (
 				<button
 					key={type.slug}

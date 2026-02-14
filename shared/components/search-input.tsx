@@ -47,6 +47,10 @@ type SearchInputProps = {
 	resultCount?: number
 	/** In live mode, call this instead of updating URL */
 	onLiveSearch?: (value: string) => void
+	/** ID of the currently active descendant (for combobox pattern) */
+	activeDescendantId?: string
+	/** Whether the associated listbox/popup is expanded (enables combobox role) */
+	ariaExpanded?: boolean
 	/** Imperative handle ref */
 	ref?: React.Ref<SearchInputHandle>
 }
@@ -95,6 +99,8 @@ export function SearchInput({
 	preventMobileBlur = false,
 	resultCount,
 	onLiveSearch,
+	activeDescendantId,
+	ariaExpanded,
 	ref,
 }: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
@@ -306,6 +312,9 @@ export function SearchInput({
 								ref={inputRef}
 								autoComplete="off"
 								autoFocus={autoFocus}
+								role={ariaExpanded !== undefined ? "combobox" : undefined}
+								aria-expanded={ariaExpanded}
+								aria-activedescendant={activeDescendantId}
 								type="search"
 								inputMode="search"
 								enterKeyHint="search"

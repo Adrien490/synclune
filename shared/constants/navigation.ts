@@ -71,7 +71,7 @@ export function getMobileNavItems(
 			? [
 					{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations", icon: "gem" },
 					...productTypes.map((type) => ({
-						href: `/produits/${type.slug}`,
+						href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
 						label: type.label,
 					})),
 			  ]
@@ -92,7 +92,7 @@ export function getMobileNavItems(
 						icon: "folder-open",
 					},
 					...collections.slice(0, MAX_COLLECTIONS_IN_MENU).map((collection) => ({
-						href: `/collections/${collection.slug}`,
+						href: ROUTES.SHOP.COLLECTION(collection.slug),
 						label: collection.label,
 						description: collection.description,
 						imageUrl: collection.imageUrl,
@@ -173,7 +173,7 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 			? [
 					{ href: ROUTES.SHOP.PRODUCTS, label: "Toutes les créations", icon: "gem" },
 					...productTypes.map((type) => ({
-						href: `/produits/${type.slug}`,
+						href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
 						label: type.label,
 					})),
 			  ]
@@ -191,7 +191,7 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 			? [
 					{ href: ROUTES.SHOP.COLLECTIONS, label: "Toutes les collections", icon: "folder-open" },
 					...collections.map((collection) => ({
-						href: `/collections/${collection.slug}`,
+						href: ROUTES.SHOP.COLLECTION(collection.slug),
 						label: collection.label,
 						description: collection.description,
 						images: collection.images,

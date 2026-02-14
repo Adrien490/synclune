@@ -27,3 +27,16 @@ export type MinimalSession = {
 		userId: string;
 	};
 };
+
+/**
+ * Données de session restreintes pour la navbar
+ * Exclut les champs sensibles (token, ipAddress, userAgent)
+ */
+export type NavbarSessionData = {
+	user: {
+		name: string | null;
+		email: string;
+		image: string | null;
+		role: string;
+	};
+};

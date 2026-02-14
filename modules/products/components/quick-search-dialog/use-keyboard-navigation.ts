@@ -16,6 +16,7 @@ export function useKeyboardNavigation() {
 		)
 
 		for (let i = 0; i < focusables.length; i++) {
+			focusables[i].id = `qs-nav-${i}`
 			if (i === activeIndex) {
 				focusables[i].setAttribute("data-active", "true")
 				focusables[i].setAttribute("aria-current", "true")
@@ -95,6 +96,8 @@ export function useKeyboardNavigation() {
 
 	const resetActiveIndex = () => setActiveIndex(-1)
 
+	const activeDescendantId = activeIndex >= 0 ? `qs-nav-${activeIndex}` : undefined
+
 	return {
 		activeIndex,
 		setActiveIndex,
@@ -102,5 +105,6 @@ export function useKeyboardNavigation() {
 		handleArrowNavigation,
 		resetActiveIndex,
 		getFocusableElements,
+		activeDescendantId,
 	}
 }

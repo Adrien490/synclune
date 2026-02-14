@@ -1,7 +1,7 @@
 "use client";
 
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
-import type { Session } from "@/modules/auth/lib/auth";
+import type { NavbarSessionData } from "@/shared/types/session.types";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 interface AccountDropdownProps {
-	session: Session | null;
+	session: NavbarSessionData | null;
 	isAdmin: boolean;
 	className?: string;
 }
