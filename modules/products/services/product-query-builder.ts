@@ -15,18 +15,18 @@ export type { SearchResult } from "../types/product-services.types";
 // ============================================================================
 
 /**
- * Construit les conditions de recherche hybride (fuzzy + exact)
+ * Build hybrid search conditions (fuzzy + exact).
  *
- * - >= 3 caracteres : fuzzy sur title/description + exact sur autres champs
- * - < 3 caracteres : exact seulement sur tous les champs
+ * - >= 3 chars: fuzzy on title/description + exact on related fields
+ * - < 3 chars: exact only on all fields
  *
  * Multi-word queries use AND logic: each word must match independently.
  *
- * Note: Le rate limiting doit etre gere au niveau data/ (get-products.ts)
+ * Note: Rate limiting is handled at the data layer (get-products.ts).
  *
- * @param search - Terme de recherche
- * @param options - Options (status pour filtrer les produits)
- * @returns Resultat de recherche avec IDs fuzzy et conditions exactes
+ * @param search - Search term
+ * @param options - Options (status to filter products)
+ * @returns Search result with fuzzy IDs and exact conditions
  */
 export async function buildSearchConditions(
 	search: string,
@@ -38,7 +38,7 @@ export async function buildSearchConditions(
 	const words = splitSearchTerms(term);
 	if (words.length === 0) return { fuzzyIds: null, exactConditions: [] };
 
-	// Recherche courte (< 3 chars) : exact seulement sur tous les champs
+	// Short search (< 3 chars): exact only on all fields
 	if (term.length < FUZZY_MIN_LENGTH) {
 		return {
 			fuzzyIds: null,
@@ -46,20 +46,20 @@ export async function buildSearchConditions(
 		};
 	}
 
-	// Recherche fuzzy sur title/description
+	// Fuzzy search on title/description
 	const { ids: fuzzyIds } = await fuzzySearchProductIds(term, {
 		status: options?.status,
 	});
 
-	// Conditions exactes pour les autres champs (SKU, couleurs, etc.)
+	// Exact conditions for related fields (SKU, colors, etc.)
 	const exactConditions = buildRelatedFieldsSearchConditions(words);
 
 	return { fuzzyIds, exactConditions };
 }
 
 /**
- * Version exacte seulement (fallback si rate limit depasse)
- * Exportee pour etre utilisee par le data layer
+ * Exact-only search (fallback when rate limited).
+ * Exported for use by the data layer.
  */
 export function buildExactSearchConditions(search: string): SearchResult {
 	const term = search.trim();
@@ -183,8 +183,8 @@ function buildPerWordRelatedConditions(
 }
 
 /**
- * Recherche exacte sur tous les champs (fallback pour termes courts)
- * Inclut title et description.
+ * Exact search on all fields (fallback for short terms).
+ * Includes title and description.
  * AND logic: each word must match at least one field.
  */
 function buildFullExactSearchConditions(
@@ -197,8 +197,8 @@ function buildFullExactSearchConditions(
 }
 
 /**
- * Recherche exacte sur les champs liés (SKU, couleurs, matériaux, collections)
- * N'inclut PAS title/description (gérés par fuzzy search).
+ * Exact search on related fields only (SKU, colors, materials, collections).
+ * Does NOT include title/description (handled by fuzzy search).
  * AND logic: each word must match at least one related field.
  * Expanded with synonyms for each word.
  */
@@ -313,7 +313,7 @@ export function buildProductFilterConditions(
 		conditions.push({ slug: { in: filters.slugs } });
 	}
 
-	// Validation bounds: prix doit etre >= 0
+	// Validation bounds: price must be >= 0
 	const validPriceMin =
 		typeof filters.priceMin === "number" && filters.priceMin >= 0
 			? filters.priceMin
@@ -379,7 +379,7 @@ export function buildProductFilterConditions(
 	// Stock status filter
 	if (filters.stockStatus !== undefined) {
 		if (filters.stockStatus === "out_of_stock") {
-			// Produits en rupture : aucun SKU actif avec inventory > 0
+			// Out of stock: no active SKU with inventory > 0
 			conditions.push({
 				NOT: {
 					skus: {
@@ -391,7 +391,7 @@ export function buildProductFilterConditions(
 				},
 			});
 		} else if (filters.stockStatus === "in_stock") {
-			// Produits en stock : au moins un SKU actif avec inventory > 0
+			// In stock: at least one active SKU with inventory > 0
 			conditions.push({
 				skus: {
 					some: {
@@ -420,12 +420,12 @@ export function buildProductFilterConditions(
 }
 
 /**
- * Construit la clause WHERE pour la requête de produits
+ * Build the WHERE clause for the product query.
  *
- * @param params - Paramètres de recherche (filtres, status, etc.)
- * @param searchResult - Résultat de la recherche (fuzzyIds + exactConditions)
- *                       Si fourni, utilise la recherche hybride
- *                       Si non fourni, pas de recherche appliquée
+ * @param params - Search parameters (filters, status, etc.)
+ * @param searchResult - Search result (fuzzyIds + exactConditions).
+ *                       If provided, uses hybrid search.
+ *                       If omitted, no search is applied.
  */
 export function buildProductWhereClause(
 	params: GetProductsParams,
@@ -435,28 +435,27 @@ export function buildProductWhereClause(
 	const andConditions: Prisma.ProductWhereInput[] = [];
 	const filters = params.filters ?? {};
 
-	// Exclure les produits soft-deleted par défaut
-	// Pour l'admin, utiliser includeDeleted: true dans les params
+	// Exclude soft-deleted products by default
+	// For admin, use includeDeleted: true in params
 	if (!params.includeDeleted) {
 		andConditions.push({ ...notDeleted });
 	}
 
-	// Si un statut est spécifié, filtrer par ce statut
-	// Si undefined, ne pas filtrer (affiche tous les statuts - utilisé par l'admin)
+	// Filter by status if specified
+	// If undefined, show all statuses (used by admin)
 	if (params.status) {
 		andConditions.push({
 			status: params.status,
 		});
 	}
 
-	// Appliquer les conditions de recherche si fournies
+	// Apply search conditions if provided
 	if (searchResult) {
 		const { fuzzyIds, exactConditions } = searchResult;
 
 		if (fuzzyIds !== null && fuzzyIds.length > 0) {
-			// Recherche fuzzy active : combiner IDs fuzzy OU conditions exactes
-			// Cela permet de trouver des produits via fuzzy (title/desc)
-			// OU via match exact (SKU, couleurs, etc.)
+			// Active fuzzy search: combine fuzzy IDs OR exact conditions
+			// Finds products via fuzzy (title/desc) OR exact match (SKU, colors, etc.)
 			// exactConditions are per-word AND conditions, so wrap in AND
 			if (exactConditions.length > 0) {
 				andConditions.push({
@@ -469,7 +468,7 @@ export function buildProductWhereClause(
 				andConditions.push({ id: { in: fuzzyIds } });
 			}
 		} else if (exactConditions.length > 0) {
-			// Pas de résultats fuzzy : utiliser uniquement les conditions exactes
+			// No fuzzy results: use exact conditions only
 			andConditions.push(...exactConditions);
 		}
 	}

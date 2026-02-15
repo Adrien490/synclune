@@ -59,8 +59,8 @@ describe("SEARCH_SYNONYMS", () => {
 	})
 
 	describe("group completeness", () => {
-		it("includes all ring synonyms", () => {
-			const ringTerms = ["bague", "anneau", "alliance", "chevaliere"]
+		it("includes all ring synonyms (with plural)", () => {
+			const ringTerms = ["bague", "bagues", "anneau", "alliance", "chevaliere"]
 			for (const term of ringTerms) {
 				expect(SEARCH_SYNONYMS.has(term)).toBe(true)
 				const synonyms = SEARCH_SYNONYMS.get(term)!
@@ -75,6 +75,42 @@ describe("SEARCH_SYNONYMS", () => {
 			const earringTerms = ["boucle", "boucles", "clou", "creole", "creoles", "dormeuse", "dormeuses"]
 			for (const term of earringTerms) {
 				expect(SEARCH_SYNONYMS.has(term)).toBe(true)
+			}
+		})
+
+		it("includes plural forms for necklaces and bracelets", () => {
+			expect(SEARCH_SYNONYMS.get("collier")).toContain("colliers")
+			expect(SEARCH_SYNONYMS.get("colliers")).toContain("collier")
+			expect(SEARCH_SYNONYMS.get("bracelet")).toContain("bracelets")
+			expect(SEARCH_SYNONYMS.get("bracelets")).toContain("bracelet")
+		})
+	})
+
+	describe("or conjunction excluded", () => {
+		it("does not include 'or' as a synonym key", () => {
+			expect(SEARCH_SYNONYMS.has("or")).toBe(false)
+		})
+
+		it("does not include 'or' in any synonym list", () => {
+			for (const synonyms of SEARCH_SYNONYMS.values()) {
+				expect(synonyms).not.toContain("or")
+			}
+		})
+	})
+
+	describe("stone groups are separated", () => {
+		it("does not link diamant to zircon", () => {
+			const diamantSynonyms = SEARCH_SYNONYMS.get("diamant")
+			if (diamantSynonyms) {
+				expect(diamantSynonyms).not.toContain("zircon")
+				expect(diamantSynonyms).not.toContain("zircone")
+			}
+		})
+
+		it("does not link zircon to diamant", () => {
+			const zirconSynonyms = SEARCH_SYNONYMS.get("zircon")
+			if (zirconSynonyms) {
+				expect(zirconSynonyms).not.toContain("diamant")
 			}
 		})
 	})

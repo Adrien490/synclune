@@ -177,15 +177,18 @@ export async function getSpellSuggestion(
 			`;
 		});
 
-		// Timeout to avoid long-running queries
-		const timeoutPromise = new Promise<never>((_, reject) =>
-			setTimeout(
+		// Client-side timeout (complements server-side SET LOCAL statement_timeout)
+		let timeoutId: ReturnType<typeof setTimeout>;
+		const timeoutPromise = new Promise<never>((_, reject) => {
+			timeoutId = setTimeout(
 				() => reject(new Error("Spell suggestion timeout")),
 				SPELL_SUGGESTION_TIMEOUT_MS
-			)
-		);
+			);
+		});
 
-		const batchResults = await Promise.race([queryPromise, timeoutPromise]);
+		const batchResults = await Promise.race([queryPromise, timeoutPromise]).finally(() => {
+			clearTimeout(timeoutId);
+		});
 
 		// Merge batch results back with the full word list (including short words)
 		const matchByIndex = new Map(

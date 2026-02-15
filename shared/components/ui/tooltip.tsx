@@ -6,7 +6,7 @@ import * as React from "react";
 import { cn } from "@/shared/utils/cn";
 
 function TooltipProvider({
-	delayDuration = 500,
+	delayDuration = 150,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
 	return (

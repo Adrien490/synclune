@@ -11,7 +11,7 @@ import {
 	RELEVANCE_WEIGHTS,
 } from "../constants/search.constants";
 import { SEARCH_SYNONYMS } from "../constants/search-synonyms";
-import { escapeLikePattern, splitSearchTerms } from "../utils/search-helpers";
+import { escapeLikePattern, sanitizeForLog, splitSearchTerms } from "../utils/search-helpers";
 import { setStatementTimeout, setTrigramThreshold } from "../utils/trigram-helpers";
 
 // ============================================================================
@@ -188,18 +188,21 @@ export async function fuzzySearchProductIds(
 			`;
 		});
 
-		// Timeout to avoid long-running queries
-		const timeoutPromise = new Promise<never>((_, reject) =>
-			setTimeout(() => reject(new Error("Fuzzy search timeout")), FUZZY_TIMEOUT_MS)
-		);
+		// Client-side timeout (complements server-side SET LOCAL statement_timeout)
+		let timeoutId: ReturnType<typeof setTimeout>;
+		const timeoutPromise = new Promise<never>((_, reject) => {
+			timeoutId = setTimeout(() => reject(new Error("Fuzzy search timeout")), FUZZY_TIMEOUT_MS);
+		});
 
-		const results = await Promise.race([queryPromise, timeoutPromise]);
+		const results = await Promise.race([queryPromise, timeoutPromise]).finally(() => {
+			clearTimeout(timeoutId);
+		});
 		const durationMs = Math.round(performance.now() - startTime);
 		const totalCount = results.length > 0 ? Number(results[0].totalCount) : 0;
 
 		if (durationMs > 500) {
 			console.warn(
-				`[SEARCH] slow-fuzzy | term="${searchTerm}" | results=${totalCount} | duration=${durationMs}ms`
+				`[SEARCH] slow-fuzzy | term="${sanitizeForLog(searchTerm)}" | results=${totalCount} | duration=${durationMs}ms`
 			);
 		}
 
@@ -210,7 +213,7 @@ export async function fuzzySearchProductIds(
 	} catch (error) {
 		const durationMs = Math.round(performance.now() - startTime);
 		console.warn(
-			`[SEARCH] fuzzy-error | term="${searchTerm}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`
+			`[SEARCH] fuzzy-error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`
 		);
 		return { ids: [], totalCount: 0 };
 	}

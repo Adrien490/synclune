@@ -12,5 +12,6 @@ interface RelativeDateProps {
  * Avoids calling new Date() during server prerendering.
  */
 export function RelativeDate({ date, className }: RelativeDateProps) {
-	return <span className={className}>{formatRelativeDate(date)}</span>
+	const isoDate = date instanceof Date ? date.toISOString() : new Date(date).toISOString()
+	return <time dateTime={isoDate} className={className}>{formatRelativeDate(date)}</time>
 }

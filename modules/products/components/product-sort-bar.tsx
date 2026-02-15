@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { SKU_SELECTOR_DIALOG_ID } from "@/modules/cart/components/sku-selector-dialog";
 import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
 import { PRODUCT_FILTER_DIALOG_ID, PRODUCTS_SORT_LABELS } from "@/modules/products/constants/product.constants";
 import { countActiveFilters } from "@/modules/products/services/product-filter-params.service";
@@ -51,8 +52,9 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 	const [focusedIndex, setFocusedIndex] = useState(0);
 	const { open: openSearch, close: closeSearch, isOpen: isSearchOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const { open: openFilter, close: closeFilter, isOpen: isFilterOpen } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+	const { isOpen: isSkuSelectorOpen } = useDialog(SKU_SELECTOR_DIALOG_ID);
 
-	const isHidden = isSearchOpen || isFilterOpen || sortOpen;
+	const isHidden = isSearchOpen || isFilterOpen || sortOpen || isSkuSelectorOpen;
 
 	useBottomBarHeight(56, !isHidden);
 	const searchParams = useSearchParams();

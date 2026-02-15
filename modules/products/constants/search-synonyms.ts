@@ -11,26 +11,28 @@
 // because splitSearchTerms splits on whitespace before synonym lookup.
 const SYNONYM_GROUPS: string[][] = [
 	// Rings
-	["bague", "anneau", "alliance", "chevaliere"],
+	["bague", "bagues", "anneau", "alliance", "chevaliere"],
 	// Necklaces
-	["collier", "pendentif", "sautoir", "chaine"],
+	["collier", "colliers", "pendentif", "sautoir", "chaine"],
 	// Earrings
 	["boucle", "boucles", "clou", "creole", "creoles", "dormeuse", "dormeuses"],
 	// Bracelets
-	["bracelet", "jonc", "manchette", "gourmette"],
-	// Materials
-	["or", "dore", "gold"],
+	["bracelet", "bracelets", "jonc", "manchette", "gourmette"],
+	// Materials — "or" excluded: too common as French conjunction, causes false positives
+	["dore", "gold"],
 	["argent", "silver", "argente"],
 	["perle", "perles", "nacre"],
 	["cristal", "cristaux", "strass"],
-	["diamant", "zircon", "zircone", "pierre"],
+	// Stones — split into separate groups (diamant != zircon for customers)
+	["diamant", "diamants"],
+	["zircon", "zircone"],
 	// Styles
 	["boheme", "boho"],
 	["minimaliste", "epure", "simple"],
 	// Occasions
 	["mariage", "noces", "nuptial"],
 	["cadeau", "coffret"],
-]
+];
 
 // Build a bidirectional lookup map from synonym groups
 function buildSynonymMap(groups: string[][]): Map<string, string[]> {

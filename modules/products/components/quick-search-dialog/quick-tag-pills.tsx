@@ -26,6 +26,7 @@ export function QuickTagPills({
 				<button
 					key={type.slug}
 					type="button"
+					aria-label={`Rechercher ${type.label}`}
 					onClick={() => onSelect(type.label)}
 					className={cn(
 						"rounded-full border bg-muted/30 hover:bg-muted",

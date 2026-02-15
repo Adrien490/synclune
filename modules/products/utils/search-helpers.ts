@@ -9,6 +9,14 @@ export function escapeLikePattern(word: string): string {
 }
 
 /**
+ * Sanitize a search term for safe logging.
+ * Strips control characters and truncates to prevent log injection.
+ */
+export function sanitizeForLog(term: string, maxLength = 80): string {
+	return term.replace(/[\x00-\x1f\x7f]/g, "").slice(0, maxLength);
+}
+
+/**
  * Split a search term into individual words for AND-logic matching.
  * Deduplicates (case-insensitive) and caps at FUZZY_MAX_WORDS.
  */

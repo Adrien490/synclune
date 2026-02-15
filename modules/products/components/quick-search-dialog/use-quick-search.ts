@@ -1,4 +1,4 @@
-import { useState, useTransition } from "react"
+import { useRef, useState, useTransition } from "react"
 
 import { quickSearch } from "@/modules/products/actions/quick-search"
 import type { QuickSearchResult } from "@/modules/products/data/quick-search-products"
@@ -16,6 +16,7 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 	const [searchResults, setSearchResults] = useState<QuickSearchResult | "error" | null>(null)
 	const [searchQuery, setSearchQuery] = useState("")
 	const [isSearching, startSearch] = useTransition()
+	const latestQueryRef = useRef("")
 
 	const isSearchMode = inputValue.trim().length >= MIN_SEARCH_LENGTH
 
@@ -32,11 +33,16 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 			return
 		}
 		setSearchQuery(trimmed)
+		latestQueryRef.current = trimmed
 		startSearch(async () => {
 			try {
 				const results = await quickSearch(trimmed)
+				// Discard stale results if user has already typed a new query
+				if (latestQueryRef.current !== trimmed) return
 				setSearchResults(results)
-			} catch {
+			} catch (error) {
+				if (latestQueryRef.current !== trimmed) return
+				console.error("[QuickSearch] Search failed:", error)
 				setSearchResults("error")
 			}
 		})

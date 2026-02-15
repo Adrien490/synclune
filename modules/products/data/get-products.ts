@@ -29,7 +29,7 @@ import { sortProducts, orderByIds } from "../services/product-list-sorting.servi
 import { cacheProducts } from "../utils/cache.utils";
 import { serializeProduct } from "../utils/serialize-product";
 
-// Re-export pour compatibilité
+// Re-exports for compatibility
 export {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
 	GET_PRODUCTS_DEFAULT_SORT_BY,
@@ -52,15 +52,15 @@ const hasSortByInput = (input: unknown): input is string =>
 	typeof input === "string" && input.trim().length > 0;
 
 /**
- * Action serveur pour récupérer les produits avec gestion des droits
- * Intègre la recherche fuzzy avec pg_trgm pour la tolérance aux fautes
+ * Server action to fetch products with access control.
+ * Integrates fuzzy search with pg_trgm for typo tolerance.
  */
 export async function getProducts(
 	params: GetProductsParams,
 	options?: { isAdmin?: boolean }
 ): Promise<GetProductsReturn> {
 	try {
-		// Validation des paramètres d'entrée
+		// Validate input parameters
 		const validation = getProductsSchema.safeParse(params);
 
 		if (!validation.success) {
@@ -72,18 +72,18 @@ export async function getProducts(
 		let validatedParams = validation.data as GetProductsParams;
 		const admin = options?.isAdmin ?? (await isAdmin());
 
-		// Admin: utiliser le tri par défaut admin si aucun tri explicite fourni
+		// Admin: use admin default sort if no explicit sort provided
 		if (admin && !hasSortByInput(validatedParams?.sortBy)) {
 			validatedParams = { ...validatedParams, sortBy: GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY };
 		}
 
-		// Executer la recherche fuzzy AVANT le cache
-		// Cela permet de cacher les resultats bases sur les IDs trouves
+		// Run fuzzy search BEFORE the cache
+		// This allows caching results based on found IDs
 		let searchResult: SearchResult | undefined;
 		let rateLimited = false;
 
 		if (validatedParams.search) {
-			// Rate limiting: protege contre le scraping et les abus
+			// Rate limiting: protects against scraping and abuse
 			let useExactOnly = false;
 			try {
 				const rateLimitId = await getRateLimitId();
@@ -94,7 +94,7 @@ export async function getProducts(
 
 				const rateLimitResult = await checkRateLimit(`search:${rateLimitId}`, limits);
 				if (!rateLimitResult.success) {
-					// Fallback: utilise recherche exacte seulement
+					// Fallback: use exact search only
 					console.warn("[search] Rate limit exceeded:", {
 						identifier: rateLimitId,
 						retryAfter: rateLimitResult.retryAfter,
@@ -103,7 +103,7 @@ export async function getProducts(
 					rateLimited = true;
 				}
 			} catch {
-				// En cas d'erreur rate limit, continuer sans bloquer
+				// On rate limit error, continue without blocking
 			}
 
 			searchResult = useExactOnly
@@ -111,11 +111,11 @@ export async function getProducts(
 				: await buildSearchConditions(validatedParams.search, { status: validatedParams.status });
 		}
 
-		// Récupérer les produits
+		// Fetch products
 		const result = await fetchProducts(validatedParams, searchResult);
 
-		// Proposer une suggestion si peu ou pas de résultats avec une recherche active
-		// Ne pas suggérer pour les admins (ils recherchent souvent des SKU/ID)
+		// Suggest a correction if few or no results with an active search
+		// Skip suggestions for admins (they often search by SKU/ID)
 		if (
 			validatedParams.search &&
 			!admin &&
@@ -140,11 +140,11 @@ export async function getProducts(
 }
 
 /**
- * Récupère la liste des produits avec pagination, tri et filtrage
- * Approche simplifiée : tri en JS pour supporter le tri par prix sans champ dénormalisé
+ * Fetch product list with pagination, sorting and filtering.
+ * Simplified approach: sort in JS to support price sorting without a denormalized field.
  *
- * @param params - Paramètres de recherche
- * @param searchResult - Résultat de la recherche fuzzy (optionnel)
+ * @param params - Search parameters
+ * @param searchResult - Fuzzy search result (optional)
  */
 async function fetchProducts(
 	params: GetProductsParams,
@@ -156,38 +156,38 @@ async function fetchProducts(
 	try {
 		const where = buildProductWhereClause(params, searchResult);
 
-		// NOTE: Tous les produits sont chargés puis triés/paginés en JS car:
-		// - Le tri par prix nécessite MIN() sur les SKUs (impossible en Prisma)
-		// - Le tri fuzzy préserve l'ordre de pertinence des IDs pré-calculés
-		// - Les bestsellers/popular utilisent des IDs pré-calculés
-		// Pour un catalogue >10,000 produits, envisager la dénormalisation de minPrice.
+		// NOTE: All products are loaded then sorted/paginated in JS because:
+		// - Price sorting requires MIN() on SKUs (not possible in Prisma)
+		// - Fuzzy sorting preserves the relevance order of pre-computed IDs
+		// - Bestsellers/popular use pre-computed IDs
+		// For a catalog >10,000 products, consider denormalizing minPrice.
 		const allProducts = await prisma.product.findMany({
 			where,
 			select: GET_PRODUCTS_SELECT,
 		});
 
-		// Trier les produits :
-		// - Si recherche fuzzy active avec résultats → tri par pertinence (défaut)
-		// - Sinon → tri selon le critère demandé
+		// Sort products:
+		// - If active fuzzy search with results -> sort by relevance (default)
+		// - Otherwise -> sort by the requested criterion
 		const fuzzyIds = searchResult?.fuzzyIds;
 		const hasFuzzyResults = fuzzyIds && fuzzyIds.length > 0;
 
 		let sortedProducts: Product[];
 		if (hasFuzzyResults && params.sortBy === GET_PRODUCTS_DEFAULT_SORT_BY) {
-			// Tri par pertinence (préserve l'ordre de la recherche fuzzy)
+			// Sort by relevance (preserves fuzzy search order)
 			sortedProducts = orderByIds(allProducts, fuzzyIds);
 		} else {
-			// Tri selon le critère demandé par l'utilisateur
+			// Sort by the user-requested criterion
 			sortedProducts = sortProducts(allProducts, params.sortBy);
 		}
 
-		// Pagination manuelle
+		// Manual pagination
 		const perPage = Math.min(
 			Math.max(1, params.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE),
 			GET_PRODUCTS_MAX_RESULTS_PER_PAGE
 		);
 
-		// Trouver l'index de départ basé sur le curseur
+		// Find start index based on cursor
 		let startIndex = 0;
 		if (params.cursor) {
 			const cursorIndex = sortedProducts.findIndex((p) => p.id === params.cursor);
@@ -198,13 +198,13 @@ async function fetchProducts(
 			}
 		}
 
-		// Extraire la page de résultats
+		// Extract result page
 		const pageProducts = sortedProducts.slice(startIndex, startIndex + perPage);
 
-		// Calculer la pagination
-		// Convention alignée sur processCursorResults (Relay spec) :
-		// - nextCursor = dernier élément de la page (pour aller forward)
-		// - prevCursor = premier élément de la page (pour aller backward)
+		// Compute pagination
+		// Convention aligned with processCursorResults (Relay spec):
+		// - nextCursor = last element of the page (for going forward)
+		// - prevCursor = first element of the page (for going backward)
 		const hasNextPage = startIndex + perPage < sortedProducts.length;
 		const hasPreviousPage = startIndex > 0;
 		const nextCursor = hasNextPage ? pageProducts[pageProducts.length - 1]?.id ?? null : null;

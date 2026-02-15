@@ -1,6 +1,5 @@
 import Image from "next/image"
 import Link from "next/link"
-import { CardContent } from "@/shared/components/ui/card"
 import { RatingStars } from "@/shared/components/rating-stars"
 import { cn } from "@/shared/utils/cn"
 import { RelativeDate } from "@/shared/components/relative-date"
@@ -26,6 +25,8 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 	return (
 		<article
 			aria-label={`Avis de ${userName} — ${review.rating} sur 5 étoiles`}
+			itemScope
+			itemType="https://schema.org/Review"
 			className={cn(
 				"overflow-hidden rounded-lg border-2 border-transparent bg-card text-card-foreground",
 				"shadow-sm transition-[shadow,border-color] duration-300 ease-out",
@@ -35,7 +36,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 			)}
 		>
 
-			<CardContent className="py-4 space-y-3">
+			<div className="px-4 sm:px-6 py-4 space-y-3">
 				{/* Header: name + verified badge */}
 				<div>
 					<span className="font-medium text-foreground truncate">
@@ -64,7 +65,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 
 				{/* Brand response (condensed) */}
 				{review.response && (
-					<div className="pt-2 border-t border-border">
+					<aside role="note" aria-label="Réponse de Synclune" className="pt-2 border-t border-border">
 						<div className="bg-muted/50 rounded-md p-2.5 border-l-2 border-primary/30">
 							<span className="text-xs font-medium text-foreground mb-1">
 								Synclune
@@ -73,7 +74,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 								{review.response.content}
 							</p>
 						</div>
-					</div>
+					</aside>
 				)}
 
 				{/* Product link with thumbnail */}
@@ -93,14 +94,15 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 								className="size-10 sm:size-12 rounded-md object-cover"
 								placeholder={productImage.blurDataUrl ? "blur" : "empty"}
 								blurDataURL={productImage.blurDataUrl ?? undefined}
+								aria-hidden="true"
 							/>
 						)}
-						<span className="text-xs text-foreground group-hover:underline truncate">
+						<span className="text-xs text-foreground can-hover:group-hover:underline truncate">
 							{review.product.title}
 						</span>
 					</Link>
 				</div>
-			</CardContent>
+			</div>
 		</article>
 	)
 }

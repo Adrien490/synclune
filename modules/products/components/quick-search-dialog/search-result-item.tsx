@@ -118,7 +118,6 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 								key={color.slug}
 								className="size-2 rounded-full border border-border/50"
 								style={{ backgroundColor: color.hex }}
-								title={color.name}
 								aria-hidden="true"
 							/>
 						))}

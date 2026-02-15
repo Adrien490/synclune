@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { escapeLikePattern, splitSearchTerms } from "./search-helpers"
+import { escapeLikePattern, sanitizeForLog, splitSearchTerms } from "./search-helpers"
 import { FUZZY_MAX_WORDS, MAX_SEARCH_LENGTH } from "../constants/search.constants"
 
 // ─── escapeLikePattern ──────────────────────────────────────────
@@ -119,5 +119,42 @@ describe("splitSearchTerms", () => {
 
 	it("handles unicode characters", () => {
 		expect(splitSearchTerms("bijoux café résine")).toEqual(["bijoux", "café", "résine"])
+	})
+})
+
+// ─── sanitizeForLog ──────────────────────────────────────────
+
+describe("sanitizeForLog", () => {
+	it("returns unchanged string for normal input", () => {
+		expect(sanitizeForLog("collier argent")).toBe("collier argent")
+	})
+
+	it("strips control characters", () => {
+		expect(sanitizeForLog("test\x00\x0a\x0dinput")).toBe("testinput")
+	})
+
+	it("strips null bytes", () => {
+		expect(sanitizeForLog("collier\x00")).toBe("collier")
+	})
+
+	it("truncates to default max length (80)", () => {
+		const long = "a".repeat(100)
+		expect(sanitizeForLog(long)).toHaveLength(80)
+	})
+
+	it("truncates to custom max length", () => {
+		expect(sanitizeForLog("abcdefgh", 5)).toBe("abcde")
+	})
+
+	it("handles empty string", () => {
+		expect(sanitizeForLog("")).toBe("")
+	})
+
+	it("preserves accented characters", () => {
+		expect(sanitizeForLog("créole émeraude")).toBe("créole émeraude")
+	})
+
+	it("strips tab and newline but preserves spaces", () => {
+		expect(sanitizeForLog("line1\nline2\ttab")).toBe("line1line2tab")
 	})
 })
