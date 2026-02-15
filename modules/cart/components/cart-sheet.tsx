@@ -27,40 +27,10 @@ import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import { CartPriceChangeAlert } from "./cart-price-change-alert";
 import { CartSheetFooter } from "./cart-sheet-footer";
 import type { GetCartReturn } from "../types/cart.types";
-import { hasCartItemIssue, getCartItemSubtotal } from "../services/cart-item.service";
-import {
-	CartOptimisticContext,
-	type CartOptimisticAction,
-} from "../contexts/cart-optimistic-context";
+import { hasCartItemIssue, getCartItemSubtotal, getCartItemIssueLabel } from "../services/cart-item.service";
+import { CartOptimisticContext } from "../contexts/cart-optimistic-context";
+import { cartReducer } from "../services/cart-reducer.service";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-
-// Extracted outside component to avoid recreation on each render
-function cartReducer(
-	state: GetCartReturn,
-	action: CartOptimisticAction
-): GetCartReturn {
-	if (!state) return state;
-	switch (action.type) {
-		case "remove":
-			return {
-				...state,
-				items: state.items.filter((item) => item.id !== action.itemId),
-			};
-		case "updateQuantity":
-			return {
-				...state,
-				items: state.items.map((item) =>
-					item.id === action.itemId
-						? { ...item, quantity: action.quantity }
-						: item
-				),
-			};
-		default: {
-			const _exhaustiveCheck: never = action;
-			return _exhaustiveCheck;
-		}
-	}
-}
 
 interface CartSheetProps {
 	cart: GetCartReturn;
@@ -178,10 +148,7 @@ export function CartSheet({ cart }: CartSheetProps) {
 												<span aria-hidden="true">•</span>
 												<span className="line-clamp-1">
 													{item.sku.product.title}
-													{item.sku.inventory < item.quantity && " (rupture)"}
-													{(!item.sku.isActive ||
-														item.sku.product.status !== "PUBLIC") &&
-														" (indisponible)"}
+													{` (${getCartItemIssueLabel(item)})`}
 												</span>
 											</li>
 										))}

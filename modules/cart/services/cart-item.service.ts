@@ -68,6 +68,15 @@ export function getCartItemDiscountPercent(item: CartItem): number {
 	);
 }
 
+/**
+ * Returns the issue label suffix for a cart item with stock/availability problems
+ */
+export function getCartItemIssueLabel(item: CartItem): string | null {
+	if (isCartItemInactive(item)) return "indisponible";
+	if (isCartItemOutOfStock(item)) return "rupture";
+	return null;
+}
+
 // ============================================================================
 // ACCESSEURS
 // ============================================================================
