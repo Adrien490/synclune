@@ -22,6 +22,7 @@ import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { NewsletterSectionSkeleton } from "./_components/newsletter-section-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
 
 export const metadata: Metadata = {
   title: {
@@ -106,12 +107,14 @@ export default async function Page() {
       </Suspense>
 
       {/* 4. Reviews - Social proof with featured customer reviews */}
-      <Suspense fallback={<ReviewsSectionSkeleton />}>
-        <ReviewsSection
-          reviewsPromise={featuredReviewsPromise}
-          reviewStatsPromise={reviewStatsPromise}
-        />
-      </Suspense>
+      <ErrorBoundary fallback={null}>
+        <Suspense fallback={<ReviewsSectionSkeleton />}>
+          <ReviewsSection
+            reviewsPromise={featuredReviewsPromise}
+            reviewStatsPromise={reviewStatsPromise}
+          />
+        </Suspense>
+      </ErrorBoundary>
 
       {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
       <Suspense fallback={<AtelierStorySkeleton />}>

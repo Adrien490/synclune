@@ -17,27 +17,27 @@ export async function getGlobalReviewStats(): Promise<GlobalReviewStats> {
 	cacheLife("reference");
 	cacheTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
 
-	const result = await prisma.productReviewStats.aggregate({
-		_sum: {
-			totalCount: true,
-		},
-		_avg: {
-			averageRating: true,
-		},
-		where: {
-			totalCount: {
-				gt: 0,
-			},
-		},
-	});
+	// Weighted average: SUM(averageRating * totalCount) / SUM(totalCount)
+	// Avoids the "average of averages" bias from _avg.averageRating
+	const [result] = await prisma.$queryRaw<
+		[{ total_reviews: bigint; weighted_avg: number | null }]
+	>`
+		SELECT
+			COALESCE(SUM("totalCount"), 0) AS total_reviews,
+			CASE
+				WHEN SUM("totalCount") > 0
+				THEN SUM("averageRating" * "totalCount") / SUM("totalCount")
+				ELSE 0
+			END AS weighted_avg
+		FROM "ProductReviewStats"
+		WHERE "totalCount" > 0
+	`;
 
-	const totalReviews = result._sum.totalCount ?? 0;
-	const averageRating = result._avg.averageRating
-		? Number(result._avg.averageRating)
-		: 0;
+	const totalReviews = Number(result.total_reviews);
+	const averageRating = result.weighted_avg ? Number(result.weighted_avg) : 0;
 
 	return {
 		totalReviews,
-		averageRating: Math.round(averageRating * 100) / 100, // Arrondi à 2 décimales
+		averageRating: Math.round(averageRating * 100) / 100,
 	};
 }

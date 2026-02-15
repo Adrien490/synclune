@@ -31,7 +31,7 @@ interface ProcessStep {
 const processSteps: ProcessStep[] = [
 	{
 		id: "idea",
-		icon: <Lightbulb className="w-6 h-6 motion-safe:transition-all motion-safe:duration-300" aria-hidden="true" />,
+		icon: <Lightbulb className="w-6 h-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300" aria-hidden="true" />,
 		title: "D'abord, une idée",
 		description:
 			"L'idée naît souvent de mon quotidien : une couleur aperçue dans la rue, un motif sur un tissu, ou même un rêve ! J'essaye de ne pas me forcer, mais plutôt de laisser l'inspiration venir d'elle-même.",
@@ -41,7 +41,7 @@ const processSteps: ProcessStep[] = [
 	},
 	{
 		id: "drawing",
-		icon: <Pencil className="w-6 h-6 motion-safe:transition-all motion-safe:duration-300" aria-hidden="true" />,
+		icon: <Pencil className="w-6 h-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300" aria-hidden="true" />,
 		title: "Le dessin et la peinture",
 		description:
 			"Je dessine mes motifs sur du plastique fou, puis je passe à la peinture acrylique. C'est l'étape la plus minutieuse : chaque trait compte, chaque couleur est choisie avec soin.",
@@ -51,7 +51,7 @@ const processSteps: ProcessStep[] = [
 	},
 	{
 		id: "assembly",
-		icon: <Hammer className="w-6 h-6 motion-safe:transition-all motion-safe:duration-300" aria-hidden="true" />,
+		icon: <Hammer className="w-6 h-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300" aria-hidden="true" />,
 		title: "La cuisson et l'assemblage",
 		description:
 			"Cuisson au four (le plastique rétrécit de 7 fois !), vernissage pour protéger les couleurs, puis montage sur les supports. Parfois le résultat surprend, mais ça fait partie du charme artisanal !",
@@ -61,7 +61,7 @@ const processSteps: ProcessStep[] = [
 	},
 	{
 		id: "finishing",
-		icon: <CheckCircle className="w-6 h-6 motion-safe:transition-all motion-safe:duration-300" aria-hidden="true" />,
+		icon: <CheckCircle className="w-6 h-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300" aria-hidden="true" />,
 		title: "La touche finale",
 		description:
 			"Je polis, je vérifie chaque détail, j'assemble les perles... Bon, je suis un peu perfectionniste ! Puis emballage avec amour dans sa jolie pochette.",
@@ -199,7 +199,8 @@ export async function CreativeProcess() {
 									{processSteps.map((step, index) => (
 										<li
 											key={step.id}
-											className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:bg-muted/30 motion-safe:hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
+											id={`creative-step-${step.id}`}
+											className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 motion-safe:transition-[background-color,transform] motion-safe:duration-300 motion-safe:hover:bg-muted/30 motion-safe:hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
 										>
 											{/* Accessibility: step number for screen readers */}
 											<span className="sr-only">Étape {index + 1} :</span>
@@ -207,7 +208,7 @@ export async function CreativeProcess() {
 											{/* Desktop: Icons in circles with vertical line */}
 											<div
 												className={cn(
-													"hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 items-center justify-center motion-safe:transition-all motion-safe:duration-300 relative z-20",
+													"hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 items-center justify-center motion-safe:transition-[transform,box-shadow] motion-safe:duration-300 relative z-20",
 													step.color,
 													// Subtle hover animation: slight rotation and scale
 													"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
@@ -262,7 +263,7 @@ export async function CreativeProcess() {
 							<div id="cta-personnalisation" className="mt-4 flex items-start gap-4 group relative rounded-xl p-2 -m-2">
 								{/* Desktop: Icon in dashed circle */}
 								<div
-									className="hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center motion-safe:transition-all motion-safe:duration-300 group-hover:border-secondary group-hover:scale-105"
+									className="hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center motion-safe:transition-[transform,border-color] motion-safe:duration-300 group-hover:border-secondary group-hover:scale-105"
 									aria-hidden="true"
 								>
 									<Sparkles className="w-5 h-5 text-secondary" />
@@ -286,7 +287,7 @@ export async function CreativeProcess() {
 										asChild
 										variant="secondary"
 										size="lg"
-										className="w-full sm:w-auto shadow-md hover:shadow-xl motion-safe:hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-all motion-safe:duration-300"
+										className="w-full sm:w-auto shadow-md hover:shadow-xl motion-safe:hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-[transform,box-shadow] motion-safe:duration-300"
 									>
 										<Link
 											href="/personnalisation"

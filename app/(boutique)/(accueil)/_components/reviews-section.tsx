@@ -17,8 +17,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing"
 import { formatRating } from "@/shared/utils/rating-utils"
 import { HomepageReviewCard } from "@/modules/reviews/components/homepage-review-card"
 
-import type { ReviewHomepage } from "@/modules/reviews/types/review.types"
-import type { GlobalReviewStats } from "@/modules/reviews/types/review.types"
+import type { ReviewHomepage, GlobalReviewStats } from "@/modules/reviews/types/review.types"
 
 interface ReviewsSectionProps {
 	reviewsPromise: Promise<ReviewHomepage[]>
@@ -41,7 +40,6 @@ export function ReviewsSection({
 	if (reviews.length === 0) {
 		return null
 	}
-
 
 	return (
 		<section
@@ -107,7 +105,7 @@ export function ReviewsSection({
 										containScroll: "trimSnaps",
 									}}
 									className="w-full"
-									aria-label="Carrousel d'avis clients"
+									aria-label={`Carrousel de ${reviews.length} avis clients`}
 								>
 									<CarouselContent className="-ml-4 py-4" showFade>
 										{reviews.map((review, index) => (
@@ -127,7 +125,7 @@ export function ReviewsSection({
 					}
 					desktop={
 						<Stagger
-							className="grid grid-cols-3 gap-6 mb-12"
+							className="grid grid-cols-3 gap-6 mb-6 sm:mb-8 lg:mb-12"
 							stagger={MOTION_CONFIG.section.grid.stagger}
 							y={MOTION_CONFIG.section.grid.y}
 							inView

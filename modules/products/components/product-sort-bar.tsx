@@ -56,6 +56,14 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 
 	const isHidden = isSearchOpen || isFilterOpen || sortOpen || isSkuSelectorOpen;
 
+	// Transfer focus away from toolbar buttons when bar hides
+	const toolbarRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (isHidden && toolbarRef.current?.contains(document.activeElement)) {
+			(document.activeElement as HTMLElement).blur();
+		}
+	}, [isHidden]);
+
 	useBottomBarHeight(56, !isHidden);
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
@@ -173,9 +181,10 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 				)}
 			>
 				<div
+					ref={toolbarRef}
 					role="toolbar"
 					aria-orientation="horizontal"
-					aria-label="Actions rapides"
+					aria-label="Tri, recherche et filtres"
 					className="flex items-stretch h-14 divide-x divide-border/50"
 				>
 					{/* Tri */}
@@ -188,6 +197,8 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						tabIndex={focusedIndex === 0 ? 0 : -1}
 						className={getButtonClassName()}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
+						aria-haspopup="dialog"
+						aria-expanded={sortOpen}
 					>
 						{hasActiveSort && <ActiveDot />}
 						<ArrowUpDown className={iconClassName} aria-hidden="true" />
@@ -208,6 +219,8 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 								? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
 								: "Ouvrir la recherche"
 						}
+						aria-haspopup="dialog"
+						aria-expanded={isSearchOpen}
 					>
 						{hasActiveSearch && <ActiveDot />}
 						<Search className={iconClassName} aria-hidden="true" />
@@ -228,6 +241,8 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 								? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}. Modifier les filtres`
 								: "Ouvrir les filtres"
 						}
+						aria-haspopup="dialog"
+						aria-expanded={isFilterOpen}
 					>
 						{hasActiveFilters && <ActiveDot />}
 						<SlidersHorizontal className={iconClassName} aria-hidden="true" />
