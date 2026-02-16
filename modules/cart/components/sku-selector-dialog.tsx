@@ -225,13 +225,13 @@ function computeValidationErrors(
 ): string[] {
 	const errors: string[] = [];
 	if (colors.length > 1 && !selectedColor) {
-		errors.push("Veuillez s\u00e9lectionner une couleur");
+		errors.push("Veuillez sélectionner une couleur");
 	}
 	if (materials.length > 1 && !selectedMaterial) {
-		errors.push("Veuillez s\u00e9lectionner un mat\u00e9riau");
+		errors.push("Veuillez sélectionner un matériau");
 	}
 	if (requiresSize && sizes.length > 0 && !selectedSize) {
-		errors.push("Veuillez s\u00e9lectionner une taille");
+		errors.push("Veuillez sélectionner une taille");
 	}
 	return errors;
 }
@@ -332,7 +332,7 @@ function ColorSelector({
 			className="space-y-2"
 			disabled={isPending}
 			role="radiogroup"
-			aria-label="S\u00e9lection de couleur"
+			aria-label="Sélection de couleur"
 			aria-describedby={
 				hasValidationErrors && !selectedValue
 					? VALIDATION_ERROR_ID
@@ -412,7 +412,7 @@ function MaterialSelector({
 			className="space-y-2"
 			disabled={isPending}
 			role="radiogroup"
-			aria-label="S\u00e9lection de mat\u00e9riau"
+			aria-label="Sélection de matériau"
 			aria-describedby={
 				hasValidationErrors && !selectedValue
 					? VALIDATION_ERROR_ID
@@ -420,7 +420,7 @@ function MaterialSelector({
 			}
 		>
 			<legend className="text-sm font-medium">
-				Mat\u00e9riau
+				Matériau
 				<span
 					className="text-destructive ml-0.5"
 					aria-hidden="true"
@@ -530,7 +530,7 @@ function SizeSelectorGroup({
 			className="space-y-2"
 			disabled={isPending}
 			role="radiogroup"
-			aria-label="S\u00e9lection de taille"
+			aria-label="Sélection de taille"
 			aria-describedby={
 				hasValidationErrors && !selectedValue
 					? VALIDATION_ERROR_ID
@@ -549,7 +549,7 @@ function SizeSelectorGroup({
 					<span className="sr-only">(obligatoire)</span>
 					{productTypeSlug === "ring" && (
 						<span className="font-normal text-muted-foreground ml-1">
-							(Diam\u00e8tre)
+							(Diamètre)
 						</span>
 					)}
 					{productTypeSlug === "bracelet" && (
@@ -760,7 +760,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 								<Skeleton className="h-8 w-20" />
 							</div>
 						</div>
-						{/* S\u00e9lecteurs skeleton */}
+						{/* Sélecteurs skeleton */}
 						<div className="space-y-2">
 							<Skeleton className="h-4 w-16" />
 							<div className="flex flex-wrap gap-2">
@@ -769,7 +769,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 								<Skeleton className="h-11 w-20 rounded-lg" />
 							</div>
 						</div>
-						{/* Quantit\u00e9 skeleton */}
+						{/* Quantité skeleton */}
 						<div className="space-y-2">
 							<Skeleton className="h-4 w-16" />
 							<div className="flex items-center gap-3">
@@ -827,7 +827,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 							className="text-muted-foreground"
 						>
 							{noActiveSkus
-								? "Ce produit n\u2019est actuellement pas disponible"
+								? "Ce produit n'est actuellement pas disponible"
 								: "Ce produit est actuellement en rupture de stock"}
 						</p>
 						<Link
@@ -1212,7 +1212,7 @@ function SkuSelectorFormContent({
 							)}
 						{quantityInCart > 0 && (
 							<span className="text-xs text-muted-foreground mt-1">
-								{quantityInCart} d\u00e9j\u00e0
+								{quantityInCart} déjà
 								dans le panier
 							</span>
 						)}
@@ -1295,7 +1295,7 @@ function SkuSelectorFormContent({
 						disabled={isPending}
 					>
 						<legend className="text-sm font-medium">
-							Quantit\u00e9
+							Quantité
 						</legend>
 						<div className="flex items-center gap-4 sm:gap-3">
 							<Button
@@ -1314,7 +1314,7 @@ function SkuSelectorFormContent({
 									isPending ||
 									quantity <= 1
 								}
-								aria-label="Diminuer la quantit\u00e9"
+								aria-label="Diminuer la quantité"
 							>
 								<Minus className="h-4 w-4" />
 							</Button>
@@ -1342,7 +1342,7 @@ function SkuSelectorFormContent({
 								}}
 								disabled={isPending}
 								className="w-12 text-center text-lg font-semibold tabular-nums bg-transparent focus:outline-none"
-								aria-label="Quantit\u00e9 \u00e0 ajouter au panier"
+								aria-label="Quantité à ajouter au panier"
 								aria-description={`Minimum 1, maximum ${maxQuantity}`}
 							/>
 							<Button
@@ -1362,7 +1362,7 @@ function SkuSelectorFormContent({
 									quantity >=
 										maxQuantity
 								}
-								aria-label="Augmenter la quantit\u00e9"
+								aria-label="Augmenter la quantité"
 							>
 								<Plus className="h-4 w-4" />
 							</Button>
@@ -1395,7 +1395,7 @@ function SkuSelectorFormContent({
 				>
 					{isPending
 						? "Ajout en cours..."
-						: `Ajouter au panier \u00b7 ${formatEuro(displayPrice * quantity)}`}
+						: `Ajouter au panier · ${formatEuro(displayPrice * quantity)}`}
 				</Button>
 				{/* m6: Validation errors only after submit attempt */}
 				<AnimatePresence mode="wait">
@@ -1429,7 +1429,7 @@ function SkuSelectorFormContent({
 								{validationErrors.length ===
 								1
 									? validationErrors[0]
-									: `${validationErrors.length} s\u00e9lections requises`}
+									: `${validationErrors.length} sélections requises`}
 							</motion.p>
 						)}
 				</AnimatePresence>
