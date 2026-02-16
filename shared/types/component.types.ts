@@ -111,8 +111,6 @@ export interface SortSelectProps {
 	className?: string;
 	/** Maximum height for dropdown in pixels */
 	maxHeight?: number;
-	/** Show label outside of select instead of inside */
-	externalLabel?: boolean;
 }
 
 /**

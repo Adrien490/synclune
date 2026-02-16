@@ -11,6 +11,7 @@ import {
 } from "@/shared/components/ui/select"
 import { cn } from "@/shared/utils/cn"
 import { ArrowUpDown, X } from "lucide-react"
+import { useRef } from "react"
 import { useSelectFilter } from "@/shared/hooks/use-select-filter"
 import type { FilterOption, SelectFilterProps } from "@/shared/types/component.types"
 
@@ -28,16 +29,19 @@ export function SelectFilter({
 }: SelectFilterProps) {
 	const { value, setFilter, clearFilter, isPending } =
 		useSelectFilter(filterKey, { noPrefix });
+	const triggerRef = useRef<HTMLButtonElement>(null);
 
-	// Filtrer les options avec value vide (requis par Radix SelectItem)
+	// Filter out empty-value options (required by Radix SelectItem)
 	const validOptions = options.filter((opt) => opt.value.length > 0);
 
-	const handleSelect = (newValue: string) => {
-		setFilter(newValue);
-	};
+	// Resolve the selected option for label display and stale value detection
+	const selectedOption = validOptions.find((opt) => opt.value === value);
 
-	const handleClear = () => {
+	const handleClear = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
 		clearFilter();
+		triggerRef.current?.focus();
 	};
 
 	return (
@@ -48,39 +52,37 @@ export function SelectFilter({
 				isPending && "opacity-70 pointer-events-none",
 				className
 			)}
-			aria-live="polite"
+			aria-atomic="true"
 			aria-busy={isPending}
 		>
-			{isPending && (
-				<span className="sr-only">Chargement des résultats du filtre...</span>
-			)}
 			<div className="relative flex items-center gap-2">
 				<Select
 					value={value || ""}
-					onValueChange={handleSelect}
+					onValueChange={setFilter}
 					disabled={isPending}
 				>
 					<SelectTrigger
+						ref={triggerRef}
 						className={cn(
 							"flex-1 h-11!",
-							// Mobile: icône seule, Desktop: largeur normale
+							// Mobile: icon only, Desktop: normal width
 							"w-11 sm:w-auto sm:min-w-45",
-							// Masquer le ChevronDown sur mobile
+							// Hide ChevronDown on mobile
 							"[&>[data-slot=select-icon]]:hidden sm:[&>[data-slot=select-icon]]:flex"
 						)}
 						aria-label={label}
 					>
-						{/* Label - masqué sur mobile */}
+						{/* Label - hidden on mobile */}
 						<span className="text-muted-foreground text-xs mr-2 hidden sm:inline">
 							{label}
 						</span>
 
-						{/* Value - masqué sur mobile */}
+						{/* Value - hidden on mobile */}
 						<div className="flex-1 hidden sm:block">
 							<SelectValue placeholder={placeholder} />
 						</div>
 
-						{/* Icône mobile avec indicateur de valeur active */}
+						{/* Mobile icon with active value indicator */}
 						<div className="sm:hidden flex items-center justify-center gap-1">
 							<ArrowUpDown className="h-4 w-4" />
 							{value && (
@@ -91,10 +93,10 @@ export function SelectFilter({
 							)}
 						</div>
 					</SelectTrigger>
-					<SelectContent>
+					<SelectContent className="max-w-[calc(100vw-2rem)]">
 						<ScrollArea
 							className="w-full"
-							style={{ maxHeight: `${maxHeight}px` }}
+							style={{ maxHeight: `min(${maxHeight}px, 60vh)` }}
 						>
 							{validOptions.length === 0 ? (
 								<div className="py-6 text-center text-sm text-muted-foreground">
@@ -115,13 +117,31 @@ export function SelectFilter({
 						type="button"
 						variant="ghost"
 						size="icon"
-						aria-label={`Effacer le filtre ${label}`}
+						aria-label={`Effacer le filtre ${selectedOption?.label || label}`}
+						title={`Effacer le filtre ${selectedOption?.label || label}`}
 						className="h-8 w-8 rounded-full shrink-0"
 						onClick={handleClear}
 						disabled={isPending}
 					>
 						<X className="h-4 w-4" />
 					</Button>
+				)}
+			</div>
+
+			{/* Live region for screen readers */}
+			<div
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+				className="sr-only"
+			>
+				{isPending && value && (
+					<span>
+						Chargement des résultats pour le filtre {label} : {selectedOption?.label}
+					</span>
+				)}
+				{isPending && !value && (
+					<span>Chargement des résultats sans filtre {label}</span>
 				)}
 			</div>
 		</div>

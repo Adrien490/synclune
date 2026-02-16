@@ -9,7 +9,7 @@ import type {
 } from "@/modules/products/types/product.types";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
-import { ShoppingCart, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface AddToCartFormProps {
 	product: GetProductReturn;
@@ -116,10 +116,7 @@ export function AddToCartForm({
 				) : !isAvailable ? (
 					<span>Indisponible</span>
 				) : (
-					<>
-						<ShoppingCart size={18} className="sm:hidden" aria-hidden="true" />
-						<span>Ajouter au panier</span>
-					</>
+					<span>Ajouter au panier</span>
 				)}
 			</Button>
 		</form>

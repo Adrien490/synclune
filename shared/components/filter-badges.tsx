@@ -1,12 +1,16 @@
 "use client";
 
+import {
+	MOTION_CONFIG,
+	maybeReduceMotion,
+} from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FilterBadge } from "./filter-badge";
 
 interface FilterBadgesProps {
@@ -77,7 +81,7 @@ export function FilterBadges({
 		isPending,
 	} = useFilter(filterOptions);
 
-	// Utiliser les filtres externes si fournis, sinon le hook interne
+	// Use external filters if provided, otherwise use internal hook
 	const activeFilters = activeFiltersProp ?? optimisticActiveFilters;
 	const handleRemove = onRemove ?? removeFilterOptimistic;
 	const handleClearAll = onClearAll ?? clearAllFiltersOptimistic;
@@ -85,31 +89,70 @@ export function FilterBadges({
 	const [showAll, setShowAll] = useState(false);
 	const isMobile = useIsMobile();
 	const shouldReduceMotion = useReducedMotion();
+	const containerRef = useRef<HTMLDivElement>(null);
 
-	// Ne rien afficher s'il n'y a pas de filtres actifs
+	// Move focus to next badge after removal, or to "Clear all" if none left
+	const handleRemoveWithFocus = (key: string, value?: string) => {
+		handleRemove(key, value);
+		requestAnimationFrame(() => {
+			const buttons =
+				containerRef.current?.querySelectorAll<HTMLButtonElement>(
+					'button[aria-label^="Supprimer"]'
+				);
+			if (buttons && buttons.length > 0) {
+				buttons[0].focus();
+			} else {
+				containerRef.current
+					?.querySelector<HTMLButtonElement>(
+						'button[aria-label="Effacer tous les filtres"]'
+					)
+					?.focus();
+			}
+		});
+	};
+
+	// Move focus to a logical target after clearing all filters
+	const handleClearAllWithFocus = () => {
+		const parent = containerRef.current?.parentElement;
+		handleClearAll();
+		requestAnimationFrame(() => {
+			if (!parent) return;
+			const target = parent.querySelector<HTMLElement>(
+				'button, [href], input, select, [tabindex]:not([tabindex="-1"])'
+			);
+			target?.focus();
+		});
+	};
+
+	// Don't render if no active filters
 	if (activeFilters.length === 0) {
 		return null;
 	}
 
-	// Layout hybride : 2 lignes max sur mobile (~6 badges), plus sur desktop
+	// Hybrid layout: 2 lines max on mobile (~6 badges), more on desktop
 	const mobileMaxFilters = 6;
 	const effectiveMaxFilters = isMobile
 		? Math.min(mobileMaxFilters, maxVisibleFilters)
 		: maxVisibleFilters;
 
-	// Filtres à afficher (limités ou tous)
+	// Filters to display (limited or all)
 	const displayedFilters =
 		showAll || activeFilters.length <= effectiveMaxFilters
 			? activeFilters
 			: activeFilters.slice(0, effectiveMaxFilters);
 	const hasMoreFilters = activeFilters.length > effectiveMaxFilters;
 
+	const motionTransition = maybeReduceMotion(
+		{ duration: MOTION_CONFIG.duration.fast },
+		shouldReduceMotion ?? false
+	);
+
 	return (
 		<div
+			ref={containerRef}
 			role="region"
 			aria-label="Filtres actifs"
 			aria-live="polite"
-			aria-atomic="true"
 			aria-busy={isPending}
 			data-pending={isPending ? "" : undefined}
 			className={cn(
@@ -127,17 +170,17 @@ export function FilterBadges({
 				{label}
 			</span>
 
-			<AnimatePresence mode="popLayout">
+			<AnimatePresence>
 				{displayedFilters.map((filter) => (
 					<FilterBadge
 						key={filter.id}
 						filter={filter}
 						formatFilter={formatFilter}
-						onRemove={handleRemove}
+						onRemove={handleRemoveWithFocus}
 					/>
 				))}
 
-				{/* Bouton "Voir plus/moins" */}
+				{/* "Show more/less" button */}
 				{hasMoreFilters && (
 					<motion.div
 						key="show-more-button"
@@ -145,7 +188,7 @@ export function FilterBadges({
 						initial={shouldReduceMotion ? false : { opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
-						transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+						transition={motionTransition}
 					>
 						<Button
 							variant="outline"
@@ -177,7 +220,7 @@ export function FilterBadges({
 					</motion.div>
 				)}
 
-				{/* Bouton "Tout effacer" */}
+				{/* "Clear all" button */}
 				{activeFilters.length >= 1 && (
 					<motion.div
 						key="clear-all-button"
@@ -185,12 +228,12 @@ export function FilterBadges({
 						initial={shouldReduceMotion ? false : { opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
-						transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+						transition={motionTransition}
 					>
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={handleClearAll}
+							onClick={handleClearAllWithFocus}
 							className={cn(
 								"h-11 sm:h-8 px-3",
 								"text-xs text-muted-foreground",

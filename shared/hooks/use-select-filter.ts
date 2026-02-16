@@ -35,15 +35,9 @@ export function useSelectFilter(filterKey: string, options?: UseSelectFilterOpti
 		});
 	};
 
-	// Préservation des paramètres existants
-	const preserveExistingParams = () => {
-		const params = new URLSearchParams(searchParams);
-		return params;
-	};
-
 	// Définir une nouvelle valeur de filtre
 	const setFilter = (value: string) => {
-		const params = preserveExistingParams();
+		const params = new URLSearchParams(searchParams);
 
 		// Supprimer d'abord le paramètre existant
 		params.delete(paramKey);
@@ -62,7 +56,7 @@ export function useSelectFilter(filterKey: string, options?: UseSelectFilterOpti
 
 	// Effacer le filtre
 	const clearFilter = () => {
-		const params = preserveExistingParams();
+		const params = new URLSearchParams(searchParams);
 		params.delete(paramKey);
 
 		// Réinitialiser également la pagination à la page 1 quand on efface un filtre

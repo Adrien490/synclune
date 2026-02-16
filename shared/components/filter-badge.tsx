@@ -1,9 +1,32 @@
 "use client";
 
+import {
+	MOTION_CONFIG,
+	maybeReduceMotion,
+} from "@/shared/components/animations/motion.config";
 import { FilterDefinition } from "@/shared/hooks/use-filter";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
-import { motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
+import {
+	motion,
+	useMotionValue,
+	useReducedMotion,
+	useTransform,
+} from "motion/react";
+
+const ANIMATION_PROPS = {
+	initial: { opacity: 0 },
+	animate: { opacity: 1 },
+	exit: { opacity: 0 },
+} as const;
+
+const ICON_VARIANTS = {
+	initial: { opacity: 0.4 },
+	hover: { opacity: 1 },
+} as const;
+
+const DRAG_CONSTRAINTS = { left: 0, right: 0 } as const;
 
 interface FilterBadgeProps {
 	filter: FilterDefinition;
@@ -20,11 +43,11 @@ export function FilterBadge({
 	onRemove,
 }: FilterBadgeProps) {
 	const shouldReduceMotion = useReducedMotion();
+	const isMobile = useIsMobile();
 
-	// Formater le filtre si une fonction est fournie
 	const formatted = formatFilter?.(filter);
 
-	// Si la fonction retourne null, ne pas afficher le badge
+	// If the function returns null, don't render the badge
 	if (formatted === null) {
 		return null;
 	}
@@ -34,7 +57,7 @@ export function FilterBadge({
 	const filterDescription = `${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
 	const ariaLabelRemove = `Supprimer le filtre ${filterDescription}`;
 
-	// Suppression optimiste - disparition instantanée du badge
+	// Optimistic removal - instant badge disappearance
 	const handleRemove = () => {
 		let value: string | undefined;
 
@@ -52,50 +75,50 @@ export function FilterBadge({
 		onRemove(filter.key, value);
 	};
 
-	// Animation props conditionnelles pour prefers-reduced-motion
-	// Opacity seulement - pas de scale pour éviter le flickering avec AnimatePresence
-	const animationProps = shouldReduceMotion
-		? {}
-		: {
-				initial: { opacity: 0 },
-				animate: { opacity: 1 },
-				exit: { opacity: 0 },
-			};
+	const animationProps = shouldReduceMotion ? {} : ANIMATION_PROPS;
 
-	const transitionProps = shouldReduceMotion
-		? { duration: 0 }
-		: {
-				duration: 0.15,
-				ease: [0.25, 0.1, 0.25, 1] as const,
-			};
+	const transitionProps = maybeReduceMotion(
+		{
+			duration: MOTION_CONFIG.duration.fast,
+			ease: MOTION_CONFIG.easing.easeInOut,
+		},
+		shouldReduceMotion ?? false
+	);
 
-	// Variants Framer Motion pour l'animation hover desktop
-	const iconVariants = {
-		initial: { width: 0, opacity: 0 },
-		hover: { width: 20, opacity: 1 },
-	};
+	// Swipe-to-dismiss on mobile
+	const x = useMotionValue(0);
+	const opacity = useTransform(x, [-100, 0, 100], [0.3, 1, 0.3]);
+	const enableDrag = isMobile && !shouldReduceMotion;
 
 	return (
 		<motion.button
 			type="button"
-			layout
 			{...animationProps}
 			transition={transitionProps}
 			onClick={handleRemove}
 			aria-label={ariaLabelRemove}
 			whileHover={shouldReduceMotion ? undefined : "hover"}
+			drag={enableDrag ? "x" : false}
+			dragConstraints={DRAG_CONSTRAINTS}
+			dragElastic={0.3}
+			onDragEnd={(_, info) => {
+				if (Math.abs(info.offset.x) > 80) {
+					handleRemove();
+				}
+			}}
+			style={{ x, opacity: enableDrag ? opacity : undefined }}
 			className={cn(
 				// Layout
 				"flex items-center gap-1.5",
 				"h-11 sm:h-8",
 				"px-3",
-				// Forme pill
+				// Pill shape
 				"rounded-full border",
-				// Typographie
-				"text-sm font-medium",
-				// Largeur max
+				// Typography
+				"text-sm",
+				// Max width
 				"max-w-70 sm:max-w-80",
-				// Etats
+				// States
 				"cursor-pointer",
 				"transition-colors duration-150",
 				"can-hover:hover:bg-accent can-hover:hover:border-primary/40",
@@ -106,30 +129,34 @@ export function FilterBadge({
 				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 			)}
 		>
-			{/* Texte */}
-			<span className="truncate font-medium">
-				{displayValue && displayValue.length > 0 ? displayValue : displayLabel}
+			{/* Text: label + value */}
+			<span className="truncate">
+				{displayValue && displayValue.length > 0 ? (
+					<>
+						<span className="text-muted-foreground font-normal">
+							{displayLabel} :
+						</span>{" "}
+						<span className="font-medium">{displayValue}</span>
+					</>
+				) : (
+					<span className="font-medium">{displayLabel}</span>
+				)}
 			</span>
 
-			{/* Icone X mobile - toujours visible */}
-			<X
-				className="size-3.5 opacity-50 shrink-0 sm:hidden"
-				aria-hidden="true"
-			/>
-
-			{/* Icone X desktop - animation width au hover */}
+			{/* X icon - responsive: plain on mobile, circle on desktop */}
 			<motion.span
 				aria-hidden="true"
-				variants={iconVariants}
+				variants={ICON_VARIANTS}
 				initial="initial"
-				transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+				transition={transitionProps}
 				className={cn(
-					"hidden sm:flex items-center justify-center",
-					"h-5 overflow-hidden rounded-full",
-					"bg-destructive/10 text-destructive"
+					"shrink-0",
+					"sm:flex sm:items-center sm:justify-center",
+					"sm:size-5 sm:rounded-full",
+					"sm:bg-destructive/10 sm:text-destructive"
 				)}
 			>
-				<X className="size-3 shrink-0" />
+				<X className="size-3.5 sm:size-3" />
 			</motion.span>
 		</motion.button>
 	);
