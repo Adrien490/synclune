@@ -7,7 +7,8 @@ import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
-import { use } from "react";
+import { Suspense, use } from "react";
+import { LatestCreationsGridSkeleton } from "./latest-creations-skeleton";
 
 interface LatestCreationsProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -16,16 +17,53 @@ interface LatestCreationsProps {
 /**
  * Latest Creations section - Grid of most recent jewelry.
  *
- * Accepts a Promise for streaming with React Suspense.
- * Wishlist state is loaded client-side by WishlistButton to avoid
- * cookies() forcing dynamic rendering on the homepage.
+ * Header renders immediately (subtitle is LCP element).
+ * Grid is wrapped in Suspense for streaming.
  */
 export function LatestCreations({
 	productsPromise,
 }: LatestCreationsProps) {
+	return (
+		<section
+			id="latest-creations"
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+			aria-labelledby="latest-creations-title"
+			aria-describedby="latest-creations-subtitle"
+		>
+			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
+				<header className="mb-8 text-center lg:mb-12">
+					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
+						<SectionTitle id="latest-creations-title">
+							Nouvelles créations
+						</SectionTitle>
+						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
+					</Fade>
+					{/* No Fade on subtitle — it's the LCP element, must paint immediately */}
+					<p
+						id="latest-creations-subtitle"
+						className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
+					>
+						Tout juste sorties de l'atelier et réalisées avec amour !
+					</p>
+				</header>
+				<Suspense fallback={<LatestCreationsGridSkeleton />}>
+					<LatestCreationsGrid productsPromise={productsPromise} />
+				</Suspense>
+			</div>
+		</section>
+	);
+}
+
+/**
+ * Inner grid component — calls use() to unwrap the products promise.
+ * Wrapped in Suspense by the parent LatestCreations.
+ */
+function LatestCreationsGrid({
+	productsPromise,
+}: LatestCreationsProps) {
 	const { products } = use(productsPromise);
 
-	// Don't render section with no products
 	if (products.length === 0) {
 		return null;
 	}
@@ -62,12 +100,7 @@ export function LatestCreations({
 	};
 
 	return (
-		<section
-			id="latest-creations"
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
-			aria-labelledby="latest-creations-title"
-			aria-describedby="latest-creations-subtitle"
-		>
+		<>
 			{/* ItemList JSON-LD for SEO */}
 			<script
 				type="application/ld+json"
@@ -75,65 +108,45 @@ export function LatestCreations({
 					__html: JSON.stringify(itemListSchema).replace(/</g, "\\u003c"),
 				}}
 			/>
-
-			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
-				<header className="mb-8 text-center lg:mb-12">
-					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
-						<SectionTitle id="latest-creations-title">
-							Nouvelles créations
-						</SectionTitle>
-						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
-					</Fade>
-					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
-						<p
-							id="latest-creations-subtitle"
-							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
-						>
-							Tout juste sorties de l'atelier et réalisées avec amour !
-						</p>
-					</Fade>
-				</header>
-				<Stagger
-					className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
-					stagger={MOTION_CONFIG.section.grid.stagger}
-					y={MOTION_CONFIG.section.grid.y}
-					inView
-					once={true}
+			<Stagger
+				className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
+				stagger={MOTION_CONFIG.section.grid.stagger}
+				y={MOTION_CONFIG.section.grid.y}
+				inView
+				once={true}
+			>
+				{products.map((product, index) => (
+					<ProductCard
+						key={product.id}
+						product={product}
+						index={index}
+						sectionId="latest"
+					/>
+				))}
+			</Stagger>
+			<Fade
+				y={MOTION_CONFIG.section.cta.y}
+				delay={MOTION_CONFIG.section.cta.delay}
+				duration={MOTION_CONFIG.section.cta.duration}
+				inView
+				once
+				className="text-center"
+			>
+				<Button
+					asChild
+					size="lg"
+					variant="outline"
+					className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+					aria-describedby="latest-creations-cta-description"
 				>
-					{products.map((product, index) => (
-						<ProductCard
-							key={product.id}
-							product={product}
-							index={index}
-							sectionId="latest"
-						/>
-					))}
-				</Stagger>
-				<Fade
-					y={MOTION_CONFIG.section.cta.y}
-					delay={MOTION_CONFIG.section.cta.delay}
-					duration={MOTION_CONFIG.section.cta.duration}
-					inView
-					once
-					className="text-center"
-				>
-					<Button
-						asChild
-						size="lg"
-						variant="outline"
-						className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
-						aria-describedby="latest-creations-cta-description"
-					>
-						<Link href="/produits?sortBy=created-descending">
-							Voir tous les nouveaux bijoux
-						</Link>
-					</Button>
-					<span id="latest-creations-cta-description" className="sr-only">
-						Découvrir tous les bijoux récemment créés dans la boutique Synclune
-					</span>
-				</Fade>
-			</div>
-		</section>
+					<Link href="/produits?sortBy=created-descending">
+						Voir tous les nouveaux bijoux
+					</Link>
+				</Button>
+				<span id="latest-creations-cta-description" className="sr-only">
+					Découvrir tous les bijoux récemment créés dans la boutique Synclune
+				</span>
+			</Fade>
+		</>
 	);
 }

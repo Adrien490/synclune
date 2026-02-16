@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, Clock, Search, X } from "lucide-react"
+import { ChevronRight, Search, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { Stagger } from "@/shared/components/animations/stagger"
@@ -97,8 +97,7 @@ export function IdleContent({
 				{searches.length > 0 && (
 					<section aria-labelledby="recent-searches-heading">
 						<div className="flex items-center justify-between mb-3">
-							<h2 id="recent-searches-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
-								<Clock className="size-5" aria-hidden="true" />
+							<h2 id="recent-searches-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide">
 								Recherches recentes
 							</h2>
 							<Button

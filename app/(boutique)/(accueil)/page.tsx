@@ -1,6 +1,5 @@
 import { CollectionsSection } from "@/app/(boutique)/(accueil)/_components/collections-section";
 import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
-import { LatestCreationsSkeleton } from "@/app/(boutique)/(accueil)/_components/latest-creations-skeleton";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
@@ -85,12 +84,10 @@ export default async function Page() {
         <HeroSection productsPromise={latestCreationsPromise} />
       </Suspense>
 
-      {/* 2. Latest Creations - 4 most recent products */}
-      <Suspense fallback={<LatestCreationsSkeleton productsCount={4} />}>
-        <LatestCreations
-          productsPromise={latestCreationsPromise}
-        />
-      </Suspense>
+      {/* 2. Latest Creations - 4 most recent products (manages its own inner Suspense) */}
+      <LatestCreations
+        productsPromise={latestCreationsPromise}
+      />
 
       {/* 3. Collections - Thematic browsing with descriptions */}
       <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSerwist } from "@serwist/turbopack";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
@@ -44,7 +45,7 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild-wasm"],
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon"],
 
   images: {
     qualities: [65, 70, 75, 80, 85, 90],
@@ -83,4 +84,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);
