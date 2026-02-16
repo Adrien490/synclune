@@ -43,7 +43,7 @@ export default async function PrivacyPolicyPage() {
       <PageHeader
         title="Politique de Confidentialité"
         description="Protection des données personnelles et respect de votre vie privée conformément au RGPD"
-        breadcrumbs={[{ label: "Confidentialité", href: "/confidentialite" }]}
+        breadcrumbs={[{ label: "Informations légales", href: "/informations-legales" }, { label: "Confidentialité", href: "/confidentialite" }]}
       />
 
       <section className={`bg-background ${SECTION_SPACING.default}`}>
@@ -268,6 +268,7 @@ export default async function PrivacyPolicyPage() {
               <h2 className="text-xl sm:text-2xl font-semibold">
                 7. Durée de conservation
               </h2>
+              <div className="overflow-x-auto">
               <table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
                 <caption className="sr-only">Durée de conservation des différents types de données personnelles</caption>
                 <thead>
@@ -341,6 +342,7 @@ export default async function PrivacyPolicyPage() {
                   </tr>
                 </tbody>
               </table>
+              </div>
             </section>
 
             <section className="space-y-4">

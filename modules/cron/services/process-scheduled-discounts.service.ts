@@ -1,4 +1,4 @@
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 
@@ -25,7 +25,7 @@ export async function processScheduledDiscounts(): Promise<{
 	const candidates = await prisma.discount.findMany({
 		where: {
 			isActive: false,
-			deletedAt: null,
+			...notDeleted,
 			startsAt: { lte: now },
 			OR: [{ endsAt: null }, { endsAt: { gte: now } }],
 		},
@@ -53,7 +53,7 @@ export async function processScheduledDiscounts(): Promise<{
 	const deactivated = await prisma.discount.updateMany({
 		where: {
 			isActive: true,
-			deletedAt: null,
+			...notDeleted,
 			endsAt: { lt: now },
 		},
 		data: {

@@ -88,6 +88,7 @@ describe("retryFailedWebhooks", () => {
 			permanentlyFailed: 0,
 			errors: 0,
 			orphansRecovered: 0,
+			hasMore: false,
 		});
 	});
 

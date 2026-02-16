@@ -1,12 +1,12 @@
 import { RefundStatus } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getStripeClient } from "@/shared/lib/stripe";
 import {
 	mapStripeRefundStatus,
 	updateRefundStatus,
 	markRefundAsFailed,
 } from "@/modules/webhooks/services/refund.service";
-import { BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
  * Reconciles pending refunds by polling Stripe.
@@ -38,7 +38,7 @@ export async function reconcilePendingRefunds(): Promise<{
 			status: RefundStatus.APPROVED,
 			stripeRefundId: { not: null },
 			processedAt: { lt: minAge },
-			deletedAt: null,
+			...notDeleted,
 		},
 		select: {
 			id: true,
@@ -59,8 +59,13 @@ export async function reconcilePendingRefunds(): Promise<{
 
 	let updated = 0;
 	let errors = 0;
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
 
 	for (const refund of pendingRefunds) {
+		if (Date.now() > deadline) {
+			console.warn("[CRON:reconcile-refunds] Approaching timeout, stopping batch early");
+			break;
+		}
 		if (!refund.stripeRefundId) continue;
 
 		try {

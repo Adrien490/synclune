@@ -10,6 +10,7 @@ import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 export async function cleanupExpiredWishlists(): Promise<{
 	deletedCount: number;
 	orphanedItemsCount: number;
+	hasMore: boolean;
 }> {
 	const now = new Date();
 
@@ -63,5 +64,6 @@ export async function cleanupExpiredWishlists(): Promise<{
 	return {
 		deletedCount: deleteResult.count,
 		orphanedItemsCount: Number(orphanedItemsCount),
+		hasMore: wishlistsToDelete.length === CLEANUP_DELETE_LIMIT,
 	};
 }

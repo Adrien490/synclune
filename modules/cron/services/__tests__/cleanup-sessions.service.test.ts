@@ -148,6 +148,7 @@ describe("cleanupExpiredSessions", () => {
 			sessionsDeleted: 0,
 			verificationsDeleted: 0,
 			tokensCleared: 0,
+			hasMore: false,
 		});
 	});
 
@@ -174,6 +175,7 @@ describe("cleanupExpiredSessions", () => {
 			sessionsDeleted: 15,
 			verificationsDeleted: 23,
 			tokensCleared: 15,
+			hasMore: false,
 		});
 		expect(mockPrisma.session.findMany).toHaveBeenCalledTimes(1);
 		expect(mockPrisma.session.deleteMany).toHaveBeenCalledTimes(1);

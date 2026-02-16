@@ -68,10 +68,33 @@ export const RETENTION = {
 export const STRIPE_TIMEOUT_MS = 5_000;
 
 /**
+ * Global deadline for batch processing in cron jobs (ms)
+ * Leaves a 10s safety margin before the 60s Vercel function timeout.
+ * Jobs check this deadline before each iteration and stop early if exceeded.
+ */
+export const BATCH_DEADLINE_MS = 50_000;
+
+/**
  * Maximum records to delete/update in a single cleanup operation
  * Prevents long-running queries on accumulated data
  */
 export const CLEANUP_DELETE_LIMIT = 1_000;
+
+/**
+ * UploadThing API page size limit for listFiles
+ */
+export const UPLOADTHING_LIST_LIMIT = 500;
+
+/**
+ * Maximum UploadThing pages to scan per run (5 pages x 500 = 2500 files max)
+ * Prevents Vercel function timeout on large file stores
+ */
+export const MAX_PAGES_PER_RUN = 5;
+
+/**
+ * Batch size for paginated DB queries when loading referenced media keys
+ */
+export const DB_QUERY_BATCH_SIZE = 500;
 
 /**
  * Time thresholds in milliseconds

@@ -44,12 +44,24 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 }
 
 /**
+ * Start a timer for measuring cron job duration.
+ * Pass the returned value to cronSuccess() to include durationMs in the response.
+ */
+export function cronTimer(): number {
+	return Date.now();
+}
+
+/**
  * Standard success response for cron jobs
  */
-export function cronSuccess(data: Record<string, unknown>): NextResponse {
+export function cronSuccess(
+	data: Record<string, unknown>,
+	startTime?: number
+): NextResponse {
 	return NextResponse.json({
 		success: true,
 		timestamp: new Date().toISOString(),
+		...(startTime !== undefined && { durationMs: Date.now() - startTime }),
 		...data,
 	});
 }

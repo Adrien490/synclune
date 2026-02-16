@@ -1,3 +1,4 @@
+import { PageHeaderSkeleton } from "@/shared/components/page-header-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 
@@ -15,36 +16,13 @@ export default function AccessibilityLoading() {
 		>
 			<span className="sr-only">Chargement de la page d'accessibilité...</span>
 
-			{/* Page Header Skeleton - Uses PageHeader component */}
-			<div className="pt-16">
-				<section className="bg-background border-b border-border">
-					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-						<div className="space-y-2">
-							{/* Breadcrumbs */}
-							<nav className="text-sm">
-								<div className="flex items-center gap-2">
-									<Skeleton className="h-4 w-16 bg-muted/40" />
-									<span className="text-muted-foreground">/</span>
-									<Skeleton className="h-4 w-32 bg-muted/40" />
-								</div>
-							</nav>
-
-							{/* Title */}
-							<Skeleton className="h-8 sm:h-9 w-80 bg-muted/50" />
-
-							{/* Description */}
-							<Skeleton className="h-5 w-full bg-muted/30" />
-							<Skeleton className="h-5 w-5/6 bg-muted/30" />
-						</div>
-					</div>
-				</section>
-			</div>
+			<PageHeaderSkeleton />
 
 			{/* Main Content */}
-			<div className="from-ivory via-rose-50/30 to-gold-50/20">
-				<div className={`container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl ${SECTION_SPACING.default}`}>
+			<div className="bg-background">
+				<div className={`container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl ${SECTION_SPACING.default}`}>
 					{/* Conformity status card */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg mb-8 p-6 space-y-4">
+					<div className="bg-card border rounded-lg shadow-lg mb-8 p-6 space-y-4">
 						<Skeleton className="h-6 w-48 bg-muted/50" />
 						<Skeleton className="h-4 w-full bg-muted/30" />
 						<Skeleton className="h-4 w-full bg-muted/30" />
@@ -55,7 +33,7 @@ export default function AccessibilityLoading() {
 					</div>
 
 					{/* Features card */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg mb-8 p-6 space-y-4">
+					<div className="bg-card border rounded-lg shadow-lg mb-8 p-6 space-y-4">
 						<Skeleton className="h-6 w-80 bg-muted/50 mb-6" />
 						<div className="space-y-4">
 							{Array.from({ length: 10 }).map((_, i) => (
@@ -71,13 +49,13 @@ export default function AccessibilityLoading() {
 					</div>
 
 					{/* Keyboard shortcuts card */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg mb-8 p-6 space-y-4">
+					<div className="bg-card border rounded-lg shadow-lg mb-8 p-6 space-y-4">
 						<Skeleton className="h-6 w-56 bg-muted/50" />
 						<div className="space-y-3">
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div
 									key={i}
-									className="flex justify-between items-center py-2 border-b border-gray-200"
+									className="flex justify-between items-center py-2 border-b border-border"
 								>
 									<Skeleton className="h-4 w-40 bg-muted/30" />
 									<Skeleton className="h-8 w-24 bg-muted/40 rounded-md" />
@@ -87,7 +65,7 @@ export default function AccessibilityLoading() {
 					</div>
 
 					{/* Compatible technologies card */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg mb-8 p-6 space-y-4">
+					<div className="bg-card border rounded-lg shadow-lg mb-8 p-6 space-y-4">
 						<Skeleton className="h-6 w-72 bg-muted/50" />
 						<Skeleton className="h-4 w-full bg-muted/30" />
 						<div className="space-y-3 mt-4">
@@ -101,7 +79,7 @@ export default function AccessibilityLoading() {
 					</div>
 
 					{/* Known limitations card */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg mb-8 p-6 space-y-4">
+					<div className="bg-card border rounded-lg shadow-lg mb-8 p-6 space-y-4">
 						<Skeleton className="h-6 w-80 bg-muted/50" />
 						<Skeleton className="h-4 w-full bg-muted/30" />
 						<div className="space-y-2 mt-4">
@@ -112,7 +90,7 @@ export default function AccessibilityLoading() {
 					</div>
 
 					{/* Contact card */}
-					<div className="from-primary/5 to-secondary/5 rounded-lg shadow-lg p-6 space-y-4">
+					<div className="bg-muted/20 border rounded-lg shadow-lg p-6 space-y-4">
 						<Skeleton className="h-6 w-64 bg-muted/50" />
 						<Skeleton className="h-4 w-full bg-muted/30" />
 						<Skeleton className="h-4 w-5/6 bg-muted/30" />
@@ -125,7 +103,7 @@ export default function AccessibilityLoading() {
 					</div>
 
 					{/* References section */}
-					<div className="mt-8 p-6 bg-white/50 rounded-lg space-y-3">
+					<div className="mt-8 p-6 bg-muted/10 border rounded-lg space-y-3">
 						<Skeleton className="h-6 w-48 bg-muted/50" />
 						<Skeleton className="h-3 w-full bg-muted/30" />
 						<Skeleton className="h-3 w-full bg-muted/30" />

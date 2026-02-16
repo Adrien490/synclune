@@ -1,15 +1,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { UTApi } from "uploadthing/server";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
-
-// UploadThing API limits listFiles to 500 per request
-const UPLOADTHING_LIST_LIMIT = 500;
-
-// Limit pages per run to avoid Vercel function timeout (5 pages x 500 = 2500 files max)
-const MAX_PAGES_PER_RUN = 5;
-
-// Batch size for paginated DB queries to avoid loading all records at once
-const DB_QUERY_BATCH_SIZE = 500;
+import { DB_QUERY_BATCH_SIZE, MAX_PAGES_PER_RUN, UPLOADTHING_LIST_LIMIT } from "@/modules/cron/constants/limits";
 
 /**
  * Cleans up orphaned UploadThing files not referenced in the database.

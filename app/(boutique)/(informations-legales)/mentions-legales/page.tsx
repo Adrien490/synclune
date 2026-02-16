@@ -61,7 +61,7 @@ export default async function MentionsLegalesPage() {
       <PageHeader
         title="Mentions Légales"
         description="Informations légales et identification de l'éditeur du site Synclune"
-        breadcrumbs={[{ label: "Mentions légales", href: "/mentions-legales" }]}
+        breadcrumbs={[{ label: "Informations légales", href: "/informations-legales" }, { label: "Mentions légales", href: "/mentions-legales" }]}
       />
 
       <section className={`bg-background ${SECTION_SPACING.default} relative z-10`}>

@@ -81,6 +81,7 @@ describe("cleanupExpiredCarts", () => {
 		expect(result).toEqual({
 			deletedCount: 7,
 			orphanedItemsCount: 3,
+			hasMore: false,
 		});
 	});
 
@@ -94,6 +95,7 @@ describe("cleanupExpiredCarts", () => {
 		expect(result).toEqual({
 			deletedCount: 0,
 			orphanedItemsCount: 0,
+			hasMore: false,
 		});
 		expect(mockPrisma.cart.findMany).toHaveBeenCalledTimes(1);
 		expect(mockPrisma.cart.deleteMany).toHaveBeenCalledTimes(1);
@@ -111,6 +113,7 @@ describe("cleanupExpiredCarts", () => {
 		expect(result).toEqual({
 			deletedCount: 4,
 			orphanedItemsCount: 0,
+			hasMore: false,
 		});
 	});
 

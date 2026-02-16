@@ -59,7 +59,7 @@ export default async function AccessibilityPage() {
       <PageHeader
         title="Déclaration d'accessibilité"
         description="Synclune s'engage à rendre son site web accessible à tous les utilisateurs, quelles que soient leurs capacités ou leurs technologies d'assistance."
-        breadcrumbs={[{ label: "Accessibilité", href: "/accessibilite" }]}
+        breadcrumbs={[{ label: "Informations légales", href: "/informations-legales" }, { label: "Accessibilité", href: "/accessibilite" }]}
       />
 
       <section className={`bg-background ${SECTION_SPACING.default} relative z-10`}>
@@ -168,10 +168,11 @@ export default async function AccessibilityPage() {
 
               <div className="overflow-x-auto">
                 <table className="min-w-full border">
+                  <caption className="sr-only">Raccourcis clavier disponibles sur le site</caption>
                   <thead className="bg-muted/50">
                     <tr>
-                      <th className="px-4 py-2 text-left border-b">Action</th>
-                      <th className="px-4 py-2 text-left border-b">
+                      <th scope="col" className="px-4 py-2 text-left border-b">Action</th>
+                      <th scope="col" className="px-4 py-2 text-left border-b">
                         Raccourci
                       </th>
                     </tr>
@@ -342,9 +343,9 @@ export default async function AccessibilityPage() {
               <h2 className="text-xl sm:text-2xl font-semibold">Références et normes</h2>
               <p>Ce site respecte les normes suivantes :</p>
 
-              <ul className="space-y-2 ml-4">
+              <ul className="list-disc list-inside space-y-2 ml-4">
                 <li>
-                  • WCAG 2.1 Niveau AA -{" "}
+                  WCAG 2.1 Niveau AA -{" "}
                   <a
                     href="https://www.w3.org/WAI/WCAG21/quickref/"
                     target="_blank"
@@ -355,7 +356,7 @@ export default async function AccessibilityPage() {
                   </a>
                 </li>
                 <li>
-                  • RGAA 4.1.2 (Référentiel Général d'Amélioration de
+                  RGAA 4.1.2 (Référentiel Général d'Amélioration de
                   l'Accessibilité) -{" "}
                   <a
                     href="https://accessibilite.numerique.gouv.fr/"
@@ -367,7 +368,7 @@ export default async function AccessibilityPage() {
                   </a>
                 </li>
                 <li>
-                  • ARIA (Accessible Rich Internet Applications) -{" "}
+                  ARIA (Accessible Rich Internet Applications) -{" "}
                   <a
                     href="https://www.w3.org/WAI/ARIA/apg/"
                     target="_blank"

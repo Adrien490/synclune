@@ -1,3 +1,4 @@
+import { PageHeaderSkeleton } from "@/shared/components/page-header-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 
@@ -15,35 +16,13 @@ export default function LegalLoading() {
 		>
 			<span className="sr-only">Chargement des mentions légales...</span>
 
-			{/* Page Header Skeleton - Uses PageHeader component */}
-			<div className="pt-16 sm:pt-20">
-				<section className="bg-background border-b border-border">
-					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-						<div className="space-y-2">
-							{/* Breadcrumbs */}
-							<nav className="text-sm">
-								<div className="flex items-center gap-2">
-									<Skeleton className="h-4 w-16 bg-muted/40" />
-									<span className="text-muted-foreground">/</span>
-									<Skeleton className="h-4 w-40 bg-muted/40" />
-								</div>
-							</nav>
-
-							{/* Title */}
-							<Skeleton className="h-8 sm:h-9 w-64 bg-muted/50" />
-
-							{/* Description */}
-							<Skeleton className="h-5 w-full max-w-xl bg-muted/30" />
-						</div>
-					</div>
-				</section>
-			</div>
+			<PageHeaderSkeleton />
 
 			{/* Main Content */}
-			<div className="from-ivory via-rose-50/30 to-gold-50/20">
-				<div className={`container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl ${SECTION_SPACING.default}`}>
+			<div className="bg-background">
+				<div className={`container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl ${SECTION_SPACING.default}`}>
 					{/* Main content card */}
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg space-y-8">
+					<div className="bg-card border rounded-2xl p-8 shadow-lg space-y-8">
 						{/* Legal sections */}
 						{Array.from({ length: 6 }).map((_, i) => (
 							<section key={i} className="space-y-4">
@@ -62,7 +41,7 @@ export default function LegalLoading() {
 						))}
 
 						{/* Contact section */}
-						<div className="from-rose-50/50 to-gold-50/50 rounded-xl p-6 space-y-4">
+						<div className="bg-muted/20 rounded-xl p-6 space-y-4">
 							<Skeleton className="h-6 w-56 bg-muted/50" />
 							<Skeleton className="h-4 w-full bg-muted/30" />
 							<Skeleton className="h-4 w-5/6 bg-muted/30" />

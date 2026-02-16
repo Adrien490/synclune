@@ -14,6 +14,7 @@ export async function cleanupExpiredSessions(): Promise<{
 	sessionsDeleted: number;
 	verificationsDeleted: number;
 	tokensCleared: number;
+	hasMore: boolean;
 }> {
 	const now = new Date();
 
@@ -97,5 +98,10 @@ export async function cleanupExpiredSessions(): Promise<{
 		sessionsDeleted: sessionsResult.count,
 		verificationsDeleted: verificationsResult.count,
 		tokensCleared,
+		hasMore:
+			sessionsToDelete.length === CLEANUP_DELETE_LIMIT ||
+			verificationsToDelete.length === CLEANUP_DELETE_LIMIT ||
+			expiredAccessTokens.length === CLEANUP_DELETE_LIMIT ||
+			expiredRefreshTokens.length === CLEANUP_DELETE_LIMIT,
 	};
 }

@@ -135,6 +135,34 @@ export async function sendWebhookFailedAlertEmail({
 }
 
 /**
+ * Alerte admin : Echecs dans un cron job critique
+ */
+export async function sendAdminCronFailedAlert({
+	job,
+	errors,
+	details,
+}: {
+	job: string
+	errors: number
+	details: Record<string, unknown>
+}): Promise<EmailResult> {
+	const detailLines = Object.entries(details)
+		.map(([key, value]) => `  ${key}: ${value}`)
+		.join("\n")
+
+	const text = `Le cron job "${job}" a rencontré ${errors} erreur(s).\n\nDétails :\n${detailLines}\n\nVérifiez les logs Vercel pour plus d'informations.`
+	const html = `<p>Le cron job <strong>${job}</strong> a rencontré <strong>${errors} erreur(s)</strong>.</p><pre>${detailLines}</pre><p>Vérifiez les logs Vercel pour plus d'informations.</p>`
+
+	return sendEmail({
+		to: EMAIL_ADMIN,
+		subject: `[ALERTE CRON] ${job} — ${errors} erreur(s)`,
+		html,
+		text,
+		tags: [{ name: "category", value: "admin" }],
+	})
+}
+
+/**
  * Alerte admin : Echec generation facture (Conformite legale)
  */
 export async function sendAdminInvoiceFailedAlert({

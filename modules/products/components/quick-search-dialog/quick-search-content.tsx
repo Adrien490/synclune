@@ -2,8 +2,8 @@
 
 import { ChevronRight, Lightbulb, Search } from "lucide-react"
 
+import { Button } from "@/shared/components/ui/button"
 import ScrollFade from "@/shared/components/scroll-fade"
-import { cn } from "@/shared/utils/cn"
 import { matchesWordStart } from "@/modules/products/utils/match-word-start"
 
 import type { QuickSearchResult } from "../../data/quick-search-products"
@@ -51,13 +51,13 @@ export function QuickSearchContent({
 	const showEmptyState = !hasSearchResults && !hasMatchedNav && !suggestion
 
 	return (
-		<>
+		<div className="flex flex-col h-full">
 			{/* Screen reader announcement (replaces Suspense fallback "Recherche en cours...") */}
 			<div role="status" aria-live="polite" className="sr-only">
 				{totalCount} resultat{totalCount !== 1 ? "s" : ""} trouve{totalCount !== 1 ? "s" : ""}.
 			</div>
 
-			<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
+			<ScrollFade axis="vertical" hideScrollbar={false} className="flex-1 min-h-0">
 				<div className="px-4 py-4 space-y-4">
 					{/* Spell suggestion */}
 					{suggestion && (
@@ -158,24 +158,19 @@ export function QuickSearchContent({
 
 			{/* Footer: View all results */}
 			{totalCount > 0 && (
-				<div className="sticky bottom-0 px-4 py-3 border-t border-border bg-background/95 backdrop-blur-sm">
-					<button
-						type="button"
+				<div className="shrink-0 px-4 py-3 border-t border-border bg-background/95 backdrop-blur-sm">
+					<Button
 						onClick={onViewAllResults}
 						data-active={undefined}
-						className={cn(
-							"w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl",
-							"text-sm font-medium text-foreground underline",
-							"hover:bg-accent transition-colors",
-							"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
-							"data-[active=true]:bg-accent"
-						)}
+						className="w-full data-[active=true]:ring-[3px] data-[active=true]:ring-ring/50"
 					>
-						Voir les {totalCount} resultat{totalCount > 1 ? "s" : ""}
+						{totalCount === 1
+							? "Voir le resultat"
+							: `Voir les ${totalCount} resultats`}
 						<ChevronRight className="size-4" aria-hidden="true" />
-					</button>
+					</Button>
 				</div>
 			)}
-		</>
+		</div>
 	)
 }

@@ -99,6 +99,7 @@ describe("cleanupExpiredWishlists", () => {
 		expect(result).toEqual({
 			deletedCount: 7,
 			orphanedItemsCount: 12,
+			hasMore: false,
 		});
 	});
 
@@ -112,6 +113,7 @@ describe("cleanupExpiredWishlists", () => {
 		expect(result).toEqual({
 			deletedCount: 0,
 			orphanedItemsCount: 0,
+			hasMore: false,
 		});
 		expect(mockPrisma.wishlist.findMany).toHaveBeenCalledTimes(1);
 		expect(mockPrisma.wishlist.deleteMany).toHaveBeenCalledTimes(1);
@@ -131,6 +133,7 @@ describe("cleanupExpiredWishlists", () => {
 		expect(result).toEqual({
 			deletedCount: 4,
 			orphanedItemsCount: 0,
+			hasMore: false,
 		});
 	});
 

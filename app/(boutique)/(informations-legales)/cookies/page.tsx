@@ -53,7 +53,7 @@ export default async function CookiesPage() {
       <PageHeader
         title="Gestion des cookies"
         description="Gérez vos préférences de cookies et consultez les informations sur les traceurs utilisés"
-        breadcrumbs={[{ label: "Cookies", href: "/cookies" }]}
+        breadcrumbs={[{ label: "Informations légales", href: "/informations-legales" }, { label: "Cookies", href: "/cookies" }]}
       />
 
       <section className={`bg-background ${SECTION_SPACING.default}`}>

@@ -5,6 +5,7 @@ import { getStripeClient } from "@/shared/lib/stripe";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
 import {
+	BATCH_DEADLINE_MS,
 	BATCH_SIZE_SMALL,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	THRESHOLDS,
@@ -69,6 +70,7 @@ export async function retryFailedWebhooks(): Promise<{
 	permanentlyFailed: number;
 	errors: number;
 	orphansRecovered: number;
+	hasMore: boolean;
 } | null> {
 	console.log("[CRON:retry-webhooks] Starting failed webhook retry...");
 
@@ -103,8 +105,13 @@ export async function retryFailedWebhooks(): Promise<{
 	let succeeded = 0;
 	let permanentlyFailed = 0;
 	let errors = 0;
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
 
 	for (const webhookEvent of failedEvents) {
+		if (Date.now() > deadline) {
+			console.warn("[CRON:retry-webhooks] Approaching timeout, stopping batch early");
+			break;
+		}
 		try {
 			// Check if the event type is supported
 			if (!isEventSupported(webhookEvent.eventType)) {
@@ -223,5 +230,6 @@ export async function retryFailedWebhooks(): Promise<{
 		permanentlyFailed,
 		errors,
 		orphansRecovered,
+		hasMore: failedEvents.length === BATCH_SIZE_SMALL,
 	};
 }

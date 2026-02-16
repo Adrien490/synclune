@@ -51,7 +51,7 @@ export default async function CGVPage() {
       <PageHeader
         title="Conditions Générales de Vente"
         description="Conditions régissant les ventes de bijoux artisanaux réalisées par Synclune"
-        breadcrumbs={[{ label: "CGV", href: "/cgv" }]}
+        breadcrumbs={[{ label: "Informations légales", href: "/informations-legales" }, { label: "CGV", href: "/cgv" }]}
       />
 
       <section className={`bg-background ${SECTION_SPACING.default}`}>
