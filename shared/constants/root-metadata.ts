@@ -61,14 +61,23 @@ export const rootMetadata: Metadata = {
 			"Bijoux colorés faits main. Boucles d'oreilles, colliers, bracelets. Créations uniques en éditions limitées.",
 		images: [SEO_DEFAULTS.images.default],
 	},
+	// TODO: Re-enable indexing when ready to go live
 	robots: {
-		index: true,
-		follow: true,
+		index: false,
+		follow: false,
 		googleBot: {
-			index: true,
-			follow: true,
+			index: false,
+			follow: false,
 		},
 	},
+	// robots: {
+	// 	index: true,
+	// 	follow: true,
+	// 	googleBot: {
+	// 		index: true,
+	// 		follow: true,
+	// 	},
+	// },
 	verification: {
 		google: process.env.GOOGLE_SITE_VERIFICATION,
 		other: {
