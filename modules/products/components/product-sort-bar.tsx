@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { SKU_SELECTOR_DIALOG_ID } from "@/modules/cart/components/sku-selector-dialog";
 import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
 import { PRODUCT_FILTER_DIALOG_ID, PRODUCTS_SORT_LABELS } from "@/modules/products/constants/product.constants";
@@ -53,8 +54,9 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 	const { open: openSearch, close: closeSearch, isOpen: isSearchOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const { open: openFilter, close: closeFilter, isOpen: isFilterOpen } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const { isOpen: isSkuSelectorOpen } = useDialog(SKU_SELECTOR_DIALOG_ID);
+	const isAnySheetOpen = useSheetStore((state) => state.openSheet !== null);
 
-	const isHidden = isSearchOpen || isFilterOpen || sortOpen || isSkuSelectorOpen;
+	const isHidden = isSearchOpen || isFilterOpen || sortOpen || isSkuSelectorOpen || isAnySheetOpen;
 
 	// Transfer focus away from toolbar buttons when bar hides
 	const toolbarRef = useRef<HTMLDivElement>(null);
