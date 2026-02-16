@@ -12,6 +12,7 @@ const { mockPrisma, mockUpdateTag } = vi.hoisted(() => ({
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("next/cache", () => ({

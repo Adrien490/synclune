@@ -62,7 +62,7 @@ export function CartSheetFooter({
 					<button
 						type="button"
 						onClick={onClose}
-						className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+						className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 					>
 						Continuer mes achats
 					</button>

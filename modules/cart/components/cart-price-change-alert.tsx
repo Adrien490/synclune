@@ -38,7 +38,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 
 	return (
 		<div
-			className="w-full p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md text-xs sm:text-sm text-blue-700 dark:text-blue-300"
+			className="px-6 py-2.5 bg-blue-50 dark:bg-blue-950/20 border-b border-blue-200 dark:border-blue-800 text-xs sm:text-sm text-blue-700 dark:text-blue-300"
 			role="alert"
 			aria-live="polite"
 		>
@@ -94,7 +94,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 						)}
 					</Button>
 					<p className="text-xs text-green-600 dark:text-green-400 font-medium text-center sm:text-left">
-						<span role="img" aria-hidden="true">💚</span> Économisez {formatEuro(totalSavings)} en actualisant !
+						<span role="img" aria-hidden="true">💚</span> Économise {formatEuro(totalSavings)} en actualisant !
 					</p>
 				</div>
 			)}

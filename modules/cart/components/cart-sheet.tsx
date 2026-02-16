@@ -88,7 +88,7 @@ export function CartSheet({ cart }: CartSheetProps) {
 							)}
 						</SheetTitle>
 						<SheetDescription className="sr-only">
-							Encore quelques étapes pour passer commande 😊
+							Encore quelques étapes pour passer commande
 						</SheetDescription>
 					</SheetHeader>
 
