@@ -62,12 +62,9 @@ export default async function RootLayout({
 
 							<ErrorBoundary fallback={null}>
 								<Suspense fallback={<CartSheetSkeleton />}>
-									<CartSheetLoader />
+									<CartAndSkuLoader />
 								</Suspense>
 							</ErrorBoundary>
-							<Suspense fallback={null}>
-								<SkuSelectorDialogLoader />
-							</Suspense>
 							<UnsavedChangesDialog />
 							<CookieBanner />
 						</Suspense>
@@ -83,12 +80,12 @@ export default async function RootLayout({
 	);
 }
 
-async function CartSheetLoader() {
+async function CartAndSkuLoader() {
 	const cart = await getCart();
-	return <CartSheet cart={cart} />;
-}
-
-async function SkuSelectorDialogLoader() {
-	const cart = await getCart();
-	return <SkuSelectorDialog cart={cart} />;
+	return (
+		<>
+			<CartSheet cart={cart} />
+			<SkuSelectorDialog cart={cart} />
+		</>
+	);
 }

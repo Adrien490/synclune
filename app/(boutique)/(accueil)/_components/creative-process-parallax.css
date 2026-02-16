@@ -1,0 +1,36 @@
+/* Blob float animations — only loaded on homepage */
+@keyframes blob-float-1 {
+	0%, 100% {
+		transform: translate(0, 0) scale(1);
+	}
+	25% {
+		transform: translate(30px, -20px) scale(1.05);
+	}
+	50% {
+		transform: translate(-20px, 30px) scale(0.95);
+	}
+	75% {
+		transform: translate(20px, 20px) scale(1.02);
+	}
+}
+
+@keyframes blob-float-2 {
+	0%, 100% {
+		transform: translate(0, 0) scale(1);
+	}
+	33% {
+		transform: translate(-25px, 25px) scale(1.08);
+	}
+	66% {
+		transform: translate(25px, -15px) scale(0.92);
+	}
+}
+
+@keyframes blob-float-3 {
+	0%, 100% {
+		transform: translate(0, 0) rotate(0deg) scale(1);
+	}
+	50% {
+		transform: translate(15px, -25px) rotate(10deg) scale(1.1);
+	}
+}

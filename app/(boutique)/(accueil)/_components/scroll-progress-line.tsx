@@ -37,7 +37,7 @@ function AnimatedLine() {
 		offset: ["start 0.8", "end 0.5"],
 	});
 
-	const scaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
+	const clipPath = useTransform(scrollYProgress, (v) => `inset(0 0 ${100 - v * 100}% 0)`);
 	const opacity = useTransform(scrollYProgress, [0, 0.1], [0.3, 1]);
 
 	return (
@@ -47,13 +47,12 @@ function AnimatedLine() {
 				className="absolute inset-0 w-0.5 sm:w-1 bg-secondary/20 rounded-full"
 				aria-hidden="true"
 			/>
-			{/* Ligne animée (progression) */}
+			{/* Ligne animée (progression) — clipPath is always GPU-composited */}
 			<motion.div
-				className="absolute top-0 left-0 w-0.5 sm:w-1 bg-secondary/60 rounded-full origin-top"
+				className="absolute top-0 left-0 w-0.5 sm:w-1 h-full bg-secondary/60 rounded-full"
 				style={{
-					scaleY,
+					clipPath,
 					opacity,
-					height: "100%",
 				}}
 				aria-hidden="true"
 			/>

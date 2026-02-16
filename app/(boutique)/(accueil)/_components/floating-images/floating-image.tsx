@@ -1,5 +1,6 @@
 "use client";
 
+import "./floating-images.css";
 import { motion, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";

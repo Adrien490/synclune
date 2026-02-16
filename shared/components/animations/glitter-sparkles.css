@@ -1,0 +1,37 @@
+/* Glitter twinkle animations — loaded with GlitterSparkles component */
+@keyframes glitter-twinkle {
+	0% {
+		opacity: 0.15;
+		transform: rotate(0deg) scale(0.3);
+	}
+	33%,
+	66% {
+		opacity: 1;
+		transform: rotate(180deg) scale(1);
+	}
+	100% {
+		opacity: 0.15;
+		transform: rotate(360deg) scale(0.3);
+	}
+}
+
+@keyframes glitter-twinkle-reduced {
+	0%,
+	100% {
+		opacity: 0.5;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+
+.animate-glitter-twinkle {
+	animation: glitter-twinkle var(--sparkle-duration, 3s) cubic-bezier(0.25, 0.1, 0.25, 1)
+		var(--sparkle-delay, 0s) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-glitter-twinkle {
+		animation-name: glitter-twinkle-reduced;
+	}
+}

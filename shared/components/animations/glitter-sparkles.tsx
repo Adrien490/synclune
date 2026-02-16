@@ -1,5 +1,6 @@
 "use client";
 
+import "./glitter-sparkles.css";
 import { useRef } from "react";
 import { useInView } from "motion/react";
 import { cn } from "@/shared/utils/cn";

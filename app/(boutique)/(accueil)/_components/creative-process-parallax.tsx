@@ -1,5 +1,6 @@
 "use client";
 
+import "./creative-process-parallax.css";
 import { cn } from "@/shared/utils/cn";
 import {
   motion,

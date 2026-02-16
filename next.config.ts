@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  experimental: {
+    optimizePackageImports: ["motion/react", "recharts"],
+  },
 
   async headers() {
     // CSP enforced — validated in staging
