@@ -3,7 +3,7 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { cn } from "@/shared/utils/cn";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
-import { petitFormalScript } from "@/shared/styles/fonts";
+
 import { NewsletterForm } from "@/modules/newsletter/components/newsletter-form";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -48,18 +48,11 @@ export async function NewsletterSection() {
 					</div>
 				</Fade>
 
-				{/* Anti-spam assurance + signature */}
+				{/* Anti-spam assurance */}
 				<Fade inView once y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
-					<div className="mt-6 text-center">
-						<p className="text-sm text-muted-foreground">
-							1 à 2 emails par mois maximum. Désinscription en un clic.
-						</p>
-						<p
-							className={`${petitFormalScript.className} mt-2 text-sm text-foreground/70 italic`}
-						>
-							— Léane
-						</p>
-					</div>
+					<p className="mt-6 text-center text-sm text-muted-foreground">
+						1 à 2 emails par mois maximum. Désinscription en un clic.
+					</p>
 				</Fade>
 			</div>
 		</section>
