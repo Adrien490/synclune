@@ -71,6 +71,7 @@ function ColorSwatchList({
 							"relative block size-6 sm:size-7 rounded-full border border-foreground/15 shrink-0",
 							"transition-transform duration-150 motion-safe:can-hover:hover:scale-110",
 							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+							"after:absolute after:content-[''] after:-inset-2 after:rounded-full",
 							!color.inStock && "opacity-50"
 						)}
 						style={{ backgroundColor: color.hex }}
@@ -92,7 +93,7 @@ function ColorSwatchList({
 				<li>
 					<Link
 						href={productUrl}
-						className="relative z-30 text-xs text-muted-foreground"
+						className="relative z-30 text-xs text-muted-foreground min-h-11 min-w-11 flex items-center justify-center"
 						aria-label={`Voir les ${colors.length} couleurs disponibles pour ${title}`}
 					>
 						+{colors.length - 5}

@@ -7,43 +7,72 @@ Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prism
 - **Storefront** (`/boutique`) - Produits, panier, paiement
 - **Admin** (`/admin`) - Catalogue, commandes, analytics
 - **Stripe** - Paiements, webhooks, remboursements
-- **Emails** - React Email + Resend
+- **Emails** - React Email + Resend (24 templates)
+- **PWA** - Serwist (service worker, offline page)
 
 ## Commands
 
 ```bash
 pnpm dev                    # Dev server
-pnpm build                  # Build (runs prisma generate)
+pnpm build                  # Build (prisma generate + next build --turbopack)
+pnpm start                  # Production server
 pnpm test                   # Vitest
-pnpm prisma migrate dev     # Migrations
-pnpm prisma studio          # DB GUI
+pnpm lint                   # ESLint
+pnpm seed                   # Seed database
+pnpm db:studio              # Prisma Studio GUI
+pnpm email:dev              # Preview emails (port 3001)
+pnpm analyse                # Bundle analysis
+pnpm e2e                    # Playwright E2E tests
+pnpm e2e:ui                 # Playwright UI mode
+pnpm prisma migrate dev     # Create/apply migrations
 ```
 
 ## Architecture
 
 ```
 app/
-├── (auth)/              # Connexion, inscription, mot-de-passe
-├── (boutique)/          # Storefront client
-├── admin/               # Dashboard admin
-└── api/                 # Auth, webhooks, uploads
+├── (auth)/                  # Connexion, inscription, mot-de-passe, verification email
+├── (boutique)/              # Storefront (accueil, produits, collections, personnalisation, compte, legal, newsletter)
+├── admin/                   # Dashboard admin (catalogue, commandes, marketing, contenu)
+├── api/                     # Routes API (auth, cron, webhooks, search, uploadthing)
+├── paiement/                # Pages paiement (confirmation, annulation, retour)
+├── serwist/                 # Service Worker PWA
+├── ~offline/                # Page offline PWA
+└── sitemap-images.xml/      # Generation sitemap images
 
-modules/                 # DDD - 23 modules
+modules/                     # DDD - 23 modules
 ├── [module]/
-│   ├── actions/         # Server Actions (mutations)
-│   ├── data/            # Data fetching + cache
-│   ├── services/        # Pure business logic
-│   ├── components/      # React components
-│   ├── schemas/         # Zod schemas
-│   ├── constants/       # Cache tags, config
-│   ├── utils/           # Helpers, query builders
-│   └── types/           # TypeScript types
+│   ├── actions/             # Server Actions (mutations)
+│   ├── data/                # Data fetching + cache ("use cache")
+│   ├── services/            # Pure business logic (no side effects)
+│   ├── components/          # React components
+│   ├── schemas/             # Zod schemas
+│   ├── constants/           # Cache tags, config
+│   ├── hooks/               # Custom React hooks
+│   ├── types/               # TypeScript types
+│   ├── utils/               # Helpers, query builders
+│   └── lib/                 # Module-specific config (auth, cart, media, refunds, wishlist)
+│
+│   Specialized modules:
+│   ├── cron/                # constants, lib, services (+ __tests__)
+│   ├── emails/              # constants, services, types
+│   └── webhooks/            # constants, handlers, services, types, utils
 
-shared/                  # Cross-cutting
-├── components/          # UI (shadcn/ui), forms
-├── lib/                 # prisma, email, actions helpers
-├── hooks/               # useFilter, usePagination...
-└── stores/              # Zustand (dialogs, cookies)
+shared/                      # Cross-cutting concerns
+├── actions/                 # Client-side state actions (FAB visibility)
+├── components/              # UI (shadcn/ui), animations, forms, icons, loaders, navigation
+├── constants/               # Cache tags, countries, currency, brand, SEO, navigation, limits
+├── contexts/                # React Context definitions
+├── data/                    # Shared data fetching with cache
+├── hooks/                   # ~20 hooks (pagination, scroll, filter, media queries, touch)
+├── lib/                     # Core: prisma, stripe, email-config, cache, rate-limit, actions/
+├── providers/               # Root providers, dialog/sheet/store providers
+├── schemas/                 # Shared Zod schemas (address, email, pagination, media, phone)
+├── services/                # Shared business logic (unique name generator)
+├── stores/                  # Zustand stores (5 stores)
+├── styles/                  # Global styles, fonts
+├── types/                   # Shared types (server actions, sessions, pagination, errors)
+└── utils/                   # Formatting, slug, date, currency, password strength, seeded random
 ```
 
 ## Key Technologies
@@ -51,8 +80,10 @@ shared/                  # Cross-cutting
 - **Auth**: Better Auth (email, Google, GitHub)
 - **Database**: PostgreSQL (Neon) + Prisma 7
 - **Forms**: TanStack Form + `useAppForm` hook
-- **State**: Zustand (dialogs, cookie consent)
-- **UI**: shadcn/ui + Tailwind + Framer Motion
+- **State**: Zustand (5 stores: dialogs, alert dialogs, sheets, cookie consent, badge counts)
+- **UI**: shadcn/ui + Tailwind + Motion (v12, `motion/react`)
+- **Uploads**: UploadThing
+- **Analytics**: Vercel Analytics + Speed Insights
 
 ### React 19 - NO MEMOIZATION
 
@@ -64,7 +95,8 @@ Le compilateur React 19 optimise automatiquement. **NE PAS utiliser:**
 ```typescript
 "use server"
 
-import { requireAdmin, validateInput, success, handleActionError } from "@/shared/lib/actions"
+import { requireAdmin } from "@/modules/auth/lib/require-auth"
+import { validateInput, success, handleActionError } from "@/shared/lib/actions"
 import { prisma } from "@/shared/lib/prisma"
 
 export async function createSomething(prevState: ActionState | undefined, formData: FormData): Promise<ActionState> {
@@ -84,11 +116,18 @@ export async function createSomething(prevState: ActionState | undefined, formDa
 }
 ```
 
-**Helpers** (`shared/lib/actions/`):
-- `requireAuth()`, `requireAdmin()` - Auth checks
-- `success()`, `error()`, `notFound()` - Responses
-- `validateInput()` - Zod validation
-- `handleActionError()` - Error handling
+**Auth helpers** (`modules/auth/lib/require-auth`):
+- `requireAuth()` - Verifies user authenticated + exists in DB
+- `requireAdmin()` - Verifies ADMIN role (session only)
+- `requireAdminWithUser()` - Verifies admin + returns user object
+
+**Action helpers** (`shared/lib/actions/`):
+- `success()`, `error()`, `notFound()`, `unauthorized()`, `forbidden()`, `validationError()` - Responses
+- `validateInput()`, `validateFormData()` - Zod validation
+- `handleActionError()`, `BusinessError` - Error handling
+- `enforceRateLimit()` - Rate limiting
+
+**Note**: Some actions use `.safeParse()` directly instead of `validateInput()`. Both patterns are valid.
 
 ## Caching
 
@@ -115,7 +154,20 @@ async function fetchCart(userId?: string) {
 }
 ```
 
-**Profiles** (next.config.ts): `products`, `collections`, `reference`, `cart`, `session`, `dashboard`
+**10 cache profiles** (next.config.ts):
+
+| Profile | Stale | Revalidate | Usage |
+|---------|-------|------------|-------|
+| `skuStock` | 30s | 15s | Real-time stock levels |
+| `dashboard` | 1m | 30s | Admin data |
+| `session` | 1m | 30s | User session |
+| `userOrders` | 2m | 1m | Order history |
+| `cart` | 5m | 1m | Cart, wishlist, newsletter status |
+| `products` | 15m | 5m | Product listings, search |
+| `productDetail` | 15m | 5m | Single product, media, SKUs |
+| `relatedProducts` | 30m | 10m | Related/suggested products |
+| `collections` | 1h | 15m | Collections |
+| `reference` | 7d | 24h | Legal pages, materials, colors, FAQs |
 
 ## Module Layers Pattern
 
@@ -204,6 +256,43 @@ Les requetes de lecture dans `actions/` sont acceptees pour:
 
 Ces reads sont atomiques avec la mutation et ne beneficieraient pas du cache (donnees potentiellement stales entre lecture et ecriture).
 
+## API Routes
+
+### Webhooks (`api/webhooks/`)
+Stripe webhook handlers with signature verification + idempotency. Logic in `modules/webhooks/`.
+
+### Cron Jobs (`api/cron/`)
+13 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
+
+| Job | Schedule |
+|-----|----------|
+| `cleanup-carts` | Daily 2:00 |
+| `cleanup-wishlists` | Daily 2:30 |
+| `cleanup-sessions` | Daily 3:00 |
+| `process-account-deletions` | Daily 5:00 |
+| `cleanup-newsletter` | Weekly Sunday 6:00 |
+| `review-request-emails` | Daily 10:00 |
+| `sync-async-payments` | Every 4h |
+| `reconcile-refunds` | Every 6h |
+| `process-scheduled-discounts` | Every 4h |
+| `retry-webhooks` | Every 30min |
+| `cleanup-webhook-events` | Monthly 1st 7:00 |
+| `hard-delete-retention` | Monthly 1st 8:00 |
+| `cleanup-orphan-media` | Monthly 1st 9:00 |
+
+### Other API Routes
+- `api/auth/` - Better Auth handler
+- `api/search/` - Search endpoint
+- `api/uploadthing/` - UploadThing file upload handler
+
+## Emails
+
+24 transactional email templates in `emails/` using React Email + Resend.
+
+Templates: order confirmation, shipping, delivery, cancellation, return, payment failed, refund (approved/confirmed), review request/response, newsletter (confirmation/welcome), password (reset/changed), verification, customization (request/confirmation), tracking update, admin notifications (new order, invoice failed, refund failed, webhook failed).
+
+Config: `shared/lib/email-config.ts`. Preview: `pnpm email:dev`.
+
 ## Prisma Patterns
 
 ```typescript
@@ -220,7 +309,7 @@ await softDelete.order(orderId)
 
 ## Forms
 
-TanStack Form avec `useAppForm`. Voir `shared/components/forms/README.md`.
+TanStack Form avec `useAppForm`. Voir `shared/components/forms/` pour les composants de formulaire.
 
 ```typescript
 const form = useAppForm<MyInput>({
@@ -232,10 +321,12 @@ const form = useAppForm<MyInput>({
 
 ## Security
 
-- **Rate limiting**: Arcjet + in-memory per-action
+- **Rate limiting**: Arcjet + Upstash Redis per-action
 - **Validation**: Zod server-side
 - **RGPD**: Soft deletes, consent tracking, data export
-- **Webhooks**: Signature verification + idempotency
+- **Webhooks**: Stripe signature verification + idempotency + 5-minute anti-replay window
+- **Security headers** (next.config.ts): CSP, HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- **Uploads**: UploadThing (server-validated)
 
 ## Conventions
 
@@ -248,3 +339,4 @@ const form = useAppForm<MyInput>({
 | UI text | French |
 | Code | English |
 | Commits | `feat:`, `fix:`, `docs:`, `refactor:` |
+| Indentation | Tabs |

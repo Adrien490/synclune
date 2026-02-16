@@ -94,6 +94,11 @@ export function useUnsavedChanges(
 	// Calculer si on bloque actuellement
 	const isBlocking = enabled && isDirty && !allowNavigationRef.current
 
+	// Effect Event: reads onBlock without re-registering the guard on identity changes
+	const onGuardBlock = useEffectEvent(() => {
+		onBlock?.()
+	})
+
 	// Enregistrer/désenregistrer le guard dans le contexte
 	useEffect(() => {
 		if (!navigationGuard) return
@@ -102,12 +107,12 @@ export function useUnsavedChanges(
 			return
 		}
 
-		navigationGuard.registerGuard(id, { message, onBlock })
+		navigationGuard.registerGuard(id, { message, onBlock: () => onGuardBlock() })
 
 		return () => {
 			navigationGuard.unregisterGuard(id)
 		}
-	}, [navigationGuard, id, isBlocking, message, onBlock])
+	}, [navigationGuard, id, isBlocking, message])
 
 	// Effect Event pour beforeunload - accède à message sans déclencher de re-registration
 	const onBeforeUnload = useEffectEvent((e: BeforeUnloadEvent) => {

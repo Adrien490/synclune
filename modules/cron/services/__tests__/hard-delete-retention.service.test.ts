@@ -232,6 +232,54 @@ describe("hardDeleteExpiredRecords", () => {
 		expect(mockPrisma.skuMedia.findMany).not.toHaveBeenCalled();
 	});
 
+	it("should not fail when UploadThing review media deletion throws", async () => {
+		mockPrisma.productReview.findMany.mockResolvedValue([
+			{ id: "review-1" },
+		]);
+		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
+		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
+		mockPrisma.product.findMany.mockResolvedValue([]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([
+			{ url: "https://utfs.io/f/review-media-1" },
+		]);
+		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.$transaction.mockResolvedValue([
+			{ count: 1 },
+			{ count: 0 },
+			{ count: 0 },
+			{ count: 0 },
+		]);
+		mockDeleteFiles.mockRejectedValue(new Error("UploadThing API error"));
+
+		const result = await hardDeleteExpiredRecords();
+
+		expect(result.reviewsDeleted).toBe(1);
+		expect(mockDeleteFiles).toHaveBeenCalled();
+	});
+
+	it("should not fail when UploadThing sku media deletion throws", async () => {
+		mockPrisma.productReview.findMany.mockResolvedValue([]);
+		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
+		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
+		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.skuMedia.findMany.mockResolvedValue([
+			{ url: "https://utfs.io/f/sku-1", thumbnailUrl: null },
+		]);
+		mockPrisma.$transaction.mockResolvedValue([
+			{ count: 0 },
+			{ count: 0 },
+			{ count: 0 },
+			{ count: 1 },
+		]);
+		mockDeleteFiles.mockRejectedValue(new Error("UploadThing API error"));
+
+		const result = await hardDeleteExpiredRecords();
+
+		expect(result.productsDeleted).toBe(1);
+		expect(mockDeleteFiles).toHaveBeenCalled();
+	});
+
 	it("should filter null thumbnailUrls from sku media", async () => {
 		mockPrisma.productReview.findMany.mockResolvedValue([]);
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);

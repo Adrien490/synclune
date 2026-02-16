@@ -7,19 +7,20 @@ import {
 	extractPaymentFailureDetails,
 	restoreStockForOrder,
 } from "@/modules/webhooks/services/payment-intent.service";
-import { BATCH_SIZE_MEDIUM, THRESHOLDS } from "@/modules/cron/constants/limits";
+import { BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
- * Service de synchronisation des paiements asynchrones
+ * Synchronizes async payment statuses by polling Stripe.
  *
- * Les méthodes de paiement asynchrones (SEPA Direct Debit, Sofort, etc.)
- * peuvent prendre 3-5 jours ouvrés pour être confirmées.
- * Ce cron poll Stripe pour réconcilier les statuts en cas d'échec webhook.
+ * Async payment methods (SEPA Direct Debit, Sofort, etc.) can take
+ * 3-5 business days to confirm. This cron polls Stripe to reconcile
+ * statuses in case of webhook failure.
  */
 export async function syncAsyncPayments(): Promise<{
 	checked: number;
 	updated: number;
 	errors: number;
+	hasMore: boolean;
 } | null> {
 	console.log("[CRON:sync-async-payments] Starting async payment sync...");
 
@@ -29,8 +30,8 @@ export async function syncAsyncPayments(): Promise<{
 		return null;
 	}
 
-	// Trouver les commandes avec paiement PENDING depuis plus d'1h et moins de 7 jours
-	// (au-delà de 7 jours, les paiements async échouent généralement)
+	// Find PENDING orders created between 1h and 7 days ago
+	// (beyond 7 days, async payments typically fail)
 	const minAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MIN_AGE_MS);
 	const maxAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MAX_AGE_MS);
 
@@ -65,12 +66,12 @@ export async function syncAsyncPayments(): Promise<{
 
 		try {
 			const paymentIntent = await stripe.paymentIntents.retrieve(
-				order.stripePaymentIntentId
+				order.stripePaymentIntentId,
+				{ timeout: STRIPE_TIMEOUT_MS }
 			);
 
-			// Vérifier si le statut a changé
 			if (paymentIntent.status === "succeeded") {
-				// Le paiement a réussi mais le webhook n'a pas été reçu
+				// Payment succeeded but webhook was missed
 				console.log(
 					`[CRON:sync-async-payments] Order ${order.orderNumber} payment succeeded (webhook missed)`
 				);
@@ -80,16 +81,23 @@ export async function syncAsyncPayments(): Promise<{
 				paymentIntent.status === "canceled" ||
 				paymentIntent.status === "requires_payment_method"
 			) {
-				// Le paiement a échoué
+				// Payment failed
 				console.log(
 					`[CRON:sync-async-payments] Order ${order.orderNumber} payment failed: ${paymentIntent.status}`
 				);
 				const failureDetails = extractPaymentFailureDetails(paymentIntent);
 				await markOrderAsFailed(order.id, order.stripePaymentIntentId, failureDetails);
-				await restoreStockForOrder(order.id);
+				try {
+					await restoreStockForOrder(order.id);
+				} catch (stockError) {
+					console.error(
+						`[STOCK-RESTORE-FAILED] Order ${order.orderNumber} (${order.id}): stock not restored after payment failure`,
+						stockError instanceof Error ? stockError.message : String(stockError)
+					);
+				}
 				updated++;
 			}
-			// Les autres statuts (processing, requires_action) sont encore en attente
+			// Other statuses (processing, requires_action) are still pending
 		} catch (error) {
 			console.error(
 				`[CRON:sync-async-payments] Error checking order ${order.orderNumber}:`,
@@ -107,5 +115,6 @@ export async function syncAsyncPayments(): Promise<{
 		checked: pendingOrders.length,
 		updated,
 		errors,
+		hasMore: pendingOrders.length === BATCH_SIZE_MEDIUM,
 	};
 }

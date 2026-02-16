@@ -14,7 +14,7 @@ import {
 const PROCESSING_ORPHAN_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
- * Recover events stuck in PROCESSING status (orphaned by a crash).
+ * Recovers events stuck in PROCESSING status (orphaned by a crash).
  * Re-marks them as FAILED so they can be retried on the next run.
  */
 async function recoverOrphanedProcessingEvents(): Promise<number> {
@@ -57,11 +57,10 @@ async function recoverOrphanedProcessingEvents(): Promise<number> {
 }
 
 /**
- * Service de retry des webhooks échoués
+ * Retries failed webhook events by re-fetching from Stripe.
  *
- * Re-fetch les événements Stripe depuis l'API et les retraite.
- * Les webhooks peuvent échouer pour des raisons transitoires
- * (timeouts, locks DB, etc.).
+ * Webhooks can fail for transient reasons (timeouts, DB locks, etc.).
+ * This cron re-fetches the event from Stripe's API and re-processes it.
  */
 export async function retryFailedWebhooks(): Promise<{
 	found: number;
@@ -82,8 +81,8 @@ export async function retryFailedWebhooks(): Promise<{
 	// Recovery phase: re-mark orphaned PROCESSING events as FAILED
 	const orphansRecovered = await recoverOrphanedProcessingEvents();
 
-	// Trouver les webhooks FAILED avec moins de MAX_WEBHOOK_RETRY_ATTEMPTS tentatives
-	// et traités il y a plus de 30 minutes (éviter les retries trop fréquents)
+	// Find FAILED webhooks under the max attempts limit,
+	// processed more than 30 min ago (avoid retrying too frequently)
 	const minAge = new Date(Date.now() - THRESHOLDS.WEBHOOK_RETRY_MIN_AGE_MS);
 
 	const failedEvents = await prisma.webhookEvent.findMany({
@@ -107,7 +106,7 @@ export async function retryFailedWebhooks(): Promise<{
 
 	for (const webhookEvent of failedEvents) {
 		try {
-			// Vérifier si le type d'événement est supporté
+			// Check if the event type is supported
 			if (!isEventSupported(webhookEvent.eventType)) {
 				console.log(
 					`[CRON:retry-webhooks] Skipping unsupported event type: ${webhookEvent.eventType}`
@@ -119,12 +118,12 @@ export async function retryFailedWebhooks(): Promise<{
 				continue;
 			}
 
-			// Re-fetch l'événement depuis Stripe
+			// Re-fetch the event from Stripe
 			let stripeEvent: Stripe.Event;
 			try {
 				stripeEvent = await stripe.events.retrieve(webhookEvent.stripeEventId);
 			} catch (fetchError) {
-				// L'événement n'existe plus chez Stripe (supprimé après 30 jours)
+				// Event no longer exists in Stripe (deleted after 30 days)
 				console.warn(
 					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} not found in Stripe`
 				);
@@ -138,7 +137,7 @@ export async function retryFailedWebhooks(): Promise<{
 				continue;
 			}
 
-			// Marquer comme PROCESSING et incrémenter les tentatives
+			// Mark as PROCESSING and increment attempts
 			await prisma.webhookEvent.update({
 				where: { id: webhookEvent.id },
 				data: {
@@ -149,10 +148,10 @@ export async function retryFailedWebhooks(): Promise<{
 
 			retried++;
 
-			// Re-dispatch l'événement
+			// Re-dispatch the event
 			const result = await dispatchEvent(stripeEvent);
 
-			// Marquer comme COMPLETED
+			// Mark as COMPLETED
 			await prisma.webhookEvent.update({
 				where: { id: webhookEvent.id },
 				data: {
@@ -162,7 +161,7 @@ export async function retryFailedWebhooks(): Promise<{
 				},
 			});
 
-			// Exécuter les tâches post-webhook
+			// Execute post-webhook tasks
 			if (result?.tasks?.length) {
 				await executePostWebhookTasks(result.tasks);
 			}

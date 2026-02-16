@@ -29,6 +29,11 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("server-only", () => ({}));
 
+vi.mock("next/cache", () => ({
+	cacheLife: vi.fn(),
+	cacheTag: vi.fn(),
+}));
+
 vi.mock("../constants/product.constants", () => ({
 	QUICK_SEARCH_SELECT: { id: true, slug: true, title: true },
 }));

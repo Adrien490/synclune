@@ -13,6 +13,7 @@ export async function GET() {
 			job: "process-account-deletions",
 			processed: result.processed,
 			errors: result.errors,
+			hasMore: result.hasMore,
 		});
 	} catch (error) {
 		return cronError(

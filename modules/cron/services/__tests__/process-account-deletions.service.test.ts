@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockDeleteUploadThingFileFromUrl } = vi.hoisted(() => ({
+const { mockPrisma, mockDeleteUploadThingFileFromUrl, mockDeleteUploadThingFilesFromUrls } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findMany: vi.fn() },
+		reviewMedia: { findMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockDeleteUploadThingFileFromUrl: vi.fn(),
+	mockDeleteUploadThingFilesFromUrls: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -14,6 +16,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
 	deleteUploadThingFileFromUrl: mockDeleteUploadThingFileFromUrl,
+	deleteUploadThingFilesFromUrls: mockDeleteUploadThingFilesFromUrls,
 }));
 
 vi.mock("next/cache", () => ({
@@ -42,7 +45,7 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 0, errors: 0 });
+		expect(result).toEqual({ processed: 0, errors: 0, hasMore: false });
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
@@ -57,8 +60,8 @@ describe("processAccountDeletions", () => {
 				deletionRequestedAt: { lt: expect.any(Date) },
 				anonymizedAt: null,
 			},
-			select: { id: true, email: true, image: true },
-			take: 50,
+			select: { id: true, image: true },
+			take: 25,
 		});
 
 		const call = mockPrisma.user.findMany.mock.calls[0][0];
@@ -72,15 +75,15 @@ describe("processAccountDeletions", () => {
 	it("should anonymize user data in a transaction", async () => {
 		const mockUser = {
 			id: "user-1",
-			email: "test@example.com",
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 1, errors: 0 });
+		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 
 		const transactionFn = mockPrisma.$transaction.mock.calls[0][0];
@@ -91,6 +94,10 @@ describe("processAccountDeletions", () => {
 			address: { deleteMany: vi.fn() },
 			cart: { deleteMany: vi.fn() },
 			wishlist: { deleteMany: vi.fn() },
+			reviewMedia: { deleteMany: vi.fn() },
+			productReview: { updateMany: vi.fn() },
+			newsletterSubscriber: { updateMany: vi.fn() },
+			order: { updateMany: vi.fn() },
 		};
 
 		await transactionFn(mockTx);
@@ -123,13 +130,58 @@ describe("processAccountDeletions", () => {
 		});
 	});
 
+	it("should anonymize order PII in the transaction", async () => {
+		const mockUser = {
+			id: "user-order",
+			image: null,
+		};
+		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.$transaction.mockResolvedValue(undefined);
+
+		await processAccountDeletions();
+
+		const transactionFn = mockPrisma.$transaction.mock.calls[0][0];
+		const mockTx = {
+			user: { update: vi.fn() },
+			session: { deleteMany: vi.fn() },
+			account: { deleteMany: vi.fn() },
+			address: { deleteMany: vi.fn() },
+			cart: { deleteMany: vi.fn() },
+			wishlist: { deleteMany: vi.fn() },
+			reviewMedia: { deleteMany: vi.fn() },
+			productReview: { updateMany: vi.fn() },
+			newsletterSubscriber: { updateMany: vi.fn() },
+			order: { updateMany: vi.fn() },
+		};
+
+		await transactionFn(mockTx);
+
+		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
+			where: { userId: "user-order" },
+			data: {
+				customerEmail: "anonymized-user-order@deleted.local",
+				customerName: "Client supprimé",
+				customerPhone: null,
+				shippingFirstName: "X",
+				shippingLastName: "X",
+				shippingAddress1: "Adresse supprimée",
+				shippingAddress2: null,
+				shippingPostalCode: "00000",
+				shippingCity: "Supprimé",
+				shippingPhone: "",
+				stripeCustomerId: null,
+			},
+		});
+	});
+
 	it("should delete avatar from UploadThing after successful transaction", async () => {
 		const mockUser = {
 			id: "user-2",
-			email: "avatar@example.com",
 			image: "https://utfs.io/f/abc123",
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 		mockDeleteUploadThingFileFromUrl.mockResolvedValue(true);
 
@@ -140,13 +192,40 @@ describe("processAccountDeletions", () => {
 		);
 	});
 
-	it("should not fail if avatar deletion fails (non-blocking)", async () => {
+	it("should delete review media from UploadThing after successful transaction", async () => {
 		const mockUser = {
 			id: "user-3",
-			email: "avatar-fail@example.com",
+			image: null,
+		};
+		const mockReviewMedias = [
+			{ url: "https://utfs.io/f/review1" },
+			{ url: "https://utfs.io/f/review2" },
+		];
+		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue(mockReviewMedias);
+		mockPrisma.$transaction.mockResolvedValue(undefined);
+		mockDeleteUploadThingFilesFromUrls.mockResolvedValue(undefined);
+
+		await processAccountDeletions();
+
+		expect(mockPrisma.reviewMedia.findMany).toHaveBeenCalledWith({
+			where: { review: { userId: "user-3" } },
+			select: { url: true },
+		});
+
+		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith([
+			"https://utfs.io/f/review1",
+			"https://utfs.io/f/review2",
+		]);
+	});
+
+	it("should not fail if avatar deletion fails (non-blocking)", async () => {
+		const mockUser = {
+			id: "user-4",
 			image: "https://utfs.io/f/failing-key",
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 		mockDeleteUploadThingFileFromUrl.mockRejectedValue(
 			new Error("UploadThing API error")
@@ -154,30 +233,50 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 1, errors: 0 });
+		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
+	});
+
+	it("should not fail if review media deletion fails (non-blocking)", async () => {
+		const mockUser = {
+			id: "user-5",
+			image: null,
+		};
+		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([
+			{ url: "https://utfs.io/f/failing-review" },
+		]);
+		mockPrisma.$transaction.mockResolvedValue(undefined);
+		mockDeleteUploadThingFilesFromUrls.mockRejectedValue(
+			new Error("UploadThing batch error")
+		);
+
+		const result = await processAccountDeletions();
+
+		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
 	});
 
 	it("should count errors when transaction fails", async () => {
 		const mockUser = {
-			id: "user-4",
-			email: "error@example.com",
+			id: "user-6",
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockRejectedValue(new Error("DB connection lost"));
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 0, errors: 1 });
+		expect(result).toEqual({ processed: 0, errors: 1, hasMore: false });
 	});
 
 	it("should process multiple users and handle mixed success/failure", async () => {
 		const users = [
-			{ id: "user-ok", email: "ok@test.com", image: null },
-			{ id: "user-fail", email: "fail@test.com", image: null },
-			{ id: "user-ok2", email: "ok2@test.com", image: null },
+			{ id: "user-ok", image: null },
+			{ id: "user-fail", image: null },
+			{ id: "user-ok2", image: null },
 		];
 		mockPrisma.user.findMany.mockResolvedValue(users);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction
 			.mockResolvedValueOnce(undefined)
 			.mockRejectedValueOnce(new Error("DB error"))
@@ -185,6 +284,36 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 2, errors: 1 });
+		expect(result).toEqual({ processed: 2, errors: 1, hasMore: false });
+	});
+
+	it("should return hasMore=true when batch size limit is reached", async () => {
+		const users = Array.from({ length: 25 }, (_, i) => ({
+			id: `user-${i}`,
+			image: null,
+		}));
+		mockPrisma.user.findMany.mockResolvedValue(users);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.$transaction.mockResolvedValue(undefined);
+
+		const result = await processAccountDeletions();
+
+		expect(result.hasMore).toBe(true);
+		expect(result.processed).toBe(25);
+	});
+
+	it("should return hasMore=false when batch size limit is not reached", async () => {
+		const users = Array.from({ length: 10 }, (_, i) => ({
+			id: `user-${i}`,
+			image: null,
+		}));
+		mockPrisma.user.findMany.mockResolvedValue(users);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.$transaction.mockResolvedValue(undefined);
+
+		const result = await processAccountDeletions();
+
+		expect(result.hasMore).toBe(false);
+		expect(result.processed).toBe(10);
 	});
 });

@@ -14,6 +14,7 @@ export async function GET() {
 			found: result.found,
 			sent: result.sent,
 			errors: result.errors,
+			hasMore: result.hasMore,
 		});
 	} catch (error) {
 		return cronError(

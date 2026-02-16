@@ -2,21 +2,24 @@ import { prisma } from "@/shared/lib/prisma";
 import { UTApi } from "uploadthing/server";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
 
-// UploadThing API limite listFiles a 500 par requete
+// UploadThing API limits listFiles to 500 per request
 const UPLOADTHING_LIST_LIMIT = 500;
 
-// Limit pages per run to avoid Vercel function timeout (5 pages × 500 = 2500 files max)
+// Limit pages per run to avoid Vercel function timeout (5 pages x 500 = 2500 files max)
 const MAX_PAGES_PER_RUN = 5;
 
+// Batch size for paginated DB queries to avoid loading all records at once
+const DB_QUERY_BATCH_SIZE = 500;
+
 /**
- * Service de nettoyage des fichiers UploadThing orphelins
+ * Cleans up orphaned UploadThing files not referenced in the database.
  *
- * Filet de securite pour rattraper les fichiers non references en DB:
+ * Safety net for files that lost their DB reference:
  * - SkuMedia (url, thumbnailUrl)
  * - ReviewMedia (url)
  * - User.image (avatars)
  *
- * Execute mensuellement pour limiter l'accumulation de fichiers orphelins.
+ * Runs monthly to limit orphan file accumulation.
  */
 export async function cleanupOrphanMedia(): Promise<{
 	filesScanned: number;
@@ -31,13 +34,13 @@ export async function cleanupOrphanMedia(): Promise<{
 	let errors = 0;
 
 	try {
-		// 1. Charger toutes les cles referencees en DB (approche efficace)
+		// 1. Load all referenced file keys from DB (paginated to control memory)
 		const referencedKeys = await getAllReferencedFileKeys();
 		console.log(
 			`[CRON:cleanup-orphan-media] Found ${referencedKeys.size} referenced keys in DB`
 		);
 
-		// 2. Lister les fichiers UploadThing avec pagination
+		// 2. List UploadThing files with pagination
 		let offset = 0;
 		let hasMore = true;
 		let pagesProcessed = 0;
@@ -68,7 +71,7 @@ export async function cleanupOrphanMedia(): Promise<{
 				)
 				.map((f) => f.key);
 
-			// 4. Supprimer les fichiers orphelins de cette page
+			// 4. Delete orphan files from this page
 			if (orphanKeys.length > 0) {
 				try {
 					await utapi.deleteFiles(orphanKeys);
@@ -111,8 +114,10 @@ export async function cleanupOrphanMedia(): Promise<{
 }
 
 /**
- * Charge toutes les cles de fichiers referencees en DB
- * Approche efficace: 3 requetes simples au lieu de N requetes avec LIKE
+ * Loads all referenced file keys from the database using paginated queries.
+ *
+ * Uses cursor-based pagination to avoid loading all media records into memory
+ * at once, which could be problematic as the catalogue grows.
  *
  * TODO: When adding new UploadThing routes (e.g. testimonialMedia, contactAttachment),
  * ensure uploaded files are tracked in DB and add the corresponding query here.
@@ -121,38 +126,65 @@ export async function cleanupOrphanMedia(): Promise<{
 async function getAllReferencedFileKeys(): Promise<Set<string>> {
 	const keys = new Set<string>();
 
-	// 1. SkuMedia (url et thumbnailUrl)
-	const skuMedia = await prisma.skuMedia.findMany({
-		select: { url: true, thumbnailUrl: true },
-	});
-	for (const media of skuMedia) {
-		const urlKey = extractFileKeyFromUrl(media.url);
-		if (urlKey) keys.add(urlKey);
-		if (media.thumbnailUrl) {
-			const thumbKey = extractFileKeyFromUrl(media.thumbnailUrl);
-			if (thumbKey) keys.add(thumbKey);
+	// 1. SkuMedia (url and thumbnailUrl) - paginated
+	let skuCursor: string | undefined;
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		const batch = await prisma.skuMedia.findMany({
+			select: { id: true, url: true, thumbnailUrl: true },
+			take: DB_QUERY_BATCH_SIZE,
+			...(skuCursor && { skip: 1, cursor: { id: skuCursor } }),
+			orderBy: { id: "asc" },
+		});
+		for (const media of batch) {
+			const urlKey = extractFileKeyFromUrl(media.url);
+			if (urlKey) keys.add(urlKey);
+			if (media.thumbnailUrl) {
+				const thumbKey = extractFileKeyFromUrl(media.thumbnailUrl);
+				if (thumbKey) keys.add(thumbKey);
+			}
 		}
+		if (batch.length < DB_QUERY_BATCH_SIZE) break;
+		skuCursor = batch[batch.length - 1].id;
 	}
 
-	// 2. ReviewMedia
-	const reviewMedia = await prisma.reviewMedia.findMany({
-		select: { url: true },
-	});
-	for (const media of reviewMedia) {
-		const key = extractFileKeyFromUrl(media.url);
-		if (key) keys.add(key);
-	}
-
-	// 3. User avatars (seulement ceux avec image non null)
-	const users = await prisma.user.findMany({
-		where: { image: { not: null } },
-		select: { image: true },
-	});
-	for (const user of users) {
-		if (user.image) {
-			const key = extractFileKeyFromUrl(user.image);
+	// 2. ReviewMedia - paginated
+	let reviewCursor: string | undefined;
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		const batch = await prisma.reviewMedia.findMany({
+			select: { id: true, url: true },
+			take: DB_QUERY_BATCH_SIZE,
+			...(reviewCursor && { skip: 1, cursor: { id: reviewCursor } }),
+			orderBy: { id: "asc" },
+		});
+		for (const media of batch) {
+			const key = extractFileKeyFromUrl(media.url);
 			if (key) keys.add(key);
 		}
+		if (batch.length < DB_QUERY_BATCH_SIZE) break;
+		reviewCursor = batch[batch.length - 1].id;
+	}
+
+	// 3. User avatars (only those with non-null image) - paginated
+	let userCursor: string | undefined;
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		const batch = await prisma.user.findMany({
+			where: { image: { not: null } },
+			select: { id: true, image: true },
+			take: DB_QUERY_BATCH_SIZE,
+			...(userCursor && { skip: 1, cursor: { id: userCursor } }),
+			orderBy: { id: "asc" },
+		});
+		for (const user of batch) {
+			if (user.image) {
+				const key = extractFileKeyFromUrl(user.image);
+				if (key) keys.add(key);
+			}
+		}
+		if (batch.length < DB_QUERY_BATCH_SIZE) break;
+		userCursor = batch[batch.length - 1].id;
 	}
 
 	return keys;

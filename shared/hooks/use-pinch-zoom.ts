@@ -440,18 +440,20 @@ export function usePinchZoom({
 		};
 	}, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
+	// Effect Event: reads scale without re-attaching the resize listener on every scale change
+	const onResize = useEffectEvent(() => {
+		const rect = containerRef.current?.getBoundingClientRect() ?? null;
+		setPosition((prev) => clampPosition(prev, scale, rect));
+	});
+
 	// Reclamper la position lors d'un changement de taille (orientation, resize)
+	const isZoomedForResize = scale > config.minScale;
 	useEffect(() => {
-		if (scale <= config.minScale) return;
+		if (!isZoomedForResize) return;
 
-		const handleResize = () => {
-			const rect = containerRef.current?.getBoundingClientRect() ?? null;
-			setPosition((prev) => clampPosition(prev, scale, rect));
-		};
-
-		window.addEventListener("resize", handleResize);
-		return () => window.removeEventListener("resize", handleResize);
-	}, [scale, config.minScale]);
+		window.addEventListener("resize", onResize);
+		return () => window.removeEventListener("resize", onResize);
+	}, [isZoomedForResize]);
 
 	return {
 		scale,

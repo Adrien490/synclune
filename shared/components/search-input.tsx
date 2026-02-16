@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useImperativeHandle, useRef, useState, useTransition } from "react"
+import { useEffect, useEffectEvent, useId, useImperativeHandle, useRef, useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { Search, X } from "lucide-react"
@@ -132,14 +132,19 @@ export function SearchInput({
 	const lastSyncedUrl = useRef(initialValue)
 	const urlValue = mode === "live" ? searchParams.get(paramName) || "" : ""
 
+	// Effect Event: reads form and onValueChange without re-triggering the sync effect
+	const onUrlSync = useEffectEvent((newUrlValue: string) => {
+		lastSyncedUrl.current = newUrlValue
+		form.setFieldValue("search", newUrlValue)
+		onValueChange?.(newUrlValue)
+	})
+
 	useEffect(() => {
 		if (mode !== "live") return
 		if (urlValue !== lastSyncedUrl.current) {
-			lastSyncedUrl.current = urlValue
-			form.setFieldValue("search", urlValue)
-			onValueChange?.(urlValue)
+			onUrlSync(urlValue)
 		}
-	}, [urlValue, form, mode, onValueChange])
+	}, [urlValue, mode])
 
 	const handleSearch = (searchValue: string) => {
 		const trimmed = searchValue.trim()

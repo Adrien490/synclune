@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 
 export interface RotatingWordProps {
 	/** List of words that rotate with animation */
@@ -32,15 +32,18 @@ export function RotatingWord({
 
 	const longestWord = words.reduce((a, b) => (a.length > b.length ? a : b));
 
+	// Effect Event: reads words.length without restarting the interval
+	const onTick = useEffectEvent(() => {
+		setCurrentIndex((prev) => (prev + 1) % words.length);
+	});
+
 	useEffect(() => {
 		if (shouldReduceMotion) return;
 
-		const interval = setInterval(() => {
-			setCurrentIndex((prev) => (prev + 1) % words.length);
-		}, duration);
+		const interval = setInterval(onTick, duration);
 
 		return () => clearInterval(interval);
-	}, [words.length, duration, shouldReduceMotion]);
+	}, [duration, shouldReduceMotion]);
 
 	const pillStyles = cn(
 		"inline-flex items-center justify-center",

@@ -13,7 +13,7 @@ import { Input } from "@/shared/components/ui/input";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useState, useTransition } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
 import { RatingStars } from "@/shared/components/rating-stars";
@@ -181,15 +181,19 @@ export function ProductFilterSheet({
 		},
 	});
 
+	// Effect Event: reads form, getValuesFromURL, setColorSearch, setMaterialSearch
+	// without re-triggering the sync effect
+	const onSheetSync = useEffectEvent(() => {
+		const values = getValuesFromURL();
+		form.reset(values);
+		setColorSearch("");
+		setMaterialSearch("");
+	});
+
 	useEffect(() => {
 		if (isOpen) {
-			const values = getValuesFromURL();
-			form.reset(values);
-			// Reset search fields on open
-			setColorSearch("");
-			setMaterialSearch("");
+			onSheetSync();
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isOpen, searchParams]);
 
 	const isOnCategoryPage = isProductCategoryPage(pathname);

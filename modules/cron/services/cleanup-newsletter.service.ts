@@ -3,10 +3,10 @@ import { prisma } from "@/shared/lib/prisma";
 import { RETENTION } from "@/modules/cron/constants/limits";
 
 /**
- * Service de nettoyage des abonnements newsletter non confirmés
+ * Cleans up unconfirmed newsletter subscriptions.
  *
- * Supprime les abonnements PENDING dont le double opt-in n'a pas été
- * complété dans les 7 jours suivant l'inscription.
+ * Deletes PENDING subscriptions where the double opt-in was not
+ * completed within 7 days of signup.
  */
 export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 	deleted: number;
@@ -19,7 +19,7 @@ export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 		Date.now() - RETENTION.NEWSLETTER_CONFIRMATION_DAYS * 24 * 60 * 60 * 1000
 	);
 
-	// Supprimer les abonnements non confirmés après 7 jours
+	// Delete unconfirmed subscriptions past the 7-day window
 	const deleteResult = await prisma.newsletterSubscriber.deleteMany({
 		where: {
 			status: NewsletterStatus.PENDING,

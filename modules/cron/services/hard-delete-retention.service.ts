@@ -6,17 +6,16 @@ import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 
 /**
- * Service de suppression définitive après la période de rétention légale
+ * Permanently deletes soft-deleted records past the legal retention period.
  *
- * Supprime définitivement les données soft-deleted après 10 ans.
  * Processes in batches to avoid timeout on large datasets.
  *
- * IMPORTANT: Les données comptables (Order, Refund, OrderHistory)
- * sont exclues car elles doivent être conservées indéfiniment pour audit.
+ * IMPORTANT: Accounting data (Order, Refund, OrderHistory) is excluded
+ * as it must be retained indefinitely for audit purposes.
  *
- * Tables concernées:
- * - Product (et ProductSku, SkuMedia, etc. en cascade)
- * - ProductReview, ReviewResponse, ReviewMedia (en cascade)
+ * Tables handled:
+ * - Product (and ProductSku, SkuMedia, etc. via cascade)
+ * - ProductReview, ReviewResponse, ReviewMedia (via cascade)
  * - NewsletterSubscriber
  * - CustomizationRequest
  */
@@ -126,7 +125,7 @@ export async function hardDeleteExpiredRecords(): Promise<{
 			`${productsResult.count} products`
 	);
 
-	// 4. Invalidate caches for deleted records
+	// 4. Invalidate caches when records were deleted
 	if (productsResult.count > 0) {
 		updateTag(PRODUCTS_CACHE_TAGS.LIST);
 		updateTag(PRODUCTS_CACHE_TAGS.COUNTS);
@@ -137,22 +136,37 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	}
 
 	// 5. Delete UploadThing files after DB transaction succeeds
+	// Non-blocking: if UploadThing fails, orphaned files will be cleaned by cleanup-orphan-media
 	if (reviewMediaUrls.length > 0) {
-		const urls = reviewMediaUrls.map((m) => m.url);
-		const result = await deleteUploadThingFilesFromUrls(urls);
-		console.log(
-			`[CRON:hard-delete-retention] Deleted ${result.deleted} review media files from UploadThing`
-		);
+		try {
+			const urls = reviewMediaUrls.map((m) => m.url);
+			const result = await deleteUploadThingFilesFromUrls(urls);
+			console.log(
+				`[CRON:hard-delete-retention] Deleted ${result.deleted} review media files from UploadThing`
+			);
+		} catch (error) {
+			console.warn(
+				`[CRON:hard-delete-retention] Failed to delete review media from UploadThing:`,
+				error instanceof Error ? error.message : String(error)
+			);
+		}
 	}
 
 	if (skuMediaUrls.length > 0) {
-		const urls = skuMediaUrls.flatMap((m) =>
-			[m.url, m.thumbnailUrl].filter((u): u is string => u !== null)
-		);
-		const result = await deleteUploadThingFilesFromUrls(urls);
-		console.log(
-			`[CRON:hard-delete-retention] Deleted ${result.deleted} product media files from UploadThing`
-		);
+		try {
+			const urls = skuMediaUrls.flatMap((m) =>
+				[m.url, m.thumbnailUrl].filter((u): u is string => u !== null)
+			);
+			const result = await deleteUploadThingFilesFromUrls(urls);
+			console.log(
+				`[CRON:hard-delete-retention] Deleted ${result.deleted} product media files from UploadThing`
+			);
+		} catch (error) {
+			console.warn(
+				`[CRON:hard-delete-retention] Failed to delete product media from UploadThing:`,
+				error instanceof Error ? error.message : String(error)
+			);
+		}
 	}
 
 	console.log("[CRON:hard-delete-retention] Retention cleanup completed");

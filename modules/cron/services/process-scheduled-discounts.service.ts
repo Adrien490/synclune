@@ -3,10 +3,13 @@ import { updateTag } from "next/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 
 /**
- * Service d'activation/désactivation des promotions programmées
+ * Activates and deactivates scheduled promotions.
  *
- * Active les promotions dont startsAt est passé et endsAt n'est pas dépassé.
- * Désactive les promotions dont endsAt est dépassé.
+ * Activates promotions whose startsAt has passed and endsAt is not exceeded.
+ * Deactivates promotions whose endsAt has passed.
+ *
+ * Discounts where updatedAt > startsAt are skipped for activation to avoid
+ * reactivating promotions that were manually deactivated by an admin.
  */
 export async function processScheduledDiscounts(): Promise<{
 	activated: number;
@@ -18,28 +21,39 @@ export async function processScheduledDiscounts(): Promise<{
 
 	const now = new Date();
 
-	// 1. Activer les promotions dont la période a commencé
-	const activated = await prisma.discount.updateMany({
+	// 1. Find activation candidates (Prisma can't compare columns, so two-step)
+	const candidates = await prisma.discount.findMany({
 		where: {
 			isActive: false,
+			deletedAt: null,
 			startsAt: { lte: now },
 			OR: [{ endsAt: null }, { endsAt: { gte: now } }],
 		},
-		data: {
-			isActive: true,
-		},
+		select: { id: true, startsAt: true, updatedAt: true },
 	});
 
-	if (activated.count > 0) {
+	// Filter out discounts manually deactivated by admin (updatedAt > startsAt)
+	const toActivate = candidates.filter(
+		(d) => d.updatedAt <= d.startsAt
+	);
+
+	let activatedCount = 0;
+	if (toActivate.length > 0) {
+		const activated = await prisma.discount.updateMany({
+			where: { id: { in: toActivate.map((d) => d.id) } },
+			data: { isActive: true },
+		});
+		activatedCount = activated.count;
 		console.log(
-			`[CRON:process-scheduled-discounts] Activated ${activated.count} discounts`
+			`[CRON:process-scheduled-discounts] Activated ${activatedCount} discounts (${candidates.length - toActivate.length} skipped: manually deactivated)`
 		);
 	}
 
-	// 2. Désactiver les promotions expirées
+	// 2. Deactivate expired promotions
 	const deactivated = await prisma.discount.updateMany({
 		where: {
 			isActive: true,
+			deletedAt: null,
 			endsAt: { lt: now },
 		},
 		data: {
@@ -53,17 +67,17 @@ export async function processScheduledDiscounts(): Promise<{
 		);
 	}
 
-	// Invalider le cache des promotions si changements
-	if (activated.count > 0 || deactivated.count > 0) {
+	// Invalidate discount cache if any changes were made
+	if (activatedCount > 0 || deactivated.count > 0) {
 		updateTag(DISCOUNT_CACHE_TAGS.LIST);
 	}
 
 	console.log(
-		`[CRON:process-scheduled-discounts] Completed: ${activated.count} activated, ${deactivated.count} deactivated`
+		`[CRON:process-scheduled-discounts] Completed: ${activatedCount} activated, ${deactivated.count} deactivated`
 	);
 
 	return {
-		activated: activated.count,
+		activated: activatedCount,
 		deactivated: deactivated.count,
 	};
 }

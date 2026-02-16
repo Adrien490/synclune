@@ -58,7 +58,7 @@ describe("reconcilePendingRefunds", () => {
 
 		const result = await reconcilePendingRefunds();
 
-		expect(result).toEqual({ checked: 0, updated: 0, errors: 0 });
+		expect(result).toEqual({ checked: 0, updated: 0, errors: 0, hasMore: false });
 	});
 
 	it("should query APPROVED refunds with correct time threshold", async () => {

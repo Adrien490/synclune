@@ -1,12 +1,14 @@
 import { prisma } from "@/shared/lib/prisma";
+import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 
 /**
- * Service de nettoyage des sessions et tokens expirés
+ * Cleans up expired sessions and tokens.
  *
- * Supprime :
- * - Sessions expirées
- * - Tokens de vérification expirés
- * - Tokens OAuth expirés (Account.accessTokenExpiresAt, refreshTokenExpiresAt)
+ * Deletes:
+ * - Expired sessions
+ * - Expired verification tokens
+ * - Expired OAuth access tokens
+ * - Expired OAuth refresh tokens
  */
 export async function cleanupExpiredSessions(): Promise<{
 	sessionsDeleted: number;
@@ -17,22 +19,36 @@ export async function cleanupExpiredSessions(): Promise<{
 
 	console.log("[CRON:cleanup-sessions] Starting expired sessions cleanup...");
 
-	// 1. Supprimer les sessions expirées
+	// 1. Delete expired sessions (bounded)
+	const sessionsToDelete = await prisma.session.findMany({
+		where: { expiresAt: { lt: now } },
+		select: { id: true },
+		take: CLEANUP_DELETE_LIMIT,
+	});
+
 	const sessionsResult = await prisma.session.deleteMany({
-		where: {
-			expiresAt: { lt: now },
-		},
+		where: { id: { in: sessionsToDelete.map((s) => s.id) } },
 	});
 
 	console.log(
 		`[CRON:cleanup-sessions] Deleted ${sessionsResult.count} expired sessions`
 	);
 
-	// 2. Supprimer les tokens de vérification expirés
+	if (sessionsToDelete.length === CLEANUP_DELETE_LIMIT) {
+		console.warn(
+			"[CRON:cleanup-sessions] Session delete limit reached, remaining will be cleaned on next run"
+		);
+	}
+
+	// 2. Delete expired verification tokens (bounded)
+	const verificationsToDelete = await prisma.verification.findMany({
+		where: { expiresAt: { lt: now } },
+		select: { id: true },
+		take: CLEANUP_DELETE_LIMIT,
+	});
+
 	const verificationsResult = await prisma.verification.deleteMany({
-		where: {
-			expiresAt: { lt: now },
-		},
+		where: { id: { in: verificationsToDelete.map((v) => v.id) } },
 	});
 
 	console.log(
@@ -40,10 +56,14 @@ export async function cleanupExpiredSessions(): Promise<{
 	);
 
 	// 3. Clear expired access tokens (short-lived, don't touch refresh tokens)
+	const expiredAccessTokens = await prisma.account.findMany({
+		where: { accessTokenExpiresAt: { lt: now } },
+		select: { id: true },
+		take: CLEANUP_DELETE_LIMIT,
+	});
+
 	const accessTokensResult = await prisma.account.updateMany({
-		where: {
-			accessTokenExpiresAt: { lt: now },
-		},
+		where: { id: { in: expiredAccessTokens.map((a) => a.id) } },
 		data: {
 			accessToken: null,
 			accessTokenExpiresAt: null,
@@ -51,10 +71,14 @@ export async function cleanupExpiredSessions(): Promise<{
 	});
 
 	// 4. Clear expired refresh tokens (long-lived, separate from access tokens)
+	const expiredRefreshTokens = await prisma.account.findMany({
+		where: { refreshTokenExpiresAt: { lt: now } },
+		select: { id: true },
+		take: CLEANUP_DELETE_LIMIT,
+	});
+
 	const refreshTokensResult = await prisma.account.updateMany({
-		where: {
-			refreshTokenExpiresAt: { lt: now },
-		},
+		where: { id: { in: expiredRefreshTokens.map((a) => a.id) } },
 		data: {
 			refreshToken: null,
 			refreshTokenExpiresAt: null,

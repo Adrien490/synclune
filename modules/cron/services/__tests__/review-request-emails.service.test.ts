@@ -34,7 +34,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 
 		const result = await sendDelayedReviewRequestEmails();
 
-		expect(result).toEqual({ found: 0, sent: 0, errors: 0 });
+		expect(result).toEqual({ found: 0, sent: 0, errors: 0, hasMore: false });
 	});
 
 	it("should query delivered orders with correct filters", async () => {
@@ -48,7 +48,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 		expect(call.where.reviewRequestSentAt).toBeNull();
 		expect(call.where.actualDelivery.lt).toBeInstanceOf(Date);
 		expect(call.where.actualDelivery.gt).toBeInstanceOf(Date);
-		expect(call.take).toBe(50);
+		expect(call.take).toBe(25);
 	});
 
 	it("should use correct time window (2-14 days after delivery)", async () => {
@@ -84,7 +84,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledTimes(2);
 		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledWith("order-1");
 		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledWith("order-2");
-		expect(result).toEqual({ found: 2, sent: 2, errors: 0 });
+		expect(result).toEqual({ found: 2, sent: 2, errors: 0, hasMore: false });
 	});
 
 	it("should count errors when sendReviewRequestEmailInternal returns non-success", async () => {
@@ -99,7 +99,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 
 		const result = await sendDelayedReviewRequestEmails();
 
-		expect(result).toEqual({ found: 1, sent: 0, errors: 1 });
+		expect(result).toEqual({ found: 1, sent: 0, errors: 1, hasMore: false });
 	});
 
 	it("should count errors when sendReviewRequestEmailInternal throws", async () => {
@@ -113,7 +113,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 
 		const result = await sendDelayedReviewRequestEmails();
 
-		expect(result).toEqual({ found: 1, sent: 0, errors: 1 });
+		expect(result).toEqual({ found: 1, sent: 0, errors: 1, hasMore: false });
 	});
 
 	it("should handle mixed results and continue on error", async () => {
@@ -130,7 +130,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 
 		const result = await sendDelayedReviewRequestEmails();
 
-		expect(result).toEqual({ found: 3, sent: 2, errors: 1 });
+		expect(result).toEqual({ found: 3, sent: 2, errors: 1, hasMore: false });
 		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledTimes(3);
 	});
 });

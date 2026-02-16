@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Loader2, Mail } from "lucide-react";
 import { useResendVerificationEmail } from "@/modules/auth/hooks/use-resend-verification-email";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useEffectEvent } from "react";
 import { getResendVerificationCooldownKey } from "@/shared/constants/storage-keys";
 
 interface ResendVerificationButtonProps {
@@ -46,22 +46,26 @@ export function ResendVerificationButton({
 		onSuccess: startCooldown,
 	});
 
-	// Timer du cooldown (séparé, une seule responsabilité)
-	useEffect(() => {
-		if (cooldown <= 0) return;
+	// Effect Event: reads COOLDOWN_KEY without restarting the interval every second
+	const onTick = useEffectEvent(() => {
+		setCooldown((prev) => {
+			if (prev <= 1) {
+				localStorage.removeItem(COOLDOWN_KEY);
+				return 0;
+			}
+			return prev - 1;
+		});
+	});
 
-		const interval = setInterval(() => {
-			setCooldown((prev) => {
-				if (prev <= 1) {
-					localStorage.removeItem(COOLDOWN_KEY);
-					return 0;
-				}
-				return prev - 1;
-			});
-		}, 1000);
+	// Timer du cooldown — only restarts when isActive flips (false→true or true→false)
+	const isActive = cooldown > 0;
+	useEffect(() => {
+		if (!isActive) return;
+
+		const interval = setInterval(onTick, 1000);
 
 		return () => clearInterval(interval);
-	}, [cooldown, COOLDOWN_KEY]);
+	}, [isActive]);
 
 	const handleResend = () => {
 		const formData = new FormData();

@@ -59,7 +59,7 @@ export default async function CustomizationPage() {
 			{/* Header standard avec breadcrumbs */}
 			<PageHeader
 				title="Créons votre bijou ensemble"
-				description="Vous avez une idée de bijou en tête ? Dîtes moi tout !"
+				description="Vous avez une idée de bijou en tête ? Dites-moi tout !"
 				breadcrumbs={[{ label: "Personnalisation", href: "/personnalisation" }]}
 			/>
 

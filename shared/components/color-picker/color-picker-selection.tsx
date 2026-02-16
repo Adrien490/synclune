@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useColorPicker } from "./color-picker";
 import type { ColorPickerSelectionProps } from "./types";
 
@@ -48,6 +48,16 @@ export function ColorPickerSelection({ className, ...props }: ColorPickerSelecti
 			updateFromPosition(x, y);
 		};
 
+		// Effect Event: stable handler for window listeners, reads latest state without re-attaching
+		const onPointerMove = useEffectEvent((event: PointerEvent | TouchEvent) => {
+			if (!containerRef.current) return;
+			const rect = containerRef.current.getBoundingClientRect();
+			const { x: clientX, y: clientY } = getEventCoordinates(event);
+			const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+			const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+			updateFromPosition(x, y);
+		});
+
 		const handleKeyDown = (e: React.KeyboardEvent) => {
 			const step = e.shiftKey ? 0.1 : 0.01;
 			let newX = positionX;
@@ -79,19 +89,19 @@ export function ColorPickerSelection({ className, ...props }: ColorPickerSelecti
 			const handlePointerUp = () => setIsDragging(false);
 
 			if (isDragging) {
-				window.addEventListener("pointermove", handlePointerMove);
+				window.addEventListener("pointermove", onPointerMove);
 				window.addEventListener("pointerup", handlePointerUp);
-				window.addEventListener("touchmove", handlePointerMove, { passive: false });
+				window.addEventListener("touchmove", onPointerMove, { passive: false });
 				window.addEventListener("touchend", handlePointerUp);
 			}
 
 			return () => {
-				window.removeEventListener("pointermove", handlePointerMove);
+				window.removeEventListener("pointermove", onPointerMove);
 				window.removeEventListener("pointerup", handlePointerUp);
-				window.removeEventListener("touchmove", handlePointerMove);
+				window.removeEventListener("touchmove", onPointerMove);
 				window.removeEventListener("touchend", handlePointerUp);
 			};
-		}, [isDragging, handlePointerMove]);
+		}, [isDragging]);
 
 		return (
 			<div

@@ -9,7 +9,7 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useEffectEvent } from "react";
 import {
 	MOTION_CONFIG,
 	maybeReduceMotion,
@@ -115,24 +115,25 @@ export function Fab({
 		},
 	});
 
+	// Effect Event: reads isPending and toggle without re-attaching the listener
+	const onEscapeKey = useEffectEvent((e: KeyboardEvent) => {
+		if (
+			e.key === "Escape" &&
+			!isPending &&
+			e.target instanceof Node &&
+			containerRef.current?.contains(e.target)
+		) {
+			toggle();
+		}
+	});
+
 	// Handler ESC pour masquer le FAB (scoped au container)
 	useEffect(() => {
 		if (isHidden) return;
 
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (
-				e.key === "Escape" &&
-				!isPending &&
-				e.target instanceof Node &&
-				containerRef.current?.contains(e.target)
-			) {
-				toggle();
-			}
-		};
-
-		document.addEventListener("keydown", handleKeyDown);
-		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, [isHidden, isPending, toggle]);
+		document.addEventListener("keydown", onEscapeKey);
+		return () => document.removeEventListener("keydown", onEscapeKey);
+	}, [isHidden]);
 
 	// Classes de base pour la visibilité mobile
 	const visibilityClass = hideOnMobile ? "hidden md:block" : "block";

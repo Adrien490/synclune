@@ -6,19 +6,20 @@ import {
 	updateRefundStatus,
 	markRefundAsFailed,
 } from "@/modules/webhooks/services/refund.service";
-import { BATCH_SIZE_MEDIUM, THRESHOLDS } from "@/modules/cron/constants/limits";
+import { BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
- * Service de réconciliation des remboursements pending
+ * Reconciles pending refunds by polling Stripe.
  *
- * Les remboursements avec status APPROVED et stripeRefundId attendent
- * le webhook refund.updated pour passer à COMPLETED.
- * Ce cron poll Stripe pour réconcilier en cas d'échec webhook.
+ * Refunds with APPROVED status and a stripeRefundId wait for the
+ * refund.updated webhook to transition to COMPLETED.
+ * This cron polls Stripe to reconcile in case of webhook failure.
  */
 export async function reconcilePendingRefunds(): Promise<{
 	checked: number;
 	updated: number;
 	errors: number;
+	hasMore: boolean;
 } | null> {
 	console.log("[CRON:reconcile-refunds] Starting refund reconciliation...");
 
@@ -28,8 +29,8 @@ export async function reconcilePendingRefunds(): Promise<{
 		return null;
 	}
 
-	// Trouver les remboursements APPROVED avec un stripeRefundId
-	// traités il y a plus d'1h (laisser le temps aux webhooks)
+	// Find APPROVED refunds with a stripeRefundId processed more than 1h ago
+	// (give webhooks time to arrive first)
 	const minAge = new Date(Date.now() - THRESHOLDS.REFUND_RECONCILE_MIN_AGE_MS);
 
 	const pendingRefunds = await prisma.refund.findMany({
@@ -63,11 +64,14 @@ export async function reconcilePendingRefunds(): Promise<{
 		if (!refund.stripeRefundId) continue;
 
 		try {
-			const stripeRefund = await stripe.refunds.retrieve(refund.stripeRefundId);
+			const stripeRefund = await stripe.refunds.retrieve(
+				refund.stripeRefundId,
+				{ timeout: STRIPE_TIMEOUT_MS }
+			);
 
 			const newStatus = mapStripeRefundStatus(stripeRefund.status);
 
-			// Si le statut a changé
+			// Update if status has changed
 			if (newStatus !== refund.status) {
 				if (newStatus === RefundStatus.COMPLETED) {
 					await updateRefundStatus(
@@ -107,5 +111,6 @@ export async function reconcilePendingRefunds(): Promise<{
 		checked: pendingRefunds.length,
 		updated,
 		errors,
+		hasMore: pendingRefunds.length === BATCH_SIZE_MEDIUM,
 	};
 }

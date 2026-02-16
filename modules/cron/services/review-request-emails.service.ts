@@ -2,20 +2,22 @@ import { FulfillmentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
 import { ActionStatus } from "@/shared/types/server-action";
-import { BATCH_SIZE_LARGE } from "@/modules/cron/constants/limits";
+import { BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
 
-const DAYS_AFTER_DELIVERY = 2; // Envoyer 2 jours après livraison
+// Send review request 2 days after delivery
+const DAYS_AFTER_DELIVERY = 2;
 
 /**
- * Service d'envoi des emails de demande d'avis différés
+ * Sends delayed review request emails after order delivery.
  *
- * Envoie les emails de demande d'avis 2-3 jours après la livraison
- * pour laisser le temps au client de tester le produit.
+ * Sends emails 2-3 days after delivery to give customers time to
+ * try the product before asking for a review.
  */
 export async function sendDelayedReviewRequestEmails(): Promise<{
 	found: number;
 	sent: number;
 	errors: number;
+	hasMore: boolean;
 }> {
 	console.log(
 		"[CRON:review-request-emails] Starting delayed review request emails..."
@@ -25,14 +27,14 @@ export async function sendDelayedReviewRequestEmails(): Promise<{
 		Date.now() - DAYS_AFTER_DELIVERY * 24 * 60 * 60 * 1000
 	);
 
-	// Trouver les commandes livrées il y a plus de 2 jours sans email d'avis envoyé
+	// Find orders delivered more than 2 days ago without a review request sent
 	const ordersToNotify = await prisma.order.findMany({
 		where: {
 			...notDeleted,
 			fulfillmentStatus: FulfillmentStatus.DELIVERED,
 			actualDelivery: {
 				lt: deliveryThreshold,
-				// Pas plus de 14 jours (éviter de spammer les anciennes commandes)
+				// Cap at 14 days to avoid spamming old orders
 				gt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
 			},
 			reviewRequestSentAt: null,
@@ -42,7 +44,7 @@ export async function sendDelayedReviewRequestEmails(): Promise<{
 			orderNumber: true,
 			customerEmail: true,
 		},
-		take: BATCH_SIZE_LARGE,
+		take: BATCH_SIZE_MEDIUM,
 	});
 
 	console.log(
@@ -84,5 +86,6 @@ export async function sendDelayedReviewRequestEmails(): Promise<{
 		found: ordersToNotify.length,
 		sent,
 		errors,
+		hasMore: ordersToNotify.length === BATCH_SIZE_MEDIUM,
 	};
 }

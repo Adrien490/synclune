@@ -20,13 +20,13 @@ export const BATCH_SIZE_SMALL = 10;
 
 /**
  * Medium batch size for mixed operations
- * Used by: sync-async-payments, reconcile-refunds
+ * Used by: sync-async-payments, reconcile-refunds, process-account-deletions, review-request-emails
  */
 export const BATCH_SIZE_MEDIUM = 25;
 
 /**
  * Large batch size for pure database operations
- * Used by: cleanup jobs, process-account-deletions
+ * Used by: cleanup jobs, hard-delete-retention
  */
 export const BATCH_SIZE_LARGE = 50;
 
@@ -60,6 +60,18 @@ export const RETENTION = {
 	/** Days to wait for newsletter confirmation before cleanup */
 	NEWSLETTER_CONFIRMATION_DAYS: 7,
 } as const;
+
+/**
+ * Per-call timeout for Stripe API calls in cron jobs (ms)
+ * Prevents a single slow Stripe call from blocking the entire batch
+ */
+export const STRIPE_TIMEOUT_MS = 5_000;
+
+/**
+ * Maximum records to delete/update in a single cleanup operation
+ * Prevents long-running queries on accumulated data
+ */
+export const CLEANUP_DELETE_LIMIT = 1_000;
 
 /**
  * Time thresholds in milliseconds

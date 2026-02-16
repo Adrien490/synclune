@@ -61,7 +61,7 @@ describe("syncAsyncPayments", () => {
 
 		const result = await syncAsyncPayments();
 
-		expect(result).toEqual({ checked: 0, updated: 0, errors: 0 });
+		expect(result).toEqual({ checked: 0, updated: 0, errors: 0, hasMore: false });
 	});
 
 	it("should query orders with correct time window", async () => {
@@ -101,6 +101,7 @@ describe("syncAsyncPayments", () => {
 		expect(mockMarkOrderAsPaid).toHaveBeenCalledWith("order-1", "pi_success");
 		expect(result!.updated).toBe(1);
 		expect(result!.checked).toBe(1);
+		expect(result!.hasMore).toBe(false);
 	});
 
 	it("should mark order as failed and restore stock when Stripe shows canceled", async () => {
@@ -126,6 +127,7 @@ describe("syncAsyncPayments", () => {
 		);
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-2");
 		expect(result!.updated).toBe(1);
+		expect(result!.hasMore).toBe(false);
 	});
 
 	it("should mark order as failed when Stripe shows requires_payment_method", async () => {
@@ -146,6 +148,7 @@ describe("syncAsyncPayments", () => {
 		expect(mockMarkOrderAsFailed).toHaveBeenCalled();
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-3");
 		expect(result!.updated).toBe(1);
+		expect(result!.hasMore).toBe(false);
 	});
 
 	it("should not update orders still in processing state", async () => {
@@ -166,6 +169,7 @@ describe("syncAsyncPayments", () => {
 		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
 		expect(result!.updated).toBe(0);
 		expect(result!.checked).toBe(1);
+		expect(result!.hasMore).toBe(false);
 	});
 
 	it("should count errors when Stripe API call fails", async () => {
@@ -184,6 +188,7 @@ describe("syncAsyncPayments", () => {
 
 		expect(result!.errors).toBe(1);
 		expect(result!.updated).toBe(0);
+		expect(result!.hasMore).toBe(false);
 	});
 
 	it("should skip orders with null stripePaymentIntentId", async () => {
@@ -200,6 +205,7 @@ describe("syncAsyncPayments", () => {
 		expect(mockStripe.paymentIntents.retrieve).not.toHaveBeenCalled();
 		expect(result!.checked).toBe(1);
 		expect(result!.updated).toBe(0);
+		expect(result!.hasMore).toBe(false);
 	});
 
 	it("should handle mixed results across multiple orders", async () => {
@@ -234,5 +240,54 @@ describe("syncAsyncPayments", () => {
 		expect(result!.checked).toBe(3);
 		expect(result!.updated).toBe(1);
 		expect(result!.errors).toBe(1);
+		expect(result!.hasMore).toBe(false);
+	});
+
+	it("should return hasMore: true when exactly 25 orders are returned", async () => {
+		const orders = Array.from({ length: 25 }, (_, i) => ({
+			id: `order-${i}`,
+			orderNumber: `SYN-${String(i).padStart(3, "0")}`,
+			stripePaymentIntentId: `pi_${i}`,
+			paymentStatus: "PENDING",
+		}));
+		mockPrisma.order.findMany.mockResolvedValue(orders);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({
+			status: "processing",
+		});
+
+		const result = await syncAsyncPayments();
+
+		expect(result!.checked).toBe(25);
+		expect(result!.hasMore).toBe(true);
+	});
+
+	it("should continue counting order as updated even if restoreStockForOrder fails", async () => {
+		const order = {
+			id: "order-stock-fail",
+			orderNumber: "SYN-STOCK-FAIL",
+			stripePaymentIntentId: "pi_canceled",
+			paymentStatus: "PENDING",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({
+			status: "canceled",
+		});
+		const failureDetails = { reason: "canceled" };
+		mockExtractPaymentFailureDetails.mockReturnValue(failureDetails);
+		mockRestoreStockForOrder.mockRejectedValue(
+			new Error("Stock restore failed")
+		);
+
+		const result = await syncAsyncPayments();
+
+		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith(
+			"order-stock-fail",
+			"pi_canceled",
+			failureDetails
+		);
+		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-stock-fail");
+		expect(result!.updated).toBe(1);
+		expect(result!.errors).toBe(0);
+		expect(result!.hasMore).toBe(false);
 	});
 });

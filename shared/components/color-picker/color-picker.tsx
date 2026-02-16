@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import Color from "color";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useEffectEvent, useRef, useState } from "react";
 import type { ColorPickerContextValue, ColorPickerProps } from "./types";
 
 const ColorPickerContext = createContext<ColorPickerContextValue | undefined>(
@@ -48,12 +48,15 @@ export const ColorPicker = ({
 
 	// Refs pour éviter les boucles infinies
 	const isUpdatingFromValue = useRef(false);
-	const onChangeRef = useRef(onChange);
 
-	// Synchroniser onChangeRef avec onChange pour éviter les dépendances instables
-	useEffect(() => {
-		onChangeRef.current = onChange;
-	}, [onChange]);
+	// Effect Event: notify parent without re-triggering the effect on onChange identity changes
+	const onNotifyChange = useEffectEvent(() => {
+		if (onChange) {
+			const color = Color.hsl(hue, saturation, lightness).alpha(alpha / 100);
+			const rgba = color.rgb().array();
+			onChange([rgba[0], rgba[1], rgba[2], alpha / 100]);
+		}
+	});
 
 	// Sync controlled value → internal state (nécessaire pour composant contrôlé)
 	const prevValueRef = useRef(value);
@@ -78,11 +81,7 @@ export const ColorPicker = ({
 			isUpdatingFromValue.current = false;
 			return;
 		}
-		if (onChangeRef.current) {
-			const color = Color.hsl(hue, saturation, lightness).alpha(alpha / 100);
-			const rgba = color.rgb().array();
-			onChangeRef.current([rgba[0], rgba[1], rgba[2], alpha / 100]);
-		}
+		onNotifyChange();
 	}, [hue, saturation, lightness, alpha]);
 
 	return (

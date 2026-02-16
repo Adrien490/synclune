@@ -7,6 +7,7 @@ import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-prod
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
+import { RefreshButton } from "./refresh-button";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
 import { SearchFallbackSuggestions, SearchFallbackSuggestionsSkeleton } from "./search-fallback-suggestions";
@@ -34,8 +35,9 @@ export function ProductList({
 		return (
 			<Alert variant="destructive">
 				<AlertTriangle className="h-4 w-4" />
-				<AlertDescription>
-					Une erreur est survenue lors du chargement des produits. Veuillez reessayer.
+				<AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3">
+					<span>Une erreur est survenue lors du chargement des produits.</span>
+					<RefreshButton />
 				</AlertDescription>
 			</Alert>
 		);

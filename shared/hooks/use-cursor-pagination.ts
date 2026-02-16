@@ -131,21 +131,21 @@ export function useCursorPagination({
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [enableKeyboardShortcuts, onKeyDown]);
 
+	// Effect Event: reads searchParams and router without re-triggering the prefetch effect
+	const onPrefetch = useEffectEvent((pCursor: string | null, direction: string) => {
+		if (!pCursor) return;
+		const params = new URLSearchParams(searchParams.toString());
+		params.set("cursor", pCursor);
+		params.set("direction", direction);
+		router.prefetch("?" + params.toString());
+	});
+
 	// Prefetch next/prev pages for faster perceived navigation
 	// Only depends on cursor values — searchParams changes (filters, etc.) don't affect prefetch URLs
-	const searchParamsString = searchParams.toString();
 	useEffect(() => {
-		const prefetch = (pCursor: string | null, direction: string) => {
-			if (!pCursor) return;
-			const params = new URLSearchParams(searchParamsString);
-			params.set("cursor", pCursor);
-			params.set("direction", direction);
-			router.prefetch("?" + params.toString());
-		};
-		prefetch(nextCursor, "forward");
-		prefetch(prevCursor, "backward");
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [nextCursor, prevCursor, router]);
+		onPrefetch(nextCursor, "forward");
+		onPrefetch(prevCursor, "backward");
+	}, [nextCursor, prevCursor]);
 
 	const handleNext = () => navigateNext(nextCursor);
 	const handlePrevious = () => navigatePrevious(prevCursor);

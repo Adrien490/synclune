@@ -9,7 +9,7 @@ import {
 	useSpring,
 	useTransform,
 } from "motion/react"
-import { useEffect, useRef } from "react"
+import { useEffect, useEffectEvent, useRef } from "react"
 
 /**
  * Configuration spring optimisee pour l'animation de nombres
@@ -74,17 +74,24 @@ export function AnimatedNumber({
 
 	const formattedValue = formatNumber(value, decimalPlaces, locale)
 
+	// Effect Events: read callbacks without re-triggering effects on identity changes
+	const onStart = useEffectEvent(() => {
+		onAnimationStart?.()
+		spring.set(direction === "down" ? startValue : value)
+	})
+
+	const onComplete = useEffectEvent(() => {
+		onAnimationComplete?.()
+	})
+
 	// Declencher l'animation quand le composant entre dans le viewport
 	useEffect(() => {
 		if (shouldReduceMotion || !isInView) return
 
-		const timer = setTimeout(() => {
-			onAnimationStart?.()
-			spring.set(direction === "down" ? startValue : value)
-		}, delay * 1000)
+		const timer = setTimeout(onStart, delay * 1000)
 
 		return () => clearTimeout(timer)
-	}, [spring, isInView, delay, value, direction, startValue, shouldReduceMotion, onAnimationStart])
+	}, [isInView, delay, value, shouldReduceMotion])
 
 	// Detecter la fin de l'animation
 	useEffect(() => {
@@ -94,12 +101,12 @@ export function AnimatedNumber({
 		const unsubscribe = spring.on("change", (current) => {
 			// Considerer l'animation terminee quand on est tres proche de la cible
 			if (Math.abs(current - targetValue) < 0.01) {
-				onAnimationComplete?.()
+				onComplete()
 			}
 		})
 
 		return () => unsubscribe()
-	}, [spring, value, startValue, direction, shouldReduceMotion, onAnimationComplete])
+	}, [spring, value, startValue, direction, shouldReduceMotion])
 
 	// Si reduced motion, afficher directement la valeur finale
 	if (shouldReduceMotion) {

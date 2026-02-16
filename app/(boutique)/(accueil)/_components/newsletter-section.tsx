@@ -57,7 +57,7 @@ export async function NewsletterSection() {
 						<p
 							className={`${petitFormalScript.className} mt-2 text-sm text-foreground/70 italic`}
 						>
-							Bye !
+							— Léane
 						</p>
 					</div>
 				</Fade>

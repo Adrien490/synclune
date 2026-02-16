@@ -7,7 +7,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
  * Matches the structure of the page:
  * - PageHeader with breadcrumbs
  * - Split layout: Form (left) + Sidebar (right on desktop)
- * - Form fields: Type bijou, Description, Créations, Prénom/Nom, Email, Téléphone, RGPD
+ * - Form fields: Type bijou (select), Description, Prénom, Email, Téléphone, RGPD
  */
 export default function CustomizationLoading() {
 	return (
@@ -26,18 +26,10 @@ export default function CustomizationLoading() {
 							{/* Required fields note */}
 							<Skeleton className="h-4 w-48 bg-muted/30" />
 
-							{/* Type de bijou (optionnel) - Pills/Chips */}
-							<div className="space-y-3">
+							{/* Type de bijou (optionnel) - Select dropdown */}
+							<div className="space-y-2">
 								<Skeleton className="h-4 w-28 bg-muted/40" />
-								<div className="flex flex-wrap gap-2">
-									{[85, 72, 98, 76, 90].map((width, i) => (
-										<Skeleton
-											key={i}
-											className="h-10 rounded-full bg-muted/30"
-											style={{ width }}
-										/>
-									))}
-								</div>
+								<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
 							</div>
 
 							{/* Description du projet - Textarea */}
@@ -47,23 +39,10 @@ export default function CustomizationLoading() {
 								<Skeleton className="h-3 w-32 ml-auto bg-muted/20" />
 							</div>
 
-							{/* Créations inspirantes - Autocomplete */}
+							{/* Prénom */}
 							<div className="space-y-2">
-								<Skeleton className="h-4 w-44 bg-muted/40" />
+								<Skeleton className="h-4 w-16 bg-muted/40" />
 								<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
-								<Skeleton className="h-3 w-40 bg-muted/20" />
-							</div>
-
-							{/* Prénom & Nom (2 cols) */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-16 bg-muted/40" />
-									<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
-								</div>
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-12 bg-muted/40" />
-									<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
-								</div>
 							</div>
 
 							{/* Email */}
@@ -93,40 +72,26 @@ export default function CustomizationLoading() {
 							</div>
 						</div>
 
-						{/* Sidebar - desktop uniquement */}
-						<aside className="hidden lg:block space-y-6">
-							{/* Sidebar card */}
-							<div className="sticky top-24 space-y-6">
-								{/* Image placeholder */}
-								<Skeleton className="aspect-square w-full rounded-lg bg-muted/30" />
+						{/* Sidebar - "Comment ça marche" card */}
+						<aside className="mt-8 lg:mt-0 lg:sticky lg:top-24 self-start" aria-label="Informations sur le processus">
+							<div className="rounded-xl border border-border bg-card p-6 space-y-6">
+								{/* Title */}
+								<Skeleton className="h-5 w-44 bg-muted/40" />
 
-								{/* Testimonial card */}
-								<div className="border border-border rounded-lg p-6 space-y-4">
-									<div className="flex items-center gap-3">
-										<Skeleton className="h-12 w-12 rounded-full bg-muted/40" />
-										<div className="space-y-1">
-											<Skeleton className="h-4 w-24 bg-muted/40" />
-											<Skeleton className="h-3 w-16 bg-muted/30" />
+								{/* 3 steps */}
+								<div className="space-y-5">
+									{[0, 1, 2].map((i) => (
+										<div key={i} className="flex gap-4">
+											<Skeleton className="size-9 shrink-0 rounded-full bg-muted/40" />
+											<div className="space-y-1.5 flex-1">
+												<Skeleton className="h-4 w-32 bg-muted/40" />
+												<Skeleton className="h-3 w-full bg-muted/25" />
+											</div>
 										</div>
-									</div>
-									<Skeleton className="h-20 w-full bg-muted/20" />
+									))}
 								</div>
 							</div>
 						</aside>
-					</div>
-
-					{/* Témoignage mobile */}
-					<div className="lg:hidden mt-12">
-						<div className="border border-border rounded-lg p-4 space-y-3">
-							<div className="flex items-center gap-3">
-								<Skeleton className="h-10 w-10 rounded-full bg-muted/40" />
-								<div className="space-y-1">
-									<Skeleton className="h-4 w-20 bg-muted/40" />
-									<Skeleton className="h-3 w-14 bg-muted/30" />
-								</div>
-							</div>
-							<Skeleton className="h-16 w-full bg-muted/20" />
-						</div>
 					</div>
 				</div>
 			</section>

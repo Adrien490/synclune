@@ -1,10 +1,11 @@
 import { prisma } from "@/shared/lib/prisma";
+import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 
 /**
- * Service de nettoyage des wishlists expirées
+ * Cleans up expired guest wishlists.
  *
- * Supprime les wishlists guest (sans userId) dont expiresAt est dépassé.
- * Les WishlistItems sont supprimés en cascade par la base de données.
+ * Deletes guest wishlists (no userId) past their expiresAt date.
+ * WishlistItems are deleted in cascade by the database.
  */
 export async function cleanupExpiredWishlists(): Promise<{
 	deletedCount: number;
@@ -14,24 +15,40 @@ export async function cleanupExpiredWishlists(): Promise<{
 
 	console.log("[CRON:cleanup-wishlists] Starting expired wishlists cleanup...");
 
-	// 1. Supprimer les wishlists expirées (guests uniquement)
-	const deleteResult = await prisma.wishlist.deleteMany({
+	// 1. Find expired guest wishlists (bounded to avoid long-running deletes)
+	const wishlistsToDelete = await prisma.wishlist.findMany({
 		where: {
 			expiresAt: { lt: now },
-			userId: null, // Seulement les wishlists guest
+			userId: null,
 		},
+		select: { id: true },
+		take: CLEANUP_DELETE_LIMIT,
+	});
+
+	const deleteResult = await prisma.wishlist.deleteMany({
+		where: { id: { in: wishlistsToDelete.map((w) => w.id) } },
 	});
 
 	console.log(
 		`[CRON:cleanup-wishlists] Deleted ${deleteResult.count} expired wishlists`
 	);
 
-	// 2. Nettoyer les WishlistItems orphelins (au cas où la cascade n'a pas fonctionné)
-	// Utilise SQL direct pour éviter de charger tous les IDs en mémoire
+	if (wishlistsToDelete.length === CLEANUP_DELETE_LIMIT) {
+		console.warn(
+			"[CRON:cleanup-wishlists] Delete limit reached, remaining wishlists will be cleaned on next run"
+		);
+	}
+
+	// 2. Clean up orphaned WishlistItems (safety net if cascade didn't trigger)
+	// Uses raw SQL to avoid loading all IDs into memory
 	const orphanedItemsCount = await prisma.$executeRaw`
-		DELETE FROM "WishlistItem" wi
-		WHERE NOT EXISTS (
-			SELECT 1 FROM "Wishlist" w WHERE w.id = wi."wishlistId"
+		DELETE FROM "WishlistItem"
+		WHERE id IN (
+			SELECT wi.id FROM "WishlistItem" wi
+			WHERE NOT EXISTS (
+				SELECT 1 FROM "Wishlist" w WHERE w.id = wi."wishlistId"
+			)
+			LIMIT ${CLEANUP_DELETE_LIMIT}
 		)
 	`;
 

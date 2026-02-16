@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -29,7 +30,12 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 	const headersList = await headers();
 	const authorization = headersList.get("authorization");
 
-	if (authorization !== `Bearer ${cronSecret}`) {
+	const expected = Buffer.from(`Bearer ${cronSecret}`);
+	const received = Buffer.from(authorization || "");
+	if (
+		expected.length !== received.length ||
+		!timingSafeEqual(expected, received)
+	) {
 		console.warn("[CRON] Unauthorized cron request attempt");
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}

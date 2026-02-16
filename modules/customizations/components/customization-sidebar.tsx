@@ -15,7 +15,7 @@ const steps = [
 
 export function CustomizationSidebar() {
 	return (
-		<aside className="lg:sticky lg:top-24" aria-label="Informations sur le processus">
+		<aside className="mt-8 lg:mt-0 lg:sticky lg:top-24" aria-label="Informations sur le processus">
 			<div className="rounded-xl border border-border bg-card p-6 space-y-6">
 				<h2 className="text-base font-semibold">Comment ça marche ?</h2>
 

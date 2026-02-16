@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 
 export interface LayoutTextFlipProps {
 	/** Texte statique affiché avant les mots rotatifs */
@@ -44,15 +44,18 @@ export function LayoutTextFlip({
 	// Trouver le mot le plus long pour réserver l'espace
 	const longestWord = words.reduce((a, b) => (a.length > b.length ? a : b));
 
+	// Effect Event: reads words.length without restarting the interval
+	const onTick = useEffectEvent(() => {
+		setCurrentIndex((prevIndex) => (prevIndex + 1) % words.length);
+	});
+
 	useEffect(() => {
 		if (shouldReduceMotion) return;
 
-		const interval = setInterval(() => {
-			setCurrentIndex((prevIndex) => (prevIndex + 1) % words.length);
-		}, duration);
+		const interval = setInterval(onTick, duration);
 
 		return () => clearInterval(interval);
-	}, [words.length, duration, shouldReduceMotion]);
+	}, [duration, shouldReduceMotion]);
 
 	// Styles pour la pill - appliqués directement sur le conteneur du texte animé
 	const pillStyles = cn(
