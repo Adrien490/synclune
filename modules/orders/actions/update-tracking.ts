@@ -51,53 +51,61 @@ export async function updateTracking(
 		});
 		if ("error" in validated) return validated.error;
 
-		// Récupérer la commande avec les données nécessaires pour l'email
-		const order = await prisma.order.findUnique({
-			where: { id },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				fulfillmentStatus: true,
-				userId: true,
-				customerEmail: true,
-				customerName: true,
-				shippingFirstName: true,
-				shippingLastName: true,
-				shippingAddress1: true,
-				shippingAddress2: true,
-				shippingPostalCode: true,
-				shippingCity: true,
-				shippingCountry: true,
-				trackingNumber: true,
-			},
-		});
-
-		if (!order) {
-			return error(ORDER_ERROR_MESSAGES.NOT_FOUND);
-		}
-
-		// Vérifier si la commande est expédiée ou livrée
-		if (order.status !== OrderStatus.SHIPPED && order.status !== OrderStatus.DELIVERED) {
-			return error("Impossible de modifier le suivi : la commande n'est pas expediee.");
-		}
-
 		// Générer l'URL de suivi si non fournie
 		const carrierValue = (validated.data.carrier || "autre") as Carrier;
 		const finalTrackingUrl =
 			validated.data.trackingUrl ||
 			getTrackingUrl(carrierValue, validated.data.trackingNumber);
 
-		// Mettre à jour la commande
-		await prisma.order.update({
-			where: { id },
-			data: {
-				trackingNumber: validated.data.trackingNumber,
-				trackingUrl: finalTrackingUrl,
-				shippingCarrier: validated.data.carrier || null,
-				estimatedDelivery: validated.data.estimatedDelivery,
-			},
+		// Transaction: fetch + validate status + update atomically (prevents race condition)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					fulfillmentStatus: true,
+					userId: true,
+					customerEmail: true,
+					customerName: true,
+					shippingFirstName: true,
+					shippingLastName: true,
+					shippingAddress1: true,
+					shippingAddress2: true,
+					shippingPostalCode: true,
+					shippingCity: true,
+					shippingCountry: true,
+					trackingNumber: true,
+				},
+			});
+
+			if (!found) return null;
+
+			if (found.status !== OrderStatus.SHIPPED && found.status !== OrderStatus.DELIVERED) {
+				return { ...found, _error: "not_shipped" as const };
+			}
+
+			await tx.order.update({
+				where: { id },
+				data: {
+					trackingNumber: validated.data.trackingNumber,
+					trackingUrl: finalTrackingUrl,
+					shippingCarrier: validated.data.carrier || null,
+					estimatedDelivery: validated.data.estimatedDelivery,
+				},
+			});
+
+			return found;
 		});
+
+		if (!order) {
+			return error(ORDER_ERROR_MESSAGES.NOT_FOUND);
+		}
+
+		if ("_error" in order) {
+			return error("Impossible de modifier le suivi : la commande n'est pas expediee.");
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));

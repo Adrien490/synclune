@@ -1,4 +1,4 @@
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import {
 	buildCursorPagination,
 	processCursorResults,
@@ -9,6 +9,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 
 import { cacheCustomizationList } from "../constants/cache";
 import { SORT_OPTIONS } from "../constants/sort.constants";
+import { buildCustomizationWhereClause } from "../services/customization-query-builder";
 import type {
 	GetCustomizationRequestsParams,
 	GetCustomizationRequestsResult,
@@ -42,16 +43,7 @@ async function fetchCustomizationRequests({
 
 	try {
 		// Build where clause
-		const where = {
-			...notDeleted,
-			...(filters?.status && { status: filters.status }),
-			...(filters?.search && {
-				OR: [
-					{ firstName: { contains: filters.search, mode: "insensitive" as const } },
-					{ email: { contains: filters.search, mode: "insensitive" as const } },
-				],
-			}),
-		};
+		const where = buildCustomizationWhereClause(filters);
 
 		// Build orderBy
 		const orderBy =

@@ -20,6 +20,8 @@ import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { handleActionError } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 
 /**
  * Marque une commande comme payée manuellement
@@ -41,6 +43,9 @@ export async function markAsPaid(
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.MARK_AS_PAID);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const id = formData.get("id") as string;
 		const note = formData.get("note") as string | null;

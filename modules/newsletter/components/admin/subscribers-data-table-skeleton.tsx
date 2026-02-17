@@ -6,10 +6,9 @@ export function SubscribersDataTableSkeleton() {
 		<DataTableSkeleton
 			tableFixed={false}
 			columns={[
-				{ width: "5%", cell: { type: "checkbox" } },
-				{ width: "30%", cell: { type: "text", width: "w-48" } },
+				{ width: "35%", cell: { type: "text", width: "w-48" } },
 				{
-					width: "15%",
+					width: "20%",
 					cell: {
 						type: "custom",
 						render: () => (
@@ -20,9 +19,8 @@ export function SubscribersDataTableSkeleton() {
 						),
 					},
 				},
-				{ width: "20%", hiddenBelow: "sm", cell: { type: "text", width: "w-24" } },
-				{ width: "15%", hiddenBelow: "md", cell: { type: "text", width: "w-24" } },
-				{ width: "10%", align: "right", cell: { type: "actions" } },
+				{ width: "25%", hiddenBelow: "sm", cell: { type: "text", width: "w-24" } },
+				{ width: "20%", hiddenBelow: "md", cell: { type: "text", width: "w-24" } },
 			]}
 			pagination="offset"
 		/>

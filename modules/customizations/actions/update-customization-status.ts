@@ -12,8 +12,10 @@ import {
 	success,
 	error,
 } from "@/shared/lib/actions";
+import { sanitizeForEmail } from "@/shared/lib/sanitize";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
+import { canTransitionTo } from "../services/customization-status.service";
 import { updateStatusSchema } from "../schemas/update-status.schema";
 
 // ============================================================================
@@ -52,7 +54,12 @@ export async function updateCustomizationStatus(
 			return error("Demande non trouvee");
 		}
 
-		// 4. Update status
+		// 4. Validate status transition
+		if (!canTransitionTo(existing.status, status)) {
+			return error("Transition de statut non autorisee");
+		}
+
+		// 5. Update status
 		const isFirstResponse =
 			existing.status === CustomizationRequestStatus.PENDING &&
 			status !== CustomizationRequestStatus.PENDING;
@@ -65,7 +72,7 @@ export async function updateCustomizationStatus(
 			},
 		});
 
-		// 5. Invalidate cache
+		// 6. Invalidate cache
 		const tags = [
 			...getCustomizationInvalidationTags(),
 			CUSTOMIZATION_CACHE_TAGS.DETAIL(requestId),
@@ -75,19 +82,18 @@ export async function updateCustomizationStatus(
 		}
 		tags.forEach((tag) => updateTag(tag));
 
-		// 6. Send status email if applicable
+		// 7. Send status email if applicable
 		if (
-			status !== CustomizationRequestStatus.PENDING &&
 			existing.email &&
 			(status === "IN_PROGRESS" || status === "COMPLETED" || status === "CANCELLED")
 		) {
 			sendCustomizationStatusEmail({
-				email: existing.email,
-				firstName: existing.firstName,
-				productTypeLabel: existing.productTypeLabel,
+				email: sanitizeForEmail(existing.email),
+				firstName: sanitizeForEmail(existing.firstName),
+				productTypeLabel: sanitizeForEmail(existing.productTypeLabel),
 				status,
-				adminNotes: existing.adminNotes,
-				details: existing.details,
+				adminNotes: existing.adminNotes ? sanitizeForEmail(existing.adminNotes) : null,
+				details: sanitizeForEmail(existing.details),
 			}).catch((emailError) => {
 				console.error("[EMAIL] Status email failed", {
 					requestId,

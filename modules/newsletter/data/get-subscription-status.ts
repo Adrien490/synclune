@@ -26,7 +26,7 @@ export async function getSubscriptionStatus(): Promise<GetSubscriptionStatusRetu
 		return {
 			isSubscribed: false,
 			email: null,
-			emailVerified: false,
+			isConfirmed: false,
 		};
 	}
 
@@ -35,7 +35,7 @@ export async function getSubscriptionStatus(): Promise<GetSubscriptionStatusRetu
 	return {
 		isSubscribed: subscriber?.status === "CONFIRMED",
 		email: user.email,
-		emailVerified: subscriber?.status === "CONFIRMED",
+		isConfirmed: subscriber?.status === "CONFIRMED",
 	};
 }
 
@@ -50,13 +50,13 @@ export async function fetchSubscriptionStatus(
 	email: string,
 	userId: string
 ): Promise<{ status: string } | null> {
-	"use cache";
+	"use cache: private";
 	cacheLife("cart");
 	cacheTag(NEWSLETTER_CACHE_TAGS.USER_STATUS(userId));
 
 	try {
-		const subscriber = await prisma.newsletterSubscriber.findUnique({
-			where: { email },
+		const subscriber = await prisma.newsletterSubscriber.findFirst({
+			where: { email, deletedAt: null },
 			select: GET_NEWSLETTER_STATUS_DEFAULT_SELECT,
 		});
 

@@ -59,5 +59,5 @@ export type GetSubscribersReturn = {
 export type GetSubscriptionStatusReturn = {
 	isSubscribed: boolean;
 	email: string | null;
-	emailVerified: boolean;
+	isConfirmed: boolean;
 };

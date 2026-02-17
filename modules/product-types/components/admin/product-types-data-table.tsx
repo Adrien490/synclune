@@ -33,12 +33,8 @@ export async function ProductTypesDataTable({
 		return (
 			<TableEmptyState
 				icon={Tags}
-				title="Aucun type trouve"
-				description="Aucun type de bijou ne correspond aux criteres de recherche."
-				action={{
-					label: "Creer un type de bijou",
-					href: "/admin/catalogue/types-de-produits",
-				}}
+				title="Aucun type trouvé"
+				description="Aucun type de bijou ne correspond aux critères de recherche."
 			/>
 		);
 	}
@@ -151,7 +147,6 @@ export async function ProductTypesDataTable({
 										<TableCell role="gridcell" className="text-right">
 											<ProductTypeRowActions
 												productTypeId={productType.id}
-												isActive={productType.isActive}
 												isSystem={productType.isSystem}
 												label={productType.label}
 												description={productType.description}

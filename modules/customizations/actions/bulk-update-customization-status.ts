@@ -12,8 +12,10 @@ import {
 	success,
 	error,
 } from "@/shared/lib/actions";
+import { sanitizeForEmail } from "@/shared/lib/sanitize";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
+import { canTransitionTo } from "../services/customization-status.service";
 import { bulkUpdateStatusSchema } from "../schemas/bulk-update-status.schema";
 
 // ============================================================================
@@ -55,8 +57,17 @@ export async function bulkUpdateCustomizationStatus(
 			return error("Aucune demande trouvee");
 		}
 
-		// 4. Separate requests that need respondedAt update
-		const needsRespondedAt = existingRequests
+		// 4. Filter out requests with invalid transitions
+		const validRequests = existingRequests.filter((r) =>
+			canTransitionTo(r.status, status)
+		);
+
+		if (validRequests.length === 0) {
+			return error("Aucune transition de statut valide");
+		}
+
+		// 5. Separate requests that need respondedAt update
+		const needsRespondedAt = validRequests
 			.filter(
 				(r) =>
 					r.status === CustomizationRequestStatus.PENDING &&
@@ -64,8 +75,9 @@ export async function bulkUpdateCustomizationStatus(
 			)
 			.map((r) => r.id);
 
-		// 5. Update all requests atomically
-		const otherIds = requestIds.filter((id) => !needsRespondedAt.includes(id));
+		// 6. Update all requests atomically
+		const validIds = validRequests.map((r) => r.id);
+		const otherIds = validIds.filter((id) => !needsRespondedAt.includes(id));
 		const txOperations = [];
 
 		if (needsRespondedAt.length > 0) {
@@ -88,14 +100,14 @@ export async function bulkUpdateCustomizationStatus(
 
 		await prisma.$transaction(txOperations);
 
-		// 6. Invalidate cache (LIST, STATS, DETAIL per request, USER_REQUESTS per user)
+		// 7. Invalidate cache (LIST, STATS, DETAIL per request, USER_REQUESTS per user)
 		const tags = getCustomizationInvalidationTags();
-		for (const request of existingRequests) {
+		for (const request of validRequests) {
 			tags.push(CUSTOMIZATION_CACHE_TAGS.DETAIL(request.id));
 		}
 		// Collect unique userIds for cache invalidation
 		const userIds = new Set<string>();
-		for (const request of existingRequests) {
+		for (const request of validRequests) {
 			if (request.userId) {
 				userIds.add(request.userId);
 			}
@@ -105,17 +117,17 @@ export async function bulkUpdateCustomizationStatus(
 		}
 		tags.forEach((tag) => updateTag(tag));
 
-		// 7. Send status emails if applicable
+		// 8. Send status emails if applicable
 		if (status === "IN_PROGRESS" || status === "COMPLETED" || status === "CANCELLED") {
-			for (const request of existingRequests) {
+			for (const request of validRequests) {
 				if (request.email) {
 					sendCustomizationStatusEmail({
-						email: request.email,
-						firstName: request.firstName,
-						productTypeLabel: request.productTypeLabel,
+						email: sanitizeForEmail(request.email),
+						firstName: sanitizeForEmail(request.firstName),
+						productTypeLabel: sanitizeForEmail(request.productTypeLabel),
 						status,
-						adminNotes: request.adminNotes,
-						details: request.details,
+						adminNotes: request.adminNotes ? sanitizeForEmail(request.adminNotes) : null,
+						details: sanitizeForEmail(request.details),
 					}).catch((emailError) => {
 						console.error("[EMAIL] Bulk status email failed", {
 							requestId: request.id,
@@ -126,7 +138,7 @@ export async function bulkUpdateCustomizationStatus(
 			}
 		}
 
-		const count = existingRequests.length;
+		const count = validRequests.length;
 		return success(
 			`${count} demande${count > 1 ? "s" : ""} mise${count > 1 ? "s" : ""} a jour`,
 			{ count }

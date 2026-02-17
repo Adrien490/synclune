@@ -3,7 +3,7 @@ import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { getMaterials, SORT_LABELS } from "@/modules/materials/data/get-materials";
+import { getMaterials, MATERIALS_SORT_LABELS } from "@/modules/materials/data/get-materials";
 import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import { MaterialsDataTable } from "@/modules/materials/components/admin/materials-data-table";
@@ -87,7 +87,7 @@ export default async function MaterialsAdminPage({
 					<SelectFilter
 						filterKey="sortBy"
 						label="Trier par"
-						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+						options={Object.entries(MATERIALS_SORT_LABELS).map(([value, label]) => ({
 							value,
 							label,
 						}))}

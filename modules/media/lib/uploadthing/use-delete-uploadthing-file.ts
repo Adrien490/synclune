@@ -17,7 +17,7 @@ export const useDeleteUploadThingFile = (
 			deleteUploadThingFile,
 			createToastCallbacks({
 				showSuccessToast: false,
-				showErrorToast: false,
+				showErrorToast: true,
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

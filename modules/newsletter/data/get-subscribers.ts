@@ -5,7 +5,6 @@ import {
 } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
-import { z } from "zod";
 import { cacheNewsletterSubscribers } from "../constants/cache";
 
 import {
@@ -48,23 +47,15 @@ export const GET_SUBSCRIBERS_SORT_FIELDS = Object.values(SORT_OPTIONS);
 export async function getSubscribers(
 	params: GetSubscribersParams
 ): Promise<GetSubscribersReturn> {
-	try {
-		const validation = getSubscribersSchema.safeParse(params);
+	const validation = getSubscribersSchema.safeParse(params);
 
-		if (!validation.success) {
-			throw new Error(
-				"Invalid parameters: " + JSON.stringify(validation.error.issues)
-			);
-		}
-
-		return await fetchSubscribers(validation.data);
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			throw new Error("Invalid parameters");
-		}
-
-		throw error;
+	if (!validation.success) {
+		throw new Error(
+			"Invalid parameters: " + JSON.stringify(validation.error.issues)
+		);
 	}
+
+	return fetchSubscribers(validation.data);
 }
 
 /**

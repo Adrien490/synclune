@@ -19,10 +19,13 @@ export async function getNewsletterStats(): Promise<NewsletterStats> {
 
 	try {
 		const [totalSubscribers, activeSubscribers] = await Promise.all([
-			prisma.newsletterSubscriber.count(),
+			prisma.newsletterSubscriber.count({
+				where: { deletedAt: null },
+			}),
 			prisma.newsletterSubscriber.count({
 				where: {
 					status: NewsletterStatus.CONFIRMED,
+					deletedAt: null,
 				},
 			}),
 		]);

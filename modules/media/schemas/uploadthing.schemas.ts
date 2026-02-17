@@ -27,7 +27,7 @@ export const deleteUploadThingFileSchema = z.object({
  * Schema for deleting multiple UploadThing files
  */
 export const deleteUploadThingFilesSchema = z.object({
-	fileUrls: z.array(uploadThingUrlSchema).min(1, "Au moins une URL est requise"),
+	fileUrls: z.array(uploadThingUrlSchema).min(1, "Au moins une URL est requise").max(100, "Maximum 100 URLs par requete"),
 });
 
 export type DeleteUploadThingFileInput = z.infer<typeof deleteUploadThingFileSchema>;

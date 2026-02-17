@@ -1,6 +1,8 @@
 "use client";
 
 import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
+import type { OrderStateInput } from "@/modules/orders/types/order.types";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -73,37 +75,33 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	const { resend: resendEmail, isPending: isResendingEmail } = useResendOrderEmail();
 
 	// =========================================================================
-	// STATE MACHINE CONDITIONS
+	// STATE MACHINE (canonical source: order-status-validation.service)
 	// =========================================================================
 
-	const isPending = order.status === OrderStatus.PENDING;
-	const isProcessing = order.status === OrderStatus.PROCESSING;
+	const permissions = getOrderPermissions(order as unknown as OrderStateInput);
+
 	const isShipped = order.status === OrderStatus.SHIPPED;
 	const isDelivered = order.status === OrderStatus.DELIVERED;
 	const isCancelled = order.status === OrderStatus.CANCELLED;
 
-	const isPaid = order.paymentStatus === PaymentStatus.PAID;
-	const isUnpaid = order.paymentStatus === PaymentStatus.PENDING;
+	const {
+		canMarkAsPaid,
+		canCancel,
+		canMarkAsShipped,
+		canMarkAsDelivered,
+		canRefund,
+		canMarkAsProcessing,
+		canRevertToProcessing,
+	} = permissions;
 
-	// Actions disponibles par statut
-	const canMarkAsPaid = isPending && isUnpaid;
-	const canCancel = !isCancelled && !isDelivered;
-	const canMarkAsShipped = isProcessing && isPaid;
-	const canMarkAsDelivered = isShipped;
 	const canTrack = isShipped && order.trackingUrl;
-	const canRefund = (isProcessing || isShipped || isDelivered) && isPaid;
+	const canMarkAsReturned =
+		isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
 
-	// Une commande peut être supprimée si :
-	// - Jamais payée (ni PAID ni REFUNDED)
+	// Deletable if never paid (no PAID or REFUNDED status)
 	const canDelete =
 		order.paymentStatus !== PaymentStatus.PAID &&
 		order.paymentStatus !== PaymentStatus.REFUNDED;
-
-	// Nouvelles actions
-	const canMarkAsProcessing = isPending && isPaid;
-	const canRevertToProcessing = isShipped;
-	const canMarkAsReturned =
-		isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
 
 	// =========================================================================
 	// HANDLERS

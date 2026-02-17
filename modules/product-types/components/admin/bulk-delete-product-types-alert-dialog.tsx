@@ -10,6 +10,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkDeleteProductTypes } from "@/modules/product-types/hooks/use-bulk-delete-product-types";
 
@@ -24,9 +25,11 @@ export function BulkDeleteProductTypesAlertDialog() {
 	const { isOpen, data, close } = useAlertDialog<BulkDeleteProductTypesDialogData>(
 		BULK_DELETE_PRODUCT_TYPES_DIALOG_ID
 	);
+	const { clearSelection } = useSelectionContext();
 
 	const { action, isPending } = useBulkDeleteProductTypes({
 		onSuccess: () => {
+			clearSelection();
 			close();
 		},
 	});

@@ -38,10 +38,6 @@ export type {
 	GetMaterialsReturn,
 } from "../types/materials.types";
 
-// Aliases pour compatibilité
-export { MATERIALS_SORT_LABELS as SORT_LABELS } from "../constants/materials.constants";
-export { MATERIALS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/materials.constants";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

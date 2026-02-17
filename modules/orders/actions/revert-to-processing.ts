@@ -10,6 +10,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendRevertShippingNotificationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -154,11 +155,7 @@ export async function revertToProcessing(
 			status: ActionStatus.SUCCESS,
 			message: `Expédition de la commande ${order.orderNumber} annulée.${trackingInfo}${emailMessage} La commande est de nouveau en préparation.`,
 		};
-	} catch (error) {
-		console.error("[REVERT_TO_PROCESSING]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.REVERT_TO_PROCESSING_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.REVERT_TO_PROCESSING_FAILED);
 	}
 }

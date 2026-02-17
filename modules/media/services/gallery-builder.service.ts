@@ -1,10 +1,8 @@
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
+import { MAX_GALLERY_IMAGES } from "@/modules/media/constants/media.constants";
 import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
-
-/** Maximum number of images in the gallery */
-const MAX_GALLERY_IMAGES = 20;
 
 /** Minimum number of images before searching other SKUs */
 const MIN_GALLERY_IMAGES = 5;

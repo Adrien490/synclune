@@ -5,6 +5,8 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
 import { bulkCancelOrdersSchema } from "../schemas/order.schemas";
@@ -28,6 +30,9 @@ export async function bulkCancelOrders(
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.BULK_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const idsString = formData.get("ids");
 		const ids = idsString ? JSON.parse(idsString as string) : [];

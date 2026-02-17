@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { toast } from "sonner";
 import type {
@@ -14,6 +14,7 @@ import {
 	generateVideoThumbnail,
 	isThumbnailGenerationSupported,
 } from "./use-video-thumbnail";
+import { deleteUploadThingFilesFromUrls } from "../services/delete-uploadthing-files.service";
 
 // Re-export types for backwards compatibility
 export type {
@@ -137,6 +138,13 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing("catalogMedia");
 
+	// Abort in-progress uploads on unmount
+	useEffect(() => {
+		return () => {
+			abortControllerRef.current?.abort();
+		};
+	}, []);
+
 	// ========================================================================
 	// UTILITIES
 	// ========================================================================
@@ -241,25 +249,35 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		}
 
 		// 3. Upload the video with retry
-		const videoUploadResult = await retryWithBackoff(
-			() => startUpload([videoFile]),
-			2,
-			1000,
-			signal
-		);
+		try {
+			const videoUploadResult = await retryWithBackoff(
+				() => startUpload([videoFile]),
+				2,
+				1000,
+				signal
+			);
 
-		const serverData = videoUploadResult?.[0]?.serverData;
-		if (serverData?.url) {
-			return {
-				url: serverData.url,
-				mediaType: "VIDEO",
-				fileName: videoFile.name,
-				thumbnailUrl,
-				blurDataUrl,
-			};
+			const serverData = videoUploadResult?.[0]?.serverData;
+			if (serverData?.url) {
+				return {
+					url: serverData.url,
+					mediaType: "VIDEO",
+					fileName: videoFile.name,
+					thumbnailUrl,
+					blurDataUrl,
+				};
+			}
+
+			return null;
+		} catch (error) {
+			// Cleanup orphan thumbnail if video upload fails
+			if (thumbnailUrl) {
+				deleteUploadThingFilesFromUrls([thumbnailUrl]).catch((cleanupError) => {
+					console.warn("[useMediaUpload] Echec nettoyage thumbnail orphelin:", cleanupError);
+				});
+			}
+			throw error;
 		}
-
-		return null;
 	};
 
 	/**

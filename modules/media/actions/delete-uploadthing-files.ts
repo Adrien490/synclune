@@ -18,15 +18,15 @@ export async function deleteUploadThingFiles(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(MEDIA_LIMITS.DELETE);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 2. Verify admin rights
+		// 1. Verify admin rights
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extract data from FormData with secure JSON parsing
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(MEDIA_LIMITS.DELETE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Extract data from FormData with secure JSON parsing
 		const fileUrlsRaw = formData.get("fileUrls");
 
 		if (fileUrlsRaw === null || fileUrlsRaw === undefined) {
@@ -48,13 +48,13 @@ export async function deleteUploadThingFiles(
 			return error("Format JSON invalide pour les URLs de fichiers");
 		}
 
-		// 3. Validate with Zod
+		// 4. Validate with Zod
 		const validated = validateInput(deleteUploadThingFilesSchema, { fileUrls: parsedFileUrls });
 		if ("error" in validated) return validated.error;
 
 		const { fileUrls } = validated.data;
 
-		// 4. Extract file keys from URLs with error handling
+		// 5. Extract file keys from URLs with error handling
 		const { keys: fileKeys, failedUrls } = extractFileKeysFromUrls(fileUrls);
 
 		if (fileKeys.length === 0) {
@@ -68,11 +68,11 @@ export async function deleteUploadThingFiles(
 			);
 		}
 
-		// 5. Delete files via UTApi (per-request instantiation)
+		// 6. Delete files via UTApi (per-request instantiation)
 		const utapi = new UTApi();
 		await utapi.deleteFiles(fileKeys);
 
-		// 6. Success (with warning for partial failures)
+		// 7. Success (with warning for partial failures)
 		if (failedUrls.length > 0) {
 			return success(
 				`${fileKeys.length} fichier(s) supprime(s). ${failedUrls.length} URL(s) n'ont pas pu etre traitee(s).`,

@@ -18,7 +18,6 @@ import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "./delete-product-type-alert-dialo
 
 interface ProductTypeRowActionsProps {
 	productTypeId: string;
-	isActive: boolean;
 	isSystem?: boolean;
 	label: string;
 	description?: string | null;
@@ -28,7 +27,6 @@ interface ProductTypeRowActionsProps {
 
 export function ProductTypeRowActions({
 	productTypeId,
-	isActive,
 	isSystem = false,
 	label,
 	description,
@@ -92,7 +90,6 @@ export function ProductTypeRowActions({
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							onClick={handleDelete}
-							disabled={!isActive}
 							className="text-destructive focus:text-destructive"
 						>
 							<Trash2 className="h-4 w-4" />

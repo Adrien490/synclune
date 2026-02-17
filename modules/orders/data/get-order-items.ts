@@ -69,7 +69,9 @@ export async function getOrderItems(
 			throw new Error("Invalid parameters");
 		}
 
-		return await fetchOrderItems(validation.data);
+		// Pass userId for non-admin users to scope results
+		const userId = admin ? undefined : session?.user?.id;
+		return await fetchOrderItems(validation.data, userId);
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			throw new Error("Invalid parameters");
@@ -81,9 +83,11 @@ export async function getOrderItems(
 
 /**
  * Récupère les items de commande depuis la DB avec cache
+ * @param userId - If provided, scopes results to orders belonging to this user (non-admin)
  */
 async function fetchOrderItems(
-	params: GetOrderItemsParams
+	params: GetOrderItemsParams,
+	userId?: string
 ): Promise<GetOrderItemsReturn> {
 	"use cache";
 	cacheOrdersDashboard();
@@ -93,6 +97,11 @@ async function fetchOrderItems(
 
 	try {
 		const where = buildOrderItemsWhereClause(params);
+
+		// Scope to user's orders for non-admin users (prevents IDOR)
+		if (userId) {
+			where.order = { userId, deletedAt: null };
+		}
 
 		const orderBy: Prisma.OrderItemOrderByWithRelationInput[] = [
 			{

@@ -6,12 +6,14 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { cancelOrderSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { canCancelOrder } from "../services/order-status-validation.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { sanitizeText } from "@/shared/lib/sanitize";
 
@@ -76,11 +78,15 @@ export async function cancelOrder(
 			};
 		}
 
-		// Vérifier si déjà annulée
-		if (order.status === OrderStatus.CANCELLED) {
+		// Validate via state machine service (blocks SHIPPED, DELIVERED, CANCELLED)
+		if (!canCancelOrder(order)) {
+			const message =
+				order.status === OrderStatus.CANCELLED
+					? ORDER_ERROR_MESSAGES.ALREADY_CANCELLED
+					: "Impossible d'annuler une commande expediee ou livree.";
 			return {
 				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.ALREADY_CANCELLED,
+				message,
 			};
 		}
 
@@ -187,11 +193,7 @@ export async function cancelOrder(
 			status: ActionStatus.SUCCESS,
 			message: `Commande ${order.orderNumber} annulée.${refundMessage}${stockMessage}${emailMessage}`,
 		};
-	} catch (error) {
-		console.error("[CANCEL_ORDER]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.CANCEL_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.CANCEL_FAILED);
 	}
 }

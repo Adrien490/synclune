@@ -13,7 +13,7 @@ export interface UseMediaUploadOptions {
 	maxSizeImage?: number;
 	/** Max size for videos in bytes (default: 512MB) */
 	maxSizeVideo?: number;
-	/** Max number of files (default: 10) */
+	/** Max number of files (default: 6) */
 	maxFiles?: number;
 	/** Max concurrency for video uploads (default: 2) */
 	videoConcurrency?: number;

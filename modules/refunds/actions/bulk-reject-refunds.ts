@@ -37,7 +37,6 @@ export async function bulkRejectRefunds(
 
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const idsRaw = formData.get("ids") as string;
 		const reason = formData.get("reason") as string | null;
@@ -70,8 +69,12 @@ export async function bulkRejectRefunds(
 					select: {
 						id: true,
 						orderNumber: true,
-						customerEmail: true,
-						customerName: true,
+						user: {
+							select: {
+								email: true,
+								name: true,
+							},
+						},
 					},
 				},
 			},
@@ -112,18 +115,20 @@ export async function bulkRejectRefunds(
 		const uniqueOrderIds = [...new Set(refunds.map(r => r.order.id))];
 		uniqueOrderIds.forEach(orderId => updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId)));
 
-		// Send rejection emails to customers
+		// Send rejection emails to customers (non-blocking)
 		for (const refund of refunds) {
-			if (refund.order.customerEmail) {
-				const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.orderNumber));
+			if (refund.order.user?.email) {
+				const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
 				sendRefundRejectedEmail({
-					to: refund.order.customerEmail,
+					to: refund.order.user.email,
 					orderNumber: refund.order.orderNumber,
-					customerName: refund.order.customerName || "Client",
+					customerName: refund.order.user.name || "Client",
 					refundAmount: refund.amount,
 					reason: sanitizedReason || undefined,
 					orderDetailsUrl,
-				}).catch(() => {});
+				}).catch((emailError) => {
+					console.error(`[BULK_REJECT_REFUNDS] Échec envoi email pour ${refund.order.orderNumber}:`, emailError);
+				});
 			}
 		}
 

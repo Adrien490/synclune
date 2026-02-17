@@ -10,6 +10,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendReturnConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -146,11 +147,7 @@ export async function markAsReturned(
 			status: ActionStatus.SUCCESS,
 			message: `Commande ${order.orderNumber} marquée comme retournée.${emailMessage} Vous pouvez créer un remboursement si nécessaire.`,
 		};
-	} catch (error) {
-		console.error("[MARK_AS_RETURNED]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.MARK_AS_RETURNED_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_RETURNED_FAILED);
 	}
 }

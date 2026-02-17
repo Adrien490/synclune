@@ -5,23 +5,19 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { AnimatePresence, motion } from "motion/react";
 import { Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { MediaTypeBadge } from "@/shared/components/ui/media-type-badge";
+import { MediaErrorFallback } from "@/modules/media/components/media-error-fallback";
 import { DELETE_PRIMARY_IMAGE_DIALOG_ID } from "./delete-primary-image-alert-dialog";
-import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants";
+import { isVideoUrl } from "@/modules/media/utils/media-type-detection";
 
 /**
  * Detects the media type from URL if not provided.
- * Uses VIDEO_EXTENSIONS from centralized config.
+ * Uses isVideoUrl() from centralized media-type-detection utility.
  */
 function detectMediaTypeFromUrl(url?: string): "IMAGE" | "VIDEO" | undefined {
 	if (!url) return undefined;
-	const lowerUrl = url.toLowerCase();
-	// Uses video extensions from centralized config
-	if (VIDEO_EXTENSIONS.some((ext) => lowerUrl.includes(ext))) {
-		return "VIDEO";
-	}
-	return "IMAGE";
+	return isVideoUrl(url) ? "VIDEO" : "IMAGE";
 }
 
 interface PrimaryImageUploadProps {
@@ -49,10 +45,16 @@ export function PrimaryImageUpload({
 	skipUtapiDelete,
 }: PrimaryImageUploadProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
+	const [videoError, setVideoError] = useState(false);
 	const deleteDialog = useAlertDialog(DELETE_PRIMARY_IMAGE_DIALOG_ID);
 
 	// Auto-detect mediaType if not provided
 	const effectiveMediaType = mediaType ?? detectMediaTypeFromUrl(imageUrl);
+
+	// Reset error state when URL changes
+	useEffect(() => {
+		setVideoError(false);
+	}, [imageUrl]);
 
 	// Cleanup video element on unmount or when URL changes to prevent memory leaks
 	useEffect(() => {
@@ -95,6 +97,17 @@ export function PrimaryImageUpload({
 									role="img"
 									aria-label="Aperçu du média principal"
 								>
+									{videoError ? (
+										<MediaErrorFallback
+											type="video"
+											onRetry={() => {
+												setVideoError(false);
+												if (videoRef.current) {
+													videoRef.current.load();
+												}
+											}}
+										/>
+									) : (
 									<video
 										ref={videoRef}
 										src={imageUrl}
@@ -115,10 +128,12 @@ export function PrimaryImageUpload({
 											e.currentTarget.pause();
 											e.currentTarget.currentTime = 0;
 										}}
+										onError={() => setVideoError(true)}
 										aria-label="Aperçu vidéo du média principal"
 									>
 										Votre navigateur ne supporte pas la lecture de vidéos.
 									</video>
+									)}
 									{/* VIDEO badge */}
 									<div className="absolute top-2 right-2 z-10">
 										<MediaTypeBadge type="VIDEO" size="md" />

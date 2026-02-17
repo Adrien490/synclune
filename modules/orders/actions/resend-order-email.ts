@@ -12,6 +12,8 @@ import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-r
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ResendEmailType } from "../types/email.types";
@@ -31,10 +33,34 @@ export async function resendOrderEmail(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Récupérer la commande avec toutes les données nécessaires
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.RESEND_EMAIL);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Récupérer la commande avec uniquement les champs nécessaires
 		const order = await prisma.order.findUnique({
 			where: { id: orderId },
-			include: {
+			select: {
+				orderNumber: true,
+				status: true,
+				fulfillmentStatus: true,
+				customerEmail: true,
+				customerName: true,
+				subtotal: true,
+				discountAmount: true,
+				shippingCost: true,
+				total: true,
+				shippingFirstName: true,
+				shippingLastName: true,
+				shippingAddress1: true,
+				shippingAddress2: true,
+				shippingPostalCode: true,
+				shippingCity: true,
+				shippingCountry: true,
+				shippingCarrier: true,
+				trackingNumber: true,
+				trackingUrl: true,
+				actualDelivery: true,
 				items: {
 					select: {
 						productTitle: true,
@@ -67,13 +93,13 @@ export async function resendOrderEmail(
 					shipping: order.shippingCost,
 					total: order.total,
 					shippingAddress: {
-						firstName: order.shippingFirstName,
-						lastName: order.shippingLastName,
-						address1: order.shippingAddress1,
+						firstName: order.shippingFirstName || "",
+						lastName: order.shippingLastName || "",
+						address1: order.shippingAddress1 || "",
 						address2: order.shippingAddress2,
-						postalCode: order.shippingPostalCode,
-						city: order.shippingCity,
-						country: order.shippingCountry,
+						postalCode: order.shippingPostalCode || "",
+						city: order.shippingCity || "",
+						country: order.shippingCountry || "France",
 					},
 					trackingUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
 				});
@@ -105,13 +131,13 @@ export async function resendOrderEmail(
 					trackingUrl: order.trackingUrl,
 					carrierLabel,
 					shippingAddress: {
-						firstName: order.shippingFirstName,
-						lastName: order.shippingLastName,
-						address1: order.shippingAddress1,
+						firstName: order.shippingFirstName || "",
+						lastName: order.shippingLastName || "",
+						address1: order.shippingAddress1 || "",
 						address2: order.shippingAddress2,
-						postalCode: order.shippingPostalCode,
-						city: order.shippingCity,
-						country: order.shippingCountry,
+						postalCode: order.shippingPostalCode || "",
+						city: order.shippingCity || "",
+						country: order.shippingCountry || "France",
 					},
 					estimatedDelivery: "3-5 jours ouvres",
 				});

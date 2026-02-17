@@ -18,13 +18,13 @@ export async function deleteUploadThingFile(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(MEDIA_LIMITS.DELETE);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 2. Verify admin rights
+		// 1. Verify admin rights
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(MEDIA_LIMITS.DELETE);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Extract data from FormData
 		const rawData = {

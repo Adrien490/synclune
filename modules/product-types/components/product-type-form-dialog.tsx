@@ -9,9 +9,13 @@ import {
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
-import { useCreateProductTypeForm } from "@/modules/product-types/hooks/use-create-product-type-form";
-import { useUpdateProductTypeForm } from "@/modules/product-types/hooks/use-update-product-type-form";
+import { useAppForm } from "@/shared/components/forms";
+import { createProductType } from "@/modules/product-types/actions/create-product-type";
+import { updateProductType } from "@/modules/product-types/actions/update-product-type";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useEffect, useActionState } from "react";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
 export const PRODUCT_TYPE_DIALOG_ID = "product-type-form";
 
@@ -29,122 +33,60 @@ export function ProductTypeFormDialog() {
 		PRODUCT_TYPE_DIALOG_ID
 	);
 	const productType = data?.productType;
+	const isUpdateMode = !!productType;
 
-	// Use appropriate form hook based on mode
-	const createFormHook = useCreateProductTypeForm({
-		onSuccess: () => {
-			close();
-		},
-	});
-
-	const updateFormHook = useUpdateProductTypeForm({
-		productType: productType || {
-			id: "",
+	const form = useAppForm({
+		defaultValues: {
 			label: "",
 			description: "",
-			slug: "",
-		},
-		onSuccess: () => {
-			close();
-			updateFormHook.form.reset();
 		},
 	});
 
-	// Render create form
-	if (!productType) {
-		const { form, action, isPending } = createFormHook;
-		return (
-			<ResponsiveDialog
-				open={isOpen}
-				onOpenChange={(open) => {
-					if (!open && !isPending) {
-						close();
-					}
-				}}
-			>
-				<ResponsiveDialogContent className="max-w-md">
-					<ResponsiveDialogHeader>
-						<ResponsiveDialogTitle>Créer un type de produit</ResponsiveDialogTitle>
-						<ResponsiveDialogDescription>
-							Ajoutez un nouveau type pour catégoriser vos produits.
-						</ResponsiveDialogDescription>
-					</ResponsiveDialogHeader>
+	// Create action
+	const [, createAction, isCreatePending] = useActionState(
+		withCallbacks(
+			createProductType,
+			createToastCallbacks({
+				onSuccess: () => {
+					close();
+					form.reset();
+				},
+			})
+		),
+		undefined
+	);
 
-					<form
-						action={action}
-						className="space-y-6"
-						onSubmit={() => form.handleSubmit()}
-					>
-						<RequiredFieldsNote />
+	// Update action
+	const [, updateAction, isUpdatePending] = useActionState(
+		withCallbacks(
+			updateProductType,
+			createToastCallbacks({
+				onSuccess: () => {
+					close();
+				},
+			})
+		),
+		undefined
+	);
 
-						<div className="space-y-4">
-							{/* Label Field */}
-							<form.AppField
-								name="label"
-								validators={{
-									onChange: ({ value }: { value: string }) => {
-										if (!value || value.length < 1) {
-											return "Le label est requis";
-										}
-										if (value.length > 50) {
-											return "Le label ne peut pas dépasser 50 caractères";
-										}
-										return undefined;
-									},
-								}}
-							>
-								{(field) => (
-									<field.InputField
-										label="Label"
-										type="text"
-										placeholder="ex: Colliers, Bagues, Bracelets"
-										disabled={isPending}
-										required
-									/>
-								)}
-							</form.AppField>
+	const isPending = isCreatePending || isUpdatePending;
+	const action = isUpdateMode ? updateAction : createAction;
 
-							{/* Description Field */}
-							<form.AppField
-								name="description"
-								validators={{
-									onChange: ({ value }: { value: string }) => {
-										if (value && value.length > 500) {
-											return "La description ne peut pas dépasser 500 caractères";
-										}
-										return undefined;
-									},
-								}}
-							>
-								{(field) => (
-									<field.TextareaField
-										label="Description"
-										placeholder="Décrivez le type de produit..."
-										disabled={isPending}
-										rows={4}
-									/>
-								)}
-							</form.AppField>
-						</div>
+	// Reset form values when productType data changes
+	useEffect(() => {
+		if (productType) {
+			form.reset({
+				label: productType.label,
+				description: productType.description || "",
+			});
+		} else {
+			form.reset({
+				label: "",
+				description: "",
+			});
+		}
+	}, [productType, form]);
 
-						{/* Submit button */}
-						<div className="flex justify-end pt-4">
-							<form.Subscribe selector={(state) => [state.canSubmit]}>
-								{([canSubmit]) => (
-									<Button disabled={!canSubmit || isPending} type="submit">
-										{isPending ? "Enregistrement..." : "Créer"}
-									</Button>
-								)}
-							</form.Subscribe>
-						</div>
-					</form>
-				</ResponsiveDialogContent>
-			</ResponsiveDialog>
-		);
-	}
-
-	// Render update form
-	const { form, action, isPending } = updateFormHook;
 	return (
 		<ResponsiveDialog
 			open={isOpen}
@@ -156,10 +98,13 @@ export function ProductTypeFormDialog() {
 		>
 			<ResponsiveDialogContent className="max-w-md">
 				<ResponsiveDialogHeader>
-					<ResponsiveDialogTitle>Modifier le type de produit</ResponsiveDialogTitle>
+					<ResponsiveDialogTitle>
+						{isUpdateMode ? "Modifier le type de produit" : "Créer un type de produit"}
+					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Modifiez les informations du type. Les changements seront
-						appliqués à tous les produits utilisant ce type.
+						{isUpdateMode
+							? "Modifiez les informations du type. Les changements seront appliqués à tous les produits utilisant ce type."
+							: "Ajoutez un nouveau type pour catégoriser vos produits."}
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
@@ -168,12 +113,13 @@ export function ProductTypeFormDialog() {
 					className="space-y-6"
 					onSubmit={() => form.handleSubmit()}
 				>
-					<input type="hidden" name="id" value={productType.id} />
+					{isUpdateMode && productType && (
+						<input type="hidden" name="id" value={productType.id} />
+					)}
 
 					<RequiredFieldsNote />
 
 					<div className="space-y-4">
-						{/* Label Field */}
 						<form.AppField
 							name="label"
 							validators={{
@@ -199,7 +145,6 @@ export function ProductTypeFormDialog() {
 							)}
 						</form.AppField>
 
-						{/* Description Field */}
 						<form.AppField
 							name="description"
 							validators={{
@@ -222,12 +167,15 @@ export function ProductTypeFormDialog() {
 						</form.AppField>
 					</div>
 
-					{/* Submit button */}
 					<div className="flex justify-end pt-4">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">
-									{isPending ? "Enregistrement..." : "Enregistrer"}
+									{isPending
+										? "Enregistrement..."
+										: isUpdateMode
+											? "Enregistrer"
+											: "Créer"}
 								</Button>
 							)}
 						</form.Subscribe>

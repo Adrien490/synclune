@@ -150,7 +150,7 @@ function StatusBadge({ status }: { status: CustomizationRequestStatus }) {
 		<span
 			className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${colors.bg} ${colors.text}`}
 		>
-			<span className={`h-1.5 w-1.5 rounded-full ${colors.dot}`} />
+			<span aria-hidden="true">{colors.symbol}</span>
 			{label}
 		</span>
 	);

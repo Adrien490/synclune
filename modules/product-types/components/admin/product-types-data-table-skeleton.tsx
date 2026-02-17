@@ -6,10 +6,11 @@ export function ProductTypesDataTableSkeleton() {
 		<DataTableSkeleton
 			columns={[
 				{ width: "5%", cell: { type: "checkbox" } },
-				{ width: "40%", cell: { type: "text", width: "w-32" } },
+				{ width: "25%", cell: { type: "text", width: "w-32" } },
+				{ width: "30%", hiddenBelow: "lg", cell: { type: "text", width: "w-48" } },
 				{ width: "15%", hiddenBelow: "sm", align: "center", cell: { type: "text", width: "w-8" } },
 				{
-					width: "15%",
+					width: "10%",
 					hiddenBelow: "sm",
 					align: "center",
 					cell: {
@@ -17,7 +18,7 @@ export function ProductTypesDataTableSkeleton() {
 						render: () => <Skeleton className="h-6 w-11 mx-auto rounded-full" />,
 					},
 				},
-				{ width: "15%", align: "right", cell: { type: "actions" } },
+				{ width: "10%", align: "right", cell: { type: "actions" } },
 			]}
 			pagination="offset"
 		/>

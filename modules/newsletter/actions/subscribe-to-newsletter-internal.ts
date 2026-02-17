@@ -1,5 +1,3 @@
-"use server";
-
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { sendNewsletterConfirmationEmail } from "@/modules/emails/services/newsletter-emails";
 import { prisma } from "@/shared/lib/prisma";
@@ -33,17 +31,17 @@ export async function subscribeToNewsletterInternal({
 	consentSource,
 }: SubscribeToNewsletterInternalParams): Promise<SubscribeToNewsletterInternalResult> {
 	try {
-		// Vérifier si l'email existe déjà
-		const existingSubscriber = await prisma.newsletterSubscriber.findUnique({
-			where: { email },
+		// Vérifier si l'email existe déjà (exclude soft-deleted)
+		const existingSubscriber = await prisma.newsletterSubscriber.findFirst({
+			where: { email, deletedAt: null },
 		});
 
 		if (existingSubscriber) {
-			// Si l'abonné est confirmé
+			// If already confirmed, return generic message to prevent email enumeration
 			if (existingSubscriber.status === NewsletterStatus.CONFIRMED) {
 				return {
 					success: true,
-					message: "Vous êtes déjà inscrit(e) à la newsletter",
+					message: "Si cette adresse n'est pas encore inscrite, un email de confirmation vous a été envoyé.",
 					alreadySubscribed: true,
 				};
 			}

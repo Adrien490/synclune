@@ -6,10 +6,8 @@ import { validateInput, handleActionError, success, error } from "@/shared/lib/a
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
-import { updateTag } from "next/cache";
 import { subscribeToNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { subscribeToNewsletterInternal } from "./subscribe-to-newsletter-internal";
-import { getNewsletterInvalidationTags } from "../constants/cache";
 
 export async function subscribeToNewsletter(
 	_previousState: ActionState | undefined,
@@ -73,9 +71,7 @@ export async function subscribeToNewsletter(
 			};
 		}
 
-		// Invalider le cache (nouvelle inscription)
-		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
-
+		// Cache already invalidated by subscribeToNewsletterInternal
 		return success(internalResult.message);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue. Veuillez réessayer plus tard.");

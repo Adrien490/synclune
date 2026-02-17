@@ -36,7 +36,6 @@ export async function rejectRefund(
 
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
@@ -56,8 +55,12 @@ export async function rejectRefund(
 					select: {
 						id: true,
 						orderNumber: true,
-						customerEmail: true,
-						customerName: true,
+						user: {
+							select: {
+								email: true,
+								name: true,
+							},
+						},
 					},
 				},
 			},
@@ -107,17 +110,22 @@ export async function rejectRefund(
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
 
-		// Send rejection email to customer
-		if (refund.order.customerEmail) {
-			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.orderNumber));
-			sendRefundRejectedEmail({
-				to: refund.order.customerEmail,
-				orderNumber: refund.order.orderNumber,
-				customerName: refund.order.customerName || "Client",
-				refundAmount: refund.amount,
-				reason: sanitizedReason || undefined,
-				orderDetailsUrl,
-			}).catch(() => {});
+		// Send rejection email to customer (non-blocking)
+		if (refund.order.user?.email) {
+			try {
+				const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
+
+				await sendRefundRejectedEmail({
+					to: refund.order.user.email,
+					orderNumber: refund.order.orderNumber,
+					customerName: refund.order.user.name || "Client",
+					refundAmount: refund.amount,
+					reason: sanitizedReason || undefined,
+					orderDetailsUrl,
+				});
+			} catch (emailError) {
+				console.error("[REJECT_REFUND] Échec envoi email:", emailError);
+			}
 		}
 
 		return {

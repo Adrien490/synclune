@@ -21,7 +21,7 @@ export function MediaErrorFallback({
 	const isSmall = size === "small";
 
 	return (
-		<div className="w-full h-full flex items-center justify-center bg-muted">
+		<div className="w-full h-full flex items-center justify-center bg-muted" role="alert">
 			<div className="text-center space-y-2 p-4">
 				<p
 					className={`font-medium text-muted-foreground ${

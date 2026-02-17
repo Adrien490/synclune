@@ -37,7 +37,7 @@ export const getAllJewelryTypes = (): JewelryTypeConfig[] => {
 export const getJewelryTypeByKey = (
 	key: string
 ): JewelryTypeConfig | undefined => {
-	return SYNCLUNE_JEWELRY_TYPES.find((type) => type.key === key);
+	return JEWELRY_TYPES[key];
 };
 
 /**

@@ -105,7 +105,7 @@ const bulkIdsSchema = z.string().transform((str) => {
 	} catch {
 		return [];
 	}
-}).pipe(z.array(z.cuid2("ID invalide")).max(100, "Maximum 100 elements par operation"));
+}).pipe(z.array(z.cuid2("ID invalide")).min(1, "Au moins un element requis").max(100, "Maximum 100 elements par operation"));
 
 export const bulkActivateProductTypesSchema = z.object({
 	ids: bulkIdsSchema,

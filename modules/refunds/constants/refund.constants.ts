@@ -117,7 +117,7 @@ export const GET_ORDER_FOR_REFUND_SELECT = {
 				where: {
 					refund: {
 						status: {
-							in: ["PENDING", "APPROVED", "COMPLETED"],
+							in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
 						},
 					},
 				},
@@ -129,7 +129,7 @@ export const GET_ORDER_FOR_REFUND_SELECT = {
 	},
 	refunds: {
 		where: {
-			status: "COMPLETED",
+			status: RefundStatus.COMPLETED,
 		},
 		select: {
 			amount: true,

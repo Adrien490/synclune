@@ -35,7 +35,6 @@ const COMMON_TYPO_CORRECTIONS: Record<string, string> = {
 	"yahooo.com": "yahoo.com",
 	"yaho.com": "yahoo.com",
 	"hotmial.com": "hotmail.com",
-	"hotmail.fr": "hotmail.fr", // Valide, pas de correction
 	"outloook.com": "outlook.com",
 	"outlok.com": "outlook.com",
 };
@@ -73,22 +72,6 @@ export const subscribeToNewsletterSchema = z.object({
 
 export type SubscribeToNewsletterInput = z.infer<
 	typeof subscribeToNewsletterSchema
->;
-
-// ============================================================================
-// UNSUBSCRIBE FROM NEWSLETTER SCHEMA
-// ============================================================================
-
-export const unsubscribeFromNewsletterSchema = z.object({
-	email: z
-		.string()
-		.min(1, "L'email est requis")
-		.email("Vérifiez le format de votre email (ex: nom@domaine.com)"),
-	token: z.string().optional(),
-});
-
-export type UnsubscribeFromNewsletterInput = z.infer<
-	typeof unsubscribeFromNewsletterSchema
 >;
 
 // ============================================================================

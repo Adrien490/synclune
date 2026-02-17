@@ -47,8 +47,8 @@ async function fetchOrderById(id: string): Promise<GetOrderReturn | null> {
 	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 
 	try {
-		const order = await prisma.order.findUnique({
-			where: { id },
+		const order = await prisma.order.findFirst({
+			where: { id, deletedAt: null },
 			select: GET_ORDER_SELECT,
 		});
 

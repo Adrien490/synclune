@@ -69,9 +69,9 @@ export async function confirmNewsletterSubscription(
 		}
 		const validatedToken = validated.data.token;
 
-		// Find subscriber with this token
-		const subscriber = await prisma.newsletterSubscriber.findUnique({
-			where: { confirmationToken: validatedToken },
+		// Find subscriber with this token (exclude soft-deleted)
+		const subscriber = await prisma.newsletterSubscriber.findFirst({
+			where: { confirmationToken: validatedToken, deletedAt: null },
 		});
 
 		if (!subscriber) {

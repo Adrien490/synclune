@@ -4,17 +4,7 @@ import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "@/modules/newsletter/constants/cache";
-import { z } from "zod";
-
-const UUID_V4_REGEX =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-const unsubscribeTokenSchema = z.object({
-	token: z
-		.string()
-		.min(1)
-		.refine((val) => UUID_V4_REGEX.test(val)),
-});
+import { unsubscribeTokenSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 
 /**
  * RFC 8058 One-Click Unsubscribe handler.

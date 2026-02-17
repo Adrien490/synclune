@@ -2,9 +2,11 @@
 
 import { updateTag } from "next/cache";
 
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
@@ -13,7 +15,7 @@ import { getProductTypeInvalidationTags } from "../utils/cache.utils";
 import { createProductTypeSchema } from "../schemas/product-type.schemas";
 
 export async function createProductType(
-	_prevState: unknown,
+	_prevState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
@@ -21,7 +23,11 @@ export async function createProductType(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les donnees du FormData
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.CREATE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Extraire les donnees du FormData
 		const rawData = {
 			label: formData.get("label"),
 			description: formData.get("description") || undefined,

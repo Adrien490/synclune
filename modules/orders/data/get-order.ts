@@ -1,8 +1,9 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheOrdersDashboard } from "../constants/cache";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { Prisma } from "@/app/generated/prisma/client";
 
 import { GET_ORDER_SELECT } from "../constants/order.constants";
@@ -54,8 +55,14 @@ export async function fetchOrder(
 	params: GetOrderParams,
 	context: FetchOrderContext
 ): Promise<GetOrderReturn | null> {
-	"use cache";
-	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+	"use cache: private";
+	cacheLife("dashboard");
+	// Use user-specific tag for non-admin to prevent cross-user cache poisoning
+	if (context.admin) {
+		cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+	} else if (context.userId) {
+		cacheTag(ORDERS_CACHE_TAGS.USER_ORDERS(context.userId));
+	}
 
 	const where: Prisma.OrderWhereInput = {
 		orderNumber: params.orderNumber,

@@ -2,22 +2,28 @@
 
 import { updateTag } from "next/cache";
 
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { getProductTypeInvalidationTags } from "../utils/cache.utils";
 import { bulkActivateProductTypesSchema } from "../schemas/product-type.schemas";
 
 export async function bulkActivateProductTypes(
-	prevState: ActionState | undefined,
+	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérification des droits admin
+		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.BULK_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
 			ids: formData.get("ids") as string,

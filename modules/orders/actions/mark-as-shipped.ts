@@ -10,6 +10,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
 
@@ -196,11 +197,7 @@ export async function markAsShipped(
 			status: ActionStatus.SUCCESS,
 			message: `Commande ${order.orderNumber} expédiée. Numéro de suivi : ${result.data.trackingNumber}.${emailMessage}`,
 		};
-	} catch (error) {
-		console.error("[MARK_AS_SHIPPED]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.MARK_AS_SHIPPED_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_SHIPPED_FAILED);
 	}
 }

@@ -12,6 +12,9 @@ export const MAX_MEDIA_PER_ITEM = 6;
 /** Maximum number of media in SKU gallery (excluding primary image) */
 export const MAX_GALLERY_MEDIA = 5;
 
+/** Maximum number of images in the product gallery (across all SKUs) */
+export const MAX_GALLERY_IMAGES = 20;
+
 // ============================================================================
 // SUPPORTED EXTENSIONS
 // ============================================================================

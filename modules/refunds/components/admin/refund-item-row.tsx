@@ -77,7 +77,7 @@ export function RefundItemRow({
 				</p>
 				{availableQty < orderItem.quantity && (
 					<p className="text-xs text-warning-foreground mt-1">
-						{orderItem.quantity - availableQty} deja rembourse(s)
+						{orderItem.quantity - availableQty} déjà remboursé(s)
 					</p>
 				)}
 			</div>
@@ -86,7 +86,7 @@ export function RefundItemRow({
 				<div className="flex flex-col gap-2 items-end">
 					<div className="flex items-center gap-2">
 						<Label htmlFor={`qty-${orderItem.id}`} className="text-xs text-muted-foreground">
-							Quantite
+							Quantité
 						</Label>
 						<Input
 							id={`qty-${orderItem.id}`}

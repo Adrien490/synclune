@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { PaymentStatus } from "@/app/generated/prisma/client";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -44,6 +45,7 @@ export async function fetchLastOrder(
 			where: {
 				userId,
 				deletedAt: null,
+				paymentStatus: PaymentStatus.PAID,
 			},
 			orderBy: {
 				createdAt: "desc",

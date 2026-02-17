@@ -9,6 +9,7 @@ import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
 
 import type { Slide } from "yet-another-react-lightbox";
+import { useReducedMotion } from "motion/react";
 import { LIGHTBOX_CONFIG, UI_DELAYS } from "@/modules/media/constants/media.constants";
 
 interface MediaLightboxProps {
@@ -35,6 +36,8 @@ export default function MediaLightbox({
 	index,
 	onIndexChange,
 }: MediaLightboxProps) {
+	const prefersReducedMotion = useReducedMotion();
+
 	if (!open) return null;
 
 	return (
@@ -64,8 +67,8 @@ export default function MediaLightbox({
 					}}
 					counter={{ container: { style: { top: "unset", bottom: LIGHTBOX_CONFIG.COUNTER_BOTTOM_OFFSET } } }}
 					video={{
-						autoPlay: true,
-						controls: false,
+						autoPlay: !prefersReducedMotion,
+						controls: true,
 						playsInline: true,
 						loop: true,
 						muted: true,

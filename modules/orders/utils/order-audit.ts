@@ -71,16 +71,6 @@ export async function createOrderAuditTx(
 }
 
 /**
- * Récupère l'historique d'une commande (plus récent en premier)
- */
-export async function getOrderHistory(orderId: string) {
-	return prisma.orderHistory.findMany({
-		where: { orderId },
-		orderBy: { createdAt: "desc" },
-	});
-}
-
-/**
  * Helper pour créer un audit de changement de statut
  */
 export function buildStatusChangeAudit(

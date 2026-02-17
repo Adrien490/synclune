@@ -10,6 +10,7 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -132,11 +133,7 @@ export async function markAsProcessing(
 			status: ActionStatus.SUCCESS,
 			message: `Commande ${order.orderNumber} passée en préparation.`,
 		};
-	} catch (error) {
-		console.error("[MARK_AS_PROCESSING]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.MARK_AS_PROCESSING_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_PROCESSING_FAILED);
 	}
 }

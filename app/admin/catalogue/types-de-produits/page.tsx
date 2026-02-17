@@ -3,7 +3,6 @@ import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { Button } from "@/shared/components/ui/button";
 import dynamic from "next/dynamic";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
@@ -22,7 +21,6 @@ import {
 	SORT_LABELS,
 } from "@/modules/product-types/data/get-product-types";
 import { getFirstParam } from "@/shared/utils/params";
-import Link from "next/link";
 import { Suspense } from "react";
 import { ProductTypesDataTable } from "@/modules/product-types/components/admin/product-types-data-table";
 import { ProductTypesDataTableSkeleton } from "@/modules/product-types/components/admin/product-types-data-table-skeleton";
@@ -33,7 +31,6 @@ import { parseFilters } from "./_utils/params";
 
 export type ProductTypeFiltersSearchParams = {
 	filter_isActive?: string;
-	filter_hasSize?: string;
 };
 
 export type ProductTypesSearchParams = {
@@ -47,7 +44,6 @@ export type ProductTypesSearchParams = {
 
 export type ParsedProductTypeFilters = {
 	isActive?: boolean;
-	hasSize?: boolean;
 };
 import { Metadata } from "next";
 
@@ -96,16 +92,7 @@ export default async function ProductTypesAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Types de bijoux"
-				actions={
-					<div className="flex gap-3">
-						<Button asChild variant="outline">
-							<Link href="/admin/catalogue/types-de-produits/trash">
-								Corbeille
-							</Link>
-						</Button>
-						<CreateProductTypeButton />
-					</div>
-				}
+				actions={<CreateProductTypeButton />}
 			/>
 
 			<div className="space-y-6">

@@ -381,6 +381,49 @@ export const ORDER_LIMITS = {
 	CANCEL: ORDER_CANCEL_LIMIT,
 } as const;
 
+// ========================================
+// 📦 ADMIN ORDER OPERATIONS
+// ========================================
+
+/**
+ * Limite pour le renvoi d'emails de commande (admin)
+ *
+ * Stricte pour eviter le spam de mails clients
+ */
+export const ADMIN_ORDER_RESEND_EMAIL_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le marquage comme paye (admin)
+ *
+ * Moderee car mutation financiere
+ */
+export const ADMIN_ORDER_MARK_AS_PAID_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour les operations bulk sur commandes (admin)
+ *
+ * Stricte car operations destructives en masse
+ */
+export const ADMIN_ORDER_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Toutes les limites admin commandes
+ */
+export const ADMIN_ORDER_LIMITS = {
+	RESEND_EMAIL: ADMIN_ORDER_RESEND_EMAIL_LIMIT,
+	MARK_AS_PAID: ADMIN_ORDER_MARK_AS_PAID_LIMIT,
+	BULK_OPERATIONS: ADMIN_ORDER_BULK_OPERATIONS_LIMIT,
+} as const;
+
 /**
  * Toutes les limites de recherche/consultation
  */
@@ -858,6 +901,49 @@ export const ADMIN_COLOR_LIMITS = {
 	DUPLICATE: ADMIN_COLOR_DUPLICATE_LIMIT,
 	BULK_OPERATIONS: ADMIN_COLOR_BULK_OPERATIONS_LIMIT,
 	REFRESH: ADMIN_COLOR_REFRESH_LIMIT,
+} as const;
+
+// ========================================
+// 📦 ADMIN PRODUCT TYPE OPERATIONS
+// ========================================
+
+export const ADMIN_PRODUCT_TYPE_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_PRODUCT_TYPE_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_PRODUCT_TYPE_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_PRODUCT_TYPE_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_PRODUCT_TYPE_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+export const ADMIN_PRODUCT_TYPE_LIMITS = {
+	CREATE: ADMIN_PRODUCT_TYPE_CREATE_LIMIT,
+	UPDATE: ADMIN_PRODUCT_TYPE_UPDATE_LIMIT,
+	DELETE: ADMIN_PRODUCT_TYPE_DELETE_LIMIT,
+	TOGGLE_STATUS: ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT,
+	BULK_OPERATIONS: ADMIN_PRODUCT_TYPE_BULK_OPERATIONS_LIMIT,
+	REFRESH: ADMIN_PRODUCT_TYPE_REFRESH_LIMIT,
 } as const;
 
 // ========================================

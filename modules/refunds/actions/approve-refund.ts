@@ -31,7 +31,6 @@ export async function approveRefund(
 
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 

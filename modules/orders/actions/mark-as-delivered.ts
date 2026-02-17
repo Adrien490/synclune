@@ -11,6 +11,7 @@ import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-e
 import { scheduleReviewRequestEmail } from "@/modules/webhooks/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -172,11 +173,7 @@ export async function markAsDelivered(
 			status: ActionStatus.SUCCESS,
 			message: `Commande ${order.orderNumber} marquée comme livrée.${emailMessage}`,
 		};
-	} catch (error) {
-		console.error("[MARK_AS_DELIVERED]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.MARK_AS_DELIVERED_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_DELIVERED_FAILED);
 	}
 }

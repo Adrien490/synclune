@@ -86,7 +86,7 @@ export function MaterialsSelectionToolbar() {
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={handleDeactivateClick}>
 							<XCircle className="h-4 w-4" />
-							Desactiver
+							Désactiver
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={handleDeleteClick} variant="destructive">
@@ -201,7 +201,7 @@ export function MaterialsSelectionToolbar() {
 						/>
 						<input type="hidden" name="isActive" value="false" />
 						<AlertDialogHeader>
-							<AlertDialogTitle>Desactiver les materiaux</AlertDialogTitle>
+							<AlertDialogTitle>Désactiver les materiaux</AlertDialogTitle>
 							<AlertDialogDescription>
 								Êtes-vous sûr de vouloir désactiver{" "}
 								<span className="font-semibold">
@@ -222,12 +222,12 @@ export function MaterialsSelectionToolbar() {
 								{isTogglePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										Desactivation...
+										Désactivation...
 									</>
 								) : (
 									<>
 										<XCircle className="mr-2 h-4 w-4" />
-										Desactiver
+										Désactiver
 									</>
 								)}
 							</Button>

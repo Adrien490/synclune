@@ -36,7 +36,7 @@ export async function sendCustomizationRequestEmail({
 			to: EMAIL_ADMIN,
 			subject: `${EMAIL_SUBJECTS.CUSTOMIZATION_REQUEST} - ${firstName}`,
 			replyTo: email,
-			tags: [{ name: "category", value: "order" }],
+			tags: [{ name: "category", value: "customization" }],
 		}
 	)
 }
@@ -67,7 +67,7 @@ export async function sendCustomizationConfirmationEmail({
 		{
 			to: email,
 			subject: EMAIL_SUBJECTS.CUSTOMIZATION_CONFIRMATION,
-			tags: [{ name: "category", value: "order" }],
+			tags: [{ name: "category", value: "customization" }],
 		}
 	)
 }
@@ -108,7 +108,7 @@ export async function sendCustomizationStatusEmail({
 			to: email,
 			subject: CUSTOMIZATION_STATUS_SUBJECTS[status] || EMAIL_SUBJECTS.CUSTOMIZATION_IN_PROGRESS,
 			replyTo: EMAIL_CONTACT,
-			tags: [{ name: "category", value: "order" }],
+			tags: [{ name: "category", value: "customization" }],
 		}
 	)
 }

@@ -97,15 +97,24 @@ export function MediaUploadGrid({
 	// Show long-press hint for new users on mobile (once only)
 	useEffect(() => {
 		if (typeof window === "undefined") return;
-		const hasSeenHint = localStorage.getItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN);
-		if (hasSeenHint) return;
+		try {
+			const hasSeenHint = localStorage.getItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN);
+			if (hasSeenHint) return;
+		} catch {
+			// localStorage unavailable (private browsing, etc.)
+			return;
+		}
 
 		// Show the hint only if there are at least 2 medias
 		if (hasMultipleMedia) {
 			setShowLongPressHint(true);
 			const timer = setTimeout(() => {
 				setShowLongPressHint(false);
-				localStorage.setItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN, "true");
+				try {
+					localStorage.setItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN, "true");
+				} catch {
+					// Ignore write failure
+				}
 			}, UI_DELAYS.HINT_DISAPPEAR_MS);
 			return () => clearTimeout(timer);
 		}

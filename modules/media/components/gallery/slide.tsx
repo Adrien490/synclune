@@ -7,6 +7,7 @@ import { cn } from "@/shared/utils/cn";
 import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { GALLERY_ZOOM_LEVEL, VIDEO_LOAD_TIMEOUT } from "@/modules/media/constants/gallery.constants";
+import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { GalleryHoverZoom } from "@/shared/components/gallery/hover-zoom";
 import { GalleryPinchZoom } from "./pinch-zoom";
@@ -140,12 +141,10 @@ export function GallerySlide({
 	// Vidéo : même rendu mobile/desktop
 	if (media.mediaType === "VIDEO") {
 		return (
-			<div
-				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
+			<button
+				type="button"
+				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in appearance-none border-0 p-0 bg-transparent text-left"
 				onClick={onOpen}
-				role="button"
-				tabIndex={0}
-				onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
 				aria-label="Ouvrir la vidéo en plein écran"
 			>
 				{videoState === "loading" && <VideoLoadingSpinner />}
@@ -178,14 +177,14 @@ export function GallerySlide({
 					aria-label={`Vidéo ${title}`}
 					aria-describedby={`video-desc-${index}`}
 				>
-					<source src={media.url} type="video/mp4" />
+					<source src={media.url} type={getVideoMimeType(media.url)} />
 					{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
 					<track kind="captions" srcLang="fr" label="Français" default />
 				</video>
 				<span id={`video-desc-${index}`} className="sr-only">
 					Vidéo de démonstration du produit sans audio
 				</span>
-			</div>
+			</button>
 		);
 	}
 
@@ -198,12 +197,10 @@ export function GallerySlide({
 	// Mobile → Pinch-zoom natif
 	if (isDesktop) {
 		return (
-			<div
-				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
+			<button
+				type="button"
+				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in appearance-none border-0 p-0 bg-transparent text-left"
 				onClick={onOpen}
-				role="button"
-				tabIndex={0}
-				onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
 				aria-label="Ouvrir l'image en plein écran"
 			>
 				<GalleryHoverZoom
@@ -214,7 +211,7 @@ export function GallerySlide({
 					priority={index === 0}
 					quality={MAIN_IMAGE_QUALITY}
 				/>
-			</div>
+			</button>
 		);
 	}
 

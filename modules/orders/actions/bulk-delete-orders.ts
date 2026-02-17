@@ -5,6 +5,8 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -29,6 +31,9 @@ export async function bulkDeleteOrders(
 	try {
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.BULK_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const idsRaw = formData.get("ids") as string;
 		const ids = idsRaw ? JSON.parse(idsRaw) : [];

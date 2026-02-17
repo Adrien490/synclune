@@ -10,6 +10,8 @@ import { validateInput, handleActionError, success, error } from "@/shared/lib/a
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
+import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -33,7 +35,6 @@ export async function bulkApproveRefunds(
 
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
 
 		const idsRaw = formData.get("ids") as string;
 		let ids: string[];
@@ -60,10 +61,18 @@ export async function bulkApproveRefunds(
 			select: {
 				id: true,
 				amount: true,
+				reason: true,
 				order: {
 					select: {
 						id: true,
 						orderNumber: true,
+						total: true,
+						user: {
+							select: {
+								email: true,
+								name: true,
+							},
+						},
 					},
 				},
 			},
@@ -91,6 +100,27 @@ export async function bulkApproveRefunds(
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		const uniqueOrderIds = [...new Set(refunds.map(r => r.order.id))];
 		uniqueOrderIds.forEach(orderId => updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId)));
+
+		// Send approval emails to customers (non-blocking)
+		for (const refund of refunds) {
+			if (refund.order.user?.email) {
+				const isPartialRefund = refund.amount < refund.order.total;
+				const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
+
+				sendRefundApprovedEmail({
+					to: refund.order.user.email,
+					orderNumber: refund.order.orderNumber,
+					customerName: refund.order.user.name || "Client",
+					refundAmount: refund.amount,
+					originalOrderTotal: refund.order.total,
+					reason: refund.reason,
+					isPartialRefund,
+					orderDetailsUrl,
+				}).catch((emailError) => {
+					console.error(`[BULK_APPROVE_REFUNDS] Échec envoi email pour ${refund.order.orderNumber}:`, emailError);
+				});
+			}
+		}
 
 		const totalAmount = refunds.reduce((sum, r) => sum + r.amount, 0);
 		const skipped = validated.data.ids.length - refunds.length;
