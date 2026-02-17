@@ -76,8 +76,8 @@ export const GET_COLLECTIONS_SELECT = {
 	status: true,
 	createdAt: true,
 	updatedAt: true,
-	// Produit vedette pour l'image de la collection (avec fallback sur le plus recent)
-	// orderBy: isFeatured desc met le produit featured en premier, sinon le plus recent
+	// Featured product image for collection card (with fallback to most recent)
+	// orderBy: isFeatured desc puts featured product first, otherwise most recent
 	products: {
 		where: {
 			product: {
@@ -107,53 +107,7 @@ export const GET_COLLECTIONS_SELECT = {
 			},
 		},
 		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
-		take: 4, // 4 produits pour le Bento Grid
-	},
-	_count: {
-		select: {
-			products: {
-				where: {
-					product: {
-						status: ProductStatus.PUBLIC,
-					},
-				},
-			},
-		},
-	},
-} as const satisfies Prisma.CollectionSelect;
-
-export const GET_COLLECTIONS_PREVIEW_SELECT = {
-	id: true,
-	slug: true,
-	name: true,
-	status: true,
-	createdAt: true,
-	products: {
-		where: {
-			product: {
-				status: ProductStatus.PUBLIC,
-			},
-		},
-		select: {
-			product: {
-				select: {
-					skus: {
-						where: { isActive: true },
-						select: {
-							images: {
-								select: { url: true, blurDataUrl: true },
-								orderBy: { position: "asc" },
-								take: 1,
-							},
-						},
-						orderBy: [{ isDefault: "desc" }],
-						take: 1,
-					},
-				},
-			},
-		},
-		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
-		take: 1,
+		take: 4, // 4 products for the Bento Grid
 	},
 	_count: {
 		select: {

@@ -49,6 +49,12 @@ export default async function ColorsAdminPage({
 		| "skuCount-descending";
 	const search = getFirstParam(params.search);
 
+	// Parse filters from search params
+	const filterIsActive = getFirstParam(params.filter_isActive);
+	const filters: { isActive?: boolean } = {};
+	if (filterIsActive === "true") filters.isActive = true;
+	else if (filterIsActive === "false") filters.isActive = false;
+
 	// La promise de couleurs n'est PAS awaitée pour permettre le streaming
 	const colorsPromise = getColors({
 		cursor,
@@ -56,7 +62,7 @@ export default async function ColorsAdminPage({
 		perPage,
 		sortBy,
 		search,
-		filters: {},
+		filters,
 	});
 
 	return (

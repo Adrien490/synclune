@@ -9,6 +9,7 @@ export const GET_COLORS_SELECT = {
 	name: true,
 	slug: true,
 	hex: true,
+	isActive: true,
 	createdAt: true,
 	updatedAt: true,
 	_count: {

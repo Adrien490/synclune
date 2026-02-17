@@ -111,9 +111,20 @@ export async function cleanupOrphanMedia(): Promise<{
  * Uses cursor-based pagination to avoid loading all media records into memory
  * at once, which could be problematic as the catalogue grows.
  *
- * TODO: When adding new UploadThing routes (e.g. testimonialMedia, contactAttachment),
- * ensure uploaded files are tracked in DB and add the corresponding query here.
- * Otherwise the orphan cleanup cron will delete those files as unreferenced.
+ * IMPORTANT: Each UploadThing route MUST have its files tracked in a DB table
+ * and queried below. Otherwise the orphan cleanup cron will delete those files
+ * as unreferenced after 24h.
+ *
+ * Currently tracked:
+ * - catalogMedia    → SkuMedia (url, thumbnailUrl)
+ * - reviewMedia     → ReviewMedia (url)
+ * - (user avatars)  → User.image
+ *
+ * NOT tracked (routes not yet connected to any component):
+ * - testimonialMedia → No DB table yet. When implementing testimonials,
+ *   create a Testimonial model with an imageUrl field and add a query here.
+ * - contactAttachment → Ephemeral files sent with contact form.
+ *   When implementing the contact form, either track in DB or exclude from cleanup.
  */
 async function getAllReferencedFileKeys(): Promise<Set<string>> {
 	const keys = new Set<string>();

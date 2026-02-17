@@ -94,6 +94,5 @@ export const softDelete = {
   productSku: (id: string) => prisma.productSku.update({ where: { id }, data: { deletedAt: new Date() } }),
   customizationRequest: (id: string) => prisma.customizationRequest.update({ where: { id }, data: { deletedAt: new Date() } }),
   discount: (id: string) => prisma.discount.update({ where: { id }, data: { deletedAt: new Date() } }),
-  wishlistItem: (id: string) => prisma.wishlistItem.update({ where: { id }, data: { deletedAt: new Date() } }),
 };
 

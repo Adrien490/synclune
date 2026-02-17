@@ -34,14 +34,3 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 	REFUNDED: "Remboursée",
 	PARTIALLY_REFUNDED: "Part. remboursée",
 };
-
-export const PAYMENT_STATUS_VARIANTS: Record<
-	PaymentStatus,
-	"default" | "secondary" | "destructive" | "outline"
-> = {
-	PENDING: "outline",
-	PAID: "default",
-	FAILED: "destructive",
-	REFUNDED: "destructive",
-	PARTIALLY_REFUNDED: "secondary",
-};

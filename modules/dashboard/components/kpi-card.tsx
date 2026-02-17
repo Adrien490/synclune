@@ -2,7 +2,12 @@
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { Badge } from "@/shared/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@/shared/components/ui/card";
 import {
 	Tooltip,
 	TooltipContent,
@@ -15,28 +20,21 @@ import { KpiEvolution } from "./kpi-evolution";
 import { KpiValue } from "./kpi-value";
 
 /**
- * CVA variants pour la hierarchie visuelle des KPIs
+ * CVA variants for the visual hierarchy of KPIs
  */
 const kpiCardVariants = cva(
 	"relative overflow-hidden border-l-4 bg-linear-to-br via-background to-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col",
 	{
 		variants: {
 			size: {
-				/** KPIs principaux - CA mois, Commandes mois */
 				featured: "min-h-45",
-				/** KPIs standards - CA jour, Panier moyen */
 				default: "min-h-35",
-				/** KPIs compacts - Alertes, compteurs */
 				compact: "min-h-25",
 			},
 			priority: {
-				/** Metriques business critiques */
 				critical: "border-primary/60 from-primary/10 shadow-md",
-				/** Metriques operationnelles */
 				operational: "border-blue-500/40 from-blue-500/5",
-				/** Alertes et avertissements */
 				alert: "border-amber-500/50 from-amber-500/5",
-				/** Informations secondaires */
 				info: "border-muted-foreground/30 from-muted/5",
 			},
 			status: {
@@ -50,7 +48,7 @@ const kpiCardVariants = cva(
 			priority: "operational",
 			status: "default",
 		},
-	}
+	},
 );
 
 export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
@@ -63,19 +61,12 @@ export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	};
 	subtitle?: string;
 	icon?: React.ReactNode;
-	/** Valeur numerique pour l'animation (si fournie, utilise NumberTicker) */
 	numericValue?: number;
-	/** Suffixe a afficher apres la valeur animee (ex: " €", " %") */
 	suffix?: string;
-	/** Nombre de decimales pour l'animation */
 	decimalPlaces?: number;
-	/** Delai avant le debut de l'animation (en secondes) */
 	animationDelay?: number;
-	/** URL de drill-down (rend la card cliquable) */
 	href?: string;
-	/** Texte explicatif affiche dans un tooltip */
 	tooltip?: string;
-	/** Label explicite de la periode de comparaison (ex: "vs 30j precedents") */
 	comparisonLabel?: string;
 }
 
@@ -97,23 +88,20 @@ export function KpiCard({
 	tooltip,
 	comparisonLabel,
 }: KpiCardProps) {
-	// Determiner les styles d'icone selon la taille
 	const iconClassName = cn(
 		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300",
 		size === "featured" && "w-10 h-10",
 		size === "default" && "w-8 h-8",
-		size === "compact" && "w-6 h-6"
+		size === "compact" && "w-6 h-6",
 	);
 
 	const cardContent = (
 		<>
-			{/* Particule décorative subtile */}
 			<div
 				className="absolute top-2 right-2 w-1 h-1 bg-secondary rounded-full opacity-40 group-hover:opacity-60 transition-opacity"
 				aria-hidden="true"
 			/>
 
-			{/* Indicateur drill-down */}
 			{href && (
 				<ChevronRight
 					className="absolute bottom-3 right-3 w-4 h-4 text-muted-foreground/70 group-hover:text-primary group-hover:translate-x-0.5 transition-all"
@@ -135,7 +123,10 @@ export function KpiCard({
 									className="inline-flex items-center justify-center w-4 h-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help"
 									aria-label={`Info: ${title}`}
 								>
-									<Info className="w-3.5 h-3.5" aria-hidden="true" />
+									<Info
+										className="w-3.5 h-3.5"
+										aria-hidden="true"
+									/>
 								</span>
 							</TooltipTrigger>
 							<TooltipContent side="top" className="max-w-xs">
@@ -185,10 +176,9 @@ export function KpiCard({
 	const cardClassName = cn(
 		kpiCardVariants({ size, priority, status }),
 		href &&
-			"cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+			"cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 	);
 
-	// Generer le texte accessible pour les screen readers
 	const displayValue =
 		numericValue !== undefined ? `${numericValue}${suffix || ""}` : value;
 	const evolutionText =

@@ -73,7 +73,6 @@ export function buildInventoryWhereClause(
 ): Prisma.ProductSkuWhereInput {
 	const filterConditions = buildInventoryFilterConditions(
 		params.filters || {
-			hasActiveReservations: undefined,
 			productTypeId: undefined,
 			colorId: undefined,
 			material: undefined,

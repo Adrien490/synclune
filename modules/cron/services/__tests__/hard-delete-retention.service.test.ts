@@ -37,7 +37,7 @@ vi.mock("@/modules/reviews/constants/cache", () => ({
 }));
 
 import { hardDeleteExpiredRecords } from "../hard-delete-retention.service";
-import { BATCH_SIZE_LARGE } from "@/modules/cron/constants/limits";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE } from "@/modules/cron/constants/limits";
 
 describe("hardDeleteExpiredRecords", () => {
 	beforeEach(() => {
@@ -302,5 +302,41 @@ describe("hardDeleteExpiredRecords", () => {
 		expect(mockDeleteFiles).toHaveBeenCalledWith([
 			"https://utfs.io/f/sku-1",
 		]);
+	});
+
+	it("should skip UploadThing cleanup when approaching deadline", async () => {
+		mockPrisma.productReview.findMany.mockResolvedValue([
+			{ id: "review-1" },
+		]);
+		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
+		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
+		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([
+			{ url: "https://utfs.io/f/review-media-1" },
+		]);
+		mockPrisma.skuMedia.findMany.mockResolvedValue([
+			{ url: "https://utfs.io/f/sku-1", thumbnailUrl: null },
+		]);
+		mockPrisma.$transaction.mockResolvedValue([
+			{ count: 1 },
+			{ count: 0 },
+			{ count: 0 },
+			{ count: 1 },
+		]);
+
+		// Advance time past the deadline after the transaction
+		const startTime = Date.now();
+		mockPrisma.$transaction.mockImplementation(async (ops: unknown[]) => {
+			vi.setSystemTime(new Date(startTime + BATCH_DEADLINE_MS + 1));
+			return [{ count: 1 }, { count: 0 }, { count: 0 }, { count: 1 }];
+		});
+
+		const result = await hardDeleteExpiredRecords();
+
+		// DB transaction should still have completed
+		expect(result.reviewsDeleted).toBe(1);
+		expect(result.productsDeleted).toBe(1);
+		// UploadThing cleanup should have been skipped
+		expect(mockDeleteFiles).not.toHaveBeenCalled();
 	});
 });

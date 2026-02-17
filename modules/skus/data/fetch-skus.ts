@@ -13,12 +13,7 @@ import {
 } from "../constants/sku.constants";
 import { GetProductSkusParams, GetProductSkusReturn } from "../types/skus.types";
 import { buildWhereClause } from "@/modules/skus/services/build-where-clause";
-
-const getSortDirection = (sortBy: string): "asc" | "desc" => {
-	if (sortBy.endsWith("-ascending")) return "asc";
-	if (sortBy.endsWith("-descending")) return "desc";
-	return "asc";
-};
+import { getSortDirection } from "@/shared/utils/sort-direction";
 
 /**
  * Récupère la liste des SKUs de produits avec pagination, tri et filtrage

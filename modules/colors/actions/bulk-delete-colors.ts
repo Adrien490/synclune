@@ -21,7 +21,12 @@ export async function bulkDeleteColors(
 
 		// 2. Extraire les IDs du FormData
 		const idsString = formData.get("ids");
-		const ids = idsString ? JSON.parse(idsString as string) : [];
+		let ids: unknown = [];
+		try {
+			ids = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format d'IDs invalide");
+		}
 
 		// Valider les donnees
 		const validated = validateInput(bulkDeleteColorsSchema, { ids });

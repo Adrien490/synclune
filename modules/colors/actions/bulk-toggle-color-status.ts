@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 
@@ -21,7 +21,12 @@ export async function bulkToggleColorStatus(
 
 		// 2. Extract data from FormData
 		const idsString = formData.get("ids");
-		const ids = idsString ? JSON.parse(idsString as string) : [];
+		let ids: unknown = [];
+		try {
+			ids = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format d'IDs invalide");
+		}
 		const isActive = formData.get("isActive") === "true";
 
 		// Validate data

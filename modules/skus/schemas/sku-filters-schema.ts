@@ -57,7 +57,6 @@ export const productSkuFiltersSchema = z
 		// Filtres sur les relations
 		hasImages: z.boolean().optional(),
 		hasOrders: z.boolean().optional(),
-		hasReservations: z.boolean().optional(),
 	})
 	.refine((data) => {
 		if (data.priceMin && data.priceMax) {

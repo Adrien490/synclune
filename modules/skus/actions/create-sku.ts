@@ -26,13 +26,13 @@ export async function createProductSku(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 0. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_CREATE_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 1. Verification des droits admin
+		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_CREATE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
 		// Parse images from JSON strings (sent as hidden inputs)

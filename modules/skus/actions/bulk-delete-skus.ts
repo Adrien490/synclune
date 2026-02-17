@@ -6,7 +6,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, success, error } from "@/shared/lib/actions";
+import { handleActionError } from "@/shared/lib/actions";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
@@ -18,13 +18,13 @@ export async function bulkDeleteSkus(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 0. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_BULK_OPERATIONS_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 1. Vérification des droits admin
+		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_BULK_OPERATIONS_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
 			ids: formData.get("ids") as string,
@@ -96,23 +96,16 @@ export async function bulkDeleteSkus(
 			};
 		}
 
-		// Supprimer les fichiers UploadThing AVANT la suppression DB
+		// Supprimer toutes les variantes AVANT les fichiers UploadThing
 		const allImageUrls = skusData.flatMap((sku) =>
 			sku.images.map((img) => img.url)
 		);
-		await deleteUploadThingFilesFromUrls(allImageUrls);
-
-		// Supprimer toutes les variantes et synchroniser les prix
-		const productIds = [...new Set(skusData.map((s) => s.productId))];
-		await prisma.$transaction(async (tx) => {
-			await tx.productSku.deleteMany({
-				where: {
-					id: {
-						in: ids,
-					},
-				},
-			});
+		await prisma.productSku.deleteMany({
+			where: { id: { in: ids } },
 		});
+
+		// Supprimer les fichiers UploadThing apres la suppression DB reussie
+		await deleteUploadThingFilesFromUrls(allImageUrls);
 
 		// Invalider le cache (deduplique automatiquement les tags)
 		const uniqueTags = collectBulkInvalidationTags(skusData);

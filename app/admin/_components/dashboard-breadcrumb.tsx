@@ -182,8 +182,8 @@ export function DashboardBreadcrumb() {
 						</>
 					)}
 
-					{/* Segments visibles restants (sauf le premier si collapse) */}
-					{(shouldCollapse ? visibleSegments.slice(1) : visibleSegments.slice(1)).map(
+					{/* Remaining visible segments (skip the first one) */}
+					{visibleSegments.slice(1).map(
 						(segment, index) => (
 							<Fragment key={segment.href}>
 								<BreadcrumbSeparator className="shrink-0" />

@@ -2,9 +2,11 @@
 
 import { updateTag } from "next/cache";
 
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
@@ -19,9 +21,18 @@ export async function bulkDeleteMaterials(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les IDs du FormData
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.BULK_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Extraire les IDs du FormData
 		const idsString = formData.get("ids");
-		const ids = idsString ? JSON.parse(idsString as string) : [];
+		let ids: unknown[];
+		try {
+			ids = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format des IDs invalide");
+		}
 
 		// Valider les donnees
 		const validated = validateInput(bulkDeleteMaterialsSchema, { ids });
@@ -51,6 +62,9 @@ export async function bulkDeleteMaterials(
 			return error(`${usedMaterials.length} materiau${usedMaterials.length > 1 ? "x" : ""} (${materialNames}) ${usedMaterials.length > 1 ? "sont utilises" : "est utilise"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`);
 		}
 
+		// Recuperer les slugs avant suppression pour invalidation cache
+		const slugs = materialsWithUsage.map((m) => m.slug);
+
 		// Supprimer les materiaux
 		const result = await prisma.material.deleteMany({
 			where: {
@@ -60,9 +74,14 @@ export async function bulkDeleteMaterials(
 			},
 		});
 
-		// Invalider le cache
+		// Invalider le cache (list + detail de chaque materiau)
 		const tags = getMaterialInvalidationTags();
-		tags.forEach((tag) => updateTag(tag));
+		for (const slug of slugs) {
+			tags.push(...getMaterialInvalidationTags(slug));
+		}
+		// Deduplicate tags
+		const uniqueTags = [...new Set(tags)];
+		uniqueTags.forEach((tag) => updateTag(tag));
 
 		return success(`${result.count} materiau${result.count > 1 ? "x" : ""} supprime${result.count > 1 ? "s" : ""} avec succes`);
 	} catch (e) {

@@ -25,7 +25,6 @@ export async function updateColor(
 		const rawData = {
 			id: formData.get("id"),
 			name: sanitizeText(formData.get("name") as string),
-			slug: formData.get("slug"),
 			hex: formData.get("hex"),
 		};
 

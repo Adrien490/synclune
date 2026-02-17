@@ -14,10 +14,19 @@ const ADMIN_FUZZY_THRESHOLD = 0.3
 const ADMIN_FUZZY_TIMEOUT_MS = 2000
 const ADMIN_FUZZY_MAX_RESULTS = 200
 
+// Allowlist of table/column pairs permitted in Prisma.raw() interpolation.
+// Prevents SQL injection if a caller ever passes dynamic values.
+const ALLOWED_FUZZY_COLUMNS: ReadonlySet<string> = new Set([
+	"Order.customerName",
+	"Order.customerEmail",
+	"User.name",
+	"User.email",
+])
+
 type FuzzyColumn = {
-	/** Table name (e.g. "User", "Order") */
+	/** Table name (e.g. "User", "Order") — must be in ALLOWED_FUZZY_COLUMNS */
 	table: string
-	/** Column name (e.g. "name", "email") */
+	/** Column name (e.g. "name", "email") — must be in ALLOWED_FUZZY_COLUMNS */
 	column: string
 	/** Whether to apply COALESCE for nullable columns */
 	nullable?: boolean
@@ -49,11 +58,16 @@ export async function fuzzySearchIds(
 
 	const { columns, baseCondition, limit = ADMIN_FUZZY_MAX_RESULTS } = options
 
+	// Validate all table/column pairs against the allowlist
+	for (const { table, column } of columns) {
+		if (!ALLOWED_FUZZY_COLUMNS.has(`${table}.${column}`)) {
+			throw new Error(`[SEARCH] Disallowed fuzzy search column: ${table}.${column}`)
+		}
+	}
+
 	// Build OR conditions across all columns.
-	// SECURITY NOTE: table/column names are interpolated via Prisma.raw() but are
-	// safe because they come from hardcoded caller code (e.g. "User", "email"),
-	// never from user input. Only `term` is user-supplied and is always passed
-	// through parameterized queries (Prisma.sql tagged template).
+	// Table/column names are validated against ALLOWED_FUZZY_COLUMNS above.
+	// Only `term` is user-supplied and is always passed through parameterized queries.
 	// Escape LIKE wildcards to prevent user input from being interpreted as patterns
 	const like = `%${term.replace(/[%_\\]/g, "\\$&")}%`
 	const columnFragments = columns.map(({ table, column, nullable }) => {

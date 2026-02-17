@@ -82,6 +82,19 @@ export async function exportUserDataAdmin(userId: string): Promise<ActionState> 
 				sessions: {
 					orderBy: { createdAt: "desc" },
 				},
+				customizationRequests: {
+					where: { deletedAt: null },
+					orderBy: { createdAt: "desc" },
+					select: {
+						firstName: true,
+						email: true,
+						phone: true,
+						productTypeLabel: true,
+						details: true,
+						status: true,
+						createdAt: true,
+					},
+				},
 			},
 		});
 
@@ -169,6 +182,15 @@ export async function exportUserDataAdmin(userId: string): Promise<ActionState> 
 				userAgent: session.userAgent,
 				createdAt: session.createdAt.toISOString(),
 				expiresAt: session.expiresAt.toISOString(),
+			})),
+			customizationRequests: user.customizationRequests.map((req) => ({
+				firstName: req.firstName,
+				email: req.email,
+				phone: req.phone,
+				productTypeLabel: req.productTypeLabel,
+				details: req.details,
+				status: req.status,
+				createdAt: req.createdAt.toISOString(),
 			})),
 		};
 

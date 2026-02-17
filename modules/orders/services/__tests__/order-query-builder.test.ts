@@ -11,6 +11,11 @@ import {
 	buildOrderFilterConditions,
 	buildOrderWhereClause,
 } from "../order-query-builder";
+import type { OrderFilters } from "../../types/order.types";
+
+function filters(overrides: Partial<OrderFilters> = {}): OrderFilters {
+	return { showDeleted: undefined, ...overrides } as OrderFilters;
+}
 
 // ============================================================================
 // buildOrderSearchConditions
@@ -73,92 +78,92 @@ describe("buildOrderSearchConditions", () => {
 
 describe("buildOrderFilterConditions", () => {
 	it("should exclude PENDING by default when no status filter", () => {
-		const result = buildOrderFilterConditions({});
+		const result = buildOrderFilterConditions(filters({}));
 		expect(result.status).toEqual({ not: "PENDING" });
 	});
 
 	it("should filter by single status", () => {
-		const result = buildOrderFilterConditions({ status: "SHIPPED" });
+		const result = buildOrderFilterConditions(filters({ status: "SHIPPED" }));
 		expect(result.status).toBe("SHIPPED");
 	});
 
 	it("should filter by multiple statuses", () => {
-		const result = buildOrderFilterConditions({
+		const result = buildOrderFilterConditions(filters({
 			status: ["SHIPPED", "DELIVERED"],
-		});
+		}));
 		expect(result.status).toEqual({ in: ["SHIPPED", "DELIVERED"] });
 	});
 
 	it("should unwrap single-element array status", () => {
-		const result = buildOrderFilterConditions({ status: ["PROCESSING"] });
+		const result = buildOrderFilterConditions(filters({ status: ["PROCESSING"] }));
 		expect(result.status).toBe("PROCESSING");
 	});
 
 	it("should filter by single paymentStatus", () => {
-		const result = buildOrderFilterConditions({ paymentStatus: "PAID" });
+		const result = buildOrderFilterConditions(filters({ paymentStatus: "PAID" }));
 		expect(result.paymentStatus).toBe("PAID");
 	});
 
 	it("should filter by multiple paymentStatuses", () => {
-		const result = buildOrderFilterConditions({
+		const result = buildOrderFilterConditions(filters({
 			paymentStatus: ["PAID", "REFUNDED"],
-		});
+		}));
 		expect(result.paymentStatus).toEqual({ in: ["PAID", "REFUNDED"] });
 	});
 
 	it("should filter by single fulfillmentStatus", () => {
-		const result = buildOrderFilterConditions({
+		const result = buildOrderFilterConditions(filters({
 			fulfillmentStatus: "SHIPPED",
-		});
+		}));
 		expect(result.fulfillmentStatus).toBe("SHIPPED");
 	});
 
 	it("should filter by totalMin only", () => {
-		const result = buildOrderFilterConditions({ totalMin: 1000 });
+		const result = buildOrderFilterConditions(filters({ totalMin: 1000 }));
 		expect(result.total).toEqual({ gte: 1000 });
 	});
 
 	it("should filter by totalMax only", () => {
-		const result = buildOrderFilterConditions({ totalMax: 5000 });
+		const result = buildOrderFilterConditions(filters({ totalMax: 5000 }));
 		expect(result.total).toEqual({ lte: 5000 });
 	});
 
 	it("should filter by totalMin and totalMax", () => {
-		const result = buildOrderFilterConditions({
+		const result = buildOrderFilterConditions(filters({
 			totalMin: 1000,
 			totalMax: 5000,
-		});
+		}));
 		expect(result.total).toEqual({ gte: 1000, lte: 5000 });
 	});
 
 	it("should filter by createdAfter only", () => {
 		const date = new Date("2024-01-01");
-		const result = buildOrderFilterConditions({ createdAfter: date });
+		const result = buildOrderFilterConditions(filters({ createdAfter: date }));
 		expect(result.createdAt).toEqual({ gte: date });
 	});
 
 	it("should filter by createdBefore only", () => {
 		const date = new Date("2024-12-31");
-		const result = buildOrderFilterConditions({ createdBefore: date });
+		const result = buildOrderFilterConditions(filters({ createdBefore: date }));
 		expect(result.createdAt).toEqual({ lte: date });
 	});
 
 	it("should filter by createdAfter and createdBefore", () => {
 		const after = new Date("2024-01-01");
 		const before = new Date("2024-12-31");
-		const result = buildOrderFilterConditions({
+		const result = buildOrderFilterConditions(filters({
 			createdAfter: after,
 			createdBefore: before,
-		});
+		}));
 		expect(result.createdAt).toEqual({ gte: after, lte: before });
 	});
 
 	it("should combine multiple filters", () => {
-		const result = buildOrderFilterConditions({
+		const result = buildOrderFilterConditions(filters({
 			status: "SHIPPED",
 			paymentStatus: "PAID",
 			totalMin: 500,
-		});
+		}));
 		expect(result.status).toBe("SHIPPED");
 		expect(result.paymentStatus).toBe("PAID");
 		expect(result.total).toEqual({ gte: 500 });

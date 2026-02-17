@@ -1,8 +1,10 @@
 "use server";
 
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
@@ -20,7 +22,11 @@ export async function createMaterial(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les donnees du FormData
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.CREATE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Extraire les donnees du FormData
 		const rawData = {
 			name: sanitizeText(formData.get("name") as string ?? ""),
 			description: formData.get("description")

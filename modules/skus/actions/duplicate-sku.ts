@@ -27,13 +27,13 @@ export async function duplicateSku(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 0. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_DUPLICATE_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 1. Vérification admin
+		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_DUPLICATE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Validation du skuId avec Zod (CUID2)
 		const validation = validateInput(deleteProductSkuSchema, {
@@ -46,8 +46,24 @@ export async function duplicateSku(
 		// 3. Récupérer le SKU original avec ses médias
 		const original = await prisma.productSku.findUnique({
 			where: { id: skuId },
-			include: {
-				images: true,
+			select: {
+				sku: true,
+				productId: true,
+				colorId: true,
+				materialId: true,
+				size: true,
+				priceInclTax: true,
+				compareAtPrice: true,
+				images: {
+					select: {
+						url: true,
+						altText: true,
+						isPrimary: true,
+						position: true,
+						mediaType: true,
+						thumbnailUrl: true,
+					},
+				},
 				product: {
 					select: { slug: true },
 				},

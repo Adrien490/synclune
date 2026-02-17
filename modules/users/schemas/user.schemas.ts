@@ -244,4 +244,15 @@ export const exportUserDataResponseSchema = z.object({
 			expiresAt: z.string().datetime(),
 		})
 	),
+	customizationRequests: z.array(
+		z.object({
+			firstName: z.string(),
+			email: z.string(),
+			phone: z.string().nullable(),
+			productTypeLabel: z.string(),
+			details: z.string(),
+			status: z.string(),
+			createdAt: z.string().datetime(),
+		})
+	),
 });

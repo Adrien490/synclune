@@ -1,4 +1,4 @@
-import { CollectionStatus, Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import type { CollectionFilters, GetCollectionsParams } from "../types/collection.types";
 
 // ============================================================================
@@ -32,7 +32,7 @@ export function buildCollectionFilterConditions(
 
 	if (filters.hasProducts !== undefined) {
 		if (filters.hasProducts === true) {
-			// Filtrer pour ne compter que les produits PUBLIC
+			// Only count PUBLIC products (consistent with storefront display)
 			conditions.products = {
 				some: {
 					product: {
@@ -41,11 +41,18 @@ export function buildCollectionFilterConditions(
 				},
 			};
 		} else {
-			conditions.products = { none: {} };
+			// No PUBLIC products (consistent with hasProducts: true filter)
+			conditions.products = {
+				none: {
+					product: {
+						status: "PUBLIC",
+					},
+				},
+			};
 		}
 	}
 
-	// Filtre par statut
+	// Filter by status
 	if (filters.status !== undefined) {
 		if (Array.isArray(filters.status)) {
 			conditions.status = { in: filters.status };
@@ -55,23 +62,6 @@ export function buildCollectionFilterConditions(
 	}
 
 	return conditions;
-}
-
-/**
- * Construit les conditions de filtre avec un statut par défaut (PUBLIC pour la boutique)
- */
-export function buildCollectionStatusFilter(
-	status?: CollectionStatus | CollectionStatus[]
-): Prisma.CollectionWhereInput {
-	if (!status) {
-		return { status: CollectionStatus.PUBLIC };
-	}
-
-	if (Array.isArray(status)) {
-		return { status: { in: status } };
-	}
-
-	return { status };
 }
 
 export function buildCollectionWhereClause(

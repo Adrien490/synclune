@@ -715,6 +715,79 @@ export const ADMIN_PRODUCT_LIMITS = {
 } as const;
 
 // ========================================
+// 🪨 ADMIN MATERIAL OPERATIONS
+// ========================================
+
+/**
+ * Limite pour la creation de materiaux (admin)
+ */
+export const ADMIN_MATERIAL_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la mise a jour de materiaux (admin)
+ */
+export const ADMIN_MATERIAL_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression de materiaux (admin)
+ */
+export const ADMIN_MATERIAL_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le toggle de statut de materiau (admin)
+ */
+export const ADMIN_MATERIAL_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la duplication de materiaux (admin)
+ */
+export const ADMIN_MATERIAL_DUPLICATE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour les operations bulk sur materiaux (admin)
+ */
+export const ADMIN_MATERIAL_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le rafraichissement du cache materiaux (admin)
+ */
+export const ADMIN_MATERIAL_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+/**
+ * Toutes les limites admin materiaux
+ */
+export const ADMIN_MATERIAL_LIMITS = {
+	CREATE: ADMIN_MATERIAL_CREATE_LIMIT,
+	UPDATE: ADMIN_MATERIAL_UPDATE_LIMIT,
+	DELETE: ADMIN_MATERIAL_DELETE_LIMIT,
+	TOGGLE_STATUS: ADMIN_MATERIAL_TOGGLE_STATUS_LIMIT,
+	DUPLICATE: ADMIN_MATERIAL_DUPLICATE_LIMIT,
+	BULK_OPERATIONS: ADMIN_MATERIAL_BULK_OPERATIONS_LIMIT,
+	REFRESH: ADMIN_MATERIAL_REFRESH_LIMIT,
+} as const;
+
+// ========================================
 // 💰 ADMIN SKU OPERATIONS
 // ========================================
 

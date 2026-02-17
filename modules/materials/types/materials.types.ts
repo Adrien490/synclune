@@ -13,6 +13,8 @@ import {
 	deleteMaterialSchema,
 	bulkDeleteMaterialsSchema,
 	toggleMaterialStatusSchema,
+	bulkToggleMaterialStatusSchema,
+	duplicateMaterialSchema,
 } from "../schemas/materials.schemas";
 
 // ============================================================================
@@ -63,6 +65,8 @@ export type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
 export type DeleteMaterialInput = z.infer<typeof deleteMaterialSchema>;
 export type BulkDeleteMaterialsInput = z.infer<typeof bulkDeleteMaterialsSchema>;
 export type ToggleMaterialStatusInput = z.infer<typeof toggleMaterialStatusSchema>;
+export type BulkToggleMaterialStatusInput = z.infer<typeof bulkToggleMaterialStatusSchema>;
+export type DuplicateMaterialInput = z.infer<typeof duplicateMaterialSchema>;
 
 // ============================================================================
 // OPTIONS TYPES (for selects/filters)

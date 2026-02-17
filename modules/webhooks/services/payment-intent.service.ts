@@ -45,7 +45,7 @@ export async function markOrderAsPaid(
 		});
 
 		console.log(`✅ [WEBHOOK] Order ${orderId} marked as PAID via payment_intent.succeeded`);
-	});
+	}, { timeout: 10000 });
 }
 
 /**
@@ -116,7 +116,7 @@ export async function restoreStockForOrder(
 				})
 			)
 		);
-	});
+	}, { timeout: 10000 });
 
 	console.log(`📦 [WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`);
 	return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: Array.from(stockUpdates.keys()) };

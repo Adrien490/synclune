@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Card,
@@ -8,7 +6,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import type { GetRecentOrdersReturn, RecentOrderItem } from "@/modules/dashboard/data/get-recent-orders";
+import type {
+	GetRecentOrdersReturn,
+	RecentOrderItem,
+} from "@/modules/dashboard/data/get-recent-orders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
@@ -28,10 +29,16 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 	const { orders } = listData;
 
 	return (
-		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
+		<Card
+			className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}
+		>
 			<CardHeader>
-				<CardTitle className={CHART_STYLES.title}>Dernières commandes</CardTitle>
-				<CardDescription className="text-sm">Les 5 commandes les plus récentes</CardDescription>
+				<CardTitle className={CHART_STYLES.title}>
+					Dernières commandes
+				</CardTitle>
+				<CardDescription className="text-sm">
+					Les 5 commandes les plus récentes
+				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-4">
@@ -43,30 +50,49 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 						>
 							<div className="space-y-1 flex-1">
 								<div className="flex items-center gap-2">
-									<p className="font-medium text-sm">#{order.orderNumber}</p>
-									<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
+									<p className="font-medium text-sm">
+										#{order.orderNumber}
+									</p>
+									<Badge
+										variant={
+											ORDER_STATUS_VARIANTS[order.status]
+										}
+									>
 										{ORDER_STATUS_LABELS[order.status]}
 									</Badge>
 									<Badge
 										variant={
-											order.paymentStatus === "PAID" ? "default" : "outline"
+											order.paymentStatus === "PAID"
+												? "default"
+												: "outline"
 										}
 										className="text-xs"
 									>
-										{PAYMENT_STATUS_LABELS[order.paymentStatus]}
+										{
+											PAYMENT_STATUS_LABELS[
+												order.paymentStatus
+											]
+										}
 									</Badge>
 								</div>
 								<p className="text-sm text-muted-foreground">
-									{order.customerName} • {order.customerEmail}
+									{order.customerName} •{" "}
+									{order.customerEmail}
 								</p>
 								<p className="text-xs text-muted-foreground">
-									{format(new Date(order.createdAt), "dd/MM/yyyy à HH:mm", {
-										locale: fr,
-									})}
+									{format(
+										new Date(order.createdAt),
+										"dd/MM/yyyy à HH:mm",
+										{
+											locale: fr,
+										},
+									)}
 								</p>
 							</div>
 							<div className="text-right">
-								<p className="font-bold">{order.total.toFixed(2)} €</p>
+								<p className="font-bold">
+									{order.total.toFixed(2)} €
+								</p>
 							</div>
 						</Link>
 					))}

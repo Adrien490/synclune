@@ -103,8 +103,8 @@ export const THRESHOLDS = {
 	/** Time to wait after order creation before syncing async payments */
 	ASYNC_PAYMENT_MIN_AGE_MS: 60 * 60 * 1000, // 1 hour
 
-	/** Max age for async payment orders to check */
-	ASYNC_PAYMENT_MAX_AGE_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
+	/** Max age for async payment orders to check (SEPA can take up to 10 business days) */
+	ASYNC_PAYMENT_MAX_AGE_MS: 10 * 24 * 60 * 60 * 1000, // 10 days
 
 	/** Time to wait before retrying failed webhooks */
 	WEBHOOK_RETRY_MIN_AGE_MS: 30 * 60 * 1000, // 30 minutes

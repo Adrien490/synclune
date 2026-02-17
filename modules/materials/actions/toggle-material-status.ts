@@ -1,8 +1,10 @@
 "use server";
 
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
@@ -18,7 +20,11 @@ export async function toggleMaterialStatus(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les donnees du FormData
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.TOGGLE_STATUS);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Extraire les donnees du FormData
 		const rawData = {
 			id: formData.get("id"),
 			isActive: formData.get("isActive") === "true",

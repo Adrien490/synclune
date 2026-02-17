@@ -13,6 +13,7 @@ import {
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import { Palette } from "lucide-react";
 import { use } from "react";
+import { ColorActiveToggle } from "@/modules/colors/components/admin/color-active-toggle";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
 import { ColorsSelectionToolbar } from "@/modules/colors/components/colors-selection-toolbar";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
@@ -59,7 +60,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 									key="name"
 									scope="col"
 									role="columnheader"
-									className="w-[50%] sm:w-[40%]"
+									className="w-[50%] sm:w-[30%]"
 								>
 									Nom
 								</TableHead>
@@ -70,6 +71,14 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 									className="hidden sm:table-cell text-center w-[10%]"
 								>
 									Variantes
+								</TableHead>
+								<TableHead
+									key="active"
+									scope="col"
+									role="columnheader"
+									className="hidden sm:table-cell text-center w-[10%]"
+								>
+									Actif
 								</TableHead>
 								<TableHead
 									key="actions"
@@ -83,7 +92,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{colors.map((color) => {
+							{colors.map((color) => {
 								const skuCount = color._count?.skus || 0;
 
 								return (
@@ -92,26 +101,35 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 											<TableSelectionCell type="row" itemId={color.id} />
 										</TableCell>
 										<TableCell role="gridcell" className="hidden md:table-cell">
-										<div
-											className="w-[30px] h-[30px] rounded-full inline-flex border border-border"
-											style={{ backgroundColor: color.hex }}
-										/>
-									</TableCell>
-									<TableCell role="gridcell">
-										<div className="overflow-hidden">
-											<span
-												className="font-semibold text-foreground truncate block"
-												title={color.name}
-											>
-												{color.name}
-											</span>
-										</div>
-									</TableCell>
+											<div
+												className="w-[30px] h-[30px] rounded-full inline-flex border border-border"
+												style={{ backgroundColor: color.hex }}
+											/>
+										</TableCell>
+										<TableCell role="gridcell">
+											<div className="overflow-hidden">
+												<span
+													className="font-semibold text-foreground truncate block"
+													title={color.name}
+												>
+													{color.name}
+												</span>
+											</div>
+										</TableCell>
 										<TableCell
 											role="gridcell"
 											className="hidden sm:table-cell text-center"
 										>
 											<span className="text-sm font-medium">{skuCount}</span>
+										</TableCell>
+										<TableCell
+											role="gridcell"
+											className="hidden sm:table-cell text-center"
+										>
+											<ColorActiveToggle
+												colorId={color.id}
+												isActive={color.isActive}
+											/>
 										</TableCell>
 										<TableCell role="gridcell" className="text-right">
 											<ColorsRowActions
@@ -123,7 +141,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 										</TableCell>
 									</TableRow>
 								);
-								})}
+							})}
 						</TableBody>
 					</Table>
 				</TableScrollContainer>

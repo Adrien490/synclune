@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import type { GetColorsParams } from "../types/color.types";
+import type { ColorFilters, GetColorsParams } from "../types/color.types";
 
 // ============================================================================
 // COLOR QUERY BUILDER UTILS
@@ -20,10 +20,21 @@ export function buildColorSearchConditions(
 	};
 }
 
+export function buildColorFilterConditions(
+	filters: ColorFilters
+): Prisma.ColorWhereInput {
+	const conditions: Prisma.ColorWhereInput = {};
+
+	if (filters.isActive !== undefined) {
+		conditions.isActive = filters.isActive;
+	}
+
+	return conditions;
+}
+
 export function buildColorWhereClause(
 	params: GetColorsParams
 ): Prisma.ColorWhereInput {
-	const whereClause: Prisma.ColorWhereInput = {};
 	const andConditions: Prisma.ColorWhereInput[] = [];
 
 	if (params.search) {
@@ -33,9 +44,15 @@ export function buildColorWhereClause(
 		}
 	}
 
-	if (andConditions.length > 0) {
-		whereClause.AND = andConditions;
+	if (params.filters) {
+		const filterConditions = buildColorFilterConditions(params.filters);
+		if (Object.keys(filterConditions).length > 0) {
+			andConditions.push(filterConditions);
+		}
 	}
 
-	return whereClause;
+	if (andConditions.length === 0) return {};
+	if (andConditions.length === 1) return andConditions[0];
+
+	return { AND: andConditions };
 }

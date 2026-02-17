@@ -5,7 +5,6 @@ import {
 } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
-import { z } from "zod";
 
 import { cacheColors } from "../constants/cache";
 
@@ -52,20 +51,13 @@ export { COLORS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/color.constant
 export async function getColors(
 	params: GetColorsParamsInput
 ): Promise<GetColorsReturn> {
-	try {
-		const validation = getColorsSchema.safeParse(params);
+	const validation = getColorsSchema.safeParse(params);
 
-		if (!validation.success) {
-			throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
-		}
-
-		return fetchColors(validation.data);
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			throw new Error("Invalid parameters");
-		}
-		throw error;
+	if (!validation.success) {
+		throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
 	}
+
+	return fetchColors(validation.data);
 }
 
 /**
@@ -128,4 +120,3 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 		};
 	}
 }
-

@@ -13,6 +13,7 @@ export interface GalleryParams {
 const VARIANT_SLUG_REGEX = /^[a-z0-9-]+$/;
 const MAX_SLUG_LENGTH = 50;
 const MAX_SIZE_LENGTH = 20;
+const SIZE_REGEX = /^[a-zA-Z0-9.,/ -]+$/;
 
 /**
  * Validates a variant slug (color/material)
@@ -25,11 +26,12 @@ function validateVariantSlug(value: string | undefined): string | undefined {
 }
 
 /**
- * Validates a size parameter
+ * Validates a size parameter (alphanumeric with common size separators)
  */
 function validateSize(value: string | undefined): string | undefined {
 	if (!value) return undefined;
 	if (value.length > MAX_SIZE_LENGTH) return undefined;
+	if (!SIZE_REGEX.test(value)) return undefined;
 	return value;
 }
 

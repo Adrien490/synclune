@@ -156,14 +156,7 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 export const GET_PRODUCT_SKUS_DEFAULT_PER_PAGE = 20;
 export const GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE = 200;
 
-export const GET_PRODUCT_SKUS_DEFAULT_PAGINATION = {
-	page: 1,
-	take: 20,
-	perPage: 20,
-} as const;
-
 export const GET_PRODUCT_SKUS_DEFAULT_SORT_BY = "created-descending";
-export const GET_PRODUCT_SKUS_DEFAULT_SORT_ORDER = "desc";
 export const GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY = "created-descending";
 
 export const GET_PRODUCT_SKUS_SORT_FIELDS = [
@@ -196,16 +189,3 @@ export const SKU_FILTERS_MIN_DATE = new Date("2020-01-01");
 export const SKU_FILTERS_MAX_INVENTORY = 100000;
 export const SKU_FILTERS_MAX_PRICE_CENTS = 99999999; // 999999.99€ en centimes
 
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const SKU_CACHE_REVALIDATE = 60 * 2; // 2 minutes (données de stock)
-export const SKU_CACHE_STALE = 60 * 5; // 5 minutes
-export const SKU_CACHE_EXPIRE = 60 * 15; // 15 minutes
-
-export const GET_PRODUCT_SKUS_DEFAULT_CACHE = {
-	revalidate: SKU_CACHE_REVALIDATE,
-	stale: SKU_CACHE_STALE,
-	expire: SKU_CACHE_EXPIRE,
-} as const;

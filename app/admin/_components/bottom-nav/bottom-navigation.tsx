@@ -30,10 +30,7 @@ import { ActiveIndicator } from "./active-indicator";
 
 // Recuperer les items depuis la configuration centralisee
 const primaryItems = getBottomNavPrimaryItems();
-// Tous les items pour le menu (exclure alertes stock)
-const allMenuItems = getAllNavItems().filter(
-	(item) => item.id !== "stock-alerts"
-);
+const allMenuItems = getAllNavItems();
 
 interface BottomNavigationProps {
 	className?: string;

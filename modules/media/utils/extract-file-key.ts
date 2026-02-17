@@ -27,8 +27,8 @@ export function extractFileKeyFromUrl(url: string): string | null {
 		// The key is the last segment of the path
 		const key = parts[parts.length - 1];
 
-		// Basic validation: key must be non-empty and resemble an identifier
-		if (!key || key === "" || key === "/") {
+		// Basic validation: key must be non-empty and contain only safe characters
+		if (!key || key === "/" || !/^[a-zA-Z0-9._-]+$/.test(key)) {
 			return null;
 		}
 

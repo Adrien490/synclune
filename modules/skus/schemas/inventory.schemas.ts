@@ -23,15 +23,6 @@ export const inventoryFiltersSchema = z.object({
 	colorId: optionalStringOrStringArraySchema,
 	material: optionalStringOrStringArraySchema,
 	stockLevel: stockLevelSchema,
-	hasActiveReservations: z
-		.union([z.boolean(), z.enum(["true", "false"])])
-		.optional()
-		.transform((val) => {
-			if (typeof val === "boolean") return val;
-			if (val === "true") return true;
-			if (val === "false") return false;
-			return undefined;
-		}),
 });
 
 // ============================================================================
@@ -59,6 +50,5 @@ export const getSkuStocksSchema = z.object({
 		colorId: undefined,
 		material: undefined,
 		stockLevel: undefined,
-		hasActiveReservations: undefined,
 	}),
 });

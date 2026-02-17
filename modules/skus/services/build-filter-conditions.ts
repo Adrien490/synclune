@@ -1,5 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import type { ProductSkuFilters } from "@/modules/skus/schemas/sku-filters-schema";
+import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 /**
  * Construit les conditions de filtrage pour la liste des SKUs de produits
@@ -169,30 +170,27 @@ export const buildFilterConditions = (
 	// Stock status composite filter
 	if (filters.stockStatus && filters.stockStatus !== "all") {
 		if (filters.stockStatus === "in_stock") {
-			// En stock (>=3)
 			conditions.push({
 				inventory: {
-					gte: 3,
+					gte: STOCK_THRESHOLDS.LOW,
 				},
 			});
 		} else if (filters.stockStatus === "low_stock") {
-			// Stock faible (1-2)
 			conditions.push({
 				AND: [
 					{
 						inventory: {
-							gte: 1,
+							gte: STOCK_THRESHOLDS.CRITICAL,
 						},
 					},
 					{
 						inventory: {
-							lte: 2,
+							lt: STOCK_THRESHOLDS.LOW,
 						},
 					},
 				],
 			});
 		} else if (filters.stockStatus === "out_of_stock") {
-			// Rupture (0)
 			conditions.push({
 				inventory: {
 					lte: 0,

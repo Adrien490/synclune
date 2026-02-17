@@ -6,31 +6,21 @@ import { ActionStatus } from "@/shared/types/server-action";
 // ============================================================================
 
 const { mockPrisma, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockValidateInput, mockHandleActionError, mockSuccess, mockError } =
-	vi.hoisted(() => {
-		const authError = { status: ActionStatus.UNAUTHORIZED, message: "Non authentifie" };
-		const rateLimitError = { status: ActionStatus.ERROR, message: "Trop de requetes" };
-		const validationError = { status: ActionStatus.VALIDATION_ERROR, message: "Donnees invalides" };
-
-		return {
-			mockPrisma: {
-				address: {
-					count: vi.fn(),
-					create: vi.fn(),
-				},
+	vi.hoisted(() => ({
+		mockPrisma: {
+			address: {
+				count: vi.fn(),
+				create: vi.fn(),
 			},
-			mockRequireAuth: vi.fn(),
-			mockEnforceRateLimit: vi.fn(),
-			mockUpdateTag: vi.fn(),
-			mockValidateInput: vi.fn(),
-			mockHandleActionError: vi.fn(),
-			mockSuccess: vi.fn(),
-			mockError: vi.fn(),
-			// Keep error objects accessible for setup
-			_authError: authError,
-			_rateLimitError: rateLimitError,
-			_validationError: validationError,
-		};
-	});
+		},
+		mockRequireAuth: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockValidateInput: vi.fn(),
+		mockHandleActionError: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockError: vi.fn(),
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -216,21 +206,24 @@ describe("createAddress", () => {
 	});
 
 	it("should reject when user has reached MAX_ADDRESSES_PER_USER (10)", async () => {
-		mockPrisma.address.count.mockResolvedValue(10);
+		mockPrisma.address.count.mockResolvedValueOnce(10);
 
-		await createAddress(undefined, validFormData);
+		const result = await createAddress(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Vous ne pouvez pas avoir plus de 10 adresses");
+		// Verify the address was not created and the error message is returned
 		expect(mockPrisma.address.create).not.toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("10 adresses");
 	});
 
 	it("should reject when user has more than 10 addresses", async () => {
-		mockPrisma.address.count.mockResolvedValue(11);
+		mockPrisma.address.count.mockResolvedValueOnce(11);
 
-		await createAddress(undefined, validFormData);
+		const result = await createAddress(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("10 adresses"));
 		expect(mockPrisma.address.create).not.toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("10 adresses");
 	});
 
 	it("should invalidate cache after successful creation", async () => {

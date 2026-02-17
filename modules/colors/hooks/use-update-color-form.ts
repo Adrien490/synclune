@@ -6,16 +6,10 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { updateColor } from "@/modules/colors/actions/update-color";
-
-interface Color {
-	id: string;
-	name: string;
-	slug: string;
-	hex: string;
-}
+import type { Color } from "@/modules/colors/types/color.types";
 
 interface UseUpdateColorFormOptions {
-	color: Color;
+	color: Pick<Color, "id" | "name" | "hex">;
 	onSuccess?: (message: string) => void;
 }
 

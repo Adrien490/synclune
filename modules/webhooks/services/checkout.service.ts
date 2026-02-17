@@ -5,21 +5,15 @@ import { stripe } from "@/shared/lib/stripe";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { validateSkuAndStock } from "@/modules/cart/services/sku-validation.service";
+import { batchValidateSkusForMerge } from "@/modules/cart/services/sku-validation.service";
 import {
 	getShippingRateName,
 	getShippingMethodFromRate,
 	getShippingCarrierFromRate,
 } from "@/modules/orders/constants/stripe-shipping-rates";
 import type { PostWebhookTask } from "../types/webhook.types";
-import type { SkuValidationResult } from "@/modules/cart/types/sku-validation.types";
-import type {
-	ProcessCheckoutResult,
-	OrderWithItems,
-	OrderItem,
-} from "../types/checkout.types";
+import type { OrderWithItems } from "../types/checkout.types";
 import { getBaseUrl } from "@/shared/constants/urls";
-import { CHECKOUT_VALIDATION_TIMEOUT_MS } from "../constants/webhook.constants";
 
 /**
  * Mappe un order Prisma vers OrderWithItems
@@ -81,21 +75,6 @@ function mapToOrderWithItems(order: {
 			sku: item.sku,
 		})),
 	};
-}
-
-async function validateWithTimeout(
-	validateFn: () => Promise<SkuValidationResult>,
-	skuId: string
-): Promise<SkuValidationResult> {
-	return Promise.race([
-		validateFn(),
-		new Promise<SkuValidationResult>((_, reject) =>
-			setTimeout(
-				() => reject(new Error(`Validation timeout for SKU ${skuId}`)),
-				CHECKOUT_VALIDATION_TIMEOUT_MS
-			)
-		),
-	]);
 }
 
 /**
@@ -174,22 +153,22 @@ export async function processOrderTransaction(
 			return mapToOrderWithItems(order);
 		}
 
-		// 3. Re-validation de tous les items AVANT de marquer comme PAID
-		// P1.2: Avec timeout pour éviter webhook timeout si DB lente
+		// 3. Re-validation of all items BEFORE marking as PAID (single batch query)
 		console.log(`🔍 [WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`);
 
-		for (const item of order.items) {
-			const validation = await validateWithTimeout(
-				() => validateSkuAndStock({ skuId: item.skuId, quantity: item.quantity }),
-				item.skuId
-			);
+		const batchResults = await batchValidateSkusForMerge(
+			order.items.map((item) => ({ skuId: item.skuId, quantity: item.quantity }))
+		);
 
-			if (!validation.success) {
+		for (const item of order.items) {
+			const result = batchResults.get(item.skuId);
+			if (!result || !result.isValid) {
+				const reason = !result ? "SKU not found" : `invalid (active=${result.isActive}, stock=${result.inventory})`;
 				console.error(
-					`❌ [WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${validation.error}`
+					`❌ [WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`
 				);
 				throw new Error(
-					`Invalid item in order: ${validation.error} (SKU: ${item.skuId}, Quantity: ${item.quantity})`
+					`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`
 				);
 			}
 		}
@@ -222,19 +201,14 @@ export async function processOrderTransaction(
 			},
 		});
 
-		// 5b. Désactiver automatiquement les SKUs épuisés
-		for (const item of order.items) {
-			const sku = await tx.productSku.findUnique({
-				where: { id: item.skuId },
-				select: { inventory: true },
-			});
-			if (sku?.inventory === 0) {
-				await tx.productSku.update({
-					where: { id: item.skuId },
-					data: { isActive: false },
-				});
-				console.log(`📦 [WEBHOOK] SKU ${item.skuId} désactivé (stock épuisé)`);
-			}
+		// 5b. Deactivate out-of-stock SKUs (single query instead of N+1)
+		const skuIds = order.items.map((item) => item.skuId);
+		const { count: deactivatedCount } = await tx.productSku.updateMany({
+			where: { id: { in: skuIds }, inventory: 0 },
+			data: { isActive: false },
+		});
+		if (deactivatedCount > 0) {
+			console.log(`📦 [WEBHOOK] ${deactivatedCount} SKU(s) deactivated (out of stock) for order ${orderId}`);
 		}
 
 		// 6. Vider le panier apres paiement reussi (utilisateur connecte OU invite)
@@ -257,7 +231,7 @@ export async function processOrderTransaction(
 		console.log("✅ [WEBHOOK] Order processed successfully:", order.orderNumber);
 
 		return mapToOrderWithItems(order);
-	});
+	}, { timeout: 10000 });
 }
 
 /**
