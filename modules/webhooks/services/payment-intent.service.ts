@@ -181,7 +181,7 @@ export async function initiateAutomaticRefund(
 				},
 			},
 			{
-				idempotencyKey: `auto-refund-${reason.replace(/\s+/g, "-").toLowerCase()}-${paymentIntentId}`,
+				idempotencyKey: `auto-refund-${paymentIntentId}`,
 			}
 		);
 

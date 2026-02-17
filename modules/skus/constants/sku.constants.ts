@@ -185,6 +185,20 @@ export const SORT_LABELS: Record<string, string> = {
 // FILTERS
 // ============================================================================
 
+// ============================================================================
+// BULK OPERATION LIMITS
+// ============================================================================
+
+export const BULK_SKU_LIMITS = {
+	DEFAULT: 100,
+	STOCK_ADJUSTMENT: 50,
+	PRICE_UPDATE: 25,
+} as const;
+
+// ============================================================================
+// FILTERS
+// ============================================================================
+
 export const SKU_FILTERS_MIN_DATE = new Date("2020-01-01");
 export const SKU_FILTERS_MAX_INVENTORY = 100000;
 export const SKU_FILTERS_MAX_PRICE_CENTS = 99999999; // 999999.99€ en centimes

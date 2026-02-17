@@ -15,7 +15,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-vi.mock("@/modules/reviews/actions/send-review-request-email", () => ({
+vi.mock("@/modules/reviews/services/send-review-request-email.service", () => ({
 	sendReviewRequestEmailInternal: mockSendReviewRequestEmailInternal,
 }));
 

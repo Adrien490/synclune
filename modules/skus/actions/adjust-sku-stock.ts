@@ -91,6 +91,10 @@ export async function adjustSkuStock(
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
 		tags.forEach((tag) => updateTag(tag));
 
+		console.log(
+			`[SKU:stock] ${sku.sku} adjusted by ${adjustment > 0 ? "+" : ""}${adjustment} (${sku.inventory - adjustment} -> ${sku.inventory})${reason ? ` reason: ${reason}` : ""}`
+		);
+
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
 		return success(`Stock de ${sku.sku} ajuste (${adjustmentText}). Nouveau stock: ${sku.inventory}`, {
 			skuId: sku.id,

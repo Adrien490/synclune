@@ -107,12 +107,17 @@ export async function bulkDeleteProducts(
 		});
 
 		// 7. Soft delete les produits et leurs SKUs dans une transaction
-		// Also clean up CartItems referencing these products' SKUs
+		// Also clean up CartItems and WishlistItems referencing these products' SKUs
 		// Files are preserved on UploadThing until hard delete (10-year retention)
 		await prisma.$transaction(async (tx) => {
 			// Remove CartItems referencing these products' SKUs before soft-deleting
 			await tx.cartItem.deleteMany({
 				where: { sku: { productId: { in: validatedProductIds } } },
+			});
+
+			// Remove WishlistItems referencing these products
+			await tx.wishlistItem.deleteMany({
+				where: { productId: { in: validatedProductIds } },
 			});
 
 			const now = new Date();

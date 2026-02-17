@@ -1,4 +1,4 @@
-import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
+import { sendReviewRequestEmailInternal } from "@/modules/reviews/services/send-review-request-email.service";
 import { ActionStatus } from "@/shared/types/server-action";
 
 /**

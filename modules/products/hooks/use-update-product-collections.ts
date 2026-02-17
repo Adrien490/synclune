@@ -38,7 +38,6 @@ export function useUpdateProductCollections(
 
 	const update = (
 		productId: string,
-		_productTitle: string,
 		collectionIds: string[]
 	) => {
 		startTransition(() => {

@@ -59,7 +59,7 @@ export function UpdateReviewForm({
 				)}
 			>
 				{/* Champ caché pour l'ID */}
-				<input type="hidden" name="reviewId" value={review.id} />
+				<input type="hidden" name="id" value={review.id} />
 
 				{/* Sélection de la note */}
 				<form.AppField name="rating">

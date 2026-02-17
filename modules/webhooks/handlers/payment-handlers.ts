@@ -34,7 +34,7 @@ export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent):
  * Restaure le stock réservé et initie un remboursement si nécessaire
  */
 export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<WebhookHandlerResult> {
-	const orderId = paymentIntent.metadata.order_id;
+	const orderId = paymentIntent.metadata?.order_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order_id in payment intent metadata");
@@ -104,7 +104,7 @@ export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent):
  * Annule la commande et initie un remboursement si nécessaire
  */
 export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent): Promise<WebhookHandlerResult> {
-	const orderId = paymentIntent.metadata.order_id;
+	const orderId = paymentIntent.metadata?.order_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order_id in payment intent metadata");

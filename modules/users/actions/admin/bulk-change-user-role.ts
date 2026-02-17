@@ -32,12 +32,17 @@ export async function bulkChangeUserRole(
 
 		// 3. Extraire et valider les donnees
 		const idsString = formData.get("ids");
-		const rawData = {
-			ids: idsString ? JSON.parse(idsString as string) : [],
-			role: formData.get("role") as Role,
-		};
+		let parsedIds: unknown;
+		try {
+			parsedIds = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format des IDs invalide.");
+		}
 
-		const validation = validateInput(bulkChangeUserRoleSchema, rawData);
+		const validation = validateInput(bulkChangeUserRoleSchema, {
+			ids: parsedIds,
+			role: formData.get("role") as Role,
+		});
 		if ("error" in validation) return validation.error;
 
 		const validatedData = validation.data;

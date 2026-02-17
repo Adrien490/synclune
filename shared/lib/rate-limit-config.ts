@@ -743,6 +743,14 @@ export const ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour le rafraichissement du cache produits (admin)
+ */
+export const ADMIN_PRODUCT_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+/**
  * Toutes les limites admin produits
  */
 export const ADMIN_PRODUCT_LIMITS = {
@@ -755,6 +763,7 @@ export const ADMIN_PRODUCT_LIMITS = {
 	TOGGLE_STATUS: ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT,
 	DUPLICATE: ADMIN_PRODUCT_DUPLICATE_LIMIT,
 	UPDATE_COLLECTIONS: ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT,
+	REFRESH: ADMIN_PRODUCT_REFRESH_LIMIT,
 } as const;
 
 // ========================================

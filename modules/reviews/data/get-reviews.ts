@@ -28,6 +28,7 @@ import {
 	buildReviewOrderBy,
 	buildReviewWhereClause,
 } from "../services/review-query-builder"
+import { stripDeletedResponses } from "../utils/strip-deleted-response"
 
 // Re-export pour compatibilité
 export {
@@ -136,7 +137,7 @@ async function fetchReviews(
 		)
 
 		return {
-			reviews: items,
+			reviews: stripDeletedResponses(items),
 			pagination,
 			totalCount,
 		}

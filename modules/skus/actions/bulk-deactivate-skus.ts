@@ -9,8 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
 import { bulkDeactivateSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
-
-const MAX_SKUS_PER_OPERATION = 100;
+import { BULK_SKU_LIMITS } from "../constants/sku.constants";
 
 export async function bulkDeactivateSkus(
 	prevState: ActionState | undefined,
@@ -38,10 +37,10 @@ export async function bulkDeactivateSkus(
 			};
 		}
 
-		if (ids.length > MAX_SKUS_PER_OPERATION) {
+		if (ids.length > BULK_SKU_LIMITS.DEFAULT) {
 			return {
 				status: ActionStatus.ERROR,
-				message: `Maximum ${MAX_SKUS_PER_OPERATION} variantes par operation`,
+				message: `Maximum ${BULK_SKU_LIMITS.DEFAULT} variantes par operation`,
 			};
 		}
 

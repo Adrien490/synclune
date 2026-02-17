@@ -31,6 +31,7 @@ import { Check, Search, X } from "lucide-react";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
+import { isLightColor, getContrastTextColor } from "@/modules/colors/utils/color-contrast.utils";
 
 // ============================================================================
 // TYPES
@@ -56,27 +57,6 @@ interface FilterSheetProps {
 // ============================================================================
 
 const SEARCH_THRESHOLD = 8;
-
-/** Detect if a hex color is light (luminance > 0.85) */
-function isLightColor(hex: string): boolean {
-	const clean = hex.replace("#", "");
-	const r = parseInt(clean.substring(0, 2), 16) / 255;
-	const g = parseInt(clean.substring(2, 4), 16) / 255;
-	const b = parseInt(clean.substring(4, 6), 16) / 255;
-	// Relative luminance (sRGB)
-	const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-	return luminance > 0.85;
-}
-
-/** Check overlay color based on hex luminance */
-function getCheckColor(hex: string): string {
-	const clean = hex.replace("#", "");
-	const r = parseInt(clean.substring(0, 2), 16) / 255;
-	const g = parseInt(clean.substring(2, 4), 16) / 255;
-	const b = parseInt(clean.substring(4, 6), 16) / 255;
-	const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-	return luminance > 0.5 ? "#000000" : "#ffffff";
-}
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -409,7 +389,7 @@ export function ProductFilterSheet({
 													const isSelected = field.state.value.includes(
 														color.slug
 													);
-													const light = isLightColor(color.hex);
+													const light = isLightColor(color.hex, 0.85);
 													return (
 														<CheckboxFilterItem
 															key={color.slug}
@@ -445,7 +425,7 @@ export function ProductFilterSheet({
 																		<Check
 																			className="absolute inset-0 m-auto w-3 h-3"
 																			style={{
-																				color: getCheckColor(
+																				color: getContrastTextColor(
 																					color.hex
 																				),
 																			}}

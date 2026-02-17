@@ -17,7 +17,11 @@ export const reviewMediaSchema = z.object({
 		.refine(isAllowedMediaDomain, {
 			message: "L'URL du média doit provenir d'UploadThing",
 		}),
-	blurDataUrl: z.string().optional(),
+	blurDataUrl: z
+		.string()
+		.startsWith("data:", "Le blurDataUrl doit être un data URI")
+		.max(5000, "BlurDataUrl trop long")
+		.optional(),
 	altText: z.string().max(255, "Texte alternatif trop long").optional(),
 })
 

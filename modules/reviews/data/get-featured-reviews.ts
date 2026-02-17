@@ -2,6 +2,7 @@ import { prisma } from "@/shared/lib/prisma"
 import { REVIEW_HOMEPAGE_SELECT } from "../constants/review.constants"
 import { cacheHomepageReviews } from "../constants/cache"
 import type { ReviewHomepage } from "../types/review.types"
+import { stripDeletedResponses } from "../utils/strip-deleted-response"
 
 /**
  * Fetches the top 6 published reviews for the homepage social proof section.
@@ -25,7 +26,7 @@ export async function getFeaturedReviews(): Promise<ReviewHomepage[]> {
 		take: 12,
 	})
 
-	const typed = reviews as unknown as ReviewHomepage[]
+	const typed = stripDeletedResponses(reviews) as unknown as ReviewHomepage[]
 
 	// Filter for substantive reviews (>= 50 chars)
 	const quality = typed.filter((r) => r.content.length >= 50)

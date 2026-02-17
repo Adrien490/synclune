@@ -189,7 +189,7 @@ export default async function ReviewsAdminPage({
 
 			{/* DataTable */}
 			<Suspense fallback={<ReviewsDataTableSkeleton />}>
-				<ReviewsDataTable reviewsPromise={reviewsPromise} />
+				<ReviewsDataTable reviewsPromise={reviewsPromise} perPage={perPage} />
 			</Suspense>
 		</>
 	)

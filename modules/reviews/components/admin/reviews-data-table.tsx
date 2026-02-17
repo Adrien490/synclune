@@ -24,10 +24,12 @@ import { ReviewRowActions } from "./review-row-actions"
 
 export interface ReviewsDataTableProps {
 	reviewsPromise: Promise<GetReviewsReturn>
+	perPage?: number
 }
 
 export async function ReviewsDataTable({
 	reviewsPromise,
+	perPage = 20,
 }: ReviewsDataTableProps) {
 	const { reviews, pagination } = await reviewsPromise
 	const adminReviews = reviews as ReviewAdmin[]
@@ -137,7 +139,7 @@ export async function ReviewsDataTable({
 				{(pagination.hasNextPage || pagination.hasPreviousPage) && (
 					<div className="mt-4">
 						<CursorPagination
-							perPage={20}
+							perPage={perPage}
 							currentPageSize={adminReviews.length}
 							nextCursor={pagination.nextCursor}
 							prevCursor={pagination.prevCursor}

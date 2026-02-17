@@ -63,6 +63,7 @@ export const REVIEW_PUBLIC_SELECT = {
 			content: true,
 			authorName: true,
 			createdAt: true,
+			deletedAt: true,
 		},
 	},
 } as const satisfies Prisma.ProductReviewSelect
@@ -138,6 +139,7 @@ export const REVIEW_ADMIN_SELECT = {
 			authorName: true,
 			createdAt: true,
 			updatedAt: true,
+			deletedAt: true,
 		},
 	},
 } as const satisfies Prisma.ProductReviewSelect
@@ -189,6 +191,7 @@ export const REVIEW_USER_SELECT = {
 			content: true,
 			authorName: true,
 			createdAt: true,
+			deletedAt: true,
 		},
 	},
 } as const satisfies Prisma.ProductReviewSelect

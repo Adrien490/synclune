@@ -92,18 +92,16 @@ export async function syncStripeRefunds(
 	if (operations.length > 0) {
 		const now = new Date();
 
-		await Promise.all(
+		const results = await Promise.allSettled(
 			operations.map((op) => {
 				switch (op.type) {
 					case "updateStatus":
-						console.log(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`);
 						return prisma.refund.update({
 							where: { id: op.id },
 							data: { status: RefundStatus.COMPLETED },
 						});
 
 					case "linkRefund":
-						console.log(`✅ [WEBHOOK] Linked existing refund ${op.id} to Stripe refund ${op.stripeRefundId}`);
 						return prisma.refund.update({
 							where: { id: op.id },
 							data: {
@@ -114,7 +112,6 @@ export async function syncStripeRefunds(
 						});
 
 					case "upsertDashboard":
-						console.log(`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${op.stripeRefundId}`);
 						return prisma.refund.upsert({
 							where: { stripeRefundId: op.stripeRefundId },
 							create: {
@@ -135,6 +132,23 @@ export async function syncStripeRefunds(
 				}
 			})
 		);
+
+		// Log results per operation
+		for (let i = 0; i < results.length; i++) {
+			const result = results[i];
+			const op = operations[i];
+			if (result.status === "fulfilled") {
+				if (op.type === "updateStatus") {
+					console.log(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`);
+				} else if (op.type === "linkRefund") {
+					console.log(`✅ [WEBHOOK] Linked existing refund ${op.id} to Stripe refund ${op.stripeRefundId}`);
+				} else if (op.type === "upsertDashboard") {
+					console.log(`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${op.stripeRefundId}`);
+				}
+			} else {
+				console.error(`❌ [WEBHOOK] Failed to process refund operation ${op.type}:`, result.reason);
+			}
+		}
 	}
 }
 
@@ -274,14 +288,35 @@ export function mapStripeRefundStatus(stripeStatus: string | undefined | null): 
 	return statusMap[stripeStatus || "pending"] || RefundStatus.PENDING;
 }
 
+/** Valid state transitions for refund status */
+const VALID_REFUND_TRANSITIONS: Record<RefundStatus, RefundStatus[]> = {
+	[RefundStatus.PENDING]: [RefundStatus.APPROVED, RefundStatus.COMPLETED, RefundStatus.REJECTED, RefundStatus.FAILED, RefundStatus.CANCELLED],
+	[RefundStatus.APPROVED]: [RefundStatus.COMPLETED, RefundStatus.FAILED, RefundStatus.CANCELLED],
+	[RefundStatus.COMPLETED]: [],
+	[RefundStatus.REJECTED]: [],
+	[RefundStatus.FAILED]: [RefundStatus.APPROVED, RefundStatus.COMPLETED],
+	[RefundStatus.CANCELLED]: [],
+};
+
 /**
  * Met à jour le statut d'un remboursement avec historique
+ * Validates state transitions to prevent invalid status changes
  */
 export async function updateRefundStatus(
 	refundId: string,
 	newStatus: RefundStatus,
-	stripeStatus: string
+	stripeStatus: string,
+	currentStatus?: RefundStatus
 ): Promise<void> {
+	// Validate transition if current status is known
+	if (currentStatus) {
+		const validTransitions = VALID_REFUND_TRANSITIONS[currentStatus];
+		if (!validTransitions.includes(newStatus)) {
+			console.warn(`⚠️ [WEBHOOK] Invalid refund status transition: ${currentStatus} -> ${newStatus} for refund ${refundId}, skipping`);
+			return;
+		}
+	}
+
 	await prisma.refund.update({
 		where: { id: refundId },
 		data: {

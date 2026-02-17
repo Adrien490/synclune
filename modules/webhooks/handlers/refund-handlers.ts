@@ -89,8 +89,8 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 
 		if (order.customerEmail) {
-			const stripeRefunds = charge.refunds?.data || [];
-			const latestRefund = stripeRefunds[0];
+			const stripeRefunds = charge.refunds?.data ?? [];
+			const latestRefund = stripeRefunds.length > 0 ? stripeRefunds[0] : undefined;
 			const reason = latestRefund?.reason || "OTHER";
 			const baseUrl = getBaseUrl();
 			const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}`;
@@ -141,7 +141,7 @@ export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<
 
 		// 3. Mettre à jour si le statut a changé
 		if (newStatus && refund.status !== newStatus) {
-			await updateRefundStatus(refund.id, newStatus, stripeRefund.status || "unknown");
+			await updateRefundStatus(refund.id, newStatus, stripeRefund.status || "unknown", refund.status);
 
 			return {
 				success: true,

@@ -9,8 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
 import { bulkUpdatePriceSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
-
-const MAX_SKUS_PER_OPERATION = 25; // Plus restrictif pour les modifications de prix
+import { BULK_SKU_LIMITS } from "../constants/sku.constants";
 
 export async function bulkUpdatePrice(
 	prevState: ActionState | undefined,
@@ -41,10 +40,10 @@ export async function bulkUpdatePrice(
 			};
 		}
 
-		if (ids.length > MAX_SKUS_PER_OPERATION) {
+		if (ids.length > BULK_SKU_LIMITS.PRICE_UPDATE) {
 			return {
 				status: ActionStatus.ERROR,
-				message: `Maximum ${MAX_SKUS_PER_OPERATION} variantes par operation de prix`,
+				message: `Maximum ${BULK_SKU_LIMITS.PRICE_UPDATE} variantes par operation de prix`,
 			};
 		}
 

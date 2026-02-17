@@ -76,8 +76,11 @@ export async function POST(req: Request) {
 			select: { id: true, status: true },
 		});
 
-		if (existingEvent?.status === WebhookEventStatus.COMPLETED) {
-			console.log(`⏭️ [WEBHOOK:${correlationId}] Event ${event.id} already processed, skipping`);
+		if (
+			existingEvent?.status === WebhookEventStatus.COMPLETED ||
+			existingEvent?.status === WebhookEventStatus.SKIPPED
+		) {
+			console.log(`⏭️ [WEBHOOK:${correlationId}] Event ${event.id} already processed (${existingEvent.status}), skipping`);
 			return NextResponse.json({ received: true, status: "duplicate" });
 		}
 
@@ -99,11 +102,14 @@ export async function POST(req: Request) {
 			// 5. Dispatch au handler approprié
 			const result = await dispatchEvent(event);
 
-			// 6. 🔴 MARQUER COMME COMPLÉTÉ
+			// 6. 🔴 MARQUER COMME COMPLÉTÉ OU SKIPPED
+			const finalStatus = result?.skipped
+				? WebhookEventStatus.SKIPPED
+				: WebhookEventStatus.COMPLETED;
 			await prisma.webhookEvent.update({
 				where: { id: webhookRecord.id },
 				data: {
-					status: WebhookEventStatus.COMPLETED,
+					status: finalStatus,
 					processedAt: new Date(),
 				},
 			});

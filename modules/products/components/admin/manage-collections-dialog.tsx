@@ -78,7 +78,7 @@ export function ManageCollectionsDialog() {
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!data) return;
-		update(data.productId, data.productTitle, Array.from(selectedIds));
+		update(data.productId, Array.from(selectedIds));
 	};
 
 	return (

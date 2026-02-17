@@ -6,6 +6,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { REVIEWS_CACHE_TAGS } from "../constants/cache";
 import { REVIEW_USER_SELECT } from "../constants/review.constants";
 import type { ReviewUser } from "../types/review.types";
+import { stripDeletedResponses } from "../utils/strip-deleted-response";
 
 /**
  * Recupere les avis de l'utilisateur connecte
@@ -41,5 +42,5 @@ async function fetchUserReviews(userId: string): Promise<ReviewUser[]> {
 		orderBy: { createdAt: "desc" },
 	});
 
-	return reviews as unknown as ReviewUser[];
+	return stripDeletedResponses(reviews) as unknown as ReviewUser[];
 }

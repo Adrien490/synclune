@@ -1,6 +1,6 @@
 import { FulfillmentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
+import { sendReviewRequestEmailInternal } from "@/modules/reviews/services/send-review-request-email.service";
 import { ActionStatus } from "@/shared/types/server-action";
 import { BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
 

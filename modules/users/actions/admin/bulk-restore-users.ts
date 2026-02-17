@@ -2,6 +2,7 @@
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
@@ -14,6 +15,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkRestoreUsersSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function bulkRestoreUsers(
 	_prevState: unknown,
@@ -30,16 +32,19 @@ export async function bulkRestoreUsers(
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
-		const rawData = {
-			ids: idsString ? JSON.parse(idsString as string) : [],
-		};
+		let parsedIds: unknown;
+		try {
+			parsedIds = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format des IDs invalide.");
+		}
 
-		const validation = validateInput(bulkRestoreUsersSchema, rawData);
+		const validation = validateInput(bulkRestoreUsersSchema, { ids: parsedIds });
 		if ("error" in validation) return validation.error;
 
 		const validatedData = validation.data;
 
-		// 3. Filtrer les utilisateurs eligibles (supprimes ou suspendus)
+		// 4. Filtrer les utilisateurs eligibles (supprimes ou suspendus)
 		const eligibleUsers = await prisma.user.findMany({
 			where: {
 				id: { in: validatedData.ids },
@@ -57,18 +62,25 @@ export async function bulkRestoreUsers(
 
 		const eligibleIds = eligibleUsers.map((u) => u.id);
 
-		// 4. Restaurer les utilisateurs
+		// 5. Restaurer les utilisateurs
 		const result = await prisma.user.updateMany({
 			where: { id: { in: eligibleIds } },
 			data: {
 				deletedAt: null,
 				suspendedAt: null,
+				accountStatus: AccountStatus.ACTIVE,
 			},
 		});
 
-		// 5. Revalider le cache
+		// 6. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
+		for (const id of eligibleIds) {
+			for (const tag of getUserFullInvalidationTags(id)) {
+				updateTag(tag);
+			}
+		}
 
 		return success(
 			`${result.count} utilisateur${result.count > 1 ? "s" : ""} restaure${result.count > 1 ? "s" : ""} avec succes.`

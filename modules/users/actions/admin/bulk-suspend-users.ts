@@ -2,6 +2,7 @@
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
@@ -31,11 +32,14 @@ export async function bulkSuspendUsers(
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
-		const rawData = {
-			ids: idsString ? JSON.parse(idsString as string) : [],
-		};
+		let parsedIds: unknown;
+		try {
+			parsedIds = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format des IDs invalide.");
+		}
 
-		const validation = validateInput(bulkSuspendUsersSchema, rawData);
+		const validation = validateInput(bulkSuspendUsersSchema, { ids: parsedIds });
 		if ("error" in validation) return validation.error;
 
 		const validatedData = validation.data;
@@ -68,7 +72,7 @@ export async function bulkSuspendUsers(
 		await prisma.$transaction([
 			prisma.user.updateMany({
 				where: { id: { in: eligibleIds } },
-				data: { suspendedAt: new Date() },
+				data: { suspendedAt: new Date(), accountStatus: AccountStatus.INACTIVE },
 			}),
 			// Invalider toutes les sessions pour forcer la deconnexion
 			prisma.session.deleteMany({

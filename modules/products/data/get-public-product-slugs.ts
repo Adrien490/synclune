@@ -14,7 +14,7 @@ export async function getPublicProductSlugs(): Promise<{ slug: string }[]> {
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
 	const products = await prisma.product.findMany({
-		where: { status: "PUBLIC" },
+		where: { status: "PUBLIC", deletedAt: null },
 		select: { slug: true },
 	});
 

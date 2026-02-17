@@ -1,9 +1,12 @@
 import { updateTag } from "next/cache";
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
-import { sendAdminNewOrderEmail, sendAdminRefundFailedAlert, sendAdminDisputeAlert } from "@/modules/emails/services/admin-emails";
+import { sendAdminNewOrderEmail, sendAdminRefundFailedAlert, sendAdminDisputeAlert, sendWebhookFailedAlertEmail } from "@/modules/emails/services/admin-emails";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
 import type { PostWebhookTask } from "../types/webhook.types";
+
+/** Customer-facing email task types that warrant an admin alert on failure */
+const CRITICAL_EMAIL_TASKS = new Set(["ORDER_CONFIRMATION_EMAIL", "REFUND_CONFIRMATION_EMAIL", "PAYMENT_FAILED_EMAIL"]);
 
 export interface PostWebhookTasksResult {
 	successful: number;
@@ -61,6 +64,21 @@ export async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise
 	// Log résumé si des erreurs
 	if (result.failed > 0) {
 		console.warn(`⚠️ [WEBHOOK-AFTER] ${result.failed}/${tasks.length} tasks failed`);
+
+		// Alert admin if critical customer-facing emails failed
+		const criticalFailures = result.errors.filter((e) => CRITICAL_EMAIL_TASKS.has(e.type));
+		if (criticalFailures.length > 0) {
+			try {
+				await sendWebhookFailedAlertEmail({
+					eventId: "post-task-email-failure",
+					eventType: criticalFailures.map((f) => f.type).join(", "),
+					attempts: 1,
+					error: criticalFailures.map((f) => `${f.type}: ${f.error}`).join("; "),
+				});
+			} catch {
+				console.error("❌ [WEBHOOK-AFTER] Failed to send admin alert for email failures");
+			}
+		}
 	}
 
 	return result;

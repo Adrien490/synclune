@@ -32,11 +32,14 @@ export async function bulkDeleteUsers(
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
-		const rawData = {
-			ids: idsString ? JSON.parse(idsString as string) : [],
-		};
+		let parsedIds: unknown;
+		try {
+			parsedIds = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format des IDs invalide.");
+		}
 
-		const validation = validateInput(bulkDeleteUsersSchema, rawData);
+		const validation = validateInput(bulkDeleteUsersSchema, { ids: parsedIds });
 		if ("error" in validation) return validation.error;
 
 		const validatedData = validation.data;

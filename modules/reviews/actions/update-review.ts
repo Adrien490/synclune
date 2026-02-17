@@ -46,12 +46,19 @@ export async function updateReview(
 		if ("error" in rateLimitCheck) return rateLimitCheck.error
 
 		// 3. Extraire les données du FormData
+		let parsedMedia: unknown = []
+		try {
+			parsedMedia = JSON.parse((formData.get("media") as string) || "[]")
+		} catch {
+			parsedMedia = []
+		}
+
 		const rawData = {
 			id: formData.get("id"),
 			rating: formData.get("rating"),
 			title: formData.get("title") || undefined,
 			content: formData.get("content"),
-			media: JSON.parse((formData.get("media") as string) || "[]"),
+			media: parsedMedia,
 		}
 
 		// 4. Valider les données
@@ -123,7 +130,7 @@ export async function updateReview(
 						reviewId: id,
 						url: m.url,
 						blurDataUrl: m.blurDataUrl || null,
-						altText: m.altText || null,
+						altText: m.altText ? sanitizeText(m.altText) : null,
 						position: index,
 					})),
 				})

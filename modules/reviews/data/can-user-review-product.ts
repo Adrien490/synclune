@@ -96,30 +96,3 @@ export async function canUserReviewProduct(
 		orderItemId: eligibleOrderItem.id,
 	}
 }
-
-/**
- * Vérifie si l'utilisateur peut modifier un avis existant
- * (doit être l'auteur de l'avis)
- *
- * @param userId - ID de l'utilisateur
- * @param reviewId - ID de l'avis
- * @returns true si l'utilisateur peut modifier l'avis
- */
-export async function canUserEditReview(
-	userId: string,
-	reviewId: string
-): Promise<boolean> {
-	"use cache: private";
-	cacheReviewableProducts(userId)
-
-	const review = await prisma.productReview.findFirst({
-		where: {
-			id: reviewId,
-			userId,
-			...notDeleted,
-		},
-		select: { id: true },
-	})
-
-	return review !== null
-}

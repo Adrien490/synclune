@@ -195,63 +195,6 @@ export interface GetReviewsReturn {
 	totalCount: number
 }
 
-/**
- * Options de filtrage et pagination pour la liste admin
- * @deprecated Utiliser GetReviewsParams à la place
- */
-export interface ReviewAdminFilters {
-	// Filtres
-	status?: ReviewStatus
-	rating?: number
-	productId?: string
-	userId?: string
-	hasResponse?: boolean
-	search?: string
-	dateFrom?: Date
-	dateTo?: Date
-	// Pagination
-	page?: number
-	perPage?: number
-	// Tri
-	sortBy?: ReviewSortBy
-	sortOrder?: ReviewSortOrder
-}
-
-/**
- * Résultat paginé pour l'admin
- * @deprecated Utiliser GetReviewsReturn à la place
- */
-export interface ReviewAdminListResult {
-	reviews: ReviewAdmin[]
-	total: number
-	page: number
-	perPage: number
-	totalPages: number
-}
-
-/**
- * Paramètres pour récupérer les avis d'un produit (storefront)
- * @deprecated Utiliser GetReviewsParams à la place
- */
-export interface GetProductReviewsParams {
-	productId: string
-	cursor?: string
-	perPage?: number
-	sortBy?: ReviewStorefrontSort
-	filterRating?: number
-}
-
-/**
- * Résultat paginé (cursor) pour le storefront
- * @deprecated Utiliser GetReviewsReturn à la place
- */
-export interface ProductReviewsResult {
-	reviews: ReviewPublic[]
-	nextCursor: string | null
-	hasMore: boolean
-	totalCount: number
-}
-
 // ============================================================================
 // ELIGIBILITY TYPES
 // ============================================================================
@@ -295,15 +238,6 @@ export interface ReviewMedia {
 	url: string
 	blurDataUrl: string | null
 	altText: string | null
-}
-
-/**
- * Input pour créer/modifier un média
- */
-export interface ReviewMediaInput {
-	url: string
-	blurDataUrl?: string
-	altText?: string
 }
 
 // ============================================================================

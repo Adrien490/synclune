@@ -9,8 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
 import { bulkAdjustStockSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
-
-const MAX_SKUS_PER_OPERATION = 50;
+import { BULK_SKU_LIMITS } from "../constants/sku.constants";
 
 export async function bulkAdjustStock(
 	prevState: ActionState | undefined,
@@ -40,10 +39,10 @@ export async function bulkAdjustStock(
 			};
 		}
 
-		if (ids.length > MAX_SKUS_PER_OPERATION) {
+		if (ids.length > BULK_SKU_LIMITS.STOCK_ADJUSTMENT) {
 			return {
 				status: ActionStatus.ERROR,
-				message: `Maximum ${MAX_SKUS_PER_OPERATION} variantes par operation`,
+				message: `Maximum ${BULK_SKU_LIMITS.STOCK_ADJUSTMENT} variantes par operation`,
 			};
 		}
 
@@ -137,6 +136,10 @@ export async function bulkAdjustStock(
 				message: "Aucune variante trouvee",
 			};
 		}
+
+		console.log(
+			`[SKU:stock-bulk] ${mode} ${value} applied to ${skusData.length} SKU(s): ${skusData.map((s) => s.sku).join(", ")}`
+		);
 
 		// Invalider le cache
 		const uniqueTags = collectBulkInvalidationTags(skusData);

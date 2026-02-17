@@ -7,10 +7,8 @@ import { useFilter, type FilterDefinition } from "@/shared/hooks/use-filter";
 import { FilterBadge } from "@/shared/components/filter-badge";
 import { Button } from "@/shared/components/ui/button";
 import { AnimatePresence } from "motion/react";
-import {
-	FILTER_LABELS,
-	formatPrice,
-} from "@/modules/products/constants/filter-labels.constants";
+import { FILTER_LABELS } from "@/modules/products/constants/filter-labels.constants";
+import { formatPrice } from "@/modules/products/utils/format-price";
 
 interface NoResultsFiltersProps {
 	/** URL de reset des filtres */

@@ -131,7 +131,7 @@ export async function createReview(
 						reviewId: newReview.id,
 						url: m.url,
 						blurDataUrl: m.blurDataUrl || null,
-						altText: m.altText || null,
+						altText: m.altText ? sanitizeText(m.altText) : null,
 						position: index,
 					})),
 				})

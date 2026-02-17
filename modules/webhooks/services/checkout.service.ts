@@ -83,21 +83,28 @@ function mapToOrderWithItems(order: {
 export async function extractShippingInfo(
 	session: Stripe.Checkout.Session
 ): Promise<{ shippingCost: number; shippingMethod: string; shippingRateId: string | undefined }> {
-	const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-		expand: ["shipping_cost.shipping_rate"],
-	});
+	try {
+		const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+			expand: ["shipping_cost.shipping_rate"],
+		});
 
-	const shippingCost = fullSession.total_details?.amount_shipping || 0;
-	const shippingRateId =
-		typeof fullSession.shipping_cost?.shipping_rate === "string"
-			? fullSession.shipping_cost.shipping_rate
-			: fullSession.shipping_cost?.shipping_rate?.id;
+		const shippingCost = fullSession.total_details?.amount_shipping || 0;
+		const shippingRateId =
+			typeof fullSession.shipping_cost?.shipping_rate === "string"
+				? fullSession.shipping_cost.shipping_rate
+				: fullSession.shipping_cost?.shipping_rate?.id;
 
-	const shippingMethod = shippingRateId
-		? getShippingRateName(shippingRateId)
-		: "Livraison standard";
+		const shippingMethod = shippingRateId
+			? getShippingRateName(shippingRateId)
+			: "Livraison standard";
 
-	return { shippingCost, shippingMethod, shippingRateId };
+		return { shippingCost, shippingMethod, shippingRateId };
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Failed to retrieve shipping info for session ${session.id}:`, error);
+		// Fallback to session-level data if Stripe API fails
+		const shippingCost = session.total_details?.amount_shipping || 0;
+		return { shippingCost, shippingMethod: "Livraison standard", shippingRateId: undefined };
+	}
 }
 
 /**

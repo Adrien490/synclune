@@ -21,10 +21,7 @@
  */
 export function generateSkuCode(): string {
 	const timestamp = Date.now();
-	const randomSuffix = Math.random()
-		.toString(36)
-		.substring(2, 9)
-		.toUpperCase();
+	const randomSuffix = crypto.randomUUID().replace(/-/g, "").slice(0, 7).toUpperCase();
 
 	return `SKU-${timestamp}-${randomSuffix}`;
 }

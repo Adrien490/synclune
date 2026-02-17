@@ -30,8 +30,15 @@ export async function bulkHideReviews(
 		if ("error" in adminCheck) return adminCheck.error
 
 		// 2. Extraire et valider les données
+		let parsedIds: unknown = []
+		try {
+			parsedIds = JSON.parse((formData.get("ids") as string) || "[]")
+		} catch {
+			parsedIds = []
+		}
+
 		const rawData = {
-			ids: JSON.parse((formData.get("ids") as string) || "[]"),
+			ids: parsedIds,
 		}
 
 		const validation = bulkHideReviewsSchema.safeParse(rawData)
