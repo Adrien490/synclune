@@ -62,13 +62,13 @@ describe("buildMaterialSearchConditions", () => {
 describe("buildMaterialWhereClause", () => {
 	describe("base behaviour", () => {
 		it("should return an empty clause when no params are provided", () => {
-			const result = buildMaterialWhereClause({});
+			const result = buildMaterialWhereClause(params());
 
 			expect(result).toEqual({});
 		});
 
 		it("should not set AND when no conditions are provided", () => {
-			const result = buildMaterialWhereClause({});
+			const result = buildMaterialWhereClause(params());
 
 			expect(result.AND).toBeUndefined();
 		});
@@ -76,7 +76,7 @@ describe("buildMaterialWhereClause", () => {
 
 	describe("search", () => {
 		it("should add a case-insensitive search condition across name, slug, and description", () => {
-			const result = buildMaterialWhereClause({ search: "bronze" });
+			const result = buildMaterialWhereClause(params({ search: "bronze" }));
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({
@@ -89,13 +89,13 @@ describe("buildMaterialWhereClause", () => {
 		});
 
 		it("should not add a search condition when search is an empty string", () => {
-			const result = buildMaterialWhereClause({ search: "" });
+			const result = buildMaterialWhereClause(params({ search: "" }));
 
 			expect(result.AND).toBeUndefined();
 		});
 
 		it("should not add a search condition when search is only whitespace", () => {
-			const result = buildMaterialWhereClause({ search: "   " });
+			const result = buildMaterialWhereClause(params({ search: "   " }));
 
 			expect(result.AND).toBeUndefined();
 		});
@@ -103,31 +103,31 @@ describe("buildMaterialWhereClause", () => {
 
 	describe("filter by isActive", () => {
 		it("should add an isActive true condition when filters.isActive is true", () => {
-			const result = buildMaterialWhereClause({
+			const result = buildMaterialWhereClause(params({
 				filters: { isActive: true },
-			});
+			}));
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ isActive: true });
 		});
 
 		it("should add an isActive false condition when filters.isActive is false", () => {
-			const result = buildMaterialWhereClause({
+			const result = buildMaterialWhereClause(params({
 				filters: { isActive: false },
-			});
+			}));
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ isActive: false });
 		});
 
 		it("should not add an isActive condition when filters.isActive is undefined", () => {
-			const result = buildMaterialWhereClause({ filters: {} });
+			const result = buildMaterialWhereClause(params({ filters: {} }));
 
 			expect(result.AND).toBeUndefined();
 		});
 
 		it("should not add an isActive condition when filters is undefined", () => {
-			const result = buildMaterialWhereClause({});
+			const result = buildMaterialWhereClause(params());
 
 			expect(result.AND).toBeUndefined();
 		});
@@ -135,10 +135,10 @@ describe("buildMaterialWhereClause", () => {
 
 	describe("search combined with filters", () => {
 		it("should include both search and isActive conditions in AND", () => {
-			const result = buildMaterialWhereClause({
+			const result = buildMaterialWhereClause(params({
 				search: "steel",
 				filters: { isActive: true },
-			});
+			}));
 
 			expect(result.AND).toHaveLength(2);
 			expect(result.AND).toContainEqual({ isActive: true });
@@ -152,10 +152,10 @@ describe("buildMaterialWhereClause", () => {
 		});
 
 		it("should add only the isActive condition when search is empty", () => {
-			const result = buildMaterialWhereClause({
+			const result = buildMaterialWhereClause(params({
 				search: "",
 				filters: { isActive: false },
-			});
+			}));
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ isActive: false });

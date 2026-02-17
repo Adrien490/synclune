@@ -42,7 +42,7 @@ function makeDiscount(
 		maxUsagePerUser: null,
 		usageCount: 0,
 		isActive: true,
-		startsAt: null,
+		startsAt: new Date("2026-01-01T00:00:00Z"),
 		endsAt: null,
 		...overrides,
 	};
@@ -129,8 +129,8 @@ describe("checkDiscountEligibility", () => {
 			expect(result.eligible).toBe(true);
 		});
 
-		it("should return eligible when both startsAt and endsAt are null", async () => {
-			const discount = makeDiscount({ startsAt: null, endsAt: null });
+		it("should return eligible when startsAt is in the past and endsAt is null", async () => {
+			const discount = makeDiscount({ endsAt: null });
 			const result = await checkDiscountEligibility(discount, makeContext());
 
 			expect(result.eligible).toBe(true);

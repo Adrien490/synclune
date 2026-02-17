@@ -11,10 +11,19 @@ import {
 	buildOrderFilterConditions,
 	buildOrderWhereClause,
 } from "../order-query-builder";
-import type { OrderFilters } from "../../types/order.types";
+import type { OrderFilters, GetOrdersParams } from "../../types/order.types";
 
 function filters(overrides: Partial<OrderFilters> = {}): OrderFilters {
 	return { showDeleted: undefined, ...overrides } as OrderFilters;
+}
+
+function params(overrides: Partial<GetOrdersParams> = {}): GetOrdersParams {
+	return {
+		direction: "forward",
+		perPage: 20,
+		sortBy: "created-descending",
+		...overrides,
+	} as GetOrdersParams;
 }
 
 // ============================================================================
@@ -176,12 +185,12 @@ describe("buildOrderFilterConditions", () => {
 
 describe("buildOrderWhereClause", () => {
 	it("should always set deletedAt to null", () => {
-		const result = buildOrderWhereClause({});
+		const result = buildOrderWhereClause(params({}));
 		expect(result.deletedAt).toBeNull();
 	});
 
 	it("should include default filter conditions (exclude PENDING)", () => {
-		const result = buildOrderWhereClause({});
+		const result = buildOrderWhereClause(params({}));
 		expect(result.AND).toBeDefined();
 		expect(result.AND).toContainEqual(
 			expect.objectContaining({ status: { not: "PENDING" } })
@@ -189,14 +198,14 @@ describe("buildOrderWhereClause", () => {
 	});
 
 	it("should add search conditions when search is provided", () => {
-		const result = buildOrderWhereClause({ search: "SYN-001" });
+		const result = buildOrderWhereClause(params({ search: "SYN-001" }));
 		expect(result.AND).toBeDefined();
-		expect(result.AND!.length).toBeGreaterThan(1);
+		expect((result.AND as unknown[]).length).toBeGreaterThan(1);
 	});
 
 	it("should include fuzzy IDs when provided", () => {
 		const result = buildOrderWhereClause(
-			{ search: "test" },
+			params({ search: "test" }),
 			["id1", "id2"]
 		);
 		const andConditions = result.AND as Array<Record<string, unknown>>;
@@ -207,13 +216,13 @@ describe("buildOrderWhereClause", () => {
 	});
 
 	it("should use only fuzzy IDs when search produces no exact conditions", () => {
-		const result = buildOrderWhereClause({}, ["id1", "id2"]);
+		const result = buildOrderWhereClause(params({}), ["id1", "id2"]);
 		// No search term, no fuzzy condition added
 		expect(result.AND).toBeDefined();
 	});
 
 	it("should handle no search and no fuzzy IDs", () => {
-		const result = buildOrderWhereClause({});
+		const result = buildOrderWhereClause(params({}));
 		expect(result.AND).toBeDefined();
 		// Only filter conditions
 		expect(result.AND).toHaveLength(1);

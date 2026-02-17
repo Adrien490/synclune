@@ -13,15 +13,15 @@ import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache"
  */
 export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 	try {
-		// 1. Validation des entrées
-		const validated = validateInput(deleteOrderNoteSchema, { noteId });
-		if ("error" in validated) return validated.error;
-
-		// 2. Vérification admin
+		// 1. Vérification admin (avant validation pour cohérence)
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) {
 			return adminCheck.error;
 		}
+
+		// 2. Validation des entrées
+		const validated = validateInput(deleteOrderNoteSchema, { noteId });
+		if ("error" in validated) return validated.error;
 
 		// 3. Vérifier que la note existe et récupérer l'orderId pour le cache
 		const note = await prisma.orderNote.findUnique({
