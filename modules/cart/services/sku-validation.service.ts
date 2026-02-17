@@ -233,7 +233,7 @@ export async function getSkuDetails(input: {
 
 // Action: Valider plusieurs SKUs d'un coup (pour validation du panier complet)
 // Optimisé: utilise une seule requête DB au lieu de N requêtes
-export async function validateCartItems(input: {
+export async function validateCartItemsWithDb(input: {
 	items: Array<{
 		skuId: string;
 		quantity: number;

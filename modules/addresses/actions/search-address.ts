@@ -3,6 +3,8 @@
 import { searchAddressSchema } from "../schemas/search-address.schema";
 import type { SearchAddressParams, SearchAddressReturn } from "../types/search-address.types";
 import { fetchAddresses } from "../utils/fetch-addresses";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 
 /**
  * Action serveur pour obtenir des suggestions d'adresses via l'API BAN (Base Adresse Nationale)
@@ -26,6 +28,12 @@ import { fetchAddresses } from "../utils/fetch-addresses";
 export async function searchAddress(
 	params: SearchAddressParams
 ): Promise<SearchAddressReturn> {
+	// Rate limiting (user or IP-based)
+	const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.SEARCH);
+	if ("error" in rateCheck) {
+		return { addresses: [], query: params.text ?? "", limit: 5 };
+	}
+
 	// Valider et appliquer les valeurs par défaut
 	const validatedParams = searchAddressSchema.parse(params);
 	return await fetchAddresses(validatedParams);

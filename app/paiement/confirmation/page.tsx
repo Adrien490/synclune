@@ -8,7 +8,7 @@ import {
 } from "@/shared/components/ui/card";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { CheckCircle2, Heart, Package, Sparkles, UserPlus } from "lucide-react";
+import { CheckCircle2, Clock, Heart, Package, Sparkles, UserPlus } from "lucide-react";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -28,6 +28,7 @@ interface CheckoutSuccessPageProps {
 	searchParams: Promise<{
 		order_id?: string;
 		order_number?: string;
+		pending?: string;
 	}>;
 }
 
@@ -44,6 +45,7 @@ export default async function CheckoutSuccessPage({
 	const params = await searchParams;
 	const orderId = params.order_id;
 	const orderNumber = params.order_number;
+	const isPending = params.pending === "true";
 
 	// Both params required for secure lookup
 	if (!orderId || !orderNumber) {
@@ -78,7 +80,9 @@ export default async function CheckoutSuccessPage({
 							</CardTitle>
 							<div className="space-y-2">
 								<p className="text-sm text-muted-foreground">
-									Votre paiement a été accepté avec succès
+									{isPending
+										? "Votre commande a été enregistrée"
+										: "Votre paiement a été accepté avec succès"}
 								</p>
 								<p className="text-lg font-semibold">
 									Commande #{order.orderNumber}
@@ -87,6 +91,18 @@ export default async function CheckoutSuccessPage({
 						</CardHeader>
 
 						<CardContent className="space-y-6">
+							{/* Async payment pending banner */}
+							{isPending && (
+								<Alert>
+									<Clock />
+									<AlertTitle>Paiement en cours de traitement</AlertTitle>
+									<AlertDescription>
+										Votre paiement est en cours de traitement. Vous recevrez un email
+										de confirmation dès que le paiement sera validé.
+									</AlertDescription>
+								</Alert>
+							)}
+
 							{/* Articles commandés */}
 							{order.items.length > 0 && (
 								<div className="bg-muted/50 rounded-lg p-4 space-y-3">

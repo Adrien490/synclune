@@ -75,7 +75,7 @@ export async function resendOrderEmail(
 						city: order.shippingCity,
 						country: order.shippingCountry,
 					},
-					trackingUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.id)),
+					trackingUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
 				});
 
 				if (!result.success) {
@@ -146,7 +146,7 @@ export async function resendOrderEmail(
 					orderNumber: order.orderNumber,
 					customerName: (order.customerName ?? "").split(" ")[0] || "Client",
 					deliveryDate,
-					orderDetailsUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.id)),
+					orderDetailsUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
 				});
 
 				if (!result.success) {

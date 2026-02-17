@@ -15,7 +15,7 @@ import { updateTag } from "next/cache";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsReturnedSchema } from "../schemas/order.schemas";
-import { createOrderAudit } from "../utils/order-audit";
+import { createOrderAuditTx } from "../utils/order-audit";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
@@ -91,30 +91,32 @@ export async function markAsReturned(
 			};
 		}
 
-		// Mettre à jour la commande
-		await prisma.order.update({
-			where: { id },
-			data: {
-				fulfillmentStatus: FulfillmentStatus.RETURNED,
-			},
-		});
+		// Mettre à jour la commande + audit trail atomique
+		await prisma.$transaction(async (tx) => {
+			await tx.order.update({
+				where: { id },
+				data: {
+					fulfillmentStatus: FulfillmentStatus.RETURNED,
+				},
+			});
 
-		// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
-		await createOrderAudit({
-			orderId: id,
-			action: "RETURNED",
-			previousFulfillmentStatus: order.fulfillmentStatus,
-			newFulfillmentStatus: FulfillmentStatus.RETURNED,
-			note: result.data.reason,
-			authorId: adminUser.id,
-			authorName: adminUser.name || "Admin",
-			source: HistorySource.ADMIN,
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "RETURNED",
+				previousFulfillmentStatus: order.fulfillmentStatus,
+				newFulfillmentStatus: FulfillmentStatus.RETURNED,
+				note: result.data.reason,
+				authorId: adminUser.id,
+				authorName: adminUser.name || "Admin",
+				source: HistorySource.ADMIN,
+			});
 		});
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 
 		// Envoyer l'email de confirmation de retour au client
+		let emailSent = false;
 		if (order.customerEmail) {
 			const customerFirstName =
 				order.customerName?.split(" ")[0] ||
@@ -123,17 +125,22 @@ export async function markAsReturned(
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
-			await sendReturnConfirmationEmail({
-				to: order.customerEmail,
-				orderNumber: order.orderNumber,
-				customerName: customerFirstName,
-				orderTotal: order.total,
-				reason: result.data.reason,
-				orderDetailsUrl,
-			});
+			try {
+				await sendReturnConfirmationEmail({
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: customerFirstName,
+					orderTotal: order.total,
+					reason: result.data.reason,
+					orderDetailsUrl,
+				});
+				emailSent = true;
+			} catch (emailError) {
+				console.error("[MARK_AS_RETURNED] Échec envoi email:", emailError);
+			}
 		}
 
-		const emailMessage = order.customerEmail ? " Email envoyé au client." : "";
+		const emailMessage = emailSent ? " Email envoyé au client." : order.customerEmail ? " (Échec envoi email)" : "";
 
 		return {
 			status: ActionStatus.SUCCESS,

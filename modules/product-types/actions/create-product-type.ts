@@ -9,8 +9,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
+import { getProductTypeInvalidationTags } from "../utils/cache.utils";
 import { createProductTypeSchema } from "../schemas/product-type.schemas";
 
 export async function createProductType(
@@ -60,8 +59,7 @@ export async function createProductType(
 		});
 
 		// 7. Invalider le cache des types de produits
-		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
-		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
+		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 
 		return success("Type de produit créé avec succès");
 	} catch (e) {

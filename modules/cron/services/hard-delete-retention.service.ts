@@ -1,7 +1,7 @@
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
-import { BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 
@@ -29,6 +29,8 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	console.log(
 		"[CRON:hard-delete-retention] Starting 10-year retention cleanup..."
 	);
+
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
 
 	const retentionDate = new Date();
 	retentionDate.setFullYear(retentionDate.getFullYear() - RETENTION.LEGAL_RETENTION_YEARS);
@@ -97,7 +99,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 			: [];
 
 	// 3. Run all DB deletes in a single transaction
-	// Note: Wishlist has no deletedAt (no soft-delete), skipped here
 	const [
 		reviewsResult,
 		newsletterResult,
@@ -137,6 +138,19 @@ export async function hardDeleteExpiredRecords(): Promise<{
 
 	// 5. Delete UploadThing files after DB transaction succeeds
 	// Non-blocking: if UploadThing fails, orphaned files will be cleaned by cleanup-orphan-media
+	if (Date.now() > deadline) {
+		console.warn(
+			"[CRON:hard-delete-retention] Approaching timeout, skipping UploadThing cleanup (will be handled by cleanup-orphan-media)"
+		);
+		return {
+			productsDeleted: productsResult.count,
+			reviewsDeleted: reviewsResult.count,
+			newsletterDeleted: newsletterResult.count,
+			customizationRequestsDeleted: customizationRequestsResult.count,
+			hasMore,
+		};
+	}
+
 	if (reviewMediaUrls.length > 0) {
 		try {
 			const urls = reviewMediaUrls.map((m) => m.url);

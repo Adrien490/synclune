@@ -81,13 +81,31 @@ describe("validateProductForPublication", () => {
 });
 
 describe("validatePublicProductCreation", () => {
-	it("should return valid for active SKU", () => {
-		const result = validatePublicProductCreation({ isActive: true });
+	it("should return valid for active SKU with stock", () => {
+		const result = validatePublicProductCreation({ isActive: true, inventory: 5 });
 		expect(result).toEqual({ isValid: true, errorMessage: null });
 	});
 
 	it("should reject inactive SKU", () => {
-		const result = validatePublicProductCreation({ isActive: false });
+		const result = validatePublicProductCreation({ isActive: false, inventory: 5 });
+		expect(result.isValid).toBe(false);
+		expect(result.errorMessage).toContain("SKU inactif");
+	});
+
+	it("should reject SKU with zero inventory", () => {
+		const result = validatePublicProductCreation({ isActive: true, inventory: 0 });
+		expect(result.isValid).toBe(false);
+		expect(result.errorMessage).toContain("stock");
+	});
+
+	it("should reject SKU with negative inventory", () => {
+		const result = validatePublicProductCreation({ isActive: true, inventory: -1 });
+		expect(result.isValid).toBe(false);
+		expect(result.errorMessage).toContain("stock");
+	});
+
+	it("should check isActive before inventory", () => {
+		const result = validatePublicProductCreation({ isActive: false, inventory: 0 });
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("SKU inactif");
 	});

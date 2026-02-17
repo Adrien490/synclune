@@ -26,15 +26,15 @@ export async function adjustSkuStock(
 
 		const adjustment = parseInt(adjustmentRaw, 10);
 
-		// 0. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_ADJUST_STOCK_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 1. Vérification admin
+		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Validation
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_ADJUST_STOCK_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Validation
 		const validation = validateInput(adjustSkuStockSchema, {
 			skuId,
 			adjustment,
@@ -42,7 +42,7 @@ export async function adjustSkuStock(
 		});
 		if ("error" in validation) return validation.error;
 
-		// 3. Atomic conditional update to prevent TOCTOU race condition
+		// 4. Atomic conditional update to prevent TOCTOU race condition
 		// A single UPDATE with a WHERE clause ensures stock never goes negative,
 		// even under concurrent requests.
 		if (adjustment < 0) {
@@ -73,7 +73,7 @@ export async function adjustSkuStock(
 			}
 		}
 
-		// 4. Fetch updated SKU info for cache invalidation and response
+		// 5. Fetch updated SKU info for cache invalidation and response
 		const sku = await prisma.productSku.findUnique({
 			where: { id: skuId },
 			select: {
@@ -87,7 +87,7 @@ export async function adjustSkuStock(
 
 		if (!sku) return error("Variante non trouvee");
 
-		// 5. Invalider le cache avec les tags appropriés
+		// 6. Invalider le cache avec les tags appropriés
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
 		tags.forEach((tag) => updateTag(tag));
 

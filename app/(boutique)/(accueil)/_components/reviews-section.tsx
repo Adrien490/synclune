@@ -79,8 +79,11 @@ export function ReviewsSection({
 						<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 							<div
 								className="mt-4 flex items-center justify-center gap-2"
-								role="img"
-								aria-label={`Note moyenne : ${formatRating(stats.averageRating)} sur 5 basée sur ${stats.totalReviews} avis`}
+								role="meter"
+								aria-label={`Note moyenne basée sur ${stats.totalReviews} avis`}
+								aria-valuenow={stats.averageRating}
+								aria-valuemin={0}
+								aria-valuemax={5}
 							>
 								<RatingStars rating={stats.averageRating} size="sm" />
 								<span className="text-sm font-medium text-foreground" aria-hidden="true">

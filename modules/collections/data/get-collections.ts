@@ -113,8 +113,10 @@ async function fetchCollections(
 		);
 
 		return { collections: items, pagination };
-	} catch (error) {
-		const baseReturn = {
+	} catch (err) {
+		console.error("[collections] Failed to fetch collections:", err);
+
+		return {
 			collections: [],
 			pagination: {
 				nextCursor: null,
@@ -122,14 +124,6 @@ async function fetchCollections(
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
-			error:
-				process.env.NODE_ENV === "development"
-					? error instanceof Error
-						? error.message
-						: "Unknown error"
-					: "Failed to fetch collections",
 		};
-
-		return baseReturn as GetCollectionsReturn & { error: string };
 	}
 }

@@ -67,7 +67,7 @@ export function extractPaymentFailureDetails(
  */
 export async function restoreStockForOrder(
 	orderId: string
-): Promise<{ shouldRestore: boolean; itemCount: number }> {
+): Promise<{ shouldRestore: boolean; itemCount: number; restoredSkuIds: string[] }> {
 	const order = await prisma.order.findUnique({
 		where: { id: orderId },
 		select: {
@@ -86,14 +86,14 @@ export async function restoreStockForOrder(
 
 	if (!order) {
 		console.error(`❌ [WEBHOOK] Order ${orderId} not found for stock restoration`);
-		return { shouldRestore: false, itemCount: 0 };
+		return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
 	}
 
 	// Vérifier si le stock a été décrémenté (statut PROCESSING = paiement avait réussi)
 	const shouldRestore = order.status === "PROCESSING" || order.paymentStatus === "PAID";
 
 	if (!shouldRestore || order.items.length === 0) {
-		return { shouldRestore: false, itemCount: 0 };
+		return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
 	}
 
 	// Restaurer le stock dans une transaction (batch pour éviter N+1)
@@ -119,7 +119,7 @@ export async function restoreStockForOrder(
 	});
 
 	console.log(`📦 [WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`);
-	return { shouldRestore: true, itemCount: order.items.length };
+	return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: Array.from(stockUpdates.keys()) };
 }
 
 /**
@@ -169,7 +169,7 @@ export async function initiateAutomaticRefund(
 	reason: string
 ): Promise<{ success: boolean; refundId?: string; error?: Error }> {
 	try {
-		const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+		const { stripe } = await import("@/shared/lib/stripe");
 
 		const refund = await stripe.refunds.create(
 			{

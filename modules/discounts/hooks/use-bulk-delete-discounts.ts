@@ -35,7 +35,7 @@ export const useBulkDeleteDiscounts = (
 
 	const handle = (discountIds: string[]) => {
 		const formData = new FormData();
-		formData.append("ids", JSON.stringify(discountIds));
+		discountIds.forEach((id) => formData.append("ids", id));
 		startTransition(() => {
 			formAction(formData);
 		});

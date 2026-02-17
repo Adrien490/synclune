@@ -24,8 +24,7 @@ export async function bulkDeleteDiscounts(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		const idsRaw = formData.get("ids") as string;
-		const ids = idsRaw ? JSON.parse(idsRaw) : [];
+		const ids = formData.getAll("ids") as string[];
 
 		const validated = validateInput(bulkDeleteDiscountsSchema, { ids });
 		if ("error" in validated) return validated.error;

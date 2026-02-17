@@ -89,16 +89,6 @@ export const collectionDescriptionSchema = z
 	.optional()
 	.nullable();
 
-export const collectionSlugSchema = z
-	.string()
-	.trim()
-	.min(1, "Le slug est requis")
-	.max(100, "Le slug ne peut pas depasser 100 caracteres")
-	.regex(
-		/^[a-z0-9-]+$/,
-		"Le slug ne peut contenir que des lettres minuscules, chiffres et tirets"
-	);
-
 export const createCollectionSchema = z.object({
 	name: collectionNameSchema,
 	description: collectionDescriptionSchema,
@@ -108,7 +98,6 @@ export const createCollectionSchema = z.object({
 export const updateCollectionSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: collectionNameSchema,
-	slug: collectionSlugSchema,
 	description: collectionDescriptionSchema,
 	status: z.nativeEnum(CollectionStatus),
 });
@@ -125,13 +114,15 @@ export const deleteCollectionSchema = z.object({
 export const bulkDeleteCollectionsSchema = z.object({
 	ids: z
 		.array(z.cuid2({ message: "ID de collection invalide" }))
-		.min(1, "Au moins une collection doit être sélectionnée"),
+		.min(1, "Au moins une collection doit être sélectionnée")
+		.max(GET_COLLECTIONS_MAX_RESULTS_PER_PAGE, "Trop de collections sélectionnées"),
 });
 
 export const bulkArchiveCollectionsSchema = z.object({
 	collectionIds: z
 		.array(z.cuid2({ message: "ID de collection invalide" }))
-		.min(1, "Au moins une collection doit être sélectionnée"),
+		.min(1, "Au moins une collection doit être sélectionnée")
+		.max(GET_COLLECTIONS_MAX_RESULTS_PER_PAGE, "Trop de collections sélectionnées"),
 	targetStatus: z.enum([CollectionStatus.ARCHIVED, CollectionStatus.PUBLIC, CollectionStatus.DRAFT]),
 });
 

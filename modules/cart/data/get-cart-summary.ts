@@ -58,7 +58,13 @@ export async function fetchCartSummary(
 
 	try {
 		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId: sessionId! },
+			where: {
+				...(userId ? { userId } : { sessionId: sessionId! }),
+				OR: [
+					{ expiresAt: null },
+					{ expiresAt: { gt: new Date() } },
+				],
+			},
 			select: GET_CART_SUMMARY_SELECT,
 		});
 

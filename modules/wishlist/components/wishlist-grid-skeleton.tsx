@@ -5,11 +5,8 @@ import { cn } from "@/shared/utils/cn";
 export function WishlistGridSkeleton() {
 	return (
 		<div className="space-y-8">
-			{/* Header placeholder (count + clear button) */}
-			<div className="flex items-center justify-between">
-				<Skeleton className="h-5 w-20 rounded" />
-				<Skeleton className="h-8 w-32 rounded" />
-			</div>
+			{/* Header placeholder (count) */}
+			<Skeleton className="h-5 w-20 rounded" />
 
 			{/* Product grid matching ProductCard structure */}
 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">

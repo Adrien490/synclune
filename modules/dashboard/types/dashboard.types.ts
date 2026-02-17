@@ -43,10 +43,6 @@ export interface OrderForTransform {
 // ============================================================================
 
 export type GetKpisReturn = {
-	todayRevenue: {
-		amount: number;
-		evolution: number;
-	};
 	monthlyRevenue: {
 		amount: number;
 		evolution: number;
@@ -58,13 +54,6 @@ export type GetKpisReturn = {
 	averageOrderValue: {
 		amount: number;
 		evolution: number;
-	};
-	pendingOrders: {
-		count: number;
-		urgentCount: number;
-	};
-	outOfStock: {
-		count: number;
 	};
 };
 

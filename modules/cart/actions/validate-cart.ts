@@ -97,12 +97,19 @@ export async function validateCart(): Promise<ValidateCartResult> {
 			issues,
 		};
 	} catch (error) {
-		// Retourner un résultat structuré au lieu de throw
-		// pour rester cohérent avec le type ValidateCartResult
+		// Return a structured result with a generic issue so the user gets feedback
 		console.error("[validateCart] Erreur inattendue:", error);
 		return {
 			isValid: false,
-			issues: [],
+			issues: [
+				{
+					cartItemId: "unknown",
+					skuId: "unknown",
+					productTitle: "",
+					issueType: "DELETED" as const,
+					message: "Une erreur est survenue lors de la validation du panier. Veuillez réessayer.",
+				},
+			],
 		};
 	}
 }

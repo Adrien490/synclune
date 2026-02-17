@@ -5,6 +5,7 @@ import {
 	mapStripeRefundStatus,
 	updateRefundStatus,
 	markRefundAsFailed,
+	sendRefundFailedAlert,
 } from "@/modules/webhooks/services/refund.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
 
@@ -44,9 +45,14 @@ export async function reconcilePendingRefunds(): Promise<{
 			id: true,
 			stripeRefundId: true,
 			status: true,
+			amount: true,
+			orderId: true,
 			order: {
 				select: {
+					id: true,
 					orderNumber: true,
+					customerEmail: true,
+					stripePaymentIntentId: true,
 				},
 			},
 		},
@@ -89,10 +95,9 @@ export async function reconcilePendingRefunds(): Promise<{
 					);
 					updated++;
 				} else if (newStatus === RefundStatus.FAILED) {
-					await markRefundAsFailed(
-						refund.id,
-						stripeRefund.failure_reason || "Unknown failure"
-					);
+					const failureReason = stripeRefund.failure_reason || "Unknown failure";
+					await markRefundAsFailed(refund.id, failureReason);
+					sendRefundFailedAlert(refund, failureReason).catch(() => {});
 					console.log(
 						`[CRON:reconcile-refunds] Refund ${refund.id} marked as FAILED`
 					);

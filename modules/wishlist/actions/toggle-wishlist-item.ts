@@ -4,7 +4,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
@@ -16,7 +16,6 @@ import {
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { validateInput, handleActionError, success, error, enforceRateLimit } from "@/shared/lib/actions";
-import { getClientIp } from "@/shared/lib/rate-limit";
 
 /**
  * Server Action pour toggle un article dans la wishlist

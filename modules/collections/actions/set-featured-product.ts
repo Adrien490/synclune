@@ -2,8 +2,10 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { setFeaturedProductSchema } from "../schemas/collection.schemas";
@@ -17,11 +19,14 @@ export async function setFeaturedProduct(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Admin auth check
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Validation des donnees
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 2. Validate data
 		const validated = validateInput(setFeaturedProductSchema, {
 			collectionId: formData.get("collectionId"),
 			productId: formData.get("productId"),
@@ -98,11 +103,14 @@ export async function removeFeaturedProduct(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Admin auth check
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Validation des donnees
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 2. Validate data
 		const validated = validateInput(setFeaturedProductSchema, {
 			collectionId: formData.get("collectionId"),
 			productId: formData.get("productId"),

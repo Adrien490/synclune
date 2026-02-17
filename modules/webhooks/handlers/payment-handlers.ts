@@ -8,6 +8,10 @@ import {
 	initiateAutomaticRefund,
 	sendRefundFailureAlert,
 } from "../services/payment-intent.service";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 
 /**
  * Gère le succès d'un paiement via Payment Intent
@@ -29,12 +33,12 @@ export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent):
  * Gère l'échec d'un paiement
  * Restaure le stock réservé et initie un remboursement si nécessaire
  */
-export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<WebhookHandlerResult> {
 	const orderId = paymentIntent.metadata.order_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order_id in payment intent metadata");
-		return;
+		throw new Error("No order_id in payment intent metadata");
 	}
 
 	try {
@@ -49,7 +53,7 @@ export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent):
 		});
 
 		// 2. Restaurer le stock si nécessaire
-		await restoreStockForOrder(orderId);
+		const { restoredSkuIds } = await restoreStockForOrder(orderId);
 
 		// 3. Marquer la commande comme échouée
 		await markOrderAsFailed(orderId, paymentIntent.id, failureDetails);
@@ -75,6 +79,20 @@ export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent):
 		}
 
 		console.log(`❌ [WEBHOOK] Order ${orderId} payment failed`);
+
+		// 5. Build cache invalidation tasks
+		const cacheTags: string[] = [
+			ORDERS_CACHE_TAGS.LIST,
+			SHARED_CACHE_TAGS.ADMIN_BADGES,
+		];
+		for (const skuId of restoredSkuIds) {
+			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+		}
+
+		return {
+			success: true,
+			tasks: [{ type: "INVALIDATE_CACHE", tags: cacheTags }],
+		};
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling payment failure for order ${orderId}:`, error);
 		throw error;
@@ -85,12 +103,12 @@ export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent):
  * Gère l'annulation d'un paiement
  * Annule la commande et initie un remboursement si nécessaire
  */
-export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent): Promise<WebhookHandlerResult> {
 	const orderId = paymentIntent.metadata.order_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order_id in payment intent metadata");
-		return;
+		throw new Error("No order_id in payment intent metadata");
 	}
 
 	try {
@@ -118,6 +136,14 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
 		}
 
 		console.log(`⚠️ [WEBHOOK] Order ${orderId} payment canceled`);
+
+		return {
+			success: true,
+			tasks: [{
+				type: "INVALIDATE_CACHE",
+				tags: [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES],
+			}],
+		};
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling payment cancelation for order ${orderId}:`, error);
 		throw error;

@@ -1,7 +1,7 @@
 "use server";
 
-import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -10,6 +10,7 @@ import { updateTag } from "next/cache";
 import { bulkCancelOrdersSchema } from "../schemas/order.schemas";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { getOrdersForBulkCancel } from "../data/get-orders-for-bulk-cancel";
+import { createOrderAuditTx } from "../utils/order-audit";
 
 /**
  * Annule plusieurs commandes en masse
@@ -24,8 +25,9 @@ export async function bulkCancelOrders(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const idsString = formData.get("ids");
 		const ids = idsString ? JSON.parse(idsString as string) : [];
@@ -109,6 +111,29 @@ export async function bulkCancelOrders(
 					)
 				);
 			}
+
+			// Audit trail for each cancelled order
+			await Promise.all(
+				eligibleOrders.map((order) => {
+					const update = orderUpdates.find((u) => u.id === order.id)!;
+					return createOrderAuditTx(tx, {
+						orderId: order.id,
+						action: "CANCELLED",
+						previousStatus: order.status,
+						newStatus: OrderStatus.CANCELLED,
+						previousPaymentStatus: order.paymentStatus,
+						newPaymentStatus: update.newPaymentStatus,
+						note: validatedData.reason,
+						authorId: adminUser.id,
+						authorName: adminUser.name || "Admin",
+						source: HistorySource.ADMIN,
+						metadata: {
+							bulk: true,
+							stockRestored: update.shouldRestoreStock,
+						},
+					});
+				})
+			);
 		});
 
 		// Invalider les caches pour chaque userId unique

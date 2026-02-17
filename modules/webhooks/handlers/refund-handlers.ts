@@ -3,14 +3,15 @@ import { prisma } from "@/shared/lib/prisma";
 import {
 	syncStripeRefunds,
 	updateOrderPaymentStatus,
-	sendRefundConfirmation,
 	findRefundByStripeId,
 	mapStripeRefundStatus,
 	updateRefundStatus,
 	markRefundAsFailed,
-	sendRefundFailedAlert,
 } from "../services/refund.service";
-import type { WebhookHandlerResult } from "../types/webhook.types";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 
 /**
  * Gère les remboursements (charge.refunded)
@@ -27,7 +28,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 
 		if (!paymentIntentId) {
 			console.error("❌ [WEBHOOK] No payment intent found for refunded charge");
-			return { success: false };
+			throw new Error("No payment intent found for refunded charge");
 		}
 
 		// 2. Trouver la commande via payment intent
@@ -40,6 +41,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 				paymentStatus: true,
 				customerEmail: true,
 				customerName: true,
+				userId: true,
 				refunds: {
 					select: {
 						id: true,
@@ -73,27 +75,45 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			`(${isFullyRefunded ? "total" : "partial"}: ${totalRefundedOnStripe / 100}€)`
 		);
 
-		// 5. Envoyer email de confirmation au client
+		// 5. Build post-tasks (email + cache invalidation)
+		const tasks: PostWebhookTask[] = [];
+
+		const cacheTags = [
+			ORDERS_CACHE_TAGS.LIST,
+			ORDERS_CACHE_TAGS.REFUNDS(order.id),
+			SHARED_CACHE_TAGS.ADMIN_BADGES,
+		];
+		if (order.userId) {
+			cacheTags.push(ORDERS_CACHE_TAGS.USER_ORDERS(order.userId));
+		}
+		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
+
 		if (order.customerEmail) {
 			const stripeRefunds = charge.refunds?.data || [];
 			const latestRefund = stripeRefunds[0];
 			const reason = latestRefund?.reason || "OTHER";
+			const baseUrl = getBaseUrl();
+			const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}`;
 
-			await sendRefundConfirmation(
-				order.customerEmail,
-				order.orderNumber,
-				order.customerName || "Client",
-				totalRefundedOnStripe,
-				order.total,
-				isFullyRefunded,
-				reason
-			);
+			tasks.push({
+				type: "REFUND_CONFIRMATION_EMAIL",
+				data: {
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: order.customerName || "Client",
+					refundAmount: totalRefundedOnStripe,
+					originalOrderTotal: order.total,
+					reason: reason.toUpperCase(),
+					isPartialRefund: !isFullyRefunded,
+					orderDetailsUrl,
+				},
+			});
 		}
 
-		return { success: true };
+		return { success: true, tasks };
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling charge refunded:`, error);
-		return { success: false };
+		throw error;
 	}
 }
 
@@ -101,7 +121,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
  * Gère les événements refund.created et refund.updated
  * Synchronise le statut du remboursement avec la base de données
  */
-export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<void> {
+export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<WebhookHandlerResult> {
 	console.log(`💰 [WEBHOOK] Refund updated: ${stripeRefund.id}, status: ${stripeRefund.status}`);
 
 	try {
@@ -113,7 +133,7 @@ export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<
 
 		if (!refund) {
 			console.log(`ℹ️ [WEBHOOK] Refund ${stripeRefund.id} not found in database (may be external)`);
-			return;
+			return { success: true, skipped: true, reason: "Refund not found in database" };
 		}
 
 		// 2. Mapper le statut Stripe vers notre statut
@@ -122,9 +142,20 @@ export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<
 		// 3. Mettre à jour si le statut a changé
 		if (newStatus && refund.status !== newStatus) {
 			await updateRefundStatus(refund.id, newStatus, stripeRefund.status || "unknown");
+
+			return {
+				success: true,
+				tasks: [{
+					type: "INVALIDATE_CACHE",
+					tags: [ORDERS_CACHE_TAGS.REFUNDS(refund.orderId)],
+				}],
+			};
 		}
+
+		return { success: true };
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling refund updated:`, error);
+		throw error;
 	}
 }
 
@@ -132,7 +163,7 @@ export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<
  * Gère les échecs de remboursement
  * Marque le remboursement comme FAILED et alerte l'admin
  */
-export async function handleRefundFailed(stripeRefund: Stripe.Refund): Promise<void> {
+export async function handleRefundFailed(stripeRefund: Stripe.Refund): Promise<WebhookHandlerResult> {
 	console.log(`❌ [WEBHOOK] Refund failed: ${stripeRefund.id}`);
 
 	try {
@@ -144,16 +175,39 @@ export async function handleRefundFailed(stripeRefund: Stripe.Refund): Promise<v
 
 		if (!refund) {
 			console.warn(`⚠️ [WEBHOOK] Failed refund ${stripeRefund.id} not found in database`);
-			return;
+			return { success: true, skipped: true, reason: "Refund not found in database" };
 		}
 
 		// 2. Marquer comme FAILED
 		const failureReason = stripeRefund.failure_reason || "unknown";
 		await markRefundAsFailed(refund.id, failureReason);
 
-		// 3. Alerter l'admin
-		await sendRefundFailedAlert(refund, failureReason);
+		// 3. Build post-tasks (admin alert + cache invalidation)
+		const tasks: PostWebhookTask[] = [];
+
+		tasks.push({
+			type: "INVALIDATE_CACHE",
+			tags: [ORDERS_CACHE_TAGS.REFUNDS(refund.orderId)],
+		});
+
+		const baseUrl = getBaseUrl();
+		const dashboardUrl = `${baseUrl}/admin/ventes/remboursements`;
+		tasks.push({
+			type: "ADMIN_REFUND_FAILED_ALERT",
+			data: {
+				orderNumber: refund.order.orderNumber,
+				customerEmail: refund.order.customerEmail || "Email non disponible",
+				amount: refund.amount,
+				reason: "other",
+				errorMessage: `Échec remboursement Stripe: ${failureReason}`,
+				stripePaymentIntentId: refund.order.stripePaymentIntentId || "",
+				dashboardUrl,
+			},
+		});
+
+		return { success: true, tasks };
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling refund failed:`, error);
+		throw error;
 	}
 }

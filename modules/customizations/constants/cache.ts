@@ -14,6 +14,8 @@ export const CUSTOMIZATION_CACHE_TAGS = {
 	DETAIL: (id: string) => `customization-request-${id}`,
 	/** Recherche de produits pour le formulaire */
 	PRODUCT_SEARCH: "customization-product-search",
+	/** Demandes d'un utilisateur (espace client) */
+	USER_REQUESTS: (userId: string) => `customization-requests-user-${userId}`,
 } as const;
 
 // ============================================================================

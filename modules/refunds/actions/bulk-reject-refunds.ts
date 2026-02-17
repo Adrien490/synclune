@@ -11,6 +11,8 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
+import { sendRefundRejectedEmail } from "@/modules/emails/services/refund-emails";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -68,6 +70,8 @@ export async function bulkRejectRefunds(
 					select: {
 						id: true,
 						orderNumber: true,
+						customerEmail: true,
+						customerName: true,
 					},
 				},
 			},
@@ -107,6 +111,21 @@ export async function bulkRejectRefunds(
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		const uniqueOrderIds = [...new Set(refunds.map(r => r.order.id))];
 		uniqueOrderIds.forEach(orderId => updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId)));
+
+		// Send rejection emails to customers
+		for (const refund of refunds) {
+			if (refund.order.customerEmail) {
+				const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.orderNumber));
+				sendRefundRejectedEmail({
+					to: refund.order.customerEmail,
+					orderNumber: refund.order.orderNumber,
+					customerName: refund.order.customerName || "Client",
+					refundAmount: refund.amount,
+					reason: sanitizedReason || undefined,
+					orderDetailsUrl,
+				}).catch(() => {});
+			}
+		}
 
 		const totalAmount = refunds.reduce((sum, r) => sum + r.amount, 0);
 		const skipped = validated.data.ids.length - refunds.length;

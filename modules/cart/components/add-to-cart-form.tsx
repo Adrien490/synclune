@@ -94,10 +94,8 @@ export function AddToCartForm({
 					"active:scale-[0.98]",
 					// Anneau de focus accessible
 					"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-					(!canAddToCart || isPending) && "opacity-50 cursor-not-allowed"
-				)}
-				aria-disabled={!canAddToCart || isPending || undefined}
-				onClick={(e) => { if (!canAddToCart || isPending) e.preventDefault(); }}
+					)}
+				disabled={!canAddToCart || isPending}
 				size="lg"
 			>
 				{isPending ? (

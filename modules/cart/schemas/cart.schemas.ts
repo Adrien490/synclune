@@ -43,7 +43,7 @@ import { CART_ERROR_MESSAGES } from "../constants/error-messages";
  * Schema pour valider un SKU et son stock
  */
 export const validateSkuSchema = z.object({
-	skuId: z.string().min(1, CART_ERROR_MESSAGES.SKU_NOT_FOUND),
+	skuId: z.cuid2(CART_ERROR_MESSAGES.SKU_NOT_FOUND),
 	quantity: z
 		.number()
 		.int()
@@ -55,5 +55,5 @@ export const validateSkuSchema = z.object({
  * Schema pour récupérer les détails d'un SKU
  */
 export const getSkuDetailsSchema = z.object({
-	skuId: z.string().min(1, CART_ERROR_MESSAGES.SKU_NOT_FOUND),
+	skuId: z.cuid2(CART_ERROR_MESSAGES.SKU_NOT_FOUND),
 });

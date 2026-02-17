@@ -10,7 +10,10 @@ import { AccountStatsCards } from "@/modules/users/components/account-stats-card
 import { AccountStatsCardsSkeleton } from "@/modules/users/components/account-stats-cards-skeleton";
 import { RecentOrders } from "@/modules/orders/components/recent-orders";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
+import { AddressInfoCard } from "@/modules/addresses/components/address-info-card";
+import { AddressInfoCardSkeleton } from "@/modules/addresses/components/address-info-card-skeleton";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
+import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -92,6 +95,13 @@ export default async function AccountPage() {
 										</Link>
 									</CardContent>
 								</Card>
+
+								{/* Adresse par défaut */}
+								<Suspense fallback={<AddressInfoCardSkeleton />}>
+									<AddressInfoCard
+										addressesPromise={getUserAddresses()}
+									/>
+								</Suspense>
 							</div>
 						</div>
 					</div>

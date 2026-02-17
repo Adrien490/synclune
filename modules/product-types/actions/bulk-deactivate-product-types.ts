@@ -7,8 +7,7 @@ import { validateInput, handleActionError, success, error } from "@/shared/lib/a
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
+import { getProductTypeInvalidationTags } from "../utils/cache.utils";
 import { bulkDeactivateProductTypesSchema } from "../schemas/product-type.schemas";
 
 export async function bulkDeactivateProductTypes(
@@ -33,7 +32,7 @@ export async function bulkDeactivateProductTypes(
 			return error("Au moins un type doit être sélectionné");
 		}
 
-		// Verifier qu'aucun type systeme n'est selectionne
+		// Exclure les types systeme (skip partiel)
 		const systemTypes = await prisma.productType.findMany({
 			where: {
 				id: { in: ids },
@@ -42,26 +41,27 @@ export async function bulkDeactivateProductTypes(
 			select: { id: true, label: true },
 		});
 
-		if (systemTypes.length > 0) {
-			return error("Impossible de modifier un type systeme");
+		const systemIds = new Set(systemTypes.map((t) => t.id));
+		const deactivatableIds = ids.filter((id) => !systemIds.has(id));
+
+		if (deactivatableIds.length === 0) {
+			return error(`Aucun type modifiable. ${systemTypes.length} type(s) systeme ignore(s)`);
 		}
 
-		// Desactiver tous les types
+		// Desactiver les types eligibles
 		await prisma.productType.updateMany({
-			where: {
-				id: {
-					in: ids,
-				},
-			},
-			data: {
-				isActive: false,
-			},
+			where: { id: { in: deactivatableIds } },
+			data: { isActive: false },
 		});
 
-		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
-		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
+		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 
-		return success(`${ids.length} type(s) désactivé(s) avec succès`);
+		let message = `${deactivatableIds.length} type(s) desactive(s) avec succes`;
+		if (systemTypes.length > 0) {
+			message += ` - ${systemTypes.length} type(s) systeme ignore(s)`;
+		}
+
+		return success(message);
 	} catch (e) {
 		return handleActionError(e, "Impossible de désactiver les types");
 	}

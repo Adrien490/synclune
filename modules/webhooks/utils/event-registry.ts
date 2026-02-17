@@ -6,6 +6,7 @@ import { handleCheckoutSessionCompleted, handleCheckoutSessionExpired } from "..
 import { handlePaymentSuccess, handlePaymentFailure, handlePaymentCanceled } from "../handlers/payment-handlers";
 import { handleChargeRefunded, handleRefundUpdated, handleRefundFailed } from "../handlers/refund-handlers";
 import { handleAsyncPaymentSucceeded, handleAsyncPaymentFailed } from "../handlers/async-payment-handlers";
+import { handleDisputeCreated, handleDisputeClosed } from "../handlers/dispute-handlers";
 
 type EventHandler = (event: Stripe.Event) => Promise<WebhookHandlerResult | null>;
 
@@ -31,6 +32,10 @@ function getRefund(event: Stripe.Event): Stripe.Refund {
 	return event.data.object as Stripe.Refund;
 }
 
+function getDispute(event: Stripe.Event): Stripe.Dispute {
+	return event.data.object as Stripe.Dispute;
+}
+
 /**
  * Registry des handlers par type d'événement
  * Chaque handler reçoit l'événement Stripe et retourne optionnellement des tâches post-webhook
@@ -40,48 +45,40 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	// === CHECKOUT ===
 	"checkout.session.completed": async (e) =>
 		handleCheckoutSessionCompleted(getCheckoutSession(e)),
-	"checkout.session.expired": async (e) => {
-		await handleCheckoutSessionExpired(getCheckoutSession(e));
-		return null;
-	},
+	"checkout.session.expired": async (e) =>
+		handleCheckoutSessionExpired(getCheckoutSession(e)),
 
 	// === PAYMENT INTENT ===
 	"payment_intent.succeeded": async (e) => {
 		await handlePaymentSuccess(getPaymentIntent(e));
 		return null;
 	},
-	"payment_intent.payment_failed": async (e) => {
-		await handlePaymentFailure(getPaymentIntent(e));
-		return null;
-	},
-	"payment_intent.canceled": async (e) => {
-		await handlePaymentCanceled(getPaymentIntent(e));
-		return null;
-	},
+	"payment_intent.payment_failed": async (e) =>
+		handlePaymentFailure(getPaymentIntent(e)),
+	"payment_intent.canceled": async (e) =>
+		handlePaymentCanceled(getPaymentIntent(e)),
 
 	// === REFUND ===
 	"charge.refunded": async (e) =>
 		handleChargeRefunded(getCharge(e)),
-	"refund.created": async (e) => {
-		await handleRefundUpdated(getRefund(e));
-		return null;
-	},
-	"refund.updated": async (e) => {
-		await handleRefundUpdated(getRefund(e));
-		return null;
-	},
-	"refund.failed": async (e) => {
-		await handleRefundFailed(getRefund(e));
-		return null;
-	},
+	"refund.created": async (e) =>
+		handleRefundUpdated(getRefund(e)),
+	"refund.updated": async (e) =>
+		handleRefundUpdated(getRefund(e)),
+	"refund.failed": async (e) =>
+		handleRefundFailed(getRefund(e)),
 
 	// === ASYNC PAYMENT (SEPA, Sofort, etc.) ===
 	"checkout.session.async_payment_succeeded": async (e) =>
 		handleAsyncPaymentSucceeded(getCheckoutSession(e)),
-	"checkout.session.async_payment_failed": async (e) => {
-		await handleAsyncPaymentFailed(getCheckoutSession(e));
-		return null;
-	},
+	"checkout.session.async_payment_failed": async (e) =>
+		handleAsyncPaymentFailed(getCheckoutSession(e)),
+
+	// === DISPUTE (chargebacks) ===
+	"charge.dispute.created": async (e) =>
+		handleDisputeCreated(getDispute(e)),
+	"charge.dispute.closed": async (e) =>
+		handleDisputeClosed(getDispute(e)),
 };
 
 /**

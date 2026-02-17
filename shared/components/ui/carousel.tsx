@@ -68,6 +68,7 @@ function Carousel({
 	const [canScrollPrev, setCanScrollPrev] = React.useState(false);
 	const [canScrollNext, setCanScrollNext] = React.useState(false);
 	const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
+	const [selectedIndex, setSelectedIndex] = React.useState(0);
 
 	const scrollPrev = () => {
 		api?.scrollPrev();
@@ -105,6 +106,7 @@ function Carousel({
 		if (!carouselApi) return;
 		setCanScrollPrev(carouselApi.canScrollPrev());
 		setCanScrollNext(carouselApi.canScrollNext());
+		setSelectedIndex(carouselApi.selectedScrollSnap());
 	});
 
 	// Effect Event pour gérer reInit sans re-registration
@@ -156,6 +158,12 @@ function Carousel({
 				data-slot="carousel"
 				{...props}
 			>
+				{/* Always-visible live region for slide change announcements (works even when CarouselDots is hidden) */}
+				{scrollSnaps.length > 1 && (
+					<div aria-live="polite" aria-atomic="true" className="sr-only">
+						Diapositive {selectedIndex + 1} sur {scrollSnaps.length}
+					</div>
+				)}
 				{children}
 			</div>
 		</CarouselContext.Provider>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptimistic } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
 
@@ -33,6 +33,7 @@ export function WishlistListContent({
 	perPage,
 }: WishlistListContentProps) {
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
+	const prefersReducedMotion = useReducedMotion();
 
 	// Optimistic state pour la liste d'items (filtre par productId)
 	const [optimisticItems, removeOptimisticItem] = useOptimistic(
@@ -58,7 +59,7 @@ export function WishlistListContent({
 			<div className="space-y-8">
 				{/* Header with count */}
 				<p className="text-sm text-muted-foreground">
-					{totalCount} article{totalCount > 1 ? "s" : ""}
+					{optimisticItems.length} article{optimisticItems.length > 1 ? "s" : ""}
 				</p>
 
 				{/* Grid des items de wishlist avec animation */}
@@ -69,11 +70,11 @@ export function WishlistListContent({
 						{optimisticItems.map((item, index) => (
 							<motion.div
 								key={item.id}
-								layout
-								initial={{ opacity: 0, scale: 0.9 }}
+								layout={!prefersReducedMotion}
+								initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.9 }}
 								animate={{ opacity: 1, scale: 1 }}
-								exit={{ opacity: 0, scale: 0.9 }}
-								transition={{
+								exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.9 }}
+								transition={prefersReducedMotion ? { duration: 0 } : {
 									duration: 0.2,
 									delay: Math.min(index * 0.05, 0.3),
 									ease: [0.4, 0, 0.2, 1],

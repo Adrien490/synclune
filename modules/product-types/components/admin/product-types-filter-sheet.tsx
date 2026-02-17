@@ -46,7 +46,8 @@ export function ProductTypesFilterSheet({
 		const params = new URLSearchParams(searchParams.toString());
 
 		params.delete("filter_isActive");
-		params.set("page", "1");
+		params.delete("cursor");
+		params.delete("direction");
 
 		// Add isActive filter
 		if (formData.isActive !== "all") {
@@ -68,7 +69,8 @@ export function ProductTypesFilterSheet({
 
 		const params = new URLSearchParams(searchParams.toString());
 		params.delete("filter_isActive");
-		params.set("page", "1");
+		params.delete("cursor");
+		params.delete("direction");
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });

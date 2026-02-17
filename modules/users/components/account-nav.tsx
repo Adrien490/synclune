@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useBottomBarHeight } from "@/shared/hooks";
-import { Heart, LayoutDashboard, MessageSquare, Package, Settings } from "lucide-react";
+import { Heart, LayoutDashboard, MapPin, MessageSquare, Package, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -28,11 +28,23 @@ const navItems = [
 		icon: Heart,
 	},
 	{
+		href: "/adresses",
+		label: "Adresses",
+		icon: MapPin,
+		desktopOnly: true,
+	},
+	{
+		href: "/mes-demandes",
+		label: "Mes demandes",
+		icon: Sparkles,
+		desktopOnly: true,
+	},
+	{
 		href: "/parametres",
 		label: "Paramètres",
 		icon: Settings,
 	},
-];
+] as const;
 
 interface AccountNavProps {
 	/** Variant pour afficher seulement mobile ou desktop */
@@ -95,7 +107,7 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 			{showMobile && (
 				<nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border safe-area-bottom">
 					<div className="flex items-center justify-around py-2">
-						{navItems.map((item) => {
+						{navItems.filter((item) => !("desktopOnly" in item && item.desktopOnly)).map((item) => {
 							const Icon = item.icon;
 							const active = isActive(item.href);
 

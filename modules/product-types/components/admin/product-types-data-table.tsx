@@ -12,7 +12,6 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetProductTypesReturn } from "@/modules/product-types/data/get-product-types";
 import { Tags } from "lucide-react";
-import Link from "next/link";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
 import { ProductTypesSelectionToolbar } from "./product-types-selection-toolbar";

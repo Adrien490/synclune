@@ -19,9 +19,9 @@ export const CART_ERROR_MESSAGES = {
 	SKU_INACTIVE: "Ce produit n'est plus disponible",
 
 	// Erreurs de quantité
-	INVALID_QUANTITY: "La quantité doit être comprise entre 1 et 99",
+	INVALID_QUANTITY: "La quantité doit être comprise entre 1 et 10",
 	QUANTITY_MIN: "La quantité minimale est de 1",
-	QUANTITY_MAX: "Quantité maximale : 99 par article. Pour une commande en gros, contactez-nous.",
+	QUANTITY_MAX: "Quantité maximale : 10 par article. Pour une commande en gros, contactez-nous.",
 	QUANTITY_EXCEEDS_STOCK: (_available: number) =>
 		"Quantité demandée supérieure au stock disponible",
 
@@ -29,6 +29,7 @@ export const CART_ERROR_MESSAGES = {
 	CART_EXPIRED: "Votre panier a expiré. Veuillez ajouter vos articles à nouveau",
 	CART_EMPTY: "Votre panier est vide",
 	CART_ITEM_NOT_FOUND: "Article introuvable dans votre panier",
+	CART_ITEMS_LIMIT: (max: number) => `Votre panier ne peut pas contenir plus de ${max} articles différents`,
 
 	// Erreurs de concurrence
 	CONCURRENT_PURCHASE: "Désolé, cet article vient d'être acheté par quelqu'un d'autre",

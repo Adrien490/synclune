@@ -10,6 +10,12 @@ import { Prisma } from "@/app/generated/prisma/client";
  */
 export const MAX_QUANTITY_PER_ORDER = 10;
 
+/**
+ * Nombre maximal d'articles distincts dans un panier
+ * Evite les paniers excessivement grands qui ralentiraient les queries
+ */
+export const MAX_CART_ITEMS = 50;
+
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================

@@ -9,7 +9,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 
-import { getDiscountInvalidationTags } from "../constants/cache";
+import { getDiscountInvalidationTags, DISCOUNT_CACHE_TAGS } from "../constants/cache";
 
 /**
  * Met à jour un code promo existant
@@ -89,9 +89,12 @@ export async function updateDiscount(
 			},
 		});
 
-		// Invalider le cache pour l'ancien et le nouveau code si different
+		// Invalidate cache for: list, id-based detail, and code-based detail
 		getDiscountInvalidationTags(id).forEach(tag => updateTag(tag));
+		// Always invalidate the old code's cache (used by get-discount-by-code)
+		updateTag(DISCOUNT_CACHE_TAGS.DETAIL(existing.code));
 		if (sanitizedCode !== existing.code) {
+			// Also invalidate the new code if it changed
 			getDiscountInvalidationTags(sanitizedCode).forEach(tag => updateTag(tag));
 		}
 

@@ -124,7 +124,7 @@ export const JEWELRY_TYPES: Record<string, JewelryTypeConfig> = {
 
 export const JEWELRY_TYPES_ARRAY = Object.values(JEWELRY_TYPES);
 
-// Re-export fonctions pour retrocompatibilite (voir utils/jewelry.utils.ts)
+// Functions are in utils/jewelry.utils.ts
 export {
 	getJewelryTypeConfig,
 	getJewelryTypeLabel,

@@ -33,7 +33,7 @@ type RevenueRow = {
 export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartReturn> {
 	"use cache: remote";
 
-	cacheDashboard();
+	cacheDashboard("dashboard-revenue-chart");
 
 	const now = new Date();
 	const thirtyDaysAgo = new Date(now);

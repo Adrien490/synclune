@@ -8,7 +8,12 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  */
 export function CartSheetSkeleton() {
 	return (
-		<div className="flex-1 px-6 py-4 space-y-4">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement du panier"
+			className="flex-1 px-6 py-4 space-y-4"
+		>
 			{Array.from({ length: 3 }).map((_, i) => (
 				<div
 					key={i}

@@ -16,7 +16,7 @@ import { updateTag } from "next/cache";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsDeliveredSchema } from "../schemas/order.schemas";
-import { createOrderAudit } from "../utils/order-audit";
+import { createOrderAuditTx } from "../utils/order-audit";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
@@ -93,31 +93,32 @@ export async function markAsDelivered(
 
 		const deliveryDate = new Date();
 
-		// Mettre à jour la commande
-		await prisma.order.update({
-			where: { id },
-			data: {
-				status: OrderStatus.DELIVERED,
-				fulfillmentStatus: FulfillmentStatus.DELIVERED,
-				actualDelivery: deliveryDate,
-			},
-		});
+		// Mettre à jour la commande + audit trail atomique
+		await prisma.$transaction(async (tx) => {
+			await tx.order.update({
+				where: { id },
+				data: {
+					status: OrderStatus.DELIVERED,
+					fulfillmentStatus: FulfillmentStatus.DELIVERED,
+					actualDelivery: deliveryDate,
+				},
+			});
 
-		// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
-		await createOrderAudit({
-			orderId: id,
-			action: "DELIVERED",
-			previousStatus: order.status,
-			newStatus: OrderStatus.DELIVERED,
-			previousFulfillmentStatus: order.fulfillmentStatus,
-			newFulfillmentStatus: FulfillmentStatus.DELIVERED,
-			authorId: adminUser.id,
-			authorName: adminUser.name || "Admin",
-			source: HistorySource.ADMIN,
-			metadata: {
-				deliveryDate: deliveryDate.toISOString(),
-				emailSent: result.data.sendEmail,
-			},
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "DELIVERED",
+				previousStatus: order.status,
+				newStatus: OrderStatus.DELIVERED,
+				previousFulfillmentStatus: order.fulfillmentStatus,
+				newFulfillmentStatus: FulfillmentStatus.DELIVERED,
+				authorId: adminUser.id,
+				authorName: adminUser.name || "Admin",
+				source: HistorySource.ADMIN,
+				metadata: {
+					deliveryDate: deliveryDate.toISOString(),
+					emailSent: result.data.sendEmail,
+				},
+			});
 		});
 
 		// Invalider les caches (orders list admin + commandes user)

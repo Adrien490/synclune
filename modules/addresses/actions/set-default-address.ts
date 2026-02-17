@@ -8,24 +8,30 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { addressIdSchema } from "../schemas/user-addresses.schemas";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 
 export async function setDefaultAddress(
 	_prev: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
-	const validation = validateInput(addressIdSchema, {
-		addressId: formData.get("addressId"),
-	});
-
-	if ("error" in validation) {
-		return validation.error;
-	}
-
-	const { addressId } = validation.data;
 	try {
 		const auth = await requireAuth();
 		if ("error" in auth) return auth.error;
 		const { user } = auth;
+
+		const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.MUTATE);
+		if ("error" in rateCheck) return rateCheck.error;
+
+		const validation = validateInput(addressIdSchema, {
+			addressId: formData.get("addressId"),
+		});
+
+		if ("error" in validation) {
+			return validation.error;
+		}
+
+		const { addressId } = validation.data;
 
 		const existingAddress = await prisma.address.findFirst({
 			where: { id: addressId, userId: user.id },

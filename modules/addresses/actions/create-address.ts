@@ -6,7 +6,11 @@ import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
-import { validateInput, handleActionError, success } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
+
+const MAX_ADDRESSES_PER_USER = 10;
 
 /**
  * Server Action pour créer une nouvelle adresse
@@ -21,6 +25,10 @@ export async function createAddress(
 		const auth = await requireAuth();
 		if ("error" in auth) return auth.error;
 		const { user } = auth;
+
+		// 1b. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.MUTATE);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Extraction des données du FormData
 		const rawData = {

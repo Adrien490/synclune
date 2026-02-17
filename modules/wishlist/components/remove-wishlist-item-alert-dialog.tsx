@@ -11,6 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useRemoveFromWishlist } from "@/modules/wishlist/hooks/use-remove-from-wishlist";
+import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { AlertDialogData } from "@/shared/stores/alert-dialog-store";
 import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
@@ -36,7 +37,11 @@ export function RemoveWishlistItemAlertDialog() {
 		WISHLIST_DIALOG_IDS.REMOVE_ITEM
 	);
 
+	// Connect to optimistic list context for immediate visual feedback
+	const wishlistListOptimistic = useWishlistListOptimistic();
+
 	const { action, isPending } = useRemoveFromWishlist({
+		onOptimisticRemove: wishlistListOptimistic?.onItemRemoved,
 		onSuccess: () => {
 			removeDialog.close();
 

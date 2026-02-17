@@ -27,7 +27,7 @@ export const DISCOUNT_CACHE_TAGS = {
 /**
  * Configure le cache pour les codes promo
  * - Utilisé pour : /admin/marketing/codes-promo
- * - Durée : 5min fraîche, 10min revalidation, 30min expiration
+ * - Profil "cart" : 5min stale, 1min revalidation
  */
 export function cacheDiscounts() {
 	cacheLife("cart")

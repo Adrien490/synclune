@@ -15,7 +15,7 @@ import { updateTag } from "next/cache";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsProcessingSchema } from "../schemas/order.schemas";
-import { createOrderAudit } from "../utils/order-audit";
+import { createOrderAuditTx } from "../utils/order-audit";
 
 /**
  * Passe une commande payée en cours de préparation
@@ -38,12 +38,8 @@ export async function markAsProcessing(
 		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
-		const sendEmail = formData.get("sendEmail") as string | null;
 
-		const result = markAsProcessingSchema.safeParse({
-			id,
-			sendEmail: sendEmail || "false",
-		});
+		const result = markAsProcessingSchema.safeParse({ id });
 
 		if (!result.success) {
 			return {
@@ -106,26 +102,27 @@ export async function markAsProcessing(
 			};
 		}
 
-		// Mettre à jour la commande
-		await prisma.order.update({
-			where: { id },
-			data: {
-				status: OrderStatus.PROCESSING,
-				fulfillmentStatus: FulfillmentStatus.PROCESSING,
-			},
-		});
+		// Mettre à jour la commande + audit trail atomique
+		await prisma.$transaction(async (tx) => {
+			await tx.order.update({
+				where: { id },
+				data: {
+					status: OrderStatus.PROCESSING,
+					fulfillmentStatus: FulfillmentStatus.PROCESSING,
+				},
+			});
 
-		// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
-		await createOrderAudit({
-			orderId: id,
-			action: "PROCESSING",
-			previousStatus: order.status,
-			newStatus: OrderStatus.PROCESSING,
-			previousFulfillmentStatus: order.fulfillmentStatus,
-			newFulfillmentStatus: FulfillmentStatus.PROCESSING,
-			authorId: adminUser.id,
-			authorName: adminUser.name || "Admin",
-			source: HistorySource.ADMIN,
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "PROCESSING",
+				previousStatus: order.status,
+				newStatus: OrderStatus.PROCESSING,
+				previousFulfillmentStatus: order.fulfillmentStatus,
+				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
+				authorId: adminUser.id,
+				authorName: adminUser.name || "Admin",
+				source: HistorySource.ADMIN,
+			});
 		});
 
 		// Invalider les caches (orders list admin + commandes user)

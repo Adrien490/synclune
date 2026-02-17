@@ -20,6 +20,7 @@ import type { CreateCheckoutSessionData } from "@/modules/payments/types/checkou
 // ALLOWED_SHIPPING_COUNTRIES n'est plus utilisé car shipping_address_collection est désactivé (embedded mode)
 import { getShippingOptionsForAddress } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
+import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
@@ -233,7 +234,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 
 		// 8. 🔴 TRANSACTION ATOMIQUE : Vérifier stock + Créer commande
 		// Cette transaction élimine la race condition entre vérif stock et création commande
-		const order = await prisma.$transaction(async (tx) => {
+		const orderResult = await prisma.$transaction(async (tx) => {
 			// 8a. Vérifier le stock pour chaque item
 			for (const cartItem of validatedData.cartItems) {
 				const skuResult = skuDetailsResults.find(
@@ -498,9 +499,15 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 				});
 			}
 
-			return newOrder;
+			return { order: newOrder, appliedDiscountId };
 		});
 
+		const { order, appliedDiscountId } = orderResult;
+
+		// Invalidate discount usage cache after successful checkout
+		if (appliedDiscountId) {
+			updateTag(DISCOUNT_CACHE_TAGS.USAGE(appliedDiscountId));
+		}
 
 		// 9. Créer la session Stripe Checkout
 		// 🔴 CORRECTION CRITIQUE : Idempotency key pour éviter double facturation
@@ -514,7 +521,8 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 			{
 				mode: "payment",
 				ui_mode: "embedded", // ✅ EMBEDDED CHECKOUT - Formulaire intégré sur le site
-				payment_method_types: ["card"],
+				// payment_method_types omitted: Stripe auto-enables all methods configured in Dashboard
+				// (card, Apple Pay, Google Pay, Link, Klarna, Bancontact, iDEAL, etc.)
 				line_items: lineItems,
 
 				// ❌ STRIPE TAX DÉSACTIVÉ - Micro-entreprise exonérée de TVA (art. 293 B du CGI)

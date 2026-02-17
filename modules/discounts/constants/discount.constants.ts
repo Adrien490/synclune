@@ -124,12 +124,3 @@ export const DISCOUNT_ERROR_MESSAGES = {
 	HAS_USAGES: "Ce code promo a déjà été utilisé et ne peut pas être supprimé",
 } as const;
 
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_DISCOUNTS_DEFAULT_CACHE = {
-	revalidate: 60 * 5, // 5 minutes
-	stale: 60 * 10, // 10 minutes
-	expire: 60 * 30, // 30 minutes
-} as const;

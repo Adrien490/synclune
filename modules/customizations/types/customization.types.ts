@@ -1,10 +1,10 @@
 // ============================================================================
-// STATUS TYPE - Client-safe type (mirrors Prisma enum)
+// STATUS TYPE - Mirrors Prisma enum CustomizationRequestStatus
 // ============================================================================
 
 /**
  * Client-safe type for customization request status.
- * Must be kept in sync with Prisma enum CustomizationRequestStatus.
+ * Source of truth: Prisma enum CustomizationRequestStatus in schema.prisma
  */
 export type CustomizationRequestStatus =
 	| "PENDING"

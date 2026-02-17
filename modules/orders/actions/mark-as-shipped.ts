@@ -16,7 +16,7 @@ import { updateTag } from "next/cache";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsShippedSchema } from "../schemas/order.schemas";
-import { createOrderAudit } from "../utils/order-audit";
+import { createOrderAuditTx } from "../utils/order-audit";
 import { canMarkAsShipped } from "../services/order-status-validation.service";
 
 /**
@@ -111,36 +111,37 @@ export async function markAsShipped(
 			result.data.trackingUrl ||
 			getTrackingUrl(carrierValue, result.data.trackingNumber);
 
-		// Mettre à jour la commande
-		await prisma.order.update({
-			where: { id },
-			data: {
-				status: OrderStatus.SHIPPED,
-				fulfillmentStatus: FulfillmentStatus.SHIPPED,
-				trackingNumber: result.data.trackingNumber,
-				trackingUrl: finalTrackingUrl,
-				shippingCarrier: result.data.carrier || null,
-				shippedAt: new Date(),
-			},
-		});
+		// Mettre à jour la commande + audit trail atomique
+		await prisma.$transaction(async (tx) => {
+			await tx.order.update({
+				where: { id },
+				data: {
+					status: OrderStatus.SHIPPED,
+					fulfillmentStatus: FulfillmentStatus.SHIPPED,
+					trackingNumber: result.data.trackingNumber,
+					trackingUrl: finalTrackingUrl,
+					shippingCarrier: result.data.carrier || null,
+					shippedAt: new Date(),
+				},
+			});
 
-		// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
-		await createOrderAudit({
-			orderId: id,
-			action: "SHIPPED",
-			previousStatus: order.status,
-			newStatus: OrderStatus.SHIPPED,
-			previousFulfillmentStatus: order.fulfillmentStatus,
-			newFulfillmentStatus: FulfillmentStatus.SHIPPED,
-			authorId: adminUser.id,
-			authorName: adminUser.name || "Admin",
-			source: HistorySource.ADMIN,
-			metadata: {
-				trackingNumber: result.data.trackingNumber,
-				trackingUrl: finalTrackingUrl,
-				shippingCarrier: result.data.carrier,
-				emailSent: result.data.sendEmail,
-			},
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "SHIPPED",
+				previousStatus: order.status,
+				newStatus: OrderStatus.SHIPPED,
+				previousFulfillmentStatus: order.fulfillmentStatus,
+				newFulfillmentStatus: FulfillmentStatus.SHIPPED,
+				authorId: adminUser.id,
+				authorName: adminUser.name || "Admin",
+				source: HistorySource.ADMIN,
+				metadata: {
+					trackingNumber: result.data.trackingNumber,
+					trackingUrl: finalTrackingUrl,
+					shippingCarrier: result.data.carrier,
+					emailSent: result.data.sendEmail,
+				},
+			});
 		});
 
 		// Invalider les caches (orders list admin + commandes user)

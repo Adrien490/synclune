@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
 
   async headers() {
     // CSP enforced — validated in staging
+    const cspReportUri = process.env.CSP_REPORT_URI ?? "/api/csp-report";
+
     const cspDirectives = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://va.vercel-scripts.com",
@@ -22,6 +24,8 @@ const nextConfig: NextConfig = {
       "base-uri 'self'",
       "form-action 'self'",
       "object-src 'none'",
+      "report-to csp-endpoint",
+      `report-uri ${cspReportUri}`,
     ].join("; ");
 
     return [
@@ -39,6 +43,10 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          },
+          {
+            key: "Reporting-Endpoints",
+            value: `csp-endpoint="${cspReportUri}"`,
           },
         ],
       },

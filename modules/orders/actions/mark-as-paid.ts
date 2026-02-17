@@ -13,6 +13,8 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
+import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
@@ -60,12 +62,29 @@ export async function markAsPaid(
 				paymentStatus: true,
 				fulfillmentStatus: true,
 				userId: true,
+				customerEmail: true,
+				customerName: true,
+				subtotal: true,
+				discountAmount: true,
+				shippingCost: true,
+				total: true,
+				shippingFirstName: true,
+				shippingLastName: true,
+				shippingAddress1: true,
+				shippingAddress2: true,
+				shippingPostalCode: true,
+				shippingCity: true,
+				shippingCountry: true,
 				stripeCheckoutSessionId: true, // Pour savoir si le stock a été réservé via checkout
 				items: {
 					select: {
 						skuId: true,
 						quantity: true,
 						productTitle: true,
+						skuColor: true,
+						skuMaterial: true,
+						skuSize: true,
+						price: true,
 					},
 				},
 			},
@@ -169,6 +188,38 @@ export async function markAsPaid(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+
+		// Send order confirmation email for manual payment
+		if (order.customerEmail) {
+			const trackingUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
+			sendOrderConfirmationEmail({
+				to: order.customerEmail,
+				orderNumber: order.orderNumber,
+				customerName: order.customerName || "Client",
+				items: order.items.map((item) => ({
+					productTitle: item.productTitle,
+					skuColor: item.skuColor,
+					skuMaterial: item.skuMaterial,
+					skuSize: item.skuSize,
+					quantity: item.quantity,
+					price: item.price,
+				})),
+				subtotal: order.subtotal,
+				discount: order.discountAmount,
+				shipping: order.shippingCost,
+				total: order.total,
+				shippingAddress: {
+					firstName: order.shippingFirstName || "",
+					lastName: order.shippingLastName || "",
+					address1: order.shippingAddress1 || "",
+					address2: order.shippingAddress2,
+					postalCode: order.shippingPostalCode || "",
+					city: order.shippingCity || "",
+					country: order.shippingCountry || "France",
+				},
+				trackingUrl,
+			}).catch(() => {});
+		}
 
 		const stockMessage = !stockAlreadyReserved && order.items.length > 0
 			? ` Stock décrémenté pour ${order.items.length} article(s).`

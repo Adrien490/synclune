@@ -8,6 +8,8 @@ import type { ActionState } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 
 export async function updateAddress(
 	addressId: string,
@@ -18,6 +20,9 @@ export async function updateAddress(
 		const auth = await requireAuth();
 		if ("error" in auth) return auth.error;
 		const { user } = auth;
+
+		const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.MUTATE);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		const existingAddress = await prisma.address.findFirst({
 			where: { id: addressId, userId: user.id },

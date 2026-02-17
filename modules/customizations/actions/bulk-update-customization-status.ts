@@ -12,6 +12,7 @@ import {
 	success,
 	error,
 } from "@/shared/lib/actions";
+import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
 import { getCustomizationInvalidationTags } from "../constants/cache";
 import { bulkUpdateStatusSchema } from "../schemas/bulk-update-status.schema";
 
@@ -47,7 +48,7 @@ export async function bulkUpdateCustomizationStatus(
 				id: { in: requestIds },
 				...notDeleted,
 			},
-			select: { id: true, status: true },
+			select: { id: true, status: true, email: true, firstName: true, productTypeLabel: true, details: true, adminNotes: true },
 		});
 
 		if (existingRequests.length === 0) {
@@ -92,6 +93,22 @@ export async function bulkUpdateCustomizationStatus(
 		// 6. Invalidate cache
 		const tags = getCustomizationInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
+
+		// 7. Send status emails if applicable
+		if (status === "IN_PROGRESS" || status === "COMPLETED" || status === "CANCELLED") {
+			for (const request of existingRequests) {
+				if (request.email) {
+					sendCustomizationStatusEmail({
+						email: request.email,
+						firstName: request.firstName,
+						productTypeLabel: request.productTypeLabel,
+						status,
+						adminNotes: request.adminNotes,
+						details: request.details,
+					}).catch(() => {});
+				}
+			}
+		}
 
 		const count = existingRequests.length;
 		return success(

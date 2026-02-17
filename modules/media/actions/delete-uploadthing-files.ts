@@ -1,11 +1,13 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { deleteUploadThingFilesSchema } from "@/modules/media/schemas/uploadthing.schemas";
 import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key";
+import { MEDIA_LIMITS } from "@/modules/media/constants/upload-limits";
 
 /**
  * Server Action to delete one or more UploadThing files.
@@ -16,7 +18,11 @@ export async function deleteUploadThingFiles(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verify admin rights
+		// 1. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(MEDIA_LIMITS.DELETE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 2. Verify admin rights
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
@@ -66,7 +72,13 @@ export async function deleteUploadThingFiles(
 		const utapi = new UTApi();
 		await utapi.deleteFiles(fileKeys);
 
-		// 6. Success
+		// 6. Success (with warning for partial failures)
+		if (failedUrls.length > 0) {
+			return success(
+				`${fileKeys.length} fichier(s) supprime(s). ${failedUrls.length} URL(s) n'ont pas pu etre traitee(s).`,
+				{ deletedCount: fileKeys.length, failedCount: failedUrls.length }
+			);
+		}
 		return success(`${fileKeys.length} fichier(s) supprime(s)`, { deletedCount: fileKeys.length });
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression des fichiers");

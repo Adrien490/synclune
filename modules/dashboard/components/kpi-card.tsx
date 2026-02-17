@@ -2,7 +2,6 @@
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import {
 	Tooltip,
@@ -130,15 +129,14 @@ export function KpiCard({
 					{tooltip && (
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="w-4 h-4 text-muted-foreground/60 hover:text-muted-foreground hover:bg-transparent"
+								<span
+									role="img"
+									tabIndex={href ? -1 : 0}
+									className="inline-flex items-center justify-center w-4 h-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help"
 									aria-label={`Info: ${title}`}
 								>
 									<Info className="w-3.5 h-3.5" aria-hidden="true" />
-								</Button>
+								</span>
 							</TooltipTrigger>
 							<TooltipContent side="top" className="max-w-xs">
 								<p className="text-sm">{tooltip}</p>

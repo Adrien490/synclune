@@ -458,6 +458,49 @@ export const ADMIN_LIMITS = {
 } as const;
 
 // ========================================
+// 📁 ADMIN COLLECTION OPERATIONS
+// ========================================
+
+export const ADMIN_COLLECTION_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_COLLECTION_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_COLLECTION_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_COLLECTION_BULK_DELETE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_COLLECTION_BULK_ARCHIVE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_COLLECTION_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_COLLECTION_LIMITS = {
+	CREATE: ADMIN_COLLECTION_CREATE_LIMIT,
+	UPDATE: ADMIN_COLLECTION_UPDATE_LIMIT,
+	DELETE: ADMIN_COLLECTION_DELETE_LIMIT,
+	BULK_DELETE: ADMIN_COLLECTION_BULK_DELETE_LIMIT,
+	BULK_ARCHIVE: ADMIN_COLLECTION_BULK_ARCHIVE_LIMIT,
+	REFRESH: ADMIN_COLLECTION_REFRESH_LIMIT,
+} as const;
+
+// ========================================
 // 👤 UTILISATEURS (USER ACCOUNT)
 // ========================================
 
@@ -801,5 +844,37 @@ export const REFUND_LIMITS = {
 	PROCESS: REFUND_PROCESS_LIMIT,
 	SINGLE_OPERATION: REFUND_SINGLE_OPERATION_LIMIT,
 	BULK_OPERATION: REFUND_BULK_OPERATION_LIMIT,
+} as const;
+
+// ========================================
+// 📍 ADRESSES (ADDRESSES)
+// ========================================
+
+/**
+ * Limite pour la creation/modification d'adresses
+ *
+ * Moderee car action legitime mais protege contre spam
+ */
+export const ADDRESS_MUTATE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+/**
+ * Limite pour la recherche d'adresses (proxy BAN API)
+ *
+ * Plus permissive car l'autocomplete genere beaucoup de requetes
+ */
+export const ADDRESS_SEARCH_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(1),
+};
+
+/**
+ * Toutes les limites d'adresses
+ */
+export const ADDRESS_LIMITS = {
+	MUTATE: ADDRESS_MUTATE_LIMIT,
+	SEARCH: ADDRESS_SEARCH_LIMIT,
 } as const;
 

@@ -1,15 +1,13 @@
-"use client"
-
-import { cn } from "@/shared/utils/cn"
+import { cn } from "@/shared/utils/cn";
 
 interface ChartScrollContainerProps {
-	children: React.ReactNode
-	/** Classes CSS additionnelles */
-	className?: string
+	children: React.ReactNode;
+	/** Additional CSS classes */
+	className?: string;
 }
 
 /**
- * Container pour les charts - force le responsive sur mobile
+ * Container for charts - forces responsive on mobile
  */
 export function ChartScrollContainer({
 	children,
@@ -19,15 +17,12 @@ export function ChartScrollContainer({
 		<div
 			className={cn(
 				"relative",
-				// Pas de scroll, forcer le responsive
 				"overflow-hidden",
 				"md:overflow-visible",
-				className
+				className,
 			)}
 		>
-			<div className="w-full min-w-0">
-				{children}
-			</div>
+			<div className="w-full min-w-0">{children}</div>
 		</div>
-	)
+	);
 }

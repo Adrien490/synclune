@@ -51,17 +51,7 @@ export async function removeFromWishlist(
 		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.REMOVE);
 		if ("error" in rateCheck) return rateCheck.error;
 
-		// 4. Valider le produit (existence)
-		const product = await prisma.product.findUnique({
-			where: { id: validatedData.productId },
-			select: { id: true },
-		});
-
-		if (!product) {
-			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
-		}
-
-		// 5. Recuperer la wishlist de l'utilisateur ou visiteur
+		// 4. Recuperer la wishlist de l'utilisateur ou visiteur
 		const wishlist = await prisma.wishlist.findFirst({
 			where: userId ? { userId } : { sessionId },
 			select: { id: true },
@@ -71,7 +61,7 @@ export async function removeFromWishlist(
 			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND);
 		}
 
-		// 6. Supprimer l'item et mettre a jour le timestamp
+		// 5. Supprimer l'item et mettre a jour le timestamp
 		const deleteResult = await prisma.$transaction(async (tx) => {
 			const result = await tx.wishlistItem.deleteMany({
 				where: {
@@ -91,7 +81,7 @@ export async function removeFromWishlist(
 			return result;
 		});
 
-		// 7. Invalidation cache immediate (read-your-own-writes)
+		// 6. Invalidation cache immediate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
 		tags.forEach(tag => updateTag(tag));
 

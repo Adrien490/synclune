@@ -97,7 +97,10 @@ export async function deleteAccount(
 					shippingLastName: "Anonyme",
 					shippingAddress1: "Adresse supprimée",
 					shippingAddress2: null,
+					shippingPostalCode: "00000",
+					shippingCity: "Supprimé",
 					shippingPhone: "",
+					stripeCustomerId: null,
 				},
 			});
 
@@ -139,6 +142,9 @@ export async function deleteAccount(
 					email: anonymizedEmail,
 					unsubscribedAt: new Date(),
 					deletedAt: new Date(),
+					ipAddress: null,
+					confirmationIpAddress: null,
+					userAgent: null,
 				},
 			});
 

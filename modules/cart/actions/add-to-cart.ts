@@ -10,6 +10,7 @@ import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import { getCartExpirationDate, getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { addToCartSchema } from "../schemas/cart.schemas";
+import { MAX_CART_ITEMS } from "../constants/cart";
 
 /**
  * Server Action pour ajouter un article au panier
@@ -58,6 +59,16 @@ export async function addToCart(
 		// 5. Vérifier que sessionId est bien défini pour les visiteurs
 		if (!userId && !sessionId) {
 			return error("Impossible de creer une session panier. Veuillez reessayer.");
+		}
+
+		// 5b. Check distinct item count to prevent cart bloat
+		const existingCart = await prisma.cart.findFirst({
+			where: userId ? { userId } : { sessionId: sessionId! },
+			select: { _count: { select: { items: true } } },
+		});
+
+		if (existingCart && existingCart._count.items >= MAX_CART_ITEMS) {
+			return error(CART_ERROR_MESSAGES.CART_ITEMS_LIMIT(MAX_CART_ITEMS));
 		}
 
 		// 6. Transaction: Trouver ou créer le panier, ajouter/mettre à jour l'item

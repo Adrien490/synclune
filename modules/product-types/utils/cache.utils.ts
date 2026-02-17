@@ -32,7 +32,8 @@ export function cacheProductTypes() {
  * Invalide automatiquement :
  * - La liste des types de produits
  * - Les badges de la sidebar admin
+ * - Le menu de navigation (navbar)
  */
 export function getProductTypeInvalidationTags(): string[] {
-	return [PRODUCT_TYPES_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
+	return [PRODUCT_TYPES_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES, SHARED_CACHE_TAGS.NAVBAR_MENU];
 }

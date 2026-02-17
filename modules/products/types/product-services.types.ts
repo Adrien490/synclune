@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma, MediaType } from "@/app/generated/prisma/client";
 import type { ColorSwatch, ProductFromList, SkuFromList } from "./product-list.types";
 import type {
 	StockStatus as SharedStockStatus,
@@ -48,7 +48,7 @@ export type ProductImage = {
 	id: string;
 	url: string;
 	alt: string;
-	mediaType: "IMAGE" | "VIDEO";
+	mediaType: MediaType;
 	blurDataURL?: string;
 	source: "default" | "selected" | "sku";
 	skuId?: string;

@@ -55,6 +55,9 @@ export default async function CheckoutReturnPage({
 			// Session encore ouverte - paiement non finalisé ou échoué
 			// Retour au checkout pour réessayer
 			redirect(`/paiement?retry=true&order_id=${orderId}`)
+		} else if (session.payment_status === "unpaid" && session.status === "complete") {
+			// Async payment in progress (SEPA, Klarna, etc.)
+			redirect(`/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}&pending=true`)
 		} else if (session.status === "expired") {
 			// Session expirée
 			redirect(`/paiement/annulation?order_id=${orderId}&reason=expired`)

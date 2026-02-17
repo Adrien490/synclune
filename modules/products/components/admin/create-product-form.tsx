@@ -11,6 +11,7 @@ import { useCreateProductForm } from "@/modules/products/hooks/use-create-produc
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
+import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -42,7 +43,7 @@ export function CreateProductForm({
 
 	const isUploading = isMediaUploading;
 
-	const maxMediaCount = 6;
+	const maxMediaCount = ARRAY_LIMITS.SKU_MEDIA;
 
 	const handleUpload = async (
 		files: File[],

@@ -61,7 +61,8 @@ export async function RelatedProducts({
 						id="related-products-heading"
 						className="text-2xl font-semibold tracking-tight"
 					>
-						D'autres créations que vous pourriez aimer 😊
+						D'autres créations que vous pourriez aimer{" "}
+						<span aria-hidden="true">😊</span>
 					</h2>
 				</div>
 			</Reveal>

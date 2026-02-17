@@ -16,7 +16,9 @@ import { normalizeHex } from "../utils/hex-normalizer";
 // FILTERS SCHEMA
 // ============================================================================
 
-export const colorFiltersSchema = z.object({});
+export const colorFiltersSchema = z.object({
+	isActive: z.boolean().optional(),
+});
 
 // ============================================================================
 // SORT SCHEMA
@@ -51,27 +53,16 @@ export const hexColorSchema = z
 	.string()
 	.trim()
 	.min(1, "Le code couleur est requis")
-	.transform((val) => {
-		// Retirer le # pour validation
+	.superRefine((val, ctx) => {
 		const cleaned = val.replace(/^#/, "");
-
-		// Verifier le format (3 ou 6 caracteres hex)
 		if (!/^[0-9A-Fa-f]{3}$/.test(cleaned) && !/^[0-9A-Fa-f]{6}$/.test(cleaned)) {
-			throw new z.ZodError([
-				{
-					code: "custom",
-					path: ["hex"],
-					message:
-						"Format invalide. Utilisez #RRGGBB (ex: #FF5733) ou #RGB (ex: #F57)",
-				},
-			]);
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "Format invalide. Utilisez #RRGGBB (ex: #FF5733) ou #RGB (ex: #F57)",
+			});
 		}
-
-		return normalizeHex(val);
 	})
-	.refine((val) => /^#[0-9A-F]{6}$/.test(val), {
-		message: "Le code couleur doit être au format #RRGGBB en majuscules",
-	});
+	.transform((val) => normalizeHex(val));
 
 export const colorSlugSchema = z
 	.string()
@@ -97,7 +88,6 @@ export const createColorSchema = z.object({
 export const updateColorSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: colorNameSchema,
-	slug: colorSlugSchema,
 	hex: hexColorSchema,
 });
 
@@ -106,7 +96,7 @@ export const deleteColorSchema = z.object({
 });
 
 export const bulkDeleteColorsSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur sélectionnée"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur sélectionnée").max(200, "Maximum 200 couleurs par opération"),
 });
 
 export const toggleColorStatusSchema = z.object({
@@ -115,7 +105,7 @@ export const toggleColorStatusSchema = z.object({
 });
 
 export const bulkToggleColorStatusSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur selectionnee"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur selectionnee").max(200, "Maximum 200 couleurs par opération"),
 	isActive: z.boolean(),
 });
 

@@ -3,6 +3,7 @@ import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email"
 import { AdminWebhookFailedEmail } from "@/emails/admin-webhook-failed-email"
 import { AdminInvoiceFailedEmail } from "@/emails/admin-invoice-failed-email"
 import { AdminCronFailedEmail } from "@/emails/admin-cron-failed-email"
+import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email"
 import { EMAIL_ADMIN } from "../constants/email.constants"
 import { renderAndSend } from "./send-email"
 import { EXTERNAL_URLS, getBaseUrl } from "@/shared/constants/urls"
@@ -151,7 +152,52 @@ export async function sendAdminCronFailedAlert({
 }
 
 /**
+ * Envoie une alerte admin en cas de litige (chargeback) Stripe
+ */
+export async function sendAdminDisputeAlert({
+	orderNumber,
+	customerEmail,
+	amount,
+	reason,
+	disputeId,
+	deadline,
+	dashboardUrl,
+	stripeDashboardUrl,
+}: {
+	orderNumber: string
+	customerEmail: string
+	amount: number
+	reason: string
+	disputeId: string
+	deadline: string | null
+	dashboardUrl: string
+	stripeDashboardUrl: string
+}): Promise<EmailResult> {
+	return renderAndSend(
+		AdminDisputeAlertEmail({
+			orderNumber,
+			customerEmail,
+			amount,
+			reason,
+			disputeId,
+			deadline,
+			dashboardUrl,
+			stripeDashboardUrl,
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[LITIGE] Commande ${orderNumber} — Action requise`,
+			tags: [{ name: "category", value: "admin" }],
+		}
+	)
+}
+
+/**
  * Alerte admin : Echec generation facture (Conformite legale)
+ *
+ * TODO: Invoice generation feature is not yet implemented.
+ * This function is preparatory code for when automated invoice
+ * generation is added. It will be wired up at that time.
  */
 export async function sendAdminInvoiceFailedAlert({
 	orderNumber,

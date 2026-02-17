@@ -77,6 +77,21 @@ export const UPLOAD_REVIEW_MEDIA_LIMIT: RateLimitConfig = {
 };
 
 // ========================================
+// ADMIN DELETE OPERATIONS
+// ========================================
+
+/**
+ * Rate limit for media file deletion (admin only)
+ *
+ * Context: Deleting UploadThing files from admin panel
+ * Moderate limit to prevent mass deletion by compromised admin
+ */
+export const DELETE_MEDIA_LIMIT: RateLimitConfig = {
+	limit: 20, // 20 deletions maximum
+	windowMs: minutes(1), // per minute
+};
+
+// ========================================
 // GROUPED EXPORT
 // ========================================
 
@@ -91,4 +106,11 @@ export const UPLOAD_LIMITS = {
 	CONTACT_ATTACHMENT: UPLOAD_CONTACT_ATTACHMENT_LIMIT,
 	// Users
 	REVIEW_MEDIA: UPLOAD_REVIEW_MEDIA_LIMIT,
+} as const;
+
+/**
+ * Media operation limits (non-upload)
+ */
+export const MEDIA_LIMITS = {
+	DELETE: DELETE_MEDIA_LIMIT,
 } as const;

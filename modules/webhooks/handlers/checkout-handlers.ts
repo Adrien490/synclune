@@ -6,6 +6,8 @@ import {
 	buildPostCheckoutTasks,
 	cancelExpiredOrder,
 } from "../services/checkout.service";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
  * Gère la complétion d'une session checkout
@@ -28,7 +30,7 @@ export async function handleCheckoutSessionCompleted(
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order ID found in checkout session");
-		return null;
+		throw new Error("No order ID found in checkout session metadata");
 	}
 
 	try {
@@ -55,18 +57,26 @@ export async function handleCheckoutSessionCompleted(
  */
 export async function handleCheckoutSessionExpired(
 	session: Stripe.Checkout.Session
-): Promise<void> {
+): Promise<WebhookHandlerResult> {
 	const orderId = session.metadata?.orderId || session.client_reference_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order ID found in expired checkout session");
-		return;
+		throw new Error("No order ID found in expired checkout session metadata");
 	}
 
 	console.log(`⏰ [WEBHOOK] Processing expired checkout session: ${session.id}, order: ${orderId}`);
 
 	try {
 		await cancelExpiredOrder(orderId);
+
+		return {
+			success: true,
+			tasks: [{
+				type: "INVALIDATE_CACHE",
+				tags: [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES],
+			}],
+		};
 	} catch (error) {
 		console.error(
 			`❌ [WEBHOOK] Error handling expired checkout session for order ${orderId}:`,

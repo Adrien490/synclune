@@ -30,8 +30,8 @@ export async function syncAsyncPayments(): Promise<{
 		return null;
 	}
 
-	// Find PENDING orders created between 1h and 7 days ago
-	// (beyond 7 days, async payments typically fail)
+	// Find PENDING orders created between 1h and 10 days ago
+	// (SEPA Direct Debit can take up to 10 business days)
 	const minAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MIN_AGE_MS);
 	const maxAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MAX_AGE_MS);
 

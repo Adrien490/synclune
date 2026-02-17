@@ -1,6 +1,6 @@
 import { updateTag } from "next/cache";
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
-import { sendAdminNewOrderEmail, sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
+import { sendAdminNewOrderEmail, sendAdminRefundFailedAlert, sendAdminDisputeAlert } from "@/modules/emails/services/admin-emails";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
 import type { PostWebhookTask } from "../types/webhook.types";
@@ -40,6 +40,9 @@ export async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise
 					break;
 				case "ADMIN_REFUND_FAILED_ALERT":
 					await sendAdminRefundFailedAlert(task.data);
+					break;
+				case "ADMIN_DISPUTE_ALERT":
+					await sendAdminDisputeAlert(task.data);
 					break;
 				case "INVALIDATE_CACHE":
 					task.tags.forEach(tag => updateTag(tag));

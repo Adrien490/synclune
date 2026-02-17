@@ -10,6 +10,7 @@ import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { MergeWishlistsResult } from "../types/wishlist.types";
 import { WISHLIST_ERROR_MESSAGES, WISHLIST_INFO_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { getGuestWishlistForMerge, getUserWishlistForMerge } from "../data/get-wishlist-for-merge";
 
 /**
@@ -100,12 +101,16 @@ export async function mergeWishlists(
 		const userProductIds = new Set(targetWishlist.items.map((item) => item.productId));
 
 		// Filter valid items to add (public, non-orphan, not already in user wishlist)
-		const itemsToAdd = guestWishlist.items.filter((guestItem) => {
+		const validItems = guestWishlist.items.filter((guestItem) => {
 			if (!guestItem.productId || !guestItem.product) return false;
 			if (guestItem.product.status !== "PUBLIC") return false;
 			if (userProductIds.has(guestItem.productId)) return false;
 			return true;
 		});
+
+		// Cap to WISHLIST_MAX_ITEMS to prevent unbounded growth
+		const availableSlots = Math.max(0, WISHLIST_MAX_ITEMS - targetWishlist.items.length);
+		const itemsToAdd = validItems.slice(0, availableSlots);
 
 		const skippedCount = guestWishlist.items.length - itemsToAdd.length;
 

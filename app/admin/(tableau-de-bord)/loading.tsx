@@ -7,7 +7,7 @@ import {
 
 /**
  * Loading skeleton pour la page du dashboard simplifié
- * Structure: 6 KPIs + graphique + liste commandes
+ * Structure: 3 KPIs + graphique + liste commandes
  */
 export default function DashboardLoading() {
 	return (
@@ -15,8 +15,8 @@ export default function DashboardLoading() {
 			<PageHeader variant="compact" title="Tableau de bord" />
 
 			<div className="space-y-6">
-				{/* 6 KPIs */}
-				<KpisSkeleton count={6} ariaLabel="Chargement des indicateurs" />
+				{/* 3 KPIs */}
+				<KpisSkeleton count={3} ariaLabel="Chargement des indicateurs" />
 
 				{/* Graphique + Commandes */}
 				<div className="grid gap-6 lg:grid-cols-2">

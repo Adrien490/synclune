@@ -8,6 +8,55 @@ import { checkDiscountEligibility } from "../services/discount-eligibility.servi
 import type { ValidateDiscountCodeReturn, DiscountApplicationContext } from "../types/discount.types";
 
 /**
+ * Looks up the discount, checks eligibility, and calculates the amount.
+ * Shared by both the main path and the userId/email retry path.
+ */
+async function lookupAndValidate(
+	validatedCode: string,
+	validatedSubtotal: number,
+	userId?: string,
+	customerEmail?: string
+): Promise<ValidateDiscountCodeReturn> {
+	const discount = await prisma.discount.findFirst({
+		where: { code: validatedCode, deletedAt: null },
+		select: GET_DISCOUNT_VALIDATION_SELECT,
+	});
+
+	if (!discount) {
+		return { valid: false, error: DISCOUNT_ERROR_MESSAGES.NOT_FOUND };
+	}
+
+	const context: DiscountApplicationContext = {
+		subtotal: validatedSubtotal,
+		userId,
+		customerEmail,
+	};
+
+	const eligibility = await checkDiscountEligibility(discount, context);
+
+	if (!eligibility.eligible) {
+		return { valid: false, error: eligibility.error };
+	}
+
+	const discountAmount = calculateDiscountAmount({
+		type: discount.type,
+		value: discount.value,
+		subtotal: validatedSubtotal,
+	});
+
+	return {
+		valid: true,
+		discount: {
+			id: discount.id,
+			code: discount.code,
+			type: discount.type,
+			value: discount.value,
+			discountAmount,
+		},
+	};
+}
+
+/**
  * Valide un code promo et calcule le montant de la réduction
  *
  * Utilisé pendant le checkout pour :
@@ -38,7 +87,6 @@ export async function validateDiscountCode(
 		});
 
 		if (!validation.success) {
-			// Identifier quel champ a échoué pour un meilleur diagnostic
 			const firstError = validation.error.issues[0];
 			const path = firstError?.path[0];
 
@@ -48,14 +96,8 @@ export async function validateDiscountCode(
 			if (path === "subtotal") {
 				return { valid: false, error: "Erreur de calcul du panier" };
 			}
-			if (path === "userId") {
-				// On continue sans userId plutôt que bloquer
-			}
-			if (path === "customerEmail") {
-				// On continue sans email plutôt que bloquer
-			}
 
-			// Si c'est userId ou customerEmail qui a échoué, on réessaie sans
+			// If userId or customerEmail validation failed, retry without them
 			if (path === "userId" || path === "customerEmail") {
 				const retryValidation = validateDiscountCodeSchema.safeParse({
 					code,
@@ -66,103 +108,22 @@ export async function validateDiscountCode(
 				if (!retryValidation.success) {
 					return { valid: false, error: "Code invalide" };
 				}
-				// Continuer avec les données validées (sans userId/email)
-				const {
-					code: validatedCode,
-					subtotal: validatedSubtotal,
-				} = retryValidation.data;
-
-				// Rechercher le code promo
-				const discount = await prisma.discount.findFirst({
-					where: { code: validatedCode, deletedAt: null },
-					select: GET_DISCOUNT_VALIDATION_SELECT,
-				});
-
-				if (!discount) {
-					return { valid: false, error: DISCOUNT_ERROR_MESSAGES.NOT_FOUND };
-				}
-
-				// Vérifier l'éligibilité sans userId/email
-				const context: DiscountApplicationContext = {
-					subtotal: validatedSubtotal,
-					userId: undefined,
-					customerEmail: undefined,
-				};
-
-				const eligibility = await checkDiscountEligibility(discount, context);
-
-				if (!eligibility.eligible) {
-					return { valid: false, error: eligibility.error };
-				}
-
-				const discountAmount = calculateDiscountAmount({
-					type: discount.type,
-					value: discount.value,
-					subtotal: validatedSubtotal,
-				});
-
-				return {
-					valid: true,
-					discount: {
-						id: discount.id,
-						code: discount.code,
-						type: discount.type,
-						value: discount.value,
-						discountAmount,
-					},
-				};
+				return lookupAndValidate(
+					retryValidation.data.code,
+					retryValidation.data.subtotal
+				);
 			}
 
 			return { valid: false, error: "Code invalide" };
 		}
 
-		const {
-			code: validatedCode,
-			subtotal: validatedSubtotal,
-			userId: validatedUserId,
-			customerEmail: validatedEmail,
-		} = validation.data;
-
-		// 2. Rechercher le code promo
-		const discount = await prisma.discount.findFirst({
-			where: { code: validatedCode, deletedAt: null },
-			select: GET_DISCOUNT_VALIDATION_SELECT,
-		});
-
-		if (!discount) {
-			return { valid: false, error: DISCOUNT_ERROR_MESSAGES.NOT_FOUND };
-		}
-
-		// 3. Vérifier l'éligibilité
-		const context: DiscountApplicationContext = {
-			subtotal: validatedSubtotal,
-			userId: validatedUserId,
-			customerEmail: validatedEmail,
-		};
-
-		const eligibility = await checkDiscountEligibility(discount, context);
-
-		if (!eligibility.eligible) {
-			return { valid: false, error: eligibility.error };
-		}
-
-		// 4. Calculer le montant de la réduction
-		const discountAmount = calculateDiscountAmount({
-			type: discount.type,
-			value: discount.value,
-			subtotal: validatedSubtotal,
-		});
-
-		return {
-			valid: true,
-			discount: {
-				id: discount.id,
-				code: discount.code,
-				type: discount.type,
-				value: discount.value,
-				discountAmount,
-			},
-		};
+		// 2. Lookup, check eligibility, and calculate discount
+		return lookupAndValidate(
+			validation.data.code,
+			validation.data.subtotal,
+			validation.data.userId,
+			validation.data.customerEmail
+		);
 	} catch {
 		return { valid: false, error: "Erreur lors de la validation du code" };
 	}

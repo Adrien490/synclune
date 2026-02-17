@@ -24,13 +24,13 @@ export async function deleteProductSku(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 0. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_DELETE_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 1. Verification des droits admin
+		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_DELETE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {
@@ -185,16 +185,16 @@ export async function deleteProductSku(
 			}
 		}
 
-		// 10. Supprimer les fichiers UploadThing AVANT la suppression du SKU
-		// (pour eviter les medias orphelins en cas d'echec de la transaction DB)
-		const imageUrls = existingSku.images.map((img) => img.url);
-		await deleteUploadThingFilesFromUrls(imageUrls);
-
-		// 11. Supprimer la variante
+		// 10. Supprimer la variante AVANT les fichiers UploadThing
+		// (si le DELETE echoue, les medias restent intacts)
 		// Les entrees SkuMedia seront supprimees automatiquement grace a onDelete: Cascade dans le schema Prisma
+		const imageUrls = existingSku.images.map((img) => img.url);
 		await prisma.productSku.delete({
 			where: { id: validatedSkuId },
 		});
+
+		// 11. Supprimer les fichiers UploadThing apres la suppression DB reussie
+		await deleteUploadThingFilesFromUrls(imageUrls);
 
 		// 12. Invalider les cache tags concernes
 		const tags = getSkuInvalidationTags(

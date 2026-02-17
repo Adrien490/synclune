@@ -39,7 +39,9 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 
 		// 5. Invalider le cache
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
-		updateTag(ORDERS_CACHE_TAGS.NOTES(note.orderId));
+		if (note.orderId) {
+			updateTag(ORDERS_CACHE_TAGS.NOTES(note.orderId));
+		}
 
 		return success("Note supprimee");
 	} catch (e) {

@@ -75,11 +75,10 @@ export async function updateProductCollections(
 			}
 		}
 
-		// 6. Récupérer les collections où ce produit était featured (pour invalidation cache)
-		const featuredInCollections = await prisma.productCollection.findMany({
+		// 6. Récupérer TOUTES les collections actuelles du produit (pour invalidation cache)
+		const currentCollections = await prisma.productCollection.findMany({
 			where: {
 				productId: validation.data.productId,
-				isFeatured: true,
 			},
 			select: {
 				collection: {
@@ -107,13 +106,25 @@ export async function updateProductCollections(
 				: []),
 		]);
 
-		// 8. Invalider le cache des collections où le produit était featured
-		for (const pc of featuredInCollections) {
+		// 8. Invalider le cache des anciennes collections
+		for (const pc of currentCollections) {
 			const tags = getCollectionInvalidationTags(pc.collection.slug);
 			tags.forEach((tag) => updateTag(tag));
 		}
 
-		// 9. Invalider le cache du produit
+		// 9. Invalider le cache des nouvelles collections
+		if (validation.data.collectionIds.length > 0) {
+			const newCollections = await prisma.collection.findMany({
+				where: { id: { in: validation.data.collectionIds } },
+				select: { slug: true },
+			});
+			for (const collection of newCollections) {
+				const tags = getCollectionInvalidationTags(collection.slug);
+				tags.forEach((tag) => updateTag(tag));
+			}
+		}
+
+		// 10. Invalider le cache du produit
 		const productTags = getProductInvalidationTags(product.slug, product.id);
 		productTags.forEach((tag) => updateTag(tag));
 

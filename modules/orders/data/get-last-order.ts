@@ -43,6 +43,7 @@ export async function fetchLastOrder(
 		const lastOrder = await prisma.order.findFirst({
 			where: {
 				userId,
+				deletedAt: null,
 			},
 			orderBy: {
 				createdAt: "desc",

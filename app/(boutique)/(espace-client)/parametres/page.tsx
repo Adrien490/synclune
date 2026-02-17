@@ -11,11 +11,15 @@ import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog
 import { ChangePasswordForm } from "@/modules/users/components/change-password-form";
 import { ProfileForm } from "@/modules/users/components/profile-form";
 import { GdprSection } from "@/modules/users/components/gdpr-section";
+import { NewsletterSettingsCard } from "@/modules/newsletter/components/newsletter-settings-card";
+import { ActiveSessionsCard } from "@/modules/auth/components/active-sessions-card";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { getUserAccounts } from "@/modules/users/data/get-user-accounts";
+import { getSubscriptionStatus } from "@/modules/newsletter/data/get-subscription-status";
+import { getUserSessions } from "@/modules/auth/data/get-user-sessions";
 import { Button } from "@/shared/components/ui/button";
 import { KeyRound, LogOut, User } from "lucide-react";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Paramètres du compte | Synclune",
@@ -27,9 +31,11 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-	const [user, accounts] = await Promise.all([
+	const [user, accounts, newsletterStatus, sessions] = await Promise.all([
 		getCurrentUser(),
 		getUserAccounts(),
+		getSubscriptionStatus(),
+		getUserSessions(),
 	]);
 
 	const hasPasswordAccount = accounts.some(
@@ -85,6 +91,9 @@ export default async function SettingsPage() {
 									</CardContent>
 								</Card>
 							)}
+
+							{/* Sessions actives */}
+							<ActiveSessionsCard sessions={sessions} />
 						</div>
 
 						{/* Sidebar contenu - 1/3 */}
@@ -109,6 +118,11 @@ export default async function SettingsPage() {
 									</LogoutAlertDialog>
 								</CardContent>
 							</Card>
+
+							{/* Newsletter */}
+							<NewsletterSettingsCard
+								isSubscribed={newsletterStatus.isSubscribed}
+							/>
 
 							{/* RGPD */}
 							<GdprSection />

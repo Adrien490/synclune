@@ -19,7 +19,10 @@ import {
 validateAuthEnvironment();
 
 // Initialiser Stripe client avec valeur par défaut pour le build
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+	apiVersion: "2026-01-28.clover",
+	maxNetworkRetries: 2,
+});
 
 export const auth = betterAuth({
 	user: {
@@ -91,8 +94,9 @@ export const auth = betterAuth({
 	plugins: [
 		customSession(async ({ user, session }) => {
 			// Récupérer les informations utilisateur complètes depuis la base de données
+			// Filter out soft-deleted users to prevent deleted accounts from retaining their role
 			const userData = await prisma.user.findUnique({
-				where: { id: session.userId },
+				where: { id: session.userId, deletedAt: null },
 				select: { role: true },
 			});
 

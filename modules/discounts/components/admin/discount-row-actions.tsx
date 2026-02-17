@@ -58,6 +58,8 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 								maxUsageCount: discount.maxUsageCount,
 								maxUsagePerUser: discount.maxUsagePerUser,
 								isActive: discount.isActive,
+								startsAt: discount.startsAt,
+								endsAt: discount.endsAt,
 							},
 						});
 					}}

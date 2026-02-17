@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
 import { bulkToggleDiscountStatus } from "@/modules/discounts/actions/bulk-toggle-discount-status";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
@@ -29,7 +29,7 @@ interface UseBulkToggleDiscountStatusOptions {
 export function useBulkToggleDiscountStatus(
 	options?: UseBulkToggleDiscountStatusOptions
 ) {
-	const [state, formAction, isPending] = useActionState(
+	const [state, formAction, isFormPending] = useActionState(
 		withCallbacks(
 			bulkToggleDiscountStatus,
 			createToastCallbacks({
@@ -41,18 +41,21 @@ export function useBulkToggleDiscountStatus(
 		undefined
 	);
 
-	// Wrapper pour appeler l'action avec un FormData directement
+	const [isTransitionPending, startTransition] = useTransition();
+
 	const toggle = (ids: string[], isActive: boolean) => {
 		const formData = new FormData();
 		ids.forEach((id) => formData.append("ids", id));
 		formData.append("isActive", isActive.toString());
-		formAction(formData);
+		startTransition(() => {
+			formAction(formData);
+		});
 	};
 
 	return {
 		state,
 		action: formAction,
 		toggle,
-		isPending,
+		isPending: isFormPending || isTransitionPending,
 	};
 }

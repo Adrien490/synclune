@@ -44,7 +44,7 @@ export function createProductFilterFormatter(
 	// Créer le mapping dynamique des matériaux
 	const materialMapping: Record<string, string> = {};
 	materials.forEach((material) => {
-		materialMapping[material.id] = material.name;
+		materialMapping[material.slug] = material.name;
 	});
 
 	// Créer le mapping dynamique des types de produits

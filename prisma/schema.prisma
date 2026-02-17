@@ -69,7 +69,7 @@ model User {
   @@index([name, id]) // Admin: tri par nom d'utilisateur
   @@index([createdAt, id])
   @@index([deletedAt, role]) // Admin: filtrer users actifs par role
-  @@index([deletionRequestedAt])
+  @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
 }
 
 model Session {
@@ -79,7 +79,7 @@ model Session {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String? @db.VarChar(45)
-  userAgent String? @db.VarChar(1000)
+  userAgent String? @db.VarChar(500)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -94,9 +94,9 @@ model Account {
   providerId            String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?   @db.Text
-  refreshToken          String?   @db.Text
-  idToken               String?   @db.Text
+  accessToken           String?   @db.VarChar(500)
+  refreshToken          String?   @db.VarChar(500)
+  idToken               String?   @db.VarChar(500)
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
@@ -191,7 +191,7 @@ enum HistorySource {
 model ProductType {
   id          String  @id @default(cuid())
   slug        String  @unique
-  label       String  @db.VarChar(50)
+  label       String  @unique @db.VarChar(50)
   description String? @db.Text
   isActive    Boolean @default(true)
   isSystem    Boolean @default(false) // Types systeme non modifiables/supprimables
@@ -448,9 +448,8 @@ model WishlistItem {
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete for RGPD traceability
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Un produit ne peut etre ajoute qu'une seule fois par wishlist
   // Note: Contrainte unique sur champ nullable - validation metier cote applicatif
@@ -542,7 +541,7 @@ model Order {
   // Stocke les codes d'erreur du dernier echec (historique complet dans WebhookEvent)
   paymentFailureCode    String? @db.VarChar(100) // Code Stripe: "card_declined", "expired_card", etc.
   paymentDeclineCode    String? @db.VarChar(100) // Code reseau detaille (Visa/MC)
-  paymentFailureMessage String? // Message lisible pour debug
+  paymentFailureMessage String? @db.VarChar(500) // Message lisible pour debug
 
   // === LIVRAISON ===
   shippingMethod    String?          @db.VarChar(20) // Type de livraison
@@ -591,8 +590,9 @@ model Order {
   // PostgreSQL uses the leading column of a composite index for single-column queries
   @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
   // Timestamps metier
-  @@index([fulfillmentStatus, actualDelivery]) // review-request-emails cron
+  @@index([fulfillmentStatus, actualDelivery, reviewRequestSentAt]) // review-request-emails cron
   @@index([paidAt, paymentStatus]) // Rapports comptables
+  @@index([paymentStatus, createdAt]) // sync-async-payments cron: WHERE paymentStatus=PENDING AND createdAt BETWEEN
   @@index([createdAt(sort: Desc)]) // Listing commandes recentes
 }
 
@@ -641,10 +641,10 @@ model OrderItem {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  // onDelete: NoAction - Preserve l'historique des ventes pour le calcul des bestsellers
-  // Un produit avec commandes ne peut pas etre supprime physiquement (utiliser soft-delete)
+  // onDelete: SetNull - Preserve l'historique des ventes, le snapshot (productTitle, etc.) reste
+  // Un produit soft-deleted rend productId null sans bloquer ni cascader
   productId String?
-  product   Product? @relation(fields: [productId], references: [id], onDelete: NoAction)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   // onDelete: Restrict intentionnel - Un SKU avec commandes ne peut pas etre supprime
   // Garantit l'integrite comptable (Art. L123-22 Code de commerce - conservation 10 ans)
@@ -657,6 +657,7 @@ model OrderItem {
   productDescription String? @db.Text
   productImageUrl    String? @db.VarChar(2048)
 
+  skuSku      String? @db.VarChar(100) // Snapshot du code SKU au moment de la commande
   skuColor    String? @db.VarChar(100)
   skuMaterial String? @db.VarChar(100)
   skuSize     String? @db.VarChar(50)
@@ -685,8 +686,8 @@ model OrderItem {
 model OrderNote {
   id String @id @default(cuid())
 
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   // Contenu de la note
   content String @db.Text
@@ -771,8 +772,8 @@ model Refund {
 model RefundItem {
   id String @id @default(cuid())
 
-  refundId String
-  refund   Refund @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  refundId String?
+  refund   Refund? @relation(fields: [refundId], references: [id], onDelete: SetNull)
 
   // Lien precis vers la ligne de commande d'origine
   // Cela permet de savoir quel produit exact (et a quel prix d'origine) est rembourse
@@ -789,6 +790,7 @@ model RefundItem {
   // false si le produit est abime/casse
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([refundId])
   @@index([orderItemId])
@@ -833,8 +835,6 @@ model Discount {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  @@index([code, isActive, deletedAt]) // Validation code promo actif avec soft-delete
-  @@index([isActive, startsAt, endsAt])
   @@index([deletedAt, isActive]) // Admin listing avec soft-delete
   @@index([createdAt, id])
 }
@@ -859,6 +859,7 @@ model DiscountUsage {
   amountApplied Int // En centimes
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([discountId, orderId])
   @@index([orderId])
@@ -895,7 +896,7 @@ model NewsletterSubscriber {
   // Champs de tracabilite RGPD
   ipAddress             String? @db.VarChar(45) // IP inscription
   confirmationIpAddress String? @db.VarChar(45) // IP confirmation (preuve RGPD)
-  userAgent             String? @db.VarChar(1000)
+  userAgent             String? @db.VarChar(500)
   consentSource         String? @default("newsletter_form")
   consentTimestamp      DateTime @default(now())
 
@@ -1038,11 +1039,10 @@ model ProductReviewStats {
   rating5Count Int @default(0) // Nombre d'avis 5 etoiles
 
   // === TIMESTAMPS ===
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // === INDEXES ===
-  // Index pour filtrage produits avec avis
-  @@index([totalCount])
 }
 
 // ============================================================================

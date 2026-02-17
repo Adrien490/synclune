@@ -23,6 +23,10 @@ vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
 }));
 
+vi.mock("@/modules/emails/services/auth-emails", () => ({
+	sendAccountDeletionEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/modules/reviews/constants/cache", () => ({
 	REVIEWS_CACHE_TAGS: {
 		USER: (id: string) => `reviews-user-${id}`,
@@ -60,7 +64,7 @@ describe("processAccountDeletions", () => {
 				deletionRequestedAt: { lt: expect.any(Date) },
 				anonymizedAt: null,
 			},
-			select: { id: true, image: true },
+			select: { id: true, email: true, name: true, image: true },
 			take: 25,
 		});
 
@@ -75,6 +79,8 @@ describe("processAccountDeletions", () => {
 	it("should anonymize user data in a transaction", async () => {
 		const mockUser = {
 			id: "user-1",
+			email: "user1@test.com",
+			name: "User One",
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
@@ -133,6 +139,8 @@ describe("processAccountDeletions", () => {
 	it("should anonymize order PII in the transaction", async () => {
 		const mockUser = {
 			id: "user-order",
+			email: "order@test.com",
+			name: "Order User",
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
@@ -178,6 +186,8 @@ describe("processAccountDeletions", () => {
 	it("should delete avatar from UploadThing after successful transaction", async () => {
 		const mockUser = {
 			id: "user-2",
+			email: "user2@test.com",
+			name: "User Two",
 			image: "https://utfs.io/f/abc123",
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
@@ -195,6 +205,8 @@ describe("processAccountDeletions", () => {
 	it("should delete review media from UploadThing after successful transaction", async () => {
 		const mockUser = {
 			id: "user-3",
+			email: "user3@test.com",
+			name: "User Three",
 			image: null,
 		};
 		const mockReviewMedias = [
@@ -222,6 +234,8 @@ describe("processAccountDeletions", () => {
 	it("should not fail if avatar deletion fails (non-blocking)", async () => {
 		const mockUser = {
 			id: "user-4",
+			email: "user4@test.com",
+			name: "User Four",
 			image: "https://utfs.io/f/failing-key",
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
@@ -239,6 +253,8 @@ describe("processAccountDeletions", () => {
 	it("should not fail if review media deletion fails (non-blocking)", async () => {
 		const mockUser = {
 			id: "user-5",
+			email: "user5@test.com",
+			name: "User Five",
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
@@ -258,6 +274,8 @@ describe("processAccountDeletions", () => {
 	it("should count errors when transaction fails", async () => {
 		const mockUser = {
 			id: "user-6",
+			email: "user6@test.com",
+			name: "User Six",
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
@@ -271,9 +289,9 @@ describe("processAccountDeletions", () => {
 
 	it("should process multiple users and handle mixed success/failure", async () => {
 		const users = [
-			{ id: "user-ok", image: null },
-			{ id: "user-fail", image: null },
-			{ id: "user-ok2", image: null },
+			{ id: "user-ok", email: "ok@test.com", name: "OK", image: null },
+			{ id: "user-fail", email: "fail@test.com", name: "Fail", image: null },
+			{ id: "user-ok2", email: "ok2@test.com", name: "OK2", image: null },
 		];
 		mockPrisma.user.findMany.mockResolvedValue(users);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
@@ -290,6 +308,8 @@ describe("processAccountDeletions", () => {
 	it("should return hasMore=true when batch size limit is reached", async () => {
 		const users = Array.from({ length: 25 }, (_, i) => ({
 			id: `user-${i}`,
+			email: `user${i}@test.com`,
+			name: `User ${i}`,
 			image: null,
 		}));
 		mockPrisma.user.findMany.mockResolvedValue(users);
@@ -305,6 +325,8 @@ describe("processAccountDeletions", () => {
 	it("should return hasMore=false when batch size limit is not reached", async () => {
 		const users = Array.from({ length: 10 }, (_, i) => ({
 			id: `user-${i}`,
+			email: `user${i}@test.com`,
+			name: `User ${i}`,
 			image: null,
 		}));
 		mockPrisma.user.findMany.mockResolvedValue(users);

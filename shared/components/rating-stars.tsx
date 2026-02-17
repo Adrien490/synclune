@@ -102,8 +102,11 @@ export function RatingStars({
 	return (
 		<div
 			className={cn("flex items-center gap-0.5", className)}
-			role={interactive ? "radiogroup" : "img"}
+			role={interactive ? "radiogroup" : "meter"}
 			aria-label={label}
+			aria-valuenow={!interactive ? rating : undefined}
+			aria-valuemin={!interactive ? 0 : undefined}
+			aria-valuemax={!interactive ? maxRating : undefined}
 			aria-required={interactive && required ? true : undefined}
 			style={{
 				"--star-filled": "rgb(251 191 36)",

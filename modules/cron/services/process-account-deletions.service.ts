@@ -5,6 +5,7 @@ import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/
 import { BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
 import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
+import { sendAccountDeletionEmail } from "@/modules/emails/services/auth-emails";
 
 /**
  * Processes GDPR account deletion requests.
@@ -37,6 +38,8 @@ export async function processAccountDeletions(): Promise<{
 		},
 		select: {
 			id: true,
+			email: true,
+			name: true,
 			image: true,
 		},
 		take: BATCH_SIZE_MEDIUM,
@@ -60,6 +63,23 @@ export async function processAccountDeletions(): Promise<{
 				select: { url: true },
 			});
 			const reviewMediaUrls = reviewMedias.map((m) => m.url);
+
+			// Send deletion email BEFORE anonymization (email will be wiped in transaction)
+			try {
+				const deletionDate = new Date().toLocaleDateString("fr-FR", {
+					weekday: "long",
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+				});
+				await sendAccountDeletionEmail({
+					to: user.email,
+					userName: user.name || "Client",
+					deletionDate,
+				});
+			} catch {
+				// Non-blocking: continue with anonymization even if email fails
+			}
 
 			const anonymizedEmail = `anonymized-${user.id}@deleted.local`;
 			const now = new Date();
@@ -118,7 +138,7 @@ export async function processAccountDeletions(): Promise<{
 					},
 				});
 
-				// 9. Unsubscribe and anonymize newsletter
+				// 9. Unsubscribe and anonymize newsletter (including IP addresses - RGPD PII)
 				await tx.newsletterSubscriber.updateMany({
 					where: { userId: user.id },
 					data: {
@@ -126,6 +146,9 @@ export async function processAccountDeletions(): Promise<{
 						email: anonymizedEmail,
 						unsubscribedAt: now,
 						deletedAt: now,
+						ipAddress: null,
+						confirmationIpAddress: null,
+						userAgent: null,
 					},
 				});
 

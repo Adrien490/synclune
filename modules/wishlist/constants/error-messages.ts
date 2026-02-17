@@ -41,16 +41,6 @@ export const WISHLIST_SUCCESS_MESSAGES = {
 } as const;
 
 /**
- * Messages d'avertissement
- */
-export const WISHLIST_WARNING_MESSAGES = {
-	OUT_OF_STOCK: "Cet article n'est plus en stock",
-	LOW_STOCK: (inventory: number) => `Plus que ${inventory} en stock !`,
-	PRICE_INCREASED: "Le prix a augmenté depuis l'ajout",
-	PRICE_DECREASED: "Le prix a baissé depuis l'ajout",
-} as const;
-
-/**
  * Messages informatifs
  */
 export const WISHLIST_INFO_MESSAGES = {

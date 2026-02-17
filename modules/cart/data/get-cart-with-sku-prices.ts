@@ -40,7 +40,13 @@ async function fetchCartWithSkuPrices(userId?: string, sessionId?: string) {
 	}
 
 	return prisma.cart.findFirst({
-		where: userId ? { userId } : { sessionId: sessionId! },
+		where: {
+			...(userId ? { userId } : { sessionId: sessionId! }),
+			OR: [
+				{ expiresAt: null },
+				{ expiresAt: { gt: new Date() } },
+			],
+		},
 		include: {
 			items: {
 				include: {

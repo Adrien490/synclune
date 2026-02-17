@@ -132,7 +132,7 @@ export async function createProduct(
         });
         if (!productType || !productType.isActive) {
           throw new Error(
-            "Le type de produit specifie n'existe pas ou n'est pas actif.",
+            "Le type de produit spécifié n'existe pas ou n'est pas actif.",
           );
         }
       }
@@ -145,7 +145,7 @@ export async function createProduct(
         });
         if (collections.length !== normalizedCollectionIds.length) {
           throw new Error(
-            "Une ou plusieurs collections specifiees n'existent pas.",
+            "Une ou plusieurs collections spécifiées n'existent pas.",
           );
         }
       }
@@ -156,7 +156,7 @@ export async function createProduct(
           select: { id: true },
         });
         if (!color) {
-          throw new Error("La couleur specifiee n'existe pas.");
+          throw new Error("La couleur spécifiée n'existe pas.");
         }
       }
 
@@ -167,7 +167,7 @@ export async function createProduct(
           select: { id: true },
         });
         if (!material) {
-          throw new Error("Le materiau specifie n'existe pas.");
+          throw new Error("Le matériau spécifié n'existe pas.");
         }
       }
 

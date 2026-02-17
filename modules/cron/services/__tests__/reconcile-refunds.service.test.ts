@@ -7,6 +7,7 @@ const {
 	mockMapStripeRefundStatus,
 	mockUpdateRefundStatus,
 	mockMarkRefundAsFailed,
+	mockSendRefundFailedAlert,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		refund: { findMany: vi.fn() },
@@ -18,6 +19,7 @@ const {
 	mockMapStripeRefundStatus: vi.fn(),
 	mockUpdateRefundStatus: vi.fn(),
 	mockMarkRefundAsFailed: vi.fn(),
+	mockSendRefundFailedAlert: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -33,6 +35,7 @@ vi.mock("@/modules/webhooks/services/refund.service", () => ({
 	mapStripeRefundStatus: mockMapStripeRefundStatus,
 	updateRefundStatus: mockUpdateRefundStatus,
 	markRefundAsFailed: mockMarkRefundAsFailed,
+	sendRefundFailedAlert: mockSendRefundFailedAlert,
 }));
 
 import { reconcilePendingRefunds } from "../reconcile-refunds.service";
@@ -44,6 +47,7 @@ describe("reconcilePendingRefunds", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-09T18:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
+		mockSendRefundFailedAlert.mockResolvedValue(undefined);
 	});
 
 	it("should return null when Stripe is not configured", async () => {

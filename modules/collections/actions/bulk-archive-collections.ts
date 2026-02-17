@@ -2,8 +2,10 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { ActionState } from "@/shared/types/server-action";
 import { bulkArchiveCollectionsSchema } from "../schemas/collection.schemas";
@@ -18,11 +20,14 @@ export async function bulkArchiveCollections(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Admin auth check
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraction des donnees du FormData
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.BULK_ARCHIVE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 2. Extract data from FormData
 		const collectionIdsRaw = formData.get("collectionIds") as string;
 		const targetStatus = (formData.get("targetStatus") as string) || "ARCHIVED";
 

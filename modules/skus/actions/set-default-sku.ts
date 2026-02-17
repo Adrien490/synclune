@@ -6,7 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -26,15 +26,15 @@ export async function setDefaultSku(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 0. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_TOGGLE_STATUS_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 1. Check admin rights
+		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Validate SKU ID with Zod (CUID2)
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_TOGGLE_STATUS_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Validate SKU ID with Zod (CUID2)
 		const validation = validateInput(deleteProductSkuSchema, {
 			skuId: formData.get("skuId") as string,
 		});
@@ -42,7 +42,7 @@ export async function setDefaultSku(
 
 		const { skuId } = validation.data;
 
-		// 3. Verify SKU exists and get productId
+		// 4. Verify SKU exists and get productId
 		const skuData = await prisma.productSku.findUnique({
 			where: { id: skuId },
 			select: {
@@ -72,7 +72,7 @@ export async function setDefaultSku(
 			};
 		}
 
-		// 4. Atomic transaction to guarantee uniqueness
+		// 5. Atomic transaction to guarantee uniqueness
 		await prisma.$transaction([
 			// Deactivate all isDefault for the product
 			prisma.productSku.updateMany({
@@ -86,12 +86,12 @@ export async function setDefaultSku(
 			}),
 		]);
 
-		// 5. Invalidate cache
+		// 6. Invalidate cache
 		const tags = getSkuInvalidationTags(
 			skuData.sku,
 			skuData.productId,
 			skuData.product.slug,
-			skuId // Invalide aussi le cache stock temps réel
+			skuId
 		);
 		tags.forEach(tag => updateTag(tag));
 

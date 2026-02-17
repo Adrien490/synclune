@@ -15,7 +15,7 @@ import { updateTag } from "next/cache";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { revertToProcessingSchema } from "../schemas/order.schemas";
-import { createOrderAudit } from "../utils/order-audit";
+import { createOrderAuditTx } from "../utils/order-audit";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
@@ -85,41 +85,43 @@ export async function revertToProcessing(
 			};
 		}
 
-		// Mettre à jour la commande
-		await prisma.order.update({
-			where: { id },
-			data: {
-				status: OrderStatus.PROCESSING,
-				fulfillmentStatus: FulfillmentStatus.PROCESSING,
-				trackingNumber: null,
-				trackingUrl: null,
-				shippingCarrier: null,
-				shippedAt: null,
-			},
-		});
+		// Mettre à jour la commande + audit trail atomique
+		await prisma.$transaction(async (tx) => {
+			await tx.order.update({
+				where: { id },
+				data: {
+					status: OrderStatus.PROCESSING,
+					fulfillmentStatus: FulfillmentStatus.PROCESSING,
+					trackingNumber: null,
+					trackingUrl: null,
+					shippingCarrier: null,
+					shippedAt: null,
+				},
+			});
 
-		// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
-		await createOrderAudit({
-			orderId: id,
-			action: "STATUS_REVERTED",
-			previousStatus: order.status,
-			newStatus: OrderStatus.PROCESSING,
-			previousFulfillmentStatus: order.fulfillmentStatus,
-			newFulfillmentStatus: FulfillmentStatus.PROCESSING,
-			note: result.data.reason,
-			authorId: adminUser.id,
-			authorName: adminUser.name || "Admin",
-			source: HistorySource.ADMIN,
-			metadata: {
-				previousTrackingNumber: order.trackingNumber,
-				previousTrackingUrl: order.trackingUrl,
-			},
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "STATUS_REVERTED",
+				previousStatus: order.status,
+				newStatus: OrderStatus.PROCESSING,
+				previousFulfillmentStatus: order.fulfillmentStatus,
+				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
+				note: result.data.reason,
+				authorId: adminUser.id,
+				authorName: adminUser.name || "Admin",
+				source: HistorySource.ADMIN,
+				metadata: {
+					previousTrackingNumber: order.trackingNumber,
+					previousTrackingUrl: order.trackingUrl,
+				},
+			});
 		});
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 
 		// Envoyer l'email de notification au client
+		let emailSent = false;
 		if (order.customerEmail) {
 			const customerFirstName =
 				order.customerName?.split(" ")[0] ||
@@ -128,20 +130,25 @@ export async function revertToProcessing(
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
-			await sendRevertShippingNotificationEmail({
-				to: order.customerEmail,
-				orderNumber: order.orderNumber,
-				customerName: customerFirstName,
-				reason: result.data.reason,
-				orderDetailsUrl,
-			});
+			try {
+				await sendRevertShippingNotificationEmail({
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: customerFirstName,
+					reason: result.data.reason,
+					orderDetailsUrl,
+				});
+				emailSent = true;
+			} catch (emailError) {
+				console.error("[REVERT_TO_PROCESSING] Échec envoi email:", emailError);
+			}
 		}
 
 		const trackingInfo = order.trackingNumber
 			? ` (ancien suivi: ${order.trackingNumber})`
 			: "";
 
-		const emailMessage = order.customerEmail ? " Email envoyé au client." : "";
+		const emailMessage = emailSent ? " Email envoyé au client." : order.customerEmail ? " (Échec envoi email)" : "";
 
 		return {
 			status: ActionStatus.SUCCESS,

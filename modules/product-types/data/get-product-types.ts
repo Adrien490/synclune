@@ -63,7 +63,7 @@ export async function getProductTypes(
 		const validation = getProductTypesSchema.safeParse(params);
 
 		if (!validation.success) {
-			throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
+			throw new Error("Invalid parameters");
 		}
 
 		return fetchProductTypes(validation.data);

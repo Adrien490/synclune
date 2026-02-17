@@ -11,6 +11,8 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
+import { sendRefundRejectedEmail } from "@/modules/emails/services/refund-emails";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -54,6 +56,8 @@ export async function rejectRefund(
 					select: {
 						id: true,
 						orderNumber: true,
+						customerEmail: true,
+						customerName: true,
 					},
 				},
 			},
@@ -102,6 +106,19 @@ export async function rejectRefund(
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
+
+		// Send rejection email to customer
+		if (refund.order.customerEmail) {
+			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.orderNumber));
+			sendRefundRejectedEmail({
+				to: refund.order.customerEmail,
+				orderNumber: refund.order.orderNumber,
+				customerName: refund.order.customerName || "Client",
+				refundAmount: refund.amount,
+				reason: sanitizedReason || undefined,
+				orderDetailsUrl,
+			}).catch(() => {});
+		}
 
 		return {
 			status: ActionStatus.SUCCESS,

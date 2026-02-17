@@ -109,7 +109,7 @@ export default async function Image({
 							display: "flex",
 						}}
 					>
-						{publicProductsCount} creation{publicProductsCount > 1 ? "s" : ""}
+						{publicProductsCount} création{publicProductsCount > 1 ? "s" : ""}
 					</div>
 				)}
 
@@ -140,7 +140,7 @@ export default async function Image({
 							display: "flex",
 						}}
 					>
-						Creations artisanales faites main a Nantes
+						Créations artisanales faites main à Nantes
 					</div>
 				</div>
 			</div>

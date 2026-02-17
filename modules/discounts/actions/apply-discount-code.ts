@@ -2,6 +2,11 @@
 
 import type { ActionState } from "@/shared/types/server-action";
 import { success, error } from "@/shared/lib/actions";
+import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
+import { getSession } from "@/modules/auth/lib/get-current-session";
+import { getClientIp } from "@/shared/lib/rate-limit";
+import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { headers } from "next/headers";
 import { validateDiscountCode } from "./validate-discount-code";
 
 /**
@@ -10,22 +15,28 @@ import { validateDiscountCode } from "./validate-discount-code";
  * Wrapper autour de validateDiscountCode qui :
  * - Accepte FormData (compatible useActionState)
  * - Retourne ActionState (compatible withCallbacks)
- *
- * @example
- * ```tsx
- * const { applyCode, isPending } = useApplyDiscountCode({
- *   onSuccess: (discount) => setAppliedDiscount(discount),
- * });
- * ```
+ * - Recupere userId/email depuis la session serveur (jamais le client)
+ * - Applique le rate limiting
  */
 export async function applyDiscountCode(
 	_prevState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
+	// Rate limiting based on IP
+	const headersList = await headers();
+	const ip = await getClientIp(headersList);
+	if (ip) {
+		const rateCheck = await enforceRateLimit(ip, PAYMENT_LIMITS.VALIDATE_DISCOUNT);
+		if ("error" in rateCheck) return rateCheck.error;
+	}
+
 	const code = formData.get("code") as string;
 	const subtotal = Number(formData.get("subtotal"));
-	const userId = (formData.get("userId") as string) || undefined;
-	const customerEmail = (formData.get("customerEmail") as string) || undefined;
+
+	// Get userId and email from server-side session, never from client
+	const session = await getSession();
+	const userId = session?.user?.id;
+	const customerEmail = session?.user?.email || undefined;
 
 	const result = await validateDiscountCode(
 		code,

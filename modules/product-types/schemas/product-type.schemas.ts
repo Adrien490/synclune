@@ -44,14 +44,12 @@ export const getProductTypesSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_PRODUCT_TYPES_DEFAULT_PER_PAGE, GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE),
 	sortBy: productTypeSortBySchema.default(GET_PRODUCT_TYPES_DEFAULT_SORT_BY),
-	sortOrder: z.enum(["asc", "desc"]).default("asc"),
 	filters: productTypeFiltersSchema.optional(),
 });
 
 export const getProductTypeSchema = z.object({
 	slug: z.string().trim().min(1),
 	includeInactive: z.boolean().optional(),
-	withDeleted: z.boolean().optional(),
 });
 
 // ============================================================================
@@ -100,47 +98,23 @@ export const toggleProductTypeStatusSchema = z.object({
 	isActive: z.boolean(),
 });
 
+const bulkIdsSchema = z.string().transform((str) => {
+	try {
+		const parsed = JSON.parse(str);
+		return Array.isArray(parsed) ? parsed : [];
+	} catch {
+		return [];
+	}
+}).pipe(z.array(z.cuid2("ID invalide")).max(100, "Maximum 100 elements par operation"));
+
 export const bulkActivateProductTypesSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
-		}
-	}).pipe(z.array(z.cuid2("ID invalide"))),
+	ids: bulkIdsSchema,
 });
 
 export const bulkDeactivateProductTypesSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
-		}
-	}).pipe(z.array(z.cuid2("ID invalide"))),
-});
-
-export const bulkToggleProductTypeStatusSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
-		}
-	}).pipe(z.array(z.cuid2("ID invalide"))),
-	isActive: z.boolean(),
+	ids: bulkIdsSchema,
 });
 
 export const bulkDeleteProductTypesSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
-		}
-	}).pipe(z.array(z.cuid2("ID invalide"))),
+	ids: bulkIdsSchema,
 });

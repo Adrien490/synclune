@@ -35,6 +35,7 @@ export const GET_PRODUCT_TYPE_SELECT = {
 	label: true,
 	description: true,
 	isActive: true,
+	isSystem: true,
 	createdAt: true,
 	updatedAt: true,
 } as const satisfies Prisma.ProductTypeSelect;

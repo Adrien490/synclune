@@ -20,6 +20,7 @@ export type ProductForPublicationCheck = {
 
 export type SkuForPublicCheck = {
 	isActive: boolean;
+	inventory: number;
 };
 
 /**
@@ -82,7 +83,15 @@ export function validatePublicProductCreation(sku: SkuForPublicCheck): ProductPu
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de creer un produit PUBLIC avec un SKU inactif. Veuillez activer le SKU ou creer le produit en DRAFT.",
+				"Impossible de créer un produit PUBLIC avec un SKU inactif. Veuillez activer le SKU ou créer le produit en DRAFT.",
+		};
+	}
+
+	if (sku.inventory <= 0) {
+		return {
+			isValid: false,
+			errorMessage:
+				"Impossible de créer un produit PUBLIC avec un stock à 0. Veuillez ajouter du stock ou créer le produit en DRAFT.",
 		};
 	}
 

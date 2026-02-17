@@ -12,6 +12,7 @@ import { updateTag } from "next/cache";
 
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
@@ -239,10 +240,31 @@ export async function processRefund(
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
 
-		// Invalider le cache d'inventaire si des articles ont été restockés
-		const restockedCount = refundData.items.filter((i) => i.restock).length;
+		// Invalider le cache d'inventaire et vitrine si des articles ont été restockés
+		const restockedItems = refundData.items.filter((i) => i.restock);
+		const restockedCount = restockedItems.length;
 		if (restockedCount > 0) {
 			updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
+
+			// Invalidate storefront SKU stock and product caches
+			const restockedSkuIds = restockedItems.map((i) => i.sku_id);
+			for (const skuId of restockedSkuIds) {
+				updateTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+			}
+
+			// Fetch product info for restocked SKUs to invalidate product-level caches
+			const restockedSkus = await prisma.productSku.findMany({
+				where: { id: { in: restockedSkuIds } },
+				select: { productId: true, product: { select: { slug: true } } },
+			});
+			const uniqueProductIds = [...new Set(restockedSkus.map((s) => s.productId))];
+			const uniqueSlugs = [...new Set(restockedSkus.map((s) => s.product.slug))];
+			for (const productId of uniqueProductIds) {
+				updateTag(PRODUCTS_CACHE_TAGS.SKUS(productId));
+			}
+			for (const slug of uniqueSlugs) {
+				updateTag(PRODUCTS_CACHE_TAGS.DETAIL(slug));
+			}
 		}
 		const restockMessage =
 			restockedCount > 0

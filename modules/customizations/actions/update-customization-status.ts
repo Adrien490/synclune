@@ -12,6 +12,7 @@ import {
 	success,
 	error,
 } from "@/shared/lib/actions";
+import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
 import { updateStatusSchema } from "../schemas/update-status.schema";
 
@@ -44,7 +45,7 @@ export async function updateCustomizationStatus(
 		// 3. Check if request exists
 		const existing = await prisma.customizationRequest.findFirst({
 			where: { id: requestId, ...notDeleted },
-			select: { id: true, status: true },
+			select: { id: true, userId: true, status: true, email: true, firstName: true, productTypeLabel: true, details: true, adminNotes: true },
 		});
 
 		if (!existing) {
@@ -69,7 +70,26 @@ export async function updateCustomizationStatus(
 			...getCustomizationInvalidationTags(),
 			CUSTOMIZATION_CACHE_TAGS.DETAIL(requestId),
 		];
+		if (existing.userId) {
+			tags.push(CUSTOMIZATION_CACHE_TAGS.USER_REQUESTS(existing.userId));
+		}
 		tags.forEach((tag) => updateTag(tag));
+
+		// 6. Send status email if applicable
+		if (
+			status !== CustomizationRequestStatus.PENDING &&
+			existing.email &&
+			(status === "IN_PROGRESS" || status === "COMPLETED" || status === "CANCELLED")
+		) {
+			sendCustomizationStatusEmail({
+				email: existing.email,
+				firstName: existing.firstName,
+				productTypeLabel: existing.productTypeLabel,
+				status,
+				adminNotes: existing.adminNotes,
+				details: existing.details,
+			}).catch(() => {});
+		}
 
 		return success("Statut mis a jour");
 	} catch (e) {

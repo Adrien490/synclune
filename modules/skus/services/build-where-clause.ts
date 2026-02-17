@@ -8,7 +8,9 @@ import { buildFilterConditions } from "./build-filter-conditions";
 export const buildWhereClause = (
 	params: GetProductSkusInput
 ): Prisma.ProductSkuWhereInput => {
-	const whereClause: Prisma.ProductSkuWhereInput = {};
+	const whereClause: Prisma.ProductSkuWhereInput = {
+		deletedAt: null,
+	};
 	const andConditions: Prisma.ProductSkuWhereInput[] = [];
 	const filters = params.filters ?? {};
 

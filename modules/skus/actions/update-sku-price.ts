@@ -24,15 +24,15 @@ export async function updateSkuPrice(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 0. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_UPDATE_PRICE_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// 1. Vérification admin
+		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Extraire et valider les données
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_UPDATE_PRICE_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Extraire et valider les données
 		const skuId = formData.get("skuId") as string;
 		const priceInclTaxEuros = formData.get("priceInclTaxEuros") as string;
 		const compareAtPriceEuros = formData.get("compareAtPriceEuros") as string | null;
@@ -44,7 +44,7 @@ export async function updateSkuPrice(
 		});
 		if ("error" in validation) return validation.error;
 
-		// 3. Vérifier que le SKU existe
+		// 4. Vérifier que le SKU existe
 		const sku = await prisma.productSku.findUnique({
 			where: { id: skuId },
 			select: {
@@ -60,13 +60,13 @@ export async function updateSkuPrice(
 			return error("Variante non trouvee");
 		}
 
-		// 4. Convertir euros → centimes
+		// 5. Convertir euros → centimes
 		const priceInclTaxCents = Math.round(validation.data.priceInclTaxEuros * 100);
 		const compareAtPriceCents = validation.data.compareAtPriceEuros
 			? Math.round(validation.data.compareAtPriceEuros * 100)
 			: null;
 
-		// 5. Mettre à jour le prix
+		// 6. Mettre à jour le prix
 		await prisma.productSku.update({
 			where: { id: skuId },
 			data: {
@@ -75,7 +75,7 @@ export async function updateSkuPrice(
 			},
 		});
 
-		// 6. Invalider le cache avec les tags appropriés
+		// 7. Invalider le cache avec les tags appropriés
 		const tags = getSkuInvalidationTags(sku.sku, sku.productId, sku.product.slug, sku.id);
 		tags.forEach((tag) => updateTag(tag));
 

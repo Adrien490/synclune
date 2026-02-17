@@ -94,7 +94,7 @@ export const deleteMaterialSchema = z.object({
 });
 
 export const bulkDeleteMaterialsSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne").max(200, "Maximum 200 materiaux par operation"),
 });
 
 export const toggleMaterialStatusSchema = z.object({
@@ -103,7 +103,7 @@ export const toggleMaterialStatusSchema = z.object({
 });
 
 export const bulkToggleMaterialStatusSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne").max(200, "Maximum 200 materiaux par operation"),
 	isActive: z.boolean(),
 });
 

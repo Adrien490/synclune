@@ -10,6 +10,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { updateProductSchema } from "../schemas/product.schemas";
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
@@ -184,7 +185,7 @@ export async function updateProduct(
 				});
 				if (!productType || !productType.isActive) {
 					throw new Error(
-						"Le type de produit specifie n'existe pas ou n'est pas actif."
+						"Le type de produit spécifié n'existe pas ou n'est pas actif."
 					);
 				}
 			}
@@ -196,7 +197,7 @@ export async function updateProduct(
 					select: { id: true },
 				});
 				if (collections.length !== normalizedCollectionIds.length) {
-					throw new Error("Une ou plusieurs collections specifiees n'existent pas.");
+					throw new Error("Une ou plusieurs collections spécifiées n'existent pas.");
 				}
 			}
 
@@ -206,7 +207,18 @@ export async function updateProduct(
 					select: { id: true },
 				});
 				if (!color) {
-					throw new Error("La couleur specifiee n'existe pas.");
+					throw new Error("La couleur spécifiée n'existe pas.");
+				}
+			}
+
+			// Validate material if provided
+			if (normalizedMaterialId) {
+				const material = await tx.material.findUnique({
+					where: { id: normalizedMaterialId },
+					select: { id: true },
+				});
+				if (!material) {
+					throw new Error("Le matériau spécifié n'existe pas.");
 				}
 			}
 
@@ -293,6 +305,9 @@ export async function updateProduct(
 			updatedProduct.id
 		);
 		productTags.forEach(tag => updateTag(tag));
+
+		// Invalider le cache stock temps réel du SKU modifié
+		updateTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(validatedData.defaultSku.skuId));
 
 		// Invalider les anciennes collections
 		for (const pc of existingProduct.collections) {

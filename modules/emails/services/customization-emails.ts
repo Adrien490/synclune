@@ -1,6 +1,7 @@
 import { CustomizationRequestEmail } from "@/emails/customization-request-email"
 import { CustomizationConfirmationEmail } from "@/emails/customization-confirmation-email"
-import { EMAIL_SUBJECTS, EMAIL_ADMIN } from "../constants/email.constants"
+import { CustomizationStatusEmail } from "@/emails/customization-status-email"
+import { EMAIL_SUBJECTS, EMAIL_ADMIN, EMAIL_CONTACT } from "../constants/email.constants"
 import { renderAndSend } from "./send-email"
 import type { EmailResult } from "../types/email.types"
 
@@ -66,6 +67,47 @@ export async function sendCustomizationConfirmationEmail({
 		{
 			to: email,
 			subject: EMAIL_SUBJECTS.CUSTOMIZATION_CONFIRMATION,
+			tags: [{ name: "category", value: "order" }],
+		}
+	)
+}
+
+const CUSTOMIZATION_STATUS_SUBJECTS: Record<string, string> = {
+	IN_PROGRESS: EMAIL_SUBJECTS.CUSTOMIZATION_IN_PROGRESS,
+	COMPLETED: EMAIL_SUBJECTS.CUSTOMIZATION_COMPLETED,
+	CANCELLED: EMAIL_SUBJECTS.CUSTOMIZATION_CANCELLED,
+}
+
+/**
+ * Envoie un email de mise a jour de statut de personnalisation au client
+ */
+export async function sendCustomizationStatusEmail({
+	email,
+	firstName,
+	productTypeLabel,
+	status,
+	adminNotes,
+	details,
+}: {
+	email: string
+	firstName: string
+	productTypeLabel: string
+	status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
+	adminNotes?: string | null
+	details: string
+}): Promise<EmailResult> {
+	return renderAndSend(
+		CustomizationStatusEmail({
+			firstName,
+			productTypeLabel,
+			status,
+			adminNotes,
+			details,
+		}),
+		{
+			to: email,
+			subject: CUSTOMIZATION_STATUS_SUBJECTS[status] || EMAIL_SUBJECTS.CUSTOMIZATION_IN_PROGRESS,
+			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
 		}
 	)

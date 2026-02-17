@@ -10,6 +10,7 @@ import {
 	getProducts,
 } from "@/modules/products/data/get-products";
 import { PageHeader } from "@/shared/components/page-header";
+import { getFirstParam } from "@/shared/utils/params";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { parseFilters } from "../_utils/params";
@@ -60,15 +61,7 @@ export default async function CollectionPage({
 		notFound();
 	}
 
-	// Helper pour extraire les paramètres
-	const getFirstParam = (
-		param: string | string[] | undefined
-	): string | undefined => {
-		if (Array.isArray(param)) return param[0];
-		return param;
-	};
-
-	// Récupérer les produits avec filtres
+	// Fetch products with filters
 	const cursor = getFirstParam(searchParamsData.cursor);
 	const direction = (getFirstParam(searchParamsData.direction) || "forward") as
 		| "forward"

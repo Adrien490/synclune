@@ -28,7 +28,7 @@ export type {
 export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersReturn> {
 	"use cache: remote";
 
-	cacheDashboard();
+	cacheDashboard("dashboard-recent-orders");
 
 	// Exclure les commandes non payees (Stripe checkout abandonnes) et supprimees
 	const orders = await prisma.order.findMany({
