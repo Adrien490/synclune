@@ -1,4 +1,4 @@
-import { Fade, GlitterSparkles, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -11,6 +11,7 @@ import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
+import { CreativeProcessGlitter } from "./creative-process-glitter";
 import { CreativeProcessParallax } from "./creative-process-parallax";
 import { MobileStepCircle } from "./mobile-step-circle";
 import { ScrollProgressLine } from "./scroll-progress-line";
@@ -225,7 +226,7 @@ export async function CreativeProcess() {
 												{/* GlitterSparkles on final step (climax) */}
 												{index === processSteps.length - 1 && (
 													<div className="hidden sm:block">
-														<GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />
+														<CreativeProcessGlitter />
 													</div>
 												)}
 											</div>

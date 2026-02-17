@@ -241,6 +241,7 @@ html {
 }
 
 body {
+	position: relative;
 	overscroll-behavior-y: none;
 	/* Safe area pour notch/bords arrondis - avec fallbacks */
 	padding-top: env(safe-area-inset-top, 0);
