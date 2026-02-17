@@ -1,3 +1,4 @@
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -25,6 +26,9 @@ export async function getRefundById(
 		return null;
 	}
 
+	const admin = await isAdmin();
+	if (!admin) return null;
+
 	return fetchRefund(validation.data);
 }
 
@@ -36,7 +40,7 @@ async function fetchRefund(
 ): Promise<GetRefundReturn> {
 	"use cache";
 	cacheLife("dashboard");
-	cacheTag(ORDERS_CACHE_TAGS.LIST);
+	cacheTag(ORDERS_CACHE_TAGS.LIST, ORDERS_CACHE_TAGS.REFUNDS(params.id));
 
 	try {
 		const refund = await prisma.refund.findUnique({

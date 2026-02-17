@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { prisma } from "@/shared/lib/prisma";
+import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_CACHE_TAGS } from "../constants/cache";
 
@@ -56,14 +56,13 @@ export async function fetchWishlistItemCount(
 				wishlist: userId ? { userId } : { sessionId },
 				product: {
 					status: "PUBLIC",
-					deletedAt: null,
+					...notDeleted,
 				},
 			},
 		});
 
 		return count;
-	} catch (e) {
-		console.error("[GET_WISHLIST_ITEM_COUNT]", e);
+	} catch {
 		return 0;
 	}
 }

@@ -51,6 +51,11 @@ export async function cancelRefund(
 					select: {
 						id: true,
 						orderNumber: true,
+						user: {
+							select: {
+								id: true,
+							},
+						},
 					},
 				},
 			},
@@ -88,6 +93,9 @@ export async function cancelRefund(
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
+		if (refund.order.user?.id) {
+			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
+		}
 
 		return {
 			status: ActionStatus.SUCCESS,

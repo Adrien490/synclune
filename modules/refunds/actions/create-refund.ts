@@ -154,8 +154,11 @@ export async function createRefund(
 				};
 			}
 
-			// Utiliser le montant fourni ou calculer à partir du prix unitaire
-			const itemAmount = item.amount || orderItem.price * item.quantity;
+			// Cap the amount to the maximum possible for this item
+			const maxItemAmount = orderItem.price * item.quantity;
+			const itemAmount = item.amount != null
+				? Math.min(item.amount, maxItemAmount)
+				: maxItemAmount;
 
 			// Utiliser le restock fourni, sinon déterminer automatiquement selon le motif
 			const shouldRestock = item.restock ?? shouldRestockByDefault(validated.data.reason);

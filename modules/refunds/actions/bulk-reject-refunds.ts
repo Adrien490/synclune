@@ -100,7 +100,7 @@ export async function bulkRejectRefunds(
 					: refund.note;
 
 				await tx.refund.update({
-					where: { id: refund.id },
+					where: { id: refund.id, status: RefundStatus.PENDING },
 					data: {
 						status: RefundStatus.REJECTED,
 						note: updatedNote,

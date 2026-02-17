@@ -196,7 +196,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 										{entry.newFulfillmentStatus &&
 											!entry.newStatus && (
 												<div className="text-xs text-muted-foreground">
-													Fulfillment :{" "}
+													Traitement :{" "}
 													{getStatusLabel(
 														entry.previousFulfillmentStatus
 													)}{" "}

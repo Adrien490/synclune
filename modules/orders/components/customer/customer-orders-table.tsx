@@ -158,8 +158,11 @@ export async function CustomerOrdersTable({
 									</TableCell>
 									<TableCell className="text-right">
 										<Button variant="ghost" size="sm" asChild>
-											<Link href={`/commandes/${order.orderNumber}`}>
-												<Eye className="h-4 w-4 sm:mr-2" />
+											<Link
+												href={`/commandes/${order.orderNumber}`}
+												aria-label={`Voir la commande #${order.orderNumber}`}
+											>
+												<Eye className="h-4 w-4 sm:mr-2" aria-hidden="true" />
 												<span className="hidden sm:inline">Voir</span>
 											</Link>
 										</Button>

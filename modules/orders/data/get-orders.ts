@@ -3,6 +3,7 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/lib/pagination";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";
@@ -50,6 +51,11 @@ export async function getOrders(
 	params: GetOrdersParams
 ): Promise<GetOrdersReturn> {
 	try {
+		const admin = await requireAdmin();
+		if ("error" in admin) {
+			throw new Error("Unauthorized");
+		}
+
 		const validation = getOrdersSchema.safeParse(params);
 
 		if (!validation.success) {

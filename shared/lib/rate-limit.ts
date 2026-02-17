@@ -156,23 +156,31 @@ function cleanupExpiredEntries(): void {
  * - Whitelist: always-allowed IPs
  * - Blacklist: always-blocked IPs
  * - Global IP limit: DDoS protection (100 req/min per IP across all actions)
+ *
+ * @param identifier - Rate limit key (e.g. "user:xxx", "ip:1.2.3.4")
+ * @param config - Limit and window configuration
+ * @param ipAddress - Explicit client IP for global limit check. Required when
+ *   identifier is user/session-based, otherwise the global IP limit is bypassed.
  */
 export async function checkRateLimit(
 	identifier: string,
-	config: RateLimitConfig = {}
+	config: RateLimitConfig = {},
+	ipAddress?: string | null
 ): Promise<RateLimitResult> {
 	const { limit = 10, windowMs = 60000 } = config;
 	const now = Date.now();
 
-	const ipAddress = identifier.startsWith("ip:") ? identifier.substring(3) : null;
+	// Resolve effective IP: extract from identifier prefix OR use explicit param
+	const extractedIp = identifier.startsWith("ip:") ? identifier.substring(3) : null;
+	const effectiveIp = extractedIp || ipAddress || null;
 
 	// Whitelist
-	if (ipAddress && WHITELIST_IPS.length > 0 && WHITELIST_IPS.includes(ipAddress)) {
+	if (effectiveIp && WHITELIST_IPS.length > 0 && WHITELIST_IPS.includes(effectiveIp)) {
 		return { success: true, remaining: 999, limit: 999, reset: now + windowMs };
 	}
 
 	// Blacklist
-	if (ipAddress && BLACKLIST_IPS.length > 0 && BLACKLIST_IPS.includes(ipAddress)) {
+	if (effectiveIp && BLACKLIST_IPS.length > 0 && BLACKLIST_IPS.includes(effectiveIp)) {
 		return {
 			success: false,
 			remaining: 0,
@@ -185,11 +193,11 @@ export async function checkRateLimit(
 
 	// Use Upstash if configured
 	if (isUpstashConfigured()) {
-		return checkRateLimitUpstash(identifier, ipAddress, limit, windowMs);
+		return checkRateLimitUpstash(identifier, effectiveIp, limit, windowMs);
 	}
 
 	// Fallback to in-memory
-	return checkRateLimitInMemory(identifier, ipAddress, limit, windowMs);
+	return checkRateLimitInMemory(identifier, effectiveIp, limit, windowMs);
 }
 
 // ============================================================================

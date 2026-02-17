@@ -9,6 +9,7 @@ import {
 	GET_WISHLIST_DEFAULT_PER_PAGE,
 	GET_WISHLIST_MAX_RESULTS_PER_PAGE,
 } from "@/modules/wishlist/constants/wishlist.constants";
+import { ROUTES } from "@/shared/constants/urls";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
@@ -59,8 +60,8 @@ export default async function WishlistPage({
 				title="Mes favoris"
 				description="Retrouvez tous vos coups de cœur"
 				breadcrumbs={[
-					{ label: "Mon compte", href: "/compte" },
-					{ label: "Favoris", href: "/favoris" },
+					{ label: "Mon compte", href: ROUTES.ACCOUNT.ROOT },
+					{ label: "Favoris", href: ROUTES.ACCOUNT.FAVORITES },
 				]}
 			/>
 

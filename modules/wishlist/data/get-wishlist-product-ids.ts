@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { prisma } from "@/shared/lib/prisma";
+import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_CACHE_TAGS } from "@/modules/wishlist/constants/cache";
 
@@ -48,7 +48,7 @@ async function fetchWishlistProductIds(
 				productId: { not: null }, // Exclure les items dont le produit a été archivé
 				product: {
 					status: "PUBLIC",
-					deletedAt: null,
+					...notDeleted,
 				},
 			},
 			select: { productId: true },

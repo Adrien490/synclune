@@ -35,7 +35,12 @@ export async function bulkCancelOrders(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const idsString = formData.get("ids");
-		const ids = idsString ? JSON.parse(idsString as string) : [];
+		let ids: unknown = [];
+		try {
+			ids = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format d'IDs invalide");
+		}
 		const reason = formData.get("reason") as string | null;
 
 		const validated = validateInput(bulkCancelOrdersSchema, {

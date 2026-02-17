@@ -59,7 +59,7 @@ export async function markAsPaid(
 		}
 
 		const order = await prisma.order.findUnique({
-			where: { id },
+			where: { id, deletedAt: null },
 			select: {
 				id: true,
 				orderNumber: true,

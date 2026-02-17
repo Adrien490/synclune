@@ -1,4 +1,4 @@
-import { OrderStatus } from "@/app/generated/prisma/client";
+import { type OrderStatus } from "@/app/generated/prisma/client";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Table,
@@ -8,8 +8,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
 import type { UserOrder } from "@/modules/orders/types/user-orders.types";
+import { ORDER_STATUS_LABELS } from "@/modules/orders/constants/status-display";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { format } from "date-fns";
@@ -17,14 +19,6 @@ import { fr } from "date-fns/locale";
 import { Package } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
-
-const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-	PENDING: "En attente",
-	PROCESSING: "En traitement",
-	SHIPPED: "Expédiée",
-	DELIVERED: "Livrée",
-	CANCELLED: "Annulée",
-};
 
 const ORDER_STATUS_STYLES: Record<OrderStatus, string> = {
 	PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
@@ -74,7 +68,7 @@ export function RecentOrders({
 				</div>
 			) : (
 				<>
-					<div className="border rounded-lg">
+					<TableScrollContainer className="border rounded-lg">
 						<Table>
 							<TableHeader>
 								<TableRow>
@@ -113,14 +107,19 @@ export function RecentOrders({
 										</TableCell>
 										<TableCell>
 											<Button variant="link" size="sm" className="h-auto p-0" asChild>
-												<Link href={`/commandes/${order.orderNumber}`}>Voir</Link>
+												<Link
+													href={`/commandes/${order.orderNumber}`}
+													aria-label={`Voir la commande #${order.orderNumber}`}
+												>
+													Voir
+												</Link>
 											</Button>
 										</TableCell>
 									</TableRow>
 								))}
 							</TableBody>
 						</Table>
-					</div>
+					</TableScrollContainer>
 
 					{showViewAll && hasMoreOrders && (
 						<div className="flex justify-center">

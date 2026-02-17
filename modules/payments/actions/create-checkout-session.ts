@@ -24,7 +24,7 @@ import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
 import { getDiscountUsageCounts } from "@/modules/discounts/data/get-discount-usage-counts";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
-import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
+import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { stripe, getInvoiceFooter } from "@/shared/lib/stripe";
 import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";

@@ -36,7 +36,12 @@ export async function bulkDeleteOrders(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const idsRaw = formData.get("ids") as string;
-		const ids = idsRaw ? JSON.parse(idsRaw) : [];
+		let ids: unknown = [];
+		try {
+			ids = idsRaw ? JSON.parse(idsRaw) : [];
+		} catch {
+			return error("Format d'IDs invalide");
+		}
 
 		const validated = validateInput(bulkDeleteOrdersSchema, { ids });
 		if ("error" in validated) return validated.error;

@@ -8,7 +8,7 @@ import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
 import type { Product } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
-import type { ComponentProps, ReactNode } from "react";
+import { ViewTransition, type ComponentProps, type ReactNode } from "react";
 import type { ColorSwatch } from "@/modules/products/types/product-list.types";
 
 interface ProductCardProps {
@@ -163,6 +163,9 @@ export function ProductCard({
 
 	const isAboveFold = index !== undefined && index < 4;
 
+	// Sections that participate in shared element transitions (no collision risk)
+	const enableSharedTransition = sectionId === "catalog" || sectionId === "latest" || sectionId === "wishlist";
+
 	// Build sr-only description for screen readers (badges info)
 	const badgeDescriptions: string[] = [];
 	if (stockStatus === "out_of_stock") {
@@ -237,33 +240,48 @@ export function ProductCard({
 					className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 sm:has-[:focus-visible]:opacity-100 transition-opacity duration-200"
 				/>
 
-				{/* Primary image — stays visible under secondary on hover, or zooms if no secondary */}
-				<Image
-					src={primaryImage.url}
-					alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
-					fill
-					className={cn(
-						"object-cover rounded-lg",
-						!secondaryImage && "motion-safe:transition-[transform] motion-safe:duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
-					)}
-					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
-					blurDataURL={primaryImage.blurDataUrl ?? undefined}
-					priority={isAboveFold}
-					loading={isAboveFold ? undefined : "lazy"}
-					sizes={IMAGE_SIZES.PRODUCT_CARD}
-				/>
+				{/* Images only — scoped ViewTransition for precise morph */}
+				{(() => {
+					const images = (
+						<div className="absolute inset-0">
+							{/* Primary image — stays visible under secondary on hover, or zooms if no secondary */}
+							<Image
+								src={primaryImage.url}
+								alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+								fill
+								className={cn(
+									"object-cover rounded-lg",
+									!secondaryImage && "motion-safe:transition-[transform] motion-safe:duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
+								)}
+								placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+								blurDataURL={primaryImage.blurDataUrl ?? undefined}
+								priority={isAboveFold}
+								loading={isAboveFold ? undefined : "lazy"}
+								sizes={IMAGE_SIZES.PRODUCT_CARD}
+							/>
 
-				{/* Secondary image — appears on hover for a different angle (desktop only) */}
-				{secondaryImage && (
-					<Image
-						src={secondaryImage.url}
-						alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
-						fill
-						className="object-cover rounded-lg opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
-						loading="lazy"
-						sizes={IMAGE_SIZES.PRODUCT_CARD}
-					/>
-				)}
+							{/* Secondary image — appears on hover for a different angle (desktop only) */}
+							{secondaryImage && (
+								<Image
+									src={secondaryImage.url}
+									alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+									fill
+									className="object-cover rounded-lg opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
+									loading="lazy"
+									sizes={IMAGE_SIZES.PRODUCT_CARD}
+								/>
+							)}
+						</div>
+					);
+
+					return enableSharedTransition ? (
+						<ViewTransition name={`product-${product.id}`} share="vt-product-image">
+							{images}
+						</ViewTransition>
+					) : (
+						images
+					);
+				})()}
 
 				{/* Add to cart button - Desktop (client island) */}
 				{defaultSku && stockStatus !== "out_of_stock" && (

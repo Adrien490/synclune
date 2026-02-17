@@ -24,7 +24,7 @@ export default async function ShopLayout({
 				aria-label="Contenu principal"
 				className="min-h-screen"
 			>
-				<ViewTransition>
+				<ViewTransition default="vt-page">
 					{children}
 				</ViewTransition>
 			</main>

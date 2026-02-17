@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { PageHeader } from "@/shared/components/page-header";
 import type { ErrorPageProps } from "@/shared/types/error.types";
 import { Heart, RefreshCw } from "lucide-react";
+import { ROUTES } from "@/shared/constants/urls";
 import Link from "next/link";
 import {
 	Empty,
@@ -20,8 +21,8 @@ export default function WishlistError({ reset }: ErrorPageProps) {
 				title="Mes favoris"
 				description="Une erreur est survenue"
 				breadcrumbs={[
-					{ label: "Mon compte", href: "/compte" },
-					{ label: "Favoris", href: "/favoris" },
+					{ label: "Mon compte", href: ROUTES.ACCOUNT.ROOT },
+					{ label: "Favoris", href: ROUTES.ACCOUNT.FAVORITES },
 				]}
 			/>
 
@@ -45,7 +46,7 @@ export default function WishlistError({ reset }: ErrorPageProps) {
 									Réessayer
 								</Button>
 								<Button asChild variant="outline" size="lg">
-									<Link href="/produits">Continuer mes achats</Link>
+									<Link href={ROUTES.SHOP.PRODUCTS}>Continuer mes achats</Link>
 								</Button>
 							</div>
 						</EmptyContent>

@@ -416,12 +416,23 @@ export const ADMIN_ORDER_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour les mutations unitaires sur commandes (admin)
+ *
+ * Moderee car actions admin individuelles (cancel, ship, deliver, etc.)
+ */
+export const ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
  * Toutes les limites admin commandes
  */
 export const ADMIN_ORDER_LIMITS = {
 	RESEND_EMAIL: ADMIN_ORDER_RESEND_EMAIL_LIMIT,
 	MARK_AS_PAID: ADMIN_ORDER_MARK_AS_PAID_LIMIT,
 	BULK_OPERATIONS: ADMIN_ORDER_BULK_OPERATIONS_LIMIT,
+	SINGLE_OPERATIONS: ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT,
 } as const;
 
 /**

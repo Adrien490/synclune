@@ -40,6 +40,7 @@ import { ORDER_NOTES_DIALOG_ID } from "../order-notes-dialog";
 import { RESEND_EMAIL_DIALOG_ID } from "../resend-email-dialog";
 import { MARK_AS_RETURNED_DIALOG_ID } from "../mark-as-returned-alert-dialog";
 import { REVERT_TO_PROCESSING_DIALOG_ID } from "../revert-to-processing-dialog";
+import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
 import type { Carrier } from "@/modules/orders/utils/carrier.utils";
 import type { OrderHeaderProps } from "./types";
 
@@ -54,24 +55,9 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
 	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
 
-	// State machine conditions
-	const isPending = order.status === OrderStatus.PENDING;
-	const isProcessing = order.status === OrderStatus.PROCESSING;
-	const isShipped = order.status === OrderStatus.SHIPPED;
+	const permissions = getOrderPermissions(order);
 	const isDelivered = order.status === OrderStatus.DELIVERED;
-	const isCancelled = order.status === OrderStatus.CANCELLED;
-
-	const isPaid = order.paymentStatus === PaymentStatus.PAID;
-	const isUnpaid = order.paymentStatus === PaymentStatus.PENDING;
-
-	const canMarkAsPaid = isPending && isUnpaid;
-	const canCancel = !isCancelled && !isDelivered;
-	const canMarkAsShipped = isProcessing && isPaid;
-	const canMarkAsDelivered = isShipped;
-	const canRefund = (isProcessing || isShipped || isDelivered) && isPaid;
-	const canUpdateTracking = (isShipped || isDelivered) && order.trackingNumber;
 	const canMarkAsReturned = isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
-	const canRevertToProcessing = isShipped;
 
 	// Handlers
 	const handleMarkAsPaid = () => {
@@ -166,19 +152,19 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 			{/* Actions */}
 			<div className="flex items-center gap-2">
 				{/* Action primaire contextuelle */}
-				{canMarkAsPaid && (
+				{permissions.canMarkAsPaid && (
 					<Button size="sm" onClick={handleMarkAsPaid}>
 						<CreditCard className="h-4 w-4" aria-hidden="true" />
 						Marquer payée
 					</Button>
 				)}
-				{canMarkAsShipped && (
+				{permissions.canMarkAsShipped && (
 					<Button size="sm" onClick={handleMarkAsShipped}>
 						<Truck className="h-4 w-4" aria-hidden="true" />
 						Marquer expédiée
 					</Button>
 				)}
-				{canMarkAsDelivered && (
+				{permissions.canMarkAsDelivered && (
 					<Button size="sm" onClick={handleMarkAsDelivered}>
 						<CheckCircle className="h-4 w-4" aria-hidden="true" />
 						Marquer livrée
@@ -202,13 +188,13 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 							<Mail className="h-4 w-4" aria-hidden="true" />
 							Renvoyer un email
 						</DropdownMenuItem>
-						{canUpdateTracking && (
+						{permissions.canUpdateTracking && (
 							<DropdownMenuItem onClick={handleUpdateTracking}>
 								<Edit className="h-4 w-4" aria-hidden="true" />
 								Modifier le suivi
 							</DropdownMenuItem>
 						)}
-						{canRefund && (
+						{permissions.canRefund && (
 							<DropdownMenuItem asChild>
 								<Link href={`/admin/ventes/remboursements/nouveau?orderId=${order.id}`}>
 									<RotateCcw className="h-4 w-4" aria-hidden="true" />
@@ -223,7 +209,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 							</DropdownMenuItem>
 						)}
 						<DropdownMenuSeparator />
-						{canRevertToProcessing && (
+						{permissions.canRevertToProcessing && (
 							<DropdownMenuItem
 								onClick={handleRevertToProcessing}
 								className="text-destructive focus:text-destructive"
@@ -232,7 +218,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 								Annuler l'expédition
 							</DropdownMenuItem>
 						)}
-						{canCancel && (
+						{permissions.canCancel && (
 							<DropdownMenuItem
 								onClick={handleCancel}
 								className="text-destructive focus:text-destructive"

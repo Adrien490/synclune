@@ -15,7 +15,7 @@
  * 3. Copier les IDs (shr_xxx) et les coller ci-dessous
  */
 
-import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
+import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { type ShippingCountry } from "@/shared/constants/countries";
 
 // ==============================================================================

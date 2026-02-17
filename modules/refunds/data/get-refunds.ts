@@ -1,4 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import {
 	buildCursorPagination,
 	processCursorResults,
@@ -47,6 +48,19 @@ export async function getRefunds(
 
 	if (!validation.success) {
 		console.error("[GET_REFUNDS] Invalid parameters:", validation.error.issues);
+		return {
+			refunds: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		};
+	}
+
+	const admin = await isAdmin();
+	if (!admin) {
 		return {
 			refunds: [],
 			pagination: {

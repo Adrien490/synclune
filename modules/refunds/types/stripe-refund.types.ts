@@ -6,8 +6,8 @@ export interface CreateStripeRefundParams {
 	chargeId?: string
 	/** Montant à rembourser en centimes */
 	amount: number
-	/** Raison du remboursement (pour Stripe) */
-	reason?: Stripe.RefundCreateParams.Reason
+	/** Raison du remboursement (RefundReason interne, mappée vers Stripe) */
+	reason?: string
 	/** Métadonnées additionnelles */
 	metadata?: Record<string, string>
 	/** Clé d'idempotence pour éviter les doublons */

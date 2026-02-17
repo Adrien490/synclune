@@ -13,5 +13,4 @@ export type CreateCheckoutSessionResult = {
 // SHIPPING ZONE TYPES (re-exported from orders module)
 // ============================================================================
 
-// Re-export pour compatibilité - les types canoniques sont dans orders/utils/postal-zone.utils
-export type { ShippingZone, ShippingZoneResult } from "@/modules/orders/utils/postal-zone.utils";
+export type { ShippingZone, ShippingZoneResult } from "@/modules/orders/services/shipping-zone.service";

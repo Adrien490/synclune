@@ -10,6 +10,8 @@ import { sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails"
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
 
@@ -33,6 +35,9 @@ export async function updateTracking(
 	try {
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const id = formData.get("id") as string;
 		const trackingNumber = formData.get("trackingNumber") as string;
@@ -60,7 +65,7 @@ export async function updateTracking(
 		// Transaction: fetch + validate status + update atomically (prevents race condition)
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
-				where: { id },
+				where: { id, deletedAt: null },
 				select: {
 					id: true,
 					orderNumber: true,

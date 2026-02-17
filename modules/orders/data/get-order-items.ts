@@ -6,7 +6,7 @@ import {
 	processCursorResults,
 } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheOrdersDashboard } from "../constants/cache";
+import { cacheOrdersDashboard, ORDERS_CACHE_TAGS } from "../constants/cache";
 import { z } from "zod";
 
 import {
@@ -90,7 +90,7 @@ async function fetchOrderItems(
 	userId?: string
 ): Promise<GetOrderItemsReturn> {
 	"use cache";
-	cacheOrdersDashboard();
+	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
 
 	const sortOrder = (params.sortOrder ||
 		GET_ORDER_ITEMS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;

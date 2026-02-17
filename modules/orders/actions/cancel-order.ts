@@ -7,6 +7,8 @@ import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/stat
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -37,6 +39,9 @@ export async function cancelOrder(
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
 
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
 		const sanitizedReason = reason ? sanitizeText(reason) : null;
@@ -51,7 +56,7 @@ export async function cancelOrder(
 
 		// Récupérer la commande avec ses items pour la restauration du stock
 		const order = await prisma.order.findUnique({
-			where: { id },
+			where: { id, deletedAt: null },
 			select: {
 				id: true,
 				orderNumber: true,

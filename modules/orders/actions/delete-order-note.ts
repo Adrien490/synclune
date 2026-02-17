@@ -5,6 +5,8 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteOrderNoteSchema } from "../schemas/order.schemas";
 import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
 
@@ -18,6 +20,9 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 		if ("error" in adminCheck) {
 			return adminCheck.error;
 		}
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Validation des entrées
 		const validated = validateInput(deleteOrderNoteSchema, { noteId });

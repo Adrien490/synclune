@@ -8,6 +8,16 @@ import type {
 
 export type { CreateStripeRefundParams, StripeRefundStatus, StripeRefundResult };
 
+// Map internal RefundReason to Stripe's reason parameter
+const STRIPE_REASON_MAP: Record<string, Stripe.RefundCreateParams.Reason> = {
+	FRAUD: "fraudulent",
+	CUSTOMER_REQUEST: "requested_by_customer",
+	DEFECTIVE: "requested_by_customer",
+	WRONG_ITEM: "requested_by_customer",
+	LOST_IN_TRANSIT: "requested_by_customer",
+	OTHER: "requested_by_customer",
+};
+
 /**
  * Crée un remboursement via l'API Stripe
  *
@@ -29,7 +39,7 @@ export async function createStripeRefund(
 		// Construire les paramètres du remboursement
 		const refundParams: Stripe.RefundCreateParams = {
 			amount: params.amount,
-			reason: params.reason || "requested_by_customer",
+			reason: (params.reason && STRIPE_REASON_MAP[params.reason]) || "requested_by_customer",
 			metadata: params.metadata,
 		};
 
@@ -66,9 +76,24 @@ export async function createStripeRefund(
 			// Peut arriver si retry webhook ou hash collision idempotency key
 			if (error.code === "charge_already_refunded") {
 				console.log("[STRIPE_REFUND] Charge already refunded, treating as success (idempotence)");
+
+				// Recover the existing refund ID from Stripe
+				let existingRefundId: string | undefined;
+				try {
+					const existingRefunds = await stripe.refunds.list({
+						...(params.chargeId ? { charge: params.chargeId } : {}),
+						...(params.paymentIntentId ? { payment_intent: params.paymentIntentId } : {}),
+						limit: 1,
+					});
+					existingRefundId = existingRefunds.data[0]?.id;
+				} catch {
+					console.warn("[STRIPE_REFUND] Could not recover existing refund ID");
+				}
+
 				return {
 					success: true,
 					pending: false,
+					refundId: existingRefundId,
 				};
 			}
 

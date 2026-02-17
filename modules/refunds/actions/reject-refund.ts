@@ -57,6 +57,7 @@ export async function rejectRefund(
 						orderNumber: true,
 						user: {
 							select: {
+								id: true,
 								email: true,
 								name: true,
 							},
@@ -109,6 +110,9 @@ export async function rejectRefund(
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
+		if (refund.order.user?.id) {
+			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
+		}
 
 		// Send rejection email to customer (non-blocking)
 		if (refund.order.user?.email) {

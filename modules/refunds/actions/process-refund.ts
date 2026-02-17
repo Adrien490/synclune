@@ -24,6 +24,7 @@ type RefundLockRow = {
 	id: string;
 	status: string;
 	amount: number;
+	reason: string;
 	order_id: string;
 	order_number: string;
 	order_total: number;
@@ -85,6 +86,7 @@ export async function processRefund(
 					r.id,
 					r.status::text,
 					r.amount,
+					r.reason::text,
 					o.id as order_id,
 					o."orderNumber" as order_number,
 					o.total as order_total,
@@ -93,6 +95,7 @@ export async function processRefund(
 				FROM "Refund" r
 				INNER JOIN "Order" o ON r."orderId" = o.id
 				WHERE r.id = ${id}
+				AND r."deletedAt" IS NULL
 				FOR UPDATE OF r
 			`;
 
@@ -151,6 +154,7 @@ export async function processRefund(
 			paymentIntentId: refundData.refund.stripe_payment_intent_id || undefined,
 			chargeId: refundData.refund.stripe_charge_id || undefined,
 			amount: refundData.refund.amount,
+			reason: refundData.refund.reason,
 			metadata: {
 				refund_id: refundData.refund.id,
 				order_number: refundData.refund.order_number,

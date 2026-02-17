@@ -12,6 +12,8 @@ import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-e
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
 import { bulkMarkAsDeliveredSchema } from "../schemas/order.schemas";
@@ -35,8 +37,16 @@ export async function bulkMarkAsDelivered(
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
 
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.BULK_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const idsString = formData.get("ids");
-		const ids = idsString ? JSON.parse(idsString as string) : [];
+		let ids: unknown = [];
+		try {
+			ids = idsString ? JSON.parse(idsString as string) : [];
+		} catch {
+			return error("Format d'IDs invalide");
+		}
 		const sendEmail = formData.get("sendEmail") as string | null;
 
 		const validated = validateInput(bulkMarkAsDeliveredSchema, {

@@ -89,7 +89,7 @@ export async function bulkApproveRefunds(
 		await prisma.$transaction(async (tx) => {
 			for (const refund of refunds) {
 				await tx.refund.update({
-					where: { id: refund.id },
+					where: { id: refund.id, status: RefundStatus.PENDING },
 					data: { status: RefundStatus.APPROVED },
 				});
 

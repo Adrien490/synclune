@@ -9,7 +9,7 @@ import {
 	SHIPPING_RATES,
 	type ShippingRate,
 } from "@/modules/orders/constants/shipping-rates";
-import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
+import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 import type { AllowedShippingCountry } from "../types/order.types";
 

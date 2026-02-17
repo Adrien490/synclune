@@ -4,7 +4,7 @@ import {
 	processCursorResults,
 } from "@/shared/lib/pagination";
 import { cacheWishlist } from "@/modules/wishlist/constants/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 
 import {
@@ -100,7 +100,7 @@ export async function fetchWishlist(
 			wishlist: userId ? { userId } : { sessionId },
 			product: {
 				status: "PUBLIC" as const,
-				deletedAt: null,
+				...notDeleted,
 			},
 		};
 
@@ -142,8 +142,7 @@ export async function fetchWishlist(
 			pagination,
 			totalCount,
 		};
-	} catch (error) {
-		console.error("[GET_WISHLIST]", error);
+	} catch {
 		return {
 			items: [],
 			pagination: {

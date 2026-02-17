@@ -16,6 +16,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { z } from "zod";
 import type { ResendEmailType } from "../types/email.types";
 
 // Re-export du type pour compatibilité
@@ -37,9 +38,15 @@ export async function resendOrderEmail(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.RESEND_EMAIL);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Récupérer la commande avec uniquement les champs nécessaires
+		// 3. Validate orderId
+		const idResult = z.cuid2().safeParse(orderId);
+		if (!idResult.success) {
+			return error("ID de commande invalide");
+		}
+
+		// 4. Récupérer la commande avec uniquement les champs nécessaires
 		const order = await prisma.order.findUnique({
-			where: { id: orderId },
+			where: { id: orderId, deletedAt: null },
 			select: {
 				orderNumber: true,
 				status: true,

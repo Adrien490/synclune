@@ -1,5 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { WishlistGridSkeleton } from "@/modules/wishlist/components/wishlist-grid-skeleton";
+import { ROUTES } from "@/shared/constants/urls";
 
 export default function WishlistLoading() {
 	return (
@@ -8,8 +9,8 @@ export default function WishlistLoading() {
 				title="Mes favoris"
 				description="Retrouvez tous vos coups de cœur"
 				breadcrumbs={[
-					{ label: "Mon compte", href: "/compte" },
-					{ label: "Favoris", href: "/favoris" },
+					{ label: "Mon compte", href: ROUTES.ACCOUNT.ROOT },
+					{ label: "Favoris", href: ROUTES.ACCOUNT.FAVORITES },
 				]}
 			/>
 

@@ -11,6 +11,8 @@ import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-e
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
 
@@ -42,6 +44,9 @@ export async function markAsShipped(
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
 
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const id = formData.get("id") as string;
 		const trackingNumber = formData.get("trackingNumber") as string;
 		const trackingUrl = formData.get("trackingUrl") as string | null;
@@ -65,7 +70,7 @@ export async function markAsShipped(
 
 		// Récupérer la commande avec les données nécessaires pour l'email
 		const order = await prisma.order.findUnique({
-			where: { id },
+			where: { id, deletedAt: null },
 			select: {
 				id: true,
 				orderNumber: true,
