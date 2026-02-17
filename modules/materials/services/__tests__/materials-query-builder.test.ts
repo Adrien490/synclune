@@ -4,10 +4,22 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	Prisma: { QueryMode: { insensitive: "insensitive" } },
 }));
 
+import type { GetMaterialsParams } from "../../types/materials.types";
 import {
 	buildMaterialSearchConditions,
 	buildMaterialWhereClause,
 } from "../materials-query-builder";
+
+// Helper to create partial params (only search & filters are used by the builder)
+function params(partial: Partial<GetMaterialsParams> = {}): GetMaterialsParams {
+	return {
+		direction: "forward",
+		perPage: 20,
+		sortBy: "name-ascending",
+		filters: {},
+		...partial,
+	} as GetMaterialsParams;
+}
 
 describe("buildMaterialSearchConditions", () => {
 	it("should return null when search is an empty string", () => {
