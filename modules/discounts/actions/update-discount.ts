@@ -53,9 +53,9 @@ export async function updateDiscount(
 		// Sanitize text input
 		const sanitizedCode = sanitizeText(data.code);
 
-		// Vérifier que le discount existe
+		// Vérifier que le discount existe (et n'est pas supprimé)
 		const existing = await prisma.discount.findUnique({
-			where: { id },
+			where: { id, deletedAt: null },
 			select: { id: true, code: true },
 		});
 
@@ -65,8 +65,8 @@ export async function updateDiscount(
 
 		// Vérifier l'unicité du code si modifié
 		if (sanitizedCode !== existing.code) {
-			const codeExists = await prisma.discount.findUnique({
-				where: { code: sanitizedCode },
+			const codeExists = await prisma.discount.findFirst({
+				where: { code: sanitizedCode, deletedAt: null },
 				select: { id: true },
 			});
 			if (codeExists) {

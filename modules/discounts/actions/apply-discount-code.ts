@@ -22,13 +22,11 @@ export async function applyDiscountCode(
 	_prevState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
-	// Rate limiting based on IP
+	// Rate limiting based on IP (fallback to "unknown" to prevent bypass)
 	const headersList = await headers();
-	const ip = await getClientIp(headersList);
-	if (ip) {
-		const rateCheck = await enforceRateLimit(ip, PAYMENT_LIMITS.VALIDATE_DISCOUNT);
-		if ("error" in rateCheck) return rateCheck.error;
-	}
+	const ip = (await getClientIp(headersList)) || "unknown";
+	const rateCheck = await enforceRateLimit(ip, PAYMENT_LIMITS.VALIDATE_DISCOUNT);
+	if ("error" in rateCheck) return rateCheck.error;
 
 	const code = formData.get("code") as string;
 	const subtotal = Number(formData.get("subtotal"));

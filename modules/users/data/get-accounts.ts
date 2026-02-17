@@ -4,9 +4,8 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/lib/pagination";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
 import { USERS_CACHE_TAGS } from "../constants/cache";
 
@@ -87,7 +86,7 @@ async function fetchAccounts(
 	params: GetAccountsParams
 ): Promise<GetAccountsReturn> {
 	"use cache";
-	cacheDashboard();
+	cacheLife("dashboard");
 	cacheTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 
 	const sortOrder = (params.sortOrder ||

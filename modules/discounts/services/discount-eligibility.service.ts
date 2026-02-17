@@ -1,4 +1,3 @@
-import { getDiscountUsageCounts } from "../data/get-discount-usage-counts";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type {
 	DiscountValidation,
@@ -15,8 +14,14 @@ export {
 	type DiscountStatus,
 } from "../services/discount-validation.service";
 
+type UsageCounts = {
+	userCount: number;
+	emailCount: number;
+};
+
 /**
  * Vérifie toutes les conditions d'éligibilité d'un code promo
+ * Pure function: no I/O, usage counts must be provided by the caller.
  *
  * Conditions vérifiées :
  * 1. Code actif
@@ -25,10 +30,11 @@ export {
  * 4. Limite d'utilisation globale (maxUsageCount)
  * 5. Limite d'utilisation par utilisateur (maxUsagePerUser) + guest checkout par email
  */
-export async function checkDiscountEligibility(
+export function checkDiscountEligibility(
 	discount: DiscountValidation,
-	context: DiscountApplicationContext
-): Promise<EligibilityCheckResult> {
+	context: DiscountApplicationContext,
+	usageCounts?: UsageCounts
+): EligibilityCheckResult {
 	const { subtotal, userId, customerEmail } = context;
 
 	// 1. Vérifier si actif
@@ -63,12 +69,8 @@ export async function checkDiscountEligibility(
 	}
 
 	// 5. Vérifier le nombre max d'utilisations par utilisateur
-	if (discount.maxUsagePerUser) {
-		const { userCount, emailCount } = await getDiscountUsageCounts({
-			discountId: discount.id,
-			userId,
-			customerEmail,
-		});
+	if (discount.maxUsagePerUser && usageCounts) {
+		const { userCount, emailCount } = usageCounts;
 
 		if (userId && userCount >= discount.maxUsagePerUser) {
 			return {

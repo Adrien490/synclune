@@ -57,10 +57,14 @@ export const auth = betterAuth({
 		sendResetPassword: async ({ user, url, token }) => {
 			// Better Auth génère automatiquement l'URL avec /api/auth/reset-password/{token}?callbackURL=...
 			// On envoie cette URL directement dans l'email
-			await sendPasswordResetEmail({
-				to: user.email,
-				url,
-			});
+			try {
+				await sendPasswordResetEmail({
+					to: user.email,
+					url,
+				});
+			} catch (error) {
+				console.error("[AUTH] Failed to send password reset email:", error)
+			}
 		},
 		onPasswordReset: async ({ user }) => {
 			// Mot de passe réinitialisé
@@ -77,10 +81,14 @@ export const auth = betterAuth({
 			const baseUrl = `${urlObj.protocol}//${urlObj.host}`;
 			const verificationUrl = `${baseUrl}/verifier-email?token=${token}`;
 
-			await sendVerificationEmail({
-				to: user.email,
-				url: verificationUrl,
-			});
+			try {
+				await sendVerificationEmail({
+					to: user.email,
+					url: verificationUrl,
+				});
+			} catch (error) {
+				console.error("[AUTH] Failed to send verification email:", error)
+			}
 		},
 		sendOnSignUp: true, // Envoi automatique à l'inscription
 		autoSignInAfterVerification: false, // Pas de connexion automatique après validation - l'utilisateur doit se connecter manuellement

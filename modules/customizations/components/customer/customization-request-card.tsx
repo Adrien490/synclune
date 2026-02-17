@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { format } from "date-fns";
@@ -73,9 +74,11 @@ export function CustomizationRequestCard({
 									className="h-10 w-10 rounded-md bg-muted overflow-hidden shrink-0"
 								>
 									{imageUrl && (
-										<img
+										<Image
 											src={imageUrl}
 											alt={product.title}
+											width={40}
+											height={40}
 											className="h-full w-full object-cover"
 										/>
 									)}

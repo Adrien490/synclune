@@ -48,11 +48,9 @@ export function BulkDeleteDiscountsAlertDialog() {
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="ids"
-						value={JSON.stringify(dialog.data?.discountIds ?? [])}
-					/>
+					{(dialog.data?.discountIds ?? []).map((id) => (
+						<input key={id} type="hidden" name="ids" value={id} />
+					))}
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>

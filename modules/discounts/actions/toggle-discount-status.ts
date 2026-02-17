@@ -28,7 +28,7 @@ export async function toggleDiscountStatus(
 		if ("error" in validated) return validated.error;
 
 		const discount = await prisma.discount.findUnique({
-			where: { id },
+			where: { id, deletedAt: null },
 			select: { id: true, code: true, isActive: true },
 		});
 

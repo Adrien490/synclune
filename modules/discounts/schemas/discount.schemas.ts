@@ -94,7 +94,7 @@ export const validateDiscountCodeSchema = z.object({
 const baseDiscountSchema = z.object({
 	code: discountCodeSchema,
 	type: z.enum(DiscountType),
-	value: z.number().int().positive("La valeur doit être positive"),
+	value: z.number().int().positive("La valeur doit être positive").max(100_000_00, "La valeur ne peut pas dépasser 100 000€"),
 	minOrderAmount: z.number().int().nonnegative().optional().nullable(),
 	maxUsageCount: z.number().int().positive().optional().nullable(),
 	maxUsagePerUser: z.number().int().positive().optional().nullable(),
@@ -155,7 +155,8 @@ export const deleteDiscountSchema = z.object({
 export const bulkDeleteDiscountsSchema = z.object({
 	ids: z
 		.array(z.cuid2())
-		.min(1, "Au moins un code doit être sélectionné"),
+		.min(1, "Au moins un code doit être sélectionné")
+		.max(100, "Maximum 100 codes à la fois"),
 });
 
 // ============================================================================
@@ -174,6 +175,6 @@ export const toggleDiscountStatusSchema = z.object({
  * Schema pour activer/désactiver plusieurs codes promo en masse
  */
 export const bulkToggleDiscountStatusSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins un code doit être sélectionné"),
+	ids: z.array(z.cuid2()).min(1, "Au moins un code doit être sélectionné").max(100, "Maximum 100 codes à la fois"),
 	isActive: z.boolean(),
 });

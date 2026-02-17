@@ -34,7 +34,7 @@ export const customizationSchema = z
 			.or(z.literal("")),
 
 		// Type de produit (optionnel)
-		productTypeLabel: z.string().optional().default(""),
+		productTypeLabel: z.string().max(100, { message: "Le type de produit ne peut pas dépasser 100 caractères" }).optional().default(""),
 
 		// Détails de la personnalisation
 		details: z
@@ -52,11 +52,6 @@ export const customizationSchema = z
 
 		// Anti-spam (honeypot)
 		website: z.string().optional().or(z.literal("")),
-	})
-	// Validation du honeypot (anti-spam)
-	.refine((data) => !data.website || data.website === "", {
-		message: "Champ invalide détecté",
-		path: ["website"],
 	});
 
 export type CustomizationFormData = z.infer<typeof customizationSchema>;

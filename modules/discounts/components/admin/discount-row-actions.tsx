@@ -68,7 +68,7 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 					Modifier
 				</DropdownMenuItem>
 				<DropdownMenuItem
-					onClick={() => duplicate(discount.id, discount.code)}
+					onClick={() => duplicate(discount.id)}
 					disabled={isDuplicating}
 				>
 					<Copy className="h-4 w-4" />

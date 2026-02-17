@@ -113,17 +113,21 @@ export async function createReviewResponse(
 		tags.forEach((tag) => updateTag(tag))
 		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST)
 
-		// 6. Envoyer l'email de notification au client
+		// 6. Envoyer l'email de notification au client (non-bloquant)
 		if (review.user.email) {
-			await sendReviewResponseEmail({
-				to: review.user.email,
-				customerName: review.user.name?.split(" ")[0] || "Cliente",
-				productTitle: review.product.title,
-				reviewContent: review.content,
-				responseContent: sanitizedContent,
-				responseAuthorName: user.name || "Équipe Synclune",
-				productUrl: buildUrl(ROUTES.SHOP.PRODUCT(review.product.slug)),
-			})
+			try {
+				await sendReviewResponseEmail({
+					to: review.user.email,
+					customerName: review.user.name?.split(" ")[0] || "Cliente",
+					productTitle: review.product.title,
+					reviewContent: review.content,
+					responseContent: sanitizedContent,
+					responseAuthorName: user.name || "Équipe Synclune",
+					productUrl: buildUrl(ROUTES.SHOP.PRODUCT(review.product.slug)),
+				})
+			} catch (emailError) {
+				console.error("[REVIEW_RESPONSE] Failed to send notification email:", emailError)
+			}
 		}
 
 		return success("Réponse publiée avec succès", { id: response.id })

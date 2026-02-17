@@ -1,6 +1,9 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import {
+	cacheDashboard,
+	DASHBOARD_CACHE_TAGS,
+} from "@/modules/dashboard/constants/cache";
 
 import type { GetKpisReturn } from "../types/dashboard.types";
 
@@ -13,9 +16,9 @@ export type { GetKpisReturn } from "../types/dashboard.types";
 
 async function fetchMonthlyRevenue() {
 	const now = new Date();
-	const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-	const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+	const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+	const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+	const lastMonthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59));
 
 	const [currentMonthOrders, lastMonthOrders] = await Promise.all([
 		prisma.order.aggregate({
@@ -46,9 +49,9 @@ async function fetchMonthlyRevenue() {
 
 async function fetchMonthlyOrders() {
 	const now = new Date();
-	const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-	const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+	const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+	const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+	const lastMonthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59));
 
 	const [currentMonthCount, lastMonthCount] = await Promise.all([
 		prisma.order.count({
@@ -77,9 +80,9 @@ async function fetchMonthlyOrders() {
 
 async function fetchAverageOrderValue() {
 	const now = new Date();
-	const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-	const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+	const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+	const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+	const lastMonthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59));
 
 	const [currentMonth, lastMonth] = await Promise.all([
 		prisma.order.aggregate({
@@ -124,7 +127,7 @@ async function fetchAverageOrderValue() {
 export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 	"use cache: remote";
 
-	cacheDashboard("dashboard-kpis");
+	cacheDashboard(DASHBOARD_CACHE_TAGS.KPIS);
 
 	const [monthlyRevenue, monthlyOrders, averageOrderValue] = await Promise.all(
 		[fetchMonthlyRevenue(), fetchMonthlyOrders(), fetchAverageOrderValue()],

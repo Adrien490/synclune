@@ -33,7 +33,7 @@ export async function bulkToggleDiscountStatus(
 		const { ids, isActive } = validated.data;
 
 		await prisma.discount.updateMany({
-			where: { id: { in: ids } },
+			where: { id: { in: ids }, deletedAt: null },
 			data: { isActive },
 		});
 

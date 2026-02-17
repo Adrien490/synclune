@@ -29,10 +29,11 @@ export async function bulkDeleteDiscounts(
 		const validated = validateInput(bulkDeleteDiscountsSchema, { ids });
 		if ("error" in validated) return validated.error;
 
-		// Récupérer les discounts sans utilisation
+		// Récupérer les discounts sans utilisation (exclure les déjà supprimés)
 		const discounts = await prisma.discount.findMany({
 			where: {
 				id: { in: validated.data.ids },
+				deletedAt: null,
 			},
 			select: {
 				id: true,

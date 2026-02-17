@@ -5,6 +5,7 @@ import { validateDiscountCodeSchema } from "../schemas/discount.schemas";
 import { GET_DISCOUNT_VALIDATION_SELECT, DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import { calculateDiscountAmount } from "../services/discount-calculation.service";
 import { checkDiscountEligibility } from "../services/discount-eligibility.service";
+import { getDiscountUsageCounts } from "../data/get-discount-usage-counts";
 import type { ValidateDiscountCodeReturn, DiscountApplicationContext } from "../types/discount.types";
 
 /**
@@ -32,7 +33,16 @@ async function lookupAndValidate(
 		customerEmail,
 	};
 
-	const eligibility = await checkDiscountEligibility(discount, context);
+	// Fetch usage counts for per-user limit check (I/O done here, not in the service)
+	const usageCounts = discount.maxUsagePerUser
+		? await getDiscountUsageCounts({
+				discountId: discount.id,
+				userId,
+				customerEmail,
+			})
+		: undefined;
+
+	const eligibility = checkDiscountEligibility(discount, context, usageCounts);
 
 	if (!eligibility.eligible) {
 		return { valid: false, error: eligibility.error };

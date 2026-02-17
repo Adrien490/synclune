@@ -106,7 +106,6 @@ export default async function ProductsAdminPage({
 		getProductTypes({
 			perPage: 100,
 			sortBy: "label-ascending",
-			sortOrder: "asc",
 		}),
 		getCollections({
 			perPage: 100,

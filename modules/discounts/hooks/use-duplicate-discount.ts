@@ -4,7 +4,6 @@ import { useActionState, useTransition } from "react";
 import { duplicateDiscount } from "@/modules/discounts/actions/admin/duplicate-discount";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import type { ActionState } from "@/shared/types/server-action";
 
 interface UseDuplicateDiscountOptions {
 	onSuccess?: (data: { id: string; code: string }) => void;
@@ -19,8 +18,7 @@ export function useDuplicateDiscount(options?: UseDuplicateDiscountOptions) {
 
 	const [, formAction, isActionPending] = useActionState(
 		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				duplicateDiscount(formData.get("discountId") as string),
+			duplicateDiscount,
 			createToastCallbacks({
 				loadingMessage: "Duplication en cours...",
 				onSuccess: (result) => {
@@ -38,7 +36,7 @@ export function useDuplicateDiscount(options?: UseDuplicateDiscountOptions) {
 		undefined
 	);
 
-	const duplicate = (discountId: string, _discountCode: string) => {
+	const duplicate = (discountId: string) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("discountId", discountId);

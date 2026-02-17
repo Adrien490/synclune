@@ -22,7 +22,7 @@ type DiscountUsageCountsResult = {
 export async function getDiscountUsageCounts(
 	params: DiscountUsageCountsParams
 ): Promise<DiscountUsageCountsResult> {
-	"use cache";
+	"use cache: private";
 
 	cacheLife("cart");
 	cacheTag(DISCOUNT_CACHE_TAGS.USAGE(params.discountId));

@@ -1,11 +1,17 @@
 "use server";
 
+import { z } from "zod";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
-import { handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 import { getDiscountInvalidationTags } from "../../constants/cache";
+
+const duplicateDiscountSchema = z.object({
+	discountId: z.cuid2("ID invalide"),
+});
 
 /**
  * Server Action ADMIN pour dupliquer un code promo
@@ -15,46 +21,68 @@ import { getDiscountInvalidationTags } from "../../constants/cache";
  * - usageCount remis à 0
  * - isActive à false (pour éviter activation accidentelle)
  */
-export async function duplicateDiscount(discountId: string): Promise<ActionState> {
+export async function duplicateDiscount(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
-		// 1. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Récupérer le code promo original
+		const validated = validateInput(duplicateDiscountSchema, {
+			discountId: formData.get("discountId") as string,
+		});
+		if ("error" in validated) return validated.error;
+
+		const { discountId } = validated.data;
+
 		const original = await prisma.discount.findUnique({
-			where: { id: discountId },
+			where: { id: discountId, deletedAt: null },
+			select: {
+				code: true,
+				type: true,
+				value: true,
+				minOrderAmount: true,
+				maxUsageCount: true,
+				maxUsagePerUser: true,
+				startsAt: true,
+				endsAt: true,
+			},
 		});
 
 		if (!original) {
 			return notFound("Code promo");
 		}
 
-		// 3. Générer un nouveau code unique
-		let newCode = `${original.code}-COPY`;
-		let suffix = 1;
+		// Find existing copies in a single query to determine the next suffix
+		const baseCode = original.code;
+		const existingCopies = await prisma.discount.findMany({
+			where: {
+				code: { startsWith: `${baseCode}-COPY` },
+				deletedAt: null,
+			},
+			select: { code: true },
+		});
 
-		// Vérifier si le code existe déjà et incrémenter le suffixe si nécessaire
-		while (true) {
-			const existing = await prisma.discount.findUnique({
-				where: { code: newCode },
-			});
+		const existingCodes = new Set(existingCopies.map((d) => d.code));
+		let newCode = `${baseCode}-COPY`;
 
-			if (!existing) break;
-
-			suffix++;
-			newCode = `${original.code}-COPY-${suffix}`;
-
-			// Sécurité: éviter boucle infinie
-			if (suffix > 100) {
-				return error("Impossible de generer un code unique. Supprimez certaines copies.");
+		if (existingCodes.has(newCode)) {
+			let suffix = 2;
+			while (existingCodes.has(`${baseCode}-COPY-${suffix}`)) {
+				suffix++;
+				if (suffix > 100) {
+					return error("Impossible de generer un code unique. Supprimez certaines copies.");
+				}
 			}
+			newCode = `${baseCode}-COPY-${suffix}`;
 		}
 
-		// 4. Créer la copie
+		const sanitizedCode = sanitizeText(newCode);
+
 		const duplicate = await prisma.discount.create({
 			data: {
-				code: newCode,
+				code: sanitizedCode,
 				type: original.type,
 				value: original.value,
 				minOrderAmount: original.minOrderAmount,
@@ -63,11 +91,11 @@ export async function duplicateDiscount(discountId: string): Promise<ActionState
 				startsAt: original.startsAt,
 				endsAt: original.endsAt,
 				usageCount: 0,
-				isActive: false, // Désactivé par défaut
+				isActive: false,
 			},
+			select: { id: true, code: true },
 		});
 
-		// 5. Invalider le cache
 		getDiscountInvalidationTags(duplicate.code).forEach(tag => updateTag(tag));
 
 		return success(`Code promo duplique: ${duplicate.code}`, { id: duplicate.id, code: duplicate.code });

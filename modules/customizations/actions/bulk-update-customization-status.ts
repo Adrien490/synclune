@@ -13,7 +13,7 @@ import {
 	error,
 } from "@/shared/lib/actions";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
-import { getCustomizationInvalidationTags } from "../constants/cache";
+import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
 import { bulkUpdateStatusSchema } from "../schemas/bulk-update-status.schema";
 
 // ============================================================================
@@ -48,7 +48,7 @@ export async function bulkUpdateCustomizationStatus(
 				id: { in: requestIds },
 				...notDeleted,
 			},
-			select: { id: true, status: true, email: true, firstName: true, productTypeLabel: true, details: true, adminNotes: true },
+			select: { id: true, userId: true, status: true, email: true, firstName: true, productTypeLabel: true, details: true, adminNotes: true },
 		});
 
 		if (existingRequests.length === 0) {
@@ -64,12 +64,12 @@ export async function bulkUpdateCustomizationStatus(
 			)
 			.map((r) => r.id);
 
-		// 5. Update all requests
-		const updatePromises = [];
+		// 5. Update all requests atomically
+		const otherIds = requestIds.filter((id) => !needsRespondedAt.includes(id));
+		const txOperations = [];
 
-		// Update requests that need respondedAt
 		if (needsRespondedAt.length > 0) {
-			updatePromises.push(
+			txOperations.push(
 				prisma.customizationRequest.updateMany({
 					where: { id: { in: needsRespondedAt } },
 					data: { status, respondedAt: new Date() },
@@ -77,10 +77,8 @@ export async function bulkUpdateCustomizationStatus(
 			);
 		}
 
-		// Update requests that don't need respondedAt
-		const otherIds = requestIds.filter((id) => !needsRespondedAt.includes(id));
 		if (otherIds.length > 0) {
-			updatePromises.push(
+			txOperations.push(
 				prisma.customizationRequest.updateMany({
 					where: { id: { in: otherIds } },
 					data: { status },
@@ -88,10 +86,23 @@ export async function bulkUpdateCustomizationStatus(
 			);
 		}
 
-		await Promise.all(updatePromises);
+		await prisma.$transaction(txOperations);
 
-		// 6. Invalidate cache
+		// 6. Invalidate cache (LIST, STATS, DETAIL per request, USER_REQUESTS per user)
 		const tags = getCustomizationInvalidationTags();
+		for (const request of existingRequests) {
+			tags.push(CUSTOMIZATION_CACHE_TAGS.DETAIL(request.id));
+		}
+		// Collect unique userIds for cache invalidation
+		const userIds = new Set<string>();
+		for (const request of existingRequests) {
+			if (request.userId) {
+				userIds.add(request.userId);
+			}
+		}
+		for (const uid of userIds) {
+			tags.push(CUSTOMIZATION_CACHE_TAGS.USER_REQUESTS(uid));
+		}
 		tags.forEach((tag) => updateTag(tag));
 
 		// 7. Send status emails if applicable
@@ -105,7 +116,12 @@ export async function bulkUpdateCustomizationStatus(
 						status,
 						adminNotes: request.adminNotes,
 						details: request.details,
-					}).catch(() => {});
+					}).catch((emailError) => {
+						console.error("[EMAIL] Bulk status email failed", {
+							requestId: request.id,
+							error: emailError,
+						});
+					});
 				}
 			}
 		}

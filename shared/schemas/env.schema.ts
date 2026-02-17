@@ -29,6 +29,9 @@ export const envSchema = z.object({
 	RESEND_API_KEY: z
 		.string()
 		.startsWith("re_", "RESEND_API_KEY doit commencer par 're_'"),
+	RESEND_CONTACT_EMAIL: z
+		.string()
+		.email("RESEND_CONTACT_EMAIL doit être un email valide"),
 	CONTACT_ADRIEN_EMAIL: z
 		.string()
 		.email("CONTACT_ADRIEN_EMAIL doit être un email valide"),

@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
 
 const GET_USER_CUSTOMIZATION_REQUESTS_SELECT = {
@@ -46,9 +46,14 @@ async function fetchUserCustomizationRequests(userId: string) {
 	cacheLife("dashboard");
 	cacheTag(CUSTOMIZATION_CACHE_TAGS.USER_REQUESTS(userId));
 
-	return prisma.customizationRequest.findMany({
-		where: { userId, deletedAt: null },
-		select: GET_USER_CUSTOMIZATION_REQUESTS_SELECT,
-		orderBy: { createdAt: "desc" },
-	});
+	try {
+		return await prisma.customizationRequest.findMany({
+			where: { userId, ...notDeleted },
+			select: GET_USER_CUSTOMIZATION_REQUESTS_SELECT,
+			orderBy: { createdAt: "desc" },
+		});
+	} catch (error) {
+		console.error("[GET_USER_CUSTOMIZATION_REQUESTS]", error);
+		return [];
+	}
 }

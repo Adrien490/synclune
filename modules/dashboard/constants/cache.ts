@@ -28,6 +28,6 @@ export const DASHBOARD_CACHE_TAGS = {
  * Uses the "dashboard" profile (1min stale, 30s revalidate, 5min expire).
  * @param tag - Cache tag for targeted invalidation (use DASHBOARD_CACHE_TAGS)
  */
-export function cacheDashboard(tag: string) {
+export function cacheDashboard(tag: (typeof DASHBOARD_CACHE_TAGS)[keyof typeof DASHBOARD_CACHE_TAGS]) {
 	cacheDefault(tag);
 }

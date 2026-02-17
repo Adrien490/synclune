@@ -88,7 +88,12 @@ export async function updateCustomizationStatus(
 				status,
 				adminNotes: existing.adminNotes,
 				details: existing.details,
-			}).catch(() => {});
+			}).catch((emailError) => {
+				console.error("[EMAIL] Status email failed", {
+					requestId,
+					error: emailError,
+				});
+			});
 		}
 
 		return success("Statut mis a jour");

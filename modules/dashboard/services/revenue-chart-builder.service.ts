@@ -22,8 +22,7 @@ export function fillMissingDates(
 	const data: RevenueDataPoint[] = [];
 
 	for (let i = 0; i < days; i++) {
-		const date = new Date(startDate);
-		date.setDate(date.getDate() + i);
+		const date = new Date(startDate.getTime() + i * 86_400_000);
 		const dateKey = date.toISOString().split("T")[0];
 		data.push({
 			date: dateKey,

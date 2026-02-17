@@ -76,9 +76,6 @@ export default async function ProductTypesAdminPage({
 		| "label-descending"
 		| "products-ascending"
 		| "products-descending";
-	const sortOrder = (getFirstParam(params.sortOrder) || "asc") as
-		| "asc"
-		| "desc";
 	const search = getFirstParam(params.search);
 
 	// La promise de types de produits n'est PAS awaitée pour permettre le streaming
@@ -87,7 +84,6 @@ export default async function ProductTypesAdminPage({
 		direction,
 		perPage,
 		sortBy,
-		sortOrder,
 		search,
 		filters: parseFilters(params),
 	});

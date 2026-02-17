@@ -5,7 +5,10 @@ import {
 	DEFAULT_PER_PAGE,
 } from "@/shared/lib/pagination";
 
+import { isAdmin } from "@/modules/auth/utils/guards";
+
 import { cacheCustomizationList } from "../constants/cache";
+import { SORT_OPTIONS } from "../constants/sort.constants";
 import type {
 	GetCustomizationRequestsParams,
 	GetCustomizationRequestsResult,
@@ -17,24 +20,21 @@ export type { GetCustomizationRequestsResult };
 const MAX_RESULTS_PER_PAGE = 200;
 
 // ============================================================================
-// SORT OPTIONS
-// ============================================================================
-
-export const CUSTOMIZATION_SORT_OPTIONS = {
-	RECENT: "recent",
-	OLDEST: "oldest",
-	STATUS: "status",
-} as const;
-
-// ============================================================================
 // DATA FUNCTION
 // ============================================================================
 
-export async function getCustomizationRequests({
+export async function getCustomizationRequests(params: GetCustomizationRequestsParams = {}): Promise<GetCustomizationRequestsResult> {
+	const admin = await isAdmin();
+	if (!admin) return { items: [], pagination: { nextCursor: null, prevCursor: null, hasNextPage: false, hasPreviousPage: false } };
+
+	return fetchCustomizationRequests(params);
+}
+
+async function fetchCustomizationRequests({
 	cursor,
 	direction = "forward",
 	perPage = DEFAULT_PER_PAGE,
-	sortBy = CUSTOMIZATION_SORT_OPTIONS.RECENT,
+	sortBy = SORT_OPTIONS.CREATED_DESC,
 	filters,
 }: GetCustomizationRequestsParams = {}): Promise<GetCustomizationRequestsResult> {
 	"use cache";
@@ -55,9 +55,9 @@ export async function getCustomizationRequests({
 
 		// Build orderBy
 		const orderBy =
-			sortBy === CUSTOMIZATION_SORT_OPTIONS.OLDEST
+			sortBy === SORT_OPTIONS.CREATED_ASC
 				? { createdAt: "asc" as const }
-				: sortBy === CUSTOMIZATION_SORT_OPTIONS.STATUS
+				: sortBy === SORT_OPTIONS.STATUS_ASC
 					? [{ status: "asc" as const }, { createdAt: "desc" as const }]
 					: { createdAt: "desc" as const };
 

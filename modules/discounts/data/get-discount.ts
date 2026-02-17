@@ -38,7 +38,7 @@ async function fetchDiscount(
 
 	try {
 		const discount = await prisma.discount.findUnique({
-			where: { id: params.id },
+			where: { id: params.id, deletedAt: null },
 			select: GET_DISCOUNT_SELECT,
 		});
 

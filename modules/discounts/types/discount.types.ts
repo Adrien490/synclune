@@ -32,7 +32,7 @@ export type DiscountFilters = z.infer<typeof discountFiltersSchema>;
 /**
  * Statut possible d'un code promo
  */
-export type DiscountStatus = "active" | "inactive" | "exhausted";
+export type DiscountStatus = "active" | "inactive" | "exhausted" | "scheduled" | "expired";
 
 // ============================================================================
 // ENTITY TYPES

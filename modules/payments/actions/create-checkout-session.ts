@@ -22,6 +22,7 @@ import { getShippingOptionsForAddress } from "@/modules/orders/constants/stripe-
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
+import { getDiscountUsageCounts } from "@/modules/discounts/data/get-discount-usage-counts";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
 import { stripe, getInvoiceFooter } from "@/shared/lib/stripe";
@@ -343,8 +344,17 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 
 				const discount = discountRows[0];
 
+				// Fetch per-user usage counts before eligibility check (I/O outside service)
+				const usageCounts = discount.maxUsagePerUser
+					? await getDiscountUsageCounts({
+							discountId: discount.id,
+							userId: userId || undefined,
+							customerEmail: finalEmail || undefined,
+						})
+					: undefined;
+
 				// Vérifier l'éligibilité (montant min, limites usage, dates)
-				const eligibility = await checkDiscountEligibility(
+				const eligibility = checkDiscountEligibility(
 					{
 						id: discount.id,
 						code: discount.code,
@@ -362,7 +372,8 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 						subtotal, // Montant hors frais de port
 						userId: userId || undefined,
 						customerEmail: finalEmail || undefined,
-					}
+					},
+					usageCounts
 				);
 
 				if (!eligibility.eligible) {
@@ -499,17 +510,30 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 				});
 			}
 
-			return { order: newOrder, appliedDiscountId };
+			return { order: newOrder, appliedDiscountId, discountAmount, appliedDiscountCode };
 		});
 
-		const { order, appliedDiscountId } = orderResult;
+		const { order, appliedDiscountId, discountAmount: orderDiscountAmount, appliedDiscountCode: orderDiscountCode } = orderResult;
 
 		// Invalidate discount usage cache after successful checkout
 		if (appliedDiscountId) {
 			updateTag(DISCOUNT_CACHE_TAGS.USAGE(appliedDiscountId));
 		}
 
-		// 9. Créer la session Stripe Checkout
+		// 9. Créer un coupon Stripe si un code promo est appliqué
+		// Nécessaire pour que Stripe facture le montant réduit (et que la facture soit correcte)
+		let stripeCouponId: string | undefined;
+		if (orderDiscountAmount > 0 && orderDiscountCode) {
+			const coupon = await stripe.coupons.create({
+				amount_off: orderDiscountAmount,
+				currency: DEFAULT_CURRENCY,
+				duration: "once",
+				name: `Code promo ${orderDiscountCode}`,
+			});
+			stripeCouponId = coupon.id;
+		}
+
+		// 10. Créer la session Stripe Checkout
 		// 🔴 CORRECTION CRITIQUE : Idempotency key pour éviter double facturation
 		const idempotencyKey = `checkout-${order.id}`;
 
@@ -524,6 +548,9 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 				// payment_method_types omitted: Stripe auto-enables all methods configured in Dashboard
 				// (card, Apple Pay, Google Pay, Link, Klarna, Bancontact, iDEAL, etc.)
 				line_items: lineItems,
+
+				// Appliquer le coupon de réduction si un code promo est utilisé
+				...(stripeCouponId && { discounts: [{ coupon: stripeCouponId }] }),
 
 				// ❌ STRIPE TAX DÉSACTIVÉ - Micro-entreprise exonérée de TVA (art. 293 B du CGI)
 				// Les prix sont des prix FINAUX sans TVA
@@ -607,6 +634,10 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 				await prisma.discountUsage.deleteMany({
 					where: { orderId: order.id },
 				});
+			}
+			// Supprimer le coupon Stripe orphelin
+			if (stripeCouponId) {
+				await stripe.coupons.del(stripeCouponId).catch(() => {});
 			}
 			// Re-throw pour que handleActionError le traite
 			throw stripeError;

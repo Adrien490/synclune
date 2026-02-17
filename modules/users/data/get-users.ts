@@ -4,8 +4,8 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/lib/pagination";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { cacheLife, cacheTag } from "next/cache";
 import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
@@ -93,7 +93,8 @@ async function fetchUsers(
 	fuzzyIds?: string[] | null
 ): Promise<GetUsersReturn> {
 	"use cache";
-	cacheDashboard(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+	cacheLife("dashboard");
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 
 	const sortOrder = (params.sortOrder ||
 		GET_USERS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;

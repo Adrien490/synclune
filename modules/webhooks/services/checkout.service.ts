@@ -363,34 +363,37 @@ export async function cancelExpiredOrder(orderId: string): Promise<{ cancelled: 
 		return { cancelled: false, orderNumber: order.orderNumber };
 	}
 
-	// Release discount usages + cancel order in a single transaction for atomicity
-	const discountUsages = await prisma.discountUsage.findMany({
-		where: { orderId },
-		select: { id: true, discountId: true },
-	});
+	// Release discount usages + cancel order in a single interactive transaction
+	// The findMany MUST be inside the transaction to prevent double-decrement on webhook replay
+	await prisma.$transaction(async (tx) => {
+		const discountUsages = await tx.discountUsage.findMany({
+			where: { orderId },
+			select: { id: true, discountId: true },
+		});
 
-	await prisma.$transaction([
-		...discountUsages.map((usage) =>
-			prisma.discount.update({
+		for (const usage of discountUsages) {
+			await tx.discount.update({
 				where: { id: usage.discountId },
 				data: { usageCount: { decrement: 1 } },
-			})
-		),
-		...(discountUsages.length > 0
-			? [prisma.discountUsage.deleteMany({ where: { orderId } })]
-			: []),
-		prisma.order.update({
+			});
+		}
+
+		if (discountUsages.length > 0) {
+			await tx.discountUsage.deleteMany({ where: { orderId } });
+		}
+
+		await tx.order.update({
 			where: { id: orderId },
 			data: {
 				status: "CANCELLED",
 				paymentStatus: "FAILED",
 			},
-		}),
-	]);
+		});
 
-	if (discountUsages.length > 0) {
-		console.log(`🔓 [WEBHOOK] Released ${discountUsages.length} discount usage(s) for expired order ${orderId}`);
-	}
+		if (discountUsages.length > 0) {
+			console.log(`🔓 [WEBHOOK] Released ${discountUsages.length} discount usage(s) for expired order ${orderId}`);
+		}
+	});
 
 	console.log(`✅ [WEBHOOK] Order ${orderId} (${order.orderNumber}) marked as cancelled due to session expiration`);
 	return { cancelled: true, orderNumber: order.orderNumber };

@@ -113,7 +113,11 @@ async function fetchDiscounts(
 
 		return { discounts: items, pagination };
 	} catch (error) {
-		const baseReturn = {
+		if (error instanceof Error) {
+			console.error("[get-discounts]", error.message);
+		}
+
+		return {
 			discounts: [],
 			pagination: {
 				nextCursor: null,
@@ -121,14 +125,6 @@ async function fetchDiscounts(
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
-			error:
-				process.env.NODE_ENV === "development"
-					? error instanceof Error
-						? error.message
-						: "Unknown error"
-					: "Failed to fetch discounts",
 		};
-
-		return baseReturn as GetDiscountsReturn & { error: string };
 	}
 }

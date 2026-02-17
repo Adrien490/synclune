@@ -1,5 +1,8 @@
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import {
+	cacheDashboard,
+	DASHBOARD_CACHE_TAGS,
+} from "@/modules/dashboard/constants/cache";
 import {
 	buildRevenueMap,
 	fillMissingDates,
@@ -33,12 +36,10 @@ type RevenueRow = {
 export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartReturn> {
 	"use cache: remote";
 
-	cacheDashboard("dashboard-revenue-chart");
+	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 
 	const now = new Date();
-	const thirtyDaysAgo = new Date(now);
-	thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-	thirtyDaysAgo.setHours(0, 0, 0, 0);
+	const thirtyDaysAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30));
 
 	// Agregation cote DB - plus efficace que de recuperer tous les ordres
 	const revenueRows = await prisma.$queryRaw<RevenueRow[]>`

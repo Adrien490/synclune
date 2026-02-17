@@ -1,14 +1,32 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { isAdmin } from "@/modules/auth/utils/guards";
 
 import { cacheCustomizationStats } from "../constants/cache";
 import { OPEN_STATUSES, CLOSED_STATUSES } from "../constants/status.constants";
 import type { CustomizationStats } from "../types/customization.types";
+
+const EMPTY_STATS: CustomizationStats = {
+	total: 0,
+	pending: 0,
+	inProgress: 0,
+	completed: 0,
+	open: 0,
+	closed: 0,
+	thisMonth: 0,
+};
 
 // ============================================================================
 // DATA FUNCTION
 // ============================================================================
 
 export async function getCustomizationStats(): Promise<CustomizationStats> {
+	const admin = await isAdmin();
+	if (!admin) return EMPTY_STATS;
+
+	return fetchCustomizationStats();
+}
+
+async function fetchCustomizationStats(): Promise<CustomizationStats> {
 	"use cache";
 	cacheCustomizationStats();
 
@@ -61,14 +79,6 @@ export async function getCustomizationStats(): Promise<CustomizationStats> {
 		};
 	} catch (error) {
 		console.error("[GET_CUSTOMIZATION_STATS]", error);
-		return {
-			total: 0,
-			pending: 0,
-			inProgress: 0,
-			completed: 0,
-			open: 0,
-			closed: 0,
-			thisMonth: 0,
-		};
+		return EMPTY_STATS;
 	}
 }

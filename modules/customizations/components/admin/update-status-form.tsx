@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useState } from "react";
 import type { CustomizationRequestStatus } from "../../types/customization.types";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -15,7 +15,6 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { updateCustomizationStatus } from "@/modules/customizations/actions/update-customization-status";
 import { CUSTOMIZATION_STATUS_LABELS } from "@/modules/customizations/constants/status.constants";
-import { useState } from "react";
 
 interface UpdateStatusFormProps {
 	requestId: string;
@@ -26,10 +25,9 @@ export function UpdateStatusForm({
 	requestId,
 	currentStatus,
 }: UpdateStatusFormProps) {
-	const [isPending, startTransition] = useTransition();
 	const [selectedStatus, setSelectedStatus] = useState<CustomizationRequestStatus>(currentStatus);
 
-	const [, action] = useActionState(
+	const [, action, isPending] = useActionState(
 		withCallbacks(updateCustomizationStatus, createToastCallbacks({
 			loadingMessage: "Mise à jour du statut...",
 		})),
@@ -39,12 +37,10 @@ export function UpdateStatusForm({
 	const handleSubmit = () => {
 		if (selectedStatus === currentStatus) return;
 
-		startTransition(() => {
-			const formData = new FormData();
-			formData.set("requestId", requestId);
-			formData.set("status", selectedStatus);
-			action(formData);
-		});
+		const formData = new FormData();
+		formData.set("requestId", requestId);
+		formData.set("status", selectedStatus);
+		action(formData);
 	};
 
 	const statusOptions = Object.entries(CUSTOMIZATION_STATUS_LABELS).map(
