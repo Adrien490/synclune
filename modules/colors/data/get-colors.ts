@@ -54,7 +54,15 @@ export async function getColors(
 	const validation = getColorsSchema.safeParse(params);
 
 	if (!validation.success) {
-		throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
+		return {
+			colors: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		};
 	}
 
 	return fetchColors(validation.data);

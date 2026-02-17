@@ -7,10 +7,14 @@ import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 
 const MAX_ADDRESSES_PER_USER = 10;
+const ADDRESS_LIMIT_ERROR = `Vous ne pouvez pas enregistrer plus de ${MAX_ADDRESSES_PER_USER} adresses`;
+
+class LimitExceededError extends Error {}
 
 /**
  * Server Action pour créer une nouvelle adresse
@@ -48,20 +52,36 @@ export async function createAddress(
 
 		const validatedData = validated.data;
 
-		// 4. Vérifier si c'est la première adresse (définir par défaut)
-		const addressCount = await prisma.address.count({
-			where: { userId: user.id },
-		});
+		// 4. Sanitize text fields
+		validatedData.firstName = sanitizeText(validatedData.firstName);
+		validatedData.lastName = sanitizeText(validatedData.lastName);
+		validatedData.address1 = sanitizeText(validatedData.address1);
+		if (validatedData.address2) {
+			validatedData.address2 = sanitizeText(validatedData.address2);
+		}
+		validatedData.city = sanitizeText(validatedData.city);
 
-		const isDefault = addressCount === 0;
+		// 5. Count + create in transaction to prevent race conditions
+		const { isDefault } = await prisma.$transaction(async (tx) => {
+			const addressCount = await tx.address.count({
+				where: { userId: user.id },
+			});
 
-		// 5. Créer l'adresse
-		await prisma.address.create({
-			data: {
-				...validatedData,
-				userId: user.id,
-				isDefault,
-			},
+			if (addressCount >= MAX_ADDRESSES_PER_USER) {
+				throw new LimitExceededError();
+			}
+
+			const isFirst = addressCount === 0;
+
+			await tx.address.create({
+				data: {
+					...validatedData,
+					userId: user.id,
+					isDefault: isFirst,
+				},
+			});
+
+			return { isDefault: isFirst };
 		});
 
 		// 6. Revalidation du cache avec tags
@@ -73,6 +93,9 @@ export async function createAddress(
 				: "Adresse ajoutee avec succes"
 		);
 	} catch (e) {
+		if (e instanceof LimitExceededError) {
+			return error(ADDRESS_LIMIT_ERROR);
+		}
 		return handleActionError(e, "Erreur lors de la création de l'adresse");
 	}
 }

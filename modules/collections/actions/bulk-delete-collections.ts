@@ -13,7 +13,7 @@ import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { bulkDeleteCollectionsSchema } from "../schemas/collection.schemas";
 
 export async function bulkDeleteCollections(
-	_prevState: unknown,
+	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {

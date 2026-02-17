@@ -5,13 +5,14 @@ import { ActionStatus } from "@/shared/types/server-action";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrisma, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockValidateInput, mockHandleActionError, mockSuccess, mockError } =
+const { mockPrisma, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockValidateInput, mockHandleActionError, mockSuccess, mockError, mockSanitizeText } =
 	vi.hoisted(() => ({
 		mockPrisma: {
 			address: {
 				count: vi.fn(),
 				create: vi.fn(),
 			},
+			$transaction: vi.fn(),
 		},
 		mockRequireAuth: vi.fn(),
 		mockEnforceRateLimit: vi.fn(),
@@ -20,6 +21,7 @@ const { mockPrisma, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockVa
 		mockHandleActionError: vi.fn(),
 		mockSuccess: vi.fn(),
 		mockError: vi.fn(),
+		mockSanitizeText: vi.fn(),
 	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -45,6 +47,10 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+}));
+
+vi.mock("@/shared/lib/sanitize", () => ({
+	sanitizeText: mockSanitizeText,
 }));
 
 // Mock addressSchema - validation is handled by mocked validateInput
@@ -106,7 +112,15 @@ describe("createAddress", () => {
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 
 		// Default: validation passes
-		mockValidateInput.mockReturnValue({ data: validatedAddressData });
+		mockValidateInput.mockReturnValue({ data: { ...validatedAddressData } });
+
+		// Default: sanitizeText passes through
+		mockSanitizeText.mockImplementation((text: string) => text);
+
+		// Default: transaction executes the callback with prisma-like tx
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+			return fn(mockPrisma);
+		});
 
 		// Default: user has 2 addresses (not first, not at limit)
 		mockPrisma.address.count.mockResolvedValue(2);
@@ -134,7 +148,7 @@ describe("createAddress", () => {
 		const result = await createAddress(undefined, validFormData);
 
 		expect(result).toEqual(authError);
-		expect(mockPrisma.address.create).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("should return rate limit error when rate limited", async () => {
@@ -144,7 +158,7 @@ describe("createAddress", () => {
 		const result = await createAddress(undefined, validFormData);
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockPrisma.address.create).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("should return validation error for invalid data", async () => {
@@ -154,21 +168,31 @@ describe("createAddress", () => {
 		const result = await createAddress(undefined, validFormData);
 
 		expect(result).toEqual(validationError);
-		expect(mockPrisma.address.create).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+	});
+
+	it("should sanitize text fields before persisting", async () => {
+		mockPrisma.address.count.mockResolvedValue(0);
+		mockSanitizeText.mockImplementation((text: string) => `sanitized:${text}`);
+
+		await createAddress(undefined, validFormData);
+
+		expect(mockSanitizeText).toHaveBeenCalledWith("Marie");
+		expect(mockSanitizeText).toHaveBeenCalledWith("Dupont");
+		expect(mockSanitizeText).toHaveBeenCalledWith("12 Rue de la Paix");
+		expect(mockSanitizeText).toHaveBeenCalledWith("Paris");
 	});
 
 	it("should create the first address as default (isDefault = true)", async () => {
-		// First address: count = 0
 		mockPrisma.address.count.mockResolvedValue(0);
 
 		await createAddress(undefined, validFormData);
 
 		expect(mockPrisma.address.create).toHaveBeenCalledWith({
-			data: {
-				...validatedAddressData,
+			data: expect.objectContaining({
 				userId: "user-123",
 				isDefault: true,
-			},
+			}),
 		});
 	});
 
@@ -182,17 +206,15 @@ describe("createAddress", () => {
 	});
 
 	it("should create a subsequent address as non-default (isDefault = false)", async () => {
-		// Already has 2 addresses
 		mockPrisma.address.count.mockResolvedValue(2);
 
 		await createAddress(undefined, validFormData);
 
 		expect(mockPrisma.address.create).toHaveBeenCalledWith({
-			data: {
-				...validatedAddressData,
+			data: expect.objectContaining({
 				userId: "user-123",
 				isDefault: false,
-			},
+			}),
 		});
 	});
 
@@ -207,33 +229,17 @@ describe("createAddress", () => {
 
 	describe("address limit enforcement", () => {
 		it("should reject when user has reached MAX_ADDRESSES_PER_USER (10)", async () => {
-			// Re-mock count to return the limit value for this specific scenario
-			vi.clearAllMocks();
-			mockRequireAuth.mockResolvedValue({ user: { id: "user-123" } });
-			mockEnforceRateLimit.mockResolvedValue({ success: true });
-			mockValidateInput.mockReturnValue({ data: validatedAddressData });
 			mockPrisma.address.count.mockResolvedValue(10);
-			mockSuccess.mockImplementation((message: string) => ({ status: ActionStatus.SUCCESS, message }));
-			mockError.mockImplementation((message: string) => ({ status: ActionStatus.ERROR, message }));
-			mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({ status: ActionStatus.ERROR, message: fallback }));
 
 			const result = await createAddress(undefined, validFormData);
 
-			// Verify the address was not created and the error message is returned
 			expect(mockPrisma.address.create).not.toHaveBeenCalled();
 			expect(result.status).toBe(ActionStatus.ERROR);
 			expect(result.message).toContain("10 adresses");
 		});
 
 		it("should reject when user has more than 10 addresses", async () => {
-			vi.clearAllMocks();
-			mockRequireAuth.mockResolvedValue({ user: { id: "user-123" } });
-			mockEnforceRateLimit.mockResolvedValue({ success: true });
-			mockValidateInput.mockReturnValue({ data: validatedAddressData });
 			mockPrisma.address.count.mockResolvedValue(11);
-			mockSuccess.mockImplementation((message: string) => ({ status: ActionStatus.SUCCESS, message }));
-			mockError.mockImplementation((message: string) => ({ status: ActionStatus.ERROR, message }));
-			mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({ status: ActionStatus.ERROR, message: fallback }));
 
 			const result = await createAddress(undefined, validFormData);
 
@@ -241,6 +247,23 @@ describe("createAddress", () => {
 			expect(result.status).toBe(ActionStatus.ERROR);
 			expect(result.message).toContain("10 adresses");
 		});
+
+		it("should allow creation at 9 addresses (just under the limit)", async () => {
+			mockPrisma.address.count.mockResolvedValue(9);
+
+			const result = await createAddress(undefined, validFormData);
+
+			expect(mockPrisma.address.create).toHaveBeenCalled();
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+		});
+	});
+
+	it("should use a transaction for count + create", async () => {
+		mockPrisma.address.count.mockResolvedValue(0);
+
+		await createAddress(undefined, validFormData);
+
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
 	});
 
 	it("should invalidate cache after successful creation", async () => {
@@ -248,7 +271,6 @@ describe("createAddress", () => {
 
 		await createAddress(undefined, validFormData);
 
-		// Cache invalidation uses updateTag with user-scoped tag
 		expect(mockUpdateTag).toHaveBeenCalledWith(`addresses-user-user-123`);
 	});
 
@@ -263,8 +285,7 @@ describe("createAddress", () => {
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.address.count.mockResolvedValue(0);
-		mockPrisma.address.create.mockRejectedValue(new Error("DB connection failed"));
+		mockPrisma.$transaction.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await createAddress(undefined, validFormData);
 

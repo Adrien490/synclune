@@ -1,6 +1,6 @@
 import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/_utils/types";
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
+import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { getPublicCollectionSlugs } from "@/modules/collections/data/get-public-collection-slugs";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
@@ -48,13 +48,13 @@ export default async function CollectionPage({
 	searchParams,
 }: CollectionPageProps) {
 	// Note: Pas de "use cache" ici car la page utilise searchParams (filtres dynamiques)
-	// Le cache est géré au niveau de getCollectionBySlug() et getProducts()
+	// Le cache est géré au niveau de getStorefrontCollectionBySlug() et getProducts()
 
 	const { slug } = await params;
 	const searchParamsData = await searchParams;
 
-	// Récupérer la collection
-	const collection = await getCollectionBySlug({ slug });
+	// Récupérer la collection (select léger pour le storefront)
+	const collection = await getStorefrontCollectionBySlug({ slug });
 
 	// Vérifier que la collection existe et est publiée
 	if (!collection || collection.status !== CollectionStatus.PUBLIC) {

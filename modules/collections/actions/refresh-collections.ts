@@ -10,7 +10,7 @@ import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshCollections(
-	_prevState: unknown,
+	_: ActionState | undefined,
 	_formData: FormData
 ): Promise<ActionState> {
 	try {

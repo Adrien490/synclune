@@ -43,8 +43,14 @@ async function fetchGuestCartForMerge(sessionId: string) {
 
 	cacheCart(undefined, sessionId);
 
-	return prisma.cart.findUnique({
-		where: { sessionId },
+	return prisma.cart.findFirst({
+		where: {
+			sessionId,
+			OR: [
+				{ expiresAt: null },
+				{ expiresAt: { gt: new Date() } },
+			],
+		},
 		include: {
 			items: {
 				include: {

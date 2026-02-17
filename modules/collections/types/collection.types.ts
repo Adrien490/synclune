@@ -3,6 +3,7 @@ import { z } from "zod";
 import { PaginationInfo } from "@/shared/lib/pagination";
 import {
 	GET_COLLECTION_SELECT,
+	GET_COLLECTION_STOREFRONT_SELECT,
 	GET_COLLECTIONS_SELECT,
 } from "../constants/collection.constants";
 import {
@@ -30,6 +31,10 @@ export type GetCollectionParams = z.infer<typeof getCollectionSchema>;
 
 export type GetCollectionReturn = Prisma.CollectionGetPayload<{
 	select: typeof GET_COLLECTION_SELECT;
+}>;
+
+export type GetCollectionStorefrontReturn = Prisma.CollectionGetPayload<{
+	select: typeof GET_COLLECTION_STOREFRONT_SELECT;
 }>;
 
 // ============================================================================
@@ -63,9 +68,6 @@ export type CollectionOption = {
 	id: string;
 	name: string;
 };
-
-/** Type minimal pour les formulaires d'édition */
-export type CollectionFormData = Pick<Collection, "id" | "name" | "slug" | "description">;
 
 // ============================================================================
 // MUTATION TYPES

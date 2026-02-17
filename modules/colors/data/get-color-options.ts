@@ -10,7 +10,7 @@ export type { ColorOption };
 // ============================================================================
 
 /**
- * Récupère toutes les couleurs pour les selects/filtres
+ * Récupère toutes les couleurs actives pour les selects/filtres
  * Version simplifiée sans pagination
  */
 export async function getColorOptions(): Promise<ColorOption[]> {
@@ -26,6 +26,7 @@ async function fetchColorOptions(): Promise<ColorOption[]> {
 
 	try {
 		const colors = await prisma.color.findMany({
+			where: { isActive: true },
 			select: {
 				id: true,
 				name: true,

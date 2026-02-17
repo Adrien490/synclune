@@ -1,6 +1,8 @@
+import { Prisma } from "@/app/generated/prisma/client";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
-import { cacheColors } from "../constants/cache";
+import { cacheColorDetail } from "../constants/cache";
 
 import { GET_COLOR_SELECT } from "../constants/color.constants";
 import { getColorSchema } from "../schemas/color.schemas";
@@ -15,6 +17,8 @@ export type { GetColorParams, GetColorReturn } from "../types/color.types";
 
 /**
  * Récupère une couleur par son slug
+ * - Admin : peut voir les couleurs inactives si includeInactive=true
+ * - Non-admin : ne voit que les couleurs actives
  */
 export async function getColorBySlug(
 	params: Partial<GetColorParams>
@@ -25,22 +29,37 @@ export async function getColorBySlug(
 		return null;
 	}
 
-	return fetchColor(validation.data);
+	const admin = await isAdmin();
+
+	return fetchColor(validation.data, { admin });
 }
 
 /**
  * Récupère la couleur depuis la DB avec cache
- * Utilise findUnique pour exploiter l'index unique sur slug
+ * Utilise findFirst pour pouvoir filtrer par isActive
  */
 async function fetchColor(
-	params: GetColorParams
+	params: GetColorParams,
+	context: { admin: boolean }
 ): Promise<GetColorReturn | null> {
 	"use cache";
-	cacheColors();
+	cacheColorDetail(params.slug);
+
+	const includeInactive = context.admin
+		? params.includeInactive === true
+		: false;
+
+	const where: Prisma.ColorWhereInput = {
+		slug: params.slug,
+	};
+
+	if (!includeInactive) {
+		where.isActive = true;
+	}
 
 	try {
-		const color = await prisma.color.findUnique({
-			where: { slug: params.slug },
+		const color = await prisma.color.findFirst({
+			where,
 			select: GET_COLOR_SELECT,
 		});
 

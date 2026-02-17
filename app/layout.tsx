@@ -60,7 +60,10 @@ export default async function RootLayout({
 							<ConditionalAnalytics />
 							{children}
 
-							<ErrorBoundary fallback={null}>
+							<ErrorBoundary
+								errorMessage="Impossible de charger le panier"
+								className="fixed bottom-4 right-4 z-50 rounded-lg bg-muted shadow-lg flex items-center justify-center max-w-xs"
+							>
 								<Suspense fallback={<CartSheetSkeleton />}>
 									<CartAndSkuLoader />
 								</Suspense>

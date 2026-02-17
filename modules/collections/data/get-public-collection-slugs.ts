@@ -14,10 +14,14 @@ export async function getPublicCollectionSlugs(): Promise<{ slug: string }[]> {
 	cacheLife("collections");
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
 
-	const collections = await prisma.collection.findMany({
-		where: { status: CollectionStatus.PUBLIC },
-		select: { slug: true },
-	});
+	try {
+		const collections = await prisma.collection.findMany({
+			where: { status: CollectionStatus.PUBLIC },
+			select: { slug: true },
+		});
 
-	return collections;
+		return collections;
+	} catch {
+		return [];
+	}
 }

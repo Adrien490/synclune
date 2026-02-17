@@ -3,9 +3,12 @@
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { removeUnavailableItems } from "../actions/remove-unavailable-items";
 
 interface UseRemoveUnavailableItemsOptions {
+	/** Total quantity of items being removed (for optimistic badge update) */
+	unavailableQuantity?: number;
 	onSuccess?: (message: string) => void;
 }
 
@@ -16,11 +19,16 @@ interface UseRemoveUnavailableItemsOptions {
 export const useRemoveUnavailableItems = (
 	options?: UseRemoveUnavailableItemsOptions
 ) => {
+	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
+
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			removeUnavailableItems,
 			createToastCallbacks({
 				onSuccess: (result: unknown) => {
+					if (options?.unavailableQuantity) {
+						adjustCart(-options.unavailableQuantity);
+					}
 					if (
 						result &&
 						typeof result === "object" &&

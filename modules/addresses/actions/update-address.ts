@@ -8,6 +8,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 
@@ -47,9 +48,20 @@ export async function updateAddress(
 		const validated = validateInput(addressSchema, rawData);
 		if ("error" in validated) return validated.error;
 
+		const validatedData = validated.data;
+
+		// Sanitize text fields
+		validatedData.firstName = sanitizeText(validatedData.firstName);
+		validatedData.lastName = sanitizeText(validatedData.lastName);
+		validatedData.address1 = sanitizeText(validatedData.address1);
+		if (validatedData.address2) {
+			validatedData.address2 = sanitizeText(validatedData.address2);
+		}
+		validatedData.city = sanitizeText(validatedData.city);
+
 		await prisma.address.update({
 			where: { id: addressId },
-			data: validated.data,
+			data: validatedData,
 		});
 
 		// Revalidation du cache avec tags

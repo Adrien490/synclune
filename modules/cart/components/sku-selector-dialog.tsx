@@ -70,6 +70,9 @@ interface AvailabilityMaps {
 /** ID for aria-describedby on validation errors */
 const VALIDATION_ERROR_ID = "sku-selector-validation-error";
 
+/** ID for aria-describedby on quantity input bounds */
+const QUANTITY_BOUNDS_ID = "sku-selector-quantity-bounds";
+
 export const SKU_SELECTOR_DIALOG_ID = "sku-selector";
 
 // ============================================================================
@@ -715,7 +718,8 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 				quantity: 1,
 			});
 		}
-	}, [isOpen, product, preselectedColor, form]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- form.reset is stable
+	}, [isOpen, product, preselectedColor]);
 
 	const handleClose = () => {
 		form.reset();
@@ -1318,11 +1322,11 @@ function SkuSelectorFormContent({
 							>
 								<Minus className="h-4 w-4" />
 							</Button>
-							{/* m4: Added aria-description for bounds */}
 							<input
 								type="text"
 								inputMode="numeric"
 								pattern="[0-9]*"
+								role="spinbutton"
 								value={quantity}
 								onChange={(e) => {
 									const val =
@@ -1343,8 +1347,17 @@ function SkuSelectorFormContent({
 								disabled={isPending}
 								className="w-12 text-center text-lg font-semibold tabular-nums bg-transparent focus:outline-none"
 								aria-label="Quantité à ajouter au panier"
-								aria-description={`Minimum 1, maximum ${maxQuantity}`}
+								aria-describedby={QUANTITY_BOUNDS_ID}
+								aria-valuemin={1}
+								aria-valuemax={maxQuantity}
+								aria-valuenow={quantity}
 							/>
+							<span
+								id={QUANTITY_BOUNDS_ID}
+								className="sr-only"
+							>
+								Minimum 1, maximum {maxQuantity}
+							</span>
 							<Button
 								type="button"
 								variant="outline"

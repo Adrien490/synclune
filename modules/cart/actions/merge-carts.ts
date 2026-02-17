@@ -7,6 +7,7 @@ import { handleActionError, success, error } from "@/shared/lib/actions";
 import { ActionStatus } from "@/shared/types/server-action";
 import { batchValidateSkusForMerge } from "@/modules/cart/services/sku-validation.service";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
+import { MAX_CART_ITEMS } from "@/modules/cart/constants/cart";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkMergeCartsRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import type { MergeCartsResult } from "../types/cart.types";
@@ -124,6 +125,30 @@ export async function mergeCarts(
 			itemsToValidate.push({ skuId: guestItem.skuId, quantity: finalQuantity });
 		}
 
+		// Enforce MAX_CART_ITEMS: truncate new items if merge would exceed limit
+		const existingUserItemCount = targetCart.items.length;
+		const newItemSkuIds = itemsToValidate
+			.filter((item) => !userItemsMap.has(item.skuId))
+			.map((item) => item.skuId);
+		const projectedTotal = existingUserItemCount + newItemSkuIds.length;
+
+		if (projectedTotal > MAX_CART_ITEMS) {
+			const availableSlots = Math.max(0, MAX_CART_ITEMS - existingUserItemCount);
+			const allowedNewSkuIds = new Set(newItemSkuIds.slice(0, availableSlots));
+			const allowedSkuIds = new Set([
+				...itemsToValidate.filter((i) => userItemsMap.has(i.skuId)).map((i) => i.skuId),
+				...allowedNewSkuIds,
+			]);
+			for (let i = itemsToValidate.length - 1; i >= 0; i--) {
+				if (!allowedSkuIds.has(itemsToValidate[i].skuId)) {
+					itemsToValidate.splice(i, 1);
+				}
+			}
+		}
+
+		// Build set of SKUs that survived truncation for filtering in transaction
+		const validatedSkuIds = new Set(itemsToValidate.map((i) => i.skuId));
+
 		// Validation batch - UNE SEULE requête pour tous les SKUs
 		const validationResults = await batchValidateSkusForMerge(itemsToValidate);
 
@@ -133,10 +158,11 @@ export async function mergeCarts(
 
 		await prisma.$transaction(async (tx) => {
 			for (const guestItem of guestCart.items) {
-				// Skip les produits inactifs
+				// Skip inactive products or items truncated by MAX_CART_ITEMS
 				if (
 					!guestItem.sku.isActive ||
-					guestItem.sku.product.status !== "PUBLIC"
+					guestItem.sku.product.status !== "PUBLIC" ||
+					!validatedSkuIds.has(guestItem.skuId)
 				) {
 					continue;
 				}

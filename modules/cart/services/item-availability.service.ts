@@ -36,7 +36,7 @@ export function isCartItemProductNotPublic(item: CartItemForValidation): boolean
 /**
  * Vérifie si l'item est en rupture de stock totale
  */
-export function isCartItemOutOfStock(item: CartItemForValidation): boolean {
+export function isCartItemZeroStock(item: CartItemForValidation): boolean {
 	return item.sku.inventory === 0;
 }
 
@@ -124,7 +124,7 @@ export function checkCartItemAvailability(
 	}
 
 	// Vérifier la rupture de stock
-	if (isCartItemOutOfStock(item)) {
+	if (isCartItemZeroStock(item)) {
 		return {
 			isAvailable: false,
 			issue: {

@@ -28,6 +28,12 @@ export const GET_CART_SELECT = {
 	createdAt: true,
 	updatedAt: true,
 	items: {
+		where: {
+			sku: {
+				deletedAt: null,
+				product: { deletedAt: null },
+			},
+		},
 		select: {
 			id: true,
 			quantity: true,

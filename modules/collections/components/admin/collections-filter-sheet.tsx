@@ -47,7 +47,8 @@ export function CollectionsFilterSheet({
 
 		const filterKeys = ["filter_hasProducts"];
 		filterKeys.forEach((key) => params.delete(key));
-		params.set("page", "1");
+		params.delete("cursor");
+		params.delete("direction");
 
 		// Add hasProducts filter
 		if (formData.hasProducts !== "all") {
@@ -70,7 +71,8 @@ export function CollectionsFilterSheet({
 		const params = new URLSearchParams(searchParams.toString());
 		const filterKeys = ["filter_hasProducts"];
 		filterKeys.forEach((key) => params.delete(key));
-		params.set("page", "1");
+		params.delete("cursor");
+		params.delete("direction");
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });

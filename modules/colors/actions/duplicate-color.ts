@@ -2,9 +2,11 @@
 
 import { updateTag } from "next/cache";
 
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
@@ -29,7 +31,11 @@ export async function duplicateColor(
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Validation des donnees
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.DUPLICATE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Validation des donnees
 		const rawData = {
 			colorId: formData.get("colorId") as string,
 		};
@@ -38,7 +44,7 @@ export async function duplicateColor(
 		if ("error" in validated) return validated.error;
 		const { colorId } = validated.data;
 
-		// 3. Recuperer la couleur originale
+		// 4. Recuperer la couleur originale
 		const original = await prisma.color.findUnique({
 			where: { id: colorId },
 		});
@@ -47,7 +53,7 @@ export async function duplicateColor(
 			return notFound("Couleur");
 		}
 
-		// 4. Generer un nouveau nom unique via le service
+		// 5. Generer un nouveau nom unique via le service
 		const nameResult = await generateUniqueReadableName(
 			original.name,
 			async (name) => {
@@ -62,10 +68,10 @@ export async function duplicateColor(
 
 		const newName = nameResult.name!;
 
-		// 5. Generer un slug unique
+		// 6. Generer un slug unique
 		const slug = await generateSlug(prisma, "color", newName);
 
-		// 6. Creer la copie
+		// 7. Creer la copie
 		const duplicate = await prisma.color.create({
 			data: {
 				name: newName,
@@ -75,7 +81,7 @@ export async function duplicateColor(
 			},
 		});
 
-		// 7. Invalider le cache
+		// 8. Invalider le cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 

@@ -2,7 +2,7 @@
 
 import { searchAddressSchema } from "../schemas/search-address.schema";
 import type { SearchAddressParams, SearchAddressReturn } from "../types/search-address.types";
-import { fetchAddresses } from "../utils/fetch-addresses";
+import { fetchAddresses } from "./fetch-addresses";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 

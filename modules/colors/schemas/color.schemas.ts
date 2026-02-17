@@ -43,6 +43,7 @@ export const getColorsSchema = z.object({
 
 export const getColorSchema = z.object({
 	slug: z.string().trim().min(1),
+	includeInactive: z.boolean().optional(),
 });
 
 // ============================================================================

@@ -3,7 +3,7 @@ import {
 	isCartItemDeleted,
 	isCartItemSkuInactive,
 	isCartItemProductNotPublic,
-	isCartItemOutOfStock,
+	isCartItemZeroStock,
 	hasInsufficientStock,
 	isCartItemUnavailable,
 	checkCartItemAvailability,
@@ -88,13 +88,13 @@ describe("isCartItemProductNotPublic", () => {
 	});
 });
 
-describe("isCartItemOutOfStock", () => {
+describe("isCartItemZeroStock", () => {
 	it("should return true when inventory is 0", () => {
-		expect(isCartItemOutOfStock(createItem({ inventory: 0 }))).toBe(true);
+		expect(isCartItemZeroStock(createItem({ inventory: 0 }))).toBe(true);
 	});
 
 	it("should return false when inventory > 0", () => {
-		expect(isCartItemOutOfStock(createItem({ inventory: 1 }))).toBe(false);
+		expect(isCartItemZeroStock(createItem({ inventory: 1 }))).toBe(false);
 	});
 });
 
@@ -107,7 +107,7 @@ describe("hasInsufficientStock", () => {
 		expect(hasInsufficientStock(createItem({ inventory: 5, quantity: 5 }))).toBe(false);
 	});
 
-	it("should return false when inventory is 0 (handled by isCartItemOutOfStock)", () => {
+	it("should return false when inventory is 0 (handled by isCartItemZeroStock)", () => {
 		expect(hasInsufficientStock(createItem({ inventory: 0, quantity: 1 }))).toBe(false);
 	});
 });

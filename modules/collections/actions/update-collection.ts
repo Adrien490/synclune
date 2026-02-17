@@ -15,7 +15,7 @@ import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { updateCollectionSchema } from "../schemas/collection.schemas";
 
 export async function updateCollection(
-	_prevState: unknown,
+	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
@@ -97,7 +97,7 @@ export async function updateCollection(
 				return notFound("Collection");
 			}
 			if (e.message === "NAME_EXISTS") {
-				return error("Ce nom de collection existe deja. Veuillez en choisir un autre.");
+				return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
 			}
 		}
 		return handleActionError(e, "Erreur lors de la modification de la collection");

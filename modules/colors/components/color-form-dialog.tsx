@@ -180,8 +180,8 @@ export function ColorFormDialog() {
 									if (!value || value.length < 1) {
 										return "Le nom est requis";
 									}
-									if (value.length > 50) {
-										return "Le nom ne peut pas dépasser 50 caractères";
+									if (value.length > 100) {
+										return "Le nom ne peut pas dépasser 100 caractères";
 									}
 									return undefined;
 								},

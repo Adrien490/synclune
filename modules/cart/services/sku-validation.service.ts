@@ -1,4 +1,3 @@
-import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import type {
@@ -8,6 +7,11 @@ import type {
 	BatchSkuValidationResult,
 } from "@/modules/cart/types/sku-validation.types";
 import { validateSkuSchema, getSkuDetailsSchema } from "@/modules/cart/schemas/cart.schemas";
+import {
+	fetchSkuForValidation,
+	fetchSkuForDetails,
+	fetchSkusForBatchValidation,
+} from "@/modules/cart/data/get-sku-for-validation";
 
 // Action: Valider un SKU et son stock
 export async function validateSkuAndStock(input: {
@@ -18,38 +22,7 @@ export async function validateSkuAndStock(input: {
 		// Validation des inputs
 		const validatedInput = validateSkuSchema.parse(input);
 
-		// Récupérer le SKU avec ses relations (incluant deletedAt pour soft-delete check)
-		const sku = await prisma.productSku.findUnique({
-			where: { id: validatedInput.skuId },
-			include: {
-				product: {
-					select: {
-						id: true,
-						title: true,
-						slug: true,
-						status: true,
-						description: true,
-						deletedAt: true,
-					},
-				},
-				images: {
-					orderBy: { createdAt: "asc" },
-				},
-				color: {
-					select: {
-						id: true,
-						name: true,
-						hex: true,
-					},
-				},
-				material: {
-					select: {
-						id: true,
-						name: true,
-					},
-				},
-			},
-		});
+		const sku = await fetchSkuForValidation(validatedInput.skuId);
 
 		if (!sku) {
 			return {
@@ -151,29 +124,7 @@ export async function getSkuDetails(input: {
 		// Validation des inputs
 		const validatedInput = getSkuDetailsSchema.parse(input);
 
-		// Récupérer le SKU avec toutes ses relations
-		const sku = await prisma.productSku.findUnique({
-			where: { id: validatedInput.skuId },
-			include: {
-				product: true,
-				images: {
-					orderBy: { createdAt: "asc" },
-				},
-				color: {
-					select: {
-						id: true,
-						name: true,
-						hex: true,
-					},
-				},
-				material: {
-					select: {
-						id: true,
-						name: true,
-					},
-				},
-			},
-		});
+		const sku = await fetchSkuForDetails(validatedInput.skuId);
 
 		if (!sku) {
 			return {
@@ -334,22 +285,7 @@ export async function batchValidateSkusForMerge(
 	const skuIds = items.map((item) => item.skuId);
 	const quantityMap = new Map(items.map((item) => [item.skuId, item.quantity]));
 
-	// Une seule requête pour tous les SKUs
-	const skus = await prisma.productSku.findMany({
-		where: { id: { in: skuIds } },
-		select: {
-			id: true,
-			inventory: true,
-			isActive: true,
-			deletedAt: true,
-			product: {
-				select: {
-					status: true,
-					deletedAt: true,
-				},
-			},
-		},
-	});
+	const skus = await fetchSkusForBatchValidation(skuIds);
 
 	const results = new Map<string, BatchSkuValidationResult>();
 

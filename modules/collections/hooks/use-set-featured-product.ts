@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useActionState, useTransition } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
@@ -13,8 +12,7 @@ interface UseSetFeaturedProductOptions {
 	onSuccess?: () => void;
 }
 
-export function useSetFeaturedProduct(options?: UseSetFeaturedProductOptions) {
-	const router = useRouter();
+export const useSetFeaturedProduct = (options?: UseSetFeaturedProductOptions) => {
 	const [isPending, startTransition] = useTransition();
 
 	const [, setFeaturedAction] = useActionState(
@@ -22,7 +20,6 @@ export function useSetFeaturedProduct(options?: UseSetFeaturedProductOptions) {
 			setFeaturedProduct,
 			createToastCallbacks({
 				onSuccess: () => {
-					router.refresh();
 					options?.onSuccess?.();
 				},
 			})
@@ -35,7 +32,6 @@ export function useSetFeaturedProduct(options?: UseSetFeaturedProductOptions) {
 			removeFeaturedProduct,
 			createToastCallbacks({
 				onSuccess: () => {
-					router.refresh();
 					options?.onSuccess?.();
 				},
 			})
@@ -66,4 +62,4 @@ export function useSetFeaturedProduct(options?: UseSetFeaturedProductOptions) {
 		removeFeatured,
 		isPending,
 	};
-}
+};

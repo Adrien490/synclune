@@ -68,6 +68,57 @@ export const GET_COLLECTION_SELECT = {
 	},
 } as const satisfies Prisma.CollectionSelect;
 
+/**
+ * Lightweight select for storefront collection pages (SEO metadata + OG image).
+ * Only loads what's needed: name, description, status, and minimal product data
+ * for featured image extraction, product type keywords, and public product count.
+ */
+export const GET_COLLECTION_STOREFRONT_SELECT = {
+	slug: true,
+	name: true,
+	description: true,
+	status: true,
+	products: {
+		where: {
+			product: {
+				status: ProductStatus.PUBLIC,
+			},
+		},
+		select: {
+			isFeatured: true,
+			product: {
+				select: {
+					title: true,
+					status: true,
+					type: {
+						select: {
+							label: true,
+						},
+					},
+					skus: {
+						where: { isActive: true },
+						select: {
+							isDefault: true,
+							images: {
+								select: {
+									url: true,
+									altText: true,
+									isPrimary: true,
+								},
+								orderBy: { createdAt: "asc" },
+								take: 1,
+							},
+						},
+						orderBy: [{ isDefault: "desc" }],
+						take: 1,
+					},
+				},
+			},
+		},
+		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
+	},
+} as const satisfies Prisma.CollectionSelect;
+
 export const GET_COLLECTIONS_SELECT = {
 	id: true,
 	slug: true,

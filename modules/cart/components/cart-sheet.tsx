@@ -74,7 +74,8 @@ export function CartSheet({ cart }: CartSheetProps) {
 		<CartOptimisticContext.Provider value={cartOptimisticValue}>
 			<Sheet direction="right" open={isOpen} onOpenChange={(open) => !open && close()}>
 				<SheetContent
-					className="w-full sm:max-w-lg flex flex-col p-0 gap-0"
+					className="group/sheet w-full sm:max-w-lg flex flex-col p-0 gap-0"
+					data-pending={isPending ? "" : undefined}
 				>
 					<SheetHeader className="px-6 py-4 border-b shrink-0">
 						<SheetTitle>
@@ -88,7 +89,7 @@ export function CartSheet({ cart }: CartSheetProps) {
 							)}
 						</SheetTitle>
 						<SheetDescription className="sr-only">
-							Encore quelques étapes pour passer commande
+							Gérez les articles de votre panier
 						</SheetDescription>
 					</SheetHeader>
 

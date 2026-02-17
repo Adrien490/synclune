@@ -788,6 +788,79 @@ export const ADMIN_MATERIAL_LIMITS = {
 } as const;
 
 // ========================================
+// 🎨 ADMIN COLOR OPERATIONS
+// ========================================
+
+/**
+ * Limite pour la creation de couleurs (admin)
+ */
+export const ADMIN_COLOR_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la mise a jour de couleurs (admin)
+ */
+export const ADMIN_COLOR_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression de couleurs (admin)
+ */
+export const ADMIN_COLOR_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le toggle de statut de couleur (admin)
+ */
+export const ADMIN_COLOR_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la duplication de couleurs (admin)
+ */
+export const ADMIN_COLOR_DUPLICATE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour les operations bulk sur couleurs (admin)
+ */
+export const ADMIN_COLOR_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le rafraichissement du cache couleurs (admin)
+ */
+export const ADMIN_COLOR_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+/**
+ * Toutes les limites admin couleurs
+ */
+export const ADMIN_COLOR_LIMITS = {
+	CREATE: ADMIN_COLOR_CREATE_LIMIT,
+	UPDATE: ADMIN_COLOR_UPDATE_LIMIT,
+	DELETE: ADMIN_COLOR_DELETE_LIMIT,
+	TOGGLE_STATUS: ADMIN_COLOR_TOGGLE_STATUS_LIMIT,
+	DUPLICATE: ADMIN_COLOR_DUPLICATE_LIMIT,
+	BULK_OPERATIONS: ADMIN_COLOR_BULK_OPERATIONS_LIMIT,
+	REFRESH: ADMIN_COLOR_REFRESH_LIMIT,
+} as const;
+
+// ========================================
 // 💰 ADMIN SKU OPERATIONS
 // ========================================
 

@@ -198,8 +198,8 @@ export async function addToCart(
 
 		// 9. Success - Return ActionState format
 		const successMessage = transactionResult.isUpdate
-			? `Quantite mise a jour (${transactionResult.newQuantity})`
-			: "Article ajoute au panier";
+			? `Quantité mise à jour (${transactionResult.newQuantity})`
+			: "Article ajouté au panier";
 
 		return success(successMessage, {
 			cartItemId: transactionResult.cartItem.id,

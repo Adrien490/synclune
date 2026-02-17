@@ -4,7 +4,6 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { getCartWithSkuPrices } from "@/modules/cart/data/get-cart-with-sku-prices";
 import { handleActionError } from "@/shared/lib/actions";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -37,8 +36,36 @@ export async function updateCartPrices(
 			};
 		}
 
-		// 2. Récupérer le panier avec ses items (via data/)
-		const cart = await getCartWithSkuPrices(userId, sessionId || undefined);
+		// 2. Direct DB read (bypasses cache for fresh prices)
+		const cart = await prisma.cart.findFirst({
+			where: {
+				...(userId ? { userId } : { sessionId: sessionId! }),
+				OR: [
+					{ expiresAt: null },
+					{ expiresAt: { gt: new Date() } },
+				],
+			},
+			include: {
+				items: {
+					include: {
+						sku: {
+							select: {
+								id: true,
+								priceInclTax: true,
+								isActive: true,
+								deletedAt: true,
+								product: {
+									select: {
+										status: true,
+										deletedAt: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		});
 
 		if (!cart || cart.items.length === 0) {
 			return {

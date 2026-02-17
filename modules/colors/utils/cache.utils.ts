@@ -22,6 +22,16 @@ export function cacheColors() {
 	cacheTag(COLORS_CACHE_TAGS.LIST);
 }
 
+/**
+ * Configure le cache pour une couleur spécifique
+ * - Utilisé pour : page détail couleur
+ * - Durée : 4h fraîche, 1h revalidation, 30j expiration
+ */
+export function cacheColorDetail(slug: string) {
+	cacheLife("reference");
+	cacheTag(COLORS_CACHE_TAGS.DETAIL(slug), COLORS_CACHE_TAGS.LIST);
+}
+
 // ============================================
 // INVALIDATION HELPER
 // ============================================

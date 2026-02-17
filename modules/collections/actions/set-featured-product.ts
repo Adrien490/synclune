@@ -15,7 +15,7 @@ import { setFeaturedProductSchema } from "../schemas/collection.schemas";
  * Un seul produit peut etre featured par collection
  */
 export async function setFeaturedProduct(
-	_prevState: ActionState | undefined,
+	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
@@ -99,7 +99,7 @@ export async function setFeaturedProduct(
  * Server Action pour retirer le statut "vedette" d'un produit dans une collection
  */
 export async function removeFeaturedProduct(
-	_prevState: ActionState | undefined,
+	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {

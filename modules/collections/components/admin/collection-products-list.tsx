@@ -19,6 +19,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { AlertTriangle, Package, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -203,7 +204,7 @@ export function CollectionProductsList({
 									<TableCell className="hidden md:table-cell text-right">
 										{price ? (
 											<span className="font-medium">
-												{(price / 100).toFixed(2)} €
+												{formatEuro(price)}
 											</span>
 										) : (
 											<span className="text-muted-foreground">-</span>

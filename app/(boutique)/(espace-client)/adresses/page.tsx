@@ -5,7 +5,7 @@ import { AddressListSkeleton } from "@/modules/addresses/components/address-list
 import { AddressFormDialog } from "@/modules/addresses/components/address-form-dialog";
 import { DeleteAddressAlertDialog } from "@/modules/addresses/components/delete-address-alert-dialog";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
-import { searchAddress } from "@/modules/addresses/actions/search-address";
+import { searchAddress } from "@/modules/addresses/data/search-address";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 

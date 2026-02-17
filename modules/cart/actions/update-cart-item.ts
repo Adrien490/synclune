@@ -41,12 +41,11 @@ export async function updateCartItem(
 
 		const validatedData = validated.data;
 
-		// 4. Récupérer l'item avec son panier
+		// 4. Récupérer l'item avec son panier (no need to include sku — FOR UPDATE fetches fresh data)
 		const cartItem = await prisma.cartItem.findUnique({
 			where: { id: validatedData.cartItemId },
 			include: {
 				cart: true,
-				sku: true,
 			},
 		});
 
@@ -65,7 +64,7 @@ export async function updateCartItem(
 
 		// 6. Si la quantité n'a pas changé, ne rien faire
 		if (validatedData.quantity === cartItem.quantity) {
-			return success(`Quantite mise a jour (${validatedData.quantity})`);
+			return success(`Quantité mise à jour (${validatedData.quantity})`);
 		}
 
 		// 7. Transaction: Mettre à jour l'item et le panier
@@ -123,7 +122,7 @@ export async function updateCartItem(
 		tags.forEach(tag => updateTag(tag));
 
 		// 9. Success - Return ActionState format
-		return success(`Quantite mise a jour (${validatedData.quantity})`);
+		return success(`Quantité mise à jour (${validatedData.quantity})`);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la mise à jour");
 	}

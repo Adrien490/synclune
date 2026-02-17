@@ -1,5 +1,5 @@
 import { CollectionStatus, ProductStatus } from "@/app/generated/prisma/client";
-import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
+import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import type { Metadata } from "next";
 import { PRODUCTION_URL } from "@/shared/constants/urls";
 
@@ -8,7 +8,7 @@ import { PRODUCTION_URL } from "@/shared/constants/urls";
  */
 function getFeaturedProductImage(
 	products: NonNullable<
-		Awaited<ReturnType<typeof getCollectionBySlug>>
+		Awaited<ReturnType<typeof getStorefrontCollectionBySlug>>
 	>["products"]
 ): { url: string; alt: string } | null {
 	// Chercher d'abord le produit featured PUBLIC
@@ -48,7 +48,7 @@ export async function generateCollectionMetadata({
 	params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
 	const { slug } = await params;
-	const collection = await getCollectionBySlug({ slug });
+	const collection = await getStorefrontCollectionBySlug({ slug });
 
 	// Vérifier que la collection existe et est publiée
 	if (!collection || collection.status !== CollectionStatus.PUBLIC) {

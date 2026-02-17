@@ -2,9 +2,11 @@
 
 import { updateTag } from "next/cache";
 
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
@@ -21,7 +23,11 @@ export async function updateColor(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les donnees du FormData
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.UPDATE);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Extraire les donnees du FormData
 		const rawData = {
 			id: formData.get("id"),
 			name: sanitizeText(formData.get("name") as string),
@@ -69,8 +75,11 @@ export async function updateColor(
 			},
 		});
 
-		// Invalider le cache
-		const tags = getColorInvalidationTags();
+		// Invalider le cache (ancien et nouveau slug si different)
+		const tags = getColorInvalidationTags(existingColor.slug);
+		if (slug !== existingColor.slug) {
+			tags.push(...getColorInvalidationTags(slug));
+		}
 		tags.forEach((tag) => updateTag(tag));
 
 		return success("Couleur modifiée avec succès");

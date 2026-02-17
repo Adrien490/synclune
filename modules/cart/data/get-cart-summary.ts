@@ -88,6 +88,7 @@ export async function fetchCartSummary(
 			hasItems: true,
 		};
 	} catch (error) {
+		console.error("[CART_SUMMARY] Failed to fetch cart summary:", error);
 		return {
 			itemCount: 0,
 			totalAmount: 0,

@@ -94,6 +94,9 @@ export default async function CheckoutPage() {
 								</ul>
 
 								<div className="flex gap-2">
+									<Button asChild>
+										<Link href="/">Retour au panier</Link>
+									</Button>
 									<Button asChild variant="outline">
 										<Link href="/creations">Continuer mes achats</Link>
 									</Button>

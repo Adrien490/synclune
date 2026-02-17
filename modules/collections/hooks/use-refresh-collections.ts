@@ -12,7 +12,7 @@ interface UseRefreshCollectionsOptions {
 /**
  * Hook pour rafraîchir les collections
  */
-export function useRefreshCollections(options?: UseRefreshCollectionsOptions) {
+export const useRefreshCollections = (options?: UseRefreshCollectionsOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 
 	const [state, action, isPending] = useActionState(
@@ -41,4 +41,4 @@ export function useRefreshCollections(options?: UseRefreshCollectionsOptions) {
 		isPending: isPending || isTransitionPending,
 		refresh,
 	};
-}
+};

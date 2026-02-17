@@ -15,7 +15,7 @@ import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { createCollectionSchema } from "../schemas/collection.schemas";
 
 export async function createCollection(
-	_prevState: unknown,
+	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
@@ -42,26 +42,31 @@ export async function createCollection(
 			? sanitizeText(validatedData.description)
 			: null;
 
-		// Verifier l'unicite du nom
-		const existingName = await prisma.collection.findFirst({
-			where: { name: sanitizedName },
-		});
+		// Transaction pour garantir l'atomicité (unicité du nom + création)
+		const slug = await prisma.$transaction(async (tx) => {
+			// Vérifier l'unicité du nom
+			const existingName = await tx.collection.findFirst({
+				where: { name: sanitizedName },
+			});
 
-		if (existingName) {
-			return error("Ce nom de collection existe deja. Veuillez en choisir un autre.");
-		}
+			if (existingName) {
+				throw new Error("NAME_EXISTS");
+			}
 
-		// Generer un slug unique automatiquement
-		const slug = await generateSlug(prisma, "collection", sanitizedName);
+			// Générer un slug unique automatiquement
+			const slug = await generateSlug(tx, "collection", sanitizedName);
 
-		// Creer la collection
-		await prisma.collection.create({
-			data: {
-				name: sanitizedName,
-				slug,
-				description: sanitizedDescription,
-				status: validatedData.status,
-			},
+			// Créer la collection
+			await tx.collection.create({
+				data: {
+					name: sanitizedName,
+					slug,
+					description: sanitizedDescription,
+					status: validatedData.status,
+				},
+			});
+
+			return slug;
 		});
 
 		// Invalider le cache
@@ -72,6 +77,9 @@ export async function createCollection(
 			collectionStatus: validatedData.status,
 		});
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la creation de la collection");
+		if (e instanceof Error && e.message === "NAME_EXISTS") {
+			return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
+		}
+		return handleActionError(e, "Erreur lors de la création de la collection");
 	}
 }

@@ -2,9 +2,11 @@
 
 import { updateTag } from "next/cache";
 
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { getColorInvalidationTags } from "../constants/cache";
@@ -19,7 +21,11 @@ export async function bulkDeleteColors(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les IDs du FormData
+		// 2. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.BULK_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 3. Extraire les IDs du FormData
 		const idsString = formData.get("ids");
 		let ids: unknown = [];
 		try {

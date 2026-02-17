@@ -5,7 +5,7 @@ import type {
 	SearchAddressReturn,
 } from "../types/search-address.types";
 import { buildApiUrl } from "../services/address-api.service";
-import { transformCompletionResult } from "./address-transform.utils";
+import { transformCompletionResult } from "../utils/address-transform.utils";
 
 /**
  * Récupère les suggestions d'adresses depuis l'API d'autocomplétion de l'IGN
@@ -42,7 +42,7 @@ export async function fetchAddresses(
 		return {
 			addresses,
 			query: params.text,
-			limit: params.maximumResponses || 5,
+			limit: params.maximumResponses,
 		};
 	} catch (error) {
 		// Log l'erreur pour debugging mais retourne un résultat vide pour ne pas bloquer l'UI
@@ -54,7 +54,7 @@ export async function fetchAddresses(
 		return {
 			addresses: [],
 			query: params.text,
-			limit: params.maximumResponses || 5,
+			limit: params.maximumResponses,
 		};
 	}
 }

@@ -1,5 +1,5 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
+import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { ImageResponse } from "next/og";
 
 // Image metadata
@@ -21,7 +21,7 @@ export default async function Image({
 	params: Promise<{ slug: string }>;
 }) {
 	const { slug } = await params;
-	const collection = await getCollectionBySlug({ slug });
+	const collection = await getStorefrontCollectionBySlug({ slug });
 
 	// Fallback si collection non trouvee ou non publiee
 	if (!collection || collection.status !== CollectionStatus.PUBLIC) {

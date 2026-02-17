@@ -19,13 +19,3 @@ export const GET_USER_ADDRESSES_DEFAULT_SELECT = {
 	createdAt: true,
 	updatedAt: true,
 } as const satisfies Prisma.AddressSelect;
-
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_USER_ADDRESSES_DEFAULT_CACHE = {
-	revalidate: 60,
-	stale: 120,
-	expire: 300,
-} as const;
