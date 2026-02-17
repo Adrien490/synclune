@@ -66,38 +66,38 @@ export function ParticleBackground({
 	const viewportInView = useInView(containerRef, { margin: "-100px" });
 	const isTouchDevice = useIsTouchDevice();
 
-	// Pause when tab is hidden (save GPU/battery)
 	const [tabVisible, setTabVisible] = useState(true);
+	const [highContrast, setHighContrast] = useState(false);
+	const [forcedColors, setForcedColors] = useState(false);
+
+	// Single effect for all environment listeners (visibility, media queries)
 	useEffect(() => {
 		function onVisibilityChange() {
 			setTabVisible(document.visibilityState === "visible");
 		}
 		document.addEventListener("visibilitychange", onVisibilityChange);
-		return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-	}, []);
 
-	// Detect high contrast mode: reduce opacity 50%, increase blur 50%
-	const [highContrast, setHighContrast] = useState(false);
-	useEffect(() => {
-		const mql = window.matchMedia("(prefers-contrast: more)");
-		setHighContrast(mql.matches);
-		function onChange(e: MediaQueryListEvent) {
+		// Detect high contrast mode: reduce opacity 50%, increase blur 50%
+		const contrastMql = window.matchMedia("(prefers-contrast: more)");
+		setHighContrast(contrastMql.matches);
+		function onContrastChange(e: MediaQueryListEvent) {
 			setHighContrast(e.matches);
 		}
-		mql.addEventListener("change", onChange);
-		return () => mql.removeEventListener("change", onChange);
-	}, []);
+		contrastMql.addEventListener("change", onContrastChange);
 
-	// Detect forced-colors mode: hide particles entirely (colors are overridden)
-	const [forcedColors, setForcedColors] = useState(false);
-	useEffect(() => {
-		const mql = window.matchMedia("(forced-colors: active)");
-		setForcedColors(mql.matches);
-		function onChange(e: MediaQueryListEvent) {
+		// Detect forced-colors mode: hide particles entirely (colors are overridden)
+		const forcedMql = window.matchMedia("(forced-colors: active)");
+		setForcedColors(forcedMql.matches);
+		function onForcedColorsChange(e: MediaQueryListEvent) {
 			setForcedColors(e.matches);
 		}
-		mql.addEventListener("change", onChange);
-		return () => mql.removeEventListener("change", onChange);
+		forcedMql.addEventListener("change", onForcedColorsChange);
+
+		return () => {
+			document.removeEventListener("visibilitychange", onVisibilityChange);
+			contrastMql.removeEventListener("change", onContrastChange);
+			forcedMql.removeEventListener("change", onForcedColorsChange);
+		};
 	}, []);
 
 	const isInView = viewportInView && tabVisible;
@@ -120,16 +120,19 @@ export function ParticleBackground({
 
 		let lerpRafId: number | null = null;
 
-		// Cache the bounding rect to avoid forced layout on every mousemove
+		// Cache the bounding rect — marked stale on scroll/resize, refreshed lazily on next mousemove
 		let cachedRect = el.getBoundingClientRect();
+		let rectStale = false;
 
-		let rectRafId: number | null = null;
-		function updateRect() {
-			if (rectRafId !== null) return;
-			rectRafId = requestAnimationFrame(() => {
-				cachedRect = el!.getBoundingClientRect();
-				rectRafId = null;
-			});
+		// ResizeObserver replaces window.resize — catches container resizes including parent layout changes
+		const ro = new ResizeObserver(() => {
+			rectStale = true;
+		});
+		ro.observe(el);
+
+		// Scroll invalidates the cached rect (viewport offset changed) — no layout read, just a flag
+		function markRectStale() {
+			rectStale = true;
 		}
 
 		function cancelLerp() {
@@ -140,6 +143,11 @@ export function ParticleBackground({
 		}
 
 		const onMouseMove = (e: MouseEvent) => {
+			// Refresh rect lazily: only recalculate when stale AND mouse is actively moving
+			if (rectStale) {
+				cachedRect = el.getBoundingClientRect();
+				rectStale = false;
+			}
 			cancelLerp();
 			mouseX.set(((e.clientX - cachedRect.left) / cachedRect.width - 0.5) * 2 * PARALLAX_STRENGTH);
 			mouseY.set(((e.clientY - cachedRect.top) / cachedRect.height - 0.5) * 2 * PARALLAX_STRENGTH);
@@ -168,15 +176,13 @@ export function ParticleBackground({
 
 		el.addEventListener("mousemove", onMouseMove, { passive: true });
 		el.addEventListener("mouseleave", onMouseLeave, { passive: true });
-		window.addEventListener("resize", updateRect, { passive: true });
-		window.addEventListener("scroll", updateRect, { passive: true });
+		window.addEventListener("scroll", markRectStale, { passive: true });
 		return () => {
 			cancelLerp();
-			if (rectRafId !== null) cancelAnimationFrame(rectRafId);
+			ro.disconnect();
 			el.removeEventListener("mousemove", onMouseMove);
 			el.removeEventListener("mouseleave", onMouseLeave);
-			window.removeEventListener("resize", updateRect);
-			window.removeEventListener("scroll", updateRect);
+			window.removeEventListener("scroll", markRectStale);
 		};
 	}, [mouseX, mouseY, disableOnTouch, isTouchDevice]);
 

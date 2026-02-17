@@ -48,7 +48,7 @@ export async function removeFromWishlist(
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.REMOVE);
+		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.REMOVE, ipAddress);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 4. Recuperer la wishlist de l'utilisateur ou visiteur

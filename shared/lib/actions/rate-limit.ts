@@ -19,11 +19,12 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
  *
  * @param identifier - Identifiant unique (userId, sessionId, IP)
  * @param limit - Configuration du rate limit
+ * @param ipAddress - Explicit client IP for global limit check (pass when identifier is user/session-based)
  * @returns success: true ou une erreur ActionState
  *
  * @example
  * ```ts
- * const rateCheck = enforceRateLimit(userId, CART_LIMITS.ADD);
+ * const rateCheck = enforceRateLimit(rateLimitId, CART_LIMITS.ADD, ipAddress);
  * if ("error" in rateCheck) return rateCheck.error;
  *
  * // Rate limit OK, continuer
@@ -31,9 +32,10 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
  */
 export async function enforceRateLimit(
 	identifier: string,
-	limit: RateLimitConfig
+	limit: RateLimitConfig,
+	ipAddress?: string | null
 ): Promise<{ success: true } | { error: ActionState }> {
-	const check = await checkRateLimit(identifier, limit);
+	const check = await checkRateLimit(identifier, limit, ipAddress);
 
 	if (!check.success) {
 		return {

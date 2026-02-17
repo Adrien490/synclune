@@ -80,9 +80,9 @@ export async function checkCartRateLimit(
 	const headersList = await headers();
 	const ipAddress = await getClientIp(headersList);
 
-	// 4. Vérifier le rate limiting
+	// 4. Vérifier le rate limiting (pass IP explicitly for global limit check)
 	const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-	const rateLimit = await checkRateLimit(rateLimitId, limitConfig);
+	const rateLimit = await checkRateLimit(rateLimitId, limitConfig, ipAddress);
 
 	if (!rateLimit.success) {
 		return {
@@ -126,7 +126,7 @@ export async function checkMergeCartsRateLimit(
 	const ipAddress = await getClientIp(headersList);
 
 	const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-	const rateLimit = await checkRateLimit(rateLimitId, limitConfig);
+	const rateLimit = await checkRateLimit(rateLimitId, limitConfig, ipAddress);
 
 	if (!rateLimit.success) {
 		return {

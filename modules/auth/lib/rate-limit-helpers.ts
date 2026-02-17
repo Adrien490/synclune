@@ -16,32 +16,32 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 
 /**
- * Obtient un identifiant de rate limit pour l'utilisateur/session/IP courant
+ * Obtient un identifiant de rate limit et l'IP client pour l'utilisateur/session/IP courant
  *
- * @returns L'identifiant de rate limit
+ * @returns The rate limit identifier and client IP address
  *
  * @example
  * ```ts
- * const rateLimitId = await getRateLimitId();
- * const rateCheck = enforceRateLimit(rateLimitId, CART_LIMITS.ADD);
+ * const { identifier, ipAddress } = await getRateLimitId();
+ * const rateCheck = enforceRateLimit(identifier, CART_LIMITS.ADD, ipAddress);
  * ```
  */
-export async function getRateLimitId(): Promise<string> {
+export async function getRateLimitId(): Promise<{ identifier: string; ipAddress: string | null }> {
+	const headersList = await headers();
+	const ipAddress = await getClientIp(headersList);
+
 	try {
 		const session = await getSession();
 		const userId = session?.user?.id;
 
 		if (userId) {
-			return getRateLimitIdentifier(userId, null, null);
+			return { identifier: getRateLimitIdentifier(userId, null, null), ipAddress };
 		}
 	} catch {
-		// Session non disponible, utiliser IP
+		// Session not available, use IP
 	}
 
-	const headersList = await headers();
-	const ipAddress = await getClientIp(headersList);
-
-	return getRateLimitIdentifier(null, null, ipAddress);
+	return { identifier: getRateLimitIdentifier(null, null, ipAddress), ipAddress };
 }
 
 /**
@@ -59,8 +59,8 @@ export async function getRateLimitId(): Promise<string> {
 export async function enforceRateLimitForCurrentUser(
 	limit: RateLimitConfig
 ): Promise<{ success: true } | { error: ActionState }> {
-	const identifier = await getRateLimitId();
-	const check = await checkRateLimit(identifier, limit);
+	const { identifier, ipAddress } = await getRateLimitId();
+	const check = await checkRateLimit(identifier, limit, ipAddress);
 
 	if (!check.success) {
 		return {

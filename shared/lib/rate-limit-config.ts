@@ -104,14 +104,10 @@ export const CART_MERGE_LIMIT: RateLimitConfig = {
  * - Abus de l'API Stripe (coût par requête)
  * - Tentatives de fraude
  * - Surcharge du système de commandes
- *
- * ⚠️ RECOMMANDATION : Réduire si vous constatez des abus
- * - Actuel : 10/min (permissif pour v1)
- * - Recommandé production : 5/heure pour visiteurs, 10/heure pour utilisateurs connectés
  */
 export const CHECKOUT_CREATE_SESSION_LIMIT: RateLimitConfig = {
-	limit: 10, // 10 sessions maximum
-	windowMs: minutes(1), // par minute
+	limit: 5, // 5 sessions maximum
+	windowMs: hours(1), // par heure
 };
 
 /**

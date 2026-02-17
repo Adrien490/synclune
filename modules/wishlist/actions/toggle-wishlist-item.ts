@@ -57,7 +57,7 @@ export async function toggleWishlistItem(
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.TOGGLE);
+		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.TOGGLE, ipAddress);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 4. Valider le produit (existence et status)

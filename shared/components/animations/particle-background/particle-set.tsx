@@ -22,10 +22,35 @@ function effectiveOpacity(p: Particle, highContrast: boolean) {
 	return highContrast ? p.opacity * 0.5 : p.opacity;
 }
 
+/** Resolve shape rendering props: SVG config or CSS styles (shared by animated + static particles) */
+function resolveShape(p: Particle) {
+	const isSvg = isSvgShape(p.shape);
+	return {
+		isSvg,
+		svgConfig: isSvg ? getSvgConfig(p.shape) : null,
+		shapeStyles: isSvg ? undefined : getShapeStyles(p.shape, p.size, p.color),
+	};
+}
+
+/** SVG shape element shared by both animated and static particles */
+function SvgShape({ config, color }: { config: { viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" }; color: string }) {
+	return (
+		<svg viewBox={config.viewBox} className="w-full h-full" fill={color} aria-hidden="true" role="presentation">
+			<path d={config.path} fillRule={config.fillRule} />
+		</svg>
+	);
+}
+
 /**
  * Animated particle with mouse parallax.
  * Uses an outer motion.span for the mouse offset (transforms driven by MotionValues)
  * and an inner motion.span for the looping keyframe animation, avoiding conflicts.
+ *
+ * Opacity is controlled at two levels:
+ * 1. **Animation preset** — keyframe opacity in ANIMATION_PRESETS (via adjustedP)
+ * 2. **Scroll fade** — scrollOpacity MotionValue on the outer wrapper (optional, multiplicative)
+ * The animation preset handles per-particle opacity variation; scrollOpacity handles
+ * the global fade-in/out as the container scrolls through the viewport.
  */
 function AnimatedParticle({
 	p,
@@ -42,9 +67,7 @@ function AnimatedParticle({
 	highContrast: boolean;
 	scrollOpacity?: MotionValue<number>;
 }) {
-	const isSvg = isSvgShape(p.shape);
-	const svgConfig = isSvg ? getSvgConfig(p.shape) : null;
-	const shapeStyles = isSvg ? undefined : getShapeStyles(p.shape, p.size, p.color);
+	const { isSvg, svgConfig, shapeStyles } = resolveShape(p);
 	const style = particleStyle(p, highContrast);
 
 	// Build a particle copy with adjusted opacity for the animation preset
@@ -62,9 +85,7 @@ function AnimatedParticle({
 			animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
 			transition={getTransition(p)}
 		>
-			<svg viewBox={svgConfig.viewBox} className="w-full h-full" fill={p.color} aria-hidden="true" role="presentation">
-				<path d={svgConfig.path} fillRule={svgConfig.fillRule} />
-			</svg>
+			<SvgShape config={svgConfig} color={p.color} />
 		</motion.span>
 	) : (
 		<motion.span
@@ -92,17 +113,13 @@ function StaticParticle({
 	highContrast: boolean;
 	scrollOpacity?: MotionValue<number>;
 }) {
-	const isSvg = isSvgShape(p.shape);
-	const svgConfig = isSvg ? getSvgConfig(p.shape) : null;
-	const shapeStyles = isSvg ? undefined : getShapeStyles(p.shape, p.size, p.color);
+	const { isSvg, svgConfig, shapeStyles } = resolveShape(p);
 	const style = particleStyle(p, highContrast);
 	const opacity = effectiveOpacity(p, highContrast);
 
 	const inner = isSvg && svgConfig ? (
 		<span className="block w-full h-full" style={{ opacity }}>
-			<svg viewBox={svgConfig.viewBox} className="w-full h-full" fill={p.color} aria-hidden="true" role="presentation">
-				<path d={svgConfig.path} fillRule={svgConfig.fillRule} />
-			</svg>
+			<SvgShape config={svgConfig} color={p.color} />
 		</span>
 	) : (
 		<span

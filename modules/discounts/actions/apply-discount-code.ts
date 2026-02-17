@@ -25,7 +25,7 @@ export async function applyDiscountCode(
 	// Rate limiting based on IP (fallback to "unknown" to prevent bypass)
 	const headersList = await headers();
 	const ip = (await getClientIp(headersList)) || "unknown";
-	const rateCheck = await enforceRateLimit(ip, PAYMENT_LIMITS.VALIDATE_DISCOUNT);
+	const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
 	if ("error" in rateCheck) return rateCheck.error;
 
 	const code = formData.get("code") as string;

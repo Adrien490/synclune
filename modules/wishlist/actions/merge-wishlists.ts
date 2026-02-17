@@ -51,7 +51,7 @@ export async function mergeWishlists(
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE);
+		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE, ipAddress);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 0c. Vérifier que l'utilisateur existe (protection contre appels directs)

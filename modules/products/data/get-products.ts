@@ -86,13 +86,13 @@ export async function getProducts(
 			// Rate limiting: protects against scraping and abuse
 			let useExactOnly = false;
 			try {
-				const rateLimitId = await getRateLimitId();
+				const { identifier: rateLimitId, ipAddress } = await getRateLimitId();
 				const isAuthenticated = rateLimitId.startsWith("user:");
 				const limits = isAuthenticated
 					? SEARCH_RATE_LIMITS.authenticated
 					: SEARCH_RATE_LIMITS.guest;
 
-				const rateLimitResult = await checkRateLimit(`search:${rateLimitId}`, limits);
+				const rateLimitResult = await checkRateLimit(`search:${rateLimitId}`, limits, ipAddress);
 				if (!rateLimitResult.success) {
 					// Fallback: use exact search only
 					console.warn("[search] Rate limit exceeded:", {

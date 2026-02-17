@@ -210,7 +210,7 @@ export function ProductCard({
 
 			{/* Image container with interactive buttons */}
 			{/* bg-muted acts as CSS-only fallback if image fails to load */}
-			<div className="product-card-media relative aspect-square sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
+			<div className="product-card-media relative aspect-3/4 sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
 
 				{/* Status badges — stock badges take priority over promo (same position) */}
 				{stockStatus === "out_of_stock" && (

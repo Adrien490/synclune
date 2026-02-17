@@ -1177,30 +1177,36 @@ textarea {
 	animation: none;
 }
 
-/* Page content crossfade */
-::view-transition-old(.vt-page) {
-	animation: vt-fade-out 200ms ease-in;
+/* Exiting page: fade out + slide left (forward-motion feel) */
+::view-transition-old(.vt-page-exit) {
+	animation: vt-slide-out 200ms ease-in;
 }
 
-::view-transition-new(.vt-page) {
-	animation: vt-fade-in 200ms ease-out;
+/* Entering page: fade in + slide from right */
+::view-transition-new(.vt-page-enter) {
+	animation: vt-slide-in 200ms ease-out;
 }
 
-@keyframes vt-fade-out {
-	from { opacity: 1; }
-	to { opacity: 0; }
+@keyframes vt-slide-out {
+	from { opacity: 1; transform: translateX(0); }
+	to { opacity: 0; transform: translateX(-30px); }
 }
 
-@keyframes vt-fade-in {
-	from { opacity: 0; }
-	to { opacity: 1; }
+@keyframes vt-slide-in {
+	from { opacity: 0; transform: translateX(30px); }
+	to { opacity: 1; transform: translateX(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-	::view-transition-old(.vt-page),
-	::view-transition-new(.vt-page) {
+	::view-transition-old(.vt-page-exit),
+	::view-transition-new(.vt-page-enter) {
 		animation-duration: 0s;
 	}
+}
+
+/* Layout containment for shared element sources/destinations (perf optimization) */
+[style*="view-transition-name"] {
+	contain: layout;
 }
 
 /* ============================================
@@ -1222,6 +1228,29 @@ textarea {
 	::view-transition-group(.vt-product-image),
 	::view-transition-old(.vt-product-image),
 	::view-transition-new(.vt-product-image) {
+		animation-duration: 0s;
+	}
+}
+
+/* ============================================
+   SHARED ELEMENT — Collection image morph
+   ============================================ */
+
+::view-transition-group(.vt-collection-image) {
+	animation-duration: 300ms;
+	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(.vt-collection-image),
+::view-transition-new(.vt-collection-image) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	::view-transition-group(.vt-collection-image),
+	::view-transition-old(.vt-collection-image),
+	::view-transition-new(.vt-collection-image) {
 		animation-duration: 0s;
 	}
 }

@@ -4,7 +4,12 @@ import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 import { seededRandom } from "@/shared/utils/seeded-random";
 
-/** Cache pour la memoization des particules générées */
+/**
+ * FIFO cache for generated particle arrays.
+ * TTL is intentionally omitted: entries are deterministic (same params = same output)
+ * so stale data is impossible. The FIFO cap prevents unbounded growth — when size
+ * exceeds MAX_CACHE_SIZE, the oldest entry is evicted regardless of age.
+ */
 const particleCache = new Map<string, Particle[]>();
 const MAX_CACHE_SIZE = 50;
 

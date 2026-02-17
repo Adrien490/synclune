@@ -103,6 +103,29 @@ const BLACKLIST_IPS = process.env.RATE_LIMIT_BLACKLIST?.split(",").map((ip) => i
 // HELPERS
 // ============================================================================
 
+/**
+ * Logs structured info when a rate limit is triggered.
+ * Enables post-mortem analysis: which endpoints are targeted, which IPs are suspicious.
+ */
+function logRateLimitBlock(params: {
+	type: "global-ip" | "per-action";
+	identifier: string;
+	ip: string | null;
+	limit: number;
+	windowMs: number;
+	retryAfterSeconds: number;
+}): void {
+	console.warn("[RATE_LIMIT] Blocked:", {
+		type: params.type,
+		identifier: params.identifier.startsWith("user:") ? "user:***" : params.identifier,
+		ip: params.ip,
+		limit: params.limit,
+		windowMs: params.windowMs,
+		retryAfter: params.retryAfterSeconds,
+		timestamp: new Date().toISOString(),
+	});
+}
+
 function formatRetryAfter(seconds: number): string {
 	if (seconds < 60) {
 		return `${seconds} seconde${seconds > 1 ? "s" : ""}`;
@@ -218,6 +241,7 @@ async function checkRateLimitUpstash(
 
 			if (!globalResult.success) {
 				const retryAfterSeconds = Math.ceil((globalResult.reset - Date.now()) / 1000);
+				logRateLimitBlock({ type: "global-ip", identifier, ip: ipAddress, limit: GLOBAL_IP_LIMIT, windowMs: GLOBAL_IP_WINDOW, retryAfterSeconds });
 				return {
 					success: false,
 					remaining: 0,
@@ -236,6 +260,10 @@ async function checkRateLimitUpstash(
 		const retryAfterSeconds = result.success
 			? undefined
 			: Math.ceil((result.reset - Date.now()) / 1000);
+
+		if (!result.success) {
+			logRateLimitBlock({ type: "per-action", identifier, ip: ipAddress, limit, windowMs, retryAfterSeconds: retryAfterSeconds! });
+		}
 
 		return {
 			success: result.success,
@@ -281,6 +309,7 @@ function checkRateLimitInMemory(
 
 		if (globalEntry.count >= GLOBAL_IP_LIMIT) {
 			const retryAfterSeconds = Math.ceil((globalEntry.resetAt - now) / 1000);
+			logRateLimitBlock({ type: "global-ip", identifier, ip: ipAddress, limit: GLOBAL_IP_LIMIT, windowMs: GLOBAL_IP_WINDOW, retryAfterSeconds });
 			return {
 				success: false,
 				remaining: 0,
@@ -313,6 +342,10 @@ function checkRateLimitInMemory(
 	const success = !wouldExceedLimit;
 	const remaining = Math.max(0, limit - entry.count);
 	const retryAfterSeconds = success ? undefined : Math.ceil((entry.resetAt - now) / 1000);
+
+	if (!success) {
+		logRateLimitBlock({ type: "per-action", identifier, ip: ipAddress, limit, windowMs, retryAfterSeconds: retryAfterSeconds! });
+	}
 
 	return {
 		success,

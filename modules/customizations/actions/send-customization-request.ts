@@ -80,7 +80,7 @@ export async function sendCustomizationRequest(
 		const emailRateLimit = await checkRateLimit(emailRateLimitId, {
 			limit: 5,
 			windowMs: 24 * 60 * 60 * 1000, // 5 demandes par email par 24h
-		});
+		}, ipAddress);
 
 		if (!emailRateLimit.success) {
 			return error("Trop de demandes pour cette adresse email. Réessaie demain.");
