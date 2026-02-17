@@ -32,7 +32,7 @@ export function AtelierStorySkeleton() {
 					{/* Badge "Depuis mon atelier" */}
 					<Skeleton className="h-5 w-36 mx-auto bg-muted/30" />
 
-					{/* Titre accrocheur "Je vais te faire une confidence" */}
+					{/* Titre accrocheur "Je vais vous faire une confidence" */}
 					<Skeleton className="h-10 sm:h-12 w-full max-w-md mx-auto bg-muted/50" />
 
 					{/* 4 paragraphes de texte narratif */}

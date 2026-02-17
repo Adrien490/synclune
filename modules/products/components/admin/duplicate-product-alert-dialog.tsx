@@ -55,7 +55,7 @@ export function DuplicateProductAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									Es-tu sûr de vouloir dupliquer le bijou{" "}
+									Êtes-vous sûr de vouloir dupliquer le bijou{" "}
 									<strong>&quot;{duplicateDialog.data?.productTitle}&quot;</strong> ?
 								</p>
 								<p className="mt-4">Une copie sera créée avec :</p>
@@ -65,7 +65,7 @@ export function DuplicateProductAlertDialog() {
 									<li>Le statut mis en &quot;Brouillon&quot;</li>
 								</ul>
 								<p className="text-muted-foreground text-xs mt-4">
-									Tu pourras ensuite modifier le bijou dupliqué selon tes besoins.
+									Vous pourrez ensuite modifier le bijou dupliqué selon vos besoins.
 								</p>
 							</div>
 						</AlertDialogDescription>

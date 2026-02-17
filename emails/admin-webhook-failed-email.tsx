@@ -1,6 +1,7 @@
 import { Button, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
+import { ErrorCodeBlock } from "./_components/error-code-block";
 import { FlexRow } from "./_components/flex-row";
 
 interface AdminWebhookFailedEmailProps {
@@ -22,18 +23,18 @@ export const AdminWebhookFailedEmail = ({
 }: AdminWebhookFailedEmailProps) => {
 	return (
 		<EmailLayout
-			preview={`ALERTE : Webhook ${eventType} en echec (${attempts} tentatives)`}
-			headerText="Webhook Stripe en echec"
+			preview={`ALERTE : Webhook ${eventType} en échec (${attempts} tentatives)`}
+			headerText="Webhook Stripe en échec"
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Cet email a ete envoye automatiquement par le systeme de
+					Cet email a été envoyé automatiquement par le système de
 					monitoring Synclune.
 				</Text>
 			}
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
 				<Text style={EMAIL_STYLES.text.small}>
-					Action manuelle peut etre requise
+					Action manuelle peut-être requise
 				</Text>
 			</Section>
 
@@ -61,7 +62,7 @@ export const AdminWebhookFailedEmail = ({
 						style={{ marginBottom: "8px" }}
 						left={
 							<Text style={EMAIL_STYLES.text.small}>
-								Type d&apos;evenement
+								Type d&apos;événement
 							</Text>
 						}
 						right={
@@ -99,26 +100,9 @@ export const AdminWebhookFailedEmail = ({
 			{/* Error */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Derniere erreur
+					Dernière erreur
 				</Text>
-				<div
-					style={{
-						...EMAIL_STYLES.section.card,
-						backgroundColor: EMAIL_COLORS.text.primary,
-						padding: "12px",
-					}}
-				>
-					<code
-						style={{
-							fontFamily: "monospace",
-							fontSize: "12px",
-							color: EMAIL_COLORS.primary,
-							wordBreak: "break-all",
-						}}
-					>
-						{error}
-					</code>
-				</div>
+				<ErrorCodeBlock error={error} />
 			</Section>
 
 			{/* CTAs */}
@@ -128,7 +112,7 @@ export const AdminWebhookFailedEmail = ({
 						href={stripeDashboardUrl}
 						style={{
 							...EMAIL_STYLES.button.primary,
-							backgroundColor: "#635bff",
+							backgroundColor: EMAIL_COLORS.stripe,
 						}}
 					>
 						Voir dans Stripe

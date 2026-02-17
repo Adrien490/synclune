@@ -11,7 +11,7 @@ interface CartRecommendationsProps {
 }
 
 /**
- * Section "Tu pourrais aimer" pour la page panier
+ * Section "Vous pourriez aimer" pour la page panier
  *
  * Utilise le même algorithme que RelatedProducts mais sans produit courant,
  * ce qui retourne :
@@ -52,10 +52,10 @@ export async function CartRecommendations({
 						id="cart-recommendations-heading"
 						className="text-xl sm:text-2xl font-semibold tracking-tight"
 					>
-						Tu pourrais aimer
+						Vous pourriez aimer
 					</h2>
 					<p className="text-sm leading-normal text-muted-foreground">
-						Des créations sélectionnées pour compléter ta commande
+						Des créations sélectionnées pour compléter votre commande
 					</p>
 				</div>
 			</Reveal>

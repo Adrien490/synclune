@@ -1,15 +1,15 @@
 const steps = [
 	{
-		title: "Décris ton idée",
-		description: "Remplis le formulaire avec ton projet, même si c'est encore flou.",
+		title: "Décrivez votre idée",
+		description: "Remplissez le formulaire avec votre projet, même si c'est encore flou.",
 	},
 	{
 		title: "On échange ensemble",
-		description: "Je te recontacte pour affiner les détails et te proposer un devis.",
+		description: "Je vous recontacte pour affiner les détails et vous proposer un devis.",
 	},
 	{
-		title: "Je crée ton bijou",
-		description: "Une fois validé, je réalise ta pièce unique à la main.",
+		title: "Je crée votre bijou",
+		description: "Une fois validé, je réalise votre pièce unique à la main.",
 	},
 ];
 

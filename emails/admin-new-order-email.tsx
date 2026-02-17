@@ -1,5 +1,5 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import type { OrderItem } from "@/modules/emails/types/email.types";
+import type { AdminShippingAddress, OrderItem } from "@/modules/emails/types/email.types";
 import { Button, Hr, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
@@ -14,16 +14,7 @@ interface AdminNewOrderEmailProps {
 	discount: number;
 	shipping: number;
 	total: number;
-	shippingAddress: {
-		firstName: string;
-		lastName: string;
-		address1: string;
-		address2?: string | null;
-		postalCode: string;
-		city: string;
-		country: string;
-		phone: string;
-	};
+	shippingAddress: AdminShippingAddress;
 	dashboardUrl: string;
 }
 

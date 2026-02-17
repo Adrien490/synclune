@@ -63,7 +63,7 @@ export function ArchiveCollectionAlertDialog() {
 						<AlertDialogDescription>
 							{isArchiving ? (
 								<>
-									Es-tu sur de vouloir archiver la collection{" "}
+									Êtes-vous sûr de vouloir archiver la collection{" "}
 									<strong>
 										&quot;{archiveDialog.data?.collectionName}&quot;
 									</strong>{" "}
@@ -75,12 +75,12 @@ export function ArchiveCollectionAlertDialog() {
 									<br />
 									<br />
 									<span className="text-muted-foreground text-xs">
-										Tu pourras la restaurer a tout moment.
+										Vous pourrez la restaurer a tout moment.
 									</span>
 								</>
 							) : (
 								<>
-									Es-tu sur de vouloir restaurer la collection{" "}
+									Êtes-vous sûr de vouloir restaurer la collection{" "}
 									<strong>
 										&quot;{archiveDialog.data?.collectionName}&quot;
 									</strong>{" "}

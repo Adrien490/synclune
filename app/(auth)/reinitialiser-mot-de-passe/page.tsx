@@ -69,7 +69,7 @@ export default async function ResetPasswordPage({
 								Réinitialiser le mot de passe
 							</h1>
 							<p className="text-muted-foreground">
-								Entre ton nouveau mot de passe ci-dessous.
+								Entrez votre nouveau mot de passe ci-dessous.
 							</p>
 						</div>
 					</div>
@@ -88,7 +88,7 @@ export default async function ResetPasswordPage({
 									</p>
 									<p className="text-sm text-destructive/90">
 										Ce lien de réinitialisation est invalide ou a expiré.
-										Fais une nouvelle demande de réinitialisation.
+										Faites une nouvelle demande de réinitialisation.
 									</p>
 								</div>
 							</div>
@@ -105,7 +105,7 @@ export default async function ResetPasswordPage({
 										Token manquant
 									</p>
 									<p className="text-sm text-accent-foreground/90">
-										Le lien de réinitialisation semble incomplet. Utilise
+										Le lien de réinitialisation semble incomplet. Utilisez
 										le lien complet reçu par email.
 									</p>
 								</div>

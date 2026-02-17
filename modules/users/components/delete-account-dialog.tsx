@@ -46,22 +46,22 @@ export function DeleteAccountDialog() {
 			</AlertDialogTrigger>
 			<AlertDialogContent>
 				<AlertDialogHeader>
-					<AlertDialogTitle>Supprimer ton compte ?</AlertDialogTitle>
+					<AlertDialogTitle>Supprimer votre compte ?</AlertDialogTitle>
 					<AlertDialogDescription>
-						Cette action est irréversible. Toutes tes données personnelles
+						Cette action est irréversible. Toutes vos données personnelles
 						seront supprimées conformément au RGPD.
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 
 				<div className="text-sm text-muted-foreground space-y-2">
 					<ul className="list-disc list-inside space-y-1">
-						<li>Tes informations personnelles</li>
-						<li>Tes adresses</li>
-						<li>Tes favoris</li>
-						<li>Ton panier</li>
+						<li>Vos informations personnelles</li>
+						<li>Vos adresses</li>
+						<li>Vos favoris</li>
+						<li>Votre panier</li>
 					</ul>
 					<p>
-						Tes commandes seront conservées de manière anonymisée pour des
+						Vos commandes seront conservées de manière anonymisée pour des
 						raisons comptables légales.
 					</p>
 				</div>

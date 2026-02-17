@@ -61,7 +61,7 @@ export function RevertToProcessingDialog() {
 					<ResponsiveDialogDescription asChild>
 						<div>
 							<p>
-								Es-tu sûr de vouloir annuler l'expédition de la commande{" "}
+								Êtes-vous sûr de vouloir annuler l'expédition de la commande{" "}
 								<strong>{dialog.data?.orderNumber}</strong> ?
 							</p>
 							{dialog.data?.trackingNumber && (

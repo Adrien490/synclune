@@ -231,7 +231,7 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 		return (
 			<Collapsible>
 				{/* Accessible heading */}
-				<h2 className="sr-only">Récapitulatif de ta commande</h2>
+				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 				<Card className="rounded-xl shadow-sm border">
 					<CollapsibleTrigger className="w-full text-left">
@@ -263,12 +263,12 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 	return (
 		<Card className="rounded-xl shadow-sm border sticky top-20">
 			{/* Heading h2 pour lecteurs d'écran */}
-			<h2 className="sr-only">Récapitulatif de ta commande</h2>
+			<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 			<CardHeader className="pb-4">
 				<CardTitle className="flex items-center gap-2 text-lg/7 tracking-tight antialiased">
 					<ShoppingBag className="w-5 h-5" />
-					Ta commande
+					Votre commande
 				</CardTitle>
 			</CardHeader>
 

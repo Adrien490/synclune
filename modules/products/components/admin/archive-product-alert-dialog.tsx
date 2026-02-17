@@ -67,7 +67,7 @@ export function ArchiveProductAlertDialog() {
 						<AlertDialogDescription>
 							{isArchiving ? (
 								<>
-									Es-tu sûr de vouloir archiver le bijou{" "}
+									Êtes-vous sûr de vouloir archiver le bijou{" "}
 									<strong>
 										&quot;{archiveDialog.data?.productTitle}&quot;
 									</strong>{" "}
@@ -79,12 +79,12 @@ export function ArchiveProductAlertDialog() {
 									<br />
 									<br />
 									<span className="text-muted-foreground text-xs">
-										Tu pourras le restaurer à tout moment.
+										Vous pourrez le restaurer à tout moment.
 									</span>
 								</>
 							) : (
 								<>
-									Es-tu sûr de vouloir désarchiver le bijou{" "}
+									Êtes-vous sûr de vouloir désarchiver le bijou{" "}
 									<strong>
 										&quot;{archiveDialog.data?.productTitle}&quot;
 									</strong>{" "}

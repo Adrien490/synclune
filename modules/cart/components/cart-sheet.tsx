@@ -106,11 +106,11 @@ export function CartSheet({ cart }: CartSheetProps) {
 									<EmptyMedia variant="icon">
 										<ShoppingBag className="size-6" />
 									</EmptyMedia>
-									<EmptyTitle>Ton panier est vide !</EmptyTitle>
+									<EmptyTitle>Votre panier est vide !</EmptyTitle>
 								</EmptyHeader>
 								<EmptyContent>
 									<p className="text-muted-foreground max-w-70">
-										Chaque bijou est une pièce unique, fabriquée à la main avec amour. Trouve celui qui te correspond !
+										Chaque bijou est une pièce unique, fabriquée à la main avec amour. Trouvez celui qui vous correspond !
 									</p>
 									<Button
 										asChild
@@ -140,7 +140,7 @@ export function CartSheet({ cart }: CartSheetProps) {
 									aria-label="Problèmes de stock dans le panier"
 								>
 									<p className="text-xs text-destructive font-medium">
-										Ajuste ton panier pour continuer
+										Ajustez votre panier pour continuer
 									</p>
 									<ul className="mt-1 space-y-0.5 text-[11px] text-destructive/80">
 										{itemsWithIssues.map((item) => (

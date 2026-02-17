@@ -48,13 +48,13 @@ export function CancelOrderAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									Es-tu sûr de vouloir annuler la commande{" "}
+									Êtes-vous sûr de vouloir annuler la commande{" "}
 									<strong>{cancelDialog.data?.orderNumber}</strong> ?
 								</p>
 								{cancelDialog.data?.isPaid && (
 									<p className="mt-2 text-amber-600">
 										Cette commande a été payée. Le statut de paiement sera passé à
-										REFUNDED. N'oublie pas de procéder au remboursement via Stripe.
+										REFUNDED. N'oubliez pas de procéder au remboursement via Stripe.
 									</p>
 								)}
 								<p className="text-muted-foreground mt-4 text-sm">

@@ -101,8 +101,8 @@ export function WishlistListContent({
 					className="sr-only"
 				>
 					{optimisticItems.length === 0
-						? "Ta wishlist est maintenant vide"
-						: `${optimisticItems.length} article${optimisticItems.length > 1 ? "s" : ""} dans ta wishlist`}
+						? "Votre wishlist est maintenant vide"
+						: `${optimisticItems.length} article${optimisticItems.length > 1 ? "s" : ""} dans votre wishlist`}
 				</div>
 
 				{/* Pagination */}

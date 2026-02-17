@@ -198,7 +198,7 @@ export function EditProductMediaSection({
 								return (
 									<div className="text-center space-y-1">
 										<p className="text-sm font-medium">
-											Glisse tes médias ici
+											Glissez vos médias ici
 										</p>
 										<p className="text-xs text-muted-foreground">
 											{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 16MB (image) / 512MB (vidéo)

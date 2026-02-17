@@ -81,7 +81,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				</div>
 				{priceInfo.hasMultiplePrices && (
 					<p className="text-xs text-muted-foreground" role="status">
-						Sélectionne tes options pour voir le prix exact
+						Sélectionnez vos options pour voir le prix exact
 					</p>
 				)}
 			</div>

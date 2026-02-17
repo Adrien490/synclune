@@ -19,29 +19,29 @@ export const ReviewResponseEmail = ({
 	responseAuthorName,
 	productUrl,
 }: ReviewResponseEmailProps) => {
-	const previewText = `Nous avons répondu à ton avis sur ${productTitle}`;
+	const previewText = `Nous avons répondu à votre avis sur ${productTitle}`;
 
 	return (
 		<EmailLayout
 			preview={previewText}
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Merci pour ta confiance !
+					Merci pour votre confiance !
 				</Text>
 			}
 		>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>
-					Nous avons répondu à ton avis !
+					Nous avons répondu à votre avis !
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
 					Bonjour {customerName},
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
-					Merci d&apos;avoir pris le temps de partager ton avis sur{" "}
-					<strong>{productTitle}</strong>. Nous avons lu ton retour avec
-					attention et nous tenions à te répondre.
+					Merci d&apos;avoir pris le temps de partager votre avis sur{" "}
+					<strong>{productTitle}</strong>. Nous avons lu votre retour avec
+					attention et nous tenions à vous répondre.
 				</Text>
 			</Section>
 
@@ -50,7 +50,7 @@ export const ReviewResponseEmail = ({
 			{/* Rappel de l'avis original */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-					Ton avis
+					Votre avis
 				</Text>
 				<div
 					style={{
@@ -114,7 +114,7 @@ ReviewResponseEmail.PreviewProps = {
 	reviewContent:
 		"J'adore ce collier ! La qualité est exceptionnelle et il brille magnifiquement. Je le porte tous les jours.",
 	responseContent:
-		"Merci beaucoup pour ton retour Marie ! Nous sommes ravies que le collier Luna te plaise autant. C'est un plaisir de savoir qu'il t'accompagne au quotidien. N'hésite pas à nous contacter si tu as la moindre question.",
+		"Merci beaucoup pour votre retour Marie ! Nous sommes ravies que le collier Luna vous plaise autant. C'est un plaisir de savoir qu'il vous accompagne au quotidien. N'hésitez pas à nous contacter si vous avez la moindre question.",
 	responseAuthorName: "Équipe Synclune",
 	productUrl: "https://synclune.fr/creations/collier-luna-or-rose",
 } as ReviewResponseEmailProps;

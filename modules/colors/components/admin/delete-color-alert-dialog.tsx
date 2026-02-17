@@ -28,7 +28,7 @@ export function DeleteColorAlertDialog() {
 			hiddenFields={[{ name: "id", dataKey: "colorId" }]}
 			description={(data) => (
 				<>
-					Es-tu sûr(e) de vouloir supprimer la couleur{" "}
+					Êtes-vous sûr de vouloir supprimer la couleur{" "}
 					<strong>&quot;{data?.colorName}&quot;</strong> ?
 					<br />
 					<br />

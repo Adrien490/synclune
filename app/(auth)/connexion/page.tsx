@@ -58,7 +58,7 @@ export default function LoginPage() {
 								Connexion
 							</h1>
 							<p className="text-muted-foreground">
-								Pour accéder à ton espace personnel
+								Pour accéder à votre espace personnel
 							</p>
 						</div>
 					</div>
@@ -76,7 +76,7 @@ export default function LoginPage() {
 							</div>
 							<div className="relative flex justify-center text-xs uppercase">
 								<span className="bg-background px-2 text-muted-foreground">
-									Ou avec ton email
+									Ou avec votre email
 								</span>
 							</div>
 						</div>
@@ -91,7 +91,7 @@ export default function LoginPage() {
 							<div className="text-sm text-muted-foreground">
 								Première visite ?{" "}
 								<Link href="/inscription" className="font-medium underline">
-									Crée ton compte
+									Créez votre compte
 								</Link>
 							</div>
 						</div>

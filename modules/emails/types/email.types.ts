@@ -13,6 +13,10 @@ export type ShippingAddress = {
 	phone?: string
 }
 
+export type AdminShippingAddress = ShippingAddress & {
+	phone: string
+}
+
 export type OrderItem = {
 	productTitle: string
 	skuColor: string | null

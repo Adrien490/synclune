@@ -32,15 +32,15 @@ export const ReviewRequestEmail = ({
 }: ReviewRequestEmailProps) => {
 	const singleProduct = products.length === 1;
 	const previewText = singleProduct
-		? `Que penses-tu de ${products[0].title} ?`
-		: `Donne ton avis sur ta commande ${orderNumber}`;
+		? `Que pensez-vous de ${products[0].title} ?`
+		: `Donnez votre avis sur votre commande ${orderNumber}`;
 
 	return (
 		<EmailLayout
 			preview={previewText}
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Merci pour ta confiance !
+					Merci pour votre confiance !
 				</Text>
 			}
 		>
@@ -48,19 +48,19 @@ export const ReviewRequestEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>
 					{singleProduct
-						? "Ton avis compte !"
-						: "Tes avis comptent !"}
+						? "Votre avis compte !"
+						: "Vos avis comptent !"}
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
 					Bonjour {customerName},
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
 					{singleProduct
-						? "Ta commande a bien été livrée. Nous espérons que tu es ravie de ta création !"
-						: "Ta commande a bien été livrée. Nous espérons que tu es ravie de tes créations !"}
+						? "Votre commande a bien été livrée. Nous espérons que vous êtes ravie de votre création !"
+						: "Votre commande a bien été livrée. Nous espérons que vous êtes ravie de vos créations !"}
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
-					Prends quelques instants pour partager ton expérience. Ton avis
+					Prenez quelques instants pour partager votre expérience. Votre avis
 					aide d&apos;autres clientes à faire leur choix et nous permet
 					d&apos;améliorer nos créations.
 				</Text>
@@ -69,7 +69,7 @@ export const ReviewRequestEmail = ({
 			{/* Produits */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "16px" }}>
-					{singleProduct ? "Ta création" : "Tes créations"}
+					{singleProduct ? "Votre création" : "Vos créations"}
 				</Text>
 
 				{products.map((product, index) => (

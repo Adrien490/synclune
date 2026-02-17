@@ -422,7 +422,7 @@ export function CheckoutForm({
 														onChange: ({ value }: { value: string }) => {
 															if (!value) return "L'adresse email est requise";
 															if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-																return "Entre une adresse email valide";
+																return "Entrez une adresse email valide";
 															}
 														},
 													}}
@@ -439,12 +439,12 @@ export function CheckoutForm({
 																spellCheck={false}
 																autoCorrect="off"
 																autoFocus
-																placeholder="ton@email.com"
+																placeholder="votre@email.com"
 															/>
 															<div className="text-sm text-muted-foreground flex items-start gap-1.5">
 																<Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
 																<span>
-																	Tu as déjà un compte ?{" "}
+																	Vous avez déjà un compte ?{" "}
 																	<Link
 																		href="/connexion?callbackURL=/paiement"
 																		className="text-foreground underline hover:no-underline font-medium"
@@ -472,9 +472,9 @@ export function CheckoutForm({
 																			}
 																		}}
 																	>
-																		Connecte-toi
+																		Connectez-vous
 																	</Link>{" "}
-																	pour accéder à tes adresses enregistrées
+																	pour accéder à vos adresses enregistrées
 																</span>
 															</div>
 														</div>
@@ -688,7 +688,7 @@ export function CheckoutForm({
 											validators={{
 												onChange: ({ value }: { value: boolean }) => {
 													if (!value) {
-														return "Tu dois accepter les conditions générales de vente";
+														return "Vous devez accepter les conditions générales de vente";
 													}
 												},
 											}}

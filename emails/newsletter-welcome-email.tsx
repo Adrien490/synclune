@@ -5,11 +5,13 @@ import { EmailLayout } from "./_components/email-layout";
 interface NewsletterWelcomeEmailProps {
 	email: string;
 	unsubscribeUrl: string;
+	shopUrl: string;
 }
 
 export const NewsletterWelcomeEmail = ({
 	email,
 	unsubscribeUrl,
+	shopUrl,
 }: NewsletterWelcomeEmailProps) => {
 	return (
 		<EmailLayout
@@ -34,14 +36,14 @@ export const NewsletterWelcomeEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Bienvenue</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Tu es inscrit à la newsletter avec {email}.
+					Vous êtes inscrit à la newsletter avec {email}.
 				</Text>
 			</Section>
 
 			{/* CTA */}
 			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
 				<Button
-					href="https://synclune.fr/produits"
+					href={shopUrl}
 					style={EMAIL_STYLES.button.primary}
 				>
 					Voir les créations
@@ -54,6 +56,7 @@ export const NewsletterWelcomeEmail = ({
 NewsletterWelcomeEmail.PreviewProps = {
 	email: "example@email.com",
 	unsubscribeUrl: "https://synclune.fr/newsletter/unsubscribe?token=abc123",
+	shopUrl: "https://synclune.fr/produits",
 } as NewsletterWelcomeEmailProps;
 
 export default NewsletterWelcomeEmail;

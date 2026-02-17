@@ -47,7 +47,7 @@ export function DeleteOrderAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									Es-tu sûr de vouloir supprimer la commande{" "}
+									Êtes-vous sûr de vouloir supprimer la commande{" "}
 									<strong>{deleteDialog.data?.orderNumber}</strong> ?
 								</p>
 								<p className="text-destructive mt-2 font-medium">

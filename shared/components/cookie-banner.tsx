@@ -92,9 +92,9 @@ export function CookieBanner() {
 
 							{/* Message */}
 							<p id="cookie-description" className="text-sm text-muted-foreground leading-relaxed">
-								Nous utilisons des cookies pour améliorer ton expérience.
+								Nous utilisons des cookies pour améliorer votre expérience.
 								<span className="sr-only">
-									{" "}Ton choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.
+									{" "}Votre choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.
 								</span>
 							</p>
 

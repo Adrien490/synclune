@@ -54,7 +54,7 @@ export function DeleteDiscountAlertDialog() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
 						<AlertDialogDescription>
-							Es-tu sûr de vouloir supprimer le code promo{" "}
+							Êtes-vous sûr de vouloir supprimer le code promo{" "}
 							<strong>&quot;{deleteDialog.data?.discountCode}&quot;</strong> ?
 							<br />
 							<br />
@@ -65,7 +65,7 @@ export function DeleteDiscountAlertDialog() {
 										supprimé.
 									</span>
 									<br />
-									Tu peux le désactiver à la place pour empêcher son
+									Vous pouvez le désactiver à la place pour empêcher son
 									utilisation.
 									<br />
 									<br />

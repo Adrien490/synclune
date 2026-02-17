@@ -177,7 +177,7 @@ export function StickyCartCTA({
 								</>
 							) : (
 								<span className="text-sm text-muted-foreground">
-									Sélectionne tes options
+									Sélectionnez vos options
 								</span>
 							)}
 						</div>

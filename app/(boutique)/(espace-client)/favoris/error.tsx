@@ -32,12 +32,12 @@ export default function WishlistError({ reset }: ErrorPageProps) {
 							<EmptyMedia variant="icon">
 								<Heart className="size-6 text-muted-foreground" />
 							</EmptyMedia>
-							<EmptyTitle>Impossible de charger tes favoris</EmptyTitle>
+							<EmptyTitle>Impossible de charger vos favoris</EmptyTitle>
 						</EmptyHeader>
 						<EmptyContent>
 							<p className="text-muted-foreground max-w-md mb-6">
-								Une erreur est survenue lors du chargement de ta wishlist.
-								Réessaie dans quelques instants.
+								Une erreur est survenue lors du chargement de votre wishlist.
+								Réessayez dans quelques instants.
 							</p>
 							<div className="flex flex-col sm:flex-row gap-3">
 								<Button onClick={reset} variant="primary" size="lg">

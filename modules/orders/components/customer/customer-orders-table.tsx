@@ -57,7 +57,7 @@ export async function CustomerOrdersTable({
 					</EmptyMedia>
 					<EmptyTitle>Aucune commande</EmptyTitle>
 					<EmptyDescription>
-						Tu n'as pas encore passé de commande.
+						Vous n'avez pas encore passé de commande.
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
@@ -75,7 +75,7 @@ export async function CustomerOrdersTable({
 				<TableScrollContainer>
 					<Table
 						role="table"
-						aria-label="Liste de tes commandes"
+						aria-label="Liste de vos commandes"
 						className="min-w-full"
 					>
 						<TableHeader>

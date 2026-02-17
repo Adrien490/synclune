@@ -52,7 +52,7 @@ export default function ResendVerificationPage() {
 								Renvoyer l'email de vérification 
 							</h1>
 							<p className="text-muted-foreground">
-								Tu peux rentrer ton email pour recevoir un nouveau lien de
+								Vous pouvez entrer votre email pour recevoir un nouveau lien de
 								vérification.
 							</p>
 						</div>
@@ -66,7 +66,7 @@ export default function ResendVerificationPage() {
 								<div className="space-y-1">
 									<p className="text-sm font-medium">Email non reçu ?</p>
 									<p className="text-sm text-muted-foreground">
-										Vérifie tes spams ou demande un nouveau lien de
+										Vérifiez vos spams ou demandez un nouveau lien de
 										vérification !
 									</p>
 								</div>

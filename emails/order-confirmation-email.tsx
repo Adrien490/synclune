@@ -12,7 +12,6 @@ interface OrderConfirmationEmailProps {
 	subtotal: number;
 	discount: number;
 	shipping: number;
-	tax: number;
 	total: number;
 	shippingAddress: ShippingAddress;
 	trackingUrl: string;
@@ -25,7 +24,6 @@ export const OrderConfirmationEmail = ({
 	subtotal,
 	discount,
 	shipping,
-	tax,
 	total,
 	shippingAddress,
 	trackingUrl,
@@ -38,7 +36,7 @@ export const OrderConfirmationEmail = ({
 					Commande confirmée
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, ta commande est enregistrée.
+					Bonjour {customerName}, votre commande est enregistrée.
 				</Text>
 			</Section>
 
@@ -245,7 +243,6 @@ OrderConfirmationEmail.PreviewProps = {
 	subtotal: 17900,
 	discount: 0,
 	shipping: 490,
-	tax: 0,
 	total: 18390,
 	shippingAddress: {
 		firstName: "Marie",

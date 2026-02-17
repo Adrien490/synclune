@@ -1,9 +1,8 @@
-import { render } from "@react-email/components"
 import { VerificationEmail } from "@/emails/verification-email"
 import { PasswordResetEmail } from "@/emails/password-reset-email"
 import { PasswordChangedEmail } from "@/emails/password-changed-email"
-import { EMAIL_SUBJECTS } from "../constants/email.constants"
-import { sendEmail } from "./send-email"
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants"
+import { renderAndSend } from "./send-email"
 import { buildUrl, ROUTES } from "@/shared/constants/urls"
 import type { EmailResult } from "../types/email.types"
 
@@ -17,14 +16,10 @@ export async function sendVerificationEmail({
 	to: string
 	url: string
 }): Promise<EmailResult> {
-	const component = VerificationEmail({ verificationUrl: url })
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
+	return renderAndSend(VerificationEmail({ verificationUrl: url }), {
 		to,
 		subject: EMAIL_SUBJECTS.VERIFICATION,
-		html,
-		text,
+		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "auth" }],
 	})
 }
@@ -39,14 +34,10 @@ export async function sendPasswordResetEmail({
 	to: string
 	url: string
 }): Promise<EmailResult> {
-	const component = PasswordResetEmail({ resetUrl: url })
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
+	return renderAndSend(PasswordResetEmail({ resetUrl: url }), {
 		to,
 		subject: EMAIL_SUBJECTS.PASSWORD_RESET,
-		html,
-		text,
+		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "auth" }],
 	})
 }
@@ -64,14 +55,10 @@ export async function sendPasswordChangedEmail({
 	changeDate: string
 }): Promise<EmailResult> {
 	const resetUrl = buildUrl(ROUTES.AUTH.FORGOT_PASSWORD)
-	const component = PasswordChangedEmail({ userName, changeDate, resetUrl })
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
+	return renderAndSend(PasswordChangedEmail({ userName, changeDate, resetUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.PASSWORD_CHANGED,
-		html,
-		text,
+		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "auth" }],
 	})
 }

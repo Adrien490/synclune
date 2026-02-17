@@ -16,8 +16,8 @@ export function WishlistBadge() {
 	return (
 		<ItemCountBadge
 			count={count}
-			singularLabel="article dans ta wishlist"
-			pluralLabel="articles dans ta wishlist"
+			singularLabel="article dans votre wishlist"
+			pluralLabel="articles dans votre wishlist"
 			size="sm"
 		/>
 	);

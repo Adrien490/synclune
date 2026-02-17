@@ -47,11 +47,11 @@ export function MarkAsReturnedAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									Es-tu sûr de vouloir marquer la commande{" "}
+									Êtes-vous sûr de vouloir marquer la commande{" "}
 									<strong>{dialog.data?.orderNumber}</strong> comme retournée ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									Le statut de livraison passera à "Retourné". Tu pourras ensuite
+									Le statut de livraison passera à "Retourné". Vous pourrez ensuite
 									créer un remboursement si nécessaire.
 								</p>
 							</div>

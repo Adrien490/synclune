@@ -33,7 +33,7 @@ export function DeleteProductTypeAlertDialog() {
 			hiddenFields={[{ name: "productTypeId", dataKey: "productTypeId" }]}
 			description={(data) => (
 				<>
-					Veux-tu vraiment supprimer le type{" "}
+					Voulez-vous vraiment supprimer le type{" "}
 					<strong>&quot;{data?.label}&quot;</strong> ?
 					<br />
 					<br />

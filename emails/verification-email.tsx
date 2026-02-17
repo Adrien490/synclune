@@ -9,12 +9,12 @@ interface VerificationEmailProps {
 export const VerificationEmail = ({
 	verificationUrl,
 }: VerificationEmailProps) => (
-	<EmailLayout preview="Vérifie ton adresse email">
+	<EmailLayout preview="Vérifiez votre adresse email">
 		{/* Titre */}
 		<Section style={{ marginBottom: "24px" }}>
 			<Text style={EMAIL_STYLES.heading.h2}>Vérification email</Text>
 			<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-				Clique sur le bouton ci-dessous pour activer ton compte.
+				Cliquez sur le bouton ci-dessous pour activer votre compte.
 			</Text>
 		</Section>
 

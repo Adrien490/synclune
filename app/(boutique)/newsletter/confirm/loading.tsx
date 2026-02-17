@@ -3,7 +3,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
  * Loading state for Newsletter Confirmation page
- * Structure simple : PageHeader + Card centrée avec formulaire
+ * Structure identique à unsubscribe page
  */
 export default function NewsletterConfirmLoading() {
 	return (
@@ -30,16 +30,7 @@ export default function NewsletterConfirmLoading() {
 							</div>
 						</div>
 
-						{/* Formulaire skeleton */}
-						<div className="space-y-4">
-							<div className="space-y-2">
-								<Skeleton className="h-4 w-32 bg-muted/40" />
-								<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
-							</div>
-							<Skeleton className="h-10 w-full bg-primary/20 rounded-md" />
-						</div>
-
-						{/* Réassurance */}
+						{/* Reassurance */}
 						<div className="bg-primary/5 rounded-lg p-4 text-center">
 							<Skeleton className="h-4 w-80 mx-auto bg-muted/30" />
 						</div>

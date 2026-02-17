@@ -59,7 +59,7 @@ export function BulkDeleteOrdersAlertDialog() {
 					<AlertDialogDescription asChild>
 						<div>
 							<p>
-								Es-tu sûr de vouloir supprimer{" "}
+								Êtes-vous sûr de vouloir supprimer{" "}
 								<strong>
 									{count} commande{count > 1 ? "s" : ""}
 								</strong>{" "}

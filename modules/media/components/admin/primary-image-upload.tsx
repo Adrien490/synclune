@@ -117,7 +117,7 @@ export function PrimaryImageUpload({
 										}}
 										aria-label="Aperçu vidéo du média principal"
 									>
-										Ton navigateur ne supporte pas la lecture de vidéos.
+										Votre navigateur ne supporte pas la lecture de vidéos.
 									</video>
 									{/* VIDEO badge */}
 									<div className="absolute top-2 right-2 z-10">

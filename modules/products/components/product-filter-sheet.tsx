@@ -285,7 +285,7 @@ export function ProductFilterSheet({
 			onClearAll={clearAllFilters}
 			isPending={isPending}
 			title="Filtres"
-			description="Affine ta recherche"
+			description="Affinez votre recherche"
 		>
 			<form
 				onSubmit={(e) => {

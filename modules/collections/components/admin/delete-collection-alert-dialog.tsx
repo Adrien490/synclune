@@ -54,7 +54,7 @@ export function DeleteCollectionAlertDialog() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
 						<AlertDialogDescription>
-							Es-tu sûr de vouloir supprimer la collection{" "}
+							Êtes-vous sûr de vouloir supprimer la collection{" "}
 							<strong>&quot;{deleteDialog.data?.collectionName}&quot;</strong> ?
 							<br />
 							<br />

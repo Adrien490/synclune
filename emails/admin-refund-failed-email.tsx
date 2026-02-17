@@ -2,6 +2,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { Button, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
+import { ErrorCodeBlock } from "./_components/error-code-block";
 import { FlexRow } from "./_components/flex-row";
 
 interface AdminRefundFailedEmailProps {
@@ -116,24 +117,7 @@ export const AdminRefundFailedEmail = ({
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
 					Erreur
 				</Text>
-				<div
-					style={{
-						...EMAIL_STYLES.section.card,
-						backgroundColor: EMAIL_COLORS.text.primary,
-						padding: "12px",
-					}}
-				>
-					<code
-						style={{
-							fontFamily: "monospace",
-							fontSize: "12px",
-							color: EMAIL_COLORS.primary,
-							wordBreak: "break-all",
-						}}
-					>
-						{errorMessage}
-					</code>
-				</div>
+				<ErrorCodeBlock error={errorMessage} />
 			</Section>
 
 			{/* Stripe IDs */}
@@ -164,7 +148,7 @@ export const AdminRefundFailedEmail = ({
 						href={stripeDashboardUrl}
 						style={{
 							...EMAIL_STYLES.button.primary,
-							backgroundColor: "#635bff",
+							backgroundColor: EMAIL_COLORS.stripe,
 						}}
 					>
 						Ouvrir Stripe

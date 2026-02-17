@@ -117,7 +117,7 @@ export function NewsletterForm() {
 											autoCorrect="off"
 											disabled={isPending || isSuccess}
 											className="h-12 text-base bg-background/80 backdrop-blur-sm border-2 focus:border-primary"
-											aria-label="Ton adresse email pour la newsletter"
+											aria-label="Votre adresse email pour la newsletter"
 											aria-invalid={hasServerError || undefined}
 											aria-describedby={hasServerError ? serverErrorId : undefined}
 											required
@@ -156,7 +156,7 @@ export function NewsletterForm() {
 						name="consent"
 						validators={{
 							onSubmit: ({ value }) => {
-								if (!value) return "Tu dois accepter pour t'inscrire";
+								if (!value) return "Vous devez accepter pour vous inscrire";
 								return undefined;
 							},
 						}}

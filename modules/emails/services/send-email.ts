@@ -1,3 +1,4 @@
+import { render } from "@react-email/components"
 import { Resend } from "resend"
 import { EMAIL_FROM } from "../constants/email.constants"
 import type { EmailResult } from "../types/email.types"
@@ -13,6 +14,11 @@ export async function sendEmail(params: {
 	headers?: Record<string, string>
 	tags?: Array<{ name: string; value: string }>
 }): Promise<EmailResult> {
+	if (!params.to || (Array.isArray(params.to) && params.to.length === 0)) {
+		console.error("[EMAIL] Missing recipient")
+		return { success: false, error: "Missing recipient" }
+	}
+
 	const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to
 	try {
 		const { data, error } = await resend.emails.send({
@@ -29,4 +35,21 @@ export async function sendEmail(params: {
 		console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error)
 		return { success: false, error }
 	}
+}
+
+/**
+ * Renders a React Email component to HTML/text and sends it via Resend
+ */
+export async function renderAndSend(
+	component: React.ReactElement,
+	params: Omit<Parameters<typeof sendEmail>[0], "html" | "text">
+): Promise<EmailResult> {
+	if (!params.to || (Array.isArray(params.to) && params.to.length === 0)) {
+		console.error("[EMAIL] Missing recipient")
+		return { success: false, error: "Missing recipient" }
+	}
+
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({ ...params, html, text })
 }

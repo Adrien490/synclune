@@ -66,7 +66,7 @@ export function RecentOrders({
 						<Package className="h-12 w-12 text-muted-foreground" />
 					</div>
 					<p className="text-base/7 tracking-normal antialiased text-muted-foreground mb-4">
-						Tu n'as pas encore passé de commande
+						Vous n'avez pas encore passé de commande
 					</p>
 					<Button asChild>
 						<Link href="/produits">Découvrir nos bijoux</Link>

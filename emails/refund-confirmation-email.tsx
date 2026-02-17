@@ -1,6 +1,6 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EMAIL_COLORS, EMAIL_STYLES, REFUND_DELAY_TEXT, REFUND_REASON_LABELS } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 import { FlexRow } from "./_components/flex-row";
 
@@ -14,15 +14,6 @@ interface RefundConfirmationEmailProps {
 	orderDetailsUrl: string;
 }
 
-const reasonLabels: Record<string, string> = {
-	CUSTOMER_REQUEST: "Demande client",
-	DEFECTIVE: "Produit défectueux",
-	WRONG_ITEM: "Erreur de commande",
-	LOST_IN_TRANSIT: "Colis perdu",
-	FRAUD: "Transaction contestée",
-	OTHER: "Autre raison",
-};
-
 export const RefundConfirmationEmail = ({
 	orderNumber,
 	customerName,
@@ -32,7 +23,7 @@ export const RefundConfirmationEmail = ({
 	isPartialRefund,
 	orderDetailsUrl,
 }: RefundConfirmationEmailProps) => {
-	const reasonLabel = reasonLabels[reason] || reason;
+	const reasonLabel = REFUND_REASON_LABELS[reason] || reason;
 
 	return (
 		<EmailLayout preview={`Remboursement ${formatEuro(refundAmount)} effectué`}>
@@ -40,9 +31,9 @@ export const RefundConfirmationEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Remboursement effectué</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, ton remboursement de{" "}
+					Bonjour {customerName}, votre remboursement de{" "}
 					{formatEuro(refundAmount)} a été effectué. Le montant sera crédité
-					sous 3 à 10 jours ouvrés.
+					sous {REFUND_DELAY_TEXT}.
 				</Text>
 			</Section>
 

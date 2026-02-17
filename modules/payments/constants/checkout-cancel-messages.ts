@@ -11,36 +11,36 @@ export const CHECKOUT_CANCEL_MESSAGES: Record<
 	card_declined: {
 		title: "Carte refusée",
 		description:
-			"Ta carte bancaire a été refusée par ta banque. Vérifie tes informations ou utilise une autre carte.",
+			"Votre carte bancaire a été refusée par votre banque. Vérifiez vos informations ou utilisez une autre carte.",
 		icon: CreditCard,
 	},
 	expired_card: {
 		title: "Carte expirée",
-		description: "Ta carte bancaire a expiré. Utilise une carte valide.",
+		description: "Votre carte bancaire a expiré. Utilisez une carte valide.",
 		icon: CreditCard,
 	},
 	insufficient_funds: {
 		title: "Fonds insuffisants",
 		description:
-			"Ton compte ne dispose pas de fonds suffisants pour effectuer cette transaction. Vérifie ton solde ou utilise une autre carte.",
+			"Votre compte ne dispose pas de fonds suffisants pour effectuer cette transaction. Vérifiez votre solde ou utilisez une autre carte.",
 		icon: CreditCard,
 	},
 	authentication_failed: {
 		title: "Authentification échouée",
 		description:
-			"L'authentification 3D Secure a échoué. Réessaye ou contacte ta banque.",
+			"L'authentification 3D Secure a échoué. Réessayez ou contactez votre banque.",
 		icon: XCircle,
 	},
 	processing_error: {
 		title: "Erreur de traitement",
 		description:
-			"Une erreur s'est produite lors du traitement de ton paiement. Réessaye dans quelques instants.",
+			"Une erreur s'est produite lors du traitement de votre paiement. Réessayez dans quelques instants.",
 		icon: XCircle,
 	},
 	canceled: {
 		title: "Paiement annulé",
 		description:
-			"Tu as annulé le processus de paiement. Aucun montant n'a été débité de ton compte.",
+			"Vous avez annulé le processus de paiement. Aucun montant n'a été débité de votre compte.",
 		icon: AlertCircle,
 	},
 }

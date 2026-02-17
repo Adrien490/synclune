@@ -68,7 +68,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 				})}
 			</ul>
 			<p className="mt-2 text-xs text-blue-600/80 dark:text-blue-400/80">
-				Les prix ont changé depuis ton ajout au panier. Ton panier conserve les prix au moment de l'ajout pour éviter toute surprise.
+				Les prix ont changé depuis votre ajout au panier. Votre panier conserve les prix au moment de l'ajout pour éviter toute surprise.
 			</p>
 
 			{/* Bouton pour actualiser les prix si certains ont baissé */}

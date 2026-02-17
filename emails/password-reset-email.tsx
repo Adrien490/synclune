@@ -7,12 +7,12 @@ interface PasswordResetEmailProps {
 }
 
 export const PasswordResetEmail = ({ resetUrl }: PasswordResetEmailProps) => (
-	<EmailLayout preview="Réinitialise ton mot de passe">
+	<EmailLayout preview="Réinitialisez votre mot de passe">
 		{/* Titre */}
 		<Section style={{ marginBottom: "24px" }}>
 			<Text style={EMAIL_STYLES.heading.h2}>Réinitialisation</Text>
 			<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-				Clique sur le bouton ci-dessous pour créer un nouveau mot de passe.
+				Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe.
 			</Text>
 		</Section>
 
@@ -26,8 +26,8 @@ export const PasswordResetEmail = ({ resetUrl }: PasswordResetEmailProps) => (
 		{/* Info */}
 		<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "32px" }}>
 			<Text style={EMAIL_STYLES.text.small}>
-				Ce lien expire dans 1 heure. Si tu n'as pas demandé cette
-				réinitialisation, ignore cet email.
+				Ce lien expire dans 1 heure. Si vous n'avez pas demandé cette
+				réinitialisation, ignorez cet email.
 			</Text>
 		</Section>
 	</EmailLayout>

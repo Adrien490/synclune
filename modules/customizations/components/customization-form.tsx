@@ -24,7 +24,7 @@ export function CustomizationForm({
 			form.reset();
 			onSuccess?.();
 			toast.success("Message envoyé !", {
-				description: "Je te réponds sous 24-48h avec un devis personnalisé",
+				description: "Je vous réponds sous 24-48h avec un devis personnalisé",
 				duration: 8000,
 			});
 		},
@@ -128,12 +128,12 @@ export function CustomizationForm({
 			>
 				{(field) => (
 					<field.TextareaField
-						label="Décris ton projet"
+						label="Décrivez votre projet"
 						required
 						rows={4}
 						maxLength={2000}
 						showCounter
-						placeholder="Décris ton idée de bijou... Par exemple : Je cherche un bracelet pour un anniversaire de mariage, dans des tons dorés avec des perles..."
+						placeholder="Décrivez votre idée de bijou... Par exemple : Je cherche un bracelet pour un anniversaire de mariage, dans des tons dorés avec des perles..."
 					/>
 				)}
 			</form.AppField>
@@ -170,7 +170,7 @@ export function CustomizationForm({
 							return "L'adresse email est requise";
 						}
 						if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-							return "Vérifie le format de ton email (ex: nom@domaine.com)";
+							return "Vérifiez le format de votre email (ex: nom@domaine.com)";
 						}
 						return undefined;
 					},
@@ -207,7 +207,7 @@ export function CustomizationForm({
 				validators={{
 					onChange: ({ value }) => {
 						if (!value) {
-							return "Tu dois accepter la politique de confidentialité pour continuer";
+							return "Vous devez accepter la politique de confidentialité pour continuer";
 						}
 						return undefined;
 					},
@@ -220,7 +220,7 @@ export function CustomizationForm({
 							required
 						/>
 						<p className="text-sm leading-relaxed text-muted-foreground ml-7">
-							Consulte notre{" "}
+							Consultez notre{" "}
 							<a
 								href="/confidentialite"
 								className="text-foreground underline hover:no-underline"

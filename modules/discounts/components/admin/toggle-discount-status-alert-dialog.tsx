@@ -60,14 +60,14 @@ export function ToggleDiscountStatusAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div className="space-y-4">
 								<div>
-									Tu es sur le point de {targetState} le code promo{" "}
+									Vous êtes sur le point de {targetState} le code promo{" "}
 									<strong>&quot;{dialog.data?.discountCode}&quot;</strong>.
 								</div>
 
 								<div className="bg-muted rounded-md p-3">
 									<div className="text-sm">
 										{isActive
-											? "Le code ne sera plus utilisable par les clients. Tu pourras le réactiver à tout moment."
+											? "Le code ne sera plus utilisable par les clients. Vous pourrez le réactiver à tout moment."
 											: "Le code redeviendra utilisable par les clients (sous réserve des autres conditions de validité)."}
 									</div>
 								</div>

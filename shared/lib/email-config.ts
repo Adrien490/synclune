@@ -55,7 +55,7 @@ export const EMAIL_SUBJECTS = {
 		"Confirmez votre inscription à la newsletter Synclune ✨",
 	NEWSLETTER_WELCOME: "Bienvenue dans notre communauté Synclune ! 🎉",
 	CUSTOMIZATION_REQUEST: "✨ Nouvelle demande de personnalisation - Synclune",
-	CUSTOMIZATION_CONFIRMATION: "Ta demande de personnalisation a été reçue - Synclune",
-	REVIEW_REQUEST: "Ton avis compte ! - Synclune",
-	REVIEW_RESPONSE: "Nous avons répondu à ton avis - Synclune",
+	CUSTOMIZATION_CONFIRMATION: "Votre demande de personnalisation a été reçue - Synclune",
+	REVIEW_REQUEST: "Votre avis compte ! - Synclune",
+	REVIEW_RESPONSE: "Nous avons répondu à votre avis - Synclune",
 } as const;

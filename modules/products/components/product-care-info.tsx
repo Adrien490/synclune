@@ -64,11 +64,11 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 				</AccordionTrigger>
 				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
 					<p>
-						J'ai passé des heures à créer ton produit (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
+						J'ai passé des heures à créer votre produit (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
 					</p>
 					<ul className="space-y-2 list-disc list-inside">
-						<li>Évite l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
-						<li>Range-le dans son petit écrin après chaque utilisation</li>
+						<li>Évitez l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
+						<li>Rangez-le dans son petit écrin après chaque utilisation</li>
 						<li>Un petit coup de chiffon doux de temps en temps, et c'est nickel</li>
 						{primaryMaterial?.toLowerCase().includes("argent") && (
 							<li>Pour l'argent : un chiffon anti-oxydation, c'est la base</li>
@@ -78,7 +78,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 						)}
 					</ul>
 					<p className="text-xs italic">
-						Ton produit a été créé avec passion, prends-en soin et il te le rendra !
+						Votre produit a été créé avec passion, prenez-en soin et il vous le rendra !
 					</p>
 				</AccordionContent>
 			</AccordionItem>

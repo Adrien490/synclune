@@ -14,7 +14,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "Paiement annulé | Synclune",
-	description: "Ton paiement a été annulé. Ton panier est toujours disponible.",
+	description: "Votre paiement a été annulé. Votre panier est toujours disponible.",
 	robots: {
 		index: false, // Ne pas indexer les pages de paiement
 		follow: false,
@@ -56,7 +56,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 								{errorInfo.title}
 							</CardTitle>
 							<CardDescription className="text-base">
-								Ta commande n'a pas été finalisée
+								Votre commande n'a pas été finalisée
 							</CardDescription>
 						</CardHeader>
 
@@ -82,8 +82,8 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							{/* 🔴 CORRECTION : Informations et conseils spécifiques */}
 							<div className="space-y-3 text-sm text-muted-foreground">
 								<p>
-									Ton panier est toujours disponible avec tous tes articles
-									sélectionnés. Tu peux reprendre ta commande à tout
+									Votre panier est toujours disponible avec tous vos articles
+									sélectionnés. Vous pouvez reprendre votre commande à tout
 									moment.
 								</p>
 
@@ -92,8 +92,8 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									<p className="flex items-start gap-2">
 										<span className="mt-0.5" aria-hidden="true">💡</span>
 										<span>
-											<strong>Que faire ?</strong> Vérifie que ta carte est activée pour les paiements en ligne,
-											ou contacte ta banque si le problème persiste.
+											<strong>Que faire ?</strong> Vérifiez que votre carte est activée pour les paiements en ligne,
+											ou contactez votre banque si le problème persiste.
 										</span>
 									</p>
 								)}
@@ -102,7 +102,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									<p className="flex items-start gap-2">
 										<span className="mt-0.5" aria-hidden="true">💡</span>
 										<span>
-											<strong>Que faire ?</strong> Vérifie ton solde ou utilise une autre carte bancaire.
+											<strong>Que faire ?</strong> Vérifiez votre solde ou utilisez une autre carte bancaire.
 										</span>
 									</p>
 								)}
@@ -111,7 +111,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									<p className="flex items-start gap-2">
 										<span className="mt-0.5" aria-hidden="true">💡</span>
 										<span>
-											<strong>Que faire ?</strong> Assure-toi d'avoir accès à ton application bancaire
+											<strong>Que faire ?</strong> Assurez-vous d'avoir accès à votre application bancaire
 											ou SMS pour valider l'authentification 3D Secure.
 										</span>
 									</p>
@@ -121,7 +121,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									<p className="flex items-start gap-2">
 										<span className="mt-0.5" aria-hidden="true">💡</span>
 										<span>
-											Si tu as rencontré un problème lors du paiement,
+											Si vous avez rencontré un problème lors du paiement,
 											n'hésite pas à me contacter !
 										</span>
 									</p>
@@ -130,8 +130,8 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 
 							{/* Reassurance message */}
 							<p className="text-sm text-muted-foreground text-center">
-								Ton panier et tes informations ont été sauvegardés.
-								Tu peux réessayer immédiatement.
+								Votre panier et vos informations ont été sauvegardés.
+								Vous pouvez réessayer immédiatement.
 							</p>
 
 							{/* Actions */}

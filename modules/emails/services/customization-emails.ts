@@ -1,8 +1,7 @@
-import { render } from "@react-email/components"
 import { CustomizationRequestEmail } from "@/emails/customization-request-email"
 import { CustomizationConfirmationEmail } from "@/emails/customization-confirmation-email"
 import { EMAIL_SUBJECTS, EMAIL_ADMIN } from "../constants/email.constants"
-import { sendEmail } from "./send-email"
+import { renderAndSend } from "./send-email"
 import type { EmailResult } from "../types/email.types"
 
 /**
@@ -23,24 +22,22 @@ export async function sendCustomizationRequestEmail({
 	details: string
 	inspirationProducts?: Array<{ title: string }>
 }): Promise<EmailResult> {
-	const component = CustomizationRequestEmail({
-		firstName,
-		email,
-		phone,
-		productTypeLabel,
-		details,
-		inspirationProducts,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to: EMAIL_ADMIN,
-		subject: `${EMAIL_SUBJECTS.CUSTOMIZATION_REQUEST} - ${firstName}`,
-		html,
-		text,
-		replyTo: email,
-		tags: [{ name: "category", value: "order" }],
-	})
+	return renderAndSend(
+		CustomizationRequestEmail({
+			firstName,
+			email,
+			phone,
+			productTypeLabel,
+			details,
+			inspirationProducts,
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `${EMAIL_SUBJECTS.CUSTOMIZATION_REQUEST} - ${firstName}`,
+			replyTo: email,
+			tags: [{ name: "category", value: "order" }],
+		}
+	)
 }
 
 /**
@@ -59,19 +56,17 @@ export async function sendCustomizationConfirmationEmail({
 	details: string
 	inspirationProducts?: Array<{ title: string }>
 }): Promise<EmailResult> {
-	const component = CustomizationConfirmationEmail({
-		firstName,
-		productTypeLabel,
-		details,
-		inspirationProducts,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to: email,
-		subject: EMAIL_SUBJECTS.CUSTOMIZATION_CONFIRMATION,
-		html,
-		text,
-		tags: [{ name: "category", value: "order" }],
-	})
+	return renderAndSend(
+		CustomizationConfirmationEmail({
+			firstName,
+			productTypeLabel,
+			details,
+			inspirationProducts,
+		}),
+		{
+			to: email,
+			subject: EMAIL_SUBJECTS.CUSTOMIZATION_CONFIRMATION,
+			tags: [{ name: "category", value: "order" }],
+		}
+	)
 }

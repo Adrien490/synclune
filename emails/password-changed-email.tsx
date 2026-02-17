@@ -18,7 +18,7 @@ export const PasswordChangedEmail = ({
 		<Section style={{ marginBottom: "24px" }}>
 			<Text style={EMAIL_STYLES.heading.h2}>Mot de passe modifié</Text>
 			<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-				Bonjour {userName}, ton mot de passe a été modifié le {changeDate}.
+				Bonjour {userName}, votre mot de passe a été modifié le {changeDate}.
 			</Text>
 		</Section>
 
@@ -31,10 +31,10 @@ export const PasswordChangedEmail = ({
 					fontWeight: "600",
 				}}
 			>
-				Ce n'était pas toi ?
+				Ce n'était pas vous ?
 			</Text>
 			<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-				Réinitialise ton mot de passe immédiatement.
+				Réinitialisez votre mot de passe immédiatement.
 			</Text>
 		</Section>
 

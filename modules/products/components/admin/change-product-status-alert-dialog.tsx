@@ -37,13 +37,13 @@ const STATUS_CONFIG = {
 		label: "Public",
 		color: "bg-green-600 hover:bg-green-700",
 		description:
-			"Le bijou sera publié sur la boutique et visible par tous les visiteurs. Assure-toi que toutes les informations sont correctes.",
+			"Le bijou sera publié sur la boutique et visible par tous les visiteurs. Assurez-vous que toutes les informations sont correctes.",
 	},
 	ARCHIVED: {
 		label: "Archivé",
 		color: "bg-orange-600 hover:bg-orange-700",
 		description:
-			"Le bijou sera archivé. Il ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Tu pourras le restaurer à tout moment.",
+			"Le bijou sera archivé. Il ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Vous pourrez le restaurer à tout moment.",
 	},
 } as const;
 
@@ -92,7 +92,7 @@ export function ChangeProductStatusAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div className="space-y-4">
 								<div>
-									Tu es sur le point de changer le statut de{" "}
+									Vous êtes sur le point de changer le statut de{" "}
 									<strong>&quot;{dialog.data?.productTitle}&quot;</strong> de{" "}
 									<span className="font-semibold">
 										{STATUS_CONFIG[currentStatus].label}

@@ -1,7 +1,6 @@
-import { render } from "@react-email/components"
 import { PaymentFailedEmail } from "@/emails/payment-failed-email"
-import { EMAIL_SUBJECTS } from "../constants/email.constants"
-import { sendEmail } from "./send-email"
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants"
+import { renderAndSend } from "./send-email"
 import type { EmailResult } from "../types/email.types"
 
 /**
@@ -18,14 +17,10 @@ export async function sendPaymentFailedEmail({
 	orderNumber: string
 	retryUrl: string
 }): Promise<EmailResult> {
-	const component = PaymentFailedEmail({ orderNumber, customerName, retryUrl })
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
+	return renderAndSend(PaymentFailedEmail({ orderNumber, customerName, retryUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.PAYMENT_FAILED,
-		html,
-		text,
+		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "payment" }],
 	})
 }

@@ -69,7 +69,7 @@ export default async function CheckoutPage() {
 							</AlertTitle>
 							<AlertDescription className="mt-2 space-y-4">
 								<p className="text-sm">
-									Certains articles de ton panier ne sont plus disponibles ou ont un stock insuffisant.
+									Certains articles de votre panier ne sont plus disponibles ou ont un stock insuffisant.
 								</p>
 
 								{/* Liste des problèmes */}

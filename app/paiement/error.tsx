@@ -18,7 +18,7 @@ export default function CheckoutError({ error, reset }: ErrorPageProps) {
 						<AlertDescription className="mt-2 space-y-4">
 							<p>
 								Nous n'avons pas pu charger la page de paiement.
-								Ton panier est toujours disponible.
+								Votre panier est toujours disponible.
 							</p>
 							<Button onClick={reset} variant="outline" size="sm">
 								<RefreshCw className="w-4 h-4 mr-2" />

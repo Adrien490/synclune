@@ -19,8 +19,8 @@ export const PaymentFailedEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Paiement échoué</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, le paiement de ta commande {orderNumber} a
-					échoué. Les articles ont été remis en stock.
+					Bonjour {customerName}, le paiement de votre commande {orderNumber}{" "}
+					a échoué. Les articles ont été remis en stock.
 				</Text>
 			</Section>
 

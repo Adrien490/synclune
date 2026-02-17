@@ -65,7 +65,6 @@ export async function resendOrderEmail(
 					subtotal: order.subtotal,
 					discount: order.discountAmount,
 					shipping: order.shippingCost,
-					tax: order.taxAmount,
 					total: order.total,
 					shippingAddress: {
 						firstName: order.shippingFirstName,

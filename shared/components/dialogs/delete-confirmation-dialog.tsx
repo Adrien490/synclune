@@ -56,7 +56,7 @@ export interface DeleteConfirmationDialogProps<T extends Record<string, unknown>
  *   hiddenFields={[{ name: "id", dataKey: "colorId" }]}
  *   description={(data) => (
  *     <>
- *       Es-tu sûr(e) de vouloir supprimer la couleur{" "}
+ *       Êtes-vous sûr(e) de vouloir supprimer la couleur{" "}
  *       <strong>"{data?.colorName}"</strong> ?
  *     </>
  *   )}

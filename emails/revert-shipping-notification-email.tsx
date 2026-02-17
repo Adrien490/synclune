@@ -21,9 +21,9 @@ export const RevertShippingNotificationEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Expédition mise à jour</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, le précédent numéro de suivi de ta commande{" "}
-					{orderNumber} n'est plus valide. Ta commande est de nouveau en
-					préparation.
+					Bonjour {customerName}, le précédent numéro de suivi de votre
+					commande {orderNumber} n'est plus valide. Votre commande est de
+					nouveau en préparation.
 				</Text>
 			</Section>
 
@@ -49,8 +49,8 @@ export const RevertShippingNotificationEmail = ({
 			{/* Info */}
 			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.text.small}>
-					Tu recevras un nouvel email avec les informations de suivi dès que
-					le colis sera réexpédié.
+					Vous recevrez un nouvel email avec les informations de suivi dès
+					que le colis sera réexpédié.
 				</Text>
 			</Section>
 

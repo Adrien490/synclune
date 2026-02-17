@@ -52,7 +52,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						Guide des tailles
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Trouve la taille parfaite pour ton produit
+						Trouvez la taille parfaite pour votre produit
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
@@ -67,10 +67,10 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						<div className="space-y-3">
 							<h3 className="text-sm font-semibold">Comment mesurer ?</h3>
 							<ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-								<li>Enroule une ficelle ou un ruban autour de ton doigt</li>
-								<li>Marque l'endroit où les deux extrémités se rejoignent</li>
-								<li>Mesure la longueur obtenue en millimètres</li>
-								<li>Compare avec le tableau ci-dessous</li>
+								<li>Enroulez une ficelle ou un ruban autour de votre doigt</li>
+								<li>Marquez l'endroit où les deux extrémités se rejoignent</li>
+								<li>Mesurez la longueur obtenue en millimètres</li>
+								<li>Comparez avec le tableau ci-dessous</li>
 							</ol>
 						</div>
 
@@ -102,7 +102,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						<div className="flex items-start gap-2 p-3 bg-accent/50 rounded-lg text-sm">
 							<Info className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
 							<p className="text-muted-foreground">
-								<strong className="text-foreground">Astuce :</strong> Mesure en fin de journée quand tes doigts sont légèrement gonflés. En cas de doute, choisis la taille supérieure.
+								<strong className="text-foreground">Astuce :</strong> Mesurez en fin de journée quand vos doigts sont légèrement gonflés. En cas de doute, choisissez la taille supérieure.
 							</p>
 						</div>
 					</TabsContent>
@@ -112,10 +112,10 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						<div className="space-y-3">
 							<h3 className="text-sm font-semibold">Comment mesurer ?</h3>
 							<ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-								<li>Enroule un mètre ruban souple autour de ton poignet</li>
-								<li>Place-le juste au-dessus de l'os du poignet</li>
-								<li>Note la mesure en centimètres</li>
-								<li>Ajoute 1 à 2 cm selon le confort souhaité</li>
+								<li>Enroulez un mètre ruban souple autour de votre poignet</li>
+								<li>Placez-le juste au-dessus de l'os du poignet</li>
+								<li>Notez la mesure en centimètres</li>
+								<li>Ajoutez 1 à 2 cm selon le confort souhaité</li>
 							</ol>
 						</div>
 
@@ -142,7 +142,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						<div className="flex items-start gap-2 p-3 bg-accent/50 rounded-lg text-sm">
 							<Info className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
 							<p className="text-muted-foreground">
-								<strong className="text-foreground">Astuce :</strong> Si tu hésites entre deux tailles, choisis la plus grande pour un confort optimal.
+								<strong className="text-foreground">Astuce :</strong> Si vous hésitez entre deux tailles, choisissez la plus grande pour un confort optimal.
 							</p>
 						</div>
 					</TabsContent>

@@ -51,36 +51,36 @@ const faqItems: FaqItemData[] = [
 	{
 		question: "Combien de temps pour recevoir ma commande ?",
 		answer:
-			"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo te livre en 2-4 jours en France métropolitaine. Je t'envoie le numéro de suivi par email dès que ton colis part de mon atelier ! Tous les détails sont dans mes {{link0}}.",
+			"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo vous livre en 2-4 jours en France métropolitaine. Je vous envoie le numéro de suivi par email dès que votre colis part de mon atelier ! Tous les détails sont dans mes {{link0}}.",
 		links: [{ text: "conditions de vente", href: "/cgv" }],
 	},
 	{
 		question: "Je peux retourner un bijou si je change d'avis ?",
 		answer:
-			"Bien sûr ! Tu as 14 jours après réception pour changer d'avis. Renvoie-moi le bijou dans son état d'origine, non porté, et je te rembourse. Écris-moi par email pour qu'on organise ça ensemble. Plus d'infos sur les retours dans mes {{link0}}.",
+			"Bien sûr ! Vous avez 14 jours après réception pour changer d'avis. Renvoyez-moi le bijou dans son état d'origine, non porté, et je vous rembourse. Écrivez-moi par email pour qu'on organise ça ensemble. Plus d'infos sur les retours dans mes {{link0}}.",
 		links: [{ text: "conditions de vente", href: "/cgv" }],
 	},
 	{
-		question: "En quoi sont faits tes bijoux ?",
+		question: "En quoi sont faits vos bijoux ?",
 		answer:
-			"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles ! Découvre toutes mes {{link0}}.",
+			"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles ! Découvrez toutes mes {{link0}}.",
 		links: [{ text: "collections", href: "/collections" }],
 	},
 	{
 		question: "Comment je prends soin de mes bijoux ?",
 		answer:
-			"Évite le contact avec l'eau, les parfums et les crèmes. Range-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
+			"Évitez le contact avec l'eau, les parfums et les crèmes. Rangez-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
 	},
 	{
-		question: "Tu fais des bijoux sur-mesure ?",
+		question: "Vous faites des bijoux sur-mesure ?",
 		answer:
-			"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écris-moi via la {{link0}} et on discute de ton projet ensemble.",
+			"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écrivez-moi via la {{link0}} et on discute de votre projet ensemble.",
 		links: [{ text: "page Personnalisation", href: "/personnalisation" }],
 	},
 	{
 		question: "C'est quoi le délai pour une création personnalisée ?",
 		answer:
-			"Compte environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que tu veux, de créer des esquisses qu'on validera ensemble, et de réaliser ton bijou avec tout le soin qu'il mérite.",
+			"Comptez environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que vous souhaitez, de créer des esquisses qu'on validera ensemble, et de réaliser votre bijou avec tout le soin qu'il mérite.",
 	},
 ];
 
@@ -140,7 +140,7 @@ export async function FaqSection() {
 					</Fade>
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-xl mx-auto">
-							Retrouve ici les réponses aux questions les plus posées
+							Retrouvez ici les réponses aux questions les plus posées
 						</p>
 					</Fade>
 				</header>
@@ -153,10 +153,10 @@ export async function FaqSection() {
 				<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration} inView once>
 					<div id="faq-cta-contact" className="mt-12 max-w-3xl mx-auto bg-primary/5 border border-primary/15 rounded-2xl p-6 sm:p-8 text-center">
 						<p className="text-muted-foreground mb-1 text-base">
-							Tu n'as pas trouvé ta réponse ?
+							Vous n'avez pas trouvé votre réponse ?
 						</p>
 						<p className={cn(petitFormalScript.className, "text-sm text-foreground/70 italic mb-5")}>
-							Écris-moi, je réponds toujours !
+							Écrivez-moi, je réponds toujours !
 						</p>
 						<Button asChild variant="outline" size="lg" className="gap-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out">
 							<a href={`mailto:${BRAND.contact.email}`}>

@@ -145,8 +145,8 @@ export async function addToWishlist(
 
 		return success(
 			transactionResult.alreadyExists
-				? "Deja dans ta wishlist"
-				: "Ajoute a ta wishlist",
+				? "Deja dans votre wishlist"
+				: "Ajoute a votre wishlist",
 			{
 				wishlistItemId: transactionResult.wishlistItem.id,
 				wishlistId: transactionResult.wishlist.id,

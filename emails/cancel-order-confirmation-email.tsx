@@ -1,6 +1,6 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EMAIL_COLORS, EMAIL_STYLES, REFUND_DELAY_TEXT } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 import { FlexRow } from "./_components/flex-row";
 
@@ -27,7 +27,7 @@ export const CancelOrderConfirmationEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Commande annulée</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, ta commande {orderNumber} a été annulée.
+					Bonjour {customerName}, votre commande {orderNumber} a été annulée.
 					{reason && ` Raison : ${reason}`}
 				</Text>
 			</Section>
@@ -85,8 +85,8 @@ export const CancelOrderConfirmationEmail = ({
 						Remboursement
 					</Text>
 					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-						Le remboursement de {formatEuro(orderTotal)} sera crédité sous 3
-						à 10 jours ouvrés.
+						Le remboursement de {formatEuro(orderTotal)} sera crédité sous{" "}
+						{REFUND_DELAY_TEXT}.
 					</Text>
 				</Section>
 			)}

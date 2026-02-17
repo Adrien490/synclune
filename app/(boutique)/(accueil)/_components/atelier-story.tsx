@@ -146,7 +146,7 @@ export async function AtelierStory() {
 
 						{/* Catchy intro */}
 						<p className="text-2xl sm:text-3xl md:text-4xl font-light text-foreground tracking-tight">
-							Je vais te faire une confidence.
+							Je vais vous faire une confidence.
 						</p>
 
 						{/* Body text with stagger for progressive reading */}
@@ -161,7 +161,7 @@ export async function AtelierStory() {
 							<p>
 								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span role="img" aria-label="rire">😂</span>
 							</p>
-							<p>Chaque bijou que tu vois ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
+							<p>Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
 						</Stagger>
 
 						{/* Signature */}

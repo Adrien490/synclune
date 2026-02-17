@@ -25,7 +25,7 @@ export const ReturnConfirmationEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Retour enregistré</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, le retour de ta commande {orderNumber} a
+					Bonjour {customerName}, le retour de votre commande {orderNumber} a
 					été enregistré.{reason && ` Motif : ${reason}`}
 				</Text>
 			</Section>
@@ -71,7 +71,7 @@ export const ReturnConfirmationEmail = ({
 			{/* Info */}
 			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.text.small}>
-					Le retour sera examiné sous 2 à 5 jours ouvrés. Tu recevras un
+					Le retour sera examiné sous 2 à 5 jours ouvrés. Vous recevrez un
 					email de confirmation si un remboursement est prévu.
 				</Text>
 			</Section>

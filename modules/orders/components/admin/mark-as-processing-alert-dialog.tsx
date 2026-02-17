@@ -49,11 +49,11 @@ export function MarkAsProcessingAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									Es-tu sûr de vouloir passer la commande{" "}
+									Êtes-vous sûr de vouloir passer la commande{" "}
 									<strong>{dialog.data?.orderNumber}</strong> en préparation ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									Le statut passera de "En attente" à "En préparation". Tu pourras
+									Le statut passera de "En attente" à "En préparation". Vous pourrez
 									ensuite l'expédier une fois le colis prêt.
 								</p>
 							</div>

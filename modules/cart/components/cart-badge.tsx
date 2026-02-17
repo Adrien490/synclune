@@ -16,8 +16,8 @@ export function CartBadge() {
 	return (
 		<ItemCountBadge
 			count={count}
-			singularLabel="article dans ton panier"
-			pluralLabel="articles dans ton panier"
+			singularLabel="article dans votre panier"
+			pluralLabel="articles dans votre panier"
 			size="default"
 		/>
 	);

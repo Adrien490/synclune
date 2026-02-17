@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
 								Mot de passe oublié ?
 							</h1>
 							<p className="text-muted-foreground">
-								Entre ton adresse email et nous t'enverrons un lien pour réinitialiser ton mot de passe.
+								Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
 							</p>
 						</div>
 					</div>
@@ -65,12 +65,12 @@ export default function ForgotPasswordPage() {
 						{/* Lien vers la connexion */}
 						<div className="text-center pt-4 border-t">
 							<div className="text-sm text-muted-foreground">
-								Tu te souviens de ton mot de passe ?{" "}
+								Vous vous souvenez de votre mot de passe ?{" "}
 								<Link
 									href="/connexion"
 									className="font-medium underline"
 								>
-									Connecte-toi
+									Connectez-vous
 								</Link>
 							</div>
 						</div>

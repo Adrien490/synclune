@@ -29,6 +29,9 @@ export const EMAIL_COLORS = {
 	/** Bordures */
 	border: "#E8E8E8",
 
+	/** Stripe brand color for dashboard links */
+	stripe: "#635bff",
+
 	/** Primary avec transparence */
 	primaryAlpha: {
 		5: "rgba(232, 164, 184, 0.05)",
@@ -136,4 +139,35 @@ export const EMAIL_STYLES = {
 		borderColor: EMAIL_COLORS.border,
 		margin: "24px 0",
 	},
+
+	codeBlock: {
+		container: {
+			padding: "12px",
+			backgroundColor: EMAIL_COLORS.text.primary,
+			borderRadius: "8px",
+		},
+		code: {
+			fontFamily: "monospace",
+			fontSize: "12px",
+			color: "#ffffff",
+			wordBreak: "break-all" as const,
+		},
+	},
 } as const;
+
+/**
+ * Refund delay text shared between refund and cancellation templates
+ */
+export const REFUND_DELAY_TEXT = "3 à 10 jours ouvrés";
+
+/**
+ * Refund reason labels shared between refund-approved and refund-confirmation emails
+ */
+export const REFUND_REASON_LABELS: Record<string, string> = {
+	CUSTOMER_REQUEST: "Demande client",
+	DEFECTIVE: "Produit défectueux",
+	WRONG_ITEM: "Erreur de commande",
+	LOST_IN_TRANSIT: "Colis perdu",
+	FRAUD: "Transaction contestée",
+	OTHER: "Autre raison",
+};

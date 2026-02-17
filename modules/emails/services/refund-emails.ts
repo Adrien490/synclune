@@ -1,8 +1,7 @@
-import { render } from "@react-email/components"
 import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email"
 import { RefundApprovedEmail } from "@/emails/refund-approved-email"
-import { EMAIL_SUBJECTS } from "../constants/email.constants"
-import { sendEmail } from "./send-email"
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants"
+import { renderAndSend } from "./send-email"
 import type { EmailResult } from "../types/email.types"
 
 /**
@@ -27,24 +26,23 @@ export async function sendRefundConfirmationEmail({
 	isPartialRefund: boolean
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const component = RefundConfirmationEmail({
-		orderNumber,
-		customerName,
-		refundAmount,
-		originalOrderTotal,
-		reason,
-		isPartialRefund,
-		orderDetailsUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to,
-		subject: EMAIL_SUBJECTS.REFUND_CONFIRMATION,
-		html,
-		text,
-		tags: [{ name: "category", value: "payment" }],
-	})
+	return renderAndSend(
+		RefundConfirmationEmail({
+			orderNumber,
+			customerName,
+			refundAmount,
+			originalOrderTotal,
+			reason,
+			isPartialRefund,
+			orderDetailsUrl,
+		}),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.REFUND_CONFIRMATION,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "payment" }],
+		},
+	)
 }
 
 /**
@@ -69,22 +67,21 @@ export async function sendRefundApprovedEmail({
 	isPartialRefund: boolean
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const component = RefundApprovedEmail({
-		orderNumber,
-		customerName,
-		refundAmount,
-		originalOrderTotal,
-		reason,
-		isPartialRefund,
-		orderDetailsUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to,
-		subject: EMAIL_SUBJECTS.REFUND_APPROVED,
-		html,
-		text,
-		tags: [{ name: "category", value: "payment" }],
-	})
+	return renderAndSend(
+		RefundApprovedEmail({
+			orderNumber,
+			customerName,
+			refundAmount,
+			originalOrderTotal,
+			reason,
+			isPartialRefund,
+			orderDetailsUrl,
+		}),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.REFUND_APPROVED,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "payment" }],
+		},
+	)
 }

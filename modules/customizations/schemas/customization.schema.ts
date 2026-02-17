@@ -20,7 +20,7 @@ export const customizationSchema = z
 
 		email: z
 			.string({ message: "L'adresse email est requise" })
-			.email({ message: "Vérifie le format de ton email (ex: nom@domaine.com)" })
+			.email({ message: "Vérifiez le format de votre email (ex: nom@domaine.com)" })
 			.max(100, { message: "L'email ne peut pas dépasser 100 caractères" })
 			.trim()
 			.toLowerCase(),
@@ -38,16 +38,16 @@ export const customizationSchema = z
 
 		// Détails de la personnalisation
 		details: z
-			.string({ message: "Les détails de ton projet sont requis" })
+			.string({ message: "Les détails de votre projet sont requis" })
 			.min(20, { message: "Les détails doivent contenir au moins 20 caractères" })
 			.max(2000, { message: "Les détails ne peuvent pas dépasser 2000 caractères" })
 			.trim(),
 
 		// Consentements
 		rgpdConsent: z
-			.boolean({ message: "Tu dois accepter la politique de confidentialité" })
+			.boolean({ message: "Vous devez accepter la politique de confidentialité" })
 			.refine((val) => val === true, {
-				message: "Tu dois accepter la politique de confidentialité pour continuer",
+				message: "Vous devez accepter la politique de confidentialité pour continuer",
 			}),
 
 		// Anti-spam (honeypot)

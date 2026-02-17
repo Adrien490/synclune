@@ -133,8 +133,8 @@ export async function mergeWishlists(
 
 		return success(
 			addedCount > 0
-				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajoute${addedCount > 1 ? "s" : ""} a ta wishlist`
-				: "Tous les favoris etaient deja dans ta liste",
+				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajoute${addedCount > 1 ? "s" : ""} a votre wishlist`
+				: "Tous les favoris etaient deja dans votre liste",
 			{
 				addedItems: addedCount,
 				skippedItems: skippedCount,

@@ -1,8 +1,8 @@
-import { render } from "@react-email/components"
 import { NewsletterConfirmationEmail } from "@/emails/newsletter-confirmation-email"
 import { NewsletterWelcomeEmail } from "@/emails/newsletter-welcome-email"
+import { buildUrl, ROUTES } from "@/shared/constants/urls"
 import { EMAIL_SUBJECTS } from "../constants/email.constants"
-import { sendEmail } from "./send-email"
+import { renderAndSend } from "./send-email"
 import type { EmailResult } from "../types/email.types"
 
 /**
@@ -15,14 +15,9 @@ export async function sendNewsletterConfirmationEmail({
 	to: string
 	confirmationUrl: string
 }): Promise<EmailResult> {
-	const component = NewsletterConfirmationEmail({ confirmationUrl })
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
+	return renderAndSend(NewsletterConfirmationEmail({ confirmationUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.NEWSLETTER_CONFIRMATION,
-		html,
-		text,
 		tags: [{ name: "category", value: "marketing" }],
 	})
 }
@@ -37,14 +32,10 @@ export async function sendNewsletterWelcomeEmail({
 	to: string
 	unsubscribeUrl: string
 }): Promise<EmailResult> {
-	const component = NewsletterWelcomeEmail({ email: to, unsubscribeUrl })
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
+	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS)
+	return renderAndSend(NewsletterWelcomeEmail({ email: to, unsubscribeUrl, shopUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.NEWSLETTER_WELCOME,
-		html,
-		text,
 		headers: {
 			"List-Unsubscribe": `<${unsubscribeUrl}>`,
 			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

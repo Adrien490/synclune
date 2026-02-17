@@ -16,7 +16,7 @@ export default function CheckoutLoading() {
 		<div className="min-h-screen">
 			<PageHeader
 				title="Finaliser ma commande"
-				description="Vérifie tes informations et procède au paiement sécurisé"
+				description="Vérifiez vos informations et procédez au paiement sécurisé"
 			/>
 
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">

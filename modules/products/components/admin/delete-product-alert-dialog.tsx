@@ -31,7 +31,7 @@ export function DeleteProductAlertDialog() {
 			hiddenFields={[{ name: "id", dataKey: "productId" }]}
 			description={(data) => (
 				<>
-					Es-tu sûr de vouloir supprimer le bijou{" "}
+					Êtes-vous sûr de vouloir supprimer le bijou{" "}
 					<strong>&quot;{data?.productTitle}&quot;</strong> ?
 					<br />
 					<br />

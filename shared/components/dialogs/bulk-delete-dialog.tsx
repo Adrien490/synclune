@@ -69,7 +69,7 @@ export interface BulkDeleteDialogProps {
  *   idsDataKey="productIds"
  *   description={(count) => (
  *     <>
- *       Es-tu sûr de vouloir supprimer{" "}
+ *       Êtes-vous sûr de vouloir supprimer{" "}
  *       <strong>{count} produit{count > 1 ? "s" : ""}</strong> ?
  *     </>
  *   )}

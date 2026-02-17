@@ -108,7 +108,7 @@ export function MaterialsSelectionToolbar() {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Supprimer les materiaux</AlertDialogTitle>
 							<AlertDialogDescription>
-								Es-tu sûr(e) de vouloir supprimer{" "}
+								Êtes-vous sûr de vouloir supprimer{" "}
 								<span className="font-semibold">
 									{selectedItems.length} materiau
 									{selectedItems.length > 1 ? "x" : ""}
@@ -158,7 +158,7 @@ export function MaterialsSelectionToolbar() {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Activer les materiaux</AlertDialogTitle>
 							<AlertDialogDescription>
-								Es-tu sûr(e) de vouloir activer{" "}
+								Êtes-vous sûr de vouloir activer{" "}
 								<span className="font-semibold">
 									{selectedItems.length} materiau
 									{selectedItems.length > 1 ? "x" : ""}
@@ -203,7 +203,7 @@ export function MaterialsSelectionToolbar() {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Desactiver les materiaux</AlertDialogTitle>
 							<AlertDialogDescription>
-								Es-tu sûr(e) de vouloir désactiver{" "}
+								Êtes-vous sûr de vouloir désactiver{" "}
 								<span className="font-semibold">
 									{selectedItems.length} materiau
 									{selectedItems.length > 1 ? "x" : ""}

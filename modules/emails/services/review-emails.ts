@@ -1,8 +1,7 @@
-import { render } from "@react-email/components"
 import { ReviewRequestEmail } from "@/emails/review-request-email"
 import { ReviewResponseEmail } from "@/emails/review-response-email"
-import { EMAIL_SUBJECTS } from "../constants/email.constants"
-import { sendEmail } from "./send-email"
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants"
+import { renderAndSend } from "./send-email"
 import type { EmailResult } from "../types/email.types"
 
 /**
@@ -26,14 +25,10 @@ export async function sendReviewRequestEmail({
 	}>
 	reviewUrl: string
 }): Promise<EmailResult> {
-	const component = ReviewRequestEmail({ customerName, orderNumber, products, reviewUrl })
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
+	return renderAndSend(ReviewRequestEmail({ customerName, orderNumber, products, reviewUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.REVIEW_REQUEST,
-		html,
-		text,
+		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "order" }],
 	})
 }
@@ -58,21 +53,20 @@ export async function sendReviewResponseEmail({
 	responseAuthorName: string
 	productUrl: string
 }): Promise<EmailResult> {
-	const component = ReviewResponseEmail({
-		customerName,
-		productTitle,
-		reviewContent,
-		responseContent,
-		responseAuthorName,
-		productUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to,
-		subject: EMAIL_SUBJECTS.REVIEW_RESPONSE,
-		html,
-		text,
-		tags: [{ name: "category", value: "order" }],
-	})
+	return renderAndSend(
+		ReviewResponseEmail({
+			customerName,
+			productTitle,
+			reviewContent,
+			responseContent,
+			responseAuthorName,
+			productUrl,
+		}),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.REVIEW_RESPONSE,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "order" }],
+		},
+	)
 }

@@ -144,8 +144,8 @@ export default async function VerifyEmailPage({
 										</p>
 										<p className="text-sm text-green-600/90 dark:text-green-400/90">
 											{isConnected
-												? "Ton compte a été activé et tu es connecté."
-												: "Ton compte a été activé. Tu peux maintenant te connecter."}
+												? "Votre compte a été activé et vous êtes connecté."
+												: "Votre compte a été activé. Vous pouvez maintenant vous connecter."}
 										</p>
 									</div>
 								</div>
@@ -179,7 +179,7 @@ export default async function VerifyEmailPage({
 								<div className="space-y-3">
 									<div className="text-center">
 										<p className="text-sm text-muted-foreground">
-											Tu n'as pas reçu l'email ou le lien a expiré ?
+											Vous n'avez pas reçu l'email ou le lien a expiré ?
 										</p>
 									</div>
 									<ResendVerificationEmailForm />

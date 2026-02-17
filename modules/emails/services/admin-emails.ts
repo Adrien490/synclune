@@ -1,10 +1,10 @@
-import { render } from "@react-email/components"
 import { AdminNewOrderEmail } from "@/emails/admin-new-order-email"
 import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email"
 import { AdminWebhookFailedEmail } from "@/emails/admin-webhook-failed-email"
 import { AdminInvoiceFailedEmail } from "@/emails/admin-invoice-failed-email"
+import { AdminCronFailedEmail } from "@/emails/admin-cron-failed-email"
 import { EMAIL_ADMIN } from "../constants/email.constants"
-import { sendEmail } from "./send-email"
+import { renderAndSend } from "./send-email"
 import { EXTERNAL_URLS, getBaseUrl } from "@/shared/constants/urls"
 import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types"
 
@@ -34,27 +34,25 @@ export async function sendAdminNewOrderEmail({
 	shippingAddress: ShippingAddress & { phone: string }
 	dashboardUrl: string
 }): Promise<EmailResult> {
-	const component = AdminNewOrderEmail({
-		orderNumber,
-		customerName,
-		customerEmail,
-		items,
-		subtotal,
-		discount,
-		shipping,
-		total,
-		shippingAddress,
-		dashboardUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to: EMAIL_ADMIN,
-		subject: `🎉 Nouvelle commande ${orderNumber} - ${(total / 100).toFixed(2)}€`,
-		html,
-		text,
-		tags: [{ name: "category", value: "admin" }],
-	})
+	return renderAndSend(
+		AdminNewOrderEmail({
+			orderNumber,
+			customerName,
+			customerEmail,
+			items,
+			subtotal,
+			discount,
+			shipping,
+			total,
+			shippingAddress,
+			dashboardUrl,
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `🎉 Nouvelle commande ${orderNumber} - ${(total / 100).toFixed(2)}€`,
+			tags: [{ name: "category", value: "admin" }],
+		}
+	)
 }
 
 /**
@@ -78,25 +76,23 @@ export async function sendAdminRefundFailedAlert({
 	dashboardUrl: string
 }): Promise<EmailResult> {
 	const stripeDashboardUrl = `https://dashboard.stripe.com/payments/${stripePaymentIntentId}`
-	const component = AdminRefundFailedEmail({
-		orderNumber,
-		customerEmail,
-		amount,
-		reason,
-		errorMessage,
-		stripePaymentIntentId,
-		dashboardUrl,
-		stripeDashboardUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to: EMAIL_ADMIN,
-		subject: `🚨 ACTION REQUISE : Échec remboursement ${orderNumber}`,
-		html,
-		text,
-		tags: [{ name: "category", value: "admin" }],
-	})
+	return renderAndSend(
+		AdminRefundFailedEmail({
+			orderNumber,
+			customerEmail,
+			amount,
+			reason,
+			errorMessage,
+			stripePaymentIntentId,
+			dashboardUrl,
+			stripeDashboardUrl,
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `🚨 ACTION REQUISE : Échec remboursement ${orderNumber}`,
+			tags: [{ name: "category", value: "admin" }],
+		}
+	)
 }
 
 /**
@@ -115,23 +111,21 @@ export async function sendWebhookFailedAlertEmail({
 }): Promise<EmailResult> {
 	const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.WEBHOOKS
 	const adminDashboardUrl = `${getBaseUrl()}/admin`
-	const component = AdminWebhookFailedEmail({
-		eventId,
-		eventType,
-		attempts,
-		error,
-		stripeDashboardUrl,
-		adminDashboardUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to: EMAIL_ADMIN,
-		subject: `[ALERTE] Webhook ${eventType} echoue (${attempts} tentatives)`,
-		html,
-		text,
-		tags: [{ name: "category", value: "admin" }],
-	})
+	return renderAndSend(
+		AdminWebhookFailedEmail({
+			eventId,
+			eventType,
+			attempts,
+			error,
+			stripeDashboardUrl,
+			adminDashboardUrl,
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[ALERTE] Webhook ${eventType} échoué (${attempts} tentatives)`,
+			tags: [{ name: "category", value: "admin" }],
+		}
+	)
 }
 
 /**
@@ -146,20 +140,14 @@ export async function sendAdminCronFailedAlert({
 	errors: number
 	details: Record<string, unknown>
 }): Promise<EmailResult> {
-	const detailLines = Object.entries(details)
-		.map(([key, value]) => `  ${key}: ${value}`)
-		.join("\n")
-
-	const text = `Le cron job "${job}" a rencontré ${errors} erreur(s).\n\nDétails :\n${detailLines}\n\nVérifiez les logs Vercel pour plus d'informations.`
-	const html = `<p>Le cron job <strong>${job}</strong> a rencontré <strong>${errors} erreur(s)</strong>.</p><pre>${detailLines}</pre><p>Vérifiez les logs Vercel pour plus d'informations.</p>`
-
-	return sendEmail({
-		to: EMAIL_ADMIN,
-		subject: `[ALERTE CRON] ${job} — ${errors} erreur(s)`,
-		html,
-		text,
-		tags: [{ name: "category", value: "admin" }],
-	})
+	return renderAndSend(
+		AdminCronFailedEmail({ job, errors, details }),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[ALERTE CRON] ${job} — ${errors} erreur(s)`,
+			tags: [{ name: "category", value: "admin" }],
+		}
+	)
 }
 
 /**
@@ -184,23 +172,21 @@ export async function sendAdminInvoiceFailedAlert({
 	stripePaymentIntentId?: string
 	dashboardUrl: string
 }): Promise<EmailResult> {
-	const component = AdminInvoiceFailedEmail({
-		orderNumber,
-		customerEmail,
-		customerCompanyName,
-		customerSiret,
-		amount,
-		errorMessage,
-		stripePaymentIntentId,
-		dashboardUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to: EMAIL_ADMIN,
-		subject: `🚨 ACTION REQUISE : Échec génération facture ${orderNumber}`,
-		html,
-		text,
-		tags: [{ name: "category", value: "admin" }],
-	})
+	return renderAndSend(
+		AdminInvoiceFailedEmail({
+			orderNumber,
+			customerEmail,
+			customerCompanyName,
+			customerSiret,
+			amount,
+			errorMessage,
+			stripePaymentIntentId,
+			dashboardUrl,
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `🚨 ACTION REQUISE : Échec génération facture ${orderNumber}`,
+			tags: [{ name: "category", value: "admin" }],
+		}
+	)
 }

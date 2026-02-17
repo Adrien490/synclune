@@ -21,7 +21,7 @@ export const DeliveryConfirmationEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Commande livrée</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, ta commande {orderNumber} a été livrée le{" "}
+					Bonjour {customerName}, votre commande {orderNumber} a été livrée le{" "}
 					{deliveryDate}.
 				</Text>
 			</Section>

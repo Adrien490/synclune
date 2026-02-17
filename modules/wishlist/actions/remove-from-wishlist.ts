@@ -97,7 +97,7 @@ export async function removeFromWishlist(
 
 		return success(
 			deleteResult.count > 0
-				? "Retire de ta wishlist"
+				? "Retire de votre wishlist"
 				: WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND,
 			{
 				wishlistId: wishlist.id,

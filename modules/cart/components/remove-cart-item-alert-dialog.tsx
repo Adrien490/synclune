@@ -82,12 +82,12 @@ export function RemoveCartItemAlertDialog() {
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							Retirer ce produit de ton panier ?
+							Retirer ce produit de votre panier ?
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							{removeDialog.data?.itemName
-								? `Tu veux vraiment retirer ${removeDialog.data.itemName} de ton panier ? Tu pourras toujours le retrouver dans la boutique si tu changes d'avis !`
-								: "Tu veux vraiment retirer ce produit de ton panier ? Tu pourras toujours le retrouver dans la boutique si tu changes d'avis !"}
+								? `Vous voulez vraiment retirer ${removeDialog.data.itemName} de votre panier ? Vous pourrez toujours le retrouver dans la boutique si vous changez d'avis !`
+								: "Vous voulez vraiment retirer ce produit de votre panier ? Vous pourrez toujours le retrouver dans la boutique si vous changez d'avis !"}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

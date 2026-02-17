@@ -92,7 +92,7 @@ const howToSchema = {
 	"@type": "HowTo",
 	"@id": `${SITE_URL}/#how-to-create-jewelry`,
 	inLanguage: "fr-FR",
-	name: "Comment je crée tes bijoux",
+	name: "Comment je crée vos bijoux",
 	description:
 		"De l'inspiration à la finition, découvrez les étapes de création de bijoux artisanaux en plastique fou peints à la main.",
 	image: IMAGES.ATELIER,
@@ -157,7 +157,7 @@ export async function CreativeProcess() {
 				<header className="text-center mb-12 lg:mb-16">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="creative-process-title">
-							Comment je crée tes bijoux
+							Comment je crée vos bijoux
 						</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
@@ -281,7 +281,7 @@ export async function CreativeProcess() {
 									<p
 										className="text-sm text-muted-foreground mb-3 italic"
 									>
-										Tu as une idée de bijou personnalisé ? N'hésite pas à m'en parler !
+										Vous avez une idée de bijou personnalisé ? N'hésitez pas à m'en parler !
 									</p>
 									<Button
 										asChild
@@ -292,7 +292,7 @@ export async function CreativeProcess() {
 										<Link
 											href="/personnalisation"
 										>
-											Discutons de ton idée
+											Discutons de votre idée
 										</Link>
 									</Button>
 								</div>

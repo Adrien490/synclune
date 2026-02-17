@@ -69,7 +69,7 @@ export function BulkArchiveCollectionsAlertDialog() {
 						<AlertDialogDescription>
 							{isArchiving ? (
 								<>
-									Es-tu sur de vouloir archiver{" "}
+									Êtes-vous sûr de vouloir archiver{" "}
 									<strong>{count} collection{count > 1 ? "s" : ""}</strong> ?
 									<br />
 									<br />
@@ -80,12 +80,12 @@ export function BulkArchiveCollectionsAlertDialog() {
 									<br />
 									<br />
 									<span className="text-muted-foreground text-xs">
-										Tu pourras les restaurer a tout moment.
+										Vous pourrez les restaurer a tout moment.
 									</span>
 								</>
 							) : (
 								<>
-									Es-tu sur de vouloir restaurer{" "}
+									Êtes-vous sûr de vouloir restaurer{" "}
 									<strong>{count} collection{count > 1 ? "s" : ""}</strong> ?
 									<br />
 									<br />

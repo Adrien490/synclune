@@ -426,7 +426,7 @@ export function CreateProductForm({
 										<TooltipContent side="right" className="max-w-[250px]">
 											<p>
 												Ces attributs concernent la première variante du produit.
-												Tu pourras ajouter d'autres variantes après la création.
+												Vous pourrez ajouter d'autres variantes après la création.
 											</p>
 										</TooltipContent>
 									</Tooltip>

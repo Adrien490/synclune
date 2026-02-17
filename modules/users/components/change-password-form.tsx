@@ -165,7 +165,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 							Déconnecter tous les autres appareils
 						</label>
 						<p className="text-xs text-muted-foreground">
-							Déconnecte toutes tes sessions actives sauf celle-ci
+							Déconnecte toutes vos sessions actives sauf celle-ci
 						</p>
 					</div>
 				</div>

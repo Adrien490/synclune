@@ -36,13 +36,13 @@ const STATUS_CONFIG = {
 		label: "Public",
 		color: "bg-green-600 hover:bg-green-700",
 		description:
-			"La collection sera publiee sur la boutique et visible par tous les visiteurs. Assure-toi que toutes les informations sont correctes.",
+			"La collection sera publiee sur la boutique et visible par tous les visiteurs. Assurez-vous que toutes les informations sont correctes.",
 	},
 	[CollectionStatus.ARCHIVED]: {
 		label: "Archivee",
 		color: "bg-orange-600 hover:bg-orange-700",
 		description:
-			"La collection sera archivee. Elle ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Tu pourras la restaurer a tout moment.",
+			"La collection sera archivee. Elle ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Vous pourrez la restaurer a tout moment.",
 	},
 } as const;
 
@@ -90,7 +90,7 @@ export function ChangeCollectionStatusAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div className="space-y-4">
 								<div>
-									Tu es sur le point de changer le statut de{" "}
+									Vous êtes sur le point de changer le statut de{" "}
 									<strong>&quot;{dialog.data?.collectionName}&quot;</strong> de{" "}
 									<span className="font-semibold">
 										{STATUS_CONFIG[currentStatus].label}

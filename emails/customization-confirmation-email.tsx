@@ -23,8 +23,8 @@ export const CustomizationConfirmationEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Demande reçue</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {firstName}, ta demande de {productTypeLabel} personnalisé
-					est bien enregistrée. Je reviens vers toi dès que possible.
+					Bonjour {firstName}, votre demande de {productTypeLabel} personnalisé
+					est bien enregistrée. Je reviens vers vous dès que possible.
 				</Text>
 			</Section>
 

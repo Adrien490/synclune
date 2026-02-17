@@ -47,7 +47,7 @@ export function MarkAsPaidAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									Es-tu sûr de vouloir marquer la commande{" "}
+									Êtes-vous sûr de vouloir marquer la commande{" "}
 									<strong>{dialog.data?.orderNumber}</strong> comme payée ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">

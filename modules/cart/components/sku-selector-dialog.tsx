@@ -815,7 +815,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 						{product.title}
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Choisis tes options pour ajouter au panier
+						Choisissez vos options pour ajouter au panier
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 

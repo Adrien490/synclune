@@ -58,7 +58,7 @@ export default function SignupPage() {
 								Inscription
 							</h1>
 							<p className="text-muted-foreground">
-								Avoir un compte te permettra de simplifier tes prochaines commandes.
+								Avoir un compte vous permettra de simplifier vos prochaines commandes.
 							</p>
 						</div>
 					</div>
@@ -76,7 +76,7 @@ export default function SignupPage() {
 							</div>
 							<div className="relative flex justify-center text-xs uppercase">
 								<span className="bg-background px-2 text-muted-foreground">
-									Ou crée ton compte
+									Ou créez votre compte
 								</span>
 							</div>
 						</div>
@@ -87,9 +87,9 @@ export default function SignupPage() {
 						{/* Lien vers la connexion */}
 						<div className="text-center pt-4 border-t">
 							<div className="text-sm text-muted-foreground">
-								Tu as déjà un compte ?{" "}
+								Vous avez déjà un compte ?{" "}
 								<Link href="/connexion" className="font-medium underline">
-									Connecte-toi
+									Connectez-vous
 								</Link>
 							</div>
 						</div>

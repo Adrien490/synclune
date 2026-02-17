@@ -57,9 +57,9 @@ class EmbeddedCheckoutErrorBoundary extends Component<
 							Le formulaire de paiement n'a pas pu se charger.
 						</p>
 						<ul className="text-sm space-y-1 list-disc pl-4">
-							<li>Désactive ton bloqueur de publicités sur cette page</li>
-							<li>Vérifie ta connexion internet</li>
-							<li>Essaie avec un autre navigateur</li>
+							<li>Désactivez votre bloqueur de publicités sur cette page</li>
+							<li>Vérifiez votre connexion internet</li>
+							<li>Essayez avec un autre navigateur</li>
 						</ul>
 						<div className="flex gap-2">
 							<Button variant="outline" size="sm" onClick={this.props.onRetry}>
@@ -175,7 +175,7 @@ export function EmbeddedCheckoutWrapper({
 					<div className="text-center space-y-3 p-4">
 						<p className="text-sm text-muted-foreground">
 							Le formulaire de paiement prend plus de temps que prévu.
-							Si tu utilises un bloqueur de publicités, essaie de le désactiver.
+							Si vous utilisez un bloqueur de publicités, essayez de le désactiver.
 						</p>
 						<Button variant="outline" size="sm" onClick={handleRetry}>
 							Réessayer

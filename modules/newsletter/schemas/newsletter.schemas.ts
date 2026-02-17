@@ -42,7 +42,7 @@ const COMMON_TYPO_CORRECTIONS: Record<string, string> = {
 
 export const subscribeToNewsletterSchema = z.object({
 	email: z
-		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
+		.email("Vérifiez le format de votre email (ex: nom@domaine.com)")
 		.transform((email) => {
 			// Auto-correction des typos courantes
 			const [localPart, domain] = email.split("@");
@@ -83,7 +83,7 @@ export const unsubscribeFromNewsletterSchema = z.object({
 	email: z
 		.string()
 		.min(1, "L'email est requis")
-		.email("Vérifie le format de ton email (ex: nom@domaine.com)"),
+		.email("Vérifiez le format de votre email (ex: nom@domaine.com)"),
 	token: z.string().optional(),
 });
 
@@ -112,3 +112,18 @@ export const confirmationTokenSchema = z.object({
 });
 
 export type ConfirmationTokenInput = z.infer<typeof confirmationTokenSchema>;
+
+// ============================================================================
+// UNSUBSCRIBE TOKEN SCHEMA
+// ============================================================================
+
+export const unsubscribeTokenSchema = z.object({
+	token: z
+		.string({ message: "Token de désinscription manquant" })
+		.min(1, "Token de désinscription manquant")
+		.refine((val) => UUID_V4_REGEX.test(val), {
+			message: "Token de désinscription invalide",
+		}),
+});
+
+export type UnsubscribeTokenInput = z.infer<typeof unsubscribeTokenSchema>;

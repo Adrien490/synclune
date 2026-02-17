@@ -19,7 +19,7 @@ interface RelatedProductsProps {
 }
 
 /**
- * Section "Produits similaires" / "Tu aimeras aussi"
+ * Section "Produits similaires" / "Vous aimerez aussi"
  *
  * Affiche des produits similaires intelligents basés sur un algorithme contextuel :
  * 1. Même collection (priorité 1) - 3 produits
@@ -61,7 +61,7 @@ export async function RelatedProducts({
 						id="related-products-heading"
 						className="text-2xl font-semibold tracking-tight"
 					>
-						D'autres créations que tu pourrais aimer 😊
+						D'autres créations que vous pourriez aimer 😊
 					</h2>
 				</div>
 			</Reveal>

@@ -97,7 +97,7 @@ export function SignUpEmailForm() {
 								required
 							/>
 							<p className="text-xs text-muted-foreground">
-								Sera utilisé pour personnaliser tes communications
+								Sera utilisé pour personnaliser vos communications
 							</p>
 						</div>
 					)}
@@ -201,7 +201,7 @@ export function SignUpEmailForm() {
 				validators={{
 					onChange: ({ value }: { value: boolean }) => {
 						if (!value) {
-							return "Tu dois accepter les conditions générales et la politique de confidentialité";
+							return "Vous devez accepter les conditions générales et la politique de confidentialité";
 						}
 						return undefined;
 					},

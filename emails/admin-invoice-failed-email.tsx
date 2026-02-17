@@ -2,6 +2,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { Button, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
+import { ErrorCodeBlock } from "./_components/error-code-block";
 import { FlexRow } from "./_components/flex-row";
 
 interface AdminInvoiceFailedEmailProps {
@@ -27,12 +28,12 @@ export const AdminInvoiceFailedEmail = ({
 }: AdminInvoiceFailedEmailProps) => {
 	return (
 		<EmailLayout
-			preview={`ACTION REQUISE : Echec generation facture - ${orderNumber}`}
-			headerText="Echec generation facture"
+			preview={`ACTION REQUISE : Échec génération facture - ${orderNumber}`}
+			headerText="Échec génération facture"
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
 				<Text style={EMAIL_STYLES.text.small}>
-					Conformite legale - Action requise
+					Conformité légale - Action requise
 				</Text>
 			</Section>
 
@@ -130,24 +131,7 @@ export const AdminInvoiceFailedEmail = ({
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
 					Erreur
 				</Text>
-				<div
-					style={{
-						...EMAIL_STYLES.section.card,
-						backgroundColor: EMAIL_COLORS.text.primary,
-						padding: "12px",
-					}}
-				>
-					<code
-						style={{
-							fontFamily: "monospace",
-							fontSize: "12px",
-							color: EMAIL_COLORS.primary,
-							wordBreak: "break-all",
-						}}
-					>
-						{errorMessage}
-					</code>
-				</div>
+				<ErrorCodeBlock error={errorMessage} />
 			</Section>
 
 			{/* Stripe ID */}

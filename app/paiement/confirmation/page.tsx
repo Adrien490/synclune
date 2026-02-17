@@ -17,7 +17,7 @@ import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
 	title: "Commande confirmée | Synclune",
-	description: "Ta commande a été confirmée avec succès. Merci pour ta confiance !",
+	description: "Votre commande a été confirmée avec succès. Merci pour votre confiance !",
 	robots: {
 		index: false,
 		follow: false,
@@ -73,12 +73,12 @@ export default async function CheckoutSuccessPage({
 								<CheckCircle2 className="w-10 h-10 text-primary" />
 							</div>
 							<CardTitle className="text-2xl sm:text-3xl">
-								Merci pour ta confiance !{" "}
+								Merci pour votre confiance !{" "}
 								<span aria-hidden="true">✨</span>
 							</CardTitle>
 							<div className="space-y-2">
 								<p className="text-sm text-muted-foreground">
-									Ton paiement a été accepté avec succès
+									Votre paiement a été accepté avec succès
 								</p>
 								<p className="text-lg font-semibold">
 									Commande #{order.orderNumber}
@@ -180,7 +180,7 @@ export default async function CheckoutSuccessPage({
 									Merci du fond du cœur <span aria-hidden="true">💕</span>
 								</AlertTitle>
 								<AlertDescription>
-									Je vais préparer ta commande avec le plus grand soin ! Chaque bijou
+									Je vais préparer votre commande avec le plus grand soin ! Chaque bijou
 									est emballé avec amour dans mon atelier.
 								</AlertDescription>
 							</Alert>
@@ -202,9 +202,9 @@ export default async function CheckoutSuccessPage({
 										<div>
 											<p className="font-medium">Email de confirmation</p>
 											<p className="text-sm text-muted-foreground">
-												Tu vas recevoir un email récapitulatif dans
-												les prochaines minutes. Pense à vérifier tes spams
-												si tu ne le reçois pas.
+												Vous allez recevoir un email récapitulatif dans
+												les prochaines minutes. Pensez à vérifier vos spams
+												si vous ne le recevez pas.
 											</p>
 										</div>
 									</div>
@@ -216,9 +216,9 @@ export default async function CheckoutSuccessPage({
 											</span>
 										</div>
 										<div>
-											<p className="font-medium">Je prépare ta commande</p>
+											<p className="font-medium">Je prépare votre commande</p>
 											<p className="text-sm text-muted-foreground">
-												Ton bijou sera préparé avec soin et expédié dans les
+												Votre bijou sera préparé avec soin et expédié dans les
 												prochains jours ouvrés.
 											</p>
 										</div>
@@ -233,8 +233,8 @@ export default async function CheckoutSuccessPage({
 										<div>
 											<p className="font-medium">Suivi de livraison</p>
 											<p className="text-sm text-muted-foreground">
-												Tu recevras un email avec le numéro de suivi dès que
-												ton colis sera expédié.
+												Vous recevrez un email avec le numéro de suivi dès que
+												votre colis sera expédié.
 											</p>
 										</div>
 									</div>
@@ -249,10 +249,10 @@ export default async function CheckoutSuccessPage({
 											<UserPlus className="w-5 h-5 text-primary" />
 										</div>
 										<div className="space-y-2">
-											<h3 className="font-semibold">Crée ton compte pour suivre ta commande</h3>
+											<h3 className="font-semibold">Créez votre compte pour suivre votre commande</h3>
 											<p className="text-sm text-muted-foreground">
-												Accède au suivi de ta commande, enregistre tes adresses et simplifie
-												tes prochains achats.
+												Accédez au suivi de votre commande, enregistrez vos adresses et simplifiez
+												vos prochains achats.
 											</p>
 											<Button asChild variant="outline" size="sm">
 												<Link href="/inscription">
@@ -283,10 +283,10 @@ export default async function CheckoutSuccessPage({
 					{/* Message de support */}
 					<div className="mt-8 text-center space-y-2">
 						<p className="text-sm text-muted-foreground">
-							Une question sur ta commande ?
+							Une question sur votre commande ?
 						</p>
 						<Button asChild variant="link">
-							<Link href="/personnalisation">Écris-moi</Link>
+							<Link href="/personnalisation">Écrivez-moi</Link>
 						</Button>
 					</div>
 				</div>

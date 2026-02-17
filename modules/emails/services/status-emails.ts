@@ -1,9 +1,8 @@
-import { render } from "@react-email/components"
 import { CancelOrderConfirmationEmail } from "@/emails/cancel-order-confirmation-email"
 import { ReturnConfirmationEmail } from "@/emails/return-confirmation-email"
 import { RevertShippingNotificationEmail } from "@/emails/revert-shipping-notification-email"
-import { EMAIL_SUBJECTS } from "../constants/email.constants"
-import { sendEmail } from "./send-email"
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants"
+import { renderAndSend } from "./send-email"
 import type { EmailResult } from "../types/email.types"
 
 /**
@@ -26,23 +25,22 @@ export async function sendCancelOrderConfirmationEmail({
 	wasRefunded: boolean
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const component = CancelOrderConfirmationEmail({
-		orderNumber,
-		customerName,
-		orderTotal,
-		reason,
-		wasRefunded,
-		orderDetailsUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to,
-		subject: EMAIL_SUBJECTS.ORDER_CANCELLED,
-		html,
-		text,
-		tags: [{ name: "category", value: "order" }],
-	})
+	return renderAndSend(
+		CancelOrderConfirmationEmail({
+			orderNumber,
+			customerName,
+			orderTotal,
+			reason,
+			wasRefunded,
+			orderDetailsUrl,
+		}),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_CANCELLED,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "order" }],
+		},
+	)
 }
 
 /**
@@ -63,22 +61,21 @@ export async function sendReturnConfirmationEmail({
 	reason?: string
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const component = ReturnConfirmationEmail({
-		orderNumber,
-		customerName,
-		orderTotal,
-		reason,
-		orderDetailsUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to,
-		subject: EMAIL_SUBJECTS.ORDER_RETURNED,
-		html,
-		text,
-		tags: [{ name: "category", value: "order" }],
-	})
+	return renderAndSend(
+		ReturnConfirmationEmail({
+			orderNumber,
+			customerName,
+			orderTotal,
+			reason,
+			orderDetailsUrl,
+		}),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_RETURNED,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "order" }],
+		},
+	)
 }
 
 /**
@@ -97,19 +94,18 @@ export async function sendRevertShippingNotificationEmail({
 	reason: string
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const component = RevertShippingNotificationEmail({
-		orderNumber,
-		customerName,
-		reason,
-		orderDetailsUrl,
-	})
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
-	return sendEmail({
-		to,
-		subject: EMAIL_SUBJECTS.ORDER_SHIPPING_REVERTED,
-		html,
-		text,
-		tags: [{ name: "category", value: "order" }],
-	})
+	return renderAndSend(
+		RevertShippingNotificationEmail({
+			orderNumber,
+			customerName,
+			reason,
+			orderDetailsUrl,
+		}),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_SHIPPING_REVERTED,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "order" }],
+		},
+	)
 }

@@ -179,7 +179,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 
 			if (cartItem.priceAtAdd !== skuResult.data.sku.priceInclTax) {
 				return error(
-					"Les prix de certains articles ont changé. Actualise ton panier avant de procéder au paiement."
+					"Les prix de certains articles ont changé. Actualisez votre panier avant de procéder au paiement."
 				);
 			}
 		}
