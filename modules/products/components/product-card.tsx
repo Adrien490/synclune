@@ -241,47 +241,62 @@ export function ProductCard({
 				/>
 
 				{/* Images only — scoped ViewTransition for precise morph */}
-				{(() => {
-					const images = (
-						<div className="absolute inset-0">
-							{/* Primary image — stays visible under secondary on hover, or zooms if no secondary */}
-							<Image
-								src={primaryImage.url}
-								alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
-								fill
-								className={cn(
-									"object-cover rounded-lg",
-									!secondaryImage && "motion-safe:transition-[transform] motion-safe:duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
-								)}
-								placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
-								blurDataURL={primaryImage.blurDataUrl ?? undefined}
-								priority={isAboveFold}
-								loading={isAboveFold ? undefined : "lazy"}
-								sizes={IMAGE_SIZES.PRODUCT_CARD}
-							/>
-
-							{/* Secondary image — appears on hover for a different angle (desktop only) */}
-							{secondaryImage && (
+				{enableSharedTransition ? (
+					<>
+						<ViewTransition name={`product-${product.id}`} share="vt-product-image">
+							<div className="absolute inset-0">
 								<Image
-									src={secondaryImage.url}
-									alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+									src={primaryImage.url}
+									alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 									fill
-									className="object-cover rounded-lg opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
-									loading="lazy"
+									className="object-cover rounded-lg"
+									placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+									blurDataURL={primaryImage.blurDataUrl ?? undefined}
+									priority={isAboveFold}
+									loading={isAboveFold ? undefined : "lazy"}
 									sizes={IMAGE_SIZES.PRODUCT_CARD}
 								/>
-							)}
-						</div>
-					);
-
-					return enableSharedTransition ? (
-						<ViewTransition name={`product-${product.id}`} share="vt-product-image">
-							{images}
+							</div>
 						</ViewTransition>
-					) : (
-						images
-					);
-				})()}
+						{secondaryImage && (
+							<Image
+								src={secondaryImage.url}
+								alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+								fill
+								className="absolute inset-0 object-cover rounded-lg opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
+								loading="lazy"
+								sizes={IMAGE_SIZES.PRODUCT_CARD}
+							/>
+						)}
+					</>
+				) : (
+					<div className="absolute inset-0">
+						<Image
+							src={primaryImage.url}
+							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+							fill
+							className={cn(
+								"object-cover rounded-lg",
+								!secondaryImage && "motion-safe:transition-[transform] motion-safe:duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
+							)}
+							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={primaryImage.blurDataUrl ?? undefined}
+							priority={isAboveFold}
+							loading={isAboveFold ? undefined : "lazy"}
+							sizes={IMAGE_SIZES.PRODUCT_CARD}
+						/>
+						{secondaryImage && (
+							<Image
+								src={secondaryImage.url}
+								alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+								fill
+								className="object-cover rounded-lg opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
+								loading="lazy"
+								sizes={IMAGE_SIZES.PRODUCT_CARD}
+							/>
+						)}
+					</div>
+				)}
 
 				{/* Add to cart button - Desktop (client island) */}
 				{defaultSku && stockStatus !== "out_of_stock" && (

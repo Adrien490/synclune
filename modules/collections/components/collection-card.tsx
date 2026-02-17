@@ -85,15 +85,15 @@ export function CollectionCard({
 				>
 					{/* Images Bento Grid avec shared element transition */}
 					{displayImages.length > 0 ? (
-						<ViewTransition name={`collection-${slug}`} share="vt-collection-image">
-							<Reveal y={8} once amount={0.2}>
+						<Reveal y={8} once amount={0.2}>
+							<ViewTransition name={`collection-${slug}`} share="vt-collection-image">
 								<CollectionImagesGrid
 									images={displayImages}
 									collectionName={name}
 									isAboveFold={isAboveFold}
 								/>
-							</Reveal>
-						</ViewTransition>
+							</ViewTransition>
+						</Reveal>
 					) : (
 						<div
 							role="img"

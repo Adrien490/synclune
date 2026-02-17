@@ -1243,7 +1243,6 @@ textarea {
 
 ::view-transition-old(.vt-collection-image),
 ::view-transition-new(.vt-collection-image) {
-	animation: none;
 	mix-blend-mode: normal;
 }
 
