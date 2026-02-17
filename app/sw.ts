@@ -52,6 +52,20 @@ const runtimeCaching: RuntimeCaching[] = [
 			],
 		}),
 	},
+	// Product detail pages — NetworkFirst (cache visited pages for offline)
+	{
+		matcher: /^\/creations\/[^/]+\/?$/,
+		handler: new NetworkFirst({
+			cacheName: "product-pages",
+			networkTimeoutSeconds: 5,
+			plugins: [
+				new ExpirationPlugin({
+					maxEntries: 20,
+					maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+				}),
+			],
+		}),
+	},
 	// API routes — NetworkFirst (fresh data preferred, offline fallback)
 	{
 		matcher: /^\/api\/.*/i,

@@ -4,6 +4,7 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
+import { InstallPromptStoreProvider } from "@/shared/providers/install-prompt-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
@@ -27,15 +28,17 @@ export function RootProviders({ children }: RootProvidersProps) {
 				}}
 			>
 				<CookieConsentStoreProvider>
-					<NavigationGuardProvider>
-						<DialogStoreProvider>
-							<SheetStoreProvider>
-								<AlertDialogStoreProvider>
-									{children}
-								</AlertDialogStoreProvider>
-							</SheetStoreProvider>
-						</DialogStoreProvider>
-					</NavigationGuardProvider>
+					<InstallPromptStoreProvider>
+						<NavigationGuardProvider>
+							<DialogStoreProvider>
+								<SheetStoreProvider>
+									<AlertDialogStoreProvider>
+										{children}
+									</AlertDialogStoreProvider>
+								</SheetStoreProvider>
+							</DialogStoreProvider>
+						</NavigationGuardProvider>
+					</InstallPromptStoreProvider>
 				</CookieConsentStoreProvider>
 			</MotionConfig>
 		</LazyMotion>

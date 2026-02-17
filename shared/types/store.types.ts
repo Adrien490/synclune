@@ -145,3 +145,29 @@ export interface AlertDialogStoreProviderProps {
 export interface CookieConsentStoreProviderProps {
 	children: ReactNode
 }
+
+// =============================================================================
+// INSTALL PROMPT STORE TYPES
+// =============================================================================
+
+export interface InstallPromptState {
+	visitCount: number
+	dismissCount: number
+	permanentlyDismissed: boolean
+	bannerVisible: boolean
+	_hasHydrated: boolean
+}
+
+export interface InstallPromptActions {
+	recordVisit: () => void
+	dismissForSession: () => void
+	markInstalled: () => void
+	showBanner: () => void
+	hideBanner: () => void
+}
+
+export type InstallPromptStore = InstallPromptState & InstallPromptActions
+
+export interface InstallPromptStoreProviderProps {
+	children: ReactNode
+}

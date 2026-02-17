@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CachedProducts } from "./_components/cached-products";
 import { OfflineActions } from "./_components/offline-actions";
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default function OfflinePage() {
         </div>
 
         <OfflineActions />
+        <CachedProducts />
       </div>
     </main>
   );

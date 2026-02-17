@@ -2,6 +2,10 @@ import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton
 import { getCart } from "@/modules/cart/data/get-cart";
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { CookieBanner } from "@/shared/components/cookie-banner";
+// Lazy-loaded: rarely shown (2nd visit + Chrome/Edge or iOS only)
+const InstallPromptBanner = dynamic(
+	() => import("@/shared/components/install-prompt-banner").then((mod) => mod.InstallPromptBanner)
+);
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
@@ -70,6 +74,7 @@ export default async function RootLayout({
 							</ErrorBoundary>
 							<UnsavedChangesDialog />
 							<CookieBanner />
+							<InstallPromptBanner />
 						</Suspense>
 					</RootProviders>
 					<AppToaster />
