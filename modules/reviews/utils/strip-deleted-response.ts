@@ -6,17 +6,16 @@
  * deleted responses in application code after fetch.
  */
 
-type ReviewWithResponse = {
-	response: { deletedAt: Date | null; [key: string]: unknown } | null
-	[key: string]: unknown
-}
-
 /**
  * Strips a soft-deleted response from a single review.
  * Returns a new object with `response` set to null if it was soft-deleted,
  * and `deletedAt` removed from the response object otherwise.
+ *
+ * Accepts any object with an optional `response` containing `deletedAt`.
+ * The Prisma select includes `deletedAt` but our domain types (ReviewPublic, ReviewAdmin) don't,
+ * so the constraint uses Record to accept both typed and untyped response objects.
  */
-export function stripDeletedResponse<T extends ReviewWithResponse>(review: T): T {
+export function stripDeletedResponse<T extends { response: Record<string, unknown> | null }>(review: T): T {
 	if (!review.response) return review
 	if (review.response.deletedAt) {
 		return { ...review, response: null }
@@ -28,6 +27,6 @@ export function stripDeletedResponse<T extends ReviewWithResponse>(review: T): T
 /**
  * Strips soft-deleted responses from an array of reviews.
  */
-export function stripDeletedResponses<T extends ReviewWithResponse>(reviews: T[]): T[] {
+export function stripDeletedResponses<T extends { response: Record<string, unknown> | null }>(reviews: T[]): T[] {
 	return reviews.map(stripDeletedResponse)
 }

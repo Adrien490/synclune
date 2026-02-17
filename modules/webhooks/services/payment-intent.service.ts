@@ -68,58 +68,71 @@ export function extractPaymentFailureDetails(
 export async function restoreStockForOrder(
 	orderId: string
 ): Promise<{ shouldRestore: boolean; itemCount: number; restoredSkuIds: string[] }> {
-	const order = await prisma.order.findUnique({
-		where: { id: orderId },
-		select: {
-			id: true,
-			orderNumber: true,
-			status: true,
-			paymentStatus: true,
-			items: {
-				select: {
-					skuId: true,
-					quantity: true,
+	// All reads and writes inside the transaction to prevent double restoration on concurrent retries
+	return prisma.$transaction(async (tx) => {
+		const order = await tx.order.findUnique({
+			where: { id: orderId },
+			select: {
+				id: true,
+				orderNumber: true,
+				status: true,
+				paymentStatus: true,
+				items: {
+					select: {
+						skuId: true,
+						quantity: true,
+					},
 				},
 			},
-		},
-	});
+		});
 
-	if (!order) {
-		console.error(`❌ [WEBHOOK] Order ${orderId} not found for stock restoration`);
-		return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
-	}
+		if (!order) {
+			console.error(`[WEBHOOK] Order ${orderId} not found for stock restoration`);
+			return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
+		}
 
-	// Vérifier si le stock a été décrémenté (statut PROCESSING = paiement avait réussi)
-	const shouldRestore = order.status === "PROCESSING" || order.paymentStatus === "PAID";
+		// Only restore if stock was decremented (PROCESSING status = payment had succeeded)
+		const shouldRestore = order.status === "PROCESSING" || order.paymentStatus === "PAID";
 
-	if (!shouldRestore || order.items.length === 0) {
-		return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
-	}
+		if (!shouldRestore || order.items.length === 0) {
+			return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
+		}
 
-	// Restaurer le stock dans une transaction (batch pour éviter N+1)
-	// Grouper les quantités par skuId au cas où plusieurs items ont le même SKU
-	const stockUpdates = new Map<string, number>();
-	for (const item of order.items) {
-		const current = stockUpdates.get(item.skuId) || 0;
-		stockUpdates.set(item.skuId, current + item.quantity);
-	}
+		// Group quantities by skuId in case multiple items share the same SKU
+		const stockUpdates = new Map<string, number>();
+		for (const item of order.items) {
+			const current = stockUpdates.get(item.skuId) || 0;
+			stockUpdates.set(item.skuId, current + item.quantity);
+		}
 
-	await prisma.$transaction(async (tx) => {
+		// Fetch current SKU states to determine if reactivation is appropriate
+		const skuIds = Array.from(stockUpdates.keys());
+		const skus = await tx.productSku.findMany({
+			where: { id: { in: skuIds } },
+			select: { id: true, inventory: true, isActive: true },
+		});
+		const skuMap = new Map(skus.map((s) => [s.id, s]));
+
 		await Promise.all(
-			Array.from(stockUpdates.entries()).map(([skuId, quantity]) =>
-				tx.productSku.update({
+			Array.from(stockUpdates.entries()).map(([skuId, quantity]) => {
+				const sku = skuMap.get(skuId);
+				// Only reactivate if the SKU was auto-deactivated (inventory === 0 and inactive)
+				// Don't reactivate SKUs that were manually deactivated by admin (inventory > 0 but inactive)
+				const shouldReactivate = sku && !sku.isActive && sku.inventory === 0;
+
+				return tx.productSku.update({
 					where: { id: skuId },
 					data: {
 						inventory: { increment: quantity },
-						isActive: true,
+						...(shouldReactivate && { isActive: true }),
 					},
-				})
-			)
+				});
+			})
 		);
-	}, { timeout: 10000 });
 
-	console.log(`📦 [WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`);
-	return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: Array.from(stockUpdates.keys()) };
+		console.log(`[WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`);
+		return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: skuIds };
+	}, { timeout: 10000 });
 }
 
 /**

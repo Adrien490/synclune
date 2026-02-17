@@ -37,11 +37,11 @@ export async function handleDisputeCreated(
 			: dispute.payment_intent?.id;
 
 	if (!paymentIntentId) {
-		console.error("❌ [WEBHOOK] Dispute without payment_intent:", dispute.id);
-		return null;
+		console.error("[WEBHOOK] Dispute without payment_intent:", dispute.id);
+		throw new Error(`Dispute ${dispute.id} has no payment_intent`);
 	}
 
-	const order = await prisma.order.findFirst({
+	const order = await prisma.order.findUnique({
 		where: { stripePaymentIntentId: paymentIntentId },
 		select: {
 			id: true,
@@ -51,8 +51,22 @@ export async function handleDisputeCreated(
 	});
 
 	if (!order) {
-		console.warn(`⚠️ [WEBHOOK] No order found for disputed PI ${paymentIntentId}`);
-		return null;
+		console.error(`[WEBHOOK] No order found for disputed PI ${paymentIntentId}`);
+		throw new Error(`No order found for dispute ${dispute.id} (PI: ${paymentIntentId})`);
+	}
+
+	// Prevent duplicate OrderNote on webhook replay
+	const existingNote = await prisma.orderNote.findFirst({
+		where: {
+			orderId: order.id,
+			content: { startsWith: `[LITIGE OUVERT] Litige Stripe ${dispute.id}` },
+		},
+		select: { id: true },
+	});
+
+	if (existingNote) {
+		console.log(`[WEBHOOK] Dispute note already exists for ${dispute.id}, skipping creation`);
+		return { success: true, skipped: true, reason: "Dispute note already created" };
 	}
 
 	// Create an OrderNote with dispute details
@@ -121,11 +135,11 @@ export async function handleDisputeClosed(
 			: dispute.payment_intent?.id;
 
 	if (!paymentIntentId) {
-		console.error("❌ [WEBHOOK] Dispute closed without payment_intent:", dispute.id);
-		return null;
+		console.error("[WEBHOOK] Dispute closed without payment_intent:", dispute.id);
+		throw new Error(`Dispute ${dispute.id} closed has no payment_intent`);
 	}
 
-	const order = await prisma.order.findFirst({
+	const order = await prisma.order.findUnique({
 		where: { stripePaymentIntentId: paymentIntentId },
 		select: {
 			id: true,
@@ -136,8 +150,22 @@ export async function handleDisputeClosed(
 	});
 
 	if (!order) {
-		console.warn(`⚠️ [WEBHOOK] No order found for closed dispute PI ${paymentIntentId}`);
-		return null;
+		console.error(`[WEBHOOK] No order found for closed dispute PI ${paymentIntentId}`);
+		throw new Error(`No order found for closed dispute ${dispute.id} (PI: ${paymentIntentId})`);
+	}
+
+	// Prevent duplicate OrderNote on webhook replay
+	const existingNote = await prisma.orderNote.findFirst({
+		where: {
+			orderId: order.id,
+			content: { startsWith: `[LITIGE CLOTURE] Litige ${dispute.id}` },
+		},
+		select: { id: true },
+	});
+
+	if (existingNote) {
+		console.log(`[WEBHOOK] Dispute closed note already exists for ${dispute.id}, skipping`);
+		return { success: true, skipped: true, reason: "Dispute closed note already created" };
 	}
 
 	const won = dispute.status === "won";

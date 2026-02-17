@@ -7,7 +7,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockPrisma,
 	mockStripe,
-	mockBatchValidateSkusForMerge,
 	mockGetShippingRateName,
 	mockGetShippingMethodFromRate,
 	mockGetShippingCarrierFromRate,
@@ -23,6 +22,7 @@ const {
 			update: vi.fn(),
 		},
 		productSku: {
+			findMany: vi.fn(),
 			update: vi.fn(),
 			updateMany: vi.fn(),
 		},
@@ -58,7 +58,6 @@ const {
 	return {
 		mockPrisma,
 		mockStripe,
-		mockBatchValidateSkusForMerge: vi.fn(),
 		mockGetShippingRateName: vi.fn(),
 		mockGetShippingMethodFromRate: vi.fn(),
 		mockGetShippingCarrierFromRate: vi.fn(),
@@ -77,10 +76,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: mockStripe,
-}));
-
-vi.mock("@/modules/cart/services/sku-validation.service", () => ({
-	batchValidateSkusForMerge: mockBatchValidateSkusForMerge,
 }));
 
 vi.mock("@/modules/orders/constants/stripe-shipping-rates", () => ({
@@ -322,13 +317,24 @@ describe("processOrderTransaction", () => {
 		mockTx.productSku.updateMany.mockResolvedValue({ count: 0 });
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
 
-		const batchResults = new Map([
-			["sku-1", { skuId: "sku-1", isValid: true, inventory: 10, isActive: true, productStatus: "PUBLIC" }],
+		// Stock validation now happens inside the transaction via tx.productSku.findMany
+		mockTx.productSku.findMany.mockResolvedValue([
+			{ id: "sku-1", inventory: 10, isActive: true, deletedAt: null, product: { status: "PUBLIC", deletedAt: null } },
 		]);
-		mockBatchValidateSkusForMerge.mockResolvedValue(batchResults);
 
 		const session = makeStripeSession();
 		const result = await processOrderTransaction("order-1", session, 600, "shr_france_123");
+
+		// Stock validation query inside transaction
+		expect(mockTx.productSku.findMany).toHaveBeenCalledWith({
+			where: { id: { in: ["sku-1"] } },
+			select: expect.objectContaining({
+				id: true,
+				inventory: true,
+				isActive: true,
+				deletedAt: true,
+			}),
+		});
 
 		// Stock decremented for each item
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
@@ -367,10 +373,9 @@ describe("processOrderTransaction", () => {
 		mockTx.productSku.updateMany.mockResolvedValue({ count: 0 });
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
 
-		const batchResults = new Map([
-			["sku-1", { skuId: "sku-1", isValid: true, inventory: 10, isActive: true, productStatus: "PUBLIC" }],
+		mockTx.productSku.findMany.mockResolvedValue([
+			{ id: "sku-1", inventory: 10, isActive: true, deletedAt: null, product: { status: "PUBLIC", deletedAt: null } },
 		]);
-		mockBatchValidateSkusForMerge.mockResolvedValue(batchResults);
 
 		const session = makeStripeSession({ metadata: { guestSessionId: "guest-session-xyz" } });
 		await processOrderTransaction("order-1", session, 600, "shr_france_123");
@@ -394,7 +399,7 @@ describe("processOrderTransaction", () => {
 		const result = await processOrderTransaction("order-1", session, 600, "shr_france_123");
 
 		// SKU validation, stock decrement and order update must NOT be called
-		expect(mockBatchValidateSkusForMerge).not.toHaveBeenCalled();
+		expect(mockTx.productSku.findMany).not.toHaveBeenCalled();
 		expect(mockTx.productSku.update).not.toHaveBeenCalled();
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 		expect(mockTx.cartItem.deleteMany).not.toHaveBeenCalled();
@@ -416,9 +421,8 @@ describe("processOrderTransaction", () => {
 		const order = makeOrderRow();
 		mockTx.order.findUnique.mockResolvedValue(order);
 
-		// SKU not found in batch results
-		const batchResults = new Map<string, unknown>();
-		mockBatchValidateSkusForMerge.mockResolvedValue(batchResults);
+		// SKU not found in validation query
+		mockTx.productSku.findMany.mockResolvedValue([]);
 
 		const session = makeStripeSession();
 		await expect(
@@ -430,15 +434,14 @@ describe("processOrderTransaction", () => {
 		const order = makeOrderRow();
 		mockTx.order.findUnique.mockResolvedValue(order);
 
-		const batchResults = new Map([
-			["sku-1", { skuId: "sku-1", isValid: false, inventory: 0, isActive: false, productStatus: "PUBLIC" }],
+		mockTx.productSku.findMany.mockResolvedValue([
+			{ id: "sku-1", inventory: 0, isActive: false, deletedAt: null, product: { status: "PUBLIC", deletedAt: null } },
 		]);
-		mockBatchValidateSkusForMerge.mockResolvedValue(batchResults);
 
 		const session = makeStripeSession();
 		await expect(
 			processOrderTransaction("order-1", session, 600, "shr_france_123")
-		).rejects.toThrow("Invalid item in order: invalid (active=false, stock=0)");
+		).rejects.toThrow("Invalid item in order: invalid (active=false, stock=0, deleted=false)");
 	});
 
 	it("should deactivate out-of-stock SKUs after decrementing inventory", async () => {
@@ -449,10 +452,9 @@ describe("processOrderTransaction", () => {
 		mockTx.productSku.updateMany.mockResolvedValue({ count: 1 });
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
 
-		const batchResults = new Map([
-			["sku-1", { skuId: "sku-1", isValid: true, inventory: 10, isActive: true, productStatus: "PUBLIC" }],
+		mockTx.productSku.findMany.mockResolvedValue([
+			{ id: "sku-1", inventory: 10, isActive: true, deletedAt: null, product: { status: "PUBLIC", deletedAt: null } },
 		]);
-		mockBatchValidateSkusForMerge.mockResolvedValue(batchResults);
 
 		const session = makeStripeSession();
 		await processOrderTransaction("order-1", session, 600, "shr_france_123");

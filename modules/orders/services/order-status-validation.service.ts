@@ -11,7 +11,7 @@
 import {
 	OrderStatus,
 	PaymentStatus,
-} from "@/app/generated/prisma/client"
+} from "@/app/generated/prisma/browser"
 
 import type {
 	OrderForShipValidation,

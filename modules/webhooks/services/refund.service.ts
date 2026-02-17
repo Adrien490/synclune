@@ -1,9 +1,8 @@
 import Stripe from "stripe";
 import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
-import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import { getBaseUrl } from "@/shared/constants/urls";
 import type { RefundSyncResult, RefundRecord } from "../types/webhook.types";
 
 // Re-export types for backwards compatibility
@@ -184,40 +183,8 @@ export async function updateOrderPaymentStatus(
 }
 
 /**
- * Envoie un email de confirmation de remboursement au client
- */
-export async function sendRefundConfirmation(
-	customerEmail: string,
-	orderNumber: string,
-	customerName: string,
-	totalRefunded: number,
-	orderTotal: number,
-	isFullyRefunded: boolean,
-	reason: string
-): Promise<void> {
-	try {
-		const baseUrl = getBaseUrl();
-		const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(orderNumber)}`;
-
-		await sendRefundConfirmationEmail({
-			to: customerEmail,
-			orderNumber,
-			customerName,
-			refundAmount: totalRefunded,
-			originalOrderTotal: orderTotal,
-			reason: reason.toUpperCase(),
-			isPartialRefund: !isFullyRefunded,
-			orderDetailsUrl,
-		});
-
-		console.log(`✅ [WEBHOOK] Refund confirmation email sent to ${customerEmail}`);
-	} catch (emailError) {
-		console.error("❌ [WEBHOOK] Error sending refund confirmation email:", emailError);
-	}
-}
-
-/**
- * Trouve un remboursement par son ID Stripe ou par metadata
+ * Finds a refund by its Stripe ID or by metadata refund_id.
+ * SIDE EFFECT: if found via metadataRefundId fallback, links the stripeRefundId to the record.
  */
 export async function findRefundByStripeId(
 	stripeRefundId: string,

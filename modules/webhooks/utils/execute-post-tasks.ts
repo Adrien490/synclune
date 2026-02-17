@@ -26,8 +26,9 @@ export async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise
 		errors: [],
 	};
 
-	for (const task of tasks) {
-		try {
+	// Execute all tasks in parallel for better throughput
+	const taskResults = await Promise.allSettled(
+		tasks.map(async (task) => {
 			switch (task.type) {
 				case "ORDER_CONFIRMATION_EMAIL":
 					await sendOrderConfirmationEmail(task.data);
@@ -51,13 +52,18 @@ export async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise
 					task.tags.forEach(tag => updateTag(tag));
 					break;
 			}
+		})
+	);
+
+	for (let i = 0; i < taskResults.length; i++) {
+		const taskResult = taskResults[i];
+		if (taskResult.status === "fulfilled") {
 			result.successful++;
-		} catch (error) {
+		} else {
 			result.failed++;
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			result.errors.push({ type: task.type, error: errorMessage });
-			// Log mais ne pas bloquer les autres tâches
-			console.error(`❌ [WEBHOOK-AFTER] Failed to execute task ${task.type}:`, error);
+			const errorMessage = taskResult.reason instanceof Error ? taskResult.reason.message : String(taskResult.reason);
+			result.errors.push({ type: tasks[i].type, error: errorMessage });
+			console.error(`[WEBHOOK-AFTER] Failed to execute task ${tasks[i].type}:`, taskResult.reason);
 		}
 	}
 

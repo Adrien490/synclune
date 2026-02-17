@@ -53,19 +53,54 @@ export async function handleAsyncPaymentFailed(
 			throw new Error("No order ID found in failed async payment session metadata");
 		}
 
-		// Mettre à jour la commande comme échouée
-		const order = await prisma.order.update({
+		// Idempotence: if async_payment_succeeded arrived first, don't overwrite PAID
+		const existingOrder = await prisma.order.findUnique({
 			where: { id: orderId },
-			data: {
-				paymentStatus: PaymentStatus.FAILED,
-				status: "CANCELLED",
-			},
-			select: {
-				id: true,
-				orderNumber: true,
-				customerEmail: true,
-				customerName: true,
-			},
+			select: { paymentStatus: true },
+		});
+
+		if (!existingOrder) {
+			throw new Error(`Order not found: ${orderId}`);
+		}
+
+		if (existingOrder.paymentStatus === "PAID" || existingOrder.paymentStatus === "REFUNDED" || existingOrder.paymentStatus === "PARTIALLY_REFUNDED") {
+			console.log(`⏭️ [WEBHOOK] Order ${orderId} already ${existingOrder.paymentStatus}, skipping async payment failure`);
+			return { success: true, skipped: true, reason: `Order already ${existingOrder.paymentStatus}` };
+		}
+
+		// Cancel order + release discount usages in a single transaction
+		const order = await prisma.$transaction(async (tx) => {
+			// Release discount usages
+			const discountUsages = await tx.discountUsage.findMany({
+				where: { orderId },
+				select: { id: true, discountId: true },
+			});
+
+			for (const usage of discountUsages) {
+				await tx.discount.update({
+					where: { id: usage.discountId },
+					data: { usageCount: { decrement: 1 } },
+				});
+			}
+
+			if (discountUsages.length > 0) {
+				await tx.discountUsage.deleteMany({ where: { orderId } });
+				console.log(`[WEBHOOK] Released ${discountUsages.length} discount usage(s) for failed async order ${orderId}`);
+			}
+
+			return tx.order.update({
+				where: { id: orderId },
+				data: {
+					paymentStatus: PaymentStatus.FAILED,
+					status: "CANCELLED",
+				},
+				select: {
+					id: true,
+					orderNumber: true,
+					customerEmail: true,
+					customerName: true,
+				},
+			});
 		});
 
 		console.log(`⚠️ [WEBHOOK] Order ${order.orderNumber} marked as FAILED due to async payment failure`);

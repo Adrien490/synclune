@@ -66,9 +66,6 @@ model User {
   // Demandes de personnalisation
   customizationRequests CustomizationRequest[]
 
-  @@index([name, id]) // Admin: tri par nom d'utilisateur
-  @@index([createdAt, id])
-  @@index([deletedAt, role]) // Admin: filtrer users actifs par role
   @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
 }
 
@@ -142,7 +139,6 @@ model Address {
   // pour garantir qu'un seul enregistrement a isDefault: true par userId
 
   @@index([userId, isDefault]) // Couvre aussi userId seul
-  @@index([userId, createdAt(sort: Desc)])
 }
 
 // ============================================================================
@@ -268,8 +264,7 @@ model ProductCollection {
 
   /// Un produit ne peut appartenir qu'une seule fois a une collection
   @@unique([productId, collectionId])
-  @@index([collectionId, addedAt(sort: Desc)])
-  @@index([collectionId, isFeatured])
+  @@index([collectionId]) // FK reverse lookup
 }
 
 // ============================================================================
@@ -305,10 +300,6 @@ model Product {
   wishlistItems WishlistItem[]
 
   @@index([typeId])
-  @@index([createdAt, id])
-  @@index([deletedAt, status]) // Couvre aussi deletedAt seul
-  @@index([status, createdAt(sort: Desc)]) // Nouveautes, couvre aussi status seul
-  @@index([typeId, status]) // Filtrage par type
 }
 
 model ProductSku {
@@ -345,12 +336,8 @@ model ProductSku {
   // Garantir unicite des combinaisons produit/couleur/taille/materiau
   // Evite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
   @@unique([productId, colorId, size, materialId])
-  // Indexes optimises pour requetes frequentes
-  @@index([productId, isActive, inventory]) // Stock actif par produit, couvre aussi [productId, isActive]
-  @@index([isActive, inventory(sort: Asc), updatedAt(sort: Desc)]) // Stock alerts (low inventory first)
-  @@index([productId, isDefault])
-  @@index([colorId, isActive]) // Filtrage catalogue par couleur
-  @@index([materialId, isActive]) // Filtrage catalogue par materiau
+  @@index([colorId])
+  @@index([materialId])
 }
 
 model SkuMedia {
@@ -370,7 +357,6 @@ model SkuMedia {
   updatedAt DateTime @updatedAt
 
   @@index([skuId, position])
-  @@index([skuId, mediaType]) // Filtrage video/image
 }
 
 // ============================================================================
@@ -579,22 +565,8 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // === INDEXES OPTIMISES ===
-  // Chronologique
   @@index([userId, createdAt(sort: Desc)])
-  @@index([userId, paymentStatus, deletedAt, createdAt(sort: Desc)]) // Covering index "Mes commandes" avec soft-delete
-  @@index([status, createdAt])
-  @@index([paymentStatus, paidAt, deletedAt]) // KPIs Dashboard (revenue, order count aggregates)
-  @@index([customerEmail]) // Recherche support client
-  // Note: @@index([deletedAt]) removed - redundant with composite @@index([deletedAt, status, createdAt])
-  // PostgreSQL uses the leading column of a composite index for single-column queries
-  @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
-  // Timestamps metier
-  @@index([fulfillmentStatus, actualDelivery, reviewRequestSentAt, deletedAt]) // review-request-emails cron
-  @@index([paymentStatus, deletedAt, paidAt(sort: Desc)]) // Dashboard recent orders
-  @@index([paidAt, paymentStatus]) // Rapports comptables
-  @@index([paymentStatus, createdAt]) // sync-async-payments cron: WHERE paymentStatus=PENDING AND createdAt BETWEEN
-  @@index([createdAt(sort: Desc)]) // Listing commandes recentes
+  @@index([customerEmail])
 }
 
 /// Historique des actions sur les commandes (audit trail)
@@ -679,7 +651,6 @@ model OrderItem {
 
   @@index([orderId])
   @@index([skuId])
-  @@index([productId, createdAt(sort: Desc)]) // Calcul bestsellers / popularite produits
 }
 
 /// Notes internes sur les commandes (visibles uniquement par les admins)
@@ -764,10 +735,6 @@ model Refund {
   deletedAt DateTime?
 
   @@index([orderId])
-  @@index([createdAt(sort: Desc)])
-  @@index([status, createdAt]) // Couvre aussi status seul
-  @@index([status, processedAt]) // Dashboard: stats remboursements par periode
-  @@index([deletedAt, status, createdAt(sort: Desc)]) // Dashboard admin listing (soft-delete + status + pagination)
 }
 
 model RefundItem {
@@ -836,8 +803,6 @@ model Discount {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  @@index([deletedAt, isActive]) // Admin listing avec soft-delete
-  @@index([createdAt, id])
 }
 
 model DiscountUsage {
@@ -908,8 +873,6 @@ model NewsletterSubscriber {
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete pour RGPD
 
-  @@index([status, createdAt])
-  @@index([deletedAt, status, subscribedAt])
 }
 
 // ============================================================================
@@ -964,15 +927,7 @@ model ProductReview {
   // La validation metier est faite cote applicatif pour les avis actifs
   @@unique([userId, productId])
 
-  // === INDEXES ===
-  // Index composite principal pour affichage des avis d'un produit
-  @@index([productId, status, deletedAt, createdAt(sort: Desc)])
-  // Index pour page "Mes avis" du client
-  @@index([userId, deletedAt, createdAt(sort: Desc)])
-  // Index pour moderation admin
-  @@index([status, createdAt(sort: Desc)])
-  // Index pour calcul des stats (rating) et filtrage par note
-  @@index([productId, deletedAt, rating])
+  @@index([productId])
 }
 
 /// Photo jointe a un avis produit
@@ -1043,8 +998,6 @@ model ProductReviewStats {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // === INDEXES ===
-  @@index([averageRating]) // Filter/sort by rating
 }
 
 // ============================================================================
@@ -1071,10 +1024,7 @@ model WebhookEvent {
   receivedAt    DateTime           @default(now())
   processedAt   DateTime?
 
-  @@index([eventType, status])
-  @@index([status, receivedAt])
-  @@index([status, attempts, processedAt]) // retry-webhooks cron
-  @@index([processedAt])
+  @@index([processedAt]) // cleanup-webhook-events cron
 }
 
 // ============================================================================

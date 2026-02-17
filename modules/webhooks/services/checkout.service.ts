@@ -5,7 +5,6 @@ import { stripe } from "@/shared/lib/stripe";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { batchValidateSkusForMerge } from "@/modules/cart/services/sku-validation.service";
 import {
 	getShippingRateName,
 	getShippingMethodFromRate,
@@ -160,19 +159,38 @@ export async function processOrderTransaction(
 			return mapToOrderWithItems(order);
 		}
 
-		// 3. Re-validation of all items BEFORE marking as PAID (single batch query)
-		console.log(`🔍 [WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`);
+		// 3. Re-validation of all items INSIDE the transaction to prevent race conditions
+		// Using tx instead of global prisma to ensure consistent reads with the decrement
+		console.log(`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`);
 
-		const batchResults = await batchValidateSkusForMerge(
-			order.items.map((item) => ({ skuId: item.skuId, quantity: item.quantity }))
-		);
+		const skuIds = order.items.map((item) => item.skuId);
+		const skus = await tx.productSku.findMany({
+			where: { id: { in: skuIds } },
+			select: {
+				id: true,
+				inventory: true,
+				isActive: true,
+				deletedAt: true,
+				product: { select: { status: true, deletedAt: true } },
+			},
+		});
+		const skuMap = new Map(skus.map((s) => [s.id, s]));
 
 		for (const item of order.items) {
-			const result = batchResults.get(item.skuId);
-			if (!result || !result.isValid) {
-				const reason = !result ? "SKU not found" : `invalid (active=${result.isActive}, stock=${result.inventory})`;
+			const sku = skuMap.get(item.skuId);
+			const isValid = sku
+				&& !sku.deletedAt
+				&& !sku.product.deletedAt
+				&& sku.isActive
+				&& sku.product.status === "PUBLIC"
+				&& sku.inventory >= item.quantity;
+
+			if (!isValid) {
+				const reason = !sku
+					? "SKU not found"
+					: `invalid (active=${sku.isActive}, stock=${sku.inventory}, deleted=${!!sku.deletedAt})`;
 				console.error(
-					`❌ [WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`
+					`[WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`
 				);
 				throw new Error(
 					`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`
@@ -180,7 +198,7 @@ export async function processOrderTransaction(
 			}
 		}
 
-		console.log(`✅ [WEBHOOK] All items validated successfully for order ${orderId}`);
+		console.log(`[WEBHOOK] All items validated successfully for order ${orderId}`);
 
 		// 4. Décrémenter le stock pour chaque item
 		for (const item of order.items) {
@@ -209,7 +227,6 @@ export async function processOrderTransaction(
 		});
 
 		// 5b. Deactivate out-of-stock SKUs (single query instead of N+1)
-		const skuIds = order.items.map((item) => item.skuId);
 		const { count: deactivatedCount } = await tx.productSku.updateMany({
 			where: { id: { in: skuIds }, inventory: 0 },
 			data: { isActive: false },

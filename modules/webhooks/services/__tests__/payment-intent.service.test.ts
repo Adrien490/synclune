@@ -14,6 +14,7 @@ const {
 			update: vi.fn(),
 		},
 		productSku: {
+			findMany: vi.fn(),
 			update: vi.fn(),
 		},
 	};
@@ -185,7 +186,11 @@ describe("restoreStockForOrder", () => {
 				{ skuId: "sku-b", quantity: 1 },
 			],
 		};
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockTx.order.findUnique.mockResolvedValue(order);
+		mockTx.productSku.findMany.mockResolvedValue([
+			{ id: "sku-a", inventory: 0, isActive: false },
+			{ id: "sku-b", inventory: 3, isActive: true },
+		]);
 		mockTx.productSku.update.mockResolvedValue({});
 
 		const result = await restoreStockForOrder("order-1");
@@ -205,7 +210,7 @@ describe("restoreStockForOrder", () => {
 			paymentStatus: "PENDING",
 			items: [{ skuId: "sku-a", quantity: 3 }],
 		};
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockTx.order.findUnique.mockResolvedValue(order);
 
 		const result = await restoreStockForOrder("order-2");
 
@@ -216,12 +221,11 @@ describe("restoreStockForOrder", () => {
 	});
 
 	it("should handle order not found gracefully", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findUnique.mockResolvedValue(null);
 
 		const result = await restoreStockForOrder("nonexistent-order");
 
 		expect(result).toEqual({ shouldRestore: false, itemCount: 0, restoredSkuIds: [] });
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("should group quantities by skuId when the same SKU appears in multiple items", async () => {
@@ -236,7 +240,11 @@ describe("restoreStockForOrder", () => {
 				{ skuId: "sku-b", quantity: 1 },
 			],
 		};
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockTx.order.findUnique.mockResolvedValue(order);
+		mockTx.productSku.findMany.mockResolvedValue([
+			{ id: "sku-a", inventory: 0, isActive: false },
+			{ id: "sku-b", inventory: 5, isActive: true },
+		]);
 		mockTx.productSku.update.mockResolvedValue({});
 
 		const result = await restoreStockForOrder("order-3");
@@ -266,6 +274,39 @@ describe("restoreStockForOrder", () => {
 
 		expect(result.restoredSkuIds).toHaveLength(2);
 		expect(result.itemCount).toBe(3);
+	});
+
+	it("should only reactivate SKUs that were auto-deactivated (inventory === 0)", async () => {
+		const order = {
+			id: "order-4",
+			orderNumber: "SYN-004",
+			status: "PROCESSING",
+			paymentStatus: "PAID",
+			items: [
+				{ skuId: "sku-auto-deactivated", quantity: 1 },
+				{ skuId: "sku-manually-deactivated", quantity: 1 },
+			],
+		};
+		mockTx.order.findUnique.mockResolvedValue(order);
+		mockTx.productSku.findMany.mockResolvedValue([
+			// Auto-deactivated: inventory=0 and inactive → should reactivate
+			{ id: "sku-auto-deactivated", inventory: 0, isActive: false },
+			// Manually deactivated: inventory>0 but inactive → should NOT reactivate
+			{ id: "sku-manually-deactivated", inventory: 5, isActive: false },
+		]);
+		mockTx.productSku.update.mockResolvedValue({});
+
+		await restoreStockForOrder("order-4");
+
+		expect(mockTx.productSku.update).toHaveBeenCalledWith({
+			where: { id: "sku-auto-deactivated" },
+			data: { inventory: { increment: 1 }, isActive: true },
+		});
+
+		expect(mockTx.productSku.update).toHaveBeenCalledWith({
+			where: { id: "sku-manually-deactivated" },
+			data: { inventory: { increment: 1 } },
+		});
 	});
 });
 

@@ -11,7 +11,7 @@ import {
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
+import type { WebhookHandlerResult } from "../types/webhook.types";
 
 /**
  * Gère le succès d'un paiement via Payment Intent
@@ -112,10 +112,13 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
 	}
 
 	try {
-		// 1. Marquer la commande comme annulée
+		// 1. Restore stock if it was decremented (order was PROCESSING/PAID)
+		const { restoredSkuIds } = await restoreStockForOrder(orderId);
+
+		// 2. Marquer la commande comme annulée
 		await markOrderAsCancelled(orderId, paymentIntent.id);
 
-		// 2. Remboursement automatique si paiement a été capturé
+		// 3. Remboursement automatique si paiement a été capturé
 		if (paymentIntent.status === "canceled" && paymentIntent.amount_received > 0) {
 			console.log(`💰 [WEBHOOK] Initiating automatic refund for canceled order ${orderId}`);
 
@@ -137,11 +140,20 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
 
 		console.log(`⚠️ [WEBHOOK] Order ${orderId} payment canceled`);
 
+		// 4. Build cache invalidation tasks
+		const cacheTags: string[] = [
+			ORDERS_CACHE_TAGS.LIST,
+			SHARED_CACHE_TAGS.ADMIN_BADGES,
+		];
+		for (const skuId of restoredSkuIds) {
+			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+		}
+
 		return {
 			success: true,
 			tasks: [{
 				type: "INVALIDATE_CACHE",
-				tags: [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES],
+				tags: cacheTags,
 			}],
 		};
 	} catch (error) {

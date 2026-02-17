@@ -5,12 +5,6 @@
 export const ANTI_REPLAY_WINDOW_SECONDS = 300
 
 /**
- * Timeout pour la validation du stock lors du checkout (ms)
- * Evite le blocage du webhook si la DB est lente
- */
-export const CHECKOUT_VALIDATION_TIMEOUT_MS = 5000
-
-/**
  * Labels pour les types d'événements (UI admin)
  */
 export const WEBHOOK_EVENT_LABELS: Record<string, string> = {
