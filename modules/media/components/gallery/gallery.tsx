@@ -217,11 +217,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 			return;
 		}
 
-		// Only handle keys when focus is inside the gallery
-		if (!galleryRef.current?.contains(document.activeElement)) {
-			return;
-		}
-
 		if (!emblaApi) return;
 
 		switch (e.key) {
@@ -301,7 +296,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 					"group-has-[[data-pending]]/product-details:scale-[0.99]",
 					"group-has-[[data-pending]]/product-details:pointer-events-none"
 				)}
-				tabIndex={0}
 				role="region"
 				aria-label={`Galerie photos ${title}`}
 				aria-roledescription="carrousel"

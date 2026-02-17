@@ -19,8 +19,6 @@ interface GalleryHoverZoomProps {
 	quality?: number;
 	/** Image sizes for responsive */
 	sizes?: string;
-	/** Called when the image fails to load */
-	onError?: () => void;
 }
 
 export function GalleryHoverZoom({
@@ -33,7 +31,6 @@ export function GalleryHoverZoom({
 	priority = false,
 	quality = 85,
 	sizes = GALLERY_MAIN_SIZES,
-	onError,
 }: GalleryHoverZoomProps) {
 	const [isZooming, setIsZooming] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -131,7 +128,6 @@ export function GalleryHoverZoom({
 					sizes={sizes}
 					placeholder={blurDataUrl ? "blur" : "empty"}
 					blurDataURL={blurDataUrl}
-					onError={onError}
 				/>
 			</div>
 		);
@@ -166,7 +162,6 @@ export function GalleryHoverZoom({
 				sizes={sizes}
 				placeholder={blurDataUrl ? "blur" : "empty"}
 				blurDataURL={blurDataUrl}
-				onError={onError}
 			/>
 		</div>
 	);

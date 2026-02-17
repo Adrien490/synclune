@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { AlertCircle, ImageOff, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
@@ -76,19 +76,6 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 	);
 }
 
-function ImageErrorFallback() {
-	return (
-		<div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80 z-10">
-			<div className="flex flex-col items-center gap-3 p-4 rounded-xl bg-background/90 backdrop-blur-sm shadow-lg">
-				<ImageOff className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
-				<p className="text-sm text-muted-foreground text-center">
-					Impossible de charger l&apos;image
-				</p>
-			</div>
-		</div>
-	);
-}
-
 type VideoState = "loading" | "ready" | "error";
 
 export function GallerySlide({
@@ -102,7 +89,6 @@ export function GallerySlide({
 }: GallerySlideProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [videoState, setVideoState] = useState<VideoState>("loading");
-	const [hasImageError, setHasImageError] = useState(false);
 	const prefersReduced = useReducedMotion();
 
 	// Détection desktop pour rendu conditionnel (évite double image dans DOM)
@@ -220,7 +206,6 @@ export function GallerySlide({
 				onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
 				aria-label="Ouvrir l'image en plein écran"
 			>
-				{hasImageError && <ImageErrorFallback />}
 				<GalleryHoverZoom
 					src={media.url}
 					alt={alt}
@@ -228,7 +213,6 @@ export function GallerySlide({
 					zoomLevel={GALLERY_ZOOM_LEVEL}
 					priority={index === 0}
 					quality={MAIN_IMAGE_QUALITY}
-					onError={() => setHasImageError(true)}
 				/>
 			</div>
 		);
@@ -240,7 +224,6 @@ export function GallerySlide({
 			className="flex-[0_0_100%] min-w-0 h-full relative"
 			role="presentation"
 		>
-			{hasImageError && <ImageErrorFallback />}
 			<GalleryPinchZoom
 				src={media.url}
 				alt={alt}
@@ -248,7 +231,6 @@ export function GallerySlide({
 				isActive={isActive}
 				onTap={onOpen}
 				priority={index === 0}
-				onError={() => setHasImageError(true)}
 			/>
 		</div>
 	);

@@ -14,8 +14,6 @@ interface GalleryPinchZoomProps {
 	isActive: boolean;
 	onTap?: () => void;
 	priority?: boolean;
-	/** Called when the image fails to load */
-	onError?: () => void;
 }
 
 /**
@@ -41,7 +39,6 @@ export function GalleryPinchZoom({
 	isActive,
 	onTap,
 	priority = false,
-	onError,
 }: GalleryPinchZoomProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReduced = useReducedMotion();
@@ -108,7 +105,6 @@ export function GalleryPinchZoom({
 					placeholder={blurDataUrl ? "blur" : "empty"}
 					blurDataURL={blurDataUrl}
 					draggable={false}
-					onError={onError}
 				/>
 			</div>
 
