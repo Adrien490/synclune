@@ -30,7 +30,7 @@ export function CartSheetFooter({
 					</span>
 					<span
 						aria-busy={isPending}
-						className="tabular-nums font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse"
+						className="tabular-nums font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:motion-safe:animate-pulse"
 					>
 						<AnimatedNumber value={subtotal} formatter={formatEuro} />
 					</span>

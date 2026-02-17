@@ -43,7 +43,7 @@ function parseBrowser(userAgent: string | null): string {
 	return "Navigateur";
 }
 
-export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
+function RevokeSessionButton({ sessionId }: { sessionId: string }) {
 	const [state, action, isPending] = useActionState(revokeSession, undefined);
 
 	useEffect(() => {
@@ -54,6 +54,32 @@ export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 		}
 	}, [state]);
 
+	return (
+		<form action={action}>
+			<input
+				type="hidden"
+				name="sessionId"
+				value={sessionId}
+			/>
+			<Button
+				type="submit"
+				variant="ghost"
+				size="icon"
+				className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+				disabled={isPending}
+				title="Révoquer cette session"
+			>
+				{isPending ? (
+					<Loader2 className="h-4 w-4 animate-spin" />
+				) : (
+					<X className="h-4 w-4" />
+				)}
+			</Button>
+		</form>
+	);
+}
+
+export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 	const activeSessions = sessions.filter((s) => !s.isExpired);
 
 	return (
@@ -104,27 +130,7 @@ export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 									</div>
 								</div>
 								{!session.isCurrentSession && (
-									<form action={action}>
-										<input
-											type="hidden"
-											name="sessionId"
-											value={session.id}
-										/>
-										<Button
-											type="submit"
-											variant="ghost"
-											size="icon"
-											className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-											disabled={isPending}
-											title="Révoquer cette session"
-										>
-											{isPending ? (
-												<Loader2 className="h-4 w-4 animate-spin" />
-											) : (
-												<X className="h-4 w-4" />
-											)}
-										</Button>
-									</form>
+									<RevokeSessionButton sessionId={session.id} />
 								)}
 							</div>
 						);

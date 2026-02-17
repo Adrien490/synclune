@@ -2,10 +2,15 @@
 
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
-import { handleActionError, success, error } from "@/shared/lib/actions";
+import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { SESSION_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { z } from "zod";
+
+const revokeSessionSchema = z.object({
+	sessionId: z.string().trim().min(1, "ID de session manquant"),
+});
 
 /**
  * Revoke a specific session by ID.
@@ -19,8 +24,11 @@ export async function revokeSession(
 	if ("error" in auth) return auth.error;
 	const { user } = auth;
 
-	const sessionId = formData.get("sessionId") as string;
-	if (!sessionId) return error("ID de session manquant");
+	const validation = validateInput(revokeSessionSchema, {
+		sessionId: formData.get("sessionId"),
+	});
+	if ("error" in validation) return validation.error;
+	const { sessionId } = validation.data;
 
 	try {
 		// Verify session belongs to user

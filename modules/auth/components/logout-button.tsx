@@ -18,6 +18,7 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
 			data-pending={isPending || isLoggedOut ? "" : undefined}
 			disabled={isPending || isLoggedOut}
 			aria-busy={isPending}
+			aria-label="Se déconnecter"
 			onClick={() => {
 				if (isPending || isLoggedOut) return;
 				action(new FormData());

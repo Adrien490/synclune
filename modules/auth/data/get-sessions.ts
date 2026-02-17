@@ -5,9 +5,7 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/lib/pagination";
-import { cacheDefault } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { z } from "zod";
 
 import {
 	GET_SESSIONS_SELECT,
@@ -18,6 +16,7 @@ import {
 	GET_SESSIONS_ADMIN_FALLBACK_SORT_BY,
 	GET_SESSIONS_SORT_FIELDS,
 } from "../constants/session.constants";
+import { cacheAuthSessions } from "../utils/cache.utils";
 import {
 	getSessionsSchema,
 	sessionFiltersSchema,
@@ -70,57 +69,58 @@ function maskToken(token: string): string | undefined {
 export async function getSessions(
 	params: GetSessionsParams
 ): Promise<GetSessionsReturn> {
-	try {
-		const [admin, session] = await Promise.all([isAdmin(), getSession()]);
+	const [admin, session] = await Promise.all([isAdmin(), getSession()]);
 
-		if (!admin && !session?.user?.id) {
-			throw new Error("Authentication required");
-		}
-
-		const validation = getSessionsSchema.safeParse(params);
-
-		if (!validation.success) {
-			throw new Error("Invalid parameters");
-		}
-
-		let validatedParams = validation.data;
-
-		if (
-			admin &&
-			validatedParams.sortBy === GET_SESSIONS_DEFAULT_SORT_BY &&
-			!params?.sortBy
-		) {
-			validatedParams = {
-				...validatedParams,
-				sortBy: GET_SESSIONS_ADMIN_FALLBACK_SORT_BY,
-			};
-		}
-
-		return await fetchSessions(validatedParams);
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			throw new Error("Invalid parameters");
-		}
-
-		throw error;
+	if (!admin && !session?.user?.id) {
+		throw new Error("Authentication required");
 	}
+
+	const validation = getSessionsSchema.safeParse(params);
+
+	if (!validation.success) {
+		throw new Error("Invalid parameters");
+	}
+
+	let validatedParams = validation.data;
+
+	if (
+		admin &&
+		validatedParams.sortBy === GET_SESSIONS_DEFAULT_SORT_BY &&
+		!params?.sortBy
+	) {
+		validatedParams = {
+			...validatedParams,
+			sortBy: GET_SESSIONS_ADMIN_FALLBACK_SORT_BY,
+		};
+	}
+
+	// Non-admin users can only see their own sessions
+	const userId = admin ? undefined : session!.user.id;
+
+	return await fetchSessions(validatedParams, userId);
 }
 
 /**
  * Récupère la liste des sessions avec pagination, tri et filtrage
- * Self /dashboard avec sécurité renforcée
+ * @param userId - If provided, restricts results to this user's sessions only
  */
 async function fetchSessions(
-	params: GetSessionsParams
+	params: GetSessionsParams,
+	userId?: string
 ): Promise<GetSessionsReturn> {
 	"use cache";
-	cacheDefault();
+	cacheAuthSessions();
 
 	const sortOrder = (params.sortOrder ||
 		GET_SESSIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
 
 	try {
 		const where = buildSessionWhereClause(params);
+
+		// Scope to specific user for non-admin callers
+		if (userId) {
+			where.userId = userId;
+		}
 
 		const orderBy: Prisma.SessionOrderByWithRelationInput[] = [
 			{

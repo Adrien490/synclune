@@ -111,7 +111,19 @@ export async function requireAuth(): Promise<
 export async function requireAdmin(): Promise<{ admin: true } | { error: ActionState }> {
 	const session = await getSession();
 
-	if (session?.user?.role !== "ADMIN") {
+	if (session?.user?.role !== "ADMIN" || !session?.user?.id) {
+		return {
+			error: {
+				status: ActionStatus.FORBIDDEN,
+				message: "Accès non autorisé. Droits administrateur requis.",
+			},
+		};
+	}
+
+	// Verify admin still exists and hasn't been soft-deleted or demoted
+	const user = await fetchUserForAuth(session.user.id);
+
+	if (!user || user.role !== "ADMIN") {
 		return {
 			error: {
 				status: ActionStatus.FORBIDDEN,

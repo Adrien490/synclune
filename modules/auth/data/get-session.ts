@@ -1,11 +1,9 @@
 import { getSession as getCurrentSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { cacheDefault } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { z } from "zod";
 
 import { GET_SESSION_SELECT } from "../constants/session.constants";
+import { cacheAuthSession } from "../utils/cache.utils";
 import { getSessionSchema } from "../schemas/session.schemas";
 import type {
 	GetSessionParams,
@@ -53,7 +51,7 @@ export async function fetchSession(
 	context: FetchSessionContext
 ): Promise<GetSessionReturn | null> {
 	"use cache";
-	cacheDefault(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+	cacheAuthSession(params.id);
 
 	const where: { id: string; userId?: string } = {
 		id: params.id,

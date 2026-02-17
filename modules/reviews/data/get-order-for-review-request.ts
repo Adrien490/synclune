@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import { cacheOrdersDashboard, ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { cacheReviewsAdmin } from "../constants/cache";
 
 // ============================================================================
 // TYPES
@@ -32,7 +32,7 @@ export async function getOrderForReviewRequest(
 async function fetchOrderForReviewRequest(orderId: string) {
 	"use cache";
 
-	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
+	cacheReviewsAdmin();
 
 	return prisma.order.findUnique({
 		where: { id: orderId },

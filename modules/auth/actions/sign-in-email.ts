@@ -41,7 +41,7 @@ export const signInEmail = async (
 		// Better Auth lance une exception APIError en cas d'erreur d'authentification
 		const response = await auth.api.signInEmail({
 			body: { email, password, callbackURL },
-			headers: await headers(),
+			headers: headersList,
 		});
 
 		if (!response) {
@@ -66,7 +66,7 @@ export const signInEmail = async (
 
 			if (errorMessage.includes("email") && errorMessage.includes("not verified")) {
 				return error(
-					"Votre email n'a pas été vérifié. Veuillez vérifier votre boîte mail ou renvoyer l'email de vérification."
+					"EMAIL_NOT_VERIFIED"
 				);
 			}
 		}

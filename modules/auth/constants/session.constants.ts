@@ -41,10 +41,6 @@ export const GET_SESSIONS_SELECT = {
 	},
 } as const satisfies Prisma.SessionSelect;
 
-export const GET_SESSIONS_ADMIN_SELECT = {
-	...GET_SESSIONS_SELECT,
-} as const satisfies Prisma.SessionSelect;
-
 // ============================================================================
 // PAGINATION & SORTING
 // ============================================================================
@@ -61,12 +57,3 @@ export const GET_SESSIONS_SORT_FIELDS = [
 	"expiresAt",
 ] as const;
 
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_SESSIONS_DEFAULT_CACHE = {
-	revalidate: 60 * 1,
-	stale: 60 * 2,
-	expire: 60 * 5,
-} as const;

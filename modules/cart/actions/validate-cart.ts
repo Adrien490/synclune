@@ -106,7 +106,7 @@ export async function validateCart(): Promise<ValidateCartResult> {
 					cartItemId: "unknown",
 					skuId: "unknown",
 					productTitle: "",
-					issueType: "DELETED" as const,
+					issueType: "UNKNOWN" as const,
 					message: "Une erreur est survenue lors de la validation du panier. Veuillez réessayer.",
 				},
 			],

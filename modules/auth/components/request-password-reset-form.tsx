@@ -6,7 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useRequestPasswordReset } from "@/modules/auth/hooks/use-request-password-reset";
 import { useEffect, useRef } from "react";
 
@@ -105,9 +105,16 @@ export function RequestPasswordResetForm() {
 						className="w-full"
 						type="submit"
 					>
-						{state?.status === ActionStatus.SUCCESS
-							? "Email envoyé"
-							: "Envoyer le lien de réinitialisation"}
+						{state?.status === ActionStatus.SUCCESS ? (
+							"Email envoyé"
+						) : isPending ? (
+							<>
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+								Envoi en cours...
+							</>
+						) : (
+							"Envoyer le lien de réinitialisation"
+						)}
 					</Button>
 				)}
 			</form.Subscribe>

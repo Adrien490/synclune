@@ -11,8 +11,15 @@ export { parseSortField, hasSortByInput }
 // HELPERS
 // ============================================================================
 
+/** Allowed sort fields for reviews (runtime allowlist) */
+const ALLOWED_SORT_FIELDS = new Set(["createdAt", "rating", "updatedAt"])
+
+/** Default sort field if the provided one is not allowed */
+const DEFAULT_SORT_FIELD = "createdAt"
+
 /**
  * Construit la clause orderBy Prisma à partir du sortBy string
+ * Validates the field against an allowlist to prevent arbitrary Prisma keys
  *
  * @example
  * buildReviewOrderBy("createdAt-desc") // { createdAt: "desc" }
@@ -20,7 +27,8 @@ export { parseSortField, hasSortByInput }
  */
 export function buildReviewOrderBy(sortBy: string): Prisma.ProductReviewOrderByWithRelationInput {
 	const { field, direction } = parseSortField(sortBy)
-	return { [field]: direction }
+	const safeField = ALLOWED_SORT_FIELDS.has(field) ? field : DEFAULT_SORT_FIELD
+	return { [safeField]: direction }
 }
 
 /**

@@ -1,4 +1,4 @@
-import { sendPasswordResetEmail, sendVerificationEmail } from "@/modules/emails/services/auth-emails";
+import { sendPasswordChangedEmail, sendPasswordResetEmail, sendVerificationEmail } from "@/modules/emails/services/auth-emails";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus } from "@/shared/types/server-action";
 import { stripe } from "@better-auth/stripe";
@@ -54,7 +54,7 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		requireEmailVerification: true, // Validation d'email obligatoire dans tous les environnements
 		enabled: true,
-		sendResetPassword: async ({ user, url, token }) => {
+		sendResetPassword: async ({ user, url }) => {
 			// Better Auth génère automatiquement l'URL avec /api/auth/reset-password/{token}?callbackURL=...
 			// On envoie cette URL directement dans l'email
 			try {
@@ -67,7 +67,20 @@ export const auth = betterAuth({
 			}
 		},
 		onPasswordReset: async ({ user }) => {
-			// Mot de passe réinitialisé
+			try {
+				const changeDate = new Intl.DateTimeFormat("fr-FR", {
+					dateStyle: "long",
+					timeStyle: "short",
+				}).format(new Date());
+
+				await sendPasswordChangedEmail({
+					to: user.email,
+					userName: user.name ?? user.email,
+					changeDate,
+				});
+			} catch {
+				// Don't block reset if email sending fails
+			}
 		},
 		resetPasswordTokenExpiresIn: AUTH_PASSWORD_CONFIG.resetTokenExpiresIn,
 		minPasswordLength: AUTH_PASSWORD_CONFIG.minLength,
@@ -158,8 +171,8 @@ export const auth = betterAuth({
 
 					});
 				} catch (error) {
-					// Ne pas bloquer l'inscription si la création échoue
-					// Le panier/wishlist seront créés au premier ajout (via upsert)
+					// Don't block signup if cart/wishlist creation fails - they'll be created on first use (via upsert)
+					console.error("[AUTH] Cart/wishlist creation failed on signup:", error);
 				}
 
 				// TODO: Optionnel - Envoyer un email de bienvenue

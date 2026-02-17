@@ -4,7 +4,6 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/lib/pagination";
-import { cacheDefault } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 import {
@@ -19,6 +18,7 @@ import type {
 	GetVerificationsReturn,
 } from "../types/verification.types";
 import { buildVerificationWhereClause } from "../services/verification-query-builder";
+import { cacheAuthVerifications } from "../utils/cache.utils";
 
 // ============================================================================
 // UTILS
@@ -73,7 +73,7 @@ async function fetchVerifications(
 	params: GetVerificationsParams
 ): Promise<GetVerificationsReturn> {
 	"use cache";
-	cacheDefault();
+	cacheAuthVerifications();
 
 	const sortOrder = (params.sortOrder ||
 		GET_VERIFICATIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;

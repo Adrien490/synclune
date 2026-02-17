@@ -1,10 +1,12 @@
 "use server"
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth"
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
 import {
 	validationError,
 	handleActionError,
 } from "@/shared/lib/actions"
+import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
@@ -28,6 +30,10 @@ export async function sendReviewRequestEmailAction(
 		// 1. Verification admin
 		const adminCheck = await requireAdmin()
 		if ("error" in adminCheck) return adminCheck.error
+
+		// 1b. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.SEND_EMAIL)
+		if ("error" in rateLimit) return rateLimit.error
 
 		// 2. Extraire et valider l'orderId
 		const rawData = {

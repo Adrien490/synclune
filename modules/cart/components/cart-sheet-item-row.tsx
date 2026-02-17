@@ -154,7 +154,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				<div
 					className={cn(
 						"tabular-nums font-medium text-sm",
-						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:animate-pulse"
+						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:motion-safe:animate-pulse"
 					)}
 				>
 					{item.quantity > 1 ? (

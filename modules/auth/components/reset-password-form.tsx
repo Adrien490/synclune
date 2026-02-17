@@ -9,6 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useResetPassword } from "@/modules/auth/hooks/use-reset-password";
+import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
 import { useEffect, useRef } from "react";
 
 interface ResetPasswordFormProps {
@@ -97,12 +98,17 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 						}}
 					>
 						{(field) => (
-							<field.PasswordInputField
-								label="Nouveau mot de passe"
-								autoComplete="new-password"
-								disabled={isPending}
-								required
-							/>
+							<div className="space-y-2">
+								<field.PasswordInputField
+									label="Nouveau mot de passe"
+									autoComplete="new-password"
+									disabled={isPending}
+									required
+								/>
+								<form.Subscribe selector={(state) => state.values.password}>
+									{(password) => <PasswordStrengthIndicator password={password} />}
+								</form.Subscribe>
+							</div>
 						)}
 					</form.AppField>
 

@@ -4,13 +4,15 @@ import { getReviews } from "../data/get-reviews"
 import { getProductReviewStats } from "../data/get-product-review-stats"
 import { ReviewsList } from "./reviews-list"
 import { ReviewSummaryCompact } from "./review-summary-compact"
-import type { ReviewPublic } from "../types/review.types"
+import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types"
 
 interface ProductReviewsSectionProps {
 	productId: string
 	productSlug: string
 	/** Filtre par note (1-5), passé depuis les searchParams de la page */
 	ratingFilter?: number
+	/** Pre-fetched stats to avoid double fetch from parent page */
+	reviewStats?: ProductReviewStatistics
 }
 
 /**
@@ -21,8 +23,9 @@ export async function ProductReviewsSection({
 	productId,
 	productSlug,
 	ratingFilter,
+	reviewStats,
 }: ProductReviewsSectionProps) {
-	// Charger les avis et stats en parallèle
+	// Charger les avis (et stats seulement si pas déjà fournies en prop)
 	// Le filtre s'applique aux avis mais pas aux stats (pour garder la distribution complète)
 	const [reviewsData, stats] = await Promise.all([
 		getReviews({
@@ -30,7 +33,7 @@ export async function ProductReviewsSection({
 			perPage: 10,
 			filterRating: ratingFilter,
 		}),
-		getProductReviewStats(productId),
+		reviewStats ? Promise.resolve(reviewStats) : getProductReviewStats(productId),
 	])
 	const reviews = (reviewsData?.reviews ?? []) as ReviewPublic[]
 

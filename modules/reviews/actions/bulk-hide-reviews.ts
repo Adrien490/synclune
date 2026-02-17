@@ -3,12 +3,14 @@
 import { updateTag } from "next/cache"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
 import { requireAdmin } from "@/modules/auth/lib/require-auth"
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
 import {
 	success,
 	error,
 	validationError,
 	handleActionError,
 } from "@/shared/lib/actions"
+import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
@@ -28,6 +30,10 @@ export async function bulkHideReviews(
 		// 1. Vérification admin
 		const adminCheck = await requireAdmin()
 		if ("error" in adminCheck) return adminCheck.error
+
+		// 1b. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.BULK_OPERATIONS)
+		if ("error" in rateLimit) return rateLimit.error
 
 		// 2. Extraire et valider les données
 		let parsedIds: unknown = []
@@ -82,10 +88,10 @@ export async function bulkHideReviews(
 				data: { status: "HIDDEN" },
 			})
 
-			// Recalculer les stats pour chaque produit affecté (seulement ceux qui existent encore)
-			for (const productId of productIds) {
-				await updateProductReviewStats(tx, productId)
-			}
+			// Recalculer les stats pour chaque produit affecté en parallèle
+			await Promise.all(
+				productIds.map((productId) => updateProductReviewStats(tx, productId))
+			)
 		})
 
 		// 5. Invalider le cache pour chaque avis et produit

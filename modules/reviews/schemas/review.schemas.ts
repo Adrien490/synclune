@@ -19,7 +19,7 @@ export const reviewMediaSchema = z.object({
 		}),
 	blurDataUrl: z
 		.string()
-		.startsWith("data:", "Le blurDataUrl doit être un data URI")
+		.startsWith("data:image/", "Le blurDataUrl doit être un data URI image")
 		.max(5000, "BlurDataUrl trop long")
 		.optional(),
 	altText: z.string().max(255, "Texte alternatif trop long").optional(),

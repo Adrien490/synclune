@@ -36,7 +36,7 @@ export interface CartValidationIssue {
 	cartItemId: string;
 	skuId: string;
 	productTitle: string;
-	issueType: "OUT_OF_STOCK" | "INSUFFICIENT_STOCK" | "INACTIVE" | "NOT_PUBLIC" | "DELETED";
+	issueType: "OUT_OF_STOCK" | "INSUFFICIENT_STOCK" | "INACTIVE" | "NOT_PUBLIC" | "DELETED" | "UNKNOWN";
 	message: string;
 	availableStock?: number;
 }

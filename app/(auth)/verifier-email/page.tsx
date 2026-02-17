@@ -3,6 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
 import { auth } from "@/modules/auth/lib/auth";
 import { ajAuth } from "@/shared/lib/arcjet";
+import { getBaseUrl } from "@/shared/constants/urls";
 import { cormorantGaramond } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
@@ -34,7 +35,7 @@ async function verifyEmailToken(token: string) {
 	try {
 		// Protection Arcjet contre le brute-force de tokens
 		const headersList = await headers();
-		const request = new Request("https://synclune.fr/verifier-email", {
+		const request = new Request(`${getBaseUrl()}/verifier-email`, {
 			method: "GET",
 			headers: headersList,
 		});

@@ -62,8 +62,12 @@ export async function addToCart(
 		}
 
 		// 5b. Check distinct item count to prevent cart bloat
+		// Filter out expired guest carts (not yet cleaned by cron) to avoid false rejections
 		const existingCart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId: sessionId! },
+			where: {
+				...(userId ? { userId } : { sessionId: sessionId! }),
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+			},
 			select: { _count: { select: { items: true } } },
 		});
 

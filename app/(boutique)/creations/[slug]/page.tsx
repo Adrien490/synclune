@@ -205,6 +205,7 @@ export default async function ProductPage({
 									productId={product.id}
 									productSlug={product.slug}
 									ratingFilter={ratingFilter}
+									reviewStats={reviewStats}
 								/>
 							</Suspense>
 

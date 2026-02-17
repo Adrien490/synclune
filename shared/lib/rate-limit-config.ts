@@ -1118,3 +1118,33 @@ export const ADDRESS_LIMITS = {
 	SEARCH: ADDRESS_SEARCH_LIMIT,
 } as const;
 
+// ========================================
+// ADMIN REVIEW LIMITS
+// ========================================
+
+/**
+ * Limite pour l'envoi d'emails de demande d'avis (admin)
+ *
+ * Protege contre le spam d'emails clients en cas de compte admin compromis
+ */
+export const ADMIN_REVIEW_SEND_EMAIL_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour les operations bulk sur les avis (admin)
+ */
+export const ADMIN_REVIEW_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Toutes les limites admin avis
+ */
+export const ADMIN_REVIEW_LIMITS = {
+	SEND_EMAIL: ADMIN_REVIEW_SEND_EMAIL_LIMIT,
+	BULK_OPERATIONS: ADMIN_REVIEW_BULK_OPERATIONS_LIMIT,
+} as const;
+

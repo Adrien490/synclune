@@ -53,7 +53,18 @@ export function SignInEmailForm() {
 				state?.status !== ActionStatus.VALIDATION_ERROR &&
 				state?.message && (
 					<Alert ref={errorRef} variant="destructive" tabIndex={-1} role="alert" aria-live="assertive">
-						<AlertDescription>{state.message}</AlertDescription>
+						<AlertDescription>
+							{state.message === "EMAIL_NOT_VERIFIED" ? (
+								<>
+									Votre email n'a pas été vérifié.{" "}
+									<Link href="/renvoyer-verification" className="underline font-medium hover:no-underline">
+										Renvoyer l'email de vérification
+									</Link>
+								</>
+							) : (
+								state.message
+							)}
+						</AlertDescription>
 					</Alert>
 				)}
 

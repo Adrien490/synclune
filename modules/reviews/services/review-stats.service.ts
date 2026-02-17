@@ -43,9 +43,21 @@ export function buildRatingCounts(
 	return ratingCounts;
 }
 
+/** Raw query result shape for review stats computation */
+interface ReviewStatsRow {
+	total_count: bigint;
+	avg_rating: number | null;
+	rating1: bigint;
+	rating2: bigint;
+	rating3: bigint;
+	rating4: bigint;
+	rating5: bigint;
+}
+
 /**
  * Met à jour les statistiques agrégées des avis d'un produit
  * À appeler dans une transaction après création/modification/suppression d'un avis
+ * Uses a single raw query instead of separate aggregate + groupBy for efficiency
  *
  * @param tx - Transaction Prisma
  * @param productId - ID du produit
@@ -54,43 +66,44 @@ export async function updateProductReviewStats(
 	tx: PrismaTransaction,
 	productId: string
 ): Promise<void> {
-	// Calculer les statistiques agrégées
-	const stats = await tx.productReview.aggregate({
-		where: {
-			productId,
-			status: "PUBLISHED",
-			deletedAt: null,
-		},
-		_count: true,
-		_avg: { rating: true },
-	});
+	// Single query: count, average, and per-rating distribution in one pass
+	const [stats] = await tx.$queryRaw<[ReviewStatsRow]>`
+		SELECT
+			COUNT(*)::bigint AS total_count,
+			AVG(rating) AS avg_rating,
+			COUNT(*) FILTER (WHERE rating = 1)::bigint AS rating1,
+			COUNT(*) FILTER (WHERE rating = 2)::bigint AS rating2,
+			COUNT(*) FILTER (WHERE rating = 3)::bigint AS rating3,
+			COUNT(*) FILTER (WHERE rating = 4)::bigint AS rating4,
+			COUNT(*) FILTER (WHERE rating = 5)::bigint AS rating5
+		FROM "ProductReview"
+		WHERE "productId" = ${productId}
+			AND status = 'PUBLISHED'
+			AND "deletedAt" IS NULL
+	`;
 
-	// Calculer la distribution des notes
-	const distribution = await tx.productReview.groupBy({
-		by: ["rating"],
-		where: {
-			productId,
-			status: "PUBLISHED",
-			deletedAt: null,
-		},
-		_count: true,
-	});
-
-	// Transformer la distribution en objet
-	const ratingCounts = buildRatingCounts(distribution);
+	const totalCount = Number(stats.total_count);
+	const averageRating = stats.avg_rating ? Number(stats.avg_rating) : 0;
+	const ratingCounts: RatingCounts = {
+		rating1Count: Number(stats.rating1),
+		rating2Count: Number(stats.rating2),
+		rating3Count: Number(stats.rating3),
+		rating4Count: Number(stats.rating4),
+		rating5Count: Number(stats.rating5),
+	};
 
 	// Upsert les statistiques
 	await tx.productReviewStats.upsert({
 		where: { productId },
 		create: {
 			productId,
-			totalCount: stats._count,
-			averageRating: stats._avg.rating ?? 0,
+			totalCount,
+			averageRating,
 			...ratingCounts,
 		},
 		update: {
-			totalCount: stats._count,
-			averageRating: stats._avg.rating ?? 0,
+			totalCount,
+			averageRating,
 			...ratingCounts,
 		},
 	});

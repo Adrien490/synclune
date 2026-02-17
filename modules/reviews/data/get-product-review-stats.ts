@@ -49,18 +49,12 @@ export async function getProductReviewStats(
 
 /**
  * Vérifie si un produit a des avis
+ * Delegates to getProductReviewStatsRaw to avoid redundant cache entries
  *
  * @param productId - ID du produit
  * @returns true si le produit a au moins un avis publié
  */
 export async function hasProductReviews(productId: string): Promise<boolean> {
-	"use cache"
-	cacheProductReviewStats(productId)
-
-	const stats = await prisma.productReviewStats.findUnique({
-		where: { productId },
-		select: { totalCount: true },
-	})
-
+	const stats = await getProductReviewStatsRaw(productId)
 	return (stats?.totalCount ?? 0) > 0
 }

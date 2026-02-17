@@ -36,12 +36,3 @@ export const GET_VERIFICATIONS_SORT_FIELDS = [
 	"expiresAt",
 ] as const;
 
-// ============================================================================
-// CACHE
-// ============================================================================
-
-export const GET_VERIFICATIONS_DEFAULT_CACHE = {
-	revalidate: 60 * 2,
-	stale: 60 * 5,
-	expire: 60 * 10,
-} as const;

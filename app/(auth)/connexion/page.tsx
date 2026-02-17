@@ -1,5 +1,6 @@
 import { SignInEmailForm } from "@/modules/auth/components/sign-in-email-form";
 import { SignInSocialForm } from "@/modules/auth/components/sign-in-social-form";
+import { SignUpLink } from "@/modules/auth/components/sign-up-link";
 import { LogoAnimated } from "@/shared/components/logo-animated";
 import { cormorantGaramond } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
@@ -88,12 +89,9 @@ export default function LoginPage() {
 
 						{/* Lien vers l'inscription */}
 						<div className="text-center pt-4 border-t">
-							<div className="text-sm text-muted-foreground">
-								Première visite ?{" "}
-								<Link href="/inscription" className="font-medium underline">
-									Créez votre compte
-								</Link>
-							</div>
+							<Suspense>
+								<SignUpLink />
+							</Suspense>
 						</div>
 					</div>
 				</div>

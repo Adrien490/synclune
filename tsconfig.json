@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["react/canary"],
     "target": "ES2017",
     "lib": [
       "dom",

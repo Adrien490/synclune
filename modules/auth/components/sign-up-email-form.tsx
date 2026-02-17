@@ -95,8 +95,9 @@ export function SignUpEmailForm() {
 								autoComplete="given-name"
 								disabled={isPending}
 								required
+								aria-describedby="name-hint"
 							/>
-							<p className="text-xs text-muted-foreground">
+							<p id="name-hint" className="text-xs text-muted-foreground">
 								Sera utilisé pour personnaliser vos communications
 							</p>
 						</div>
@@ -125,8 +126,9 @@ export function SignUpEmailForm() {
 								spellCheck={false}
 								disabled={isPending}
 								required
+								aria-describedby="email-hint"
 							/>
-							<p className="text-xs text-muted-foreground">
+							<p id="email-hint" className="text-xs text-muted-foreground">
 								Utilisé uniquement pour la confirmation de compte et les notifications de commande
 							</p>
 						</div>

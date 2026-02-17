@@ -1,8 +1,8 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { cacheDefault } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_VERIFICATION_SELECT } from "../constants/verification.constants";
+import { cacheAuthVerifications } from "../utils/cache.utils";
 import { getVerificationSchema } from "../schemas/verification.schemas";
 import type {
 	GetVerificationParams,
@@ -65,7 +65,7 @@ export async function fetchVerification(
 	params: GetVerificationParams
 ): Promise<GetVerificationReturn | null> {
 	"use cache";
-	cacheDefault();
+	cacheAuthVerifications();
 
 	try {
 		const verification = await prisma.verification.findUnique({

@@ -25,35 +25,28 @@ export const getSessionSchema = z.object({
 // FILTERS SCHEMA
 // ============================================================================
 
+const MIN_DATE = new Date("2020-01-01");
+
+const pastDateSchema = z.coerce
+	.date()
+	.min(MIN_DATE, "Date too old")
+	.refine((d) => d <= new Date(), "Date cannot be in the future")
+	.optional();
+
+const dateSchema = z.coerce
+	.date()
+	.min(MIN_DATE, "Date too old")
+	.optional();
+
 export const sessionFiltersSchema = z
 	.object({
 		userId: optionalStringOrStringArraySchema,
-		createdAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
-			.optional(),
-		createdBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-		updatedAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
-			.optional(),
-		updatedBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-		expiresAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-		expiresBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
+		createdAfter: pastDateSchema,
+		createdBefore: dateSchema,
+		updatedAfter: pastDateSchema,
+		updatedBefore: dateSchema,
+		expiresAfter: dateSchema,
+		expiresBefore: dateSchema,
 		isExpired: z.boolean().optional(),
 		isActive: z.boolean().optional(),
 		ipAddress: optionalStringOrStringArraySchema,

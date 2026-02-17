@@ -25,37 +25,30 @@ export const getVerificationSchema = z.object({
 // GET VERIFICATIONS SCHEMA (list)
 // ============================================================================
 
+const MIN_DATE = new Date("2020-01-01");
+
+const pastDateSchema = z.coerce
+	.date()
+	.min(MIN_DATE, "Date too old")
+	.refine((d) => d <= new Date(), "Date cannot be in the future")
+	.optional();
+
+const dateSchema = z.coerce
+	.date()
+	.min(MIN_DATE, "Date too old")
+	.optional();
+
 export const verificationFiltersSchema = z
 	.object({
 		identifier: optionalStringOrStringArraySchema,
-		expiresBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-		expiresAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
+		expiresBefore: dateSchema,
+		expiresAfter: dateSchema,
 		isExpired: z.boolean().optional(),
 		isActive: z.boolean().optional(),
-		createdAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
-			.optional(),
-		createdBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-		updatedAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
-			.optional(),
-		updatedBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
+		createdAfter: pastDateSchema,
+		createdBefore: dateSchema,
+		updatedAfter: pastDateSchema,
+		updatedBefore: dateSchema,
 	})
 	.refine((data) => {
 		if (data.expiresAfter && data.expiresBefore) {
