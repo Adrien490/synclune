@@ -512,7 +512,7 @@ model Order {
   stripeCheckoutSessionId String? @unique // cs_xxx
   stripePaymentIntentId   String? @unique // pi_xxx
   stripeChargeId          String? @unique // ch_xxx
-  stripeCustomerId        String? // cus_xxx
+  stripeCustomerId        String? @db.VarChar(50) // cus_xxx
 
   // === INFORMATIONS CLIENT ===
   customerEmail String @db.VarChar(255)
@@ -534,7 +534,7 @@ model Order {
   discountAmount Int          @default(0) // Montant total des reductions appliquees
   taxAmount      Int          @default(0) // Micro-entreprise : Toujours 0 (exoneree de TVA - art. 293 B du CGI)
   shippingCost   Int          @default(0) // Frais de livraison
-  total          Int // Formule: MAX(0, subtotal - discountAmount + shippingCost + taxAmount)
+  total          Int // Formule: MAX(0, subtotal - discountAmount + shippingCost)
   currency       String       @default("EUR") @db.VarChar(3)
 
   // === ECHECS DE PAIEMENT ===
@@ -590,7 +590,8 @@ model Order {
   // PostgreSQL uses the leading column of a composite index for single-column queries
   @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
   // Timestamps metier
-  @@index([fulfillmentStatus, actualDelivery, reviewRequestSentAt]) // review-request-emails cron
+  @@index([fulfillmentStatus, actualDelivery, reviewRequestSentAt, deletedAt]) // review-request-emails cron
+  @@index([paymentStatus, deletedAt, paidAt(sort: Desc)]) // Dashboard recent orders
   @@index([paidAt, paymentStatus]) // Rapports comptables
   @@index([paymentStatus, createdAt]) // sync-async-payments cron: WHERE paymentStatus=PENDING AND createdAt BETWEEN
   @@index([createdAt(sort: Desc)]) // Listing commandes recentes
@@ -1043,6 +1044,7 @@ model ProductReviewStats {
   updatedAt DateTime @updatedAt
 
   // === INDEXES ===
+  @@index([averageRating]) // Filter/sort by rating
 }
 
 // ============================================================================
@@ -1071,6 +1073,7 @@ model WebhookEvent {
 
   @@index([eventType, status])
   @@index([status, receivedAt])
+  @@index([status, attempts, processedAt]) // retry-webhooks cron
   @@index([processedAt])
 }
 

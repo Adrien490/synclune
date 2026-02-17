@@ -7,6 +7,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	CollectionStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
 }));
 
+import type { CollectionFilters, GetCollectionsParams } from "../../types/collection.types";
 import {
 	buildCollectionSearchConditions,
 	buildCollectionFilterConditions,
@@ -86,7 +87,7 @@ describe("buildCollectionSearchConditions", () => {
 
 describe("buildCollectionFilterConditions", () => {
 	it("returns an empty object when no filters are provided", () => {
-		expect(buildCollectionFilterConditions({})).toEqual({});
+		expect(buildCollectionFilterConditions({} as CollectionFilters)).toEqual({});
 	});
 
 	it("filters products using 'some' when hasProducts is true", () => {
