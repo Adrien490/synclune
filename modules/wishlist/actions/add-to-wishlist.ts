@@ -13,8 +13,9 @@ import {
 	getOrCreateWishlistSessionId,
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session";
-import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import { WISHLIST_ERROR_MESSAGES, WISHLIST_FULL_SENTINEL } from "@/modules/wishlist/constants/error-messages";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
+import { Prisma } from "@/app/generated/prisma/client";
 import { validateInput, handleActionError, success, error, enforceRateLimit } from "@/shared/lib/actions";
 
 /**
@@ -102,7 +103,7 @@ export async function addToWishlist(
 				where: { wishlistId: wishlist.id },
 			});
 			if (itemCount >= WISHLIST_MAX_ITEMS) {
-				throw new Error("WISHLIST_FULL");
+				throw new Error(WISHLIST_FULL_SENTINEL);
 			}
 
 			// 6c. Vérifier si ce produit est déjà dans la wishlist
@@ -153,8 +154,15 @@ export async function addToWishlist(
 			},
 		);
 	} catch (e) {
-		if (e instanceof Error && e.message === "WISHLIST_FULL") {
+		if (e instanceof Error && e.message === WISHLIST_FULL_SENTINEL) {
 			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
+		}
+		// Unique constraint violation (wishlistId, productId) - race condition on double submit
+		if (
+			e instanceof Prisma.PrismaClientKnownRequestError &&
+			e.code === "P2002"
+		) {
+			return success("Deja dans votre wishlist");
 		}
 		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}

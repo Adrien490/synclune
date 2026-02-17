@@ -41,18 +41,22 @@ async function fetchWishlistProductIds(
 	// Pas d'utilisateur ni de session = wishlist vide
 	if (!userId && !sessionId) return new Set();
 
-	const wishlistItems = await prisma.wishlistItem.findMany({
-		where: {
-			wishlist: userId ? { userId } : { sessionId },
-			productId: { not: null }, // Exclure les items dont le produit a été archivé
-			product: {
-				status: "PUBLIC",
-				deletedAt: null,
+	try {
+		const wishlistItems = await prisma.wishlistItem.findMany({
+			where: {
+				wishlist: userId ? { userId } : { sessionId },
+				productId: { not: null }, // Exclure les items dont le produit a été archivé
+				product: {
+					status: "PUBLIC",
+					deletedAt: null,
+				},
 			},
-		},
-		select: { productId: true },
-	});
+			select: { productId: true },
+		});
 
-	// Filtrer les nulls (ne devrait pas arriver avec le where ci-dessus, mais TypeScript l'exige)
-	return new Set(wishlistItems.map((item) => item.productId).filter((id): id is string => id !== null));
+		// Filtrer les nulls (ne devrait pas arriver avec le where ci-dessus, mais TypeScript l'exige)
+		return new Set(wishlistItems.map((item) => item.productId).filter((id): id is string => id !== null));
+	} catch {
+		return new Set<string>();
+	}
 }

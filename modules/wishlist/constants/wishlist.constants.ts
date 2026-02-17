@@ -14,7 +14,6 @@ import { Prisma } from "@/app/generated/prisma/client";
  */
 export const GET_WISHLIST_SELECT = {
 	id: true,
-	userId: true,
 	createdAt: true,
 	updatedAt: true,
 	items: {

@@ -255,7 +255,8 @@ export const auth = betterAuth({
 
 			// ❤️ MERGE DE LA WISHLIST (import dynamique pour éviter le cycle de dépendances)
 			const wishlistSessionId = ctx.getCookie("wishlist_session");
-			if (wishlistSessionId) {
+			const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+			if (wishlistSessionId && UUID_V4_REGEX.test(wishlistSessionId)) {
 				try {
 					const { mergeWishlists } = await import("@/modules/wishlist/actions/merge-wishlists");
 					const wishlistResult = await mergeWishlists(

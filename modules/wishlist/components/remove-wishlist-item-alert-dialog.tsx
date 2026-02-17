@@ -19,7 +19,6 @@ import { toast } from "sonner";
 
 type RemoveWishlistItemData = AlertDialogData & {
 	productId: string;
-	itemId: string;
 	itemName: string;
 };
 

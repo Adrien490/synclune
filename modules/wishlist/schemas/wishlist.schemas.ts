@@ -1,52 +1,16 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
-import { createPerPageSchema } from "@/shared/utils/pagination";
-import {
-	GET_WISHLIST_DEFAULT_PER_PAGE,
-	GET_WISHLIST_MAX_RESULTS_PER_PAGE,
-} from "../constants/wishlist.constants";
 
 // ============================================================================
-// GET WISHLIST SCHEMA
+// WISHLIST PRODUCT SCHEMA (shared by add, remove, toggle)
 // ============================================================================
 
-export const getWishlistSchema = z.object({
-	cursor: cursorSchema,
-	direction: directionSchema,
-	perPage: createPerPageSchema(GET_WISHLIST_DEFAULT_PER_PAGE, GET_WISHLIST_MAX_RESULTS_PER_PAGE),
-});
-
-// ============================================================================
-// WISHLIST ITEM SCHEMAS
-// ============================================================================
-
-/**
- * Schéma de validation pour l'ajout à la wishlist
- */
-export const addToWishlistSchema = z.object({
+export const wishlistProductSchema = z.object({
 	productId: z.cuid2({ message: 'Produit invalide' }),
 });
 
-export type AddToWishlistInput = z.infer<typeof addToWishlistSchema>;
+export type WishlistProductInput = z.infer<typeof wishlistProductSchema>;
 
-
-/**
- * Schéma de validation pour le retrait de la wishlist
- */
-export const removeFromWishlistSchema = z.object({
-	productId: z.cuid2({ message: 'Produit invalide' }),
-});
-
-export type RemoveFromWishlistInput = z.infer<typeof removeFromWishlistSchema>;
-
-/**
- * Schéma de validation pour le toggle wishlist
- */
-export const toggleWishlistItemSchema = z.object({
-	productId: z.cuid2({ message: 'Produit invalide' }),
-});
-
-export type ToggleWishlistItemInput = z.infer<typeof toggleWishlistItemSchema>;
+// Aliases for semantic clarity in action imports
+export const addToWishlistSchema = wishlistProductSchema;
+export const removeFromWishlistSchema = wishlistProductSchema;
+export const toggleWishlistItemSchema = wishlistProductSchema;

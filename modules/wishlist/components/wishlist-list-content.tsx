@@ -51,6 +51,9 @@ export function WishlistListContent({
 		onItemRemoved: handleItemRemoved,
 	};
 
+	// Adjust totalCount for optimistic removals on the current page
+	const optimisticTotalCount = totalCount - (items.length - optimisticItems.length);
+
 	// Set des Product IDs en wishlist (basé sur l'état optimiste)
 	const wishlistProductIds = new Set(optimisticItems.map((item) => item.productId));
 
@@ -59,7 +62,7 @@ export function WishlistListContent({
 			<div className="space-y-8">
 				{/* Header with count */}
 				<p className="text-sm text-muted-foreground">
-					{optimisticItems.length} article{optimisticItems.length > 1 ? "s" : ""}
+					{optimisticTotalCount} article{optimisticTotalCount > 1 ? "s" : ""}
 				</p>
 
 				{/* Grid des items de wishlist avec animation */}
@@ -101,9 +104,9 @@ export function WishlistListContent({
 					aria-atomic="true"
 					className="sr-only"
 				>
-					{optimisticItems.length === 0
+					{optimisticTotalCount === 0
 						? "Votre wishlist est maintenant vide"
-						: `${optimisticItems.length} article${optimisticItems.length > 1 ? "s" : ""} dans votre wishlist`}
+						: `${optimisticTotalCount} article${optimisticTotalCount > 1 ? "s" : ""} dans votre wishlist`}
 				</div>
 
 				{/* Pagination */}

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Prisma } from "@/app/generated/prisma/client";
 import { ActionStatus } from "@/shared/types/server-action";
 
 // Valid cuid2 for tests
@@ -276,6 +277,68 @@ describe("addToWishlist", () => {
 
 		expect(mockUpdateTag).toHaveBeenCalledTimes(3);
 	});
+
+	it("should successfully add a product as guest", async () => {
+		setupGuestUser();
+		mockPrisma.product.findUnique.mockResolvedValue({
+			id: VALID_PRODUCT_ID,
+			status: "PUBLIC",
+		});
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "guest-wishlist-1" });
+		mockPrisma.wishlistItem.count.mockResolvedValue(0);
+		mockPrisma.wishlistItem.findFirst.mockResolvedValue(null);
+		mockPrisma.wishlistItem.create.mockResolvedValue({ id: "item-1" });
+
+		const result = await addToWishlist(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("Ajoute");
+	});
+
+	it("should return error when rate limited", async () => {
+		setupAuthenticatedUser();
+		mockEnforceRateLimit.mockResolvedValue({
+			error: {
+				status: ActionStatus.ERROR,
+				message: "Trop de requetes",
+				data: { retryAfter: 60 },
+			},
+		});
+
+		const result = await addToWishlist(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("Trop de requetes");
+	});
+
+	it("should return success on P2002 unique constraint violation (race condition)", async () => {
+		setupAuthenticatedUser();
+		mockPrisma.product.findUnique.mockResolvedValue({
+			id: VALID_PRODUCT_ID,
+			status: "PUBLIC",
+		});
+		mockPrisma.$transaction.mockRejectedValue(
+			new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+				code: "P2002",
+				clientVersion: "6.0.0",
+			})
+		);
+
+		const result = await addToWishlist(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("Deja");
+	});
 });
 
 // ============================================================================
@@ -386,6 +449,41 @@ describe("removeFromWishlist", () => {
 		);
 
 		expect(mockUpdateTag).toHaveBeenCalledTimes(3);
+	});
+
+	it("should successfully remove an item as guest", async () => {
+		setupGuestUser();
+		mockPrisma.wishlist.findFirst.mockResolvedValue({ id: "guest-wishlist-1" });
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.wishlistItem.deleteMany.mockResolvedValue({ count: 1 });
+		mockPrisma.wishlist.update.mockResolvedValue({});
+
+		const result = await removeFromWishlist(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toBe("Retire de votre wishlist");
+	});
+
+	it("should return error when rate limited", async () => {
+		setupAuthenticatedUser();
+		mockEnforceRateLimit.mockResolvedValue({
+			error: {
+				status: ActionStatus.ERROR,
+				message: "Trop de requetes",
+				data: { retryAfter: 60 },
+			},
+		});
+
+		const result = await removeFromWishlist(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("Trop de requetes");
 	});
 });
 
@@ -508,6 +606,100 @@ describe("toggleWishlistItem", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("pleine");
+	});
+
+	it("should successfully toggle (add) as guest", async () => {
+		setupGuestUser();
+		mockPrisma.product.findUnique.mockResolvedValue({
+			id: VALID_PRODUCT_ID,
+			status: "PUBLIC",
+		});
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "guest-wishlist-1" });
+		mockPrisma.wishlistItem.count.mockResolvedValue(0);
+		mockPrisma.wishlistItem.findFirst.mockResolvedValue(null);
+		mockPrisma.wishlistItem.create.mockResolvedValue({ id: "new-item" });
+		mockPrisma.wishlist.update.mockResolvedValue({});
+
+		const result = await toggleWishlistItem(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("Ajoute");
+		expect(result.data).toEqual(
+			expect.objectContaining({ action: "added" })
+		);
+	});
+
+	it("should successfully toggle (remove) as guest", async () => {
+		setupGuestUser();
+		mockPrisma.product.findUnique.mockResolvedValue({
+			id: VALID_PRODUCT_ID,
+			status: "PUBLIC",
+		});
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "guest-wishlist-1" });
+		mockPrisma.wishlistItem.count.mockResolvedValue(5);
+		mockPrisma.wishlistItem.findFirst.mockResolvedValue({
+			id: "existing-item",
+			productId: VALID_PRODUCT_ID,
+		});
+		mockPrisma.wishlistItem.delete.mockResolvedValue({});
+		mockPrisma.wishlist.update.mockResolvedValue({});
+
+		const result = await toggleWishlistItem(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("Retire");
+		expect(result.data).toEqual(
+			expect.objectContaining({ action: "removed" })
+		);
+	});
+
+	it("should return error when rate limited", async () => {
+		setupAuthenticatedUser();
+		mockEnforceRateLimit.mockResolvedValue({
+			error: {
+				status: ActionStatus.ERROR,
+				message: "Trop de requetes",
+				data: { retryAfter: 60 },
+			},
+		});
+
+		const result = await toggleWishlistItem(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("Trop de requetes");
+	});
+
+	it("should return success on P2002 unique constraint violation (race condition)", async () => {
+		setupAuthenticatedUser();
+		mockPrisma.product.findUnique.mockResolvedValue({
+			id: VALID_PRODUCT_ID,
+			status: "PUBLIC",
+		});
+		mockPrisma.$transaction.mockRejectedValue(
+			new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+				code: "P2002",
+				clientVersion: "6.0.0",
+			})
+		);
+
+		const result = await toggleWishlistItem(
+			undefined,
+			createFormData({ productId: VALID_PRODUCT_ID })
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("Deja");
 	});
 });
 
