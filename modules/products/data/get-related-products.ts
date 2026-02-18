@@ -61,6 +61,7 @@ async function fetchPublicRelatedProducts(
 		const products = await prisma.product.findMany({
 			where: {
 				status: "PUBLIC",
+				deletedAt: null,
 				skus: {
 					some: {
 						isActive: true,
@@ -124,6 +125,7 @@ async function fetchPersonalizedRelatedProducts(
 			const relatedProducts = await prisma.product.findMany({
 				where: {
 					status: "PUBLIC",
+					deletedAt: null,
 					skus: {
 						some: {
 							isActive: true,
@@ -152,6 +154,7 @@ async function fetchPersonalizedRelatedProducts(
 		const fallbackProducts = await prisma.product.findMany({
 			where: {
 				status: "PUBLIC",
+				deletedAt: null,
 				skus: {
 					some: {
 						isActive: true,
@@ -229,6 +232,7 @@ async function fetchContextualRelatedProducts(
 		const baseWhere = {
 			id: { not: currentProduct.id },
 			status: "PUBLIC" as const,
+			deletedAt: null,
 			skus: {
 				some: {
 					isActive: true,

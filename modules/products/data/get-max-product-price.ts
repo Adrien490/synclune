@@ -27,6 +27,7 @@ export async function getMaxProductPrice(): Promise<number> {
 				isActive: true,
 				product: {
 					status: "PUBLIC",
+					deletedAt: null,
 				},
 			},
 			_max: {

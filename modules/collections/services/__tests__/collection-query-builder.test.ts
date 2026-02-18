@@ -93,14 +93,14 @@ describe("buildCollectionFilterConditions", () => {
 	it("filters products using 'some' when hasProducts is true", () => {
 		const result = buildCollectionFilterConditions({ hasProducts: true });
 		expect(result.products).toEqual({
-			some: { product: { status: "PUBLIC" } },
+			some: { product: { status: "PUBLIC", deletedAt: null } },
 		});
 	});
 
 	it("filters products using 'none' when hasProducts is false", () => {
 		const result = buildCollectionFilterConditions({ hasProducts: false });
 		expect(result.products).toEqual({
-			none: { product: { status: "PUBLIC" } },
+			none: { product: { status: "PUBLIC", deletedAt: null } },
 		});
 	});
 
@@ -132,7 +132,7 @@ describe("buildCollectionFilterConditions", () => {
 			status: ["PUBLIC", "ARCHIVED"],
 		} as CollectionFilters);
 		expect(result.products).toEqual({
-			some: { product: { status: "PUBLIC" } },
+			some: { product: { status: "PUBLIC", deletedAt: null } },
 		});
 		expect(result.status).toEqual({ in: ["PUBLIC", "ARCHIVED"] });
 	});
@@ -160,7 +160,7 @@ describe("buildCollectionWhereClause", () => {
 		} as GetCollectionsParams);
 		// Single condition: should be returned unwrapped, not inside AND.
 		expect(result).toEqual({
-			products: { some: { product: { status: "PUBLIC" } } },
+			products: { some: { product: { status: "PUBLIC", deletedAt: null } } },
 		});
 		expect(result).not.toHaveProperty("AND");
 	});
@@ -209,7 +209,7 @@ describe("buildCollectionWhereClause", () => {
 		// Single condition - returned without AND wrapper.
 		expect(result).not.toHaveProperty("AND");
 		expect(result).toEqual({
-			products: { none: { product: { status: "PUBLIC" } } },
+			products: { none: { product: { status: "PUBLIC", deletedAt: null } } },
 		});
 	});
 

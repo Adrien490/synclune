@@ -69,6 +69,7 @@ async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
 			where: {
 				slug: { in: slugs },
 				status: "PUBLIC",
+				deletedAt: null,
 				skus: {
 					some: {
 						isActive: true,

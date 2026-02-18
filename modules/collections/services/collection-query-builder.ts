@@ -37,6 +37,7 @@ export function buildCollectionFilterConditions(
 				some: {
 					product: {
 						status: "PUBLIC",
+						deletedAt: null,
 					},
 				},
 			};
@@ -46,6 +47,7 @@ export function buildCollectionFilterConditions(
 				none: {
 					product: {
 						status: "PUBLIC",
+						deletedAt: null,
 					},
 				},
 			};
