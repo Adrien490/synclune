@@ -30,27 +30,25 @@ export async function getColorBySlug(
 	}
 
 	const admin = await isAdmin();
+	const includeInactive = admin && validation.data.includeInactive === true;
 
-	return fetchColor(validation.data, { admin });
+	return fetchColor(validation.data.slug, includeInactive);
 }
 
 /**
  * Récupère la couleur depuis la DB avec cache
  * Utilise findFirst pour pouvoir filtrer par isActive
+ * includeInactive is a separate param to ensure distinct cache keys between admin/public
  */
 async function fetchColor(
-	params: GetColorParams,
-	context: { admin: boolean }
+	slug: string,
+	includeInactive: boolean
 ): Promise<GetColorReturn | null> {
 	"use cache";
-	cacheColorDetail(params.slug);
-
-	const includeInactive = context.admin
-		? params.includeInactive === true
-		: false;
+	cacheColorDetail(slug);
 
 	const where: Prisma.ColorWhereInput = {
-		slug: params.slug,
+		slug,
 	};
 
 	if (!includeInactive) {

@@ -55,10 +55,33 @@ export async function fetchSkuForValidation(skuId: string) {
 export async function fetchSkuForDetails(skuId: string) {
 	return prisma.productSku.findUnique({
 		where: { id: skuId },
-		include: {
-			product: true,
+		select: {
+			id: true,
+			sku: true,
+			priceInclTax: true,
+			compareAtPrice: true,
+			inventory: true,
+			isActive: true,
+			size: true,
+			colorId: true,
+			deletedAt: true,
+			product: {
+				select: {
+					id: true,
+					title: true,
+					slug: true,
+					status: true,
+					description: true,
+					deletedAt: true,
+				},
+			},
 			images: {
 				orderBy: { createdAt: "asc" },
+				select: {
+					url: true,
+					altText: true,
+					isPrimary: true,
+				},
 			},
 			color: {
 				select: {

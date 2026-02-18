@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheCart } from "@/modules/cart/utils/cache";
 
@@ -40,7 +41,7 @@ export async function getUserCartForMerge(
 
 async function fetchGuestCartForMerge(sessionId: string) {
 	"use cache: private";
-
+	cacheLife("cart");
 	cacheCart(undefined, sessionId);
 
 	return prisma.cart.findFirst({
@@ -75,13 +76,21 @@ async function fetchGuestCartForMerge(sessionId: string) {
 
 async function fetchUserCartForMerge(userId: string) {
 	"use cache: private";
-
+	cacheLife("cart");
 	cacheCart(userId, undefined);
 
 	return prisma.cart.findUnique({
 		where: { userId },
-		include: {
-			items: true,
+		select: {
+			id: true,
+			userId: true,
+			items: {
+				select: {
+					id: true,
+					skuId: true,
+					quantity: true,
+				},
+			},
 		},
 	});
 }

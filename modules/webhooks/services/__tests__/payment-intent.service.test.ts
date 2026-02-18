@@ -317,10 +317,14 @@ describe("restoreStockForOrder", () => {
 describe("markOrderAsFailed", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
+			cb(mockTx)
+		);
 	});
 
 	it("should update order with FAILED payment status, CANCELLED status and failure details", async () => {
-		mockPrisma.order.update.mockResolvedValue({});
+		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.update.mockResolvedValue({});
 
 		const failureDetails: PaymentFailureDetails = {
 			code: "card_declined",
@@ -330,7 +334,7 @@ describe("markOrderAsFailed", () => {
 
 		await markOrderAsFailed("order-1", "pi_failed123", failureDetails);
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
 			data: expect.objectContaining({
 				paymentStatus: "FAILED",
@@ -341,6 +345,33 @@ describe("markOrderAsFailed", () => {
 				paymentFailureMessage: "Your card was declined.",
 			}),
 		});
+	});
+
+	it("should skip update when order is already FAILED (idempotent)", async () => {
+		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "FAILED" });
+
+		const failureDetails: PaymentFailureDetails = {
+			code: "card_declined",
+			declineCode: null,
+			message: null,
+		};
+
+		await markOrderAsFailed("order-1", "pi_failed123", failureDetails);
+
+		expect(mockTx.order.update).not.toHaveBeenCalled();
+	});
+
+	it("should handle order not found gracefully without throwing", async () => {
+		mockTx.order.findUnique.mockResolvedValue(null);
+
+		const failureDetails: PaymentFailureDetails = {
+			code: null,
+			declineCode: null,
+			message: null,
+		};
+
+		await expect(markOrderAsFailed("nonexistent", "pi_x", failureDetails)).resolves.toBeUndefined();
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 });
 

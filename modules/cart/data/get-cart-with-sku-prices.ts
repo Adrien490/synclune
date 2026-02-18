@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheCart } from "@/modules/cart/utils/cache";
 
@@ -32,7 +33,7 @@ export async function getCartWithSkuPrices(
 
 async function fetchCartWithSkuPrices(userId?: string, sessionId?: string) {
 	"use cache: private";
-
+	cacheLife("cart");
 	cacheCart(userId, sessionId);
 
 	if (!userId && !sessionId) {

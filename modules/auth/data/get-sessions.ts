@@ -109,7 +109,7 @@ async function fetchSessions(
 	userId?: string
 ): Promise<GetSessionsReturn> {
 	"use cache";
-	cacheAuthSessions();
+	cacheAuthSessions(userId);
 
 	const sortOrder = (params.sortOrder ||
 		GET_SESSIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;

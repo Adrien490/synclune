@@ -30,7 +30,7 @@ export async function getUserReviews(): Promise<ReviewUser[]> {
  */
 async function fetchUserReviews(userId: string): Promise<ReviewUser[]> {
 	"use cache: private";
-	cacheLife("session");
+	cacheLife("userOrders");
 	cacheTag(REVIEWS_CACHE_TAGS.USER(userId));
 
 	const reviews = await prisma.productReview.findMany({

@@ -6,7 +6,7 @@ import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails
 import type { PostWebhookTask } from "../types/webhook.types";
 
 /** Customer-facing email task types that warrant an admin alert on failure */
-const CRITICAL_EMAIL_TASKS = new Set(["ORDER_CONFIRMATION_EMAIL", "REFUND_CONFIRMATION_EMAIL", "PAYMENT_FAILED_EMAIL"]);
+const CRITICAL_EMAIL_TASKS = new Set(["ORDER_CONFIRMATION_EMAIL", "ADMIN_NEW_ORDER_EMAIL", "REFUND_CONFIRMATION_EMAIL", "PAYMENT_FAILED_EMAIL"]);
 
 export interface PostWebhookTasksResult {
 	successful: number;

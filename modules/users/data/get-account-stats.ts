@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 
 import { CART_SELECT_FOR_COUNT } from "../constants/account-stats.constants";
@@ -64,12 +64,14 @@ export async function fetchAccountStats(userId: string): Promise<AccountStats> {
 			prisma.order.count({
 				where: {
 					userId,
+					...notDeleted,
 				},
 			}),
 			prisma.order.count({
 				where: {
 					userId,
 					status: "PROCESSING",
+					...notDeleted,
 				},
 			}),
 			prisma.cart.findUnique({

@@ -30,7 +30,7 @@ async function fetchReviewableProducts(
 	userId: string
 ): Promise<ReviewableProduct[]> {
 	"use cache: private";
-	cacheLife("session");
+	cacheLife("userOrders");
 	cacheTag(REVIEWS_CACHE_TAGS.REVIEWABLE(userId));
 
 	// Trouver les OrderItems livres sans avis
@@ -43,7 +43,8 @@ async function fetchReviewableProducts(
 			},
 			review: null,
 		},
-		include: {
+		select: {
+			id: true,
 			order: {
 				select: {
 					createdAt: true,

@@ -40,7 +40,7 @@ export async function getReviewById(reviewId: string): Promise<ReviewPublic | nu
 export async function getReviewByIdAdmin(reviewId: string): Promise<ReviewAdmin | null> {
 	"use cache"
 	cacheLife("dashboard")
-	cacheTag(REVIEWS_CACHE_TAGS.DETAIL(reviewId))
+	cacheTag(REVIEWS_CACHE_TAGS.ADMIN_DETAIL(reviewId))
 
 	const review = await prisma.productReview.findFirst({
 		where: {

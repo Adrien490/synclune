@@ -107,7 +107,7 @@ export async function createReviewResponse(
 				reviewId,
 				content: sanitizedContent,
 				authorId: user.id,
-				authorName: user.name || "Équipe Synclune",
+				authorName: user.name || "Synclune",
 			},
 			select: {
 				id: true,
@@ -128,7 +128,7 @@ export async function createReviewResponse(
 					productTitle: review.product.title,
 					reviewContent: review.content,
 					responseContent: sanitizedContent,
-					responseAuthorName: user.name || "Équipe Synclune",
+					responseAuthorName: user.name || "Synclune",
 					productUrl: buildUrl(ROUTES.SHOP.PRODUCT(review.product.slug)),
 				})
 			} catch (emailError) {

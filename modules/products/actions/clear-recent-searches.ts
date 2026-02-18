@@ -2,6 +2,8 @@
 
 import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
+import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config"
 import { success, handleActionError } from "@/shared/lib/actions"
 import type { ActionState } from "@/shared/types/server-action"
 import { RECENT_SEARCHES_COOKIE_NAME } from "../constants/recent-searches"
@@ -15,6 +17,9 @@ export async function clearRecentSearches(
 	_formData: FormData
 ): Promise<ActionState> {
 	try {
+		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION)
+		if ("error" in rateCheck) return rateCheck.error
+
 		const cookieStore = await cookies()
 		cookieStore.delete(RECENT_SEARCHES_COOKIE_NAME)
 

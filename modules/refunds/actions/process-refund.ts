@@ -28,6 +28,7 @@ type RefundLockRow = {
 	order_id: string;
 	order_number: string;
 	order_total: number;
+	order_user_id: string | null;
 	stripe_payment_intent_id: string | null;
 	stripe_charge_id: string | null;
 };
@@ -90,6 +91,7 @@ export async function processRefund(
 					o.id as order_id,
 					o."orderNumber" as order_number,
 					o.total as order_total,
+					o."userId" as order_user_id,
 					o."stripePaymentIntentId" as stripe_payment_intent_id,
 					o."stripeChargeId" as stripe_charge_id
 				FROM "Refund" r
@@ -242,7 +244,15 @@ export async function processRefund(
 		// Invalider le cache commandes et badges (paymentStatus a changé)
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
+
+		// Invalider le cache user (commandes, stats)
+		if (refundData.refund.order_user_id) {
+			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refundData.refund.order_user_id));
+			updateTag(ORDERS_CACHE_TAGS.LAST_ORDER(refundData.refund.order_user_id));
+			updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(refundData.refund.order_user_id));
+		}
 
 		// Invalider le cache d'inventaire et vitrine si des articles ont été restockés
 		const restockedItems = refundData.items.filter((i) => i.restock);

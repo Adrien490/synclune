@@ -11,6 +11,7 @@ const { mockPrisma, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockVa
 			address: {
 				findFirst: vi.fn(),
 				update: vi.fn(),
+				updateMany: vi.fn(),
 			},
 		},
 		mockRequireAuth: vi.fn(),
@@ -112,7 +113,7 @@ describe("updateAddress", () => {
 		mockValidateInput.mockReturnValue({ data: validatedAddressData });
 
 		// Default: update succeeds
-		mockPrisma.address.update.mockResolvedValue({ id: ADDRESS_ID });
+		mockPrisma.address.updateMany.mockResolvedValue({ count: 1 });
 
 		// Default: success/error helpers
 		mockSuccess.mockImplementation((message: string) => ({
@@ -136,7 +137,7 @@ describe("updateAddress", () => {
 		const result = await updateAddress(ADDRESS_ID, undefined, validFormData);
 
 		expect(result).toEqual(authError);
-		expect(mockPrisma.address.update).not.toHaveBeenCalled();
+		expect(mockPrisma.address.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should return rate limit error when rate limited", async () => {
@@ -146,7 +147,7 @@ describe("updateAddress", () => {
 		const result = await updateAddress(ADDRESS_ID, undefined, validFormData);
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockPrisma.address.update).not.toHaveBeenCalled();
+		expect(mockPrisma.address.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should return not found when address does not exist for the current user", async () => {
@@ -156,7 +157,7 @@ describe("updateAddress", () => {
 		await updateAddress(ADDRESS_ID, undefined, validFormData);
 
 		expect(mockError).toHaveBeenCalledWith("Adresse non trouvee");
-		expect(mockPrisma.address.update).not.toHaveBeenCalled();
+		expect(mockPrisma.address.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should return not found when address belongs to another user", async () => {
@@ -175,15 +176,15 @@ describe("updateAddress", () => {
 		const result = await updateAddress(ADDRESS_ID, undefined, validFormData);
 
 		expect(result).toEqual(validationError);
-		expect(mockPrisma.address.update).not.toHaveBeenCalled();
+		expect(mockPrisma.address.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should update address with validated data on success", async () => {
 		await updateAddress(ADDRESS_ID, undefined, validFormData);
 
-		// Ownership is verified via findFirst; the update uses only the addressId
-		expect(mockPrisma.address.update).toHaveBeenCalledWith({
-			where: { id: ADDRESS_ID },
+		// updateMany scopes by both id and userId for security
+		expect(mockPrisma.address.updateMany).toHaveBeenCalledWith({
+			where: { id: ADDRESS_ID, userId: "user-123" },
 			data: validatedAddressData,
 		});
 	});
@@ -216,15 +217,15 @@ describe("updateAddress", () => {
 
 		await updateAddress(specificId, undefined, validFormData);
 
-		expect(mockPrisma.address.update).toHaveBeenCalledWith(
+		expect(mockPrisma.address.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: specificId },
+				where: { id: specificId, userId: "user-123" },
 			})
 		);
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.address.update.mockRejectedValue(new Error("DB constraint violation"));
+		mockPrisma.address.updateMany.mockRejectedValue(new Error("DB constraint violation"));
 
 		const result = await updateAddress(ADDRESS_ID, undefined, validFormData);
 

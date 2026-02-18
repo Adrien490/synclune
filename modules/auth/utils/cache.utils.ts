@@ -12,11 +12,16 @@ import { AUTH_CACHE_TAGS } from "../constants/cache";
 // ============================================
 
 /**
- * Applique le cache pour les sessions admin (dashboard)
+ * Applique le cache pour les sessions
+ * Uses user-specific tag for non-admin to prevent cross-user cache pollution
  */
-export function cacheAuthSessions() {
+export function cacheAuthSessions(userId?: string) {
 	cacheLife("dashboard");
-	cacheTag(AUTH_CACHE_TAGS.SESSIONS_LIST);
+	if (userId) {
+		cacheTag(`auth-sessions-${userId}`);
+	} else {
+		cacheTag(AUTH_CACHE_TAGS.SESSIONS_LIST);
+	}
 }
 
 /**
@@ -42,10 +47,13 @@ export function cacheAuthVerifications() {
 /**
  * Retourne les tags à invalider pour une session
  */
-export function getAuthSessionInvalidationTags(sessionId?: string): string[] {
+export function getAuthSessionInvalidationTags(sessionId?: string, userId?: string): string[] {
 	const tags: string[] = [AUTH_CACHE_TAGS.SESSIONS_LIST];
 	if (sessionId) {
 		tags.push(AUTH_CACHE_TAGS.SESSION(sessionId));
+	}
+	if (userId) {
+		tags.push(`auth-sessions-${userId}`);
 	}
 	return tags;
 }

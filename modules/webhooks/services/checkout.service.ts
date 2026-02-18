@@ -268,15 +268,14 @@ export function buildPostCheckoutTasks(
 	const tasks: PostWebhookTask[] = [];
 	const baseUrl = getBaseUrl();
 
-	// 1. Invalider les caches (panier, commandes user, stats compte)
-	const cacheTags: string[] = [];
+	// 1. Invalider les caches (panier, commandes user, stats compte, dashboard)
+	const cacheTags: string[] = [
+		...getOrderInvalidationTags(order.userId ?? undefined),
+	];
 
 	if (order.userId) {
 		// Panier de l'utilisateur
 		cacheTags.push(...getCartInvalidationTags(order.userId, undefined));
-
-		// Commandes de l'utilisateur (inclut LAST_ORDER et ACCOUNT_STATS)
-		cacheTags.push(...getOrderInvalidationTags(order.userId));
 	}
 
 	// Stock temps réel des SKUs achetés

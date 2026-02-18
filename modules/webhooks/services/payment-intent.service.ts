@@ -137,23 +137,43 @@ export async function restoreStockForOrder(
 
 /**
  * Met à jour une commande comme échouée avec les détails d'erreur
+ * Idempotent: if the order is already FAILED, the operation is skipped
  */
 export async function markOrderAsFailed(
 	orderId: string,
 	paymentIntentId: string,
 	failureDetails: PaymentFailureDetails
 ): Promise<void> {
-	await prisma.order.update({
-		where: { id: orderId },
-		data: {
-			paymentStatus: "FAILED",
-			status: "CANCELLED",
-			stripePaymentIntentId: paymentIntentId,
-			paymentFailureCode: failureDetails.code,
-			paymentDeclineCode: failureDetails.declineCode,
-			paymentFailureMessage: failureDetails.message,
-		},
-	});
+	await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+		const order = await tx.order.findUnique({
+			where: { id: orderId },
+			select: { paymentStatus: true },
+		});
+
+		if (!order) {
+			console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsFailed`);
+			return;
+		}
+
+		if (order.paymentStatus === "FAILED") {
+			console.log(`⏭️ [WEBHOOK] Order ${orderId} already marked as FAILED, skipping`);
+			return;
+		}
+
+		await tx.order.update({
+			where: { id: orderId },
+			data: {
+				paymentStatus: "FAILED",
+				status: "CANCELLED",
+				stripePaymentIntentId: paymentIntentId,
+				paymentFailureCode: failureDetails.code,
+				paymentDeclineCode: failureDetails.declineCode,
+				paymentFailureMessage: failureDetails.message,
+			},
+		});
+
+		console.log(`❌ [WEBHOOK] Order ${orderId} marked as FAILED`);
+	}, { timeout: 10000 });
 }
 
 /**

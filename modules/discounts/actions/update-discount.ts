@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { updateDiscountSchema } from "../schemas/discount.schemas";
@@ -105,6 +106,12 @@ export async function updateDiscount(
 
 		return success(`Code promo "${sanitizedCode}" mis à jour`);
 	} catch (e) {
+		if (
+			e instanceof Prisma.PrismaClientKnownRequestError &&
+			e.code === "P2002"
+		) {
+			return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
+		}
 		return handleActionError(e, DISCOUNT_ERROR_MESSAGES.UPDATE_FAILED);
 	}
 }

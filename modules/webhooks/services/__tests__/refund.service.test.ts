@@ -7,31 +7,43 @@ import type Stripe from "stripe";
 
 const {
 	mockPrisma,
+	mockTx,
 	mockSendRefundConfirmationEmail,
 	mockSendAdminRefundFailedAlert,
 	mockGetBaseUrl,
 	mockROUTES,
-} = vi.hoisted(() => ({
-	mockPrisma: {
+} = vi.hoisted(() => {
+	const mockTx = {
 		refund: {
 			update: vi.fn(),
 			upsert: vi.fn(),
-			findUnique: vi.fn(),
 		},
-		order: {
-			update: vi.fn(),
-			findUnique: vi.fn(),
+	};
+
+	return {
+		mockPrisma: {
+			$transaction: vi.fn(),
+			refund: {
+				update: vi.fn(),
+				upsert: vi.fn(),
+				findUnique: vi.fn(),
+			},
+			order: {
+				update: vi.fn(),
+				findUnique: vi.fn(),
+			},
 		},
-	},
-	mockSendRefundConfirmationEmail: vi.fn(),
-	mockSendAdminRefundFailedAlert: vi.fn(),
-	mockGetBaseUrl: vi.fn(),
-	mockROUTES: {
-		ACCOUNT: {
-			ORDER_DETAIL: (orderNumber: string) => `/compte/commandes/${orderNumber}`,
+		mockTx,
+		mockSendRefundConfirmationEmail: vi.fn(),
+		mockSendAdminRefundFailedAlert: vi.fn(),
+		mockGetBaseUrl: vi.fn(),
+		mockROUTES: {
+			ACCOUNT: {
+				ORDER_DETAIL: (orderNumber: string) => `/compte/commandes/${orderNumber}`,
+			},
 		},
-	},
-}));
+	};
+});
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	RefundStatus: {
@@ -111,8 +123,11 @@ function makeRefundRecord() {
 describe("syncStripeRefunds", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.refund.update.mockResolvedValue({});
-		mockPrisma.refund.upsert.mockResolvedValue({});
+		mockTx.refund.update.mockResolvedValue({});
+		mockTx.refund.upsert.mockResolvedValue({});
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
+			cb(mockTx)
+		);
 	});
 
 	it("should update existing refund status to COMPLETED when Stripe shows succeeded", async () => {
@@ -125,7 +140,7 @@ describe("syncStripeRefunds", () => {
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
+		expect(mockTx.refund.update).toHaveBeenCalledWith({
 			where: { id: "refund-app-1" },
 			data: { status: "COMPLETED" },
 		});
@@ -141,8 +156,8 @@ describe("syncStripeRefunds", () => {
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
-		expect(mockPrisma.refund.upsert).not.toHaveBeenCalled();
+		expect(mockTx.refund.update).not.toHaveBeenCalled();
+		expect(mockTx.refund.upsert).not.toHaveBeenCalled();
 	});
 
 	it("should link app-initiated refund via metadata.refund_id", async () => {
@@ -158,7 +173,7 @@ describe("syncStripeRefunds", () => {
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith(
+		expect(mockTx.refund.update).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "refund-app-2" },
 				data: expect.objectContaining({
@@ -167,7 +182,7 @@ describe("syncStripeRefunds", () => {
 				}),
 			})
 		);
-		expect(mockPrisma.refund.upsert).not.toHaveBeenCalled();
+		expect(mockTx.refund.upsert).not.toHaveBeenCalled();
 	});
 
 	it("should link app-initiated refund with PENDING status when Stripe status is not succeeded", async () => {
@@ -183,7 +198,7 @@ describe("syncStripeRefunds", () => {
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith(
+		expect(mockTx.refund.update).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "refund-app-3" },
 				data: expect.objectContaining({
@@ -207,7 +222,7 @@ describe("syncStripeRefunds", () => {
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
-		expect(mockPrisma.refund.upsert).toHaveBeenCalledWith(
+		expect(mockTx.refund.upsert).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { stripeRefundId: "re_dashboard_1" },
 				create: expect.objectContaining({
@@ -225,20 +240,19 @@ describe("syncStripeRefunds", () => {
 		);
 	});
 
-	it("should handle partial failures gracefully via Promise.allSettled", async () => {
+	it("should throw when any operation fails (atomic transaction)", async () => {
 		const charge = makeCharge([
 			{ id: "re_ok", status: "succeeded", amount: 5000, metadata: { refund_id: "app-ok" } },
 			{ id: "re_fail", status: "succeeded", amount: 3000, metadata: { refund_id: "app-fail" } },
 		]);
 		const existingRefunds: Array<{ id: string; amount: number; status: "COMPLETED"; stripeRefundId: string | null }> = [];
 
-		mockPrisma.refund.update
+		mockTx.refund.update
 			.mockResolvedValueOnce({})
 			.mockRejectedValueOnce(new Error("DB error"));
 
-		// Should not throw even though one operation fails
-		await expect(syncStripeRefunds(charge, existingRefunds, "order-1")).resolves.toBeUndefined();
-		expect(mockPrisma.refund.update).toHaveBeenCalledTimes(2);
+		// Transaction should propagate the error (all-or-nothing)
+		await expect(syncStripeRefunds(charge, existingRefunds, "order-1")).rejects.toThrow("DB error");
 	});
 
 	it("should skip refunds without an ID", async () => {
@@ -249,8 +263,7 @@ describe("syncStripeRefunds", () => {
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
-		expect(mockPrisma.refund.upsert).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("should handle empty charge refunds list", async () => {
@@ -258,8 +271,7 @@ describe("syncStripeRefunds", () => {
 
 		await syncStripeRefunds(charge, [], "order-1");
 
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
-		expect(mockPrisma.refund.upsert).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 });
 
@@ -517,9 +529,15 @@ describe("updateRefundStatus", () => {
 		expect(call.data.processedAt).toBeUndefined();
 	});
 
-	it("should update without validation when currentStatus is not provided", async () => {
+	it("should fetch current status from DB and validate when currentStatus is not provided", async () => {
+		mockPrisma.refund.findUnique.mockResolvedValue({ status: "APPROVED" });
+
 		await updateRefundStatus("refund-1", "COMPLETED" as never, "succeeded");
 
+		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith({
+			where: { id: "refund-1" },
+			select: { status: true },
+		});
 		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
 			where: { id: "refund-1" },
 			data: {
@@ -529,7 +547,18 @@ describe("updateRefundStatus", () => {
 		});
 	});
 
-	it("should update to FAILED without validation when currentStatus is not provided", async () => {
+	it("should reject invalid transition after fetching from DB when currentStatus is not provided", async () => {
+		mockPrisma.refund.findUnique.mockResolvedValue({ status: "COMPLETED" });
+
+		await updateRefundStatus("refund-1", "PENDING" as never, "pending");
+
+		expect(mockPrisma.refund.findUnique).toHaveBeenCalled();
+		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+	});
+
+	it("should proceed without validation when refund not found in DB and no currentStatus", async () => {
+		mockPrisma.refund.findUnique.mockResolvedValue(null);
+
 		await updateRefundStatus("refund-1", "FAILED" as never, "failed");
 
 		expect(mockPrisma.refund.update).toHaveBeenCalledWith({

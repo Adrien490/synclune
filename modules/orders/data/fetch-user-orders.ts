@@ -10,6 +10,7 @@ import {
 	GET_USER_ORDERS_MAX_RESULTS_PER_PAGE,
 	GET_USER_ORDERS_SELECT,
 } from "../constants/user-orders.constants";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import type { GetUserOrdersParams, GetUserOrdersReturn } from "../types/user-orders.types";
 
 const getSortDirection = (sortBy: string): "asc" | "desc" => {
@@ -37,7 +38,7 @@ export async function fetchUserOrders(
 ): Promise<GetUserOrdersReturn> {
 	"use cache: private";
 	cacheLife("userOrders");
-	cacheTag(`orders-user-${userId}`);
+	cacheTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId));
 
 	try {
 		const direction = getSortDirection(params.sortBy);

@@ -34,26 +34,24 @@ export async function getProductTypeBySlug(
 	}
 
 	const admin = await isAdmin();
+	const includeInactive = admin && validation.data.includeInactive === true;
 
-	return fetchProductType(validation.data, { admin });
+	return fetchProductType(validation.data.slug, includeInactive);
 }
 
 /**
  * Récupère le type de produit depuis la DB avec cache
+ * includeInactive is a separate param to ensure distinct cache keys between admin/public
  */
 async function fetchProductType(
-	params: GetProductTypeParams,
-	context: { admin: boolean }
+	slug: string,
+	includeInactive: boolean
 ): Promise<GetProductTypeReturn | null> {
 	"use cache";
 	cacheProductTypes();
 
-	const includeInactive = context.admin
-		? params.includeInactive === true
-		: false;
-
 	const where: Prisma.ProductTypeWhereInput = {
-		slug: params.slug,
+		slug,
 	};
 
 	if (!includeInactive) {

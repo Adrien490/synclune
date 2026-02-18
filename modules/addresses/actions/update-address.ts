@@ -59,8 +59,8 @@ export async function updateAddress(
 		}
 		validatedData.city = sanitizeText(validatedData.city);
 
-		await prisma.address.update({
-			where: { id: addressId },
+		await prisma.address.updateMany({
+			where: { id: addressId, userId: user.id },
 			data: validatedData,
 		});
 

@@ -29,12 +29,15 @@ type DiscountUsagesResult = {
  */
 async function fetchDiscountUsages(discountId: string): Promise<DiscountUsagesResult> {
 	"use cache";
-	cacheLife("cart");
+	cacheLife("dashboard");
 	cacheTag(DISCOUNT_CACHE_TAGS.DETAIL(discountId));
 
 	const usages = await prisma.discountUsage.findMany({
 		where: { discountId },
-		include: {
+		select: {
+			id: true,
+			createdAt: true,
+			amountApplied: true,
 			user: {
 				select: {
 					id: true,

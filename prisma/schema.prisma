@@ -1025,6 +1025,7 @@ model WebhookEvent {
   processedAt   DateTime?
 
   @@index([processedAt]) // cleanup-webhook-events cron
+  @@index([status, processedAt]) // cleanup + retry queries filter by status then processedAt
 }
 
 // ============================================================================

@@ -34,45 +34,61 @@ async function fetchOrderForReviewRequest(orderId: string) {
 
 	cacheReviewsAdmin();
 
-	return prisma.order.findUnique({
-		where: { id: orderId },
-		include: {
-			user: {
-				select: {
-					id: true,
-					name: true,
-					email: true,
+	try {
+		return await prisma.order.findUnique({
+			where: { id: orderId, deletedAt: null },
+			select: {
+				id: true,
+				orderNumber: true,
+				userId: true,
+				fulfillmentStatus: true,
+				reviewRequestSentAt: true,
+				user: {
+					select: {
+						id: true,
+						name: true,
+						email: true,
+					},
 				},
-			},
-			items: {
-				include: {
-					sku: {
-						include: {
-							product: {
-								select: {
-									id: true,
-									title: true,
-									slug: true,
+				items: {
+					select: {
+						id: true,
+						skuId: true,
+						productTitle: true,
+						quantity: true,
+						sku: {
+							select: {
+								id: true,
+								size: true,
+								product: {
+									select: {
+										id: true,
+										title: true,
+										slug: true,
+									},
+								},
+								color: {
+									select: { name: true },
+								},
+								material: {
+									select: { name: true },
+								},
+								images: {
+									where: { isPrimary: true },
+									take: 1,
+									select: { url: true },
 								},
 							},
-							color: {
-								select: { name: true },
-							},
-							material: {
-								select: { name: true },
-							},
-							images: {
-								where: { isPrimary: true },
-								take: 1,
-								select: { url: true },
-							},
 						},
-					},
-					review: {
-						select: { id: true },
+						review: {
+							select: { id: true },
+						},
 					},
 				},
 			},
-		},
-	});
+		});
+	} catch (error) {
+		console.error("[getOrderForReviewRequest]", error);
+		return null;
+	}
 }

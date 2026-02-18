@@ -443,9 +443,20 @@ export const ADMIN_ORDER_LIMITS = {
 /**
  * Toutes les limites de recherche/consultation
  */
+/**
+ * Limite pour les actions cookie (produits recents, recherches recentes)
+ *
+ * Pas de DB, uniquement des cookies - seuil genereux
+ */
+export const PRODUCT_COOKIE_ACTION_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(1),
+};
+
 export const PRODUCT_LIMITS = {
 	SEARCH: PRODUCT_SEARCH_LIMIT,
 	REVIEW: PRODUCT_REVIEW_LIMIT,
+	COOKIE_ACTION: PRODUCT_COOKIE_ACTION_LIMIT,
 } as const;
 
 /**

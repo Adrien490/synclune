@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { createDiscountSchema } from "../schemas/discount.schemas";
@@ -92,6 +93,12 @@ export async function createDiscount(
 
 		return success(`Code promo "${discount.code}" créé avec succès`, { id: discount.id });
 	} catch (e) {
+		if (
+			e instanceof Prisma.PrismaClientKnownRequestError &&
+			e.code === "P2002"
+		) {
+			return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
+		}
 		return handleActionError(e, DISCOUNT_ERROR_MESSAGES.CREATE_FAILED);
 	}
 }

@@ -515,14 +515,15 @@ describe("buildPostCheckoutTasks", () => {
 		expect(mockGetOrderInvalidationTags).toHaveBeenCalledWith("user-1");
 	});
 
-	it("should not include cart and order invalidation tags for guest (userId is null)", () => {
+	it("should not include cart invalidation tags for guest (userId is null) but still invalidate orders/dashboard", () => {
 		const order = makeOrderWithItems({ userId: null });
 		const session = makeStripeSession();
 
 		const tasks = buildPostCheckoutTasks(order, session);
 
 		expect(mockGetCartInvalidationTags).not.toHaveBeenCalled();
-		expect(mockGetOrderInvalidationTags).not.toHaveBeenCalled();
+		// Order invalidation is always called (includes dashboard tags)
+		expect(mockGetOrderInvalidationTags).toHaveBeenCalledWith(undefined);
 
 		// Still has SKU stock cache tag and INVALIDATE_CACHE task
 		const cacheTask = tasks.find((t) => t.type === "INVALIDATE_CACHE");

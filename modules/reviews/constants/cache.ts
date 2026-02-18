@@ -24,8 +24,11 @@ export const REVIEWS_CACHE_TAGS = {
 	/** Produits que l'utilisateur peut évaluer */
 	REVIEWABLE: (userId: string) => `reviewable-products-${userId}`,
 
-	/** Détail d'un avis */
+	/** Détail d'un avis (public) */
 	DETAIL: (reviewId: string) => `review-${reviewId}`,
+
+	/** Détail d'un avis (admin - includes hidden reviews) */
+	ADMIN_DETAIL: (reviewId: string) => `review-admin-${reviewId}`,
 
 	/** Liste admin (tous les avis) */
 	ADMIN_LIST: "reviews-admin-list",
@@ -64,7 +67,7 @@ export function cacheProductReviewStats(productId: string) {
  * - Durée : Cache privé court
  */
 export function cacheUserReviews(userId: string) {
-	cacheLife("session")
+	cacheLife("userOrders")
 	cacheTag(REVIEWS_CACHE_TAGS.USER(userId))
 }
 
@@ -74,7 +77,7 @@ export function cacheUserReviews(userId: string) {
  * - Durée : Cache privé court
  */
 export function cacheReviewableProducts(userId: string) {
-	cacheLife("session")
+	cacheLife("userOrders")
 	cacheTag(REVIEWS_CACHE_TAGS.REVIEWABLE(userId))
 }
 
@@ -127,6 +130,7 @@ export function getReviewInvalidationTags(
 
 	if (reviewId) {
 		tags.push(REVIEWS_CACHE_TAGS.DETAIL(reviewId))
+		tags.push(REVIEWS_CACHE_TAGS.ADMIN_DETAIL(reviewId))
 	}
 
 	return tags
@@ -143,6 +147,7 @@ export function getReviewModerationTags(
 ): string[] {
 	const tags = [
 		REVIEWS_CACHE_TAGS.DETAIL(reviewId),
+		REVIEWS_CACHE_TAGS.ADMIN_DETAIL(reviewId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
 		REVIEWS_CACHE_TAGS.GLOBAL_STATS,

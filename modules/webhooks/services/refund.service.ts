@@ -87,21 +87,23 @@ export async function syncStripeRefunds(
 		}
 	}
 
-	// Exécuter toutes les opérations en parallèle
+	// Execute all operations atomically — partial sync would leave DB inconsistent with Stripe
 	if (operations.length > 0) {
 		const now = new Date();
 
-		const results = await Promise.allSettled(
-			operations.map((op) => {
+		await prisma.$transaction(async (tx) => {
+			for (const op of operations) {
 				switch (op.type) {
 					case "updateStatus":
-						return prisma.refund.update({
+						await tx.refund.update({
 							where: { id: op.id },
 							data: { status: RefundStatus.COMPLETED },
 						});
+						console.log(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`);
+						break;
 
 					case "linkRefund":
-						return prisma.refund.update({
+						await tx.refund.update({
 							where: { id: op.id },
 							data: {
 								stripeRefundId: op.stripeRefundId,
@@ -109,9 +111,11 @@ export async function syncStripeRefunds(
 								processedAt: now,
 							},
 						});
+						console.log(`✅ [WEBHOOK] Linked existing refund ${op.id} to Stripe refund ${op.stripeRefundId}`);
+						break;
 
 					case "upsertDashboard":
-						return prisma.refund.upsert({
+						await tx.refund.upsert({
 							where: { stripeRefundId: op.stripeRefundId },
 							create: {
 								orderId,
@@ -128,26 +132,11 @@ export async function syncStripeRefunds(
 								processedAt: now,
 							},
 						});
+						console.log(`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${op.stripeRefundId}`);
+						break;
 				}
-			})
-		);
-
-		// Log results per operation
-		for (let i = 0; i < results.length; i++) {
-			const result = results[i];
-			const op = operations[i];
-			if (result.status === "fulfilled") {
-				if (op.type === "updateStatus") {
-					console.log(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`);
-				} else if (op.type === "linkRefund") {
-					console.log(`✅ [WEBHOOK] Linked existing refund ${op.id} to Stripe refund ${op.stripeRefundId}`);
-				} else if (op.type === "upsertDashboard") {
-					console.log(`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${op.stripeRefundId}`);
-				}
-			} else {
-				console.error(`❌ [WEBHOOK] Failed to process refund operation ${op.type}:`, result.reason);
 			}
-		}
+		}, { timeout: 10000 });
 	}
 }
 
@@ -275,11 +264,18 @@ export async function updateRefundStatus(
 	stripeStatus: string,
 	currentStatus?: RefundStatus
 ): Promise<void> {
-	// Validate transition if current status is known
-	if (currentStatus) {
-		const validTransitions = VALID_REFUND_TRANSITIONS[currentStatus];
+	// Fetch current status from DB if not provided to always validate transitions
+	const statusToValidate = currentStatus ?? (
+		await prisma.refund.findUnique({
+			where: { id: refundId },
+			select: { status: true },
+		})
+	)?.status;
+
+	if (statusToValidate) {
+		const validTransitions = VALID_REFUND_TRANSITIONS[statusToValidate];
 		if (!validTransitions.includes(newStatus)) {
-			console.warn(`⚠️ [WEBHOOK] Invalid refund status transition: ${currentStatus} -> ${newStatus} for refund ${refundId}, skipping`);
+			console.warn(`⚠️ [WEBHOOK] Invalid refund status transition: ${statusToValidate} -> ${newStatus} for refund ${refundId}, skipping`);
 			return;
 		}
 	}

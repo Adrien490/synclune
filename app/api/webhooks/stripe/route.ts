@@ -6,6 +6,7 @@ import { stripe } from "@/shared/lib/stripe";
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { ANTI_REPLAY_WINDOW_SECONDS } from "@/modules/webhooks/constants/webhook.constants";
+import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/cron/constants/limits";
 import { dispatchEvent } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
@@ -143,8 +144,8 @@ export async function POST(req: Request) {
 				},
 			});
 
-			// P0.2: Alerter admin si trop de tentatives échouées (>= 3)
-			if (webhookRecord.attempts >= 2) {
+			// Alert admin if too many failed attempts
+			if (webhookRecord.attempts >= MAX_WEBHOOK_RETRY_ATTEMPTS - 1) {
 				after(async () => {
 					await sendWebhookFailedAlert({
 						eventId: event.id,

@@ -8,6 +8,7 @@ import {
 } from "../services/checkout.service";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
 /**
  * Gère la complétion d'une session checkout
@@ -74,7 +75,14 @@ export async function handleCheckoutSessionExpired(
 			success: true,
 			tasks: [{
 				type: "INVALIDATE_CACHE",
-				tags: [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES],
+				tags: [
+					ORDERS_CACHE_TAGS.LIST,
+					SHARED_CACHE_TAGS.ADMIN_BADGES,
+					SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
+					DASHBOARD_CACHE_TAGS.KPIS,
+					DASHBOARD_CACHE_TAGS.REVENUE_CHART,
+					DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
+				],
 			}],
 		};
 	} catch (error) {

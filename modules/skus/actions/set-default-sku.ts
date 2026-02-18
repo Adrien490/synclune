@@ -6,7 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { validateInput, handleActionError } from "@/shared/lib/actions";
+import { BusinessError, validateInput, handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -42,51 +42,46 @@ export async function setDefaultSku(
 
 		const { skuId } = validation.data;
 
-		// 4. Verify SKU exists and get productId
-		const skuData = await prisma.productSku.findUnique({
-			where: { id: skuId },
-			select: {
-				sku: true,
-				productId: true,
-				isActive: true,
-				product: {
-					select: {
-						title: true,
-						slug: true,
+		// 4. Verify SKU exists + atomic transaction to guarantee uniqueness
+		const skuData = await prisma.$transaction(async (tx) => {
+			const sku = await tx.productSku.findUnique({
+				where: { id: skuId },
+				select: {
+					sku: true,
+					productId: true,
+					isActive: true,
+					product: {
+						select: {
+							title: true,
+							slug: true,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		if (!skuData) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Variante non trouvée",
-			};
-		}
+			if (!sku) {
+				throw new BusinessError("Variante non trouvée");
+			}
 
-		if (!skuData.isActive) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Impossible de définir une variante inactive par défaut",
-			};
-		}
+			if (!sku.isActive) {
+				throw new BusinessError("Impossible de définir une variante inactive par défaut");
+			}
 
-		// 5. Atomic transaction to guarantee uniqueness
-		await prisma.$transaction([
 			// Deactivate all isDefault for the product
-			prisma.productSku.updateMany({
-				where: { productId: skuData.productId },
+			await tx.productSku.updateMany({
+				where: { productId: sku.productId },
 				data: { isDefault: false },
-			}),
+			});
 			// Activate the selected SKU
-			prisma.productSku.update({
+			await tx.productSku.update({
 				where: { id: skuId },
 				data: { isDefault: true },
-			}),
-		]);
+			});
 
-		// 6. Invalidate cache
+			return sku;
+		});
+
+		// 5. Invalidate cache
 		const tags = getSkuInvalidationTags(
 			skuData.sku,
 			skuData.productId,

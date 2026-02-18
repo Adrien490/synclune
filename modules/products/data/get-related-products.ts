@@ -54,7 +54,7 @@ async function fetchPublicRelatedProducts(
 	limit: number
 ): Promise<Product[]> {
 	"use cache";
-	cacheLife("collections");
+	cacheLife("relatedProducts");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
 
 	try {

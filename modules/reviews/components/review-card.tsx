@@ -1,4 +1,4 @@
-import { BadgeCheck, Store } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { CardContent } from "@/shared/components/ui/card";
@@ -79,7 +79,6 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 					<div className="mt-4 pt-4 border-t border-border">
 						<div className="bg-muted/50 rounded-lg p-3 border-l-2 border-primary/30">
 							<div className="flex items-center gap-2 mb-2">
-								<Store className="size-3.5 text-primary/70 shrink-0" aria-hidden="true" />
 								<span className="text-xs font-medium text-foreground">
 									Réponse de {review.response.authorName}
 								</span>

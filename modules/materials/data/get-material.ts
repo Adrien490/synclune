@@ -30,27 +30,25 @@ export async function getMaterialBySlug(
 	}
 
 	const admin = await isAdmin();
+	const includeInactive = admin && validation.data.includeInactive === true;
 
-	return fetchMaterial(validation.data, { admin });
+	return fetchMaterial(validation.data.slug, includeInactive);
 }
 
 /**
  * Récupère le matériau depuis la DB avec cache
  * Utilise findFirst pour pouvoir filtrer par isActive
+ * includeInactive is a separate param to ensure distinct cache keys between admin/public
  */
 async function fetchMaterial(
-	params: GetMaterialParams,
-	context: { admin: boolean }
+	slug: string,
+	includeInactive: boolean
 ): Promise<GetMaterialReturn | null> {
 	"use cache";
-	cacheMaterialDetail(params.slug);
-
-	const includeInactive = context.admin
-		? params.includeInactive === true
-		: false;
+	cacheMaterialDetail(slug);
 
 	const where: Prisma.MaterialWhereInput = {
-		slug: params.slug,
+		slug,
 	};
 
 	if (!includeInactive) {

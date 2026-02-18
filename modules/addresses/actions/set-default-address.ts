@@ -6,7 +6,7 @@ import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { BusinessError, validateInput, handleActionError, success } from "@/shared/lib/actions";
 import { addressIdSchema } from "../schemas/user-addresses.schemas";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -33,25 +33,25 @@ export async function setDefaultAddress(
 
 		const { addressId } = validation.data;
 
-		const existingAddress = await prisma.address.findFirst({
-			where: { id: addressId, userId: user.id },
-			select: { id: true },
-		});
+		await prisma.$transaction(async (tx) => {
+			const existingAddress = await tx.address.findFirst({
+				where: { id: addressId, userId: user.id },
+				select: { id: true },
+			});
 
-		if (!existingAddress) {
-			return error(ADDRESS_ERROR_MESSAGES.NOT_FOUND);
-		}
+			if (!existingAddress) {
+				throw new BusinessError(ADDRESS_ERROR_MESSAGES.NOT_FOUND);
+			}
 
-		await prisma.$transaction([
-			prisma.address.updateMany({
+			await tx.address.updateMany({
 				where: { userId: user.id },
 				data: { isDefault: false },
-			}),
-			prisma.address.update({
+			});
+			await tx.address.update({
 				where: { id: addressId },
 				data: { isDefault: true },
-			}),
-		]);
+			});
+		});
 
 		// Revalidation du cache avec tags
 		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));

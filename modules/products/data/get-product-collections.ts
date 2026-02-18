@@ -31,7 +31,7 @@ async function fetchProductCollections(
 
 	const productCollections = await prisma.productCollection.findMany({
 		where: { productId },
-		include: {
+		select: {
 			collection: {
 				select: { id: true, name: true },
 			},

@@ -6,7 +6,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { BusinessError, handleActionError } from "@/shared/lib/actions";
 import { bulkAdjustStockSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
@@ -70,8 +70,8 @@ export async function bulkAdjustStock(
 		} else if (value < 0) {
 			// Atomic conditional update to prevent TOCTOU race condition:
 			// only decrements rows where stock won't go negative.
-			// Wrapped in $transaction to ensure rollback is atomic with the decrement.
-			const updatedCount = await prisma.$transaction(async (tx) => {
+			// Transaction auto-rollbacks on throw.
+			await prisma.$transaction(async (tx) => {
 				const count = await tx.$executeRaw`
 					UPDATE "ProductSku"
 					SET "inventory" = "inventory" + ${value}, "updatedAt" = NOW()
@@ -80,36 +80,20 @@ export async function bulkAdjustStock(
 				`;
 
 				if (count !== ids.length) {
-					// Rollback partial updates within the same transaction
-					if (count > 0) {
-						await tx.$executeRaw`
-							UPDATE "ProductSku"
-							SET "inventory" = "inventory" - ${value}, "updatedAt" = NOW()
-							WHERE "id" = ANY(${ids}::text[])
-							AND "inventory" >= ${-value}
-						`;
-					}
-					return count;
+					// Fetch current state for error message before rollback
+					const insufficientSkus = await tx.productSku.findMany({
+						where: { id: { in: ids }, inventory: { lt: Math.abs(value) } },
+						select: { sku: true, inventory: true },
+					});
+					const details = insufficientSkus
+						.slice(0, 3)
+						.map((s) => `${s.sku} (stock: ${s.inventory})`)
+						.join(", ");
+					throw new BusinessError(
+						`Stock insuffisant pour ${insufficientSkus.length} variante(s): ${details}${insufficientSkus.length > 3 ? "..." : ""}. Operation annulee.`
+					);
 				}
-
-				return count;
 			});
-
-			if (updatedCount !== ids.length) {
-				// Fetch current state for error message
-				const insufficientSkus = await prisma.productSku.findMany({
-					where: { id: { in: ids }, inventory: { lt: Math.abs(value) } },
-					select: { sku: true, inventory: true },
-				});
-				const details = insufficientSkus
-					.slice(0, 3)
-					.map((s) => `${s.sku} (stock: ${s.inventory})`)
-					.join(", ");
-				return {
-					status: ActionStatus.ERROR,
-					message: `Stock insuffisant pour ${insufficientSkus.length} variante(s): ${details}${insufficientSkus.length > 3 ? "..." : ""}. Operation annulee.`,
-				};
-			}
 		} else {
 			// Positive relative adjustment - no risk of negative stock
 			await prisma.$executeRaw`

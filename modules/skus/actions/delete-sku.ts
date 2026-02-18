@@ -147,50 +147,48 @@ export async function deleteProductSku(
 			}
 		}
 
-		// 9. Si le SKU a supprimer est le defaut, promouvoir un autre SKU automatiquement
-		// (sauf s'il est le dernier SKU, car deja verifie precedemment)
+		// 9. Promote fallback SKU + delete in a single transaction for atomicity
+		const imageUrls = existingSku.images.map((img) => img.url);
 		let promotedSkuSku: string | null = null;
-		if (existingSku.isDefault && existingSku.product._count.skus > 1) {
-			// Trouver un autre SKU actif a promouvoir
-			const candidateSku = await prisma.productSku.findFirst({
-				where: {
-					productId: existingSku.productId,
-					id: { not: validatedSkuId },
-					isActive: true,
-				},
-				orderBy: [
-					{ createdAt: "asc" }, // Le plus ancien SKU actif
-				],
-				select: { id: true, sku: true },
-			});
 
-			// Si aucun SKU actif trouve, prendre n'importe quel SKU
-			const fallbackSku =
-				candidateSku ||
-				(await prisma.productSku.findFirst({
+		await prisma.$transaction(async (tx) => {
+			if (existingSku.isDefault && existingSku.product._count.skus > 1) {
+				// Find another active SKU to promote
+				const candidateSku = await tx.productSku.findFirst({
 					where: {
 						productId: existingSku.productId,
 						id: { not: validatedSkuId },
+						isActive: true,
 					},
 					orderBy: [{ createdAt: "asc" }],
 					select: { id: true, sku: true },
-				}));
-
-			if (fallbackSku) {
-				await prisma.productSku.update({
-					where: { id: fallbackSku.id },
-					data: { isDefault: true },
 				});
-				promotedSkuSku = fallbackSku.sku;
-			}
-		}
 
-		// 10. Supprimer la variante AVANT les fichiers UploadThing
-		// (si le DELETE echoue, les medias restent intacts)
-		// Les entrees SkuMedia seront supprimees automatiquement grace a onDelete: Cascade dans le schema Prisma
-		const imageUrls = existingSku.images.map((img) => img.url);
-		await prisma.productSku.delete({
-			where: { id: validatedSkuId },
+				// If no active SKU found, take any SKU
+				const fallbackSku =
+					candidateSku ||
+					(await tx.productSku.findFirst({
+						where: {
+							productId: existingSku.productId,
+							id: { not: validatedSkuId },
+						},
+						orderBy: [{ createdAt: "asc" }],
+						select: { id: true, sku: true },
+					}));
+
+				if (fallbackSku) {
+					await tx.productSku.update({
+						where: { id: fallbackSku.id },
+						data: { isDefault: true },
+					});
+					promotedSkuSku = fallbackSku.sku;
+				}
+			}
+
+			// Delete the SKU (SkuMedia cascade-deleted by Prisma)
+			await tx.productSku.delete({
+				where: { id: validatedSkuId },
+			});
 		});
 
 		// 11. Supprimer les fichiers UploadThing apres la suppression DB reussie
