@@ -4,7 +4,6 @@ import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { Gem } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import type { CollectionImage } from "../types/collection.types";
 import { CollectionImagesGrid } from "./collection-images-grid";
 
@@ -83,16 +82,14 @@ export function CollectionCard({
 						"can-hover:group-hover:will-change-transform",
 					)}
 				>
-					{/* Images Bento Grid avec shared element transition */}
+					{/* Images Bento Grid */}
 					{displayImages.length > 0 ? (
 						<Reveal y={8} once amount={0.2}>
-							<ViewTransition name={`collection-${slug}`} share="vt-collection-image">
-								<CollectionImagesGrid
-									images={displayImages}
-									collectionName={name}
-									isAboveFold={isAboveFold}
-								/>
-							</ViewTransition>
+							<CollectionImagesGrid
+								images={displayImages}
+								collectionName={name}
+								isAboveFold={isAboveFold}
+							/>
 						</Reveal>
 					) : (
 						<div

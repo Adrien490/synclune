@@ -13,7 +13,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { getFirstParam } from "@/shared/utils/params";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Suspense, ViewTransition } from "react";
+import { Suspense } from "react";
 import { parseFilters } from "../_utils/params";
 import { generateCollectionMetadata } from "./_utils/generate-metadata";
 import { generateCollectionStructuredData } from "./_utils/generate-structured-data";
@@ -98,7 +98,7 @@ export default async function CollectionPage({
 		featuredImageUrl,
 	});
 
-	// Extract hero images for shared element transition destination
+	// Extract hero images for collection strip
 	const heroImages = collection.products
 		.map((pc) => pc.product?.skus?.[0]?.images?.[0])
 		.filter((img): img is NonNullable<typeof img> => Boolean(img?.url))
@@ -118,26 +118,24 @@ export default async function CollectionPage({
 				breadcrumbs={breadcrumbs}
 			/>
 
-			{/* Collection hero strip — shared element transition destination from collection card */}
+			{/* Collection hero strip */}
 			{heroImages.length > 0 && (
-				<ViewTransition name={`collection-${slug}`} share="vt-collection-image">
-					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6" aria-hidden="true">
-						<div className="grid grid-cols-4 gap-0.5 rounded-xl overflow-hidden h-16 sm:h-20 lg:h-24">
-							{heroImages.map((img, i) => (
-								<div key={img.url} className="relative overflow-hidden bg-muted">
-									<Image
-										src={img.url}
-										alt={img.altText || ""}
-										fill
-										className="object-cover"
-										sizes="(max-width: 640px) 25vw, 15vw"
-										loading={i === 0 ? "eager" : "lazy"}
-									/>
-								</div>
-							))}
-						</div>
+				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6" aria-hidden="true">
+					<div className="grid grid-cols-4 gap-0.5 rounded-xl overflow-hidden h-16 sm:h-20 lg:h-24">
+						{heroImages.map((img, i) => (
+							<div key={img.url} className="relative overflow-hidden bg-muted">
+								<Image
+									src={img.url}
+									alt={img.altText || ""}
+									fill
+									className="object-cover"
+									sizes="(max-width: 640px) 25vw, 15vw"
+									loading={i === 0 ? "eager" : "lazy"}
+								/>
+							</div>
+						))}
 					</div>
-				</ViewTransition>
+				</div>
 			)}
 
 			{/* Section principale avec catalogue */}

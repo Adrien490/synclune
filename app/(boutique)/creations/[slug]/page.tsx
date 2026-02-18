@@ -172,7 +172,7 @@ export default async function ProductPage({
 							<div className="group/product-details grid gap-6 lg:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 								{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
 								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
-									<Gallery product={product} title={product.title} productId={product.id} />
+									<Gallery product={product} title={product.title} />
 								</section>
 
 								{/* Informations et configurateur scrollables */}

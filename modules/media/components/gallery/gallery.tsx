@@ -2,7 +2,7 @@
 
 import useEmblaCarousel from "embla-carousel-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, ViewTransition, useEffect, useEffectEvent, useRef, useState } from "react";
+import { Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { useReducedMotion } from "@/shared/hooks";
@@ -35,7 +35,6 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 interface GalleryProps {
 	product: GetProductReturn;
 	title: string;
-	productId?: string;
 }
 
 function GalleryLoadingSkeleton() {
@@ -109,7 +108,7 @@ export function Gallery(props: GalleryProps) {
 	);
 }
 
-function GalleryContent({ product, title, productId }: GalleryProps) {
+function GalleryContent({ product, title }: GalleryProps) {
 	const searchParams = useSearchParams();
 	const [current, setCurrent] = useState(0);
 	const [thumbnailErrors, setThumbnailErrors] = useState<Set<string>>(new Set());
@@ -326,70 +325,58 @@ function GalleryContent({ product, title, productId }: GalleryProps) {
 					)}
 
 					{/* Image principale avec Embla */}
-					{(() => {
-						const galleryMain = (
-							<div className="gallery-main relative group order-2">
-								<div
-									className={cn(
-										"relative aspect-3/4 sm:aspect-4/5 overflow-hidden rounded-2xl sm:rounded-3xl",
-										"bg-linear-organic border-0 sm:border-2 sm:border-border",
-										"shadow-md sm:shadow-lg hover:shadow-lg",
-										transitionClass
-									)}
-								>
-									{/* Effet hover subtil */}
-									<div
-										className={cn(
-											"absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 pointer-events-none rounded-2xl sm:rounded-3xl z-10",
-											!prefersReduced && "transition-opacity duration-300"
-										)}
-									/>
+					<div className="gallery-main relative group order-2">
+						<div
+							className={cn(
+								"relative aspect-3/4 sm:aspect-4/5 overflow-hidden rounded-2xl sm:rounded-3xl",
+								"bg-linear-organic border-0 sm:border-2 sm:border-border",
+								"shadow-md sm:shadow-lg hover:shadow-lg",
+								transitionClass
+							)}
+						>
+							{/* Effet hover subtil */}
+							<div
+								className={cn(
+									"absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 pointer-events-none rounded-2xl sm:rounded-3xl z-10",
+									!prefersReduced && "transition-opacity duration-300"
+								)}
+							/>
 
-									{/* Compteur d'images */}
-									{images.length > 1 && (
-										<GalleryCounter current={current} total={images.length} />
-									)}
+							{/* Compteur d'images */}
+							{images.length > 1 && (
+								<GalleryCounter current={current} total={images.length} />
+							)}
 
-									{/* Bouton zoom - Desktop uniquement */}
-									{currentMedia?.mediaType === "IMAGE" && (
-										<GalleryZoomButton onOpen={open} />
-									)}
+							{/* Bouton zoom - Desktop uniquement */}
+							{currentMedia?.mediaType === "IMAGE" && (
+								<GalleryZoomButton onOpen={open} />
+							)}
 
 
-									{/* Embla viewport */}
-									<div ref={emblaRef} className="absolute inset-0 overflow-hidden">
-										<div className="flex h-full">
-											{images.map((media, index) => (
-												<GallerySlide
-													key={media.id}
-													media={media}
-													index={index}
-													title={title}
-													productType={productType}
-													totalImages={images.length}
-													isActive={index === current}
-													onOpen={open}
-												/>
-											))}
-										</div>
-									</div>
-
-									{/* Flèches navigation - Desktop uniquement */}
-									{images.length > 1 && (
-										<GalleryNavigation onPrev={scrollPrev} onNext={scrollNext} />
-									)}
+							{/* Embla viewport */}
+							<div ref={emblaRef} className="absolute inset-0 overflow-hidden">
+								<div className="flex h-full">
+									{images.map((media, index) => (
+										<GallerySlide
+											key={media.id}
+											media={media}
+											index={index}
+											title={title}
+											productType={productType}
+											totalImages={images.length}
+											isActive={index === current}
+											onOpen={open}
+										/>
+									))}
 								</div>
 							</div>
-						);
 
-						return productId ? (
-							<ViewTransition name={`product-${productId}`} share="vt-product-image">
-								{galleryMain}
-							</ViewTransition>
-						) : (
-							galleryMain
-						);
-					})()}
+							{/* Flèches navigation - Desktop uniquement */}
+							{images.length > 1 && (
+								<GalleryNavigation onPrev={scrollPrev} onNext={scrollNext} />
+							)}
+						</div>
+					</div>
 
 					{/* Thumbnails horizontales - Mobile */}
 					{images.length > 1 && (

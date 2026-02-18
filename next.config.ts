@@ -4,7 +4,6 @@ import { withSerwist } from "@serwist/turbopack";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   experimental: {
-    viewTransition: true,
     optimizePackageImports: ["motion/react", "recharts"],
   },
 
