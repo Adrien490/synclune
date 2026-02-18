@@ -161,3 +161,21 @@ export const bulkRejectRefundsSchema = z.object({
 export const getOrderForRefundSchema = z.object({
 	orderId: z.cuid2(),
 });
+
+// ============================================================================
+// CLIENT RETURN REQUEST SCHEMA
+// ============================================================================
+
+/**
+ * Schema for client-side return requests (14-day withdrawal right)
+ * Limited to customer-accessible reasons only
+ */
+export const requestReturnSchema = z.object({
+	orderId: z.cuid2(),
+	reason: z.enum([
+		RefundReason.CUSTOMER_REQUEST,
+		RefundReason.DEFECTIVE,
+		RefundReason.WRONG_ITEM,
+	]),
+	message: z.string().max(500).optional(),
+});

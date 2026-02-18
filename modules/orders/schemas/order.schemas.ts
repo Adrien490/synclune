@@ -469,3 +469,22 @@ export const deleteOrderNoteSchema = z.object({
 export const getOrderByIdSchema = z.object({
 	id: z.cuid2(),
 });
+
+// ============================================================================
+// UPDATE ORDER SHIPPING ADDRESS SCHEMA (ADMIN)
+// ============================================================================
+
+/**
+ * Schema for updating the shipping address of an order before shipment
+ * Admin only - used to correct address errors before dispatch
+ */
+export const updateOrderShippingAddressSchema = z.object({
+	id: z.cuid2(),
+	shippingFirstName: z.string().min(1).max(50),
+	shippingLastName: z.string().min(1).max(50),
+	shippingAddress1: z.string().min(1).max(255),
+	shippingAddress2: z.string().max(255).optional().or(z.literal("")),
+	shippingPostalCode: z.string().min(1).max(10),
+	shippingCity: z.string().min(1).max(100),
+	shippingCountry: z.string().length(2).default("FR"),
+});

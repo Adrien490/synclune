@@ -424,11 +424,20 @@ export const ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT: RateLimitConfig = {
 /**
  * Toutes les limites admin commandes
  */
+/**
+ * Limite pour le rafraichissement du cache commandes (admin)
+ */
+export const ADMIN_ORDER_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
 export const ADMIN_ORDER_LIMITS = {
 	RESEND_EMAIL: ADMIN_ORDER_RESEND_EMAIL_LIMIT,
 	MARK_AS_PAID: ADMIN_ORDER_MARK_AS_PAID_LIMIT,
 	BULK_OPERATIONS: ADMIN_ORDER_BULK_OPERATIONS_LIMIT,
 	SINGLE_OPERATIONS: ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT,
+	REFRESH: ADMIN_ORDER_REFRESH_LIMIT,
 } as const;
 
 /**
@@ -663,6 +672,14 @@ export const ADMIN_USER_INVALIDATE_SESSIONS_LIMIT: RateLimitConfig = {
 /**
  * Toutes les limites admin utilisateurs
  */
+/**
+ * Limite pour le rafraichissement du cache utilisateurs (admin)
+ */
+export const ADMIN_USER_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
 export const ADMIN_USER_LIMITS = {
 	BULK_OPERATIONS: ADMIN_USER_BULK_OPERATIONS_LIMIT,
 	SINGLE_OPERATIONS: ADMIN_USER_SINGLE_OPERATIONS_LIMIT,
@@ -670,6 +687,7 @@ export const ADMIN_USER_LIMITS = {
 	EXPORT_DATA: ADMIN_USER_EXPORT_DATA_LIMIT,
 	SEND_RESET: ADMIN_USER_SEND_RESET_LIMIT,
 	INVALIDATE_SESSIONS: ADMIN_USER_INVALIDATE_SESSIONS_LIMIT,
+	REFRESH: ADMIN_USER_REFRESH_LIMIT,
 } as const;
 
 // ========================================
@@ -1086,11 +1104,93 @@ export const REFUND_BULK_OPERATION_LIMIT: RateLimitConfig = {
 /**
  * Toutes les limites de remboursements
  */
+/**
+ * Limite pour le rafraichissement du cache remboursements (admin)
+ */
+export const REFUND_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
 export const REFUND_LIMITS = {
 	CREATE: REFUND_CREATE_LIMIT,
 	PROCESS: REFUND_PROCESS_LIMIT,
 	SINGLE_OPERATION: REFUND_SINGLE_OPERATION_LIMIT,
 	BULK_OPERATION: REFUND_BULK_OPERATION_LIMIT,
+	REFRESH: REFUND_REFRESH_LIMIT,
+} as const;
+
+// ========================================
+// CODES PROMO (DISCOUNTS) - ADMIN
+// ========================================
+
+/**
+ * Limite pour la creation de codes promo (admin)
+ */
+export const ADMIN_DISCOUNT_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la modification de codes promo (admin)
+ */
+export const ADMIN_DISCOUNT_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression de codes promo (admin)
+ */
+export const ADMIN_DISCOUNT_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le toggle de statut de codes promo (admin)
+ */
+export const ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la duplication de codes promo (admin)
+ */
+export const ADMIN_DISCOUNT_DUPLICATE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour les operations bulk sur codes promo (admin)
+ */
+export const ADMIN_DISCOUNT_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour le rafraichissement du cache codes promo (admin)
+ */
+export const ADMIN_DISCOUNT_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+/**
+ * Toutes les limites admin codes promo
+ */
+export const ADMIN_DISCOUNT_LIMITS = {
+	CREATE: ADMIN_DISCOUNT_CREATE_LIMIT,
+	UPDATE: ADMIN_DISCOUNT_UPDATE_LIMIT,
+	DELETE: ADMIN_DISCOUNT_DELETE_LIMIT,
+	TOGGLE_STATUS: ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT,
+	DUPLICATE: ADMIN_DISCOUNT_DUPLICATE_LIMIT,
+	BULK_OPERATIONS: ADMIN_DISCOUNT_BULK_OPERATIONS_LIMIT,
+	REFRESH: ADMIN_DISCOUNT_REFRESH_LIMIT,
 } as const;
 
 // ========================================
@@ -1148,10 +1248,83 @@ export const ADMIN_REVIEW_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour la creation de reponses admin aux avis (admin)
+ */
+export const ADMIN_REVIEW_RESPONSE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
  * Toutes les limites admin avis
  */
+/**
+ * Limite pour la moderation d'avis (admin)
+ */
+export const ADMIN_REVIEW_MODERATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
 export const ADMIN_REVIEW_LIMITS = {
 	SEND_EMAIL: ADMIN_REVIEW_SEND_EMAIL_LIMIT,
 	BULK_OPERATIONS: ADMIN_REVIEW_BULK_OPERATIONS_LIMIT,
+	RESPONSE: ADMIN_REVIEW_RESPONSE_LIMIT,
+	MODERATE: ADMIN_REVIEW_MODERATE_LIMIT,
+} as const;
+
+// ========================================
+// DEMANDES DE RETOUR (CLIENT)
+// ========================================
+
+/**
+ * Limite pour les demandes de retour client
+ *
+ * Stricte car action sensible (3 par jour par utilisateur)
+ */
+export const RETURN_REQUEST_LIMIT: RateLimitConfig = {
+	limit: 3,
+	windowMs: hours(24),
+};
+
+// ========================================
+// 📧 ADMIN NEWSLETTER OPERATIONS
+// ========================================
+
+/**
+ * Limite pour le rafraichissement du cache newsletter (admin)
+ */
+export const ADMIN_NEWSLETTER_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+export const ADMIN_NEWSLETTER_LIMITS = {
+	REFRESH: ADMIN_NEWSLETTER_REFRESH_LIMIT,
+} as const;
+
+// ========================================
+// 🎨 ADMIN CUSTOMIZATION OPERATIONS
+// ========================================
+
+/**
+ * Limite pour la mise a jour de personnalisations (admin)
+ */
+export const ADMIN_CUSTOMIZATION_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour les operations bulk sur personnalisations (admin)
+ */
+export const ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_CUSTOMIZATION_LIMITS = {
+	UPDATE: ADMIN_CUSTOMIZATION_UPDATE_LIMIT,
+	BULK_UPDATE: ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT,
 } as const;
 

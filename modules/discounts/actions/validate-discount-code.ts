@@ -1,11 +1,16 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
+import { getClientIp } from "@/shared/lib/rate-limit";
+import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
+import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { headers } from "next/headers";
 import { validateDiscountCodeSchema } from "../schemas/discount.schemas";
 import { GET_DISCOUNT_VALIDATION_SELECT, DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import { calculateDiscountAmount } from "../services/discount-calculation.service";
 import { checkDiscountEligibility } from "../services/discount-eligibility.service";
 import { getDiscountUsageCounts } from "../data/get-discount-usage-counts";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { ValidateDiscountCodeReturn, DiscountApplicationContext } from "../types/discount.types";
 
 /**
@@ -74,9 +79,11 @@ async function lookupAndValidate(
  * 2. Vérifier toutes les conditions d'éligibilité
  * 3. Calculer le montant de la réduction
  *
+ * Security: userId is always read from the server-side session (never trusted from client).
+ * customerEmail can be provided for guest checkout (validated by Zod).
+ *
  * @param code - Le code promo saisi par l'utilisateur
  * @param subtotal - Le sous-total du panier en centimes (hors frais de port)
- * @param userId - L'ID de l'utilisateur connecté (optionnel)
  * @param customerEmail - L'email du client pour guest checkout (optionnel)
  *
  * @returns ValidateDiscountCodeReturn avec le résultat de la validation
@@ -84,16 +91,29 @@ async function lookupAndValidate(
 export async function validateDiscountCode(
 	code: string,
 	subtotal: number,
-	userId?: string,
 	customerEmail?: string
 ): Promise<ValidateDiscountCodeReturn> {
 	try {
+		// Rate limiting based on IP
+		const headersList = await headers();
+		const ip = (await getClientIp(headersList)) || "unknown";
+		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
+		if ("error" in rateCheck) return { valid: false, error: "Trop de tentatives. Veuillez réessayer plus tard." };
+
+		// Read userId from session server-side (never trust client-provided value)
+		const session = await getSession();
+		const userId = session?.user?.id;
+		const sessionEmail = session?.user?.email || undefined;
+
+		// Use session email if available, fallback to provided guest email
+		const effectiveEmail = sessionEmail || customerEmail;
+
 		// 1. Valider les paramètres avec messages d'erreur spécifiques
 		const validation = validateDiscountCodeSchema.safeParse({
 			code,
 			subtotal,
 			userId,
-			customerEmail,
+			customerEmail: effectiveEmail,
 		});
 
 		if (!validation.success) {

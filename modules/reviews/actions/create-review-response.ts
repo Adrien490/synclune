@@ -12,6 +12,8 @@ import {
 } from "@/shared/lib/actions"
 import { sendReviewResponseEmail } from "@/modules/emails/services/review-emails"
 import { sanitizeText } from "@/shared/lib/sanitize"
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
+import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
@@ -33,6 +35,10 @@ export async function createReviewResponse(
 		if ("error" in auth) return auth.error
 
 		const user = auth.user
+
+		// 1b. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.RESPONSE)
+		if ("error" in rateLimit) return rateLimit.error
 
 		// 2. Extraire et valider les données
 		const rawData = {

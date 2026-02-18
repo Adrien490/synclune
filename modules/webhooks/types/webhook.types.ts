@@ -1,6 +1,6 @@
 import type { RefundStatus } from "@/app/generated/prisma/client";
 import type { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
-import type { sendAdminNewOrderEmail, sendAdminRefundFailedAlert, sendAdminDisputeAlert } from "@/modules/emails/services/admin-emails";
+import type { sendAdminNewOrderEmail, sendAdminRefundFailedAlert, sendAdminDisputeAlert, sendAdminInvoiceFailedAlert } from "@/modules/emails/services/admin-emails";
 import type { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import type { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
 
@@ -51,6 +51,7 @@ export type PostWebhookTask =
 	| { type: "PAYMENT_FAILED_EMAIL"; data: Parameters<typeof sendPaymentFailedEmail>[0] }
 	| { type: "ADMIN_REFUND_FAILED_ALERT"; data: Parameters<typeof sendAdminRefundFailedAlert>[0] }
 	| { type: "ADMIN_DISPUTE_ALERT"; data: Parameters<typeof sendAdminDisputeAlert>[0] }
+	| { type: "ADMIN_INVOICE_FAILED_ALERT"; data: Parameters<typeof sendAdminInvoiceFailedAlert>[0] }
 	| { type: "INVALIDATE_CACHE"; tags: string[] };
 
 /**
@@ -88,4 +89,5 @@ export type SupportedStripeEvent =
 	| "checkout.session.async_payment_succeeded"
 	| "checkout.session.async_payment_failed"
 	| "charge.dispute.created"
-	| "charge.dispute.closed";
+	| "charge.dispute.closed"
+	| "invoice.payment_failed";

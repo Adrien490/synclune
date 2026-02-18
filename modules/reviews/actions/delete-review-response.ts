@@ -3,6 +3,8 @@
 import { updateTag } from "next/cache"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
 import { requireAdmin } from "@/modules/auth/lib/require-auth"
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
+import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config"
 import {
 	success,
 	notFound,
@@ -27,6 +29,9 @@ export async function deleteReviewResponse(
 		// 1. Verification admin
 		const adminCheck = await requireAdmin()
 		if ("error" in adminCheck) return adminCheck.error
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.RESPONSE)
+		if ("error" in rateLimit) return rateLimit.error
 
 		// 2. Extraire et valider les donnees
 		const rawData = {

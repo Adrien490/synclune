@@ -8,6 +8,8 @@ import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
 
@@ -23,6 +25,10 @@ export async function createDiscount(
 		// 1. Vérification admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		// 1b. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.CREATE);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des données
 		const rawData = {

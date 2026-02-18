@@ -17,8 +17,6 @@ type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>
 
 interface DiscountCodeInputProps {
 	subtotal: number
-	userId?: string
-	email?: string
 	appliedDiscount: AppliedDiscount | null
 	onDiscountApplied: (discount: AppliedDiscount | null) => void
 }
@@ -26,11 +24,11 @@ interface DiscountCodeInputProps {
 /**
  * Progressive disclosure discount code input
  * Validates codes via server action and displays result inline
+ *
+ * Security: userId is read server-side from the session by validateDiscountCode.
  */
 export function DiscountCodeInput({
 	subtotal,
-	userId,
-	email,
 	appliedDiscount,
 	onDiscountApplied,
 }: DiscountCodeInputProps) {
@@ -45,7 +43,7 @@ export function DiscountCodeInput({
 
 		setError(null)
 		startTransition(async () => {
-			const result = await validateDiscountCode(trimmed, subtotal, userId, email)
+			const result = await validateDiscountCode(trimmed, subtotal)
 			if (result.valid && result.discount) {
 				onDiscountApplied(result.discount)
 				setCode("")

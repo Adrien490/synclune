@@ -5,7 +5,7 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	success,
@@ -22,13 +22,13 @@ export async function bulkDeleteUsers(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
+		// 1. Verification des droits admin
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+
+		// 2. Rate limiting
 		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateCheck) return rateCheck.error;
-
-		// 2. Verification des droits admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
@@ -45,10 +45,7 @@ export async function bulkDeleteUsers(
 		const validatedData = validation.data;
 
 		// 4. Verifier qu'on ne supprime pas son propre compte
-		const userAuth = await requireAuth();
-		if ("error" in userAuth) return userAuth.error;
-
-		if (validatedData.ids.includes(userAuth.user.id)) {
+		if (validatedData.ids.includes(auth.user.id)) {
 			return error("Vous ne pouvez pas supprimer votre propre compte.");
 		}
 

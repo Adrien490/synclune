@@ -3,7 +3,7 @@ import type { WebhookHandlerResult, SupportedStripeEvent } from "../types/webhoo
 
 // Import handlers
 import { handleCheckoutSessionCompleted, handleCheckoutSessionExpired } from "../handlers/checkout-handlers";
-import { handlePaymentSuccess, handlePaymentFailure, handlePaymentCanceled } from "../handlers/payment-handlers";
+import { handlePaymentSuccess, handlePaymentFailure, handlePaymentCanceled, handleInvoicePaymentFailed } from "../handlers/payment-handlers";
 import { handleChargeRefunded, handleRefundUpdated, handleRefundFailed } from "../handlers/refund-handlers";
 import { handleAsyncPaymentSucceeded, handleAsyncPaymentFailed } from "../handlers/async-payment-handlers";
 import { handleDisputeCreated, handleDisputeClosed } from "../handlers/dispute-handlers";
@@ -34,6 +34,10 @@ function getRefund(event: Stripe.Event): Stripe.Refund {
 
 function getDispute(event: Stripe.Event): Stripe.Dispute {
 	return event.data.object as Stripe.Dispute;
+}
+
+function getInvoice(event: Stripe.Event): Stripe.Invoice {
+	return event.data.object as Stripe.Invoice;
 }
 
 /**
@@ -79,6 +83,10 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 		handleDisputeCreated(getDispute(e)),
 	"charge.dispute.closed": async (e) =>
 		handleDisputeClosed(getDispute(e)),
+
+	// === INVOICE ===
+	"invoice.payment_failed": async (e) =>
+		handleInvoicePaymentFailed(getInvoice(e)),
 };
 
 /**

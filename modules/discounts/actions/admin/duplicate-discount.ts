@@ -6,6 +6,8 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 import { getDiscountInvalidationTags } from "../../constants/cache";
 
@@ -28,6 +30,9 @@ export async function duplicateDiscount(
 	try {
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.DUPLICATE);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const validated = validateInput(duplicateDiscountSchema, {
 			discountId: formData.get("discountId") as string,

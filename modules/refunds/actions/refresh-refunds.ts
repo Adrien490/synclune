@@ -2,8 +2,9 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { handleActionError, success } from "@/shared/lib/actions";
-import { ActionStatus } from "@/shared/types/server-action";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -17,14 +18,14 @@ export async function refreshRefunds(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.REFRESH);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Remboursements rafraîchis",
-		};
-	} catch (error) {
-		return handleActionError(error, "Une erreur est survenue lors du rafraîchissement");
+		return success("Remboursements rafraichis");
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors du rafraîchissement");
 	}
 }

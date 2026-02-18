@@ -7,6 +7,8 @@ import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
 
@@ -23,6 +25,9 @@ export async function bulkDeleteDiscounts(
 	try {
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.BULK_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const ids = formData.getAll("ids") as string[];
 

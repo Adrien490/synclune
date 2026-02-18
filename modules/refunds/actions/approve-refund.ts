@@ -26,11 +26,11 @@ export async function approveRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
-		if ("error" in rateLimit) return rateLimit.error;
-
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const id = formData.get("id") as string;
 

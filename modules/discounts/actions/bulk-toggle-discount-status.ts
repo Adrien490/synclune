@@ -6,6 +6,8 @@ import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success } from "@/shared/lib/actions";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getDiscountInvalidationTags } from "../constants/cache";
 import { bulkToggleDiscountStatusSchema } from "../schemas/discount.schemas";
 
@@ -20,6 +22,9 @@ export async function bulkToggleDiscountStatus(
 	try {
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.BULK_OPERATIONS);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const idsRaw = formData.getAll("ids");
 		const isActiveRaw = formData.get("isActive");

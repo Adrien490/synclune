@@ -8,6 +8,8 @@ import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 
 import { getDiscountInvalidationTags, DISCOUNT_CACHE_TAGS } from "../constants/cache";
 
@@ -22,6 +24,9 @@ export async function updateDiscount(
 	try {
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.UPDATE);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
 			id: formData.get("id") as string,

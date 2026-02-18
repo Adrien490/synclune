@@ -220,4 +220,7 @@ export const ORDER_ERROR_MESSAGES = {
 	MARK_AS_RETURNED_FAILED: "Erreur lors du marquage comme retourné.",
 	ALREADY_RETURNED: "Cette commande est déjà marquée comme retournée.",
 	CANNOT_RETURN_NOT_DELIVERED: "Seule une commande livrée peut être marquée comme retournée.",
+	// Update shipping address
+	UPDATE_SHIPPING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse de livraison.",
+	CANNOT_UPDATE_ADDRESS_SHIPPED: "L'adresse ne peut plus être modifiée car la commande a été expédiée.",
 } as const;

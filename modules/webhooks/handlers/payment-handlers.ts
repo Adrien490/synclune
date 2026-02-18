@@ -8,9 +8,11 @@ import {
 	initiateAutomaticRefund,
 	sendRefundFailureAlert,
 } from "../services/payment-intent.service";
+import { prisma } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult } from "../types/webhook.types";
 
 /**
@@ -160,4 +162,61 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
 		console.error(`❌ [WEBHOOK] Error handling payment cancelation for order ${orderId}:`, error);
 		throw error;
 	}
+}
+
+/**
+ * Handles invoice payment failure
+ *
+ * When invoice_creation.enabled is true in checkout, Stripe creates invoices.
+ * If a payment retry on those invoices fails, this handler sends an admin alert.
+ */
+export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<WebhookHandlerResult> {
+	// Try to find the related order via invoice metadata or customer email
+	const orderId = invoice.metadata?.order_id;
+	const order = orderId
+		? await prisma.order.findFirst({
+				where: { id: orderId, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					customerEmail: true,
+					stripePaymentIntentId: true,
+				},
+			})
+		: null;
+
+	const orderNumber = order?.orderNumber || invoice.number || "N/A";
+	const customerEmail = order?.customerEmail || invoice.customer_email || "N/A";
+	const amount = invoice.amount_due || 0;
+
+	// Extract error message from the invoice
+	const errorMessage = invoice.last_finalization_error?.message
+		|| `Invoice payment failed (status: ${invoice.status})`;
+
+	const dashboardUrl = order
+		? buildUrl(ROUTES.ADMIN.ORDER_DETAIL(order.id))
+		: buildUrl(ROUTES.ADMIN.ORDERS);
+
+	console.log(`❌ [WEBHOOK] Invoice payment failed for order ${orderNumber} (${amount} cents)`);
+
+	return {
+		success: true,
+		tasks: [
+			{
+				type: "ADMIN_INVOICE_FAILED_ALERT",
+				data: {
+					orderNumber,
+					customerEmail,
+					amount,
+					errorMessage,
+					stripePaymentIntentId: order?.stripePaymentIntentId || undefined,
+					dashboardUrl,
+				},
+			},
+			{
+				type: "INVALIDATE_CACHE",
+				tags: [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES],
+			},
+		],
+	};
 }

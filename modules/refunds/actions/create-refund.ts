@@ -32,12 +32,12 @@ export async function createRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.CREATE);
-		if ("error" in rateLimit) return rateLimit.error;
-
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.CREATE);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// Parser les données du formulaire
 		const orderId = formData.get("orderId") as string;

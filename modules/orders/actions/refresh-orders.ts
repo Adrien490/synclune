@@ -2,6 +2,8 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { handleActionError, success } from "@/shared/lib/actions";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -14,6 +16,9 @@ export async function refreshOrders(
 	try {
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.REFRESH);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(ORDERS_CACHE_TAGS.CUSTOMERS_LIST);

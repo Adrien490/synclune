@@ -289,6 +289,34 @@ export const auth = betterAuth({
 					console.error('[AUTH] Wishlist merge failed:', error);
 				}
 			}
+
+			// 📦 LINK GUEST ORDERS (retroactive order linking by email)
+			// When a guest creates an account or signs in, link their previous
+			// guest orders (userId: null) to the new account by email match.
+			if (newSession.user.email) {
+				try {
+					const { count } = await prisma.order.updateMany({
+						where: {
+							userId: null,
+							customerEmail: newSession.user.email,
+							deletedAt: null,
+						},
+						data: {
+							userId: newSession.user.id,
+						},
+					});
+
+					if (count > 0) {
+						// Invalidate user orders cache so they appear in the account
+						const { updateTag } = await import("next/cache");
+						const { ORDERS_CACHE_TAGS } = await import("@/modules/orders/constants/cache");
+						updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(newSession.user.id));
+						updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(newSession.user.id));
+					}
+				} catch (error) {
+					console.error('[AUTH] Guest order linking failed:', error);
+				}
+			}
 		}),
 	},
 });

@@ -676,8 +676,6 @@ export function CheckoutForm({
 										{/* Code promo */}
 										<DiscountCodeInput
 											subtotal={subtotal}
-											userId={session?.user?.id}
-											email={isGuest ? (form.state.values.email as string | undefined) : session?.user?.email}
 											appliedDiscount={appliedDiscount}
 											onDiscountApplied={setAppliedDiscount}
 										/>

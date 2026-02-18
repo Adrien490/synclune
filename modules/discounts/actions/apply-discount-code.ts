@@ -3,7 +3,6 @@
 import type { ActionState } from "@/shared/types/server-action";
 import { success, error } from "@/shared/lib/actions";
 import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
@@ -31,17 +30,8 @@ export async function applyDiscountCode(
 	const code = formData.get("code") as string;
 	const subtotal = Number(formData.get("subtotal"));
 
-	// Get userId and email from server-side session, never from client
-	const session = await getSession();
-	const userId = session?.user?.id;
-	const customerEmail = session?.user?.email || undefined;
-
-	const result = await validateDiscountCode(
-		code,
-		subtotal,
-		userId,
-		customerEmail
-	);
+	// validateDiscountCode reads userId from session internally
+	const result = await validateDiscountCode(code, subtotal);
 
 	if (result.valid && result.discount) {
 		return success(`Code "${result.discount.code}" appliqué`, result.discount);
