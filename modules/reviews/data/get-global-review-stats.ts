@@ -17,27 +17,33 @@ export async function getGlobalReviewStats(): Promise<GlobalReviewStats> {
 	cacheLife("reference");
 	cacheTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
 
-	// Weighted average: SUM(averageRating * totalCount) / SUM(totalCount)
-	// Avoids the "average of averages" bias from _avg.averageRating
-	const [result] = await prisma.$queryRaw<
-		[{ total_reviews: bigint; weighted_avg: number | null }]
-	>`
-		SELECT
-			COALESCE(SUM("totalCount"), 0) AS total_reviews,
-			CASE
-				WHEN SUM("totalCount") > 0
-				THEN SUM("averageRating" * "totalCount") / SUM("totalCount")
-				ELSE 0
-			END AS weighted_avg
-		FROM "ProductReviewStats"
-		WHERE "totalCount" > 0
-	`;
+	try {
+		// Weighted average: SUM(averageRating * totalCount) / SUM(totalCount)
+		// Avoids the "average of averages" bias from _avg.averageRating
+		const [result] = await prisma.$queryRaw<
+			[{ total_reviews: bigint; weighted_avg: number | null }]
+		>`
+			SELECT
+				COALESCE(SUM("totalCount"), 0) AS total_reviews,
+				CASE
+					WHEN SUM("totalCount") > 0
+					THEN SUM("averageRating" * "totalCount") / SUM("totalCount")
+					ELSE 0
+				END AS weighted_avg
+			FROM "ProductReviewStats"
+			WHERE "totalCount" > 0
+		`;
 
-	const totalReviews = Number(result.total_reviews);
-	const averageRating = result.weighted_avg ? Number(result.weighted_avg) : 0;
+		const totalReviews = Number(result.total_reviews);
+		const averageRating = result.weighted_avg
+			? Number(result.weighted_avg)
+			: 0;
 
-	return {
-		totalReviews,
-		averageRating: Math.round(averageRating * 100) / 100,
-	};
+		return {
+			totalReviews,
+			averageRating: Math.round(averageRating * 100) / 100,
+		};
+	} catch {
+		return { totalReviews: 0, averageRating: 0 };
+	}
 }

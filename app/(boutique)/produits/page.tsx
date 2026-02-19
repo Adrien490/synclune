@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { ProductCatalog } from "@/modules/products/components/product-catalog";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
 import type { ProductSearchParams } from "./_utils/types";
 import { parseFilters } from "./_utils/params";
@@ -114,8 +115,9 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const { perPage, searchTerm } = parsePaginationParams(searchParamsData);
 	const filters = parseFilters(searchParamsData);
 
-	// Récupérer les produits
+	// Récupérer les produits et la wishlist en parallèle
 	const productsPromise = fetchProducts(searchParamsData);
+	const wishlistProductIdsPromise = getWishlistProductIds();
 
 	// Compter les filtres actifs
 	const activeFiltersCount = countActiveFilters(searchParamsData, filters);
@@ -140,6 +142,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			productsPromise={productsPromise}
 			perPage={perPage}
 			searchTerm={searchTerm}
+			wishlistProductIdsPromise={wishlistProductIdsPromise}
 			productTypes={productTypes}
 			colors={colors}
 			materials={materials}

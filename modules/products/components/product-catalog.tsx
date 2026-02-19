@@ -39,6 +39,8 @@ export type ProductCatalogProps = {
 	perPage: number;
 	/** Terme de recherche actif */
 	searchTerm?: string;
+	/** Wishlist product IDs (pre-fetched at page level to avoid inline promise) */
+	wishlistProductIdsPromise?: Promise<Set<string>>;
 	/** Type de produit filtré (pour la page catégorie) */
 	activeProductType?: {
 		slug: string;
@@ -69,6 +71,7 @@ export function ProductCatalog({
 	productsPromise,
 	perPage,
 	searchTerm,
+	wishlistProductIdsPromise,
 	activeProductType,
 	productTypes,
 	colors,
@@ -168,6 +171,7 @@ export function ProductCatalog({
 							productsPromise={productsPromise}
 							perPage={perPage}
 							searchTerm={searchTerm}
+							wishlistProductIdsPromise={wishlistProductIdsPromise}
 						/>
 					</Suspense>
 				</div>

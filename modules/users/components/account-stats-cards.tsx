@@ -1,30 +1,30 @@
 import { Card, CardContent } from "@/shared/components/ui/card";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
-import { fetchAccountStats } from "@/modules/users/data/get-account-stats";
+import type { AccountStats } from "@/modules/users/data/get-account-stats";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { use } from "react";
 
 interface AccountStatsCardsProps {
-	userPromise: ReturnType<typeof getCurrentUser>;
+	statsPromise: Promise<AccountStats>;
+	memberSince: Date;
 }
 
-export function AccountStatsCards({ userPromise }: AccountStatsCardsProps) {
-	const user = use(userPromise);
-
-	if (!user) return null;
-
-	const statsPromise = fetchAccountStats(user.id);
+export function AccountStatsCards({
+	statsPromise,
+	memberSince,
+}: AccountStatsCardsProps) {
 	const { totalOrders } = use(statsPromise);
 
-	const memberSince = format(user.createdAt, "MMMM yyyy", { locale: fr });
+	const memberSinceLabel = format(memberSince, "MMMM yyyy", { locale: fr });
 
 	return (
 		<div className="grid gap-4 sm:grid-cols-2">
 			<Card>
 				<CardContent className="pt-6">
 					<p className="text-sm text-muted-foreground">Membre depuis</p>
-					<p className="text-lg font-semibold capitalize">{memberSince}</p>
+					<p className="text-lg font-semibold capitalize">
+						{memberSinceLabel}
+					</p>
 				</CardContent>
 			</Card>
 
@@ -39,4 +39,3 @@ export function AccountStatsCards({ userPromise }: AccountStatsCardsProps) {
 		</div>
 	);
 }
-

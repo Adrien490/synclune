@@ -3,7 +3,6 @@ import { AlertTriangle } from "lucide-react";
 
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
@@ -18,17 +17,22 @@ interface ProductListProps {
 	perPage: number;
 	/** Terme de recherche actuel */
 	searchTerm?: string;
+	/** Wishlist product IDs (pre-fetched at page level to avoid inline promise) */
+	wishlistProductIdsPromise?: Promise<Set<string>>;
 }
 
 export function ProductList({
 	productsPromise,
 	perPage,
 	searchTerm,
+	wishlistProductIdsPromise,
 }: ProductListProps) {
 	const result = use(productsPromise);
 	const { products, pagination, totalCount, suggestion } = result;
 	const error = "error" in result ? result.error : undefined;
-	const wishlistProductIds = use(getWishlistProductIds());
+	const wishlistProductIds = wishlistProductIdsPromise
+		? use(wishlistProductIdsPromise)
+		: new Set<string>();
 
 	// Afficher une erreur si la requete a echoue
 	if (error) {

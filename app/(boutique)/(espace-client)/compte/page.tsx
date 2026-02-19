@@ -15,6 +15,7 @@ import { AddressInfoCardSkeleton } from "@/modules/addresses/components/address-
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
+import { fetchAccountStats } from "@/modules/users/data/get-account-stats";
 import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -41,6 +42,7 @@ export default async function AccountPage() {
 	});
 
 	const user = await userPromise;
+	const statsPromise = user ? fetchAccountStats(user.id) : null;
 
 	return (
 		<div className="min-h-screen">
@@ -54,9 +56,14 @@ export default async function AccountPage() {
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="space-y-6">
 						{/* Stats */}
-						<Suspense fallback={<AccountStatsCardsSkeleton />}>
-							<AccountStatsCards userPromise={getCurrentUser()} />
-						</Suspense>
+						{statsPromise && user && (
+							<Suspense fallback={<AccountStatsCardsSkeleton />}>
+								<AccountStatsCards
+									statsPromise={statsPromise}
+									memberSince={user.createdAt}
+								/>
+							</Suspense>
+						)}
 
 						{/* Grille principale */}
 						<div className="grid gap-6 lg:grid-cols-3">

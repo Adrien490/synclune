@@ -4,6 +4,7 @@ import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-co
 import { getPublicCollectionSlugs } from "@/modules/collections/data/get-public-collection-slugs";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import type { SortField } from "@/modules/products/data/get-products";
 import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
@@ -71,7 +72,8 @@ export default async function CollectionPage({
 		GET_PRODUCTS_DEFAULT_PER_PAGE;
 	const sortBy = getFirstParam(searchParamsData.sortBy) || "created-descending";
 
-	// Créer une Promise pour les produits (comme products/page.tsx)
+	// Créer les Promises pour les produits et la wishlist en parallèle
+	const wishlistProductIdsPromise = getWishlistProductIds();
 	const productsPromise = getProducts({
 		cursor,
 		direction,
@@ -115,7 +117,11 @@ export default async function CollectionPage({
 			<section className="bg-background pt-6 pb-12 lg:pt-8 lg:pb-16">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<ProductListSkeleton />}>
-						<ProductList productsPromise={productsPromise} perPage={perPage} />
+						<ProductList
+							productsPromise={productsPromise}
+							perPage={perPage}
+							wishlistProductIdsPromise={wishlistProductIdsPromise}
+						/>
 					</Suspense>
 				</div>
 			</section>

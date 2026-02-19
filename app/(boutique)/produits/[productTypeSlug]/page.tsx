@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProductTypeBySlug } from "@/modules/product-types/data/get-product-type";
 import { ProductCatalog } from "@/modules/products/components/product-catalog";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
 import type { ProductSearchParams } from "../_utils/types";
 import { parseFilters } from "../_utils/params";
@@ -128,10 +129,11 @@ export default async function ProductTypeCategoryPage({
 	const { perPage, searchTerm } = parsePaginationParams(searchParamsData);
 	const filters = parseFilters(searchParamsData);
 
-	// Récupérer les produits avec le type pré-filtré
+	// Récupérer les produits et la wishlist en parallèle
 	const productsPromise = fetchProducts(searchParamsData, {
 		type: [productTypeSlug],
 	});
+	const wishlistProductIdsPromise = getWishlistProductIds();
 
 	// Compter les filtres actifs (exclure le type car il vient du path)
 	const activeFiltersCount = countActiveFilters(searchParamsData, filters, true);
@@ -161,6 +163,7 @@ export default async function ProductTypeCategoryPage({
 			productsPromise={productsPromise}
 			perPage={perPage}
 			searchTerm={searchTerm}
+			wishlistProductIdsPromise={wishlistProductIdsPromise}
 			activeProductType={{
 				slug: productType.slug,
 				label: productType.label,

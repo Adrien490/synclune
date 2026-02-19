@@ -79,9 +79,11 @@ export default async function RootLayout({
 					</RootProviders>
 					<AppToaster />
 					{/* JSON-LD global - placé dans body comme recommandé par Next.js */}
-					<Suspense fallback={null}>
-						<StructuredDataAsync />
-					</Suspense>
+					<ErrorBoundary fallback={null}>
+						<Suspense fallback={null}>
+							<StructuredDataAsync />
+						</Suspense>
+					</ErrorBoundary>
 				</SerwistProvider>
 			</body>
 		</html>
