@@ -29,8 +29,6 @@ export { ScrollIndicator } from "./scroll-indicator";
 
 // Background Animations (effets décoratifs)
 export { BubbleDream } from "./bubble-dream";
-export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
-export { GlitterSparkles } from "./glitter-sparkles";
 export { HandDrawnAccent, HandDrawnCircle, HandDrawnUnderline } from "./hand-drawn-accent";
 export { ParticleBackground } from "./particle-background/index";
 
@@ -49,7 +47,6 @@ export type { TapProps } from "./tap";
 
 // Background Animation Types
 export type { BubbleDreamProps } from "./bubble-dream";
-export type { GlitterSparklesProps } from "./glitter-sparkles";
 export type { HandDrawnAccentProps } from "./hand-drawn-accent";
 export type {
 	AnimationStyle, ParticleBackgroundProps, ParticleShape

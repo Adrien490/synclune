@@ -15,6 +15,7 @@ import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { MegaMenuProduct } from "@/shared/constants/navigation";
+import { LoadingIndicator } from "@/shared/components/navigation";
 import { MegaMenuCreations } from "./mega-menu-creations";
 import { MegaMenuCollections } from "./mega-menu-collections";
 
@@ -61,6 +62,7 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 										aria-current={itemIsActive ? "page" : undefined}
 									>
 										{item.label}
+										<LoadingIndicator />
 									</Link>
 								</NavigationMenuLink>
 							</NavigationMenuItem>

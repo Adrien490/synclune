@@ -137,11 +137,10 @@ export async function Footer() {
 							</h3>
 							<ul className="space-y-2">
 								<li>
-									<Link
+									<a
 										href={BRAND.social.instagram.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										prefetch={false}
 										className="group inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-all duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 										aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
 									>
@@ -153,14 +152,13 @@ export async function Footer() {
 										<span className="text-sm/6 font-medium antialiased text-foreground">
 											{BRAND.social.instagram.handle}
 										</span>
-									</Link>
+									</a>
 								</li>
 								<li>
-									<Link
+									<a
 										href={BRAND.social.tiktok.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										prefetch={false}
 										className="group inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-all duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 										aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
 									>
@@ -172,7 +170,7 @@ export async function Footer() {
 										<span className="text-sm/6 font-medium antialiased text-foreground">
 											{BRAND.social.tiktok.handle}
 										</span>
-									</Link>
+									</a>
 								</li>
 							</ul>
 						</nav>

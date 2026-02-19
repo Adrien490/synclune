@@ -9,6 +9,7 @@
 html {
 	scroll-behavior: smooth;
 	--navbar-height: 4rem;
+	position: relative;
 }
 
 @media (prefers-reduced-motion: reduce) {

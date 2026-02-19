@@ -25,11 +25,16 @@ export type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
  * @returns Le panier avec ses items, ou null si aucun panier n'existe
  */
 export async function getCart(): Promise<GetCartReturn> {
-	const session = await getSession();
-	const userId = session?.user?.id;
-	const sessionId = !userId ? await getCartSessionId() : null;
+	try {
+		const session = await getSession();
+		const userId = session?.user?.id;
+		const sessionId = !userId ? await getCartSessionId() : null;
 
-	return await fetchCart(userId, sessionId || undefined);
+		return await fetchCart(userId, sessionId || undefined);
+	} catch (error) {
+		console.error("[getCart] Failed to fetch cart:", error);
+		return null;
+	}
 }
 
 /**

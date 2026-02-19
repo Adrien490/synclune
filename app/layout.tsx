@@ -56,9 +56,11 @@ export default async function RootLayout({
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />
 					<IconSprite />
-					<Suspense fallback={null}>
-						<UploadThingSSR />
-					</Suspense>
+					<ErrorBoundary fallback={null}>
+						<Suspense fallback={null}>
+							<UploadThingSSR />
+						</Suspense>
+					</ErrorBoundary>
 					<RootProviders>
 						<Suspense fallback={null}>
 							<ConditionalAnalytics />
