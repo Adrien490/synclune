@@ -11,7 +11,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
-import { getOrderInvalidationTags } from "../constants/cache";
+import { getOrderMetadataInvalidationTags } from "../constants/cache";
 import { updateOrderShippingAddressSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 
@@ -137,7 +137,7 @@ export async function updateOrderShippingAddress(
 		}
 
 		// Invalidate caches
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderMetadataInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

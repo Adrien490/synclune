@@ -124,7 +124,18 @@ export async function deleteAccount(
 				},
 			});
 
-			// 5.4 Supprimer les données non nécessaires à la comptabilité
+			// 5.4 Anonymiser les demandes de personnalisation (PII RGPD)
+			await tx.customizationRequest.updateMany({
+				where: { userId },
+				data: {
+					firstName: "Anonyme",
+					email: anonymizedEmail,
+					phone: null,
+					details: "Contenu supprimé",
+				},
+			});
+
+			// 5.5 Supprimer les données non nécessaires à la comptabilité
 			// Adresses
 			await tx.address.deleteMany({ where: { userId } });
 
@@ -140,7 +151,7 @@ export async function deleteAccount(
 			// Comptes OAuth
 			await tx.account.deleteMany({ where: { userId } });
 
-			// 5.5 Désabonner et anonymiser la newsletter
+			// 5.6 Désabonner et anonymiser la newsletter
 			await tx.newsletterSubscriber.updateMany({
 				where: { userId },
 				data: {
@@ -154,7 +165,7 @@ export async function deleteAccount(
 				},
 			});
 
-			// 5.6 Soft delete du compte utilisateur avec anonymisation RGPD
+			// 5.7 Soft delete du compte utilisateur avec anonymisation RGPD
 			await tx.user.update({
 				where: { id: userId },
 				data: {

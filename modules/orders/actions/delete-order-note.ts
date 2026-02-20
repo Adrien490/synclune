@@ -8,7 +8,7 @@ import { validateInput, handleActionError, success, error } from "@/shared/lib/a
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteOrderNoteSchema } from "../schemas/order.schemas";
-import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
 /**
  * Server Action ADMIN pour supprimer une note de commande
@@ -42,8 +42,7 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 		// Conservation des notes pour audit trail (Art. L123-22 Code de Commerce)
 		await softDelete.orderNote(validated.data.noteId);
 
-		// 5. Invalider le cache
-		getOrderInvalidationTags().forEach(tag => updateTag(tag));
+		// 5. Invalider le cache des notes uniquement (pas de changement de statut)
 		if (note.orderId) {
 			updateTag(ORDERS_CACHE_TAGS.NOTES(note.orderId));
 		}

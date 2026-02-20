@@ -3,17 +3,20 @@ import { prisma } from "@/shared/lib/prisma";
 import { CLEANUP_DELETE_LIMIT, RETENTION } from "@/modules/cron/constants/limits";
 
 /**
- * Cleans up old webhook events past their retention period.
+ * Cleans up old webhook events past their retention period,
+ * and resolved FailedEmail records older than 30 days.
  *
  * COMPLETED/SKIPPED events are deleted after 90 days.
  * FAILED events are kept longer (180 days) for debugging.
  * Stale PROCESSING/PENDING events are cleaned as stragglers.
+ * RETRIED/EXHAUSTED FailedEmail records are deleted after 30 days.
  */
 export async function cleanupOldWebhookEvents(): Promise<{
 	completedDeleted: number;
 	failedDeleted: number;
 	skippedDeleted: number;
 	staleDeleted: number;
+	failedEmailsDeleted: number;
 }> {
 	console.log(
 		"[CRON:cleanup-webhook-events] Starting webhook events cleanup..."
@@ -117,6 +120,25 @@ export async function cleanupOldWebhookEvents(): Promise<{
 		);
 	}
 
+	// 5. Delete resolved FailedEmail records older than 30 days (bounded)
+	// RETRIED = successfully resent, EXHAUSTED = gave up after max retries
+	const failedEmailExpiryDate = new Date(
+		Date.now() - RETENTION.FAILED_EMAIL_RESOLVED_DAYS * 24 * 60 * 60 * 1000
+	);
+
+	const failedEmailResult = await prisma.failedEmail.deleteMany({
+		where: {
+			status: { in: ["RETRIED", "EXHAUSTED"] },
+			updatedAt: { lt: failedEmailExpiryDate },
+		},
+	});
+
+	if (failedEmailResult.count > 0) {
+		console.log(
+			`[CRON:cleanup-webhook-events] Deleted ${failedEmailResult.count} resolved FailedEmail records`
+		);
+	}
+
 	console.log("[CRON:cleanup-webhook-events] Cleanup completed");
 
 	return {
@@ -124,5 +146,6 @@ export async function cleanupOldWebhookEvents(): Promise<{
 		failedDeleted: failedResult.count,
 		skippedDeleted: skippedResult.count,
 		staleDeleted: staleResult.count,
+		failedEmailsDeleted: failedEmailResult.count,
 	};
 }

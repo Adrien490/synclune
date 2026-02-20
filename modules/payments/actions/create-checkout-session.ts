@@ -26,9 +26,10 @@ import { getDiscountUsageCounts } from "@/modules/discounts/data/get-discount-us
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { stripe, getInvoiceFooter } from "@/shared/lib/stripe";
-import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";
+import { getValidImageUrl } from "@/shared/lib/media-validation";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { validateInput, handleActionError, success, error, BusinessError } from "@/shared/lib/actions";
+import { sendAdminCheckoutFailedAlert } from "@/modules/emails/services/admin-emails";
 
 export const createCheckoutSession = async (_prevState: ActionState | undefined, formData: FormData) => {
 	try {
@@ -426,13 +427,13 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 			const total = Math.max(0, subtotalAfterDiscount + shippingCost);
 
 			// 8e. Créer la commande avec stock déjà réservé
-			// Note: Montants temporaires - seront recalculés par Stripe Tax dans le webhook
+			// Montants finaux — Stripe Tax désactivé (micro-entreprise, art. 293 B du CGI)
 			const newOrder = await tx.order.create({
 				data: {
 					orderNumber,
 					userId,
 
-					// === MONTANTS (temporaires - mis à jour par webhook) ===
+					// === MONTANTS (finaux — pas de TVA, micro-entreprise) ===
 					subtotal,
 					discountAmount,
 					shippingCost,
@@ -639,6 +640,13 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 			if (stripeCouponId) {
 				await stripe.coupons.del(stripeCouponId).catch(() => {});
 			}
+			// Alert admin about checkout session creation failure
+			sendAdminCheckoutFailedAlert({
+				orderNumber: order.orderNumber,
+				customerEmail: finalEmail || "unknown",
+				total: order.total,
+				errorMessage: stripeError instanceof Error ? stripeError.message : String(stripeError),
+			}).catch(() => {}); // Fire-and-forget — don't block the error response
 			// Re-throw pour que handleActionError le traite
 			throw stripeError;
 		}

@@ -42,8 +42,8 @@ Le layout utilise une grille 2 colonnes (desktop) :
 ### Pattern page detail commande (`/commandes/[orderNumber]`)
 
 La page affiche la commande dans une grille 2/3 + 1/3 :
-- **Colonne principale (2/3)** : `OrderItemsList` → `OrderRefundsCard` (si refunds) → `OrderTracking`
-- **Colonne sidebar (1/3)** : `OrderSummaryCard` → `OrderInfoCard` → `DownloadInvoiceButton` (si PAID)
+- **Colonne principale (2/3)** : `OrderItemsList` → `OrderRefundsCard` (si refunds) → `OrderStatusTimeline` (timeline de statut) → `OrderTracking` (suivi colis, visible seulement si `trackingNumber`)
+- **Colonne sidebar (1/3)** : `OrderSummaryCard` (recapitulatif montants) → `OrderAddressesCard` (adresse de livraison) → `DownloadInvoiceButton` (si PAID)
 
 ### Pattern page parametres (`/parametres`)
 
@@ -51,12 +51,17 @@ La page parametres utilise aussi une grille 2/3 + 1/3 :
 - **Colonne principale (2/3)** : `ProfileForm` → `SecuritySection` (change password) → `GdprSection` (export/delete)
 - **Colonne sidebar (1/3)** : `AvatarUpload` (Feature H) → `NewsletterSettingsCard` → `ActiveSessionsCard`
 
+> **`SecuritySection` n'existe pas encore** — a creer comme wrapper. Les composants enfants existants sont :
+> - `ChangePasswordDialog` (`modules/users/components/change-password-dialog.tsx`) : dialog modal avec `ChangePasswordForm`, min 6 caracteres
+> - `ResendVerificationButton` (`modules/users/components/resend-verification-button.tsx`) : bouton avec cooldown 60s, utilise localStorage
+>
+> `SecuritySection` devra afficher un bouton "Modifier mon mot de passe" ouvrant `ChangePasswordDialog`, et un statut de verification email avec `ResendVerificationButton` si `emailVerified === false`.
+
 ### Pattern page compte (`/compte`) - Dashboard
 
-Page tableau de bord avec stats et raccourcis :
-- Nombre de commandes, montant total depense
-- Derniere commande
-- Nombre de favoris
+Page tableau de bord avec stats et raccourcis (voir section dediee ci-dessous pour les details) :
+- Composants existants : `AccountStatsCards`, `AccountStatsCardsSkeleton`
+- Data fetcher : `getAccountStats()` → `{ totalOrders, pendingOrders, cartItemsCount }`
 - Liens rapides vers les sections principales
 
 ---
@@ -90,6 +95,170 @@ const navItems = [
 ### Attention mobile
 
 La bottom bar affiche 5 items. Les 2 items `desktopOnly` restent accessibles via la sidebar desktop et le tableau de bord.
+
+---
+
+## Page compte - Dashboard (`/compte`)
+
+> **Statut : A faire** — Backend complet, page a recreer
+
+### Statut actuel
+
+- **Backend** : complet (data fetcher, composants)
+- **Composants** : existants (`AccountStatsCards`, `AccountStatsCardsSkeleton`)
+- **Page** : supprimee, a recreer
+
+### Donnees disponibles
+
+| Source | Fonction | Return type |
+|---|---|---|
+| `modules/users/data/get-account-stats.ts` | `getAccountStats()` | `Promise<AccountStats \| null>` |
+
+`AccountStats` contient : `totalOrders: number`, `pendingOrders: number`, `cartItemsCount: number`.
+
+Le cache utilise `"use cache: private"`, `cacheLife("userOrders")`, `cacheTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId))`.
+
+### Fichiers
+
+| Fichier | Role |
+|---|---|
+| `app/(boutique)/(espace-client)/compte/page.tsx` | **A creer** - Page dashboard |
+| `modules/users/components/account-stats-cards.tsx` | Cartes de stats (utilise `use(statsPromise)`, wrapper en `<Suspense>`) |
+| `modules/users/components/account-stats-cards-skeleton.tsx` | Skeleton de chargement |
+| `modules/users/data/get-account-stats.ts` | Data fetcher avec cache |
+
+### UI
+
+`AccountStatsCards` affiche actuellement 2 cartes :
+- "Membre depuis" (date formatee mois/annee)
+- "Commandes passees" (`totalOrders`)
+
+> **Note :** `pendingOrders` et `cartItemsCount` sont fetches mais pas affiches dans le composant. Ils pourraient etre utilises pour enrichir le dashboard (ex: "2 commandes en cours", "3 articles dans le panier").
+
+### Enrichissements possibles
+
+- Commandes recentes (liste des 3-5 dernieres commandes)
+- Liens rapides vers les sections principales (commandes, favoris, parametres)
+- Bandeau si `accountStatus === "PENDING_DELETION"` (lie a Feature M)
+
+### Empty state
+
+Impossible : le dashboard est toujours accessible pour un utilisateur connecte.
+
+---
+
+## Page commandes - Liste (`/commandes`)
+
+> **Statut : A faire** — Backend complet, page a recreer
+
+### Statut actuel
+
+- **Backend** : complet (data fetcher avec pagination cursor-based, tri)
+- **Composants** : existants (`CustomerOrdersTable`, `CustomerOrdersTableSkeleton`, `SortSelect`)
+- **Page** : supprimee, a recreer
+
+### Donnees disponibles
+
+| Source | Fonction | Return type |
+|---|---|---|
+| `modules/orders/data/get-user-orders.ts` | `getUserOrders(params?)` | `Promise<GetUserOrdersReturn>` |
+| `modules/orders/data/fetch-user-orders.ts` | `fetchUserOrders(userId, params)` | Fonction interne avec `"use cache: private"` |
+
+`GetUserOrdersReturn` contient : `orders: UserOrder[]`, `pagination: { nextCursor, prevCursor, hasNextPage, hasPreviousPage }`.
+
+### Pagination
+
+Pattern cursor-based existant :
+- `cursor` : ID du dernier element
+- `direction` : `"forward"` ou `"backward"`
+- `perPage` : 10 par defaut, max 50
+- `sortBy` : 4 options (voir ci-dessous)
+- Le composant `CursorPagination` est integre dans `CustomerOrdersTable`
+
+### Tri
+
+Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `useSortSelect()` qui lit/ecrit le search param `sort` dans l'URL.
+
+4 options de tri definies dans `modules/orders/constants/user-orders.constants.ts` :
+- "Plus recentes" (defaut), "Plus anciennes", "Montant decroissant", "Montant croissant"
+
+### Fichiers
+
+| Fichier | Role |
+|---|---|
+| `app/(boutique)/(espace-client)/commandes/page.tsx` | **A creer** - Page liste des commandes |
+| `modules/orders/components/customer/customer-orders-table.tsx` | Tableau des commandes (server component async, colonnes : numero, date, statut, livraison, articles, total) |
+| `modules/orders/components/customer/customer-orders-table-skeleton.tsx` | Skeleton de chargement |
+| `shared/components/sort-select.tsx` | Select de tri reutilisable |
+| `modules/orders/data/get-user-orders.ts` | Wrapper public (gere session) |
+| `modules/orders/data/fetch-user-orders.ts` | Data fetcher interne avec cache |
+| `modules/orders/constants/user-orders.constants.ts` | Select, sort options, labels, pagination defaults |
+| `modules/orders/schemas/user-orders.schemas.ts` | Schema Zod des params |
+
+### Empty state
+
+0 commandes : "Vous n'avez pas encore passe de commande." + lien vers `/creations`.
+
+---
+
+## Page mes avis (`/mes-avis`)
+
+> **Statut : A faire** — Backend complet, page a recreer
+
+### Statut actuel
+
+- **Backend** : complet (data fetchers, actions CRUD, hooks, schemas)
+- **Composants** : existants (`UserReviewCard`, `UserReviewCardActions`, `EditReviewDialog`, `DeleteReviewAlertDialog`, `ReviewableProductCard`, `CreateReviewForm`, `UpdateReviewForm`)
+- **Page** : supprimee, a recreer
+- **Composant wrapper liste** : inexistant, a creer
+
+### Donnees disponibles
+
+| Source | Fonction | Return type |
+|---|---|---|
+| `modules/reviews/data/get-user-reviews.ts` | `getUserReviews()` | `Promise<ReviewUser[]>` |
+| `modules/reviews/data/get-reviewable-products.ts` | `getReviewableProducts()` | `Promise<ReviewableProduct[]>` |
+
+`getUserReviews()` retourne les avis de l'utilisateur tries par `createdAt desc`, avec cache `"use cache: private"`, `cacheLife("userOrders")`.
+
+`getReviewableProducts()` retourne les produits commandes et livres sans avis existant (dedupliques par produit).
+
+### Fichiers
+
+| Fichier | Role |
+|---|---|
+| `app/(boutique)/(espace-client)/mes-avis/page.tsx` | **A creer** - Page principale |
+| `modules/reviews/components/user-review-card.tsx` | Carte d'avis (server component) : image produit, titre, etoiles, date, badge "Achat verifie", statut, contenu, reponse marque |
+| `modules/reviews/components/user-review-card-actions.tsx` | Actions (modifier, supprimer) |
+| `modules/reviews/components/edit-review-dialog.tsx` | Dialog d'edition (utilise le dialog store) |
+| `modules/reviews/components/delete-review-alert-dialog.tsx` | Dialog de suppression (utilise l'alert dialog store) |
+| `modules/reviews/components/reviewable-product-card.tsx` | Carte produit evaluable avec bouton "Laisser un avis" ouvrant `CreateReviewForm` |
+| `modules/reviews/components/create-review-form.tsx` | Formulaire de creation d'avis |
+| `modules/reviews/components/update-review-form.tsx` | Formulaire de modification d'avis |
+| `modules/reviews/hooks/use-create-review-form.ts` | Hook pour le formulaire de creation |
+| `modules/reviews/hooks/use-update-review-form.ts` | Hook pour le formulaire de modification |
+| `modules/reviews/hooks/use-delete-review.ts` | Hook de suppression |
+
+### UI
+
+La page se divise en 2 sections :
+
+1. **Produits a evaluer** (si `reviewableProducts.length > 0`) : grille de `ReviewableProductCard` avec image, titre, date de livraison, et bouton "Laisser un avis"
+2. **Mes avis** : liste de `UserReviewCard` avec statut, etoiles, contenu, reponse marque, et actions (modifier/supprimer)
+
+Les dialogs `EditReviewDialog` et `DeleteReviewAlertDialog` sont geres via les stores Zustand (`useDialog` / `useAlertDialog`) et doivent etre montes dans la page.
+
+### Composant wrapper a creer
+
+Un composant wrapper (ex: `UserReviewsList`) pourrait orchestrer :
+- La section "Produits a evaluer" en haut
+- La liste des avis en dessous
+- Les dialogs montes globalement
+
+### Empty state
+
+0 avis et 0 produits evaluables : "Vous n'avez pas encore laisse d'avis."
+0 avis mais des produits evaluables : afficher seulement la section "Produits a evaluer".
 
 ---
 
@@ -233,7 +402,7 @@ La route API de telechargement de facture verifie maintenant `order.userId === s
 
 - **Schema** : `Refund` et `RefundItem` existent avec toutes les relations
 - **Backend admin** : actions de creation/gestion de remboursements implementees
-- **Data client** : aucun data fetcher client n'existe pour les remboursements, fichier a creer
+- **Data admin** : `modules/orders/data/get-order-refunds.ts` existe mais est reserve a l'admin (`requireAdmin()`). Deux approches possibles : (1) enrichir `GET_ORDER_SELECT` avec les refunds inline (recommande, evite un fetch supplementaire), ou (2) creer un data fetcher client dedie
 - **Frontend client** : rien (`GET_ORDER_SELECT` n'inclut pas `refunds`)
 
 ### Prisma - Champs utiles
@@ -270,6 +439,8 @@ model RefundItem {
 | Fichier | Modification |
 |---|---|
 | `modules/orders/constants/order.constants.ts` | Ajouter `refunds` au `GET_ORDER_SELECT` |
+
+> **Note :** `GET_ORDER_SELECT` (dans `order.constants.ts`) est le select de detail commande. Ne pas confondre avec `GET_USER_ORDERS_SELECT` (dans `user-orders.constants.ts`) qui est le select de la liste des commandes et n'a pas besoin des refunds.
 
 ### Select a ajouter dans `GET_ORDER_SELECT`
 
@@ -367,7 +538,7 @@ Pas d'empty state necessaire : la carte ne s'affiche que si `refunds.length > 0`
 ```ts
 import { getSubscriptionStatus } from "@/modules/newsletter/data/get-subscription-status";
 const status = await getSubscriptionStatus();
-// → { isSubscribed: boolean, email: string | null, emailVerified: boolean }
+// → { isSubscribed: boolean, email: string | null, isConfirmed: boolean }
 ```
 
 ---
@@ -474,7 +645,7 @@ La session actuelle est identifiee en comparant `session.token` (du cookie Bette
 Chaque session affiche :
 - Icone appareil (parser `userAgent` : desktop/mobile/tablet)
 - Navigateur + OS (parser `userAgent`)
-- Adresse IP (masquee partiellement pour securite)
+- Adresse IP (affichee telle quelle actuellement — masquage partiel a implementer si souhaite)
 - Date de connexion
 - Badge "Session actuelle" pour la session en cours
 - Bouton "Revoquer" (sauf session actuelle)
@@ -732,6 +903,8 @@ Le client ne peut annuler sa commande que si :
 
 Une commande en `PROCESSING`, `SHIPPED`, ou `DELIVERED` ne peut pas etre annulee par le client (il devrait faire une demande de remboursement via le support).
 
+> **Attention : `canCancelOrder()` accepte aussi PROCESSING.** La fonction `canCancelOrder()` dans `order-status-validation.service.ts` retourne `true` pour PENDING **et** PROCESSING (elle n'exclut que SHIPPED, DELIVERED, CANCELLED). L'action client `cancelOrderCustomer` doit donc ajouter un guard supplementaire `order.status === "PENDING"` en plus de l'appel a `canCancelOrder()`, ou bien la decision peut etre prise d'autoriser l'annulation en PROCESSING aussi (a trancher).
+
 ### Fichiers a creer
 
 | Fichier | Role |
@@ -776,13 +949,20 @@ export async function cancelOrderCustomer(
   if (!order) return notFound("Commande introuvable")
   if (!canCancelOrder(order)) return error("Cette commande ne peut plus etre annulee")
 
+  // Guard supplementaire : le client ne peut annuler que les commandes PENDING
+  // (canCancelOrder accepte aussi PROCESSING, reserve a l'admin)
+  if (order.status !== "PENDING") return error("Cette commande ne peut plus etre annulee")
+
   // Restauration stock conditionnelle (PENDING seulement)
   const shouldRestoreStock = order.paymentStatus === "PENDING"
+
+  // Si la commande etait payee, marquer le paiement comme rembourse
+  const newPaymentStatus = order.paymentStatus === "PAID" ? "REFUNDED" : order.paymentStatus
 
   await prisma.$transaction(async (tx) => {
     await tx.order.update({
       where: { id: order.id },
-      data: { status: "CANCELLED" },
+      data: { status: "CANCELLED", paymentStatus: newPaymentStatus },
     })
 
     if (shouldRestoreStock) {
@@ -794,6 +974,8 @@ export async function cancelOrderCustomer(
       action: "CANCELLED",
       previousStatus: order.status,
       newStatus: "CANCELLED",
+      previousPaymentStatus: order.paymentStatus,
+      newPaymentStatus,
       note: "Annulation par le client",
       authorId: user.id,
       authorName: user.name || "Client",
@@ -896,6 +1078,8 @@ Mais l'implementation actuelle (`modules/users/actions/delete-account.ts`) **byp
   - `ACCOUNT_STATUS_LABELS` : "Actif", "Inactif", "Suppression en attente", "Anonymise"
   - `ACCOUNT_STATUS_COLORS` : green, yellow, orange, gray
   - `ACCOUNT_STATUS_DESCRIPTIONS` : textes descriptifs pour tooltips
+
+> **Inconsistance d'anonymisation** : `delete-account.ts` (suppression immediate) utilise `"Anonyme"` pour les noms de livraison et `deleted_${id}@synclune.local` pour l'email, tandis que `process-account-deletions.service.ts` (cron) utilise `"X"` pour les noms et `anonymized-${id}@deleted.local` pour l'email. Si l'option 1 (differee) est retenue, il faut harmoniser ces patterns — idealement factoriser la logique d'anonymisation dans un service partage.
 
 ### Decision requise
 

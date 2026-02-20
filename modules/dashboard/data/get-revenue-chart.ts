@@ -44,13 +44,13 @@ export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartRetur
 	// Agregation cote DB - plus efficace que de recuperer tous les ordres
 	const revenueRows = await prisma.$queryRaw<RevenueRow[]>`
 		SELECT
-			TO_CHAR("paidAt", 'YYYY-MM-DD') as date,
+			TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
 			COALESCE(SUM(total), 0) as revenue
 		FROM "Order"
 		WHERE "paidAt" >= ${thirtyDaysAgo}
 			AND "paymentStatus" = 'PAID'::"PaymentStatus"
 			AND "deletedAt" IS NULL
-		GROUP BY TO_CHAR("paidAt", 'YYYY-MM-DD')
+		GROUP BY TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
 		ORDER BY date ASC
 	`;
 

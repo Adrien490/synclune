@@ -8,6 +8,7 @@ import {
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
+import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import { scheduleReviewRequestEmail } from "@/modules/webhooks/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -167,6 +168,19 @@ export async function markAsDelivered(
 				emailSent = true;
 			} catch (emailError) {
 				console.error("[MARK_AS_DELIVERED] Échec envoi email livraison:", emailError);
+				await logFailedEmail({
+					to: order.customerEmail!,
+					subject: `Votre commande ${order.orderNumber} a été livrée`,
+					template: "delivery-confirmation",
+					payload: {
+						orderNumber: order.orderNumber,
+						customerName: customerFirstName,
+						deliveryDate: deliveryDateStr,
+						orderDetailsUrl,
+					},
+					error: emailError,
+					orderId: order.id,
+				});
 			}
 		}
 

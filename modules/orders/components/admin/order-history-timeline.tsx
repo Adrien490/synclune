@@ -7,6 +7,7 @@ import {
 	ChevronDown,
 	Clock,
 	CreditCard,
+	FileText,
 	MapPin,
 	Package,
 	Truck,
@@ -91,6 +92,12 @@ const ACTION_CONFIG: Record<
 		color: "text-teal-500",
 		label: "Adresse modifiée",
 		symbol: "📍",
+	},
+	INVOICE_GENERATED: {
+		icon: FileText,
+		color: "text-emerald-500",
+		label: "Facture générée",
+		symbol: "📄",
 	},
 };
 

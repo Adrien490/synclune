@@ -65,14 +65,10 @@ export function cacheUserOrders(userId: string) {
 // ============================================
 
 /**
- * Tags à invalider lors de la modification d'une commande
+ * Tags à invalider lors d'un changement de statut de commande
+ * (création, annulation, changement de statut, suppression)
  *
- * Invalide automatiquement :
- * - La liste des commandes admin
- * - Les commandes de l'utilisateur (si userId fourni)
- * - La dernière commande de l'utilisateur
- * - Les statistiques du compte utilisateur
- * - Les badges de la sidebar (affecte le count de commandes en attente)
+ * Inclut les badges admin car le count de commandes change
  */
 export function getOrderInvalidationTags(userId?: string): string[] {
 	const tags: string[] = [
@@ -89,6 +85,29 @@ export function getOrderInvalidationTags(userId?: string): string[] {
 			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
 			ORDERS_CACHE_TAGS.LAST_ORDER(userId),
 			ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId)
+		)
+	}
+
+	return tags
+}
+
+/**
+ * Tags à invalider pour des modifications de métadonnées
+ * (tracking, adresse, notes) qui ne changent PAS les compteurs
+ *
+ * Exclut ADMIN_BADGES et les KPIs dashboard pour éviter les
+ * invalidations inutiles sur des opérations fréquentes
+ */
+export function getOrderMetadataInvalidationTags(userId?: string): string[] {
+	const tags: string[] = [
+		ORDERS_CACHE_TAGS.LIST,
+		SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
+	]
+
+	if (userId) {
+		tags.push(
+			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
+			ORDERS_CACHE_TAGS.LAST_ORDER(userId)
 		)
 	}
 

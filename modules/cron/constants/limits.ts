@@ -59,6 +59,9 @@ export const RETENTION = {
 
 	/** Days to wait for newsletter confirmation before cleanup */
 	NEWSLETTER_CONFIRMATION_DAYS: 7,
+
+	/** Days to keep resolved FailedEmail records (RETRIED/EXHAUSTED) */
+	FAILED_EMAIL_RESOLVED_DAYS: 30,
 } as const;
 
 /**

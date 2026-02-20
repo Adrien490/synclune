@@ -8,7 +8,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { addOrderNoteSchema } from "../schemas/order.schemas";
 import { sanitizeText } from "@/shared/lib/sanitize";
-import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { updateTag } from "next/cache";
 
 /**
@@ -52,7 +52,6 @@ export async function addOrderNote(
 		});
 
 		// 6. Invalider le cache
-		getOrderInvalidationTags().forEach(tag => updateTag(tag));
 		updateTag(ORDERS_CACHE_TAGS.NOTES(orderId));
 
 		return success("Note ajoutee");

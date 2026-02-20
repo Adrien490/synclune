@@ -24,7 +24,9 @@ export const GET_ORDERS_SELECT = {
 	shippedAt: true,
 	paymentMethod: true,
 	paidAt: true,
-	// ROADMAP: Invoices - add invoiceNumber, invoiceStatus, invoiceGeneratedAt
+	invoiceNumber: true,
+	invoiceStatus: true,
+	invoiceGeneratedAt: true,
 	createdAt: true,
 	updatedAt: true,
 	user: {
@@ -59,7 +61,7 @@ export const GET_ORDER_SELECT = {
 	stripePaymentIntentId: true,
 	stripeChargeId: true,
 	stripeCustomerId: true,
-	// ROADMAP: Invoices - add stripeInvoiceId
+	stripeInvoiceId: true,
 	customerEmail: true,
 	customerName: true,
 	customerPhone: true,
@@ -90,7 +92,9 @@ export const GET_ORDER_SELECT = {
 	fulfillmentStatus: true,
 	paymentMethod: true,
 	paidAt: true,
-	// ROADMAP: Invoices - add invoiceNumber, invoiceGeneratedAt, invoiceStatus
+	invoiceNumber: true,
+	invoiceStatus: true,
+	invoiceGeneratedAt: true,
 	createdAt: true,
 	updatedAt: true,
 	items: {

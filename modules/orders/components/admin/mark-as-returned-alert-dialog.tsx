@@ -10,14 +10,18 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsReturned } from "@/modules/orders/hooks/use-mark-as-returned";
+import { RotateCcw } from "lucide-react";
+import Link from "next/link";
 
 export const MARK_AS_RETURNED_DIALOG_ID = "mark-as-returned";
 
 interface MarkAsReturnedData {
 	orderId: string;
 	orderNumber: string;
+	showRefundPrompt?: boolean;
 	[key: string]: unknown;
 }
 
@@ -26,7 +30,7 @@ export function MarkAsReturnedAlertDialog() {
 
 	const { action, isPending } = useMarkAsReturned({
 		onSuccess: () => {
-			dialog.close();
+			dialog.open({ ...dialog.data!, showRefundPrompt: true });
 		},
 	});
 
@@ -35,6 +39,45 @@ export function MarkAsReturnedAlertDialog() {
 			dialog.close();
 		}
 	};
+
+	if (dialog.data?.showRefundPrompt) {
+		return (
+			<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle className="flex items-center gap-2">
+							<RotateCcw className="h-5 w-5" />
+							Commande retournée
+						</AlertDialogTitle>
+						<AlertDialogDescription asChild>
+							<div>
+								<p>
+									La commande <strong>{dialog.data?.orderNumber}</strong> a été
+									marquée comme retournée.
+								</p>
+								<p className="mt-2">
+									Souhaitez-vous créer un remboursement pour cette commande ?
+								</p>
+							</div>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button" onClick={() => dialog.close()}>
+							Plus tard
+						</AlertDialogCancel>
+						<Button asChild>
+							<Link
+								href={`/admin/ventes/remboursements/nouveau?orderId=${dialog.data?.orderId}`}
+								onClick={() => dialog.close()}
+							>
+								Créer un remboursement
+							</Link>
+						</Button>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		);
+	}
 
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>

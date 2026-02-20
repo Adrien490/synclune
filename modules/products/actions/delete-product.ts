@@ -108,7 +108,7 @@ export async function deleteProduct(
 			});
 			await tx.product.update({
 				where: { id: productId },
-				data: { deletedAt: now },
+				data: { deletedAt: now, status: "ARCHIVED" },
 			});
 		});
 

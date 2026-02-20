@@ -8,6 +8,7 @@ import {
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
+import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
@@ -193,6 +194,20 @@ export async function markAsShipped(
 				emailSent = true;
 			} catch (emailError) {
 				console.error("[MARK_AS_SHIPPED] Échec envoi email:", emailError);
+				await logFailedEmail({
+					to: order.customerEmail!,
+					subject: `Votre commande ${order.orderNumber} a été expédiée`,
+					template: "shipping-confirmation",
+					payload: {
+						orderNumber: order.orderNumber,
+						customerName: customerFirstName,
+						trackingNumber: result.data.trackingNumber,
+						trackingUrl: finalTrackingUrl,
+						carrierLabel,
+					},
+					error: emailError,
+					orderId: order.id,
+				});
 			}
 		}
 

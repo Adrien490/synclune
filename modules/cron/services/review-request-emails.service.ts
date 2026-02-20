@@ -2,7 +2,7 @@ import { FulfillmentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/services/send-review-request-email.service";
 import { ActionStatus } from "@/shared/types/server-action";
-import { BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
 
 // Send review request 2 days after delivery
 const DAYS_AFTER_DELIVERY = 2;
@@ -51,10 +51,16 @@ export async function sendDelayedReviewRequestEmails(): Promise<{
 		`[CRON:review-request-emails] Found ${ordersToNotify.length} orders to send review requests`
 	);
 
+	const startTime = Date.now();
 	let sent = 0;
 	let errors = 0;
 
 	for (const order of ordersToNotify) {
+		if (Date.now() - startTime > BATCH_DEADLINE_MS) {
+			console.log("[CRON:review-request-emails] Deadline reached, stopping early");
+			break;
+		}
+
 		try {
 			const result = await sendReviewRequestEmailInternal(order.id);
 

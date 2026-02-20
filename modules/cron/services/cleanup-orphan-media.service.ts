@@ -27,6 +27,9 @@ export async function cleanupOrphanMedia(): Promise<{
 
 	try {
 		// 1. Load all referenced file keys from DB (paginated to control memory)
+		// WARNING: testimonialMedia and contactAttachment routes are NOT tracked.
+		// Files uploaded via these routes will be deleted after 24h.
+		// See getAllReferencedFileKeys() for details.
 		const referencedKeys = await getAllReferencedFileKeys();
 		console.log(
 			`[CRON:cleanup-orphan-media] Found ${referencedKeys.size} referenced keys in DB`
@@ -93,7 +96,9 @@ export async function cleanupOrphanMedia(): Promise<{
 			"[CRON:cleanup-orphan-media] Error during cleanup:",
 			error instanceof Error ? error.message : String(error)
 		);
-		errors++;
+		// Re-throw to signal total failure to the route handler (returns cronError/500)
+		// A DB failure during key scan means we can't safely determine orphans
+		throw error;
 	}
 
 	console.log("[CRON:cleanup-orphan-media] Cleanup completed");
@@ -120,11 +125,12 @@ export async function cleanupOrphanMedia(): Promise<{
  * - reviewMedia     → ReviewMedia (url)
  * - (user avatars)  → User.image
  *
- * NOT tracked (routes not yet connected to any component):
- * - testimonialMedia → No DB table yet. When implementing testimonials,
- *   create a Testimonial model with an imageUrl field and add a query here.
+ * ⚠️ UNTRACKED ROUTES - Files from these routes will be deleted as orphans after 24h:
+ * - testimonialMedia → No DB table yet. BEFORE enabling testimonials in production,
+ *   create a Testimonial model with an imageUrl field and add a query below.
  * - contactAttachment → Ephemeral files sent with contact form.
- *   When implementing the contact form, either track in DB or exclude from cleanup.
+ *   BEFORE enabling the contact form, either track attachments in DB or exclude
+ *   from cleanup. Contact attachments should be forwarded via email then deleted.
  */
 async function getAllReferencedFileKeys(): Promise<Set<string>> {
 	const keys = new Set<string>();

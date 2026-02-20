@@ -2,7 +2,7 @@ import { updateTag } from "next/cache";
 import { AccountStatus, NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
-import { BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
 import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { sendAccountDeletionEmail } from "@/modules/emails/services/auth-emails";
@@ -49,13 +49,21 @@ export async function processAccountDeletions(): Promise<{
 		`[CRON:process-account-deletions] Found ${accountsToAnonymize.length} accounts to anonymize`
 	);
 
+	const startTime = Date.now();
 	let processed = 0;
 	let errors = 0;
 
 	for (const user of accountsToAnonymize) {
+		if (Date.now() - startTime > BATCH_DEADLINE_MS) {
+			console.log("[CRON:process-account-deletions] Deadline reached, stopping early");
+			break;
+		}
+
 		try {
-			// Save avatar URL before transaction (will be deleted after success)
+			// Save data needed after transaction (will be wiped during anonymization)
 			const avatarUrl = user.image;
+			const emailBeforeAnonymization = user.email;
+			const nameBeforeAnonymization = user.name || "Client";
 
 			// Collect review media URLs for UploadThing cleanup after transaction
 			const reviewMedias = await prisma.reviewMedia.findMany({
@@ -63,23 +71,6 @@ export async function processAccountDeletions(): Promise<{
 				select: { url: true },
 			});
 			const reviewMediaUrls = reviewMedias.map((m) => m.url);
-
-			// Send deletion email BEFORE anonymization (email will be wiped in transaction)
-			try {
-				const deletionDate = new Date().toLocaleDateString("fr-FR", {
-					weekday: "long",
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-				});
-				await sendAccountDeletionEmail({
-					to: user.email,
-					userName: user.name || "Client",
-					deletionDate,
-				});
-			} catch {
-				// Non-blocking: continue with anonymization even if email fails
-			}
 
 			const anonymizedEmail = `anonymized-${user.id}@deleted.local`;
 			const now = new Date();
@@ -152,7 +143,18 @@ export async function processAccountDeletions(): Promise<{
 					},
 				});
 
-				// 10. Anonymize PII denormalized in orders
+				// 10. Anonymize PII in customization requests
+				await tx.customizationRequest.updateMany({
+					where: { userId: user.id },
+					data: {
+						firstName: "Anonyme",
+						email: anonymizedEmail,
+						phone: null,
+						details: "Contenu supprimé",
+					},
+				});
+
+				// 11. Anonymize PII denormalized in orders
 				// Legal retention 10 years (Art. L123-22 Code de Commerce):
 				// keep amounts and accounting IDs, anonymize personal data
 				await tx.order.updateMany({
@@ -172,6 +174,24 @@ export async function processAccountDeletions(): Promise<{
 					},
 				});
 			});
+
+			// Send deletion confirmation email AFTER successful transaction
+			// (prevents sending false confirmations if the transaction fails)
+			try {
+				const deletionDate = new Date().toLocaleDateString("fr-FR", {
+					weekday: "long",
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+				});
+				await sendAccountDeletionEmail({
+					to: emailBeforeAnonymization,
+					userName: nameBeforeAnonymization,
+					deletionDate,
+				});
+			} catch {
+				// Non-blocking: continue even if email fails
+			}
 
 			// Invalidate user-related caches
 			updateTag(NEWSLETTER_CACHE_TAGS.LIST);

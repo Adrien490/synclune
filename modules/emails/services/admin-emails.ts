@@ -3,6 +3,7 @@ import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email"
 import { AdminWebhookFailedEmail } from "@/emails/admin-webhook-failed-email"
 import { AdminInvoiceFailedEmail } from "@/emails/admin-invoice-failed-email"
 import { AdminCronFailedEmail } from "@/emails/admin-cron-failed-email"
+import { AdminCheckoutFailedEmail } from "@/emails/admin-checkout-failed-email"
 import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email"
 import { EMAIL_ADMIN } from "../constants/email.constants"
 import { renderAndSend } from "./send-email"
@@ -146,6 +147,37 @@ export async function sendAdminCronFailedAlert({
 		{
 			to: EMAIL_ADMIN,
 			subject: `[ALERTE CRON] ${job} — ${errors} erreur(s)`,
+			tags: [{ name: "category", value: "admin" }],
+		}
+	)
+}
+
+/**
+ * Alerte admin : Echec creation session Stripe Checkout
+ * Envoyee quand stripe.checkout.sessions.create() echoue
+ * (la commande orpheline est nettoyee automatiquement)
+ */
+export async function sendAdminCheckoutFailedAlert({
+	orderNumber,
+	customerEmail,
+	total,
+	errorMessage,
+}: {
+	orderNumber: string
+	customerEmail: string
+	total: number
+	errorMessage: string
+}): Promise<EmailResult> {
+	return renderAndSend(
+		AdminCheckoutFailedEmail({
+			orderNumber,
+			customerEmail,
+			total,
+			errorMessage,
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[ALERTE CHECKOUT] Échec session Stripe — ${orderNumber}`,
 			tags: [{ name: "category", value: "admin" }],
 		}
 	)

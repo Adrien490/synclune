@@ -5,7 +5,7 @@ import { SelectFilter } from "@/shared/components/select-filter";
 import { getOrders } from "@/modules/orders/data/get-orders";
 import { SORT_LABELS as ORDERS_SORT_LABELS } from "@/modules/orders/constants/order.constants";
 import { parseOrderParams } from "@/modules/orders/utils/parse-order-params";
-// ROADMAP: Invoices - add ExportInvoicesButton
+import { ExportOrdersButton } from "@/modules/orders/components/admin/export-orders-button";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
@@ -129,7 +129,7 @@ export default async function OrdersAdminPage({
 						noPrefix
 					/>
 					<OrdersFilterSheet />
-					{/* ROADMAP: Invoices - ExportInvoicesButton goes here */}
+					<ExportOrdersButton />
 					<RefreshOrdersButton />
 				</Toolbar>
 

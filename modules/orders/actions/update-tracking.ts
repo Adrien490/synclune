@@ -16,7 +16,7 @@ import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
-import { getOrderInvalidationTags } from "../constants/cache";
+import { getOrderMetadataInvalidationTags } from "../constants/cache";
 import { updateTrackingSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 
@@ -127,7 +127,7 @@ export async function updateTracking(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderMetadataInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 
 		// Envoyer l'email de mise à jour du suivi au client
 		let emailSent = false;

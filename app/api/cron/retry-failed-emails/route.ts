@@ -1,8 +1,8 @@
 import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
-import { processScheduledDiscounts } from "@/modules/cron/services/process-scheduled-discounts.service";
+import { retryFailedEmails } from "@/modules/cron/services/retry-failed-emails.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function GET() {
 	const unauthorized = await verifyCronRequest();
@@ -10,22 +10,25 @@ export async function GET() {
 
 	const startTime = cronTimer();
 	try {
-		const result = await processScheduledDiscounts();
+		const result = await retryFailedEmails();
+
+		if (result.exhausted > 0) {
+			sendAdminCronFailedAlert({
+				job: "retry-failed-emails",
+				errors: result.exhausted,
+				details: { found: result.found, retried: result.retried },
+			}).catch(() => {});
+		}
+
 		return cronSuccess({
-			job: "process-scheduled-discounts",
+			job: "retry-failed-emails",
 			...result,
 		}, startTime);
 	} catch (error) {
-		sendAdminCronFailedAlert({
-			job: "process-scheduled-discounts",
-			errors: 1,
-			details: { error: error instanceof Error ? error.message : String(error) },
-		}).catch(() => {});
-
 		return cronError(
 			error instanceof Error
 				? error.message
-				: "Failed to process scheduled discounts"
+				: "Failed to retry failed emails"
 		);
 	}
 }

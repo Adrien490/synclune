@@ -30,7 +30,8 @@ function formatDatePdf(date: Date): string {
 
 /**
  * Generates a PDF invoice for a paid order
- * Returns the PDF as a Uint8Array buffer
+ * Uses the persisted invoiceNumber if available, falls back to orderNumber
+ * Returns the PDF as an ArrayBuffer
  */
 export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 	const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -69,10 +70,13 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 	// Invoice details - right aligned
 	doc.setFontSize(9);
 	doc.setFont("helvetica", "normal");
-	const invoiceRef = `Réf. : ${order.orderNumber}`;
-	const invoiceDate = `Date : ${formatDatePdf(order.paidAt ?? order.createdAt)}`;
+	const invoiceNumber = order.invoiceNumber ?? order.orderNumber;
+	const invoiceRef = `N° : ${invoiceNumber}`;
+	const invoiceDate = `Date : ${formatDatePdf(order.invoiceGeneratedAt ?? order.paidAt ?? order.createdAt)}`;
+	const orderRef = `Commande : ${order.orderNumber}`;
 	doc.text(invoiceRef, pageWidth - margin - doc.getTextWidth(invoiceRef), margin + 8);
 	doc.text(invoiceDate, pageWidth - margin - doc.getTextWidth(invoiceDate), margin + 12);
+	doc.text(orderRef, pageWidth - margin - doc.getTextWidth(orderRef), margin + 16);
 
 	y += 10;
 
