@@ -54,62 +54,46 @@ export async function cancelOrder(
 			};
 		}
 
-		// Récupérer la commande avec ses items pour la restauration du stock
-		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				paymentStatus: true,
-				total: true,
-				userId: true,
-				customerEmail: true,
-				customerName: true,
-				shippingFirstName: true,
-				items: {
-					select: {
-						skuId: true,
-						quantity: true,
+		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					paymentStatus: true,
+					total: true,
+					userId: true,
+					customerEmail: true,
+					customerName: true,
+					shippingFirstName: true,
+					items: {
+						select: {
+							skuId: true,
+							quantity: true,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
-		}
+			if (!found) return null;
 
-		// Validate via state machine service (blocks SHIPPED, DELIVERED, CANCELLED)
-		if (!canCancelOrder(order)) {
-			const message =
-				order.status === OrderStatus.CANCELLED
-					? ORDER_ERROR_MESSAGES.ALREADY_CANCELLED
-					: "Impossible d'annuler une commande expediee ou livree.";
-			return {
-				status: ActionStatus.ERROR,
-				message,
-			};
-		}
+			// Validate via state machine service (blocks SHIPPED, DELIVERED, CANCELLED)
+			if (!canCancelOrder(found)) {
+				const _error = found.status === OrderStatus.CANCELLED ? "already_cancelled" as const : "cannot_cancel" as const;
+				return { ...found, _error };
+			}
 
-		// Déterminer le nouveau paymentStatus
-		// Si la commande était payée, on passe à REFUNDED
-		const newPaymentStatus =
-			order.paymentStatus === PaymentStatus.PAID
-				? PaymentStatus.REFUNDED
-				: order.paymentStatus;
+			// Déterminer le nouveau paymentStatus
+			const newPaymentStatus =
+				found.paymentStatus === PaymentStatus.PAID
+					? PaymentStatus.REFUNDED
+					: found.paymentStatus;
 
-		// 🔴 CORRECTION : Ne restaurer le stock QUE si la commande était PENDING
-		// - PENDING = stock réservé lors du checkout, doit être libéré
-		// - PAID = produit déjà envoyé/reçu par le client, stock ne doit PAS être restauré
-		// - FAILED/REFUNDED = stock déjà restauré par les webhooks
-		const shouldRestoreStock = order.paymentStatus === PaymentStatus.PENDING;
+			// Ne restaurer le stock QUE si la commande était PENDING
+			const shouldRestoreStock = found.paymentStatus === PaymentStatus.PENDING;
 
-		// Transaction pour annuler la commande ET restaurer le stock si nécessaire
-		await prisma.$transaction(async (tx) => {
 			// 1. Mettre à jour la commande
 			await tx.order.update({
 				where: { id },
@@ -121,7 +105,7 @@ export async function cancelOrder(
 
 			// 2. Restaurer le stock uniquement si la commande était PENDING
 			if (shouldRestoreStock) {
-				for (const item of order.items) {
+				for (const item of found.items) {
 					await tx.productSku.update({
 						where: { id: item.skuId },
 						data: {
@@ -133,13 +117,13 @@ export async function cancelOrder(
 				}
 			}
 
-			// 3. 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
+			// 3. Audit trail (Best Practice Stripe 2025)
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "CANCELLED",
-				previousStatus: order.status,
+				previousStatus: found.status,
 				newStatus: OrderStatus.CANCELLED,
-				previousPaymentStatus: order.paymentStatus,
+				previousPaymentStatus: found.paymentStatus,
 				newPaymentStatus: newPaymentStatus,
 				note: sanitizedReason || undefined,
 				authorId: adminUser.id,
@@ -147,10 +131,30 @@ export async function cancelOrder(
 				source: HistorySource.ADMIN,
 				metadata: {
 					stockRestored: shouldRestoreStock,
-					itemsCount: order.items.length,
+					itemsCount: found.items.length,
 				},
 			});
+
+			return { ...found, _newPaymentStatus: newPaymentStatus, _shouldRestoreStock: shouldRestoreStock };
 		});
+
+		if (!order) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
+			};
+		}
+
+		if ("_error" in order) {
+			const message =
+				order._error === "already_cancelled"
+					? ORDER_ERROR_MESSAGES.ALREADY_CANCELLED
+					: "Impossible d'annuler une commande expediee ou livree.";
+			return {
+				status: ActionStatus.ERROR,
+				message,
+			};
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
@@ -172,7 +176,7 @@ export async function cancelOrder(
 					customerName: customerFirstName,
 					orderTotal: order.total,
 					reason: sanitizedReason || undefined,
-					wasRefunded: newPaymentStatus === PaymentStatus.REFUNDED,
+					wasRefunded: order._newPaymentStatus === PaymentStatus.REFUNDED,
 					orderDetailsUrl,
 				});
 				emailSent = true;
@@ -182,13 +186,13 @@ export async function cancelOrder(
 		}
 
 		const refundMessage =
-			newPaymentStatus === PaymentStatus.REFUNDED
+			order._newPaymentStatus === PaymentStatus.REFUNDED
 				? " Le statut de paiement a été passé à REFUNDED."
 				: "";
 
-		const stockMessage = shouldRestoreStock && order.items.length > 0
+		const stockMessage = order._shouldRestoreStock && order.items.length > 0
 			? ` Stock restauré pour ${order.items.length} article(s).`
-			: order.items.length > 0 && !shouldRestoreStock
+			: order.items.length > 0 && !order._shouldRestoreStock
 				? " Stock non restauré (commande déjà payée/traitée)."
 				: "";
 

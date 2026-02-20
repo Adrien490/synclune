@@ -3,7 +3,6 @@
 import { Button } from "@/shared/components/ui/button";
 import {
 	ColorPicker,
-	ColorPickerAlpha,
 	ColorPickerFormat,
 	ColorPickerHue,
 	ColorPickerOutput,
@@ -160,7 +159,6 @@ export function ColorFormDialog() {
 												<ColorPickerSelection className="h-full w-full" />
 											</div>
 											<ColorPickerHue className="w-full" />
-											<ColorPickerAlpha className="w-full" />
 											<div className="flex gap-2">
 												<ColorPickerFormat className="flex-1" />
 												<ColorPickerOutput />

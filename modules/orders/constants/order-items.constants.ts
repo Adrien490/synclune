@@ -75,12 +75,3 @@ export const GET_ORDER_ITEMS_SORT_FIELDS = [
 	"quantity",
 ] as const;
 
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_ORDER_ITEMS_DEFAULT_CACHE = {
-	revalidate: 60 * 5,
-	stale: 60 * 10,
-	expire: 60 * 30,
-} as const;

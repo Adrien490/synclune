@@ -59,40 +59,30 @@ export async function revertToProcessing(
 			};
 		}
 
-		// Récupérer la commande
-		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				fulfillmentStatus: true,
-				userId: true,
-				trackingNumber: true,
-				trackingUrl: true,
-				customerEmail: true,
-				customerName: true,
-				shippingFirstName: true,
-			},
-		});
+		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					fulfillmentStatus: true,
+					userId: true,
+					trackingNumber: true,
+					trackingUrl: true,
+					customerEmail: true,
+					customerName: true,
+					shippingFirstName: true,
+				},
+			});
 
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
-		}
+			if (!found) return null;
 
-		// Vérifier que la commande est bien expédiée
-		if (order.status !== OrderStatus.SHIPPED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_REVERT_NOT_SHIPPED,
-			};
-		}
+			if (found.status !== OrderStatus.SHIPPED) {
+				return { ...found, _error: "not_shipped" as const };
+			}
 
-		// Mettre à jour la commande + audit trail atomique
-		await prisma.$transaction(async (tx) => {
 			await tx.order.update({
 				where: { id },
 				data: {
@@ -108,20 +98,36 @@ export async function revertToProcessing(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "STATUS_REVERTED",
-				previousStatus: order.status,
+				previousStatus: found.status,
 				newStatus: OrderStatus.PROCESSING,
-				previousFulfillmentStatus: order.fulfillmentStatus,
+				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 				note: result.data.reason,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
-					previousTrackingNumber: order.trackingNumber,
-					previousTrackingUrl: order.trackingUrl,
+					previousTrackingNumber: found.trackingNumber,
+					previousTrackingUrl: found.trackingUrl,
 				},
 			});
+
+			return found;
 		});
+
+		if (!order) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
+			};
+		}
+
+		if ("_error" in order) {
+			return {
+				status: ActionStatus.ERROR,
+				message: ORDER_ERROR_MESSAGES.CANNOT_REVERT_NOT_SHIPPED,
+			};
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));

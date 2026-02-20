@@ -45,9 +45,13 @@ export async function deleteUploadThingFile(
 
 		// 6. Delete file via UTApi (per-request instantiation)
 		const utapi = new UTApi();
-		await utapi.deleteFiles(fileKey);
+		const result = await utapi.deleteFiles(fileKey);
 
-		// 7. Success
+		// 7. Verify deletion succeeded
+		if (!result.success || result.deletedCount === 0) {
+			return error("La suppression du fichier a echoue cote UploadThing");
+		}
+
 		return success("Fichier supprime", { deletedFile: fileKey });
 	} catch (e) {
 		return handleActionError(e, "Impossible de supprimer le fichier");

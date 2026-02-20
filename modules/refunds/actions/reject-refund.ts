@@ -7,7 +7,6 @@ import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
-import { ActionStatus } from "@/shared/types/server-action";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -31,11 +30,11 @@ export async function rejectRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
-		if ("error" in rateLimit) return rateLimit.error;
-
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
@@ -68,25 +67,16 @@ export async function rejectRefund(
 		});
 
 		if (!refund) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: REFUND_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return error(REFUND_ERROR_MESSAGES.NOT_FOUND);
 		}
 
 		// Vérifier le statut actuel
 		if (refund.status === RefundStatus.REJECTED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: REFUND_ERROR_MESSAGES.ALREADY_REJECTED,
-			};
+			return error(REFUND_ERROR_MESSAGES.ALREADY_REJECTED);
 		}
 
 		if (refund.status !== RefundStatus.PENDING) {
-			return {
-				status: ActionStatus.ERROR,
-				message: REFUND_ERROR_MESSAGES.ALREADY_PROCESSED,
-			};
+			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
 		}
 
 		// Sanitiser et construire la note avec la raison du rejet
@@ -132,10 +122,7 @@ export async function rejectRefund(
 			}
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Remboursement de ${(refund.amount / 100).toFixed(2)} € refusé pour la commande ${refund.order.orderNumber}`,
-		};
+		return success(`Remboursement de ${(refund.amount / 100).toFixed(2)} € refusé pour la commande ${refund.order.orderNumber}`);
 	} catch (error) {
 		return handleActionError(error, REFUND_ERROR_MESSAGES.REJECT_FAILED);
 	}

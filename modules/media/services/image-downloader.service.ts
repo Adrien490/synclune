@@ -10,7 +10,7 @@
  */
 
 import sharp from "sharp";
-import { delay } from "@/shared/utils/delay";
+import { withRetry as withRetryBase } from "@/shared/utils/with-retry";
 import type { DownloadImageOptions, RetryOptions, LogFn } from "../types/image-processing.types";
 import { IMAGE_DOWNLOADER_CONFIG } from "../constants/media.constants";
 
@@ -72,37 +72,18 @@ export function isRetryableError(error: unknown): boolean {
 }
 
 /**
- * Executes a function with retry and exponential backoff.
- * Only retries temporary errors (5xx, timeout, network).
+ * Image-aware retry wrapper. Pre-configures the shared withRetry utility
+ * with isRetryableError to skip retries on permanent HTTP 4xx errors.
  */
 export async function withRetry<T>(
 	fn: () => Promise<T>,
 	options: RetryOptions = {}
 ): Promise<T> {
-	const maxRetries = options.maxRetries ?? IMAGE_DOWNLOADER_CONFIG.MAX_RETRIES;
-	const baseDelay = options.baseDelay ?? IMAGE_DOWNLOADER_CONFIG.RETRY_BASE_DELAY_MS;
-
-	let lastError: Error | null = null;
-
-	for (let attempt = 0; attempt < maxRetries; attempt++) {
-		try {
-			return await fn();
-		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
-
-			// Check if the error is worth retrying
-			if (!isRetryableError(error)) {
-				throw lastError; // Permanent error, no retry
-			}
-
-			if (attempt < maxRetries - 1) {
-				const waitTime = baseDelay * Math.pow(2, attempt);
-				await delay(waitTime);
-			}
-		}
-	}
-
-	throw lastError;
+	return withRetryBase(fn, {
+		maxAttempts: options.maxRetries ?? IMAGE_DOWNLOADER_CONFIG.MAX_RETRIES,
+		baseDelay: options.baseDelay ?? IMAGE_DOWNLOADER_CONFIG.RETRY_BASE_DELAY_MS,
+		isRetryable: isRetryableError,
+	});
 }
 
 // ============================================================================

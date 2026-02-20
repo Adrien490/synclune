@@ -6,7 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError, error } from "@/shared/lib/actions";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
@@ -30,11 +30,11 @@ export async function bulkApproveRefunds(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
-		if ("error" in rateLimit) return rateLimit.error;
-
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const idsRaw = formData.get("ids") as string;
 		let ids: string[];
@@ -42,10 +42,7 @@ export async function bulkApproveRefunds(
 		try {
 			ids = JSON.parse(idsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des IDs invalide",
-			};
+			return error("Format des IDs invalide");
 		}
 
 		const validated = validateInput(bulkApproveRefundsSchema, { ids });
@@ -69,6 +66,7 @@ export async function bulkApproveRefunds(
 						total: true,
 						user: {
 							select: {
+								id: true,
 								email: true,
 								name: true,
 							},
@@ -79,13 +77,10 @@ export async function bulkApproveRefunds(
 		});
 
 		if (refunds.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun remboursement éligible à l'approbation (seuls les remboursements en attente peuvent être approuvés)",
-			};
+			return error("Aucun remboursement éligible à l'approbation (seuls les remboursements en attente peuvent être approuvés)");
 		}
 
-		// Approuver tous les remboursements avec audit trail
+		// Approuver tous les remboursements
 		await prisma.$transaction(async (tx) => {
 			for (const refund of refunds) {
 				await tx.refund.update({
@@ -96,10 +91,17 @@ export async function bulkApproveRefunds(
 			}
 		});
 
+		// Invalidate admin caches
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		const uniqueOrderIds = [...new Set(refunds.map(r => r.order.id))];
 		uniqueOrderIds.forEach(orderId => updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId)));
+
+		// Invalidate per-user caches
+		const uniqueUserIds = [...new Set(refunds.map(r => r.order.user?.id).filter(Boolean))] as string[];
+		for (const userId of uniqueUserIds) {
+			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId));
+		}
 
 		// Send approval emails to customers (non-blocking)
 		for (const refund of refunds) {

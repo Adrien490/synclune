@@ -32,6 +32,7 @@ export async function getCatalogData() {
 			getColors({
 				perPage: 100,
 				sortBy: "name-ascending",
+				filters: { isActive: true },
 			}),
 			getMaterialOptions(),
 			getMaxProductPrice(),

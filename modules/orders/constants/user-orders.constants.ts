@@ -54,12 +54,3 @@ export const USER_ORDERS_SORT_LABELS = {
 	[USER_ORDERS_SORT_OPTIONS.TOTAL_ASC]: "Montant croissant",
 } as const;
 
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_USER_ORDERS_DEFAULT_CACHE = {
-	revalidate: 60,
-	stale: 60 * 5,
-	expire: 60 * 15,
-} as const;

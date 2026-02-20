@@ -36,5 +36,18 @@ export async function searchAddress(
 
 	// Valider et appliquer les valeurs par défaut
 	const validatedParams = searchAddressSchema.parse(params);
-	return await fetchAddresses(validatedParams);
+
+	try {
+		return await fetchAddresses(validatedParams);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Erreur inconnue";
+		console.error(`[ADDRESS-SEARCH] ${message}`);
+
+		return {
+			addresses: [],
+			query: validatedParams.text,
+			limit: validatedParams.maximumResponses,
+			error: true,
+		};
+	}
 }

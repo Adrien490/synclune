@@ -74,7 +74,7 @@ export const createRefundItemSchema = z.object({
 	amount: z
 		.number()
 		.int()
-		.nonnegative("Le montant doit être positif ou nul")
+		.positive("Le montant doit être supérieur à 0")
 		.max(999999999, "Montant trop élevé"),
 	restock: z.boolean().default(true),
 });
@@ -89,16 +89,8 @@ export const createRefundSchema = z.object({
 	note: z.string().max(2000).optional(),
 	items: z
 		.array(createRefundItemSchema)
-		.min(1, "Au moins un article doit être sélectionné"),
-});
-
-// ============================================================================
-// UPDATE REFUND STATUS SCHEMA
-// ============================================================================
-
-export const updateRefundStatusSchema = z.object({
-	id: z.cuid2(),
-	status: z.enum(RefundStatus),
+		.min(1, "Au moins un article doit être sélectionné")
+		.max(100, "Maximum 100 articles par remboursement"),
 });
 
 // ============================================================================

@@ -50,13 +50,29 @@ export async function deleteUploadThingFilesFromUrls(
 
 	try {
 		const utapi = new UTApi();
-		await utapi.deleteFiles(fileKeys);
+		const result = await utapi.deleteFiles(fileKeys);
 
-		console.log(
-			`[deleteUploadThingFilesFromUrls] ${fileKeys.length} fichier(s) supprime(s) avec succes`
-		);
+		if (!result.success) {
+			console.warn(
+				`[deleteUploadThingFilesFromUrls] UTApi.deleteFiles returned success=false for ${fileKeys.length} key(s)`
+			);
+			return { deleted: 0, failed: urls.length };
+		}
 
-		return { deleted: fileKeys.length, failed: failedUrls.length };
+		const actualDeleted = result.deletedCount;
+		const utFailures = fileKeys.length - actualDeleted;
+
+		if (utFailures > 0) {
+			console.warn(
+				`[deleteUploadThingFilesFromUrls] Partial deletion: ${actualDeleted}/${fileKeys.length} fichier(s) supprime(s)`
+			);
+		} else {
+			console.log(
+				`[deleteUploadThingFilesFromUrls] ${actualDeleted} fichier(s) supprime(s) avec succes`
+			);
+		}
+
+		return { deleted: actualDeleted, failed: failedUrls.length + utFailures };
 	} catch (error) {
 		// Log error but don't block the main operation
 		console.error(

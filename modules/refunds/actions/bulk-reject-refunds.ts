@@ -6,7 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError, error } from "@/shared/lib/actions";
 import { ActionStatus } from "@/shared/types/server-action";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
@@ -32,11 +32,11 @@ export async function bulkRejectRefunds(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
-		if ("error" in rateLimit) return rateLimit.error;
-
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const idsRaw = formData.get("ids") as string;
 		const reason = formData.get("reason") as string | null;
@@ -45,10 +45,7 @@ export async function bulkRejectRefunds(
 		try {
 			ids = JSON.parse(idsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des IDs invalide",
-			};
+			return error("Format des IDs invalide");
 		}
 
 		const validated = validateInput(bulkRejectRefundsSchema, { ids, reason });
@@ -71,6 +68,7 @@ export async function bulkRejectRefunds(
 						orderNumber: true,
 						user: {
 							select: {
+								id: true,
 								email: true,
 								name: true,
 							},
@@ -81,16 +79,13 @@ export async function bulkRejectRefunds(
 		});
 
 		if (refunds.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun remboursement éligible au rejet (seuls les remboursements en attente peuvent être rejetés)",
-			};
+			return error("Aucun remboursement éligible au rejet (seuls les remboursements en attente peuvent être rejetés)");
 		}
 
 		// Sanitiser la raison avant stockage
 		const sanitizedReason = validated.data.reason ? sanitizeText(validated.data.reason) : null;
 
-		// Rejeter tous les remboursements avec audit trail
+		// Rejeter tous les remboursements
 		await prisma.$transaction(async (tx) => {
 			for (const refund of refunds) {
 				const updatedNote = sanitizedReason
@@ -110,10 +105,17 @@ export async function bulkRejectRefunds(
 			}
 		});
 
+		// Invalidate admin caches
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		const uniqueOrderIds = [...new Set(refunds.map(r => r.order.id))];
 		uniqueOrderIds.forEach(orderId => updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId)));
+
+		// Invalidate per-user caches
+		const uniqueUserIds = [...new Set(refunds.map(r => r.order.user?.id).filter(Boolean))] as string[];
+		for (const userId of uniqueUserIds) {
+			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId));
+		}
 
 		// Send rejection emails to customers (non-blocking)
 		for (const refund of refunds) {

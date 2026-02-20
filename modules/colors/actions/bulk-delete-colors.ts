@@ -9,7 +9,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
-import { getColorInvalidationTags } from "../constants/cache";
+import { COLORS_CACHE_TAGS, getColorInvalidationTags } from "../constants/cache";
 import { bulkDeleteColorsSchema } from "../schemas/color.schemas";
 
 export async function bulkDeleteColors(
@@ -71,9 +71,12 @@ export async function bulkDeleteColors(
 			},
 		});
 
-		// Invalider le cache
-		const tags = getColorInvalidationTags();
-		tags.forEach((tag) => updateTag(tag));
+		// Invalider le cache (list + detail for each deleted color)
+		const tagSet = new Set(getColorInvalidationTags());
+		for (const color of colorsWithUsage) {
+			tagSet.add(COLORS_CACHE_TAGS.DETAIL(color.slug));
+		}
+		tagSet.forEach((tag) => updateTag(tag));
 
 		return success(`${result.count} couleur${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès`);
 	} catch (e) {

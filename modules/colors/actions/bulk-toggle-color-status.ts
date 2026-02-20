@@ -56,8 +56,8 @@ export async function bulkToggleColorStatus(
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		const statusText = validatedData.isActive ? "activee" : "desactivee";
-		return success(`${result.count} couleur${result.count > 1 ? "s" : ""} ${statusText}${result.count > 1 ? "s" : ""} avec succes`);
+		const statusText = validatedData.isActive ? "activée" : "désactivée";
+		return success(`${result.count} couleur${result.count > 1 ? "s" : ""} ${statusText}${result.count > 1 ? "s" : ""} avec succès`);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le statut des couleurs");
 	}

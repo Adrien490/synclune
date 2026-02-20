@@ -71,7 +71,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 			keys: ["abc123.jpg"],
 			failedUrls: [],
 		});
-		mockDeleteFiles.mockResolvedValue(undefined);
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
 		await deleteUploadThingFilesFromUrls([
 			"https://utfs.io/f/abc123.jpg",
@@ -87,7 +87,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 			keys: ["key-one.jpg", "key-two.png"],
 			failedUrls: [],
 		});
-		mockDeleteFiles.mockResolvedValue(undefined);
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 2 });
 
 		await deleteUploadThingFilesFromUrls([
 			"https://utfs.io/f/key-one.jpg",
@@ -103,7 +103,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 			keys: ["key-one.jpg", "key-two.png"],
 			failedUrls: [],
 		});
-		mockDeleteFiles.mockResolvedValue(undefined);
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 2 });
 
 		const result = await deleteUploadThingFilesFromUrls([
 			"https://utfs.io/f/key-one.jpg",
@@ -119,7 +119,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 			keys: ["good-key.jpg"],
 			failedUrls: ["https://utfs.io/f/"],
 		});
-		mockDeleteFiles.mockResolvedValue(undefined);
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
 		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
@@ -188,13 +188,56 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		errorSpy.mockRestore();
 	});
 
+	it("should return { deleted: 0, failed: urls.length } when UTApi returns success=false", async () => {
+		mockIsValidUploadThingUrl.mockReturnValue(true);
+		mockExtractFileKeysFromUrls.mockReturnValue({
+			keys: ["key-one.jpg", "key-two.png"],
+			failedUrls: [],
+		});
+		mockDeleteFiles.mockResolvedValue({ success: false, deletedCount: 0 });
+
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+		const urls = ["https://utfs.io/f/key-one.jpg", "https://utfs.io/f/key-two.png"];
+		const result = await deleteUploadThingFilesFromUrls(urls);
+
+		expect(result).toEqual({ deleted: 0, failed: urls.length });
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining("success=false")
+		);
+		warnSpy.mockRestore();
+	});
+
+	it("should report partial deletion when UTApi deletedCount < requested keys", async () => {
+		mockIsValidUploadThingUrl.mockReturnValue(true);
+		mockExtractFileKeysFromUrls.mockReturnValue({
+			keys: ["key-one.jpg", "key-two.png", "key-three.webp"],
+			failedUrls: [],
+		});
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 2 });
+
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+		const result = await deleteUploadThingFilesFromUrls([
+			"https://utfs.io/f/key-one.jpg",
+			"https://utfs.io/f/key-two.png",
+			"https://utfs.io/f/key-three.webp",
+		]);
+
+		expect(result).toEqual({ deleted: 2, failed: 1 });
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining("Partial deletion")
+		);
+		warnSpy.mockRestore();
+	});
+
 	it("should log a success message after successful deletion", async () => {
 		mockIsValidUploadThingUrl.mockReturnValue(true);
 		mockExtractFileKeysFromUrls.mockReturnValue({
 			keys: ["key.jpg"],
 			failedUrls: [],
 		});
-		mockDeleteFiles.mockResolvedValue(undefined);
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
 		const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
@@ -245,7 +288,7 @@ describe("deleteUploadThingFileFromUrl", () => {
 			keys: ["abc123.jpg"],
 			failedUrls: [],
 		});
-		mockDeleteFiles.mockResolvedValue(undefined);
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
 		const result = await deleteUploadThingFileFromUrl("https://utfs.io/f/abc123.jpg");
 
@@ -281,13 +324,28 @@ describe("deleteUploadThingFileFromUrl", () => {
 		expect(result).toBe(false);
 	});
 
+	it("should return false when UTApi returns success=false without throwing", async () => {
+		mockIsValidUploadThingUrl.mockReturnValue(true);
+		mockExtractFileKeysFromUrls.mockReturnValue({
+			keys: ["abc123.jpg"],
+			failedUrls: [],
+		});
+		mockDeleteFiles.mockResolvedValue({ success: false, deletedCount: 0 });
+
+		vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+		const result = await deleteUploadThingFileFromUrl("https://utfs.io/f/abc123.jpg");
+
+		expect(result).toBe(false);
+	});
+
 	it("should delegate to deleteUploadThingFilesFromUrls with the URL wrapped in an array", async () => {
 		mockIsValidUploadThingUrl.mockReturnValue(true);
 		mockExtractFileKeysFromUrls.mockReturnValue({
 			keys: ["abc123.jpg"],
 			failedUrls: [],
 		});
-		mockDeleteFiles.mockResolvedValue(undefined);
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
 		await deleteUploadThingFileFromUrl("https://utfs.io/f/abc123.jpg");
 

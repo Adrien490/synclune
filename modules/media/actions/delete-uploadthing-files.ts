@@ -70,16 +70,24 @@ export async function deleteUploadThingFiles(
 
 		// 6. Delete files via UTApi (per-request instantiation)
 		const utapi = new UTApi();
-		await utapi.deleteFiles(fileKeys);
+		const result = await utapi.deleteFiles(fileKeys);
 
-		// 7. Success (with warning for partial failures)
-		if (failedUrls.length > 0) {
+		// 7. Verify deletion and report accurate counts
+		const actualDeleted = result.success ? result.deletedCount : 0;
+		const utFailures = result.success ? fileKeys.length - result.deletedCount : fileKeys.length;
+		const totalFailed = failedUrls.length + utFailures;
+
+		if (!result.success) {
+			return error("La suppression des fichiers a echoue cote UploadThing");
+		}
+
+		if (totalFailed > 0) {
 			return success(
-				`${fileKeys.length} fichier(s) supprime(s). ${failedUrls.length} URL(s) n'ont pas pu etre traitee(s).`,
-				{ deletedCount: fileKeys.length, failedCount: failedUrls.length }
+				`${actualDeleted} fichier(s) supprime(s). ${totalFailed} fichier(s) n'ont pas pu etre traite(s).`,
+				{ deletedCount: actualDeleted, failedCount: totalFailed }
 			);
 		}
-		return success(`${fileKeys.length} fichier(s) supprime(s)`, { deletedCount: fileKeys.length });
+		return success(`${actualDeleted} fichier(s) supprime(s)`, { deletedCount: actualDeleted });
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression des fichiers");
 	}

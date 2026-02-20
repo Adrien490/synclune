@@ -1,5 +1,6 @@
 "use server";
 
+import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { RETURN_REQUEST_LIMIT } from "@/shared/lib/rate-limit-config";
@@ -70,12 +71,19 @@ export async function requestReturn(
 						quantity: true,
 						price: true,
 						refundItems: {
+							where: {
+								refund: {
+									status: {
+										in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+									},
+								},
+							},
 							select: { quantity: true },
 						},
 					},
 				},
 				refunds: {
-					where: { status: "PENDING" },
+					where: { status: { in: ["PENDING", "APPROVED"] } },
 					select: { id: true },
 				},
 			},
@@ -114,7 +122,7 @@ export async function requestReturn(
 			}
 		}
 
-		// 7. Check no existing PENDING refund for this order
+		// 7. Check no existing PENDING or APPROVED refund for this order
 		if (order.refunds.length > 0) {
 			return error(REFUND_ERROR_MESSAGES.RETURN_ALREADY_REQUESTED);
 		}

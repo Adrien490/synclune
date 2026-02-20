@@ -18,6 +18,7 @@ import { updateTag } from "next/cache";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { updateTrackingSchema } from "../schemas/order.schemas";
+import { createOrderAuditTx } from "../utils/order-audit";
 
 /**
  * Met à jour les informations de suivi d'une commande expédiée
@@ -62,7 +63,7 @@ export async function updateTracking(
 			validated.data.trackingUrl ||
 			getTrackingUrl(carrierValue, validated.data.trackingNumber);
 
-		// Transaction: fetch + validate status + update atomically (prevents race condition)
+		// Transaction: fetch + validate status + update + audit atomically (prevents race condition)
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
 				where: { id, deletedAt: null },
@@ -98,6 +99,19 @@ export async function updateTracking(
 					trackingUrl: finalTrackingUrl,
 					shippingCarrier: validated.data.carrier || null,
 					estimatedDelivery: validated.data.estimatedDelivery,
+				},
+			});
+
+			// Audit trail (Art. L123-22 Code de Commerce)
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "TRACKING_UPDATED",
+				note: `Suivi mis a jour : ${validated.data.trackingNumber}`,
+				metadata: {
+					previousTrackingNumber: found.trackingNumber,
+					newTrackingNumber: validated.data.trackingNumber,
+					trackingUrl: finalTrackingUrl,
+					carrier: validated.data.carrier || null,
 				},
 			});
 

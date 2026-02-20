@@ -12,6 +12,7 @@ import {
 	Sparkles,
 	Mail,
 	MessageSquare,
+	Ticket,
 } from "lucide-react";
 
 // ============================================================================
@@ -108,6 +109,13 @@ export const navigationData: NavigationData = {
 			label: "Marketing",
 			icon: Mail,
 			items: [
+				{
+					id: "discounts",
+					title: "Codes promo",
+					shortTitle: "Promos",
+					url: "/admin/marketing/discounts",
+					icon: Ticket,
+				},
 				{
 					id: "reviews",
 					title: "Avis clients",

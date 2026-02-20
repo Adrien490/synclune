@@ -52,14 +52,3 @@ export function getVideoMimeType(url: string): string {
 
 	return VIDEO_MIME_TYPES[extension] || "video/mp4";
 }
-
-/**
- * Generates a list of video sources.
- * Note: Does not generate WebM fallback since CDNs (UploadThing, etc.)
- * do not automatically create alternative versions.
- * @param url - The main video URL
- * @returns Array of sources with MIME types
- */
-export function getVideoSources(url: string): Array<{ src: string; type: string }> {
-	return [{ src: url, type: getVideoMimeType(url) }];
-}

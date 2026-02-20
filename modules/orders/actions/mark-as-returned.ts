@@ -58,47 +58,33 @@ export async function markAsReturned(
 			};
 		}
 
-		// Récupérer la commande
-		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				fulfillmentStatus: true,
-				userId: true,
-				total: true,
-				customerEmail: true,
-				customerName: true,
-				shippingFirstName: true,
-			},
-		});
+		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					fulfillmentStatus: true,
+					userId: true,
+					total: true,
+					customerEmail: true,
+					customerName: true,
+					shippingFirstName: true,
+				},
+			});
 
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
-		}
+			if (!found) return null;
 
-		// Vérifier si déjà retournée
-		if (order.fulfillmentStatus === FulfillmentStatus.RETURNED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.ALREADY_RETURNED,
-			};
-		}
+			if (found.fulfillmentStatus === FulfillmentStatus.RETURNED) {
+				return { ...found, _error: "already_returned" as const };
+			}
 
-		// Vérifier que la commande est bien livrée
-		if (order.status !== OrderStatus.DELIVERED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_RETURN_NOT_DELIVERED,
-			};
-		}
+			if (found.status !== OrderStatus.DELIVERED) {
+				return { ...found, _error: "not_delivered" as const };
+			}
 
-		// Mettre à jour la commande + audit trail atomique
-		await prisma.$transaction(async (tx) => {
 			await tx.order.update({
 				where: { id },
 				data: {
@@ -109,14 +95,33 @@ export async function markAsReturned(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "RETURNED",
-				previousFulfillmentStatus: order.fulfillmentStatus,
+				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.RETURNED,
 				note: result.data.reason,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
 				source: HistorySource.ADMIN,
 			});
+
+			return found;
 		});
+
+		if (!order) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
+			};
+		}
+
+		if ("_error" in order) {
+			const message = order._error === "already_returned"
+				? ORDER_ERROR_MESSAGES.ALREADY_RETURNED
+				: ORDER_ERROR_MESSAGES.CANNOT_RETURN_NOT_DELIVERED;
+			return {
+				status: ActionStatus.ERROR,
+				message,
+			};
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));

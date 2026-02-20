@@ -36,10 +36,12 @@ interface AddressDialogData extends Record<string, unknown> {
 
 interface AddressFormDialogProps {
 	addressSuggestions?: SearchAddressResult[];
+	addressSearchError?: boolean;
 }
 
 export function AddressFormDialog({
 	addressSuggestions = [],
+	addressSearchError = false,
 }: AddressFormDialogProps) {
 	const { isOpen, close, data } =
 		useDialog<AddressDialogData>(ADDRESS_DIALOG_ID);
@@ -53,6 +55,7 @@ export function AddressFormDialog({
 					key={address?.id ?? "new"}
 					address={address}
 					addressSuggestions={addressSuggestions}
+					addressSearchError={addressSearchError}
 					onClose={close}
 				/>
 			</ResponsiveDialogContent>
@@ -63,12 +66,14 @@ export function AddressFormDialog({
 interface AddressFormContentProps {
 	address?: UserAddress;
 	addressSuggestions: SearchAddressResult[];
+	addressSearchError: boolean;
 	onClose: () => void;
 }
 
 function AddressFormContent({
 	address,
 	addressSuggestions,
+	addressSearchError,
 	onClose,
 }: AddressFormContentProps) {
 	const mode = address ? "edit" : "create";
@@ -258,6 +263,7 @@ function AddressFormContent({
 										placeholder="Rechercher une adresse..."
 										isLoading={isPendingAddress}
 										disabled={isPending}
+										error={addressSearchError ? "La recherche d'adresse est temporairement indisponible" : undefined}
 										noResultsMessage="Aucune adresse trouvée"
 										minQueryLength={3}
 										debounceMs={0}

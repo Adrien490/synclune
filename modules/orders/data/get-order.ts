@@ -35,9 +35,6 @@ export async function getOrder(
 	const validation = getOrderSchema.safeParse(params ?? {});
 
 	if (!validation.success) {
-		if (process.env.NODE_ENV !== "production") {
-			// console.warn("getOrder invalid params", validation.error.issues);
-		}
 		return null;
 	}
 
@@ -80,10 +77,7 @@ export async function fetchOrder(
 		});
 
 		return order;
-	} catch (error) {
-		if (process.env.NODE_ENV !== "production") {
-			// console.error("fetchOrder error:", error);
-		}
+	} catch {
 		return null;
 	}
 }

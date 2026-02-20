@@ -10,9 +10,7 @@ import { validateInput, handleActionError, success, error } from "@/shared/lib/a
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
-
-const MAX_ADDRESSES_PER_USER = 10;
-const ADDRESS_LIMIT_ERROR = `Vous ne pouvez pas enregistrer plus de ${MAX_ADDRESSES_PER_USER} adresses`;
+import { MAX_ADDRESSES_PER_USER, ADDRESS_LIMIT_ERROR } from "../constants/address.constants";
 
 class LimitExceededError extends Error {}
 

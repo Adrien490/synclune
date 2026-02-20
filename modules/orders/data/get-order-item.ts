@@ -66,6 +66,7 @@ export async function fetchOrderItem(
 	if (!context.admin && context.userId) {
 		where.order = {
 			userId: context.userId,
+			deletedAt: null,
 		};
 	}
 

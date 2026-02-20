@@ -58,105 +58,77 @@ export async function markAsPaid(
 			};
 		}
 
-		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				paymentStatus: true,
-				fulfillmentStatus: true,
-				userId: true,
-				customerEmail: true,
-				customerName: true,
-				subtotal: true,
-				discountAmount: true,
-				shippingCost: true,
-				total: true,
-				shippingFirstName: true,
-				shippingLastName: true,
-				shippingAddress1: true,
-				shippingAddress2: true,
-				shippingPostalCode: true,
-				shippingCity: true,
-				shippingCountry: true,
-				stripeCheckoutSessionId: true, // Pour savoir si le stock a été réservé via checkout
-				items: {
-					select: {
-						skuId: true,
-						quantity: true,
-						productTitle: true,
-						skuColor: true,
-						skuMaterial: true,
-						skuSize: true,
-						price: true,
+		// Transaction: fetch + validate + stock check + update + audit atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+			const found = await tx.order.findUnique({
+				where: { id, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					paymentStatus: true,
+					fulfillmentStatus: true,
+					userId: true,
+					customerEmail: true,
+					customerName: true,
+					subtotal: true,
+					discountAmount: true,
+					shippingCost: true,
+					total: true,
+					shippingFirstName: true,
+					shippingLastName: true,
+					shippingAddress1: true,
+					shippingAddress2: true,
+					shippingPostalCode: true,
+					shippingCity: true,
+					shippingCountry: true,
+					stripeCheckoutSessionId: true,
+					items: {
+						select: {
+							skuId: true,
+							quantity: true,
+							productTitle: true,
+							skuColor: true,
+							skuMaterial: true,
+							skuSize: true,
+							price: true,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
-		}
+			if (!found) return null;
 
-		// Vérifier si déjà payée
-		if (order.paymentStatus === PaymentStatus.PAID) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.ALREADY_PAID,
-			};
-		}
+			if (found.paymentStatus === PaymentStatus.PAID) {
+				return { ...found, _error: "already_paid" as const };
+			}
 
-		// Vérifier si annulée
-		if (order.status === OrderStatus.CANCELLED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED,
-			};
-		}
+			if (found.status === OrderStatus.CANCELLED) {
+				return { ...found, _error: "cancelled" as const };
+			}
 
-		// 🔴 CORRECTION : Vérifier si le stock a été réservé
-		// - Si stripeCheckoutSessionId existe → stock déjà réservé lors du checkout
-		// - Si absent → commande créée manuellement, stock à décrémenter
-		const stockAlreadyReserved = !!order.stripeCheckoutSessionId;
+			// Stock reservation check
+			const stockAlreadyReserved = !!found.stripeCheckoutSessionId;
 
-		// Transaction atomique pour mise à jour commande + gestion stock
-		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			// Si le stock n'a pas été réservé (commande manuelle), le décrémenter maintenant
-			if (!stockAlreadyReserved && order.items.length > 0) {
-				// Vérifier d'abord que le stock est suffisant pour tous les items
-				for (const item of order.items) {
-					const sku = await tx.productSku.findUnique({
-						where: { id: item.skuId },
-						select: { inventory: true, sku: true, isActive: true },
-					});
-
-					if (!sku) {
-						throw new Error(`SKU introuvable : ${item.skuId}`);
-					}
-
-					if (!sku.isActive) {
-						throw new Error(`Le produit ${item.productTitle} n'est plus disponible (SKU inactif)`);
-					}
-
-					if (sku.inventory < item.quantity) {
-						throw new Error(
-							`Stock insuffisant pour ${item.productTitle} (${item.quantity} demandé, ${sku.inventory} disponible)`
-						);
-					}
-				}
-
-				// Décrémenter le stock
-				for (const item of order.items) {
-					await tx.productSku.update({
-						where: { id: item.skuId },
+			// Atomic stock decrement with conditional WHERE (prevents overselling)
+			if (!stockAlreadyReserved && found.items.length > 0) {
+				for (const item of found.items) {
+					const result = await tx.productSku.updateMany({
+						where: {
+							id: item.skuId,
+							isActive: true,
+							inventory: { gte: item.quantity },
+						},
 						data: {
 							inventory: { decrement: item.quantity },
 						},
 					});
+
+					if (result.count === 0) {
+						throw new Error(
+							`Stock insuffisant ou SKU inactif pour ${item.productTitle}`
+						);
+					}
 				}
 			}
 
@@ -171,25 +143,44 @@ export async function markAsPaid(
 				},
 			});
 
-			// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
+			// Audit trail (Best Practice Stripe 2025)
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "PAID",
-				previousStatus: order.status,
+				previousStatus: found.status,
 				newStatus: OrderStatus.PROCESSING,
-				previousPaymentStatus: order.paymentStatus,
+				previousPaymentStatus: found.paymentStatus,
 				newPaymentStatus: PaymentStatus.PAID,
-				previousFulfillmentStatus: order.fulfillmentStatus,
+				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
 					stockAdjusted: !stockAlreadyReserved,
-					itemsCount: order.items.length,
+					itemsCount: found.items.length,
 				},
 			});
+
+			return { ...found, _stockAlreadyReserved: stockAlreadyReserved };
 		});
+
+		if (!order) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
+			};
+		}
+
+		if ("_error" in order) {
+			const message = order._error === "already_paid"
+				? ORDER_ERROR_MESSAGES.ALREADY_PAID
+				: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
+			return {
+				status: ActionStatus.ERROR,
+				message,
+			};
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
@@ -226,7 +217,7 @@ export async function markAsPaid(
 			}).catch(() => {});
 		}
 
-		const stockMessage = !stockAlreadyReserved && order.items.length > 0
+		const stockMessage = !order._stockAlreadyReserved && order.items.length > 0
 			? ` Stock décrémenté pour ${order.items.length} article(s).`
 			: "";
 

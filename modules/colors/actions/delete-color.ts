@@ -63,7 +63,7 @@ export async function deleteColor(
 		});
 
 		// Invalider le cache
-		const tags = getColorInvalidationTags();
+		const tags = getColorInvalidationTags(existingColor.slug);
 		tags.forEach((tag) => updateTag(tag));
 
 		return success("Couleur supprimée avec succès");

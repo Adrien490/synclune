@@ -38,7 +38,7 @@ vi.mock("@/modules/orders/constants/shipping-rates", () => ({
 	},
 }));
 
-vi.mock("@/modules/orders/utils/postal-zone.utils", () => ({
+vi.mock("@/modules/orders/services/shipping-zone.service", () => ({
 	getShippingZoneFromPostalCode: (postalCode: string) => {
 		if (postalCode.startsWith("20")) {
 			return { zone: "CORSE" };

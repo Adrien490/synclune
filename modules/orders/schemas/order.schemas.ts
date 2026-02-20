@@ -228,7 +228,7 @@ export const deleteOrderSchema = z.object({
  * Seules les commandes éligibles seront supprimées
  */
 export const bulkDeleteOrdersSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée"),
+	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée").max(100, "Maximum 100 commandes par opération"),
 });
 
 // ============================================================================
@@ -413,7 +413,7 @@ export const markAsReturnedSchema = z.object({
  * Filtrage automatique : seules les commandes SHIPPED seront traitées
  */
 export const bulkMarkAsDeliveredSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée"),
+	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée").max(100, "Maximum 100 commandes par opération"),
 	sendEmail: z
 		.union([z.boolean(), z.enum(["true", "false"])])
 		.optional()
@@ -433,7 +433,7 @@ export const bulkMarkAsDeliveredSchema = z.object({
  * Filtrage automatique : seules les commandes non annulées seront traitées
  */
 export const bulkCancelOrdersSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée"),
+	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée").max(100, "Maximum 100 commandes par opération"),
 	reason: z.string().max(500).optional(),
 });
 

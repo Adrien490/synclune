@@ -18,43 +18,29 @@ export async function fetchAddresses(
 	"use cache";
 	cacheAddressSearch(params.text);
 
-	try {
-		const apiUrl = buildApiUrl(params);
+	const apiUrl = buildApiUrl(params);
 
-		const response = await fetch(apiUrl, {
-			method: "GET",
-			headers: {
-				"Accept": "application/json",
-			},
-		});
+	const response = await fetch(apiUrl, {
+		method: "GET",
+		headers: {
+			"Accept": "application/json",
+		},
+	});
 
-		if (!response.ok) {
-			throw new Error(
-				`Erreur API BAN: ${response.status} ${response.statusText}`
-			);
-		}
-
-		const data: CompletionApiResponse = await response.json();
-
-		// Transformer les résultats en format simplifié
-		const addresses = data.results.map(transformCompletionResult);
-
-		return {
-			addresses,
-			query: params.text,
-			limit: params.maximumResponses,
-		};
-	} catch (error) {
-		// Log l'erreur pour debugging mais retourne un résultat vide pour ne pas bloquer l'UI
-		const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
-		console.error(`[ADDRESS-SEARCH] Erreur API BAN: ${errorMessage}`);
-
-		// Retourne un résultat vide plutôt que de throw
-		// L'utilisateur peut toujours saisir son adresse manuellement
-		return {
-			addresses: [],
-			query: params.text,
-			limit: params.maximumResponses,
-		};
+	if (!response.ok) {
+		throw new Error(
+			`Erreur API BAN: ${response.status} ${response.statusText}`
+		);
 	}
+
+	const data: CompletionApiResponse = await response.json();
+
+	// Transformer les résultats en format simplifié
+	const addresses = data.results.map(transformCompletionResult);
+
+	return {
+		addresses,
+		query: params.text,
+		limit: params.maximumResponses,
+	};
 }

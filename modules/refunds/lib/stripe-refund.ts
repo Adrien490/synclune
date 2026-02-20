@@ -78,14 +78,22 @@ export async function createStripeRefund(
 				console.log("[STRIPE_REFUND] Charge already refunded, treating as success (idempotence)");
 
 				// Recover the existing refund ID from Stripe
+				// Fetch multiple refunds and match by metadata or amount to avoid
+				// returning an unrelated partial refund from the same charge
 				let existingRefundId: string | undefined;
 				try {
 					const existingRefunds = await stripe.refunds.list({
 						...(params.chargeId ? { charge: params.chargeId } : {}),
 						...(params.paymentIntentId ? { payment_intent: params.paymentIntentId } : {}),
-						limit: 1,
+						limit: 10,
 					});
-					existingRefundId = existingRefunds.data[0]?.id;
+
+					// Prefer matching by metadata refund_id, then by amount, then fallback to first
+					const byMetadata = params.metadata?.refund_id
+						? existingRefunds.data.find(r => r.metadata?.refund_id === params.metadata!.refund_id)
+						: undefined;
+					const byAmount = existingRefunds.data.find(r => r.amount === params.amount);
+					existingRefundId = (byMetadata ?? byAmount ?? existingRefunds.data[0])?.id;
 				} catch {
 					console.warn("[STRIPE_REFUND] Could not recover existing refund ID");
 				}

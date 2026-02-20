@@ -126,15 +126,3 @@ export interface OrderPermissions {
 	canCancel: boolean
 	canRevertToProcessing: boolean
 }
-
-// ============================================================================
-// TYPES - ORDER AUDIT (from utils/)
-// ============================================================================
-
-export interface CreateOrderAuditParams {
-	orderId: string
-	action: string
-	details?: Record<string, unknown>
-	userId?: string
-}
-

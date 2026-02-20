@@ -1,35 +1,67 @@
 # Spec technique - Espace client Synclune
 
 > Ce document detaille les fonctionnalites de l'espace client (A-M) + la navigation, avec pour chaque item : le statut d'implementation, les fichiers a creer/modifier, les patterns a suivre, les donnees disponibles, et les dependances.
+>
+> **Les pages ont ete supprimees** (`app/(boutique)/(espace-client)/`) pour etre reconstruites de zero. Tous les composants modules, actions, data, hooks et services restent intacts.
 
 ---
 
 ## Tableau de suivi
 
-| Feature | Statut | Effort | Notes |
-|---|---|---|---|
-| Navigation (7 items) | Fait | - | Avec `desktopOnly` pour Adresses + Demandes |
-| A - Adresses | Fait | - | BAN autocomplete inclus |
-| B - Mes demandes | Fait | - | Page + composants customer |
-| C - Facture PDF | Fait | - | `DownloadInvoiceButton` + route API |
-| D - Remboursements | A faire | Faible | Modifier `GET_ORDER_SELECT` + 1 composant |
-| E - Newsletter settings | Fait | - | `NewsletterSettingsCard` dans sidebar parametres |
-| F - Filtres commandes | A faire | Faible | Params types mais pas wires |
-| G - Sessions actives | Fait | - | `ActiveSessionsCard` dans parametres |
-| H - Avatar upload | A faire | Moyen | Nouvelle route UploadThing + composant |
-| I - Changement email | A faire | Moyen | Email toujours read-only dans `ProfileForm` |
-| J - Panier wishlist | A faire | Faible | Pas de bouton ajout panier depuis wishlist |
-| K - Annulation commande client | A faire | Moyen | `cancelOrder` est admin-only actuellement |
-| L - Codes promo sur commande | A faire | Faible | `discountAmount` affiche mais pas le code |
-| M - Annulation suppression compte | A faire | Moyen | `PENDING_DELETION` non utilise, suppression immediate |
+| Feature | Statut | Backend | Effort | Notes |
+|---|---|---|---|---|
+| Navigation (7 items) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| A - Adresses | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| B - Mes demandes | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| C - Facture PDF | A faire | Complet | Faible | Page a recreer, fix securite `order.userId` applique |
+| D - Remboursements | A faire | A completer | Faible | Modifier `GET_ORDER_SELECT` + 1 composant |
+| E - Newsletter settings | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| F - Filtres commandes | A faire | A completer | Faible | Params types mais pas wires, conflit `paymentStatus: PAID` hardcode |
+| G - Sessions actives | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| H - Avatar upload | A faire | A completer | Moyen | Nouvelle route UploadThing + composant. Prerequis : fix RGPD (Feature M) |
+| I - Changement email | A faire | A completer | Moyen | Email toujours read-only dans `ProfileForm` |
+| J - Panier wishlist | A faire | Complet | Faible | `AddToCartCardButton` deja dans `ProductCard` |
+| K - Annulation commande client | A faire | A completer | Moyen | `cancelOrder` admin-only, mais `canCancelOrder()` reutilisable |
+| L - Codes promo sur commande | A faire | A completer | Faible | `discountAmount` affiche mais pas le code |
+| M - Annulation suppression compte | A faire | A completer | Moyen | `PENDING_DELETION` non utilise, `deletionRequestedAt` dead code |
+
+---
+
+## Architecture transversale
+
+### Layout espace-client
+
+Le layout utilise une grille 2 colonnes (desktop) :
+- **Colonne gauche (2/3)** : contenu principal (nav mobile + page content)
+- **Colonne droite (1/3)** : sidebar de navigation (desktop only, via `AccountNav`)
+
+### Pattern page detail commande (`/commandes/[orderNumber]`)
+
+La page affiche la commande dans une grille 2/3 + 1/3 :
+- **Colonne principale (2/3)** : `OrderItemsList` → `OrderRefundsCard` (si refunds) → `OrderTracking`
+- **Colonne sidebar (1/3)** : `OrderSummaryCard` → `OrderInfoCard` → `DownloadInvoiceButton` (si PAID)
+
+### Pattern page parametres (`/parametres`)
+
+La page parametres utilise aussi une grille 2/3 + 1/3 :
+- **Colonne principale (2/3)** : `ProfileForm` → `SecuritySection` (change password) → `GdprSection` (export/delete)
+- **Colonne sidebar (1/3)** : `AvatarUpload` (Feature H) → `NewsletterSettingsCard` → `ActiveSessionsCard`
+
+### Pattern page compte (`/compte`) - Dashboard
+
+Page tableau de bord avec stats et raccourcis :
+- Nombre de commandes, montant total depense
+- Derniere commande
+- Nombre de favoris
+- Liens rapides vers les sections principales
 
 ---
 
 ## Navigation transversale
 
-> **Statut : Fait**
+> **Statut : A faire** — Backend complet, page a recreer
 
-### Fichier modifie
+### Fichier existant
 
 `modules/users/components/account-nav.tsx`
 
@@ -59,26 +91,26 @@ La bottom bar affiche 5 items. Les 2 items `desktopOnly` restent accessibles via
 
 ## A - Page adresses (`/adresses`)
 
-> **Statut : Fait**
+> **Statut : A faire** — Backend complet, page a recreer
 
 ### Statut actuel
 
 - **Backend** : complet (actions CRUD, data fetcher, schemas, hooks)
 - **Composants** : complets (`AddressList`, `AddressCard`, `AddressFormDialog`, `DeleteAddressAlertDialog`, `AddressListSkeleton`, `CreateAddressButton`, `AddressCardActions`)
-- **Page** : implementee avec autocomplete BAN
+- **Page** : supprimee, a recreer
 
 ### Donnees disponibles
 
 | Source | Fonction | Return type |
 |---|---|---|
 | `modules/addresses/data/get-user-addresses.ts` | `getUserAddresses()` | `Promise<UserAddress[] \| null>` |
-| `modules/addresses/actions/search-address.ts` | `searchAddress(params)` | `Promise<SearchAddressReturn>` |
+| `modules/addresses/data/search-address.ts` | `searchAddress(params)` | `Promise<SearchAddressReturn>` |
 
 ### Fichiers
 
 | Fichier | Role |
 |---|---|
-| `app/(boutique)/(espace-client)/adresses/page.tsx` | Page principale |
+| `app/(boutique)/(espace-client)/adresses/page.tsx` | **A creer** - Page principale |
 | `modules/addresses/components/address-list.tsx` | Grille + empty state |
 | `modules/addresses/components/address-card.tsx` | Carte individuelle |
 | `modules/addresses/components/address-card-actions.tsx` | Dropdown (modifier, supprimer, defaut) |
@@ -98,13 +130,13 @@ La bottom bar affiche 5 items. Les 2 items `desktopOnly` restent accessibles via
 
 ## B - Suivi des demandes de personnalisation (`/mes-demandes`)
 
-> **Statut : Fait**
+> **Statut : A faire** — Backend complet, page a recreer
 
 ### Statut actuel
 
 - **Schema** : `CustomizationRequest` avec `userId`, `status`, `adminNotes`, `respondedAt`, index `@@index([userId, status])`
 - **Backend admin** : complet (listing, detail, actions update status/notes)
-- **Frontend client** : page + composants implementes
+- **Frontend client** : composants existants, page a recreer
 
 ### Prisma - Champs utiles cote client
 
@@ -129,7 +161,7 @@ model CustomizationRequest {
 
 | Fichier | Role |
 |---|---|
-| `app/(boutique)/(espace-client)/mes-demandes/page.tsx` | Page listant les demandes |
+| `app/(boutique)/(espace-client)/mes-demandes/page.tsx` | **A creer** - Page listant les demandes |
 | `modules/customizations/data/get-user-customization-requests.ts` | Data fetcher filtre par `userId` |
 | `modules/customizations/components/customer/customization-request-list.tsx` | Liste des demandes |
 | `modules/customizations/components/customer/customization-request-card.tsx` | Carte individuelle |
@@ -153,13 +185,17 @@ model CustomizationRequest {
 
 ## C - Facture PDF
 
-> **Statut : Fait**
+> **Statut : A faire** — Backend complet, page a recreer
 
 ### Implementation actuelle
 
 - `DownloadInvoiceButton` dans la page detail commande
 - Route API pour la generation du PDF
 - Condition : affiche uniquement si `order.paymentStatus === "PAID"`
+
+### Fix securite applique
+
+La route API de telechargement de facture verifie maintenant `order.userId === session.user.id` pour empecher un utilisateur de telecharger la facture d'un autre utilisateur.
 
 ### Donnees utilisees (via `GET_ORDER_SELECT`)
 
@@ -187,13 +223,13 @@ model CustomizationRequest {
 
 ## D - Historique des remboursements
 
-> **Statut : A faire**
+> **Statut : A faire** — Backend a completer
 
 ### Statut actuel
 
 - **Schema** : `Refund` et `RefundItem` existent avec toutes les relations
 - **Backend admin** : actions de creation/gestion de remboursements implementees
-- **Data admin** : `get-order-refunds.ts` existe mais appelle `requireAdmin()` (inaccessible client)
+- **Data client** : aucun data fetcher client n'existe pour les remboursements, fichier a creer
 - **Frontend client** : rien (`GET_ORDER_SELECT` n'inclut pas `refunds`)
 
 ### Prisma - Champs utiles
@@ -230,7 +266,6 @@ model RefundItem {
 | Fichier | Modification |
 |---|---|
 | `modules/orders/constants/order.constants.ts` | Ajouter `refunds` au `GET_ORDER_SELECT` |
-| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | Ajouter `<OrderRefundsCard>` |
 
 ### Select a ajouter dans `GET_ORDER_SELECT`
 
@@ -281,6 +316,10 @@ Chaque remboursement affiche :
 - Date de creation / date de traitement
 - Liste des articles concernes avec quantites
 
+### Attention : `REFUND_STATUS_COLORS` sont des hex strings
+
+Les couleurs dans `modules/refunds/constants/refund.constants.ts` sont des hex strings (`#f59e0b`, `#3b82f6`, `#22c55e`, `#ef4444`, `#dc2626`, `#6b7280`), pas des noms Tailwind. L'utilisation cote client doit passer par `style={{ color }}` ou un mapping vers des classes Tailwind.
+
 ### Remboursements partiels
 
 Un remboursement peut ne couvrir qu'une partie des articles ou un montant partiel. L'UI doit :
@@ -295,7 +334,7 @@ Les labels sont deja definis dans `modules/refunds/constants/refund.constants.ts
 
 - `REFUND_REASON_LABELS` : "Retractation client", "Produit defectueux", "Erreur de preparation", "Colis perdu", "Fraude", "Autre"
 - `REFUND_STATUS_LABELS` : "En attente", "Approuve", "Rembourse", "Refuse", "Echoue", "Annule"
-- `REFUND_STATUS_COLORS` : couleurs par statut (amber, blue, green, red, gray)
+- `REFUND_STATUS_COLORS` : hex strings par statut (voir ci-dessus)
 
 Ne pas creer de doublons dans `modules/orders/`.
 
@@ -311,7 +350,7 @@ Pas d'empty state necessaire : la carte ne s'affiche que si `refunds.length > 0`
 
 ## E - Gestion newsletter dans les parametres
 
-> **Statut : Fait**
+> **Statut : A faire** — Backend complet, page a recreer
 
 ### Implementation actuelle
 
@@ -331,7 +370,7 @@ const status = await getSubscriptionStatus();
 
 ## F - Filtrage/recherche des commandes
 
-> **Statut : A faire** (tri implemente, filtres non)
+> **Statut : A faire** — Backend a completer (tri implemente, filtres non)
 
 ### Statut actuel
 
@@ -340,11 +379,15 @@ const status = await getSubscriptionStatus();
 - **Backend** : `fetch-user-orders.ts` hardcode `paymentStatus: PaymentStatus.PAID` sans filtres supplementaires
 - **UI filtres** : absente
 
+### Attention : conflit potentiel avec `paymentStatus: PAID` hardcode
+
+`fetch-user-orders.ts:52` hardcode `paymentStatus: PaymentStatus.PAID` pour n'afficher que les commandes payees. Si on ajoute un filtre par statut de commande, il faut decider si les commandes non-payees (PENDING, FAILED) doivent etre visibles. Les params `filter_status` et `filter_fulfillmentStatus` existent deja dans le composant admin `orders-filter-sheet.tsx` mais ne sont pas wires cote client.
+
 ### Fichiers a modifier
 
 | Fichier | Modification |
 |---|---|
-| `app/(boutique)/(espace-client)/commandes/page.tsx` | Ajouter parsing des filtres + passer a `getUserOrders` |
+| `app/(boutique)/(espace-client)/commandes/page.tsx` | **A creer** - Ajouter parsing des filtres + passer a `getUserOrders` |
 | `modules/orders/schemas/user-orders.schemas.ts` | Ajouter champs `search`, `filterStatus`, `filterFulfillmentStatus` |
 | `modules/orders/data/get-user-orders.ts` | Passer les filtres a `fetchUserOrders` |
 | `modules/orders/data/fetch-user-orders.ts` | Ajouter les `where` clauses |
@@ -410,11 +453,11 @@ Si les filtres ne retournent aucun resultat : "Aucune commande ne correspond a v
 
 ## G - Sessions actives
 
-> **Statut : Fait**
+> **Statut : A faire** — Backend complet, page a recreer
 
 ### Implementation actuelle
 
-- `ActiveSessionsCard` dans la page parametres
+- `ActiveSessionsCard` dans `modules/auth/components/active-sessions-card.tsx`
 - Listing des sessions non expirees
 - Bouton "Revoquer" par session
 
@@ -440,7 +483,7 @@ Si la revocation echoue (ex: session deja expiree) : toast d'erreur + refresh de
 
 ## H - Upload d'avatar
 
-> **Statut : A faire**
+> **Statut : A faire** — Backend a completer. **Prerequis : fix RGPD (Feature M)** - `delete-account.ts` doit gerer la suppression de l'image avatar
 
 ### Statut actuel
 
@@ -448,6 +491,10 @@ Si la revocation echoue (ex: session deja expiree) : toast d'erreur + refresh de
 - **Upload** : UploadThing configure avec 4 routes (`testimonialMedia`, `catalogMedia`, `contactAttachment`, `reviewMedia`)
 - **UI** : aucune
 - **Fallback existant** : l'UI affiche deja les initiales de l'utilisateur quand `User.image` est null (verifier dans les composants de header/nav)
+
+### Fix RGPD applique
+
+`delete-account.ts` fait maintenant une requete separee pour l'image (`select: { image: true }`) avant anonymisation, ce qui permet de supprimer le fichier UploadThing associe.
 
 ### Fichiers a creer
 
@@ -461,7 +508,7 @@ Si la revocation echoue (ex: session deja expiree) : toast d'erreur + refresh de
 | Fichier | Modification |
 |---|---|
 | `app/api/uploadthing/core.ts` | Ajouter route `avatarMedia` |
-| `app/(boutique)/(espace-client)/parametres/page.tsx` | Ajouter `<AvatarUpload>` dans la carte profil |
+| `app/(boutique)/(espace-client)/parametres/page.tsx` | **A creer** - Ajouter `<AvatarUpload>` dans la carte profil |
 | `modules/users/constants/current-user.constants.ts` | Ajouter `image: true` au select |
 
 ### Nouvelle route UploadThing
@@ -514,7 +561,7 @@ L'image n'est pas croppee cote client pour simplifier l'implementation. UploadTh
 
 ## I - Modification d'email
 
-> **Statut : A faire**
+> **Statut : A faire** — Backend a completer
 
 ### Statut actuel
 
@@ -567,38 +614,30 @@ Better Auth a un flow `changeEmail` integre qui :
 
 ## J - Ajouter au panier depuis la wishlist
 
-> **Statut : A faire**
+> **Statut : A faire** — Backend complet (`AddToCartCardButton` deja dans `ProductCard`)
 
 ### Statut actuel
 
 - **Wishlist** : affiche des `ProductCard` dans une grille
-- **ProductCard** : pas de bouton "Ajouter au panier" (c'est un lien vers la page produit)
+- **ProductCard** : inclut deja `AddToCartCardButton` (`modules/cart/components/add-to-cart-card-button.tsx`)
+  - Desktop : overlay au hover sur la carte produit
+  - Mobile : bouton pleine largeur sous la carte
+  - Gere les produits multi-SKU (selecteur de variante)
 - **addToCart** : action existante qui attend `{ skuId, quantity }` via FormData
 - **Wishlist data** : inclut les SKUs avec `id`, `inventory`, `isActive`, `priceInclTax`
 - **Badge counts** : le store `useBadgeCountsStore` n'est utilise que dans la navbar storefront, pas dans la nav espace-client
 
-### Complexite
+### Implementation
 
-Un produit peut avoir plusieurs SKUs (couleur/taille/matiere). Le bouton "Ajouter au panier" depuis la wishlist doit gerer :
+Le bouton est deja present dans `ProductCard` qui est utilise par la wishlist. Il suffit de verifier que le composant fonctionne correctement dans le contexte wishlist lors de la recreation de la page.
 
-**Cas 1 - Produit mono-SKU** : ajouter directement le SKU par defaut
-**Cas 2 - Produit multi-SKU** : ouvrir un selecteur de variante ou rediriger vers la page produit
-
-### Approche recommandee
-
-Ajouter un bouton "Ajouter au panier" sur chaque `ProductCard` dans le contexte wishlist :
-- Si 1 seul SKU actif → ajout direct (appel `addToCart` avec le `skuId`)
-- Si multi-SKU → redirection vers la page produit (`/creations/[slug]`)
-
-### Fichiers a creer
+### Fichiers
 
 | Fichier | Role |
 |---|---|
-| `modules/wishlist/components/wishlist-add-to-cart-button.tsx` | Bouton conditionnel |
-
-### Fichier a modifier
-
-`modules/wishlist/components/wishlist-list-content.tsx` : ajouter le bouton sous chaque `ProductCard`, ou creer un wrapper `WishlistProductCard`.
+| `app/(boutique)/(espace-client)/favoris/page.tsx` | **A creer** - Page favoris |
+| `modules/products/components/product-card.tsx` | Carte produit (inclut `AddToCartCardButton`) |
+| `modules/cart/components/add-to-cart-card-button.tsx` | Bouton ajout panier (existant) |
 
 ### Donnees disponibles
 
@@ -607,53 +646,22 @@ Le `GET_WISHLIST_SELECT` inclut deja tout ce qu'il faut :
 product.skus[]: { id, sku, priceInclTax, inventory, isActive, isDefault, color, material, size, images }
 ```
 
-### Implementation du bouton
-
-```tsx
-// modules/wishlist/components/wishlist-add-to-cart-button.tsx
-"use client";
-
-function WishlistAddToCartButton({ product }) {
-  const activeSkus = product.skus.filter(sku => sku.isActive && sku.inventory > 0);
-
-  if (activeSkus.length === 0) {
-    return <Badge variant="secondary">Rupture de stock</Badge>;
-  }
-
-  if (activeSkus.length === 1) {
-    // Ajout direct - formulaire avec hidden skuId
-    return (
-      <form action={addToCartAction}>
-        <input type="hidden" name="skuId" value={activeSkus[0].id} />
-        <input type="hidden" name="quantity" value="1" />
-        <Button type="submit" size="sm" variant="outline">
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Ajouter au panier
-        </Button>
-      </form>
-    );
-  }
-
-  // Multi-SKU → lien vers page produit
-  return (
-    <Button asChild size="sm" variant="outline">
-      <Link href={`/creations/${product.slug}`}>
-        Choisir une variante
-      </Link>
-    </Button>
-  );
-}
-```
-
 ---
 
 ## K - Annulation de commande par le client
 
-> **Statut : A faire** (nouvelle feature)
+> **Statut : A faire** — Backend a completer (nouvelle action client)
 
 ### Contexte
 
 Le schema supporte `OrderStatus.CANCELLED`, `OrderAction.CANCELLED`, et `OrderHistory` pour tracer les changements de statut. L'action `cancelOrder` existante (`modules/orders/actions/cancel-order.ts`) appelle `requireAdminWithUser()` et est donc inaccessible aux clients.
+
+### Elements backend existants reutilisables
+
+- **`canCancelOrder(order)`** dans `modules/orders/services/order-status-validation.service.ts` : verifie si une commande peut etre annulee (exclut SHIPPED, DELIVERED, CANCELLED). Reutilisable pour la version client.
+- **`getOrderPermissions(order)`** dans le meme fichier : matrice complete de permissions (`canCancel`, `canRefund`, `canMarkAsShipped`, etc.). Utile pour controler l'affichage des boutons d'action.
+- **Restauration stock conditionnelle** : `cancelOrder` (admin) restaure le stock seulement si `paymentStatus === PENDING` (commande non encore payee). Pour les commandes payees, le stock n'est pas restaure car le remboursement Stripe doit etre traite separement.
+- **Email d'annulation** : `sendCancelOrderConfirmationEmail` dans `modules/emails/services/status-emails.ts` envoie un email de confirmation d'annulation.
 
 ### Prisma - Champs utiles
 
@@ -731,7 +739,7 @@ Une commande en `PROCESSING`, `SHIPPED`, ou `DELIVERED` ne peut pas etre annulee
 
 | Fichier | Modification |
 |---|---|
-| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | Ajouter `<CancelOrderButton>` conditionnel |
+| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | **A creer** - Ajouter `<CancelOrderButton>` conditionnel |
 
 ### Server action
 
@@ -740,6 +748,7 @@ Une commande en `PROCESSING`, `SHIPPED`, ou `DELIVERED` ne peut pas etre annulee
 "use server"
 
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit"
+import { canCancelOrder } from "@/modules/orders/services/order-status-validation.service"
 
 export async function cancelOrderCustomer(
   _: ActionState | undefined,
@@ -751,23 +760,30 @@ export async function cancelOrderCustomer(
   const validation = validateInput(schema, { orderNumber: formData.get("orderNumber") })
   if (!validation.success) return error(validation.error.errors[0]?.message)
 
-  // Verifier que la commande appartient au user ET est PENDING
+  // Verifier que la commande appartient au user ET est annulable
   const order = await prisma.order.findFirst({
     where: {
       orderNumber: validation.data.orderNumber,
       userId: user.id,
-      status: "PENDING",
       deletedAt: null,
     },
-    select: { id: true, orderNumber: true, status: true },
+    select: { id: true, orderNumber: true, status: true, paymentStatus: true },
   })
-  if (!order) return notFound("Commande introuvable ou non annulable")
+  if (!order) return notFound("Commande introuvable")
+  if (!canCancelOrder(order)) return error("Cette commande ne peut plus etre annulee")
+
+  // Restauration stock conditionnelle (PENDING seulement)
+  const shouldRestoreStock = order.paymentStatus === "PENDING"
 
   await prisma.$transaction(async (tx) => {
     await tx.order.update({
       where: { id: order.id },
       data: { status: "CANCELLED" },
     })
+
+    if (shouldRestoreStock) {
+      // Restore stock for each SKU
+    }
 
     await createOrderAuditTx(tx, {
       orderId: order.id,
@@ -781,6 +797,9 @@ export async function cancelOrderCustomer(
     })
   })
 
+  // Send cancellation email
+  // await sendCancelOrderConfirmationEmail(...)
+
   updateTag("orders-list")
   updateTag(`order-${order.orderNumber}`)
   return success("Commande annulee")
@@ -789,20 +808,20 @@ export async function cancelOrderCustomer(
 
 ### UI
 
-- Le bouton "Annuler la commande" s'affiche uniquement si `order.status === "PENDING"`
+- Le bouton "Annuler la commande" s'affiche uniquement si `canCancelOrder(order)` retourne `true`
 - Un `AlertDialog` de confirmation demande "Etes-vous sur de vouloir annuler cette commande ? Cette action est irreversible."
 - Apres annulation, la page se rafraichit et le statut passe a `CANCELLED`
 
 ### Gestion d'erreur
 
-- Commande pas trouvee ou plus PENDING (race condition) : message "Cette commande ne peut plus etre annulee"
+- Commande pas trouvee ou plus annulable (race condition) : message "Cette commande ne peut plus etre annulee"
 - Erreur serveur : toast generique avec retry
 
 ---
 
 ## L - Codes promo affiches sur commande
 
-> **Statut : A faire** (nouvelle feature)
+> **Statut : A faire** — Backend a completer (nouvelle feature)
 
 ### Contexte
 
@@ -855,7 +874,7 @@ Tres faible : ajouter 1 champ au select + modifier 1 ligne dans le composant exi
 
 ## M - Annulation de demande de suppression de compte
 
-> **Statut : A faire** (nouvelle feature)
+> **Statut : A faire** — Backend a completer (nouvelle feature)
 
 ### Contexte
 
@@ -864,6 +883,15 @@ Le schema Prisma prevoit un flux de suppression en 2 etapes :
 - `User.deletionRequestedAt` : date de la demande
 
 Mais l'implementation actuelle (`modules/users/actions/delete-account.ts`) **bypass completement** l'etat `PENDING_DELETION` et anonymise immediatement le compte en une transaction. Il n'y a pas de periode de grace.
+
+### Dead code pret a activer
+
+- `deletionRequestedAt` n'est jamais set nulle part dans le code actuel (uniquement reference dans `prisma/schema.prisma` et `modules/cron/services/process-account-deletions.service.ts`)
+- Le cron `process-account-deletions` et son service sont **complets et testes** mais n'ont rien a traiter car aucun compte n'est jamais mis en `PENDING_DELETION`
+- `account-status.constants.ts` fournit deja labels, couleurs et descriptions pour les 4 statuts :
+  - `ACCOUNT_STATUS_LABELS` : "Actif", "Inactif", "Suppression en attente", "Anonymise"
+  - `ACCOUNT_STATUS_COLORS` : green, yellow, orange, gray
+  - `ACCOUNT_STATUS_DESCRIPTIONS` : textes descriptifs pour tooltips
 
 ### Decision requise
 
@@ -1018,28 +1046,35 @@ Priorites E2E :
 
 ```
 D (remboursements) ← modifier GET_ORDER_SELECT
-F (filtres commandes) ← modifier schema + data fetcher
-H (avatar) ← modifier UploadThing core + user select
+F (filtres commandes) ← modifier schema + data fetcher, resoudre conflit paymentStatus: PAID
+H (avatar) ← modifier UploadThing core + user select, prerequis fix RGPD (M)
 I (email) ← verifier Better Auth changeEmail + impacts Stripe/newsletter
-J (panier wishlist) ← aucune
-K (annulation commande) ← creer action client + composant
+J (panier wishlist) ← aucune (AddToCartCardButton deja dans ProductCard)
+K (annulation commande) ← creer action client + composant, reutiliser canCancelOrder()
 L (codes promo) ← modifier GET_ORDER_SELECT + OrderSummaryCard
 M (annulation suppression) ← decision sur le flux de suppression (immediat vs differe)
 ```
 
 ## Ordre d'implementation suggere
 
-Features restantes uniquement :
+Toutes les pages sont a recreer. Commencer par les pages avec backend complet, puis celles necessitant du backend :
 
-1. **L** - Codes promo (effort minimal, 1 select + 1 ligne UI)
-2. **D** - Remboursements (effort faible, modifier select + 1 composant)
-3. **F** - Filtres commandes (effort faible, enrichir params existants)
-4. **J** - Panier wishlist (effort faible, 1 composant)
-5. **K** - Annulation commande (effort moyen, action + composant + dialog)
-6. **H** - Avatar (effort moyen, nouvelle route UploadThing)
-7. **I** - Email (effort moyen, depend de Better Auth + impacts Stripe/newsletter)
-8. **M** - Annulation suppression (effort moyen, depend de la decision sur le flux)
+### Phase 1 - Pages a backend complet (pages a recreer uniquement)
 
-### Note sur les features existantes
+1. **Nav** + **Layout** - Layout espace-client + navigation
+2. **A** - Adresses (composants complets)
+3. **B** - Mes demandes (composants complets)
+4. **E** - Newsletter settings (composant complet)
+5. **G** - Sessions actives (composant complet)
+6. **J** - Favoris avec panier (composant complet)
+7. **C** - Detail commande avec facture PDF (composant complet)
 
-Les features suivantes sont deja implementees et fonctionnelles : Navigation, A (Adresses), B (Mes demandes), C (Facture PDF), E (Newsletter), G (Sessions). Les reponses admin aux avis (`ReviewResponse`) sont egalement visibles dans `UserReviewCard`.
+### Phase 2 - Features avec backend a completer
+
+8. **L** - Codes promo (effort minimal, 1 select + 1 ligne UI)
+9. **D** - Remboursements (effort faible, modifier select + 1 composant)
+10. **F** - Filtres commandes (effort faible, enrichir params existants)
+11. **K** - Annulation commande (effort moyen, action + composant + dialog)
+12. **H** - Avatar (effort moyen, nouvelle route UploadThing)
+13. **I** - Email (effort moyen, depend de Better Auth + impacts Stripe/newsletter)
+14. **M** - Annulation suppression (effort moyen, depend de la decision sur le flux)

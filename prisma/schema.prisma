@@ -474,14 +474,16 @@ enum FulfillmentStatus {
 /// Actions tracables sur les commandes (audit trail)
 /// Requis pour conformite legale (Art. L123-22 Code de Commerce)
 enum OrderAction {
-  CREATED          // Creation de la commande
-  PAID             // Paiement recu
-  PROCESSING       // Mise en preparation
-  SHIPPED          // Expedition
-  DELIVERED        // Livraison confirmee
-  CANCELLED        // Annulation
-  RETURNED         // Retour client
-  STATUS_REVERTED  // Retour a un statut precedent
+  CREATED            // Creation de la commande
+  PAID               // Paiement recu
+  PROCESSING         // Mise en preparation
+  SHIPPED            // Expedition
+  DELIVERED          // Livraison confirmee
+  CANCELLED          // Annulation
+  RETURNED           // Retour client
+  STATUS_REVERTED    // Retour a un statut precedent
+  TRACKING_UPDATED   // Mise a jour du suivi
+  ADDRESS_UPDATED    // Mise a jour de l'adresse de livraison
 }
 
 // ============================================================================

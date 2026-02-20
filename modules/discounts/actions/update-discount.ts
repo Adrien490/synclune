@@ -89,8 +89,7 @@ export async function updateDiscount(
 				minOrderAmount: data.minOrderAmount,
 				maxUsageCount: data.maxUsageCount,
 				maxUsagePerUser: data.maxUsagePerUser,
-				// startsAt is NOT NULL, so only update if provided
-				...(data.startsAt && { startsAt: data.startsAt }),
+				startsAt: data.startsAt ?? undefined,
 				endsAt: data.endsAt,
 			},
 		});

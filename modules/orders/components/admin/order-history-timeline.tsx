@@ -7,6 +7,7 @@ import {
 	ChevronDown,
 	Clock,
 	CreditCard,
+	MapPin,
 	Package,
 	Truck,
 	CheckCircle2,
@@ -78,6 +79,18 @@ const ACTION_CONFIG: Record<
 		color: "text-amber-500",
 		label: "Statut annulé",
 		symbol: "↶",
+	},
+	TRACKING_UPDATED: {
+		icon: Truck,
+		color: "text-indigo-500",
+		label: "Suivi mis à jour",
+		symbol: "📦",
+	},
+	ADDRESS_UPDATED: {
+		icon: MapPin,
+		color: "text-teal-500",
+		label: "Adresse modifiée",
+		symbol: "📍",
 	},
 };
 

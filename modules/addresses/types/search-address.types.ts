@@ -102,4 +102,5 @@ export type SearchAddressReturn = {
 	addresses: SearchAddressResult[];
 	query: string;
 	limit: number;
+	error?: boolean;
 };

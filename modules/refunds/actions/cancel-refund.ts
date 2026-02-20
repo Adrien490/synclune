@@ -7,7 +7,6 @@ import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
-import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
@@ -62,10 +61,7 @@ export async function cancelRefund(
 		});
 
 		if (!refund) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: REFUND_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return error(REFUND_ERROR_MESSAGES.NOT_FOUND);
 		}
 
 		// Vérifier le statut actuel - on ne peut annuler que PENDING ou APPROVED
@@ -73,10 +69,7 @@ export async function cancelRefund(
 			refund.status !== RefundStatus.PENDING &&
 			refund.status !== RefundStatus.APPROVED
 		) {
-			return {
-				status: ActionStatus.ERROR,
-				message: REFUND_ERROR_MESSAGES.CANNOT_CANCEL,
-			};
+			return error(REFUND_ERROR_MESSAGES.CANNOT_CANCEL);
 		}
 
 		// Soft delete : marquer comme CANCELLED au lieu de supprimer
@@ -97,10 +90,7 @@ export async function cancelRefund(
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Remboursement de ${(refund.amount / 100).toFixed(2)} € annulé pour la commande ${refund.order.orderNumber}`,
-		};
+		return success(`Remboursement de ${(refund.amount / 100).toFixed(2)} € annulé pour la commande ${refund.order.orderNumber}`);
 	} catch (error) {
 		return handleActionError(error, REFUND_ERROR_MESSAGES.CANCEL_FAILED);
 	}

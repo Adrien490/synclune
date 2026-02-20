@@ -13,6 +13,7 @@ import { updateTag } from "next/cache";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { updateOrderShippingAddressSchema } from "../schemas/order.schemas";
+import { createOrderAuditTx } from "../utils/order-audit";
 
 /**
  * Updates the shipping address of an order before shipment
@@ -54,36 +55,33 @@ export async function updateOrderShippingAddress(
 
 		const { id, ...addressData } = result.data;
 
-		// Fetch order and verify it hasn't been shipped yet
-		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
-			select: {
-				id: true,
-				orderNumber: true,
-				userId: true,
-				fulfillmentStatus: true,
-			},
-		});
+		// Transaction: fetch + validate + update + audit atomically
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					userId: true,
+					fulfillmentStatus: true,
+					shippingFirstName: true,
+					shippingLastName: true,
+					shippingAddress1: true,
+					shippingAddress2: true,
+					shippingPostalCode: true,
+					shippingCity: true,
+					shippingCountry: true,
+				},
+			});
 
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
-		}
+			if (!found) return null;
 
-		// Cannot update address after shipment
-		if (order.fulfillmentStatus === "SHIPPED" || order.fulfillmentStatus === "DELIVERED" || order.fulfillmentStatus === "RETURNED") {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_UPDATE_ADDRESS_SHIPPED,
-			};
-		}
+			// Cannot update address after shipment
+			if (found.fulfillmentStatus === "SHIPPED" || found.fulfillmentStatus === "DELIVERED" || found.fulfillmentStatus === "RETURNED") {
+				return { ...found, _error: "already_shipped" as const };
+			}
 
-		// Sanitize all text fields
-		await prisma.order.update({
-			where: { id },
-			data: {
+			const sanitizedData = {
 				shippingFirstName: sanitizeText(addressData.shippingFirstName),
 				shippingLastName: sanitizeText(addressData.shippingLastName),
 				shippingAddress1: sanitizeText(addressData.shippingAddress1),
@@ -93,8 +91,50 @@ export async function updateOrderShippingAddress(
 				shippingPostalCode: sanitizeText(addressData.shippingPostalCode),
 				shippingCity: sanitizeText(addressData.shippingCity),
 				shippingCountry: addressData.shippingCountry,
-			},
+			};
+
+			await tx.order.update({
+				where: { id },
+				data: sanitizedData,
+			});
+
+			// Audit trail (Art. L123-22 Code de Commerce)
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "ADDRESS_UPDATED",
+				authorId: auth.user.id,
+				authorName: auth.user.name || "Admin",
+				note: "Adresse de livraison modifiee",
+				metadata: {
+					previousAddress: {
+						firstName: found.shippingFirstName,
+						lastName: found.shippingLastName,
+						address1: found.shippingAddress1,
+						address2: found.shippingAddress2,
+						postalCode: found.shippingPostalCode,
+						city: found.shippingCity,
+						country: found.shippingCountry,
+					},
+					newAddress: sanitizedData,
+				},
+			});
+
+			return found;
 		});
+
+		if (!order) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
+			};
+		}
+
+		if ("_error" in order) {
+			return {
+				status: ActionStatus.ERROR,
+				message: ORDER_ERROR_MESSAGES.CANNOT_UPDATE_ADDRESS_SHIPPED,
+			};
+		}
 
 		// Invalidate caches
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));

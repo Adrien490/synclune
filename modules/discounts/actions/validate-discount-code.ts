@@ -127,20 +127,27 @@ export async function validateDiscountCode(
 				return { valid: false, error: "Erreur de calcul du panier" };
 			}
 
-			// If userId or customerEmail validation failed, retry without them
-			if (path === "userId" || path === "customerEmail") {
+			// If customerEmail validation failed, reject immediately (needed for maxUsagePerUser)
+			if (path === "customerEmail") {
+				return { valid: false, error: "Adresse email invalide" };
+			}
+
+			// If userId validation failed, retry without it but keep customerEmail for maxUsagePerUser
+			if (path === "userId") {
 				const retryValidation = validateDiscountCodeSchema.safeParse({
 					code,
 					subtotal,
 					userId: undefined,
-					customerEmail: undefined,
+					customerEmail: effectiveEmail,
 				});
 				if (!retryValidation.success) {
 					return { valid: false, error: "Code invalide" };
 				}
 				return lookupAndValidate(
 					retryValidation.data.code,
-					retryValidation.data.subtotal
+					retryValidation.data.subtotal,
+					undefined,
+					retryValidation.data.customerEmail
 				);
 			}
 

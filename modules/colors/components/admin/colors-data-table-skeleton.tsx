@@ -11,7 +11,7 @@ export function ColorsDataTableSkeleton() {
 				{ width: "10%", hiddenBelow: "sm", align: "center", cell: { type: "text", width: "w-10" } },
 				{ width: "10%", align: "right", cell: { type: "actions" } },
 			]}
-			pagination="offset"
+			pagination="cursor"
 		/>
 	);
 }

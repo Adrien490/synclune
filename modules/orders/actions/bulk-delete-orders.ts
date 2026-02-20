@@ -46,10 +46,11 @@ export async function bulkDeleteOrders(
 		const validated = validateInput(bulkDeleteOrdersSchema, { ids });
 		if ("error" in validated) return validated.error;
 
-		// Récupérer les commandes pour vérifier leur éligibilité
+		// Récupérer les commandes pour vérifier leur éligibilité (exclure déjà supprimées)
 		const orders = await prisma.order.findMany({
 			where: {
 				id: { in: validated.data.ids },
+				deletedAt: null,
 			},
 			select: {
 				id: true,

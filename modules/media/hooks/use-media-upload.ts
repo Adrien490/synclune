@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
+import { withRetry } from "@/shared/utils/with-retry";
 import { toast } from "sonner";
 import type {
 	UseMediaUploadOptions,
@@ -51,46 +52,6 @@ function formatFileSize(bytes: number): string {
  */
 function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
 	return file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
-}
-
-/**
- * Retry with exponential backoff
- */
-async function retryWithBackoff<T>(
-	fn: () => Promise<T>,
-	maxRetries: number = 3,
-	baseDelay: number = 1000,
-	signal?: AbortSignal
-): Promise<T> {
-	let lastError: Error | undefined;
-
-	for (let attempt = 0; attempt <= maxRetries; attempt++) {
-		if (signal?.aborted) {
-			throw new DOMException("Operation annulee", "AbortError");
-		}
-
-		try {
-			return await fn();
-		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
-
-			// Don't retry abort errors
-			if (error instanceof DOMException && error.name === "AbortError") {
-				throw error;
-			}
-
-			// Last attempt, throw
-			if (attempt === maxRetries) {
-				throw lastError;
-			}
-
-			// Wait with exponential backoff
-			const delay = baseDelay * Math.pow(2, attempt);
-			await new Promise(resolve => setTimeout(resolve, delay));
-		}
-	}
-
-	throw lastError;
 }
 
 // ============================================================================
@@ -223,11 +184,9 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				blurDataUrl = thumbnailResult.blurDataUrl;
 
 				// 2. Upload the thumbnail with retry
-				const thumbUploadResult = await retryWithBackoff(
+				const thumbUploadResult = await withRetry(
 					() => startUpload([thumbnailResult!.thumbnailFile]),
-					2,
-					500,
-					signal
+					{ maxAttempts: 3, baseDelay: 500, signal }
 				);
 
 				if (thumbUploadResult?.[0]?.serverData?.url) {
@@ -250,11 +209,9 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		// 3. Upload the video with retry
 		try {
-			const videoUploadResult = await retryWithBackoff(
+			const videoUploadResult = await withRetry(
 				() => startUpload([videoFile]),
-				2,
-				1000,
-				signal
+				{ maxAttempts: 3, baseDelay: 1000, signal }
 			);
 
 			const serverData = videoUploadResult?.[0]?.serverData;
@@ -293,11 +250,9 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			throw new DOMException("Operation annulee", "AbortError");
 		}
 
-		const results = await retryWithBackoff(
+		const results = await withRetry(
 			() => startUpload(imageFiles),
-			2,
-			1000,
-			signal
+			{ maxAttempts: 3, baseDelay: 1000, signal }
 		);
 
 		const uploadResults: MediaUploadResult[] = [];

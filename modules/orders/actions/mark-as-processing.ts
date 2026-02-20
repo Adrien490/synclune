@@ -54,62 +54,38 @@ export async function markAsProcessing(
 			};
 		}
 
-		// Récupérer la commande
-		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				paymentStatus: true,
-				fulfillmentStatus: true,
-				userId: true,
-			},
-		});
+		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					paymentStatus: true,
+					fulfillmentStatus: true,
+					userId: true,
+				},
+			});
 
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
-		}
+			if (!found) return null;
 
-		// Vérifier si déjà en préparation ou plus avancée
-		if (order.status === OrderStatus.PROCESSING) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.ALREADY_PROCESSING,
-			};
-		}
+			if (found.status === OrderStatus.PROCESSING) {
+				return { ...found, _error: "already_processing" as const };
+			}
 
-		if (
-			order.status === OrderStatus.SHIPPED ||
-			order.status === OrderStatus.DELIVERED
-		) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_NOT_PENDING,
-			};
-		}
+			if (found.status === OrderStatus.SHIPPED || found.status === OrderStatus.DELIVERED) {
+				return { ...found, _error: "not_pending" as const };
+			}
 
-		// Vérifier si annulée
-		if (order.status === OrderStatus.CANCELLED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_CANCELLED,
-			};
-		}
+			if (found.status === OrderStatus.CANCELLED) {
+				return { ...found, _error: "cancelled" as const };
+			}
 
-		// Vérifier si payée
-		if (order.paymentStatus !== PaymentStatus.PAID) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_UNPAID,
-			};
-		}
+			if (found.paymentStatus !== PaymentStatus.PAID) {
+				return { ...found, _error: "unpaid" as const };
+			}
 
-		// Mettre à jour la commande + audit trail atomique
-		await prisma.$transaction(async (tx) => {
 			await tx.order.update({
 				where: { id },
 				data: {
@@ -121,15 +97,37 @@ export async function markAsProcessing(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "PROCESSING",
-				previousStatus: order.status,
+				previousStatus: found.status,
 				newStatus: OrderStatus.PROCESSING,
-				previousFulfillmentStatus: order.fulfillmentStatus,
+				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
 				source: HistorySource.ADMIN,
 			});
+
+			return found;
 		});
+
+		if (!order) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
+			};
+		}
+
+		if ("_error" in order) {
+			const errorMessages = {
+				already_processing: ORDER_ERROR_MESSAGES.ALREADY_PROCESSING,
+				not_pending: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_NOT_PENDING,
+				cancelled: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_CANCELLED,
+				unpaid: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_UNPAID,
+			} as const;
+			return {
+				status: ActionStatus.ERROR,
+				message: errorMessages[order._error],
+			};
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));

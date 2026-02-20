@@ -167,15 +167,27 @@ export async function processRefund(
 
 		// P0.1: Gérer les différents états de retour Stripe
 		if (!stripeResult.success && !stripeResult.pending) {
-			// Marquer le remboursement comme échoué
+			// Marquer le remboursement comme échoué avec la raison
+			const failureMessage = stripeResult.error || REFUND_ERROR_MESSAGES.STRIPE_ERROR;
 			await prisma.refund.update({
 				where: { id },
-				data: { status: RefundStatus.FAILED },
+				data: {
+					status: RefundStatus.FAILED,
+					failureReason: failureMessage,
+				},
 			});
+
+			// Invalidate cache so UI reflects FAILED status
+			updateTag(ORDERS_CACHE_TAGS.LIST);
+			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
+			if (refundData.refund.order_user_id) {
+				updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refundData.refund.order_user_id));
+			}
 
 			return {
 				status: ActionStatus.ERROR,
-				message: stripeResult.error || REFUND_ERROR_MESSAGES.STRIPE_ERROR,
+				message: failureMessage,
 			};
 		}
 
@@ -215,12 +227,17 @@ export async function processRefund(
 			// 3. Restaurer le stock pour les articles avec restock=true
 			for (const item of refundData.items) {
 				if (item.restock) {
-					await tx.productSku.update({
-						where: { id: item.sku_id },
-						data: {
-							inventory: { increment: item.quantity },
-						},
-					});
+					try {
+						await tx.productSku.update({
+							where: { id: item.sku_id },
+							data: {
+								inventory: { increment: item.quantity },
+							},
+						});
+					} catch {
+						// SKU may have been deleted between refund creation and processing
+						console.warn(`[PROCESS_REFUND] SKU ${item.sku_id} not found, skipping restock`);
+					}
 				}
 			}
 

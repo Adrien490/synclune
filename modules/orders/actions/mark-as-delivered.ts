@@ -60,47 +60,34 @@ export async function markAsDelivered(
 			};
 		}
 
-		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				fulfillmentStatus: true,
-				userId: true,
-				customerEmail: true,
-				customerName: true,
-				shippingFirstName: true,
-			},
-		});
-
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
-		}
-
-		// Vérifier si déjà livrée
-		if (order.status === OrderStatus.DELIVERED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.ALREADY_DELIVERED,
-			};
-		}
-
-		// Vérifier si expédiée
-		if (order.status !== OrderStatus.SHIPPED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_DELIVER_NOT_SHIPPED,
-			};
-		}
-
 		const deliveryDate = new Date();
 
-		// Mettre à jour la commande + audit trail atomique
-		await prisma.$transaction(async (tx) => {
+		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					fulfillmentStatus: true,
+					userId: true,
+					customerEmail: true,
+					customerName: true,
+					shippingFirstName: true,
+				},
+			});
+
+			if (!found) return null;
+
+			if (found.status === OrderStatus.DELIVERED) {
+				return { ...found, _error: "already_delivered" as const };
+			}
+
+			if (found.status !== OrderStatus.SHIPPED) {
+				return { ...found, _error: "not_shipped" as const };
+			}
+
 			await tx.order.update({
 				where: { id },
 				data: {
@@ -113,9 +100,9 @@ export async function markAsDelivered(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "DELIVERED",
-				previousStatus: order.status,
+				previousStatus: found.status,
 				newStatus: OrderStatus.DELIVERED,
-				previousFulfillmentStatus: order.fulfillmentStatus,
+				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.DELIVERED,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
@@ -125,7 +112,26 @@ export async function markAsDelivered(
 					emailSent: result.data.sendEmail,
 				},
 			});
+
+			return found;
 		});
+
+		if (!order) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
+			};
+		}
+
+		if ("_error" in order) {
+			const message = order._error === "already_delivered"
+				? ORDER_ERROR_MESSAGES.ALREADY_DELIVERED
+				: ORDER_ERROR_MESSAGES.CANNOT_DELIVER_NOT_SHIPPED;
+			return {
+				status: ActionStatus.ERROR,
+				message,
+			};
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));

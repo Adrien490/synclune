@@ -68,57 +68,43 @@ export async function markAsShipped(
 			};
 		}
 
-		// Récupérer la commande avec les données nécessaires pour l'email
-		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				paymentStatus: true,
-				fulfillmentStatus: true,
-				userId: true,
-				customerEmail: true,
-				customerName: true,
-				shippingFirstName: true,
-				shippingLastName: true,
-				shippingAddress1: true,
-				shippingAddress2: true,
-				shippingPostalCode: true,
-				shippingCity: true,
-				shippingCountry: true,
-			},
-		});
-
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
-		}
-
-		// Validation métier via le service
-		const shipValidation = canMarkAsShipped(order);
-		if (!shipValidation.canShip) {
-			const errorMessages: Record<string, string> = {
-				already_shipped: ORDER_ERROR_MESSAGES.ALREADY_SHIPPED,
-				cancelled: ORDER_ERROR_MESSAGES.CANNOT_SHIP_CANCELLED,
-				unpaid: ORDER_ERROR_MESSAGES.CANNOT_SHIP_UNPAID,
-			};
-			return {
-				status: ActionStatus.ERROR,
-				message: errorMessages[shipValidation.reason],
-			};
-		}
-
 		// Générer l'URL de suivi si non fournie
 		const carrierValue = (result.data.carrier || "autre") as Carrier;
 		const finalTrackingUrl =
 			result.data.trackingUrl ||
 			getTrackingUrl(carrierValue, result.data.trackingNumber);
 
-		// Mettre à jour la commande + audit trail atomique
-		await prisma.$transaction(async (tx) => {
+		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id, deletedAt: null },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					paymentStatus: true,
+					fulfillmentStatus: true,
+					userId: true,
+					customerEmail: true,
+					customerName: true,
+					shippingFirstName: true,
+					shippingLastName: true,
+					shippingAddress1: true,
+					shippingAddress2: true,
+					shippingPostalCode: true,
+					shippingCity: true,
+					shippingCountry: true,
+				},
+			});
+
+			if (!found) return null;
+
+			// Validation métier via le service
+			const shipValidation = canMarkAsShipped(found);
+			if (!shipValidation.canShip) {
+				return { ...found, _error: shipValidation.reason };
+			}
+
 			await tx.order.update({
 				where: { id },
 				data: {
@@ -134,9 +120,9 @@ export async function markAsShipped(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "SHIPPED",
-				previousStatus: order.status,
+				previousStatus: found.status,
 				newStatus: OrderStatus.SHIPPED,
-				previousFulfillmentStatus: order.fulfillmentStatus,
+				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.SHIPPED,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
@@ -148,7 +134,28 @@ export async function markAsShipped(
 					emailSent: result.data.sendEmail,
 				},
 			});
+
+			return found;
 		});
+
+		if (!order) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
+			};
+		}
+
+		if ("_error" in order) {
+			const errorMessages: Record<string, string> = {
+				already_shipped: ORDER_ERROR_MESSAGES.ALREADY_SHIPPED,
+				cancelled: ORDER_ERROR_MESSAGES.CANNOT_SHIP_CANCELLED,
+				unpaid: ORDER_ERROR_MESSAGES.CANNOT_SHIP_UNPAID,
+			};
+			return {
+				status: ActionStatus.ERROR,
+				message: errorMessages[order._error],
+			};
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
