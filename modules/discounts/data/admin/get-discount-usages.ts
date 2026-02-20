@@ -1,3 +1,5 @@
+"use server";
+
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";

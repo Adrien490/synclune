@@ -138,6 +138,24 @@ export const bulkHideReviewsSchema = z.object({
 
 export type BulkHideReviewsInput = z.infer<typeof bulkHideReviewsSchema>
 
+/**
+ * Schéma pour publier plusieurs avis en masse
+ */
+export const bulkPublishReviewsSchema = z.object({
+	ids: z.array(z.cuid2("ID d'avis invalide")).min(1, "Sélectionnez au moins un avis"),
+})
+
+export type BulkPublishReviewsInput = z.infer<typeof bulkPublishReviewsSchema>
+
+/**
+ * Schéma pour supprimer plusieurs avis en masse (soft delete admin)
+ */
+export const bulkDeleteReviewsSchema = z.object({
+	ids: z.array(z.cuid2("ID d'avis invalide")).min(1, "Sélectionnez au moins un avis"),
+})
+
+export type BulkDeleteReviewsInput = z.infer<typeof bulkDeleteReviewsSchema>
+
 // ============================================================================
 // REVIEW RESPONSE SCHEMAS (Admin)
 // ============================================================================

@@ -11,6 +11,10 @@
 | Feature | Statut | Backend | Effort | Notes |
 |---|---|---|---|---|
 | Navigation (7 items) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| Compte (dashboard) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| Commandes (liste) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| Mes avis | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| Favoris | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | A - Adresses | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | B - Mes demandes | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | C - Facture PDF | A faire | Complet | Faible | Page a recreer, fix securite `order.userId` applique |
