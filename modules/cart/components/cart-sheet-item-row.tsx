@@ -42,8 +42,8 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 	return (
 		<article
 			className={cn(
-				"group/item border rounded-lg p-3",
-				"grid grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr] gap-3",
+				"group/item border rounded-lg p-3.5",
+				"grid grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr] gap-3.5",
 				hasIssue ? "border-destructive/50 bg-destructive/5" : "border-border"
 			)}
 			aria-label={`${item.sku.product.title}, quantité ${item.quantity}`}

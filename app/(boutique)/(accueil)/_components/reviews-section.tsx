@@ -58,7 +58,7 @@ export function ReviewsSection({
 
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Header */}
-				<header className="mb-8 text-center lg:mb-12">
+				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="reviews-title">
 							Ce que disent nos clientes
@@ -68,7 +68,7 @@ export function ReviewsSection({
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p
 							id="reviews-subtitle"
-							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
+							className="mt-5 text-lg/8 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
 							Des créations uniques, portées et approuvées par notre communauté
 						</p>

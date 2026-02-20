@@ -32,7 +32,7 @@ export function LatestCreations({
 		>
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
-				<header className="mb-8 text-center lg:mb-12">
+				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="latest-creations-title">
 							Nouvelles créations
@@ -42,7 +42,7 @@ export function LatestCreations({
 					{/* No Fade on subtitle — it's the LCP element, must paint immediately */}
 					<p
 						id="latest-creations-subtitle"
-						className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
+						className="mt-5 text-lg/8 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 					>
 						Tout juste sorties de l'atelier et réalisées avec amour !
 					</p>
@@ -109,7 +109,7 @@ function LatestCreationsGrid({
 				}}
 			/>
 			<Stagger
-				className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
+				className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
 				stagger={MOTION_CONFIG.section.grid.stagger}
 				y={MOTION_CONFIG.section.grid.y}
 				inView

@@ -122,7 +122,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
               </SectionTitle>
               <p
                 id="hero-subtitle"
-                className="text-lg/7 sm:text-xl/8 md:text-2xl/9 2xl:text-3xl/10 text-foreground font-normal tracking-tight antialiased max-w-2xl 2xl:max-w-3xl mx-auto"
+                className="text-lg/7 sm:text-xl/8 md:text-2xl/9 2xl:text-3xl/10 text-foreground font-light tracking-tight antialiased max-w-2xl 2xl:max-w-3xl mx-auto"
               >
                 <span className="sm:hidden">
                   Faits main pour sublimer votre quotidien{" "}
@@ -142,11 +142,11 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
             </div>
 
             {/* CTA - Immediate render for LCP */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 w-full sm:w-auto">
               <Button
                 asChild
                 size="lg"
-                className="shadow-lg font-semibold w-full sm:w-auto"
+                className="shadow-lg font-semibold tracking-wide w-full sm:w-auto"
               >
                 <Link
                   href="/produits"

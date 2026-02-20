@@ -7,8 +7,8 @@ export const SECTION_PADDING = {
 	xs: "py-6 sm:py-8" as const,
 	sm: "py-8 sm:py-10 lg:py-12" as const,
 	md: "py-12 lg:py-16" as const,
-	lg: "py-16 lg:py-24" as const,
-	xl: "py-20 lg:py-32" as const,
+	lg: "py-20 lg:py-28" as const,
+	xl: "py-24 lg:py-36" as const,
 } as const;
 
 export const SECTION_SPACING = {

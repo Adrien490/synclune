@@ -10,7 +10,7 @@ import { formatShippingPrice } from "@/modules/orders/services/shipping.service"
  */
 export function ProductReassurance() {
 	return (
-		<ul className="space-y-1.5 text-sm text-muted-foreground">
+		<ul className="space-y-2.5 text-sm text-muted-foreground bg-muted/30 border border-border/50 rounded-xl px-4 py-4">
 			{/* Frais de livraison explicites - Baymard : 64% cherchent cette info avant add-to-cart */}
 			<li>
 				<span className="font-medium text-foreground">

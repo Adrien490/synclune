@@ -47,7 +47,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 				Passer au bouton Explorer
 			</a>
 			<div className={`relative ${CONTAINER_CLASS}`}>
-				<header className="mb-8 text-center lg:mb-12">
+				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="collections-title">
 							Les dernières collections
@@ -57,7 +57,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p
 							id="collections-subtitle"
-							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
+							className="mt-5 text-lg/8 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
 							Je rajoute une petite touche personnelle à chaque création <Heart className="inline size-4 text-primary fill-primary" aria-hidden="true" /><span className="sr-only"> avec amour</span>
 						</p>

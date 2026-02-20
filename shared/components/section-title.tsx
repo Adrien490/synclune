@@ -5,9 +5,9 @@ import type { SectionTitleProps } from "@/shared/types/component.types";
 export type { SectionTitleProps };
 
 const sizeVariants = {
-	hero: "text-5xl sm:text-6xl lg:text-7xl leading-tight",
-	default: "text-3xl sm:text-4xl lg:text-5xl leading-tight",
-	small: "text-2xl sm:text-3xl lg:text-3xl leading-normal",
+	hero: "text-5xl sm:text-6xl lg:text-7xl leading-tight tracking-wider",
+	default: "text-3xl sm:text-4xl lg:text-5xl leading-tight tracking-wide",
+	small: "text-2xl sm:text-3xl lg:text-3xl leading-normal tracking-wide",
 } as const;
 
 const alignVariants = {
@@ -66,7 +66,7 @@ export function SectionTitle({
 				// Police Cormorant Garamond - Serif élégante
 				cormorantGaramond.className,
 				// Style de base unifié
-				"text-foreground tracking-wide",
+				"text-foreground",
 				// Graisse
 				weightVariants[weight],
 				// Italique optionnel

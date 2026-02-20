@@ -182,7 +182,7 @@ export async function Footer() {
 					<section aria-label="Engagements et garanties" className="mb-8">
 						<ul className="grid sm:grid-cols-3 gap-3">
 							{REASSURANCE_ITEMS.map((item) => (
-								<li key={item.title} className="flex items-center rounded-xl bg-card/30 border border-border/50 px-4 py-3">
+								<li key={item.title} className="flex items-center rounded-xl bg-card/50 border border-border/60 px-5 py-4 shadow-sm">
 									<div className="text-sm">
 										<p className="font-medium text-foreground">{item.title}</p>
 										<p className="text-muted-foreground">{item.description}</p>

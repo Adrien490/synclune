@@ -51,7 +51,7 @@ export function CartSheetFooter({
 					<Button
 						asChild
 						size="lg"
-						className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+						className="w-full shadow-md hover:shadow-lg transition-shadow group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 					>
 						<Link href="/paiement" onClick={onClose}>Passer commande</Link>
 					</Button>
@@ -69,14 +69,14 @@ export function CartSheetFooter({
 				</div>
 
 				{/* Trust badges */}
-				<div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-					<ShieldCheck aria-hidden="true" className="size-3 text-green-600 shrink-0" />
+				<div className="flex items-center justify-center gap-2.5 text-xs text-muted-foreground pt-2">
+					<ShieldCheck aria-hidden="true" className="size-3.5 text-green-600 shrink-0" />
 					<span>Paiement sécurisé</span>
 					<span aria-hidden="true">·</span>
-					<RotateCcw aria-hidden="true" className="size-3 text-blue-600 shrink-0" />
+					<RotateCcw aria-hidden="true" className="size-3.5 text-blue-600 shrink-0" />
 					<span>Retours 14j</span>
 					<span aria-hidden="true">·</span>
-					<Package aria-hidden="true" className="size-3 shrink-0" />
+					<Package aria-hidden="true" className="size-3.5 shrink-0" />
 					<span>Suivi colis</span>
 				</div>
 			</div>

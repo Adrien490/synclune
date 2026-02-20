@@ -25,7 +25,7 @@ export async function NewsletterSection() {
 		>
 			<div className={CONTAINER_CLASS}>
 				{/* Storytelling header */}
-				<header className="mb-8 text-center lg:mb-12">
+				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="newsletter-title">Ma newsletter</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
@@ -33,7 +33,7 @@ export async function NewsletterSection() {
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p
 							id="newsletter-subtitle"
-							className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
+							className="mt-5 text-lg/8 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
 						>
 							Les nouveautés en avant-première, des offres exclusives et
 							des surprises réservées aux abonnées !

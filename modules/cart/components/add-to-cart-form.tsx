@@ -84,12 +84,12 @@ export function AddToCartForm({
 			<Button
 				type="submit"
 				className={cn(
-					"w-full shadow-lg",
+					"w-full shadow-lg tracking-wide",
 					// Style amélioré pour meilleur contraste
 					"bg-primary hover:bg-primary/90",
 					"text-primary-foreground font-semibold",
 					// Animation fluide
-					"transition-all duration-200 transform-gpu",
+					"transition-all duration-300 transform-gpu",
 					"hover:scale-[1.02] hover:shadow-xl",
 					"active:scale-[0.98]",
 					// Anneau de focus accessible

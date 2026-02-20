@@ -184,8 +184,8 @@ export function ProductCard({
 			aria-labelledby={titleId}
 			aria-describedby={badgeDescId}
 			className={cn(
-				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
-				"transition-transform duration-300 ease-out",
+				"product-card grid relative overflow-hidden bg-card rounded-lg sm:rounded-xl group border-2 border-transparent gap-4",
+				"transition-[transform,border-color,box-shadow] duration-300 ease-out",
 				// Disable transforms for motion-reduce, keep color transitions (WCAG 2.3.3)
 				"motion-reduce:transition-colors",
 				"shadow-sm",
@@ -207,7 +207,7 @@ export function ProductCard({
 
 			{/* Image container with interactive buttons */}
 			{/* bg-muted acts as CSS-only fallback if image fails to load */}
-			<div className="product-card-media relative aspect-3/4 sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
+			<div className="product-card-media relative aspect-3/4 sm:aspect-4/5 overflow-hidden bg-muted rounded-lg sm:rounded-xl">
 
 				{/* Status badges — stock badges take priority over promo (same position) */}
 				{stockStatus === "out_of_stock" && (
@@ -243,7 +243,7 @@ export function ProductCard({
 						alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 						fill
 						className={cn(
-							"object-cover rounded-lg",
+							"object-cover rounded-lg sm:rounded-xl",
 							!secondaryImage && "motion-safe:transition-[transform] motion-safe:duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
 						)}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
@@ -257,7 +257,7 @@ export function ProductCard({
 							src={secondaryImage.url}
 							alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 							fill
-							className="object-cover rounded-lg opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
+							className="object-cover rounded-lg sm:rounded-xl opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
 							loading="lazy"
 							sizes={IMAGE_SIZES.PRODUCT_CARD}
 						/>
@@ -276,7 +276,7 @@ export function ProductCard({
 			</div>
 
 			{/* Card content — no position:relative so stretched link ::after reaches the article */}
-			<div className="flex flex-col gap-2.5 sm:gap-3 px-3 pb-3 sm:px-4 sm:pb-4 lg:px-5 lg:pb-5 overflow-hidden">
+			<div className="flex flex-col gap-3 sm:gap-3.5 px-3 pb-4 sm:px-4 sm:pb-5 lg:px-5 lg:pb-6 pt-1 overflow-hidden">
 				{/* Stretched link: title link with ::after covering the entire card */}
 				<Link
 					href={productUrl}

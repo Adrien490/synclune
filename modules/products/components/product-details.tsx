@@ -49,7 +49,7 @@ export function ProductDetails({
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-8">
 			{/* 1. Prix (Baymard: visible en premier) */}
 			<AnimatePresence mode="wait">
 				<motion.div

@@ -73,7 +73,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					)}
 					<p
 						id="product-price-title"
-						className="text-3xl sm:text-2xl font-bold tracking-tight text-foreground"
+						className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground"
 						aria-label={priceInfo.minPrice > 0 ? `Prix à partir de ${formatEuro(priceInfo.minPrice)}` : "Prix non disponible"}
 					>
 						{priceInfo.minPrice > 0 ? formatEuro(priceInfo.minPrice) : "—"}
@@ -99,7 +99,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				{/* Prix principal */}
 				<p
 					id="product-price-selected"
-					className="text-3xl sm:text-2xl font-bold tracking-tight text-foreground"
+					className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground"
 					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
 				>
 					{formatEuro(selectedSku.priceInclTax)}
