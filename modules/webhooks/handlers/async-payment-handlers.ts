@@ -3,7 +3,9 @@ import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { handleCheckoutSessionCompleted } from "./checkout-handlers";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { getBaseUrl } from "@/shared/constants/urls";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 
@@ -69,7 +71,7 @@ export async function handleAsyncPaymentFailed(
 		}
 
 		// Cancel order + release discount usages in a single transaction
-		const order = await prisma.$transaction(async (tx) => {
+		const { order, releasedDiscountIds } = await prisma.$transaction(async (tx) => {
 			// Release discount usages
 			const discountUsages = await tx.discountUsage.findMany({
 				where: { orderId },
@@ -88,7 +90,7 @@ export async function handleAsyncPaymentFailed(
 				console.log(`[WEBHOOK] Released ${discountUsages.length} discount usage(s) for failed async order ${orderId}`);
 			}
 
-			return tx.order.update({
+			const updatedOrder = await tx.order.update({
 				where: { id: orderId },
 				data: {
 					paymentStatus: PaymentStatus.FAILED,
@@ -101,6 +103,11 @@ export async function handleAsyncPaymentFailed(
 					customerName: true,
 				},
 			});
+
+			return {
+				order: updatedOrder,
+				releasedDiscountIds: discountUsages.map((u) => u.discountId),
+			};
 		});
 
 		console.log(`⚠️ [WEBHOOK] Order ${order.orderNumber} marked as FAILED due to async payment failure`);
@@ -108,9 +115,26 @@ export async function handleAsyncPaymentFailed(
 		// Build post-tasks (email + cache invalidation)
 		const tasks: PostWebhookTask[] = [];
 
+		// Collect discount tags for released usages
+		const discountTags: string[] = [];
+		if (releasedDiscountIds.length > 0) {
+			discountTags.push(DISCOUNT_CACHE_TAGS.LIST);
+			for (const discountId of releasedDiscountIds) {
+				discountTags.push(DISCOUNT_CACHE_TAGS.USAGE(discountId));
+			}
+		}
+
 		tasks.push({
 			type: "INVALIDATE_CACHE",
-			tags: [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES],
+			tags: [
+				ORDERS_CACHE_TAGS.LIST,
+				SHARED_CACHE_TAGS.ADMIN_BADGES,
+				SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
+				DASHBOARD_CACHE_TAGS.KPIS,
+				DASHBOARD_CACHE_TAGS.REVENUE_CHART,
+				DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
+				...discountTags,
+			],
 		});
 
 		const retryUrl = `${getBaseUrl()}/creations`;

@@ -1,6 +1,6 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { RETENTION } from "@/modules/cron/constants/limits";
+import { CLEANUP_DELETE_LIMIT, RETENTION } from "@/modules/cron/constants/limits";
 
 /**
  * Cleans up unconfirmed newsletter subscriptions.
@@ -10,6 +10,7 @@ import { RETENTION } from "@/modules/cron/constants/limits";
  */
 export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 	deleted: number;
+	hasMore: boolean;
 }> {
 	console.log(
 		"[CRON:cleanup-newsletter] Starting unconfirmed subscriptions cleanup..."
@@ -19,14 +20,26 @@ export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 		Date.now() - RETENTION.NEWSLETTER_CONFIRMATION_DAYS * 24 * 60 * 60 * 1000
 	);
 
-	// Delete unconfirmed subscriptions past the 7-day window
-	const deleteResult = await prisma.newsletterSubscriber.deleteMany({
+	// Find expired subscriptions (bounded)
+	const toDelete = await prisma.newsletterSubscriber.findMany({
 		where: {
 			status: NewsletterStatus.PENDING,
 			confirmationSentAt: { lt: expiryDate },
 			confirmedAt: null,
 		},
+		select: { id: true },
+		take: CLEANUP_DELETE_LIMIT,
 	});
+
+	const deleteResult = await prisma.newsletterSubscriber.deleteMany({
+		where: { id: { in: toDelete.map((s) => s.id) } },
+	});
+
+	if (toDelete.length === CLEANUP_DELETE_LIMIT) {
+		console.warn(
+			"[CRON:cleanup-newsletter] Delete limit reached, remaining will be cleaned on next run"
+		);
+	}
 
 	console.log(
 		`[CRON:cleanup-newsletter] Deleted ${deleteResult.count} unconfirmed subscriptions`
@@ -34,5 +47,6 @@ export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 
 	return {
 		deleted: deleteResult.count,
+		hasMore: toDelete.length === CLEANUP_DELETE_LIMIT,
 	};
 }

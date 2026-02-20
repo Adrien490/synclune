@@ -29,7 +29,7 @@ export const RevertShippingNotificationEmail = ({
 
 			{/* Raison */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<Text style={{ ...EMAIL_STYLES.text.small, fontWeight: "600" }}>
 						Motif
 					</Text>
@@ -43,7 +43,7 @@ export const RevertShippingNotificationEmail = ({
 					>
 						{reason}
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Info */}

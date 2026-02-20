@@ -10,6 +10,7 @@ interface CustomizationStatusEmailProps {
 	status: CustomizationStatus;
 	adminNotes?: string | null;
 	details: string;
+	shopUrl?: string;
 }
 
 const STATUS_CONFIG: Record<CustomizationStatus, { title: string; preview: string; body: string }> = {
@@ -36,6 +37,7 @@ export const CustomizationStatusEmail = ({
 	status,
 	adminNotes,
 	details,
+	shopUrl = "https://synclune.fr/creations",
 }: CustomizationStatusEmailProps) => {
 	const config = STATUS_CONFIG[status];
 
@@ -51,7 +53,7 @@ export const CustomizationStatusEmail = ({
 
 			{/* Details card */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>
 						Type de création
 					</Text>
@@ -77,13 +79,13 @@ export const CustomizationStatusEmail = ({
 					>
 						{details}
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Admin notes */}
 			{adminNotes && (
 				<Section style={{ marginBottom: "24px" }}>
-					<div style={{ ...EMAIL_STYLES.section.card, borderLeft: `3px solid ${EMAIL_COLORS.primary}` }}>
+					<Section style={{ ...EMAIL_STYLES.section.card, borderLeft: `3px solid ${EMAIL_COLORS.primary}` }}>
 						<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>
 							Note de notre artisan
 						</Text>
@@ -97,14 +99,14 @@ export const CustomizationStatusEmail = ({
 						>
 							{adminNotes}
 						</Text>
-					</div>
+					</Section>
 				</Section>
 			)}
 
 			{/* CTA for completed status */}
 			{status === "COMPLETED" && (
 				<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-					<Button href="https://synclune.fr/creations" style={EMAIL_STYLES.button.primary}>
+					<Button href={shopUrl} style={EMAIL_STYLES.button.primary}>
 						Voir les créations
 					</Button>
 				</Section>

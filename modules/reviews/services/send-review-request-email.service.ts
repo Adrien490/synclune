@@ -1,6 +1,7 @@
 import { prisma } from "@/shared/lib/prisma"
 import { sendReviewRequestEmail } from "@/modules/emails/services/review-emails"
 import { SITE_URL } from "@/shared/constants/seo-config"
+import { buildUrl, ROUTES } from "@/shared/constants/urls"
 import {
 	success,
 	notFound,
@@ -83,12 +84,14 @@ export async function executeReviewRequestEmail(orderId: string): Promise<Action
 	})
 
 	// 6. Send email
+	const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE)
 	const result = await sendReviewRequestEmail({
 		to: order.user.email,
 		customerName: order.user.name || "Cliente",
 		orderNumber: order.orderNumber,
 		products,
 		reviewUrl,
+		unsubscribeUrl,
 	})
 
 	if (!result.success) {

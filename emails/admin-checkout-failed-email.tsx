@@ -1,5 +1,6 @@
+import { formatEuro } from "@/shared/utils/format-euro";
 import { Section, Text } from "@react-email/components";
-import { EMAIL_STYLES } from "./email-colors";
+import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 import { ErrorCodeBlock } from "./_components/error-code-block";
 import { FlexRow } from "./_components/flex-row";
@@ -37,7 +38,7 @@ export const AdminCheckoutFailedEmail = ({
 
 			{/* Details */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
 						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
@@ -48,7 +49,7 @@ export const AdminCheckoutFailedEmail = ({
 									fontFamily: "monospace",
 									fontSize: "14px",
 									fontWeight: "bold",
-									color: EMAIL_STYLES.heading.h3.color,
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
 								{orderNumber}
@@ -63,7 +64,7 @@ export const AdminCheckoutFailedEmail = ({
 								style={{
 									margin: 0,
 									fontSize: "14px",
-									color: EMAIL_STYLES.heading.h3.color,
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
 								{customerEmail}
@@ -78,14 +79,14 @@ export const AdminCheckoutFailedEmail = ({
 									margin: 0,
 									fontSize: "14px",
 									fontWeight: "bold",
-									color: EMAIL_STYLES.heading.h3.color,
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
-								{(total / 100).toFixed(2)} €
+								{formatEuro(total)}
 							</Text>
 						}
 					/>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Error details */}

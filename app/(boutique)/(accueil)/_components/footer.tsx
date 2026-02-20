@@ -50,8 +50,9 @@ export async function Footer() {
 			/>
 
 			<div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${FOOTER_PADDING}`}>
-				{/* Navigation principale - Ordre: Logo, Navigation, Contact, Réseaux */}
-				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} inView once>
+				{/* Single Fade wrapper — 1 IntersectionObserver instead of 4 */}
+				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} inView once disableOnTouch>
+					{/* Navigation principale - Ordre: Logo, Navigation, Contact, Réseaux */}
 					<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-8">
 						{/* Colonne 1: Logo + phrase perso */}
 						<div className="order-1 space-y-4">
@@ -104,8 +105,8 @@ export async function Footer() {
 						</nav>
 
 						{/* Colonne 3: Contact */}
-						<section aria-labelledby="footer-contact-title" className="order-3">
-							<h3 id="footer-contact-title" className="text-base/6 font-medium antialiased text-foreground mb-4">
+						<div className="order-3">
+							<h3 className="text-base/6 font-medium antialiased text-foreground mb-4">
 								Contact
 							</h3>
 							<div className="space-y-3">
@@ -113,7 +114,7 @@ export async function Footer() {
 								<a
 									href={`mailto:${BRAND.contact.email}`}
 									className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 wrap-break-words focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
-									aria-label="Envoyer un email à Synclune"
+									aria-label={`Envoyer un email à Synclune : ${BRAND.contact.email}`}
 								>
 									{BRAND.contact.email}
 								</a>
@@ -122,7 +123,7 @@ export async function Footer() {
 									Atelier basé à Nantes, Loire-Atlantique, France
 								</p>
 							</div>
-						</section>
+						</div>
 
 						{/* Colonne 4: Réseaux sociaux */}
 						<nav
@@ -175,10 +176,8 @@ export async function Footer() {
 							</ul>
 						</nav>
 					</div>
-				</Fade>
 
-				{/* Reassurance - Baymard UX trust signals */}
-				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} delay={MOTION_CONFIG.section.footer.stagger} inView once>
+					{/* Reassurance - Baymard UX trust signals */}
 					<section aria-label="Engagements et garanties" className="mb-8">
 						<ul className="grid sm:grid-cols-3 gap-3">
 							{REASSURANCE_ITEMS.map((item) => (
@@ -191,10 +190,8 @@ export async function Footer() {
 							))}
 						</ul>
 					</section>
-				</Fade>
 
-				{/* Paiement sécurisé */}
-				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} delay={MOTION_CONFIG.section.footer.stagger * 2} inView once>
+					{/* Paiement sécurisé */}
 					<section className="flex flex-col items-center gap-3 pt-8 border-t border-border" aria-labelledby="footer-payment-title">
 						<h3 id="footer-payment-title" className="sr-only">Paiement sécurisé</h3>
 						<div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -209,22 +206,21 @@ export async function Footer() {
 							<li><ApplePayIcon aria-label="Apple Pay accepté" className="text-muted-foreground" /></li>
 						</ul>
 					</section>
-				</Fade>
 
-				{/* Copyright + Liens légaux */}
-				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} delay={MOTION_CONFIG.section.footer.stagger * 3} inView once>
+					{/* Copyright + Liens légaux */}
 					<div className="flex flex-col items-center gap-4 pt-6">
 						<p className="text-sm/6 antialiased text-muted-foreground text-center">
 							© <CopyrightYear /> Synclune. Tous droits réservés.
 						</p>
 						<nav
 							aria-label="Liens légaux"
-							className="flex flex-col sm:flex-row sm:flex-wrap justify-center items-center gap-x-1"
+							className="flex flex-col sm:flex-row sm:flex-wrap justify-center items-center gap-x-2"
 						>
 							{legalLinks.map((link) => (
 								<Link
 									key={link.href}
 									href={link.href}
+									title={"title" in link ? link.title : undefined}
 									className="text-sm antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg px-3 py-2 min-h-11 inline-flex items-center justify-center sm:justify-start"
 								>
 									{link.label}

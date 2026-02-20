@@ -51,7 +51,7 @@ export function MenuSheet({
 					type="button"
 					className="relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-[transform,color,background-color] duration-300 ease-out motion-safe:hover:scale-105 motion-safe:active:scale-95 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 					aria-label="Ouvrir le menu de navigation"
-					aria-controls="mobile-menu-synclune"
+					aria-haspopup="dialog"
 				>
 					<Menu
 						size={20}
@@ -63,7 +63,6 @@ export function MenuSheet({
 
 			<SheetContent
 				className="w-[min(88vw,340px)] sm:w-80 sm:max-w-md border-r bg-background/95 p-0! flex flex-col"
-				id="mobile-menu-synclune"
 			>
 
 				{/* Header sr-only */}

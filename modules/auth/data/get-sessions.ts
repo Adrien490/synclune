@@ -108,7 +108,7 @@ async function fetchSessions(
 	params: GetSessionsParams,
 	userId?: string
 ): Promise<GetSessionsReturn> {
-	"use cache";
+	"use cache: private";
 	cacheAuthSessions(userId);
 
 	const sortOrder = (params.sortOrder ||

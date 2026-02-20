@@ -7,6 +7,9 @@ const { mockPrisma } = vi.hoisted(() => ({
 			findMany: vi.fn(),
 			deleteMany: vi.fn(),
 		},
+		failedEmail: {
+			deleteMany: vi.fn(),
+		},
 	},
 }));
 
@@ -28,6 +31,7 @@ describe("cleanupOldWebhookEvents", () => {
 		// Default: all findMany return empty, all deleteMany return 0
 		mockPrisma.webhookEvent.findMany.mockResolvedValue([]);
 		mockPrisma.webhookEvent.deleteMany.mockResolvedValue({ count: 0 });
+		mockPrisma.failedEmail.deleteMany.mockResolvedValue({ count: 0 });
 	});
 
 	it("should return zero counts when no webhook events are expired", async () => {
@@ -38,9 +42,11 @@ describe("cleanupOldWebhookEvents", () => {
 			failedDeleted: 0,
 			skippedDeleted: 0,
 			staleDeleted: 0,
+			failedEmailsDeleted: 0,
 		});
 		expect(mockPrisma.webhookEvent.findMany).toHaveBeenCalledTimes(4);
 		expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenCalledTimes(4);
+		expect(mockPrisma.failedEmail.deleteMany).toHaveBeenCalledTimes(1);
 	});
 
 	it("should delete completed webhook events older than 90 days", async () => {
@@ -182,6 +188,27 @@ describe("cleanupOldWebhookEvents", () => {
 		});
 	});
 
+	it("should delete resolved FailedEmail records older than 30 days", async () => {
+		mockPrisma.failedEmail.deleteMany.mockResolvedValue({ count: 7 });
+
+		const result = await cleanupOldWebhookEvents();
+
+		expect(result.failedEmailsDeleted).toBe(7);
+		expect(mockPrisma.failedEmail.deleteMany).toHaveBeenCalledWith({
+			where: {
+				status: { in: ["RETRIED", "EXHAUSTED"] },
+				updatedAt: { lt: expect.any(Date) },
+			},
+		});
+
+		// Verify retention date (30 days ago)
+		const call = mockPrisma.failedEmail.deleteMany.mock.calls[0][0];
+		const retentionDate = call.where.updatedAt.lt;
+		const expectedDate = new Date("2026-02-16T10:00:00Z");
+		expectedDate.setTime(expectedDate.getTime() - RETENTION.FAILED_EMAIL_RESOLVED_DAYS * 24 * 60 * 60 * 1000);
+		expect(retentionDate.getTime()).toBe(expectedDate.getTime());
+	});
+
 	it("should verify correct retention dates for all statuses", async () => {
 		await cleanupOldWebhookEvents();
 
@@ -233,6 +260,7 @@ describe("cleanupOldWebhookEvents", () => {
 			.mockResolvedValueOnce({ count: 10 })
 			.mockResolvedValueOnce({ count: 5 })
 			.mockResolvedValueOnce({ count: 2 });
+		mockPrisma.failedEmail.deleteMany.mockResolvedValue({ count: 3 });
 
 		const result = await cleanupOldWebhookEvents();
 
@@ -241,9 +269,11 @@ describe("cleanupOldWebhookEvents", () => {
 			failedDeleted: 10,
 			skippedDeleted: 5,
 			staleDeleted: 2,
+			failedEmailsDeleted: 3,
 		});
 		expect(mockPrisma.webhookEvent.findMany).toHaveBeenCalledTimes(4);
 		expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenCalledTimes(4);
+		expect(mockPrisma.failedEmail.deleteMany).toHaveBeenCalledTimes(1);
 	});
 
 	it("should execute all operations in correct order", async () => {

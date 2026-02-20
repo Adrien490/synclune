@@ -49,7 +49,15 @@ export async function renderAndSend(
 		return { success: false, error: "Missing recipient" }
 	}
 
-	const html = await render(component)
-	const text = await render(component, { plainText: true })
+	let html: string
+	let text: string
+	try {
+		html = await render(component)
+		text = await render(component, { plainText: true })
+	} catch (renderError) {
+		const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to
+		console.error(`[EMAIL] Failed to render template for "${params.subject}" to ${recipient}:`, renderError)
+		return { success: false, error: renderError }
+	}
 	return sendEmail({ ...params, html, text })
 }

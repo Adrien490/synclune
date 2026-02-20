@@ -32,9 +32,6 @@ export const envSchema = z.object({
 	RESEND_CONTACT_EMAIL: z
 		.string()
 		.email("RESEND_CONTACT_EMAIL doit être un email valide"),
-	CONTACT_ADRIEN_EMAIL: z
-		.string()
-		.email("CONTACT_ADRIEN_EMAIL doit être un email valide"),
 
 	// ========================================
 	// Stripe (Paiement)
@@ -60,15 +57,22 @@ export const envSchema = z.object({
 	UPLOADTHING_TOKEN: z.string().min(1, "UPLOADTHING_TOKEN est requis"),
 
 	// ========================================
-	// Rate Limiting (Arcjet - optionnel)
+	// Rate Limiting (Arcjet - required in production)
 	// ========================================
 	ARCJET_KEY: z.string().optional(),
 
 	// ========================================
-	// Rate Limiting (Upstash Redis - optionnel en dev)
+	// Rate Limiting (Upstash Redis - optionnel)
 	// ========================================
 	UPSTASH_REDIS_REST_URL: z.string().url().optional(),
 	UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+
+	// ========================================
+	// Cron Jobs
+	// ========================================
+	CRON_SECRET: z
+		.string()
+		.min(32, "CRON_SECRET doit avoir au moins 32 caractères"),
 
 	// ========================================
 	// Node
@@ -76,6 +80,16 @@ export const envSchema = z.object({
 	NODE_ENV: z
 		.enum(["development", "production", "test"])
 		.default("development"),
+}).superRefine((data, ctx) => {
+	if (data.NODE_ENV === "production") {
+		if (!data.ARCJET_KEY) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "ARCJET_KEY est requis en production",
+				path: ["ARCJET_KEY"],
+			});
+		}
+	}
 });
 
 /**

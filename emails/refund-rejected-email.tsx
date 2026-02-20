@@ -39,7 +39,7 @@ export const RefundRejectedEmail = ({
 			{/* Raison du refus */}
 			{reasonLabel && (
 				<Section style={{ marginBottom: "24px" }}>
-					<div style={EMAIL_STYLES.section.card}>
+					<Section style={EMAIL_STYLES.section.card}>
 						<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>
 							Motif
 						</Text>
@@ -52,7 +52,7 @@ export const RefundRejectedEmail = ({
 						>
 							{reasonLabel}
 						</Text>
-					</div>
+					</Section>
 				</Section>
 			)}
 

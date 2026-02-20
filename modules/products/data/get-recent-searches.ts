@@ -21,7 +21,9 @@ export async function getRecentSearches(): Promise<string[]> {
 	try {
 		const parsed = JSON.parse(decodeURIComponent(cookie.value))
 		if (Array.isArray(parsed)) {
-			return parsed.slice(0, RECENT_SEARCHES_MAX_ITEMS)
+			return parsed
+				.filter((s): s is string => typeof s === "string" && s.length <= 100)
+				.slice(0, RECENT_SEARCHES_MAX_ITEMS)
 		}
 	} catch {
 		// Ignore les erreurs de parsing

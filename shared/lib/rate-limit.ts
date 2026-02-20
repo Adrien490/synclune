@@ -18,11 +18,24 @@ export type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit
 // UPSTASH REDIS RATE LIMITER (lazy-initialized)
 // ============================================================================
 
+let sharedRedis: import("@upstash/redis").Redis | null = null;
 let upstashLimiterCache: Map<string, import("@upstash/ratelimit").Ratelimit> | null = null;
 let globalIpLimiter: import("@upstash/ratelimit").Ratelimit | null = null;
 
 function isUpstashConfigured(): boolean {
 	return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
+
+async function getSharedRedis(): Promise<import("@upstash/redis").Redis> {
+	if (sharedRedis) return sharedRedis;
+
+	const { Redis } = await import("@upstash/redis");
+	sharedRedis = new Redis({
+		url: process.env.UPSTASH_REDIS_REST_URL!,
+		token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+	});
+
+	return sharedRedis;
 }
 
 async function getUpstashLimiter(limit: number, windowMs: number): Promise<import("@upstash/ratelimit").Ratelimit> {
@@ -35,12 +48,7 @@ async function getUpstashLimiter(limit: number, windowMs: number): Promise<impor
 	if (cached) return cached;
 
 	const { Ratelimit } = await import("@upstash/ratelimit");
-	const { Redis } = await import("@upstash/redis");
-
-	const redis = new Redis({
-		url: process.env.UPSTASH_REDIS_REST_URL!,
-		token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-	});
+	const redis = await getSharedRedis();
 
 	const windowSeconds = Math.ceil(windowMs / 1000);
 	const limiter = new Ratelimit({
@@ -57,12 +65,7 @@ async function getGlobalIpLimiter(): Promise<import("@upstash/ratelimit").Rateli
 	if (globalIpLimiter) return globalIpLimiter;
 
 	const { Ratelimit } = await import("@upstash/ratelimit");
-	const { Redis } = await import("@upstash/redis");
-
-	const redis = new Redis({
-		url: process.env.UPSTASH_REDIS_REST_URL!,
-		token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-	});
+	const redis = await getSharedRedis();
 
 	globalIpLimiter = new Ratelimit({
 		redis,

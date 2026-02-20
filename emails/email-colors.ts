@@ -31,13 +31,6 @@ export const EMAIL_COLORS = {
 
 	/** Stripe brand color for dashboard links */
 	stripe: "#635bff",
-
-	/** Primary avec transparence */
-	primaryAlpha: {
-		5: "rgba(232, 164, 184, 0.05)",
-		10: "rgba(232, 164, 184, 0.1)",
-		20: "rgba(232, 164, 184, 0.2)",
-	},
 } as const;
 
 /**

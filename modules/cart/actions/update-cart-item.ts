@@ -10,6 +10,7 @@ import { getCartExpirationDate } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { updateCartItemSchema } from "../schemas/cart.schemas";
 import { CART_ERROR_MESSAGES } from "../constants/error-messages";
+import { MAX_QUANTITY_PER_ORDER } from "../constants/cart";
 
 /**
  * Server Action pour mettre à jour la quantité d'un article dans le panier
@@ -94,20 +95,25 @@ export async function updateCartItem(
 				throw new BusinessError(CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 			}
 
-			// 7b. Si augmentation de quantité, vérifier le stock disponible
+			// 7b. Defense-in-depth: enforce max quantity inside the transaction
+			if (validatedData.quantity > MAX_QUANTITY_PER_ORDER) {
+				throw new BusinessError(CART_ERROR_MESSAGES.QUANTITY_MAX);
+			}
+
+			// 7c. Si augmentation de quantité, vérifier le stock disponible
 			if (validatedData.quantity > sku.inventory) {
 				throw new BusinessError(
 					CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory)
 				);
 			}
 
-			// 7c. Mettre à jour le CartItem
+			// 7d. Mettre à jour le CartItem
 			await tx.cartItem.update({
 				where: { id: validatedData.cartItemId },
 				data: { quantity: validatedData.quantity },
 			});
 
-			// 7d. Mettre à jour le panier
+			// 7e. Mettre à jour le panier
 			await tx.cart.update({
 				where: { id: cartItem.cartId },
 				data: {

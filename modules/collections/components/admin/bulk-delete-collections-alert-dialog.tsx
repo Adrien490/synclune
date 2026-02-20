@@ -13,6 +13,7 @@ import {
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteCollections } from "@/modules/collections/hooks/use-bulk-delete-collections";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { Loader2 } from "lucide-react";
 
 export const BULK_DELETE_COLLECTIONS_DIALOG_ID = "bulk-delete-collections";
 

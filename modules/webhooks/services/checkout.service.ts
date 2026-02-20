@@ -276,6 +276,12 @@ export function buildPostCheckoutTasks(
 	if (order.userId) {
 		// Panier de l'utilisateur
 		cacheTags.push(...getCartInvalidationTags(order.userId, undefined));
+	} else {
+		// Guest cart: invalidate by guestSessionId from Stripe metadata
+		const guestSessionId = session.metadata?.guestSessionId;
+		if (guestSessionId) {
+			cacheTags.push(...getCartInvalidationTags(undefined, guestSessionId));
+		}
 	}
 
 	// Stock temps réel des SKUs achetés

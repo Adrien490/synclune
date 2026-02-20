@@ -45,7 +45,7 @@ export const AdminRefundFailedEmail = ({
 
 			{/* Détails */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
 						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
@@ -109,7 +109,7 @@ export const AdminRefundFailedEmail = ({
 							</Text>
 						}
 					/>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Erreur */}
@@ -125,7 +125,7 @@ export const AdminRefundFailedEmail = ({
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
 					Identifiants Stripe
 				</Text>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<Text style={EMAIL_STYLES.text.tiny}>Payment Intent ID</Text>
 					<Text
 						style={{
@@ -138,7 +138,7 @@ export const AdminRefundFailedEmail = ({
 					>
 						{stripePaymentIntentId}
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			{/* CTAs */}

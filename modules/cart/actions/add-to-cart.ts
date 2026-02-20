@@ -10,7 +10,7 @@ import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import { getCartExpirationDate, getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { addToCartSchema } from "../schemas/cart.schemas";
-import { MAX_CART_ITEMS } from "../constants/cart";
+import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "../constants/cart";
 
 /**
  * Server Action pour ajouter un article au panier
@@ -151,6 +151,11 @@ export async function addToCart(
 
 			if (existingItem) {
 				newQuantity = existingItem.quantity + validatedData.quantity;
+
+				// Enforce max quantity per order (cumulative check)
+				if (newQuantity > MAX_QUANTITY_PER_ORDER) {
+					throw new BusinessError(CART_ERROR_MESSAGES.QUANTITY_MAX);
+				}
 
 				// Vérification du stock (message générique pour ne pas révéler le stock exact)
 				if (sku.inventory < newQuantity) {

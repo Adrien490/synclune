@@ -1,6 +1,7 @@
 import { CustomizationRequestEmail } from "@/emails/customization-request-email"
 import { CustomizationConfirmationEmail } from "@/emails/customization-confirmation-email"
 import { CustomizationStatusEmail } from "@/emails/customization-status-email"
+import { buildUrl, ROUTES } from "@/shared/constants/urls"
 import { EMAIL_SUBJECTS, EMAIL_ADMIN, EMAIL_CONTACT } from "../constants/email.constants"
 import { renderAndSend } from "./send-email"
 import type { EmailResult } from "../types/email.types"
@@ -96,6 +97,7 @@ export async function sendCustomizationStatusEmail({
 	adminNotes?: string | null
 	details: string
 }): Promise<EmailResult> {
+	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS)
 	return renderAndSend(
 		CustomizationStatusEmail({
 			firstName,
@@ -103,6 +105,7 @@ export async function sendCustomizationStatusEmail({
 			status,
 			adminNotes,
 			details,
+			shopUrl,
 		}),
 		{
 			to: email,

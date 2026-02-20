@@ -61,12 +61,13 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 										)}>
 											<Image
 												src={product.imageUrl}
-												alt={product.title}
+												alt=""
 												fill
 												sizes="90px"
 												className="object-cover"
 												placeholder={product.blurDataUrl ? "blur" : "empty"}
 												blurDataURL={product.blurDataUrl ?? undefined}
+												aria-hidden="true"
 											/>
 										</div>
 										<div className="min-w-0">

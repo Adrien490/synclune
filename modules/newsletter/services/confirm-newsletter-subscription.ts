@@ -72,6 +72,14 @@ export async function confirmNewsletterSubscription(
 		// Find subscriber with this token (exclude soft-deleted)
 		const subscriber = await prisma.newsletterSubscriber.findFirst({
 			where: { confirmationToken: validatedToken, deletedAt: null },
+			select: {
+				id: true,
+				email: true,
+				status: true,
+				confirmationSentAt: true,
+				unsubscribeToken: true,
+				userId: true,
+			},
 		});
 
 		if (!subscriber) {
@@ -129,8 +137,8 @@ export async function confirmNewsletterSubscription(
 			},
 		});
 
-		// Invalidate cache
-		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
+		// Invalidate cache (pass userId to invalidate user-specific status)
+		getNewsletterInvalidationTags(subscriber.userId ?? undefined).forEach((tag) => updateTag(tag));
 
 		// Send welcome email (non-blocking: don't fail confirmation if email fails)
 		try {

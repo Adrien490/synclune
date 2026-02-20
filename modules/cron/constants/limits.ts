@@ -36,6 +36,11 @@ export const BATCH_SIZE_LARGE = 50;
 export const MAX_WEBHOOK_RETRY_ATTEMPTS = 3;
 
 /**
+ * Maximum retry attempts for failed transactional emails
+ */
+export const MAX_EMAIL_RETRY_ATTEMPTS = 3;
+
+/**
  * Retention periods in days
  */
 export const RETENTION = {

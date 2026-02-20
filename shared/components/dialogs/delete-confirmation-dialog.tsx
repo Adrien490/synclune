@@ -11,6 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
 
 export interface DeleteConfirmationDialogProps<T extends Record<string, unknown>> {
@@ -107,7 +108,12 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<AlertDialogAction
+							type="submit"
+							disabled={isPending}
+							aria-busy={isPending}
+						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? pendingLabel : submitLabel}
 						</AlertDialogAction>
 					</AlertDialogFooter>

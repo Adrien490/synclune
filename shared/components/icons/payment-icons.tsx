@@ -22,7 +22,7 @@ export function VisaIcon({ className = "", "aria-label": ariaLabel = "Visa" }: P
 			role="img"
 			aria-label={ariaLabel}
 		>
-			<title>Visa</title>
+			<title>{ariaLabel}</title>
 			<rect
 				x="0.5"
 				y="0.5"
@@ -54,7 +54,7 @@ export function MastercardIcon({ className = "", "aria-label": ariaLabel = "Mast
 			role="img"
 			aria-label={ariaLabel}
 		>
-			<title>Mastercard</title>
+			<title>{ariaLabel}</title>
 			<rect
 				x="0.5"
 				y="0.5"
@@ -88,7 +88,7 @@ export function CBIcon({ className = "", "aria-label": ariaLabel = "Carte Bancai
 			role="img"
 			aria-label={ariaLabel}
 		>
-			<title>Carte Bancaire</title>
+			<title>{ariaLabel}</title>
 			<rect
 				x="0.5"
 				y="0.5"
@@ -129,7 +129,7 @@ export function PayPalIcon({ className = "", "aria-label": ariaLabel = "PayPal" 
 			role="img"
 			aria-label={ariaLabel}
 		>
-			<title>PayPal</title>
+			<title>{ariaLabel}</title>
 			<rect
 				x="0.5"
 				y="0.5"
@@ -166,7 +166,7 @@ export function ApplePayIcon({ className = "", "aria-label": ariaLabel = "Apple 
 			role="img"
 			aria-label={ariaLabel}
 		>
-			<title>Apple Pay</title>
+			<title>{ariaLabel}</title>
 			<rect
 				x="0.5"
 				y="0.5"

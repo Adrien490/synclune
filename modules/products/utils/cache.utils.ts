@@ -25,7 +25,7 @@ export function cacheProducts() {
 /**
  * Configure le cache pour le détail d'un produit
  * - Utilisé pour : /products/[slug]
- * - Durée : 30min fraîche, 10min revalidation, 12h expiration
+ * - Durée : 15min fraîche, 5min revalidation, 6h expiration
  */
 export function cacheProductDetail(slug: string) {
 	cacheLife("productDetail");

@@ -76,7 +76,7 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 								showChevron
 								className={linkClasses}
 								data-active={itemIsActive}
-								aria-current={itemIsActive ? "page" : undefined}
+								aria-current={itemIsActive ? "true" : undefined}
 								onClick={(e) => {
 									// Only navigate on mouse click, not keyboard activation
 									if (e.detail > 0 && !e.defaultPrevented) {

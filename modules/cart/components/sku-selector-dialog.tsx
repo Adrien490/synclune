@@ -73,6 +73,11 @@ const VALIDATION_ERROR_ID = "sku-selector-validation-error";
 /** ID for aria-describedby on quantity input bounds */
 const QUANTITY_BOUNDS_ID = "sku-selector-quantity-bounds";
 
+/** IDs for aria-labelledby on radiogroup containers */
+const COLOR_LEGEND_ID = "sku-color-legend";
+const MATERIAL_LEGEND_ID = "sku-material-legend";
+const SIZE_LEGEND_ID = "sku-size-legend";
+
 export const SKU_SELECTOR_DIALOG_ID = "sku-selector";
 
 // ============================================================================
@@ -249,7 +254,7 @@ interface ColorSelectorProps {
 	onSelect: (slug: string) => void;
 	isPending: boolean;
 	hasValidationErrors: boolean;
-	isColorAvailable: (slug: string) => boolean;
+	colorAvailability: Map<string, boolean>;
 }
 
 function ColorSelector({
@@ -258,19 +263,20 @@ function ColorSelector({
 	onSelect,
 	isPending,
 	hasValidationErrors,
-	isColorAvailable,
+	colorAvailability,
 }: ColorSelectorProps) {
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: colors,
 		getOptionId: (color) => color.slug,
-		isOptionDisabled: (color) => !isColorAvailable(color.slug),
+		isOptionDisabled: (color) =>
+			!(colorAvailability.get(color.slug) ?? false),
 		onSelect: (color) => onSelect(color.slug),
 	});
 
 	const needsCarousel = colors.length > 5;
 	const colorButtons = colors.map((color, index) => {
 		const isSelected = color.slug === selectedValue;
-		const isAvailable = isColorAvailable(color.slug);
+		const isAvailable = colorAvailability.get(color.slug) ?? false;
 
 		return (
 			<button
@@ -318,11 +324,17 @@ function ColorSelector({
 							damping: 15,
 						}}
 					>
-						<Check className="w-4 h-4 text-primary shrink-0" />
+						<Check
+							className="w-4 h-4 text-primary shrink-0"
+							aria-hidden="true"
+						/>
 					</motion.div>
 				)}
 				{!isAvailable && (
-					<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+					<div
+						className="absolute inset-0 flex items-center justify-center pointer-events-none"
+						aria-hidden="true"
+					>
 						<div className="w-full h-px bg-muted-foreground/50 rotate-[-8deg]" />
 					</div>
 				)}
@@ -331,18 +343,8 @@ function ColorSelector({
 	});
 
 	return (
-		<fieldset
-			className="space-y-2"
-			disabled={isPending}
-			role="radiogroup"
-			aria-label="Sélection de couleur"
-			aria-describedby={
-				hasValidationErrors && !selectedValue
-					? VALIDATION_ERROR_ID
-					: undefined
-			}
-		>
-			<legend className="text-sm font-medium">
+		<fieldset className="space-y-2" disabled={isPending}>
+			<legend id={COLOR_LEGEND_ID} className="text-sm font-medium">
 				Couleur
 				<span
 					className="text-destructive ml-0.5"
@@ -365,6 +367,13 @@ function ColorSelector({
 				<ScrollFade axis="horizontal" hideScrollbar>
 					<div
 						ref={containerRef}
+						role="radiogroup"
+						aria-labelledby={COLOR_LEGEND_ID}
+						aria-describedby={
+							hasValidationErrors && !selectedValue
+								? VALIDATION_ERROR_ID
+								: undefined
+						}
 						className="flex gap-2 pb-1"
 					>
 						{colorButtons}
@@ -373,6 +382,13 @@ function ColorSelector({
 			) : (
 				<div
 					ref={containerRef}
+					role="radiogroup"
+					aria-labelledby={COLOR_LEGEND_ID}
+					aria-describedby={
+						hasValidationErrors && !selectedValue
+							? VALIDATION_ERROR_ID
+							: undefined
+					}
 					className="flex flex-wrap gap-2"
 				>
 					{colorButtons}
@@ -392,7 +408,7 @@ interface MaterialSelectorProps {
 	onSelect: (slug: string) => void;
 	isPending: boolean;
 	hasValidationErrors: boolean;
-	isMaterialAvailable: (slug: string) => boolean;
+	materialAvailability: Map<string, boolean>;
 }
 
 function MaterialSelector({
@@ -401,28 +417,19 @@ function MaterialSelector({
 	onSelect,
 	isPending,
 	hasValidationErrors,
-	isMaterialAvailable,
+	materialAvailability,
 }: MaterialSelectorProps) {
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: materials,
 		getOptionId: (material) => material.slug,
-		isOptionDisabled: (material) => !isMaterialAvailable(material.slug),
+		isOptionDisabled: (material) =>
+			!(materialAvailability.get(material.slug) ?? false),
 		onSelect: (material) => onSelect(material.slug),
 	});
 
 	return (
-		<fieldset
-			className="space-y-2"
-			disabled={isPending}
-			role="radiogroup"
-			aria-label="Sélection de matériau"
-			aria-describedby={
-				hasValidationErrors && !selectedValue
-					? VALIDATION_ERROR_ID
-					: undefined
-			}
-		>
-			<legend className="text-sm font-medium">
+		<fieldset className="space-y-2" disabled={isPending}>
+			<legend id={MATERIAL_LEGEND_ID} className="text-sm font-medium">
 				Matériau
 				<span
 					className="text-destructive ml-0.5"
@@ -434,11 +441,19 @@ function MaterialSelector({
 			</legend>
 			<div
 				ref={containerRef}
+				role="radiogroup"
+				aria-labelledby={MATERIAL_LEGEND_ID}
+				aria-describedby={
+					hasValidationErrors && !selectedValue
+						? VALIDATION_ERROR_ID
+						: undefined
+				}
 				className="grid grid-cols-1 sm:grid-cols-2 gap-2"
 			>
 				{materials.map((material, index) => {
 					const isSelected = material.slug === selectedValue;
-					const isAvailable = isMaterialAvailable(material.slug);
+					const isAvailable =
+						materialAvailability.get(material.slug) ?? false;
 
 					return (
 						<button
@@ -481,11 +496,17 @@ function MaterialSelector({
 										damping: 15,
 									}}
 								>
-									<Check className="w-4 h-4 text-primary shrink-0" />
+									<Check
+										className="w-4 h-4 text-primary shrink-0"
+										aria-hidden="true"
+									/>
 								</motion.div>
 							)}
 							{!isAvailable && (
-								<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+								<div
+									className="absolute inset-0 flex items-center justify-center pointer-events-none"
+									aria-hidden="true"
+								>
 									<div className="w-full h-px bg-muted-foreground/50 rotate-[-8deg]" />
 								</div>
 							)}
@@ -507,7 +528,7 @@ interface SizeSelectorGroupProps {
 	onSelect: (size: string) => void;
 	isPending: boolean;
 	hasValidationErrors: boolean;
-	isSizeAvailable: (size: string) => boolean;
+	sizeAvailability: Map<string, boolean>;
 	productTypeSlug?: string | null;
 }
 
@@ -517,31 +538,22 @@ function SizeSelectorGroup({
 	onSelect,
 	isPending,
 	hasValidationErrors,
-	isSizeAvailable,
+	sizeAvailability,
 	productTypeSlug,
 }: SizeSelectorGroupProps) {
 	const sizeOptions = sizes.map((s) => ({ size: s }));
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: sizeOptions,
 		getOptionId: (option) => option.size,
-		isOptionDisabled: (option) => !isSizeAvailable(option.size),
+		isOptionDisabled: (option) =>
+			!(sizeAvailability.get(option.size) ?? false),
 		onSelect: (option) => onSelect(option.size),
 	});
 
 	return (
-		<fieldset
-			className="space-y-2"
-			disabled={isPending}
-			role="radiogroup"
-			aria-label="Sélection de taille"
-			aria-describedby={
-				hasValidationErrors && !selectedValue
-					? VALIDATION_ERROR_ID
-					: undefined
-			}
-		>
+		<fieldset className="space-y-2" disabled={isPending}>
 			<div className="flex items-center justify-between">
-				<legend className="text-sm font-medium">
+				<legend id={SIZE_LEGEND_ID} className="text-sm font-medium">
 					Taille
 					<span
 						className="text-destructive ml-0.5"
@@ -565,11 +577,19 @@ function SizeSelectorGroup({
 			</div>
 			<div
 				ref={containerRef}
+				role="radiogroup"
+				aria-labelledby={SIZE_LEGEND_ID}
+				aria-describedby={
+					hasValidationErrors && !selectedValue
+						? VALIDATION_ERROR_ID
+						: undefined
+				}
 				className="grid grid-cols-3 sm:grid-cols-4 gap-2"
 			>
 				{sizes.map((size, index) => {
 					const isSelected = size === selectedValue;
-					const isAvailable = isSizeAvailable(size);
+					const isAvailable =
+						sizeAvailability.get(size) ?? false;
 
 					return (
 						<button
@@ -613,11 +633,17 @@ function SizeSelectorGroup({
 									}}
 									className="absolute top-1.5 right-1.5"
 								>
-									<Check className="w-3.5 h-3.5 text-primary" />
+									<Check
+										className="w-3.5 h-3.5 text-primary"
+										aria-hidden="true"
+									/>
 								</motion.div>
 							)}
 							{!isAvailable && (
-								<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+								<div
+									className="absolute inset-0 flex items-center justify-center pointer-events-none"
+									aria-hidden="true"
+								>
 									<div className="w-full h-px bg-muted-foreground/50 rotate-[-8deg]" />
 								</div>
 							)}
@@ -625,6 +651,90 @@ function SizeSelectorGroup({
 					);
 				})}
 			</div>
+		</fieldset>
+	);
+}
+
+// ============================================================================
+// Quantity Section (isolated for performance — only re-renders on quantity change)
+// ============================================================================
+
+interface QuantitySectionProps {
+	quantity: number;
+	maxQuantity: number;
+	onQuantityChange: (q: number) => void;
+	isPending: boolean;
+	selectedSku: ActiveSku | undefined;
+	displayPrice: number;
+}
+
+function QuantitySection({
+	quantity,
+	maxQuantity,
+	onQuantityChange,
+	isPending,
+	selectedSku,
+	displayPrice,
+}: QuantitySectionProps) {
+	return (
+		<fieldset className="space-y-2" disabled={isPending}>
+			<legend className="text-sm font-medium">Quantité</legend>
+			<div className="flex items-center gap-4 sm:gap-3">
+				<Button
+					type="button"
+					variant="outline"
+					size="icon"
+					onClick={() =>
+						onQuantityChange(Math.max(1, quantity - 1))
+					}
+					disabled={isPending || quantity <= 1}
+					aria-label="Diminuer la quantité"
+				>
+					<Minus className="h-4 w-4" />
+				</Button>
+				<input
+					type="number"
+					min={1}
+					max={maxQuantity}
+					value={quantity}
+					onChange={(e) => {
+						const val = parseInt(e.target.value, 10) || 1;
+						onQuantityChange(
+							Math.max(1, Math.min(maxQuantity, val))
+						);
+					}}
+					disabled={isPending}
+					className="w-12 text-center text-lg font-semibold tabular-nums bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+					aria-label="Quantité à ajouter au panier"
+					aria-describedby={QUANTITY_BOUNDS_ID}
+				/>
+				<span id={QUANTITY_BOUNDS_ID} className="sr-only">
+					Minimum 1, maximum {maxQuantity}
+				</span>
+				<Button
+					type="button"
+					variant="outline"
+					size="icon"
+					onClick={() =>
+						onQuantityChange(
+							Math.min(maxQuantity, quantity + 1)
+						)
+					}
+					disabled={isPending || quantity >= maxQuantity}
+					aria-label="Augmenter la quantité"
+				>
+					<Plus className="h-4 w-4" />
+				</Button>
+			</div>
+			{/* Subtotal when quantity > 1 */}
+			{quantity > 1 && selectedSku && (
+				<p
+					className="text-xs text-muted-foreground"
+					aria-label={`${quantity} fois ${formatEuro(displayPrice)}`}
+				>
+					{quantity} x {formatEuro(displayPrice)}
+				</p>
+			)}
 		</fieldset>
 	);
 }
@@ -732,7 +842,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 		}
 	};
 
-	// m3: Skeleton state with aria-busy and accessible title
+	// Skeleton state with aria-busy and accessible title
 	if (!product) {
 		return (
 			<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -795,7 +905,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 		product.skus?.filter((sku) => sku.isActive) || [];
 	const { colors, materials, sizes } = extractVariantOptions(activeSkus);
 
-	// M3 + M4: Check for product unavailability
+	// Check for product unavailability
 	const noActiveSkus = activeSkus.length === 0;
 	const allOutOfStock =
 		activeSkus.length > 0 &&
@@ -823,7 +933,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				{/* M3 + M4: Unavailable product message */}
+				{/* Unavailable product message */}
 				{(noActiveSkus || allOutOfStock) && (
 					<div className="py-8 text-center space-y-3">
 						<p
@@ -837,10 +947,11 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 						<Link
 							href={`/creations/${product.slug}`}
 							onClick={handleClose}
+							aria-label={`Voir la fiche produit : ${product.title}`}
 							className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
 						>
 							Voir la fiche produit
-							<ArrowRight className="w-3.5 h-3.5" />
+							<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
 						</Link>
 					</div>
 				)}
@@ -852,6 +963,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 						className="flex flex-col flex-1 min-h-0"
 						data-pending={isPending ? "" : undefined}
 					>
+						{/* Variant fields subscribe — isolated from quantity changes */}
 						<form.Subscribe
 							selector={(state) => state.values}
 						>
@@ -949,10 +1061,10 @@ function SkuSelectorFormContent({
 		size: selectedSize,
 	} = values;
 
-	// m6: Only show validation errors after submit attempt
+	// Only show validation errors after submit attempt
 	const [showErrors, setShowErrors] = useState(false);
 
-	// Availability maps (M2: optimized single-pass)
+	// Availability maps (optimized single-pass)
 	const availability = buildAvailabilityMaps(
 		activeSkus,
 		colors,
@@ -962,13 +1074,6 @@ function SkuSelectorFormContent({
 		selectedMaterial,
 		selectedSize
 	);
-
-	const isColorAvailable = (slug: string) =>
-		availability.color.get(slug) ?? false;
-	const isMaterialAvailable = (slug: string) =>
-		availability.material.get(slug) ?? false;
-	const isSizeAvailable = (size: string) =>
-		availability.size.get(size) ?? false;
 
 	// Find matching SKU
 	const selectedSku = activeSkus.find((sku) => {
@@ -1031,13 +1136,21 @@ function SkuSelectorFormContent({
 		? calculateDiscountPercent(compareAtPrice, displayPrice)
 		: 0;
 
-	// m2: Use shared constant instead of local duplicate
 	const maxQuantity = selectedSku
 		? Math.min(availableToAdd, MAX_QUANTITY_PER_ORDER)
 		: MAX_QUANTITY_PER_ORDER;
 
-	// m1: Clamp quantity inline - the hidden input and all UI already use this clamped value
-	const quantity = Math.min(values.quantity, maxQuantity || 1);
+	// Clamp quantity — when maxQuantity is 0 (stock exhausted), default to 1
+	// (the UI hides the quantity selector and disables submit in this case)
+	const quantity = maxQuantity > 0
+		? Math.min(values.quantity, maxQuantity)
+		: 1;
+
+	const hasVisibleErrors =
+		!canAddToCart &&
+		validationErrors.length > 0 &&
+		showErrors &&
+		!isPending;
 
 	return (
 		<>
@@ -1181,7 +1294,7 @@ function SkuSelectorFormContent({
 								</span>
 							</motion.div>
 						</AnimatePresence>
-						{/* n1: Low stock badge with role="status" */}
+						{/* Low stock badge */}
 						{selectedSku &&
 							selectedSku.inventory <=
 								STOCK_THRESHOLDS.LOW &&
@@ -1215,12 +1328,15 @@ function SkuSelectorFormContent({
 								</motion.span>
 							)}
 						{quantityInCart > 0 && (
-							<span className="text-xs text-muted-foreground mt-1">
+							<span
+								role="status"
+								className="text-xs text-muted-foreground mt-1"
+							>
 								{quantityInCart} déjà
 								dans le panier
 							</span>
 						)}
-						{/* n2: Max stock badge with role="status" */}
+						{/* Max stock badge */}
 						{selectedSku &&
 							availableToAdd === 0 && (
 								<span
@@ -1238,10 +1354,11 @@ function SkuSelectorFormContent({
 				<Link
 					href={`/creations/${product.slug}`}
 					onClick={handleClose}
+					aria-label={`Voir la fiche produit : ${product.title}`}
 					className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
 				>
 					Voir la fiche produit
-					<ArrowRight className="w-3.5 h-3.5" />
+					<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
 				</Link>
 
 				{/* Color selector */}
@@ -1255,7 +1372,7 @@ function SkuSelectorFormContent({
 							validationErrors.length > 0 &&
 							showErrors
 						}
-						isColorAvailable={isColorAvailable}
+						colorAvailability={availability.color}
 					/>
 				)}
 
@@ -1270,7 +1387,7 @@ function SkuSelectorFormContent({
 							validationErrors.length > 0 &&
 							showErrors
 						}
-						isMaterialAvailable={isMaterialAvailable}
+						materialAvailability={availability.material}
 					/>
 				)}
 
@@ -1285,7 +1402,7 @@ function SkuSelectorFormContent({
 							validationErrors.length > 0 &&
 							showErrors
 						}
-						isSizeAvailable={isSizeAvailable}
+						sizeAvailability={availability.size}
 						productTypeSlug={
 							product.type?.slug
 						}
@@ -1294,102 +1411,14 @@ function SkuSelectorFormContent({
 
 				{/* Quantity selector: hidden when stock max reached */}
 				{(!selectedSku || availableToAdd > 0) && (
-					<fieldset
-						className="space-y-2"
-						disabled={isPending}
-					>
-						<legend className="text-sm font-medium">
-							Quantité
-						</legend>
-						<div className="flex items-center gap-4 sm:gap-3">
-							<Button
-								type="button"
-								variant="outline"
-								size="icon"
-								onClick={() =>
-									onQuantityChange(
-										Math.max(
-											1,
-											quantity - 1
-										)
-									)
-								}
-								disabled={
-									isPending ||
-									quantity <= 1
-								}
-								aria-label="Diminuer la quantité"
-							>
-								<Minus className="h-4 w-4" />
-							</Button>
-							<input
-								type="text"
-								inputMode="numeric"
-								pattern="[0-9]*"
-								role="spinbutton"
-								value={quantity}
-								onChange={(e) => {
-									const val =
-										parseInt(
-											e.target
-												.value
-										) || 1;
-									onQuantityChange(
-										Math.max(
-											1,
-											Math.min(
-												maxQuantity,
-												val
-											)
-										)
-									);
-								}}
-								disabled={isPending}
-								className="w-12 text-center text-lg font-semibold tabular-nums bg-transparent focus:outline-none"
-								aria-label="Quantité à ajouter au panier"
-								aria-describedby={QUANTITY_BOUNDS_ID}
-								aria-valuemin={1}
-								aria-valuemax={maxQuantity}
-								aria-valuenow={quantity}
-							/>
-							<span
-								id={QUANTITY_BOUNDS_ID}
-								className="sr-only"
-							>
-								Minimum 1, maximum {maxQuantity}
-							</span>
-							<Button
-								type="button"
-								variant="outline"
-								size="icon"
-								onClick={() =>
-									onQuantityChange(
-										Math.min(
-											maxQuantity,
-											quantity + 1
-										)
-									)
-								}
-								disabled={
-									isPending ||
-									quantity >=
-										maxQuantity
-								}
-								aria-label="Augmenter la quantité"
-							>
-								<Plus className="h-4 w-4" />
-							</Button>
-						</div>
-						{/* Subtotal when quantity > 1 */}
-						{quantity > 1 && selectedSku && (
-							<p className="text-xs text-muted-foreground">
-								{quantity} x{" "}
-								{formatEuro(
-									displayPrice
-								)}
-							</p>
-						)}
-					</fieldset>
+					<QuantitySection
+						quantity={quantity}
+						maxQuantity={maxQuantity}
+						onQuantityChange={onQuantityChange}
+						isPending={isPending}
+						selectedSku={selectedSku}
+						displayPrice={displayPrice}
+					/>
 				)}
 			</div>
 			{/* End scrollable content */}
@@ -1410,42 +1439,22 @@ function SkuSelectorFormContent({
 						? "Ajout en cours..."
 						: `Ajouter au panier · ${formatEuro(displayPrice * quantity)}`}
 				</Button>
-				{/* m6: Validation errors only after submit attempt */}
-				<AnimatePresence mode="wait">
-					{!canAddToCart &&
-						validationErrors.length > 0 &&
-						showErrors &&
-						!isPending && (
-							<motion.p
-								id={VALIDATION_ERROR_ID}
-								key={validationErrors.join()}
-								initial={{
-									opacity: 0,
-									x: 0,
-								}}
-								animate={{
-									opacity: 1,
-									x: shouldReduceMotion
-										? 0
-										: [
-												0, -8, 8,
-												-8, 0,
-											],
-								}}
-								exit={{ opacity: 0 }}
-								transition={{
-									duration: 0.35,
-								}}
-								className="text-xs text-muted-foreground text-center mt-2"
-								role="alert"
-							>
-								{validationErrors.length ===
-								1
-									? validationErrors[0]
-									: `${validationErrors.length} sélections requises`}
-							</motion.p>
-						)}
-				</AnimatePresence>
+				{/* Validation error — always present for aria-describedby, content swapped */}
+				<p
+					id={VALIDATION_ERROR_ID}
+					role="alert"
+					aria-atomic="true"
+					className={cn(
+						"text-xs text-muted-foreground text-center mt-2",
+						!hasVisibleErrors && "sr-only"
+					)}
+				>
+					{hasVisibleErrors
+						? validationErrors.length === 1
+							? validationErrors[0]
+							: `${validationErrors.length} sélections requises`
+						: null}
+				</p>
 			</ResponsiveDialogFooter>
 		</>
 	);

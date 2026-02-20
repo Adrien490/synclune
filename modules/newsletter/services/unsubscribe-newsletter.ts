@@ -72,6 +72,11 @@ export async function unsubscribeNewsletter(
 				unsubscribeToken: validatedToken,
 				deletedAt: null,
 			},
+			select: {
+				id: true,
+				status: true,
+				userId: true,
+			},
 		});
 
 		if (!subscriber) {
@@ -100,8 +105,8 @@ export async function unsubscribeNewsletter(
 			},
 		});
 
-		// Invalidate cache
-		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
+		// Invalidate cache (pass userId to invalidate user-specific status)
+		getNewsletterInvalidationTags(subscriber.userId ?? undefined).forEach((tag) => updateTag(tag));
 
 		return {
 			success: true,

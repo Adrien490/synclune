@@ -3,11 +3,11 @@
  */
 export function SectionHeader({ children, id }: { children: React.ReactNode; id?: string }) {
 	return (
-		<h3
+		<h2
 			id={id}
 			className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
 		>
 			{children}
-		</h3>
+		</h2>
 	);
 }

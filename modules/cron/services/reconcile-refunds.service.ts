@@ -1,3 +1,4 @@
+import { updateTag } from "next/cache";
 import { RefundStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getStripeClient } from "@/shared/lib/stripe";
@@ -7,6 +8,9 @@ import {
 	markRefundAsFailed,
 	sendRefundFailedAlert,
 } from "@/modules/webhooks/services/refund.service";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
@@ -66,6 +70,7 @@ export async function reconcilePendingRefunds(): Promise<{
 	let updated = 0;
 	let errors = 0;
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
+	const tagsToInvalidate = new Set<string>();
 
 	for (const refund of pendingRefunds) {
 		if (Date.now() > deadline) {
@@ -93,6 +98,7 @@ export async function reconcilePendingRefunds(): Promise<{
 					console.log(
 						`[CRON:reconcile-refunds] Refund ${refund.id} marked as COMPLETED`
 					);
+					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
 					updated++;
 				} else if (newStatus === RefundStatus.FAILED) {
 					const failureReason = stripeRefund.failure_reason || "Unknown failure";
@@ -101,6 +107,7 @@ export async function reconcilePendingRefunds(): Promise<{
 					console.log(
 						`[CRON:reconcile-refunds] Refund ${refund.id} marked as FAILED`
 					);
+					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
 					updated++;
 				}
 			}
@@ -110,6 +117,19 @@ export async function reconcilePendingRefunds(): Promise<{
 				error
 			);
 			errors++;
+		}
+	}
+
+	// Invalidate caches if any refunds were updated
+	if (updated > 0) {
+		tagsToInvalidate.add(ORDERS_CACHE_TAGS.LIST);
+		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.KPIS);
+		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
+		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
+		for (const tag of tagsToInvalidate) {
+			updateTag(tag);
 		}
 	}
 

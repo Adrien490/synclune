@@ -4,6 +4,7 @@ import { sendAdminNewOrderEmail, sendAdminRefundFailedAlert, sendAdminDisputeAle
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
 import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
+import { EMAIL_ADMIN } from "@/modules/emails/constants/email.constants";
 import type { PostWebhookTask } from "../types/webhook.types";
 
 /** Customer-facing email task types that warrant an admin alert on failure */
@@ -12,6 +13,7 @@ const CRITICAL_EMAIL_TASKS = new Set(["ORDER_CONFIRMATION_EMAIL", "ADMIN_NEW_ORD
 /** Maps task types to template names for logFailedEmail retry system */
 const TASK_TEMPLATE_MAP: Record<string, string> = {
 	ORDER_CONFIRMATION_EMAIL: "order-confirmation",
+	ADMIN_NEW_ORDER_EMAIL: "admin-new-order",
 	REFUND_CONFIRMATION_EMAIL: "refund-confirmation",
 	PAYMENT_FAILED_EMAIL: "payment-failed",
 };
@@ -90,7 +92,7 @@ export async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise
 			if (!templateName || task.type === "INVALIDATE_CACHE") continue;
 
 			const data = task.data as Record<string, unknown>;
-			const to = data.to as string | undefined;
+			const to = (data.to as string | undefined) ?? (task.type.startsWith("ADMIN_") ? EMAIL_ADMIN : undefined);
 			if (!to) continue;
 
 			logFailedEmail({

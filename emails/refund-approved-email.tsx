@@ -39,7 +39,7 @@ export const RefundApprovedEmail = ({
 
 			{/* Détails */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
 						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
@@ -106,7 +106,7 @@ export const RefundApprovedEmail = ({
 							</Text>
 						}
 					/>
-				</div>
+				</Section>
 			</Section>
 
 			{/* CTA */}

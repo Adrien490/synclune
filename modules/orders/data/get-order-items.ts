@@ -89,7 +89,7 @@ async function fetchOrderItems(
 	params: GetOrderItemsParams,
 	userId?: string
 ): Promise<GetOrderItemsReturn> {
-	"use cache";
+	"use cache: private";
 	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
 
 	const sortOrder = (params.sortOrder ||

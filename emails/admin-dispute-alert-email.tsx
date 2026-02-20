@@ -38,7 +38,7 @@ export const AdminDisputeAlertEmail = ({
 
 			{/* Details */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
 						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
@@ -58,7 +58,7 @@ export const AdminDisputeAlertEmail = ({
 					/>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Montant conteste</Text>}
+						left={<Text style={EMAIL_STYLES.text.small}>Montant contesté</Text>}
 						right={
 							<Text
 								style={{
@@ -120,7 +120,7 @@ export const AdminDisputeAlertEmail = ({
 							}
 						/>
 					)}
-				</div>
+				</Section>
 			</Section>
 
 			{/* Stripe IDs */}
@@ -128,7 +128,7 @@ export const AdminDisputeAlertEmail = ({
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
 					Identifiant Stripe
 				</Text>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<Text style={EMAIL_STYLES.text.tiny}>Dispute ID</Text>
 					<Text
 						style={{
@@ -141,7 +141,7 @@ export const AdminDisputeAlertEmail = ({
 					>
 						{disputeId}
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			{/* CTAs */}
@@ -154,7 +154,7 @@ export const AdminDisputeAlertEmail = ({
 							backgroundColor: EMAIL_COLORS.stripe,
 						}}
 					>
-						Repondre au litige
+						Répondre au litige
 					</Button>
 				</div>
 				<div>

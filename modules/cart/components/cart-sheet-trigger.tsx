@@ -15,7 +15,7 @@ interface CartSheetTriggerProps {
  * Remplace le Link vers /panier dans la navbar
  */
 export function CartSheetTrigger({ className }: CartSheetTriggerProps) {
-	const { open } = useSheet("cart");
+	const { isOpen, open } = useSheet("cart");
 
 	return (
 		<Tooltip>
@@ -25,6 +25,8 @@ export function CartSheetTrigger({ className }: CartSheetTriggerProps) {
 					onClick={open}
 					className={cn("relative group", className)}
 					aria-label="Ouvrir mon panier"
+					aria-expanded={isOpen}
+					aria-haspopup="dialog"
 				>
 					<ShoppingCart
 						size={20}

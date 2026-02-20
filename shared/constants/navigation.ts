@@ -218,7 +218,7 @@ export const footerNavItems = [
 
 // Liens légaux
 export const legalLinks = [
-	{ label: "CGV", href: ROUTES.LEGAL.CGV },
+	{ label: "CGV", href: ROUTES.LEGAL.CGV, title: "Conditions Générales de Vente" },
 	{ label: "Mentions légales", href: ROUTES.LEGAL.LEGAL_NOTICE },
 	{ label: "Politique de confidentialité", href: ROUTES.LEGAL.PRIVACY },
 	{ label: "Gestion des cookies", href: ROUTES.LEGAL.COOKIES },

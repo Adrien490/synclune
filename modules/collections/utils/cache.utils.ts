@@ -15,7 +15,7 @@ import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 /**
  * Configure le cache pour les collections
  * - Utilisé pour : /collections, listes de collections
- * - Durée : 2h fraîche, 30min revalidation, 7j expiration
+ * - Durée : 1h fraîche, 15min revalidation, 24h expiration
  */
 export function cacheCollections() {
 	cacheLife("collections");
@@ -25,7 +25,7 @@ export function cacheCollections() {
 /**
  * Configure le cache pour une collection et ses produits
  * - Utilisé pour : /collections/[slug]
- * - Durée : 2h fraîche, 30min revalidation, 7j expiration
+ * - Durée : 1h fraîche, 15min revalidation, 24h expiration
  */
 export function cacheCollectionDetail(slug: string) {
 	cacheLife("collections");

@@ -13,6 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useApproveRefund } from "@/modules/refunds/hooks/use-approve-refund";
 import { ActionStatus } from "@/shared/types/server-action";
+import { Loader2 } from "lucide-react";
 
 export const APPROVE_REFUND_DIALOG_ID = "approve-refund";
 
@@ -71,6 +72,7 @@ export function ApproveRefundAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Approbation..." : "Approuver"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

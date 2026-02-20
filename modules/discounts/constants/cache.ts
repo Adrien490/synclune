@@ -37,7 +37,7 @@ export function cacheDiscounts() {
 /**
  * Configure le cache pour un code promo spécifique
  * - Utilisé pour : validation checkout, détail admin
- * - Durée : 5min fraîche, 5min revalidation, 30min expiration
+ * - Durée : 5min fraîche, 1min revalidation, 30min expiration
  */
 export function cacheDiscountDetail(idOrCode: string) {
 	cacheLife("cart")

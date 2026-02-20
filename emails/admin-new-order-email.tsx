@@ -39,7 +39,7 @@ export const AdminNewOrderEmail = ({
 		>
 			{/* Résumé */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
 						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
@@ -89,7 +89,7 @@ export const AdminNewOrderEmail = ({
 							</Text>
 						}
 					/>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Client */}
@@ -97,7 +97,7 @@ export const AdminNewOrderEmail = ({
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
 					Client
 				</Text>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<Text
 						style={{
 							margin: 0,
@@ -114,7 +114,7 @@ export const AdminNewOrderEmail = ({
 					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
 						{shippingAddress.phone}
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Adresse */}
@@ -122,7 +122,7 @@ export const AdminNewOrderEmail = ({
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
 					Adresse de livraison
 				</Text>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<Text
 						style={{
 							margin: 0,
@@ -146,7 +146,7 @@ export const AdminNewOrderEmail = ({
 					<Text style={EMAIL_STYLES.text.small}>
 						{shippingAddress.country}
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Articles */}

@@ -8,6 +8,7 @@ const {
 	mockSendOrderConfirmationEmail,
 	mockSendRefundConfirmationEmail,
 	mockSendPaymentFailedEmail,
+	mockSendAdminNewOrderEmail,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		failedEmail: {
@@ -21,6 +22,7 @@ const {
 	mockSendOrderConfirmationEmail: vi.fn(),
 	mockSendRefundConfirmationEmail: vi.fn(),
 	mockSendPaymentFailedEmail: vi.fn(),
+	mockSendAdminNewOrderEmail: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -43,6 +45,10 @@ vi.mock("@/modules/emails/services/refund-emails", () => ({
 
 vi.mock("@/modules/emails/services/payment-emails", () => ({
 	sendPaymentFailedEmail: mockSendPaymentFailedEmail,
+}));
+
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminNewOrderEmail: mockSendAdminNewOrderEmail,
 }));
 
 import { retryFailedEmails } from "../retry-failed-emails.service";

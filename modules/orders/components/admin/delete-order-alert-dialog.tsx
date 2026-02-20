@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteOrder } from "@/modules/orders/hooks/use-delete-order";
+import { Loader2 } from "lucide-react";
 
 export const DELETE_ORDER_DIALOG_ID = "delete-order";
 

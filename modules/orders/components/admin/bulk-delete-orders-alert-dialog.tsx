@@ -13,6 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteOrders } from "@/modules/orders/hooks/use-bulk-delete-orders";
+import { Loader2 } from "lucide-react";
 
 export const BULK_DELETE_ORDERS_DIALOG_ID = "bulk-delete-orders";
 

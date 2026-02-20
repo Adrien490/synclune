@@ -1,5 +1,5 @@
 import { Section, Text } from "@react-email/components";
-import { EMAIL_STYLES } from "./email-colors";
+import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 import { ErrorCodeBlock } from "./_components/error-code-block";
 import { FlexRow } from "./_components/flex-row";
@@ -37,7 +37,7 @@ export const AdminCronFailedEmail = ({
 
 			{/* Details */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
 						left={<Text style={EMAIL_STYLES.text.small}>Cron job</Text>}
@@ -48,7 +48,7 @@ export const AdminCronFailedEmail = ({
 									fontFamily: "monospace",
 									fontSize: "14px",
 									fontWeight: "bold",
-									color: EMAIL_STYLES.heading.h3.color,
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
 								{job}
@@ -63,14 +63,14 @@ export const AdminCronFailedEmail = ({
 									margin: 0,
 									fontSize: "14px",
 									fontWeight: "bold",
-									color: EMAIL_STYLES.heading.h3.color,
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
 								{errors}
 							</Text>
 						}
 					/>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Error details */}

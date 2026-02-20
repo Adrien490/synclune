@@ -60,7 +60,7 @@ export async function subscribeToNewsletterInternal({
 				});
 
 				// Invalider le cache
-				getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
+				getNewsletterInvalidationTags(existingSubscriber?.userId ?? undefined).forEach((tag) => updateTag(tag));
 
 				// Envoyer l'email de confirmation
 				const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
@@ -90,7 +90,7 @@ export async function subscribeToNewsletterInternal({
 			});
 
 			// Invalider le cache
-			getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
+			getNewsletterInvalidationTags(existingSubscriber?.userId ?? undefined).forEach((tag) => updateTag(tag));
 
 			// Envoyer l'email de confirmation
 			const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
@@ -123,7 +123,7 @@ export async function subscribeToNewsletterInternal({
 			},
 		});
 
-		// Invalider le cache
+		// Invalider le cache (new subscriber, no userId yet)
 		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		// Envoyer l'email de confirmation

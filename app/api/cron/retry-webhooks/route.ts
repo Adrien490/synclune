@@ -15,10 +15,10 @@ export async function GET() {
 			return cronError("STRIPE_SECRET_KEY not configured");
 		}
 
-		if (result.errors > 0 || result.permanentlyFailed > 0) {
+		if (result.errors > 0) {
 			sendAdminCronFailedAlert({
 				job: "retry-webhooks",
-				errors: result.errors + result.permanentlyFailed,
+				errors: result.errors,
 				details: {
 					found: result.found,
 					retried: result.retried,

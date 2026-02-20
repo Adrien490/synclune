@@ -55,13 +55,13 @@ export const CustomizationConfirmationEmail = ({
 					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
 						Inspirations
 					</Text>
-					<div style={EMAIL_STYLES.section.card}>
+					<Section style={EMAIL_STYLES.section.card}>
 						{inspirationProducts.map((product, index) => (
 							<Text key={index} style={EMAIL_STYLES.text.small}>
 								• {product.title}
 							</Text>
 						))}
-					</div>
+					</Section>
 				</Section>
 			)}
 
@@ -70,19 +70,21 @@ export const CustomizationConfirmationEmail = ({
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
 					Description
 				</Text>
-				<div style={EMAIL_STYLES.section.card}>
-					<Text
-						style={{
-							margin: 0,
-							fontSize: "14px",
-							color: EMAIL_COLORS.text.primary,
-							whiteSpace: "pre-wrap",
-							lineHeight: "1.6",
-						}}
-					>
-						{details}
-					</Text>
-				</div>
+				<Section style={EMAIL_STYLES.section.card}>
+					{details.split("\n").map((line, i) => (
+						<Text
+							key={i}
+							style={{
+								margin: 0,
+								fontSize: "14px",
+								color: EMAIL_COLORS.text.primary,
+								lineHeight: "1.6",
+							}}
+						>
+							{line || "\u00A0"}
+						</Text>
+					))}
+				</Section>
 			</Section>
 		</EmailLayout>
 	);

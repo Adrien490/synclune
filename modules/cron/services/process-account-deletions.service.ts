@@ -5,6 +5,8 @@ import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
 import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
+import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
+import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { sendAccountDeletionEmail } from "@/modules/emails/services/auth-emails";
 
 /**
@@ -173,7 +175,7 @@ export async function processAccountDeletions(): Promise<{
 						stripeCustomerId: null,
 					},
 				});
-			});
+			}, { timeout: 15_000 });
 
 			// Send deletion confirmation email AFTER successful transaction
 			// (prevents sending false confirmations if the transaction fails)
@@ -194,6 +196,11 @@ export async function processAccountDeletions(): Promise<{
 			}
 
 			// Invalidate user-related caches
+			updateTag(USERS_CACHE_TAGS.CURRENT_USER(user.id));
+			updateTag(SESSION_CACHE_TAGS.SESSION(user.id));
+			updateTag(SESSION_CACHE_TAGS.SESSIONS(user.id));
+			updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 			updateTag(NEWSLETTER_CACHE_TAGS.LIST);
 			updateTag(REVIEWS_CACHE_TAGS.USER(user.id));
 			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(user.id));

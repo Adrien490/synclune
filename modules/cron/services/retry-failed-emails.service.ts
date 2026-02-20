@@ -1,11 +1,11 @@
 import { prisma } from "@/shared/lib/prisma";
-import { BATCH_SIZE_SMALL, BATCH_DEADLINE_MS } from "../constants/limits";
-import { sendShippingConfirmationEmail, sendOrderConfirmationEmail, sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
-import { sendReturnConfirmationEmail } from "@/modules/emails/services/status-emails";
-import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { BATCH_SIZE_SMALL, BATCH_DEADLINE_MS, MAX_EMAIL_RETRY_ATTEMPTS } from "../constants/limits";
+import { sendShippingConfirmationEmail, sendOrderConfirmationEmail, sendDeliveryConfirmationEmail, sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails";
+import { sendCancelOrderConfirmationEmail, sendReturnConfirmationEmail } from "@/modules/emails/services/status-emails";
+import { sendRefundConfirmationEmail, sendRefundApprovedEmail, sendRefundRejectedEmail } from "@/modules/emails/services/refund-emails";
 import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
+import { sendAdminNewOrderEmail } from "@/modules/emails/services/admin-emails";
 
-const MAX_RETRY_ATTEMPTS = 3;
 
 type EmailSender = (payload: Record<string, unknown>) => Promise<unknown>;
 
@@ -20,10 +20,21 @@ const EMAIL_SENDERS: Record<string, EmailSender> = {
 	// Webhook-triggered emails (from execute-post-tasks)
 	"order-confirmation": (p) =>
 		sendOrderConfirmationEmail(p as Parameters<typeof sendOrderConfirmationEmail>[0]),
+	"admin-new-order": (p) =>
+		sendAdminNewOrderEmail(p as Parameters<typeof sendAdminNewOrderEmail>[0]),
 	"refund-confirmation": (p) =>
 		sendRefundConfirmationEmail(p as Parameters<typeof sendRefundConfirmationEmail>[0]),
 	"payment-failed": (p) =>
 		sendPaymentFailedEmail(p as Parameters<typeof sendPaymentFailedEmail>[0]),
+	// Admin action emails (from cancel-order, approve/reject-refund, update-tracking)
+	"cancel-order-confirmation": (p) =>
+		sendCancelOrderConfirmationEmail(p as Parameters<typeof sendCancelOrderConfirmationEmail>[0]),
+	"refund-approved": (p) =>
+		sendRefundApprovedEmail(p as Parameters<typeof sendRefundApprovedEmail>[0]),
+	"refund-rejected": (p) =>
+		sendRefundRejectedEmail(p as Parameters<typeof sendRefundRejectedEmail>[0]),
+	"tracking-update": (p) =>
+		sendTrackingUpdateEmail(p as Parameters<typeof sendTrackingUpdateEmail>[0]),
 };
 
 /**
@@ -41,7 +52,7 @@ export async function retryFailedEmails(): Promise<{
 	const failedEmails = await prisma.failedEmail.findMany({
 		where: {
 			status: "PENDING",
-			attempts: { lt: MAX_RETRY_ATTEMPTS },
+			attempts: { lt: MAX_EMAIL_RETRY_ATTEMPTS },
 		},
 		orderBy: { createdAt: "asc" },
 		take: BATCH_SIZE_SMALL,
@@ -85,7 +96,7 @@ export async function retryFailedEmails(): Promise<{
 			console.log(`[RETRY_EMAILS] Retried successfully: ${email.template} to ${email.to}`);
 		} catch (e) {
 			const newAttempts = email.attempts + 1;
-			const isExhausted = newAttempts >= MAX_RETRY_ATTEMPTS;
+			const isExhausted = newAttempts >= MAX_EMAIL_RETRY_ATTEMPTS;
 
 			await prisma.failedEmail.update({
 				where: { id: email.id },
@@ -103,7 +114,7 @@ export async function retryFailedEmails(): Promise<{
 			}
 
 			console.error(
-				`[RETRY_EMAILS] Failed retry (attempt ${newAttempts}/${MAX_RETRY_ATTEMPTS}):`,
+				`[RETRY_EMAILS] Failed retry (attempt ${newAttempts}/${MAX_EMAIL_RETRY_ATTEMPTS}):`,
 				email.template,
 				email.to,
 				e

@@ -56,8 +56,8 @@ export const ReviewRequestEmail = ({
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
 					{singleProduct
-						? "Votre commande a bien été livrée. Nous espérons que vous êtes ravie de votre création !"
-						: "Votre commande a bien été livrée. Nous espérons que vous êtes ravie de vos créations !"}
+						? "Votre commande a bien été livrée. Nous espérons que votre création vous plaît !"
+						: "Votre commande a bien été livrée. Nous espérons que vos créations vous plaisent !"}
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
 					Prenez quelques instants pour partager votre expérience. Votre avis
@@ -93,7 +93,6 @@ export const ReviewRequestEmail = ({
 									height={80}
 									style={{
 										borderRadius: "8px",
-										objectFit: "cover",
 									}}
 								/>
 							</Column>
@@ -156,7 +155,7 @@ export const ReviewRequestEmail = ({
 				>
 					Chaque avis est lu avec attention et contribue
 					<br />
-					a faire grandir notre petite marque artisanale.
+					à faire grandir notre petite marque artisanale.
 				</Text>
 			</Section>
 

@@ -262,7 +262,7 @@ Ces reads sont atomiques avec la mutation et ne beneficieraient pas du cache (do
 Stripe webhook handlers with signature verification + idempotency. Logic in `modules/webhooks/`.
 
 ### Cron Jobs (`api/cron/`)
-13 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
+14 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
 
 | Job | Schedule |
 |-----|----------|
@@ -276,6 +276,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 | `reconcile-refunds` | Every 6h |
 | `process-scheduled-discounts` | Every 4h |
 | `retry-webhooks` | Every 30min |
+| `retry-failed-emails` | Every 15min |
 | `cleanup-webhook-events` | Monthly 1st 7:00 |
 | `hard-delete-retention` | Monthly 1st 8:00 |
 | `cleanup-orphan-media` | Monthly 1st 9:00 |

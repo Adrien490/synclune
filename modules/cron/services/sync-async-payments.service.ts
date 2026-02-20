@@ -1,3 +1,4 @@
+import { updateTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getStripeClient } from "@/shared/lib/stripe";
@@ -7,6 +8,10 @@ import {
 	extractPaymentFailureDetails,
 	restoreStockForOrder,
 } from "@/modules/webhooks/services/payment-intent.service";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
@@ -61,6 +66,7 @@ export async function syncAsyncPayments(): Promise<{
 	let updated = 0;
 	let errors = 0;
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
+	const tagsToInvalidate = new Set<string>();
 
 	for (const order of pendingOrders) {
 		if (Date.now() > deadline) {
@@ -93,7 +99,10 @@ export async function syncAsyncPayments(): Promise<{
 				const failureDetails = extractPaymentFailureDetails(paymentIntent);
 				await markOrderAsFailed(order.id, order.stripePaymentIntentId, failureDetails);
 				try {
-					await restoreStockForOrder(order.id);
+					const stockResult = await restoreStockForOrder(order.id);
+					for (const skuId of stockResult.restoredSkuIds) {
+						tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+					}
 				} catch (stockError) {
 					console.error(
 						`[STOCK-RESTORE-FAILED] Order ${order.orderNumber} (${order.id}): stock not restored after payment failure`,
@@ -109,6 +118,19 @@ export async function syncAsyncPayments(): Promise<{
 				error instanceof Error ? error.message : String(error)
 			);
 			errors++;
+		}
+	}
+
+	// Invalidate caches if any orders were updated
+	if (updated > 0) {
+		tagsToInvalidate.add(ORDERS_CACHE_TAGS.LIST);
+		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.KPIS);
+		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
+		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
+		for (const tag of tagsToInvalidate) {
+			updateTag(tag);
 		}
 	}
 

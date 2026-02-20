@@ -11,10 +11,12 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
 import { sendRefundRejectedEmail } from "@/modules/emails/services/refund-emails";
+import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { rejectRefundSchema } from "../schemas/refund.schemas";
 
 /**
@@ -100,15 +102,18 @@ export async function rejectRefund(
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
+		updateTag(DASHBOARD_CACHE_TAGS.KPIS);
+		updateTag(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
+		updateTag(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
 		if (refund.order.user?.id) {
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
 		}
 
 		// Send rejection email to customer (non-blocking)
 		if (refund.order.user?.email) {
-			try {
-				const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
+			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
 
+			try {
 				await sendRefundRejectedEmail({
 					to: refund.order.user.email,
 					orderNumber: refund.order.orderNumber,
@@ -119,6 +124,20 @@ export async function rejectRefund(
 				});
 			} catch (emailError) {
 				console.error("[REJECT_REFUND] Échec envoi email:", emailError);
+				await logFailedEmail({
+					to: refund.order.user!.email,
+					subject: `Remboursement refusé — Commande ${refund.order.orderNumber}`,
+					template: "refund-rejected",
+					payload: {
+						orderNumber: refund.order.orderNumber,
+						customerName: refund.order.user!.name || "Client",
+						refundAmount: refund.amount,
+						reason: sanitizedReason || undefined,
+						orderDetailsUrl,
+					},
+					error: emailError,
+					orderId: refund.order.id,
+				});
 			}
 		}
 

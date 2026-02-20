@@ -13,6 +13,7 @@ export async function sendReviewRequestEmail({
 	orderNumber,
 	products,
 	reviewUrl,
+	unsubscribeUrl,
 }: {
 	to: string
 	customerName: string
@@ -24,11 +25,16 @@ export async function sendReviewRequestEmail({
 		skuVariants: string | null
 	}>
 	reviewUrl: string
+	unsubscribeUrl: string
 }): Promise<EmailResult> {
 	return renderAndSend(ReviewRequestEmail({ customerName, orderNumber, products, reviewUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.REVIEW_REQUEST,
 		replyTo: EMAIL_CONTACT,
+		headers: {
+			"List-Unsubscribe": `<${unsubscribeUrl}>`,
+			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+		},
 		tags: [{ name: "category", value: "order" }],
 	})
 }

@@ -43,7 +43,7 @@ export async function getUserAccounts(): Promise<GetUserAccountsReturn> {
 export async function fetchUserAccounts(
 	userId: string
 ): Promise<GetUserAccountsReturn> {
-	"use cache";
+	"use cache: private";
 	cacheUserAccounts(userId);
 
 	try {

@@ -56,7 +56,7 @@ export async function fetchOrderItem(
 	params: GetOrderItemParams,
 	context: FetchOrderItemContext
 ): Promise<GetOrderItemReturn | null> {
-	"use cache";
+	"use cache: private";
 	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
 
 	const where: Prisma.OrderItemWhereInput = {

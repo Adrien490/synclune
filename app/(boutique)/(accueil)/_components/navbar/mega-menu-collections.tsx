@@ -30,7 +30,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 	const isViewAllActive = pathname === ROUTES.SHOP.COLLECTIONS;
 
 	return (
-		<div className="py-6" role="group" aria-labelledby={headingId}>
+		<div className="py-6" role="region" aria-labelledby={headingId}>
 			<h3 id={headingId} className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 				Collections
 			</h3>

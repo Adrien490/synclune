@@ -37,6 +37,6 @@ export type NavbarSessionData = {
 		name: string | null;
 		email: string;
 		image: string | null;
-		role: string;
+		role: "USER" | "ADMIN";
 	};
 };

@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
+import { Loader2 } from "lucide-react";
 
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";
 

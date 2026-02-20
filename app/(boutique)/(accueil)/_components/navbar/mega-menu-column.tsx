@@ -47,7 +47,7 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 	const [primaryItem, ...restItems] = items;
 
 	return (
-		<div role="group" aria-labelledby={headingId}>
+		<div role="region" aria-labelledby={headingId}>
 			<h3 id={headingId} className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 				{title}
 			</h3>

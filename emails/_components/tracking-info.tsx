@@ -1,4 +1,4 @@
-import { Text } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "../email-colors";
 import { FlexRow } from "./flex-row";
 
@@ -14,7 +14,7 @@ export const TrackingInfo = ({
 	estimatedDelivery,
 }: TrackingInfoProps) => {
 	return (
-		<div style={EMAIL_STYLES.section.card}>
+		<Section style={EMAIL_STYLES.section.card}>
 			<FlexRow
 				style={{ marginBottom: "8px" }}
 				left={<Text style={EMAIL_STYLES.text.small}>Transporteur</Text>}
@@ -67,6 +67,6 @@ export const TrackingInfo = ({
 					}
 				/>
 			)}
-		</div>
+		</Section>
 	);
 };

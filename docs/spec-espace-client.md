@@ -6,6 +6,18 @@
 
 ---
 
+> **⚠ Decisions a trancher avant implementation**
+>
+> Les points suivants sont bloquants ou impactants et doivent etre tranches avant de commencer le developpement :
+>
+> 1. **`adminNotes` visible client ?** (Section B) — Les notes admin des demandes de personnalisation doivent-elles etre visibles au client, renommees en "reponse", ou rester internes ?
+> 2. **Annulation en PROCESSING par le client ?** (Section K) — `canCancelOrder()` accepte PENDING et PROCESSING. Le client peut-il annuler une commande en preparation ou seulement en PENDING ?
+> 3. **Suppression immediate vs differee ?** (Section M) — `delete-account.ts` anonymise immediatement. Passer par `PENDING_DELETION` avec periode de grace de 30 jours (recommande) ou garder le comportement actuel ?
+> 4. **Commandes non-payees visibles ?** (Section F) — `fetch-user-orders.ts` hardcode `paymentStatus: PAID`. Les commandes PENDING/FAILED doivent-elles apparaitre dans la liste client ?
+> 5. **Notes de commande visibles client ?** — Le modele `OrderNote` existe avec un champ `isInternal`. Les notes non-internes doivent-elles etre affichees dans le detail commande client ?
+
+---
+
 ## Tableau de suivi
 
 | Feature | Statut | Backend | Effort | Notes |
@@ -22,8 +34,8 @@
 | E - Newsletter settings | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | F - Filtres commandes | A faire | A completer | Faible | Params types mais pas wires, conflit `paymentStatus: PAID` hardcode |
 | G - Sessions actives | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| H - Avatar upload | A faire | A completer | Moyen | Nouvelle route UploadThing + composant. Prerequis : fix RGPD (Feature M) |
-| I - Changement email | A faire | A completer | Moyen | Email toujours read-only dans `ProfileForm` |
+| H - Avatar upload | A faire | A completer | Moyen | Nouvelle route UploadThing + composant |
+| I - Changement email | A faire | A completer | Moyen | Email absent de `ProfileForm`, `changeEmail` non configure dans Better Auth |
 | J - Panier wishlist | A faire | Complet | Faible | `AddToCartCardButton` deja dans `ProductCard` |
 | K - Annulation commande client | A faire | A completer | Moyen | `cancelOrder` admin-only, mais `canCancelOrder()` reutilisable |
 | L - Codes promo sur commande | A faire | A completer | Faible | `discountAmount` affiche mais pas le code |
@@ -45,6 +57,8 @@ La page affiche la commande dans une grille 2/3 + 1/3 :
 - **Colonne principale (2/3)** : `OrderItemsList` → `OrderRefundsCard` (si refunds) → `OrderStatusTimeline` (timeline de statut) → `OrderTracking` (suivi colis, visible seulement si `trackingNumber`)
 - **Colonne sidebar (1/3)** : `OrderSummaryCard` (recapitulatif montants) → `OrderAddressesCard` (adresse de livraison) → `DownloadInvoiceButton` (si PAID)
 
+**Data fetcher** : `getOrder({ orderNumber })` dans `modules/orders/data/get-order.ts`. Gere l'authentification et le scope `userId` automatiquement (les non-admins ne voient que leurs propres commandes). Utilise `"use cache: private"` avec tags specifiques a l'utilisateur.
+
 ### Pattern page parametres (`/parametres`)
 
 La page parametres utilise aussi une grille 2/3 + 1/3 :
@@ -63,6 +77,40 @@ Page tableau de bord avec stats et raccourcis (voir section dediee ci-dessous po
 - Composants existants : `AccountStatsCards`, `AccountStatsCardsSkeleton`
 - Data fetcher : `getAccountStats()` → `{ totalOrders, pendingOrders, cartItemsCount }`
 - Liens rapides vers les sections principales
+
+### Protection des routes
+
+Le layout `app/(boutique)/(espace-client)/layout.tsx` doit verifier la session utilisateur et proteger toutes les pages enfants :
+
+- Appeler `getSession()` (Better Auth) au niveau du layout
+- Si pas de session, rediriger vers `/connexion?callbackUrl={pathname}` (utiliser `headers()` pour recuperer le pathname)
+- Pas de `middleware.ts` existant dans le projet — la protection se fait au niveau du layout serveur
+- Toutes les pages enfants heritent de cette verification automatiquement
+
+### Metadata / SEO
+
+Chaque page de l'espace client doit exporter ses `metadata` Next.js :
+
+- Titre contextuel : `{ title: "Mes commandes" }`, `{ title: "Parametres" }`, etc.
+- Le layout peut definir un template de titre : `{ title: { template: "%s | Mon compte | Synclune", default: "Mon compte | Synclune" } }`
+- Toutes les pages doivent avoir `robots: { index: false }` (contenu prive, pas d'indexation)
+- Pas de `description` necessaire (pages non indexees)
+
+### Error boundaries
+
+- `app/(boutique)/error.tsx` existe et sera herite par toutes les pages de l'espace client (affiche `ParticleBackground` + message + boutons "Reessayer" / "Retour a l'accueil")
+- Recommander un `app/(boutique)/(espace-client)/not-found.tsx` pour les cas commande/adresse introuvable (les pages detail appellent `notFound()` si l'entite n'existe pas)
+- `loading.tsx` optionnel au niveau layout ou par page pour les transitions de navigation
+
+### Composants partages reutilisables
+
+Composants existants a reutiliser dans les pages de l'espace client :
+
+| Composant | Fichier | Usage |
+|---|---|---|
+| `PageHeader` (variante `compact`) | `shared/components/page-header.tsx` | En-tete de page simplifie sans breadcrumbs, adapte a l'espace client |
+| `Empty` (compound component) | `shared/components/ui/empty.tsx` | Etats vides : `<Empty>`, `EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, `EmptyActions`. Variantes `default` / `borderless`, tailles `sm` / `default` / `lg` |
+| `CursorPagination` | `shared/components/cursor-pagination/cursor-pagination.tsx` | Pagination cursor-based avec boutons prev/next, select per-page, liens SEO `rel="prev/next"`, aria-live. Deja integre dans `CustomerOrdersTable` |
 
 ---
 
@@ -658,7 +706,7 @@ Si la revocation echoue (ex: session deja expiree) : toast d'erreur + refresh de
 
 ## H - Upload d'avatar
 
-> **Statut : A faire** — Backend a completer. **Prerequis : fix RGPD (Feature M)** - `delete-account.ts` doit gerer la suppression de l'image avatar
+> **Statut : A faire** — Backend a completer
 
 ### Statut actuel
 
@@ -667,9 +715,15 @@ Si la revocation echoue (ex: session deja expiree) : toast d'erreur + refresh de
 - **UI** : aucune
 - **Fallback existant** : l'UI affiche deja les initiales de l'utilisateur quand `User.image` est null (verifier dans les composants de header/nav)
 
-### Fix RGPD applique
+### RGPD : suppression avatar deja geree
 
-`delete-account.ts` fait maintenant une requete separee pour l'image (`select: { image: true }`) avant anonymisation, ce qui permet de supprimer le fichier UploadThing associe.
+`delete-account.ts` gere deja la suppression de l'avatar et des medias de review lors de la suppression de compte :
+- **Avatar** (ligne ~194) : `deleteUploadThingFileFromUrl(userAvatar)` — fire-and-forget apres la transaction
+- **Medias review** (ligne ~201) : `deleteUploadThingFilesFromUrls(reviewMediaUrls)` — idem
+
+L'image est recuperee via une requete separee (`select: { image: true }`) car `GET_CURRENT_USER_DEFAULT_SELECT` ne contient pas le champ `image`.
+
+> **Note** : `GET_CURRENT_USER_DEFAULT_SELECT` (dans `modules/users/constants/current-user.constants.ts`) selectionne `{ id, name, email, emailVerified, role, createdAt, updatedAt }` — le champ `image` n'est pas inclus. Il faudra l'ajouter pour afficher l'avatar dans l'UI.
 
 ### Fichiers a creer
 
@@ -740,11 +794,13 @@ L'image n'est pas croppee cote client pour simplifier l'implementation. UploadTh
 
 ### Statut actuel
 
-- **ProfileForm** : email affiche en read-only (`disabled`, message "L'adresse email ne peut pas etre modifiee")
+- **ProfileForm** : le champ email est absent du formulaire (seul le champ `name` est present)
 - **Better Auth** : supporte `changeEmail` via son API (`auth.api.changeEmail`)
 - **Schema** : `User.email` + `User.emailVerified`
 
 ### Approche
+
+> **⚠ `auth.api.changeEmail` n'est PAS integre dans la config Better Auth actuelle.** Les plugins configures dans `modules/auth/lib/auth.ts` sont : `stripe()`, `customSession()`, `nextCookies()`. Il n'y a pas de plugin `changeEmail`. Il faudra soit ajouter le plugin correspondant, soit implementer le flow manuellement (token de verification + email + mise a jour).
 
 Better Auth a un flow `changeEmail` integre qui :
 1. Envoie un email de verification a la nouvelle adresse
@@ -815,6 +871,12 @@ Le bouton est deja present dans `ProductCard` qui est utilise par la wishlist. I
 | `modules/cart/components/add-to-cart-card-button.tsx` | Bouton ajout panier (existant) |
 
 ### Donnees disponibles
+
+| Source | Fonction | Return type |
+|---|---|---|
+| `modules/wishlist/data/get-wishlist.ts` | `getWishlist(params)` | `Promise<{ items, pagination, totalCount }>` |
+
+`getWishlist()` supporte les utilisateurs connectes et les visiteurs invites (via cookie de session). Pagination cursor-based avec `buildCursorPagination` / `processCursorResults`. Retourne `{ items, pagination: { nextCursor, prevCursor, hasNextPage, hasPreviousPage }, totalCount }`. Utilise `"use cache: private"`.
 
 Le `GET_WISHLIST_SELECT` inclut deja tout ce qu'il faut :
 ```ts
@@ -1079,7 +1141,20 @@ Mais l'implementation actuelle (`modules/users/actions/delete-account.ts`) **byp
   - `ACCOUNT_STATUS_COLORS` : green, yellow, orange, gray
   - `ACCOUNT_STATUS_DESCRIPTIONS` : textes descriptifs pour tooltips
 
-> **Inconsistance d'anonymisation** : `delete-account.ts` (suppression immediate) utilise `"Anonyme"` pour les noms de livraison et `deleted_${id}@synclune.local` pour l'email, tandis que `process-account-deletions.service.ts` (cron) utilise `"X"` pour les noms et `anonymized-${id}@deleted.local` pour l'email. Si l'option 1 (differee) est retenue, il faut harmoniser ces patterns — idealement factoriser la logique d'anonymisation dans un service partage.
+> **Inconsistance d'anonymisation** : Les deux chemins de suppression utilisent des formats differents :
+>
+> | Champ | `delete-account.ts` (immediat) | `process-account-deletions.service.ts` (cron) |
+> |---|---|---|
+> | Email | `deleted_${userId.slice(0, 8)}@synclune.local` | `anonymized-${userId}@deleted.local` |
+> | Nom utilisateur | `"Anonyme"` | `"Utilisateur supprime"` |
+> | Noms livraison | `"Anonyme"` | `"X"` |
+> | Adresse | `"Adresse supprimee"` | `"Adresse supprimee"` |
+> | Code postal | `"00000"` | `"00000"` |
+> | Nom client commande | `"Client supprime"` | `"Client supprime"` |
+>
+> Si l'option 1 (differee) est retenue, il faut harmoniser ces formats — idealement factoriser la logique d'anonymisation dans un service partage (`modules/users/services/anonymize-user.service.ts`).
+
+> **Note** : `GET_CURRENT_USER_DEFAULT_SELECT` devra etre enrichi avec `accountStatus` et `deletionRequestedAt` pour que l'UI puisse afficher le bandeau "Suppression en attente" et le bouton "Annuler la suppression" dans `GdprSection`.
 
 ### Decision requise
 
@@ -1235,7 +1310,7 @@ Priorites E2E :
 ```
 D (remboursements) ← modifier GET_ORDER_SELECT
 F (filtres commandes) ← modifier schema + data fetcher, resoudre conflit paymentStatus: PAID
-H (avatar) ← modifier UploadThing core + user select, prerequis fix RGPD (M)
+H (avatar) ← modifier UploadThing core + user select (RGPD avatar deja gere dans delete-account.ts)
 I (email) ← verifier Better Auth changeEmail + impacts Stripe/newsletter
 J (panier wishlist) ← aucune (AddToCartCardButton deja dans ProductCard)
 K (annulation commande) ← creer action client + composant, reutiliser canCancelOrder()

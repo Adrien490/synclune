@@ -4,6 +4,9 @@ import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
+import { CUSTOMIZATION_CACHE_TAGS } from "@/modules/customizations/constants/cache";
+import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
  * Permanently deletes soft-deleted records past the legal retention period.
@@ -130,10 +133,22 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	if (productsResult.count > 0) {
 		updateTag(PRODUCTS_CACHE_TAGS.LIST);
 		updateTag(PRODUCTS_CACHE_TAGS.COUNTS);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
 	}
 	if (reviewsResult.count > 0) {
 		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST);
 		updateTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
+	}
+	if (customizationRequestsResult.count > 0) {
+		updateTag(CUSTOMIZATION_CACHE_TAGS.LIST);
+		updateTag(CUSTOMIZATION_CACHE_TAGS.STATS);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+	}
+	if (newsletterResult.count > 0) {
+		updateTag(NEWSLETTER_CACHE_TAGS.LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 	}
 
 	// 5. Delete UploadThing files after DB transaction succeeds

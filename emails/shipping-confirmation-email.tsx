@@ -54,7 +54,7 @@ export const ShippingConfirmationEmail = ({
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
 					Adresse de livraison
 				</Text>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<Text style={{ ...EMAIL_STYLES.text.body, margin: 0 }}>
 						{shippingAddress.firstName} {shippingAddress.lastName}
 					</Text>
@@ -66,7 +66,7 @@ export const ShippingConfirmationEmail = ({
 						{shippingAddress.postalCode} {shippingAddress.city},{" "}
 						{shippingAddress.country}
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			{/* CTA */}

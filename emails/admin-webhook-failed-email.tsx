@@ -40,7 +40,7 @@ export const AdminWebhookFailedEmail = ({
 
 			{/* Details */}
 			<Section style={{ marginBottom: "24px" }}>
-				<div style={EMAIL_STYLES.section.card}>
+				<Section style={EMAIL_STYLES.section.card}>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
 						left={<Text style={EMAIL_STYLES.text.small}>Event ID</Text>}
@@ -94,7 +94,7 @@ export const AdminWebhookFailedEmail = ({
 							</Text>
 						}
 					/>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Error */}

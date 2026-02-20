@@ -7,6 +7,7 @@ import {
 	cancelExpiredOrder,
 } from "../services/checkout.service";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
@@ -82,6 +83,7 @@ export async function handleCheckoutSessionExpired(
 					DASHBOARD_CACHE_TAGS.KPIS,
 					DASHBOARD_CACHE_TAGS.REVENUE_CHART,
 					DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
+					DISCOUNT_CACHE_TAGS.LIST,
 				],
 			}],
 		};

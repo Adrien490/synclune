@@ -97,6 +97,9 @@ async function fetchReviews(
 		cacheReviewsAdmin()
 	} else if (context.productId) {
 		cacheProductReviews(context.productId)
+	} else {
+		// Public reviews without productId filter (e.g. homepage)
+		cacheProductReviews("public-all")
 	}
 
 	try {

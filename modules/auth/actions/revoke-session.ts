@@ -6,6 +6,7 @@ import { handleActionError, success, error, validateInput } from "@/shared/lib/a
 import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { SESSION_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getAuthSessionInvalidationTags } from "@/modules/auth/utils/cache.utils";
 import { z } from "zod";
 
 const revokeSessionSchema = z.object({
@@ -46,6 +47,9 @@ export async function revokeSession(
 		});
 
 		updateTag(SESSION_CACHE_TAGS.SESSIONS(user.id));
+		for (const tag of getAuthSessionInvalidationTags(sessionId, user.id)) {
+			updateTag(tag);
+		}
 
 		return success("Session révoquée");
 	} catch (e) {

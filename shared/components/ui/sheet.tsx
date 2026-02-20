@@ -120,8 +120,6 @@ function SheetContent({
 				)}
 				{...props}
 			>
-				{/* Titre fallback pour accessibilité Radix - remplacé par SheetTitle si présent */}
-				<SheetPrimitive.Title className="sr-only">Panneau latéral</SheetPrimitive.Title>
 				{children}
 				{showCloseButton && (
 					<SheetPrimitive.Close

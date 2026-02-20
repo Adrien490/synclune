@@ -43,7 +43,7 @@ export function MenuSheetFooter({ isAdmin }: MenuSheetFooterProps) {
 							<Link
 								href={ROUTES.ADMIN.ROOT}
 								className="inline-flex items-center justify-center size-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all duration-150"
-								aria-label="Tableau de bord"
+								aria-label="Tableau de bord administrateur"
 							>
 								<Settings size={18} aria-hidden="true" />
 							</Link>
