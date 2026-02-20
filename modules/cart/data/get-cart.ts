@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
@@ -25,6 +26,7 @@ export type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
  * @returns Le panier avec ses items, ou null si aucun panier n'existe
  */
 export async function getCart(): Promise<GetCartReturn> {
+	await connection();
 	try {
 		const session = await getSession();
 		const userId = session?.user?.id;
