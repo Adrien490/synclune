@@ -71,8 +71,6 @@ export function RotatingWord({
 			className={pillStyles}
 			style={{ contain: "layout paint" }}
 			lang="fr"
-			aria-live="polite"
-			aria-atomic="true"
 		>
 			<span className="relative inline-flex items-center">
 				<AnimatePresence mode="wait">

@@ -10,7 +10,6 @@ export const GET_CURRENT_USER_DEFAULT_SELECT = {
 	email: true,
 	emailVerified: true,
 	role: true,
-	stripeCustomerId: true,
 	createdAt: true,
 	updatedAt: true,
 } as const satisfies Prisma.UserSelect;

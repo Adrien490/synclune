@@ -219,6 +219,7 @@ export function ParticleBackground({
 		<div
 			ref={containerRef}
 			aria-hidden="true"
+			data-testid="particle-background"
 			className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}
 			style={{ contain: "layout paint" }}
 		>

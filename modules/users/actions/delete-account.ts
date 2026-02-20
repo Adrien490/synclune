@@ -54,6 +54,12 @@ export async function deleteAccount(
 
 		const user = userAuth.user;
 
+		// Fetch image separately since GET_CURRENT_USER_DEFAULT_SELECT doesn't include it
+		const userWithImage = await prisma.user.findUnique({
+			where: { id: user.id },
+			select: { image: true },
+		});
+
 		const userId = user.id;
 
 		// 4. Vérifier qu'il n'y a pas de commandes en cours
@@ -74,7 +80,7 @@ export async function deleteAccount(
 
 		const anonymizedEmail = `deleted_${userId.slice(0, 8)}@synclune.local`;
 		const stripeCustomerId = user.stripeCustomerId;
-		const userAvatar = user.image;
+		const userAvatar = userWithImage?.image;
 
 		// 4b. Collect review media URLs for UploadThing cleanup after transaction
 		const reviewMedias = await prisma.reviewMedia.findMany({

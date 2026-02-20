@@ -187,5 +187,15 @@ export async function requireAdminWithUser(): Promise<
 		};
 	}
 
+	// Re-verify admin role from DB (session may be stale after demotion)
+	if (user.role !== "ADMIN") {
+		return {
+			error: {
+				status: ActionStatus.FORBIDDEN,
+				message: "Accès non autorisé. Droits administrateur requis.",
+			},
+		};
+	}
+
 	return { user };
 }

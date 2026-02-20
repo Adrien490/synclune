@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ANIMATION_PRESETS, SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 import { seededRandom } from "@/shared/utils/seeded-random";
 import {
+	clearParticleCache,
 	generateParticles,
 	getShapeStyles,
 	getSvgConfig,
@@ -13,12 +14,16 @@ import {
 // ─── generateParticles ─────────────────────────────────────────────
 
 describe("generateParticles", () => {
+	beforeEach(() => {
+		clearParticleCache();
+	});
+
 	const defaults = {
 		count: 4,
 		size: [10, 50] as [number, number],
 		opacity: [0.1, 0.4] as [number, number],
 		colors: ["red", "blue"],
-		blur: [5, 20] as [number, number],
+		blur: [5, 20] as number | [number, number],
 		depthParallax: true,
 		shapes: ["circle"] as ParticleShape[],
 		baseDuration: 20,
@@ -137,7 +142,7 @@ describe("generateParticles", () => {
 	});
 
 	it("handles scalar blur (no array)", () => {
-		const particles = generate({ blur: 10 as unknown as [number, number] });
+		const particles = generate({ blur: 10 });
 		for (const p of particles) {
 			expect(p.blur).toBe(10);
 		}

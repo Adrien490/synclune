@@ -22,13 +22,13 @@ export async function bulkDeleteUsers(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
-		if ("error" in auth) return auth.error;
-
-		// 2. Rate limiting
+		// 1. Rate limiting (before auth to avoid unnecessary DB hits)
 		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateCheck) return rateCheck.error;
+
+		// 2. Verification des droits admin
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
@@ -75,11 +75,16 @@ export async function bulkDeleteUsers(
 
 		const eligibleIds = eligibleUsers.map((u) => u.id);
 
-		// 6. Soft delete
-		const result = await prisma.user.updateMany({
-			where: { id: { in: eligibleIds } },
-			data: { deletedAt: new Date() },
-		});
+		// 6. Soft delete + invalidate sessions
+		const [result] = await prisma.$transaction([
+			prisma.user.updateMany({
+				where: { id: { in: eligibleIds } },
+				data: { deletedAt: new Date() },
+			}),
+			prisma.session.deleteMany({
+				where: { userId: { in: eligibleIds } },
+			}),
+		]);
 
 		// 7. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);

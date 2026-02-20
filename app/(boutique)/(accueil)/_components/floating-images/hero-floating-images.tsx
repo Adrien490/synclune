@@ -33,8 +33,7 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 	return (
 		<div
 			ref={containerRef}
-			role="group"
-			aria-label="Aperçu des dernières créations"
+			aria-hidden="true"
 			className="absolute inset-0 z-0 hidden md:block pointer-events-none"
 			style={{ contain: "layout paint" }}
 		>

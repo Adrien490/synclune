@@ -5,7 +5,7 @@ import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	success,
@@ -27,8 +27,8 @@ export async function bulkSuspendUsers(
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Verification des droits admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
@@ -45,10 +45,7 @@ export async function bulkSuspendUsers(
 		const validatedData = validation.data;
 
 		// 4. Verifier qu'on ne suspend pas son propre compte
-		const userAuth = await requireAuth();
-		if ("error" in userAuth) return userAuth.error;
-
-		if (validatedData.ids.includes(userAuth.user.id)) {
+		if (validatedData.ids.includes(auth.user.id)) {
 			return error("Vous ne pouvez pas suspendre votre propre compte.");
 		}
 

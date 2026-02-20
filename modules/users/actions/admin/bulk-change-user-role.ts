@@ -22,13 +22,13 @@ export async function bulkChangeUserRole(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
-		if ("error" in auth) return auth.error;
-
-		// 2. Rate limiting
+		// 1. Rate limiting (before auth to avoid unnecessary DB hits)
 		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateCheck) return rateCheck.error;
+
+		// 2. Verification des droits admin
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
 
 		// 3. Extraire et valider les donnees
 		const idsString = formData.get("ids");

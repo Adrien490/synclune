@@ -23,7 +23,13 @@ export interface ParticleBackgroundProps {
 	opacity?: [number, number];
 	/** Couleurs CSS des particules */
 	colors?: string[];
-	/** Blur min/max en pixels pour effet de profondeur (défaut: [12, 32]) */
+	/**
+	 * Blur en pixels pour effet de profondeur (défaut: [12, 32]).
+	 * Accepte un scalaire (blur uniforme) ou un tuple [min, max] (blur corrélé inversement à la taille :
+	 * les grosses particules sont nettes, les petites sont floues).
+	 * Contrairement à size/opacity qui n'acceptent que des tuples, le scalaire permet un shortcut
+	 * quand toutes les particules doivent avoir le même blur.
+	 */
 	blur?: number | [number, number];
 	/** Forme(s) des particules - une forme ou un tableau pour mixer (défaut: "circle") */
 	shape?: ParticleShape | ParticleShape[];

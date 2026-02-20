@@ -63,7 +63,7 @@ export function ScrollIndicator({
 		for (const id of ids) {
 			const target = document.getElementById(id);
 			if (target) {
-				target.scrollIntoView({ behavior: "smooth" });
+				target.scrollIntoView({ behavior: shouldReduceMotion ? "auto" : "smooth" });
 				return;
 			}
 		}
@@ -75,6 +75,7 @@ export function ScrollIndicator({
 			onClick={handleClick}
 			aria-label={ariaLabel}
 			tabIndex={isVisible ? 0 : -1}
+			aria-hidden={!isVisible}
 			className={cn(
 				// Position au-dessus des zones mask avec fallback minimum
 				"absolute left-1/2 -translate-x-1/2 z-20",
@@ -100,7 +101,7 @@ export function ScrollIndicator({
 						}
 			}
 		>
-			<ChevronDown size={28} strokeWidth={1.5} />
+			<ChevronDown size={28} strokeWidth={1.5} aria-hidden="true" focusable="false" />
 		</motion.button>
 	);
 }

@@ -85,6 +85,9 @@ export async function fuzzySearchIds(
 	// Use the first column's table as the main table
 	const mainTable = Prisma.raw(`"${columns[0].table}"`)
 
+	// Truncate term for logging to avoid exposing PII (names/emails)
+	const logTerm = term.length > 3 ? `${term.slice(0, 3)}***` : "***"
+
 	const startTime = performance.now()
 
 	try {
@@ -110,7 +113,7 @@ export async function fuzzySearchIds(
 
 		if (durationMs > 500) {
 			console.warn(
-				`[SEARCH] slow-admin-fuzzy | term="${term}" | table="${columns[0].table}" | results=${results.length} | duration=${durationMs}ms`
+				`[SEARCH] slow-admin-fuzzy | term="${logTerm}" | table="${columns[0].table}" | results=${results.length} | duration=${durationMs}ms`
 			)
 		}
 
@@ -118,7 +121,7 @@ export async function fuzzySearchIds(
 	} catch (error) {
 		const durationMs = Math.round(performance.now() - startTime)
 		console.warn(
-			`[SEARCH] admin-fuzzy-error | term="${term}" | table="${columns[0].table}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`
+			`[SEARCH] admin-fuzzy-error | term="${logTerm}" | table="${columns[0].table}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`
 		)
 		return null
 	}

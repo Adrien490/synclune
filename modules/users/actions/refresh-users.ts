@@ -13,12 +13,13 @@ export async function refreshUsers(
 	_formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérification des droits admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
-
+		// 1. Rate limiting (before auth to avoid unnecessary DB hits)
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.REFRESH);
 		if ("error" in rateLimit) return rateLimit.error;
+
+		// 2. Vérification des droits admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Revalidation du cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);

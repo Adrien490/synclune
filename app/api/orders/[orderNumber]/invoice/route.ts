@@ -18,6 +18,12 @@ export async function GET(
 		return new Response("Commande introuvable", { status: 404 });
 	}
 
+	// Defense-in-depth: getOrder already scopes by userId for non-admins,
+	// but we add an explicit ownership check for the API route
+	if (order.userId !== session.user.id) {
+		return new Response("Accès interdit", { status: 403 });
+	}
+
 	if (order.paymentStatus !== "PAID") {
 		return new Response("Facture non disponible pour cette commande", {
 			status: 400,

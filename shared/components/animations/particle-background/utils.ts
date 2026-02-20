@@ -13,6 +13,11 @@ import { seededRandom } from "@/shared/utils/seeded-random";
 const particleCache = new Map<string, Particle[]>();
 const MAX_CACHE_SIZE = 50;
 
+/** Clear the particle cache (for tests only) */
+export function clearParticleCache() {
+	particleCache.clear();
+}
+
 const DEFAULT_DURATION = 20;
 
 /** Génère un tableau de particules avec des propriétés déterministes (memoizé) */
@@ -28,8 +33,9 @@ export function generateParticles(
 ): Particle[] {
 	// Normalize tuples so min <= max
 	const safeSize: [number, number] = [Math.min(size[0], size[1]), Math.max(size[0], size[1])];
+	const safeOpacity: [number, number] = [Math.min(opacity[0], opacity[1]), Math.max(opacity[0], opacity[1])];
 
-	const cacheKey = JSON.stringify([count, safeSize, opacity, colors, blur, depthParallax, shapes, baseDuration]);
+	const cacheKey = JSON.stringify([count, safeSize, safeOpacity, colors, blur, depthParallax, shapes, baseDuration]);
 	const cached = particleCache.get(cacheKey);
 	if (cached) return cached;
 
@@ -42,7 +48,7 @@ export function generateParticles(
 		const rand = (offset: number) => seededRandom(seed + offset);
 
 		const particleSize = safeSize[0] + rand(1) * (safeSize[1] - safeSize[0]);
-		const particleOpacity = opacity[0] + rand(2) * (opacity[1] - opacity[0]);
+		const particleOpacity = safeOpacity[0] + rand(2) * (safeOpacity[1] - safeOpacity[0]);
 		const x = 5 + rand(3) * 90;
 		const y = 5 + rand(4) * 90;
 		// Offset 7 intentionally skipped to keep color selection independent from delay (offset 6)
