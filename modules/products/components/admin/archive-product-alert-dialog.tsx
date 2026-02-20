@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
+import { Loader2 } from "lucide-react";
 
 export const ARCHIVE_PRODUCT_DIALOG_ID = "archive-product";
 
@@ -64,37 +65,41 @@ export function ArchiveProductAlertDialog() {
 						<AlertDialogTitle>
 							{isArchiving ? "Archiver le bijou" : "Désarchiver le bijou"}
 						</AlertDialogTitle>
-						<AlertDialogDescription>
-							{isArchiving ? (
-								<>
-									Êtes-vous sûr de vouloir archiver le bijou{" "}
-									<strong>
-										&quot;{archiveDialog.data?.productTitle}&quot;
-									</strong>{" "}
-									?
-									<br />
-									<br />
-									Le bijou ne sera plus visible sur la boutique mais restera
-									accessible dans le dashboard.
-									<br />
-									<br />
-									<span className="text-muted-foreground text-xs">
-										Vous pourrez le restaurer à tout moment.
-									</span>
-								</>
-							) : (
-								<>
-									Êtes-vous sûr de vouloir désarchiver le bijou{" "}
-									<strong>
-										&quot;{archiveDialog.data?.productTitle}&quot;
-									</strong>{" "}
-									?
-									<br />
-									<br />
-									Le bijou sera remis en statut &quot;Public&quot; et
-									redeviendra visible sur la boutique.
-								</>
-							)}
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								{isArchiving ? (
+									<>
+										<p>
+											Êtes-vous sûr de vouloir archiver le bijou{" "}
+											<strong>
+												&quot;{archiveDialog.data?.productTitle}&quot;
+											</strong>{" "}
+											?
+										</p>
+										<p>
+											Le bijou ne sera plus visible sur la boutique mais restera
+											accessible dans le dashboard.
+										</p>
+										<p className="text-muted-foreground text-xs">
+											Vous pourrez le restaurer à tout moment.
+										</p>
+									</>
+								) : (
+									<>
+										<p>
+											Êtes-vous sûr de vouloir désarchiver le bijou{" "}
+											<strong>
+												&quot;{archiveDialog.data?.productTitle}&quot;
+											</strong>{" "}
+											?
+										</p>
+										<p>
+											Le bijou sera remis en statut &quot;Public&quot; et
+											redeviendra visible sur la boutique.
+										</p>
+									</>
+								)}
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -104,12 +109,14 @@ export function ArchiveProductAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 							className={
 								isArchiving
 									? "bg-orange-600 text-white hover:bg-orange-700"
 									: undefined
 							}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Désarchiver")}
 						</AlertDialogAction>
 					</AlertDialogFooter>

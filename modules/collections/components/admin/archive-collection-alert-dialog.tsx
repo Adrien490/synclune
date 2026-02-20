@@ -13,6 +13,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
+import { Loader2 } from "lucide-react";
 
 export const ARCHIVE_COLLECTION_DIALOG_ID = "archive-collection";
 
@@ -60,37 +61,41 @@ export function ArchiveCollectionAlertDialog() {
 						<AlertDialogTitle>
 							{isArchiving ? "Archiver la collection" : "Restaurer la collection"}
 						</AlertDialogTitle>
-						<AlertDialogDescription>
-							{isArchiving ? (
-								<>
-									Êtes-vous sûr de vouloir archiver la collection{" "}
-									<strong>
-										&quot;{archiveDialog.data?.collectionName}&quot;
-									</strong>{" "}
-									?
-									<br />
-									<br />
-									La collection ne sera plus visible sur la boutique mais restera
-									accessible dans le dashboard.
-									<br />
-									<br />
-									<span className="text-muted-foreground text-xs">
-										Vous pourrez la restaurer a tout moment.
-									</span>
-								</>
-							) : (
-								<>
-									Êtes-vous sûr de vouloir restaurer la collection{" "}
-									<strong>
-										&quot;{archiveDialog.data?.collectionName}&quot;
-									</strong>{" "}
-									?
-									<br />
-									<br />
-									La collection sera remise en statut &quot;Public&quot; et
-									redeviendra visible sur la boutique.
-								</>
-							)}
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								{isArchiving ? (
+									<>
+										<p>
+											Êtes-vous sûr de vouloir archiver la collection{" "}
+											<strong>
+												&quot;{archiveDialog.data?.collectionName}&quot;
+											</strong>{" "}
+											?
+										</p>
+										<p>
+											La collection ne sera plus visible sur la boutique mais restera
+											accessible dans le dashboard.
+										</p>
+										<p className="text-muted-foreground text-xs">
+											Vous pourrez la restaurer a tout moment.
+										</p>
+									</>
+								) : (
+									<>
+										<p>
+											Êtes-vous sûr de vouloir restaurer la collection{" "}
+											<strong>
+												&quot;{archiveDialog.data?.collectionName}&quot;
+											</strong>{" "}
+											?
+										</p>
+										<p>
+											La collection sera remise en statut &quot;Public&quot; et
+											redeviendra visible sur la boutique.
+										</p>
+									</>
+								)}
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -100,12 +105,14 @@ export function ArchiveCollectionAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 							className={
 								isArchiving
 									? "bg-orange-600 text-white hover:bg-orange-700"
 									: undefined
 							}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Restaurer")}
 						</AlertDialogAction>
 					</AlertDialogFooter>

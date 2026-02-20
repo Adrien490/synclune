@@ -27,15 +27,15 @@ export function DeleteMaterialAlertDialog() {
 			isPending={isPending}
 			hiddenFields={[{ name: "id", dataKey: "materialId" }]}
 			description={(data) => (
-				<>
-					Êtes-vous sûr de vouloir supprimer le matériau{" "}
-					<strong>&quot;{data?.materialName}&quot;</strong> ?
-					<br />
-					<br />
-					<span className="text-destructive font-medium">
+				<div className="space-y-3">
+					<p>
+						Êtes-vous sûr de vouloir supprimer le matériau{" "}
+						<strong>&quot;{data?.materialName}&quot;</strong> ?
+					</p>
+					<p className="text-destructive font-medium">
 						Cette action est irréversible.
-					</span>
-				</>
+					</p>
+				</div>
 			)}
 		/>
 	);

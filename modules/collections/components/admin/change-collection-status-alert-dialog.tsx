@@ -14,6 +14,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
 import { cn } from "@/shared/utils/cn";
+import { Loader2 } from "lucide-react";
 
 export const CHANGE_COLLECTION_STATUS_DIALOG_ID = "change-collection-status";
 
@@ -120,8 +121,10 @@ export function ChangeCollectionStatusAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 							className={cn("text-white", config.color)}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Changement en cours..." : `Changer en ${config.label}`}
 						</AlertDialogAction>
 					</AlertDialogFooter>

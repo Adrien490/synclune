@@ -13,6 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 import { cn } from "@/shared/utils/cn";
+import { Loader2 } from "lucide-react";
 
 export const CHANGE_PRODUCT_STATUS_DIALOG_ID = "change-product-status";
 
@@ -122,8 +123,10 @@ export function ChangeProductStatusAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 							className={cn("text-white", config.color)}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Changement en cours..." : `Changer en ${config.label}`}
 						</AlertDialogAction>
 					</AlertDialogFooter>

@@ -65,7 +65,8 @@ export function DeleteOrderAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

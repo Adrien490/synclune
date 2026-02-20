@@ -69,7 +69,8 @@ export function CancelOrderAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Fermer
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Annulation..." : "Annuler la commande"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

@@ -32,25 +32,21 @@ export function DeleteProductTypeAlertDialog() {
 			isPending={isPending}
 			hiddenFields={[{ name: "productTypeId", dataKey: "productTypeId" }]}
 			description={(data) => (
-				<>
-					Voulez-vous vraiment supprimer le type{" "}
-					<strong>&quot;{data?.label}&quot;</strong> ?
-					<br />
-					<br />
+				<div className="space-y-3">
+					<p>
+						Voulez-vous vraiment supprimer le type{" "}
+						<strong>&quot;{data?.label}&quot;</strong> ?
+					</p>
 					{data?.productsCount && data.productsCount > 0 && (
-						<>
-							<span className="text-orange-600 dark:text-orange-400 font-medium">
-								Attention : {data.productsCount} bijou(x) utilise(nt) ce type.
-								Ils seront dissociés de ce type.
-							</span>
-							<br />
-							<br />
-						</>
+						<p className="text-orange-600 dark:text-orange-400 font-medium">
+							Attention : {data.productsCount} bijou(x) utilise(nt) ce
+							type. Ils seront dissociés de ce type.
+						</p>
 					)}
-					<span className="text-muted-foreground text-sm">
+					<p className="text-muted-foreground text-sm">
 						Cette action est irréversible.
-					</span>
-				</>
+					</p>
+				</div>
 			)}
 		/>
 	);

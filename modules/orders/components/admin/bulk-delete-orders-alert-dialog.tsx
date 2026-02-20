@@ -83,7 +83,9 @@ export function BulkDeleteOrdersAlertDialog() {
 					<AlertDialogAction
 						onClick={handleDelete}
 						disabled={isPending}
+						aria-busy={isPending}
 					>
+						{isPending && <Loader2 className="animate-spin" />}
 						{isPending ? "Suppression..." : "Supprimer"}
 					</AlertDialogAction>
 				</AlertDialogFooter>

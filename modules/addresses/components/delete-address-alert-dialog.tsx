@@ -52,25 +52,23 @@ export function DeleteAddressAlertDialog() {
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Supprimer cette adresse ?</AlertDialogTitle>
-						<AlertDialogDescription>
-							Vous voulez vraiment supprimer l'adresse{" "}
-							<strong>&quot;{deleteDialog.data?.addressLabel}&quot;</strong> ?
-							<br />
-							<br />
-							{deleteDialog.data?.isDefault && (
-								<>
-									<span className="text-orange-600 dark:text-orange-400 font-medium">
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								<p>
+									Vous voulez vraiment supprimer l'adresse{" "}
+									<strong>&quot;{deleteDialog.data?.addressLabel}&quot;</strong> ?
+								</p>
+								{deleteDialog.data?.isDefault && (
+									<p className="text-orange-600 dark:text-orange-400 font-medium">
 										C'est votre adresse par défaut. Si vous en avez
 										d'autres, une nouvelle sera automatiquement
 										sélectionnée par défaut.
-									</span>
-									<br />
-									<br />
-								</>
-							)}
-							<span className="text-muted-foreground text-sm">
-								Vous ne pourrez pas annuler cette action.
-							</span>
+									</p>
+								)}
+								<p className="text-muted-foreground text-sm">
+									Vous ne pourrez pas annuler cette action.
+								</p>
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -80,7 +78,9 @@ export function DeleteAddressAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

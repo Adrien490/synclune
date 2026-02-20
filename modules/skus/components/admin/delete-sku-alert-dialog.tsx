@@ -32,28 +32,33 @@ export function DeleteProductSkuAlertDialog() {
 			hiddenFields={[{ name: "skuId", dataKey: "skuId" }]}
 			description={(data) =>
 				data?.isDefault ? (
-					<>
-						<strong className="text-destructive">
-							Attention : Cette variante est la variante principale du
-							produit.
-						</strong>
-						<br />
-						<br />
-						Êtes-vous sûr de vouloir supprimer la variante{" "}
-						<strong>{data?.skuName}</strong> ?<br />
-						<br />
-						Vous devrez définir une nouvelle variante principale après cette
-						suppression.
-					</>
+					<div className="space-y-3">
+						<p>
+							<strong className="text-destructive">
+								Attention : Cette variante est la variante principale du
+								produit.
+							</strong>
+						</p>
+						<p>
+							Êtes-vous sûr de vouloir supprimer la variante{" "}
+							<strong>{data?.skuName}</strong> ?
+						</p>
+						<p>
+							Vous devrez définir une nouvelle variante principale après
+							cette suppression.
+						</p>
+					</div>
 				) : (
-					<>
-						Êtes-vous sûr de vouloir supprimer la variante{" "}
-						<strong>{data?.skuName}</strong> ?
-						<br />
-						<br />
-						Cette action est irréversible et supprimera également toutes
-						les images associées à cette variante.
-					</>
+					<div className="space-y-3">
+						<p>
+							Êtes-vous sûr de vouloir supprimer la variante{" "}
+							<strong>{data?.skuName}</strong> ?
+						</p>
+						<p>
+							Cette action est irréversible et supprimera également
+							toutes les images associées à cette variante.
+						</p>
+					</div>
 				)
 			}
 		/>

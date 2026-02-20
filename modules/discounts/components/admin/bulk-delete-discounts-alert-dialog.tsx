@@ -13,6 +13,7 @@ import {
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteDiscounts } from "@/modules/discounts/hooks/use-bulk-delete-discounts";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { Loader2 } from "lucide-react";
 
 export const BULK_DELETE_DISCOUNTS_DIALOG_ID = "bulk-delete-discounts";
 
@@ -54,27 +55,25 @@ export function BulkDeleteDiscountsAlertDialog() {
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-						<AlertDialogDescription>
-							Êtes-vous sûr de vouloir supprimer{" "}
-							<strong>
-								{count} code{count > 1 ? "s" : ""} promo
-							</strong>{" "}
-							?
-							<br />
-							<br />
-							{totalUsageCount > 0 && (
-								<>
-									<span className="text-amber-600 dark:text-amber-500 font-medium">
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								<p>
+									Êtes-vous sûr de vouloir supprimer{" "}
+									<strong>
+										{count} code{count > 1 ? "s" : ""} promo
+									</strong>{" "}
+									?
+								</p>
+								{totalUsageCount > 0 && (
+									<p className="text-amber-600 dark:text-amber-500 font-medium">
 										{totalUsageCount} utilisation{totalUsageCount > 1 ? "s" : ""}{" "}
 										au total. Les codes déjà utilisés seront ignorés.
-									</span>
-									<br />
-									<br />
-								</>
-							)}
-							<span className="text-destructive font-medium">
-								Cette action est irréversible.
-							</span>
+									</p>
+								)}
+								<p className="text-destructive font-medium">
+									Cette action est irréversible.
+								</p>
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -84,7 +83,9 @@ export function BulkDeleteDiscountsAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-product";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { Loader2 } from "lucide-react";
 
 export const DUPLICATE_PRODUCT_DIALOG_ID = "duplicate-product";
 
@@ -74,7 +75,8 @@ export function DuplicateProductAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Duplication..." : "Dupliquer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

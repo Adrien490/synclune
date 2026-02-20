@@ -13,6 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
 import { cn } from "@/shared/utils/cn";
+import { Loader2 } from "lucide-react";
 
 export const TOGGLE_DISCOUNT_STATUS_DIALOG_ID = "toggle-discount-status";
 
@@ -81,6 +82,7 @@ export function ToggleDiscountStatusAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 							className={cn(
 								"text-white",
 								isActive
@@ -88,6 +90,7 @@ export function ToggleDiscountStatusAlertDialog() {
 									: "bg-green-600 hover:bg-green-700"
 							)}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "En cours..." : isActive ? "Désactiver" : "Activer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

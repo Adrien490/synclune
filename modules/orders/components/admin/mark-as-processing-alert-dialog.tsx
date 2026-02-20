@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsProcessing } from "@/modules/orders/hooks/use-mark-as-processing";
+import { Loader2 } from "lucide-react";
 
 export const MARK_AS_PROCESSING_DIALOG_ID = "mark-as-processing";
 
@@ -63,7 +64,8 @@ export function MarkAsProcessingAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Passage..." : "Passer en préparation"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

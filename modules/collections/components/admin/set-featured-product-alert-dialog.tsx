@@ -11,7 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Star } from "lucide-react";
+import { Loader2, Star } from "lucide-react";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
 export const SET_FEATURED_PRODUCT_DIALOG_ID = "set-featured-product";
@@ -68,27 +68,33 @@ export function SetFeaturedProductAlertDialog() {
 						/>
 						{isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}
 					</AlertDialogTitle>
-					<AlertDialogDescription>
-						{isFeatured ? (
-							<>
-								Voulez-vous retirer le statut vedette de{" "}
-								<strong>&quot;{dialog.data?.productTitle}&quot;</strong> ?
-								<br />
-								<br />
-								La collection n'aura plus de produit vedette et affichera le
-								produit le plus recent comme image representative.
-							</>
-						) : (
-							<>
-								Voulez-vous definir{" "}
-								<strong>&quot;{dialog.data?.productTitle}&quot;</strong> comme
-								produit vedette de cette collection ?
-								<br />
-								<br />
-								Ce produit sera utilise comme image representative de la
-								collection sur la page d'accueil et dans les listes.
-							</>
-						)}
+					<AlertDialogDescription asChild>
+						<div className="space-y-3">
+							{isFeatured ? (
+								<>
+									<p>
+										Voulez-vous retirer le statut vedette de{" "}
+										<strong>&quot;{dialog.data?.productTitle}&quot;</strong> ?
+									</p>
+									<p>
+										La collection n'aura plus de produit vedette et affichera le
+										produit le plus recent comme image representative.
+									</p>
+								</>
+							) : (
+								<>
+									<p>
+										Voulez-vous definir{" "}
+										<strong>&quot;{dialog.data?.productTitle}&quot;</strong> comme
+										produit vedette de cette collection ?
+									</p>
+									<p>
+										Ce produit sera utilise comme image representative de la
+										collection sur la page d'accueil et dans les listes.
+									</p>
+								</>
+							)}
+						</div>
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
@@ -99,7 +105,9 @@ export function SetFeaturedProductAlertDialog() {
 						type="button"
 						onClick={handleConfirm}
 						disabled={isPending}
+						aria-busy={isPending}
 					>
+						{isPending && <Loader2 className="animate-spin" />}
 						{isPending ? (isFeatured ? "Retrait..." : "Definition...") : isFeatured ? "Retirer" : "Definir comme vedette"}
 					</AlertDialogAction>
 				</AlertDialogFooter>

@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useDeleteDiscount } from "@/modules/discounts/hooks/use-delete-discount";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { Loader2 } from "lucide-react";
 
 export const DELETE_DISCOUNT_DIALOG_ID = "delete-discount";
 
@@ -53,28 +54,29 @@ export function DeleteDiscountAlertDialog() {
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-						<AlertDialogDescription>
-							Êtes-vous sûr de vouloir supprimer le code promo{" "}
-							<strong>&quot;{deleteDialog.data?.discountCode}&quot;</strong> ?
-							<br />
-							<br />
-							{usageCount > 0 ? (
-								<>
-									<span className="text-amber-600 dark:text-amber-500 font-medium">
-										Ce code a été utilisé {usageCount} fois et ne peut pas être
-										supprimé.
-									</span>
-									<br />
-									Vous pouvez le désactiver à la place pour empêcher son
-									utilisation.
-									<br />
-									<br />
-								</>
-							) : (
-								<span className="text-destructive font-medium">
-									Cette action est irréversible.
-								</span>
-							)}
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								<p>
+									Êtes-vous sûr de vouloir supprimer le code promo{" "}
+									<strong>&quot;{deleteDialog.data?.discountCode}&quot;</strong> ?
+								</p>
+								{usageCount > 0 ? (
+									<>
+										<p className="text-amber-600 dark:text-amber-500 font-medium">
+											Ce code a été utilisé {usageCount} fois et ne peut pas être
+											supprimé.
+										</p>
+										<p>
+											Vous pouvez le désactiver à la place pour empêcher son
+											utilisation.
+										</p>
+									</>
+								) : (
+									<p className="text-destructive font-medium">
+										Cette action est irréversible.
+									</p>
+								)}
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -84,7 +86,9 @@ export function DeleteDiscountAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending || usageCount > 0}
+							aria-busy={isPending}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

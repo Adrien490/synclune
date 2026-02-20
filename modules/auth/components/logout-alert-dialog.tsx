@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
 	AlertDialog,
@@ -37,20 +38,25 @@ export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
 				>
 					<AlertDialogHeader>
 						<AlertDialogTitle>Se déconnecter ?</AlertDialogTitle>
-						<AlertDialogDescription>
-							Voulez-vous vraiment vous déconnecter de votre compte ?
-							<br />
-							<br />
-							<span className="text-muted-foreground text-sm">
-								Vous pourrez vous reconnecter à tout moment.
-							</span>
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								<p>Voulez-vous vraiment vous déconnecter de votre compte ?</p>
+								<p className="text-muted-foreground text-sm">
+									Vous pourrez vous reconnecter à tout moment.
+								</p>
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending || isLoggedOut}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending || isLoggedOut}>
+						<AlertDialogAction
+							type="submit"
+							disabled={isPending || isLoggedOut}
+							aria-busy={isPending || isLoggedOut}
+						>
+							{(isPending || isLoggedOut) && <Loader2 className="animate-spin" />}
 							{isLoggedOut
 								? "Déconnecté !"
 								: isPending

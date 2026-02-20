@@ -27,15 +27,15 @@ export function DeleteColorAlertDialog() {
 			isPending={isPending}
 			hiddenFields={[{ name: "id", dataKey: "colorId" }]}
 			description={(data) => (
-				<>
-					Êtes-vous sûr de vouloir supprimer la couleur{" "}
-					<strong>&quot;{data?.colorName}&quot;</strong> ?
-					<br />
-					<br />
-					<span className="text-destructive font-medium">
+				<div className="space-y-3">
+					<p>
+						Êtes-vous sûr de vouloir supprimer la couleur{" "}
+						<strong>&quot;{data?.colorName}&quot;</strong> ?
+					</p>
+					<p className="text-destructive font-medium">
 						Cette action est irréversible.
-					</span>
-				</>
+					</p>
+				</div>
 			)}
 		/>
 	);

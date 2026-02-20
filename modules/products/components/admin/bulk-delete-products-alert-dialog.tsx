@@ -26,25 +26,26 @@ export function BulkDeleteProductsAlertDialog() {
 			idsFieldName="productIds"
 			idsDataKey="productIds"
 			description={(count) => (
-				<>
-					Êtes-vous sûr de vouloir supprimer{" "}
-					<strong>
-						{count} produit{count > 1 ? "s" : ""}
-					</strong>{" "}
-					?
-					<br />
-					<br />
-					<span className="text-destructive font-medium">
-						Cette action est irréversible
-					</span>{" "}
-					et supprimera également toutes les variantes et images associées.
-					<br />
-					<br />
-					<span className="text-muted-foreground text-xs">
-						Note: Les commandes existantes conserveront les informations des
-						produits via des snapshots.
-					</span>
-				</>
+				<div className="space-y-3">
+					<p>
+						Êtes-vous sûr de vouloir supprimer{" "}
+						<strong>
+							{count} produit{count > 1 ? "s" : ""}
+						</strong>{" "}
+						?
+					</p>
+					<p>
+						<span className="text-destructive font-medium">
+							Cette action est irréversible
+						</span>{" "}
+						et supprimera également toutes les variantes et images
+						associées.
+					</p>
+					<p className="text-muted-foreground text-xs">
+						Note: Les commandes existantes conserveront les informations
+						des produits via des snapshots.
+					</p>
+				</div>
 			)}
 		/>
 	);

@@ -13,6 +13,7 @@ import {
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkDeleteProductTypes } from "@/modules/product-types/hooks/use-bulk-delete-product-types";
+import { Loader2 } from "lucide-react";
 
 export const BULK_DELETE_PRODUCT_TYPES_DIALOG_ID = "bulk-delete-product-types";
 
@@ -45,20 +46,20 @@ export function BulkDeleteProductTypesAlertDialog() {
 					<input type="hidden" name="ids" value={JSON.stringify(data.productTypeIds)} />
 					<AlertDialogHeader>
 						<AlertDialogTitle>Supprimer les types de bijoux</AlertDialogTitle>
-						<AlertDialogDescription>
-							Supprimer{" "}
-							<span className="font-semibold">
-								{count} type{count > 1 ? "s" : ""} de bijou{count > 1 ? "x" : ""}
-							</span>{" "}
-							?
-							<br />
-							<br />
-							<span className="text-amber-600">
-								Les types système et ceux avec des produits actifs seront ignorés.
-							</span>
-							<br />
-							<br />
-							Cette action est irréversible.
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								<p>
+									Supprimer{" "}
+									<span className="font-semibold">
+										{count} type{count > 1 ? "s" : ""} de bijou{count > 1 ? "x" : ""}
+									</span>{" "}
+									?
+								</p>
+								<p className="text-amber-600">
+									Les types système et ceux avec des produits actifs seront ignorés.
+								</p>
+								<p>Cette action est irréversible.</p>
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -68,7 +69,9 @@ export function BulkDeleteProductTypesAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

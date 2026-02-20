@@ -14,6 +14,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkArchiveCollections } from "@/modules/collections/hooks/use-bulk-archive-collections";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
+import { Loader2 } from "lucide-react";
 
 export const BULK_ARCHIVE_COLLECTIONS_DIALOG_ID = "bulk-archive-collections";
 
@@ -66,35 +67,39 @@ export function BulkArchiveCollectionsAlertDialog() {
 								? `Archiver ${count} collection${count > 1 ? "s" : ""}`
 								: `Restaurer ${count} collection${count > 1 ? "s" : ""}`}
 						</AlertDialogTitle>
-						<AlertDialogDescription>
-							{isArchiving ? (
-								<>
-									Êtes-vous sûr de vouloir archiver{" "}
-									<strong>{count} collection{count > 1 ? "s" : ""}</strong> ?
-									<br />
-									<br />
-									{count > 1 ? "Ces collections ne seront" : "Cette collection ne sera"}{" "}
-									plus {count > 1 ? "visibles" : "visible"} sur la boutique mais{" "}
-									{count > 1 ? "resteront accessibles" : "restera accessible"}{" "}
-									dans le dashboard.
-									<br />
-									<br />
-									<span className="text-muted-foreground text-xs">
-										Vous pourrez les restaurer a tout moment.
-									</span>
-								</>
-							) : (
-								<>
-									Êtes-vous sûr de vouloir restaurer{" "}
-									<strong>{count} collection{count > 1 ? "s" : ""}</strong> ?
-									<br />
-									<br />
-									{count > 1 ? "Ces collections seront remises" : "Cette collection sera remise"}{" "}
-									en statut &quot;Public&quot; et{" "}
-									{count > 1 ? "redeviendront visibles" : "redeviendra visible"}{" "}
-									sur la boutique.
-								</>
-							)}
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								{isArchiving ? (
+									<>
+										<p>
+											Êtes-vous sûr de vouloir archiver{" "}
+											<strong>{count} collection{count > 1 ? "s" : ""}</strong> ?
+										</p>
+										<p>
+											{count > 1 ? "Ces collections ne seront" : "Cette collection ne sera"}{" "}
+											plus {count > 1 ? "visibles" : "visible"} sur la boutique mais{" "}
+											{count > 1 ? "resteront accessibles" : "restera accessible"}{" "}
+											dans le dashboard.
+										</p>
+										<p className="text-muted-foreground text-xs">
+											Vous pourrez les restaurer a tout moment.
+										</p>
+									</>
+								) : (
+									<>
+										<p>
+											Êtes-vous sûr de vouloir restaurer{" "}
+											<strong>{count} collection{count > 1 ? "s" : ""}</strong> ?
+										</p>
+										<p>
+											{count > 1 ? "Ces collections seront remises" : "Cette collection sera remise"}{" "}
+											en statut &quot;Public&quot; et{" "}
+											{count > 1 ? "redeviendront visibles" : "redeviendra visible"}{" "}
+											sur la boutique.
+										</p>
+									</>
+								)}
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -104,12 +109,14 @@ export function BulkArchiveCollectionsAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 							className={
 								isArchiving
 									? "bg-orange-600 text-white hover:bg-orange-700"
 									: undefined
 							}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Restaurer")}
 						</AlertDialogAction>
 					</AlertDialogFooter>

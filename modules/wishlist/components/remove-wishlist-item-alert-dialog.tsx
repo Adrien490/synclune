@@ -16,6 +16,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { AlertDialogData } from "@/shared/stores/alert-dialog-store";
 import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 type RemoveWishlistItemData = AlertDialogData & {
 	productId: string;
@@ -85,23 +86,25 @@ export function RemoveWishlistItemAlertDialog() {
 						<AlertDialogTitle>
 							Retirer ce produit de votre wishlist ?
 						</AlertDialogTitle>
-						<AlertDialogDescription>
-							{removeDialog.data?.itemName ? (
-								<>
-									Vous voulez vraiment retirer{" "}
-									<span className="font-medium text-foreground">
-										{removeDialog.data.itemName}
-									</span>{" "}
-									de votre wishlist ?
-								</>
-							) : (
-								"Vous voulez vraiment retirer ce produit de votre wishlist ?"
-							)}
-							<br />
-							<br />
-							<span className="text-muted-foreground text-sm">
-								Vous pourrez toujours le retrouver dans la boutique<span aria-hidden="true"> 💕</span>
-							</span>
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								<p>
+									{removeDialog.data?.itemName ? (
+										<>
+											Vous voulez vraiment retirer{" "}
+											<span className="font-medium text-foreground">
+												{removeDialog.data.itemName}
+											</span>{" "}
+											de votre wishlist ?
+										</>
+									) : (
+										"Vous voulez vraiment retirer ce produit de votre wishlist ?"
+									)}
+								</p>
+								<p className="text-muted-foreground text-sm">
+									Vous pourrez toujours le retrouver dans la boutique<span aria-hidden="true"> 💕</span>
+								</p>
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -111,8 +114,10 @@ export function RemoveWishlistItemAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

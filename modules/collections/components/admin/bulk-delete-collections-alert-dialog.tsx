@@ -57,30 +57,31 @@ export function BulkDeleteCollectionsAlertDialog() {
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-						<AlertDialogDescription>
-							Êtes-vous sûr de vouloir supprimer{" "}
-							<strong>
-								{count} collection{count > 1 ? "s" : ""}
-							</strong>{" "}
-							?
-							<br />
-							<br />
-							{totalProductsCount > 0 && (
-								<>
-									<span className="text-amber-600 dark:text-amber-500 font-medium">
-										Ces collections contiennent au total {totalProductsCount}{" "}
-										produit{totalProductsCount > 1 ? "s" : ""}.
-									</span>
-									<br />
-									Les produits seront préservés mais n&apos;appartiendront plus à
-									aucune collection.
-									<br />
-									<br />
-								</>
-							)}
-							<span className="text-destructive font-medium">
-								Cette action est irréversible.
-							</span>
+						<AlertDialogDescription asChild>
+							<div className="space-y-3">
+								<p>
+									Êtes-vous sûr de vouloir supprimer{" "}
+									<strong>
+										{count} collection{count > 1 ? "s" : ""}
+									</strong>{" "}
+									?
+								</p>
+								{totalProductsCount > 0 && (
+									<>
+										<p className="text-amber-600 dark:text-amber-500 font-medium">
+											Ces collections contiennent au total {totalProductsCount}{" "}
+											produit{totalProductsCount > 1 ? "s" : ""}.
+										</p>
+										<p>
+											Les produits seront préservés mais n&apos;appartiendront plus à
+											aucune collection.
+										</p>
+									</>
+								)}
+								<p className="text-destructive font-medium">
+									Cette action est irréversible.
+								</p>
+							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -90,7 +91,9 @@ export function BulkDeleteCollectionsAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							aria-busy={isPending}
 						>
+							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
