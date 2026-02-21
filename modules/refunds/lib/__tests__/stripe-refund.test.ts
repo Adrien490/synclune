@@ -56,7 +56,7 @@ describe("createStripeRefund", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should return success:true when Stripe returns succeeded", async () => {
+	it("should return success when Stripe returns succeeded", async () => {
 		mockStripe.refunds.create.mockResolvedValue({
 			id: "re_123",
 			status: "succeeded",
@@ -75,7 +75,7 @@ describe("createStripeRefund", () => {
 		});
 	});
 
-	it("should return pending:true when Stripe returns pending", async () => {
+	it("should return pending when Stripe returns pending", async () => {
 		mockStripe.refunds.create.mockResolvedValue({
 			id: "re_456",
 			status: "pending",
@@ -94,7 +94,7 @@ describe("createStripeRefund", () => {
 		});
 	});
 
-	it("should return error if neither paymentIntentId nor chargeId provided", async () => {
+	it("should return error when neither paymentIntentId nor chargeId provided", async () => {
 		const result = await createStripeRefund({ amount: 5000 });
 
 		expect(result).toEqual({
@@ -113,9 +113,9 @@ describe("createStripeRefund", () => {
 			amount: 5000,
 		});
 
-		const params = mockStripe.refunds.create.mock.calls[0][0];
-		expect(params.payment_intent).toBe("pi_123");
-		expect(params.charge).toBeUndefined();
+		const callArgs = mockStripe.refunds.create.mock.calls[0][0];
+		expect(callArgs.payment_intent).toBe("pi_123");
+		expect(callArgs.charge).toBeUndefined();
 	});
 
 	it("should use chargeId when paymentIntentId is not provided", async () => {
@@ -126,12 +126,12 @@ describe("createStripeRefund", () => {
 			amount: 5000,
 		});
 
-		const params = mockStripe.refunds.create.mock.calls[0][0];
-		expect(params.charge).toBe("ch_456");
-		expect(params.payment_intent).toBeUndefined();
+		const callArgs = mockStripe.refunds.create.mock.calls[0][0];
+		expect(callArgs.charge).toBe("ch_456");
+		expect(callArgs.payment_intent).toBeUndefined();
 	});
 
-	it("should pass idempotency key in requestOptions", async () => {
+	it("should pass idempotency key in request options", async () => {
 		mockStripe.refunds.create.mockResolvedValue({ id: "re_123", status: "succeeded" });
 
 		await createStripeRefund({
@@ -143,6 +143,20 @@ describe("createStripeRefund", () => {
 		expect(mockStripe.refunds.create).toHaveBeenCalledWith(
 			expect.any(Object),
 			{ idempotencyKey: "refund_abc" },
+		);
+	});
+
+	it("should not pass idempotency key when not provided", async () => {
+		mockStripe.refunds.create.mockResolvedValue({ id: "re_123", status: "succeeded" });
+
+		await createStripeRefund({
+			paymentIntentId: "pi_123",
+			amount: 5000,
+		});
+
+		expect(mockStripe.refunds.create).toHaveBeenCalledWith(
+			expect.any(Object),
+			{},
 		);
 	});
 
@@ -191,9 +205,9 @@ describe("createStripeRefund", () => {
 		);
 	});
 
-	// ========================================================================
-	// Idempotence: charge_already_refunded
-	// ========================================================================
+	// ==========================================================================
+	// charge_already_refunded idempotence
+	// ==========================================================================
 
 	describe("charge_already_refunded handling", () => {
 		it("should match by metadata refund_id (highest priority)", async () => {
@@ -244,8 +258,8 @@ describe("createStripeRefund", () => {
 			const now = Math.floor(Date.now() / 1000);
 			mockStripe.refunds.list.mockResolvedValue({
 				data: [
-					{ id: "re_diff", amount: 3000, created: now - 100, metadata: {} },
-					{ id: "re_same", amount: 5000, created: now - 7200, metadata: {} },
+					{ id: "re_diff_amount", amount: 3000, created: now - 100, metadata: {} },
+					{ id: "re_same_amount", amount: 5000, created: now - 7200, metadata: {} },
 				],
 			});
 
@@ -255,15 +269,17 @@ describe("createStripeRefund", () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(result.refundId).toBe("re_same");
+			expect(result.refundId).toBe("re_same_amount");
 		});
 
-		it("should fallback to first refund when no match criteria met", async () => {
+		it("should fallback to first refund when no better match", async () => {
 			mockStripe.refunds.create.mockRejectedValue(
 				makeStripeError("charge_already_refunded", "Charge already refunded"),
 			);
 			mockStripe.refunds.list.mockResolvedValue({
-				data: [{ id: "re_first", amount: 3000, created: 0, metadata: {} }],
+				data: [
+					{ id: "re_first", amount: 3000, created: Math.floor(Date.now() / 1000) - 7200, metadata: {} },
+				],
 			});
 
 			const result = await createStripeRefund({
@@ -282,7 +298,9 @@ describe("createStripeRefund", () => {
 			);
 			const now = Math.floor(Date.now() / 1000);
 			mockStripe.refunds.list.mockResolvedValue({
-				data: [{ id: "re_fb", amount: 5000, created: now - 100, metadata: {} }],
+				data: [
+					{ id: "re_fallback", amount: 5000, created: now - 100, metadata: {} },
+				],
 			});
 
 			await createStripeRefund({

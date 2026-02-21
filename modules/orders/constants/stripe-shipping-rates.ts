@@ -27,6 +27,9 @@ import { type ShippingCountry } from "@/shared/constants/countries";
  *
  * IMPORTANT : Remplacer ces placeholders par les vrais IDs après création
  * dans le Dashboard Stripe.
+ *
+ * Uses getters to defer env var reads to runtime (avoids build-time crashes
+ * when env vars are not yet available during Next.js page data collection).
  */
 function requireEnv(name: string): string {
 	const value = process.env[name];
@@ -42,21 +45,27 @@ export const STRIPE_SHIPPING_RATE_IDS = {
 	 * Prix : 6,00€ | Délai : 2-3 jours ouvrés
 	 * Pays autorisés dans Stripe : FR
 	 */
-	FRANCE: requireEnv("STRIPE_SHIPPING_RATE_FRANCE"),
+	get FRANCE() {
+		return requireEnv("STRIPE_SHIPPING_RATE_FRANCE");
+	},
 	/**
 	 * Livraison Corse
 	 * Prix : 10,00€ | Délai : 4-7 jours ouvrés
 	 * Pays autorisés dans Stripe : FR (filtrage par code postal côté backend)
 	 */
-	CORSE: requireEnv("STRIPE_SHIPPING_RATE_CORSE"),
+	get CORSE() {
+		return requireEnv("STRIPE_SHIPPING_RATE_CORSE");
+	},
 	/**
 	 * Livraison Union Européenne
 	 * Prix : 15,00€ | Délai : 4-7 jours ouvrés
 	 * Pays autorisés dans Stripe : BE, DE, NL, LU, IT, ES, PT, AT, IE, FI, SE, DK, GR,
 	 *                              BG, HR, CY, CZ, EE, HU, LV, LT, MT, PL, RO, SK, SI, MC
 	 */
-	EUROPE: requireEnv("STRIPE_SHIPPING_RATE_EUROPE"),
-} as const;
+	get EUROPE() {
+		return requireEnv("STRIPE_SHIPPING_RATE_EUROPE");
+	},
+};
 
 // ==============================================================================
 // HELPERS POUR LA CONSTRUCTION DES SHIPPING OPTIONS
@@ -105,23 +114,18 @@ export function getShippingOptionsForAddress(
 // ==============================================================================
 
 /**
- * Map les IDs de tarifs Stripe vers des noms lisibles
- * Utile pour afficher la méthode de livraison dans les emails/dashboard
- */
-export const SHIPPING_RATE_NAMES: Record<string, string> = {
-	[STRIPE_SHIPPING_RATE_IDS.FRANCE]: "Livraison France",
-	[STRIPE_SHIPPING_RATE_IDS.CORSE]: "Livraison Corse",
-	[STRIPE_SHIPPING_RATE_IDS.EUROPE]: "Livraison Europe",
-};
-
-/**
  * Récupère le nom lisible d'un tarif de livraison
  *
  * @param shippingRateId - ID du shipping rate Stripe (shr_xxx)
  * @returns Nom lisible de la méthode de livraison
  */
 export function getShippingRateName(shippingRateId: string): string {
-	return SHIPPING_RATE_NAMES[shippingRateId] || "Livraison standard";
+	const names: Record<string, string> = {
+		[STRIPE_SHIPPING_RATE_IDS.FRANCE]: "Livraison France",
+		[STRIPE_SHIPPING_RATE_IDS.CORSE]: "Livraison Corse",
+		[STRIPE_SHIPPING_RATE_IDS.EUROPE]: "Livraison Europe",
+	};
+	return names[shippingRateId] || "Livraison standard";
 }
 
 /**

@@ -22,11 +22,9 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-vi.mock("@/shared/types/server-action", async () => {
-	const actual = await vi.importActual<typeof import("@/shared/types/server-action")>(
-		"@/shared/types/server-action",
-	);
-	return actual;
+vi.mock("@/shared/types/server-action", async (importOriginal) => {
+	const original = await importOriginal<typeof import("@/shared/types/server-action")>();
+	return original;
 });
 
 import { requireAuth, requireAdmin, requireAdminWithUser } from "../require-auth";
@@ -70,7 +68,7 @@ describe("requireAuth", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should return UNAUTHORIZED if no session", async () => {
+	it("should return UNAUTHORIZED when no session", async () => {
 		mockGetSession.mockResolvedValue(null);
 
 		const result = await requireAuth();
@@ -81,8 +79,8 @@ describe("requireAuth", () => {
 		}
 	});
 
-	it("should return UNAUTHORIZED if session has no user.id", async () => {
-		mockGetSession.mockResolvedValue({ user: { role: "USER" } });
+	it("should return UNAUTHORIZED when session has no user.id", async () => {
+		mockGetSession.mockResolvedValue({ user: {} });
 
 		const result = await requireAuth();
 
@@ -92,7 +90,7 @@ describe("requireAuth", () => {
 		}
 	});
 
-	it("should return UNAUTHORIZED if user not found in DB (deleted)", async () => {
+	it("should return UNAUTHORIZED when user not found in DB (deleted)", async () => {
 		mockGetSession.mockResolvedValue(makeSession());
 		mockPrisma.user.findUnique.mockResolvedValue(null);
 
@@ -104,7 +102,7 @@ describe("requireAuth", () => {
 		}
 	});
 
-	it("should return { user } for a valid authenticated user", async () => {
+	it("should return user for a valid authenticated user", async () => {
 		const user = makeUser();
 		mockGetSession.mockResolvedValue(makeSession());
 		mockPrisma.user.findUnique.mockResolvedValue(user);
@@ -113,8 +111,7 @@ describe("requireAuth", () => {
 
 		expect("user" in result).toBe(true);
 		if ("user" in result) {
-			expect(result.user.id).toBe("user-1");
-			expect(result.user.email).toBe("user@example.com");
+			expect(result.user).toEqual(user);
 		}
 	});
 
@@ -126,7 +123,7 @@ describe("requireAuth", () => {
 
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: expect.objectContaining({ id: "user-1", deletedAt: null }),
+				where: expect.objectContaining({ deletedAt: null }),
 			}),
 		);
 	});
@@ -141,7 +138,7 @@ describe("requireAdmin", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should return FORBIDDEN if no session", async () => {
+	it("should return FORBIDDEN when no session", async () => {
 		mockGetSession.mockResolvedValue(null);
 
 		const result = await requireAdmin();
@@ -152,7 +149,7 @@ describe("requireAdmin", () => {
 		}
 	});
 
-	it("should return FORBIDDEN if role is not ADMIN", async () => {
+	it("should return FORBIDDEN when role is not ADMIN", async () => {
 		mockGetSession.mockResolvedValue(makeSession({ role: "USER", id: "user-1" }));
 
 		const result = await requireAdmin();
@@ -163,9 +160,9 @@ describe("requireAdmin", () => {
 		}
 	});
 
-	it("should return FORBIDDEN if admin in session but demoted in DB", async () => {
-		mockGetSession.mockResolvedValue(makeSession({ role: "ADMIN", id: "admin-1" }));
-		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ id: "admin-1", role: "USER" }));
+	it("should return FORBIDDEN when admin in session but demoted in DB", async () => {
+		mockGetSession.mockResolvedValue(makeSession({ role: "ADMIN", id: "user-1" }));
+		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "USER" }));
 
 		const result = await requireAdmin();
 
@@ -175,8 +172,8 @@ describe("requireAdmin", () => {
 		}
 	});
 
-	it("should return FORBIDDEN if admin in session but deleted in DB", async () => {
-		mockGetSession.mockResolvedValue(makeSession({ role: "ADMIN", id: "admin-1" }));
+	it("should return FORBIDDEN when admin in session but deleted in DB", async () => {
+		mockGetSession.mockResolvedValue(makeSession({ role: "ADMIN", id: "user-1" }));
 		mockPrisma.user.findUnique.mockResolvedValue(null);
 
 		const result = await requireAdmin();
@@ -187,16 +184,13 @@ describe("requireAdmin", () => {
 		}
 	});
 
-	it("should return { admin: true } for a valid admin", async () => {
+	it("should return admin: true for a valid admin", async () => {
 		mockGetSession.mockResolvedValue(makeSession({ role: "ADMIN", id: "admin-1" }));
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ id: "admin-1", role: "ADMIN" }));
 
 		const result = await requireAdmin();
 
-		expect("admin" in result).toBe(true);
-		if ("admin" in result) {
-			expect(result.admin).toBe(true);
-		}
+		expect(result).toEqual({ admin: true });
 	});
 });
 
@@ -209,7 +203,7 @@ describe("requireAdminWithUser", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should return UNAUTHORIZED if no session", async () => {
+	it("should return UNAUTHORIZED when no session", async () => {
 		mockGetSession.mockResolvedValue(null);
 
 		const result = await requireAdminWithUser();
@@ -220,7 +214,7 @@ describe("requireAdminWithUser", () => {
 		}
 	});
 
-	it("should return FORBIDDEN if non-admin in session", async () => {
+	it("should return FORBIDDEN when role is not ADMIN", async () => {
 		mockGetSession.mockResolvedValue(makeSession({ role: "USER", id: "user-1" }));
 
 		const result = await requireAdminWithUser();
@@ -231,7 +225,7 @@ describe("requireAdminWithUser", () => {
 		}
 	});
 
-	it("should return UNAUTHORIZED if user not found in DB", async () => {
+	it("should return UNAUTHORIZED when user not found in DB", async () => {
 		mockGetSession.mockResolvedValue(makeSession({ role: "ADMIN", id: "admin-1" }));
 		mockPrisma.user.findUnique.mockResolvedValue(null);
 
@@ -243,29 +237,28 @@ describe("requireAdminWithUser", () => {
 		}
 	});
 
-	it("should return FORBIDDEN if admin in session but demoted in DB", async () => {
+	it("should return FORBIDDEN when admin in session but demoted in DB", async () => {
 		mockGetSession.mockResolvedValue(makeSession({ role: "ADMIN", id: "admin-1" }));
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ id: "admin-1", role: "USER" }));
 
 		const result = await requireAdminWithUser();
 
-		expect ("error" in result).toBe(true);
+		expect("error" in result).toBe(true);
 		if ("error" in result) {
 			expect(result.error.status).toBe(ActionStatus.FORBIDDEN);
 		}
 	});
 
-	it("should return { user } for a valid admin", async () => {
-		const adminUser = makeUser({ id: "admin-1", role: "ADMIN" });
+	it("should return user for a valid admin", async () => {
+		const admin = makeUser({ id: "admin-1", role: "ADMIN" });
 		mockGetSession.mockResolvedValue(makeSession({ role: "ADMIN", id: "admin-1" }));
-		mockPrisma.user.findUnique.mockResolvedValue(adminUser);
+		mockPrisma.user.findUnique.mockResolvedValue(admin);
 
 		const result = await requireAdminWithUser();
 
 		expect("user" in result).toBe(true);
 		if ("user" in result) {
-			expect(result.user.id).toBe("admin-1");
-			expect(result.user.role).toBe("ADMIN");
+			expect(result.user).toEqual(admin);
 		}
 	});
 });
