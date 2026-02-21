@@ -3,20 +3,10 @@ import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emai
 import { sendAdminNewOrderEmail, sendAdminRefundFailedAlert, sendAdminDisputeAlert, sendAdminInvoiceFailedAlert, sendWebhookFailedAlertEmail } from "@/modules/emails/services/admin-emails";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
-import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
-import { EMAIL_ADMIN } from "@/modules/emails/constants/email.constants";
 import type { PostWebhookTask } from "../types/webhook.types";
 
 /** Customer-facing email task types that warrant an admin alert on failure */
 const CRITICAL_EMAIL_TASKS = new Set(["ORDER_CONFIRMATION_EMAIL", "ADMIN_NEW_ORDER_EMAIL", "REFUND_CONFIRMATION_EMAIL", "PAYMENT_FAILED_EMAIL"]);
-
-/** Maps task types to template names for logFailedEmail retry system */
-const TASK_TEMPLATE_MAP: Record<string, string> = {
-	ORDER_CONFIRMATION_EMAIL: "order-confirmation",
-	ADMIN_NEW_ORDER_EMAIL: "admin-new-order",
-	REFUND_CONFIRMATION_EMAIL: "refund-confirmation",
-	PAYMENT_FAILED_EMAIL: "payment-failed",
-};
 
 export interface PostWebhookTasksResult {
 	successful: number;
@@ -83,27 +73,6 @@ export async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise
 	// Log résumé si des erreurs
 	if (result.failed > 0) {
 		console.warn(`⚠️ [WEBHOOK-AFTER] ${result.failed}/${tasks.length} tasks failed`);
-
-		// Log failed customer-facing emails for automatic retry via cron
-		for (let j = 0; j < taskResults.length; j++) {
-			if (taskResults[j].status !== "rejected") continue;
-			const task = tasks[j];
-			const templateName = TASK_TEMPLATE_MAP[task.type];
-			if (!templateName || task.type === "INVALIDATE_CACHE") continue;
-
-			const data = task.data as Record<string, unknown>;
-			const to = (data.to as string | undefined) ?? (task.type.startsWith("ADMIN_") ? EMAIL_ADMIN : undefined);
-			if (!to) continue;
-
-			logFailedEmail({
-				to,
-				subject: `[Retry] ${task.type}`,
-				template: templateName,
-				payload: data,
-				error: taskResults[j].status === "rejected" ? (taskResults[j] as PromiseRejectedResult).reason : "Unknown error",
-				orderId: (data.orderId as string) ?? undefined,
-			});
-		}
 
 		// Alert admin if critical customer-facing emails failed
 		const criticalFailures = result.errors.filter((e) => CRITICAL_EMAIL_TASKS.has(e.type));

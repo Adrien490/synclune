@@ -7,7 +7,6 @@ import {
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails";
-import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -167,21 +166,6 @@ export async function updateTracking(
 				emailSent = true;
 			} catch (emailError) {
 				console.error("[UPDATE_TRACKING] Echec envoi email:", emailError);
-				await logFailedEmail({
-					to: order.customerEmail!,
-					subject: `Suivi mis à jour — Commande ${order.orderNumber}`,
-					template: "tracking-update",
-					payload: {
-						orderNumber: order.orderNumber,
-						customerName: customerFirstName,
-						trackingNumber: validated.data.trackingNumber,
-						trackingUrl: finalTrackingUrl,
-						carrierLabel,
-						estimatedDelivery: estimatedDeliveryStr,
-					},
-					error: emailError,
-					orderId: order.id,
-				});
 			}
 		}
 

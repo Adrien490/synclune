@@ -11,7 +11,6 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
 import { sendRefundRejectedEmail } from "@/modules/emails/services/refund-emails";
-import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -124,20 +123,6 @@ export async function rejectRefund(
 				});
 			} catch (emailError) {
 				console.error("[REJECT_REFUND] Échec envoi email:", emailError);
-				await logFailedEmail({
-					to: refund.order.user!.email,
-					subject: `Remboursement refusé — Commande ${refund.order.orderNumber}`,
-					template: "refund-rejected",
-					payload: {
-						orderNumber: refund.order.orderNumber,
-						customerName: refund.order.user!.name || "Client",
-						refundAmount: refund.amount,
-						reason: sanitizedReason || undefined,
-						orderDetailsUrl,
-					},
-					error: emailError,
-					orderId: refund.order.id,
-				});
 			}
 		}
 

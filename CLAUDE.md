@@ -276,7 +276,6 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 | `reconcile-refunds` | Every 6h |
 | `process-scheduled-discounts` | Every 4h |
 | `retry-webhooks` | Every 30min |
-| `retry-failed-emails` | Every 15min |
 | `cleanup-webhook-events` | Monthly 1st 7:00 |
 | `hard-delete-retention` | Monthly 1st 8:00 |
 | `cleanup-orphan-media` | Monthly 1st 9:00 |

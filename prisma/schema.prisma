@@ -1108,35 +1108,6 @@ model WebhookEvent {
 }
 
 // ============================================================================
-// EMAILS ECHOUES (retry automatique via cron)
-// ============================================================================
-
-enum FailedEmailStatus {
-  PENDING   // En attente de retry
-  RETRIED   // Retry effectue avec succes
-  EXHAUSTED // Nombre max de tentatives atteint
-}
-
-/// Emails transactionnels echoues, retentes automatiquement par le cron retry-failed-emails
-/// Retention : 30 jours (nettoye par cleanup cron)
-model FailedEmail {
-  id        String            @id @default(cuid())
-  to        String            @db.VarChar(255)
-  subject   String            @db.VarChar(500)
-  template  String            @db.VarChar(100) // e.g. "shipping-confirmation", "delivery-confirmation"
-  payload   Json              // Serialized template props for re-rendering
-  status    FailedEmailStatus @default(PENDING)
-  attempts  Int               @default(0)
-  lastError String?           @db.Text
-  orderId   String?           // Optional reference for context
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([status, createdAt])
-}
-
-// ============================================================================
 // DEMANDES DE PERSONNALISATION
 // ============================================================================
 

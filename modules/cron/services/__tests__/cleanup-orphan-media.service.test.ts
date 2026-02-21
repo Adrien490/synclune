@@ -172,9 +172,7 @@ describe("cleanupOrphanMedia", () => {
 			new Error("Database connection error")
 		);
 
-		const result = await cleanupOrphanMedia();
-
-		expect(result.errors).toBe(1);
+		await expect(cleanupOrphanMedia()).rejects.toThrow("Database connection error");
 	});
 
 	it("should respect MAX_PAGES_PER_RUN pagination limit", async () => {

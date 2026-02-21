@@ -14,7 +14,6 @@ const {
 	mockPrisma,
 	mockUpdateTag,
 	mockSendRefundApprovedEmail,
-	mockLogFailedEmail,
 	mockBuildUrl,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
@@ -31,7 +30,6 @@ const {
 	},
 	mockUpdateTag: vi.fn(),
 	mockSendRefundApprovedEmail: vi.fn(),
-	mockLogFailedEmail: vi.fn(),
 	mockBuildUrl: vi.fn(),
 }));
 
@@ -65,10 +63,6 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/modules/emails/services/refund-emails", () => ({
 	sendRefundApprovedEmail: mockSendRefundApprovedEmail,
-}));
-
-vi.mock("@/modules/emails/services/log-failed-email", () => ({
-	logFailedEmail: mockLogFailedEmail,
 }));
 
 vi.mock("@/shared/constants/urls", () => ({
@@ -300,21 +294,13 @@ describe("approveRefund", () => {
 		);
 	});
 
-	it("should call logFailedEmail on email failure but still succeed", async () => {
+	it("should still succeed when email fails", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
 		mockPrisma.refund.update.mockResolvedValue({});
 		mockSendRefundApprovedEmail.mockRejectedValue(new Error("SMTP error"));
-		mockLogFailedEmail.mockResolvedValue(undefined);
 
-		const result = await approveRefund(undefined, makeFormData());
+		await approveRefund(undefined, makeFormData());
 
-		expect(mockLogFailedEmail).toHaveBeenCalledWith(
-			expect.objectContaining({
-				to: "client@example.com",
-				template: "refund-approved",
-				orderId: "order-1",
-			}),
-		);
 		// Action should still succeed
 		expect(mockSuccess).toHaveBeenCalled();
 	});

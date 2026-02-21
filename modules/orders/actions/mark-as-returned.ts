@@ -8,7 +8,6 @@ import {
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendReturnConfirmationEmail } from "@/modules/emails/services/status-emails";
-import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
@@ -151,20 +150,6 @@ export async function markAsReturned(
 				emailSent = true;
 			} catch (emailError) {
 				console.error("[MARK_AS_RETURNED] Échec envoi email:", emailError);
-				await logFailedEmail({
-					to: order.customerEmail!,
-					subject: `Retour de votre commande ${order.orderNumber}`,
-					template: "return-confirmation",
-					payload: {
-						orderNumber: order.orderNumber,
-						customerName: customerFirstName,
-						orderTotal: order.total,
-						reason: result.data.reason,
-						orderDetailsUrl,
-					},
-					error: emailError,
-					orderId: order.id,
-				});
 			}
 		}
 

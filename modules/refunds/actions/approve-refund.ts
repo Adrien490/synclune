@@ -10,7 +10,6 @@ import { validateInput, handleActionError, success, error } from "@/shared/lib/a
 import { updateTag } from "next/cache";
 
 import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
-import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
@@ -114,22 +113,6 @@ export async function approveRefund(
 				});
 			} catch (emailError) {
 				console.error("[APPROVE_REFUND] Échec envoi email:", emailError);
-				await logFailedEmail({
-					to: refund.order.user!.email,
-					subject: `Remboursement approuvé — Commande ${refund.order.orderNumber}`,
-					template: "refund-approved",
-					payload: {
-						orderNumber: refund.order.orderNumber,
-						customerName: refund.order.user!.name || "Client",
-						refundAmount: refund.amount,
-						originalOrderTotal: refund.order.total,
-						reason: refund.reason,
-						isPartialRefund,
-						orderDetailsUrl,
-					},
-					error: emailError,
-					orderId: refund.order.id,
-				});
 			}
 		}
 

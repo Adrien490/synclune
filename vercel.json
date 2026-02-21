@@ -52,10 +52,6 @@
     {
       "path": "/api/cron/retry-webhooks",
       "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/cron/retry-failed-emails",
-      "schedule": "*/15 * * * *"
     }
   ]
 }

@@ -4,7 +4,6 @@ import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prism
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
-import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
@@ -183,21 +182,6 @@ export async function cancelOrder(
 				emailSent = true;
 			} catch (emailError) {
 				console.error("[CANCEL_ORDER] Échec envoi email:", emailError);
-				await logFailedEmail({
-					to: order.customerEmail!,
-					subject: `Commande ${order.orderNumber} annulée`,
-					template: "cancel-order-confirmation",
-					payload: {
-						orderNumber: order.orderNumber,
-						customerName: customerFirstName,
-						orderTotal: order.total,
-						reason: sanitizedReason || undefined,
-						wasRefunded: order._newPaymentStatus === PaymentStatus.REFUNDED,
-						orderDetailsUrl,
-					},
-					error: emailError,
-					orderId: order.id,
-				});
 			}
 		}
 

@@ -14,7 +14,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
-import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -216,17 +215,7 @@ export async function markAsPaid(
 				},
 				trackingUrl,
 			}).catch((emailError) => {
-				logFailedEmail({
-					to: order.customerEmail!,
-					subject: `Confirmation de commande ${order.orderNumber}`,
-					template: "order-confirmation",
-					payload: {
-						orderNumber: order.orderNumber,
-						customerName: order.customerName || "Client",
-					},
-					error: emailError,
-					orderId: order.id,
-				});
+				console.error("[MARK_AS_PAID] Échec envoi email:", emailError);
 			});
 		}
 

@@ -36,11 +36,6 @@ export const BATCH_SIZE_LARGE = 50;
 export const MAX_WEBHOOK_RETRY_ATTEMPTS = 3;
 
 /**
- * Maximum retry attempts for failed transactional emails
- */
-export const MAX_EMAIL_RETRY_ATTEMPTS = 3;
-
-/**
  * Retention periods in days
  */
 export const RETENTION = {
@@ -65,8 +60,6 @@ export const RETENTION = {
 	/** Days to wait for newsletter confirmation before cleanup */
 	NEWSLETTER_CONFIRMATION_DAYS: 7,
 
-	/** Days to keep resolved FailedEmail records (RETRIED/EXHAUSTED) */
-	FAILED_EMAIL_RESOLVED_DAYS: 30,
 } as const;
 
 /**

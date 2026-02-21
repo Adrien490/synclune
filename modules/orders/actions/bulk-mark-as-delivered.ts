@@ -9,7 +9,6 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { scheduleReviewRequestEmailsBulk } from "@/modules/webhooks/services/review-request.service";
 import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
-import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -125,18 +124,7 @@ export async function bulkMarkAsDelivered(
 						deliveryDate: formattedDeliveryDate,
 						orderDetailsUrl,
 					}).catch((emailError) => {
-						logFailedEmail({
-							to: order.customerEmail!,
-							subject: `Votre commande ${order.orderNumber} a été livrée`,
-							template: "delivery-confirmation",
-							payload: {
-								orderNumber: order.orderNumber,
-								customerName: order.shippingFirstName || order.customerName || "Client",
-								deliveryDate: formattedDeliveryDate,
-							},
-							error: emailError,
-							orderId: order.id,
-						});
+						console.error(`[BULK_MARK_AS_DELIVERED] Échec envoi email pour ${order.orderNumber}:`, emailError);
 					});
 				}
 			}

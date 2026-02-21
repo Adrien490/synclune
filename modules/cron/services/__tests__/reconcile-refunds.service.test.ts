@@ -32,6 +32,10 @@ vi.mock("@/shared/lib/stripe", () => ({
 	getStripeClient: mockGetStripeClient,
 }));
 
+vi.mock("next/cache", () => ({
+	revalidateTag: vi.fn(),
+}));
+
 vi.mock("@/modules/webhooks/services/refund.service", () => ({
 	mapStripeRefundStatus: mockMapStripeRefundStatus,
 	updateRefundStatus: mockUpdateRefundStatus,

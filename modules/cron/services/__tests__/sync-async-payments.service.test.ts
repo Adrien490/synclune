@@ -31,6 +31,10 @@ vi.mock("@/shared/lib/stripe", () => ({
 	getStripeClient: mockGetStripeClient,
 }));
 
+vi.mock("next/cache", () => ({
+	revalidateTag: vi.fn(),
+}));
+
 vi.mock("@/modules/webhooks/services/payment-intent.service", () => ({
 	markOrderAsPaid: mockMarkOrderAsPaid,
 	markOrderAsFailed: mockMarkOrderAsFailed,

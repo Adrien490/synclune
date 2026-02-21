@@ -1,4 +1,4 @@
-import { updateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { RefundStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getStripeClient } from "@/shared/lib/stripe";
@@ -206,7 +206,7 @@ export async function reconcilePendingRefunds(): Promise<{
 		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
 		for (const tag of tagsToInvalidate) {
-			updateTag(tag);
+			revalidateTag(tag);
 		}
 	}
 
