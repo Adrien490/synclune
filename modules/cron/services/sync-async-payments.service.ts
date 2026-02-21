@@ -1,4 +1,4 @@
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getStripeClient } from "@/shared/lib/stripe";
@@ -134,7 +134,7 @@ export async function syncAsyncPayments(): Promise<{
 		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
 		for (const tag of tagsToInvalidate) {
-			revalidateTag(tag);
+			updateTag(tag);
 		}
 	}
 

@@ -32,7 +32,7 @@ vi.mock("@/shared/lib/stripe", () => ({
 }));
 
 vi.mock("next/cache", () => ({
-	revalidateTag: vi.fn(),
+	updateTag: vi.fn(),
 }));
 
 vi.mock("@/modules/webhooks/services/payment-intent.service", () => ({
