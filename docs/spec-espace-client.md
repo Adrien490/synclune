@@ -2,7 +2,7 @@
 
 > Ce document detaille les fonctionnalites de l'espace client (A-M) + la navigation, avec pour chaque item : le statut d'implementation, les fichiers a creer/modifier, les patterns a suivre, les donnees disponibles, et les dependances.
 >
-> **Les pages ont ete supprimees** (`app/(boutique)/(espace-client)/`) pour etre reconstruites de zero. Tous les composants modules, actions, data, hooks et services restent intacts.
+> **Les pages ont ete supprimees** (`app/(boutique)/(espace-client)/`) pour etre reconstruites de zero, a l'exception de `favoris/` (page, error, loading) qui existe deja. Tous les composants modules, actions, data, hooks et services restent intacts.
 
 ---
 
@@ -14,7 +14,7 @@
 > 2. **Annulation en PROCESSING par le client ?** (Section K) — `canCancelOrder()` accepte PENDING et PROCESSING. Le client peut-il annuler une commande en preparation ou seulement en PENDING ?
 > 3. **Suppression immediate vs differee ?** (Section M) — `delete-account.ts` anonymise immediatement. Passer par `PENDING_DELETION` avec periode de grace de 30 jours (recommande) ou garder le comportement actuel ?
 > 4. **Commandes non-payees visibles ?** (Section F) — `fetch-user-orders.ts` hardcode `paymentStatus: PAID`. Les commandes PENDING/FAILED doivent-elles apparaitre dans la liste client ?
-> 5. **Notes de commande visibles client ?** — Le modele `OrderNote` existe avec un champ `isInternal`. Les notes non-internes doivent-elles etre affichees dans le detail commande client ?
+
 
 ---
 
@@ -26,7 +26,7 @@
 | Compte (dashboard) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | Commandes (liste) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | Mes avis | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| Favoris | A faire | Complet | Faible | Page a recreer, composants modules intacts |
+| Favoris | Fait | Complet | - | Pages existantes (page.tsx, error.tsx, loading.tsx) |
 | A - Adresses | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | B - Mes demandes | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | C - Facture PDF | A faire | Complet | Faible | Page a recreer, fix securite `order.userId` applique |
@@ -34,7 +34,6 @@
 | E - Newsletter settings | A faire | Complet | Faible | Page a recreer, composants modules intacts |
 | F - Filtres commandes | A faire | A completer | Faible | Params types mais pas wires, conflit `paymentStatus: PAID` hardcode |
 | G - Sessions actives | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| H - Avatar upload | A faire | A completer | Moyen | Nouvelle route UploadThing + composant |
 | I - Changement email | A faire | A completer | Moyen | Email absent de `ProfileForm`, `changeEmail` non configure dans Better Auth |
 | J - Panier wishlist | A faire | Complet | Faible | `AddToCartCardButton` deja dans `ProductCard` |
 | K - Annulation commande client | A faire | A completer | Moyen | `cancelOrder` admin-only, mais `canCancelOrder()` reutilisable |
@@ -51,19 +50,26 @@ Le layout utilise une grille 2 colonnes (desktop) :
 - **Colonne gauche (2/3)** : contenu principal (nav mobile + page content)
 - **Colonne droite (1/3)** : sidebar de navigation (desktop only, via `AccountNav`)
 
+### Fichiers a creer
+
+| Fichier | Role |
+|---|---|
+| `app/(boutique)/(espace-client)/layout.tsx` | **A creer** - Layout avec auth guard, grille 2 colonnes, metadata template |
+| `app/(boutique)/(espace-client)/not-found.tsx` | **A creer** - Page 404 pour entites introuvables (commande, adresse) |
+
 ### Pattern page detail commande (`/commandes/[orderNumber]`)
 
 La page affiche la commande dans une grille 2/3 + 1/3 :
 - **Colonne principale (2/3)** : `OrderItemsList` → `OrderRefundsCard` (si refunds) → `OrderStatusTimeline` (timeline de statut) → `OrderTracking` (suivi colis, visible seulement si `trackingNumber`)
 - **Colonne sidebar (1/3)** : `OrderSummaryCard` (recapitulatif montants) → `OrderAddressesCard` (adresse de livraison) → `DownloadInvoiceButton` (si PAID)
 
-**Data fetcher** : `getOrder({ orderNumber })` dans `modules/orders/data/get-order.ts`. Gere l'authentification et le scope `userId` automatiquement (les non-admins ne voient que leurs propres commandes). Utilise `"use cache: private"` avec tags specifiques a l'utilisateur.
+**Data fetcher** : `getOrder({ orderNumber })` dans `modules/orders/data/get-order.ts`. Gere l'authentification et le scope `userId` automatiquement (les non-admins ne voient que leurs propres commandes). Utilise `"use cache: private"` avec `cacheLife("dashboard")` et tags specifiques a l'utilisateur (non-admins : `ORDERS_CACHE_TAGS.USER_ORDERS(userId)`).
 
 ### Pattern page parametres (`/parametres`)
 
 La page parametres utilise aussi une grille 2/3 + 1/3 :
 - **Colonne principale (2/3)** : `ProfileForm` → `SecuritySection` (change password) → `GdprSection` (export/delete)
-- **Colonne sidebar (1/3)** : `AvatarUpload` (Feature H) → `NewsletterSettingsCard` → `ActiveSessionsCard`
+- **Colonne sidebar (1/3)** : `NewsletterSettingsCard` (`modules/newsletter/components/newsletter-settings-card.tsx`) → `ActiveSessionsCard`
 
 > **`SecuritySection` n'existe pas encore** — a creer comme wrapper. Les composants enfants existants sont :
 > - `ChangePasswordDialog` (`modules/users/components/change-password-dialog.tsx`) : dialog modal avec `ChangePasswordForm`, min 6 caracteres
@@ -82,7 +88,7 @@ Page tableau de bord avec stats et raccourcis (voir section dediee ci-dessous po
 
 Le layout `app/(boutique)/(espace-client)/layout.tsx` doit verifier la session utilisateur et proteger toutes les pages enfants :
 
-- Appeler `getSession()` (Better Auth) au niveau du layout
+- Appeler `getSession()` (wrapper dans `modules/auth/lib/get-current-session.ts`, encapsule Better Auth + `headers()`) au niveau du layout
 - Si pas de session, rediriger vers `/connexion?callbackUrl={pathname}` (utiliser `headers()` pour recuperer le pathname)
 - Pas de `middleware.ts` existant dans le projet — la protection se fait au niveau du layout serveur
 - Toutes les pages enfants heritent de cette verification automatiquement
@@ -242,6 +248,8 @@ Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `
 | `modules/orders/data/fetch-user-orders.ts` | Data fetcher interne avec cache |
 | `modules/orders/constants/user-orders.constants.ts` | Select, sort options, labels, pagination defaults |
 | `modules/orders/schemas/user-orders.schemas.ts` | Schema Zod des params |
+
+> **Note :** `GET_USER_ORDERS_SELECT` ne contient pas `invoiceNumber` (commentaire `ROADMAP` dans le fichier). Si le bouton de telechargement de facture doit apparaitre dans la liste des commandes, ce champ devra etre ajoute au select.
 
 ### Empty state
 
@@ -412,6 +420,7 @@ model CustomizationRequest {
 
 - `DownloadInvoiceButton` dans la page detail commande
 - Route API pour la generation du PDF
+- Route API : `app/api/orders/[orderNumber]/invoice/route.ts` (GET handler avec auth, verification userId, generation numero de facture sequentiel, cache-control private)
 - Condition : affiche uniquement si `order.paymentStatus === "PAID"`
 
 ### Fix securite applique
@@ -575,19 +584,32 @@ Pas d'empty state necessaire : la carte ne s'affiche que si `refunds.length > 0`
 
 > **Statut : A faire** — Backend complet, page a recreer
 
-### Implementation actuelle
+### Statut actuel
 
-- `NewsletterSettingsCard` dans la sidebar parametres
-- Utilise `getSubscriptionStatus()` pour l'etat actuel
-- Toggle inscription/desinscription
+- **Backend** : complet (data fetcher, action toggle, composant)
+- **Composant** : existant (`NewsletterSettingsCard`)
+- **Page** : integree dans la page parametres (sidebar)
 
 ### Donnees disponibles
 
-```ts
-import { getSubscriptionStatus } from "@/modules/newsletter/data/get-subscription-status";
-const status = await getSubscriptionStatus();
-// → { isSubscribed: boolean, email: string | null, isConfirmed: boolean }
-```
+| Source | Fonction | Return type |
+|---|---|---|
+| `modules/newsletter/data/get-subscription-status.ts` | `getSubscriptionStatus()` | `Promise<{ isSubscribed: boolean, email: string \| null, isConfirmed: boolean }>` |
+
+### Fichiers
+
+| Fichier | Role |
+|---|---|
+| `app/(boutique)/(espace-client)/parametres/page.tsx` | **A creer** - Page parametres (inclut `NewsletterSettingsCard` dans la sidebar) |
+| `modules/newsletter/components/newsletter-settings-card.tsx` | Carte avec statut (dot vert/gris) + bouton subscribe/unsubscribe |
+| `modules/newsletter/data/get-subscription-status.ts` | Data fetcher avec cache |
+
+### UI
+
+`NewsletterSettingsCard` est un client component qui :
+- Affiche le statut d'inscription (dot vert = inscrit, gris = non inscrit)
+- Propose un bouton pour s'inscrire ou se desinscrire
+- Appelle l'action `toggleNewsletter`
 
 ---
 
@@ -704,97 +726,13 @@ Si la revocation echoue (ex: session deja expiree) : toast d'erreur + refresh de
 
 ---
 
-## H - Upload d'avatar
-
-> **Statut : A faire** — Backend a completer
-
-### Statut actuel
-
-- **Schema** : `User.image` existe (`String? @db.VarChar(2048)`)
-- **Upload** : UploadThing configure avec 4 routes (`testimonialMedia`, `catalogMedia`, `contactAttachment`, `reviewMedia`)
-- **UI** : aucune
-- **Fallback existant** : l'UI affiche deja les initiales de l'utilisateur quand `User.image` est null (verifier dans les composants de header/nav)
-
-### RGPD : suppression avatar deja geree
-
-`delete-account.ts` gere deja la suppression de l'avatar et des medias de review lors de la suppression de compte :
-- **Avatar** (ligne ~194) : `deleteUploadThingFileFromUrl(userAvatar)` — fire-and-forget apres la transaction
-- **Medias review** (ligne ~201) : `deleteUploadThingFilesFromUrls(reviewMediaUrls)` — idem
-
-L'image est recuperee via une requete separee (`select: { image: true }`) car `GET_CURRENT_USER_DEFAULT_SELECT` ne contient pas le champ `image`.
-
-> **Note** : `GET_CURRENT_USER_DEFAULT_SELECT` (dans `modules/users/constants/current-user.constants.ts`) selectionne `{ id, name, email, emailVerified, role, createdAt, updatedAt }` — le champ `image` n'est pas inclus. Il faudra l'ajouter pour afficher l'avatar dans l'UI.
-
-### Fichiers a creer
-
-| Fichier | Role |
-|---|---|
-| `modules/users/components/avatar-upload.tsx` | Composant upload + preview |
-| `modules/users/actions/update-avatar.ts` | Server action pour mettre a jour `User.image` |
-
-### Fichier a modifier
-
-| Fichier | Modification |
-|---|---|
-| `app/api/uploadthing/core.ts` | Ajouter route `avatarMedia` |
-| `app/(boutique)/(espace-client)/parametres/page.tsx` | **A creer** - Ajouter `<AvatarUpload>` dans la carte profil |
-| `modules/users/constants/current-user.constants.ts` | Ajouter `image: true` au select |
-
-### Nouvelle route UploadThing
-
-```ts
-// Dans app/api/uploadthing/core.ts
-avatarMedia: f({
-  image: { maxFileSize: "2MB", maxFileCount: 1 },
-})
-  .middleware(async ({ files }) => {
-    const session = await getSession();
-    if (!session?.user) throw new UploadThingError("Non connecte");
-
-    // Rate limiting
-    // Validation MIME (images uniquement)
-    // Validation taille (2MB max)
-
-    return { userId: session.user.id };
-  })
-  .onUploadComplete(async ({ metadata, file }) => {
-    // Mettre a jour User.image
-    await prisma.user.update({
-      where: { id: metadata.userId },
-      data: { image: file.ufsUrl },
-    });
-
-    // Invalider le cache utilisateur
-    updateTag(USERS_CACHE_TAGS.CURRENT_USER(metadata.userId));
-
-    return { url: file.ufsUrl };
-  }),
-```
-
-### UI
-
-- Cercle avec avatar actuel (ou initiales si pas d'image - fallback existant)
-- Bouton "Modifier" overlay au hover
-- Preview avant upload
-- Bouton "Supprimer" si image existante (set `User.image` a null)
-
-### Crop / Resize
-
-L'image n'est pas croppee cote client pour simplifier l'implementation. UploadThing gere le stockage. Pour un crop carre :
-- Option 1 : CSS `object-fit: cover` + `border-radius: 50%` (pas de crop reel, juste visuel)
-- Option 2 : Ajouter un crop cote client avec une lib comme `react-image-crop` (plus complexe)
-
-**Recommandation** : commencer par le crop CSS uniquement (option 1).
-
----
-
 ## I - Modification d'email
 
 > **Statut : A faire** — Backend a completer
 
 ### Statut actuel
 
-- **ProfileForm** : le champ email est absent du formulaire (seul le champ `name` est present)
+- **ProfileForm** : le champ email est present en lecture seule (`<Input disabled>` avec message "L'adresse email ne peut pas etre modifiee"). Seul le champ `name` est editable et soumis.
 - **Better Auth** : supporte `changeEmail` via son API (`auth.api.changeEmail`)
 - **Schema** : `User.email` + `User.emailVerified`
 
@@ -827,7 +765,7 @@ Better Auth a un flow `changeEmail` integre qui :
 
 ### Impacts sur les autres systemes
 
-- **Stripe** : le `stripeCustomerId` est lie au customer Stripe. Apres changement d'email, il faut mettre a jour l'email du customer Stripe via `stripe.customers.update(stripeCustomerId, { email: newEmail })`. Sinon les emails de Stripe (recus de paiement) iront a l'ancienne adresse.
+- **Stripe** : le plugin `@better-auth/stripe` synchronise automatiquement l'email du customer Stripe lors de certains evenements. Verifier si le changement d'email declenche cette sync. Si non, ajouter manuellement `stripe.customers.update(stripeCustomerId, { email: newEmail })` dans l'action de changement d'email.
 - **Newsletter** : si l'utilisateur est inscrit a la newsletter (`NewsletterSubscriber.email`), l'email de la souscription doit aussi etre mis a jour. Sinon la newsletter continuera d'arriver sur l'ancienne adresse, et le lien de desinscription ne marchera plus.
 - **Sessions** : Better Auth devrait gerer les sessions existantes (les garder valides apres changement d'email).
 
@@ -866,7 +804,7 @@ Le bouton est deja present dans `ProductCard` qui est utilise par la wishlist. I
 
 | Fichier | Role |
 |---|---|
-| `app/(boutique)/(espace-client)/favoris/page.tsx` | **A creer** - Page favoris |
+| `app/(boutique)/(espace-client)/favoris/page.tsx` | **Existe** - Page favoris (+ error.tsx, loading.tsx) |
 | `modules/products/components/product-card.tsx` | Carte produit (inclut `AddToCartCardButton`) |
 | `modules/cart/components/add-to-cart-card-button.tsx` | Bouton ajout panier (existant) |
 
@@ -1141,18 +1079,16 @@ Mais l'implementation actuelle (`modules/users/actions/delete-account.ts`) **byp
   - `ACCOUNT_STATUS_COLORS` : green, yellow, orange, gray
   - `ACCOUNT_STATUS_DESCRIPTIONS` : textes descriptifs pour tooltips
 
-> **Inconsistance d'anonymisation** : Les deux chemins de suppression utilisent des formats differents :
+> **Inconsistance d'anonymisation** : Les deux chemins de suppression utilisent `generateAnonymizedEmail()` (`modules/users/utils/anonymization.utils.ts`) pour l'email (format identique : `anonymized-${userId}@deleted.synclune.local`). Les differences sont :
 >
 > | Champ | `delete-account.ts` (immediat) | `process-account-deletions.service.ts` (cron) |
 > |---|---|---|
-> | Email | `deleted_${userId.slice(0, 8)}@synclune.local` | `anonymized-${userId}@deleted.local` |
-> | Nom utilisateur | `"Anonyme"` | `"Utilisateur supprime"` |
+> | Nom utilisateur | `"Compte supprime"` | `"Utilisateur supprime"` |
 > | Noms livraison | `"Anonyme"` | `"X"` |
-> | Adresse | `"Adresse supprimee"` | `"Adresse supprimee"` |
-> | Code postal | `"00000"` | `"00000"` |
-> | Nom client commande | `"Client supprime"` | `"Client supprime"` |
 >
-> Si l'option 1 (differee) est retenue, il faut harmoniser ces formats — idealement factoriser la logique d'anonymisation dans un service partage (`modules/users/services/anonymize-user.service.ts`).
+> Les autres champs sont identiques : `customerName: "Client supprime"`, `shippingAddress1: "Adresse supprimee"`, `shippingCity: "Supprime"`, `shippingPostalCode: "00000"`.
+>
+> Si l'option 1 (differee) est retenue, il faut harmoniser ces 2 differences — idealement factoriser la logique d'anonymisation dans un service partage (`modules/users/services/anonymize-user.service.ts`).
 
 > **Note** : `GET_CURRENT_USER_DEFAULT_SELECT` devra etre enrichi avec `accountStatus` et `deletionRequestedAt` pour que l'UI puisse afficher le bandeau "Suppression en attente" et le bouton "Annuler la suppression" dans `GdprSection`.
 
@@ -1256,7 +1192,7 @@ Exigences minimales pour chaque nouvelle page/composant :
 ### Responsive / Mobile
 
 - Les pages avec des tableaux (commandes, sessions) doivent s'adapter en mobile : soit cards empilees, soit tableau scrollable horizontalement
-- Les formulaires (email, avatar) doivent etre utilisables sur petit ecran (inputs pleine largeur)
+- Les formulaires (email) doivent etre utilisables sur petit ecran (inputs pleine largeur)
 - Les dialogs de confirmation doivent etre en plein ecran sur mobile (`sm:max-w-lg` ou pattern sheet bottom sur mobile)
 
 ### Analytics / Tracking
@@ -1267,8 +1203,6 @@ Events a tracker (si Vercel Analytics ou custom events) :
 |---|---|---|
 | `invoice_downloaded` | C | `orderNumber` |
 | `session_revoked` | G | `sessionId` (anonymise) |
-| `avatar_uploaded` | H | - |
-| `avatar_removed` | H | - |
 | `email_change_requested` | I | - |
 | `email_change_confirmed` | I | - |
 | `order_cancelled_by_customer` | K | `orderNumber`, `orderStatus` |
@@ -1310,7 +1244,6 @@ Priorites E2E :
 ```
 D (remboursements) ← modifier GET_ORDER_SELECT
 F (filtres commandes) ← modifier schema + data fetcher, resoudre conflit paymentStatus: PAID
-H (avatar) ← modifier UploadThing core + user select (RGPD avatar deja gere dans delete-account.ts)
 I (email) ← verifier Better Auth changeEmail + impacts Stripe/newsletter
 J (panier wishlist) ← aucune (AddToCartCardButton deja dans ProductCard)
 K (annulation commande) ← creer action client + composant, reutiliser canCancelOrder()
@@ -1338,6 +1271,5 @@ Toutes les pages sont a recreer. Commencer par les pages avec backend complet, p
 9. **D** - Remboursements (effort faible, modifier select + 1 composant)
 10. **F** - Filtres commandes (effort faible, enrichir params existants)
 11. **K** - Annulation commande (effort moyen, action + composant + dialog)
-12. **H** - Avatar (effort moyen, nouvelle route UploadThing)
-13. **I** - Email (effort moyen, depend de Better Auth + impacts Stripe/newsletter)
-14. **M** - Annulation suppression (effort moyen, depend de la decision sur le flux)
+12. **I** - Email (effort moyen, depend de Better Auth + impacts Stripe/newsletter)
+13. **M** - Annulation suppression (effort moyen, depend de la decision sur le flux)

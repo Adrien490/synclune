@@ -2,7 +2,6 @@ import { SheetFooter } from "@/shared/components/ui/sheet";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { AnimatedNumber } from "@/shared/components/animated-number";
-import { ShieldCheck, RotateCcw, Package } from "lucide-react";
 import Link from "next/link";
 
 interface CartSheetFooterProps {
@@ -66,18 +65,6 @@ export function CartSheetFooter({
 					>
 						Continuer mes achats
 					</button>
-				</div>
-
-				{/* Trust badges */}
-				<div className="flex items-center justify-center gap-2.5 text-xs text-muted-foreground pt-2">
-					<ShieldCheck aria-hidden="true" className="size-3.5 text-green-600 shrink-0" />
-					<span>Paiement sécurisé</span>
-					<span aria-hidden="true">·</span>
-					<RotateCcw aria-hidden="true" className="size-3.5 text-blue-600 shrink-0" />
-					<span>Retours 14j</span>
-					<span aria-hidden="true">·</span>
-					<Package aria-hidden="true" className="size-3.5 shrink-0" />
-					<span>Suivi colis</span>
 				</div>
 			</div>
 		</SheetFooter>
