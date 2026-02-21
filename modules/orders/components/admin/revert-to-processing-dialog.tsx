@@ -15,6 +15,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRevertToProcessing } from "@/modules/orders/hooks/use-revert-to-processing";
 import { useTransition } from "react";
+import { Loader2 } from "lucide-react";
 
 export const REVERT_TO_PROCESSING_DIALOG_ID = "revert-to-processing";
 
@@ -30,27 +31,27 @@ export function RevertToProcessingDialog() {
 		REVERT_TO_PROCESSING_DIALOG_ID
 	);
 	const { action } = useRevertToProcessing();
-	const [, startTransition] = useTransition();
+	const [isPending, startTransition] = useTransition();
 	const [reason, setReason] = useState("");
 
 	const handleOpenChange = (open: boolean) => {
-		if (!open) {
+		if (!open && !isPending) {
 			dialog.close();
 			setReason("");
 		}
 	};
 
 	const handleSubmit = () => {
-		if (!reason.trim()) return;
+		if (!reason.trim() || isPending) return;
 
 		const formData = new FormData();
 		formData.append("id", dialog.data?.orderId ?? "");
 		formData.append("reason", reason);
-		startTransition(() => {
-			action(formData);
+		startTransition(async () => {
+			await action(formData);
+			dialog.close();
+			setReason("");
 		});
-		dialog.close();
-		setReason("");
 	};
 
 	return (
@@ -84,6 +85,7 @@ export function RevertToProcessingDialog() {
 						value={reason}
 						onChange={(e) => setReason(e.target.value)}
 						rows={3}
+						disabled={isPending}
 					/>
 					<p className="text-muted-foreground text-xs">
 						Cette raison sera enregistrée dans l'historique de la commande.
@@ -91,14 +93,15 @@ export function RevertToProcessingDialog() {
 				</div>
 
 				<ResponsiveDialogFooter>
-					<Button variant="outline" onClick={() => handleOpenChange(false)}>
+					<Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
 						Fermer
 					</Button>
 					<Button
 						variant="destructive"
 						onClick={handleSubmit}
-						disabled={!reason.trim()}
+						disabled={!reason.trim() || isPending}
 					>
+						{isPending && <Loader2 className="h-4 w-4 animate-spin" />}
 						Annuler l'expédition
 					</Button>
 				</ResponsiveDialogFooter>

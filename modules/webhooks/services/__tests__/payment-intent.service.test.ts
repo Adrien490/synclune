@@ -382,14 +382,22 @@ describe("markOrderAsFailed", () => {
 describe("markOrderAsCancelled", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
+			cb(mockTx)
+		);
 	});
 
 	it("should update order to CANCELLED status with FAILED payment status", async () => {
-		mockPrisma.order.update.mockResolvedValue({});
+		mockTx.order.findUnique.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
+		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsCancelled("order-1", "pi_cancelled123");
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+		expect(mockTx.order.findUnique).toHaveBeenCalledWith({
+			where: { id: "order-1" },
+			select: { status: true, paymentStatus: true },
+		});
+		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
 			data: expect.objectContaining({
 				status: "CANCELLED",
@@ -397,6 +405,22 @@ describe("markOrderAsCancelled", () => {
 				stripePaymentIntentId: "pi_cancelled123",
 			}),
 		});
+	});
+
+	it("should skip update when order is already CANCELLED with FAILED payment (idempotent)", async () => {
+		mockTx.order.findUnique.mockResolvedValue({ status: "CANCELLED", paymentStatus: "FAILED" });
+
+		await markOrderAsCancelled("order-1", "pi_cancelled123");
+
+		expect(mockTx.order.update).not.toHaveBeenCalled();
+	});
+
+	it("should handle order not found gracefully without throwing", async () => {
+		mockTx.order.findUnique.mockResolvedValue(null);
+
+		await expect(markOrderAsCancelled("nonexistent-order", "pi_cancelled123")).resolves.toBeUndefined();
+
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 });
 

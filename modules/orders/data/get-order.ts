@@ -2,7 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { Prisma } from "@/app/generated/prisma/client";
 
@@ -63,7 +63,7 @@ export async function fetchOrder(
 
 	const where: Prisma.OrderWhereInput = {
 		orderNumber: params.orderNumber,
-		deletedAt: null, // Soft delete: exclure les commandes supprimées
+		...notDeleted, // Soft delete: exclure les commandes supprimées
 	};
 
 	if (!context.admin && context.userId) {

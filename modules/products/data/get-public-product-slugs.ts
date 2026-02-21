@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 /**
@@ -14,7 +14,7 @@ export async function getPublicProductSlugs(): Promise<{ slug: string }[]> {
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
 	const products = await prisma.product.findMany({
-		where: { status: "PUBLIC", deletedAt: null },
+		where: { status: "PUBLIC", ...notDeleted },
 		select: { slug: true },
 	});
 

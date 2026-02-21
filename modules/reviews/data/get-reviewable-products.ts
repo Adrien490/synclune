@@ -97,7 +97,7 @@ async function fetchReviewableProducts(
 		where: {
 			userId,
 			productId: { in: Array.from(uniqueProductIds) },
-			deletedAt: null,
+			...notDeleted,
 		},
 		select: { productId: true },
 	});

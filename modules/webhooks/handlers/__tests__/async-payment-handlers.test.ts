@@ -67,6 +67,7 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 vi.mock("@/app/generated/prisma/client", () => ({
 	PaymentStatus: {
 		FAILED: "FAILED",
+		EXPIRED: "EXPIRED",
 		PAID: "PAID",
 		REFUNDED: "REFUNDED",
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",

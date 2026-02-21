@@ -59,7 +59,6 @@ export const GET_REFUND_SELECT = {
 			customerEmail: true,
 			customerName: true,
 			total: true,
-			stripeChargeId: true,
 			stripePaymentIntentId: true,
 		},
 	},
@@ -100,7 +99,6 @@ export const GET_ORDER_FOR_REFUND_SELECT = {
 	total: true,
 	paymentStatus: true,
 	stripePaymentIntentId: true,
-	stripeChargeId: true,
 	items: {
 		select: {
 			id: true,

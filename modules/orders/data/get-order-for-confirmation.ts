@@ -1,4 +1,4 @@
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { z } from "zod";
 
 // Lightweight select for the confirmation page
@@ -32,7 +32,7 @@ const CONFIRMATION_ORDER_SELECT = {
 } as const;
 
 const confirmationParamsSchema = z.object({
-	orderId: z.string().cuid(),
+	orderId: z.cuid2(),
 	orderNumber: z.string().min(1),
 });
 
@@ -55,7 +55,7 @@ export async function getOrderForConfirmation(
 			where: {
 				id: validation.data.orderId,
 				orderNumber: validation.data.orderNumber,
-				deletedAt: null,
+				...notDeleted,
 			},
 			select: CONFIRMATION_ORDER_SELECT,
 		});

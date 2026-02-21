@@ -7,7 +7,7 @@ import {
 	HistorySource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
@@ -57,7 +57,7 @@ export async function markAsProcessing(
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
-				where: { id, deletedAt: null },
+				where: { id, ...notDeleted },
 				select: {
 					id: true,
 					orderNumber: true,

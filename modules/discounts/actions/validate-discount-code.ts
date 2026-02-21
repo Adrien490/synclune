@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -24,7 +24,7 @@ async function lookupAndValidate(
 	customerEmail?: string
 ): Promise<ValidateDiscountCodeReturn> {
 	const discount = await prisma.discount.findFirst({
-		where: { code: validatedCode, deletedAt: null },
+		where: { code: validatedCode, ...notDeleted },
 		select: GET_DISCOUNT_VALIDATION_SELECT,
 	});
 

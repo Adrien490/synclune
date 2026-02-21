@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
@@ -38,7 +38,7 @@ export async function bulkToggleDiscountStatus(
 		const { ids, isActive } = validated.data;
 
 		await prisma.discount.updateMany({
-			where: { id: { in: ids }, deletedAt: null },
+			where: { id: { in: ids }, ...notDeleted },
 			data: { isActive },
 		});
 

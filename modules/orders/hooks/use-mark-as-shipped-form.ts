@@ -50,7 +50,7 @@ export const useMarkAsShippedForm = (options: UseMarkAsShippedFormOptions) => {
 			customUrlMode: false,
 		},
 		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
+			(baseForm) => mergeForm(baseForm, state ?? {}),
 			[state]
 		),
 	});

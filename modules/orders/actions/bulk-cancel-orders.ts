@@ -2,7 +2,7 @@
 
 import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -11,7 +11,6 @@ import { updateTag } from "next/cache";
 
 import { bulkCancelOrdersSchema } from "../schemas/order.schemas";
 import { getOrderInvalidationTags } from "../constants/cache";
-import { getOrdersForBulkCancel } from "../data/get-orders-for-bulk-cancel";
 import { createOrderAuditTx } from "../utils/order-audit";
 
 /**
@@ -51,51 +50,69 @@ export async function bulkCancelOrders(
 
 		const validatedData = validated.data;
 
-		// Filtrer les commandes éligibles (via data/)
-		const eligibleOrders = await getOrdersForBulkCancel(validatedData.ids);
+		// Transaction: fetch eligible orders + cancel atomically (prevents TOCTOU race)
+		const { eligibleOrders, stockRestored, refundedCount } = await prisma.$transaction(async (tx) => {
+			// Filter eligible orders inside the transaction to prevent race condition
+			const eligible = await tx.order.findMany({
+				where: {
+					id: { in: validatedData.ids },
+					status: {
+						notIn: [OrderStatus.CANCELLED, OrderStatus.SHIPPED, OrderStatus.DELIVERED],
+					},
+					...notDeleted,
+				},
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					userId: true,
+					paymentStatus: true,
+					items: {
+						select: {
+							skuId: true,
+							quantity: true,
+						},
+					},
+				},
+			});
 
-		if (eligibleOrders.length === 0) {
-			return error("Aucune commande eligible pour l'annulation.");
-		}
-
-		let stockRestored = 0;
-		let refundedCount = 0;
-
-		// Pré-calculer les mises à jour de stock pour éviter N+1 queries
-		// Grouper les quantités par skuId pour batch update
-		const stockUpdates = new Map<string, number>();
-		const orderUpdates: Array<{
-			id: string;
-			newPaymentStatus: PaymentStatus;
-			shouldRestoreStock: boolean;
-		}> = [];
-
-		for (const order of eligibleOrders) {
-			const newPaymentStatus =
-				order.paymentStatus === PaymentStatus.PAID
-					? PaymentStatus.REFUNDED
-					: order.paymentStatus;
-
-			if (newPaymentStatus === PaymentStatus.REFUNDED) {
-				refundedCount++;
+			if (eligible.length === 0) {
+				return { eligibleOrders: [], stockRestored: 0, refundedCount: 0 };
 			}
 
-			const shouldRestoreStock = order.paymentStatus === PaymentStatus.PENDING;
-			orderUpdates.push({ id: order.id, newPaymentStatus, shouldRestoreStock });
+			let stockRestoredCount = 0;
+			let refunded = 0;
 
-			// Collecter les quantités à restaurer par SKU
-			if (shouldRestoreStock && order.items.length > 0) {
-				for (const item of order.items) {
-					const current = stockUpdates.get(item.skuId) || 0;
-					stockUpdates.set(item.skuId, current + item.quantity);
+			const stockUpdates = new Map<string, number>();
+			const orderUpdates: Array<{
+				id: string;
+				newPaymentStatus: PaymentStatus;
+				shouldRestoreStock: boolean;
+			}> = [];
+
+			for (const order of eligible) {
+				const newPaymentStatus =
+					order.paymentStatus === PaymentStatus.PAID
+						? PaymentStatus.REFUNDED
+						: order.paymentStatus;
+
+				if (newPaymentStatus === PaymentStatus.REFUNDED) {
+					refunded++;
 				}
-				stockRestored++;
-			}
-		}
 
-		// Transaction pour annuler toutes les commandes
-		await prisma.$transaction(async (tx) => {
-			// Batch update de toutes les commandes en parallèle
+				const shouldRestoreStock = order.paymentStatus === PaymentStatus.PENDING;
+				orderUpdates.push({ id: order.id, newPaymentStatus, shouldRestoreStock });
+
+				if (shouldRestoreStock && order.items.length > 0) {
+					for (const item of order.items) {
+						const current = stockUpdates.get(item.skuId) || 0;
+						stockUpdates.set(item.skuId, current + item.quantity);
+					}
+					stockRestoredCount++;
+				}
+			}
+
+			// Batch update all orders
 			await Promise.all(
 				orderUpdates.map((order) =>
 					tx.order.update({
@@ -108,7 +125,7 @@ export async function bulkCancelOrders(
 				)
 			);
 
-			// Batch update de tous les stocks en parallèle (1 requête par SKU unique)
+			// Batch update stock
 			if (stockUpdates.size > 0) {
 				await Promise.all(
 					Array.from(stockUpdates.entries()).map(([skuId, quantity]) =>
@@ -124,7 +141,7 @@ export async function bulkCancelOrders(
 
 			// Audit trail for each cancelled order
 			await Promise.all(
-				eligibleOrders.map((order) => {
+				eligible.map((order) => {
 					const update = orderUpdates.find((u) => u.id === order.id)!;
 					return createOrderAuditTx(tx, {
 						orderId: order.id,
@@ -144,7 +161,13 @@ export async function bulkCancelOrders(
 					});
 				})
 			);
+
+			return { eligibleOrders: eligible, stockRestored: stockRestoredCount, refundedCount: refunded };
 		});
+
+		if (eligibleOrders.length === 0) {
+			return error("Aucune commande eligible pour l'annulation.");
+		}
 
 		// Invalider les caches pour chaque userId unique
 		const uniqueUserIds = [...new Set(eligibleOrders.map(o => o.userId).filter(Boolean))] as string[];

@@ -1,4 +1,4 @@
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { cacheDiscountDetail } from "../constants/cache";
 import { GET_DISCOUNT_VALIDATION_SELECT } from "../constants/discount.constants";
@@ -39,7 +39,7 @@ async function fetchDiscountByCode(
 
 	try {
 		const discount = await prisma.discount.findFirst({
-			where: { code: params.code, deletedAt: null },
+			where: { code: params.code, ...notDeleted },
 			select: GET_DISCOUNT_VALIDATION_SELECT,
 		});
 

@@ -17,6 +17,7 @@ const { mockPrisma, mockListFiles, mockDeleteFiles, mockExtractFileKey } =
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("uploadthing/server", () => ({

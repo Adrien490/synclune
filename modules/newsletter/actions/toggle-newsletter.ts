@@ -3,7 +3,7 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
@@ -72,7 +72,7 @@ export async function toggleNewsletter(
 
 		if (action === "unsubscribe") {
 			const subscriber = await prisma.newsletterSubscriber.findFirst({
-				where: { email: user.email, deletedAt: null },
+				where: { email: user.email, ...notDeleted },
 			});
 
 			if (!subscriber || subscriber.status === NewsletterStatus.UNSUBSCRIBED) {

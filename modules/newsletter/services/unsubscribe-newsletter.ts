@@ -1,6 +1,6 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { validateInput } from "@/shared/lib/actions";
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
@@ -70,7 +70,7 @@ export async function unsubscribeNewsletter(
 		const subscriber = await prisma.newsletterSubscriber.findFirst({
 			where: {
 				unsubscribeToken: validatedToken,
-				deletedAt: null,
+				...notDeleted,
 			},
 			select: {
 				id: true,

@@ -1,5 +1,5 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import {
 	cacheDashboard,
 	DASHBOARD_CACHE_TAGS,
@@ -25,7 +25,7 @@ async function fetchMonthlyRevenue() {
 			where: {
 				paidAt: { gte: currentMonthStart },
 				paymentStatus: PaymentStatus.PAID,
-				deletedAt: null,
+				...notDeleted,
 			},
 			_sum: { total: true },
 		}),
@@ -33,7 +33,7 @@ async function fetchMonthlyRevenue() {
 			where: {
 				paidAt: { gte: lastMonthStart, lte: lastMonthEnd },
 				paymentStatus: PaymentStatus.PAID,
-				deletedAt: null,
+				...notDeleted,
 			},
 			_sum: { total: true },
 		}),
@@ -58,14 +58,14 @@ async function fetchMonthlyOrders() {
 			where: {
 				paidAt: { gte: currentMonthStart },
 				paymentStatus: PaymentStatus.PAID,
-				deletedAt: null,
+				...notDeleted,
 			},
 		}),
 		prisma.order.count({
 			where: {
 				paidAt: { gte: lastMonthStart, lte: lastMonthEnd },
 				paymentStatus: PaymentStatus.PAID,
-				deletedAt: null,
+				...notDeleted,
 			},
 		}),
 	]);
@@ -89,7 +89,7 @@ async function fetchAverageOrderValue() {
 			where: {
 				paidAt: { gte: currentMonthStart },
 				paymentStatus: PaymentStatus.PAID,
-				deletedAt: null,
+				...notDeleted,
 			},
 			_sum: { total: true },
 			_count: true,
@@ -98,7 +98,7 @@ async function fetchAverageOrderValue() {
 			where: {
 				paidAt: { gte: lastMonthStart, lte: lastMonthEnd },
 				paymentStatus: PaymentStatus.PAID,
-				deletedAt: null,
+				...notDeleted,
 			},
 			_sum: { total: true },
 			_count: true,

@@ -4,7 +4,7 @@ import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { RETURN_REQUEST_LIMIT } from "@/shared/lib/rate-limit-config";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -57,7 +57,7 @@ export async function requestReturn(
 
 		// 4. Fetch the order and verify ownership (IDOR protection)
 		const order = await prisma.order.findUnique({
-			where: { id: orderId, deletedAt: null },
+			where: { id: orderId, ...notDeleted },
 			select: {
 				id: true,
 				orderNumber: true,

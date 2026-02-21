@@ -1,5 +1,5 @@
 import { OrderStatus } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 // ============================================================================
 // TYPES
@@ -26,7 +26,7 @@ export async function getOrdersForBulkCancel(ids: string[]) {
 			status: {
 				notIn: [OrderStatus.CANCELLED, OrderStatus.SHIPPED, OrderStatus.DELIVERED],
 			},
-			deletedAt: null,
+			...notDeleted,
 		},
 		select: {
 			id: true,

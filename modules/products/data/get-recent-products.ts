@@ -1,7 +1,7 @@
 import "server-only"
 
 import { cacheLife, cacheTag } from "next/cache"
-import { prisma } from "@/shared/lib/prisma"
+import { prisma, notDeleted } from "@/shared/lib/prisma"
 import { GET_PRODUCTS_SELECT } from "../constants/product.constants"
 import type { Product } from "../types/product.types"
 import { serializeProducts } from "../utils/serialize-product"
@@ -69,7 +69,7 @@ async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
 			where: {
 				slug: { in: slugs },
 				status: "PUBLIC",
-				deletedAt: null,
+				...notDeleted,
 				skus: {
 					some: {
 						isActive: true,

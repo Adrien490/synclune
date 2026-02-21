@@ -1,5 +1,5 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import {
 	cacheDashboard,
 	DASHBOARD_CACHE_TAGS,
@@ -37,7 +37,7 @@ export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersRetur
 	const orders = await prisma.order.findMany({
 		where: {
 			paymentStatus: PaymentStatus.PAID,
-			deletedAt: null,
+			...notDeleted,
 		},
 		take: DASHBOARD_RECENT_ORDERS_LIMIT,
 		orderBy: {

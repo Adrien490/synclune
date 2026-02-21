@@ -1,5 +1,5 @@
 import { auth } from "@/modules/auth/lib/auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { headers } from "next/headers";
 
@@ -61,7 +61,7 @@ async function fetchPublicRelatedProducts(
 		const products = await prisma.product.findMany({
 			where: {
 				status: "PUBLIC",
-				deletedAt: null,
+				...notDeleted,
 				skus: {
 					some: {
 						isActive: true,
@@ -125,7 +125,7 @@ async function fetchPersonalizedRelatedProducts(
 			const relatedProducts = await prisma.product.findMany({
 				where: {
 					status: "PUBLIC",
-					deletedAt: null,
+					...notDeleted,
 					skus: {
 						some: {
 							isActive: true,
@@ -154,7 +154,7 @@ async function fetchPersonalizedRelatedProducts(
 		const fallbackProducts = await prisma.product.findMany({
 			where: {
 				status: "PUBLIC",
-				deletedAt: null,
+				...notDeleted,
 				skus: {
 					some: {
 						isActive: true,
@@ -232,7 +232,7 @@ async function fetchContextualRelatedProducts(
 		const baseWhere = {
 			id: { not: currentProduct.id },
 			status: "PUBLIC" as const,
-			deletedAt: null,
+			...notDeleted,
 			skus: {
 				some: {
 					isActive: true,

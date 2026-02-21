@@ -178,19 +178,39 @@ export async function markOrderAsFailed(
 
 /**
  * Marque une commande comme annulée
+ * Idempotent: if the order is already CANCELLED with FAILED payment, the operation is skipped
  */
 export async function markOrderAsCancelled(
 	orderId: string,
 	paymentIntentId: string
 ): Promise<void> {
-	await prisma.order.update({
-		where: { id: orderId },
-		data: {
-			status: "CANCELLED",
-			paymentStatus: "FAILED",
-			stripePaymentIntentId: paymentIntentId,
-		},
-	});
+	await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+		const order = await tx.order.findUnique({
+			where: { id: orderId },
+			select: { status: true, paymentStatus: true },
+		});
+
+		if (!order) {
+			console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsCancelled`);
+			return;
+		}
+
+		if (order.status === "CANCELLED" && order.paymentStatus === "FAILED") {
+			console.log(`⏭️ [WEBHOOK] Order ${orderId} already CANCELLED with FAILED payment, skipping`);
+			return;
+		}
+
+		await tx.order.update({
+			where: { id: orderId },
+			data: {
+				status: "CANCELLED",
+				paymentStatus: "FAILED",
+				stripePaymentIntentId: paymentIntentId,
+			},
+		});
+
+		console.log(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`);
+	}, { timeout: 10000 });
 }
 
 /**

@@ -65,7 +65,7 @@ export async function handleAsyncPaymentFailed(
 			throw new Error(`Order not found: ${orderId}`);
 		}
 
-		if (existingOrder.paymentStatus === "PAID" || existingOrder.paymentStatus === "REFUNDED" || existingOrder.paymentStatus === "PARTIALLY_REFUNDED") {
+		if (existingOrder.paymentStatus === "PAID" || existingOrder.paymentStatus === "REFUNDED" || existingOrder.paymentStatus === "PARTIALLY_REFUNDED" || existingOrder.paymentStatus === "EXPIRED") {
 			console.log(`⏭️ [WEBHOOK] Order ${orderId} already ${existingOrder.paymentStatus}, skipping async payment failure`);
 			return { success: true, skipped: true, reason: `Order already ${existingOrder.paymentStatus}` };
 		}

@@ -8,12 +8,13 @@ import {
 	HistorySource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
+import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -61,7 +62,7 @@ export async function markAsPaid(
 		// Transaction: fetch + validate + stock check + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			const found = await tx.order.findUnique({
-				where: { id, deletedAt: null },
+				where: { id, ...notDeleted },
 				select: {
 					id: true,
 					orderNumber: true,
@@ -214,7 +215,19 @@ export async function markAsPaid(
 					country: order.shippingCountry || "France",
 				},
 				trackingUrl,
-			}).catch(() => {});
+			}).catch((emailError) => {
+				logFailedEmail({
+					to: order.customerEmail!,
+					subject: `Confirmation de commande ${order.orderNumber}`,
+					template: "order-confirmation",
+					payload: {
+						orderNumber: order.orderNumber,
+						customerName: order.customerName || "Client",
+					},
+					error: emailError,
+					orderId: order.id,
+				});
+			});
 		}
 
 		const stockMessage = !order._stockAlreadyReserved && order.items.length > 0

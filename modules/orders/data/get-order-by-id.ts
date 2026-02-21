@@ -1,6 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard } from "../constants/cache";
 import { z } from "zod";
 import { GET_ORDER_SELECT } from "../constants/order.constants";
@@ -48,7 +48,7 @@ async function fetchOrderById(id: string): Promise<GetOrderReturn | null> {
 
 	try {
 		const order = await prisma.order.findFirst({
-			where: { id, deletedAt: null },
+			where: { id, ...notDeleted },
 			select: GET_ORDER_SELECT,
 		});
 

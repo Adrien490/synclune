@@ -30,6 +30,7 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("next/headers", () => ({

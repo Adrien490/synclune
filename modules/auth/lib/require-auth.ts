@@ -6,7 +6,7 @@
  */
 
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 /**
@@ -44,7 +44,7 @@ async function fetchUserForAuth(userId: string): Promise<RequireAuthUser | null>
 	const user = await prisma.user.findUnique({
 		where: {
 			id: userId,
-			deletedAt: null,
+			...notDeleted,
 		},
 		select: REQUIRE_AUTH_USER_SELECT,
 	});

@@ -415,7 +415,7 @@ export async function cancelExpiredOrder(orderId: string): Promise<{ cancelled: 
 			where: { id: orderId },
 			data: {
 				status: "CANCELLED",
-				paymentStatus: "FAILED",
+				paymentStatus: "EXPIRED",
 			},
 		});
 

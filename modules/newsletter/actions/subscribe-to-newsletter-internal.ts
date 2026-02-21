@@ -1,6 +1,6 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { sendNewsletterConfirmationEmail } from "@/modules/emails/services/newsletter-emails";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { randomUUID } from "crypto";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
@@ -33,7 +33,7 @@ export async function subscribeToNewsletterInternal({
 	try {
 		// Vérifier si l'email existe déjà (exclude soft-deleted)
 		const existingSubscriber = await prisma.newsletterSubscriber.findFirst({
-			where: { email, deletedAt: null },
+			where: { email, ...notDeleted },
 		});
 
 		if (existingSubscriber) {

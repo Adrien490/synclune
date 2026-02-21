@@ -4,7 +4,7 @@ import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
@@ -42,7 +42,7 @@ export async function cancelRefund(
 
 		// Récupérer le remboursement
 		const refund = await prisma.refund.findUnique({
-			where: { id, deletedAt: null },
+			where: { id, ...notDeleted },
 			select: {
 				id: true,
 				status: true,

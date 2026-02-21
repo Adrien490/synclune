@@ -1,7 +1,7 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterConfirm } from "@/shared/lib/arcjet";
 import { sendNewsletterWelcomeEmail } from "@/modules/emails/services/newsletter-emails";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { validateInput } from "@/shared/lib/actions";
 import { headers } from "next/headers";
@@ -71,7 +71,7 @@ export async function confirmNewsletterSubscription(
 
 		// Find subscriber with this token (exclude soft-deleted)
 		const subscriber = await prisma.newsletterSubscriber.findFirst({
-			where: { confirmationToken: validatedToken, deletedAt: null },
+			where: { confirmationToken: validatedToken, ...notDeleted },
 			select: {
 				id: true,
 				email: true,

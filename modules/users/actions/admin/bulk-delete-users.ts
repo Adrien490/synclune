@@ -2,7 +2,7 @@
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
@@ -53,7 +53,7 @@ export async function bulkDeleteUsers(
 		const eligibleUsers = await prisma.user.findMany({
 			where: {
 				id: { in: validatedData.ids },
-				deletedAt: null,
+				...notDeleted,
 			},
 			select: { id: true, role: true },
 		});
@@ -66,7 +66,7 @@ export async function bulkDeleteUsers(
 		const adminsToDelete = eligibleUsers.filter((u) => u.role === Role.ADMIN);
 		if (adminsToDelete.length > 0) {
 			const totalAdminCount = await prisma.user.count({
-				where: { role: Role.ADMIN, deletedAt: null },
+				where: { role: Role.ADMIN, ...notDeleted },
 			});
 			if (totalAdminCount - adminsToDelete.length < 1) {
 				return error("Impossible de supprimer tous les administrateurs. Au moins un admin doit rester.");

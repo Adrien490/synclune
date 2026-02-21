@@ -12,6 +12,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PENDING: "PENDING",
 		PAID: "PAID",
 		FAILED: "FAILED",
+		EXPIRED: "EXPIRED",
 		REFUNDED: "REFUNDED",
 	},
 }));

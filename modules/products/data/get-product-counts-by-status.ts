@@ -1,6 +1,6 @@
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
@@ -45,7 +45,7 @@ async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
 	try {
 		const counts = await prisma.product.groupBy({
 			by: ["status"],
-			where: { deletedAt: null },
+			where: { ...notDeleted },
 			_count: {
 				id: true,
 			},

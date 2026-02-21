@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { MetadataRoute } from "next";
 
 /**
@@ -18,7 +18,7 @@ async function fetchSitemapImages() {
 	return prisma.product.findMany({
 		where: {
 			status: "PUBLIC",
-			deletedAt: null,
+			...notDeleted,
 		},
 		select: {
 			slug: true,

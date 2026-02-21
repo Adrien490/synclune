@@ -2,7 +2,7 @@
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
@@ -56,7 +56,7 @@ export async function bulkChangeUserRole(
 		const eligibleUsers = await prisma.user.findMany({
 			where: {
 				id: { in: validatedData.ids },
-				deletedAt: null,
+				...notDeleted,
 				role: { not: validatedData.role },
 			},
 			select: { id: true, role: true },
@@ -74,7 +74,7 @@ export async function bulkChangeUserRole(
 				const totalAdminCount = await prisma.user.count({
 					where: {
 						role: Role.ADMIN,
-						deletedAt: null,
+						...notDeleted,
 					},
 				});
 

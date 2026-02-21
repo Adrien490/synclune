@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 
 import { GET_REFUND_SELECT } from "../constants/refund.constants";
@@ -46,7 +46,7 @@ async function fetchRefund(
 		const refund = await prisma.refund.findUnique({
 			where: {
 				id: params.id,
-				deletedAt: null, // Soft delete: exclure les remboursements supprimés
+				...notDeleted, // Soft delete: exclure les remboursements supprimés
 			},
 			select: GET_REFUND_SELECT,
 		});

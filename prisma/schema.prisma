@@ -461,6 +461,7 @@ enum PaymentStatus {
   PENDING
   PAID
   FAILED
+  EXPIRED // Checkout session expired (no payment attempted)
   PARTIALLY_REFUNDED
   REFUNDED
 }
@@ -509,7 +510,6 @@ model Order {
   // === IDENTIFIANTS STRIPE (CRITIQUES) ===
   stripeCheckoutSessionId String? @unique // cs_xxx
   stripePaymentIntentId   String? @unique // pi_xxx
-  stripeChargeId          String? @unique // ch_xxx
   stripeCustomerId        String? @db.VarChar(50) // cus_xxx
   stripeInvoiceId         String? @unique // in_xxx
 
@@ -575,6 +575,7 @@ model Order {
   refunds        Refund[]
   notes          OrderNote[]
   history        OrderHistory[] // Audit trail (conformite legale)
+  disputes       Dispute[]
 
   // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
@@ -585,6 +586,7 @@ model Order {
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([customerEmail])
+  @@index([stripeCustomerId])
   @@index([paymentStatus, createdAt]) // sync-async-payments cron
   @@index([fulfillmentStatus, actualDelivery]) // review-request-emails cron
 }
@@ -783,6 +785,61 @@ model RefundItem {
 
   @@index([refundId])
   @@index([orderItemId])
+}
+
+// ============================================================================
+// LITIGES STRIPE (CHARGEBACKS)
+// ============================================================================
+
+enum DisputeStatus {
+  NEEDS_RESPONSE     // Requires evidence submission
+  UNDER_REVIEW       // Evidence submitted, Stripe reviewing
+  WON                // Resolved in merchant's favor
+  LOST               // Resolved in customer's favor
+  CHARGE_REFUNDED    // Charge was refunded before dispute resolved
+}
+
+enum DisputeReason {
+  DUPLICATE
+  FRAUDULENT
+  SUBSCRIPTION_CANCELED
+  PRODUCT_UNACCEPTABLE
+  PRODUCT_NOT_RECEIVED
+  UNRECOGNIZED
+  CREDIT_NOT_PROCESSED
+  GENERAL
+}
+
+/// Litige Stripe (chargeback) associe a une commande
+/// Permet de tracker les disputes de maniere structuree au lieu de notes texte libres
+model Dispute {
+  id              String        @id @default(cuid())
+  stripeDisputeId String        @unique // dp_xxx
+
+  // Relation avec la commande (Restrict pour protection comptable)
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  // Montants
+  amount   Int    // Montant conteste en centimes
+  fee      Int    @default(0) // Frais de litige Stripe (~1500 = 15 EUR)
+  currency String @default("EUR") @db.VarChar(3)
+
+  // Raison et statut
+  reason DisputeReason
+  status DisputeStatus @default(NEEDS_RESPONSE)
+
+  // Deadline Stripe pour soumettre les preuves
+  dueBy DateTime?
+
+  // Resolution
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status, dueBy]) // Dashboard: disputes needing attention
 }
 
 // ============================================================================

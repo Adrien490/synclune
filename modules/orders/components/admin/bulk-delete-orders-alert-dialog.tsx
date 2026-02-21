@@ -36,7 +36,7 @@ export function BulkDeleteOrdersAlertDialog() {
 	});
 
 	const handleOpenChange = (open: boolean) => {
-		if (!open) {
+		if (!open && !isPending) {
 			bulkDeleteDialog.close();
 		}
 	};

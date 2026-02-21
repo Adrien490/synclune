@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -32,7 +32,7 @@ export async function addOrderNote(
 
 		// 4. Vérifier que la commande existe
 		const order = await prisma.order.findUnique({
-			where: { id: orderId, deletedAt: null },
+			where: { id: orderId, ...notDeleted },
 			select: { id: true },
 		});
 

@@ -1,4 +1,4 @@
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheReviewsAdmin } from "../constants/cache";
 
 // ============================================================================
@@ -36,7 +36,7 @@ async function fetchOrderForReviewRequest(orderId: string) {
 
 	try {
 		return await prisma.order.findUnique({
-			where: { id: orderId, deletedAt: null },
+			where: { id: orderId, ...notDeleted },
 			select: {
 				id: true,
 				orderNumber: true,

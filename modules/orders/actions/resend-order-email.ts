@@ -2,7 +2,7 @@
 
 import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import {
 	sendOrderConfirmationEmail,
 	sendShippingConfirmationEmail,
@@ -38,15 +38,20 @@ export async function resendOrderEmail(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.RESEND_EMAIL);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Validate orderId
+		// 3. Validate orderId and emailType
 		const idResult = z.cuid2().safeParse(orderId);
 		if (!idResult.success) {
 			return error("ID de commande invalide");
 		}
 
+		const emailTypeResult = z.enum(["confirmation", "shipping", "delivery", "review-request"]).safeParse(emailType);
+		if (!emailTypeResult.success) {
+			return error("Type d'email invalide");
+		}
+
 		// 4. Récupérer la commande avec uniquement les champs nécessaires
 		const order = await prisma.order.findUnique({
-			where: { id: orderId, deletedAt: null },
+			where: { id: orderId, ...notDeleted },
 			select: {
 				orderNumber: true,
 				status: true,

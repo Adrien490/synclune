@@ -49,7 +49,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 			date: order.paidAt,
 			icon: CreditCard,
 			completed: order.paymentStatus === "PAID",
-			failed: order.paymentStatus === "FAILED",
+			failed: order.paymentStatus === "FAILED" || order.paymentStatus === "EXPIRED",
 		},
 		{
 			label: "En préparation",
@@ -128,7 +128,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 															: "border-border bg-muted text-muted-foreground"
 											}`}
 										>
-											<Icon className="h-4 w-4" />
+											<Icon className="h-4 w-4" aria-hidden="true" />
 										</div>
 
 										{/* Content */}

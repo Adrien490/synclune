@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "@/modules/newsletter/constants/cache";
 import { unsubscribeTokenSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 		const subscriber = await prisma.newsletterSubscriber.findFirst({
 			where: {
 				unsubscribeToken: parsed.data.token,
-				deletedAt: null,
+				...notDeleted,
 			},
 		});
 

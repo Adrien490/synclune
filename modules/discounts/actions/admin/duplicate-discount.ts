@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
@@ -42,7 +42,7 @@ export async function duplicateDiscount(
 		const { discountId } = validated.data;
 
 		const original = await prisma.discount.findUnique({
-			where: { id: discountId, deletedAt: null },
+			where: { id: discountId, ...notDeleted },
 			select: {
 				code: true,
 				type: true,
@@ -64,7 +64,7 @@ export async function duplicateDiscount(
 		const existingCopies = await prisma.discount.findMany({
 			where: {
 				code: { startsWith: `${baseCode}-COPY` },
-				deletedAt: null,
+				...notDeleted,
 			},
 			select: { code: true },
 		});

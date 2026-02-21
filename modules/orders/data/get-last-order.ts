@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { GET_LAST_ORDER_DEFAULT_SELECT } from "../constants/last-order.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -44,7 +44,7 @@ export async function fetchLastOrder(
 		const lastOrder = await prisma.order.findFirst({
 			where: {
 				userId,
-				deletedAt: null,
+				...notDeleted,
 				paymentStatus: PaymentStatus.PAID,
 			},
 			orderBy: {

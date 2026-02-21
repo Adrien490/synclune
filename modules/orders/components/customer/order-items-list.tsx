@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { formatEuro } from "@/shared/utils/format-euro";
 import Image from "next/image";
-import Link from "next/link";
 
 interface OrderItem {
 	id: string;
@@ -19,13 +19,6 @@ interface OrderItem {
 interface OrderItemsListProps {
 	items: OrderItem[];
 }
-
-const formatPrice = (priceInCents: number) => {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(priceInCents / 100);
-};
 
 export function OrderItemsList({ items }: OrderItemsListProps) {
 	return (
@@ -84,11 +77,11 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 								{/* Price */}
 								<div className="text-right shrink-0">
 									<p className="font-semibold text-sm">
-										{formatPrice(item.price * item.quantity)}
+										{formatEuro(item.price * item.quantity)}
 									</p>
 									{item.quantity > 1 && (
 										<p className="text-xs text-muted-foreground">
-											{formatPrice(item.price)} / unité
+											{formatEuro(item.price)} / unité
 										</p>
 									)}
 								</div>

@@ -183,6 +183,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 			"filter_totalMax",
 			"filter_createdAfter",
 			"filter_createdBefore",
+			"filter_showDeleted",
 		];
 		filterKeys.forEach((key) => {
 			params.delete(key);

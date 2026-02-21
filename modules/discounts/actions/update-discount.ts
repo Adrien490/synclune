@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { updateDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
@@ -61,7 +61,7 @@ export async function updateDiscount(
 
 		// Vérifier que le discount existe (et n'est pas supprimé)
 		const existing = await prisma.discount.findUnique({
-			where: { id, deletedAt: null },
+			where: { id, ...notDeleted },
 			select: { id: true, code: true },
 		});
 
@@ -72,7 +72,7 @@ export async function updateDiscount(
 		// Vérifier l'unicité du code si modifié
 		if (sanitizedCode !== existing.code) {
 			const codeExists = await prisma.discount.findFirst({
-				where: { code: sanitizedCode, deletedAt: null },
+				where: { code: sanitizedCode, ...notDeleted },
 				select: { id: true },
 			});
 			if (codeExists) {

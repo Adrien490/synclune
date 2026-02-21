@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { bulkDeleteDiscountsSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
@@ -38,7 +38,7 @@ export async function bulkDeleteDiscounts(
 		const discounts = await prisma.discount.findMany({
 			where: {
 				id: { in: validated.data.ids },
-				deletedAt: null,
+				...notDeleted,
 			},
 			select: {
 				id: true,

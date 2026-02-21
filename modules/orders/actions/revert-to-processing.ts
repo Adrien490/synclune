@@ -6,11 +6,12 @@ import {
 	HistorySource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendRevertShippingNotificationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -45,7 +46,8 @@ export async function revertToProcessing(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const id = formData.get("id") as string;
-		const reason = formData.get("reason") as string;
+		const rawReason = formData.get("reason") as string;
+		const reason = sanitizeText(rawReason);
 
 		const result = revertToProcessingSchema.safeParse({
 			id,
@@ -62,7 +64,7 @@ export async function revertToProcessing(
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
-				where: { id, deletedAt: null },
+				where: { id, ...notDeleted },
 				select: {
 					id: true,
 					orderNumber: true,

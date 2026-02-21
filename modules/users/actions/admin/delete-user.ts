@@ -2,7 +2,7 @@
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
-import { prisma, softDelete } from "@/shared/lib/prisma";
+import { prisma, softDelete, notDeleted } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
@@ -63,7 +63,7 @@ export async function deleteUser(
 		// 5b. Verifier qu'on ne supprime pas le dernier admin
 		if (user.role === Role.ADMIN) {
 			const adminCount = await prisma.user.count({
-				where: { role: Role.ADMIN, deletedAt: null },
+				where: { role: Role.ADMIN, ...notDeleted },
 			});
 			if (adminCount <= 1) {
 				return error("Impossible de supprimer le dernier administrateur.");

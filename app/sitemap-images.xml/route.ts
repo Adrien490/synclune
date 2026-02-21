@@ -1,4 +1,4 @@
-import { prisma } from "@/shared/lib/prisma"
+import { prisma, notDeleted } from "@/shared/lib/prisma"
 import { SITE_URL } from "@/shared/constants/seo-config"
 import { NextResponse } from "next/server"
 
@@ -12,7 +12,7 @@ export async function GET() {
 	const products = await prisma.product.findMany({
 		where: {
 			status: "PUBLIC",
-			deletedAt: null,
+			...notDeleted,
 		},
 		select: {
 			slug: true,

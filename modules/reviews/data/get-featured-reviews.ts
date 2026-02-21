@@ -1,4 +1,4 @@
-import { prisma } from "@/shared/lib/prisma"
+import { prisma, notDeleted } from "@/shared/lib/prisma"
 import { REVIEW_HOMEPAGE_SELECT } from "../constants/review.constants"
 import { cacheHomepageReviews } from "../constants/cache"
 import type { ReviewHomepage } from "../types/review.types"
@@ -15,7 +15,7 @@ export async function getFeaturedReviews(): Promise<ReviewHomepage[]> {
 	const reviews = await prisma.productReview.findMany({
 		where: {
 			status: "PUBLISHED",
-			deletedAt: null,
+			...notDeleted,
 			product: {
 				status: "PUBLIC",
 				deletedAt: null,

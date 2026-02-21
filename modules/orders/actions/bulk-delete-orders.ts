@@ -2,7 +2,7 @@
 
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -50,7 +50,7 @@ export async function bulkDeleteOrders(
 		const orders = await prisma.order.findMany({
 			where: {
 				id: { in: validated.data.ids },
-				deletedAt: null,
+				...notDeleted,
 			},
 			select: {
 				id: true,

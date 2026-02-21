@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { GET_NEWSLETTER_STATUS_DEFAULT_SELECT } from "../constants/subscriber.constants";
 import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
@@ -56,7 +56,7 @@ export async function fetchSubscriptionStatus(
 
 	try {
 		const subscriber = await prisma.newsletterSubscriber.findFirst({
-			where: { email, deletedAt: null },
+			where: { email, ...notDeleted },
 			select: GET_NEWSLETTER_STATUS_DEFAULT_SELECT,
 		});
 

@@ -6,9 +6,10 @@ import {
 	HistorySource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { scheduleReviewRequestEmailsBulk } from "@/modules/webhooks/services/review-request.service";
 import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
+import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -62,7 +63,7 @@ export async function bulkMarkAsDelivered(
 			where: {
 				id: { in: validatedData.ids },
 				status: OrderStatus.SHIPPED,
-				deletedAt: null,
+				...notDeleted,
 			},
 			select: { id: true, orderNumber: true, userId: true, customerEmail: true, customerName: true, shippingFirstName: true },
 		});
@@ -123,7 +124,20 @@ export async function bulkMarkAsDelivered(
 						customerName: order.shippingFirstName || order.customerName || "Client",
 						deliveryDate: formattedDeliveryDate,
 						orderDetailsUrl,
-					}).catch(() => {});
+					}).catch((emailError) => {
+						logFailedEmail({
+							to: order.customerEmail!,
+							subject: `Votre commande ${order.orderNumber} a été livrée`,
+							template: "delivery-confirmation",
+							payload: {
+								orderNumber: order.orderNumber,
+								customerName: order.shippingFirstName || order.customerName || "Client",
+								deliveryDate: formattedDeliveryDate,
+							},
+							error: emailError,
+							orderId: order.id,
+						});
+					});
 				}
 			}
 		}

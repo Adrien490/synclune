@@ -46,7 +46,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 	return (
 		<Card>
 			<CardContent>
-				<OrdersSelectionToolbar orderIds={orderIds} />
+				<OrdersSelectionToolbar />
 				<TableScrollContainer>
 					<Table caption="Liste des commandes" striped className="min-w-full table-fixed">
 						<TableHeader>

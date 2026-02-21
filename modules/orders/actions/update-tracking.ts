@@ -4,8 +4,8 @@ import {
 	OrderStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails";
 import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import type { ActionState } from "@/shared/types/server-action";
@@ -35,8 +35,9 @@ export async function updateTracking(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -67,7 +68,7 @@ export async function updateTracking(
 		// Transaction: fetch + validate status + update + audit atomically (prevents race condition)
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
-				where: { id, deletedAt: null },
+				where: { id, ...notDeleted },
 				select: {
 					id: true,
 					orderNumber: true,
@@ -108,6 +109,8 @@ export async function updateTracking(
 				orderId: id,
 				action: "TRACKING_UPDATED",
 				note: `Suivi mis a jour : ${validated.data.trackingNumber}`,
+				authorId: adminUser.id,
+				authorName: adminUser.name || "Admin",
 				metadata: {
 					previousTrackingNumber: found.trackingNumber,
 					newTrackingNumber: validated.data.trackingNumber,

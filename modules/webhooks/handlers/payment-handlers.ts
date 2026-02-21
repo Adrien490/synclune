@@ -8,7 +8,7 @@ import {
 	initiateAutomaticRefund,
 	sendRefundFailureAlert,
 } from "../services/payment-intent.service";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
@@ -184,7 +184,7 @@ export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promi
 	const orderId = invoice.metadata?.order_id;
 	const order = orderId
 		? await prisma.order.findFirst({
-				where: { id: orderId, deletedAt: null },
+				where: { id: orderId, ...notDeleted },
 				select: {
 					id: true,
 					orderNumber: true,

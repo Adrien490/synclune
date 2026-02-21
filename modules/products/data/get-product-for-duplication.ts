@@ -1,4 +1,4 @@
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheProductDetail } from "@/modules/products/utils/cache.utils";
 
 // ============================================================================
@@ -36,7 +36,7 @@ async function fetchProductForDuplication(productId: string) {
 	cacheProductDetail(`product-id-${productId}`);
 
 	return prisma.product.findFirst({
-		where: { id: productId, deletedAt: null },
+		where: { id: productId, ...notDeleted },
 		select: {
 			id: true,
 			title: true,

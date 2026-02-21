@@ -28,26 +28,34 @@ import { type ShippingCountry } from "@/shared/constants/countries";
  * IMPORTANT : Remplacer ces placeholders par les vrais IDs après création
  * dans le Dashboard Stripe.
  */
+function requireEnv(name: string): string {
+	const value = process.env[name];
+	if (!value) {
+		throw new Error(`Missing required environment variable: ${name}`);
+	}
+	return value;
+}
+
 export const STRIPE_SHIPPING_RATE_IDS = {
 	/**
 	 * Livraison France Métropolitaine
 	 * Prix : 6,00€ | Délai : 2-3 jours ouvrés
 	 * Pays autorisés dans Stripe : FR
 	 */
-	FRANCE: process.env.STRIPE_SHIPPING_RATE_FRANCE!,
+	FRANCE: requireEnv("STRIPE_SHIPPING_RATE_FRANCE"),
 	/**
 	 * Livraison Corse
 	 * Prix : 10,00€ | Délai : 4-7 jours ouvrés
 	 * Pays autorisés dans Stripe : FR (filtrage par code postal côté backend)
 	 */
-	CORSE: process.env.STRIPE_SHIPPING_RATE_CORSE!,
+	CORSE: requireEnv("STRIPE_SHIPPING_RATE_CORSE"),
 	/**
 	 * Livraison Union Européenne
 	 * Prix : 15,00€ | Délai : 4-7 jours ouvrés
 	 * Pays autorisés dans Stripe : BE, DE, NL, LU, IT, ES, PT, AT, IE, FI, SE, DK, GR,
 	 *                              BG, HR, CY, CZ, EE, HU, LV, LT, MT, PL, RO, SK, SI, MC
 	 */
-	EUROPE: process.env.STRIPE_SHIPPING_RATE_EUROPE!,
+	EUROPE: requireEnv("STRIPE_SHIPPING_RATE_EUROPE"),
 } as const;
 
 // ==============================================================================
@@ -122,18 +130,16 @@ export function getShippingRateName(shippingRateId: string): string {
  * @param shippingRateId - ID du shipping rate Stripe (shr_xxx)
  * @returns La méthode de livraison (toujours STANDARD)
  */
-export function getShippingMethodFromRate(shippingRateId: string): string {
+export function getShippingMethodFromRate(_shippingRateId: string): string {
 	return "STANDARD";
 }
 
 /**
  * Détermine le transporteur à partir du shipping rate ID
  *
- * @param shippingRateId - ID du shipping rate Stripe (shr_xxx)
+ * @param _shippingRateId - ID du shipping rate Stripe (shr_xxx)
  * @returns Le transporteur (lowercase string matching Carrier type)
  */
-export function getShippingCarrierFromRate(shippingRateId: string): string {
-	// Par défaut, transporteur non spécifié
-	// Mapper ici selon l'ID si nécessaire
+export function getShippingCarrierFromRate(_shippingRateId: string): string {
 	return "autre";
 }

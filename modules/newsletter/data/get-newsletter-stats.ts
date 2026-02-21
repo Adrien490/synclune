@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
 import type { NewsletterStats } from "../types/subscriber.types";
@@ -20,12 +20,12 @@ export async function getNewsletterStats(): Promise<NewsletterStats> {
 	try {
 		const [totalSubscribers, activeSubscribers] = await Promise.all([
 			prisma.newsletterSubscriber.count({
-				where: { deletedAt: null },
+				where: { ...notDeleted },
 			}),
 			prisma.newsletterSubscriber.count({
 				where: {
 					status: NewsletterStatus.CONFIRMED,
-					deletedAt: null,
+					...notDeleted,
 				},
 			}),
 		]);

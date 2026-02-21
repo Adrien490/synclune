@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import type { OrderRefundItem } from "../types/order-refunds.types";
@@ -42,7 +42,7 @@ async function fetchOrderRefunds(orderId: string): Promise<OrderRefundItem[]> {
 	return prisma.refund.findMany({
 		where: {
 			orderId,
-			deletedAt: null,
+			...notDeleted,
 		},
 		orderBy: { createdAt: "desc" },
 		select: {

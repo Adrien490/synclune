@@ -30,7 +30,6 @@ type RefundLockRow = {
 	order_total: number;
 	order_user_id: string | null;
 	stripe_payment_intent_id: string | null;
-	stripe_charge_id: string | null;
 };
 
 type RefundItemRow = {
@@ -92,8 +91,7 @@ export async function processRefund(
 					o."orderNumber" as order_number,
 					o.total as order_total,
 					o."userId" as order_user_id,
-					o."stripePaymentIntentId" as stripe_payment_intent_id,
-					o."stripeChargeId" as stripe_charge_id
+					o."stripePaymentIntentId" as stripe_payment_intent_id
 				FROM "Refund" r
 				INNER JOIN "Order" o ON r."orderId" = o.id
 				WHERE r.id = ${id}
@@ -116,7 +114,7 @@ export async function processRefund(
 			}
 
 			// Vérifier qu'on a un ID de paiement Stripe
-			if (!refund.stripe_payment_intent_id && !refund.stripe_charge_id) {
+			if (!refund.stripe_payment_intent_id) {
 				throw new Error("NO_CHARGE_ID");
 			}
 
@@ -154,7 +152,6 @@ export async function processRefund(
 		// ========================================================================
 		const stripeResult = await createStripeRefund({
 			paymentIntentId: refundData.refund.stripe_payment_intent_id || undefined,
-			chargeId: refundData.refund.stripe_charge_id || undefined,
 			amount: refundData.refund.amount,
 			reason: refundData.refund.reason,
 			metadata: {

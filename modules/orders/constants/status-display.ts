@@ -32,6 +32,7 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 	PENDING: "En attente",
 	PAID: "Payée",
 	FAILED: "Échouée",
+	EXPIRED: "Expirée",
 	PARTIALLY_REFUNDED: "Partiellement remboursée",
 	REFUNDED: "Remboursée",
 };
@@ -40,6 +41,7 @@ export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
 	PENDING: "#f59e0b", // yellow-500
 	PAID: "#10b981", // green-500
 	FAILED: "#ef4444", // red-500
+	EXPIRED: "#6b7280", // gray-500
 	PARTIALLY_REFUNDED: "#f97316", // orange-500
 	REFUNDED: "#6b7280", // gray-500
 };
@@ -48,6 +50,7 @@ export const PAYMENT_STATUS_VARIANTS: Record<PaymentStatus, BadgeVariant> = {
 	PENDING: "warning",
 	PAID: "success",
 	FAILED: "destructive",
+	EXPIRED: "secondary",
 	PARTIALLY_REFUNDED: "warning",
 	REFUNDED: "secondary",
 };

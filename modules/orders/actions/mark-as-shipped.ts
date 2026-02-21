@@ -6,7 +6,7 @@ import {
 	HistorySource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { logFailedEmail } from "@/modules/emails/services/log-failed-email";
 import type { ActionState } from "@/shared/types/server-action";
@@ -78,7 +78,7 @@ export async function markAsShipped(
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
-				where: { id, deletedAt: null },
+				where: { id, ...notDeleted },
 				select: {
 					id: true,
 					orderNumber: true,

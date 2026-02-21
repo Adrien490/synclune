@@ -134,7 +134,7 @@ export function OrderNotesDialog() {
 									<Button
 										variant="ghost"
 										size="icon"
-										className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+										className="h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-destructive hover:text-destructive"
 										onClick={() => handleDeleteNote(note.id)}
 										disabled={isPendingDelete}
 									>

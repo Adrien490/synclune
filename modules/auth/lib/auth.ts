@@ -1,5 +1,5 @@
 import { sendPasswordChangedEmail, sendPasswordResetEmail, sendVerificationEmail } from "@/modules/emails/services/auth-emails";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ActionStatus } from "@/shared/types/server-action";
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
@@ -117,7 +117,7 @@ export const auth = betterAuth({
 			// Récupérer les informations utilisateur complètes depuis la base de données
 			// Filter out soft-deleted users to prevent deleted accounts from retaining their role
 			const userData = await prisma.user.findUnique({
-				where: { id: session.userId, deletedAt: null },
+				where: { id: session.userId, ...notDeleted },
 				select: { role: true },
 			});
 
@@ -299,7 +299,7 @@ export const auth = betterAuth({
 						where: {
 							userId: null,
 							customerEmail: newSession.user.email,
-							deletedAt: null,
+							...notDeleted,
 						},
 						data: {
 							userId: newSession.user.id,

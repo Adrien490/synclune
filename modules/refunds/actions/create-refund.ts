@@ -4,7 +4,7 @@ import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -90,14 +90,13 @@ export async function createRefund(
 
 			// Read order with items and refunds within the locked transaction
 			const order = await tx.order.findUnique({
-				where: { id: orderId, deletedAt: null },
+				where: { id: orderId, ...notDeleted },
 				select: {
 					id: true,
 					orderNumber: true,
 					total: true,
 					paymentStatus: true,
 					stripePaymentIntentId: true,
-					stripeChargeId: true,
 					items: {
 						select: {
 							id: true,

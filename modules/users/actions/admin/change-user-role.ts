@@ -2,7 +2,7 @@
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
@@ -73,7 +73,7 @@ export async function changeUserRole(
 			const adminCount = await prisma.user.count({
 				where: {
 					role: Role.ADMIN,
-					deletedAt: null,
+					...notDeleted,
 				},
 			});
 

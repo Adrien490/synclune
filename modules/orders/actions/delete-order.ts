@@ -2,7 +2,7 @@
 
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { prisma, softDelete } from "@/shared/lib/prisma";
+import { prisma, softDelete, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -48,7 +48,7 @@ export async function deleteOrder(
 
 		// Récupérer la commande avec les infos nécessaires
 		const order = await prisma.order.findUnique({
-			where: { id, deletedAt: null },
+			where: { id, ...notDeleted },
 			select: {
 				id: true,
 				orderNumber: true,

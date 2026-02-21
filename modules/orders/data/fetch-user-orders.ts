@@ -3,7 +3,7 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/lib/pagination";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import {
 	GET_USER_ORDERS_DEFAULT_PER_PAGE,
@@ -50,7 +50,7 @@ export async function fetchUserOrders(
 		const where: Prisma.OrderWhereInput = {
 			userId,
 			paymentStatus: PaymentStatus.PAID, // Seulement les commandes confirmees et payees
-			deletedAt: null, // Soft delete: exclure les commandes supprimees
+			...notDeleted, // Soft delete: exclure les commandes supprimees
 		};
 
 		// Construire l'orderBy

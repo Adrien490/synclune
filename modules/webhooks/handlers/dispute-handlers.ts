@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { DisputeReason, DisputeStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
@@ -18,6 +19,34 @@ const DISPUTE_REASON_LABELS: Record<string, string> = {
 	credit_not_processed: "Remboursement non effectué",
 	general: "Litige général",
 };
+
+/**
+ * Map Stripe dispute reasons to our DisputeReason enum
+ */
+const STRIPE_REASON_MAP: Record<string, DisputeReason> = {
+	duplicate: DisputeReason.DUPLICATE,
+	fraudulent: DisputeReason.FRAUDULENT,
+	subscription_canceled: DisputeReason.SUBSCRIPTION_CANCELED,
+	product_unacceptable: DisputeReason.PRODUCT_UNACCEPTABLE,
+	product_not_received: DisputeReason.PRODUCT_NOT_RECEIVED,
+	unrecognized: DisputeReason.UNRECOGNIZED,
+	credit_not_processed: DisputeReason.CREDIT_NOT_PROCESSED,
+	general: DisputeReason.GENERAL,
+};
+
+/**
+ * Map Stripe dispute status to our DisputeStatus enum
+ */
+function mapStripeDisputeStatus(stripeStatus: string): DisputeStatus {
+	switch (stripeStatus) {
+		case "needs_response": return DisputeStatus.NEEDS_RESPONSE;
+		case "under_review": return DisputeStatus.UNDER_REVIEW;
+		case "won": return DisputeStatus.WON;
+		case "lost": return DisputeStatus.LOST;
+		case "charge_refunded": return DisputeStatus.CHARGE_REFUNDED;
+		default: return DisputeStatus.NEEDS_RESPONSE;
+	}
+}
 
 const SYSTEM_AUTHOR_ID = "system";
 const SYSTEM_AUTHOR_NAME = "Système (webhook Stripe)";
@@ -69,19 +98,37 @@ export async function handleDisputeCreated(
 		return { success: true, skipped: true, reason: "Dispute note already created" };
 	}
 
-	// Create an OrderNote with dispute details
+	// Create Dispute record and OrderNote atomically
 	const deadlineStr = dispute.evidence_details?.due_by
 		? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
 		: "N/A";
 	const noteContent = `[LITIGE OUVERT] Litige Stripe ${dispute.id}. Raison: ${DISPUTE_REASON_LABELS[dispute.reason] || dispute.reason}. Montant contesté: ${dispute.amount} centimes. Deadline de réponse: ${deadlineStr}.`;
 
-	await prisma.orderNote.create({
-		data: {
-			orderId: order.id,
-			content: noteContent,
-			authorId: SYSTEM_AUTHOR_ID,
-			authorName: SYSTEM_AUTHOR_NAME,
-		},
+	const dueBy = dispute.evidence_details?.due_by
+		? new Date(dispute.evidence_details.due_by * 1000)
+		: null;
+
+	await prisma.$transaction(async (tx) => {
+		await tx.dispute.create({
+			data: {
+				stripeDisputeId: dispute.id,
+				orderId: order.id,
+				amount: dispute.amount,
+				fee: (dispute.balance_transactions?.[0]?.fee ?? 0),
+				reason: STRIPE_REASON_MAP[dispute.reason] || DisputeReason.GENERAL,
+				status: mapStripeDisputeStatus(dispute.status),
+				dueBy,
+			},
+		});
+
+		await tx.orderNote.create({
+			data: {
+				orderId: order.id,
+				content: noteContent,
+				authorId: SYSTEM_AUTHOR_ID,
+				authorName: SYSTEM_AUTHOR_NAME,
+			},
+		});
 	});
 
 	console.log(`⚠️ [WEBHOOK] Dispute ${dispute.id} created for order ${order.orderNumber}`);
@@ -171,24 +218,43 @@ export async function handleDisputeClosed(
 	const won = dispute.status === "won";
 	const statusLabel = won ? "gagné" : "perdu";
 
-	// Create an OrderNote with the outcome
+	// Update Dispute record, create OrderNote, and update order status atomically
 	const noteContent = `[LITIGE CLOTURE] Litige ${dispute.id} clôturé: ${statusLabel}.${!won ? " Le montant a été débité par Stripe." : ""}`;
-	await prisma.orderNote.create({
-		data: {
-			orderId: order.id,
-			content: noteContent,
-			authorId: SYSTEM_AUTHOR_ID,
-			authorName: SYSTEM_AUTHOR_NAME,
-		},
-	});
 
-	// If lost, Stripe has already debited the amount — mark as REFUNDED
-	if (!won && order.paymentStatus !== "REFUNDED") {
-		await prisma.order.update({
-			where: { id: order.id },
-			data: { paymentStatus: "REFUNDED" },
+	await prisma.$transaction(async (tx) => {
+		// Update Dispute record if it exists
+		const existingDispute = await tx.dispute.findUnique({
+			where: { stripeDisputeId: dispute.id },
+			select: { id: true },
 		});
-	}
+
+		if (existingDispute) {
+			await tx.dispute.update({
+				where: { stripeDisputeId: dispute.id },
+				data: {
+					status: mapStripeDisputeStatus(dispute.status),
+					resolvedAt: new Date(),
+				},
+			});
+		}
+
+		await tx.orderNote.create({
+			data: {
+				orderId: order.id,
+				content: noteContent,
+				authorId: SYSTEM_AUTHOR_ID,
+				authorName: SYSTEM_AUTHOR_NAME,
+			},
+		});
+
+		// If lost, Stripe has already debited the amount — mark as REFUNDED
+		if (!won && order.paymentStatus !== "REFUNDED") {
+			await tx.order.update({
+				where: { id: order.id },
+				data: { paymentStatus: "REFUNDED" },
+			});
+		}
+	});
 
 	console.log(`${won ? "✅" : "❌"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`);
 

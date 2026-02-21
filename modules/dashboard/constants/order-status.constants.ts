@@ -31,6 +31,7 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 	PENDING: "En attente",
 	PAID: "Payée",
 	FAILED: "Échouée",
+	EXPIRED: "Expirée",
 	REFUNDED: "Remboursée",
 	PARTIALLY_REFUNDED: "Part. remboursée",
 };

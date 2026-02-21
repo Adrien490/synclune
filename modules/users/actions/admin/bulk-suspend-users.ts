@@ -3,7 +3,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 
 import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import {
@@ -53,7 +53,7 @@ export async function bulkSuspendUsers(
 		const eligibleUsers = await prisma.user.findMany({
 			where: {
 				id: { in: validatedData.ids },
-				deletedAt: null,
+				...notDeleted,
 				suspendedAt: null,
 			},
 			select: { id: true },

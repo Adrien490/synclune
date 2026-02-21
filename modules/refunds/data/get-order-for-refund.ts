@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { GET_ORDER_FOR_REFUND_SELECT } from "../constants/refund.constants";
@@ -52,7 +52,7 @@ async function fetchOrderForRefund(
 	try {
 		// Exclure les commandes soft-deleted
 		const order = await prisma.order.findUnique({
-			where: { id: orderId, deletedAt: null },
+			where: { id: orderId, ...notDeleted },
 			select: GET_ORDER_FOR_REFUND_SELECT,
 		});
 

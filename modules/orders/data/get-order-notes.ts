@@ -1,7 +1,7 @@
 "use server";
 
 import { cacheLife, cacheTag } from "next/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import type { OrderNoteItem } from "../types/order-notes.types";
@@ -41,7 +41,7 @@ async function fetchOrderNotes(orderId: string): Promise<OrderNoteItem[]> {
 	return prisma.orderNote.findMany({
 		where: {
 			orderId,
-			deletedAt: null,
+			...notDeleted,
 		},
 		orderBy: { createdAt: "desc" },
 		select: {

@@ -1178,7 +1178,6 @@ async function main(): Promise<void> {
       ? {
           stripeCheckoutSessionId: `cs_test_${faker.string.alphanumeric(24)}`,
           stripePaymentIntentId: `pi_${faker.string.alphanumeric(24)}`,
-          stripeChargeId: `ch_${faker.string.alphanumeric(24)}`,
           stripeCustomerId: customerId ? userStripeCustomerMap.get(customerId)! : null,
         }
       : {};

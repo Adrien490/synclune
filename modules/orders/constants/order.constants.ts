@@ -59,7 +59,6 @@ export const GET_ORDER_SELECT = {
 	userId: true,
 	stripeCheckoutSessionId: true,
 	stripePaymentIntentId: true,
-	stripeChargeId: true,
 	stripeCustomerId: true,
 	stripeInvoiceId: true,
 	customerEmail: true,

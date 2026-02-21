@@ -29,19 +29,13 @@ import {
 import type { GetUserOrdersReturn } from "@/modules/orders/types/user-orders.types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { Eye, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 export interface CustomerOrdersTableProps {
 	ordersPromise: Promise<GetUserOrdersReturn>;
 }
-
-const formatPrice = (priceInCents: number) => {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(priceInCents / 100);
-};
 
 export async function CustomerOrdersTable({
 	ordersPromise,
@@ -153,7 +147,7 @@ export async function CustomerOrdersTable({
 									</TableCell>
 									<TableCell className="text-right">
 										<span className="text-sm font-semibold">
-											{formatPrice(order.total)}
+											{formatEuro(order.total)}
 										</span>
 									</TableCell>
 									<TableCell className="text-right">

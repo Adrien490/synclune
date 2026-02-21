@@ -653,10 +653,10 @@ describe("cancelExpiredOrder", () => {
 		// Discount usages are deleted
 		expect(mockTx.discountUsage.deleteMany).toHaveBeenCalledWith({ where: { orderId: "order-1" } });
 
-		// Order is updated to CANCELLED/FAILED
+		// Order is updated to CANCELLED/EXPIRED
 		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
-			data: { status: "CANCELLED", paymentStatus: "FAILED" },
+			data: { status: "CANCELLED", paymentStatus: "EXPIRED" },
 		});
 	});
 
@@ -676,7 +676,7 @@ describe("cancelExpiredOrder", () => {
 		expect(mockTx.discountUsage.deleteMany).not.toHaveBeenCalled();
 		expect(mockTx.order.update).toHaveBeenCalledWith(
 			expect.objectContaining({
-				data: { status: "CANCELLED", paymentStatus: "FAILED" },
+				data: { status: "CANCELLED", paymentStatus: "EXPIRED" },
 			})
 		);
 	});

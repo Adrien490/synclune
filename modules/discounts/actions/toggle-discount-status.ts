@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { toggleDiscountStatusSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
@@ -33,7 +33,7 @@ export async function toggleDiscountStatus(
 		if ("error" in validated) return validated.error;
 
 		const discount = await prisma.discount.findUnique({
-			where: { id, deletedAt: null },
+			where: { id, ...notDeleted },
 			select: { id: true, code: true, isActive: true },
 		});
 
