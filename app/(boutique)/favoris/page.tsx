@@ -9,17 +9,11 @@ import {
 	GET_WISHLIST_DEFAULT_PER_PAGE,
 	GET_WISHLIST_MAX_RESULTS_PER_PAGE,
 } from "@/modules/wishlist/constants/wishlist.constants";
-import { ROUTES } from "@/shared/constants/urls";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Mes favoris - Synclune",
-	description: "Retrouvez tous vos coups de cœur Synclune.",
-	robots: {
-		index: false,
-		follow: true,
-	},
+	title: "Mes favoris",
 };
 
 type WishlistPageProps = {
@@ -55,29 +49,21 @@ export default async function WishlistPage({
 	});
 
 	return (
-		<div className="min-h-screen">
+		<>
 			<PageHeader
 				title="Mes favoris"
 				description="Retrouvez tous vos coups de cœur"
-				breadcrumbs={[
-					{ label: "Mon compte", href: ROUTES.ACCOUNT.ROOT },
-					{ label: "Favoris", href: ROUTES.ACCOUNT.FAVORITES },
-				]}
+				variant="compact"
 			/>
 
-			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<Suspense fallback={<WishlistGridSkeleton />}>
-						<WishlistList
-							wishlistPromise={wishlistPromise}
-							perPage={perPage}
-						/>
-					</Suspense>
-				</div>
-			</section>
+			<Suspense fallback={<WishlistGridSkeleton />}>
+				<WishlistList
+					wishlistPromise={wishlistPromise}
+					perPage={perPage}
+				/>
+			</Suspense>
 
-			{/* Alert Dialogs */}
 			<RemoveWishlistItemAlertDialog />
-		</div>
+		</>
 	);
 }

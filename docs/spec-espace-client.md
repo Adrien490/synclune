@@ -2,7 +2,7 @@
 
 > Ce document detaille les fonctionnalites de l'espace client (A-M) + la navigation, avec pour chaque item : le statut d'implementation, les fichiers a creer/modifier, les patterns a suivre, les donnees disponibles, et les dependances.
 >
-> **Les pages ont ete supprimees** (`app/(boutique)/(espace-client)/`) pour etre reconstruites de zero, a l'exception de `favoris/` (page, error, loading) qui existe deja. Tous les composants modules, actions, data, hooks et services restent intacts.
+> **Les pages ont ete supprimees** (`app/(boutique)/(espace-client)/`) pour etre reconstruites de zero. Tous les composants modules, actions, data, hooks et services restent intacts. La page favoris est dans `app/(boutique)/favoris/` (hors espace-client, accessible sans authentification).
 
 ---
 
@@ -20,25 +20,26 @@
 
 ## Tableau de suivi
 
-| Feature | Statut | Backend | Effort | Notes |
-|---|---|---|---|---|
-| Navigation (7 items) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| Compte (dashboard) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| Commandes (liste) | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| Mes avis | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| Favoris | Fait | Complet | - | Pages existantes (page.tsx, error.tsx, loading.tsx) |
-| A - Adresses | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| B - Mes demandes | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| C - Facture PDF | A faire | Complet | Faible | Page a recreer, fix securite `order.userId` applique |
-| D - Remboursements | A faire | A completer | Faible | Modifier `GET_ORDER_SELECT` + 1 composant |
-| E - Newsletter settings | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| F - Filtres commandes | A faire | A completer | Faible | Params types mais pas wires, conflit `paymentStatus: PAID` hardcode |
-| G - Sessions actives | A faire | Complet | Faible | Page a recreer, composants modules intacts |
-| I - Changement email | A faire | A completer | Moyen | Email absent de `ProfileForm`, `changeEmail` non configure dans Better Auth |
-| J - Panier wishlist | A faire | Complet | Faible | `AddToCartCardButton` deja dans `ProductCard` |
-| K - Annulation commande client | A faire | A completer | Moyen | `cancelOrder` admin-only, mais `canCancelOrder()` reutilisable |
-| L - Codes promo sur commande | A faire | A completer | Faible | `discountAmount` affiche mais pas le code |
-| M - Annulation suppression compte | A faire | A completer | Moyen | `PENDING_DELETION` non utilise, `deletionRequestedAt` dead code |
+| Feature | Statut | Backend | Effort | Decisions bloquantes | Notes |
+|---|---|---|---|---|---|
+| Navigation (7 items) | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
+| Compte (dashboard) | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
+| Commandes (liste) | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
+| Mes avis | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
+| A - Adresses | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
+| B - Mes demandes | A faire | Complet | Faible | Decision 1 | Page a recreer, composants modules intacts |
+| C - Facture PDF | A faire | Complet | Faible | - | Page a recreer, fix securite `order.userId` applique |
+| D - Remboursements | A faire | A completer | Faible | - | Modifier `GET_ORDER_SELECT` + 1 composant |
+| E - Newsletter settings | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
+| F - Filtres commandes | A faire | A completer | Faible | Decision 4 | Filtres absents du schema (tri seul implemente), conflit `paymentStatus: PAID` hardcode |
+| G - Sessions actives | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
+| I - Changement email | A faire | A completer | Moyen | - | Email absent de `ProfileForm`, `changeEmail` non configure dans Better Auth |
+| J - Panier wishlist | A faire | Complet | Faible | - | `AddToCartCardButton` deja dans `ProductCard` |
+| K - Annulation commande client | A faire | A completer | Moyen | Decision 2 | `cancelOrder` admin-only, mais `canCancelOrder()` reutilisable |
+| L - Codes promo sur commande | A faire | A completer | Faible | - | `discountAmount` affiche mais pas le code |
+| M - Annulation suppression compte | A faire | A completer | Moyen | Decision 3 | `PENDING_DELETION` non utilise, `deletionRequestedAt` dead code |
+
+> **Note :** La numerotation saute de G a I. La feature H n'existe pas (saut intentionnel dans la numerotation).
 
 ---
 
@@ -46,16 +47,18 @@
 
 ### Layout espace-client
 
-Le layout utilise une grille 2 colonnes (desktop) :
-- **Colonne gauche (2/3)** : contenu principal (nav mobile + page content)
-- **Colonne droite (1/3)** : sidebar de navigation (desktop only, via `AccountNav`)
+Le layout utilise un flex 2 colonnes (desktop) :
+- **Colonne sidebar (w-56 fixe)** : `AccountNav` (desktop only, `hidden lg:block`, sticky top-28)
+- **Colonne contenu (flex-1)** : page content
 
 ### Fichiers a creer
 
 | Fichier | Role |
 |---|---|
-| `app/(boutique)/(espace-client)/layout.tsx` | **A creer** - Layout avec auth guard, grille 2 colonnes, metadata template |
+| `app/(boutique)/(espace-client)/layout.tsx` | **A creer** - Layout avec auth guard, flex 2 colonnes, metadata template |
 | `app/(boutique)/(espace-client)/not-found.tsx` | **A creer** - Page 404 pour entites introuvables (commande, adresse) |
+
+> **Note :** `ROUTES.ACCOUNT` dans `shared/constants/urls.ts` definit `ROOT`, `ORDERS`, `ORDER_DETAIL`, `FAVORITES`, `REVIEWS`, `ADDRESSES`, `CUSTOMIZATIONS`, `SETTINGS`. Les anciennes entrees `PROFILE` et `SECURITY` (dead code) ont ete supprimees.
 
 ### Pattern page detail commande (`/commandes/[orderNumber]`)
 
@@ -86,12 +89,13 @@ Page tableau de bord avec stats et raccourcis (voir section dediee ci-dessous po
 
 ### Protection des routes
 
-Le layout `app/(boutique)/(espace-client)/layout.tsx` doit verifier la session utilisateur et proteger toutes les pages enfants :
+La protection des routes de l'espace client est assuree par le proxy (`proxy.ts`, convention Next.js 16) :
 
-- Appeler `getSession()` (wrapper dans `modules/auth/lib/get-current-session.ts`, encapsule Better Auth + `headers()`) au niveau du layout
-- Si pas de session, rediriger vers `/connexion?callbackUrl={pathname}` (utiliser `headers()` pour recuperer le pathname)
-- Pas de `middleware.ts` existant dans le projet — la protection se fait au niveau du layout serveur
-- Toutes les pages enfants heritent de cette verification automatiquement
+- Le middleware verifie l'existence du cookie de session via `getSessionCookie()` (Better Auth)
+- Les routes `/compte`, `/commandes`, `/adresses`, `/mes-avis`, `/mes-demandes`, `/parametres` sont dans `protectedRoutes`
+- Si pas de cookie de session, redirection vers `/connexion?callbackURL={pathname}`
+- Le layout `app/(boutique)/(espace-client)/layout.tsx` est purement visuel (pas d'auth guard)
+- Les server actions continuent de verifier l'auth cote serveur via `requireAuth()` / `requireAdmin()`
 
 ### Metadata / SEO
 
@@ -106,7 +110,7 @@ Chaque page de l'espace client doit exporter ses `metadata` Next.js :
 
 - `app/(boutique)/error.tsx` existe et sera herite par toutes les pages de l'espace client (affiche `ParticleBackground` + message + boutons "Reessayer" / "Retour a l'accueil")
 - Recommander un `app/(boutique)/(espace-client)/not-found.tsx` pour les cas commande/adresse introuvable (les pages detail appellent `notFound()` si l'entite n'existe pas)
-- `loading.tsx` optionnel au niveau layout ou par page pour les transitions de navigation
+- **`loading.tsx` recommande** au niveau `(espace-client)/` pour les transitions de navigation (toutes les pages font des fetches caches). Un skeleton global avec le layout 2 colonnes (sidebar vide + zone de contenu avec skeleton) ameliorera l'UX. Les pages avec des besoins specifiques (tableau commandes, grille adresses) peuvent ajouter leur propre `loading.tsx` par-dessus
 
 ### Composants partages reutilisables
 
@@ -115,7 +119,7 @@ Composants existants a reutiliser dans les pages de l'espace client :
 | Composant | Fichier | Usage |
 |---|---|---|
 | `PageHeader` (variante `compact`) | `shared/components/page-header.tsx` | En-tete de page simplifie sans breadcrumbs, adapte a l'espace client |
-| `Empty` (compound component) | `shared/components/ui/empty.tsx` | Etats vides : `<Empty>`, `EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, `EmptyActions`. Variantes `default` / `borderless`, tailles `sm` / `default` / `lg` |
+| `Empty` (compound component) | `shared/components/ui/empty.tsx` | Etats vides : `<Empty>`, `EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, `EmptyContent`, `EmptyActions`. Variantes `default` / `borderless`, tailles `sm` / `default` / `lg` |
 | `CursorPagination` | `shared/components/cursor-pagination/cursor-pagination.tsx` | Pagination cursor-based avec boutons prev/next, select per-page, liens SEO `rel="prev/next"`, aria-live. Deja integre dans `CustomerOrdersTable` |
 
 ---
@@ -130,25 +134,30 @@ Composants existants a reutiliser dans les pages de l'espace client :
 
 ### Implementation actuelle
 
-7 entrees dans `navItems` avec `desktopOnly: true` pour Adresses et Mes demandes (filtrees en mobile) :
+6 entrees dans `navItems` avec `desktopOnly: true` pour Adresses et Mes demandes (filtrees en mobile), plus un bouton de deconnexion (via `LogoutAlertDialog`) separe par un divider en bas de la sidebar desktop :
 
 ```ts
-import { Heart, LayoutDashboard, MapPin, MessageSquare, Package, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, MapPin, MessageSquare, Package, Settings, Sparkles } from "lucide-react";
 
 const navItems = [
   { href: "/compte", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/commandes", label: "Commandes", icon: Package },
   { href: "/mes-avis", label: "Mes avis", icon: MessageSquare },
-  { href: "/favoris", label: "Favoris", icon: Heart },
   { href: "/adresses", label: "Adresses", icon: MapPin, desktopOnly: true },
   { href: "/mes-demandes", label: "Mes demandes", icon: Sparkles, desktopOnly: true },
   { href: "/parametres", label: "Parametres", icon: Settings },
 ];
 ```
 
+### Deconnexion
+
+Le dropdown navbar ne mene plus vers un menu avec deconnexion — il redirige directement vers l'espace client. Le bouton de deconnexion est donc integre dans `AccountNav` :
+- **Desktop** : bouton "Se deconnecter" avec icone `LogOut` en bas de la sidebar, separe par un divider. Ouvre `LogoutAlertDialog` (confirmation).
+- **Mobile** : le bouton de deconnexion est accessible via la page Parametres (`/parametres`) dans `GdprSection`, ou via le tableau de bord.
+
 ### Attention mobile
 
-La bottom bar affiche 5 items. Les 2 items `desktopOnly` restent accessibles via la sidebar desktop et le tableau de bord.
+La bottom bar affiche les 4 items non-`desktopOnly` : **Tableau de bord**, **Commandes**, **Mes avis**, **Parametres**. Les 2 items `desktopOnly` (Adresses, Mes demandes) restent accessibles via la sidebar desktop et le tableau de bord.
 
 ---
 
@@ -169,6 +178,12 @@ La bottom bar affiche 5 items. Les 2 items `desktopOnly` restent accessibles via
 | `modules/users/data/get-account-stats.ts` | `getAccountStats()` | `Promise<AccountStats \| null>` |
 
 `AccountStats` contient : `totalOrders: number`, `pendingOrders: number`, `cartItemsCount: number`.
+
+> **Note :** `memberSince` (Date) n'est pas dans `AccountStats`. Il est passe separement a `AccountStatsCards` depuis `user.createdAt` via `getCurrentUser()` (`modules/users/data/get-current-user.ts`).
+>
+> `GET_CURRENT_USER_DEFAULT_SELECT` (`modules/users/constants/current-user.constants.ts`) selectionne actuellement : `id`, `name`, `email`, `emailVerified`, `role`, `createdAt`, `updatedAt`. Ce select devra etre enrichi avec `accountStatus` et `deletionRequestedAt` pour la Feature M.
+
+> **Note :** `pendingOrders` compte les commandes avec `status: "PROCESSING"` (en preparation), pas `PENDING`. Le nom est trompeur mais conserve pour compatibilite.
 
 Le cache utilise `"use cache: private"`, `cacheLife("userOrders")`, `cacheTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId))`.
 
@@ -191,7 +206,7 @@ Le cache utilise `"use cache: private"`, `cacheLife("userOrders")`, `cacheTag(OR
 
 ### Enrichissements possibles
 
-- Commandes recentes (liste des 3-5 dernieres commandes)
+- Commandes recentes via `RecentOrders` (`modules/orders/components/recent-orders.tsx`) : composant existant (table avec colonnes, limite configurable, lien "voir tout" vers `/commandes`). L'integrer dans la page dashboard sous les stats, enveloppe dans `<Suspense>` avec skeleton. Props : `limit={5}` pour afficher les 5 dernieres commandes
 - Liens rapides vers les sections principales (commandes, favoris, parametres)
 - Bandeau si `accountStatus === "PENDING_DELETION"` (lie a Feature M)
 
@@ -254,6 +269,74 @@ Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `
 ### Empty state
 
 0 commandes : "Vous n'avez pas encore passe de commande." + lien vers `/creations`.
+
+---
+
+## Page detail commande (`/commandes/[orderNumber]`)
+
+> **Statut : A faire** — Backend complet, page a creer
+
+### Statut actuel
+
+- **Backend** : complet (data fetcher avec auth + scope userId, composants d'affichage)
+- **Composants** : existants (`OrderItemsList`, `OrderStatusTimeline`, `OrderTracking`, `OrderSummaryCard`, `OrderAddressesCard`, `DownloadInvoiceButton`)
+- **Page** : supprimee, a creer
+- **Composants a creer** : `OrderRefundsCard` (Feature D), `CancelOrderButton` (Feature K)
+
+### Donnees disponibles
+
+| Source | Fonction | Return type |
+|---|---|---|
+| `modules/orders/data/get-order.ts` | `getOrder({ orderNumber })` | `Promise<Order \| null>` |
+
+`getOrder()` gere l'authentification et le scope `userId` automatiquement (les non-admins ne voient que leurs propres commandes). Utilise `"use cache: private"` avec `cacheLife("dashboard")` et tags specifiques a l'utilisateur.
+
+### Fichiers
+
+| Fichier | Role |
+|---|---|
+| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | **A creer** - Page detail commande |
+| `modules/orders/data/get-order.ts` | Data fetcher avec auth + cache |
+| `modules/orders/constants/order.constants.ts` | `GET_ORDER_SELECT` (a enrichir avec `refunds` et `discountUsages`) |
+
+### Layout et assemblage des composants
+
+La page utilise une grille 2/3 + 1/3 :
+
+**Colonne principale (2/3)** :
+1. `OrderItemsList` - Liste des articles commandes
+2. `OrderRefundsCard` - Historique remboursements (Feature D, visible seulement si `order.refunds.length > 0`)
+3. `OrderStatusTimeline` - Timeline de statut
+4. `OrderTracking` - Suivi colis (visible seulement si `order.trackingNumber`)
+
+**Colonne sidebar (1/3)** :
+1. `OrderSummaryCard` - Recapitulatif montants + codes promo (Feature L)
+2. `OrderAddressesCard` - Adresse de livraison
+3. `DownloadInvoiceButton` - Telechargement facture (visible seulement si `order.paymentStatus === "PAID"`)
+4. `CancelOrderButton` - Annulation commande (Feature K, visible seulement si `canCancelOrder(order)` et `order.status === "PENDING"`)
+
+### Conditions d'affichage
+
+| Composant | Condition |
+|---|---|
+| `OrderRefundsCard` | `order.refunds.length > 0` |
+| `OrderTracking` | `order.trackingNumber` non null |
+| `DownloadInvoiceButton` | `order.paymentStatus === "PAID"` |
+| `CancelOrderButton` | `canCancelOrder(order)` + guard client (`order.status === "PENDING"`) |
+
+### Gestion d'erreur
+
+- Commande introuvable : appeler `notFound()` → affiche `not-found.tsx` de l'espace client
+- Commande d'un autre utilisateur : `getOrder()` filtre par `userId` automatiquement → meme comportement que introuvable
+
+### Metadata
+
+```ts
+export async function generateMetadata({ params }: { params: Promise<{ orderNumber: string }> }) {
+  const { orderNumber } = await params
+  return { title: `Commande ${orderNumber}` }
+}
+```
 
 ---
 
@@ -804,7 +887,7 @@ Le bouton est deja present dans `ProductCard` qui est utilise par la wishlist. I
 
 | Fichier | Role |
 |---|---|
-| `app/(boutique)/(espace-client)/favoris/page.tsx` | **Existe** - Page favoris (+ error.tsx, loading.tsx) |
+| `app/(boutique)/favoris/page.tsx` | **Existe** - Page favoris (+ error.tsx, loading.tsx), hors espace-client |
 | `modules/products/components/product-card.tsx` | Carte produit (inclut `AddToCartCardButton`) |
 | `modules/cart/components/add-to-cart-card-button.tsx` | Bouton ajout panier (existant) |
 
@@ -1090,7 +1173,7 @@ Mais l'implementation actuelle (`modules/users/actions/delete-account.ts`) **byp
 >
 > Si l'option 1 (differee) est retenue, il faut harmoniser ces 2 differences — idealement factoriser la logique d'anonymisation dans un service partage (`modules/users/services/anonymize-user.service.ts`).
 
-> **Note** : `GET_CURRENT_USER_DEFAULT_SELECT` devra etre enrichi avec `accountStatus` et `deletionRequestedAt` pour que l'UI puisse afficher le bandeau "Suppression en attente" et le bouton "Annuler la suppression" dans `GdprSection`.
+> **Note** : `GET_CURRENT_USER_DEFAULT_SELECT` (`modules/users/constants/current-user.constants.ts`, select actuel : `id`, `name`, `email`, `emailVerified`, `role`, `createdAt`, `updatedAt`) devra etre enrichi avec `accountStatus` et `deletionRequestedAt` pour que l'UI puisse afficher le bandeau "Suppression en attente" et le bouton "Annuler la suppression" dans `GdprSection`.
 
 ### Decision requise
 
@@ -1233,7 +1316,6 @@ Priorites E2E :
 | Mes demandes (B) | "Vous n'avez pas encore fait de demande de personnalisation." + lien vers `/personnalisation` |
 | Commandes (liste) | "Vous n'avez pas encore passe de commande." + lien vers `/creations` |
 | Commandes (filtres actifs, F) | "Aucune commande ne correspond a vos criteres." + bouton "Reinitialiser les filtres" |
-| Favoris | "Votre liste de favoris est vide." + lien vers `/creations` |
 | Mes avis | "Vous n'avez pas encore laisse d'avis." |
 | Sessions (G) | Impossible (au moins la session actuelle existe) |
 
@@ -1257,13 +1339,14 @@ Toutes les pages sont a recreer. Commencer par les pages avec backend complet, p
 
 ### Phase 1 - Pages a backend complet (pages a recreer uniquement)
 
-1. **Nav** + **Layout** - Layout espace-client + navigation
-2. **A** - Adresses (composants complets)
-3. **B** - Mes demandes (composants complets)
-4. **E** - Newsletter settings (composant complet)
-5. **G** - Sessions actives (composant complet)
-6. **J** - Favoris avec panier (composant complet)
-7. **C** - Detail commande avec facture PDF (composant complet)
+1. **Nav** + **Layout** + **loading.tsx** - Layout espace-client + navigation + skeleton global
+   - Sous-tache : migrer `favoris/page.tsx` de `PageHeader variant="default"` vers `variant="compact"` (coherence avec le nouveau layout)
+   - Sous-tache : nettoyer `ROUTES.ACCOUNT` (supprimer `PROFILE`/`SECURITY` dead code, ajouter `SETTINGS`/`ADDRESSES`/`CUSTOMIZATIONS`)
+2. **Dashboard** + **Commandes liste** + **Mes avis** - Pages a recreer (composants complets)
+3. **A** - Adresses (composants complets)
+4. **B** - Mes demandes (composants complets)
+5. **E** + **G** - Parametres : Newsletter settings + Sessions actives (composants complets)
+6. **C** - Detail commande avec facture PDF (composant complet)
 
 ### Phase 2 - Features avec backend a completer
 

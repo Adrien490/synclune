@@ -6,6 +6,5 @@ export * from "./navbar-skeleton";
 export * from "./navbar-wrapper";
 export * from "./menu-sheet";
 export * from "./desktop-nav";
-export * from "./account-dropdown";
 export * from "./mega-menu-creations";
 export * from "./mega-menu-collections";

@@ -52,8 +52,9 @@ export const ROUTES = {
 			`/commandes/${orderIdOrNumber}`,
 		FAVORITES: "/favoris",
 		REVIEWS: "/mes-avis",
-		PROFILE: "/compte/profil",
-		SECURITY: "/compte/securite",
+		ADDRESSES: "/adresses",
+		CUSTOMIZATIONS: "/mes-demandes",
+		SETTINGS: "/parametres",
 	},
 
 	// Shop

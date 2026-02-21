@@ -2,7 +2,10 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useBottomBarHeight } from "@/shared/hooks";
-import { Heart, LayoutDashboard, MapPin, MessageSquare, Package, Settings, Sparkles } from "lucide-react";
+import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { motion, useReducedMotion } from "motion/react";
+import { LayoutDashboard, LogOut, MapPin, MessageSquare, Package, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,6 +13,7 @@ const navItems = [
 	{
 		href: "/compte",
 		label: "Tableau de bord",
+		mobileLabel: "Accueil",
 		icon: LayoutDashboard,
 	},
 	{
@@ -21,11 +25,6 @@ const navItems = [
 		href: "/mes-avis",
 		label: "Mes avis",
 		icon: MessageSquare,
-	},
-	{
-		href: "/favoris",
-		label: "Favoris",
-		icon: Heart,
 	},
 	{
 		href: "/adresses",
@@ -46,6 +45,10 @@ const navItems = [
 	},
 ] as const;
 
+const mobileItems = navItems.filter(
+	(item) => !("desktopOnly" in item && item.desktopOnly)
+);
+
 interface AccountNavProps {
 	/** Variant pour afficher seulement mobile ou desktop */
 	variant?: "full" | "mobile-only" | "desktop-only";
@@ -53,13 +56,14 @@ interface AccountNavProps {
 
 /**
  * Navigation de l'espace client
- * - Desktop : Sidebar à gauche (sticky)
- * - Mobile : Bottom tabs fixes
+ * - Desktop : Sidebar a gauche (sticky)
+ * - Mobile : Bottom bar fixe avec animation d'entree
  *
- * @param variant - "full" (défaut) affiche les deux, "mobile-only" ou "desktop-only"
+ * @param variant - "full" (defaut) affiche les deux, "mobile-only" ou "desktop-only"
  */
 export function AccountNav({ variant = "full" }: AccountNavProps) {
 	const pathname = usePathname();
+	const prefersReducedMotion = useReducedMotion();
 
 	const showDesktop = variant === "full" || variant === "desktop-only";
 	const showMobile = variant === "full" || variant === "mobile-only";
@@ -78,7 +82,7 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 			{/* Desktop Sidebar */}
 			{showDesktop && (
 				<aside className="hidden lg:block w-56 shrink-0">
-					<nav className="sticky top-28 space-y-1">
+					<nav className="sticky top-28 flex flex-col gap-1">
 						{navItems.map((item) => {
 							const Icon = item.icon;
 							const active = isActive(item.href);
@@ -99,34 +103,73 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 								</Link>
 							);
 						})}
+
+						<div className="my-2 border-t border-border" />
+
+						<LogoutAlertDialog>
+							<button
+								type="button"
+								className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full"
+							>
+								<LogOut className="size-5" />
+								Se déconnecter
+							</button>
+						</LogoutAlertDialog>
 					</nav>
 				</aside>
 			)}
 
-			{/* Mobile Bottom Tabs */}
+			{/* Mobile Bottom Bar */}
 			{showMobile && (
-				<nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border safe-area-bottom">
-					<div className="flex items-center justify-around py-2">
-						{navItems.filter((item) => !("desktopOnly" in item && item.desktopOnly)).map((item) => {
+				<motion.nav
+					initial={prefersReducedMotion ? false : { y: 100, opacity: 0 }}
+					animate={{ y: 0, opacity: 1 }}
+					transition={MOTION_CONFIG.spring.bar}
+					className={cn(
+						"lg:hidden",
+						"fixed bottom-0 left-0 right-0 z-50",
+						"pb-[env(safe-area-inset-bottom)]",
+						"bg-background/95 backdrop-blur-md",
+						"border-t border-x border-border",
+						"rounded-t-2xl",
+						"shadow-[0_-4px_20px_rgba(0,0,0,0.08)]",
+					)}
+					aria-label="Navigation espace client"
+				>
+					<div className="flex items-stretch h-14">
+						{mobileItems.map((item) => {
 							const Icon = item.icon;
 							const active = isActive(item.href);
+							const label = "mobileLabel" in item ? item.mobileLabel : item.label;
 
 							return (
 								<Link
 									key={item.href}
 									href={item.href}
 									className={cn(
-										"flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-15",
-										active ? "text-foreground" : "text-muted-foreground"
+										"flex-1 flex flex-col items-center justify-center gap-1",
+										"transition-colors duration-200",
+										"active:scale-[0.98] active:bg-primary/10",
+										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+										"relative",
+										active
+											? "text-foreground"
+											: "text-muted-foreground hover:text-foreground"
 									)}
 								>
-									<Icon className="size-5" />
-									<span className="text-xs font-medium">{item.label}</span>
+									{active && (
+										<span
+											className="absolute -top-0.5 left-1/2 -translate-x-1/2 size-1.5 bg-primary rounded-full animate-in zoom-in-50 duration-200"
+											aria-hidden="true"
+										/>
+									)}
+									<Icon className="size-5" aria-hidden="true" />
+									<span className="text-xs font-medium">{label}</span>
 								</Link>
 							);
 						})}
 					</div>
-				</nav>
+				</motion.nav>
 			)}
 		</>
 	);

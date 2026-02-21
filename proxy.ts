@@ -1,12 +1,9 @@
 /**
- * FICHIER DE RÉFÉRENCE - MIDDLEWARE DÉSACTIVÉ
+ * Proxy de protection des routes (convention Next.js 16)
  *
- * Ce fichier contient la logique de middleware pour la protection des routes,
- * mais il n'est PAS activé. La protection des routes repose sur les validations
- * côté serveur via requireAuth() et requireAdmin() dans les pages et actions.
- *
- * Pour activer ce middleware, créer middleware.ts à la racine :
- * export { proxy as middleware, config } from "./proxy";
+ * Vérifie l'existence du cookie de session (pas de validation DB).
+ * Les pages/actions protégées DOIVENT toujours revalider la session côté serveur
+ * avec requireAuth() / requireAdmin() pour garantir la sécurité.
  */
 
 import { getSessionCookie } from "better-auth/cookies";
@@ -41,6 +38,8 @@ const protectedRoutes = [
 	"/compte",
 	"/commandes",
 	"/adresses",
+	"/mes-avis",
+	"/mes-demandes",
 	"/parametres",
 ] as const;
 
