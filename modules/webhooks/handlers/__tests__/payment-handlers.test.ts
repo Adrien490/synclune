@@ -111,7 +111,7 @@ function makeInvoice(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "in_123",
 		number: "INV-001",
-		metadata: { order_id: "order-1" },
+		metadata: { orderId: "order-1" },
 		customer_email: "client@example.com",
 		amount_due: 10000,
 		status: "open",
@@ -326,7 +326,7 @@ describe("handleInvoicePaymentFailed", () => {
 		mockBuildUrl.mockImplementation((path: string) => `https://synclune.fr${path}`);
 	});
 
-	it("should find order by metadata.order_id", async () => {
+	it("should find order by metadata.orderId", async () => {
 		const order = {
 			id: "order-1",
 			orderNumber: "SYN-001",
@@ -349,7 +349,7 @@ describe("handleInvoicePaymentFailed", () => {
 		mockPrisma.order.findFirst.mockResolvedValue(null);
 
 		const result = await handleInvoicePaymentFailed(
-			makeInvoice({ metadata: { order_id: "order-missing" } }),
+			makeInvoice({ metadata: { orderId: "order-missing" } }),
 		);
 
 		expect(result.success).toBe(true);
@@ -360,7 +360,7 @@ describe("handleInvoicePaymentFailed", () => {
 		}
 	});
 
-	it("should work without order_id in metadata", async () => {
+	it("should work without orderId in metadata", async () => {
 		const result = await handleInvoicePaymentFailed(
 			makeInvoice({ metadata: {} }),
 		);

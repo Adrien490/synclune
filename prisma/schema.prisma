@@ -589,6 +589,7 @@ model Order {
   @@index([stripeCustomerId])
   @@index([paymentStatus, createdAt]) // sync-async-payments cron
   @@index([fulfillmentStatus, actualDelivery]) // review-request-emails cron
+  @@index([paidAt(sort: Desc)]) // Dashboard KPIs, revenue chart, recent orders, CSV export
 }
 
 /// Historique des actions sur les commandes (audit trail)
@@ -839,7 +840,6 @@ model Dispute {
   updatedAt DateTime @updatedAt
 
   @@index([orderId])
-  @@index([status, dueBy]) // Dashboard: disputes needing attention
 }
 
 // ============================================================================
@@ -1102,7 +1102,6 @@ model WebhookEvent {
   receivedAt    DateTime           @default(now())
   processedAt   DateTime?
 
-  @@index([processedAt]) // cleanup-webhook-events cron
   @@index([status, processedAt]) // cleanup + retry queries filter by status then processedAt
   @@index([status, receivedAt]) // cleanup SKIPPED/stale webhook events by receivedAt
 }

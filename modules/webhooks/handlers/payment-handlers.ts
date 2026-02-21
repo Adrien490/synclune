@@ -181,7 +181,7 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
  */
 export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<WebhookHandlerResult> {
 	// Try to find the related order via invoice metadata or customer email
-	const orderId = invoice.metadata?.order_id;
+	const orderId = invoice.metadata?.orderId;
 	const order = orderId
 		? await prisma.order.findFirst({
 				where: { id: orderId, ...notDeleted },
