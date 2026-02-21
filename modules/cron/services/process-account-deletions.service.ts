@@ -8,6 +8,7 @@ import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { sendAccountDeletionEmail } from "@/modules/emails/services/auth-emails";
+import { generateAnonymizedEmail } from "@/modules/users/utils/anonymization.utils";
 
 /**
  * Processes GDPR account deletion requests.
@@ -74,7 +75,7 @@ export async function processAccountDeletions(): Promise<{
 			});
 			const reviewMediaUrls = reviewMedias.map((m) => m.url);
 
-			const anonymizedEmail = `anonymized-${user.id}@deleted.local`;
+			const anonymizedEmail = generateAnonymizedEmail(user.id);
 			const now = new Date();
 
 			await prisma.$transaction(async (tx) => {

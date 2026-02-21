@@ -113,7 +113,7 @@ describe("processAccountDeletions", () => {
 			where: { id: "user-1" },
 			data: expect.objectContaining({
 				accountStatus: "ANONYMIZED",
-				email: "anonymized-user-1@deleted.local",
+				email: "anonymized-user-1@deleted.synclune.local",
 				name: "Utilisateur supprimé",
 				image: null,
 				stripeCustomerId: null,
@@ -171,7 +171,7 @@ describe("processAccountDeletions", () => {
 			where: { userId: "user-order" },
 			data: {
 				firstName: "Anonyme",
-				email: "anonymized-user-order@deleted.local",
+				email: "anonymized-user-order@deleted.synclune.local",
 				phone: null,
 				details: "Contenu supprimé",
 			},
@@ -180,7 +180,7 @@ describe("processAccountDeletions", () => {
 		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
 			where: { userId: "user-order" },
 			data: {
-				customerEmail: "anonymized-user-order@deleted.local",
+				customerEmail: "anonymized-user-order@deleted.synclune.local",
 				customerName: "Client supprimé",
 				customerPhone: null,
 				shippingFirstName: "X",

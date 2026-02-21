@@ -18,6 +18,7 @@ import {
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { deleteAccountSchema } from "../schemas/user.schemas";
+import { generateAnonymizedEmail } from "../utils/anonymization.utils";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { USERS_CACHE_TAGS } from "../constants/cache";
@@ -78,7 +79,7 @@ export async function deleteAccount(
 			);
 		}
 
-		const anonymizedEmail = `deleted_${userId.slice(0, 8)}@synclune.local`;
+		const anonymizedEmail = generateAnonymizedEmail(userId);
 		const stripeCustomerId = user.stripeCustomerId;
 		const userAvatar = userWithImage?.image;
 

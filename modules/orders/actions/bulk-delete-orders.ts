@@ -56,15 +56,15 @@ export async function bulkDeleteOrders(
 				id: true,
 				orderNumber: true,
 				userId: true,
-				// ROADMAP: Invoices - add invoiceNumber to select
+				invoiceNumber: true,
 				paymentStatus: true,
 			},
 		});
 
 		// Filter orders eligible for deletion
-		// ROADMAP: Invoices - add invoiceNumber === null check
 		const deletableOrders = orders.filter(
 			(order) =>
+				!order.invoiceNumber &&
 				order.paymentStatus !== PaymentStatus.PAID &&
 				order.paymentStatus !== PaymentStatus.REFUNDED
 		);

@@ -53,7 +53,7 @@ export async function deleteOrder(
 				id: true,
 				orderNumber: true,
 				userId: true,
-				// ROADMAP: Invoices - add invoiceNumber to select
+				invoiceNumber: true,
 				paymentStatus: true,
 			},
 		});
@@ -62,7 +62,10 @@ export async function deleteOrder(
 			return error(ORDER_ERROR_MESSAGES.NOT_FOUND);
 		}
 
-		// ROADMAP: Invoices - check invoiceNumber === null before allowing delete
+		// Règle 1 : Vérifier qu'aucune facture n'a été émise
+		if (order.invoiceNumber) {
+			return error(ORDER_ERROR_MESSAGES.HAS_INVOICE);
+		}
 
 		// Règle 2 : Vérifier que la commande n'a jamais été payée
 		// PAID ou REFUNDED signifie qu'il y a eu un paiement
