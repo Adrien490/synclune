@@ -11,6 +11,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		refund: { findMany: vi.fn() },
+		orderNote: { create: vi.fn() },
 	},
 	mockStripe: {
 		refunds: { retrieve: vi.fn() },
@@ -44,7 +45,7 @@ import { THRESHOLDS } from "@/modules/cron/constants/limits";
 describe("reconcilePendingRefunds", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.useFakeTimers();
+		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(new Date("2026-02-09T18:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
 		mockSendRefundFailedAlert.mockResolvedValue(undefined);
@@ -63,7 +64,7 @@ describe("reconcilePendingRefunds", () => {
 
 		const result = await reconcilePendingRefunds();
 
-		expect(result).toEqual({ checked: 0, updated: 0, errors: 0, hasMore: false });
+		expect(result).toEqual({ checked: 0, updated: 0, errors: 0, staleAlerted: 0, hasMore: false });
 	});
 
 	it("should query APPROVED refunds with correct time threshold", async () => {
@@ -71,6 +72,7 @@ describe("reconcilePendingRefunds", () => {
 
 		await reconcilePendingRefunds();
 
+		// Phase 1: APPROVED refunds with stripeRefundId
 		const call = mockPrisma.refund.findMany.mock.calls[0][0];
 		expect(call.where.status).toBe("APPROVED");
 		expect(call.where.stripeRefundId).toEqual({ not: null });
@@ -81,6 +83,11 @@ describe("reconcilePendingRefunds", () => {
 		);
 		expect(call.where.processedAt.lt.getTime()).toBe(minAge.getTime());
 		expect(call.take).toBe(25);
+
+		// Phase 2: stale PENDING/APPROVED refunds without stripeRefundId
+		const call2 = mockPrisma.refund.findMany.mock.calls[1][0];
+		expect(call2.where.status).toEqual({ in: ["PENDING", "APPROVED"] });
+		expect(call2.where.stripeRefundId).toBeNull();
 	});
 
 	it("should update refund to COMPLETED when Stripe shows succeeded", async () => {
@@ -90,7 +97,9 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-001" },
 		};
-		mockPrisma.refund.findMany.mockResolvedValue([refund]);
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([refund])
+			.mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "succeeded",
 			failure_reason: null,
@@ -114,7 +123,9 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-002" },
 		};
-		mockPrisma.refund.findMany.mockResolvedValue([refund]);
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([refund])
+			.mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "failed",
 			failure_reason: "charge_for_pending_refund_disputed",
@@ -137,7 +148,9 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-003" },
 		};
-		mockPrisma.refund.findMany.mockResolvedValue([refund]);
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([refund])
+			.mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "failed",
 			failure_reason: null,
@@ -159,7 +172,9 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-004" },
 		};
-		mockPrisma.refund.findMany.mockResolvedValue([refund]);
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([refund])
+			.mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "pending",
 		});
@@ -179,7 +194,9 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-005" },
 		};
-		mockPrisma.refund.findMany.mockResolvedValue([refund]);
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([refund])
+			.mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockRejectedValue(
 			new Error("Stripe API error")
 		);
@@ -197,7 +214,9 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-006" },
 		};
-		mockPrisma.refund.findMany.mockResolvedValue([refund]);
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([refund])
+			.mockResolvedValueOnce([]);
 
 		const result = await reconcilePendingRefunds();
 
@@ -227,7 +246,9 @@ describe("reconcilePendingRefunds", () => {
 				order: { orderNumber: "SYN-C" },
 			},
 		];
-		mockPrisma.refund.findMany.mockResolvedValue(refunds);
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce(refunds)
+			.mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve
 			.mockResolvedValueOnce({ status: "succeeded" })
 			.mockResolvedValueOnce({ status: "failed", failure_reason: "disputed" })

@@ -146,13 +146,6 @@ export async function processOrderTransaction(
 			throw new Error(`Order not found: ${orderId}`);
 		}
 
-		// P1.1: Vérifier que l'email Stripe correspond à la commande (anti-fraude)
-		const stripeEmail = session.customer_email || session.customer_details?.email;
-		if (stripeEmail && order.customerEmail && stripeEmail.toLowerCase() !== order.customerEmail.toLowerCase()) {
-			console.warn(`⚠️ [WEBHOOK] Email mismatch for order ${orderId}: Stripe=${stripeEmail}, Order=${order.customerEmail}`);
-			// On log mais on ne bloque pas (guest checkout peut changer d'email)
-		}
-
 		// 2. Vérifier l'idempotence - Si déjà traité, on skip
 		if (order.paymentStatus === "PAID") {
 			console.log(`⚠️  [WEBHOOK] Order ${orderId} already processed, skipping`);

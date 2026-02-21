@@ -11,19 +11,21 @@ import {
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
-import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_THROTTLE_MS, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
  * Reconciles pending refunds by polling Stripe.
  *
- * Refunds with APPROVED status and a stripeRefundId wait for the
- * refund.updated webhook to transition to COMPLETED.
- * This cron polls Stripe to reconcile in case of webhook failure.
+ * Phase 1: APPROVED refunds with a stripeRefundId - poll Stripe for final status.
+ * Phase 2: Stale PENDING/APPROVED refunds without stripeRefundId - alert admin.
+ *   These are "phantom refunds" created in DB but never processed through Stripe
+ *   (e.g. crash between createRefund and processRefund).
  */
 export async function reconcilePendingRefunds(): Promise<{
 	checked: number;
 	updated: number;
 	errors: number;
+	staleAlerted: number;
 	hasMore: boolean;
 } | null> {
 	console.log("[CRON:reconcile-refunds] Starting refund reconciliation...");
@@ -80,6 +82,10 @@ export async function reconcilePendingRefunds(): Promise<{
 		if (!refund.stripeRefundId) continue;
 
 		try {
+			// Throttle to avoid Stripe rate limits
+			if (updated > 0 || errors > 0) {
+				await new Promise(resolve => setTimeout(resolve, STRIPE_THROTTLE_MS));
+			}
 			const stripeRefund = await stripe.refunds.retrieve(
 				refund.stripeRefundId,
 				{ timeout: STRIPE_TIMEOUT_MS }
@@ -120,8 +126,79 @@ export async function reconcilePendingRefunds(): Promise<{
 		}
 	}
 
-	// Invalidate caches if any refunds were updated
-	if (updated > 0) {
+	// ========================================================================
+	// Phase 2: Detect stale refunds without stripeRefundId (phantom refunds)
+	// These were created in DB but never processed through Stripe
+	// ========================================================================
+	const staleAge = new Date(Date.now() - THRESHOLDS.REFUND_STALE_PENDING_MS);
+
+	const staleRefunds = await prisma.refund.findMany({
+		where: {
+			status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] },
+			stripeRefundId: null,
+			createdAt: { lt: staleAge },
+			...notDeleted,
+		},
+		select: {
+			id: true,
+			status: true,
+			amount: true,
+			createdAt: true,
+			orderId: true,
+			order: {
+				select: {
+					id: true,
+					orderNumber: true,
+				},
+			},
+		},
+		take: BATCH_SIZE_MEDIUM,
+	});
+
+	let staleAlerted = 0;
+
+	if (staleRefunds.length > 0) {
+		console.warn(
+			`[CRON:reconcile-refunds] Found ${staleRefunds.length} stale refund(s) without Stripe ID`
+		);
+
+		for (const stale of staleRefunds) {
+			const ageHours = Math.round(
+				(Date.now() - stale.createdAt.getTime()) / (1000 * 60 * 60)
+			);
+			console.warn(
+				`[CRON:reconcile-refunds] Stale refund ${stale.id} (${stale.status}, ${ageHours}h old) ` +
+				`for order ${stale.order.orderNumber} - amount: ${stale.amount} cents. ` +
+				`No stripeRefundId found. Admin action required.`
+			);
+
+			// Create an admin OrderNote to flag the stale refund
+			try {
+				await prisma.orderNote.create({
+					data: {
+						orderId: stale.orderId,
+						content:
+							`[REMBOURSEMENT ORPHELIN] Le remboursement ${stale.id} (${stale.amount / 100} EUR, statut: ${stale.status}) ` +
+							`est en attente depuis ${ageHours}h sans avoir ete transmis a Stripe. ` +
+							`Action requise: approuver et traiter le remboursement, ou le rejeter/annuler.`,
+						authorId: "system",
+						authorName: "Systeme (cron reconcile-refunds)",
+					},
+				});
+				staleAlerted++;
+				tagsToInvalidate.add(ORDERS_CACHE_TAGS.NOTES(stale.orderId));
+			} catch (noteError) {
+				console.error(
+					`[CRON:reconcile-refunds] Error creating note for stale refund ${stale.id}:`,
+					noteError
+				);
+				errors++;
+			}
+		}
+	}
+
+	// Invalidate caches if any refunds were updated or alerted
+	if (updated > 0 || staleAlerted > 0) {
 		tagsToInvalidate.add(ORDERS_CACHE_TAGS.LIST);
 		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_BADGES);
@@ -134,13 +211,14 @@ export async function reconcilePendingRefunds(): Promise<{
 	}
 
 	console.log(
-		`[CRON:reconcile-refunds] Reconciliation completed: ${updated} updated, ${errors} errors`
+		`[CRON:reconcile-refunds] Reconciliation completed: ${updated} updated, ${staleAlerted} stale alerted, ${errors} errors`
 	);
 
 	return {
 		checked: pendingRefunds.length,
 		updated,
 		errors,
-		hasMore: pendingRefunds.length === BATCH_SIZE_MEDIUM,
+		staleAlerted,
+		hasMore: pendingRefunds.length === BATCH_SIZE_MEDIUM || staleRefunds.length === BATCH_SIZE_MEDIUM,
 	};
 }

@@ -12,7 +12,7 @@ import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
-import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_THROTTLE_MS, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
  * Synchronizes async payment statuses by polling Stripe.
@@ -76,6 +76,10 @@ export async function syncAsyncPayments(): Promise<{
 		if (!order.stripePaymentIntentId) continue;
 
 		try {
+			// Throttle to avoid Stripe rate limits
+			if (updated > 0 || errors > 0) {
+				await new Promise(resolve => setTimeout(resolve, STRIPE_THROTTLE_MS));
+			}
 			const paymentIntent = await stripe.paymentIntents.retrieve(
 				order.stripePaymentIntentId,
 				{ timeout: STRIPE_TIMEOUT_MS }

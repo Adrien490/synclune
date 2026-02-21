@@ -6,6 +6,7 @@ import {
 	buildPostCheckoutTasks,
 	cancelExpiredOrder,
 } from "../services/checkout.service";
+import { prisma } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -45,6 +46,36 @@ export async function handleCheckoutSessionCompleted(
 
 		// 3. Construire les tâches post-webhook (emails, cache)
 		const tasks = buildPostCheckoutTasks(order, session);
+
+		// 4. Anti-fraud: detect email mismatch between Stripe and order
+		const stripeEmail = session.customer_email || session.customer_details?.email;
+		if (stripeEmail) {
+			const dbOrder = await prisma.order.findUnique({
+				where: { id: orderId },
+				select: { customerEmail: true },
+			});
+			if (dbOrder?.customerEmail && stripeEmail.toLowerCase() !== dbOrder.customerEmail.toLowerCase()) {
+				console.warn(
+					`[WEBHOOK] Email mismatch for order ${orderId}: Stripe=${stripeEmail}, Order=${dbOrder.customerEmail}`
+				);
+				// Create an admin OrderNote for visibility
+				await prisma.orderNote.create({
+					data: {
+						orderId,
+						content:
+							`[ALERTE EMAIL] Email Stripe (${stripeEmail}) ne correspond pas a l'email commande (${dbOrder.customerEmail}). ` +
+							`Verifier la legitimite de cette commande.`,
+						authorId: "system",
+						authorName: "Systeme (webhook Stripe)",
+					},
+				});
+				// Add cache invalidation for order notes
+				tasks.push({
+					type: "INVALIDATE_CACHE",
+					tags: [ORDERS_CACHE_TAGS.NOTES(orderId)],
+				});
+			}
+		}
 
 		return { success: true, tasks };
 	} catch (error) {

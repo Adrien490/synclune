@@ -44,7 +44,7 @@ import { THRESHOLDS } from "@/modules/cron/constants/limits";
 describe("syncAsyncPayments", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.useFakeTimers();
+		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(new Date("2026-02-09T12:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
 	});

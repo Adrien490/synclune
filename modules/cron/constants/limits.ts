@@ -76,6 +76,12 @@ export const RETENTION = {
 export const STRIPE_TIMEOUT_MS = 5_000;
 
 /**
+ * Delay between consecutive Stripe API calls in batch cron jobs (ms)
+ * Prevents hitting Stripe's rate limit (100 req/s) during large batches
+ */
+export const STRIPE_THROTTLE_MS = 20;
+
+/**
  * Global deadline for batch processing in cron jobs (ms)
  * Leaves a 10s safety margin before the 60s Vercel function timeout.
  * Jobs check this deadline before each iteration and stop early if exceeded.
@@ -119,4 +125,7 @@ export const THRESHOLDS = {
 
 	/** Time to wait after refund processing before reconciliation */
 	REFUND_RECONCILE_MIN_AGE_MS: 60 * 60 * 1000, // 1 hour
+
+	/** Time after which a PENDING refund without stripeRefundId is considered stale */
+	REFUND_STALE_PENDING_MS: 48 * 60 * 60 * 1000, // 48 hours
 } as const;

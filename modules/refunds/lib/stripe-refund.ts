@@ -88,12 +88,29 @@ export async function createStripeRefund(
 						limit: 10,
 					});
 
-					// Prefer matching by metadata refund_id, then by amount, then fallback to first
+					// Match priority: metadata refund_id > amount + recent timestamp > first refund
 					const byMetadata = params.metadata?.refund_id
 						? existingRefunds.data.find(r => r.metadata?.refund_id === params.metadata!.refund_id)
 						: undefined;
+
+					// Match by amount AND creation time proximity (within 1 hour) for safety
+					const oneHourAgo = Math.floor(Date.now() / 1000) - 3600;
+					const byAmountAndTime = existingRefunds.data.find(
+						r => r.amount === params.amount && r.created >= oneHourAgo
+					);
 					const byAmount = existingRefunds.data.find(r => r.amount === params.amount);
-					existingRefundId = (byMetadata ?? byAmount ?? existingRefunds.data[0])?.id;
+
+					const matched = byMetadata ?? byAmountAndTime ?? byAmount ?? existingRefunds.data[0];
+					existingRefundId = matched?.id;
+
+					// Warn when using weak fallback matching (no metadata)
+					if (!byMetadata && existingRefundId) {
+						const matchType = byAmountAndTime ? "amount+time" : byAmount ? "amount-only" : "first-refund";
+						console.warn(
+							`[STRIPE_REFUND] Recovered refund via fallback (${matchType}): ${existingRefundId}. ` +
+							`No metadata match available. Verify manually if multiple partial refunds exist.`
+						);
+					}
 				} catch {
 					console.warn("[STRIPE_REFUND] Could not recover existing refund ID");
 				}

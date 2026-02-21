@@ -19,7 +19,7 @@ export async function GET() {
 			sendAdminCronFailedAlert({
 				job: "reconcile-refunds",
 				errors: result.errors,
-				details: { checked: result.checked, updated: result.updated },
+				details: { checked: result.checked, updated: result.updated, staleAlerted: result.staleAlerted },
 			}).catch(() => {});
 		}
 
