@@ -10,7 +10,6 @@ import {
 	SheetContent,
 	SheetFooter,
 	SheetHeader,
-	SheetTitle,
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import { cn } from "@/shared/utils/cn";
@@ -98,6 +97,7 @@ export function FilterSheetWrapper({
 			<SheetContent
 				className="w-full sm:w-100 md:w-110 p-0 flex flex-col h-full"
 				onKeyDown={handleKeyDown}
+				title={title}
 			>
 				<SheetHeader
 					className="relative px-6 py-5 border-b border-primary/10 bg-linear-to-r from-background via-primary/[0.02] to-background shrink-0"
@@ -106,12 +106,12 @@ export function FilterSheetWrapper({
 				>
 					<div className="flex items-center justify-between gap-4">
 						<div className="space-y-0.5">
-							<SheetTitle
+							<h2
 								id="filter-sheet-title"
 								className="text-lg font-semibold font-serif tracking-tight"
 							>
 								{title}
-							</SheetTitle>
+							</h2>
 							{description && (
 								<p className="text-sm text-muted-foreground">{description}</p>
 							)}

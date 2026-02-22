@@ -91,10 +91,14 @@ function SheetContent({
 	children,
 	overlayClassName,
 	showCloseButton = true,
+	title,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
 	overlayClassName?: string;
 	showCloseButton?: boolean;
+	/** Accessible title for screen readers. Renders a sr-only Drawer.Title
+	 * to satisfy Radix's accessibility check. */
+	title?: string;
 }) {
 	const { direction } = React.useContext(SheetContext);
 
@@ -120,6 +124,11 @@ function SheetContent({
 				)}
 				{...props}
 			>
+				{title && (
+					<SheetPrimitive.Title className="sr-only">
+						{title}
+					</SheetPrimitive.Title>
+				)}
 				{children}
 				{showCloseButton && (
 					<SheetPrimitive.Close
