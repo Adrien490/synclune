@@ -44,6 +44,7 @@ export function CreateReviewForm({
 			<form
 				action={action}
 				data-pending={isPending || undefined}
+				aria-busy={isPending}
 				className={cn(
 					"space-y-6 transition-all duration-200",
 					"group-has-[[data-pending]]/form:blur-[1px] group-has-[[data-pending]]/form:scale-[0.99] group-has-[[data-pending]]/form:pointer-events-none",

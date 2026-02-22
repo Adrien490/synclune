@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { FileText, Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -39,14 +38,12 @@ export function DownloadInvoiceButton({
 	}
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-lg flex items-center gap-2">
-					<FileText className="h-5 w-5" />
-					Facture
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
+		<section className="space-y-4">
+			<h2 className="text-base font-semibold flex items-center gap-2">
+				<FileText className="size-4 text-muted-foreground" />
+				Facture
+			</h2>
+			<div className="border-t border-border/60 pt-4">
 				<Button
 					variant="outline"
 					className="w-full"
@@ -60,7 +57,7 @@ export function DownloadInvoiceButton({
 					)}
 					{isDownloading ? "Téléchargement..." : "Télécharger la facture"}
 				</Button>
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }

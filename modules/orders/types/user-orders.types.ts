@@ -12,3 +12,4 @@ export type GetUserOrdersReturn = {
 };
 
 export type GetUserOrdersParams = z.infer<typeof getUserOrdersSchema>;
+export type GetUserOrdersInput = z.input<typeof getUserOrdersSchema>;

@@ -20,8 +20,9 @@ import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { useStore } from "@tanstack/react-form";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useRef, useTransition } from "react";
 import { toast } from "sonner";
 
 import { ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
@@ -46,9 +47,22 @@ export function AddressFormDialog({
 	const { isOpen, close, data } =
 		useDialog<AddressDialogData>(ADDRESS_DIALOG_ID);
 	const address = data?.address;
+	const isDirtyRef = useRef(false);
+
+	const handleOpenChange = (open: boolean) => {
+		if (open) return;
+		if (isDirtyRef.current) {
+			// eslint-disable-next-line no-alert
+			const confirmed = window.confirm(
+				"Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer ?"
+			);
+			if (!confirmed) return;
+		}
+		close();
+	};
 
 	return (
-		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
 			<ResponsiveDialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
 				{/* Key pattern: remount form when address changes */}
 				<AddressFormContent
@@ -57,6 +71,7 @@ export function AddressFormDialog({
 					addressSuggestions={addressSuggestions}
 					addressSearchError={addressSearchError}
 					onClose={close}
+					isDirtyRef={isDirtyRef}
 				/>
 			</ResponsiveDialogContent>
 		</ResponsiveDialog>
@@ -68,6 +83,7 @@ interface AddressFormContentProps {
 	addressSuggestions: SearchAddressResult[];
 	addressSearchError: boolean;
 	onClose: () => void;
+	isDirtyRef: React.RefObject<boolean>;
 }
 
 function AddressFormContent({
@@ -75,6 +91,7 @@ function AddressFormContent({
 	addressSuggestions,
 	addressSearchError,
 	onClose,
+	isDirtyRef,
 }: AddressFormContentProps) {
 	const mode = address ? "edit" : "create";
 
@@ -116,6 +133,10 @@ function AddressFormContent({
 
 	const { action, isPending, state } =
 		mode === "create" ? createHook : updateHook;
+
+	// Sync dirty state to parent ref for close confirmation
+	const isDirty = useStore(form.store, (s) => s.isDirty);
+	isDirtyRef.current = isDirty;
 
 	return (
 		<>

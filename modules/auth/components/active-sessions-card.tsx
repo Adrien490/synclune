@@ -1,13 +1,6 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import { revokeSession } from "@/modules/auth/actions/revoke-session";
 import { Monitor, Smartphone, Globe, X, Loader2 } from "lucide-react";
@@ -83,18 +76,18 @@ export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 	const activeSessions = sessions.filter((s) => !s.isExpired);
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="flex items-center gap-2">
-					<Monitor className="w-5 h-5" />
+		<section className="space-y-4">
+			<div>
+				<h2 className="text-base font-semibold flex items-center gap-2">
+					<Monitor className="size-4 text-muted-foreground" />
 					Appareils connectés
-				</CardTitle>
-				<CardDescription>
+				</h2>
+				<p className="text-sm text-muted-foreground mt-0.5">
 					{activeSessions.length} session{activeSessions.length > 1 ? "s" : ""} active{activeSessions.length > 1 ? "s" : ""}
-				</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<div className="space-y-3">
+				</p>
+			</div>
+			<div className="border-t border-border/60 pt-4">
+				<div className="divide-y divide-border/50">
 					{activeSessions.map((session) => {
 						const device = parseDevice(session.userAgent);
 						const DeviceIcon = device.icon;
@@ -103,7 +96,7 @@ export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 						return (
 							<div
 								key={session.id}
-								className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+								className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
 							>
 								<DeviceIcon className="h-5 w-5 text-muted-foreground shrink-0" />
 								<div className="flex-1 min-w-0">
@@ -136,7 +129,7 @@ export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 						);
 					})}
 				</div>
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }

@@ -1,7 +1,9 @@
-import { Button } from "@/shared/components/ui/button";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
+
+import { Button } from "@/shared/components/ui/button";
+
 import type { UserCustomizationRequest } from "../../data/get-user-customization-requests";
 import { CustomizationRequestCard } from "./customization-request-card";
 
@@ -36,29 +38,13 @@ export function CustomizationRequestList({
 	}
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between gap-4">
-				<div>
-					<h2 className="text-lg font-semibold text-foreground">
-						Mes demandes
-					</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						Suivez l'avancement de vos demandes de personnalisation
-					</p>
-				</div>
-				<Button asChild size="sm">
-					<Link href="/personnalisation">Nouvelle demande</Link>
-				</Button>
-			</div>
-
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				{requests.map((request) => (
-					<CustomizationRequestCard
-						key={request.id}
-						request={request}
-					/>
-				))}
-			</div>
+		<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+			{requests.map((request) => (
+				<CustomizationRequestCard
+					key={request.id}
+					request={request}
+				/>
+			))}
 		</div>
 	);
 }

@@ -1,6 +1,6 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getUserOrdersSchema } from "../schemas/user-orders.schemas";
-import type { GetUserOrdersParams, GetUserOrdersReturn } from "../types/user-orders.types";
+import type { GetUserOrdersInput, GetUserOrdersReturn } from "../types/user-orders.types";
 import { fetchUserOrders } from "./fetch-user-orders";
 
 /**
@@ -12,7 +12,7 @@ import { fetchUserOrders } from "./fetch-user-orders";
  * @returns Liste des commandes avec pagination
  */
 export async function getUserOrders(
-	params?: GetUserOrdersParams
+	params?: GetUserOrdersInput
 ): Promise<GetUserOrdersReturn> {
 	// Récupérer la session utilisateur
 	const session = await getSession();

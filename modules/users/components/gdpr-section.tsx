@@ -1,10 +1,3 @@
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import { ExportDataButton } from "./export-data-button";
 import { DeleteAccountDialog } from "./delete-account-dialog";
@@ -12,18 +5,18 @@ import { Shield } from "lucide-react";
 
 export function GdprSection() {
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="flex items-center gap-2">
-					<Shield className="w-5 h-5" />
+		<section className="space-y-4">
+			<div>
+				<h2 className="text-base font-semibold flex items-center gap-2">
+					<Shield className="size-4 text-muted-foreground" />
 					Données personnelles
-				</CardTitle>
-				<CardDescription>
+				</h2>
+				<p className="text-sm text-muted-foreground mt-0.5">
 					Gérez vos données conformément au RGPD (Règlement Général sur la
 					Protection des Données)
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-6">
+				</p>
+			</div>
+			<div className="border-t border-border/60 pt-4 space-y-6">
 				{/* Export */}
 				<div>
 					<h4 className="font-medium mb-2">Droit à la portabilité</h4>
@@ -41,7 +34,7 @@ export function GdprSection() {
 					</p>
 					<DeleteAccountDialog />
 				</div>
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }

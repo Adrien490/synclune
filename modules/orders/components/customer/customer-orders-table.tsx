@@ -3,7 +3,6 @@ import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent } from "@/shared/components/ui/card";
 import {
 	Empty,
 	EmptyContent,
@@ -35,37 +34,40 @@ import Link from "next/link";
 
 export interface CustomerOrdersTableProps {
 	ordersPromise: Promise<GetUserOrdersReturn>;
+	perPage: number;
 }
 
 export async function CustomerOrdersTable({
 	ordersPromise,
+	perPage,
 }: CustomerOrdersTableProps) {
 	const { orders, pagination } = await ordersPromise;
 
 	if (orders.length === 0) {
 		return (
-			<Empty className="py-12">
+			<Empty className="mt-4 mb-12 sm:my-12">
 				<EmptyHeader>
 					<EmptyMedia variant="icon">
 						<ShoppingBag />
 					</EmptyMedia>
 					<EmptyTitle>Aucune commande</EmptyTitle>
 					<EmptyDescription>
-						Vous n'avez pas encore passé de commande.
+						Vous n'avez pas encore passé de commande. Découvrez nos
+						créations artisanales uniques.
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
-					<Link href="/produits" className="text-foreground hover:underline">
-						Découvrir nos créations
-					</Link>
+					<Button asChild variant="primary" size="lg">
+						<Link href="/produits">Découvrir nos créations</Link>
+					</Button>
 				</EmptyContent>
 			</Empty>
 		);
 	}
 
 	return (
-		<Card>
-			<CardContent className="p-0 sm:p-6">
+		<div className="space-y-4">
+			<div className="border rounded-lg overflow-hidden">
 				<TableScrollContainer>
 					<Table
 						role="table"
@@ -166,18 +168,18 @@ export async function CustomerOrdersTable({
 						</TableBody>
 					</Table>
 				</TableScrollContainer>
+			</div>
 
-				<div className="mt-4 px-4 sm:px-0">
-					<CursorPagination
-						perPage={orders.length}
-						hasNextPage={pagination.hasNextPage}
-						hasPreviousPage={pagination.hasPreviousPage}
-						currentPageSize={orders.length}
-						nextCursor={pagination.nextCursor}
-						prevCursor={pagination.prevCursor}
-					/>
-				</div>
-			</CardContent>
-		</Card>
+			<div className="px-1">
+				<CursorPagination
+					perPage={perPage}
+					hasNextPage={pagination.hasNextPage}
+					hasPreviousPage={pagination.hasPreviousPage}
+					currentPageSize={orders.length}
+					nextCursor={pagination.nextCursor}
+					prevCursor={pagination.prevCursor}
+				/>
+			</div>
+		</div>
 	);
 }

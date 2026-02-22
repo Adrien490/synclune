@@ -16,12 +16,13 @@ export function UserReviewCardActions({ review }: UserReviewCardActionsProps) {
 	const deleteDialog = useAlertDialog(DELETE_REVIEW_DIALOG_ID)
 
 	return (
-		<div className="flex items-center gap-2 pt-2" role="group" aria-label="Actions sur l'avis">
+		<div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 pt-2" role="group" aria-label="Actions sur l'avis">
 			<Button
 				variant="outline"
 				size="sm"
-				className="min-h-11"
+				className="min-h-11 w-full xs:w-auto"
 				onClick={() => editDialog.open({ review })}
+				aria-label={`Modifier l'avis sur ${review.product.title}`}
 			>
 				<Edit2 className="size-4 mr-1" aria-hidden="true" />
 				Modifier
@@ -30,13 +31,14 @@ export function UserReviewCardActions({ review }: UserReviewCardActionsProps) {
 			<Button
 				variant="outline"
 				size="sm"
-				className="min-h-11 text-destructive hover:text-destructive"
+				className="min-h-11 w-full xs:w-auto text-destructive hover:text-destructive"
 				onClick={() =>
 					deleteDialog.open({
 						reviewId: review.id,
 						productTitle: review.product.title,
 					})
 				}
+				aria-label={`Supprimer l'avis sur ${review.product.title}`}
 			>
 				<Trash2 className="size-4 mr-1" aria-hidden="true" />
 				Supprimer

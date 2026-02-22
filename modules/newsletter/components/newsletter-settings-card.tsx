@@ -1,13 +1,6 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
 import { toggleNewsletter } from "@/modules/newsletter/actions/toggle-newsletter";
 import { Bell, BellOff, Loader2 } from "lucide-react";
 import { useActionState } from "react";
@@ -33,17 +26,17 @@ export function NewsletterSettingsCard({
 	}, [state]);
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-lg flex items-center gap-2">
-					<Bell className="w-5 h-5" />
+		<section className="space-y-4">
+			<div>
+				<h2 className="text-base font-semibold flex items-center gap-2">
+					<Bell className="size-4 text-muted-foreground" />
 					Newsletter
-				</CardTitle>
-				<CardDescription>
+				</h2>
+				<p className="text-sm text-muted-foreground mt-0.5">
 					Recevez nos nouveautés et offres exclusives
-				</CardDescription>
-			</CardHeader>
-			<CardContent>
+				</p>
+			</div>
+			<div className="border-t border-border/60 pt-4">
 				<div className="space-y-3">
 					<div className="flex items-center gap-2 text-sm">
 						{isSubscribed ? (
@@ -85,7 +78,7 @@ export function NewsletterSettingsCard({
 						</Button>
 					</form>
 				</div>
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }

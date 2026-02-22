@@ -3,15 +3,10 @@ import {
 	PaymentStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	ORDER_STATUS_LABELS,
 	ORDER_STATUS_VARIANTS,
-	PAYMENT_STATUS_LABELS,
-	PAYMENT_STATUS_VARIANTS,
-	FULFILLMENT_STATUS_LABELS,
-	FULFILLMENT_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -80,18 +75,17 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 	const isCancelled = order.status === "CANCELLED";
 
 	return (
-		<Card>
-			<CardHeader>
-				<div className="flex items-center justify-between">
-					<CardTitle className="text-lg">Suivi de commande</CardTitle>
-					<div className="flex gap-2">
-						<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
-							{ORDER_STATUS_LABELS[order.status]}
-						</Badge>
-					</div>
-				</div>
-			</CardHeader>
-			<CardContent>
+		<section className="space-y-4">
+			<div className="flex items-center justify-between">
+				<h2 className="text-base font-semibold flex items-center gap-2">
+					<Clock className="size-4 text-muted-foreground" />
+					Suivi de commande
+				</h2>
+				<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
+					{ORDER_STATUS_LABELS[order.status]}
+				</Badge>
+			</div>
+			<div className="border-t border-border/60 pt-4">
 				{isCancelled ? (
 					<div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-lg">
 						<XCircle className="h-6 w-6 text-destructive" />
@@ -156,7 +150,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 						</div>
 					</div>
 				)}
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }

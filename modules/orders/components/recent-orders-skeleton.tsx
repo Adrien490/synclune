@@ -13,7 +13,6 @@ export function RecentOrdersSkeleton() {
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
 				<Skeleton className="h-7 w-48" />
-				<Skeleton className="h-9 w-24" />
 			</div>
 
 			<div className="border rounded-lg">

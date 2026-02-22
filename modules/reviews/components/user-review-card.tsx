@@ -2,9 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { BadgeCheck, MessageSquare, ExternalLink } from "lucide-react"
 
-import { CardContent } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
-import { cn } from "@/shared/utils/cn"
 
 import { RatingStars } from "@/shared/components/rating-stars"
 
@@ -29,96 +27,101 @@ const formatDate = (date: Date) => {
  * Carte d'avis pour l'espace client "Mes avis"
  * Affichage uniquement - les actions sont dans UserReviewCardActions
  */
-export function UserReviewCard({ review, className }: UserReviewCardProps) {
+export function UserReviewCard({ review }: UserReviewCardProps) {
 	const productImage = review.product.skus[0]?.images[0]
 
 	return (
-		<article className={cn("overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm", className)}>
-			<CardContent className="p-0">
-				<div className="flex flex-col sm:flex-row">
-					{/* Image produit */}
-					<div className="relative w-full sm:w-32 h-32 sm:h-auto shrink-0">
-						{productImage ? (
-							<Image
-								src={productImage.url}
-								alt={productImage.altText ?? review.product.title}
-								fill
-								className="object-cover"
-								sizes="(max-width: 640px) 100vw, 128px"
-								placeholder={productImage.blurDataUrl ? "blur" : "empty"}
-								blurDataURL={productImage.blurDataUrl ?? undefined}
-							/>
-						) : (
-							<div className="w-full h-full bg-muted flex items-center justify-center">
-								<MessageSquare className="size-8 text-muted-foreground" aria-hidden="true" />
+		<article>
+			<div className="flex flex-col sm:flex-row">
+				{/* Image produit */}
+				<div className="relative w-full sm:w-32 aspect-[3/2] sm:aspect-auto sm:h-auto shrink-0">
+					{productImage ? (
+						<Image
+							src={productImage.url}
+							alt={productImage.altText ?? review.product.title}
+							fill
+							className="object-cover"
+							sizes="(max-width: 640px) 100vw, 128px"
+							placeholder={productImage.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={productImage.blurDataUrl ?? undefined}
+						/>
+					) : (
+						<div className="w-full h-full bg-muted flex items-center justify-center">
+							<MessageSquare className="size-8 text-muted-foreground" aria-hidden="true" />
+						</div>
+					)}
+				</div>
+
+				{/* Contenu */}
+				<div className="flex-1 p-4 space-y-3">
+					{/* En-tête: titre produit + statut */}
+					<div className="flex items-start justify-between gap-2">
+						<div className="min-w-0">
+							<Link
+								href={`/creations/${review.product.slug}`}
+								className="font-medium hover:text-primary transition-colors line-clamp-1 flex items-center gap-1"
+								title={review.product.title}
+							>
+								{review.product.title}
+								<ExternalLink className="size-3 shrink-0" aria-hidden="true" />
+							</Link>
+							<div className="flex flex-wrap items-center gap-2 mt-1">
+								<RatingStars rating={review.rating} size="sm" />
+								<time
+									dateTime={new Date(review.createdAt).toISOString()}
+									className="text-xs text-muted-foreground"
+								>
+									{formatDate(review.createdAt)}
+								</time>
+								<Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 h-5 shrink-0 text-muted-foreground">
+									<BadgeCheck className="size-3" aria-hidden="true" />
+									Achat vérifié
+								</Badge>
 							</div>
-						)}
+						</div>
+						<Badge
+							variant={review.status === "PUBLISHED" ? "default" : "secondary"}
+							className="shrink-0"
+							aria-label={`Statut de l'avis : ${REVIEW_STATUS_LABELS[review.status]}`}
+						>
+							{REVIEW_STATUS_LABELS[review.status]}
+						</Badge>
 					</div>
 
-					{/* Contenu */}
-					<div className="flex-1 p-4 space-y-3">
-						{/* En-tête: titre produit + statut */}
-						<div className="flex items-start justify-between gap-2">
-							<div className="min-w-0">
-								<Link
-									href={`/creations/${review.product.slug}`}
-									className="font-medium hover:text-primary transition-colors line-clamp-1 flex items-center gap-1"
-									title={review.product.title}
-								>
-									{review.product.title}
-									<ExternalLink className="size-3 shrink-0" aria-hidden="true" />
-								</Link>
-								<div className="flex flex-wrap items-center gap-2 mt-1">
-									<RatingStars rating={review.rating} size="sm" />
-									<time
-										dateTime={new Date(review.createdAt).toISOString()}
-										className="text-xs text-muted-foreground"
-									>
-										{formatDate(review.createdAt)}
-									</time>
-									<Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 h-5 shrink-0 text-muted-foreground">
-										<BadgeCheck className="size-3" aria-hidden="true" />
-										Achat vérifié
-									</Badge>
-								</div>
-							</div>
-							<Badge
-								variant={review.status === "PUBLISHED" ? "default" : "secondary"}
-								className="shrink-0"
-								role="status"
-								aria-label={`Statut de l'avis : ${REVIEW_STATUS_LABELS[review.status]}`}
-							>
-								{REVIEW_STATUS_LABELS[review.status]}
-							</Badge>
-						</div>
+					{/* Titre de l'avis */}
+					{review.title && (
+						<h4 className="font-medium text-sm">{review.title}</h4>
+					)}
 
-						{/* Titre de l'avis */}
-						{review.title && (
-							<h4 className="font-medium text-sm">{review.title}</h4>
-						)}
+					{/* Contenu de l'avis */}
+					<p className="text-sm text-muted-foreground line-clamp-3">
+						{review.content}
+					</p>
 
-						{/* Contenu de l'avis */}
-						<p className="text-sm text-muted-foreground line-clamp-3">
-							{review.content}
-						</p>
-
-						{/* Réponse de la marque */}
-						{review.response && (
-							<div className="bg-muted/50 rounded-lg p-3 mt-2">
-								<p className="text-xs font-medium text-foreground mb-1">
+					{/* Réponse de la marque */}
+					{review.response && (
+						<div className="bg-muted/50 rounded-lg p-3 mt-2 border-l-2 border-primary/30">
+							<div className="flex items-baseline gap-2 mb-1">
+								<p className="text-xs font-medium text-foreground">
 									Réponse de {review.response.authorName}
 								</p>
-								<p className="text-sm text-muted-foreground line-clamp-2">
-									{review.response.content}
-								</p>
+								<time
+									dateTime={new Date(review.response.createdAt).toISOString()}
+									className="text-[10px] text-muted-foreground"
+								>
+									{formatDate(review.response.createdAt)}
+								</time>
 							</div>
-						)}
+							<p className="text-sm text-muted-foreground line-clamp-2">
+								{review.response.content}
+							</p>
+						</div>
+					)}
 
-						{/* Actions */}
-						<UserReviewCardActions review={review} />
-					</div>
+					{/* Actions */}
+					<UserReviewCardActions review={review} />
 				</div>
-			</CardContent>
+			</div>
 		</article>
 	)
 }

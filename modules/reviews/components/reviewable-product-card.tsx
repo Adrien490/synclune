@@ -14,7 +14,6 @@ import {
 	ResponsiveDialogTrigger,
 } from "@/shared/components/responsive-dialog"
 import { Button } from "@/shared/components/ui/button"
-import { CardContent } from "@/shared/components/ui/card"
 import { cn } from "@/shared/utils/cn"
 
 import type { ReviewableProduct } from "../types/review.types"
@@ -47,72 +46,70 @@ export function ReviewableProductCard({ product, className }: ReviewableProductC
 	return (
 		<article
 			aria-labelledby={titleId}
-			className={cn("overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm", className)}
+			className={cn("overflow-hidden rounded-lg border border-border/60", className)}
 		>
-			<CardContent className="p-0">
-				<div className="flex flex-col sm:flex-row">
-					{/* Image produit */}
-					<div className="relative w-full sm:w-32 h-32 sm:h-auto shrink-0">
-						{product.productImage ? (
-							<Image
-								src={product.productImage.url}
-								alt={product.productImage.altText ?? product.productTitle}
-								fill
-								className="object-cover"
-								sizes="(max-width: 640px) 100vw, 128px"
-								placeholder={product.productImage.blurDataUrl ? "blur" : "empty"}
-								blurDataURL={product.productImage.blurDataUrl ?? undefined}
-							/>
-						) : (
-							<div className="w-full h-full bg-muted flex items-center justify-center">
-								<Star className="size-8 text-muted-foreground" aria-hidden="true" />
-							</div>
-						)}
-					</div>
-
-					{/* Contenu */}
-					<div className="flex-1 p-4 space-y-3">
-						{/* Titre produit */}
-						<div>
-							<Link
-								id={titleId}
-								href={`/creations/${product.productSlug}`}
-								className="font-medium hover:text-primary transition-colors line-clamp-1 flex items-center gap-1"
-							>
-								{product.productTitle}
-								<ExternalLink className="size-3 shrink-0" aria-hidden="true" />
-							</Link>
-							<p className="text-xs text-muted-foreground mt-1">
-								Livré le {formatDate(product.deliveredAt)}
-							</p>
+			<div className="flex flex-col sm:flex-row">
+				{/* Image produit */}
+				<div className="relative w-full sm:w-32 aspect-[3/2] sm:aspect-auto sm:h-auto shrink-0">
+					{product.productImage ? (
+						<Image
+							src={product.productImage.url}
+							alt={product.productImage.altText ?? product.productTitle}
+							fill
+							className="object-cover"
+							sizes="(max-width: 640px) 100vw, 128px"
+							placeholder={product.productImage.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={product.productImage.blurDataUrl ?? undefined}
+						/>
+					) : (
+						<div className="w-full h-full bg-muted flex items-center justify-center">
+							<Star className="size-8 text-muted-foreground" aria-hidden="true" />
 						</div>
-
-						{/* CTA */}
-						<ResponsiveDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-							<ResponsiveDialogTrigger asChild>
-								<Button size="sm" className="w-full sm:w-auto min-h-11">
-									<Star className="size-4 mr-1" aria-hidden="true" />
-									Laisser un avis
-								</Button>
-							</ResponsiveDialogTrigger>
-							<ResponsiveDialogContent className="max-w-lg">
-								<ResponsiveDialogHeader>
-									<ResponsiveDialogTitle>Donner mon avis</ResponsiveDialogTitle>
-									<ResponsiveDialogDescription>
-										Partagez votre expérience avec {product.productTitle}
-									</ResponsiveDialogDescription>
-								</ResponsiveDialogHeader>
-								<CreateReviewForm
-									productId={product.productId}
-									orderItemId={product.orderItemId}
-									productTitle={product.productTitle}
-									onSuccess={() => setIsDialogOpen(false)}
-								/>
-							</ResponsiveDialogContent>
-						</ResponsiveDialog>
-					</div>
+					)}
 				</div>
-			</CardContent>
+
+				{/* Contenu */}
+				<div className="flex-1 p-4 space-y-3">
+					{/* Titre produit */}
+					<div>
+						<Link
+							id={titleId}
+							href={`/creations/${product.productSlug}`}
+							className="font-medium hover:text-primary transition-colors line-clamp-1 flex items-center gap-1"
+						>
+							{product.productTitle}
+							<ExternalLink className="size-3 shrink-0" aria-hidden="true" />
+						</Link>
+						<p className="text-xs text-muted-foreground mt-1">
+							Livré le {formatDate(product.deliveredAt)}
+						</p>
+					</div>
+
+					{/* CTA */}
+					<ResponsiveDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+						<ResponsiveDialogTrigger asChild>
+							<Button size="sm" className="w-full sm:w-auto min-h-11">
+								<Star className="size-4 mr-1" aria-hidden="true" />
+								Laisser un avis
+							</Button>
+						</ResponsiveDialogTrigger>
+						<ResponsiveDialogContent className="max-w-lg">
+							<ResponsiveDialogHeader>
+								<ResponsiveDialogTitle>Donner mon avis</ResponsiveDialogTitle>
+								<ResponsiveDialogDescription>
+									Partagez votre expérience avec {product.productTitle}
+								</ResponsiveDialogDescription>
+							</ResponsiveDialogHeader>
+							<CreateReviewForm
+								productId={product.productId}
+								orderItemId={product.orderItemId}
+								productTitle={product.productTitle}
+								onSuccess={() => setIsDialogOpen(false)}
+							/>
+						</ResponsiveDialogContent>
+					</ResponsiveDialog>
+				</div>
+			</div>
 		</article>
 	)
 }

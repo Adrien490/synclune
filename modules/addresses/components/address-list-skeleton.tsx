@@ -1,4 +1,4 @@
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 /**
  * Skeleton pour la liste d'adresses
@@ -6,7 +6,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  */
 export function AddressListSkeleton() {
 	return (
-		<div className="space-y-6">
+		<SkeletonGroup label="Chargement des adresses" className="space-y-6">
 			{/* Section header skeleton */}
 			<div className="flex items-center justify-between gap-4">
 				<div className="space-y-2">
@@ -46,6 +46,6 @@ export function AddressListSkeleton() {
 					</div>
 				))}
 			</div>
-		</div>
+		</SkeletonGroup>
 	);
 }

@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { ShoppingBag } from "lucide-react";
 import Image from "next/image";
 
 interface OrderItem {
@@ -22,13 +22,12 @@ interface OrderItemsListProps {
 
 export function OrderItemsList({ items }: OrderItemsListProps) {
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-lg">
-					Articles commandés ({items.length})
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
+		<section className="space-y-4">
+			<h2 className="text-base font-semibold flex items-center gap-2">
+				<ShoppingBag className="size-4 text-muted-foreground" />
+				Articles commandés ({items.length})
+			</h2>
+			<div className="border-t border-border/60 pt-4">
 				<div className="divide-y">
 					{items.map((item) => {
 						const imageUrl = item.skuImageUrl || item.productImageUrl;
@@ -89,7 +88,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 						);
 					})}
 				</div>
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }

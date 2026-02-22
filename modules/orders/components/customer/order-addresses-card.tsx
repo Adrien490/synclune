@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { MapPin } from "lucide-react";
 
 interface OrderAddressesCardProps {
@@ -57,16 +56,14 @@ export function OrderAddressesCard({ order }: OrderAddressesCardProps) {
 	};
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-lg flex items-center gap-2">
-					<MapPin className="h-5 w-5" />
-					Adresse de livraison
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
+		<section className="space-y-4">
+			<h2 className="text-base font-semibold flex items-center gap-2">
+				<MapPin className="size-4 text-muted-foreground" />
+				Adresse de livraison
+			</h2>
+			<div className="border-t border-border/60 pt-4">
 				{formatAddress(shippingAddress)}
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }

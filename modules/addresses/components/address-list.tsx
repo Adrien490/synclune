@@ -12,11 +12,11 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 	const addresses = use(addressesPromise);
 
 	return (
-		<div className="space-y-6">
+		<section aria-labelledby="addresses-heading" className="space-y-6">
 			{/* Section header */}
 			<div className="flex items-center justify-between gap-4">
 				<div>
-					<h2 className="text-lg font-semibold text-foreground">
+					<h2 id="addresses-heading" className="text-lg font-semibold text-foreground">
 						Adresses enregistrées
 					</h2>
 					<p className="text-sm text-muted-foreground mt-1">
@@ -32,7 +32,7 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 
 			{/* Address list or empty state */}
 			{!addresses || addresses.length === 0 ? (
-				<div className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-lg">
+				<div role="status" className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-lg">
 					<div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
 						<MapPin className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
 					</div>
@@ -50,6 +50,6 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 					))}
 				</div>
 			)}
-		</div>
+		</section>
 	);
 }

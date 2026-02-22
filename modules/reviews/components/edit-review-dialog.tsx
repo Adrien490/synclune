@@ -1,12 +1,12 @@
 "use client"
 
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog"
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/responsive-dialog"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { EDIT_REVIEW_DIALOG_ID } from "../constants/review.constants"
 import { UpdateReviewForm } from "./update-review-form"
@@ -27,15 +27,15 @@ export function EditReviewDialog() {
 	}
 
 	return (
-		<Dialog open={editDialog.isOpen} onOpenChange={handleOpenChange}>
-			<DialogContent className="max-w-lg">
-				<DialogHeader>
-					<DialogTitle>Modifier mon avis</DialogTitle>
-					<DialogDescription>
+		<ResponsiveDialog open={editDialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveDialogContent className="max-w-lg">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Modifier mon avis</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
 						Modifiez votre avis pour{" "}
 						{editDialog.data?.review?.product?.title ?? "ce produit"}
-					</DialogDescription>
-				</DialogHeader>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 				{editDialog.data?.review && (
 					<UpdateReviewForm
 						review={editDialog.data.review}
@@ -43,7 +43,7 @@ export function EditReviewDialog() {
 						onCancel={() => editDialog.close()}
 					/>
 				)}
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	)
 }

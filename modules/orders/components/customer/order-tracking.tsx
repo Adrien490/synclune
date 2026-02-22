@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -22,14 +21,12 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 	}
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-lg flex items-center gap-2">
-					<Truck className="h-5 w-5" />
-					Suivi de livraison
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-4">
+		<section className="space-y-4">
+			<h2 className="text-base font-semibold flex items-center gap-2">
+				<Truck className="size-4 text-muted-foreground" />
+				Suivi de livraison
+			</h2>
+			<div className="border-t border-border/60 pt-4 space-y-4">
 				{/* Carrier & Tracking */}
 				<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
 					{order.shippingCarrier && (
@@ -89,7 +86,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 						</a>
 					</Button>
 				)}
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }
