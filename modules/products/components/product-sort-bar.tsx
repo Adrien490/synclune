@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion, useReducedMotion } from "motion/react";
 import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -12,24 +11,21 @@ import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-sear
 import { PRODUCT_FILTER_DIALOG_ID, PRODUCTS_SORT_LABELS } from "@/modules/products/constants/product.constants";
 import { countActiveFilters } from "@/modules/products/services/product-filter-params.service";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import {
+	BottomBar,
+	ActiveDot,
+	bottomBarContainerClass,
+	bottomBarItemClass,
+	bottomBarIconClass,
+	bottomBarLabelClass,
+} from "@/shared/components/bottom-bar";
 import { cn } from "@/shared/utils/cn";
-import { useBottomBarHeight } from "@/shared/hooks";
 
 interface ProductSortBarProps {
 	/** Options de tri disponibles */
 	sortOptions: SortOption[];
 	/** Classes CSS additionnelles */
 	className?: string;
-}
-
-function ActiveDot() {
-	return (
-		<span
-			className="absolute -top-0.5 left-1/2 -translate-x-1/2 size-1.5 bg-primary rounded-full animate-in zoom-in-50 duration-200"
-			aria-hidden="true"
-		/>
-	);
 }
 
 /**
@@ -43,9 +39,9 @@ function ActiveDot() {
  * Visible uniquement sur mobile (md:hidden).
  * Respecte safe-area-inset-bottom pour iPhone X+.
  *
- * Accessibilité:
- * - role="toolbar" avec navigation par flèches gauche/droite
- * - Live region pour annoncer les changements d'état
+ * Accessibilite:
+ * - role="toolbar" avec navigation par fleches gauche/droite
+ * - Live region pour annoncer les changements d'etat
  * - Touch targets 56px minimum (Material Design 3)
  */
 export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) {
@@ -66,9 +62,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		}
 	}, [isHidden]);
 
-	useBottomBarHeight(56, !isHidden);
 	const searchParams = useSearchParams();
-	const prefersReducedMotion = useReducedMotion();
 
 	// Refs for toolbar buttons (order: Sort, Search, Filters)
 	const sortButtonRef = useRef<HTMLButtonElement>(null);
@@ -150,44 +144,22 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		}
 	};
 
-	const getButtonClassName = () =>
-		cn(
-			"flex-1 min-w-18 flex flex-col items-center justify-center gap-1",
-			"h-full min-h-14",
-			"transition-colors duration-200",
-			"active:scale-[0.98] active:bg-primary/10",
-			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
-			"relative",
-			"text-muted-foreground hover:text-foreground"
-		);
-
-	const iconClassName = "size-5";
-	const labelClassName = "text-xs font-medium";
+	const buttonClassName = cn(bottomBarItemClass, "min-w-18");
 
 	return (
 		<>
-			<motion.div
-				initial={prefersReducedMotion ? false : { y: 100, opacity: 0 }}
-				animate={isHidden ? { y: 100, opacity: 0 } : { y: 0, opacity: 1 }}
-				transition={MOTION_CONFIG.spring.bar}
-				className={cn(
-					"md:hidden",
-					"fixed bottom-0 left-0 right-0 z-[75]",
-					"pb-[env(safe-area-inset-bottom)]",
-					"bg-background/95 backdrop-blur-md",
-					"border-t border-x border-border",
-					"rounded-t-2xl",
-					"shadow-[0_-4px_20px_rgba(0,0,0,0.08)]",
-					isHidden && "pointer-events-none",
-					className
-				)}
+			<BottomBar
+				isHidden={isHidden}
+				breakpointClass="md:hidden"
+				zIndex="z-[75]"
+				className={className}
 			>
 				<div
 					ref={toolbarRef}
 					role="toolbar"
 					aria-orientation="horizontal"
 					aria-label="Tri, recherche et filtres"
-					className="flex items-stretch h-14 divide-x divide-border/50"
+					className={bottomBarContainerClass}
 				>
 					{/* Tri */}
 					<button
@@ -197,14 +169,14 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
-						className={getButtonClassName()}
+						className={buttonClassName}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 						aria-haspopup="dialog"
 						aria-expanded={sortOpen}
 					>
 						{hasActiveSort && <ActiveDot />}
-						<ArrowUpDown className={iconClassName} aria-hidden="true" />
-						<span className={labelClassName}>Trier</span>
+						<ArrowUpDown className={bottomBarIconClass} aria-hidden="true" />
+						<span className={bottomBarLabelClass}>Trier</span>
 					</button>
 
 					{/* Recherche */}
@@ -215,7 +187,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
-						className={getButtonClassName()}
+						className={buttonClassName}
 						aria-label={
 							hasActiveSearch
 								? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
@@ -225,8 +197,8 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						aria-expanded={isSearchOpen}
 					>
 						{hasActiveSearch && <ActiveDot />}
-						<Search className={iconClassName} aria-hidden="true" />
-						<span className={labelClassName}>Rechercher</span>
+						<Search className={bottomBarIconClass} aria-hidden="true" />
+						<span className={bottomBarLabelClass}>Rechercher</span>
 					</button>
 
 					{/* Filtres */}
@@ -237,7 +209,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
-						className={getButtonClassName()}
+						className={buttonClassName}
 						aria-label={
 							hasActiveFilters
 								? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}. Modifier les filtres`
@@ -247,15 +219,15 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						aria-expanded={isFilterOpen}
 					>
 						{hasActiveFilters && <ActiveDot />}
-						<SlidersHorizontal className={iconClassName} aria-hidden="true" />
-						<span className={labelClassName}>Filtrer</span>
+						<SlidersHorizontal className={bottomBarIconClass} aria-hidden="true" />
+						<span className={bottomBarLabelClass}>Filtrer</span>
 					</button>
 
 				</div>
 
 				{/* Live region pour screen readers */}
 				<span ref={announcementRef} role="status" aria-live="polite" aria-atomic="true" className="sr-only" />
-			</motion.div>
+			</BottomBar>
 
 			{/* SortDrawer */}
 			<SortDrawer

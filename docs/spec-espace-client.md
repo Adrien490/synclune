@@ -13,7 +13,7 @@
 > 1. **`adminNotes` visible client ?** (Section B) — Les notes admin des demandes de personnalisation doivent-elles etre visibles au client, renommees en "reponse", ou rester internes ?
 > 2. **Annulation en PROCESSING par le client ?** (Section K) — `canCancelOrder()` accepte PENDING et PROCESSING. Le client peut-il annuler une commande en preparation ou seulement en PENDING ?
 > 3. **Suppression immediate vs differee ?** (Section M) — `delete-account.ts` anonymise immediatement. Passer par `PENDING_DELETION` avec periode de grace de 30 jours (recommande) ou garder le comportement actuel ?
-> 4. **Commandes non-payees visibles ?** (Section F) — `fetch-user-orders.ts` hardcode `paymentStatus: PAID`. Les commandes PENDING/FAILED doivent-elles apparaitre dans la liste client ?
+> 4. ~~**Commandes non-payees visibles ?** (Section F)~~ — **FERMEE** : Les commandes non payees restent masquees. Justification UX dans `fetch-user-orders.ts:47-49` : "Les commandes PENDING/FAILED/CANCELLED sont des artefacts techniques (reservations de stock) et ne doivent pas apparaitre dans Mes commandes." Le hardcode `paymentStatus: PAID` est delibere et correct.
 
 
 ---
@@ -31,15 +31,16 @@
 | C - Facture PDF | A faire | Complet | Faible | - | Page a recreer, fix securite `order.userId` applique |
 | D - Remboursements | A faire | A completer | Faible | - | Modifier `GET_ORDER_SELECT` + 1 composant |
 | E - Newsletter settings | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
-| F - Filtres commandes | A faire | A completer | Faible | Decision 4 | Filtres absents du schema (tri seul implemente), conflit `paymentStatus: PAID` hardcode |
+| F - Filtres commandes | A faire | A completer | Faible | ~~Decision 4~~ fermee | Filtres absents du schema (tri seul implemente). `paymentStatus: PAID` est delibere (Decision 4 fermee) |
 | G - Sessions actives | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
+| H - Demande de retour | A faire | Complet | Faible | - | Backend complet (`requestReturn` action, schema, validation 14j), composant a creer |
 | I - Changement email | A faire | A completer | Moyen | - | Email absent de `ProfileForm`, `changeEmail` non configure dans Better Auth |
 | J - Panier wishlist | A faire | Complet | Faible | - | `AddToCartCardButton` deja dans `ProductCard` |
 | K - Annulation commande client | A faire | A completer | Moyen | Decision 2 | `cancelOrder` admin-only, mais `canCancelOrder()` reutilisable |
 | L - Codes promo sur commande | A faire | A completer | Faible | - | `discountAmount` affiche mais pas le code |
 | M - Annulation suppression compte | A faire | A completer | Moyen | Decision 3 | `PENDING_DELETION` non utilise, `deletionRequestedAt` dead code |
 
-> **Note :** La numerotation saute de G a I. La feature H n'existe pas (saut intentionnel dans la numerotation).
+> **Note :** La feature H (Demande de retour client) a ete ajoutee pour couvrir l'obligation legale du droit de retractation 14 jours.
 
 ---
 
@@ -55,7 +56,7 @@ Le layout utilise un flex 2 colonnes (desktop) :
 
 | Fichier | Role |
 |---|---|
-| `app/(boutique)/(espace-client)/layout.tsx` | **A creer** - Layout avec auth guard, flex 2 colonnes, metadata template |
+| `app/(boutique)/(espace-client)/layout.tsx` | **Existe** - Layout complet (flex 2 colonnes, metadata template `%s | Mon compte | Synclune`, robots noindex). A enrichir si besoin |
 | `app/(boutique)/(espace-client)/not-found.tsx` | **A creer** - Page 404 pour entites introuvables (commande, adresse) |
 
 > **Note :** `ROUTES.ACCOUNT` dans `shared/constants/urls.ts` definit `ROOT`, `ORDERS`, `ORDER_DETAIL`, `FAVORITES`, `REVIEWS`, `ADDRESSES`, `CUSTOMIZATIONS`, `SETTINGS`. Les anciennes entrees `PROFILE` et `SECURITY` (dead code) ont ete supprimees.
@@ -64,21 +65,24 @@ Le layout utilise un flex 2 colonnes (desktop) :
 
 La page affiche la commande dans une grille 2/3 + 1/3 :
 - **Colonne principale (2/3)** : `OrderItemsList` → `OrderRefundsCard` (si refunds) → `OrderStatusTimeline` (timeline de statut) → `OrderTracking` (suivi colis, visible seulement si `trackingNumber`)
-- **Colonne sidebar (1/3)** : `OrderSummaryCard` (recapitulatif montants) → `OrderAddressesCard` (adresse de livraison) → `DownloadInvoiceButton` (si PAID)
+- **Colonne sidebar (1/3)** : `OrderSummaryCard` (recapitulatif montants) → `OrderAddressesCard` (adresse de livraison) → `DownloadInvoiceButton` (si `PAID && invoiceStatus === "GENERATED"`) → `RequestReturnButton` (Feature H, si eligible retractation 14j) → `CancelOrderButton` (Feature K, si annulable)
 
 **Data fetcher** : `getOrder({ orderNumber })` dans `modules/orders/data/get-order.ts`. Gere l'authentification et le scope `userId` automatiquement (les non-admins ne voient que leurs propres commandes). Utilise `"use cache: private"` avec `cacheLife("dashboard")` et tags specifiques a l'utilisateur (non-admins : `ORDERS_CACHE_TAGS.USER_ORDERS(userId)`).
 
 ### Pattern page parametres (`/parametres`)
 
 La page parametres utilise aussi une grille 2/3 + 1/3 :
-- **Colonne principale (2/3)** : `ProfileForm` → `SecuritySection` (change password) → `GdprSection` (export/delete)
+- **Colonne principale (2/3)** : `ProfileForm` → `SecuritySection` (change password + providers OAuth) → `GdprSection` (export/delete). Note : `ExportDataButton` (`modules/users/components/export-data-button.tsx`) et `export-user-data.ts` existent deja. Le format d'export (JSON contenant profil, commandes, adresses, avis, preferences newsletter) devrait etre documente
 - **Colonne sidebar (1/3)** : `NewsletterSettingsCard` (`modules/newsletter/components/newsletter-settings-card.tsx`) → `ActiveSessionsCard`
 
 > **`SecuritySection` n'existe pas encore** — a creer comme wrapper. Les composants enfants existants sont :
 > - `ChangePasswordDialog` (`modules/users/components/change-password-dialog.tsx`) : dialog modal avec `ChangePasswordForm`, min 6 caracteres
 > - `ResendVerificationButton` (`modules/users/components/resend-verification-button.tsx`) : bouton avec cooldown 60s, utilise localStorage
 >
-> `SecuritySection` devra afficher un bouton "Modifier mon mot de passe" ouvrant `ChangePasswordDialog`, et un statut de verification email avec `ResendVerificationButton` si `emailVerified === false`.
+> `SecuritySection` devra afficher :
+> - Un bouton "Modifier mon mot de passe" ouvrant `ChangePasswordDialog` (uniquement si le compte utilise le provider "email" — les comptes OAuth n'ont pas de mot de passe)
+> - Un statut de verification email avec `ResendVerificationButton` si `emailVerified === false`
+> - Les providers OAuth connectes (Google, GitHub) via le modele `Account` : afficher "Connecte via Google" etc. La gestion de liaison/deliaison de comptes peut etre V2
 
 ### Pattern page compte (`/compte`) - Dashboard
 
@@ -121,6 +125,10 @@ Composants existants a reutiliser dans les pages de l'espace client :
 | `PageHeader` (variante `compact`) | `shared/components/page-header.tsx` | En-tete de page simplifie sans breadcrumbs, adapte a l'espace client |
 | `Empty` (compound component) | `shared/components/ui/empty.tsx` | Etats vides : `<Empty>`, `EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, `EmptyContent`, `EmptyActions`. Variantes `default` / `borderless`, tailles `sm` / `default` / `lg` |
 | `CursorPagination` | `shared/components/cursor-pagination/cursor-pagination.tsx` | Pagination cursor-based avec boutons prev/next, select per-page, liens SEO `rel="prev/next"`, aria-live. Deja integre dans `CustomerOrdersTable` |
+| `RecentOrders` | `modules/orders/components/recent-orders.tsx` | Table des commandes recentes (limit configurable, lien "voir tout"). A integrer dans le dashboard `/compte` |
+| `AddressInfoCard` | `modules/addresses/components/address-info-card.tsx` | Carte d'info adresse en lecture seule. Utilisable dans le detail commande |
+| `SortDrawer` | `shared/components/sort-drawer/` | Tri sur mobile (drawer bottom). Alternative a `SortSelect` sur petit ecran pour la liste commandes |
+| `LogoutAlertDialog` | `modules/auth/components/logout-alert-dialog.tsx` | Dialog de confirmation de deconnexion. Utilise dans `AccountNav` |
 
 ---
 
@@ -191,7 +199,7 @@ Le cache utilise `"use cache: private"`, `cacheLife("userOrders")`, `cacheTag(OR
 
 | Fichier | Role |
 |---|---|
-| `app/(boutique)/(espace-client)/compte/page.tsx` | **A creer** - Page dashboard |
+| `app/(boutique)/(espace-client)/compte/page.tsx` | **Existe** - Page basique (profil card avec nom, email, date membre). A enrichir avec `AccountStatsCards`, `RecentOrders`, liens rapides |
 | `modules/users/components/account-stats-cards.tsx` | Cartes de stats (utilise `use(statsPromise)`, wrapper en `<Suspense>`) |
 | `modules/users/components/account-stats-cards-skeleton.tsx` | Skeleton de chargement |
 | `modules/users/data/get-account-stats.ts` | Data fetcher avec cache |
@@ -246,7 +254,7 @@ Pattern cursor-based existant :
 
 ### Tri
 
-Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `useSortSelect()` qui lit/ecrit le search param `sort` dans l'URL.
+Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `useSortSelect()` qui lit/ecrit le search param `sort` dans l'URL. Sur mobile, `SortDrawer` (`shared/components/sort-drawer/`) offre une meilleure UX (drawer bottom) et devrait etre utilise a la place du select dropdown.
 
 4 options de tri definies dans `modules/orders/constants/user-orders.constants.ts` :
 - "Plus recentes" (defaut), "Plus anciennes", "Montant decroissant", "Montant croissant"
@@ -263,6 +271,8 @@ Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `
 | `modules/orders/data/fetch-user-orders.ts` | Data fetcher interne avec cache |
 | `modules/orders/constants/user-orders.constants.ts` | Select, sort options, labels, pagination defaults |
 | `modules/orders/schemas/user-orders.schemas.ts` | Schema Zod des params |
+
+> **Note :** `GET_USER_ORDERS_SELECT` inclut deja les champs livraison (`estimatedDelivery`, `actualDelivery`, `shippedAt`, `trackingNumber`, `trackingUrl`, `shippingCarrier`). Le composant `CustomerOrdersTable` peut afficher "Livraison estimee le X" ou "Livree le X" dans la colonne livraison.
 
 > **Note :** `GET_USER_ORDERS_SELECT` ne contient pas `invoiceNumber` (commentaire `ROADMAP` dans le fichier). Si le bouton de telechargement de facture doit apparaitre dans la liste des commandes, ce champ devra etre ajoute au select.
 
@@ -291,6 +301,8 @@ Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `
 
 `getOrder()` gere l'authentification et le scope `userId` automatiquement (les non-admins ne voient que leurs propres commandes). Utilise `"use cache: private"` avec `cacheLife("dashboard")` et tags specifiques a l'utilisateur.
 
+> **Note :** `GET_ORDER_SELECT` inclut deja `history` (avec `orderBy: createdAt desc`, `take: 50`) et les 11 valeurs de `OrderAction` (incluant `TRACKING_UPDATED`, `ADDRESS_UPDATED`, `INVOICE_GENERATED`). Le composant `OrderStatusTimeline` peut utiliser cette relation directement au lieu de recalculer les etapes.
+
 ### Fichiers
 
 | Fichier | Role |
@@ -312,8 +324,9 @@ La page utilise une grille 2/3 + 1/3 :
 **Colonne sidebar (1/3)** :
 1. `OrderSummaryCard` - Recapitulatif montants + codes promo (Feature L)
 2. `OrderAddressesCard` - Adresse de livraison
-3. `DownloadInvoiceButton` - Telechargement facture (visible seulement si `order.paymentStatus === "PAID"`)
-4. `CancelOrderButton` - Annulation commande (Feature K, visible seulement si `canCancelOrder(order)` et `order.status === "PENDING"`)
+3. `DownloadInvoiceButton` - Telechargement facture (visible seulement si `order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED"`)
+4. `RequestReturnButton` - Demande de retour (Feature H, visible seulement si eligible au droit de retractation 14 jours)
+5. `CancelOrderButton` - Annulation commande (Feature K, visible seulement si `canCancelOrder(order)` et `order.status === "PENDING"`)
 
 ### Conditions d'affichage
 
@@ -321,7 +334,8 @@ La page utilise une grille 2/3 + 1/3 :
 |---|---|
 | `OrderRefundsCard` | `order.refunds.length > 0` |
 | `OrderTracking` | `order.trackingNumber` non null |
-| `DownloadInvoiceButton` | `order.paymentStatus === "PAID"` |
+| `DownloadInvoiceButton` | `order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED"` |
+| `RequestReturnButton` | `paymentStatus in [PAID, PARTIALLY_REFUNDED]` + `fulfillmentStatus === DELIVERED` + `actualDelivery + 14j > now()` + pas de refund PENDING/APPROVED |
 | `CancelOrderButton` | `canCancelOrder(order)` + guard client (`order.status === "PENDING"`) |
 
 ### Gestion d'erreur
@@ -504,7 +518,7 @@ model CustomizationRequest {
 - `DownloadInvoiceButton` dans la page detail commande
 - Route API pour la generation du PDF
 - Route API : `app/api/orders/[orderNumber]/invoice/route.ts` (GET handler avec auth, verification userId, generation numero de facture sequentiel, cache-control private)
-- Condition : affiche uniquement si `order.paymentStatus === "PAID"`
+- Condition : affiche uniquement si `order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED"` (evite d'afficher le bouton avant generation de la facture ou si elle est annulee VOIDED)
 
 ### Fix securite applique
 
@@ -707,9 +721,9 @@ Pas d'empty state necessaire : la carte ne s'affiche que si `refunds.length > 0`
 - **Backend** : `fetch-user-orders.ts` hardcode `paymentStatus: PaymentStatus.PAID` sans filtres supplementaires
 - **UI filtres** : absente
 
-### Attention : conflit potentiel avec `paymentStatus: PAID` hardcode
+### `paymentStatus: PAID` hardcode (Decision 4 — fermee)
 
-`fetch-user-orders.ts:52` hardcode `paymentStatus: PaymentStatus.PAID` pour n'afficher que les commandes payees. Si on ajoute un filtre par statut de commande, il faut decider si les commandes non-payees (PENDING, FAILED) doivent etre visibles. Les params `filter_status` et `filter_fulfillmentStatus` existent deja dans le composant admin `orders-filter-sheet.tsx` mais ne sont pas wires cote client.
+`fetch-user-orders.ts:47-52` hardcode `paymentStatus: PaymentStatus.PAID` de maniere deliberee. Les commandes non payees (PENDING, FAILED, EXPIRED) sont des artefacts techniques (reservations de stock) et ne doivent pas apparaitre dans "Mes commandes". Les filtres client operent donc uniquement sur les commandes deja payees. Les params `filter_status` et `filter_fulfillmentStatus` existent deja dans le composant admin `orders-filter-sheet.tsx` mais ne sont pas wires cote client.
 
 ### Fichiers a modifier
 
@@ -785,7 +799,8 @@ Si les filtres ne retournent aucun resultat : "Aucune commande ne correspond a v
 
 ### Implementation actuelle
 
-- `ActiveSessionsCard` dans `modules/auth/components/active-sessions-card.tsx`
+- `ActiveSessionsCard` dans `modules/auth/components/active-sessions-card.tsx` (contient `RevokeSessionButton` inline)
+- `revokeSession` server action dans `modules/auth/actions/revoke-session.ts`
 - Listing des sessions non expirees
 - Bouton "Revoquer" par session
 
@@ -806,6 +821,107 @@ Chaque session affiche :
 ### Gestion d'erreur
 
 Si la revocation echoue (ex: session deja expiree) : toast d'erreur + refresh de la liste pour synchroniser l'etat.
+
+---
+
+## H - Demande de retour client (droit de retractation 14 jours)
+
+> **Statut : A faire** — Backend complet, composant a creer
+>
+> **Obligation legale** : directive 2011/83/EU, art. L221-18 Code de la consommation. Les consommateurs francais disposent d'un droit de retractation de 14 jours a compter de la reception du produit.
+
+### Statut actuel
+
+- **Backend** : complet (`requestReturn` server action avec auth, rate limiting, validation IDOR, verification delai 14 jours, creation `Refund` PENDING)
+- **Schema** : `requestReturnSchema` dans `modules/refunds/schemas/refund.schemas.ts`
+- **Frontend client** : aucun composant dedie. Le bouton de demande de retour doit etre ajoute a la page detail commande
+
+### Implementation backend existante
+
+L'action `requestReturn` (`modules/refunds/actions/request-return.ts`) :
+1. Verifie l'authentification (`requireAuth`)
+2. Applique un rate limit (`RETURN_REQUEST_LIMIT`)
+3. Valide l'input (`requestReturnSchema` : `orderId`, `reason`, `message` optionnel)
+4. Verifie la propriete de la commande (protection IDOR)
+5. Verifie l'eligibilite : `paymentStatus === PAID || PARTIALLY_REFUNDED` et `fulfillmentStatus === DELIVERED`
+6. Verifie le delai de 14 jours depuis `actualDelivery`
+7. Verifie qu'aucun remboursement PENDING ou APPROVED n'existe deja
+8. Calcule le montant refundable en deduisant les articles deja rembourses
+9. Cree un `Refund` avec statut `PENDING` pour review admin
+10. Invalide les caches pertinents
+
+### Schema de validation client
+
+```ts
+// modules/refunds/schemas/refund.schemas.ts
+export const requestReturnSchema = z.object({
+  orderId: z.cuid2(),
+  reason: z.enum([
+    RefundReason.CUSTOMER_REQUEST,  // Retractation client
+    RefundReason.DEFECTIVE,          // Produit defectueux
+    RefundReason.WRONG_ITEM,         // Erreur de preparation
+  ]),
+  message: z.string().max(500).optional(),
+})
+```
+
+> **Note :** Les raisons client sont limitees a 3 valeurs (pas LOST_IN_TRANSIT, FRAUD, OTHER qui sont reservees a l'admin).
+
+### Conditions d'affichage du bouton
+
+Le bouton "Demander un retour" s'affiche dans la page detail commande si **toutes** ces conditions sont remplies :
+
+| Condition | Champ | Valeur |
+|---|---|---|
+| Commande payee | `order.paymentStatus` | `PAID` ou `PARTIALLY_REFUNDED` |
+| Commande livree | `order.fulfillmentStatus` | `DELIVERED` |
+| Dans le delai de 14 jours | `order.actualDelivery` | `actualDelivery + 14j > now()` |
+| Pas de retour deja en cours | `order.refunds` | Aucun refund avec statut `PENDING` ou `APPROVED` |
+
+### Fichiers a creer
+
+| Fichier | Role |
+|---|---|
+| `modules/refunds/components/customer/request-return-button.tsx` | Bouton + dialog formulaire de demande de retour |
+
+### Fichier a modifier
+
+| Fichier | Modification |
+|---|---|
+| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | Ajouter `<RequestReturnButton>` conditionnel dans la sidebar |
+| `modules/orders/constants/order.constants.ts` | Ajouter `refunds` au `GET_ORDER_SELECT` (necessaire aussi pour Feature D) |
+
+### UI
+
+Le bouton s'affiche dans la colonne sidebar (1/3), apres `DownloadInvoiceButton` et avant `CancelOrderButton`. Au clic, il ouvre un dialog contenant :
+
+1. **Select `reason`** : "Retractation (changement d'avis)", "Produit defectueux", "Erreur de preparation"
+2. **Textarea `message`** (optionnel) : "Precisions sur votre demande (facultatif)" — max 500 caracteres
+3. **Bouton de soumission** : "Envoyer ma demande de retour"
+4. **Message de confirmation** : "Votre demande de retour a ete enregistree. Nous la traiterons dans les plus brefs delais."
+
+### Affichage du statut de la demande dans le detail commande
+
+Si la commande a un refund lie (PENDING, APPROVED, COMPLETED, REJECTED) :
+- Afficher un bandeau informatif dans la colonne principale : "Demande de retour en cours" / "Retour approuve" / "Retour rembourse" / "Retour refuse"
+- Le statut utilise les constants existantes : `REFUND_STATUS_LABELS` et `REFUND_STATUS_COLORS` dans `modules/refunds/constants/refund.constants.ts`
+
+### Jours restants
+
+Afficher le nombre de jours restants pour exercer le droit de retractation : "Il vous reste X jours pour demander un retour." Calcul : `14 - Math.floor((now() - actualDelivery) / (24*60*60*1000))`.
+
+### Gestion d'erreur
+
+| Scenario | Comportement |
+|---|---|
+| Delai depasse (race condition) | Message "Le delai de retractation de 14 jours est depasse" |
+| Retour deja en cours | Message "Une demande de retour est deja en cours pour cette commande" |
+| Rate limit | Message "Trop de tentatives, reessayez plus tard" |
+| Erreur serveur | Toast generique avec retry |
+
+### Empty state
+
+Pas d'empty state : le bouton n'apparait que si les conditions sont remplies.
 
 ---
 
@@ -933,14 +1049,17 @@ enum OrderStatus {
 }
 
 enum OrderAction {
-  CREATED          // Creation de la commande
-  PAID             // Paiement recu
-  PROCESSING       // Mise en preparation
-  SHIPPED          // Expedition
-  DELIVERED        // Livraison confirmee
-  CANCELLED        // Annulation
-  RETURNED         // Retour client
-  STATUS_REVERTED  // Retour a un statut precedent
+  CREATED            // Creation de la commande
+  PAID               // Paiement recu
+  PROCESSING         // Mise en preparation
+  SHIPPED            // Expedition
+  DELIVERED          // Livraison confirmee
+  CANCELLED          // Annulation
+  RETURNED           // Retour client
+  STATUS_REVERTED    // Retour a un statut precedent
+  TRACKING_UPDATED   // Mise a jour du suivi
+  ADDRESS_UPDATED    // Mise a jour de l'adresse de livraison
+  INVOICE_GENERATED  // Facture generee
 }
 
 enum HistorySource {
@@ -1194,6 +1313,10 @@ Avant d'implementer cette feature, il faut decider de l'approche de suppression 
 
 ### Si option 1 retenue
 
+#### Prerequis : harmoniser l'anonymisation
+
+**Action corrective requise** avant implementation. Les deux chemins de suppression utilisent des valeurs differentes (voir inconsistance ci-dessus). Il faut factoriser la logique d'anonymisation dans un service partage (`modules/users/services/anonymize-user.service.ts`) et harmoniser les valeurs (`name`, `shippingFirstName`, `shippingLastName`).
+
 #### Fichiers a modifier
 
 | Fichier | Modification |
@@ -1247,6 +1370,55 @@ Si `user.accountStatus === "PENDING_DELETION"` :
 
 ---
 
+## Champs schema exploitables non couverts
+
+Les champs suivants existent dans le schema Prisma et/ou les selects existants mais ne sont pas encore specifies pour l'affichage client. Ils sont listes ici pour reference et priorisation.
+
+### Affichage livraison (`estimatedDelivery` / `actualDelivery`)
+
+Disponibles dans `GET_ORDER_SELECT` et `GET_USER_ORDERS_SELECT`. Utiles pour :
+- **Liste commandes** : "Livraison estimee le X" ou "Livree le X" dans la colonne livraison de `CustomerOrdersTable`
+- **Detail commande** : dans `OrderTracking` ou `OrderStatusTimeline`
+
+### Echec de paiement (`paymentFailureCode` / `paymentDeclineCode` / `paymentFailureMessage`)
+
+Non utilises tant que la Decision 4 reste fermee (commandes non payees masquees). Si un jour les commandes echouees sont visibles, ces champs permettraient d'afficher la raison de l'echec.
+
+### Statut `PARTIALLY_REFUNDED` (`PaymentStatus`)
+
+L'enum inclut `PARTIALLY_REFUNDED` mais la spec ne le mentionne pas pour l'affichage client. Si un remboursement partiel est fait, le client devrait voir "Partiellement rembourse" dans le detail commande. Les composants d'affichage de statut (`OrderStatusTimeline`, `CustomerOrdersTable`) doivent gerer ce cas.
+
+### Statut `RETURNED` (`FulfillmentStatus`)
+
+Le statut `RETURNED` existe dans l'enum et dans la machine d'etat (action admin `mark-as-returned`). Le client devrait voir "Retourne" dans la timeline et la liste commandes. Les composants d'affichage doivent mapper ce statut.
+
+### Avatar utilisateur (`User.image`)
+
+Le champ `image` (VARCHAR 2048, URL) existe mais n'est utilise nulle part dans l'espace client. Recommandation :
+- **P2** : Afficher l'avatar dans la sidebar `AccountNav` et le dashboard
+- **V2** : Edition de l'avatar (upload via UploadThing)
+
+### Suspension de compte (`User.suspendedAt`)
+
+Le schema a un champ `suspendedAt` mais aucune logique client ne le gere. Questions a trancher :
+- Un utilisateur suspendu peut-il acceder a l'espace client ?
+- Doit-il voir un bandeau d'information ? ("Votre compte est suspendu. Contactez le support.")
+- Les actions (annulation, retour) sont-elles bloquees ?
+
+### CTA "Laisser un avis" (`Order.reviewRequestSentAt`)
+
+Le champ `reviewRequestSentAt` est disponible dans le schema. Si l'email de demande d'avis a ete envoye mais aucun avis n'a ete laisse, un CTA contextuel "Laisser un avis" pourrait etre affiche dans le detail commande.
+
+### Litiges Stripe (`Dispute` model)
+
+Hors scope espace client — les litiges sont geres dans le dashboard Stripe et l'interface admin. Evenement extremement rare pour un site de bijoux artisanaux.
+
+### Comptes OAuth connectes (`Account` model)
+
+Le modele `Account` stocke les providers (email, google, github). La page parametres (`SecuritySection`) pourrait afficher "Connecte via Google" et potentiellement permettre de lier/delier des comptes. Voir aussi point 5.4 ci-dessous.
+
+---
+
 ## Preoccupations transversales
 
 ### Gestion d'erreurs
@@ -1257,9 +1429,34 @@ Chaque feature doit gerer :
 |---|---|
 | Fetch echoue (erreur serveur) | Afficher un message d'erreur avec bouton retry, ou `error.tsx` boundary |
 | Action echoue (mutation) | Toast d'erreur avec message contextuel, formulaire reste rempli |
-| Session expiree en cours d'action | Redirection vers `/connexion` avec `callbackUrl` vers la page actuelle |
-| Rate limit atteint | Message "Trop de tentatives, reessayez dans X secondes" |
+| Session expiree en cours d'action | `requireAuth()` retourne `{ error: { status: ActionStatus.UNAUTHORIZED } }` — l'erreur apparait dans le formulaire via `useActionState`. La redirection vers `/connexion` est geree par le proxy middleware lors des navigations suivantes, pas lors des mutations |
+| Rate limit atteint | `ActionStatus.ERROR` avec `data: { retryAfter: number, reset: number }` (secondes). L'UI affiche un countdown decremental "Reessayez dans X secondes" |
 | Donnees introuvables (404) | Redirection vers la page parente ou `notFound()` |
+
+> **Note session expiree :** `requireAuth()` ne redirige jamais — il retourne une reponse d'erreur structuree. C'est le proxy middleware (`proxy.ts`) qui gere la redirection vers `/connexion?callbackURL={pathname}` lors de la navigation suivante en verifiant le cookie de session via `getSessionCookie()`.
+
+> **Note rate limiting :** `enforceRateLimitForCurrentUser()` (`modules/auth/lib/rate-limit-helpers.ts`) retourne `retryAfter` en secondes dans le champ `data` de la reponse d'erreur. Le composant UI doit utiliser cette valeur pour afficher un countdown decremental et desactiver le bouton de soumission jusqu'a expiration.
+
+### Mises a jour optimistes
+
+Le projet utilise le pattern `useOptimistic` + `useTransition` + `startTransition` (23 fichiers dans le codebase). References : `modules/wishlist/hooks/use-wishlist-toggle.ts`, `modules/cart/components/cart-item-quantity-selector.tsx`.
+
+Matrice des mutations espace-client :
+
+| Mutation | Optimistic ? | Justification |
+|---|---|---|
+| Toggle newsletter (E) | Oui (deja fait) | Reversible, feedback immediat |
+| Suppression adresse (A) | Oui | Carte visible, rollback possible |
+| Revocation session (G) | Oui | Ligne visible, rollback possible |
+| Annulation commande (K) | Non | Irreversible, AlertDialog requis |
+| Demande retour (H) | Non | Irreversible, confirmation requise |
+| Changement email (I) | Non | Multi-etapes |
+| Suppression compte (M) | Non | Action rare |
+
+Pour les mutations marquees "Oui", le pattern est :
+1. `useOptimistic` pour maintenir l'etat local
+2. `startTransition` pour wrapper l'appel a la server action
+3. Rollback automatique si l'action echoue (React reconcilie avec l'etat serveur)
 
 ### Accessibilite (WCAG 2.1 AA)
 
@@ -1280,7 +1477,9 @@ Exigences minimales pour chaque nouvelle page/composant :
 
 ### Analytics / Tracking
 
-Events a tracker (si Vercel Analytics ou custom events) :
+**V1 :** Vercel Analytics + Speed Insights (deja en place, consent RGPD via `ConditionalAnalytics`). Aucun event custom requis.
+
+**V2 :** Events custom a tracker :
 
 | Event | Feature | Donnees |
 |---|---|---|
@@ -1292,6 +1491,7 @@ Events a tracker (si Vercel Analytics ou custom events) :
 | `deletion_requested` | M | - |
 | `deletion_cancelled` | M | - |
 | `wishlist_add_to_cart` | J | `productId`, `skuId` |
+| `return_requested` | H | `orderNumber`, `reason` |
 | `orders_filtered` | F | `filterType`, `filterValue` |
 
 ### Tests
@@ -1304,9 +1504,10 @@ Pour chaque feature, prevoir :
 
 Priorites E2E :
 1. K - Annulation commande (mutation critique)
-2. G - Revocation session (securite)
-3. I - Changement email (flow multi-etapes)
-4. C - Telechargement facture (verification du PDF)
+2. H - Demande de retour (obligation legale, mutation critique)
+3. G - Revocation session (securite)
+4. I - Changement email (flow multi-etapes)
+5. C - Telechargement facture (verification du PDF)
 
 ### Empty states
 
@@ -1321,16 +1522,40 @@ Priorites E2E :
 
 ---
 
+## Recommendations production-ready
+
+### Priorite P0 (legalement requis)
+
+1. **Feature H — Demande de retour** : Obligation legale pour le e-commerce francais. Backend complet, composant a creer
+2. **Condition facture enrichie** : `invoiceStatus === "GENERATED"` en plus de `paymentStatus === PAID` (evite d'afficher un bouton pour une facture non generee ou annulee)
+
+### Priorite P1 (qualite production)
+
+3. **Afficher `estimatedDelivery` / `actualDelivery`** dans la timeline et la liste commandes (champs deja dans les selects)
+4. **Gerer `PARTIALLY_REFUNDED` et `RETURNED`** dans tous les composants d'affichage de statut
+5. **Harmoniser l'anonymisation** entre `delete-account.ts` et `process-account-deletions.service.ts` avant d'implementer la Feature M
+6. **Definir le comportement `suspendedAt`** — le client suspendu doit etre gere
+
+### Priorite P2 (polish)
+
+7. **Afficher l'avatar** (`User.image`) dans la sidebar et le dashboard
+8. **Afficher les providers OAuth** dans les parametres (section securite)
+9. **`SortDrawer` sur mobile** (optionnel) — avec 4 options de tri et un faible volume de commandes, le `SortSelect` natif est suffisant. Le `SortDrawer` est un raffinement UX marginal
+10. **Afficher le CTA "Laisser un avis"** dans le detail commande si `reviewRequestSentAt` et pas d'avis
+
+---
+
 ## Dependances entre fonctionnalites
 
 ```
-D (remboursements) ← modifier GET_ORDER_SELECT
-F (filtres commandes) ← modifier schema + data fetcher, resoudre conflit paymentStatus: PAID
+D (remboursements) ← modifier GET_ORDER_SELECT (ajouter refunds)
+H (retour client) ← modifier GET_ORDER_SELECT (ajouter refunds, partage avec D) + creer RequestReturnButton
+F (filtres commandes) ← modifier schema + data fetcher (Decision 4 fermee, pas de conflit)
 I (email) ← verifier Better Auth changeEmail + impacts Stripe/newsletter
 J (panier wishlist) ← aucune (AddToCartCardButton deja dans ProductCard)
 K (annulation commande) ← creer action client + composant, reutiliser canCancelOrder()
 L (codes promo) ← modifier GET_ORDER_SELECT + OrderSummaryCard
-M (annulation suppression) ← decision sur le flux de suppression (immediat vs differe)
+M (annulation suppression) ← decision sur le flux de suppression (immediat vs differe) + harmoniser anonymisation
 ```
 
 ## Ordre d'implementation suggere
@@ -1339,20 +1564,20 @@ Toutes les pages sont a recreer. Commencer par les pages avec backend complet, p
 
 ### Phase 1 - Pages a backend complet (pages a recreer uniquement)
 
-1. **Nav** + **Layout** + **loading.tsx** - Layout espace-client + navigation + skeleton global
+1. **Nav** + **Layout** + **loading.tsx** - Layout espace-client (existe, a enrichir) + navigation + skeleton global
    - Sous-tache : migrer `favoris/page.tsx` de `PageHeader variant="default"` vers `variant="compact"` (coherence avec le nouveau layout)
    - Sous-tache : nettoyer `ROUTES.ACCOUNT` (supprimer `PROFILE`/`SECURITY` dead code, ajouter `SETTINGS`/`ADDRESSES`/`CUSTOMIZATIONS`)
-2. **Dashboard** + **Commandes liste** + **Mes avis** - Pages a recreer (composants complets)
+2. **Dashboard** (existe, a enrichir avec `AccountStatsCards` + `RecentOrders`) + **Commandes liste** + **Mes avis** - Pages a recreer (composants complets)
 3. **A** - Adresses (composants complets)
 4. **B** - Mes demandes (composants complets)
 5. **E** + **G** - Parametres : Newsletter settings + Sessions actives (composants complets)
-6. **C** - Detail commande avec facture PDF (composant complet)
+6. **C** - Detail commande avec facture PDF (composant complet, condition `invoiceStatus === "GENERATED"`)
 
 ### Phase 2 - Features avec backend a completer
 
-8. **L** - Codes promo (effort minimal, 1 select + 1 ligne UI)
-9. **D** - Remboursements (effort faible, modifier select + 1 composant)
-10. **F** - Filtres commandes (effort faible, enrichir params existants)
-11. **K** - Annulation commande (effort moyen, action + composant + dialog)
-12. **I** - Email (effort moyen, depend de Better Auth + impacts Stripe/newsletter)
-13. **M** - Annulation suppression (effort moyen, depend de la decision sur le flux)
+7. **L** - Codes promo (effort minimal, 1 select + 1 ligne UI)
+8. **D** + **H** - Remboursements + Retour client (partagent la modification `GET_ORDER_SELECT` pour `refunds`. D = composant lecture, H = bouton + formulaire. **H est une obligation legale**)
+9. **F** - Filtres commandes (effort faible, enrichir params existants, Decision 4 fermee)
+10. **K** - Annulation commande (effort moyen, action + composant + dialog)
+11. **I** - Email (effort moyen, depend de Better Auth + impacts Stripe/newsletter)
+12. **M** - Annulation suppression (effort moyen, depend de la decision sur le flux + harmonisation anonymisation)
