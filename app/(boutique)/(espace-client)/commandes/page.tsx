@@ -1,5 +1,4 @@
 import { PageHeader } from "@/shared/components/page-header";
-import { SortSelect } from "@/shared/components/sort-select";
 import { CustomerOrdersTable } from "@/modules/orders/components/customer/customer-orders-table";
 import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer/customer-orders-table-skeleton";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
@@ -8,7 +7,6 @@ import {
 	GET_USER_ORDERS_DEFAULT_PER_PAGE,
 	GET_USER_ORDERS_MAX_RESULTS_PER_PAGE,
 	GET_USER_ORDERS_SORT_FIELDS,
-	USER_ORDERS_SORT_LABELS,
 	USER_ORDERS_SORT_OPTIONS,
 } from "@/modules/orders/constants/user-orders.constants";
 import { Suspense } from "react";
@@ -26,10 +24,6 @@ type OrdersPageProps = {
 		sortBy?: string;
 	}>;
 };
-
-const sortOptions = Object.entries(USER_ORDERS_SORT_LABELS).map(
-	([value, label]) => ({ value, label })
-);
 
 function parseParams(params: {
 	cursor?: string;
@@ -70,13 +64,6 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 				title="Mes commandes"
 				description="Suivez l'état de vos commandes"
 				variant="compact"
-				actions={
-					<SortSelect
-						label="Trier par"
-						options={sortOptions}
-						placeholder="Trier par..."
-					/>
-				}
 			/>
 
 			<Suspense fallback={<CustomerOrdersTableSkeleton />}>
