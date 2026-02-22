@@ -533,6 +533,10 @@ textarea {
 	}
 
 	@media (prefers-reduced-motion: reduce) {
+		.animate-in {
+			animation: none !important;
+		}
+
 		.animate-pulse,
 		.animate-sparkle-pulse,
 		.animate-wave {

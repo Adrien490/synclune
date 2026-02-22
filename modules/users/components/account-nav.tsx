@@ -7,42 +7,54 @@ import {
 	ActiveDot,
 	bottomBarContainerClass,
 	bottomBarItemClass,
+	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
 } from "@/shared/components/bottom-bar";
-import { Home, MessageSquare, Package, Settings } from "lucide-react";
+import { ROUTES } from "@/shared/constants/urls";
+import {
+	Home,
+	LogOut,
+	MapPin,
+	MessageSquare,
+	Package,
+	Settings,
+	Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
 	{
-		href: "/compte",
+		href: ROUTES.ACCOUNT.ROOT,
 		label: "Tableau de bord",
 		mobileLabel: "Accueil",
 		icon: Home,
 	},
 	{
-		href: "/commandes",
+		href: ROUTES.ACCOUNT.ORDERS,
 		label: "Commandes",
 		icon: Package,
 	},
 	{
-		href: "/mes-avis",
+		href: ROUTES.ACCOUNT.REVIEWS,
 		label: "Mes avis",
 		icon: MessageSquare,
 	},
 	{
-		href: "/adresses",
+		href: ROUTES.ACCOUNT.ADDRESSES,
 		label: "Adresses",
+		icon: MapPin,
 		desktopOnly: true,
 	},
 	{
-		href: "/mes-demandes",
+		href: ROUTES.ACCOUNT.CUSTOMIZATIONS,
 		label: "Mes demandes",
+		icon: Sparkles,
 		desktopOnly: true,
 	},
 	{
-		href: "/parametres",
+		href: ROUTES.ACCOUNT.SETTINGS,
 		label: "Paramètres",
 		icon: Settings,
 	},
@@ -71,8 +83,8 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 	const showMobile = variant === "full" || variant === "mobile-only";
 
 	const isActive = (href: string) => {
-		if (href === "/compte") {
-			return pathname === "/compte";
+		if (href === ROUTES.ACCOUNT.ROOT) {
+			return pathname === ROUTES.ACCOUNT.ROOT;
 		}
 		return pathname.startsWith(href);
 	};
@@ -82,9 +94,13 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 			{/* Desktop Sidebar */}
 			{showDesktop && (
 				<aside className="hidden lg:block w-56 shrink-0 sticky top-28">
-					<nav className="flex flex-col gap-1">
+					<nav
+						className="flex flex-col gap-1"
+						aria-label="Navigation espace client"
+					>
 						{navItems.map((item) => {
 							const active = isActive(item.href);
+							const Icon = item.icon;
 
 							return (
 								<Link
@@ -92,12 +108,13 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 									href={item.href}
 									aria-current={active ? "page" : undefined}
 									className={cn(
-										"px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
+										"flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border-l-2",
 										active
-											? "bg-muted text-foreground border-l-2 border-primary"
-											: "text-muted-foreground hover:bg-muted hover:text-foreground"
+											? "bg-muted text-foreground border-primary"
+											: "text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
 									)}
 								>
+									<Icon className="size-4 shrink-0" aria-hidden="true" />
 									{item.label}
 								</Link>
 							);
@@ -108,8 +125,9 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 						<LogoutAlertDialog>
 							<button
 								type="button"
-								className="px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full text-left"
+								className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full text-left border-l-2 border-transparent"
 							>
+								<LogOut className="size-4 shrink-0" aria-hidden="true" />
 								Se déconnecter
 							</button>
 						</LogoutAlertDialog>
@@ -129,17 +147,17 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 						{mobileItems.map((item) => {
 							const active = isActive(item.href);
 							const label = "mobileLabel" in item ? item.mobileLabel : item.label;
-							const Icon = "icon" in item ? item.icon : null;
+							const Icon = item.icon;
 
 							return (
 								<Link
 									key={item.href}
 									href={item.href}
 									aria-current={active ? "page" : undefined}
-									className={bottomBarItemClass}
+									className={cn(bottomBarItemClass, active && bottomBarActiveItemClass)}
 								>
 									{active && <ActiveDot />}
-									{Icon && <Icon className={bottomBarIconClass} aria-hidden="true" />}
+									<Icon className={bottomBarIconClass} aria-hidden="true" />
 									<span className={bottomBarLabelClass}>{label}</span>
 								</Link>
 							);

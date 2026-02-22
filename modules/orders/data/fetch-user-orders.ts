@@ -51,6 +51,9 @@ export async function fetchUserOrders(
 			userId,
 			paymentStatus: PaymentStatus.PAID, // Seulement les commandes confirmees et payees
 			...notDeleted, // Soft delete: exclure les commandes supprimees
+			...(params.search && {
+				orderNumber: { contains: params.search, mode: "insensitive" as const },
+			}),
 		};
 
 		// Construire l'orderBy

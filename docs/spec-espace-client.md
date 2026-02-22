@@ -116,6 +116,19 @@ Chaque page de l'espace client doit exporter ses `metadata` Next.js :
 - Recommander un `app/(boutique)/(espace-client)/not-found.tsx` pour les cas commande/adresse introuvable (les pages detail appellent `notFound()` si l'entite n'existe pas)
 - **`loading.tsx` recommande** au niveau `(espace-client)/` pour les transitions de navigation (toutes les pages font des fetches caches). Un skeleton global avec le layout 2 colonnes (sidebar vide + zone de contenu avec skeleton) ameliorera l'UX. Les pages avec des besoins specifiques (tableau commandes, grille adresses) peuvent ajouter leur propre `loading.tsx` par-dessus
 
+### Limites de pagination connues
+
+4 data fetchers retournent des resultats non bornes (`findMany` sans `take` ni cursor) :
+
+| Data fetcher | Fichier | Borne naturelle ? |
+|---|---|---|
+| `getUserReviews()` | `modules/reviews/data/get-user-reviews.ts` | Non |
+| `getUserAddresses()` | `modules/addresses/data/get-user-addresses.ts` | Oui (< 10 adresses par utilisateur) |
+| `getReviewableProducts()` | `modules/reviews/data/get-reviewable-products.ts` | Non |
+| `getUserCustomizationRequests()` | `modules/customizations/data/get-user-customization-requests.ts` | Non |
+
+> **Note :** Les adresses sont naturellement bornees (un utilisateur a rarement plus de 10 adresses). Pour les avis et demandes de personnalisation, ajouter un `take: 50` en V1 pour borner les resultats. En V2, migrer vers une pagination cursor-based (pattern existant dans `getUserOrders()`). Les commandes utilisent deja une pagination cursor-based correcte via `CursorPagination`.
+
 ### Composants partages reutilisables
 
 Composants existants a reutiliser dans les pages de l'espace client :
@@ -127,7 +140,7 @@ Composants existants a reutiliser dans les pages de l'espace client :
 | `CursorPagination` | `shared/components/cursor-pagination/cursor-pagination.tsx` | Pagination cursor-based avec boutons prev/next, select per-page, liens SEO `rel="prev/next"`, aria-live. Deja integre dans `CustomerOrdersTable` |
 | `RecentOrders` | `modules/orders/components/recent-orders.tsx` | Table des commandes recentes (limit configurable, lien "voir tout"). A integrer dans le dashboard `/compte` |
 | `AddressInfoCard` | `modules/addresses/components/address-info-card.tsx` | Carte d'info adresse en lecture seule. Utilisable dans le detail commande |
-| `SortDrawer` | `shared/components/sort-drawer/` | Tri sur mobile (drawer bottom). Alternative a `SortSelect` sur petit ecran pour la liste commandes |
+| `SortDrawer` | `shared/components/sort-drawer/` | Tri sur mobile (drawer bottom). Alternative optionnelle a `SortSelect` — avec 4 options de tri, le select natif est suffisant |
 | `LogoutAlertDialog` | `modules/auth/components/logout-alert-dialog.tsx` | Dialog de confirmation de deconnexion. Utilise dans `AccountNav` |
 
 ---
@@ -254,7 +267,7 @@ Pattern cursor-based existant :
 
 ### Tri
 
-Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `useSortSelect()` qui lit/ecrit le search param `sort` dans l'URL. Sur mobile, `SortDrawer` (`shared/components/sort-drawer/`) offre une meilleure UX (drawer bottom) et devrait etre utilise a la place du select dropdown.
+Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `useSortSelect()` qui lit/ecrit le search param `sort` dans l'URL. Sur mobile, `SortDrawer` (`shared/components/sort-drawer/`) est disponible comme alternative (drawer bottom) mais reste optionnel — avec 4 options de tri, le `SortSelect` natif est suffisant.
 
 4 options de tri definies dans `modules/orders/constants/user-orders.constants.ts` :
 - "Plus recentes" (defaut), "Plus anciennes", "Montant decroissant", "Montant croissant"
@@ -714,6 +727,8 @@ Pas d'empty state necessaire : la carte ne s'affiche que si `refunds.length > 0`
 
 > **Statut : A faire** — Backend a completer (tri implemente, filtres non)
 
+> **Justification du split V1/V2 :** Pour une micro-entreprise de bijoux artisanaux, les clients ont typiquement < 20 commandes. La recherche par numero suffit en V1. Les filtres avances sont un raffinement pour quand le volume de commandes par client justifiera l'investissement.
+
 ### Statut actuel
 
 - **Schema actuel** : `user-orders.schemas.ts` ne contient que `cursor`, `direction`, `perPage`, `sortBy` - aucun champ de filtre n'est defini
@@ -723,41 +738,26 @@ Pas d'empty state necessaire : la carte ne s'affiche que si `refunds.length > 0`
 
 ### `paymentStatus: PAID` hardcode (Decision 4 — fermee)
 
-`fetch-user-orders.ts:47-52` hardcode `paymentStatus: PaymentStatus.PAID` de maniere deliberee. Les commandes non payees (PENDING, FAILED, EXPIRED) sont des artefacts techniques (reservations de stock) et ne doivent pas apparaitre dans "Mes commandes". Les filtres client operent donc uniquement sur les commandes deja payees. Les params `filter_status` et `filter_fulfillmentStatus` existent deja dans le composant admin `orders-filter-sheet.tsx` mais ne sont pas wires cote client.
+`fetch-user-orders.ts:47-52` hardcode `paymentStatus: PaymentStatus.PAID` de maniere deliberee. Les commandes non payees (PENDING, FAILED, EXPIRED) sont des artefacts techniques (reservations de stock) et ne doivent pas apparaitre dans "Mes commandes". Les filtres client operent donc uniquement sur les commandes deja payees.
 
-### Fichiers a modifier
+### V1 — Recherche par numero + tri existant
+
+#### Fichiers a modifier
 
 | Fichier | Modification |
 |---|---|
-| `app/(boutique)/(espace-client)/commandes/page.tsx` | **A creer** - Ajouter parsing des filtres + passer a `getUserOrders` |
-| `modules/orders/schemas/user-orders.schemas.ts` | Ajouter champs `search`, `filterStatus`, `filterFulfillmentStatus` |
-| `modules/orders/data/get-user-orders.ts` | Passer les filtres a `fetchUserOrders` |
-| `modules/orders/data/fetch-user-orders.ts` | Ajouter les `where` clauses |
+| `app/(boutique)/(espace-client)/commandes/page.tsx` | **A creer** - Ajouter parsing du search param + passer a `getUserOrders` |
+| `modules/orders/schemas/user-orders.schemas.ts` | Ajouter `search: z.string().max(50).optional()` |
+| `modules/orders/data/get-user-orders.ts` | Passer `search` a `fetchUserOrders` |
+| `modules/orders/data/fetch-user-orders.ts` | Ajouter la `where` clause sur `orderNumber` |
 
-### Fichier a creer
+#### Fichier a creer
 
 | Fichier | Role |
 |---|---|
-| `modules/orders/components/customer/customer-orders-filters.tsx` | Barre de filtres (statut + recherche) |
+| `modules/orders/components/customer/customer-orders-filters.tsx` | Barre de recherche (input recherche par numero de commande) |
 
-### UI des filtres
-
-Barre de filtres au-dessus de la table, contenant :
-- Input recherche par numero de commande (`Order.orderNumber`)
-- Select filtre par statut (`OrderStatus` : PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED)
-- Select filtre par statut livraison (`FulfillmentStatus` : UNFULFILLED, PROCESSING, SHIPPED, DELIVERED, RETURNED)
-
-Les filtres utilisent des search params URL (pattern existant dans le projet).
-
-### Filtre par date (optionnel, V2)
-
-Pour les clients avec beaucoup de commandes, un filtre par plage de dates serait utile. Options :
-- Presets : "30 derniers jours", "3 derniers mois", "6 derniers mois", "Cette annee"
-- Ou un date range picker (plus complexe a implementer)
-
-A evaluer selon le volume moyen de commandes par client.
-
-### Schema enrichi
+#### Schema V1
 
 ```ts
 // modules/orders/schemas/user-orders.schemas.ts
@@ -766,14 +766,12 @@ export const getUserOrdersSchema = z.object({
   direction: directionSchema,
   perPage: createPerPageSchema(...),
   sortBy: userOrdersSortBySchema,
-  // NEW
+  // V1
   search: z.string().max(50).optional(),
-  filterStatus: z.enum(["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]).optional(),
-  filterFulfillmentStatus: z.enum(["UNFULFILLED", "PROCESSING", "SHIPPED", "DELIVERED", "RETURNED"]).optional(),
 });
 ```
 
-### Where clause dans fetch-user-orders.ts
+#### Where clause V1 dans fetch-user-orders.ts
 
 ```ts
 const where: Prisma.OrderWhereInput = {
@@ -782,14 +780,38 @@ const where: Prisma.OrderWhereInput = {
   ...(params.search && {
     orderNumber: { contains: params.search, mode: "insensitive" },
   }),
-  ...(params.filterStatus && { status: params.filterStatus }),
-  ...(params.filterFulfillmentStatus && { fulfillmentStatus: params.filterFulfillmentStatus }),
 };
 ```
 
+#### UI V1
+
+`customer-orders-filters.tsx` est une simple barre de recherche au-dessus de la table :
+- Input recherche par numero de commande (`Order.orderNumber`)
+- Les search params URL sont utilises (pattern existant dans le projet)
+- Le tri existant (4 options via `SortSelect`) reste inchange
+
+### V2 — Filtres avances
+
+#### Schema V2 (ajouts)
+
+```ts
+// Ajouter au schema V1 :
+filterStatus: z.enum(["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]).optional(),
+filterFulfillmentStatus: z.enum(["UNFULFILLED", "PROCESSING", "SHIPPED", "DELIVERED", "RETURNED"]).optional(),
+```
+
+#### UI V2
+
+Enrichir `customer-orders-filters.tsx` avec :
+- Select filtre par statut (`OrderStatus` : PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED)
+- Select filtre par statut livraison (`FulfillmentStatus` : UNFULFILLED, PROCESSING, SHIPPED, DELIVERED, RETURNED)
+- Filtre par plage de dates (presets : "30 derniers jours", "3 derniers mois", "6 derniers mois", "Cette annee")
+
+Les params `filter_status` et `filter_fulfillmentStatus` existent deja dans le composant admin `orders-filter-sheet.tsx` et peuvent servir de reference.
+
 ### Empty state filtre
 
-Si les filtres ne retournent aucun resultat : "Aucune commande ne correspond a vos criteres" + bouton "Reinitialiser les filtres".
+Si la recherche/les filtres ne retournent aucun resultat : "Aucune commande ne correspond a vos criteres" + bouton "Reinitialiser les filtres".
 
 ---
 
@@ -967,6 +989,18 @@ Better Auth a un flow `changeEmail` integre qui :
 - **Stripe** : le plugin `@better-auth/stripe` synchronise automatiquement l'email du customer Stripe lors de certains evenements. Verifier si le changement d'email declenche cette sync. Si non, ajouter manuellement `stripe.customers.update(stripeCustomerId, { email: newEmail })` dans l'action de changement d'email.
 - **Newsletter** : si l'utilisateur est inscrit a la newsletter (`NewsletterSubscriber.email`), l'email de la souscription doit aussi etre mis a jour. Sinon la newsletter continuera d'arriver sur l'ancienne adresse, et le lien de desinscription ne marchera plus.
 - **Sessions** : Better Auth devrait gerer les sessions existantes (les garder valides apres changement d'email).
+
+### Strategie de compensation en cas d'echec
+
+Le changement d'email impacte 3 systemes. En cas d'echec partiel :
+
+1. **Better Auth `changeEmail`** — si echec, stop et retourner erreur a l'utilisateur. Aucune compensation necessaire.
+2. **Stripe `customers.update`** — si echec, logger l'erreur + creer une entree de retry via cron. Le changement principal (email utilisateur) est reussi.
+3. **Newsletter `subscriber.update`** — si echec, logger l'erreur + creer une entree de retry via cron. Le changement principal est reussi.
+
+Si les etapes 2 ou 3 echouent : retourner succes a l'utilisateur (le changement d'email principal est reussi), creer une entree de retry pour les systemes en echec. Un cron de reconciliation traitera les retries.
+
+> **⚠ Prerequis bloquant :** Better Auth `changeEmail` n'est **PAS configure** dans le projet. Verifie dans `modules/auth/lib/auth.ts` : les plugins configures sont `stripe()`, `customSession()`, `nextCookies()`. Aucun plugin `changeEmail` n'est present. Ce prerequis doit etre resolu avant toute implementation de la Feature I (soit ajouter le plugin correspondant, soit implementer le flow manuellement).
 
 ### Attention
 

@@ -17,7 +17,7 @@ export const bottomBarContainerClass =
 /** Classes for an individual item (button or link) inside the bar. */
 export const bottomBarItemClass = cn(
 	"flex-1 flex flex-col items-center justify-center gap-1",
-	"h-full min-h-14",
+	"h-full min-h-14 min-w-16",
 	"transition-colors duration-200",
 	"active:scale-[0.98] active:bg-primary/10",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
@@ -25,11 +25,26 @@ export const bottomBarItemClass = cn(
 	"text-muted-foreground hover:text-foreground",
 );
 
+/** Classes applied to an active item (in addition to bottomBarItemClass). */
+export const bottomBarActiveItemClass = "text-foreground bg-primary/5";
+
 /** Icon size class. */
 export const bottomBarIconClass = "size-5";
 
 /** Label text class. */
-export const bottomBarLabelClass = "text-xs font-medium";
+export const bottomBarLabelClass = "text-xs font-medium truncate max-w-full";
+
+/** Wrapper for icon + optional badge. */
+export const bottomBarIconWrapperClass = "relative inline-flex";
+
+/** Badge displayed over an icon. */
+export const bottomBarBadgeClass = cn(
+	"absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1",
+	"flex items-center justify-center",
+	"text-[10px] font-bold leading-none",
+	"bg-primary text-primary-foreground rounded-full",
+	"animate-in zoom-in-75 duration-200",
+);
 
 // ---------------------------------------------------------------------------
 // ActiveDot
@@ -87,13 +102,15 @@ export function BottomBar({
 		<Component
 			initial={prefersReducedMotion ? false : { y: 100, opacity: 0 }}
 			animate={isHidden ? { y: 100, opacity: 0 } : { y: 0, opacity: 1 }}
-			transition={MOTION_CONFIG.spring.bar}
+			transition={prefersReducedMotion ? { duration: 0 } : MOTION_CONFIG.spring.bar}
 			aria-label={ariaLabel}
+			{...(isHidden && { inert: true })}
 			className={cn(
 				breakpointClass,
 				"fixed bottom-0 left-0 right-0",
 				zIndex,
 				"pb-[env(safe-area-inset-bottom)]",
+				// bg-background/95 acts as fallback when backdrop-filter is unsupported
 				"bg-background/95 backdrop-blur-md",
 				"border-t border-x border-border",
 				"rounded-t-2xl",

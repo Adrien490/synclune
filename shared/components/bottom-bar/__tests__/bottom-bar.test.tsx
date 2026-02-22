@@ -36,8 +36,11 @@ import {
 	ActiveDot,
 	bottomBarContainerClass,
 	bottomBarItemClass,
+	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
+	bottomBarIconWrapperClass,
+	bottomBarBadgeClass,
 } from "../bottom-bar";
 
 afterEach(() => {
@@ -92,7 +95,7 @@ describe("BottomBar", () => {
 		expect(screen.getByLabelText("test label")).toBeDefined();
 	});
 
-	it("applies pointer-events-none when isHidden", () => {
+	it("applies pointer-events-none and inert when isHidden", () => {
 		render(
 			<BottomBar isHidden aria-label="bar">
 				<span>content</span>
@@ -101,9 +104,10 @@ describe("BottomBar", () => {
 
 		const el = screen.getByLabelText("bar");
 		expect(el.className).toContain("pointer-events-none");
+		expect(el).toHaveAttribute("inert");
 	});
 
-	it("does not apply pointer-events-none when visible", () => {
+	it("does not apply pointer-events-none or inert when visible", () => {
 		render(
 			<BottomBar aria-label="bar">
 				<span>content</span>
@@ -112,6 +116,7 @@ describe("BottomBar", () => {
 
 		const el = screen.getByLabelText("bar");
 		expect(el.className).not.toContain("pointer-events-none");
+		expect(el).not.toHaveAttribute("inert");
 	});
 
 	it("uses custom breakpointClass", () => {
@@ -217,12 +222,32 @@ describe("Exported class constants", () => {
 		expect(bottomBarItemClass).toContain("min-h-14");
 	});
 
+	it("bottomBarItemClass contains min-width", () => {
+		expect(bottomBarItemClass).toContain("min-w-16");
+	});
+
+	it("bottomBarActiveItemClass contains active styles", () => {
+		expect(bottomBarActiveItemClass).toContain("text-foreground");
+		expect(bottomBarActiveItemClass).toContain("bg-primary/5");
+	});
+
 	it("bottomBarIconClass defines size", () => {
 		expect(bottomBarIconClass).toContain("size-5");
 	});
 
-	it("bottomBarLabelClass defines text size", () => {
+	it("bottomBarLabelClass defines text size and truncation", () => {
 		expect(bottomBarLabelClass).toContain("text-xs");
+		expect(bottomBarLabelClass).toContain("truncate");
+	});
+
+	it("bottomBarIconWrapperClass contains relative inline-flex", () => {
+		expect(bottomBarIconWrapperClass).toContain("relative");
+		expect(bottomBarIconWrapperClass).toContain("inline-flex");
+	});
+
+	it("bottomBarBadgeClass contains badge styles", () => {
+		expect(bottomBarBadgeClass).toContain("rounded-full");
+		expect(bottomBarBadgeClass).toContain("bg-primary");
 	});
 });
 
@@ -284,6 +309,47 @@ describe("useBottomBarHeight", () => {
 
 		unmount();
 		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("");
+	});
+
+	it("uses max height when multiple bars registered", async () => {
+		const { useBottomBarHeight: realHook } = await vi.importActual<
+			typeof import("@/shared/hooks/use-bottom-bar-height")
+		>("@/shared/hooks/use-bottom-bar-height");
+
+		function Bar({ height }: { height: number }) {
+			realHook(height, true);
+			return <div />;
+		}
+
+		render(
+			<>
+				<Bar height={56} />
+				<Bar height={72} />
+			</>
+		);
+
+		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("72px");
+	});
+
+	it("preserves CSS variable when one of two bars unmounts", async () => {
+		const { useBottomBarHeight: realHook, _registry } = await vi.importActual<
+			typeof import("@/shared/hooks/use-bottom-bar-height")
+		>("@/shared/hooks/use-bottom-bar-height");
+
+		function Bar({ height }: { height: number }) {
+			realHook(height, true);
+			return <div />;
+		}
+
+		const { unmount: unmountFirst } = render(<Bar height={56} />);
+		render(<Bar height={72} />);
+
+		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("72px");
+
+		unmountFirst();
+
+		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("72px");
+		expect(_registry.size).toBe(1);
 	});
 
 	it("updates CSS variable when height changes", async () => {

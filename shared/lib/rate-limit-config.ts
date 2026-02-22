@@ -191,6 +191,20 @@ export const AUTH_PASSWORD_CHANGE_LIMIT: RateLimitConfig = {
 };
 
 // ========================================
+// 🔑 SESSIONS
+// ========================================
+
+/**
+ * Limite pour la revocation de sessions
+ *
+ * Protege contre abus de revocation repetee
+ */
+export const SESSION_REVOKE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+// ========================================
 // 📧 CONTACT & COMMUNICATION
 // ========================================
 

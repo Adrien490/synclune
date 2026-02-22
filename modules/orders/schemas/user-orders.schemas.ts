@@ -32,4 +32,5 @@ export const getUserOrdersSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_USER_ORDERS_DEFAULT_PER_PAGE, GET_USER_ORDERS_MAX_RESULTS_PER_PAGE),
 	sortBy: userOrdersSortBySchema,
+	search: z.string().max(50).optional(),
 });

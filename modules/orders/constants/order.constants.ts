@@ -112,6 +112,31 @@ export const GET_ORDER_SELECT = {
 			quantity: true,
 		},
 	},
+	refunds: {
+		select: {
+			id: true,
+			status: true,
+			reason: true,
+			amount: true,
+			currency: true,
+			createdAt: true,
+			items: {
+				select: {
+					id: true,
+					orderItemId: true,
+					quantity: true,
+					amount: true,
+				},
+			},
+		},
+		orderBy: { createdAt: "desc" as const },
+	},
+	discountUsages: {
+		select: {
+			discountCode: true,
+			amountApplied: true,
+		},
+	},
 	history: {
 		select: {
 			id: true,

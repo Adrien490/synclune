@@ -16,6 +16,7 @@ import {
 	ActiveDot,
 	bottomBarContainerClass,
 	bottomBarItemClass,
+	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
 } from "@/shared/components/bottom-bar";
@@ -53,14 +54,6 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 	const isAnySheetOpen = useSheetStore((state) => state.openSheet !== null);
 
 	const isHidden = isSearchOpen || isFilterOpen || sortOpen || isSkuSelectorOpen || isAnySheetOpen;
-
-	// Transfer focus away from toolbar buttons when bar hides
-	const toolbarRef = useRef<HTMLDivElement>(null);
-	useEffect(() => {
-		if (isHidden && toolbarRef.current?.contains(document.activeElement)) {
-			(document.activeElement as HTMLElement).blur();
-		}
-	}, [isHidden]);
 
 	const searchParams = useSearchParams();
 
@@ -145,17 +138,19 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 	};
 
 	const buttonClassName = cn(bottomBarItemClass, "min-w-18");
+	const activeButtonClassName = cn(buttonClassName, bottomBarActiveItemClass);
 
 	return (
 		<>
 			<BottomBar
+				as="nav"
+				aria-label="Tri, recherche et filtres"
 				isHidden={isHidden}
 				breakpointClass="md:hidden"
 				zIndex="z-[75]"
 				className={className}
 			>
 				<div
-					ref={toolbarRef}
 					role="toolbar"
 					aria-orientation="horizontal"
 					aria-label="Tri, recherche et filtres"
@@ -169,10 +164,9 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
-						className={buttonClassName}
+						className={hasActiveSort ? activeButtonClassName : buttonClassName}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 						aria-haspopup="dialog"
-						aria-expanded={sortOpen}
 					>
 						{hasActiveSort && <ActiveDot />}
 						<ArrowUpDown className={bottomBarIconClass} aria-hidden="true" />
@@ -187,14 +181,13 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
-						className={buttonClassName}
+						className={hasActiveSearch ? activeButtonClassName : buttonClassName}
 						aria-label={
 							hasActiveSearch
 								? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
 								: "Ouvrir la recherche"
 						}
 						aria-haspopup="dialog"
-						aria-expanded={isSearchOpen}
 					>
 						{hasActiveSearch && <ActiveDot />}
 						<Search className={bottomBarIconClass} aria-hidden="true" />
@@ -209,14 +202,13 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
-						className={buttonClassName}
+						className={hasActiveFilters ? activeButtonClassName : buttonClassName}
 						aria-label={
 							hasActiveFilters
 								? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}. Modifier les filtres`
 								: "Ouvrir les filtres"
 						}
 						aria-haspopup="dialog"
-						aria-expanded={isFilterOpen}
 					>
 						{hasActiveFilters && <ActiveDot />}
 						<SlidersHorizontal className={bottomBarIconClass} aria-hidden="true" />
