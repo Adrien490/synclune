@@ -88,13 +88,13 @@ describe("isReturnEligible", () => {
 			expect(isReturnEligible(order)).toBe(true);
 		});
 
-		it("should return false when fulfillment status is FULFILLED", () => {
-			const order = makeOrder({ fulfillmentStatus: "FULFILLED" });
+		it("should return false when fulfillment status is SHIPPED", () => {
+			const order = makeOrder({ fulfillmentStatus: "SHIPPED" });
 			expect(isReturnEligible(order)).toBe(false);
 		});
 
-		it("should return false when fulfillment status is PARTIALLY_FULFILLED", () => {
-			const order = makeOrder({ fulfillmentStatus: "PARTIALLY_FULFILLED" });
+		it("should return false when fulfillment status is PROCESSING", () => {
+			const order = makeOrder({ fulfillmentStatus: "PROCESSING" });
 			expect(isReturnEligible(order)).toBe(false);
 		});
 
@@ -160,8 +160,8 @@ describe("isReturnEligible", () => {
 			expect(isReturnEligible(order)).toBe(true);
 		});
 
-		it("should return true when only PROCESSED refunds exist", () => {
-			const order = makeOrder({ refunds: [{ status: "PROCESSED" }] });
+		it("should return true when only COMPLETED refunds exist", () => {
+			const order = makeOrder({ refunds: [{ status: "COMPLETED" }] });
 			expect(isReturnEligible(order)).toBe(true);
 		});
 
@@ -169,7 +169,7 @@ describe("isReturnEligible", () => {
 			const order = makeOrder({
 				refunds: [
 					{ status: "REJECTED" },
-					{ status: "PROCESSED" },
+					{ status: "COMPLETED" },
 					{ status: "PENDING" },
 				],
 			});

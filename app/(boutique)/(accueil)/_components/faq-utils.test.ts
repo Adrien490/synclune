@@ -132,13 +132,11 @@ describe("generateFaqSchema", () => {
 		{
 			question: "Question 1 ?",
 			answer: "Answer with {{link0}}.",
-			icon: null as unknown as FaqItemData["icon"],
 			links: [{ text: "a link", href: "/link" }],
 		},
 		{
 			question: "Question 2 ?",
 			answer: "Plain answer.",
-			icon: null as unknown as FaqItemData["icon"],
 		},
 	];
 
@@ -183,7 +181,6 @@ describe("validateFaqPlaceholders", () => {
 			{
 				question: "Test question?",
 				answer: "See {{link0}} and {{link1}}.",
-				icon: null as unknown as FaqItemData["icon"],
 				links: [{ text: "only one", href: "/one" }],
 			},
 		]);
@@ -203,7 +200,6 @@ describe("validateFaqPlaceholders", () => {
 			{
 				question: "Valid question?",
 				answer: "See {{link0}}.",
-				icon: null as unknown as FaqItemData["icon"],
 				links: [{ text: "valid", href: "/valid" }],
 			},
 		]);
@@ -220,7 +216,6 @@ describe("validateFaqPlaceholders", () => {
 			{
 				question: "No links?",
 				answer: "No placeholders here.",
-				icon: null as unknown as FaqItemData["icon"],
 			},
 		]);
 

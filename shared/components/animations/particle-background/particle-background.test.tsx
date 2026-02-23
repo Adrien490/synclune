@@ -27,7 +27,7 @@ vi.mock("motion/react", () => {
 		...actual,
 		useReducedMotion: vi.fn(() => false),
 		useInView: vi.fn(() => true),
-		useMotionValue: vi.fn((initial: number) => ({
+		useMotionValue: vi.fn((initial) => ({
 			get: () => initial,
 			set: vi.fn(),
 		})),
@@ -305,7 +305,7 @@ describe("ParticleBackground", () => {
 // ─── Parallax & mouse interaction tests ─────────────────────────────
 
 describe("ParticleBackground parallax", () => {
-	let motionValues: { initial: number; value: number; setFn: ReturnType<typeof vi.fn> }[];
+	let motionValues: { initial: unknown; value: unknown; setFn: ReturnType<typeof vi.fn> }[];
 
 	beforeEach(() => {
 		mockMatchMedia({
@@ -315,7 +315,7 @@ describe("ParticleBackground parallax", () => {
 
 		// Track all useMotionValue instances to capture mouseX/mouseY
 		motionValues = [];
-		vi.mocked(useMotionValue).mockImplementation((initial: number) => {
+		vi.mocked(useMotionValue).mockImplementation((initial) => {
 			const mv = {
 				initial,
 				value: initial,
@@ -335,10 +335,10 @@ describe("ParticleBackground parallax", () => {
 	});
 
 	afterEach(() => {
-		vi.mocked(useMotionValue).mockImplementation((initial: number) => ({
+		vi.mocked(useMotionValue).mockImplementation((initial) => ({
 			get: () => initial,
 			set: vi.fn(),
-		}));
+		}) as any);
 	});
 
 	it("sets parallax offset on mousemove", () => {

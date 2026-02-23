@@ -12,8 +12,8 @@ import {
 describe("buildRevenueMap", () => {
 	it("should convert SQL rows to a Map of date -> number", () => {
 		const rows = [
-			{ date: "2026-01-15", revenue: 150000n },
-			{ date: "2026-01-16", revenue: 230000n },
+			{ date: "2026-01-15", revenue: BigInt(150000) },
+			{ date: "2026-01-16", revenue: BigInt(230000) },
 		];
 
 		const result = buildRevenueMap(rows);
@@ -24,7 +24,7 @@ describe("buildRevenueMap", () => {
 	});
 
 	it("should handle bigint zero", () => {
-		const rows = [{ date: "2026-01-01", revenue: 0n }];
+		const rows = [{ date: "2026-01-01", revenue: BigInt(0) }];
 
 		const result = buildRevenueMap(rows);
 
@@ -32,7 +32,7 @@ describe("buildRevenueMap", () => {
 	});
 
 	it("should handle large bigint values", () => {
-		const rows = [{ date: "2026-01-01", revenue: 9_999_999_999n }];
+		const rows = [{ date: "2026-01-01", revenue: BigInt(9_999_999_999) }];
 
 		const result = buildRevenueMap(rows);
 
@@ -47,8 +47,8 @@ describe("buildRevenueMap", () => {
 
 	it("should overwrite duplicate dates with the last value", () => {
 		const rows = [
-			{ date: "2026-01-01", revenue: 100n },
-			{ date: "2026-01-01", revenue: 200n },
+			{ date: "2026-01-01", revenue: BigInt(100) },
+			{ date: "2026-01-01", revenue: BigInt(200) },
 		];
 
 		const result = buildRevenueMap(rows);

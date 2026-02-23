@@ -269,7 +269,7 @@ describe("approveRefund", () => {
 		await approveRefund(undefined, makeFormData());
 
 		const userTagCalls = mockUpdateTag.mock.calls.filter(
-			([tag]: [string]) => tag.startsWith("orders-user-"),
+			([tag]) => (tag as string).startsWith("orders-user-"),
 		);
 		expect(userTagCalls).toHaveLength(0);
 	});

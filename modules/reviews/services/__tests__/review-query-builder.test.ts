@@ -119,9 +119,9 @@ describe("buildReviewWhereClause (admin)", () => {
 	});
 
 	it("should filter by status when provided", () => {
-		const result = buildReviewWhereClause(params({ status: "PENDING" }), true);
+		const result = buildReviewWhereClause(params({ status: "HIDDEN" }), true);
 
-		expect(result.status).toBe("PENDING");
+		expect(result.status).toBe("HIDDEN");
 	});
 
 	it("should filter by userId when provided", () => {

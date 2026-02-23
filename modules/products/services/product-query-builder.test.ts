@@ -127,7 +127,7 @@ describe("buildSearchConditions", () => {
 // ─── buildProductWhereClause ──────────────────────────────────
 
 describe("buildProductWhereClause", () => {
-	const baseParams: GetProductsParams = {}
+	const baseParams: GetProductsParams = { perPage: 20, sortBy: "created-descending", filters: {} }
 
 	it("excludes soft-deleted products by default", () => {
 		const where = buildProductWhereClause(baseParams)
@@ -140,7 +140,7 @@ describe("buildProductWhereClause", () => {
 	})
 
 	it("does not exclude soft-deleted when includeDeleted is true", () => {
-		const where = buildProductWhereClause({ includeDeleted: true })
+		const where = buildProductWhereClause({ ...baseParams, includeDeleted: true })
 		const conditions = (where.AND ?? []) as Prisma.ProductWhereInput[]
 		const hasDeletedAtNull = conditions.some(
 			(c) => "deletedAt" in c && c.deletedAt === null
@@ -149,7 +149,7 @@ describe("buildProductWhereClause", () => {
 	})
 
 	it("filters by status when provided", () => {
-		const where = buildProductWhereClause({ status: "PUBLIC" })
+		const where = buildProductWhereClause({ ...baseParams, status: "PUBLIC" })
 		const conditions = where.AND as Prisma.ProductWhereInput[]
 		const hasStatus = conditions.some(
 			(c) => "status" in c && c.status === "PUBLIC"
@@ -233,7 +233,7 @@ describe("buildProductWhereClause", () => {
 	})
 
 	it("returns empty AND when no conditions at all", () => {
-		const where = buildProductWhereClause({ includeDeleted: true })
+		const where = buildProductWhereClause({ ...baseParams, includeDeleted: true })
 		expect(where.AND).toBeUndefined()
 	})
 })

@@ -170,7 +170,7 @@ describe("MenuSheetNav", () => {
 				name: "Alice",
 				email: "alice@test.com",
 				image: null,
-				role: "USER",
+				role: "USER" as const,
 			},
 		};
 

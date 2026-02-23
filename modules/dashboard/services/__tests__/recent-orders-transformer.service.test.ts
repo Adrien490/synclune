@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("@/app/generated/prisma/client", () => ({
 	OrderStatus: {
 		PENDING: "PENDING",
-		CONFIRMED: "CONFIRMED",
+		PROCESSING: "PROCESSING",
 		SHIPPED: "SHIPPED",
 		DELIVERED: "DELIVERED",
 		CANCELLED: "CANCELLED",
@@ -36,7 +36,7 @@ function makeOrder(overrides: Partial<OrderForTransform> = {}): OrderForTransfor
 		id: "order-1",
 		orderNumber: "SYN-20260001",
 		createdAt: new Date("2026-01-15T10:00:00Z"),
-		status: OrderStatus.CONFIRMED,
+		status: OrderStatus.PROCESSING,
 		paymentStatus: PaymentStatus.PAID,
 		total: 4500,
 		user: { name: "Alice", email: "alice@test.com" },
@@ -58,7 +58,7 @@ describe("transformRecentOrder", () => {
 			id: "order-1",
 			orderNumber: "SYN-20260001",
 			createdAt: new Date("2026-01-15T10:00:00Z"),
-			status: OrderStatus.CONFIRMED,
+			status: OrderStatus.PROCESSING,
 			paymentStatus: PaymentStatus.PAID,
 			total: 4500,
 			customerName: "Alice",

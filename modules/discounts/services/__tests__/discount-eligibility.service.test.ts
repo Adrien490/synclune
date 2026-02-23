@@ -22,7 +22,7 @@ vi.mock("../../constants/discount.constants", () => ({
 // ---------------------------------------------------------------------------
 
 function makeDiscount(
-	overrides: Partial<DiscountValidation> = {}
+	overrides: Record<string, unknown> = {}
 ): DiscountValidation {
 	return {
 		id: "discount-1",
@@ -37,7 +37,7 @@ function makeDiscount(
 		startsAt: new Date("2026-01-01T00:00:00Z"),
 		endsAt: null,
 		...overrides,
-	};
+	} as DiscountValidation;
 }
 
 function makeContext(
