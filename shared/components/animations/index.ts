@@ -24,6 +24,9 @@ export { ErrorShake } from "./error-shake";
 export { StaggerGrid } from "./stagger-grid";
 
 
+// Text animations
+export { SplitText } from "./split-text";
+
 // Scroll indicator
 export { ScrollIndicator } from "./scroll-indicator";
 
@@ -43,6 +46,7 @@ export type { ScrollIndicatorProps } from "./scroll-indicator";
 export type { SlideProps } from "./slide";
 export type { StaggerGridProps } from "./stagger-grid";
 export type { StaggerProps } from "./stagger";
+export type { SplitTextProps } from "./split-text";
 export type { TapProps } from "./tap";
 
 // Background Animation Types

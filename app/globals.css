@@ -9,6 +9,8 @@
 html {
 	scroll-behavior: smooth;
 	--navbar-height: 4rem;
+	--ab-height: 44px;
+	--announcement-bar-height: 0px;
 	position: relative;
 }
 
@@ -394,6 +396,16 @@ textarea {
 				black 97%,
 				transparent 100%
 			);
+		}
+	}
+
+	/* Animation shimmer sweep for announcement bar */
+	@keyframes announcement-shimmer {
+		0% {
+			transform: translateX(-100%);
+		}
+		100% {
+			transform: translateX(100%);
 		}
 	}
 
@@ -816,6 +828,14 @@ textarea {
 
 	.scrollbar-none::-webkit-scrollbar {
 		display: none;
+	}
+
+	/* ==========================================
+	   CONTENT VISIBILITY — Defer below-fold rendering
+	   ========================================== */
+	.content-defer {
+		content-visibility: auto;
+		contain-intrinsic-size: auto 600px;
 	}
 }
 

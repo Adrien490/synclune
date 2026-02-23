@@ -1,0 +1,21 @@
+/* CSS Scroll-Driven Animation for progress line */
+/* Progressive enhancement: only applies when browser supports animation-timeline */
+
+@keyframes grow-progress {
+	from {
+		clip-path: inset(0 0 100% 0);
+		opacity: 0.3;
+	}
+	to {
+		clip-path: inset(0 0 0% 0);
+		opacity: 1;
+	}
+}
+
+@supports (animation-timeline: view()) {
+	.scroll-progress-line-css {
+		animation: grow-progress linear both;
+		animation-timeline: view();
+		animation-range: entry 20% cover 50%;
+	}
+}

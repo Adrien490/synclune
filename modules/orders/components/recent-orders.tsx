@@ -1,5 +1,13 @@
-import { type OrderStatus } from "@/app/generated/prisma/client";
+import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/shared/components/ui/empty";
 import {
 	Table,
 	TableBody,
@@ -11,22 +19,16 @@ import {
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
 import type { UserOrder } from "@/modules/orders/types/user-orders.types";
-import { ORDER_STATUS_LABELS } from "@/modules/orders/constants/status-display";
-import { cn } from "@/shared/utils/cn";
+import {
+	ORDER_STATUS_LABELS,
+	ORDER_STATUS_VARIANTS,
+} from "@/modules/orders/constants/status-display";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Package } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
-
-const ORDER_STATUS_STYLES: Record<OrderStatus, string> = {
-	PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-	PROCESSING: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-	SHIPPED: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-	DELIVERED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-	CANCELLED: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
-};
 
 interface RecentOrdersProps {
 	ordersPromise: ReturnType<typeof getUserOrders>;
@@ -55,17 +57,22 @@ export function RecentOrders({
 			</div>
 
 			{orders.length === 0 ? (
-				<div className="text-center py-12 border rounded-lg">
-					<div className="flex justify-center mb-4">
-						<Package className="h-12 w-12 text-muted-foreground" />
-					</div>
-					<p className="text-base/7 tracking-normal antialiased text-muted-foreground mb-4">
-						Vous n'avez pas encore passé de commande
-					</p>
-					<Button asChild>
-						<Link href="/produits">Découvrir nos bijoux</Link>
-					</Button>
-				</div>
+				<Empty>
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<Package className="size-6" />
+						</EmptyMedia>
+						<EmptyTitle>Aucune commande</EmptyTitle>
+						<EmptyDescription>
+							Vous n'avez pas encore passé de commande
+						</EmptyDescription>
+					</EmptyHeader>
+					<EmptyContent>
+						<Button asChild>
+							<Link href="/produits">Découvrir nos bijoux</Link>
+						</Button>
+					</EmptyContent>
+				</Empty>
 			) : (
 				<>
 					<TableScrollContainer className="border rounded-lg">
@@ -87,14 +94,12 @@ export function RecentOrders({
 											#{order.orderNumber}
 										</TableCell>
 										<TableCell>
-											<span
-												className={cn(
-													"inline-flex items-center rounded-full px-2 py-1 text-xs/5 tracking-normal antialiased font-medium",
-													ORDER_STATUS_STYLES[order.status]
-												)}
+											<Badge
+												variant={ORDER_STATUS_VARIANTS[order.status]}
+												className="whitespace-nowrap"
 											>
 												{ORDER_STATUS_LABELS[order.status]}
-											</span>
+											</Badge>
 										</TableCell>
 										<TableCell className="hidden sm:table-cell text-sm/6 tracking-normal antialiased text-muted-foreground">
 											{format(order.createdAt, "d MMM yyyy", { locale: fr })}

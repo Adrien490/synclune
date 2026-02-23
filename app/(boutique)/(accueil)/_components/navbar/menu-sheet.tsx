@@ -13,7 +13,8 @@ import {
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { Menu } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef } from "react";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
 
@@ -43,6 +44,7 @@ export function MenuSheet({
 	session,
 }: MenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("menu-sheet");
+	useEdgeSwipe(openMenu, isOpen);
 
 	return (
 		<Sheet direction="left" open={isOpen} onOpenChange={(open) => (open ? openMenu() : closeMenu())} preventScrollRestoration>
@@ -50,14 +52,11 @@ export function MenuSheet({
 				<button
 					type="button"
 					className="relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-[transform,color,background-color] duration-300 ease-out motion-safe:hover:scale-105 motion-safe:active:scale-95 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-					aria-label="Ouvrir le menu de navigation"
+					aria-label={isOpen ? "Fermer le menu de navigation" : "Ouvrir le menu de navigation"}
 					aria-haspopup="dialog"
+					aria-expanded={isOpen}
 				>
-					<Menu
-						size={20}
-						className="transition-transform duration-300 motion-safe:group-hover:rotate-6"
-						aria-hidden="true"
-					/>
+					<HamburgerIcon isOpen={isOpen} />
 				</button>
 			</SheetTrigger>
 
@@ -89,5 +88,122 @@ export function MenuSheet({
 				<MenuSheetFooter isAdmin={isAdmin} />
 			</SheetContent>
 		</Sheet>
+	);
+}
+
+/** Detect swipe-from-left-edge to open menu (mobile native UX pattern) */
+function useEdgeSwipe(onOpen: () => void, isOpen: boolean) {
+	const onOpenRef = useRef(onOpen);
+	onOpenRef.current = onOpen;
+
+	useEffect(() => {
+		// Skip on desktop (pointer: fine) and when menu is already open
+		if (typeof window === "undefined") return;
+		const mql = window.matchMedia("(min-width: 1024px)");
+		if (mql.matches) return;
+
+		let startX = 0;
+		let startY = 0;
+		let tracking = false;
+
+		function onTouchStart(e: TouchEvent) {
+			if (isOpen) return;
+			const touch = e.touches[0];
+			// Only track touches starting within 20px of the left edge
+			if (touch.clientX <= 20) {
+				startX = touch.clientX;
+				startY = touch.clientY;
+				tracking = true;
+			}
+		}
+
+		function onTouchMove(e: TouchEvent) {
+			if (!tracking) return;
+			const touch = e.touches[0];
+			const dx = touch.clientX - startX;
+			const dy = Math.abs(touch.clientY - startY);
+
+			// Cancel if vertical movement dominates (user is scrolling)
+			if (dy > dx) {
+				tracking = false;
+				return;
+			}
+
+			// Trigger open when horizontal swipe exceeds 50px
+			if (dx > 50) {
+				tracking = false;
+				onOpenRef.current();
+			}
+		}
+
+		function onTouchEnd() {
+			tracking = false;
+		}
+
+		document.addEventListener("touchstart", onTouchStart, { passive: true });
+		document.addEventListener("touchmove", onTouchMove, { passive: true });
+		document.addEventListener("touchend", onTouchEnd, { passive: true });
+
+		return () => {
+			document.removeEventListener("touchstart", onTouchStart);
+			document.removeEventListener("touchmove", onTouchMove);
+			document.removeEventListener("touchend", onTouchEnd);
+		};
+	}, [isOpen]);
+}
+
+/** Animated hamburger ↔ X morph icon (3 bars → cross) */
+function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
+	const shouldReduceMotion = useReducedMotion();
+	const transition = shouldReduceMotion
+		? { duration: 0 }
+		: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const };
+
+	return (
+		<svg
+			width={20}
+			height={20}
+			viewBox="0 0 20 20"
+			fill="none"
+			aria-hidden="true"
+			className="text-current"
+		>
+			{/* Top bar → top-left to bottom-right diagonal */}
+			<motion.line
+				x1="3" x2="17" y1="5" y2="5"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				animate={isOpen
+					? { x1: 4, x2: 16, y1: 4, y2: 16, opacity: 1 }
+					: { x1: 3, x2: 17, y1: 5, y2: 5, opacity: 1 }
+				}
+				transition={transition}
+			/>
+			{/* Middle bar → fades out */}
+			<motion.line
+				x1="3" x2="17" y1="10" y2="10"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				animate={isOpen
+					? { opacity: 0 }
+					: { opacity: 1 }
+				}
+				transition={transition}
+			/>
+			{/* Bottom bar → bottom-left to top-right diagonal */}
+			<motion.line
+				x1="3" x2="17" y1="15" y2="15"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				animate={isOpen
+					? { x1: 4, x2: 16, y1: 16, y2: 4, opacity: 1 }
+					: { x1: 3, x2: 17, y1: 15, y2: 15, opacity: 1 }
+				}
+				transition={transition}
+			/>
+		</svg>
 	);
 }

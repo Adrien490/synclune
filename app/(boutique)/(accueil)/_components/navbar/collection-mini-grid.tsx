@@ -50,9 +50,9 @@ export function CollectionMiniGrid({
 				role="img"
 				aria-label={`${count} photo${count > 1 ? "s" : ""} de la collection ${collectionName}`}
 			>
-				{images.slice(0, 2).map((image) => (
+				{images.slice(0, 2).map((image, i) => (
 					<Image
-						key={image.url}
+						key={`${image.url}-${i}`}
 						src={image.url}
 						alt=""
 						width={24}
@@ -76,9 +76,9 @@ export function CollectionMiniGrid({
 			role="img"
 			aria-label={`${count} photo${count > 1 ? "s" : ""} de la collection ${collectionName}`}
 		>
-			{images.slice(0, 4).map((image) => (
+			{images.slice(0, 4).map((image, i) => (
 				<Image
-					key={image.url}
+					key={`${image.url}-${i}`}
 					src={image.url}
 					alt=""
 					width={24}

@@ -298,6 +298,7 @@ model Product {
   wishlistItems WishlistItem[]
 
   @@index([typeId])
+  @@index([status, createdAt(sort: Desc)]) // Admin: filtrage catalogue par statut
 }
 
 model ProductSku {
@@ -586,6 +587,7 @@ model Order {
   @@index([paymentStatus, createdAt]) // sync-async-payments cron
   @@index([fulfillmentStatus, actualDelivery]) // review-request-emails cron
   @@index([paidAt(sort: Desc)]) // Dashboard KPIs, revenue chart, recent orders, CSV export
+  @@index([status, createdAt(sort: Desc)]) // Admin: filtrage commandes par statut
 }
 
 /// Historique des actions sur les commandes (audit trail)
@@ -755,13 +757,14 @@ model Refund {
 
   @@index([orderId])
   @@index([status, processedAt]) // reconcile-refunds cron
+  @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
 }
 
 model RefundItem {
   id String @id @default(cuid())
 
-  refundId String?
-  refund   Refund? @relation(fields: [refundId], references: [id], onDelete: SetNull)
+  refundId String
+  refund   Refund @relation(fields: [refundId], references: [id], onDelete: Restrict)
 
   // Lien precis vers la ligne de commande d'origine
   // Cela permet de savoir quel produit exact (et a quel prix d'origine) est rembourse
@@ -903,6 +906,7 @@ model DiscountUsage {
   @@unique([discountId, orderId])
   @@index([orderId])
   @@index([discountId, userId]) // Pour verifier usage par utilisateur, couvre aussi discountId seul
+  @@index([userId]) // Lookup usage par utilisateur (verification limite promo/user)
 }
 
 // ============================================================================

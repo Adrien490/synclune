@@ -1,3 +1,10 @@
+import {
+	Empty,
+	EmptyContent,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/shared/components/ui/empty";
 import type { UserAddress } from "../types/user-addresses.types";
 import { MapPin } from "lucide-react";
 import { use } from "react";
@@ -32,17 +39,17 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 
 			{/* Address list or empty state */}
 			{!addresses || addresses.length === 0 ? (
-				<div role="status" className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-lg">
-					<div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
-						<MapPin className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-					</div>
-					<p className="text-sm text-muted-foreground mb-4">
-						Aucune adresse enregistrée
-					</p>
-					<CreateAddressButton>
-						Ajouter une adresse
-					</CreateAddressButton>
-				</div>
+				<Empty>
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<MapPin className="size-6" />
+						</EmptyMedia>
+						<EmptyTitle>Aucune adresse enregistrée</EmptyTitle>
+					</EmptyHeader>
+					<EmptyContent>
+						<CreateAddressButton>Ajouter une adresse</CreateAddressButton>
+					</EmptyContent>
+				</Empty>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 					{addresses.map((address) => (

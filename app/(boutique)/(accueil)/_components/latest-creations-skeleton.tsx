@@ -53,19 +53,17 @@ export function LatestCreationsGridSkeleton({
 }: LatestCreationsSkeletonProps = {}) {
 	return (
 		<>
-			{/* Grid skeleton */}
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12">
 				{Array.from({ length: productsCount }).map((_, i) => (
 					<div key={i} className="bg-card rounded-lg border-2 border-transparent shadow-sm overflow-hidden">
-						{/* Image skeleton - aspect-4/5 pour correspondre au ProductCard */}
-						<div className="aspect-4/5 bg-muted animate-pulse" />
+						<div className="aspect-3/4 sm:aspect-4/5 bg-muted animate-pulse" />
 
-						{/* Contenu avec padding */}
+						{/* Content padding */}
 						<div className="p-4 space-y-2">
-							{/* Titre skeleton */}
+							{/* Title skeleton */}
 							<div className="h-6 bg-muted rounded animate-pulse" />
 
-							{/* Prix skeleton */}
+							{/* Price skeleton */}
 							<div className="h-5 w-20 bg-muted rounded animate-pulse" />
 						</div>
 					</div>

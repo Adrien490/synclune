@@ -1,3 +1,10 @@
+import {
+	Empty,
+	EmptyContent,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/shared/components/ui/empty";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
@@ -18,22 +25,19 @@ export function CustomizationRequestList({
 
 	if (!requests || requests.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center py-12 border border-dashed border-border rounded-lg">
-				<div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
-					<Sparkles
-						className="h-6 w-6 text-muted-foreground"
-						aria-hidden="true"
-					/>
-				</div>
-				<p className="text-sm text-muted-foreground mb-4">
-					Aucune demande de personnalisation
-				</p>
-				<Button asChild>
-					<Link href="/personnalisation">
-						Faire une demande
-					</Link>
-				</Button>
-			</div>
+			<Empty>
+				<EmptyHeader>
+					<EmptyMedia variant="icon">
+						<Sparkles className="size-6" />
+					</EmptyMedia>
+					<EmptyTitle>Aucune demande de personnalisation</EmptyTitle>
+				</EmptyHeader>
+				<EmptyContent>
+					<Button asChild>
+						<Link href="/personnalisation">Faire une demande</Link>
+					</Button>
+				</EmptyContent>
+			</Empty>
 		);
 	}
 

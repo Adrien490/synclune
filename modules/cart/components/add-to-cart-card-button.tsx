@@ -76,8 +76,8 @@ export function AddToCartCardButton({
 							"absolute z-30",
 							"bottom-2.5 right-2.5",
 							"sm:bottom-0 sm:right-0 sm:inset-x-0",
-							"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100",
-							"transition-opacity duration-300"
+							"opacity-100 sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 sm:focus-within:opacity-100 sm:focus-within:translate-y-0",
+							"motion-safe:transition-[opacity,transform] duration-300"
 						),
 				className
 			)}

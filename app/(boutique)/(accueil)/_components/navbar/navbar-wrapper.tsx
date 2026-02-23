@@ -23,9 +23,10 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 		<header
 			data-scrolled={isScrolled}
 			className={cn(
-				"group fixed top-0 inset-x-0 z-40",
+				"group fixed inset-x-0 z-40",
+				"top-[var(--announcement-bar-height)]",
 				"transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
-				"border-b pt-[env(safe-area-inset-top)]",
+				"border-b",
 				isScrolled
 					? "bg-background/95 backdrop-blur-md border-border shadow-lg shadow-black/[0.08]"
 					: "bg-transparent border-transparent"

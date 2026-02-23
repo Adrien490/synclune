@@ -21,6 +21,7 @@ import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { NewsletterSectionSkeleton } from "./_components/newsletter-section-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
+import { StickyMobileCta } from "./_components/sticky-mobile-cta";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 
 export const metadata: Metadata = {
@@ -90,48 +91,63 @@ export default async function Page() {
       />
 
       {/* 3. Collections - Thematic browsing with descriptions */}
-      <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
-        <CollectionsSection
-          collectionsPromise={getCollections({
-            perPage: 6,
-            sortBy: "created-descending",
-            filters: {
-              hasProducts: true,
-              status: CollectionStatus.PUBLIC,
-            },
-          })}
-        />
-      </Suspense>
-
-      {/* 4. Reviews - Social proof with featured customer reviews */}
-      <ErrorBoundary fallback={null}>
-        <Suspense fallback={<ReviewsSectionSkeleton />}>
-          <ReviewsSection
-            reviewsPromise={featuredReviewsPromise}
-            reviewStatsPromise={reviewStatsPromise}
+      <div className="content-defer">
+        <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
+          <CollectionsSection
+            collectionsPromise={getCollections({
+              perPage: 6,
+              sortBy: "created-descending",
+              filters: {
+                hasProducts: true,
+                status: CollectionStatus.PUBLIC,
+              },
+            })}
           />
         </Suspense>
-      </ErrorBoundary>
+      </div>
+
+      {/* 4. Reviews - Social proof with featured customer reviews */}
+      <div className="content-defer">
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={<ReviewsSectionSkeleton />}>
+            <ReviewsSection
+              reviewsPromise={featuredReviewsPromise}
+              reviewStatsPromise={reviewStatsPromise}
+            />
+          </Suspense>
+        </ErrorBoundary>
+      </div>
 
       {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
-      <Suspense fallback={<AtelierStorySkeleton />}>
-        <AtelierStory />
-      </Suspense>
+      <div className="content-defer">
+        <Suspense fallback={<AtelierStorySkeleton />}>
+          <AtelierStory />
+        </Suspense>
+      </div>
 
       {/* 6. Creative Process - Step-by-step jewelry making */}
-      <Suspense fallback={<CreativeProcessSkeleton />}>
-        <CreativeProcess />
-      </Suspense>
+      <div className="content-defer">
+        <Suspense fallback={<CreativeProcessSkeleton />}>
+          <CreativeProcess />
+        </Suspense>
+      </div>
 
       {/* 7. FAQ - Frequently asked questions with JSON-LD */}
-      <Suspense fallback={<FaqSectionSkeleton />}>
-        <FaqSection />
-      </Suspense>
+      <div className="content-defer">
+        <Suspense fallback={<FaqSectionSkeleton />}>
+          <FaqSection />
+        </Suspense>
+      </div>
 
       {/* 8. Newsletter - Subscription with gift incentive */}
-      <Suspense fallback={<NewsletterSectionSkeleton />}>
-        <NewsletterSection />
-      </Suspense>
+      <div className="content-defer">
+        <Suspense fallback={<NewsletterSectionSkeleton />}>
+          <NewsletterSection />
+        </Suspense>
+      </div>
+
+      {/* Sticky mobile CTA — appears after hero, hides near newsletter */}
+      <StickyMobileCta />
     </>
   );
 }

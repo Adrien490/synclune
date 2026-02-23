@@ -11,7 +11,7 @@
 export function NavbarSkeleton() {
 	return (
 		<header
-			className="fixed top-0 inset-x-0 z-40 transition-all duration-300 ease-out border-b bg-transparent border-transparent pt-[env(safe-area-inset-top)]"
+			className="fixed top-[var(--announcement-bar-height)] inset-x-0 z-40 transition-all duration-300 ease-out border-b bg-transparent border-transparent pt-[env(safe-area-inset-top)]"
 			aria-busy="true"
 			aria-label="Chargement de la navigation"
 		>

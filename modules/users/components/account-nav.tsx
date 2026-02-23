@@ -11,8 +11,16 @@ import {
 	bottomBarIconClass,
 	bottomBarLabelClass,
 } from "@/shared/components/bottom-bar";
+import {
+	Sheet,
+	SheetContent,
+	SheetHeader,
+	SheetTitle,
+} from "@/shared/components/ui/sheet";
+import { Separator } from "@/shared/components/ui/separator";
 import { ROUTES } from "@/shared/constants/urls";
 import {
+	Ellipsis,
 	Home,
 	LogOut,
 	MapPin,
@@ -23,6 +31,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const navItems = [
 	{
@@ -76,8 +85,13 @@ interface AccountNavProps {
  *
  * @param variant - "full" (defaut) affiche les deux, "mobile-only" ou "desktop-only"
  */
+const desktopOnlyItems = navItems.filter(
+	(item) => "desktopOnly" in item && item.desktopOnly
+);
+
 export function AccountNav({ variant = "full" }: AccountNavProps) {
 	const pathname = usePathname();
+	const [moreOpen, setMoreOpen] = useState(false);
 
 	const showDesktop = variant === "full" || variant === "desktop-only";
 	const showMobile = variant === "full" || variant === "mobile-only";
@@ -162,8 +176,64 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 								</Link>
 							);
 						})}
+						<button
+							type="button"
+							onClick={() => setMoreOpen(true)}
+							className={bottomBarItemClass}
+							aria-label="Plus d'options"
+						>
+							<Ellipsis className={bottomBarIconClass} aria-hidden="true" />
+							<span className={bottomBarLabelClass}>Plus</span>
+						</button>
 					</div>
 				</BottomBar>
+			)}
+
+			{/* Mobile "Plus" Sheet */}
+			{showMobile && (
+				<Sheet direction="bottom" open={moreOpen} onOpenChange={setMoreOpen}>
+					<SheetContent className="rounded-t-2xl">
+						<SheetHeader>
+							<SheetTitle>Plus</SheetTitle>
+						</SheetHeader>
+						<nav
+							className="flex flex-col gap-1 px-4 pb-4"
+							aria-label="Navigation supplementaire"
+						>
+							{desktopOnlyItems.map((item) => {
+								const Icon = item.icon;
+								const active = isActive(item.href);
+								return (
+									<Link
+										key={item.href}
+										href={item.href}
+										onClick={() => setMoreOpen(false)}
+										aria-current={active ? "page" : undefined}
+										className={cn(
+											"flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+											active
+												? "bg-muted text-foreground"
+												: "text-muted-foreground hover:bg-muted hover:text-foreground"
+										)}
+									>
+										<Icon className="size-4 shrink-0" aria-hidden="true" />
+										{item.label}
+									</Link>
+								);
+							})}
+							<Separator className="my-1" />
+							<LogoutAlertDialog>
+								<button
+									type="button"
+									className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full text-left"
+								>
+									<LogOut className="size-4 shrink-0" aria-hidden="true" />
+									Se deconnecter
+								</button>
+							</LogoutAlertDialog>
+						</nav>
+					</SheetContent>
+				</Sheet>
 			)}
 		</>
 	);

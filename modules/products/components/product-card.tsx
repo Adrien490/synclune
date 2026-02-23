@@ -69,7 +69,7 @@ function ColorSwatchList({
 						href={`${productUrl}?color=${color.slug}`}
 						className={cn(
 							"relative block size-6 sm:size-7 rounded-full border border-foreground/15 shrink-0",
-							"transition-transform duration-150 motion-safe:can-hover:hover:scale-110",
+							"transition-transform duration-150 motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5",
 							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 							"after:absolute after:content-[''] after:-inset-2 after:rounded-full",
 							!color.inStock && "opacity-50"
@@ -207,7 +207,12 @@ export function ProductCard({
 
 			{/* Image container with interactive buttons */}
 			{/* bg-muted acts as CSS-only fallback if image fails to load */}
-			<div className="product-card-media relative aspect-3/4 sm:aspect-4/5 overflow-hidden bg-muted rounded-lg sm:rounded-xl">
+			<div className={cn(
+				"product-card-media relative overflow-hidden bg-muted rounded-lg sm:rounded-xl",
+				"aspect-3/4 sm:aspect-4/5",
+				// Gradient overlay on hover
+				"after:absolute after:inset-0 after:z-[5] after:bg-gradient-to-t after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity after:duration-300 motion-safe:can-hover:group-hover:after:opacity-100",
+			)}>
 
 				{/* Status badges — stock badges take priority over promo (same position) */}
 				{stockStatus === "out_of_stock" && (
@@ -234,7 +239,7 @@ export function ProductCard({
 					productId={product.id}
 					isInWishlist={isInWishlist}
 					productTitle={title}
-					className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 sm:has-[:focus-visible]:opacity-100 transition-opacity duration-200"
+					className="absolute top-2.5 right-2.5 z-30 opacity-100 scale-90 sm:opacity-0 sm:scale-90 motion-safe:can-hover:sm:group-hover:opacity-100 motion-safe:can-hover:sm:group-hover:scale-100 sm:focus-within:opacity-100 sm:focus-within:scale-100 sm:has-[:focus-visible]:opacity-100 transition-[opacity,transform] duration-200"
 				/>
 
 				<div className="absolute inset-0">
@@ -257,7 +262,7 @@ export function ProductCard({
 							src={secondaryImage.url}
 							alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 							fill
-							className="object-cover rounded-lg sm:rounded-xl opacity-0 motion-safe:transition-opacity motion-safe:duration-300 ease-out can-hover:group-hover:opacity-100"
+							className="object-cover rounded-lg sm:rounded-xl opacity-0 scale-[1.02] motion-safe:transition-[opacity,transform] motion-safe:duration-500 ease-out can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100"
 							loading="lazy"
 							sizes={IMAGE_SIZES.PRODUCT_CARD}
 						/>
@@ -285,7 +290,10 @@ export function ProductCard({
 				>
 					<h3
 						id={titleId}
-						className="font-sans text-foreground text-base sm:text-lg tracking-normal"
+						className={cn(
+							"font-sans text-foreground tracking-normal",
+							"text-base sm:text-lg",
+						)}
 					>
 						{title}
 					</h3>
