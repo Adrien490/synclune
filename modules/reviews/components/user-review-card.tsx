@@ -8,6 +8,7 @@ import { RatingStars } from "@/shared/components/rating-stars"
 
 import type { ReviewUser } from "../types/review.types"
 import { UserReviewCardActions } from "./user-review-card-actions"
+import { ReviewCardGallery } from "./review-card-gallery"
 import { REVIEW_STATUS_LABELS } from "../constants/review.constants"
 
 interface UserReviewCardProps {
@@ -97,6 +98,11 @@ export function UserReviewCard({ review }: UserReviewCardProps) {
 					<p className="text-sm text-muted-foreground line-clamp-3">
 						{review.content}
 					</p>
+
+					{/* Photos de l'avis */}
+					{review.medias.length > 0 && (
+						<ReviewCardGallery medias={review.medias} />
+					)}
 
 					{/* Réponse de la marque */}
 					{review.response && (

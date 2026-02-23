@@ -71,18 +71,35 @@ La page affiche la commande dans une grille 2/3 + 1/3 :
 
 ### Pattern page parametres (`/parametres`)
 
-La page parametres utilise aussi une grille 2/3 + 1/3 :
-- **Colonne principale (2/3)** : `ProfileForm` → `SecuritySection` (change password + providers OAuth) → `GdprSection` (export/delete). Note : `ExportDataButton` (`modules/users/components/export-data-button.tsx`) et `export-user-data.ts` existent deja. Le format d'export (JSON contenant profil, commandes, adresses, avis, preferences newsletter) devrait etre documente
-- **Colonne sidebar (1/3)** : `NewsletterSettingsCard` (`modules/newsletter/components/newsletter-settings-card.tsx`) → `ActiveSessionsCard`
+#### Assemblage de la page
 
-> **`SecuritySection` n'existe pas encore** — a creer comme wrapper. Les composants enfants existants sont :
-> - `ChangePasswordDialog` (`modules/users/components/change-password-dialog.tsx`) : dialog modal avec `ChangePasswordForm`, min 6 caracteres
-> - `ResendVerificationButton` (`modules/users/components/resend-verification-button.tsx`) : bouton avec cooldown 60s, utilise localStorage
->
-> `SecuritySection` devra afficher :
-> - Un bouton "Modifier mon mot de passe" ouvrant `ChangePasswordDialog` (uniquement si le compte utilise le provider "email" — les comptes OAuth n'ont pas de mot de passe)
-> - Un statut de verification email avec `ResendVerificationButton` si `emailVerified === false`
-> - Les providers OAuth connectes (Google, GitHub) via le modele `Account` : afficher "Connecte via Google" etc. La gestion de liaison/deliaison de comptes peut etre V2
+La page utilise un layout grille `grid-cols-1 lg:grid-cols-3 gap-6` :
+
+**Colonne principale (`lg:col-span-2`)** :
+1. `ProfileForm` — Formulaire de profil (nom, email en lecture seule)
+2. `SecuritySection` (dans `<Suspense>`) — Mot de passe, verification email, providers OAuth
+3. `GdprSection` — Export de donnees (`ExportDataButton`) + suppression de compte
+
+**Colonne sidebar (`lg:col-span-1`)** :
+1. `NewsletterSettingsCard` (`modules/newsletter/components/newsletter-settings-card.tsx`) (dans `<Suspense>`)
+2. `ActiveSessionsCard` (dans `<Suspense>`)
+
+**Responsive** : sur mobile (`< lg`), la sidebar passe en dessous en single column stack (comportement natif de `grid-cols-1`).
+
+**Format des sections** : chaque section est un `<section>` avec icone + `<h2>` + description + divider `border-t border-border/60 pt-4` avant le contenu.
+
+> **Note :** `ExportDataButton` (`modules/users/components/export-data-button.tsx`) et `export-user-data.ts` existent deja. Le format d'export (JSON contenant profil, commandes, adresses, avis, preferences newsletter) devrait etre documente.
+
+#### `SecuritySection` (a creer comme wrapper)
+
+Les composants enfants existants sont :
+- `ChangePasswordDialog` (`modules/users/components/change-password-dialog.tsx`) : dialog modal avec `ChangePasswordForm`, min 6 caracteres
+- `ResendVerificationButton` (`modules/users/components/resend-verification-button.tsx`) : bouton avec cooldown 60s, utilise localStorage
+
+`SecuritySection` devra afficher :
+- Un bouton "Modifier mon mot de passe" ouvrant `ChangePasswordDialog` (uniquement si le compte utilise le provider "email" — les comptes OAuth n'ont pas de mot de passe)
+- Un statut de verification email avec `ResendVerificationButton` si `emailVerified === false`
+- Les providers OAuth connectes (Google, GitHub) via le modele `Account` : afficher "Connecte via Google" etc. La gestion de liaison/deliaison de comptes peut etre V2
 
 ### Pattern page compte (`/compte`) - Dashboard
 
@@ -175,6 +192,16 @@ const navItems = [
 Le dropdown navbar ne mene plus vers un menu avec deconnexion — il redirige directement vers l'espace client. Le bouton de deconnexion est donc integre dans `AccountNav` :
 - **Desktop** : bouton "Se deconnecter" avec icone `LogOut` en bas de la sidebar, separe par un divider. Ouvre `LogoutAlertDialog` (confirmation).
 - **Mobile** : le bouton de deconnexion est accessible via la page Parametres (`/parametres`) dans `GdprSection`, ou via le tableau de bord.
+
+### Panier et favoris (hors espace-client)
+
+Le panier (`/panier`) et les favoris (`/favoris`) sont **hors espace-client** — accessibles via la navigation principale du storefront (header/navbar), pas via `AccountNav`. `cartItemsCount` dans `AccountStats` est utilise a titre informatif dans le dashboard, mais le lien d'action pointe vers `ROUTES.SHOP.CART` (hors espace-client).
+
+**Fusion guest → authentifie** : le merge des donnees guest est gere automatiquement au login via des hooks Better Auth :
+- **Panier** : strategie MAX (garde la quantite la plus elevee entre guest et user), dans `modules/cart/actions/merge-carts.ts`
+- **Wishlist** : strategie UNION (ajoute tous les produits uniques du guest), dans `modules/wishlist/actions/merge-wishlists.ts`
+
+Ces comportements sont hors scope de la spec espace-client mais documentes ici pour reference.
 
 ### Attention mobile
 
@@ -394,7 +421,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 | Fichier | Role |
 |---|---|
 | `app/(boutique)/(espace-client)/mes-avis/page.tsx` | **A creer** - Page principale |
-| `modules/reviews/components/user-review-card.tsx` | Carte d'avis (server component) : image produit, titre, etoiles, date, badge "Achat verifie", statut, contenu, reponse marque |
+| `modules/reviews/components/user-review-card.tsx` | Carte d'avis (server component) : image produit, titre, etoiles, date, badge "Achat verifie", statut, contenu, reponse marque (voir detail ci-dessous) |
 | `modules/reviews/components/user-review-card-actions.tsx` | Actions (modifier, supprimer) |
 | `modules/reviews/components/edit-review-dialog.tsx` | Dialog d'edition (utilise le dialog store) |
 | `modules/reviews/components/delete-review-alert-dialog.tsx` | Dialog de suppression (utilise l'alert dialog store) |
@@ -413,6 +440,26 @@ La page se divise en 2 sections :
 2. **Mes avis** : liste de `UserReviewCard` avec statut, etoiles, contenu, reponse marque, et actions (modifier/supprimer)
 
 Les dialogs `EditReviewDialog` et `DeleteReviewAlertDialog` sont geres via les stores Zustand (`useDialog` / `useAlertDialog`) et doivent etre montes dans la page.
+
+### Affichage de `ReviewResponse` dans `UserReviewCard`
+
+La reponse de la marque s'affiche comme un bloc toujours visible (pas depliable) sous le contenu de l'avis :
+- **Style** : `bg-muted/50 rounded-lg p-3 border-l-2 border-primary/30`
+- **Header** : "Reponse de {authorName}" + date formatee
+- **Contenu** : texte avec `line-clamp-2` (tronque a 2 lignes)
+- **Filtrage** : les reponses soft-deleted (`deletedAt` non null) sont filtrees par `stripDeletedResponses()` dans le data fetcher avant envoi au composant
+
+### Flux photos (`ReviewMedia`)
+
+**Schema** : `ReviewMedia` — `url` (String), `blurDataUrl` (String?), `altText` (String?), `position` (Int). Maximum 3 photos par avis, defini par `REVIEW_CONFIG.MAX_MEDIA_COUNT`.
+
+**Upload** : `CreateReviewForm` et `UpdateReviewForm` utilisent `ReviewMediaField` → `ReviewMediaUpload` → endpoint UploadThing `reviewMedia`. Le serveur genere `blurDataUrl` automatiquement. L'utilisateur ne peut pas definir `altText` (limitation actuelle — les images sont servies sans texte alternatif).
+
+**Affichage dans `UserReviewCard`** : les medias sont fetches via `REVIEW_USER_SELECT` (avec `orderBy: { position: "asc" }`) mais **ne sont PAS encore affiches** dans `UserReviewCard`. A implementer : galerie de thumbnails similaire a `ReviewCardGallery` (composant storefront existant dans `modules/reviews/components/review-card-gallery.tsx`, avec lightbox).
+
+**Affichage dans `UpdateReviewForm`** : les photos existantes sont chargees via `review.medias.map()` et affichees comme thumbnails avec bouton de suppression individuel.
+
+**Fichiers concernes** : `modules/reviews/components/review-media-field.tsx`, `modules/reviews/components/review-media-upload.tsx`, `modules/reviews/components/review-card-gallery.tsx` (reference storefront).
 
 ### Composant wrapper a creer
 
@@ -505,6 +552,14 @@ model CustomizationRequest {
 | `modules/customizations/components/customer/customization-request-list.tsx` | Liste des demandes |
 | `modules/customizations/components/customer/customization-request-card.tsx` | Carte individuelle |
 
+### Produits d'inspiration (`inspirationProducts`)
+
+`inspirationProducts` (relation M2M vers `Product[]`) s'affiche dans `CustomizationRequestCard` comme une rangee de max 4 thumbnails :
+- Taille : 40x40px, `rounded-md`
+- Image : `product.skus[0]?.images[0]?.url` (premier SKU, premiere image)
+- Au-dela de 4 produits : badge `+{count - 4}` affiche a la suite des thumbnails
+- Les thumbnails ne sont pas cliquables (pas de lien vers les fiches produit actuellement)
+
 ### Constants reutilisees
 
 - `modules/customizations/constants/status.constants.ts` : `CUSTOMIZATION_STATUS_LABELS`, `CUSTOMIZATION_STATUS_COLORS`
@@ -532,6 +587,15 @@ model CustomizationRequest {
 - Route API pour la generation du PDF
 - Route API : `app/api/orders/[orderNumber]/invoice/route.ts` (GET handler avec auth, verification userId, generation numero de facture sequentiel, cache-control private)
 - Condition : affiche uniquement si `order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED"` (evite d'afficher le bouton avant generation de la facture ou si elle est annulee VOIDED)
+
+### Gestion de `InvoiceStatus.VOIDED`
+
+Quand `invoiceStatus === "VOIDED"`, le bouton de telechargement est masque (meme condition que `invoiceStatus !== "GENERATED"`). Aucune mention "Facture annulee" n'est affichee au client — il voit simplement l'absence du bouton. **Recommandation P2** : ajouter un texte conditionnel "Facture non disponible" quand `invoiceStatus === "VOIDED"` pour informer explicitement le client.
+
+Constante `INVOICE_STATUS_LABELS` a creer si on souhaite afficher le statut :
+- `PENDING` → "En cours de generation"
+- `GENERATED` → "Disponible"
+- `VOIDED` → "Annulee"
 
 ### Fix securite applique
 
@@ -911,7 +975,7 @@ Le bouton "Demander un retour" s'affiche dans la page detail commande si **toute
 | Fichier | Modification |
 |---|---|
 | `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | Ajouter `<RequestReturnButton>` conditionnel dans la sidebar |
-| `modules/orders/constants/order.constants.ts` | Ajouter `refunds` au `GET_ORDER_SELECT` (necessaire aussi pour Feature D) |
+| `modules/orders/constants/order.constants.ts` | Modification partagee avec Feature D — voir section D pour le select `refunds` a ajouter |
 
 ### UI
 
@@ -1255,12 +1319,15 @@ Le `discountAmount` (montant de la reduction) est deja affiche dans `OrderSummar
 model DiscountUsage {
   id            String   @id @default(cuid())
   orderId       String
+  userId        String?  // Nullable pour supporter le guest checkout
   discountId    String
-  discountCode  String   @db.VarChar(30) // Le code tape par le client
+  discountCode  String   @db.VarChar(30) // Le code tape par le client (denormalise)
   amountApplied Int      // Montant en centimes
   createdAt     DateTime @default(now())
 }
 ```
+
+> **Note `userId` nullable :** `DiscountUsage.userId` est `String?` pour supporter le guest checkout. Le `discountCode` est stocke directement sur `DiscountUsage` (denormalise), donc il est toujours disponible independamment du `userId`. Si une commande provient d'un guest checkout converti en compte, le code promo reste visible car il est lie a l'`orderId`, pas au `userId`.
 
 ### Fichiers a modifier
 
@@ -1408,6 +1475,18 @@ Si `user.accountStatus === "PENDING_DELETION"` :
 
 Les champs suivants existent dans le schema Prisma et/ou les selects existants mais ne sont pas encore specifies pour l'affichage client. Ils sont listes ici pour reference et priorisation.
 
+### Telephone commande (`Order.customerPhone`)
+
+Disponible dans `GET_ORDER_SELECT`, jamais mentionne pour l'affichage client. Le client pourrait verifier le telephone associe a sa commande dans la page detail commande (ex: dans `OrderAddressesCard` ou un bloc d'informations contact).
+
+### Photos d'avis (`ReviewMedia`)
+
+Voir la sous-section "Flux photos (ReviewMedia)" dans la page mes avis ci-dessus pour le detail du schema, de l'upload et de l'affichage.
+
+### Statistiques d'avis produit (`ProductReviewStats`)
+
+Table de cache avec `totalCount`, `averageRating`, `rating1Count`..`rating5Count`. Potentiellement utile sur la page mes-avis pour un recapitulatif des notes de l'utilisateur (ex: "Vous avez donne en moyenne 4.2/5 sur vos 8 avis") ou dans le dashboard comme stat supplementaire.
+
 ### Affichage livraison (`estimatedDelivery` / `actualDelivery`)
 
 Disponibles dans `GET_ORDER_SELECT` et `GET_USER_ORDERS_SELECT`. Utiles pour :
@@ -1454,6 +1533,26 @@ Le modele `Account` stocke les providers (email, google, github). La page parame
 ---
 
 ## Preoccupations transversales
+
+### Enums → Labels client
+
+Tableau centralise des enums utilisees cote client, avec leur fichier de constantes, les labels definis, et le composant d'affichage :
+
+| Enum | Fichier constants | Labels definis | Composant d'affichage |
+|------|-------------------|----------------|----------------------|
+| `OrderStatus` | `modules/orders/constants/status-display.ts` | `ORDER_STATUS_LABELS` | `OrderStatusBadge`, `OrderStatusTimeline` |
+| `PaymentStatus` | `modules/orders/constants/status-display.ts` | `PAYMENT_STATUS_LABELS` | `OrderSummaryCard` |
+| `FulfillmentStatus` | `modules/orders/constants/status-display.ts` | `FULFILLMENT_STATUS_LABELS` | `CustomerOrdersTable`, `OrderStatusTimeline` |
+| `RefundStatus` | `modules/refunds/constants/refund.constants.ts` | `REFUND_STATUS_LABELS` | `OrderRefundsCard` (Feature D) |
+| `RefundReason` | `modules/refunds/constants/refund.constants.ts` | `REFUND_REASON_LABELS` | `OrderRefundsCard` (Feature D) |
+| `CustomizationRequestStatus` | `modules/customizations/constants/status.constants.ts` | `CUSTOMIZATION_STATUS_LABELS` | `CustomizationRequestCard` |
+| `ReviewStatus` | `modules/reviews/constants/review.constants.ts` | `REVIEW_STATUS_LABELS` | `UserReviewCard` |
+| `AccountStatus` | `modules/users/constants/account-status.constants.ts` | `ACCOUNT_STATUS_LABELS` | `GdprSection` (Feature M) |
+| `InvoiceStatus` | **A creer** | **Aucun** | `DownloadInvoiceButton` (conditionnel) |
+
+> **Distinction FulfillmentStatus vs OrderStatus :** `FulfillmentStatus.PROCESSING` = "En preparation" (commande en cours de traitement logistique) vs `OrderStatus.PROCESSING` = "En traitement" (commande globalement en cours). La distinction est portee par les labels differents dans `FULFILLMENT_STATUS_LABELS` et `ORDER_STATUS_LABELS`.
+
+> **Enums hors scope client :** `WebhookEventStatus`, `DisputeStatus` et `DisputeReason` sont des enums internes utilisees uniquement dans le dashboard admin et les handlers de webhooks. Elles n'ont pas de labels client et ne doivent pas etre exposees dans l'espace client.
 
 ### Gestion d'erreurs
 

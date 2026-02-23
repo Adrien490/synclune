@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, FulfillmentStatus, InvoiceStatus } from "@/app/generated/prisma/client";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // Re-export pour compatibilité
@@ -93,6 +93,24 @@ export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant
 	SHIPPED: "secondary",
 	DELIVERED: "success",
 	RETURNED: "destructive",
+};
+
+export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
+	PENDING: "En cours de génération",
+	GENERATED: "Disponible",
+	VOIDED: "Annulée",
+};
+
+export const INVOICE_STATUS_COLORS: Record<InvoiceStatus, string> = {
+	PENDING: "#f59e0b", // yellow-500
+	GENERATED: "#10b981", // green-500
+	VOIDED: "#6b7280", // gray-500
+};
+
+export const INVOICE_STATUS_VARIANTS: Record<InvoiceStatus, BadgeVariant> = {
+	PENDING: "warning",
+	GENERATED: "success",
+	VOIDED: "secondary",
 };
 
 // Micro-entreprise : exonération de TVA (art. 293 B du CGI)
