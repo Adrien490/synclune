@@ -9,6 +9,11 @@ import { OrderSummaryCard } from "@/modules/orders/components/customer/order-sum
 import { OrderAddressesCard } from "@/modules/orders/components/customer/order-addresses-card";
 import { DownloadInvoiceButton } from "@/modules/orders/components/customer/download-invoice-button";
 import { RequestReturnButton } from "@/modules/refunds/components/customer/request-return-button";
+import { CancelOrderButton } from "@/modules/orders/components/customer/cancel-order-button";
+import {
+	isReturnEligible,
+	getReturnDaysRemaining,
+} from "@/modules/refunds/services/return-eligibility.service";
 import { PageHeader } from "@/shared/components/page-header";
 
 interface OrderPageProps {
@@ -28,25 +33,8 @@ export default async function OrderPage({ params }: OrderPageProps) {
 		notFound();
 	}
 
-	// Return eligibility: paid/partially refunded, delivered, within 14 days, no pending/approved refund
-	const canRequestReturn =
-		(order.paymentStatus === "PAID" ||
-			order.paymentStatus === "PARTIALLY_REFUNDED") &&
-		order.fulfillmentStatus === "DELIVERED" &&
-		!!order.actualDelivery &&
-		new Date(order.actualDelivery).getTime() + 14 * 86_400_000 >
-			Date.now() &&
-		!order.refunds.some(
-			(r) => r.status === "PENDING" || r.status === "APPROVED"
-		);
-
-	const daysRemaining = order.actualDelivery
-		? 14 -
-			Math.floor(
-				(Date.now() - new Date(order.actualDelivery).getTime()) /
-					86_400_000
-			)
-		: 0;
+	const canRequestReturn = isReturnEligible(order);
+	const daysRemaining = getReturnDaysRemaining(order.actualDelivery);
 
 	return (
 		<>
@@ -80,6 +68,9 @@ export default async function OrderPage({ params }: OrderPageProps) {
 							orderId={order.id}
 							daysRemaining={daysRemaining}
 						/>
+					)}
+					{order.status === "PENDING" && (
+						<CancelOrderButton orderId={order.id} />
 					)}
 				</div>
 			</div>

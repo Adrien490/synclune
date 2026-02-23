@@ -94,7 +94,10 @@ describe("processAccountDeletions", () => {
 
 		const transactionFn = mockPrisma.$transaction.mock.calls[0][0];
 		const mockTx = {
-			user: { update: vi.fn() },
+			user: {
+				findUnique: vi.fn().mockResolvedValue({ accountStatus: "PENDING_DELETION" }),
+				update: vi.fn(),
+			},
 			session: { deleteMany: vi.fn() },
 			account: { deleteMany: vi.fn() },
 			address: { deleteMany: vi.fn() },
@@ -117,6 +120,7 @@ describe("processAccountDeletions", () => {
 				name: "Utilisateur supprimé",
 				image: null,
 				stripeCustomerId: null,
+				deletionRequestedAt: null,
 			}),
 		});
 
@@ -152,7 +156,10 @@ describe("processAccountDeletions", () => {
 
 		const transactionFn = mockPrisma.$transaction.mock.calls[0][0];
 		const mockTx = {
-			user: { update: vi.fn() },
+			user: {
+				findUnique: vi.fn().mockResolvedValue({ accountStatus: "PENDING_DELETION" }),
+				update: vi.fn(),
+			},
 			session: { deleteMany: vi.fn() },
 			account: { deleteMany: vi.fn() },
 			address: { deleteMany: vi.fn() },
@@ -189,7 +196,7 @@ describe("processAccountDeletions", () => {
 				shippingAddress2: null,
 				shippingPostalCode: "00000",
 				shippingCity: "Supprimé",
-				shippingPhone: "",
+				shippingPhone: "0000000000",
 				stripeCustomerId: null,
 			},
 		});

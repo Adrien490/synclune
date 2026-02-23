@@ -49,7 +49,7 @@ export default async function WishlistPage({
 	});
 
 	return (
-		<>
+		<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-6 lg:pb-10">
 			<PageHeader
 				title="Mes favoris"
 				description="Retrouvez tous vos coups de cœur"
@@ -64,6 +64,6 @@ export default async function WishlistPage({
 			</Suspense>
 
 			<RemoveWishlistItemAlertDialog />
-		</>
+		</div>
 	);
 }

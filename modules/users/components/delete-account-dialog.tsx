@@ -50,8 +50,9 @@ export function DeleteAccountDialog() {
 				<AlertDialogHeader>
 					<AlertDialogTitle>Supprimer votre compte ?</AlertDialogTitle>
 					<AlertDialogDescription>
-						Cette action est irréversible. Toutes vos données personnelles
-						seront supprimées conformément au RGPD.
+						Votre compte sera supprimé après un délai de 30 jours. Vous
+						pourrez annuler cette demande en vous reconnectant pendant
+						cette période.
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 
@@ -91,7 +92,7 @@ export function DeleteAccountDialog() {
 							aria-busy={isPending}
 						>
 							{isPending && <Loader2 className="animate-spin" />}
-							{isPending ? "Suppression..." : "Supprimer définitivement"}
+							{isPending ? "Envoi de la demande..." : "Demander la suppression"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

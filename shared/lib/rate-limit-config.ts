@@ -620,10 +620,21 @@ export const USER_UPDATE_PROFILE_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour l'annulation de suppression de compte
+ *
+ * Modérée : protège contre les abus de toggle suppression/annulation
+ */
+export const USER_CANCEL_DELETION_LIMIT: RateLimitConfig = {
+	limit: 5, // 5 annulations maximum
+	windowMs: hours(1), // par heure
+};
+
+/**
  * Toutes les limites du compte utilisateur
  */
 export const USER_LIMITS = {
 	DELETE_ACCOUNT: USER_DELETE_ACCOUNT_LIMIT,
+	CANCEL_DELETION: USER_CANCEL_DELETION_LIMIT,
 	EXPORT_DATA: USER_EXPORT_DATA_LIMIT,
 	UPDATE_PROFILE: USER_UPDATE_PROFILE_LIMIT,
 } as const;

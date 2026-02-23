@@ -1,5 +1,5 @@
 import { updateTag } from "next/cache";
-import { AccountStatus, NewsletterStatus } from "@/app/generated/prisma/client";
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
@@ -8,7 +8,7 @@ import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { sendAccountDeletionEmail } from "@/modules/emails/services/auth-emails";
-import { generateAnonymizedEmail } from "@/modules/users/utils/anonymization.utils";
+import { anonymizeUserInTransaction } from "@/modules/users/services/anonymize-user.service";
 
 /**
  * Processes GDPR account deletion requests.
@@ -75,107 +75,8 @@ export async function processAccountDeletions(): Promise<{
 			});
 			const reviewMediaUrls = reviewMedias.map((m) => m.url);
 
-			const anonymizedEmail = generateAnonymizedEmail(user.id);
-			const now = new Date();
-
 			await prisma.$transaction(async (tx) => {
-				// 1. Anonymize user data
-				await tx.user.update({
-					where: { id: user.id },
-					data: {
-						accountStatus: AccountStatus.ANONYMIZED,
-						email: anonymizedEmail,
-						name: "Utilisateur supprimé",
-						image: null,
-						stripeCustomerId: null,
-						anonymizedAt: now,
-						deletedAt: now,
-					},
-				});
-
-				// 2. Delete sessions
-				await tx.session.deleteMany({
-					where: { userId: user.id },
-				});
-
-				// 3. Delete OAuth accounts (links, not data)
-				await tx.account.deleteMany({
-					where: { userId: user.id },
-				});
-
-				// 4. Delete addresses
-				await tx.address.deleteMany({
-					where: { userId: user.id },
-				});
-
-				// 5. Delete cart
-				await tx.cart.deleteMany({
-					where: { userId: user.id },
-				});
-
-				// 6. Delete wishlist
-				await tx.wishlist.deleteMany({
-					where: { userId: user.id },
-				});
-
-				// 7. Delete review media (potential PII: faces, identifiable decor)
-				await tx.reviewMedia.deleteMany({
-					where: { review: { userId: user.id } },
-				});
-
-				// 8. Anonymize review content
-				await tx.productReview.updateMany({
-					where: { userId: user.id },
-					data: {
-						content: "Contenu supprimé suite à la suppression du compte.",
-						title: null,
-					},
-				});
-
-				// 9. Unsubscribe and anonymize newsletter (including IP addresses - RGPD PII)
-				await tx.newsletterSubscriber.updateMany({
-					where: { userId: user.id },
-					data: {
-						status: NewsletterStatus.UNSUBSCRIBED,
-						email: anonymizedEmail,
-						unsubscribedAt: now,
-						deletedAt: now,
-						ipAddress: null,
-						confirmationIpAddress: null,
-						userAgent: null,
-					},
-				});
-
-				// 10. Anonymize PII in customization requests
-				await tx.customizationRequest.updateMany({
-					where: { userId: user.id },
-					data: {
-						firstName: "Anonyme",
-						email: anonymizedEmail,
-						phone: null,
-						details: "Contenu supprimé",
-					},
-				});
-
-				// 11. Anonymize PII denormalized in orders
-				// Legal retention 10 years (Art. L123-22 Code de Commerce):
-				// keep amounts and accounting IDs, anonymize personal data
-				await tx.order.updateMany({
-					where: { userId: user.id },
-					data: {
-						customerEmail: anonymizedEmail,
-						customerName: "Client supprimé",
-						customerPhone: null,
-						shippingFirstName: "X",
-						shippingLastName: "X",
-						shippingAddress1: "Adresse supprimée",
-						shippingAddress2: null,
-						shippingPostalCode: "00000",
-						shippingCity: "Supprimé",
-						shippingPhone: "",
-						stripeCustomerId: null,
-					},
-				});
+				await anonymizeUserInTransaction(tx, user.id);
 			}, { timeout: 15_000 });
 
 			// Send deletion confirmation email AFTER successful transaction

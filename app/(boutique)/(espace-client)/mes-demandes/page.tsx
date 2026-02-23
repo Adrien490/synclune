@@ -1,16 +1,16 @@
-import type { Metadata } from "next"
-import Link from "next/link"
-import { Suspense } from "react"
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Suspense } from "react";
 
-import { CustomizationRequestList } from "@/modules/customizations/components/customer/customization-request-list"
-import { getUserCustomizationRequests } from "@/modules/customizations/data/get-user-customization-requests"
-import { PageHeader } from "@/shared/components/page-header"
-import { Button } from "@/shared/components/ui/button"
-import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton"
+import { CustomizationRequestList } from "@/modules/customizations/components/customer/customization-request-list";
+import { getUserCustomizationRequests } from "@/modules/customizations/data/get-user-customization-requests";
+import { PageHeader } from "@/shared/components/page-header";
+import { Button } from "@/shared/components/ui/button";
+import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 export const metadata: Metadata = {
 	title: "Mes demandes",
-}
+};
 
 function CustomizationRequestListSkeleton() {
 	return (
@@ -34,11 +34,11 @@ function CustomizationRequestListSkeleton() {
 				))}
 			</div>
 		</SkeletonGroup>
-	)
+	);
 }
 
 export default async function MesDemandesPage() {
-	const requestsPromise = getUserCustomizationRequests()
+	const requestsPromise = getUserCustomizationRequests();
 
 	return (
 		<>
@@ -56,5 +56,5 @@ export default async function MesDemandesPage() {
 				<CustomizationRequestList requestsPromise={requestsPromise} />
 			</Suspense>
 		</>
-	)
+	);
 }

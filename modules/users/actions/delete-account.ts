@@ -1,8 +1,7 @@
 "use server";
 
-import { AccountStatus, NewsletterStatus, OrderStatus } from "@/app/generated/prisma/client";
+import { AccountStatus, OrderStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { stripe } from "@/shared/lib/stripe";
 import type { ActionState } from "@/shared/types/server-action";
 import { auth } from "@/modules/auth/lib/auth";
 import { headers } from "next/headers";
@@ -16,23 +15,16 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
-import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { deleteAccountSchema } from "../schemas/user.schemas";
-import { generateAnonymizedEmail } from "../utils/anonymization.utils";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { USERS_CACHE_TAGS } from "../constants/cache";
 
 /**
- * Server Action pour supprimer le compte utilisateur (droit à l'oubli RGPD)
+ * Server Action to request deferred account deletion (GDPR right to erasure)
  *
- * Cette action :
- * - Anonymise les commandes (obligation comptable 10 ans - art. L123-22 Code de commerce)
- * - Supprime les données personnelles non nécessaires à la comptabilité
- * - Supprime le client Stripe
- * - Effectue un soft delete du compte
- *
- * Les commandes sont conservées avec des données anonymisées pour la comptabilité.
+ * Sets the account to PENDING_DELETION status with a 30-day grace period.
+ * The actual anonymization is handled by the `process-account-deletions` cron job.
+ * Users can cancel the deletion during the grace period.
  */
 export async function deleteAccount(
 	_prevState: ActionState | undefined,
@@ -43,27 +35,32 @@ export async function deleteAccount(
 		const rateCheck = await enforceRateLimitForCurrentUser(USER_LIMITS.DELETE_ACCOUNT);
 		if ("error" in rateCheck) return rateCheck.error;
 
-		// 2. Vérification de l'authentification
+		// 2. Auth
 		const userAuth = await requireAuth();
 		if ("error" in userAuth) return userAuth.error;
 
-		// 3. Validation server-side de la confirmation
+		// 3. Validate confirmation text
 		const validation = validateInput(deleteAccountSchema, {
 			confirmation: formData.get("confirmation"),
 		});
 		if ("error" in validation) return validation.error;
 
 		const user = userAuth.user;
-
-		// Fetch image separately since GET_CURRENT_USER_DEFAULT_SELECT doesn't include it
-		const userWithImage = await prisma.user.findUnique({
-			where: { id: user.id },
-			select: { image: true },
-		});
-
 		const userId = user.id;
 
-		// 4. Vérifier qu'il n'y a pas de commandes en cours
+		// 4. Idempotence guard: already pending deletion
+		const currentUser = await prisma.user.findUnique({
+			where: { id: userId },
+			select: { accountStatus: true },
+		});
+
+		if (currentUser?.accountStatus === AccountStatus.PENDING_DELETION) {
+			return error(
+				"Une demande de suppression est déjà en cours pour votre compte."
+			);
+		}
+
+		// 5. Check no pending orders
 		const pendingOrders = await prisma.order.count({
 			where: {
 				userId,
@@ -79,150 +76,30 @@ export async function deleteAccount(
 			);
 		}
 
-		const anonymizedEmail = generateAnonymizedEmail(userId);
-		const stripeCustomerId = user.stripeCustomerId;
-		const userAvatar = userWithImage?.image;
-
-		// 4b. Collect review media URLs for UploadThing cleanup after transaction
-		const reviewMedias = await prisma.reviewMedia.findMany({
-			where: { review: { userId } },
-			select: { url: true },
-		});
-		const reviewMediaUrls = reviewMedias.map((m) => m.url);
-
-		// 5. Transaction pour garantir l'intégrité des données
-		await prisma.$transaction(async (tx) => {
-			// 5.1 Anonymiser les commandes (conserver pour comptabilité)
-			await tx.order.updateMany({
-				where: { userId },
-				data: {
-					customerEmail: anonymizedEmail,
-					customerName: "Client supprimé",
-					customerPhone: null,
-					// Adresse de livraison
-					shippingFirstName: "Anonyme",
-					shippingLastName: "Anonyme",
-					shippingAddress1: "Adresse supprimée",
-					shippingAddress2: null,
-					shippingPostalCode: "00000",
-					shippingCity: "Supprimé",
-					shippingPhone: "",
-					stripeCustomerId: null,
-				},
-			});
-
-			// 5.2 Supprimer les photos des avis (PII potentiel : visages, décor identifiable)
-			await tx.reviewMedia.deleteMany({
-				where: { review: { userId } },
-			});
-
-			// 5.3 Anonymiser le contenu des avis (texte libre potentiellement personnel)
-			await tx.productReview.updateMany({
-				where: { userId },
-				data: {
-					content: "Contenu supprimé suite à la suppression du compte.",
-					title: null,
-				},
-			});
-
-			// 5.4 Anonymiser les demandes de personnalisation (PII RGPD)
-			await tx.customizationRequest.updateMany({
-				where: { userId },
-				data: {
-					firstName: "Anonyme",
-					email: anonymizedEmail,
-					phone: null,
-					details: "Contenu supprimé",
-				},
-			});
-
-			// 5.5 Supprimer les données non nécessaires à la comptabilité
-			// Adresses
-			await tx.address.deleteMany({ where: { userId } });
-
-			// Panier
-			await tx.cart.deleteMany({ where: { userId } });
-
-			// Wishlist
-			await tx.wishlist.deleteMany({ where: { userId } });
-
-			// Sessions (déconnexion de tous les appareils)
-			await tx.session.deleteMany({ where: { userId } });
-
-			// Comptes OAuth
-			await tx.account.deleteMany({ where: { userId } });
-
-			// 5.6 Désabonner et anonymiser la newsletter
-			await tx.newsletterSubscriber.updateMany({
-				where: { userId },
-				data: {
-					status: NewsletterStatus.UNSUBSCRIBED,
-					email: anonymizedEmail,
-					unsubscribedAt: new Date(),
-					deletedAt: new Date(),
-					ipAddress: null,
-					confirmationIpAddress: null,
-					userAgent: null,
-				},
-			});
-
-			// 5.7 Soft delete du compte utilisateur avec anonymisation RGPD
-			await tx.user.update({
-				where: { id: userId },
-				data: {
-					deletedAt: new Date(),
-					anonymizedAt: new Date(),
-					accountStatus: AccountStatus.ANONYMIZED,
-					email: anonymizedEmail,
-					name: "Compte supprimé",
-					image: null,
-					stripeCustomerId: null,
-					emailVerified: false,
-				},
-			});
+		// 6. Set account to PENDING_DELETION
+		await prisma.user.update({
+			where: { id: userId },
+			data: {
+				accountStatus: AccountStatus.PENDING_DELETION,
+				deletionRequestedAt: new Date(),
+			},
 		});
 
-		// 6. Supprimer le client Stripe (hors transaction car externe)
-		if (stripeCustomerId) {
-			try {
-				await stripe.customers.del(stripeCustomerId);
-			} catch {
-				// Erreur silencieuse - le client Stripe sera orphelin mais le compte est supprimé
-			}
-		}
-
-		// 7. Supprimer l'avatar UploadThing si present
-		if (userAvatar) {
-			deleteUploadThingFileFromUrl(userAvatar).catch((err) => {
-				console.error("[deleteAccount] Erreur suppression avatar UploadThing:", err);
-			});
-		}
-
-		// 7b. Supprimer les photos des avis sur UploadThing (RGPD: PII potentiel)
-		if (reviewMediaUrls.length > 0) {
-			deleteUploadThingFilesFromUrls(reviewMediaUrls).catch((err) => {
-				console.error("[deleteAccount] Erreur suppression review media UploadThing:", err);
-			});
-		}
-
-		// 8. Invalider la session Better Auth
+		// 7. Sign out (invalidate session)
 		const headersList = await headers();
 		await auth.api.signOut({
 			headers: headersList,
 		});
 
-		// 9. Invalider le cache
+		// 8. Invalidate cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
-		updateTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
-		updateTag(NEWSLETTER_CACHE_TAGS.LIST);
-		updateTag(NEWSLETTER_CACHE_TAGS.USER_STATUS(userId));
 
 		return success(
-			"Votre compte a été supprimé. Vos données personnelles ont été effacées conformément au RGPD."
+			"Votre demande de suppression a été enregistrée. Votre compte sera définitivement supprimé dans 30 jours. Vous pouvez annuler cette demande en vous reconnectant."
 		);
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la suppression du compte");
+		return handleActionError(e, "Erreur lors de la demande de suppression du compte");
 	}
 }

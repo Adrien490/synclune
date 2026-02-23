@@ -7,7 +7,7 @@ import {
 	Skeleton,
 	SkeletonGroup,
 } from "@/shared/components/ui/skeleton";
-import { Bell, Monitor, User } from "lucide-react";
+import { Bell, LockKeyhole, Monitor, User } from "lucide-react";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { getUserProviders } from "@/modules/auth/data/get-user-providers";
 import { getSubscriptionStatus } from "@/modules/newsletter/data/get-subscription-status";
@@ -25,8 +25,6 @@ export const metadata: Metadata = {
 export default async function SettingsPage() {
 	const user = await getCurrentUser();
 	if (!user) notFound();
-
-	const providers = await getUserProviders();
 
 	return (
 		<>
@@ -49,13 +47,17 @@ export default async function SettingsPage() {
 						</div>
 					</section>
 
-					<SecuritySection
-						emailVerified={user.emailVerified}
-						providers={providers}
-						email={user.email}
-					/>
+					<Suspense fallback={<SecuritySkeleton />}>
+						<SecuritySectionWrapper
+							emailVerified={user.emailVerified}
+							email={user.email}
+						/>
+					</Suspense>
 
-					<GdprSection />
+					<GdprSection
+						accountStatus={user.accountStatus}
+						deletionRequestedAt={user.deletionRequestedAt}
+					/>
 				</div>
 
 				<div className="space-y-6">
@@ -72,6 +74,23 @@ export default async function SettingsPage() {
 	);
 }
 
+async function SecuritySectionWrapper({
+	emailVerified,
+	email,
+}: {
+	emailVerified: boolean;
+	email: string;
+}) {
+	const providers = await getUserProviders();
+	return (
+		<SecuritySection
+			emailVerified={emailVerified}
+			providers={providers}
+			email={email}
+		/>
+	);
+}
+
 async function NewsletterWrapper() {
 	const status = await getSubscriptionStatus();
 	return <NewsletterSettingsCard isSubscribed={status.isSubscribed} />;
@@ -80,6 +99,32 @@ async function NewsletterWrapper() {
 async function SessionsWrapper() {
 	const sessions = await getUserSessions();
 	return <ActiveSessionsCard sessions={sessions} />;
+}
+
+function SecuritySkeleton() {
+	return (
+		<SkeletonGroup label="Chargement des paramètres de sécurité">
+			<section className="space-y-4">
+				<div>
+					<div className="flex items-center gap-2">
+						<LockKeyhole className="size-4 text-muted-foreground" />
+						<Skeleton className="h-5 w-24" />
+					</div>
+					<Skeleton className="h-4 w-64 mt-0.5" />
+				</div>
+				<div className="border-t border-border/60 pt-4 space-y-6">
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<Skeleton className="h-4 w-28" />
+							<Skeleton className="h-4 w-52" />
+						</div>
+						<Skeleton className="h-9 w-24" />
+					</div>
+					<Skeleton className="h-4 w-32" />
+				</div>
+			</section>
+		</SkeletonGroup>
+	);
 }
 
 function NewsletterSkeleton() {

@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/modules/auth/lib/auth";
 import { AccountNav } from "@/modules/users/components/account-nav";
 import type { Metadata } from "next";
 
@@ -9,11 +11,19 @@ export const metadata: Metadata = {
 	robots: { index: false },
 };
 
-export default function EspaceClientLayout({
+export default async function EspaceClientLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
+	const session = await auth.api.getSession({
+		headers: await import("next/headers").then((m) => m.headers()),
+	});
+
+	if (!session?.user) {
+		redirect("/connexion?callbackURL=/compte");
+	}
+
 	return (
 		<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-6 lg:pb-10">
 			<div className="lg:flex lg:gap-10">
