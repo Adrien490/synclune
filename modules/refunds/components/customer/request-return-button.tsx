@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RotateCcw, Loader2 } from "lucide-react";
-import { RefundReason } from "@/app/generated/prisma/client";
+import { RefundReason } from "@/app/generated/prisma/enums";
 import { requestReturn } from "@/modules/refunds/actions/request-return";
 import { REFUND_REASON_LABELS } from "@/modules/refunds/constants/refund.constants";
 import { Button } from "@/shared/components/ui/button";

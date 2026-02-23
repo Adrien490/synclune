@@ -15,8 +15,19 @@ import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
+import { cn } from "@/shared/utils/cn";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
+
+/** Trigger button classes (mirrors iconButtonClassName from navbar.tsx) */
+const triggerClassName = cn(
+	"relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden",
+	"bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground",
+	"transition-[transform,color,background-color] duration-300 ease-out",
+	"motion-safe:hover:scale-105 motion-safe:active:scale-95",
+	"cursor-pointer group",
+	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+);
 
 /**
  * navItems (flat list from getMobileNavItems) drives the mobile sheet's link rendering,
@@ -51,7 +62,7 @@ export function MenuSheet({
 			<SheetTrigger asChild>
 				<button
 					type="button"
-					className="relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-[transform,color,background-color] duration-300 ease-out motion-safe:hover:scale-105 motion-safe:active:scale-95 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+					className={triggerClassName}
 					aria-label={isOpen ? "Fermer le menu de navigation" : "Ouvrir le menu de navigation"}
 					aria-haspopup="dialog"
 					aria-expanded={isOpen}

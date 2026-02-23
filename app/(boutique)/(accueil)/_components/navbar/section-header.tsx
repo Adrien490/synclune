@@ -1,13 +1,23 @@
 /**
- * Header de section pour les catégories du menu
+ * Header de section pour les catégories du menu.
+ * Accepts `as` prop to control heading level — defaults to h3
+ * (appropriate for sub-sections inside a `<nav>` landmark).
  */
-export function SectionHeader({ children, id }: { children: React.ReactNode; id?: string }) {
+export function SectionHeader({
+	children,
+	id,
+	as: Tag = "h3",
+}: {
+	children: React.ReactNode;
+	id?: string;
+	as?: "h2" | "h3";
+}) {
 	return (
-		<h2
+		<Tag
 			id={id}
 			className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
 		>
 			{children}
-		</h2>
+		</Tag>
 	);
 }

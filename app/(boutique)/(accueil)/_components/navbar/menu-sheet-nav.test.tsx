@@ -29,8 +29,8 @@ vi.mock("./collection-mini-grid", () => ({
 }));
 
 vi.mock("./section-header", () => ({
-	SectionHeader: ({ children, id }: { children: React.ReactNode; id: string }) => (
-		<h2 id={id}>{children}</h2>
+	SectionHeader: ({ children, id, as: Tag = "h3" }: { children: React.ReactNode; id: string; as?: "h2" | "h3" }) => (
+		<Tag id={id}>{children}</Tag>
 	),
 }));
 

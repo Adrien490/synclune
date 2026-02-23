@@ -1,11 +1,22 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+// Mock next/font/google (imported transitively via barrel → unsaved-changes-dialog → alert-dialog → fonts)
+vi.mock("next/font/google", () => {
+	const fontMock = () => ({ className: "mock-font", variable: "--mock-font", style: { fontFamily: "mock" } });
+	return {
+		Inter: fontMock,
+		Cormorant_Garamond: fontMock,
+		Petit_Formal_Script: fontMock,
+	};
+});
+
 // Mock next/link
 vi.mock("next/link", () => ({
 	default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
 		<a href={href} {...props}>{children}</a>
 	),
+	useLinkStatus: () => ({ pending: false }),
 }));
 
 // Mock next/navigation
@@ -97,11 +108,11 @@ describe("DesktopNav", () => {
 		expect(creationsButton).toBeDefined();
 	});
 
-	it("marks the active item with aria-current=page", () => {
+	it("marks the active dropdown trigger with aria-current=true", () => {
 		render(<DesktopNav navItems={navItems} />);
 
 		const activeButton = screen.getByRole("button", { name: "Les créations" });
-		expect(activeButton.getAttribute("aria-current")).toBe("page");
+		expect(activeButton.getAttribute("aria-current")).toBe("true");
 	});
 
 	it("does not mark inactive items with aria-current", () => {
