@@ -7,8 +7,10 @@ import {
 	GET_USER_ORDERS_DEFAULT_PER_PAGE,
 	GET_USER_ORDERS_MAX_RESULTS_PER_PAGE,
 	GET_USER_ORDERS_SORT_FIELDS,
+	USER_ORDERS_SORT_LABELS,
 	USER_ORDERS_SORT_OPTIONS,
 } from "@/modules/orders/constants/user-orders.constants";
+import { SortSelect } from "@/shared/components/sort-select";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
@@ -51,6 +53,11 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 	const params = await searchParams;
 	const { cursor, direction, perPage, sortBy } = parseParams(params);
 
+	const sortOptions = Object.values(USER_ORDERS_SORT_OPTIONS).map((value) => ({
+		value,
+		label: USER_ORDERS_SORT_LABELS[value],
+	}));
+
 	const ordersPromise = getUserOrders({
 		cursor,
 		direction,
@@ -65,6 +72,8 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 				description="Suivez l'état de vos commandes"
 				variant="compact"
 			/>
+
+			<SortSelect label="Trier par" options={sortOptions} />
 
 			<Suspense fallback={<CustomerOrdersTableSkeleton />}>
 				<CustomerOrdersTable ordersPromise={ordersPromise} perPage={perPage} />

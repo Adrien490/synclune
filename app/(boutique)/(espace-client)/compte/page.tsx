@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ChevronRight, Heart, Package, Settings } from "lucide-react";
 import { PageHeader } from "@/shared/components/page-header";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
@@ -10,10 +12,17 @@ import { AccountStatsCards } from "@/modules/users/components/account-stats-card
 import { AccountStatsCardsSkeleton } from "@/modules/users/components/account-stats-cards-skeleton";
 import { RecentOrders } from "@/modules/orders/components/recent-orders";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
+import { ROUTES } from "@/shared/constants/urls";
 
 export const metadata: Metadata = {
 	title: "Tableau de bord",
 };
+
+const quickLinks = [
+	{ href: ROUTES.ACCOUNT.ORDERS, label: "Mes commandes", icon: Package },
+	{ href: ROUTES.ACCOUNT.FAVORITES, label: "Mes favoris", icon: Heart },
+	{ href: ROUTES.ACCOUNT.SETTINGS, label: "Paramètres", icon: Settings },
+];
 
 export default async function DashboardPage() {
 	const user = await getCurrentUser();
@@ -38,6 +47,25 @@ export default async function DashboardPage() {
 						/>
 					</Suspense>
 				</ErrorBoundary>
+
+				<section>
+					<h2 className="text-lg/7 tracking-tight antialiased font-semibold mb-3">
+						Liens rapides
+					</h2>
+					<div className="grid gap-3 sm:grid-cols-3">
+						{quickLinks.map(({ href, label, icon: Icon }) => (
+							<Link
+								key={href}
+								href={href}
+								className="flex items-center gap-3 rounded-xl border border-border/60 p-4 hover:bg-muted transition-colors"
+							>
+								<Icon className="size-5 text-muted-foreground" />
+								<span className="font-medium">{label}</span>
+								<ChevronRight className="ml-auto size-4 text-muted-foreground" />
+							</Link>
+						))}
+					</div>
+				</section>
 
 				<ErrorBoundary errorMessage="Impossible de charger les commandes">
 					<Suspense fallback={<RecentOrdersSkeleton />}>

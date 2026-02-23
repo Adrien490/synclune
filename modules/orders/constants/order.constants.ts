@@ -119,6 +119,8 @@ export const GET_ORDER_SELECT = {
 			reason: true,
 			amount: true,
 			currency: true,
+			note: true,
+			processedAt: true,
 			createdAt: true,
 			items: {
 				select: {
@@ -126,6 +128,12 @@ export const GET_ORDER_SELECT = {
 					orderItemId: true,
 					quantity: true,
 					amount: true,
+					orderItem: {
+						select: {
+							productTitle: true,
+							skuColor: true,
+						},
+					},
 				},
 			},
 		},

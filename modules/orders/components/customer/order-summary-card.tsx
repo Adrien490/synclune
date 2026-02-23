@@ -10,6 +10,7 @@ interface OrderSummaryCardProps {
 		createdAt: Date;
 		subtotal: number;
 		discountAmount: number;
+		discountUsages?: { discountCode: string; amountApplied: number }[];
 		shippingCost: number;
 		total: number;
 		currency: string;
@@ -60,7 +61,11 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 					</div>
 					{order.discountAmount > 0 && (
 						<div className="flex justify-between text-green-600">
-							<span>Réduction</span>
+							<span>
+							Réduction
+							{order.discountUsages && order.discountUsages.length > 0 &&
+								` (${order.discountUsages.map(d => d.discountCode).join(", ")})`}
+						</span>
 							<span>-{formatEuro(order.discountAmount)}</span>
 						</div>
 					)}
