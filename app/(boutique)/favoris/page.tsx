@@ -49,19 +49,22 @@ export default async function WishlistPage({
 	});
 
 	return (
-		<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-6 lg:pb-10">
+		<div className="min-h-screen relative">
 			<PageHeader
 				title="Mes favoris"
-				description="Retrouvez tous vos coups de cœur"
-				variant="compact"
+				breadcrumbs={[{ label: "Mes favoris", href: "/favoris" }]}
 			/>
 
-			<Suspense fallback={<WishlistGridSkeleton />}>
-				<WishlistList
-					wishlistPromise={wishlistPromise}
-					perPage={perPage}
-				/>
-			</Suspense>
+			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
+				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+					<Suspense fallback={<WishlistGridSkeleton />}>
+						<WishlistList
+							wishlistPromise={wishlistPromise}
+							perPage={perPage}
+						/>
+					</Suspense>
+				</div>
+			</section>
 
 			<RemoveWishlistItemAlertDialog />
 		</div>
