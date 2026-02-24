@@ -77,7 +77,10 @@ export default async function Page() {
     <>
       {/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
       <Suspense>
-        <StructuredData reviewStatsPromise={reviewStatsPromise} reviewsPromise={featuredReviewsPromise} />
+        <StructuredData
+          reviewStatsPromise={reviewStatsPromise}
+          reviewsPromise={featuredReviewsPromise}
+        />
       </Suspense>
 
       {/* 1. Hero - Attention capture + rotating tagline + floating product images */}
@@ -86,13 +89,13 @@ export default async function Page() {
       </Suspense>
 
       {/* 2. Latest Creations - 4 most recent products (manages its own inner Suspense) */}
-      <LatestCreations
-        productsPromise={latestCreationsPromise}
-      />
+      <LatestCreations productsPromise={latestCreationsPromise} />
 
       {/* 3. Collections - Thematic browsing with descriptions */}
       <div className="content-defer">
-        <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
+        <Suspense
+          fallback={<CollectionsSectionSkeleton collectionsCount={6} />}
+        >
           <CollectionsSection
             collectionsPromise={getCollections({
               perPage: 6,
@@ -108,50 +111,30 @@ export default async function Page() {
 
       {/* 4. Reviews - Social proof with featured customer reviews */}
       <div className="content-defer">
-        <ErrorBoundary fallback={null}>
-          <Suspense fallback={<ReviewsSectionSkeleton />}>
-            <ReviewsSection
-              reviewsPromise={featuredReviewsPromise}
-              reviewStatsPromise={reviewStatsPromise}
-            />
-          </Suspense>
-        </ErrorBoundary>
+        <ReviewsSection
+          reviewsPromise={featuredReviewsPromise}
+          reviewStatsPromise={reviewStatsPromise}
+        />
       </div>
 
       {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
       <div className="content-defer">
-        <ErrorBoundary fallback={null}>
-          <Suspense fallback={<AtelierStorySkeleton />}>
-            <AtelierStory />
-          </Suspense>
-        </ErrorBoundary>
+        <AtelierStory />
       </div>
 
       {/* 6. Creative Process - Step-by-step jewelry making */}
       <div className="content-defer">
-        <ErrorBoundary fallback={null}>
-          <Suspense fallback={<CreativeProcessSkeleton />}>
-            <CreativeProcess />
-          </Suspense>
-        </ErrorBoundary>
+        <CreativeProcess />
       </div>
 
       {/* 7. FAQ - Frequently asked questions with JSON-LD */}
       <div className="content-defer">
-        <ErrorBoundary fallback={null}>
-          <Suspense fallback={<FaqSectionSkeleton />}>
-            <FaqSection />
-          </Suspense>
-        </ErrorBoundary>
+        <FaqSection />
       </div>
 
       {/* 8. Newsletter - Subscription with gift incentive */}
       <div className="content-defer">
-        <ErrorBoundary fallback={null}>
-          <Suspense fallback={<NewsletterSectionSkeleton />}>
-            <NewsletterSection />
-          </Suspense>
-        </ErrorBoundary>
+        <NewsletterSection />
       </div>
     </>
   );
