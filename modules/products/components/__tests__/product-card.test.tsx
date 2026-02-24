@@ -201,7 +201,11 @@ describe("ProductCard", () => {
 				})
 			);
 			render(<ProductCard product={createProduct()} />);
-			expect(screen.getByText("Rupture de stock")).toBeDefined();
+			// Text appears twice: once in a sr-only accessibility span, once in the visible badge
+			const matches = screen.getAllByText("Rupture de stock");
+			expect(matches.length).toBeGreaterThanOrEqual(1);
+			// The visual badge carries data-testid="badge-secondary"
+			expect(screen.getByTestId("badge-secondary")).toBeDefined();
 		});
 
 		it("does not show out-of-stock badge when product is in stock", () => {
@@ -323,11 +327,14 @@ describe("ProductCard", () => {
 				})
 			);
 			render(<ProductCard product={createProduct()} />);
-			const argentLink = screen.getByRole("link", {
-				name: /Bague Lune Argent en Argent/i,
-			});
+			// Color swatch links use title="<ColorName>" (aria-label is dropped by the link mock)
+			const argentLink = screen.getByTitle("Argent");
 			expect(argentLink.getAttribute("href")).toBe(
 				"/creations/bague-lune-argent?color=argent"
+			);
+			const orLink = screen.getByTitle("Or");
+			expect(orLink.getAttribute("href")).toBe(
+				"/creations/bague-lune-argent?color=or"
 			);
 		});
 	});
