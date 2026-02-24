@@ -120,10 +120,7 @@ test.describe("SEO et métadonnées - Page produit détail", () => {
 		await page.waitForLoadState("networkidle")
 
 		const productLinks = page.locator('a[href*="/creations/"]')
-		if (await productLinks.count() === 0) {
-			test.skip()
-			return
-		}
+		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
 		const href = await productLinks.first().getAttribute("href")
 		await page.goto(href!)
@@ -151,10 +148,7 @@ test.describe("SEO et métadonnées - Page produit détail", () => {
 		await page.waitForLoadState("networkidle")
 
 		const productLinks = page.locator('a[href*="/creations/"]')
-		if (await productLinks.count() === 0) {
-			test.skip()
-			return
-		}
+		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
 		const href = await productLinks.first().getAttribute("href")
 		await page.goto(href!)
@@ -169,10 +163,7 @@ test.describe("SEO et métadonnées - Page produit détail", () => {
 		await page.waitForLoadState("networkidle")
 
 		const productLinks = page.locator('a[href*="/creations/"]')
-		if (await productLinks.count() === 0) {
-			test.skip()
-			return
-		}
+		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
 		const href = await productLinks.first().getAttribute("href")
 		await page.goto(href!)

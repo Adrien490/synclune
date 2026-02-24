@@ -74,7 +74,7 @@ export function ScrollIndicator({
 			type="button"
 			onClick={handleClick}
 			aria-label={ariaLabel}
-			{...(!isVisible && { inert: "" })}
+			{...(!isVisible && { inert: true })}
 			className={cn(
 				// Position au-dessus des zones mask avec fallback minimum
 				"absolute left-1/2 -translate-x-1/2 z-20",

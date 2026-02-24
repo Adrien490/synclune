@@ -66,11 +66,7 @@ test.describe("Navigation catalogue produits", () => {
 		// Chercher les liens vers les pages de créations
 		const productLinks = page.locator('a[href*="/creations/"]')
 		const count = await productLinks.count()
-
-		if (count === 0) {
-			test.skip()
-			return
-		}
+		expect(count, "No products found in database - seed data required").toBeGreaterThan(0)
 
 		// Récupérer le href du premier lien
 		const href = await productLinks.first().getAttribute("href")
@@ -91,11 +87,7 @@ test.describe("Navigation catalogue produits", () => {
 
 		const productLinks = page.locator('a[href*="/creations/"]')
 		const count = await productLinks.count()
-
-		if (count === 0) {
-			test.skip()
-			return
-		}
+		expect(count, "No products found in database - seed data required").toBeGreaterThan(0)
 
 		const href = await productLinks.first().getAttribute("href")
 		await page.goto(href!)
@@ -111,10 +103,7 @@ test.describe("Navigation catalogue produits", () => {
 		await page.waitForLoadState("networkidle")
 
 		const productLinks = page.locator('a[href*="/creations/"]')
-		if (await productLinks.count() === 0) {
-			test.skip()
-			return
-		}
+		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
 		const href = await productLinks.first().getAttribute("href")
 		await page.goto(href!)
@@ -131,10 +120,7 @@ test.describe("Navigation catalogue produits", () => {
 		await page.waitForLoadState("networkidle")
 
 		const productLinks = page.locator('a[href*="/creations/"]')
-		if (await productLinks.count() === 0) {
-			test.skip()
-			return
-		}
+		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
 		const href = await productLinks.first().getAttribute("href")
 		await page.goto(href!)
@@ -155,10 +141,7 @@ test.describe("Navigation catalogue produits", () => {
 		await page.waitForLoadState("networkidle")
 
 		const productLinks = page.locator('a[href*="/creations/"]')
-		if (await productLinks.count() === 0) {
-			test.skip()
-			return
-		}
+		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
 		const href = await productLinks.first().getAttribute("href")
 		await page.goto(href!)
@@ -205,10 +188,7 @@ test.describe("Navigation catalogue produits", () => {
 
 		// Chercher le champ de recherche dans le catalogue
 		const searchInput = page.getByRole("searchbox")
-		if (await searchInput.count() === 0) {
-			test.skip()
-			return
-		}
+		expect(await searchInput.count(), "No search input found on /produits page").toBeGreaterThan(0)
 
 		// Taper un terme de recherche
 		await searchInput.first().fill("bague")
