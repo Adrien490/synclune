@@ -80,6 +80,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 							href={order.trackingUrl}
 							target="_blank"
 							rel="noopener noreferrer"
+							aria-label="Suivre mon colis (s'ouvre dans un nouvel onglet)"
 						>
 							<ExternalLink className="h-4 w-4 mr-2" />
 							Suivre mon colis

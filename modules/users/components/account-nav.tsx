@@ -194,7 +194,7 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 				<Sheet direction="bottom" open={moreOpen} onOpenChange={setMoreOpen}>
 					<SheetContent className="rounded-t-2xl">
 						<SheetHeader>
-							<SheetTitle>Plus</SheetTitle>
+							<SheetTitle>Plus d'options</SheetTitle>
 						</SheetHeader>
 						<nav
 							className="flex flex-col gap-1 px-4 pb-4"

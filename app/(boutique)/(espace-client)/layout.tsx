@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { auth } from "@/modules/auth/lib/auth";
 import { AccountNav } from "@/modules/users/components/account-nav";
 import type { Metadata } from "next";
@@ -16,8 +17,9 @@ export default async function EspaceClientLayout({
 }: {
 	children: React.ReactNode;
 }) {
+	const reqHeaders = await headers();
 	const session = await auth.api.getSession({
-		headers: await import("next/headers").then((m) => m.headers()),
+		headers: reqHeaders,
 	});
 
 	if (!session?.user) {

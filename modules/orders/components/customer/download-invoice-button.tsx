@@ -49,6 +49,7 @@ export function DownloadInvoiceButton({
 					className="w-full"
 					onClick={handleDownload}
 					disabled={isDownloading}
+					aria-busy={isDownloading}
 				>
 					{isDownloading ? (
 						<Loader2 className="h-4 w-4 mr-2 animate-spin" />

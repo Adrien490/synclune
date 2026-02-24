@@ -8,6 +8,7 @@ import { getProducts } from "@/modules/products/data/get-products";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import { StructuredData } from "@/shared/components/structured-data";
+import { SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
     title: "Synclune | Bijoux artisanaux faits main à Nantes (44)",
     description:
       "Bijoux colorés faits main dans mon atelier nantais. Boucles d'oreilles, colliers, bracelets. Loire-Atlantique.",
-    url: "https://synclune.fr",
+    url: SITE_URL,
     type: "website",
     images: [
       {
@@ -119,30 +120,38 @@ export default async function Page() {
 
       {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
       <div className="content-defer">
-        <Suspense fallback={<AtelierStorySkeleton />}>
-          <AtelierStory />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={<AtelierStorySkeleton />}>
+            <AtelierStory />
+          </Suspense>
+        </ErrorBoundary>
       </div>
 
       {/* 6. Creative Process - Step-by-step jewelry making */}
       <div className="content-defer">
-        <Suspense fallback={<CreativeProcessSkeleton />}>
-          <CreativeProcess />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={<CreativeProcessSkeleton />}>
+            <CreativeProcess />
+          </Suspense>
+        </ErrorBoundary>
       </div>
 
       {/* 7. FAQ - Frequently asked questions with JSON-LD */}
       <div className="content-defer">
-        <Suspense fallback={<FaqSectionSkeleton />}>
-          <FaqSection />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={<FaqSectionSkeleton />}>
+            <FaqSection />
+          </Suspense>
+        </ErrorBoundary>
       </div>
 
       {/* 8. Newsletter - Subscription with gift incentive */}
       <div className="content-defer">
-        <Suspense fallback={<NewsletterSectionSkeleton />}>
-          <NewsletterSection />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={<NewsletterSectionSkeleton />}>
+            <NewsletterSection />
+          </Suspense>
+        </ErrorBoundary>
       </div>
     </>
   );

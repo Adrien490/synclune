@@ -29,15 +29,15 @@ export async function updateProfile(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(USER_LIMITS.UPDATE_PROFILE);
-		if ("error" in rateCheck) return rateCheck.error;
-
-		// 2. Vérification de l'authentification
+		// 1. Vérification de l'authentification
 		const userAuth = await requireAuth();
 		if ("error" in userAuth) return userAuth.error;
 
 		const user = userAuth.user;
+
+		// 2. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(USER_LIMITS.UPDATE_PROFILE);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		// 3. Extraction et validation des données
 		const rawData = {
