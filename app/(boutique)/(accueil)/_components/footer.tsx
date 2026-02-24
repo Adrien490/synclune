@@ -197,7 +197,7 @@ export async function Footer() {
 					{/* Paiement sécurisé */}
 					<section className="flex flex-col items-center gap-3 pt-8 border-t border-border" aria-labelledby="footer-payment-title">
 						<h3 id="footer-payment-title" className="sr-only">Paiement sécurisé</h3>
-						<p className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Paiements sécurisés par Stripe">
+						<p className="flex items-center gap-2 text-sm text-muted-foreground">
 							<span aria-hidden="true">Sécurisé par</span>
 							<span aria-hidden="true">
 								<StripeWordmark className="text-muted-foreground hover:text-foreground transition-colors duration-200" />
