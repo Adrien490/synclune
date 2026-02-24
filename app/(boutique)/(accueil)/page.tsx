@@ -21,7 +21,6 @@ import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { NewsletterSectionSkeleton } from "./_components/newsletter-section-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
-import { StickyMobileCta } from "./_components/sticky-mobile-cta";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 
 export const metadata: Metadata = {
@@ -145,9 +144,6 @@ export default async function Page() {
           <NewsletterSection />
         </Suspense>
       </div>
-
-      {/* Sticky mobile CTA — appears after hero, hides near newsletter */}
-      <StickyMobileCta />
     </>
   );
 }
