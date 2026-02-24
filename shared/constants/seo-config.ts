@@ -14,7 +14,7 @@ export const BUSINESS_INFO = {
 	tradeName: "Synclune",
 	description:
 		"Créatrice de bijoux faits main avec amour à Nantes. Bijoux artisanaux colorés et originaux pour le quotidien et les occasions spéciales.",
-	email: "synclune.bijoux@gmail.com",
+	email: BRAND.contact.email,
 	// Informations légales
 	siren: "839 183 027",
 	siret: "839 183 027 00037",
@@ -81,7 +81,7 @@ export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
 	const baseSchema = {
 		"@context": "https://schema.org",
 		"@type": "LocalBusiness",
-		"@id": `${SITE_URL}/#organization`,
+		"@id": `${SITE_URL}/#local-business`,
 		name: BUSINESS_INFO.name,
 		legalName: BUSINESS_INFO.legalName,
 		description: BUSINESS_INFO.description,

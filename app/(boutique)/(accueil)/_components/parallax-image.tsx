@@ -5,7 +5,6 @@ import {
 	useScroll,
 	useTransform,
 	useReducedMotion,
-	useInView,
 } from "motion/react";
 import Image from "next/image";
 import type { RefObject } from "react";
@@ -18,19 +17,19 @@ interface ParallaxImageProps {
 	alt: string;
 	blurDataURL?: string;
 	className?: string;
-	/** Classes CSS sur le container externe */
+	/** CSS classes on the outer container */
 	containerClassName?: string;
-	/** Force de l'effet parallax en pourcentage (defaut: 5, max: 15) */
+	/** Parallax effect strength as a percentage (default: 5, max: 15) */
 	intensity?: number;
-	/** Attribut sizes pour images responsives */
+	/** Sizes attribute for responsive images */
 	sizes?: string;
-	/** Qualite de compression (defaut: 75) */
+	/** Compression quality (default: 75) */
 	quality?: number;
 	/** Priority loading for above-fold images */
 	priority?: boolean;
-	/** Image purement decorative (aria-hidden, alt vide) */
+	/** Purely decorative image (aria-hidden, empty alt) */
 	decorative?: boolean;
-	/** Desactive le parallax sur appareils tactiles (defaut: true pour meilleure UX mobile) */
+	/** Disable parallax on touch devices (default: true for better mobile UX) */
 	disableOnTouch?: boolean;
 }
 
@@ -40,33 +39,26 @@ interface ParallaxInnerProps {
 	imageElement: React.ReactNode;
 }
 
-// Hydration safety pattern (evite mismatch server/client)
+// Hydration safety pattern (avoids server/client mismatch)
 const subscribeNoop = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
 
 /**
- * Composant interne qui gere l'animation parallax
- * Isole les hooks scroll pour eviter les listeners inutiles quand desactive
+ * Inner component handling the parallax animation.
+ * Isolates scroll hooks to avoid unnecessary listeners when disabled.
  */
 function ParallaxInner({
 	containerRef,
 	safeIntensity,
 	imageElement,
 }: ParallaxInnerProps) {
-	// Lazy animation : n'active le parallax que si visible
-	// Margin fixe en pixels pour comportement consistant mobile/desktop
-	const isInView = useInView(containerRef, {
-		once: false,
-		margin: "0px 0px -100px 0px",
-	});
-
 	const { scrollYProgress } = useScroll({
 		target: containerRef,
 		offset: ["start end", "end start"],
 	});
 
-	// Effet parallax : translation Y basee sur le scroll
+	// Parallax effect: Y translation based on scroll progress
 	const y = useTransform(
 		scrollYProgress,
 		[0, 1],
@@ -75,16 +67,14 @@ function ParallaxInner({
 
 	return (
 		<motion.div
+			role="presentation"
 			className="absolute inset-x-0 w-full"
 			style={{
-				// Container plus grand pour eviter le clipping lors du parallax
+				// Oversized container to prevent clipping during parallax
 				height: `${100 + safeIntensity * 2}%`,
-				// Centrage vertical pour eviter le clipping aux extremes
+				// Vertically centered to prevent clipping at extremes
 				top: `-${safeIntensity}%`,
-				// Animation uniquement si visible (performance)
-				y: isInView ? y : 0,
-				// GPU hint uniquement quand visible (evite surconsommation memoire)
-				willChange: isInView ? "transform" : "auto",
+				y,
 			}}
 		>
 			{imageElement}
@@ -93,22 +83,22 @@ function ParallaxInner({
 }
 
 /**
- * Image avec effet parallax subtil au scroll
+ * Image with a subtle parallax scroll effect.
  *
- * Respecte prefers-reduced-motion et assure l'hydration safety.
- * L'animation ne s'active que lorsque l'element est visible (lazy).
+ * Respects prefers-reduced-motion (motion opt-in) and ensures hydration safety.
+ * Uses useTransform which is lazy — near-zero CPU cost when off-screen.
  *
- * @param src - URL de l'image
- * @param alt - Texte alternatif pour l'accessibilite
- * @param blurDataURL - Placeholder blur en base64
- * @param className - Classes CSS pour l'image
- * @param containerClassName - Classes CSS pour le container externe
- * @param intensity - Force de l'effet (defaut: 5%, max: 15%)
- * @param sizes - Attribut sizes responsive
- * @param quality - Qualite de compression (defaut: 75)
+ * @param src - Image URL
+ * @param alt - Alt text for accessibility
+ * @param blurDataURL - Base64 blur placeholder
+ * @param className - CSS classes for the image
+ * @param containerClassName - CSS classes for the outer container
+ * @param intensity - Effect strength (default: 5%, max: 15%)
+ * @param sizes - Responsive sizes attribute
+ * @param quality - Compression quality (default: 75)
  * @param priority - Priority loading for above-fold images
- * @param decorative - Image purement decorative (aria-hidden)
- * @param disableOnTouch - Desactive le parallax sur appareils tactiles (defaut: true)
+ * @param decorative - Purely decorative image (aria-hidden)
+ * @param disableOnTouch - Disable parallax on touch devices (default: true)
  *
  * @example
  * ```tsx
@@ -138,22 +128,22 @@ export function ParallaxImage({
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
 
-	// Hydration safety : evite les mismatches useReducedMotion server/client
+	// Hydration safety: avoids useReducedMotion server/client mismatches
 	const isMounted = useSyncExternalStore(
 		subscribeNoop,
 		getClientSnapshot,
 		getServerSnapshot
 	);
 
-	// Limite l'intensite pour eviter overflow (max 15%)
+	// Cap intensity to prevent overflow (max 15%)
 	const safeIntensity = Math.min(intensity, 15);
 
-	// Image commune (evite la duplication de code)
+	// Shared image element (avoids code duplication between branches)
 	const imageElement = (
 		<Image
 			src={src}
 			alt={decorative ? "" : alt}
-			aria-hidden={decorative || undefined}
+			aria-hidden={decorative ? true : undefined}
 			fill
 			className={className}
 			loading={priority ? undefined : "lazy"}
@@ -165,10 +155,12 @@ export function ParallaxImage({
 		/>
 	);
 
-	// SSR, reduced motion, ou appareil tactile avec option activee : rendu statique
-	// Les hooks scroll sont isoles dans ParallaxInner pour eviter les listeners inutiles
+	// Motion opt-in: only allow animation when mounted AND reduced-motion is explicitly false.
+	// This prevents a flash of animation for users with prefers-reduced-motion: reduce
+	// whose preference hasn't resolved yet on the first client render.
+	const motionIsAllowed = isMounted && shouldReduceMotion === false;
 	const shouldDisableParallax =
-		!isMounted || shouldReduceMotion || (disableOnTouch && isTouchDevice);
+		!motionIsAllowed || (disableOnTouch && isTouchDevice);
 
 	if (shouldDisableParallax) {
 		return (

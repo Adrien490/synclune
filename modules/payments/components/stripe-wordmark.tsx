@@ -18,6 +18,7 @@ export function StripeWordmark({ className = "" }: StripeWordmarkProps) {
 			className={className}
 			role="img"
 			aria-label="Stripe"
+			focusable="false"
 		>
 			<title>Stripe</title>
 			<path

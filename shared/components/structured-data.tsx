@@ -50,24 +50,12 @@ export function StructuredData({ reviewStatsPromise, reviewsPromise }: Structure
 	graphSchemas.push({
 		"@type": "Article",
 		headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
+		url: `${SITE_URL}/#atelier-story`,
+		image: `${SITE_URL}/opengraph-image`,
 		datePublished: "2025-01-15",
 		dateModified: "2025-06-01",
 		author: {
-			"@type": "Person",
-			name: "Léane",
-			jobTitle: "Créatrice de bijoux artisanaux",
-			sameAs: [
-				"https://www.instagram.com/synclune.bijoux/",
-				"https://www.tiktok.com/@synclune",
-			],
-			workLocation: {
-				"@type": "Place",
-				address: {
-					"@type": "PostalAddress",
-					addressLocality: "Nantes",
-					addressCountry: "FR",
-				},
-			},
+			"@id": `${SITE_URL}/#founder`,
 		},
 		about: {
 			"@type": "Brand",

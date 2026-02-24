@@ -19,6 +19,7 @@ export function TikTokIcon({
 			role={decorative ? "presentation" : "img"}
 			aria-label={decorative ? undefined : ariaLabel}
 			aria-hidden={decorative ? "true" : undefined}
+			focusable="false"
 		>
 			{!decorative && <title>{ariaLabel}</title>}
 

@@ -26,7 +26,7 @@ export const inter = Inter({
 // Élégante et raffinée, positionnement luxe artisanal
 export const petitFormalScript = Petit_Formal_Script({
 	subsets: ["latin"],
-	display: "swap",
+	display: "optional",
 	weight: ["400"],
 	variable: "--font-cursive",
 	preload: false, // Only used below-the-fold (signatures)

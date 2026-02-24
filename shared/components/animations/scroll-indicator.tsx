@@ -74,8 +74,7 @@ export function ScrollIndicator({
 			type="button"
 			onClick={handleClick}
 			aria-label={ariaLabel}
-			tabIndex={isVisible ? 0 : -1}
-			aria-hidden={!isVisible}
+			{...(!isVisible && { inert: "" })}
 			className={cn(
 				// Position au-dessus des zones mask avec fallback minimum
 				"absolute left-1/2 -translate-x-1/2 z-20",
@@ -90,7 +89,7 @@ export function ScrollIndicator({
 				className
 			)}
 			style={{ opacity }}
-			animate={shouldReduceMotion ? undefined : { y: [0, 8, 0] }}
+			animate={shouldReduceMotion || !isVisible ? undefined : { y: [0, 8, 0] }}
 			transition={
 				shouldReduceMotion
 					? undefined

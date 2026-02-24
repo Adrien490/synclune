@@ -1,8 +1,12 @@
 import { useSyncExternalStore } from "react";
 
-// Media query pour detecter appareils tactiles (smartphones, tablettes)
-// - hover: none = pas de survol possible (pas de souris)
-// - pointer: coarse = pointeur imprecis (doigt vs curseur souris)
+// Media query to detect touch devices (smartphones, tablets).
+// - hover: none = no hover capability (no mouse)
+// - pointer: coarse = imprecise pointer (finger vs mouse cursor)
+//
+// Limitation: does not detect switch/eye-tracking devices (pointer: none).
+// Users of these devices are expected to have prefers-reduced-motion enabled,
+// which disables motion-heavy effects independently.
 const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
 
 /**

@@ -42,7 +42,7 @@ const POLAROIDS: PolaroidConfig[] = [
 		tiltDegree: -3,
 		washiColor: "pink",
 		washiPosition: "top-left",
-		captionColor: "#9d4b6e",
+		captionColor: "#8a3a5c",
 		captionRotate: -1.5,
 		vintage: true,
 		glowColor: "pink",
@@ -50,7 +50,7 @@ const POLAROIDS: PolaroidConfig[] = [
 	},
 	{
 		caption: "Mes petits trésors",
-		label: "Perles et matériaux colorés",
+		label: "Perles et matériaux colorés Synclune",
 		tiltDegree: 1.5,
 		washiColor: "lavender",
 		washiPosition: "top-right",
@@ -62,11 +62,11 @@ const POLAROIDS: PolaroidConfig[] = [
 	},
 	{
 		caption: "L'inspiration du jour",
-		label: "Carnet d'inspiration avec croquis",
+		label: "Carnet d'inspiration de Léane, créatrice Synclune",
 		tiltDegree: -1,
 		washiColor: "mint",
 		washiPosition: "top-left",
-		captionColor: "#3d7a5f",
+		captionColor: "#2e6047",
 		captionRotate: -0.5,
 		vintage: true,
 		glowColor: "mint",
@@ -79,7 +79,7 @@ const POLAROIDS: PolaroidConfig[] = [
 		tiltDegree: 2.5,
 		washiColor: "peach",
 		washiPosition: "top-right",
-		captionColor: "#7a5b2d",
+		captionColor: "#6b4d20",
 		captionRotate: 0.8,
 		vintage: true,
 		glowColor: "yellow",
@@ -103,21 +103,12 @@ export async function AtelierStory() {
 			id="atelier-story"
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.spacious}`}
 			aria-labelledby="atelier-story-title"
-			data-voice-queries="qui est Léane Synclune,atelier bijoux Nantes,créatrice bijoux artisanaux"
 			data-content-type="about-creator"
 		>
 			{/* Descriptive title for SEO and screen readers */}
 			<h2 id="atelier-story-title" className="sr-only">
 				L'histoire de Léane, créatrice de bijoux artisanaux Synclune à Nantes
 			</h2>
-
-			{/* Skip link for keyboard navigation */}
-			<a
-				href="#atelier-story-cta"
-				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-ring focus:text-foreground"
-			>
-				Passer au bouton Découvrir
-			</a>
 
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Main ambiance photo - reduced height on mobile for better flow */}
@@ -159,7 +150,7 @@ export async function AtelierStory() {
 						>
 							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
 							<p>
-								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span role="img" aria-label="rire">😂</span>
+								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span aria-hidden="true">😂</span>
 							</p>
 							<p>Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
 						</Stagger>
@@ -179,7 +170,7 @@ export async function AtelierStory() {
 					<div className="mt-12 sm:mt-16">
 						{/* Polaroid scrapbook grid with doodles */}
 						<div
-							role="group"
+							role="region"
 							aria-label="Galerie photos de l'atelier Synclune"
 							className="relative"
 						>
@@ -225,7 +216,7 @@ export async function AtelierStory() {
 							Envie de voir mes créations de plus près ?
 						</p>
 						<Button asChild size="lg" variant="outline"
-							className="shadow-md hover:shadow-xl motion-safe:hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-all motion-safe:duration-300"
+							className="shadow-md hover:shadow-xl motion-safe:hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-[transform,box-shadow] motion-safe:duration-300"
 						>
 							<Link href="/produits">Découvrir les créations Synclune</Link>
 						</Button>

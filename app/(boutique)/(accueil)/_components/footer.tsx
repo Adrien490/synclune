@@ -13,11 +13,10 @@ import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
-import { FOOTER_PADDING } from "@/shared/constants/spacing";
+import { CONTAINER_CLASS, FOOTER_PADDING } from "@/shared/constants/spacing";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
-import { CopyrightYear } from "./copyright-year";
 
 const REASSURANCE_ITEMS: { title: string; description: string }[] = [
 	{ title: "Livraison France : 6€", description: "Expédition sous 2-3 jours" },
@@ -38,10 +37,10 @@ export async function Footer() {
 	return (
 		<footer
 			className="relative bg-gradient-to-b from-muted/20 via-background to-background overflow-hidden"
-			aria-label="Informations de contact et navigation du site"
+			aria-labelledby="footer-heading"
 		>
 			{/* Titre sr-only pour hiérarchie des headings */}
-			<h2 className="sr-only">Informations et liens utiles</h2>
+			<h2 id="footer-heading" className="sr-only">Informations et liens utiles</h2>
 
 			{/* Masque flou en haut pour transition douce (réduit sur mobile) */}
 			<div
@@ -49,7 +48,7 @@ export async function Footer() {
 				aria-hidden="true"
 			/>
 
-			<div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${FOOTER_PADDING}`}>
+			<div className={`relative z-10 ${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
 				{/* Single Fade wrapper — 1 IntersectionObserver instead of 4 */}
 				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} inView once disableOnTouch>
 					{/* Navigation principale - Ordre: Logo, Navigation, Contact, Réseaux */}
@@ -57,7 +56,7 @@ export async function Footer() {
 						{/* Colonne 1: Logo + phrase perso */}
 						<div className="order-1 space-y-4">
 							<div className="mb-4">
-								<Logo href="/" size={40} className="lg:[&_>_div]:size-12" />
+								<Logo href="/" size={40} quality={75} className="lg:[&_>_div]:size-12" />
 							</div>
 							<div className="space-y-2 max-w-xs">
 								<p className="text-sm/6 antialiased text-muted-foreground">
@@ -73,6 +72,7 @@ export async function Footer() {
 											height={12}
 											strokeWidth={1.5}
 											delay={0.8}
+											inView={false}
 											className="absolute -bottom-1 left-[4.5ch]"
 										/>
 									</span>
@@ -105,8 +105,11 @@ export async function Footer() {
 						</nav>
 
 						{/* Colonne 3: Contact */}
-						<div className="order-3">
-							<h3 className="text-base/6 font-medium antialiased text-foreground mb-4">
+						<section aria-labelledby="footer-contact-title" className="order-3">
+							<h3
+								id="footer-contact-title"
+								className="text-base/6 font-medium antialiased text-foreground mb-4"
+							>
 								Contact
 							</h3>
 							<div className="space-y-3">
@@ -114,16 +117,16 @@ export async function Footer() {
 								<a
 									href={`mailto:${BRAND.contact.email}`}
 									className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 wrap-break-words focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
-									aria-label={`Envoyer un email à Synclune : ${BRAND.contact.email}`}
+									aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 								>
 									{BRAND.contact.email}
 								</a>
 
 								<p className="text-sm/6 antialiased text-muted-foreground px-3">
-									Atelier basé à Nantes, Loire-Atlantique, France
+									Atelier basé à {BRAND.contact.location.city}, {BRAND.contact.location.region}, {BRAND.contact.location.country}
 								</p>
 							</div>
-						</div>
+						</section>
 
 						{/* Colonne 4: Réseaux sociaux */}
 						<nav
@@ -142,8 +145,8 @@ export async function Footer() {
 										href={BRAND.social.instagram.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-all duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
-										aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
+										className="group inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+										aria-label={`Suivre ${BRAND.name} sur Instagram (nouvelle fenêtre)`}
 									>
 										<InstagramIcon
 											decorative
@@ -160,8 +163,8 @@ export async function Footer() {
 										href={BRAND.social.tiktok.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-all duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
-										aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
+										className="group inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+										aria-label={`Suivre ${BRAND.name} sur TikTok (nouvelle fenêtre)`}
 									>
 										<TikTokIcon
 											decorative
@@ -194,10 +197,12 @@ export async function Footer() {
 					{/* Paiement sécurisé */}
 					<section className="flex flex-col items-center gap-3 pt-8 border-t border-border" aria-labelledby="footer-payment-title">
 						<h3 id="footer-payment-title" className="sr-only">Paiement sécurisé</h3>
-						<div className="flex items-center gap-2 text-sm text-muted-foreground">
-							<span>Sécurisé par</span>
-							<StripeWordmark className="text-muted-foreground hover:text-foreground transition-colors duration-200" />
-						</div>
+						<p className="flex items-center gap-2 text-sm text-muted-foreground" aria-label="Paiements sécurisés par Stripe">
+							<span aria-hidden="true">Sécurisé par</span>
+							<span aria-hidden="true">
+								<StripeWordmark className="text-muted-foreground hover:text-foreground transition-colors duration-200" />
+							</span>
+						</p>
 						<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
 							<li><VisaIcon aria-label="Visa accepté" className="text-muted-foreground" /></li>
 							<li><MastercardIcon aria-label="Mastercard accepté" className="text-muted-foreground" /></li>
@@ -210,7 +215,7 @@ export async function Footer() {
 					{/* Copyright + Liens légaux */}
 					<div className="flex flex-col items-center gap-4 pt-6">
 						<p className="text-sm/6 antialiased text-muted-foreground text-center">
-							© <CopyrightYear /> Synclune. Tous droits réservés.
+							© {new Date().getFullYear()} {BRAND.name}. Tous droits réservés.
 						</p>
 						<nav
 							aria-label="Liens légaux"
@@ -220,7 +225,7 @@ export async function Footer() {
 								<Link
 									key={link.href}
 									href={link.href}
-									title={"title" in link ? link.title : undefined}
+									aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
 									className="text-sm antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg px-3 py-2 min-h-11 inline-flex items-center justify-center sm:justify-start"
 								>
 									{link.label}

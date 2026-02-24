@@ -56,7 +56,7 @@ export function Reveal({
 		<motion.div
 			className={className}
 			role={role}
-			initial={{ opacity: 0, y }}
+			initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y }}
 			whileInView={{ opacity: 1, y: 0 }}
 			viewport={{ once, amount }}
 			transition={{

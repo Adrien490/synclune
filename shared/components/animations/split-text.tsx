@@ -11,7 +11,6 @@ export interface SplitTextProps {
 
 const wordVariants = {
 	hidden: {
-		opacity: 0,
 		y: 20,
 		filter: "blur(4px)",
 	},
@@ -27,7 +26,7 @@ const wordVariants = {
  *
  * - Splits text into <span> per word with staggered entrance
  * - Each word animates: opacity, translateY, blur
- * - Text is immediately visible in DOM for SSR/LCP (motion handles initial state)
+ * - Text stays visible during hydration for LCP (no opacity:0 in hidden variant)
  * - Respects prefers-reduced-motion: renders without animation
  */
 export function SplitText({
@@ -49,6 +48,7 @@ export function SplitText({
 			initial="hidden"
 			animate="visible"
 			transition={{ staggerChildren: stagger }}
+			aria-label={children}
 		>
 			{words.map((word, i) => (
 				<motion.span
@@ -56,6 +56,7 @@ export function SplitText({
 					variants={wordVariants}
 					transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
 					className="inline-block"
+					aria-hidden="true"
 				>
 					{word}
 					{i < words.length - 1 && "\u00A0"}

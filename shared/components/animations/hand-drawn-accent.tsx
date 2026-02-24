@@ -130,6 +130,7 @@ export function HandDrawnAccent({
 				fill="none"
 				className={cn("pointer-events-none", className)}
 				aria-hidden="true"
+				focusable="false"
 			>
 				<path
 					d={config.path}
@@ -156,6 +157,7 @@ export function HandDrawnAccent({
 			fill="none"
 			className={cn("pointer-events-none", className)}
 			aria-hidden="true"
+			focusable="false"
 		>
 			<motion.path
 				d={config.path}

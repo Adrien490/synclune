@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { CustomerOrdersFilters } from "@/modules/orders/components/customer/customer-orders-filters";
 import { CustomerOrdersTable } from "@/modules/orders/components/customer/customer-orders-table";
 import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer/customer-orders-table-skeleton";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
@@ -24,6 +25,7 @@ type OrdersPageProps = {
 		direction?: string;
 		perPage?: string;
 		sortBy?: string;
+		search?: string;
 	}>;
 };
 
@@ -32,6 +34,7 @@ function parseParams(params: {
 	direction?: string;
 	perPage?: string;
 	sortBy?: string;
+	search?: string;
 }) {
 	return {
 		cursor: searchParamParsers.cursor(params.cursor),
@@ -46,12 +49,13 @@ function parseParams(params: {
 			GET_USER_ORDERS_SORT_FIELDS,
 			USER_ORDERS_SORT_OPTIONS.CREATED_DESC
 		),
+		search: searchParamParsers.search(params.search, 50),
 	};
 }
 
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 	const params = await searchParams;
-	const { cursor, direction, perPage, sortBy } = parseParams(params);
+	const { cursor, direction, perPage, sortBy, search } = parseParams(params);
 
 	const sortOptions = Object.values(USER_ORDERS_SORT_OPTIONS).map((value) => ({
 		value,
@@ -63,6 +67,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 		direction,
 		perPage,
 		sortBy,
+		search,
 	});
 
 	return (
@@ -73,7 +78,10 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 				variant="compact"
 			/>
 
-			<SortSelect label="Trier par" options={sortOptions} />
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<CustomerOrdersFilters />
+				<SortSelect label="Trier par" options={sortOptions} />
+			</div>
 
 			<Suspense fallback={<CustomerOrdersTableSkeleton />}>
 				<CustomerOrdersTable ordersPromise={ordersPromise} perPage={perPage} />

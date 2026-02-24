@@ -60,7 +60,7 @@ export function RotatingWord({
 
 	if (shouldReduceMotion) {
 		return (
-			<span className={pillStyles} style={{ contain: "layout paint" }}>
+			<span className={pillStyles} style={{ contain: "layout paint" }} lang="fr">
 				<span className={textStyles}>{words[0]}</span>
 			</span>
 		);
