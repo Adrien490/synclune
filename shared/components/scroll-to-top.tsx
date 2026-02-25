@@ -148,7 +148,7 @@ export function ScrollToTop() {
 						className={cn(
 							"fixed bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] md:bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] z-40",
 							"size-12 rounded-full bg-background/90 backdrop-blur-md shadow-md",
-							"flex items-center justify-center cursor-pointer",
+							"hidden md:flex items-center justify-center cursor-pointer",
 							"hover:bg-background hover:shadow-lg",
 							"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
 						)}
