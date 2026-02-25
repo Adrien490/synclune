@@ -1,10 +1,20 @@
+import type { Decimal } from "@/app/generated/prisma/client/runtime/library";
 import type { Product } from "../types/product.types";
+
+/**
+ * Convert a Prisma Decimal (or already-converted number) to a plain number.
+ * Handles both Decimal objects (.toNumber()) and primitive numbers.
+ */
+function decimalToNumber(value: Decimal | number): number {
+	return typeof value === "number" ? value : value.toNumber();
+}
 
 /**
  * Serialise un produit pour les Client Components (Decimal → number)
  *
- * Le cast est necessaire car Prisma type averageRating comme Decimal,
- * mais apres conversion c'est un number serialisable.
+ * Prisma type averageRating comme Decimal, mais les Client Components
+ * ont besoin d'un number serialisable. Le cast au niveau reviewStats
+ * est necessaire car le type retour doit rester Product.
  *
  * @param product - Produit avec potentiellement un Decimal
  * @returns Produit avec reviewStats.averageRating converti en number
@@ -16,12 +26,8 @@ export function serializeProduct(product: Product): Product {
 		...product,
 		reviewStats: {
 			...product.reviewStats,
-			averageRating: (
-				typeof product.reviewStats.averageRating === "number"
-					? product.reviewStats.averageRating
-					: product.reviewStats.averageRating.toNumber()
-			) as unknown as typeof product.reviewStats.averageRating,
-		},
+			averageRating: decimalToNumber(product.reviewStats.averageRating),
+		} as typeof product.reviewStats,
 	};
 }
 

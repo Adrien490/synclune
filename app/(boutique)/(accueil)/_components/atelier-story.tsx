@@ -113,7 +113,7 @@ export async function AtelierStory() {
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Main ambiance photo - reduced height on mobile for better flow */}
 				<Reveal y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} once>
-					<div className="mb-8 sm:mb-12">
+					<div className="-mx-4 sm:mx-0 mb-8 sm:mb-12">
 						<PlaceholderImage
 							className="aspect-3/2 sm:aspect-video max-h-[50vh] sm:max-h-none"
 							label="Atelier de création Synclune à Nantes - Léane travaillant sur ses bijoux artisanaux"
