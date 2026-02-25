@@ -20,7 +20,7 @@ export default defineConfig({
 			testMatch: /auth\.setup\.ts/,
 		},
 
-		// Unauthenticated tests (existing)
+		// Unauthenticated tests - Desktop
 		{
 			name: "chromium",
 			use: { ...devices["Desktop Chrome"] },
@@ -34,6 +34,13 @@ export default defineConfig({
 		{
 			name: "webkit",
 			use: { ...devices["Desktop Safari"] },
+			testIgnore: /authenticated\//,
+		},
+
+		// Unauthenticated tests - Mobile
+		{
+			name: "mobile-chrome",
+			use: { ...devices["Pixel 7"] },
 			testIgnore: /authenticated\//,
 		},
 

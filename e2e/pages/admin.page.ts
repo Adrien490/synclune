@@ -7,7 +7,7 @@ export class AdminPage {
 	readonly searchInput: Locator
 	readonly viewSiteLink: Locator
 
-	constructor(private page: Page) {
+	constructor(readonly page: Page) {
 		this.heading = page.getByRole("heading", { name: /Tableau de bord/i })
 		this.ordersLink = page.getByRole("link", { name: /Commandes/i }).first()
 		this.productsLink = page.getByRole("link", { name: /Produits/i }).first()

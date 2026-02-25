@@ -5,30 +5,56 @@ const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password123"
 const USER_EMAIL = process.env.E2E_USER_EMAIL ?? "user2@synclune.fr"
 const USER_PASSWORD = process.env.E2E_USER_PASSWORD ?? "password123"
 
-setup("authenticate as admin", async ({ page }) => {
+/**
+ * Authenticate via Better Auth API directly (faster than UI login).
+ * Falls back to UI login if the API call fails.
+ */
+async function authenticateViaAPI(
+	page: Parameters<Parameters<typeof setup>[1]>[0]["page"],
+	email: string,
+	password: string,
+	storagePath: string,
+) {
+	const baseURL = "http://localhost:3000"
+
+	// Try API-based auth first (much faster than UI)
+	const response = await page.request.post(`${baseURL}/api/auth/sign-in/email`, {
+		data: { email, password, callbackURL: "/" },
+		headers: { "Content-Type": "application/json" },
+	})
+
+	if (response.ok()) {
+		// Navigate to a page to ensure cookies are properly set in the browser context
+		await page.goto("/")
+		await page.waitForLoadState("domcontentloaded")
+
+		// Verify we're authenticated by checking we can access /compte
+		await page.goto("/compte")
+		await page.waitForLoadState("domcontentloaded")
+
+		if (!page.url().includes("/connexion")) {
+			// API auth worked, save state
+			await page.context().storageState({ path: storagePath })
+			return
+		}
+	}
+
+	// Fallback: UI-based login
 	await page.goto("/connexion")
 	await page.waitForLoadState("domcontentloaded")
 
-	await page.getByRole("textbox", { name: /Email/i }).fill(ADMIN_EMAIL)
-	await page.locator('input[type="password"]').fill(ADMIN_PASSWORD)
+	await page.getByRole("textbox", { name: /Email/i }).fill(email)
+	await page.locator('input[type="password"]').fill(password)
 	await page.getByRole("button", { name: /Se connecter/i }).click()
 
-	// Wait for successful redirect away from login
 	await expect(page).not.toHaveURL(/\/connexion/, { timeout: 15000 })
+	await page.context().storageState({ path: storagePath })
+}
 
-	await page.context().storageState({ path: "e2e/.auth/admin.json" })
+setup("authenticate as admin", async ({ page }) => {
+	await authenticateViaAPI(page, ADMIN_EMAIL, ADMIN_PASSWORD, "e2e/.auth/admin.json")
 })
 
 setup("authenticate as user", async ({ page }) => {
-	await page.goto("/connexion")
-	await page.waitForLoadState("domcontentloaded")
-
-	await page.getByRole("textbox", { name: /Email/i }).fill(USER_EMAIL)
-	await page.locator('input[type="password"]').fill(USER_PASSWORD)
-	await page.getByRole("button", { name: /Se connecter/i }).click()
-
-	// Wait for successful redirect away from login
-	await expect(page).not.toHaveURL(/\/connexion/, { timeout: 15000 })
-
-	await page.context().storageState({ path: "e2e/.auth/user.json" })
+	await authenticateViaAPI(page, USER_EMAIL, USER_PASSWORD, "e2e/.auth/user.json")
 })

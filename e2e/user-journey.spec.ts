@@ -1,19 +1,15 @@
 import { test, expect } from "./fixtures"
 
 test.describe("Parcours utilisateur authentifie", () => {
-	test("le formulaire de connexion accepte des identifiants et montre un feedback", async ({ page, authPage }) => {
+	test("la connexion avec des identifiants invalides affiche une erreur", async ({ page, authPage }) => {
 		await authPage.goto()
 
-		await authPage.login("test@example.com", "motdepasse123")
+		await authPage.login("fake@example.com", "mauvaisMotDePasse123")
 
-		// Wait for either error message or redirect away from login
-		const errorMessage = page.getByText(/Identifiants invalides|Email ou mot de passe incorrect|Erreur|invalide/i)
-
-		await expect(async () => {
-			const redirected = !page.url().includes("/connexion")
-			const hasError = await errorMessage.first().isVisible()
-			expect(redirected || hasError).toBe(true)
-		}).toPass({ timeout: 5000 })
+		// Should stay on login page and show an error
+		const errorMessage = page.getByText(/Identifiants invalides|Email ou mot de passe incorrect/i)
+		await expect(errorMessage.first()).toBeVisible({ timeout: 5000 })
+		await expect(page).toHaveURL(/\/connexion/)
 	})
 
 	test("le formulaire d'inscription valide tous les champs avant soumission", async ({ page }) => {
