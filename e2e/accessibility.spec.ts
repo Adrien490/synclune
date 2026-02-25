@@ -174,7 +174,9 @@ test.describe("Accessibilité - Formulaires auth", () => {
 		const errorMessage = page.getByText(/Format d'email invalide/i)
 		await expect(errorMessage).toBeVisible()
 
-		expect(errorMessage).toBeTruthy()
+		// Verify aria-live announcement for screen readers
+		const errorContainer = errorMessage.locator("..")
+		await expect(errorContainer).toHaveAttribute("aria-live", /(polite|assertive)/)
 	})
 
 	test("les boutons de soumission ont des textes descriptifs", async ({ authPage }) => {
@@ -252,7 +254,7 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", () => {
 			await page.waitForLoadState("domcontentloaded")
 
 			const results = await new AxeBuilder({ page })
-				.withTags(["wcag2a", "wcag2aa"])
+				.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
 				.analyze()
 
 			expect(results.violations).toEqual([])

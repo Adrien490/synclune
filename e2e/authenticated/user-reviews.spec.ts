@@ -14,7 +14,9 @@ test.describe("Avis produits", () => {
 		const emptyReviewsState = page.getByText(/aucun avis|soyez le premier/i)
 
 		// Either reviews are displayed or the empty state is shown
-		await expect(reviewsSection.first().or(emptyReviewsState.first())).toBeVisible()
+		const hasReviews = await reviewsSection.first().isVisible()
+		const hasEmptyState = await emptyReviewsState.first().isVisible()
+		expect(hasReviews || hasEmptyState, "Neither reviews section nor empty state is visible").toBe(true)
 	})
 
 	test("le formulaire d'avis est accessible pour les produits commandes", async ({ page, orderPage }) => {
@@ -38,9 +40,16 @@ test.describe("Avis produits", () => {
 		await expect(heading).toBeVisible()
 
 		// Review option depends on order status (must be DELIVERED)
-		// Assert we either see the review button or the order isn't eligible
-		const orderStatus = page.getByText(/Livr|En cours|Expédi|Annul|En attente/i)
-		await expect(reviewButton.first().or(orderStatus.first())).toBeVisible()
+		const reviewVisible = await reviewButton.first().isVisible()
+
+		if (reviewVisible) {
+			await expect(reviewButton.first()).toBeEnabled()
+		} else {
+			// Order is not eligible for review - verify status explains why
+			const orderStatus = page.getByText(/Livr|En cours|Expédi|Annul|En attente/i)
+			await expect(orderStatus.first()).toBeVisible()
+			test.skip(true, "Order not eligible for review")
+		}
 	})
 
 	test("le formulaire d'avis contient les champs requis", async ({ page }) => {

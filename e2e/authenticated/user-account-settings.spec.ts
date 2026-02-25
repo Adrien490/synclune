@@ -76,9 +76,7 @@ test.describe("Parametres du compte", () => {
 		await page.waitForLoadState("domcontentloaded")
 
 		const sessionsSection = page.getByText(/Sessions actives|Appareils connectés/i)
-		// Sessions section may be in a sidebar on desktop
-		const sessionsCount = await sessionsSection.count()
-		expect(sessionsCount).toBeGreaterThanOrEqual(0)
+		await expect(sessionsSection.first()).toBeVisible()
 	})
 
 	test("les parametres newsletter sont accessibles", async ({ page }) => {

@@ -19,20 +19,14 @@ test.describe("Smoke tests", () => {
 		await expect(heading).toBeVisible()
 	})
 
-	test("critical pages return 200", async ({ page }) => {
-		const criticalRoutes = [
-			"/",
-			"/produits",
-			"/collections",
-			"/connexion",
-			"/inscription",
-		]
+	const criticalRoutes = ["/", "/produits", "/collections", "/connexion", "/inscription"]
 
-		for (const route of criticalRoutes) {
+	for (const route of criticalRoutes) {
+		test(`${route} returns 200`, async ({ page }) => {
 			const response = await page.goto(route)
 			expect(response?.status(), `${route} should return 200`).toBe(200)
-		}
-	})
+		})
+	}
 
 	test("404 page renders for unknown routes", async ({ page }) => {
 		const response = await page.goto("/cette-page-nexiste-pas")

@@ -20,18 +20,23 @@ test.describe("Retours et remboursements", () => {
 
 		await page.waitForLoadState("domcontentloaded")
 
-		// Check for return/refund button on order detail
-		const returnButton = page.getByRole("button", { name: /Retour|Remboursement|Retourner/i })
-			.or(page.getByRole("link", { name: /Retour|Remboursement/i }))
-
 		// Order detail page should display order heading
 		const heading = page.getByRole("heading", { level: 1 })
 		await expect(heading).toBeVisible()
 
-		// Return button visibility depends on order status (DELIVERED)
-		// Assert it's either visible or the order status doesn't allow returns
-		const orderStatus = page.getByText(/Statut/i).locator("..").getByText(/Livr|En cours|Expédi|Annul|En attente/i)
-		await expect(returnButton.or(orderStatus.first())).toBeVisible()
+		// Check for return/refund button on order detail
+		const returnButton = page.getByRole("button", { name: /Retour|Remboursement|Retourner/i })
+			.or(page.getByRole("link", { name: /Retour|Remboursement/i }))
+		const returnVisible = await returnButton.isVisible()
+
+		if (returnVisible) {
+			await expect(returnButton).toBeEnabled()
+		} else {
+			// Order is not eligible for return - verify status explains why
+			const orderStatus = page.getByText(/Statut/i).locator("..").getByText(/Livr|En cours|Expédi|Annul|En attente/i)
+			await expect(orderStatus.first()).toBeVisible()
+			test.skip(true, "Order not eligible for return")
+		}
 	})
 
 	test("la vue detail de commande affiche les informations", async ({ page, orderPage }) => {

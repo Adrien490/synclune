@@ -30,8 +30,8 @@ test.describe("SEO et métadonnées - Homepage", () => {
 	})
 
 	test("la homepage contient des données structurées JSON-LD", async ({ page }) => {
-		// Attendre que les composants Suspense se résolvent
-		await page.waitForLoadState("networkidle")
+		// Wait for JSON-LD scripts to be injected
+		await page.locator('script[type="application/ld+json"]').first().waitFor()
 
 		const jsonLdScripts = page.locator('script[type="application/ld+json"]')
 		const count = await jsonLdScripts.count()
@@ -101,7 +101,7 @@ test.describe("SEO et métadonnées - Page produits", () => {
 	})
 
 	test("la page /produits contient des données structurées JSON-LD", async ({ page }) => {
-		await page.waitForLoadState("networkidle")
+		await page.locator('script[type="application/ld+json"]').first().waitFor()
 
 		const jsonLdScripts = page.locator('script[type="application/ld+json"]')
 		const count = await jsonLdScripts.count()
@@ -120,7 +120,7 @@ test.describe("SEO et métadonnées - Page produit détail", () => {
 		expect(await productCatalogPage.productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
 		await productCatalogPage.gotoFirstProduct()
-		await page.waitForLoadState("networkidle")
+		await page.locator('script[type="application/ld+json"]').first().waitFor()
 
 		// Chercher un JSON-LD de type Product
 		const jsonLdScripts = page.locator('script[type="application/ld+json"]')

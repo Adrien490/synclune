@@ -30,23 +30,17 @@ test.describe("Parcours utilisateur authentifie", () => {
 		await expect(confirmationMessage.first().or(errorMessage.first())).toBeVisible({ timeout: 5000 })
 	})
 
-	test("les pages du compte redirigent les utilisateurs non connectes", async ({ page }) => {
-		const accountRoutes = [
-			"/compte",
-			"/compte/commandes",
-			"/compte/adresses",
-			"/compte/favoris",
-		]
+	const accountRoutes = ["/compte", "/compte/commandes", "/compte/adresses", "/compte/favoris"]
 
-		for (const route of accountRoutes) {
+	for (const route of accountRoutes) {
+		test(`${route} redirects unauthenticated users to login`, async ({ page }) => {
 			await page.goto(route)
 			await page.waitForLoadState("domcontentloaded")
 
-			// Should redirect to login
 			const url = page.url()
 			expect(url, `${route} should redirect to connexion`).toMatch(/\/connexion/)
-		}
-	})
+		})
+	}
 })
 
 test.describe("Navigation entre pages critiques", () => {

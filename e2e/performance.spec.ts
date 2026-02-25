@@ -16,14 +16,14 @@ test.describe("Performance budgets", () => {
 				})
 				observer.observe({ type: "largest-contentful-paint", buffered: true })
 
-				// Give it time to report
 				setTimeout(() => {
 					observer.disconnect()
 					resolve(lcpValue)
-				}, 3000)
+				}, 5000)
 			})
 		})
 
+		expect(lcp, "LCP measurement was 0 - observer may not have captured it").toBeGreaterThan(0)
 		expect(lcp, `LCP was ${lcp}ms, should be under 3000ms`).toBeLessThan(3000)
 	})
 
@@ -37,7 +37,7 @@ test.describe("Performance budgets", () => {
 				const observer = new PerformanceObserver((entryList) => {
 					for (const entry of entryList.getEntries()) {
 						if ("hadRecentInput" in entry && !(entry as PerformanceEntry & { hadRecentInput: boolean }).hadRecentInput) {
-							clsValue += (entry as PerformanceEntry & { value: number }).value
+							clsValue += (entry as unknown as PerformanceEntry & { value: number }).value
 						}
 					}
 				})
@@ -46,7 +46,7 @@ test.describe("Performance budgets", () => {
 				setTimeout(() => {
 					observer.disconnect()
 					resolve(clsValue)
-				}, 3000)
+				}, 5000)
 			})
 		})
 
@@ -70,10 +70,11 @@ test.describe("Performance budgets", () => {
 				setTimeout(() => {
 					observer.disconnect()
 					resolve(lcpValue)
-				}, 3000)
+				}, 5000)
 			})
 		})
 
+		expect(lcp, "LCP measurement was 0 - observer may not have captured it").toBeGreaterThan(0)
 		expect(lcp, `LCP was ${lcp}ms, should be under 3000ms`).toBeLessThan(3000)
 	})
 
@@ -87,7 +88,7 @@ test.describe("Performance budgets", () => {
 				const observer = new PerformanceObserver((entryList) => {
 					for (const entry of entryList.getEntries()) {
 						if ("hadRecentInput" in entry && !(entry as PerformanceEntry & { hadRecentInput: boolean }).hadRecentInput) {
-							clsValue += (entry as PerformanceEntry & { value: number }).value
+							clsValue += (entry as unknown as PerformanceEntry & { value: number }).value
 						}
 					}
 				})
@@ -96,23 +97,51 @@ test.describe("Performance budgets", () => {
 				setTimeout(() => {
 					observer.disconnect()
 					resolve(clsValue)
-				}, 3000)
+				}, 5000)
 			})
 		})
 
 		expect(cls, `CLS was ${cls}, should be under 0.15`).toBeLessThan(0.15)
 	})
 
-	test("les pages critiques chargent en moins de 3.5s", async ({ page }) => {
-		const criticalPages = ["/", "/produits", "/collections", "/connexion", "/inscription"]
+	test("homepage - INP under 200ms", async ({ page }) => {
+		await page.goto("/")
+		await page.waitForLoadState("domcontentloaded")
 
-		for (const route of criticalPages) {
+		// Trigger an interaction to measure
+		const heading = page.getByRole("heading", { level: 1 })
+		await heading.click()
+
+		const inp = await page.evaluate(() => {
+			return new Promise<number>((resolve) => {
+				let maxDuration = 0
+				const observer = new PerformanceObserver((list) => {
+					for (const entry of list.getEntries()) {
+						const duration = (entry as unknown as { duration: number }).duration
+						if (duration > maxDuration) maxDuration = duration
+					}
+				})
+				observer.observe({ type: "event", buffered: true })
+				setTimeout(() => {
+					observer.disconnect()
+					resolve(maxDuration)
+				}, 3000)
+			})
+		})
+
+		expect(inp, `INP was ${inp}ms, should be under 200ms`).toBeLessThan(200)
+	})
+
+	const criticalPages = ["/", "/produits", "/collections", "/connexion", "/inscription"]
+
+	for (const route of criticalPages) {
+		test(`${route} loads under 3.5s`, async ({ page }) => {
 			const startTime = Date.now()
 			await page.goto(route)
 			await page.waitForLoadState("domcontentloaded")
 			const loadTime = Date.now() - startTime
 
 			expect(loadTime, `${route} took ${loadTime}ms, should be under 3500ms`).toBeLessThan(3500)
-		}
-	})
+		})
+	}
 })

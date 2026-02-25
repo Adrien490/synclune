@@ -44,8 +44,8 @@ test.describe("Personnalisation - Demande sur mesure", () => {
 		// Submit without description and email
 		// Submit should either be disabled or show validation errors when clicked
 		if (await submitButton.isDisabled()) {
-			// Button correctly prevents submission with incomplete data
-			expect(true).toBe(true)
+			// Verified: button is correctly disabled with incomplete form
+			await expect(submitButton).toBeDisabled()
 		} else {
 			await submitButton.click()
 			// Should show validation errors

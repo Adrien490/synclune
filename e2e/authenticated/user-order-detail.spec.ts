@@ -83,15 +83,21 @@ test.describe("Detail de commande", () => {
 		await viewButton.click()
 		await page.waitForLoadState("domcontentloaded")
 
-		// Cancel button may or may not be visible depending on order status
-		const cancelButton = page.getByRole("button", { name: /Annuler/i })
-
 		// Order heading should be visible (page loaded correctly)
 		const heading = page.getByRole("heading", { level: 1 })
 		await expect(heading).toBeVisible()
 
-		// Assert cancel button is either visible (eligible) or order status doesn't allow it
-		const orderStatus = page.getByText(/Livr|Expédi|Annul|Rembours/i)
-		await expect(cancelButton.or(orderStatus.first())).toBeVisible()
+		// Check if cancel button is visible (depends on order status)
+		const cancelButton = page.getByRole("button", { name: /Annuler/i })
+		const cancelVisible = await cancelButton.isVisible()
+
+		if (cancelVisible) {
+			await expect(cancelButton).toBeEnabled()
+		} else {
+			// Order is not eligible for cancellation - verify status explains why
+			const orderStatus = page.getByText(/Livr|Expédi|Annul|Rembours/i)
+			await expect(orderStatus.first()).toBeVisible()
+			test.skip(true, "Order not eligible for cancellation")
+		}
 	})
 })

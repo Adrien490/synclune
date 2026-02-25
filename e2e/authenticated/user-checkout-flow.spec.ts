@@ -4,6 +4,7 @@ test.describe("Parcours checkout authentifié", () => {
 	test("parcours d'achat complet : produit → panier → paiement → confirmation", async ({
 		page,
 		cartPage,
+		checkoutPage,
 		productCatalogPage,
 	}) => {
 		// 1. Navigate to products and find one to purchase
@@ -30,63 +31,14 @@ test.describe("Parcours checkout authentifié", () => {
 		await page.waitForLoadState("domcontentloaded")
 		await expect(page).toHaveURL(/\/paiement/)
 
-		// 4. Fill address form (Step 1 of embedded checkout)
-		const fullNameInput = page.getByLabel(/Nom complet|Prénom et nom/i)
-		const addressInput = page.getByLabel(/^Adresse$|Adresse ligne 1/i)
-		const postalCodeInput = page.getByLabel(/Code postal/i)
-		const cityInput = page.getByLabel(/Ville/i)
-		const phoneInput = page.getByLabel(/Téléphone/i)
+		// 4. Fill address form and submit
+		await checkoutPage.fillAddress()
+		await checkoutPage.submitAddress()
 
-		await fullNameInput.fill("Marie Dupont")
-		await addressInput.fill("12 rue de la Paix")
-		await postalCodeInput.fill("75002")
-		await cityInput.fill("Paris")
-		await phoneInput.fill("0612345678")
-
-		// Accept terms if checkbox is present
-		const termsCheckbox = page.getByLabel(/conditions générales|J'accepte/i)
-		if (await termsCheckbox.isVisible()) {
-			await termsCheckbox.check()
-		}
-
-		// Submit address form
-		const continueButton = page.getByRole("button", { name: /Continuer|Valider|Payer/i })
-		await expect(continueButton).toBeEnabled()
-		await continueButton.click()
-
-		// 5. Wait for Stripe Embedded Checkout to load (Step 2)
-		// The embedded checkout renders in an iframe from Stripe
-		const stripeFrame = page.frameLocator('iframe[src*="stripe"]').first()
-
-		// Wait for the Stripe checkout form to be ready
-		await expect(async () => {
-			const frameCount = await page.locator('iframe[src*="stripe"]').count()
-			expect(frameCount).toBeGreaterThan(0)
-		}).toPass({ timeout: 15000 })
-
-		// 6. Fill payment details in Stripe iframe
-		// Stripe Embedded Checkout has its own form - fill test card
-		const cardInput = stripeFrame.getByPlaceholder(/numéro de carte|card number/i)
-			.or(stripeFrame.locator('[name="cardNumber"]'))
-			.or(stripeFrame.locator('#cardNumber'))
-
-		await cardInput.fill("4242424242424242")
-
-		const expiryInput = stripeFrame.getByPlaceholder(/MM \/ AA|expiry/i)
-			.or(stripeFrame.locator('[name="cardExpiry"]'))
-			.or(stripeFrame.locator('#cardExpiry'))
-
-		await expiryInput.fill("12/30")
-
-		const cvcInput = stripeFrame.getByPlaceholder(/CVC|CVV/i)
-			.or(stripeFrame.locator('[name="cardCvc"]'))
-			.or(stripeFrame.locator('#cardCvc'))
-
-		await cvcInput.fill("123")
-
-		// Submit payment
-		const payButton = stripeFrame.getByRole("button", { name: /Payer|Pay/i })
-		await payButton.click()
+		// 5. Wait for Stripe Embedded Checkout and fill card
+		const stripeFrame = await checkoutPage.waitForStripeFrame()
+		await checkoutPage.fillStripeCard(stripeFrame)
+		await checkoutPage.submitPayment(stripeFrame)
 
 		// 7. Wait for redirect to confirmation
 		// Stripe processes payment → redirect to /paiement/retour → /paiement/confirmation
@@ -131,6 +83,7 @@ test.describe("Parcours checkout authentifié", () => {
 	test("paiement échoué avec carte refusée affiche une erreur", async ({
 		page,
 		cartPage,
+		checkoutPage,
 		productCatalogPage,
 	}) => {
 		// 1. Navigate to products and add one to cart
@@ -154,49 +107,14 @@ test.describe("Parcours checkout authentifié", () => {
 		await page.waitForLoadState("domcontentloaded")
 		await expect(page).toHaveURL(/\/paiement/)
 
-		// 3. Fill address form
-		await page.getByLabel(/Nom complet|Prénom et nom/i).fill("Marie Dupont")
-		await page.getByLabel(/^Adresse$|Adresse ligne 1/i).fill("12 rue de la Paix")
-		await page.getByLabel(/Code postal/i).fill("75002")
-		await page.getByLabel(/Ville/i).fill("Paris")
-		await page.getByLabel(/Téléphone/i).fill("0612345678")
+		// 3. Fill address form and submit
+		await checkoutPage.fillAddress()
+		await checkoutPage.submitAddress()
 
-		const termsCheckbox = page.getByLabel(/conditions générales|J'accepte/i)
-		if (await termsCheckbox.isVisible()) {
-			await termsCheckbox.check()
-		}
-
-		const continueButton = page.getByRole("button", { name: /Continuer|Valider|Payer/i })
-		await expect(continueButton).toBeEnabled()
-		await continueButton.click()
-
-		// 4. Wait for Stripe Embedded Checkout
-		await expect(async () => {
-			const frameCount = await page.locator('iframe[src*="stripe"]').count()
-			expect(frameCount).toBeGreaterThan(0)
-		}).toPass({ timeout: 15000 })
-
-		const stripeFrame = page.frameLocator('iframe[src*="stripe"]').first()
-
-		// 5. Fill with DECLINED test card (4000000000000002)
-		const cardInput = stripeFrame.getByPlaceholder(/numéro de carte|card number/i)
-			.or(stripeFrame.locator('[name="cardNumber"]'))
-			.or(stripeFrame.locator('#cardNumber'))
-		await cardInput.fill("4000000000000002")
-
-		const expiryInput = stripeFrame.getByPlaceholder(/MM \/ AA|expiry/i)
-			.or(stripeFrame.locator('[name="cardExpiry"]'))
-			.or(stripeFrame.locator('#cardExpiry'))
-		await expiryInput.fill("12/30")
-
-		const cvcInput = stripeFrame.getByPlaceholder(/CVC|CVV/i)
-			.or(stripeFrame.locator('[name="cardCvc"]'))
-			.or(stripeFrame.locator('#cardCvc'))
-		await cvcInput.fill("123")
-
-		// 6. Submit payment
-		const payButton = stripeFrame.getByRole("button", { name: /Payer|Pay/i })
-		await payButton.click()
+		// 4. Wait for Stripe and fill DECLINED test card
+		const stripeFrame = await checkoutPage.waitForStripeFrame()
+		await checkoutPage.fillStripeCard(stripeFrame, "4000000000000002")
+		await checkoutPage.submitPayment(stripeFrame)
 
 		// 7. Stripe should display a decline error within its iframe
 		// The error message appears in the Stripe form, not on a separate page
