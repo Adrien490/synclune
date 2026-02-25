@@ -5,12 +5,29 @@ import { useSyncExternalStore } from "react";
 type Platform = "mac" | "windows" | "linux" | "unknown";
 
 /**
- * Detecte la plateforme de l'utilisateur
- * Utile pour afficher les raccourcis clavier adaptes (⌘ vs Ctrl)
+ * Detects the user's platform.
+ * Uses Navigator.userAgentData (UA Client Hints) when available,
+ * falls back to navigator.platform (deprecated) + userAgent.
  */
 function detectPlatform(): Platform {
 	if (typeof navigator === "undefined") return "unknown";
 
+	// Modern API: Navigator.userAgentData (Chrome 90+, Edge 90+, Opera 76+)
+	if (
+		"userAgentData" in navigator &&
+		(navigator as Navigator & { userAgentData?: { platform?: string } })
+			.userAgentData?.platform
+	) {
+		const platform = (
+			navigator as Navigator & { userAgentData: { platform: string } }
+		).userAgentData.platform.toLowerCase();
+		if (platform.includes("mac")) return "mac";
+		if (platform.includes("win")) return "windows";
+		if (platform.includes("linux")) return "linux";
+		return "unknown";
+	}
+
+	// Fallback: navigator.platform (deprecated but widely supported)
 	const platform = navigator.platform?.toLowerCase() ?? "";
 	const userAgent = navigator.userAgent?.toLowerCase() ?? "";
 
@@ -21,7 +38,7 @@ function detectPlatform(): Platform {
 	return "unknown";
 }
 
-// Cache la valeur cote client (ne change pas pendant la session)
+// Cache the value client-side (does not change during session)
 let cachedPlatform: Platform | null = null;
 
 function getPlatform(): Platform {
@@ -32,24 +49,24 @@ function getPlatform(): Platform {
 }
 
 /**
- * Hook pour detecter la plateforme de l'utilisateur
- * @internal Utilisé uniquement par useIsMac
+ * Hook to detect the user's platform
+ * @internal Used only by useIsMac
  */
 function usePlatform(): Platform {
 	return useSyncExternalStore(
-		// Subscribe: la plateforme ne change pas, donc pas de listener
+		// Subscribe: platform does not change, so no listener
 		() => () => {},
-		// getSnapshot: valeur cote client
+		// getSnapshot: client value
 		getPlatform,
-		// getServerSnapshot: fallback SSR (mac par defaut pour UX majoritaire)
+		// getServerSnapshot: SSR fallback (mac by default for majority UX)
 		() => "mac" as Platform
 	);
 }
 
 /**
- * Hook simplifie pour detecter si l'utilisateur est sur Mac
+ * Hook to detect if the user is on Mac
  *
- * @returns true si Mac, false sinon (SSR: true par defaut)
+ * @returns true if Mac, false otherwise (SSR: true by default)
  *
  * @example
  * const isMac = useIsMac()

@@ -183,49 +183,55 @@ export async function markAsPaid(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		// Send order confirmation email for manual payment
+		let emailSent = false;
 		if (order.customerEmail) {
 			const trackingUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
-			sendOrderConfirmationEmail({
-				to: order.customerEmail,
-				orderNumber: order.orderNumber,
-				customerName: order.customerName || "Client",
-				items: order.items.map((item) => ({
-					productTitle: item.productTitle,
-					skuColor: item.skuColor,
-					skuMaterial: item.skuMaterial,
-					skuSize: item.skuSize,
-					quantity: item.quantity,
-					price: item.price,
-				})),
-				subtotal: order.subtotal,
-				discount: order.discountAmount,
-				shipping: order.shippingCost,
-				total: order.total,
-				shippingAddress: {
-					firstName: order.shippingFirstName || "",
-					lastName: order.shippingLastName || "",
-					address1: order.shippingAddress1 || "",
-					address2: order.shippingAddress2,
-					postalCode: order.shippingPostalCode || "",
-					city: order.shippingCity || "",
-					country: order.shippingCountry || "France",
-				},
-				trackingUrl,
-			}).catch((emailError) => {
+			try {
+				await sendOrderConfirmationEmail({
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: order.customerName || "Client",
+					items: order.items.map((item) => ({
+						productTitle: item.productTitle,
+						skuColor: item.skuColor,
+						skuMaterial: item.skuMaterial,
+						skuSize: item.skuSize,
+						quantity: item.quantity,
+						price: item.price,
+					})),
+					subtotal: order.subtotal,
+					discount: order.discountAmount,
+					shipping: order.shippingCost,
+					total: order.total,
+					shippingAddress: {
+						firstName: order.shippingFirstName || "",
+						lastName: order.shippingLastName || "",
+						address1: order.shippingAddress1 || "",
+						address2: order.shippingAddress2,
+						postalCode: order.shippingPostalCode || "",
+						city: order.shippingCity || "",
+						country: order.shippingCountry || "France",
+					},
+					trackingUrl,
+				});
+				emailSent = true;
+			} catch (emailError) {
 				console.error("[MARK_AS_PAID] Échec envoi email:", emailError);
-			});
+			}
 		}
 
 		const stockMessage = !order._stockAlreadyReserved && order.items.length > 0
 			? ` Stock décrémenté pour ${order.items.length} article(s).`
 			: "";
 
+		const emailMessage = emailSent ? " Email envoyé au client." : order.customerEmail ? " (Échec envoi email)" : "";
+
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} marquée comme payée. Prête pour préparation.${stockMessage}`,
+			message: `Commande ${order.orderNumber} marquée comme payée. Prête pour préparation.${stockMessage}${emailMessage}`,
 		};
 	} catch (error) {
 		return handleActionError(error, ORDER_ERROR_MESSAGES.MARK_AS_PAID_FAILED);

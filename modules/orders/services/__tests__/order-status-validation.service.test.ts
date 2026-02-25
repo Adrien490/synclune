@@ -14,6 +14,32 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		EXPIRED: "EXPIRED",
 		REFUNDED: "REFUNDED",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+	},
+	FulfillmentStatus: {
+		UNFULFILLED: "UNFULFILLED",
+		PROCESSING: "PROCESSING",
+		SHIPPED: "SHIPPED",
+		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
+	},
+}));
+
+vi.mock("@/app/generated/prisma/browser", () => ({
+	OrderStatus: {
+		PENDING: "PENDING",
+		PROCESSING: "PROCESSING",
+		SHIPPED: "SHIPPED",
+		DELIVERED: "DELIVERED",
+		CANCELLED: "CANCELLED",
+	},
+	PaymentStatus: {
+		PENDING: "PENDING",
+		PAID: "PAID",
+		FAILED: "FAILED",
+		EXPIRED: "EXPIRED",
+		REFUNDED: "REFUNDED",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
 	},
 	FulfillmentStatus: {
 		UNFULFILLED: "UNFULFILLED",
@@ -31,6 +57,10 @@ import {
 	canRefundOrder,
 	getOrderPermissions,
 	canUpdateOrderTracking,
+	canMarkAsDelivered,
+	canMarkAsReturned,
+	canMarkAsProcessing,
+	canRevertToProcessing,
 } from "../order-status-validation.service";
 
 // ============================================================================
@@ -311,5 +341,251 @@ describe("canUpdateOrderTracking", () => {
 				trackingNumber: "ABC123",
 			})
 		).toBe(false);
+	});
+});
+
+// ============================================================================
+// canMarkAsDelivered
+// ============================================================================
+
+describe("canMarkAsDelivered", () => {
+	it("should return canDeliver: true when status is SHIPPED", () => {
+		const result = canMarkAsDelivered({ status: "SHIPPED" });
+		expect(result).toEqual({ canDeliver: true });
+	});
+
+	it("should return already_delivered reason when status is DELIVERED", () => {
+		const result = canMarkAsDelivered({ status: "DELIVERED" });
+		expect(result).toEqual({ canDeliver: false, reason: "already_delivered" });
+	});
+
+	it("should return not_shipped reason when status is PENDING", () => {
+		const result = canMarkAsDelivered({ status: "PENDING" });
+		expect(result).toEqual({ canDeliver: false, reason: "not_shipped" });
+	});
+
+	it("should return not_shipped reason when status is PROCESSING", () => {
+		const result = canMarkAsDelivered({ status: "PROCESSING" });
+		expect(result).toEqual({ canDeliver: false, reason: "not_shipped" });
+	});
+
+	it("should return not_shipped reason when status is CANCELLED", () => {
+		const result = canMarkAsDelivered({ status: "CANCELLED" });
+		expect(result).toEqual({ canDeliver: false, reason: "not_shipped" });
+	});
+});
+
+// ============================================================================
+// canMarkAsReturned
+// ============================================================================
+
+describe("canMarkAsReturned", () => {
+	it("should return canReturn: true when status is DELIVERED and fulfillmentStatus is DELIVERED", () => {
+		const result = canMarkAsReturned({
+			status: "DELIVERED",
+			fulfillmentStatus: "DELIVERED",
+		});
+		expect(result).toEqual({ canReturn: true });
+	});
+
+	it("should return already_returned reason when fulfillmentStatus is RETURNED", () => {
+		const result = canMarkAsReturned({
+			status: "DELIVERED",
+			fulfillmentStatus: "RETURNED",
+		});
+		expect(result).toEqual({ canReturn: false, reason: "already_returned" });
+	});
+
+	it("should return not_delivered reason when status is SHIPPED", () => {
+		const result = canMarkAsReturned({
+			status: "SHIPPED",
+			fulfillmentStatus: "SHIPPED",
+		});
+		expect(result).toEqual({ canReturn: false, reason: "not_delivered" });
+	});
+
+	it("should return not_delivered reason when status is PROCESSING", () => {
+		const result = canMarkAsReturned({
+			status: "PROCESSING",
+			fulfillmentStatus: "PROCESSING",
+		});
+		expect(result).toEqual({ canReturn: false, reason: "not_delivered" });
+	});
+
+	it("should return not_delivered reason when status is PENDING", () => {
+		const result = canMarkAsReturned({
+			status: "PENDING",
+			fulfillmentStatus: "UNFULFILLED",
+		});
+		expect(result).toEqual({ canReturn: false, reason: "not_delivered" });
+	});
+});
+
+// ============================================================================
+// canMarkAsProcessing
+// ============================================================================
+
+describe("canMarkAsProcessing", () => {
+	it("should return canProcess: true when status is PENDING and paymentStatus is PAID", () => {
+		const result = canMarkAsProcessing({
+			status: "PENDING",
+			paymentStatus: "PAID",
+		});
+		expect(result).toEqual({ canProcess: true });
+	});
+
+	it("should return already_processing reason when status is PROCESSING", () => {
+		const result = canMarkAsProcessing({
+			status: "PROCESSING",
+			paymentStatus: "PAID",
+		});
+		expect(result).toEqual({ canProcess: false, reason: "already_processing" });
+	});
+
+	it("should return not_pending reason when status is SHIPPED", () => {
+		const result = canMarkAsProcessing({
+			status: "SHIPPED",
+			paymentStatus: "PAID",
+		});
+		expect(result).toEqual({ canProcess: false, reason: "not_pending" });
+	});
+
+	it("should return not_pending reason when status is DELIVERED", () => {
+		const result = canMarkAsProcessing({
+			status: "DELIVERED",
+			paymentStatus: "PAID",
+		});
+		expect(result).toEqual({ canProcess: false, reason: "not_pending" });
+	});
+
+	it("should return cancelled reason when status is CANCELLED", () => {
+		const result = canMarkAsProcessing({
+			status: "CANCELLED",
+			paymentStatus: "PAID",
+		});
+		expect(result).toEqual({ canProcess: false, reason: "cancelled" });
+	});
+
+	it("should return unpaid reason when paymentStatus is PENDING", () => {
+		const result = canMarkAsProcessing({
+			status: "PENDING",
+			paymentStatus: "PENDING",
+		});
+		expect(result).toEqual({ canProcess: false, reason: "unpaid" });
+	});
+
+	it("should return unpaid reason when paymentStatus is FAILED", () => {
+		const result = canMarkAsProcessing({
+			status: "PENDING",
+			paymentStatus: "FAILED",
+		});
+		expect(result).toEqual({ canProcess: false, reason: "unpaid" });
+	});
+});
+
+// ============================================================================
+// canRevertToProcessing
+// ============================================================================
+
+describe("canRevertToProcessing", () => {
+	it("should return canRevert: true when status is SHIPPED", () => {
+		const result = canRevertToProcessing({ status: "SHIPPED" });
+		expect(result).toEqual({ canRevert: true });
+	});
+
+	it("should return not_shipped reason when status is PENDING", () => {
+		const result = canRevertToProcessing({ status: "PENDING" });
+		expect(result).toEqual({ canRevert: false, reason: "not_shipped" });
+	});
+
+	it("should return not_shipped reason when status is PROCESSING", () => {
+		const result = canRevertToProcessing({ status: "PROCESSING" });
+		expect(result).toEqual({ canRevert: false, reason: "not_shipped" });
+	});
+
+	it("should return not_shipped reason when status is DELIVERED", () => {
+		const result = canRevertToProcessing({ status: "DELIVERED" });
+		expect(result).toEqual({ canRevert: false, reason: "not_shipped" });
+	});
+
+	it("should return not_shipped reason when status is CANCELLED", () => {
+		const result = canRevertToProcessing({ status: "CANCELLED" });
+		expect(result).toEqual({ canRevert: false, reason: "not_shipped" });
+	});
+});
+
+// ============================================================================
+// getOrderPermissions - PARTIALLY_REFUNDED and EXPIRED payment statuses
+// ============================================================================
+
+describe("getOrderPermissions - PARTIALLY_REFUNDED payment status", () => {
+	it("should allow canMarkAsShipped for PROCESSING + PARTIALLY_REFUNDED (same as PAID)", () => {
+		const permissions = getOrderPermissions({
+			status: "PROCESSING",
+			paymentStatus: "PARTIALLY_REFUNDED",
+		});
+
+		// PARTIALLY_REFUNDED is not PAID, so paid-gated permissions are off
+		expect(permissions.canMarkAsShipped).toBe(false);
+		expect(permissions.canRefund).toBe(false);
+		expect(permissions.canMarkAsProcessing).toBe(false);
+		expect(permissions.canCancel).toBe(true);
+		expect(permissions.canMarkAsDelivered).toBe(false);
+		expect(permissions.canRevertToProcessing).toBe(false);
+	});
+
+	it("should not allow canMarkAsPaid for PROCESSING + PARTIALLY_REFUNDED", () => {
+		const permissions = getOrderPermissions({
+			status: "PROCESSING",
+			paymentStatus: "PARTIALLY_REFUNDED",
+		});
+
+		// canMarkAsPaid requires paymentStatus PENDING
+		expect(permissions.canMarkAsPaid).toBe(false);
+	});
+
+	it("should not allow canRefund for SHIPPED + PARTIALLY_REFUNDED", () => {
+		const permissions = getOrderPermissions({
+			status: "SHIPPED",
+			paymentStatus: "PARTIALLY_REFUNDED",
+			trackingNumber: "XYZ999",
+		});
+
+		expect(permissions.canRefund).toBe(false);
+		expect(permissions.canMarkAsDelivered).toBe(true);
+		expect(permissions.canRevertToProcessing).toBe(true);
+		// canUpdateTracking requires tracking number but not PAID
+		expect(permissions.canUpdateTracking).toBe(true);
+	});
+});
+
+describe("getOrderPermissions - EXPIRED payment status", () => {
+	it("should block paid-gated permissions for PENDING + EXPIRED", () => {
+		const permissions = getOrderPermissions({
+			status: "PENDING",
+			paymentStatus: "EXPIRED",
+		});
+
+		expect(permissions.canMarkAsProcessing).toBe(false);
+		expect(permissions.canMarkAsPaid).toBe(false);
+		expect(permissions.canRefund).toBe(false);
+		expect(permissions.canCancel).toBe(true);
+		expect(permissions.canMarkAsShipped).toBe(false);
+		expect(permissions.canMarkAsDelivered).toBe(false);
+		expect(permissions.canRevertToProcessing).toBe(false);
+	});
+
+	it("should block paid-gated permissions for PROCESSING + EXPIRED", () => {
+		const permissions = getOrderPermissions({
+			status: "PROCESSING",
+			paymentStatus: "EXPIRED",
+		});
+
+		expect(permissions.canMarkAsShipped).toBe(false);
+		expect(permissions.canRefund).toBe(false);
+		expect(permissions.canMarkAsPaid).toBe(false);
+		expect(permissions.canCancel).toBe(true);
+		expect(permissions.canMarkAsDelivered).toBe(false);
+		expect(permissions.canRevertToProcessing).toBe(false);
 	});
 });

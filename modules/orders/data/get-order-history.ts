@@ -1,7 +1,8 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheOrdersDashboard, ORDERS_CACHE_TAGS } from "../constants/cache";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
 const orderIdSchema = z.cuid2();
 
@@ -21,7 +22,8 @@ export async function getOrderHistory(orderId: string) {
 
 async function fetchOrderHistory(orderId: string) {
 	"use cache";
-	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
+	cacheLife("dashboard");
+	cacheTag(ORDERS_CACHE_TAGS.HISTORY(orderId));
 
 	return prisma.orderHistory.findMany({
 		where: { orderId },

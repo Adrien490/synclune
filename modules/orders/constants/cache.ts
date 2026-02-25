@@ -23,8 +23,8 @@ export const ORDERS_CACHE_TAGS = {
 	/** Statistiques du compte utilisateur (nb commandes, total dépensé) */
 	ACCOUNT_STATS: (userId: string) => `account-stats-${userId}`,
 
-	/** Liste des clients (dashboard admin) */
-	CUSTOMERS_LIST: "customers-list",
+	/** Historique d'une commande spécifique (audit trail) */
+	HISTORY: (orderId: string) => `order-history-${orderId}`,
 
 	/** Notes internes d'une commande (admin) */
 	NOTES: (orderId: string) => `order-notes-${orderId}`,
@@ -70,7 +70,7 @@ export function cacheUserOrders(userId: string) {
  *
  * Inclut les badges admin car le count de commandes change
  */
-export function getOrderInvalidationTags(userId?: string): string[] {
+export function getOrderInvalidationTags(userId?: string, orderId?: string): string[] {
 	const tags: string[] = [
 		ORDERS_CACHE_TAGS.LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
@@ -88,6 +88,10 @@ export function getOrderInvalidationTags(userId?: string): string[] {
 		)
 	}
 
+	if (orderId) {
+		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId))
+	}
+
 	return tags
 }
 
@@ -98,7 +102,7 @@ export function getOrderInvalidationTags(userId?: string): string[] {
  * Exclut ADMIN_BADGES et les KPIs dashboard pour éviter les
  * invalidations inutiles sur des opérations fréquentes
  */
-export function getOrderMetadataInvalidationTags(userId?: string): string[] {
+export function getOrderMetadataInvalidationTags(userId?: string, orderId?: string): string[] {
 	const tags: string[] = [
 		ORDERS_CACHE_TAGS.LIST,
 		SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
@@ -111,12 +115,10 @@ export function getOrderMetadataInvalidationTags(userId?: string): string[] {
 		)
 	}
 
+	if (orderId) {
+		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId))
+	}
+
 	return tags
 }
 
-/**
- * Tags à invalider lors de la modification d'un client
- */
-export function getCustomerInvalidationTags(): string[] {
-	return [ORDERS_CACHE_TAGS.CUSTOMERS_LIST]
-}

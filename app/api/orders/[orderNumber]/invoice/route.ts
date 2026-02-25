@@ -60,7 +60,7 @@ export async function GET(
 			};
 
 			// Invalidate cache so the invoice number shows in admin
-			getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+			getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 		} catch (e) {
 			// If invoice number generation fails (e.g. unique constraint race),
 			// still serve the PDF with orderNumber as reference

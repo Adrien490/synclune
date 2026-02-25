@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/client";
+import { InvoiceStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import type { ExportInvoicesInput } from "../schemas/order.schemas";
 
 interface ExportableOrder {
@@ -19,9 +21,9 @@ interface ExportableOrder {
 /**
  * Builds the Prisma where clause for the export query based on period filters
  */
-export function buildExportWhereClause(input: ExportInvoicesInput) {
-	const where: Record<string, unknown> = {
-		paymentStatus: "PAID",
+export function buildExportWhereClause(input: ExportInvoicesInput): Prisma.OrderWhereInput {
+	const where: Prisma.OrderWhereInput = {
+		paymentStatus: PaymentStatus.PAID,
 		deletedAt: null,
 	};
 
@@ -43,7 +45,7 @@ export function buildExportWhereClause(input: ExportInvoicesInput) {
 	}
 
 	if (input.invoiceStatus && input.invoiceStatus !== "all") {
-		where.invoiceStatus = input.invoiceStatus === "sent" ? "GENERATED" : "VOIDED";
+		where.invoiceStatus = input.invoiceStatus === "sent" ? InvoiceStatus.GENERATED : InvoiceStatus.VOIDED;
 	}
 
 	return where;

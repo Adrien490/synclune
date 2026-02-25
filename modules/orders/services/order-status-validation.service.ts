@@ -11,6 +11,7 @@
 import {
 	OrderStatus,
 	PaymentStatus,
+	FulfillmentStatus,
 } from "@/app/generated/prisma/browser"
 
 import type {
@@ -18,6 +19,10 @@ import type {
 	ShipValidationResult,
 	OrderStateInput,
 	OrderPermissions,
+	DeliveryValidationResult,
+	ReturnValidationResult,
+	ProcessingValidationResult,
+	RevertValidationResult,
 } from "../types/order.types"
 
 export type {
@@ -26,6 +31,14 @@ export type {
 	ShipBlockReason,
 	OrderStateInput,
 	OrderPermissions,
+	DeliveryValidationResult,
+	DeliveryBlockReason,
+	ReturnValidationResult,
+	ReturnBlockReason,
+	ProcessingValidationResult,
+	ProcessingBlockReason,
+	RevertValidationResult,
+	RevertBlockReason,
 } from "../types/order.types"
 
 // ============================================================================
@@ -118,6 +131,73 @@ export function canRefundOrder(order: OrderForShipValidation): boolean {
 	}
 
 	return true;
+}
+
+// ============================================================================
+// STATUS TRANSITION VALIDATORS
+// ============================================================================
+
+/**
+ * Vérifie si une commande peut être marquée comme livrée
+ */
+export function canMarkAsDelivered(
+	order: { status: OrderStatus }
+): DeliveryValidationResult {
+	if (order.status === OrderStatus.DELIVERED) {
+		return { canDeliver: false, reason: "already_delivered" };
+	}
+	if (order.status !== OrderStatus.SHIPPED) {
+		return { canDeliver: false, reason: "not_shipped" };
+	}
+	return { canDeliver: true };
+}
+
+/**
+ * Vérifie si une commande peut être marquée comme retournée
+ */
+export function canMarkAsReturned(
+	order: { status: OrderStatus; fulfillmentStatus: FulfillmentStatus }
+): ReturnValidationResult {
+	if (order.fulfillmentStatus === FulfillmentStatus.RETURNED) {
+		return { canReturn: false, reason: "already_returned" };
+	}
+	if (order.status !== OrderStatus.DELIVERED) {
+		return { canReturn: false, reason: "not_delivered" };
+	}
+	return { canReturn: true };
+}
+
+/**
+ * Vérifie si une commande peut passer en cours de préparation
+ */
+export function canMarkAsProcessing(
+	order: OrderForShipValidation
+): ProcessingValidationResult {
+	if (order.status === OrderStatus.PROCESSING) {
+		return { canProcess: false, reason: "already_processing" };
+	}
+	if (order.status === OrderStatus.SHIPPED || order.status === OrderStatus.DELIVERED) {
+		return { canProcess: false, reason: "not_pending" };
+	}
+	if (order.status === OrderStatus.CANCELLED) {
+		return { canProcess: false, reason: "cancelled" };
+	}
+	if (order.paymentStatus !== PaymentStatus.PAID) {
+		return { canProcess: false, reason: "unpaid" };
+	}
+	return { canProcess: true };
+}
+
+/**
+ * Vérifie si une commande peut être remise en préparation
+ */
+export function canRevertToProcessing(
+	order: { status: OrderStatus }
+): RevertValidationResult {
+	if (order.status !== OrderStatus.SHIPPED) {
+		return { canRevert: false, reason: "not_shipped" };
+	}
+	return { canRevert: true };
 }
 
 // ============================================================================

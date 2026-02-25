@@ -2,7 +2,6 @@
 
 import {
 	OrderStatus,
-	PaymentStatus,
 	FulfillmentStatus,
 	HistorySource,
 } from "@/app/generated/prisma/client";
@@ -19,6 +18,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsProcessingSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { canMarkAsProcessing } from "../services/order-status-validation.service";
 
 /**
  * Passe une commande payée en cours de préparation
@@ -70,20 +70,9 @@ export async function markAsProcessing(
 
 			if (!found) return null;
 
-			if (found.status === OrderStatus.PROCESSING) {
-				return { ...found, _error: "already_processing" as const };
-			}
-
-			if (found.status === OrderStatus.SHIPPED || found.status === OrderStatus.DELIVERED) {
-				return { ...found, _error: "not_pending" as const };
-			}
-
-			if (found.status === OrderStatus.CANCELLED) {
-				return { ...found, _error: "cancelled" as const };
-			}
-
-			if (found.paymentStatus !== PaymentStatus.PAID) {
-				return { ...found, _error: "unpaid" as const };
+			const validation = canMarkAsProcessing(found);
+			if (!validation.canProcess) {
+				return { ...found, _error: validation.reason };
 			}
 
 			await tx.order.update({
@@ -130,7 +119,7 @@ export async function markAsProcessing(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

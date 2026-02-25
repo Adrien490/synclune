@@ -21,7 +21,7 @@ export async function refreshOrders(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
-		updateTag(ORDERS_CACHE_TAGS.CUSTOMERS_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		return success("Commandes rafraichies");

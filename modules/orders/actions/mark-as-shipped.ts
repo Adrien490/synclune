@@ -20,6 +20,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsShippedSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { extractCustomerFirstName } from "../utils/customer-name";
 import { canMarkAsShipped } from "../services/order-status-validation.service";
 
 /**
@@ -158,18 +159,14 @@ export async function markAsShipped(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		// Envoyer l'email de confirmation d'expédition au client
 		let emailSent = false;
 		if (result.data.sendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
-			// Extraire le prénom du customerName ou utiliser shippingFirstName
-			const customerFirstName =
-				order.customerName?.split(" ")[0] ||
-				order.shippingFirstName ||
-				"Client";
+			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
 
 			try {
 				await sendShippingConfirmationEmail({

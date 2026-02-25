@@ -18,6 +18,7 @@ import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.ut
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { z } from "zod";
 import type { ResendEmailType } from "../types/email.types";
+import { extractCustomerFirstName } from "../utils/customer-name";
 
 // Re-export du type pour compatibilité
 export type { ResendEmailType } from "../types/email.types";
@@ -98,7 +99,7 @@ export async function resendOrderEmail(
 				const result = await sendOrderConfirmationEmail({
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
-					customerName: (order.customerName ?? "").split(" ")[0] || "Client",
+					customerName: extractCustomerFirstName(order.customerName, order.shippingFirstName),
 					items: order.items,
 					subtotal: order.subtotal,
 					discount: order.discountAmount,
@@ -138,7 +139,7 @@ export async function resendOrderEmail(
 				const result = await sendShippingConfirmationEmail({
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
-					customerName: (order.customerName ?? "").split(" ")[0] || "Client",
+					customerName: extractCustomerFirstName(order.customerName, order.shippingFirstName),
 					trackingNumber: order.trackingNumber,
 					trackingUrl: order.trackingUrl,
 					carrierLabel,
@@ -182,7 +183,7 @@ export async function resendOrderEmail(
 				const result = await sendDeliveryConfirmationEmail({
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
-					customerName: (order.customerName ?? "").split(" ")[0] || "Client",
+					customerName: extractCustomerFirstName(order.customerName, order.shippingFirstName),
 					deliveryDate,
 					orderDetailsUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
 				});

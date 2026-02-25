@@ -17,8 +17,9 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
 import { bulkMarkAsDeliveredSchema } from "../schemas/order.schemas";
-import { getOrderInvalidationTags } from "../constants/cache";
+import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { extractCustomerFirstName } from "../utils/customer-name";
 
 /**
  * Marque plusieurs commandes comme livrées
@@ -120,7 +121,7 @@ export async function bulkMarkAsDelivered(
 					sendDeliveryConfirmationEmail({
 						to: order.customerEmail,
 						orderNumber: order.orderNumber,
-						customerName: order.shippingFirstName || order.customerName || "Client",
+						customerName: extractCustomerFirstName(order.customerName, order.shippingFirstName),
 						deliveryDate: formattedDeliveryDate,
 						orderDetailsUrl,
 					}).catch((emailError) => {
@@ -141,6 +142,8 @@ export async function bulkMarkAsDelivered(
 		});
 		// Toujours invalider la liste admin (même si pas d'userId)
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
+		// Invalider l'historique de chaque commande
+		eligibleOrders.forEach(o => updateTag(ORDERS_CACHE_TAGS.HISTORY(o.id)));
 
 		const count = eligibleOrders.length;
 		return success(`${count} commande${count > 1 ? "s" : ""} marquee${count > 1 ? "s" : ""} comme livree${count > 1 ? "s" : ""}.`);

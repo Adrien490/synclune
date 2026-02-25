@@ -110,9 +110,10 @@ test.describe("Panier", () => {
 
 		// Le bouton ne doit pas afficher de badge avec un nombre > 0 si le panier est vide
 		// (implémentation: le badge a un texte numérique uniquement si > 0)
+		// The button should not display a count > 0 when cart is empty
 		const badgeText = await cartButton.textContent()
-		// Le badge peut ne pas être visible ou afficher rien si panier vide
-		// On vérifie simplement que le bouton existe et est fonctionnel
-		expect(cartButton).toBeTruthy()
+		const numbers = badgeText?.match(/\d+/)
+		const count = numbers ? parseInt(numbers[0], 10) : 0
+		expect(count).toBe(0)
 	})
 })

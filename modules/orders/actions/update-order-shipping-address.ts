@@ -1,5 +1,6 @@
 "use server";
 
+import { FulfillmentStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -77,7 +78,7 @@ export async function updateOrderShippingAddress(
 			if (!found) return null;
 
 			// Cannot update address after shipment
-			if (found.fulfillmentStatus === "SHIPPED" || found.fulfillmentStatus === "DELIVERED" || found.fulfillmentStatus === "RETURNED") {
+			if (found.fulfillmentStatus === FulfillmentStatus.SHIPPED || found.fulfillmentStatus === FulfillmentStatus.DELIVERED || found.fulfillmentStatus === FulfillmentStatus.RETURNED) {
 				return { ...found, _error: "already_shipped" as const };
 			}
 
@@ -137,7 +138,7 @@ export async function updateOrderShippingAddress(
 		}
 
 		// Invalidate caches
-		getOrderMetadataInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

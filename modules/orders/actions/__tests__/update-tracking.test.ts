@@ -260,7 +260,7 @@ describe("updateTracking", () => {
 	it("should invalidate order metadata cache tags", async () => {
 		await updateTracking(undefined, validFormData)
 
-		expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(VALID_USER_ID)
+		expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(VALID_USER_ID, expect.any(String))
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list")
 	})
 

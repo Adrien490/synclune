@@ -294,7 +294,7 @@ describe("cancelOrderCustomer", () => {
 	it("should invalidate order cache tags on success", async () => {
 		await cancelOrderCustomer(undefined, validFormData)
 
-		expect(mockGetOrderInvalidationTags).toHaveBeenCalledWith(VALID_USER_ID)
+		expect(mockGetOrderInvalidationTags).toHaveBeenCalledWith(VALID_USER_ID, expect.any(String))
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list")
 		expect(mockUpdateTag).toHaveBeenCalledWith(`orders-user-${VALID_USER_ID}`)
 	})

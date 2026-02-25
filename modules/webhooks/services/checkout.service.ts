@@ -263,7 +263,7 @@ export function buildPostCheckoutTasks(
 
 	// 1. Invalider les caches (panier, commandes user, stats compte, dashboard)
 	const cacheTags: string[] = [
-		...getOrderInvalidationTags(order.userId ?? undefined),
+		...getOrderInvalidationTags(order.userId ?? undefined, order.id),
 	];
 
 	if (order.userId) {

@@ -20,6 +20,8 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { revertToProcessingSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { extractCustomerFirstName } from "../utils/customer-name";
+import { canRevertToProcessing } from "../services/order-status-validation.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
@@ -81,8 +83,9 @@ export async function revertToProcessing(
 
 			if (!found) return null;
 
-			if (found.status !== OrderStatus.SHIPPED) {
-				return { ...found, _error: "not_shipped" as const };
+			const validation = canRevertToProcessing(found);
+			if (!validation.canRevert) {
+				return { ...found, _error: validation.reason };
 			}
 
 			await tx.order.update({
@@ -132,15 +135,12 @@ export async function revertToProcessing(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		// Envoyer l'email de notification au client
 		let emailSent = false;
 		if (order.customerEmail) {
-			const customerFirstName =
-				order.customerName?.split(" ")[0] ||
-				order.shippingFirstName ||
-				"Client";
+			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 

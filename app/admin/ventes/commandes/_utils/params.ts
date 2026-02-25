@@ -1,4 +1,4 @@
-import type { GetOrdersParams } from "@/modules/orders/types/orders.types";
+import type { GetOrdersParams } from "@/modules/orders/types/order.types";
 import type { OrdersSearchParams } from "../page";
 import { getFirstParam } from "@/shared/utils/params";
 

@@ -1,65 +1,48 @@
 "use client";
 
-import { useState, useEffect, useRef, useEffectEvent } from "react";
+import { useState, useRef } from "react";
+import { useBackButtonClose } from "./use-back-button-close";
 
 /**
- * Hook pour gérer l'état d'une lightbox
- * - Gère le bouton "retour" mobile : ferme la lightbox au lieu de naviguer
- * - Focus management : sauvegarde et restaure le focus (WCAG 2.4.3)
+ * Hook to manage lightbox state
+ * - Handles mobile "back" button: closes lightbox instead of navigating
+ * - Focus management: saves and restores focus (WCAG 2.4.3)
  */
 export function useLightbox() {
 	const [isOpen, setIsOpen] = useState(false);
-	const historyPushedRef = useRef(false);
 	const previousFocusRef = useRef<HTMLElement | null>(null);
 
-	const open = () => {
-		// Sauvegarder l'élément actuellement focalisé
-		previousFocusRef.current = document.activeElement as HTMLElement;
-
-		if (typeof window !== "undefined" && typeof window.history?.pushState === "function") {
-			history.pushState({ lightbox: true }, "");
-			historyPushedRef.current = true;
-		}
-		setIsOpen(true);
-	};
-
-	const close = () => {
-		if (historyPushedRef.current && typeof window !== "undefined") {
-			historyPushedRef.current = false;
-			history.back();
-		}
-		setIsOpen(false);
-
-		// Restaurer le focus après fermeture
+	const restoreFocus = () => {
 		requestAnimationFrame(() => {
-			if (previousFocusRef.current && typeof previousFocusRef.current.focus === "function") {
+			if (
+				previousFocusRef.current &&
+				typeof previousFocusRef.current.focus === "function"
+			) {
 				previousFocusRef.current.focus();
 				previousFocusRef.current = null;
 			}
 		});
 	};
 
-	// Effect Event pour accéder aux dernières valeurs sans re-registration du listener
-	const onPopState = useEffectEvent(() => {
-		if (isOpen) {
-			historyPushedRef.current = false;
+	// Delegate history management to useBackButtonClose
+	useBackButtonClose({
+		isOpen,
+		onClose: () => {
 			setIsOpen(false);
-
-			// Restaurer le focus
-			requestAnimationFrame(() => {
-				if (previousFocusRef.current && typeof previousFocusRef.current.focus === "function") {
-					previousFocusRef.current.focus();
-					previousFocusRef.current = null;
-				}
-			});
-		}
+			restoreFocus();
+		},
+		id: "lightbox",
 	});
 
-	// Écouter le bouton retour (popstate) pour fermer la lightbox
-	useEffect(() => {
-		window.addEventListener("popstate", onPopState);
-		return () => window.removeEventListener("popstate", onPopState);
-	}, [onPopState]);
+	const open = () => {
+		previousFocusRef.current = document.activeElement as HTMLElement;
+		setIsOpen(true);
+	};
+
+	const close = () => {
+		setIsOpen(false);
+		restoreFocus();
+	};
 
 	return { isOpen, open, close };
 }

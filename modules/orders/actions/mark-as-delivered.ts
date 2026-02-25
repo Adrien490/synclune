@@ -21,6 +21,8 @@ import { getOrderInvalidationTags } from "../constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { markAsDeliveredSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { extractCustomerFirstName } from "../utils/customer-name";
+import { canMarkAsDelivered } from "../services/order-status-validation.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
@@ -81,12 +83,9 @@ export async function markAsDelivered(
 
 			if (!found) return null;
 
-			if (found.status === OrderStatus.DELIVERED) {
-				return { ...found, _error: "already_delivered" as const };
-			}
-
-			if (found.status !== OrderStatus.SHIPPED) {
-				return { ...found, _error: "not_shipped" as const };
+			const validation = canMarkAsDelivered(found);
+			if (!validation.canDeliver) {
+				return { ...found, _error: validation.reason };
 			}
 
 			await tx.order.update({
@@ -135,7 +134,7 @@ export async function markAsDelivered(
 		}
 
 		// Invalider les caches (orders list admin + commandes user + reviewable products)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 		if (order.userId) {
 			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(order.userId));
 		}
@@ -143,11 +142,7 @@ export async function markAsDelivered(
 		// Envoyer l'email de confirmation de livraison au client
 		let emailSent = false;
 		if (result.data.sendEmail && order.customerEmail) {
-			// Extraire le prénom du customerName ou utiliser shippingFirstName
-			const customerFirstName =
-				order.customerName?.split(" ")[0] ||
-				order.shippingFirstName ||
-				"Client";
+			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
 
 			// Formater la date de livraison
 			const deliveryDateStr = deliveryDate.toLocaleDateString("fr-FR", {

@@ -81,7 +81,7 @@ export async function deleteOrder(
 		await softDelete.order(id);
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		return success(`Commande ${order.orderNumber} supprimee.`);
 	} catch (e) {

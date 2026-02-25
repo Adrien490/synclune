@@ -76,8 +76,8 @@ describe("CancelOrderConfirmationEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<CancelOrderConfirmationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -119,8 +119,8 @@ describe("DeliveryConfirmationEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<DeliveryConfirmationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -149,8 +149,8 @@ describe("PaymentFailedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<PaymentFailedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -183,8 +183,8 @@ describe("RefundApprovedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<RefundApprovedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -232,8 +232,8 @@ describe("RefundConfirmationEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<RefundConfirmationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -263,8 +263,8 @@ describe("RefundRejectedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<RefundRejectedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -305,8 +305,8 @@ describe("ReturnConfirmationEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<ReturnConfirmationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -338,8 +338,8 @@ describe("TrackingUpdateEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<TrackingUpdateEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -381,8 +381,8 @@ describe("PasswordChangedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<PasswordChangedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -416,8 +416,8 @@ describe("AccountDeletionEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<AccountDeletionEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -464,8 +464,8 @@ describe("ReviewRequestEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<ReviewRequestEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -507,8 +507,8 @@ describe("ReviewResponseEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<ReviewResponseEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -538,8 +538,8 @@ describe("RevertShippingNotificationEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<RevertShippingNotificationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -570,8 +570,8 @@ describe("CustomizationConfirmationEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<CustomizationConfirmationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -616,8 +616,8 @@ describe("CustomizationRequestEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<CustomizationRequestEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -659,8 +659,8 @@ describe("CustomizationStatusEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<CustomizationStatusEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading for IN_PROGRESS status", async () => {
@@ -701,8 +701,8 @@ describe("NewsletterConfirmationEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<NewsletterConfirmationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -730,8 +730,8 @@ describe("NewsletterWelcomeEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<NewsletterWelcomeEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -766,8 +766,8 @@ describe("AdminNewOrderEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<AdminNewOrderEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -812,8 +812,8 @@ describe("AdminRefundFailedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<AdminRefundFailedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -846,8 +846,8 @@ describe("AdminWebhookFailedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<AdminWebhookFailedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -881,8 +881,8 @@ describe("AdminInvoiceFailedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<AdminInvoiceFailedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -930,8 +930,8 @@ describe("AdminDisputeAlertEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<AdminDisputeAlertEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -974,8 +974,8 @@ describe("AdminCheckoutFailedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<AdminCheckoutFailedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {
@@ -1008,8 +1008,8 @@ describe("AdminCronFailedEmail", () => {
 
 	it("renders without error", async () => {
 		const html = await render(<AdminCronFailedEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains expected heading", async () => {

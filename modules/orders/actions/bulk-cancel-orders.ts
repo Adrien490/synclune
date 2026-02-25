@@ -10,7 +10,7 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
 import { bulkCancelOrdersSchema } from "../schemas/order.schemas";
-import { getOrderInvalidationTags } from "../constants/cache";
+import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
 import { createOrderAuditTx } from "../utils/order-audit";
 
 /**
@@ -176,6 +176,8 @@ export async function bulkCancelOrders(
 		});
 		// Toujours invalider la liste admin (même si pas d'userId)
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
+		// Invalider l'historique de chaque commande
+		eligibleOrders.forEach(o => updateTag(ORDERS_CACHE_TAGS.HISTORY(o.id)));
 
 		const messages = [`${eligibleOrders.length} commande${eligibleOrders.length > 1 ? "s" : ""} annulee${eligibleOrders.length > 1 ? "s" : ""}.`];
 

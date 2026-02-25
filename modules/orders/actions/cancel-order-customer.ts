@@ -14,6 +14,7 @@ import { z } from "zod";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { extractCustomerFirstName } from "../utils/customer-name";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 const cancelOrderCustomerSchema = z.object({
@@ -142,14 +143,11 @@ export async function cancelOrderCustomer(
 		}
 
 		// Invalidate caches
-		getOrderInvalidationTags(user.id).forEach((tag) => updateTag(tag));
+		getOrderInvalidationTags(user.id, order.id).forEach((tag) => updateTag(tag));
 
 		// Send cancellation email
 		if (order.customerEmail) {
-			const customerFirstName =
-				order.customerName?.split(" ")[0] ||
-				order.shippingFirstName ||
-				"Client";
+			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
 
 			const orderDetailsUrl = buildUrl(
 				ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)

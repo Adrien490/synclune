@@ -109,7 +109,9 @@ import { POST } from "../route";
 // Helpers
 // ============================================================================
 
-const NOW_SECONDS = Math.floor(Date.now() / 1000);
+// Use fake timers to avoid timezone/runtime flakiness
+const FIXED_NOW_MS = Date.UTC(2026, 0, 15, 12, 0, 0); // 2026-01-15T12:00:00Z
+const NOW_SECONDS = Math.floor(FIXED_NOW_MS / 1000);
 
 function makeStripeEvent(overrides: Record<string, unknown> = {}) {
 	return {
@@ -149,6 +151,8 @@ function makeHeadersList(signature: string | null = "t=123,v1=abc") {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	vi.useFakeTimers();
+	vi.setSystemTime(FIXED_NOW_MS);
 
 	// Default: env vars present
 	process.env.STRIPE_SECRET_KEY = "sk_test_123";

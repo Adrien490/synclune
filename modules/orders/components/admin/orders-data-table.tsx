@@ -16,7 +16,7 @@ import {
 	ORDER_STATUS_LABELS,
 	ORDER_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";
-import type { GetOrdersReturn } from "@/modules/orders/types/orders.types";
+import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";

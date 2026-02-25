@@ -10,7 +10,7 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
-import { getOrderInvalidationTags } from "../constants/cache";
+import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
 import { bulkDeleteOrdersSchema } from "../schemas/order.schemas";
 
 /**
@@ -89,6 +89,8 @@ export async function bulkDeleteOrders(
 		});
 		// Toujours invalider la liste admin (même si pas d'userId)
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
+		// Invalider l'historique de chaque commande
+		deletableOrders.forEach(o => updateTag(ORDERS_CACHE_TAGS.HISTORY(o.id)));
 
 		const message =
 			skippedCount > 0

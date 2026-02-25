@@ -18,6 +18,7 @@ import { createOrderAuditTx } from "../utils/order-audit";
 import { canCancelOrder } from "../services/order-status-validation.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { sanitizeText } from "@/shared/lib/sanitize";
+import { extractCustomerFirstName } from "../utils/customer-name";
 
 /**
  * Annule une commande
@@ -157,15 +158,12 @@ export async function cancelOrder(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		// Envoyer l'email de confirmation d'annulation au client
 		let emailSent = false;
 		if (order.customerEmail) {
-			const customerFirstName =
-				order.customerName?.split(" ")[0] ||
-				order.shippingFirstName ||
-				"Client";
+			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 

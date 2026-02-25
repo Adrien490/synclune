@@ -8,7 +8,6 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
-import { z } from "zod";
 import { cacheOrdersDashboard } from "../constants/cache";
 
 import {
@@ -50,41 +49,33 @@ export type {
 export async function getOrders(
 	params: GetOrdersParams
 ): Promise<GetOrdersReturn> {
-	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) {
-			throw new Error("Unauthorized");
-		}
-
-		const validation = getOrdersSchema.safeParse(params);
-
-		if (!validation.success) {
-			throw new Error(
-				"Invalid parameters: " + JSON.stringify(validation.error.issues)
-			);
-		}
-
-		// Fuzzy search on customer name/email for typo tolerance
-		const validatedParams = validation.data;
-		let fuzzyIds: string[] | null = null;
-		if (validatedParams.search && validatedParams.search.trim().length >= 3) {
-			fuzzyIds = await fuzzySearchIds(validatedParams.search, {
-				columns: [
-					{ table: "Order", column: "customerName" },
-					{ table: "Order", column: "customerEmail" },
-				],
-				baseCondition: Prisma.sql`AND "Order"."deletedAt" IS NULL`,
-			});
-		}
-
-		return await fetchOrders(validatedParams, fuzzyIds);
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			throw new Error("Invalid parameters");
-		}
-
-		throw error;
+	const admin = await requireAdmin();
+	if ("error" in admin) {
+		throw new Error("Unauthorized");
 	}
+
+	const validation = getOrdersSchema.safeParse(params);
+
+	if (!validation.success) {
+		throw new Error(
+			"Invalid parameters: " + JSON.stringify(validation.error.issues)
+		);
+	}
+
+	// Fuzzy search on customer name/email for typo tolerance
+	const validatedParams = validation.data;
+	let fuzzyIds: string[] | null = null;
+	if (validatedParams.search && validatedParams.search.trim().length >= 3) {
+		fuzzyIds = await fuzzySearchIds(validatedParams.search, {
+			columns: [
+				{ table: "Order", column: "customerName" },
+				{ table: "Order", column: "customerEmail" },
+			],
+			baseCondition: Prisma.sql`AND "Order"."deletedAt" IS NULL`,
+		});
+	}
+
+	return fetchOrders(validatedParams, fuzzyIds);
 }
 
 /**

@@ -22,22 +22,7 @@ export function useSelection(selectionKey: string = "selected") {
 	};
 
 	const preserveExistingParams = () => {
-		const params = new URLSearchParams(searchParams);
-		const existingParams = {
-			page: Number(params.get("page")) || 1,
-			perPage: Number(params.get("perPage")) || 10,
-			search: params.get("search") || undefined,
-		};
-
-		// Préserver les filtres existants
-		const filters: Record<string, string> = {};
-		params.forEach((value, key) => {
-			if (key.startsWith("filter_")) {
-				filters[key.replace("filter_", "")] = value;
-			}
-		});
-
-		return { params, existingParams, filters };
+		return new URLSearchParams(searchParams);
 	};
 
 	/**
@@ -46,7 +31,7 @@ export function useSelection(selectionKey: string = "selected") {
 	 * @param checked - true pour sélectionner, false pour désélectionner
 	 */
 	const handleSelectionChange = (selection: string[], checked: boolean) => {
-		const { params } = preserveExistingParams();
+		const params = preserveExistingParams();
 
 		// Supprimer d'abord tous les paramètres de sélection
 		params.delete(selectionKey);
@@ -72,7 +57,7 @@ export function useSelection(selectionKey: string = "selected") {
 	 * @param checked - true pour sélectionner, false pour désélectionner
 	 */
 	const handleItemSelectionChange = (itemId: string, checked: boolean) => {
-		const { params } = preserveExistingParams();
+		const params = preserveExistingParams();
 
 		// Supprimer d'abord tous les paramètres de sélection
 		params.delete(selectionKey);
@@ -89,7 +74,7 @@ export function useSelection(selectionKey: string = "selected") {
 	 * Efface toute la sélection
 	 */
 	const clearAll = () => {
-		const { params } = preserveExistingParams();
+		const params = preserveExistingParams();
 		params.delete(selectionKey);
 		updateUrlWithParams(params, []);
 	};
@@ -99,7 +84,7 @@ export function useSelection(selectionKey: string = "selected") {
 	 * @param ids - Les IDs des éléments à désélectionner
 	 */
 	const clearItems = (ids: string[]) => {
-		const { params } = preserveExistingParams();
+		const params = preserveExistingParams();
 		const newSelection = optimisticSelection.filter((id) => !ids.includes(id));
 		params.delete(selectionKey);
 		newSelection.forEach((id) => params.append(selectionKey, id));

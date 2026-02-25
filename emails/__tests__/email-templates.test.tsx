@@ -57,8 +57,8 @@ describe("OrderConfirmationEmail", () => {
 
 	it("renders without crashing", async () => {
 		const html = await render(<OrderConfirmationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains the order number in the output", async () => {
@@ -157,8 +157,8 @@ describe("ShippingConfirmationEmail", () => {
 
 	it("renders without crashing", async () => {
 		const html = await render(<ShippingConfirmationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains the Commande expédiée heading", async () => {
@@ -241,8 +241,8 @@ describe("VerificationEmail", () => {
 
 	it("renders without crashing", async () => {
 		const html = await render(<VerificationEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains the Vérification email heading", async () => {
@@ -277,8 +277,8 @@ describe("PasswordResetEmail", () => {
 
 	it("renders without crashing", async () => {
 		const html = await render(<PasswordResetEmail {...baseProps} />)
-		expect(html).toBeTruthy()
-		expect(typeof html).toBe("string")
+		expect(html).toContain("<!DOCTYPE")
+		expect(html.length).toBeGreaterThan(100)
 	})
 
 	it("contains the Réinitialisation heading", async () => {

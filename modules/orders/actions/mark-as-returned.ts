@@ -1,7 +1,6 @@
 "use server";
 
 import {
-	OrderStatus,
 	FulfillmentStatus,
 	HistorySource,
 } from "@/app/generated/prisma/client";
@@ -20,6 +19,8 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsReturnedSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { extractCustomerFirstName } from "../utils/customer-name";
+import { canMarkAsReturned } from "../services/order-status-validation.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
@@ -79,12 +80,9 @@ export async function markAsReturned(
 
 			if (!found) return null;
 
-			if (found.fulfillmentStatus === FulfillmentStatus.RETURNED) {
-				return { ...found, _error: "already_returned" as const };
-			}
-
-			if (found.status !== OrderStatus.DELIVERED) {
-				return { ...found, _error: "not_delivered" as const };
+			const validation = canMarkAsReturned(found);
+			if (!validation.canReturn) {
+				return { ...found, _error: validation.reason };
 			}
 
 			await tx.order.update({
@@ -126,15 +124,12 @@ export async function markAsReturned(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		// Envoyer l'email de confirmation de retour au client
 		let emailSent = false;
 		if (order.customerEmail) {
-			const customerFirstName =
-				order.customerName?.split(" ")[0] ||
-				order.shippingFirstName ||
-				"Client";
+			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 

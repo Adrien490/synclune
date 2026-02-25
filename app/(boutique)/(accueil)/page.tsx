@@ -12,17 +12,11 @@ import { SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
-import { AtelierStorySkeleton } from "./_components/atelier-story-skeleton";
 import { CreativeProcess } from "./_components/creative-process";
-import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton";
 import { FaqSection } from "./_components/faq-section";
-import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
-import { NewsletterSectionSkeleton } from "./_components/newsletter-section-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
-import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
 
 export const metadata: Metadata = {
   title: {

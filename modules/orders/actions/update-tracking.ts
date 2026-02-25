@@ -19,6 +19,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderMetadataInvalidationTags } from "../constants/cache";
 import { updateTrackingSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { extractCustomerFirstName } from "../utils/customer-name";
 
 /**
  * Met à jour les informations de suivi d'une commande expédiée
@@ -130,18 +131,14 @@ export async function updateTracking(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderMetadataInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
+		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
 
 		// Envoyer l'email de mise à jour du suivi au client
 		let emailSent = false;
 		if (validated.data.sendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
-			// Extraire le prénom du customerName ou utiliser shippingFirstName
-			const customerFirstName =
-				order.customerName?.split(" ")[0] ||
-				order.shippingFirstName ||
-				"Client";
+			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
 
 			// Formater la date de livraison estimée
 			const estimatedDeliveryStr = validated.data.estimatedDelivery
