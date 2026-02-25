@@ -112,12 +112,9 @@ test.describe("Navigation principale", () => {
 	})
 
 	test("le footer est présent avec les liens de navigation", async ({ page }) => {
-		// Faire défiler jusqu'au footer
-		await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-		await page.waitForTimeout(500)
-
-		// Le footer doit exister avec le label aria correct
+		// Faire défiler jusqu'au footer et attendre qu'il soit visible
 		const footer = page.getByRole("contentinfo")
+		await footer.scrollIntoViewIfNeeded()
 		await expect(footer).toBeAttached()
 
 		// Le footer doit contenir un lien vers les créations

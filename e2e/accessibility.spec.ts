@@ -230,9 +230,7 @@ test.describe("Accessibilité - Cart Sheet", () => {
 		const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
 		await cartButton.click()
 
-		// Après l'ouverture, le focus doit être dans le dialog
-		await page.waitForTimeout(300) // Attendre l'animation
-
+		// Après l'ouverture, attendre que le dialog soit visible (inclut l'animation)
 		const cartDialog = page.getByRole("dialog")
 		await expect(cartDialog).toBeVisible()
 

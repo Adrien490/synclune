@@ -190,11 +190,8 @@ test.describe("Navigation catalogue produits", () => {
 		const searchInput = page.getByRole("searchbox")
 		expect(await searchInput.count(), "No search input found on /produits page").toBeGreaterThan(0)
 
-		// Taper un terme de recherche
+		// Taper un terme de recherche et attendre la mise à jour de l'URL (debounce-aware)
 		await searchInput.first().fill("bague")
-		await page.waitForTimeout(600) // Debounce
-
-		// L'URL doit refléter la recherche
-		await expect(page).toHaveURL(/search=bague/)
+		await expect(page).toHaveURL(/search=bague/, { timeout: 5000 })
 	})
 })

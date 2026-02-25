@@ -53,12 +53,14 @@ test.describe("Parcours produit → panier", () => {
 			await addToCartButton.first().click()
 
 			// Wait for cart feedback - either a toast, sheet opening, or badge update
-			// The cart sheet should open or a success indicator should appear
-			await page.waitForTimeout(1000)
-
-			// Check that the cart sheet opened or badge updated
 			const cartDialog = page.getByRole("dialog")
 			const toastOrFeedback = page.getByText(/ajouté|panier/i)
+
+			// Wait for either dialog or feedback text to appear
+			await Promise.race([
+				cartDialog.waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
+				toastOrFeedback.first().waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
+			])
 
 			const dialogVisible = await cartDialog.isVisible().catch(() => false)
 			const feedbackVisible = await toastOrFeedback.first().isVisible().catch(() => false)
@@ -97,10 +99,13 @@ test.describe("Parcours produit → panier", () => {
 		}
 
 		await addToCartButton.first().click()
-		await page.waitForTimeout(1500)
 
-		// Open cart if not already open
+		// Wait for cart response before checking
 		const cartDialog = page.getByRole("dialog")
+		await Promise.race([
+			cartDialog.waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
+			page.waitForResponse(resp => resp.url().includes("/api/") && resp.status() === 200, { timeout: 5000 }).catch(() => {}),
+		])
 		if (!await cartDialog.isVisible().catch(() => false)) {
 			const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
 			await cartButton.click()
@@ -129,12 +134,9 @@ test.describe("Parcours produit → panier", () => {
 			return
 		}
 
-		// Type a search term
+		// Type a search term and wait for URL to update (debounce-aware)
 		await searchInput.first().fill("bague")
-		await page.waitForTimeout(800) // Debounce
-
-		// URL should reflect search
-		await expect(page).toHaveURL(/search=bague/)
+		await expect(page).toHaveURL(/search=bague/, { timeout: 5000 })
 
 		// Either products or empty state should be visible
 		await page.waitForLoadState("networkidle")

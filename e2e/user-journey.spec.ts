@@ -15,10 +15,14 @@ test.describe("Parcours utilisateur authentifie", () => {
 		await submitButton.click()
 
 		// Should show some feedback (error for invalid credentials, or redirect)
-		// We expect an error since test credentials are likely invalid
-		await page.waitForTimeout(2000)
-
 		const errorMessage = page.getByText(/Identifiants invalides|Email ou mot de passe incorrect|Erreur|invalide/i)
+
+		// Wait for either error message or navigation away from login
+		await Promise.race([
+			errorMessage.first().waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
+			page.waitForURL(url => !url.toString().includes("/connexion"), { timeout: 5000 }).catch(() => {}),
+		])
+
 		const redirected = !page.url().includes("/connexion")
 
 		// Either we got an error (expected with fake credentials) or were redirected (real account)
@@ -80,11 +84,14 @@ test.describe("Parcours utilisateur authentifie", () => {
 		await emailInput.fill("test@example.com")
 		await submitButton.click()
 
-		// Should show a confirmation message or redirect
-		await page.waitForTimeout(2000)
-
+		// Wait for feedback after form submission
 		const confirmationMessage = page.getByText(/envoyé|vérifiez votre email|lien.*envoyé/i)
 		const errorMessage = page.getByText(/erreur|impossible/i)
+
+		await Promise.race([
+			confirmationMessage.first().waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
+			errorMessage.first().waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
+		])
 
 		const hasConfirmation = await confirmationMessage.first().isVisible().catch(() => false)
 		const hasError = await errorMessage.first().isVisible().catch(() => false)
