@@ -86,50 +86,36 @@ export default async function Page() {
       <LatestCreations productsPromise={latestCreationsPromise} />
 
       {/* 3. Collections - Thematic browsing with descriptions */}
-      <div className="content-defer">
-        <Suspense
-          fallback={<CollectionsSectionSkeleton collectionsCount={6} />}
-        >
-          <CollectionsSection
-            collectionsPromise={getCollections({
-              perPage: 6,
-              sortBy: "created-descending",
-              filters: {
-                hasProducts: true,
-                status: CollectionStatus.PUBLIC,
-              },
-            })}
-          />
-        </Suspense>
-      </div>
+      <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
+        <CollectionsSection
+          collectionsPromise={getCollections({
+            perPage: 6,
+            sortBy: "created-descending",
+            filters: {
+              hasProducts: true,
+              status: CollectionStatus.PUBLIC,
+            },
+          })}
+        />
+      </Suspense>
 
       {/* 4. Reviews - Social proof with featured customer reviews */}
-      <div className="content-defer">
-        <ReviewsSection
-          reviewsPromise={featuredReviewsPromise}
-          reviewStatsPromise={reviewStatsPromise}
-        />
-      </div>
+      <ReviewsSection
+        reviewsPromise={featuredReviewsPromise}
+        reviewStatsPromise={reviewStatsPromise}
+      />
 
       {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
-      <div className="content-defer">
-        <AtelierStory />
-      </div>
+      <AtelierStory />
 
       {/* 6. Creative Process - Step-by-step jewelry making */}
-      <div className="content-defer">
-        <CreativeProcess />
-      </div>
+      <CreativeProcess />
 
       {/* 7. FAQ - Frequently asked questions with JSON-LD */}
-      <div className="content-defer">
-        <FaqSection />
-      </div>
+      <FaqSection />
 
       {/* 8. Newsletter - Subscription with gift incentive */}
-      <div className="content-defer">
-        <NewsletterSection />
-      </div>
+      <NewsletterSection />
     </>
   );
 }
