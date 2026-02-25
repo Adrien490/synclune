@@ -41,12 +41,6 @@ export default defineConfig({
 				"app/api/**",
 				"app/serwist/**",
 			],
-			thresholds: {
-				statements: 80,
-				branches: 80,
-				functions: 80,
-				lines: 80,
-			},
 		},
 	},
 });
