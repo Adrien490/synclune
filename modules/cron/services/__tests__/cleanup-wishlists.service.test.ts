@@ -246,4 +246,10 @@ describe("cleanupExpiredWishlists", () => {
 			where: { id: { in: ["abc-123", "def-456"] } },
 		});
 	});
+
+	it("should propagate errors from prisma operations", async () => {
+		mockPrisma.wishlist.findMany.mockRejectedValue(new Error("DB connection lost"));
+
+		await expect(cleanupExpiredWishlists()).rejects.toThrow("DB connection lost");
+	});
 });

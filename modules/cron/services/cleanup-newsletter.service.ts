@@ -16,37 +16,47 @@ export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 		"[CRON:cleanup-newsletter] Starting unconfirmed subscriptions cleanup..."
 	);
 
-	const expiryDate = new Date(
-		Date.now() - RETENTION.NEWSLETTER_CONFIRMATION_DAYS * 24 * 60 * 60 * 1000
-	);
-
-	// Find expired subscriptions (bounded)
-	const toDelete = await prisma.newsletterSubscriber.findMany({
-		where: {
-			status: NewsletterStatus.PENDING,
-			confirmationSentAt: { lt: expiryDate },
-			confirmedAt: null,
-		},
-		select: { id: true },
-		take: CLEANUP_DELETE_LIMIT,
-	});
-
-	const deleteResult = await prisma.newsletterSubscriber.deleteMany({
-		where: { id: { in: toDelete.map((s) => s.id) } },
-	});
-
-	if (toDelete.length === CLEANUP_DELETE_LIMIT) {
-		console.warn(
-			"[CRON:cleanup-newsletter] Delete limit reached, remaining will be cleaned on next run"
+	try {
+		const expiryDate = new Date(
+			Date.now() - RETENTION.NEWSLETTER_CONFIRMATION_DAYS * 24 * 60 * 60 * 1000
 		);
+
+		// Find expired subscriptions (bounded)
+		const toDelete = await prisma.newsletterSubscriber.findMany({
+			where: {
+				status: NewsletterStatus.PENDING,
+				confirmationSentAt: { lt: expiryDate },
+				confirmedAt: null,
+			},
+			select: { id: true },
+			take: CLEANUP_DELETE_LIMIT,
+		});
+
+		const deleteResult = await prisma.newsletterSubscriber.deleteMany({
+			where: { id: { in: toDelete.map((s) => s.id) } },
+		});
+
+		const hasMore = toDelete.length === CLEANUP_DELETE_LIMIT;
+
+		if (hasMore) {
+			console.warn(
+				"[CRON:cleanup-newsletter] Delete limit reached, remaining will be cleaned on next run"
+			);
+		}
+
+		console.log(
+			`[CRON:cleanup-newsletter] Deleted ${deleteResult.count} unconfirmed subscriptions`
+		);
+
+		return {
+			deleted: deleteResult.count,
+			hasMore,
+		};
+	} catch (error) {
+		console.error(
+			"[CRON:cleanup-newsletter] Error during cleanup:",
+			error instanceof Error ? error.message : String(error)
+		);
+		throw error;
 	}
-
-	console.log(
-		`[CRON:cleanup-newsletter] Deleted ${deleteResult.count} unconfirmed subscriptions`
-	);
-
-	return {
-		deleted: deleteResult.count,
-		hasMore: toDelete.length === CLEANUP_DELETE_LIMIT,
-	};
 }

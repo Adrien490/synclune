@@ -217,4 +217,10 @@ describe("cleanupExpiredCarts", () => {
 			where: { id: { in: ["abc-123", "def-456"] } },
 		});
 	});
+
+	it("should propagate errors from prisma operations", async () => {
+		mockPrisma.cart.findMany.mockRejectedValue(new Error("DB connection lost"));
+
+		await expect(cleanupExpiredCarts()).rejects.toThrow("DB connection lost");
+	});
 });

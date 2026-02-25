@@ -1,5 +1,6 @@
 import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
 import { cleanupUnconfirmedNewsletterSubscriptions } from "@/modules/cron/services/cleanup-newsletter.service";
+import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
 export const maxDuration = 30;
 
@@ -15,6 +16,12 @@ export async function GET() {
 			...result,
 		}, startTime);
 	} catch (error) {
+		sendAdminCronFailedAlert({
+			job: "cleanup-newsletter",
+			errors: 1,
+			details: { error: error instanceof Error ? error.message : String(error) },
+		}).catch(() => {});
+
 		return cronError(
 			error instanceof Error
 				? error.message

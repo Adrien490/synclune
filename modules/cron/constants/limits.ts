@@ -104,6 +104,12 @@ export const MAX_PAGES_PER_RUN = 5;
 export const DB_QUERY_BATCH_SIZE = 500;
 
 /**
+ * Delay between consecutive email sends in batch cron jobs (ms)
+ * Prevents hitting Resend's rate limit during large batches
+ */
+export const EMAIL_THROTTLE_MS = 100;
+
+/**
  * Time thresholds in milliseconds
  */
 export const THRESHOLDS = {

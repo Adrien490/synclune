@@ -10,6 +10,7 @@ import {
 	success,
 	handleActionError,
 } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateProfileSchema } from "../schemas/user.schemas";
 import { getCurrentUserInvalidationTags } from "../constants/cache";
@@ -51,7 +52,7 @@ export async function updateProfile(
 		await prisma.user.update({
 			where: { id: user.id },
 			data: {
-				name: validation.data.name,
+				name: sanitizeText(validation.data.name),
 			},
 		});
 

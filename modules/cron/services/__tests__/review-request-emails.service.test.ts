@@ -25,7 +25,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 describe("sendDelayedReviewRequestEmails", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.useFakeTimers();
+		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(new Date("2026-02-09T10:00:00Z"));
 	});
 

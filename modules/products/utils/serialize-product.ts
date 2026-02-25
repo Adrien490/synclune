@@ -1,4 +1,4 @@
-import type { Decimal } from "@/app/generated/prisma/client/runtime/library";
+import type { Decimal } from "@/app/generated/prisma/internal/prismaNamespace";
 import type { Product } from "../types/product.types";
 
 /**
@@ -27,7 +27,7 @@ export function serializeProduct(product: Product): Product {
 		reviewStats: {
 			...product.reviewStats,
 			averageRating: decimalToNumber(product.reviewStats.averageRating),
-		} as typeof product.reviewStats,
+		} as unknown as typeof product.reviewStats,
 	};
 }
 

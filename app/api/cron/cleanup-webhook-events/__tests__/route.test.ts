@@ -63,8 +63,8 @@ const DEFAULT_SERVICE_RESULT = {
 // ============================================================================
 
 describe("maxDuration", () => {
-	it("is exported as 30", () => {
-		expect(maxDuration).toBe(30);
+	it("is exported as 60", () => {
+		expect(maxDuration).toBe(60);
 	});
 });
 

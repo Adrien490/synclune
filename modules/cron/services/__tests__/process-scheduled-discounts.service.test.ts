@@ -37,17 +37,19 @@ describe("processScheduledDiscounts", () => {
 	});
 
 	it("should return zero counts when no discounts need changes", async () => {
-		mockPrisma.discount.findMany.mockResolvedValueOnce([]); // no candidates
-		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 0 }); // deactivation
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([]) // activation candidates
+			.mockResolvedValueOnce([]); // deactivation candidates
 
 		const result = await processScheduledDiscounts();
 
-		expect(result).toEqual({ activated: 0, deactivated: 0 });
+		expect(result).toEqual({ activated: 0, deactivated: 0, hasMore: false });
 	});
 
 	it("should not invalidate cache when no changes are made", async () => {
-		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
-		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 0 });
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
 
 		await processScheduledDiscounts();
 
@@ -59,17 +61,17 @@ describe("processScheduledDiscounts", () => {
 		const startsAt = new Date("2026-02-09T00:00:00Z");
 
 		// Mock candidates where updatedAt <= startsAt (eligible for activation)
-		mockPrisma.discount.findMany.mockResolvedValueOnce([
-			{ id: "disc-1", startsAt, updatedAt: startsAt },
-			{ id: "disc-2", startsAt, updatedAt: new Date("2026-02-08T23:00:00Z") },
-		]);
-		mockPrisma.discount.updateMany
-			.mockResolvedValueOnce({ count: 2 }) // activation
-			.mockResolvedValueOnce({ count: 0 }); // deactivation
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([
+				{ id: "disc-1", startsAt, updatedAt: startsAt },
+				{ id: "disc-2", startsAt, updatedAt: new Date("2026-02-08T23:00:00Z") },
+			])
+			.mockResolvedValueOnce([]); // deactivation candidates
+		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 2 }); // activation
 
 		const result = await processScheduledDiscounts();
 
-		// Verify findMany query
+		// Verify findMany query for activation
 		const findCall = mockPrisma.discount.findMany.mock.calls[0][0];
 		expect(findCall.where.isActive).toBe(false);
 		expect(findCall.where.deletedAt).toBe(null);
@@ -83,8 +85,9 @@ describe("processScheduledDiscounts", () => {
 			startsAt: true,
 			updatedAt: true,
 		});
+		expect(findCall.take).toBe(1000);
 
-		// Verify updateMany query
+		// Verify updateMany query for activation
 		const updateCall = mockPrisma.discount.updateMany.mock.calls[0][0];
 		expect(updateCall.where.id.in).toEqual(["disc-1", "disc-2"]);
 		expect(updateCall.data.isActive).toBe(true);
@@ -97,13 +100,13 @@ describe("processScheduledDiscounts", () => {
 		const manuallyDeactivated = new Date("2026-02-09T10:00:00Z");
 
 		// One eligible, one manually deactivated
-		mockPrisma.discount.findMany.mockResolvedValueOnce([
-			{ id: "disc-1", startsAt, updatedAt: startsAt }, // eligible
-			{ id: "disc-2", startsAt, updatedAt: manuallyDeactivated }, // skipped
-		]);
-		mockPrisma.discount.updateMany
-			.mockResolvedValueOnce({ count: 1 }) // only one activated
-			.mockResolvedValueOnce({ count: 0 });
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([
+				{ id: "disc-1", startsAt, updatedAt: startsAt }, // eligible
+				{ id: "disc-2", startsAt, updatedAt: manuallyDeactivated }, // skipped
+			])
+			.mockResolvedValueOnce([]); // deactivation candidates
+		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1 }); // only one activated
 
 		const result = await processScheduledDiscounts();
 
@@ -118,47 +121,55 @@ describe("processScheduledDiscounts", () => {
 		const manuallyDeactivated = new Date("2026-02-09T10:00:00Z");
 
 		// All candidates have updatedAt > startsAt
-		mockPrisma.discount.findMany.mockResolvedValueOnce([
-			{ id: "disc-1", startsAt, updatedAt: manuallyDeactivated },
-			{ id: "disc-2", startsAt, updatedAt: manuallyDeactivated },
-		]);
-		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 0 }); // deactivation only
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([
+				{ id: "disc-1", startsAt, updatedAt: manuallyDeactivated },
+				{ id: "disc-2", startsAt, updatedAt: manuallyDeactivated },
+			])
+			.mockResolvedValueOnce([]); // deactivation candidates
 
 		const result = await processScheduledDiscounts();
 
-		// Verify no activation call was made (only deactivation)
-		expect(mockPrisma.discount.updateMany).toHaveBeenCalledTimes(1);
+		// Verify no updateMany was called (no activation, no deactivation)
+		expect(mockPrisma.discount.updateMany).not.toHaveBeenCalled();
 		expect(result.activated).toBe(0);
 	});
 
 	it("should deactivate expired discounts", async () => {
 		const now = new Date("2026-02-09T12:00:00Z");
 
-		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
-		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 3 }); // 3 deactivated
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([]) // activation candidates
+			.mockResolvedValueOnce([{ id: "exp-1" }, { id: "exp-2" }, { id: "exp-3" }]); // deactivation candidates
+		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 3 }); // deactivation
 
 		const result = await processScheduledDiscounts();
 
-		// Verify deactivation query
+		// Verify deactivation findMany query
+		const deactivationFindCall = mockPrisma.discount.findMany.mock.calls[1][0];
+		expect(deactivationFindCall.where.isActive).toBe(true);
+		expect(deactivationFindCall.where.deletedAt).toBe(null);
+		expect(deactivationFindCall.where.endsAt.lt).toEqual(now);
+		expect(deactivationFindCall.take).toBe(1000);
+
+		// Verify deactivation updateMany query
 		const deactivationCall = mockPrisma.discount.updateMany.mock.calls[0][0];
-		expect(deactivationCall.where.isActive).toBe(true);
-		expect(deactivationCall.where.deletedAt).toBe(null);
-		expect(deactivationCall.where.endsAt.lt).toEqual(now);
+		expect(deactivationCall.where.id.in).toEqual(["exp-1", "exp-2", "exp-3"]);
 		expect(deactivationCall.data.isActive).toBe(false);
 		expect(result.deactivated).toBe(3);
 	});
 
 	it("should invalidate cache when discounts are activated", async () => {
-		mockPrisma.discount.findMany.mockResolvedValueOnce([
-			{
-				id: "disc-1",
-				startsAt: new Date("2026-02-09T00:00:00Z"),
-				updatedAt: new Date("2026-02-09T00:00:00Z"),
-			},
-		]);
-		mockPrisma.discount.updateMany
-			.mockResolvedValueOnce({ count: 1 })
-			.mockResolvedValueOnce({ count: 0 });
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([
+				{
+					id: "disc-1",
+					startsAt: new Date("2026-02-09T00:00:00Z"),
+					updatedAt: new Date("2026-02-09T00:00:00Z"),
+				},
+			])
+			.mockResolvedValueOnce([]); // deactivation candidates
+		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1 });
 
 		await processScheduledDiscounts();
 
@@ -166,7 +177,9 @@ describe("processScheduledDiscounts", () => {
 	});
 
 	it("should invalidate cache when discounts are deactivated", async () => {
-		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([]) // activation candidates
+			.mockResolvedValueOnce([{ id: "exp-1" }, { id: "exp-2" }]); // deactivation candidates
 		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 2 });
 
 		await processScheduledDiscounts();
@@ -175,27 +188,30 @@ describe("processScheduledDiscounts", () => {
 	});
 
 	it("should handle both activation and deactivation in same run", async () => {
-		mockPrisma.discount.findMany.mockResolvedValueOnce([
-			{
-				id: "disc-1",
-				startsAt: new Date("2026-02-09T00:00:00Z"),
-				updatedAt: new Date("2026-02-09T00:00:00Z"),
-			},
-		]);
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([
+				{
+					id: "disc-1",
+					startsAt: new Date("2026-02-09T00:00:00Z"),
+					updatedAt: new Date("2026-02-09T00:00:00Z"),
+				},
+			])
+			.mockResolvedValueOnce([{ id: "exp-1" }, { id: "exp-2" }]); // deactivation candidates
 		mockPrisma.discount.updateMany
 			.mockResolvedValueOnce({ count: 1 }) // 1 activated
 			.mockResolvedValueOnce({ count: 2 }); // 2 deactivated
 
 		const result = await processScheduledDiscounts();
 
-		expect(result).toEqual({ activated: 1, deactivated: 2 });
+		expect(result).toEqual({ activated: 1, deactivated: 2, hasMore: false });
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
 		expect(mockUpdateTag).toHaveBeenCalledTimes(1);
 	});
 
 	it("should include deletedAt: null in findMany query", async () => {
-		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
-		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 0 });
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
 
 		await processScheduledDiscounts();
 
@@ -203,21 +219,23 @@ describe("processScheduledDiscounts", () => {
 		expect(findCall.where.deletedAt).toBe(null);
 	});
 
-	it("should include deletedAt: null in deactivation query", async () => {
-		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
-		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1 });
+	it("should include deletedAt: null in deactivation findMany query", async () => {
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
 
 		await processScheduledDiscounts();
 
-		const deactivationCall = mockPrisma.discount.updateMany.mock.calls[0][0];
-		expect(deactivationCall.where.deletedAt).toBe(null);
+		const deactivationFindCall = mockPrisma.discount.findMany.mock.calls[1][0];
+		expect(deactivationFindCall.where.deletedAt).toBe(null);
 	});
 
 	it("should handle discounts with null endsAt in activation candidates", async () => {
 		const now = new Date("2026-02-09T12:00:00Z");
 
-		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
-		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 0 });
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
 
 		await processScheduledDiscounts();
 
@@ -227,5 +245,65 @@ describe("processScheduledDiscounts", () => {
 			{ endsAt: null },
 			{ endsAt: { gte: now } },
 		]);
+	});
+
+	it("should use CLEANUP_DELETE_LIMIT (take) on both findMany queries", async () => {
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
+
+		await processScheduledDiscounts();
+
+		expect(mockPrisma.discount.findMany.mock.calls[0][0].take).toBe(1000);
+		expect(mockPrisma.discount.findMany.mock.calls[1][0].take).toBe(1000);
+	});
+
+	it("should return hasMore true when activation candidates hit the limit", async () => {
+		const candidates = Array.from({ length: 1000 }, (_, i) => ({
+			id: `disc-${i}`,
+			startsAt: new Date("2026-02-09T00:00:00Z"),
+			updatedAt: new Date("2026-02-09T00:00:00Z"),
+		}));
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce(candidates)
+			.mockResolvedValueOnce([]);
+		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1000 });
+
+		const result = await processScheduledDiscounts();
+
+		expect(result.hasMore).toBe(true);
+	});
+
+	it("should return hasMore true when deactivation candidates hit the limit", async () => {
+		const expired = Array.from({ length: 1000 }, (_, i) => ({
+			id: `exp-${i}`,
+		}));
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce(expired);
+		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1000 });
+
+		const result = await processScheduledDiscounts();
+
+		expect(result.hasMore).toBe(true);
+	});
+
+	it("should return hasMore false when both are under limit", async () => {
+		mockPrisma.discount.findMany
+			.mockResolvedValueOnce([
+				{
+					id: "disc-1",
+					startsAt: new Date("2026-02-09T00:00:00Z"),
+					updatedAt: new Date("2026-02-09T00:00:00Z"),
+				},
+			])
+			.mockResolvedValueOnce([{ id: "exp-1" }]);
+		mockPrisma.discount.updateMany
+			.mockResolvedValueOnce({ count: 1 })
+			.mockResolvedValueOnce({ count: 1 });
+
+		const result = await processScheduledDiscounts();
+
+		expect(result.hasMore).toBe(false);
 	});
 });

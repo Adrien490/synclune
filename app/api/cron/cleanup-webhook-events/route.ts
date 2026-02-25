@@ -2,7 +2,7 @@ import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/
 import { cleanupOldWebhookEvents } from "@/modules/cron/services/cleanup-webhook-events.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function GET() {
 	const unauthorized = await verifyCronRequest();

@@ -1,4 +1,3 @@
-import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
@@ -128,18 +127,18 @@ export async function CustomerOrdersTable({
 									</TableCell>
 									<TableCell>
 										<Badge
-											variant={ORDER_STATUS_VARIANTS[order.status as OrderStatus]}
+											variant={ORDER_STATUS_VARIANTS[order.status]}
 											className="whitespace-nowrap"
 										>
-											{ORDER_STATUS_LABELS[order.status as OrderStatus]}
+											{ORDER_STATUS_LABELS[order.status]}
 										</Badge>
 									</TableCell>
 									<TableCell className="hidden lg:table-cell">
 										<Badge
-											variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus as FulfillmentStatus]}
+											variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
 											className="whitespace-nowrap"
 										>
-											{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus as FulfillmentStatus]}
+											{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
 										</Badge>
 									</TableCell>
 									<TableCell className="hidden sm:table-cell text-center">

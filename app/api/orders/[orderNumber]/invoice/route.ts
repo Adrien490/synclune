@@ -5,6 +5,8 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
+import { checkRateLimit, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 
 export async function GET(
 	_request: Request,
@@ -15,6 +17,18 @@ export async function GET(
 	const session = await getSession();
 	if (!session?.user?.id) {
 		return new Response("Non autorisé", { status: 401 });
+	}
+
+	// Rate limit: PDF generation is CPU-intensive
+	const identifier = getRateLimitIdentifier(session.user.id);
+	const rateCheck = await checkRateLimit(identifier, ORDER_LIMITS.INVOICE_DOWNLOAD);
+	if (!rateCheck.success) {
+		return new Response("Trop de requêtes. Veuillez réessayer plus tard.", {
+			status: 429,
+			headers: {
+				"Retry-After": String(rateCheck.retryAfter ?? 60),
+			},
+		});
 	}
 
 	const order = await getOrder({ orderNumber });

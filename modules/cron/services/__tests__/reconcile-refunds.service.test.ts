@@ -11,7 +11,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		refund: { findMany: vi.fn() },
-		orderNote: { create: vi.fn() },
+		orderNote: { findFirst: vi.fn(), create: vi.fn() },
 	},
 	mockStripe: {
 		refunds: { retrieve: vi.fn() },
@@ -53,6 +53,7 @@ describe("reconcilePendingRefunds", () => {
 		vi.setSystemTime(new Date("2026-02-09T18:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
 		mockSendRefundFailedAlert.mockResolvedValue(undefined);
+		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
 	});
 
 	it("should return null when Stripe is not configured", async () => {
@@ -266,5 +267,73 @@ describe("reconcilePendingRefunds", () => {
 		expect(result!.checked).toBe(3);
 		expect(result!.updated).toBe(2);
 		expect(result!.errors).toBe(1);
+	});
+
+	it("should skip creating OrderNote when one already exists for the stale refund", async () => {
+		const staleRefund = {
+			id: "stale-1",
+			status: "PENDING",
+			amount: 1500,
+			createdAt: new Date("2026-02-06T10:00:00Z"), // >48h before 2026-02-09T18:00:00Z
+			orderId: "order-1",
+			order: { id: "order-1", orderNumber: "SYN-STALE" },
+		};
+
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([]) // Phase 1: no APPROVED refunds with stripeRefundId
+			.mockResolvedValueOnce([staleRefund]); // Phase 2: one stale refund
+
+		// Deduplication check finds an existing note
+		mockPrisma.orderNote.findFirst.mockResolvedValue({ id: "note-existing" });
+
+		await reconcilePendingRefunds();
+
+		expect(mockPrisma.orderNote.findFirst).toHaveBeenCalledWith({
+			where: {
+				orderId: "order-1",
+				content: { startsWith: "[REMBOURSEMENT ORPHELIN] Le remboursement stale-1" },
+			},
+			select: { id: true },
+		});
+		expect(mockPrisma.orderNote.create).not.toHaveBeenCalled();
+	});
+
+	it("should create OrderNote when no duplicate exists for the stale refund", async () => {
+		const staleRefund = {
+			id: "stale-1",
+			status: "PENDING",
+			amount: 1500,
+			createdAt: new Date("2026-02-06T10:00:00Z"), // >48h before 2026-02-09T18:00:00Z
+			orderId: "order-1",
+			order: { id: "order-1", orderNumber: "SYN-STALE" },
+		};
+
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([]) // Phase 1: no APPROVED refunds with stripeRefundId
+			.mockResolvedValueOnce([staleRefund]); // Phase 2: one stale refund
+
+		// Deduplication check finds no existing note
+		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.orderNote.create.mockResolvedValue({ id: "note-new" });
+
+		const result = await reconcilePendingRefunds();
+
+		expect(mockPrisma.orderNote.findFirst).toHaveBeenCalledWith({
+			where: {
+				orderId: "order-1",
+				content: { startsWith: "[REMBOURSEMENT ORPHELIN] Le remboursement stale-1" },
+			},
+			select: { id: true },
+		});
+		expect(mockPrisma.orderNote.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					orderId: "order-1",
+					content: expect.stringContaining("[REMBOURSEMENT ORPHELIN] Le remboursement stale-1"),
+					authorId: "system",
+				}),
+			})
+		);
+		expect(result!.staleAlerted).toBe(1);
 	});
 });

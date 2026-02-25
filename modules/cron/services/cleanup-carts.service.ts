@@ -13,55 +13,71 @@ export async function cleanupExpiredCarts(): Promise<{
 	hasMore: boolean;
 }> {
 	const now = new Date();
+	let deletedCount = 0;
+	let orphanedItemsCount = 0;
+	let hasMore = false;
 
 	console.log("[CRON:cleanup-carts] Starting expired carts cleanup...");
 
-	// 1. Find expired guest carts (bounded to avoid long-running deletes)
-	const cartsToDelete = await prisma.cart.findMany({
-		where: {
-			expiresAt: { lt: now },
-			userId: null,
-		},
-		select: { id: true },
-		take: CLEANUP_DELETE_LIMIT,
-	});
+	try {
+		// 1. Find expired guest carts (bounded to avoid long-running deletes)
+		const cartsToDelete = await prisma.cart.findMany({
+			where: {
+				expiresAt: { lt: now },
+				userId: null,
+			},
+			select: { id: true },
+			take: CLEANUP_DELETE_LIMIT,
+		});
 
-	const deleteResult = await prisma.cart.deleteMany({
-		where: { id: { in: cartsToDelete.map((c) => c.id) } },
-	});
+		const deleteResult = await prisma.cart.deleteMany({
+			where: { id: { in: cartsToDelete.map((c) => c.id) } },
+		});
 
-	console.log(`[CRON:cleanup-carts] Deleted ${deleteResult.count} expired carts`);
+		deletedCount = deleteResult.count;
+		hasMore = cartsToDelete.length === CLEANUP_DELETE_LIMIT;
 
-	if (cartsToDelete.length === CLEANUP_DELETE_LIMIT) {
-		console.warn(
-			"[CRON:cleanup-carts] Delete limit reached, remaining carts will be cleaned on next run"
-		);
-	}
+		console.log(`[CRON:cleanup-carts] Deleted ${deletedCount} expired carts`);
 
-	// 2. Clean up orphaned CartItems (safety net if cascade didn't trigger)
-	// Uses raw SQL to avoid loading all IDs into memory
-	const orphanedItemsCount = await prisma.$executeRaw`
-		DELETE FROM "CartItem"
-		WHERE id IN (
-			SELECT ci.id FROM "CartItem" ci
-			WHERE NOT EXISTS (
-				SELECT 1 FROM "Cart" c WHERE c.id = ci."cartId"
+		if (hasMore) {
+			console.warn(
+				"[CRON:cleanup-carts] Delete limit reached, remaining carts will be cleaned on next run"
+			);
+		}
+
+		// 2. Clean up orphaned CartItems (safety net if cascade didn't trigger)
+		// Uses raw SQL to avoid loading all IDs into memory
+		const rawCount = await prisma.$executeRaw`
+			DELETE FROM "CartItem"
+			WHERE id IN (
+				SELECT ci.id FROM "CartItem" ci
+				WHERE NOT EXISTS (
+					SELECT 1 FROM "Cart" c WHERE c.id = ci."cartId"
+				)
+				LIMIT ${CLEANUP_DELETE_LIMIT}
 			)
-			LIMIT ${CLEANUP_DELETE_LIMIT}
-		)
-	`;
+		`;
 
-	if (orphanedItemsCount > 0) {
-		console.log(
-			`[CRON:cleanup-carts] Cleaned up ${orphanedItemsCount} orphaned cart items`
+		orphanedItemsCount = Number(rawCount);
+
+		if (orphanedItemsCount > 0) {
+			console.log(
+				`[CRON:cleanup-carts] Cleaned up ${orphanedItemsCount} orphaned cart items`
+			);
+		}
+	} catch (error) {
+		console.error(
+			"[CRON:cleanup-carts] Error during cleanup:",
+			error instanceof Error ? error.message : String(error)
 		);
+		throw error;
 	}
 
 	console.log("[CRON:cleanup-carts] Cleanup completed");
 
 	return {
-		deletedCount: deleteResult.count,
-		orphanedItemsCount: Number(orphanedItemsCount),
-		hasMore: cartsToDelete.length === CLEANUP_DELETE_LIMIT,
+		deletedCount,
+		orphanedItemsCount,
+		hasMore,
 	};
 }

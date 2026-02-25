@@ -1,6 +1,7 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
+import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 
 /**
  * Activates and deactivates scheduled promotions.
@@ -14,6 +15,7 @@ import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 export async function processScheduledDiscounts(): Promise<{
 	activated: number;
 	deactivated: number;
+	hasMore: boolean;
 }> {
 	console.log(
 		"[CRON:process-scheduled-discounts] Starting scheduled discounts processing..."
@@ -30,6 +32,7 @@ export async function processScheduledDiscounts(): Promise<{
 			OR: [{ endsAt: null }, { endsAt: { gte: now } }],
 		},
 		select: { id: true, startsAt: true, updatedAt: true },
+		take: CLEANUP_DELETE_LIMIT,
 	});
 
 	// Filter out discounts manually deactivated by admin (updatedAt > startsAt)
@@ -49,35 +52,41 @@ export async function processScheduledDiscounts(): Promise<{
 		);
 	}
 
-	// 2. Deactivate expired promotions
-	const deactivated = await prisma.discount.updateMany({
+	// 2. Deactivate expired promotions (bounded)
+	const expiredIds = await prisma.discount.findMany({
 		where: {
 			isActive: true,
 			...notDeleted,
 			endsAt: { lt: now },
 		},
-		data: {
-			isActive: false,
-		},
+		select: { id: true },
+		take: CLEANUP_DELETE_LIMIT,
 	});
 
-	if (deactivated.count > 0) {
+	let deactivatedCount = 0;
+	if (expiredIds.length > 0) {
+		const deactivated = await prisma.discount.updateMany({
+			where: { id: { in: expiredIds.map((d) => d.id) } },
+			data: { isActive: false },
+		});
+		deactivatedCount = deactivated.count;
 		console.log(
-			`[CRON:process-scheduled-discounts] Deactivated ${deactivated.count} discounts`
+			`[CRON:process-scheduled-discounts] Deactivated ${deactivatedCount} discounts`
 		);
 	}
 
 	// Invalidate discount cache if any changes were made
-	if (activatedCount > 0 || deactivated.count > 0) {
+	if (activatedCount > 0 || deactivatedCount > 0) {
 		updateTag(DISCOUNT_CACHE_TAGS.LIST);
 	}
 
 	console.log(
-		`[CRON:process-scheduled-discounts] Completed: ${activatedCount} activated, ${deactivated.count} deactivated`
+		`[CRON:process-scheduled-discounts] Completed: ${activatedCount} activated, ${deactivatedCount} deactivated`
 	);
 
 	return {
 		activated: activatedCount,
-		deactivated: deactivated.count,
+		deactivated: deactivatedCount,
+		hasMore: candidates.length === CLEANUP_DELETE_LIMIT || expiredIds.length === CLEANUP_DELETE_LIMIT,
 	};
 }

@@ -172,8 +172,23 @@ export async function reconcilePendingRefunds(): Promise<{
 				`No stripeRefundId found. Admin action required.`
 			);
 
-			// Create an admin OrderNote to flag the stale refund
+			// Create an admin OrderNote to flag the stale refund (deduplicated)
 			try {
+				const existingNote = await prisma.orderNote.findFirst({
+					where: {
+						orderId: stale.orderId,
+						content: { startsWith: `[REMBOURSEMENT ORPHELIN] Le remboursement ${stale.id}` },
+					},
+					select: { id: true },
+				});
+
+				if (existingNote) {
+					console.log(
+						`[CRON:reconcile-refunds] Note already exists for stale refund ${stale.id}, skipping`
+					);
+					continue;
+				}
+
 				await prisma.orderNote.create({
 					data: {
 						orderId: stale.orderId,

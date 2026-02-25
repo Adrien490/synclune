@@ -38,6 +38,7 @@ describe("cleanupOldWebhookEvents", () => {
 			failedDeleted: 0,
 			skippedDeleted: 0,
 			staleDeleted: 0,
+			hasMore: false,
 		});
 		expect(mockPrisma.webhookEvent.findMany).toHaveBeenCalledTimes(4);
 		expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenCalledTimes(4);
@@ -240,6 +241,7 @@ describe("cleanupOldWebhookEvents", () => {
 			failedDeleted: 10,
 			skippedDeleted: 5,
 			staleDeleted: 2,
+			hasMore: false,
 		});
 		expect(mockPrisma.webhookEvent.findMany).toHaveBeenCalledTimes(4);
 		expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenCalledTimes(4);
@@ -386,5 +388,44 @@ describe("cleanupOldWebhookEvents", () => {
 		for (const call of findCalls) {
 			expect(call[0].select).toEqual({ id: true });
 		}
+	});
+
+	it("should return hasMore true when any status hits the delete limit (1000)", async () => {
+		// Only the stale (4th) status hits the limit - all others are under
+		const staleIds = Array.from({ length: 1000 }, (_, i) => ({ id: `st-${i}` }));
+		mockPrisma.webhookEvent.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce(staleIds);
+		mockPrisma.webhookEvent.deleteMany
+			.mockResolvedValueOnce({ count: 0 })
+			.mockResolvedValueOnce({ count: 0 })
+			.mockResolvedValueOnce({ count: 0 })
+			.mockResolvedValueOnce({ count: 1000 });
+
+		const result = await cleanupOldWebhookEvents();
+
+		expect(result.hasMore).toBe(true);
+	});
+
+	it("should return hasMore false when all statuses are under limit", async () => {
+		const completedIds = Array.from({ length: 999 }, (_, i) => ({ id: `c-${i}` }));
+		const failedIds = Array.from({ length: 500 }, (_, i) => ({ id: `f-${i}` }));
+		const skippedIds = Array.from({ length: 1 }, (_, i) => ({ id: `s-${i}` }));
+		mockPrisma.webhookEvent.findMany
+			.mockResolvedValueOnce(completedIds)
+			.mockResolvedValueOnce(failedIds)
+			.mockResolvedValueOnce(skippedIds)
+			.mockResolvedValueOnce([]);
+		mockPrisma.webhookEvent.deleteMany
+			.mockResolvedValueOnce({ count: 999 })
+			.mockResolvedValueOnce({ count: 500 })
+			.mockResolvedValueOnce({ count: 1 })
+			.mockResolvedValueOnce({ count: 0 });
+
+		const result = await cleanupOldWebhookEvents();
+
+		expect(result.hasMore).toBe(false);
 	});
 });

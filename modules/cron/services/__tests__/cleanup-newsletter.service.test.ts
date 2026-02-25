@@ -101,4 +101,10 @@ describe("cleanupUnconfirmedNewsletterSubscriptions", () => {
 			"[CRON:cleanup-newsletter] Delete limit reached, remaining will be cleaned on next run"
 		);
 	});
+
+	it("should propagate errors from prisma operations", async () => {
+		mockPrisma.newsletterSubscriber.findMany.mockRejectedValue(new Error("DB connection lost"));
+
+		await expect(cleanupUnconfirmedNewsletterSubscriptions()).rejects.toThrow("DB connection lost");
+	});
 });

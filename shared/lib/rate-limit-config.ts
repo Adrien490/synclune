@@ -386,9 +386,20 @@ export const CUSTOMIZATION_LIMITS = {
 /**
  * Toutes les limites de commandes
  */
+/**
+ * Limite pour le telechargement de factures (client)
+ *
+ * Protege contre abus de generation PDF (CPU-intensive)
+ */
+export const ORDER_INVOICE_DOWNLOAD_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 telechargements maximum
+	windowMs: hours(1), // par heure
+};
+
 export const ORDER_LIMITS = {
 	CREATE: ORDER_CREATE_LIMIT,
 	CANCEL: ORDER_CANCEL_LIMIT,
+	INVOICE_DOWNLOAD: ORDER_INVOICE_DOWNLOAD_LIMIT,
 } as const;
 
 // ========================================

@@ -14,6 +14,7 @@ export async function cleanupOldWebhookEvents(): Promise<{
 	failedDeleted: number;
 	skippedDeleted: number;
 	staleDeleted: number;
+	hasMore: boolean;
 }> {
 	console.log(
 		"[CRON:cleanup-webhook-events] Starting webhook events cleanup..."
@@ -124,5 +125,10 @@ export async function cleanupOldWebhookEvents(): Promise<{
 		failedDeleted: failedResult.count,
 		skippedDeleted: skippedResult.count,
 		staleDeleted: staleResult.count,
+		hasMore:
+			completedToDelete.length === CLEANUP_DELETE_LIMIT ||
+			failedToDelete.length === CLEANUP_DELETE_LIMIT ||
+			skippedToDelete.length === CLEANUP_DELETE_LIMIT ||
+			staleToDelete.length === CLEANUP_DELETE_LIMIT,
 	};
 }
