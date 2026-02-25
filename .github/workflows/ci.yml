@@ -16,8 +16,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Audit production dependencies
-        run: pnpm audit --prod
-        continue-on-error: true
+        run: pnpm audit --prod --audit-level=high
       - run: pnpm lint
       - run: pnpm test:coverage -- --run
       - uses: codecov/codecov-action@v5
@@ -31,6 +30,28 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 14
+  build:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      BETTER_AUTH_URL: http://localhost:3000
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
   e2e:
     runs-on: ubuntu-latest
     needs: lint-and-test

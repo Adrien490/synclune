@@ -128,6 +128,86 @@ test.describe("Parcours checkout authentifié", () => {
 		await expect(page.getByLabel(/Téléphone/i)).toBeVisible()
 	})
 
+	test("paiement échoué avec carte refusée affiche une erreur", async ({
+		page,
+		cartPage,
+		productCatalogPage,
+	}) => {
+		// 1. Navigate to products and add one to cart
+		await productCatalogPage.goto()
+
+		const productCount = await productCatalogPage.productLinks.count()
+		test.skip(productCount === 0, "Seed data required: no products found")
+
+		await productCatalogPage.gotoFirstProduct()
+
+		const addButtonCount = await productCatalogPage.addToCartButton.count()
+		test.skip(addButtonCount === 0, "Product requires SKU selection")
+
+		await productCatalogPage.addToCartButton.first().click()
+		await expect(cartPage.dialog).toBeVisible({ timeout: 5000 })
+
+		// 2. Navigate to checkout
+		await expect(cartPage.checkoutLink).toBeVisible({ timeout: 5000 })
+		await cartPage.checkoutLink.click()
+
+		await page.waitForLoadState("domcontentloaded")
+		await expect(page).toHaveURL(/\/paiement/)
+
+		// 3. Fill address form
+		await page.getByLabel(/Nom complet|Prénom et nom/i).fill("Marie Dupont")
+		await page.getByLabel(/^Adresse$|Adresse ligne 1/i).fill("12 rue de la Paix")
+		await page.getByLabel(/Code postal/i).fill("75002")
+		await page.getByLabel(/Ville/i).fill("Paris")
+		await page.getByLabel(/Téléphone/i).fill("0612345678")
+
+		const termsCheckbox = page.getByLabel(/conditions générales|J'accepte/i)
+		if (await termsCheckbox.isVisible()) {
+			await termsCheckbox.check()
+		}
+
+		const continueButton = page.getByRole("button", { name: /Continuer|Valider|Payer/i })
+		await expect(continueButton).toBeEnabled()
+		await continueButton.click()
+
+		// 4. Wait for Stripe Embedded Checkout
+		await expect(async () => {
+			const frameCount = await page.locator('iframe[src*="stripe"]').count()
+			expect(frameCount).toBeGreaterThan(0)
+		}).toPass({ timeout: 15000 })
+
+		const stripeFrame = page.frameLocator('iframe[src*="stripe"]').first()
+
+		// 5. Fill with DECLINED test card (4000000000000002)
+		const cardInput = stripeFrame.getByPlaceholder(/numéro de carte|card number/i)
+			.or(stripeFrame.locator('[name="cardNumber"]'))
+			.or(stripeFrame.locator('#cardNumber'))
+		await cardInput.fill("4000000000000002")
+
+		const expiryInput = stripeFrame.getByPlaceholder(/MM \/ AA|expiry/i)
+			.or(stripeFrame.locator('[name="cardExpiry"]'))
+			.or(stripeFrame.locator('#cardExpiry'))
+		await expiryInput.fill("12/30")
+
+		const cvcInput = stripeFrame.getByPlaceholder(/CVC|CVV/i)
+			.or(stripeFrame.locator('[name="cardCvc"]'))
+			.or(stripeFrame.locator('#cardCvc'))
+		await cvcInput.fill("123")
+
+		// 6. Submit payment
+		const payButton = stripeFrame.getByRole("button", { name: /Payer|Pay/i })
+		await payButton.click()
+
+		// 7. Stripe should display a decline error within its iframe
+		// The error message appears in the Stripe form, not on a separate page
+		const errorMessage = stripeFrame.getByText(/refusée|declined|échoué|failed|error/i)
+			.or(stripeFrame.locator('[class*="error"]').first())
+		await expect(errorMessage).toBeVisible({ timeout: 15000 })
+
+		// 8. Should NOT redirect to confirmation page
+		await expect(page).not.toHaveURL(/\/paiement\/confirmation/, { timeout: 5000 })
+	})
+
 	test("le checkout valide les champs d'adresse obligatoires", async ({
 		page,
 		cartPage,

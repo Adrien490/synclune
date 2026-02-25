@@ -33,7 +33,7 @@ interface CollectionCardProps {
  * OPTIMISATIONS:
  * - can-hover + motion-safe (WCAG 2.3.3)
  * - Shadow oklch pastel + hover-only will-change-transform
- * - Blur placeholder + preload above-fold
+ * - Blur placeholder + priority above-fold
  */
 export function CollectionCard({
 	slug,
@@ -55,6 +55,7 @@ export function CollectionCard({
 		<article aria-labelledby={titleId}>
 			<Link
 				href={`/collections/${slug}`}
+				aria-label={`Voir la collection ${name}`}
 				className={cn(
 					"group block min-w-0",
 					"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:rounded-lg",
@@ -65,11 +66,11 @@ export function CollectionCard({
 						"relative overflow-hidden rounded-lg bg-card",
 						// COHERENCE ProductCard: border-2 transparent
 						"border-2 border-transparent shadow-sm",
-						"transition-transform duration-300 ease-out",
+						"transition-[transform,border-color,box-shadow] duration-300 ease-out",
 						// Motion-reduce: desactiver transforms, garder transitions couleurs
 						"motion-reduce:transition-colors",
 						// COHERENCE ProductCard: border-primary/40
-						"motion-safe:can-hover:hover:border-primary/40",
+						"can-hover:hover:border-primary/40",
 						// COHERENCE ProductCard: shadow oklch pastel
 						"can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
 						// COHERENCE ProductCard: transform subtil (version plus douce)
@@ -84,13 +85,21 @@ export function CollectionCard({
 				>
 					{/* Images Bento Grid */}
 					{displayImages.length > 0 ? (
-						<Reveal y={8} once amount={0.2}>
+						isAboveFold ? (
 							<CollectionImagesGrid
 								images={displayImages}
 								collectionName={name}
 								isAboveFold={isAboveFold}
 							/>
-						</Reveal>
+						) : (
+							<Reveal y={8} once amount={0.2}>
+								<CollectionImagesGrid
+									images={displayImages}
+									collectionName={name}
+									isAboveFold={isAboveFold}
+								/>
+							</Reveal>
+						)
 					) : (
 						<div
 							role="img"
@@ -114,7 +123,7 @@ export function CollectionCard({
 							className={cn(
 								"w-16 h-0.5 mx-auto mb-3",
 								"bg-linear-to-r from-transparent via-primary/50 to-transparent",
-								"transition-[transform,opacity,background] duration-300 origin-center",
+								"transition-[transform,opacity] duration-300 origin-center",
 								"scale-x-75",
 								// Motion-reduce: pas d'animation de scale
 								"motion-reduce:scale-x-100",
@@ -137,7 +146,7 @@ export function CollectionCard({
 
 						{/* Description (hidden on mobile for space) */}
 						{description && (
-							<p className="hidden sm:block mt-1.5 text-xs text-muted-foreground line-clamp-2">
+							<p className="sr-only sm:not-sr-only sm:block mt-1.5 text-xs text-muted-foreground line-clamp-2">
 								{description}
 							</p>
 						)}

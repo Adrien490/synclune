@@ -135,7 +135,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 										className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
 										placeholder={product.image.blurDataUrl ? "blur" : "empty"}
 										blurDataURL={product.image.blurDataUrl}
-										preload={index === 0}
+										priority={index === 0}
 										quality={index === 0 ? 90 : 80}
 										sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 50vw"
 									/>
