@@ -19,7 +19,7 @@ interface LogoProps {
 	size?: number;
 	href?: string;
 	className?: string;
-	priority?: boolean;
+	preload?: boolean;
 	quality?: number;
 	sizes?: string;
 	showText?: boolean;
@@ -33,7 +33,7 @@ export function Logo({
 	size = 48,
 	href,
 	className,
-	priority = false,
+	preload = false,
 	quality = 90,
 	sizes,
 	showText = false,
@@ -77,7 +77,7 @@ export function Logo({
 					fill
 					className="object-cover"
 					sizes={sizes || `${size}px`}
-					priority={priority}
+					preload={preload}
 					quality={quality}
 					placeholder="blur"
 					blurDataURL={BLUR_DATA_URL}

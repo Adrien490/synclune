@@ -20,14 +20,8 @@ export { useFilter } from "./use-filter"
 export { useBackButtonClose } from "./use-back-button-close"
 export { useRadioGroupKeyboard } from "./use-radio-group-keyboard"
 
-// File download hooks
-export { useFileDownload } from "./use-file-download"
-
 // Modal/Lightbox hooks
 export { useLightbox } from "./use-lightbox"
-
-// Form hooks
-export { useScrollToError } from "./use-scroll-to-error"
 
 // Animation hooks
 export { usePulseOnChange } from "./use-pulse-on-change"

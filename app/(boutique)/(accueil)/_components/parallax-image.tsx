@@ -25,8 +25,8 @@ interface ParallaxImageProps {
 	sizes?: string;
 	/** Compression quality (default: 75) */
 	quality?: number;
-	/** Priority loading for above-fold images */
-	priority?: boolean;
+	/** Preload for above-fold images */
+	preload?: boolean;
 	/** Purely decorative image (aria-hidden, empty alt) */
 	decorative?: boolean;
 	/** Disable parallax on touch devices (default: true for better mobile UX) */
@@ -96,7 +96,7 @@ function ParallaxInner({
  * @param intensity - Effect strength (default: 5%, max: 15%)
  * @param sizes - Responsive sizes attribute
  * @param quality - Compression quality (default: 75)
- * @param priority - Priority loading for above-fold images
+ * @param preload - Preload for above-fold images
  * @param decorative - Purely decorative image (aria-hidden)
  * @param disableOnTouch - Disable parallax on touch devices (default: true)
  *
@@ -120,7 +120,7 @@ export function ParallaxImage({
 	intensity = 5,
 	sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 45vw",
 	quality = 75,
-	priority = false,
+	preload = false,
 	decorative = false,
 	disableOnTouch = true,
 }: ParallaxImageProps) {
@@ -146,8 +146,7 @@ export function ParallaxImage({
 			aria-hidden={decorative ? true : undefined}
 			fill
 			className={className}
-			loading={priority ? undefined : "lazy"}
-			priority={priority}
+			preload={preload}
 			quality={quality}
 			sizes={sizes}
 			placeholder={blurDataURL ? "blur" : "empty"}

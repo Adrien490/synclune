@@ -107,9 +107,7 @@ export function FloatingImage({
               height={position.height}
               className="relative aspect-4/5 w-full object-cover"
               sizes={position.sizes}
-              priority={index === 0}
-              loading={index === 0 ? undefined : "lazy"}
-              fetchPriority={index === 0 ? "high" : undefined}
+              preload={index === 0}
               quality={85}
               placeholder={image.blurDataUrl ? "blur" : "empty"}
               blurDataURL={image.blurDataUrl}

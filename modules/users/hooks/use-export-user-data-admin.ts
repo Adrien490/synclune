@@ -6,7 +6,7 @@ import type { UserDataExport } from "@/modules/users/actions/export-user-data";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import type { ActionState } from "@/shared/types/server-action";
-import { useFileDownload } from "@/shared/hooks";
+import { downloadJSON } from "@/shared/utils/file-download";
 
 interface UseExportUserDataAdminOptions {
 	onSuccess?: (data: UserDataExport) => void;
@@ -20,7 +20,6 @@ export function useExportUserDataAdmin(
 	options?: UseExportUserDataAdminOptions
 ) {
 	const [isPending, startTransition] = useTransition();
-	const { downloadJSON } = useFileDownload();
 	const userNameRef = useRef("");
 
 	const [, formAction, isActionPending] = useActionState(

@@ -33,8 +33,8 @@ export function useIsMobile() {
 			mql.addEventListener("change", listener);
 			return () => mql.removeEventListener("change", listener);
 		},
-		// getSnapshot: retourne la valeur côté client
-		() => window.innerWidth < MOBILE_BREAKPOINT,
+		// getSnapshot: uses matchMedia for consistency with the subscribe method
+		() => window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches,
 		// getServerSnapshot: fallback SSR (false = desktop par défaut)
 		() => false
 	);

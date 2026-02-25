@@ -57,10 +57,13 @@ export function useBackButtonClose({
 	});
 
 	// Écouter le bouton retour (popstate) pour fermer le modal
+	// Only attach the listener when the modal is open to avoid unnecessary work
 	useEffect(() => {
+		if (!isOpen) return;
+
 		window.addEventListener("popstate", onPopState);
 		return () => window.removeEventListener("popstate", onPopState);
-	}, [onPopState]);
+	}, [isOpen, onPopState]);
 
 	// Fonction pour fermer proprement
 	const handleClose = () => {

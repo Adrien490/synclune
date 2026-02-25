@@ -57,6 +57,8 @@ const nextConfig: NextConfig = {
 
   images: {
     qualities: [65, 70, 75, 80, 85, 90],
+    minimumCacheTTL: 2678400,
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**", search: "" },
       { protocol: "https", hostname: "utfs.io", pathname: "/f/**", search: "" },
@@ -74,7 +76,7 @@ const nextConfig: NextConfig = {
         pathname: "/**",
         search: "",
       },
-      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**", search: "" },
     ],
   },
 

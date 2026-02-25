@@ -59,22 +59,17 @@ describe("useIsMobile", () => {
 	})
 
 	describe("client snapshot", () => {
-		it("returns true when window.innerWidth is below the breakpoint", () => {
-			vi.stubGlobal("innerWidth", 375)
+		it("returns true when matchMedia matches (mobile width)", () => {
+			currentMql = createMatchMediaMock(true)
+			vi.stubGlobal("matchMedia", vi.fn(() => currentMql))
 
 			const { result } = renderHook(() => useIsMobile())
 			expect(result.current).toBe(true)
 		})
 
-		it("returns false when window.innerWidth is at or above the breakpoint", () => {
-			vi.stubGlobal("innerWidth", 1024)
-
-			const { result } = renderHook(() => useIsMobile())
-			expect(result.current).toBe(false)
-		})
-
-		it("returns false when window.innerWidth equals the breakpoint exactly", () => {
-			vi.stubGlobal("innerWidth", 768)
+		it("returns false when matchMedia does not match (desktop width)", () => {
+			currentMql = createMatchMediaMock(false)
+			vi.stubGlobal("matchMedia", vi.fn(() => currentMql))
 
 			const { result } = renderHook(() => useIsMobile())
 			expect(result.current).toBe(false)
@@ -83,13 +78,14 @@ describe("useIsMobile", () => {
 
 	describe("reactivity to media query changes", () => {
 		it("updates when the media query fires a change event", () => {
-			vi.stubGlobal("innerWidth", 1024)
+			currentMql = createMatchMediaMock(false)
+			vi.stubGlobal("matchMedia", vi.fn(() => currentMql))
 
 			const { result } = renderHook(() => useIsMobile())
 			expect(result.current).toBe(false)
 
-			// Simulate a screen resize to mobile width
-			vi.stubGlobal("innerWidth", 375)
+			// Simulate a screen resize to mobile width — matchMedia now returns true
+			currentMql.matches = true
 
 			act(() => {
 				currentMql._triggerChange()

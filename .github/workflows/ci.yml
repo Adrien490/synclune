@@ -83,6 +83,8 @@ jobs:
         run: pnpm prisma db push --skip-generate
       - name: Seed database
         run: pnpm seed
+      - name: Build application
+        run: pnpm build
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(pnpm ls @playwright/test --json | jq -r '.[0].devDependencies["@playwright/test"].version')" >> $GITHUB_OUTPUT

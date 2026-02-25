@@ -8,7 +8,7 @@ import {
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import type { ActionState } from "@/shared/types/server-action";
-import { useFileDownload } from "@/shared/hooks";
+import { downloadJSON } from "@/shared/utils/file-download";
 
 interface UseExportUserDataOptions {
 	onSuccess?: (data: UserDataExport) => void;
@@ -35,7 +35,6 @@ interface UseExportUserDataOptions {
  */
 export function useExportUserData(options?: UseExportUserDataOptions) {
 	const [isPending, startTransition] = useTransition();
-	const { downloadJSON } = useFileDownload();
 
 	const [, formAction, isActionPending] = useActionState(
 		withCallbacks(
