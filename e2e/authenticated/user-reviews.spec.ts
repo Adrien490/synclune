@@ -11,9 +11,10 @@ test.describe("Avis produits", () => {
 
 		// Look for reviews section on product page
 		const reviewsSection = page.getByText(/avis|commentaires|évaluations/i)
-		// Reviews section may or may not be visible depending on product
-		const pageContent = await page.textContent("body")
-		expect(pageContent).toBeTruthy()
+		const emptyReviewsState = page.getByText(/aucun avis|soyez le premier/i)
+
+		// Either reviews are displayed or the empty state is shown
+		await expect(reviewsSection.first().or(emptyReviewsState.first())).toBeVisible()
 	})
 
 	test("le formulaire d'avis est accessible pour les produits commandes", async ({ page, orderPage }) => {
@@ -32,9 +33,14 @@ test.describe("Avis produits", () => {
 		const reviewButton = page.getByRole("button", { name: /avis|évaluer|noter/i })
 			.or(page.getByRole("link", { name: /avis|évaluer|noter/i }))
 
-		// Review option may not be available depending on order status
-		const pageContent = await page.textContent("body")
-		expect(pageContent).toBeTruthy()
+		// Order detail heading should be visible
+		const heading = page.getByRole("heading", { level: 1 })
+		await expect(heading).toBeVisible()
+
+		// Review option depends on order status (must be DELIVERED)
+		// Assert we either see the review button or the order isn't eligible
+		const orderStatus = page.getByText(/Livr|En cours|Expédi|Annul|En attente/i)
+		await expect(reviewButton.first().or(orderStatus.first())).toBeVisible()
 	})
 
 	test("le formulaire d'avis contient les champs requis", async ({ page }) => {
@@ -51,14 +57,15 @@ test.describe("Avis produits", () => {
 
 		// Look for review form elements
 		const ratingLabel = page.getByText(/Votre note/i)
+
+		// Skip if review form is not shown (user hasn't purchased this product)
+		const ratingVisible = await ratingLabel.isVisible()
+		test.skip(!ratingVisible, "Review form not available - user may not have purchased this product")
+
 		const contentLabel = page.getByLabel(/Votre avis/i)
+		await expect(contentLabel).toBeVisible()
 
-		// Review form may not be accessible if user hasn't purchased
-		if (await ratingLabel.isVisible()) {
-			await expect(contentLabel).toBeVisible()
-
-			const submitButton = page.getByRole("button", { name: /Publier/i })
-			await expect(submitButton).toBeVisible()
-		}
+		const submitButton = page.getByRole("button", { name: /Publier/i })
+		await expect(submitButton).toBeVisible()
 	})
 })

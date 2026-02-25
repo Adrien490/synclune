@@ -69,7 +69,8 @@ test.describe("Resilience aux erreurs", () => {
 		test.skip(addButtonCount === 0, "Product requires SKU selection")
 
 		// Intercept cart API to simulate failure
-		await page.route("**/api/**", (route) => {
+		const routePattern = "**/api/**"
+		await page.route(routePattern, (route) => {
 			if (route.request().method() === "POST") {
 				route.abort("connectionrefused")
 			} else {
@@ -77,17 +78,20 @@ test.describe("Resilience aux erreurs", () => {
 			}
 		})
 
-		await productCatalogPage.addToCartButton.first().click()
+		try {
+			await productCatalogPage.addToCartButton.first().click()
 
-		// Should show error feedback, not crash
-		await page.waitForTimeout(2000)
-
-		// Page should still be interactive (not frozen)
-		const heading = page.getByRole("heading", { level: 1 })
-		await expect(heading).toBeVisible()
-
-		// Restore routes for subsequent tests
-		await page.unroute("**/api/**")
+			// Should show error feedback, not crash - wait for error state
+			const errorFeedback = page.locator('[role="alert"]')
+				.or(page.getByText(/erreur|impossible|réessayer/i))
+			await expect(async () => {
+				const heading = page.getByRole("heading", { level: 1 })
+				await expect(heading).toBeVisible()
+			}).toPass({ timeout: 5000 })
+		} finally {
+			// Always restore routes, even if test fails
+			await page.unroute(routePattern)
+		}
 	})
 
 	test("la navigation fonctionne apres une erreur", async ({ page }) => {

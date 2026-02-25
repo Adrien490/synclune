@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test"
 import { expect } from "@playwright/test"
+import { SELECTORS } from "../constants"
 
 export class SearchPage {
 	readonly searchForm: Locator
@@ -29,7 +30,7 @@ export class SearchPage {
 	}
 
 	async getResults() {
-		return this.page.locator('a[href*="/creations/"]')
+		return this.page.locator(SELECTORS.PRODUCT_LINK)
 	}
 
 	async getResultCount() {

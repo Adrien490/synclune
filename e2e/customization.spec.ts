@@ -42,9 +42,11 @@ test.describe("Personnalisation - Demande sur mesure", () => {
 		await page.getByLabel(/Prénom/i).blur()
 
 		// Submit without description and email
-		// The button should be disabled or show errors on attempt
-		const isDisabled = await submitButton.isDisabled()
-		if (!isDisabled) {
+		// Submit should either be disabled or show validation errors when clicked
+		if (await submitButton.isDisabled()) {
+			// Button correctly prevents submission with incomplete data
+			expect(true).toBe(true)
+		} else {
 			await submitButton.click()
 			// Should show validation errors
 			const errorMessage = page.getByText(/obligatoire|requis|invalide/i)
@@ -91,9 +93,10 @@ test.describe("Personnalisation - Demande sur mesure", () => {
 
 		await submitButton.click()
 
-		// Wait for feedback - success message or redirect
+		// Wait for success feedback specifically (not generic error alerts)
 		const successFeedback = page.getByText(/envoyé|reçu|merci|confirmation/i)
-			.or(page.locator('[role="alert"]'))
-		await expect(successFeedback.first()).toBeVisible({ timeout: 10000 })
+		const rateLimitError = page.getByText(/trop de demandes|réessayer plus tard|rate limit/i)
+
+		await expect(successFeedback.first().or(rateLimitError.first())).toBeVisible({ timeout: 10000 })
 	})
 })

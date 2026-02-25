@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures"
 
 test.describe("Performance budgets", () => {
-	test("homepage - LCP under 4s", async ({ page }) => {
+	test("homepage - LCP under 3s", async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
 
@@ -24,11 +24,10 @@ test.describe("Performance budgets", () => {
 			})
 		})
 
-		// LCP should be under 4000ms (generous budget for CI)
-		expect(lcp, `LCP was ${lcp}ms, should be under 4000ms`).toBeLessThan(4000)
+		expect(lcp, `LCP was ${lcp}ms, should be under 3000ms`).toBeLessThan(3000)
 	})
 
-	test("homepage - CLS under 0.25", async ({ page }) => {
+	test("homepage - CLS under 0.15", async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
 
@@ -51,11 +50,10 @@ test.describe("Performance budgets", () => {
 			})
 		})
 
-		// CLS should be under 0.25 (good threshold)
-		expect(cls, `CLS was ${cls}, should be under 0.25`).toBeLessThan(0.25)
+		expect(cls, `CLS was ${cls}, should be under 0.15`).toBeLessThan(0.15)
 	})
 
-	test("page produits - LCP under 4s", async ({ page }) => {
+	test("page produits - LCP under 3s", async ({ page }) => {
 		await page.goto("/produits")
 		await page.waitForLoadState("domcontentloaded")
 
@@ -76,10 +74,10 @@ test.describe("Performance budgets", () => {
 			})
 		})
 
-		expect(lcp, `LCP was ${lcp}ms, should be under 4000ms`).toBeLessThan(4000)
+		expect(lcp, `LCP was ${lcp}ms, should be under 3000ms`).toBeLessThan(3000)
 	})
 
-	test("page produits - CLS under 0.25", async ({ page }) => {
+	test("page produits - CLS under 0.15", async ({ page }) => {
 		await page.goto("/produits")
 		await page.waitForLoadState("domcontentloaded")
 
@@ -102,10 +100,10 @@ test.describe("Performance budgets", () => {
 			})
 		})
 
-		expect(cls, `CLS was ${cls}, should be under 0.25`).toBeLessThan(0.25)
+		expect(cls, `CLS was ${cls}, should be under 0.15`).toBeLessThan(0.15)
 	})
 
-	test("les pages critiques chargent en moins de 5s", async ({ page }) => {
+	test("les pages critiques chargent en moins de 3.5s", async ({ page }) => {
 		const criticalPages = ["/", "/produits", "/collections", "/connexion", "/inscription"]
 
 		for (const route of criticalPages) {
@@ -114,7 +112,7 @@ test.describe("Performance budgets", () => {
 			await page.waitForLoadState("domcontentloaded")
 			const loadTime = Date.now() - startTime
 
-			expect(loadTime, `${route} took ${loadTime}ms, should be under 5000ms`).toBeLessThan(5000)
+			expect(loadTime, `${route} took ${loadTime}ms, should be under 3500ms`).toBeLessThan(3500)
 		}
 	})
 })

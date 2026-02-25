@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test"
 import { expect } from "@playwright/test"
 import type { CartPage } from "./cart.page"
+import { SELECTORS } from "../constants"
 
 export class ProductCatalogPage {
 	readonly productLinks: Locator
@@ -9,7 +10,7 @@ export class ProductCatalogPage {
 	readonly heading: Locator
 
 	constructor(private page: Page) {
-		this.productLinks = page.locator('a[href*="/creations/"]')
+		this.productLinks = page.locator(SELECTORS.PRODUCT_LINK)
 		this.addToCartButton = page.getByRole("button", { name: /Ajouter au panier|Ajouter/i })
 		this.searchInput = page.getByRole("searchbox")
 		this.heading = page.getByRole("heading", { level: 1 })

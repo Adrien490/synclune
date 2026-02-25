@@ -50,10 +50,12 @@ test.describe("Newsletter", () => {
 		const footer = page.locator("footer")
 		const consentCheckbox = footer.getByLabel(/J'accepte.*newsletter/i)
 
-		if (await consentCheckbox.count() > 0) {
-			// Consent checkbox should be present and required
-			await expect(consentCheckbox).toBeVisible()
-		}
+		// RGPD consent checkbox should be present
+		// Skip test if the form doesn't have a consent checkbox
+		const checkboxCount = await consentCheckbox.count()
+		test.skip(checkboxCount === 0, "No RGPD consent checkbox in newsletter form")
+
+		await expect(consentCheckbox).toBeVisible()
 	})
 
 	test("s'inscrire avec un email valide affiche une confirmation", async ({ page }) => {
@@ -79,11 +81,12 @@ test.describe("Newsletter", () => {
 
 		await submitButton.click()
 
-		// Wait for feedback - success or error (rate limit in CI)
-		const feedback = page.getByText(/Inscrit|Merci|confirmation|envoyé/i)
-			.or(page.locator('[role="alert"]'))
+		// Wait for success feedback specifically (not generic error alerts)
+		const successFeedback = page.getByText(/Inscrit|Merci|confirmation|envoyé/i)
+		const rateLimitError = page.getByText(/trop de demandes|réessayer plus tard|rate limit/i)
 
-		await expect(feedback.first()).toBeVisible({ timeout: 5000 })
+		// Either success message or rate limit (acceptable in CI), but NOT a generic error
+		await expect(successFeedback.first().or(rateLimitError.first())).toBeVisible({ timeout: 5000 })
 	})
 
 	test("la page de confirmation newsletter existe", async ({ page }) => {

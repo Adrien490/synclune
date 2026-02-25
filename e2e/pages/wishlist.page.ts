@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test"
 import { expect } from "@playwright/test"
+import { SELECTORS } from "../constants"
 
 export class WishlistPage {
 	readonly heading: Locator
@@ -32,7 +33,7 @@ export class WishlistPage {
 	}
 
 	async getItems() {
-		return this.page.locator('a[href*="/creations/"]')
+		return this.page.locator(SELECTORS.PRODUCT_LINK)
 	}
 
 	async getItemCount() {

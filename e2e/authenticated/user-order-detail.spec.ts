@@ -46,13 +46,13 @@ test.describe("Detail de commande", () => {
 		await viewButton.click()
 		await page.waitForLoadState("domcontentloaded")
 
-		// Order detail should show heading
+		// Order detail should show heading with order number
 		const heading = page.getByRole("heading", { level: 1 })
 		await expect(heading).toBeVisible()
+		await expect(heading).toHaveText(/SYN-\d+/)
 
-		// Should contain order-related information
-		const pageContent = await page.textContent("body")
-		expect(pageContent).toMatch(/statut|total|article|adresse/i)
+		// Should display order total
+		await expect(page.getByText(/Total/i).first()).toBeVisible()
 	})
 
 	test("le tri des commandes fonctionne", async ({ page, orderPage }) => {
@@ -85,9 +85,13 @@ test.describe("Detail de commande", () => {
 
 		// Cancel button may or may not be visible depending on order status
 		const cancelButton = page.getByRole("button", { name: /Annuler/i })
-		const pageContent = await page.textContent("body")
 
-		// Just verify the page loaded correctly with order content
-		expect(pageContent).toBeTruthy()
+		// Order heading should be visible (page loaded correctly)
+		const heading = page.getByRole("heading", { level: 1 })
+		await expect(heading).toBeVisible()
+
+		// Assert cancel button is either visible (eligible) or order status doesn't allow it
+		const orderStatus = page.getByText(/Livr|Expédi|Annul|Rembours/i)
+		await expect(cancelButton.or(orderStatus.first())).toBeVisible()
 	})
 })

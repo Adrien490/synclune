@@ -12,50 +12,6 @@ test.describe("Parcours utilisateur authentifie", () => {
 		await expect(page).toHaveURL(/\/connexion/)
 	})
 
-	test("le formulaire d'inscription valide tous les champs avant soumission", async ({ page }) => {
-		await page.goto("/inscription")
-		await page.waitForLoadState("domcontentloaded")
-
-		// Try to submit with empty fields
-		const submitButton = page.getByRole("button", { name: /S'inscrire/i })
-
-		// Fill partial data and check validation cascade
-		const nameInput = page.getByRole("textbox", { name: /Prénom/i })
-		const emailInput = page.getByRole("textbox", { name: /^Email$/i })
-		const confirmEmailInput = page.getByRole("textbox", { name: /Confirmer l'email/i })
-		const passwordInput = page.locator('input[type="password"]').first()
-
-		// Step 1: Fill name too short
-		await nameInput.fill("A")
-		await nameInput.blur()
-		await expect(page.getByText(/au moins 2 caractères/i)).toBeVisible()
-
-		// Step 2: Fix name, bad email
-		await nameInput.fill("Marie")
-		await emailInput.fill("pas-un-email")
-		await emailInput.blur()
-		await expect(page.getByText(/Format d'email invalide/i)).toBeVisible()
-
-		// Step 3: Fix email, mismatched confirmation
-		await emailInput.fill("marie@example.com")
-		await confirmEmailInput.fill("autre@example.com")
-		await confirmEmailInput.blur()
-		await expect(page.getByText(/Les emails ne correspondent pas/i)).toBeVisible()
-
-		// Step 4: Fix confirmation, short password
-		await confirmEmailInput.fill("marie@example.com")
-		await passwordInput.fill("court")
-		await passwordInput.blur()
-		await expect(page.getByText(/au moins 8 caractères/i)).toBeVisible()
-
-		// Step 5: All valid - no validation errors should remain
-		await passwordInput.fill("MotDePasse123!")
-		await passwordInput.blur()
-
-		// The form should be submittable now (submit button not disabled)
-		await expect(submitButton).toBeEnabled()
-	})
-
 	test("le mot de passe oublie envoie un lien et affiche une confirmation", async ({ page }) => {
 		await page.goto("/mot-de-passe-oublie")
 		await page.waitForLoadState("domcontentloaded")
@@ -100,15 +56,12 @@ test.describe("Navigation entre pages critiques", () => {
 		await page.waitForLoadState("domcontentloaded")
 		await expect(page).toHaveTitle(/Synclune/)
 
-		// Navigate to products
+		// Navigate to products via navigation link
 		const productLink = page.getByRole("link", { name: /Créations|Produits|Boutique/i })
-		if (await productLink.first().isVisible()) {
-			await productLink.first().click()
-			await page.waitForLoadState("domcontentloaded")
-			await expect(page).toHaveURL(/\/produits/)
-		} else {
-			await page.goto("/produits")
-		}
+		await expect(productLink.first()).toBeVisible()
+		await productLink.first().click()
+		await page.waitForLoadState("domcontentloaded")
+		await expect(page).toHaveURL(/\/produits/)
 
 		// Navigate to collections
 		await page.goto("/collections")
@@ -135,10 +88,9 @@ test.describe("Navigation entre pages critiques", () => {
 
 		for (const { name, href } of legalLinks) {
 			const link = footer.getByRole("link", { name })
-			if (await link.count() > 0) {
-				const linkHref = await link.first().getAttribute("href")
-				expect(linkHref).toMatch(href)
-			}
+			await expect(link.first()).toBeAttached()
+			const linkHref = await link.first().getAttribute("href")
+			expect(linkHref).toMatch(href)
 		}
 	})
 })

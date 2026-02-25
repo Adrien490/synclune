@@ -24,9 +24,14 @@ test.describe("Retours et remboursements", () => {
 		const returnButton = page.getByRole("button", { name: /Retour|Remboursement|Retourner/i })
 			.or(page.getByRole("link", { name: /Retour|Remboursement/i }))
 
-		// Return button may or may not be visible depending on order status
-		const pageContent = await page.textContent("body")
-		expect(pageContent).toBeTruthy()
+		// Order detail page should display order heading
+		const heading = page.getByRole("heading", { level: 1 })
+		await expect(heading).toBeVisible()
+
+		// Return button visibility depends on order status (DELIVERED)
+		// Assert it's either visible or the order status doesn't allow returns
+		const orderStatus = page.getByText(/Statut/i).locator("..").getByText(/Livr|En cours|Expédi|Annul|En attente/i)
+		await expect(returnButton.or(orderStatus.first())).toBeVisible()
 	})
 
 	test("la vue detail de commande affiche les informations", async ({ page, orderPage }) => {
@@ -41,12 +46,13 @@ test.describe("Retours et remboursements", () => {
 
 		await page.waitForLoadState("domcontentloaded")
 
-		// Order detail should show key information
+		// Order detail should show heading with order number
 		const heading = page.getByRole("heading", { level: 1 })
 		await expect(heading).toBeVisible()
+		await expect(heading).toHaveText(/SYN-\d+/)
 
-		// Should display order number, status, or items
-		const pageContent = await page.textContent("body")
-		expect(pageContent).toMatch(/SYN-\d+|commande|statut|total/i)
+		// Should display specific order information sections
+		const orderInfo = page.getByText(/Total/i)
+		await expect(orderInfo.first()).toBeVisible()
 	})
 })
