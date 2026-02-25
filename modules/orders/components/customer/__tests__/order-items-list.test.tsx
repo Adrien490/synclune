@@ -70,7 +70,7 @@ describe("OrderItemsList", () => {
 	describe("heading", () => {
 		it("renders the heading with correct item count for one item", () => {
 			render(<OrderItemsList items={[createItem()]} />);
-			expect(screen.getByText(/Articles commandés \(1\)/)).toBeDefined();
+			expect(screen.getByText(/Articles commandés \(1\)/)).toBeInTheDocument();
 		});
 
 		it("renders the heading with correct item count for multiple items", () => {
@@ -82,12 +82,12 @@ describe("OrderItemsList", () => {
 					]}
 				/>
 			);
-			expect(screen.getByText(/Articles commandés \(2\)/)).toBeDefined();
+			expect(screen.getByText(/Articles commandés \(2\)/)).toBeInTheDocument();
 		});
 
 		it("renders the heading with zero items", () => {
 			render(<OrderItemsList items={[]} />);
-			expect(screen.getByText(/Articles commandés \(0\)/)).toBeDefined();
+			expect(screen.getByText(/Articles commandés \(0\)/)).toBeInTheDocument();
 		});
 	});
 
@@ -101,8 +101,8 @@ describe("OrderItemsList", () => {
 					]}
 				/>
 			);
-			expect(screen.getByText("Bague en argent")).toBeDefined();
-			expect(screen.getByText("Collier doré")).toBeDefined();
+			expect(screen.getByText("Bague en argent")).toBeInTheDocument();
+			expect(screen.getByText("Collier doré")).toBeInTheDocument();
 		});
 	});
 
@@ -144,7 +144,7 @@ describe("OrderItemsList", () => {
 				/>
 			);
 			expect(screen.queryByRole("img")).toBeNull();
-			expect(screen.getByText("Image")).toBeDefined();
+			expect(screen.getByText("Image")).toBeInTheDocument();
 		});
 
 		it("uses the product title as the alt text for the image", () => {
@@ -176,7 +176,7 @@ describe("OrderItemsList", () => {
 					]}
 				/>
 			);
-			expect(screen.getByText("Or • Argent 925 • 52")).toBeDefined();
+			expect(screen.getByText("Or • Argent 925 • 52")).toBeInTheDocument();
 		});
 
 		it("filters out null variant values", () => {
@@ -191,7 +191,7 @@ describe("OrderItemsList", () => {
 					]}
 				/>
 			);
-			expect(screen.getByText("Or")).toBeDefined();
+			expect(screen.getByText("Or")).toBeInTheDocument();
 			// No bullet separators present when only one variant
 			expect(screen.queryByText(/•/)).toBeNull();
 		});
@@ -208,7 +208,7 @@ describe("OrderItemsList", () => {
 					]}
 				/>
 			);
-			expect(screen.getByText("Or jaune")).toBeDefined();
+			expect(screen.getByText("Or jaune")).toBeInTheDocument();
 		});
 
 		it("does not render the variants paragraph when all variant fields are null", () => {
@@ -239,19 +239,19 @@ describe("OrderItemsList", () => {
 					]}
 				/>
 			);
-			expect(screen.getByText("Rose • M")).toBeDefined();
+			expect(screen.getByText("Rose • M")).toBeInTheDocument();
 		});
 	});
 
 	describe("quantity", () => {
 		it("displays the quantity for each item", () => {
 			render(<OrderItemsList items={[createItem({ quantity: 3 })]} />);
-			expect(screen.getByText("Quantité : 3")).toBeDefined();
+			expect(screen.getByText("Quantité : 3")).toBeInTheDocument();
 		});
 
 		it("displays quantity 1 correctly", () => {
 			render(<OrderItemsList items={[createItem({ quantity: 1 })]} />);
-			expect(screen.getByText("Quantité : 1")).toBeDefined();
+			expect(screen.getByText("Quantité : 1")).toBeInTheDocument();
 		});
 	});
 
@@ -261,14 +261,14 @@ describe("OrderItemsList", () => {
 			render(
 				<OrderItemsList items={[createItem({ price: 2500, quantity: 2 })]} />
 			);
-			expect(screen.getByText("50.00 €")).toBeDefined();
+			expect(screen.getByText("50.00 €")).toBeInTheDocument();
 		});
 
 		it("shows the unit price when quantity is greater than 1", () => {
 			render(
 				<OrderItemsList items={[createItem({ price: 2500, quantity: 2 })]} />
 			);
-			expect(screen.getByText("25.00 € / unité")).toBeDefined();
+			expect(screen.getByText("25.00 € / unité")).toBeInTheDocument();
 		});
 
 		it("does not show the unit price when quantity is 1", () => {
@@ -282,7 +282,7 @@ describe("OrderItemsList", () => {
 			render(
 				<OrderItemsList items={[createItem({ price: 3000, quantity: 1 })]} />
 			);
-			expect(screen.getByText("30.00 €")).toBeDefined();
+			expect(screen.getByText("30.00 €")).toBeInTheDocument();
 		});
 
 		it("shows the correct total for quantity 3 (price * 3)", () => {
@@ -290,7 +290,7 @@ describe("OrderItemsList", () => {
 			render(
 				<OrderItemsList items={[createItem({ price: 1500, quantity: 3 })]} />
 			);
-			expect(screen.getByText("45.00 €")).toBeDefined();
+			expect(screen.getByText("45.00 €")).toBeInTheDocument();
 		});
 	});
 
@@ -314,10 +314,10 @@ describe("OrderItemsList", () => {
 					]}
 				/>
 			);
-			expect(screen.getByText("Bague en argent")).toBeDefined();
-			expect(screen.getByText("Bracelet doré")).toBeDefined();
-			expect(screen.getByText("25.00 €")).toBeDefined();
-			expect(screen.getByText("80.00 €")).toBeDefined();
+			expect(screen.getByText("Bague en argent")).toBeInTheDocument();
+			expect(screen.getByText("Bracelet doré")).toBeInTheDocument();
+			expect(screen.getByText("25.00 €")).toBeInTheDocument();
+			expect(screen.getByText("80.00 €")).toBeInTheDocument();
 		});
 	});
 });

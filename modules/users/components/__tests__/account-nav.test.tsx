@@ -116,7 +116,7 @@ describe("Desktop nav accessibility", () => {
 		const nav = screen.getByRole("navigation", {
 			name: "Navigation espace client",
 		});
-		expect(nav).toBeDefined();
+		expect(nav).toBeInTheDocument();
 	});
 
 	it("is wrapped in an aside element", () => {
@@ -226,7 +226,7 @@ describe("Desktop nav items", () => {
 	it("renders Adresses (desktopOnly item)", () => {
 		render(<AccountNav variant="desktop-only" />);
 
-		expect(screen.getByRole("link", { name: /Adresses/i })).toBeDefined();
+		expect(screen.getByRole("link", { name: /Adresses/i })).toBeInTheDocument();
 	});
 
 	it("renders Mes demandes (desktopOnly item)", () => {
@@ -234,7 +234,7 @@ describe("Desktop nav items", () => {
 
 		expect(
 			screen.getByRole("link", { name: /Mes demandes/i })
-		).toBeDefined();
+		).toBeInTheDocument();
 	});
 });
 
@@ -266,7 +266,7 @@ describe("Mobile nav items", () => {
 	it("uses mobileLabel for Tableau de bord", () => {
 		render(<AccountNav variant="mobile-only" />);
 
-		expect(screen.getByText("Accueil")).toBeDefined();
+		expect(screen.getByText("Accueil")).toBeInTheDocument();
 		expect(screen.queryByText("Tableau de bord")).toBeNull();
 	});
 });

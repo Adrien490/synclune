@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("Navigation principale", () => {
 	test.beforeEach(async ({ page }) => {
@@ -39,14 +39,13 @@ test.describe("Navigation principale", () => {
 		await expect(personnalisationLink).toBeVisible()
 	})
 
-	test("la navbar contient les icônes d'action (favoris, panier)", async ({ page }) => {
+	test("la navbar contient les icônes d'action (favoris, panier)", async ({ page, cartPage }) => {
 		// Icône favoris (accessible via aria-label)
 		const favoritesLink = page.getByRole("link", { name: /Accéder à mes favoris/i })
 		await expect(favoritesLink).toBeVisible()
 
 		// Bouton panier
-		const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
-		await expect(cartButton).toBeVisible()
+		await expect(cartPage.openButton).toBeVisible()
 	})
 
 	test("navigation vers /produits", async ({ page }) => {

@@ -1,92 +1,86 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("Parcours checkout complet", () => {
 	test.describe("Initiation du checkout depuis le panier", () => {
-		test("le bouton de paiement est absent quand le panier est vide", async ({ page }) => {
+		test("le bouton de paiement est absent quand le panier est vide", async ({ page, cartPage }) => {
 			await page.goto("/")
 			await page.waitForLoadState("domcontentloaded")
 
-			// Open cart sheet
-			const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
-			await cartButton.click()
-
-			const cartDialog = page.getByRole("dialog")
-			await expect(cartDialog).toBeVisible()
+			await cartPage.open()
 
 			// Verify empty state - no checkout button
-			await expect(cartDialog.getByText(/Votre panier est vide/i)).toBeVisible()
-			const checkoutButton = cartDialog.getByRole("link", { name: /Passer commande|Commander|Paiement/i })
-			await expect(checkoutButton).not.toBeVisible()
+			await expect(cartPage.emptyMessage).toBeVisible()
+			await expect(cartPage.checkoutLink).not.toBeVisible()
 		})
 
-		test("ajouter un produit puis voir le bouton de paiement dans le panier", async ({ page }) => {
+		test("ajouter un produit puis voir le bouton de paiement dans le panier", async ({ page, cartPage, productCatalogPage }) => {
 			// Navigate to a product
-			await page.goto("/produits")
-			await page.waitForLoadState("networkidle")
+			await productCatalogPage.goto()
 
-			const productLinks = page.locator('a[href*="/creations/"]')
-			const count = await productLinks.count()
+			const count = await productCatalogPage.productLinks.count()
 
 			if (count === 0) {
 				test.skip(true, "Seed data required: no products found")
 				return
 			}
 
-			await productLinks.first().click()
-			await page.waitForLoadState("domcontentloaded")
+			await productCatalogPage.gotoFirstProduct()
 
 			// Try to add to cart
-			const addToCartButton = page.getByRole("button", {
-				name: /Ajouter au panier|Ajouter/i,
-			})
-
-			if (await addToCartButton.count() === 0) {
+			if (await productCatalogPage.addToCartButton.count() === 0) {
 				test.skip(true, "Product requires SKU selection - skipping checkout test")
 				return
 			}
 
-			await addToCartButton.first().click()
+			await productCatalogPage.addToCartButton.first().click()
 
-			// Wait for cart feedback
-			await page.waitForTimeout(2000)
+			// Wait for cart feedback (dialog or toast)
+			const toastOrFeedback = page.getByText(/ajouté|panier/i)
+			await expect(cartPage.dialog.or(toastOrFeedback.first())).toBeVisible({ timeout: 5000 })
 
 			// Open cart if not already open
-			const cartDialog = page.getByRole("dialog")
-			if (!await cartDialog.isVisible().catch(() => false)) {
-				const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
-				await cartButton.click()
-				await expect(cartDialog).toBeVisible()
+			if (!await cartPage.dialog.isVisible()) {
+				await cartPage.open()
 			}
 
 			// Cart should not be empty
-			await expect(cartDialog.getByText(/Votre panier est vide/i)).not.toBeVisible()
+			await expect(cartPage.emptyMessage).not.toBeVisible()
 
 			// Should display price
-			const cartContent = await cartDialog.textContent()
+			const cartContent = await cartPage.dialog.textContent()
 			expect(cartContent).toMatch(/\d+[,.]?\d*\s*€/)
 		})
 	})
 
 	test.describe("Page de paiement", () => {
 		test("accéder à /paiement sans panier redirige ou affiche un message", async ({ page }) => {
-			// Trying to access payment page directly without a cart should handle gracefully
 			const response = await page.goto("/paiement")
 			await page.waitForLoadState("domcontentloaded")
 
-			// Should either redirect or show an appropriate message
 			const url = page.url()
-			const pageContent = await page.textContent("body")
 
-			const isHandled =
-				url.includes("/produits") ||
-				url.includes("/boutique") ||
-				url.includes("/connexion") ||
-				url === page.url() && (
-					pageContent?.match(/panier.*vide|aucun.*article|erreur/i) !== null ||
+			// Unauthenticated users should be redirected to login
+			if (url.includes("/connexion")) {
+				await expect(page).toHaveURL(/\/connexion/)
+				return
+			}
+
+			// Authenticated users with empty cart should see an empty state or be redirected to shop
+			if (url.includes("/produits") || url.includes("/boutique")) {
+				await expect(page).toHaveURL(/\/(produits|boutique)/)
+				return
+			}
+
+			// If staying on /paiement, page should show empty cart message or error
+			const emptyCartMessage = page.getByText(/panier.*vide|aucun.*article/i)
+			const errorMessage = page.getByText(/erreur/i)
+
+			await expect(async () => {
+				const hasMessage = await emptyCartMessage.isVisible() ||
+					await errorMessage.isVisible() ||
 					response?.status() === 404
-				)
-
-			expect(isHandled).toBe(true)
+				expect(hasMessage).toBe(true)
+			}).toPass({ timeout: 5000 })
 		})
 	})
 
@@ -96,14 +90,16 @@ test.describe("Parcours checkout complet", () => {
 			await page.waitForLoadState("domcontentloaded")
 
 			const url = page.url()
-			const pageContent = await page.textContent("body")
 
-			// Should either redirect or show error state
-			const isHandled =
-				!url.includes("/paiement/confirmation") ||
-				pageContent?.match(/erreur|introuvable|not found|commande/i) !== null
+			// If redirected away from confirmation page, that's valid
+			if (!url.includes("/paiement/confirmation")) {
+				expect(url).not.toContain("/paiement/confirmation")
+				return
+			}
 
-			expect(isHandled).toBe(true)
+			// If staying on the page, should display an error/not-found message
+			const errorIndicator = page.getByText(/erreur|introuvable|not found|commande/i)
+			await expect(errorIndicator.first()).toBeVisible()
 		})
 
 		test("/paiement/confirmation avec un order_id invalide affiche une erreur", async ({ page }) => {
@@ -147,16 +143,23 @@ test.describe("Parcours checkout complet", () => {
 			await page.waitForLoadState("domcontentloaded")
 
 			const url = page.url()
-			const pageContent = await page.textContent("body")
 
-			// Should either redirect or show loading/error state
-			const isHandled =
-				!url.includes("/paiement/retour") ||
-				pageContent?.match(/chargement|erreur|redirection|traitement/i) !== null ||
-				url.includes("/paiement/confirmation") ||
-				url.includes("/paiement/annulation")
+			// Without session_id, should redirect to confirmation, cancellation, or show error
+			if (url.includes("/paiement/confirmation") || url.includes("/paiement/annulation")) {
+				// Redirected to an appropriate page
+				expect(url).toMatch(/\/paiement\/(confirmation|annulation)/)
+				return
+			}
 
-			expect(isHandled).toBe(true)
+			if (!url.includes("/paiement/retour")) {
+				// Redirected elsewhere (e.g., home, shop)
+				expect(url).not.toContain("/paiement/retour")
+				return
+			}
+
+			// If staying on /paiement/retour, should show loading/error state
+			const stateIndicator = page.getByText(/chargement|erreur|redirection|traitement/i)
+			await expect(stateIndicator.first()).toBeVisible()
 		})
 	})
 })

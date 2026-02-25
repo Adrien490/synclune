@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("SEO et métadonnées - Homepage", () => {
 	test.beforeEach(async ({ page }) => {
@@ -114,16 +114,12 @@ test.describe("SEO et métadonnées - Page produits", () => {
 })
 
 test.describe("SEO et métadonnées - Page produit détail", () => {
-	test("la page détail produit a un JSON-LD de type Product", async ({ page }) => {
-		// Trouver une URL de produit existante
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("la page détail produit a un JSON-LD de type Product", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
+		expect(await productCatalogPage.productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
-		const href = await productLinks.first().getAttribute("href")
-		await page.goto(href!)
+		await productCatalogPage.gotoFirstProduct()
 		await page.waitForLoadState("networkidle")
 
 		// Chercher un JSON-LD de type Product
@@ -143,31 +139,22 @@ test.describe("SEO et métadonnées - Page produit détail", () => {
 		expect(hasProductSchema).toBe(true)
 	})
 
-	test("la page détail produit a un titre SEO pertinent", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("la page détail produit a un titre SEO pertinent", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
+		expect(await productCatalogPage.productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
-		const href = await productLinks.first().getAttribute("href")
-		await page.goto(href!)
-		await page.waitForLoadState("domcontentloaded")
+		await productCatalogPage.gotoFirstProduct()
 
-		// Le titre doit contenir «Synclune»
 		await expect(page).toHaveTitle(/Synclune/)
 	})
 
-	test("la page détail produit a des balises Open Graph", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("la page détail produit a des balises Open Graph", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
+		expect(await productCatalogPage.productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
-		const href = await productLinks.first().getAttribute("href")
-		await page.goto(href!)
-		await page.waitForLoadState("domcontentloaded")
+		await productCatalogPage.gotoFirstProduct()
 
 		const ogTitle = page.locator('meta[property="og:title"]')
 		await expect(ogTitle).toBeAttached()
@@ -199,7 +186,6 @@ test.describe("SEO - Pages légales", () => {
 
 	test("la page 404 s'affiche pour une route inexistante", async ({ page }) => {
 		const response = await page.goto("/route-qui-nexiste-vraiment-pas-du-tout")
-		// Next.js renvoie 404
 		expect(response?.status()).toBe(404)
 	})
 })

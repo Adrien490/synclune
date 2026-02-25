@@ -154,7 +154,7 @@ describe("ProductCard", () => {
 	it("renders the product title", () => {
 		mockGetProductCardData.mockReturnValue(createCardData());
 		render(<ProductCard product={createProduct()} />);
-		expect(screen.getByText("Bague Lune Argent")).toBeDefined();
+		expect(screen.getByText("Bague Lune Argent")).toBeInTheDocument();
 	});
 
 	it("links title to the correct product page URL", () => {
@@ -167,7 +167,7 @@ describe("ProductCard", () => {
 	it("renders the product price via ProductPrice", () => {
 		mockGetProductCardData.mockReturnValue(createCardData({ price: 4800 }));
 		render(<ProductCard product={createProduct()} />);
-		expect(screen.getByTestId("product-price")).toBeDefined();
+		expect(screen.getByTestId("product-price")).toBeInTheDocument();
 		expect(screen.getByTestId("product-price").textContent).toContain("48.00");
 	});
 
@@ -184,7 +184,7 @@ describe("ProductCard", () => {
 		);
 		render(<ProductCard product={createProduct()} />);
 		const img = screen.getByRole("img", { name: "Bague Lune Argent" });
-		expect(img).toBeDefined();
+		expect(img).toBeInTheDocument();
 		expect((img as HTMLImageElement).src).toContain("bague.jpg");
 	});
 
@@ -205,7 +205,7 @@ describe("ProductCard", () => {
 			const matches = screen.getAllByText("Rupture de stock");
 			expect(matches.length).toBeGreaterThanOrEqual(1);
 			// The visual badge carries data-testid="badge-secondary"
-			expect(screen.getByTestId("badge-secondary")).toBeDefined();
+			expect(screen.getByTestId("badge-secondary")).toBeInTheDocument();
 		});
 
 		it("does not show out-of-stock badge when product is in stock", () => {
@@ -228,7 +228,7 @@ describe("ProductCard", () => {
 				})
 			);
 			render(<ProductCard product={createProduct()} />);
-			expect(screen.getByText("Plus que 2 !")).toBeDefined();
+			expect(screen.getByText("Plus que 2 !")).toBeInTheDocument();
 		});
 	});
 
@@ -248,7 +248,7 @@ describe("ProductCard", () => {
 			);
 			render(<ProductCard product={createProduct()} />);
 			// discount = round(1 - 3600/4800) * 100 = round(25) = 25%
-			expect(screen.getByText("-25%")).toBeDefined();
+			expect(screen.getByText("-25%")).toBeInTheDocument();
 		});
 
 		it("does not show discount badge when there is no compareAtPrice", () => {
@@ -298,7 +298,7 @@ describe("ProductCard", () => {
 			);
 			render(<ProductCard product={createProduct()} />);
 			const list = screen.getByRole("list", { name: /couleurs disponibles/i });
-			expect(list).toBeDefined();
+			expect(list).toBeInTheDocument();
 		});
 
 		it("does not render color swatches for a single color", () => {
@@ -352,7 +352,7 @@ describe("ProductCard", () => {
 			render(<ProductCard product={createProduct()} />);
 			// The title h3 has an id used by aria-labelledby on the article
 			const heading = screen.getByRole("heading", { name: "Bague Lune Argent" });
-			expect(heading).toBeDefined();
+			expect(heading).toBeInTheDocument();
 		});
 	});
 });

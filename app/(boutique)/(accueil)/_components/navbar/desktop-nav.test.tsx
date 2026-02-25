@@ -89,9 +89,9 @@ describe("DesktopNav", () => {
 	it("renders all nav items", () => {
 		render(<DesktopNav navItems={navItems} />);
 
-		expect(screen.getByText("Les créations")).toBeDefined();
-		expect(screen.getByText("Les collections")).toBeDefined();
-		expect(screen.getByText("Personnalisation")).toBeDefined();
+		expect(screen.getByText("Les créations")).toBeInTheDocument();
+		expect(screen.getByText("Les collections")).toBeInTheDocument();
+		expect(screen.getByText("Personnalisation")).toBeInTheDocument();
 	});
 
 	it("renders simple items as links", () => {
@@ -105,7 +105,7 @@ describe("DesktopNav", () => {
 		render(<DesktopNav navItems={navItems} />);
 
 		const creationsButton = screen.getByRole("button", { name: "Les créations" });
-		expect(creationsButton).toBeDefined();
+		expect(creationsButton).toBeInTheDocument();
 	});
 
 	it("marks the active dropdown trigger with aria-current=true", () => {
@@ -125,7 +125,7 @@ describe("DesktopNav", () => {
 	it("renders mega menu content for dropdown items", () => {
 		render(<DesktopNav navItems={navItems} />);
 
-		expect(screen.getByTestId("mega-menu-creations")).toBeDefined();
-		expect(screen.getByTestId("mega-menu-collections")).toBeDefined();
+		expect(screen.getByTestId("mega-menu-creations")).toBeInTheDocument();
+		expect(screen.getByTestId("mega-menu-collections")).toBeInTheDocument();
 	});
 });

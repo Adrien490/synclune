@@ -81,7 +81,7 @@ describe("OrderStatusTimeline", () => {
 	describe("section heading and badge", () => {
 		it("renders the section heading 'Suivi de commande'", () => {
 			render(<OrderStatusTimeline order={createOrder()} />);
-			expect(screen.getByText("Suivi de commande")).toBeDefined();
+			expect(screen.getByText("Suivi de commande")).toBeInTheDocument();
 		});
 
 		it("renders the order status badge with the correct label", () => {
@@ -107,12 +107,12 @@ describe("OrderStatusTimeline", () => {
 	describe("cancelled order", () => {
 		it("shows the cancellation alert for CANCELLED status", () => {
 			render(<OrderStatusTimeline order={createOrder({ status: "CANCELLED" })} />);
-			expect(screen.getByText("Commande annulée")).toBeDefined();
+			expect(screen.getByText("Commande annulée")).toBeInTheDocument();
 		});
 
 		it("shows the cancellation description message", () => {
 			render(<OrderStatusTimeline order={createOrder({ status: "CANCELLED" })} />);
-			expect(screen.getByText("Cette commande a été annulée.")).toBeDefined();
+			expect(screen.getByText("Cette commande a été annulée.")).toBeInTheDocument();
 		});
 
 		it("does not render any timeline steps for a cancelled order", () => {
@@ -128,11 +128,11 @@ describe("OrderStatusTimeline", () => {
 	describe("timeline steps rendering", () => {
 		it("renders all 5 step labels for a non-cancelled order", () => {
 			render(<OrderStatusTimeline order={createOrder()} />);
-			expect(screen.getByText("Commande passée")).toBeDefined();
-			expect(screen.getByText("Paiement reçu")).toBeDefined();
-			expect(screen.getByText("En préparation")).toBeDefined();
-			expect(screen.getByText("Expédiée")).toBeDefined();
-			expect(screen.getByText("Livrée")).toBeDefined();
+			expect(screen.getByText("Commande passée")).toBeInTheDocument();
+			expect(screen.getByText("Paiement reçu")).toBeInTheDocument();
+			expect(screen.getByText("En préparation")).toBeInTheDocument();
+			expect(screen.getByText("Expédiée")).toBeInTheDocument();
+			expect(screen.getByText("Livrée")).toBeInTheDocument();
 		});
 
 		it("renders 'Commande passée' as always completed (foreground text class)", () => {
@@ -144,7 +144,7 @@ describe("OrderStatusTimeline", () => {
 		it("always displays the createdAt date for the first step", () => {
 			render(<OrderStatusTimeline order={createOrder({ createdAt: BASE_DATE })} />);
 			// createdAt step is always completed — its date must be shown
-			expect(screen.getByText("1 janvier 2024 à 10:00")).toBeDefined();
+			expect(screen.getByText("1 janvier 2024 à 10:00")).toBeInTheDocument();
 		});
 	});
 

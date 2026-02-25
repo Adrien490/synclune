@@ -40,14 +40,14 @@ describe("AddressCard", () => {
 	it("renders the full name", () => {
 		render(<AddressCard address={createAddress()} />);
 
-		expect(screen.getByText("Marie Dupont")).toBeDefined();
+		expect(screen.getByText("Marie Dupont")).toBeInTheDocument();
 	});
 
 	it("renders the address lines", () => {
 		render(<AddressCard address={createAddress()} />);
 
-		expect(screen.getByText("12 Rue de la Paix")).toBeDefined();
-		expect(screen.getByText("75001 Paris")).toBeDefined();
+		expect(screen.getByText("12 Rue de la Paix")).toBeInTheDocument();
+		expect(screen.getByText("75001 Paris")).toBeInTheDocument();
 	});
 
 	it("renders address2 when present", () => {
@@ -55,7 +55,7 @@ describe("AddressCard", () => {
 			<AddressCard address={createAddress({ address2: "Bâtiment B" })} />
 		);
 
-		expect(screen.getByText("Bâtiment B")).toBeDefined();
+		expect(screen.getByText("Bâtiment B")).toBeInTheDocument();
 	});
 
 	it("does not render address2 when null", () => {
@@ -69,7 +69,7 @@ describe("AddressCard", () => {
 			<AddressCard address={createAddress({ isDefault: true })} />
 		);
 
-		expect(screen.getByText("Par défaut")).toBeDefined();
+		expect(screen.getByText("Par défaut")).toBeInTheDocument();
 	});
 
 	it("hides default badge when isDefault is false", () => {
@@ -81,7 +81,7 @@ describe("AddressCard", () => {
 	it("renders the actions component", () => {
 		render(<AddressCard address={createAddress()} />);
 
-		expect(screen.getByTestId("actions-addr-1")).toBeDefined();
+		expect(screen.getByTestId("actions-addr-1")).toBeInTheDocument();
 	});
 
 	describe("phone formatting", () => {
@@ -90,7 +90,7 @@ describe("AddressCard", () => {
 				<AddressCard address={createAddress({ phone: "+33612345678" })} />
 			);
 
-			expect(screen.getByText("+33 6 12 34 56 78")).toBeDefined();
+			expect(screen.getByText("+33 6 12 34 56 78")).toBeInTheDocument();
 		});
 
 		it("formats 0X national numbers with spaces", () => {
@@ -98,7 +98,7 @@ describe("AddressCard", () => {
 				<AddressCard address={createAddress({ phone: "0612345678" })} />
 			);
 
-			expect(screen.getByText("06 12 34 56 78")).toBeDefined();
+			expect(screen.getByText("06 12 34 56 78")).toBeInTheDocument();
 		});
 
 		it("returns unformatted phone for non-FR numbers", () => {
@@ -106,7 +106,7 @@ describe("AddressCard", () => {
 				<AddressCard address={createAddress({ phone: "+4915112345678" })} />
 			);
 
-			expect(screen.getByText("+4915112345678")).toBeDefined();
+			expect(screen.getByText("+4915112345678")).toBeInTheDocument();
 		});
 
 		it("formats landline numbers correctly", () => {
@@ -114,7 +114,7 @@ describe("AddressCard", () => {
 				<AddressCard address={createAddress({ phone: "0145678901" })} />
 			);
 
-			expect(screen.getByText("01 45 67 89 01")).toBeDefined();
+			expect(screen.getByText("01 45 67 89 01")).toBeInTheDocument();
 		});
 	});
 });

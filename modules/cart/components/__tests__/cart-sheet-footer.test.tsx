@@ -92,31 +92,31 @@ function createProps(overrides: Partial<React.ComponentProps<typeof CartSheetFoo
 describe("CartSheetFooter", () => {
 	it("renders the subtotal via AnimatedNumber", () => {
 		render(<CartSheetFooter {...createProps({ subtotal: 4800 })} />);
-		expect(screen.getByTestId("animated-number")).toBeDefined();
+		expect(screen.getByTestId("animated-number")).toBeInTheDocument();
 		expect(screen.getByTestId("animated-number").textContent).toContain("48.00");
 	});
 
 	it("displays item count in singular for one item", () => {
 		render(<CartSheetFooter {...createProps({ totalItems: 1 })} />);
-		expect(screen.getByText(/Sous-total \(1 article\)/)).toBeDefined();
+		expect(screen.getByText(/Sous-total \(1 article\)/)).toBeInTheDocument();
 	});
 
 	it("displays item count in plural for multiple items", () => {
 		render(<CartSheetFooter {...createProps({ totalItems: 3 })} />);
-		expect(screen.getByText(/Sous-total \(3 articles\)/)).toBeDefined();
+		expect(screen.getByText(/Sous-total \(3 articles\)/)).toBeInTheDocument();
 	});
 
 	it("renders checkout link to /paiement when no stock issues", () => {
 		render(<CartSheetFooter {...createProps({ hasStockIssues: false })} />);
 		const link = screen.getByRole("link", { name: /Passer commande/i });
-		expect(link).toBeDefined();
+		expect(link).toBeInTheDocument();
 		expect(link.getAttribute("href")).toBe("/paiement");
 	});
 
 	it("renders disabled button instead of link when stock issues exist", () => {
 		render(<CartSheetFooter {...createProps({ hasStockIssues: true })} />);
 		const disabledButton = screen.getByRole("button", { name: /Passer commande/i });
-		expect(disabledButton).toBeDefined();
+		expect(disabledButton).toBeInTheDocument();
 		expect(disabledButton).toBeDisabled();
 	});
 
@@ -139,7 +139,7 @@ describe("CartSheetFooter", () => {
 
 	it("renders 'Continuer mes achats' button", () => {
 		render(<CartSheetFooter {...createProps()} />);
-		expect(screen.getByText("Continuer mes achats")).toBeDefined();
+		expect(screen.getByText("Continuer mes achats")).toBeInTheDocument();
 	});
 
 	it("calls onClose when 'Continuer mes achats' is clicked", async () => {
@@ -159,6 +159,6 @@ describe("CartSheetFooter", () => {
 
 	it("renders the sheet footer wrapper", () => {
 		render(<CartSheetFooter {...createProps()} />);
-		expect(screen.getByTestId("sheet-footer")).toBeDefined();
+		expect(screen.getByTestId("sheet-footer")).toBeInTheDocument();
 	});
 });

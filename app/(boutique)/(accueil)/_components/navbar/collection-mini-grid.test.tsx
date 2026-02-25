@@ -36,7 +36,7 @@ describe("CollectionMiniGrid", () => {
 			);
 
 			const imgContainer = container.querySelector("[role='img']");
-			expect(imgContainer).toBeDefined();
+			expect(imgContainer).toBeInTheDocument();
 			expect(imgContainer?.getAttribute("aria-label")).toBe(
 				"1 photo de la collection Mariage"
 			);

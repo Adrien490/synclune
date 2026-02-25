@@ -1,72 +1,44 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("Parcours produit → panier", () => {
-	test("naviguer vers un produit depuis le catalogue et voir les details", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("naviguer vers un produit depuis le catalogue et voir les details", async ({ productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		// Find a product link
-		const productLinks = page.locator('a[href*="/creations/"]')
-		const count = await productLinks.count()
+		const count = await productCatalogPage.productLinks.count()
 		expect(count, "Seed data required: no products found").toBeGreaterThan(0)
 
 		// Click the first product
-		const firstLink = productLinks.first()
-		const productName = await firstLink.textContent()
+		const firstLink = productCatalogPage.productLinks.first()
 		await firstLink.click()
-		await page.waitForLoadState("domcontentloaded")
 
-		// Should be on a product detail page
-		await expect(page).toHaveURL(/\/creations\//)
+		await expect(firstLink.page()).toHaveURL(/\/creations\//)
 
 		// Product page must have: h1 title, price, image, add-to-cart action
-		const heading = page.getByRole("heading", { level: 1 })
+		const heading = firstLink.page().getByRole("heading", { level: 1 })
 		await expect(heading).toBeVisible()
 
-		const priceText = await page.textContent("body")
+		const priceText = await firstLink.page().textContent("body")
 		expect(priceText).toMatch(/\d+[,.]?\d*\s*€/)
 
-		const images = page.locator("img")
+		const images = firstLink.page().locator("img")
 		expect(await images.count()).toBeGreaterThan(0)
 	})
 
-	test("ajouter un produit au panier depuis la page detail", async ({ page }) => {
-		// Navigate to a product
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("ajouter un produit au panier depuis la page detail", async ({ page, cartPage, productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		expect(await productLinks.count(), "Seed data required").toBeGreaterThan(0)
+		expect(await productCatalogPage.productLinks.count(), "Seed data required").toBeGreaterThan(0)
 
-		await productLinks.first().click()
-		await page.waitForLoadState("domcontentloaded")
+		await productCatalogPage.gotoFirstProduct()
 
-		// Look for the add-to-cart button or SKU selector
-		const addToCartButton = page.getByRole("button", {
-			name: /Ajouter au panier|Ajouter/i,
-		})
-
-		const buttonCount = await addToCartButton.count()
+		const buttonCount = await productCatalogPage.addToCartButton.count()
 
 		if (buttonCount > 0) {
-			// Click add to cart
-			await addToCartButton.first().click()
+			await productCatalogPage.addToCartButton.first().click()
 
-			// Wait for cart feedback - either a toast, sheet opening, or badge update
-			const cartDialog = page.getByRole("dialog")
+			// Wait for cart feedback - either dialog or toast
 			const toastOrFeedback = page.getByText(/ajouté|panier/i)
-
-			// Wait for either dialog or feedback text to appear
-			await Promise.race([
-				cartDialog.waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
-				toastOrFeedback.first().waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
-			])
-
-			const dialogVisible = await cartDialog.isVisible().catch(() => false)
-			const feedbackVisible = await toastOrFeedback.first().isVisible().catch(() => false)
-
-			// At least one feedback mechanism should have triggered
-			expect(dialogVisible || feedbackVisible).toBe(true)
+			await expect(cartPage.dialog.or(toastOrFeedback.first())).toBeVisible({ timeout: 5000 })
 		} else {
 			// Product may require SKU selection first (variants)
 			const variantSelector = page.locator('[data-variant-selector], select, [role="radiogroup"]')
@@ -74,60 +46,40 @@ test.describe("Parcours produit → panier", () => {
 		}
 	})
 
-	test("le panier affiche le produit apres ajout", async ({ page }) => {
-		// Navigate to a product and add it
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("le panier affiche le produit apres ajout", async ({ page, cartPage, productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		expect(await productLinks.count(), "Seed data required").toBeGreaterThan(0)
+		expect(await productCatalogPage.productLinks.count(), "Seed data required").toBeGreaterThan(0)
 
-		await productLinks.first().click()
-		await page.waitForLoadState("domcontentloaded")
+		await productCatalogPage.gotoFirstProduct()
 
-		// Get product name for later verification
-		const productTitle = await page.getByRole("heading", { level: 1 }).textContent()
-
-		// Try to add to cart
-		const addToCartButton = page.getByRole("button", {
-			name: /Ajouter au panier|Ajouter/i,
-		})
-
-		if (await addToCartButton.count() === 0) {
+		if (await productCatalogPage.addToCartButton.count() === 0) {
 			test.skip(true, "Product requires SKU selection - skipping cart verification")
 			return
 		}
 
-		await addToCartButton.first().click()
+		await productCatalogPage.addToCartButton.first().click()
 
-		// Wait for cart response before checking
-		const cartDialog = page.getByRole("dialog")
-		await Promise.race([
-			cartDialog.waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
-			page.waitForResponse(resp => resp.url().includes("/api/") && resp.status() === 200, { timeout: 5000 }).catch(() => {}),
-		])
-		if (!await cartDialog.isVisible().catch(() => false)) {
-			const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
-			await cartButton.click()
-			await expect(cartDialog).toBeVisible()
+		// Wait for cart to update, then ensure it's open
+		await expect(cartPage.dialog.or(page.getByText(/ajouté|panier/i).first())).toBeVisible({ timeout: 5000 })
+
+		if (!await cartPage.dialog.isVisible()) {
+			await cartPage.open()
 		}
 
 		// Cart should no longer show "empty" message
-		const emptyMessage = cartDialog.getByText(/Votre panier est vide/i)
-		await expect(emptyMessage).not.toBeVisible()
+		await expect(cartPage.emptyMessage).not.toBeVisible()
 
 		// Cart should contain at least one item
-		const cartContent = await cartDialog.textContent()
+		const cartContent = await cartPage.dialog.textContent()
 		expect(cartContent).toMatch(/\d+[,.]?\d*\s*€/)
 	})
 
-	test("le parcours recherche → produit fonctionne", async ({ page }) => {
+	test("le parcours recherche → produit fonctionne", async ({ page, productCatalogPage }) => {
 		await page.goto("/produits")
 		await page.waitForLoadState("domcontentloaded")
 
-		// Find search input
-		const searchInput = page.getByRole("searchbox")
-		const searchCount = await searchInput.count()
+		const searchCount = await productCatalogPage.searchInput.count()
 
 		if (searchCount === 0) {
 			test.skip(true, "No search input on /produits page")
@@ -135,7 +87,7 @@ test.describe("Parcours produit → panier", () => {
 		}
 
 		// Type a search term and wait for URL to update (debounce-aware)
-		await searchInput.first().fill("bague")
+		await productCatalogPage.searchInput.first().fill("bague")
 		await expect(page).toHaveURL(/search=bague/, { timeout: 5000 })
 
 		// Either products or empty state should be visible
@@ -143,9 +95,6 @@ test.describe("Parcours produit → panier", () => {
 		const productCards = page.locator('article, [data-product-card], a[href*="/creations/"]')
 		const emptyState = page.getByText(/aucun (résultat|produit)/i)
 
-		const hasProducts = await productCards.count() > 0
-		const hasEmpty = await emptyState.isVisible().catch(() => false)
-
-		expect(hasProducts || hasEmpty).toBe(true)
+		await expect(productCards.first().or(emptyState)).toBeVisible({ timeout: 5000 })
 	})
 })

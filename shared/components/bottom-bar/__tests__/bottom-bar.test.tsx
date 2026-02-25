@@ -60,7 +60,7 @@ describe("BottomBar", () => {
 			</BottomBar>
 		);
 
-		expect(screen.getByTestId("child")).toBeDefined();
+		expect(screen.getByTestId("child")).toBeInTheDocument();
 	});
 
 	it("renders as div by default", () => {
@@ -92,7 +92,7 @@ describe("BottomBar", () => {
 			</BottomBar>
 		);
 
-		expect(screen.getByLabelText("test label")).toBeDefined();
+		expect(screen.getByLabelText("test label")).toBeInTheDocument();
 	});
 
 	it("applies pointer-events-none and inert when isHidden", () => {
@@ -193,7 +193,7 @@ describe("ActiveDot", () => {
 		render(<ActiveDot />);
 
 		const dot = document.querySelector("[aria-hidden='true']");
-		expect(dot).toBeDefined();
+		expect(dot).toBeInTheDocument();
 		expect(dot).not.toBeNull();
 	});
 

@@ -85,16 +85,16 @@ describe("MegaMenuCollections", () => {
 		expect(ctaLink.getAttribute("href")).toBe("/collections");
 
 		// Collection cards should exist
-		expect(screen.getByText("Mariage")).toBeDefined();
-		expect(screen.getByText("Bohème")).toBeDefined();
-		expect(screen.getByText("Minimale")).toBeDefined();
+		expect(screen.getByText("Mariage")).toBeInTheDocument();
+		expect(screen.getByText("Bohème")).toBeInTheDocument();
+		expect(screen.getByText("Minimale")).toBeInTheDocument();
 	});
 
 	it("renders CollectionImagesGrid when collection has images", () => {
 		render(<MegaMenuCollections collections={collections} />);
 
-		expect(screen.getByTestId("collection-grid-Mariage")).toBeDefined();
-		expect(screen.getByTestId("collection-grid-Bohème")).toBeDefined();
+		expect(screen.getByTestId("collection-grid-Mariage")).toBeInTheDocument();
+		expect(screen.getByTestId("collection-grid-Bohème")).toBeInTheDocument();
 	});
 
 	it("renders fallback icon when collection has no images", () => {
@@ -103,13 +103,13 @@ describe("MegaMenuCollections", () => {
 		// Minimale has no images, should render a fallback Gem icon container
 		const minimaleLink = screen.getByRole("link", { name: /Minimale/ });
 		const fallback = minimaleLink.querySelector("[aria-hidden='true']");
-		expect(fallback).toBeDefined();
+		expect(fallback).toBeInTheDocument();
 	});
 
 	it("renders collection descriptions when provided", () => {
 		render(<MegaMenuCollections collections={collections} />);
 
-		expect(screen.getByText("Collection mariage")).toBeDefined();
+		expect(screen.getByText("Collection mariage")).toBeInTheDocument();
 	});
 
 	it("uses role='region' with aria-labelledby", () => {

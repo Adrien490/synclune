@@ -61,7 +61,7 @@ describe("AddressList", () => {
 
 		render(<AddressList addressesPromise={Promise.resolve([])} />);
 
-		expect(screen.getByText("Adresses enregistrées")).toBeDefined();
+		expect(screen.getByText("Adresses enregistrées")).toBeInTheDocument();
 	});
 
 	it("shows empty state when no addresses", () => {
@@ -69,8 +69,8 @@ describe("AddressList", () => {
 
 		render(<AddressList addressesPromise={Promise.resolve([])} />);
 
-		expect(screen.getByText("Aucune adresse enregistrée")).toBeDefined();
-		expect(screen.getByText("Ajouter une adresse")).toBeDefined();
+		expect(screen.getByText("Aucune adresse enregistrée")).toBeInTheDocument();
+		expect(screen.getByText("Ajouter une adresse")).toBeInTheDocument();
 	});
 
 	it("shows empty state when addresses is null", () => {
@@ -78,7 +78,7 @@ describe("AddressList", () => {
 
 		render(<AddressList addressesPromise={Promise.resolve(null)} />);
 
-		expect(screen.getByText("Aucune adresse enregistrée")).toBeDefined();
+		expect(screen.getByText("Aucune adresse enregistrée")).toBeInTheDocument();
 	});
 
 	it("renders address cards when addresses exist", () => {
@@ -90,8 +90,8 @@ describe("AddressList", () => {
 
 		render(<AddressList addressesPromise={Promise.resolve(addresses)} />);
 
-		expect(screen.getByTestId("address-card-addr-1")).toBeDefined();
-		expect(screen.getByTestId("address-card-addr-2")).toBeDefined();
+		expect(screen.getByTestId("address-card-addr-1")).toBeInTheDocument();
+		expect(screen.getByTestId("address-card-addr-2")).toBeInTheDocument();
 	});
 
 	it("shows the 'Ajouter' button in header when addresses exist", () => {
@@ -100,7 +100,7 @@ describe("AddressList", () => {
 
 		render(<AddressList addressesPromise={Promise.resolve(addresses)} />);
 
-		expect(screen.getByText("Ajouter")).toBeDefined();
+		expect(screen.getByText("Ajouter")).toBeInTheDocument();
 	});
 
 	it("hides the header 'Ajouter' button when no addresses", () => {

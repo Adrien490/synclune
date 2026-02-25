@@ -1,12 +1,10 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("Accès admin - protection des routes", () => {
 	test("un utilisateur non authentifié est redirigé depuis /admin vers /connexion", async ({ page }) => {
-		// Naviguer vers l'admin sans être connecté
 		await page.goto("/admin")
 		await page.waitForLoadState("domcontentloaded")
 
-		// L'utilisateur doit être redirigé vers la page de connexion
 		await expect(page).toHaveURL(/\/connexion/)
 	})
 
@@ -14,7 +12,6 @@ test.describe("Accès admin - protection des routes", () => {
 		await page.goto("/admin")
 		await page.waitForLoadState("domcontentloaded")
 
-		// L'URL de connexion doit contenir callbackURL=/admin
 		const url = page.url()
 		expect(url).toMatch(/callbackURL.*admin|connexion/)
 	})
@@ -23,7 +20,6 @@ test.describe("Accès admin - protection des routes", () => {
 		await page.goto("/admin/catalogue/produits")
 		await page.waitForLoadState("domcontentloaded")
 
-		// Doit être redirigé vers connexion
 		await expect(page).toHaveURL(/\/connexion/)
 	})
 
@@ -41,16 +37,13 @@ test.describe("Accès admin - protection des routes", () => {
 		await expect(page).toHaveURL(/\/connexion/)
 	})
 
-	test("la page de connexion affiche le formulaire après la redirection depuis /admin", async ({ page }) => {
+	test("la page de connexion affiche le formulaire après la redirection depuis /admin", async ({ page, authPage }) => {
 		await page.goto("/admin")
 		await page.waitForLoadState("domcontentloaded")
 
-		// La page de connexion doit s'afficher correctement
 		await expect(page).toHaveURL(/\/connexion/)
 		await expect(page).toHaveTitle(/Connexion.*Synclune|Synclune.*Connexion/i)
 
-		// Le formulaire de connexion doit être présent
-		const emailInput = page.getByRole("textbox", { name: /Email/i })
-		await expect(emailInput).toBeVisible()
+		await expect(authPage.emailInput).toBeVisible()
 	})
 })

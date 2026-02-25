@@ -102,7 +102,7 @@ describe("MenuSheet", () => {
 			render(<MenuSheet {...baseProps} />);
 
 			const trigger = screen.getByRole("button", { name: "Ouvrir le menu de navigation" });
-			expect(trigger).toBeDefined();
+			expect(trigger).toBeInTheDocument();
 			expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
 			expect(trigger.getAttribute("aria-expanded")).toBe("false");
 		});
@@ -119,8 +119,8 @@ describe("MenuSheet", () => {
 		it("renders sr-only sheet header with title and description", () => {
 			render(<MenuSheet {...baseProps} />);
 
-			expect(screen.getByText("Menu de navigation")).toBeDefined();
-			expect(screen.getByText(/Découvrez nos bijoux et collections/)).toBeDefined();
+			expect(screen.getByText("Menu de navigation")).toBeInTheDocument();
+			expect(screen.getByText(/Découvrez nos bijoux et collections/)).toBeInTheDocument();
 		});
 
 		it("passes isAdmin to footer", () => {
@@ -133,7 +133,7 @@ describe("MenuSheet", () => {
 		it("renders nav component", () => {
 			render(<MenuSheet {...baseProps} />);
 
-			expect(screen.getByTestId("menu-sheet-nav")).toBeDefined();
+			expect(screen.getByTestId("menu-sheet-nav")).toBeInTheDocument();
 		});
 	});
 

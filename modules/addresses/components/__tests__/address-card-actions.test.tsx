@@ -78,7 +78,7 @@ describe("AddressCardActions", () => {
 
 		render(<AddressCardActions address={createAddress()} />);
 
-		expect(screen.getByText("Actions pour Marie Dupont")).toBeDefined();
+		expect(screen.getByText("Actions pour Marie Dupont")).toBeInTheDocument();
 	});
 
 	it("shows 'Définir par défaut' when address is not default", () => {
@@ -86,7 +86,7 @@ describe("AddressCardActions", () => {
 
 		render(<AddressCardActions address={createAddress({ isDefault: false })} />);
 
-		expect(screen.getByText("Définir par défaut")).toBeDefined();
+		expect(screen.getByText("Définir par défaut")).toBeInTheDocument();
 	});
 
 	it("hides 'Définir par défaut' when address is already default", () => {
@@ -102,7 +102,7 @@ describe("AddressCardActions", () => {
 
 		render(<AddressCardActions address={createAddress()} />);
 
-		expect(screen.getByText("Modifier")).toBeDefined();
+		expect(screen.getByText("Modifier")).toBeInTheDocument();
 	});
 
 	it("always shows 'Supprimer' option", () => {
@@ -110,7 +110,7 @@ describe("AddressCardActions", () => {
 
 		render(<AddressCardActions address={createAddress()} />);
 
-		expect(screen.getByText("Supprimer")).toBeDefined();
+		expect(screen.getByText("Supprimer")).toBeInTheDocument();
 	});
 
 	it("calls handleSetDefault with address id when clicking set default", () => {

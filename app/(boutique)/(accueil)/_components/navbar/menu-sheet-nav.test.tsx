@@ -89,10 +89,10 @@ describe("MenuSheetNav", () => {
 				/>
 			);
 
-			expect(screen.getByText("Découvrir")).toBeDefined();
-			expect(screen.getByText("Nos créations")).toBeDefined();
-			expect(screen.getByText("Collections")).toBeDefined();
-			expect(screen.getByText("Compte")).toBeDefined();
+			expect(screen.getByText("Découvrir")).toBeInTheDocument();
+			expect(screen.getByText("Nos créations")).toBeInTheDocument();
+			expect(screen.getByText("Collections")).toBeInTheDocument();
+			expect(screen.getByText("Compte")).toBeInTheDocument();
 		});
 
 		it("renders product type links using ROUTES", () => {
@@ -145,8 +145,8 @@ describe("MenuSheetNav", () => {
 				/>
 			);
 
-			expect(screen.getByRole("link", { name: "Se connecter" })).toBeDefined();
-			expect(screen.getByRole("link", { name: "Créer un compte" })).toBeDefined();
+			expect(screen.getByRole("link", { name: "Se connecter" })).toBeInTheDocument();
+			expect(screen.getByRole("link", { name: "Créer un compte" })).toBeInTheDocument();
 		});
 
 		it("does not render user header", () => {
@@ -185,7 +185,7 @@ describe("MenuSheetNav", () => {
 				/>
 			);
 
-			expect(screen.getByTestId("user-header")).toBeDefined();
+			expect(screen.getByTestId("user-header")).toBeInTheDocument();
 		});
 
 		it("renders favorites with badge count", () => {
@@ -214,8 +214,8 @@ describe("MenuSheetNav", () => {
 				/>
 			);
 
-			expect(screen.getByRole("link", { name: "Mes commandes" })).toBeDefined();
-			expect(screen.getByRole("button", { name: "Déconnexion" })).toBeDefined();
+			expect(screen.getByRole("link", { name: "Mes commandes" })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Déconnexion" })).toBeInTheDocument();
 		});
 	});
 });

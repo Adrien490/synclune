@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("Navigation catalogue produits", () => {
 	test("la page /produits charge correctement", async ({ page }) => {
@@ -9,145 +9,93 @@ test.describe("Navigation catalogue produits", () => {
 		await expect(page).toHaveTitle(/Synclune/)
 	})
 
-	test("la page /produits affiche un header de page", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("domcontentloaded")
-
-		// Un h1 doit être présent sur la page
-		const heading = page.getByRole("heading", { level: 1 })
-		await expect(heading).toBeVisible()
+	test("la page /produits affiche un header de page", async ({ productCatalogPage }) => {
+		await productCatalogPage.goto()
+		await expect(productCatalogPage.heading).toBeVisible()
 	})
 
 	test("la page /produits affiche une barre d'outils (tri, filtres)", async ({ page }) => {
 		await page.goto("/produits")
 		await page.waitForLoadState("domcontentloaded")
 
-		// Une barre de tri doit être présente (bouton de tri ou select)
-		// On cherche soit un combobox de tri, soit un bouton «Filtrer»
 		const toolbar = page.locator('[role="toolbar"], form').first()
 		await expect(toolbar).toBeAttached()
 	})
 
-	test("la page /produits affiche des cartes produit ou un état vide", async ({ page }) => {
-		await page.goto("/produits")
-		// On attend un peu plus pour les Suspense boundaries
-		await page.waitForLoadState("networkidle")
+	test("la page /produits affiche des cartes produit ou un état vide", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		// On vérifie soit des articles produit, soit un message «aucun produit»
 		const productCards = page.locator('article, [data-product-card]')
 		const emptyState = page.getByText(/aucun produit/i)
 
-		const hasProducts = await productCards.count() > 0
-		const hasEmpty = await emptyState.isVisible().catch(() => false)
-
-		expect(hasProducts || hasEmpty).toBe(true)
+		await expect(productCards.first().or(emptyState)).toBeVisible({ timeout: 5000 })
 	})
 
-	test("les cartes produit ont des liens cliquables", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("les cartes produit ont des liens cliquables", async ({ productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		// Les cartes produit doivent contenir un lien vers la page détail
-		const productLinks = page.locator('article a[href*="/creations/"], a[href*="/creations/"]')
-		const count = await productLinks.count()
+		const count = await productCatalogPage.productLinks.count()
 
-		// Si des produits existent, ils doivent avoir des liens
 		if (count > 0) {
-			const firstLink = productLinks.first()
+			const firstLink = productCatalogPage.productLinks.first()
 			const href = await firstLink.getAttribute("href")
 			expect(href).toMatch(/\/creations\//)
 		}
 	})
 
-	test("cliquer sur une carte produit navigue vers la page détail", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("cliquer sur une carte produit navigue vers la page détail", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		// Chercher les liens vers les pages de créations
-		const productLinks = page.locator('a[href*="/creations/"]')
-		const count = await productLinks.count()
+		const count = await productCatalogPage.productLinks.count()
 		expect(count, "No products found in database - seed data required").toBeGreaterThan(0)
 
-		// Récupérer le href du premier lien
-		const href = await productLinks.first().getAttribute("href")
+		const href = await productCatalogPage.productLinks.first().getAttribute("href")
 		expect(href).toBeTruthy()
 
-		// Naviguer vers la page produit
 		await page.goto(href!)
 		await page.waitForLoadState("domcontentloaded")
 
-		// Vérifier qu'on est bien sur une page produit
 		await expect(page).toHaveURL(/\/creations\//)
 	})
 
-	test("la page détail produit affiche un titre (h1)", async ({ page }) => {
-		// D'abord, trouver une URL de produit existante depuis /produits
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("la page détail produit affiche un titre (h1)", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		const count = await productLinks.count()
+		const count = await productCatalogPage.productLinks.count()
 		expect(count, "No products found in database - seed data required").toBeGreaterThan(0)
 
-		const href = await productLinks.first().getAttribute("href")
-		await page.goto(href!)
-		await page.waitForLoadState("domcontentloaded")
+		await productCatalogPage.gotoFirstProduct()
 
-		// La page détail doit avoir un h1
 		const heading = page.getByRole("heading", { level: 1 })
 		await expect(heading).toBeVisible()
 	})
 
-	test("la page détail produit affiche un prix", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("la page détail produit affiche un prix", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
+		expect(await productCatalogPage.productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
+		await productCatalogPage.gotoFirstProduct()
 
-		const href = await productLinks.first().getAttribute("href")
-		await page.goto(href!)
-		await page.waitForLoadState("domcontentloaded")
-
-		// Un prix en euros doit être visible (format «XX,XX €» ou «XX €»)
 		const pricePattern = /\d+[,.]?\d*\s*€/
 		const pageText = await page.textContent("body")
 		expect(pageText).toMatch(pricePattern)
 	})
 
-	test("la page détail produit affiche un bouton d'ajout au panier ou de sélection SKU", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("la page détail produit affiche un bouton d'ajout au panier ou de sélection SKU", async ({ productCatalogPage }) => {
+		await productCatalogPage.goto()
+		expect(await productCatalogPage.productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
+		await productCatalogPage.gotoFirstProduct()
 
-		const href = await productLinks.first().getAttribute("href")
-		await page.goto(href!)
-		await page.waitForLoadState("domcontentloaded")
-
-		// Chercher un bouton d'ajout au panier ou équivalent
-		// Plusieurs cas: bouton «Ajouter au panier», «Choisir les options», etc.
-		const cartButton = page.getByRole("button", {
-			name: /Ajouter au panier|Ajouter|Choisir|Sélectionner/i,
-		})
-
-		// La présence du bouton suffit (il peut être désactivé si hors stock)
-		await expect(cartButton.first()).toBeAttached()
+		await expect(productCatalogPage.addToCartButton.first()).toBeAttached()
 	})
 
-	test("la page détail produit affiche une galerie d'images", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test("la page détail produit affiche une galerie d'images", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
+		expect(await productCatalogPage.productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
 
-		const productLinks = page.locator('a[href*="/creations/"]')
-		expect(await productLinks.count(), "No products found in database - seed data required").toBeGreaterThan(0)
+		await productCatalogPage.gotoFirstProduct()
 
-		const href = await productLinks.first().getAttribute("href")
-		await page.goto(href!)
-		await page.waitForLoadState("domcontentloaded")
-
-		// Au moins une image doit être présente
 		const images = page.locator("img")
 		const imgCount = await images.count()
 		expect(imgCount).toBeGreaterThan(0)
@@ -160,7 +108,6 @@ test.describe("Navigation catalogue produits", () => {
 		await expect(page).toHaveURL(/\/collections/)
 		await expect(page).toHaveTitle(/Synclune/)
 
-		// Un h1 doit être présent
 		const heading = page.getByRole("heading", { level: 1 })
 		await expect(heading).toBeVisible()
 	})
@@ -170,28 +117,22 @@ test.describe("Navigation catalogue produits", () => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
 
-		// Le bouton de recherche doit être présent sur desktop
 		const searchButton = page.getByRole("button", { name: /Rechercher/i })
 		await expect(searchButton.first()).toBeVisible()
 
-		// Cliquer pour ouvrir la recherche rapide
 		await searchButton.first().click()
 
-		// Le dialog de recherche doit apparaître
 		const searchDialog = page.getByRole("dialog")
 		await expect(searchDialog).toBeVisible()
 	})
 
-	test("la recherche depuis /produits filtre les résultats", async ({ page }) => {
+	test("la recherche depuis /produits filtre les résultats", async ({ page, productCatalogPage }) => {
 		await page.goto("/produits")
 		await page.waitForLoadState("domcontentloaded")
 
-		// Chercher le champ de recherche dans le catalogue
-		const searchInput = page.getByRole("searchbox")
-		expect(await searchInput.count(), "No search input found on /produits page").toBeGreaterThan(0)
+		expect(await productCatalogPage.searchInput.count(), "No search input found on /produits page").toBeGreaterThan(0)
 
-		// Taper un terme de recherche et attendre la mise à jour de l'URL (debounce-aware)
-		await searchInput.first().fill("bague")
+		await productCatalogPage.searchInput.first().fill("bague")
 		await expect(page).toHaveURL(/search=bague/, { timeout: 5000 })
 	})
 })

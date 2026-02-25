@@ -85,7 +85,7 @@ describe("AddressSelector", () => {
 				/>
 			)
 
-			expect(screen.getByRole("group")).toBeDefined()
+			expect(screen.getByRole("group")).toBeInTheDocument()
 		})
 	})
 
@@ -121,7 +121,7 @@ describe("AddressSelector", () => {
 				/>
 			)
 
-			expect(screen.getByText("Adresses enregistrées")).toBeDefined()
+			expect(screen.getByText("Adresses enregistrées")).toBeInTheDocument()
 		})
 	})
 
@@ -141,9 +141,9 @@ describe("AddressSelector", () => {
 				/>
 			)
 
-			expect(screen.getByText("Marie Dupont")).toBeDefined()
-			expect(screen.getByText("Jean Martin")).toBeDefined()
-			expect(screen.getByText("Sophie Bernard")).toBeDefined()
+			expect(screen.getByText("Marie Dupont")).toBeInTheDocument()
+			expect(screen.getByText("Jean Martin")).toBeInTheDocument()
+			expect(screen.getByText("Sophie Bernard")).toBeInTheDocument()
 		})
 
 		it("shows full name as firstName + lastName joined by space", () => {
@@ -160,7 +160,7 @@ describe("AddressSelector", () => {
 				/>
 			)
 
-			expect(screen.getByText("Marie Dupont")).toBeDefined()
+			expect(screen.getByText("Marie Dupont")).toBeInTheDocument()
 		})
 
 		it("shows address line as address1 and city joined by comma", () => {
@@ -177,7 +177,7 @@ describe("AddressSelector", () => {
 				/>
 			)
 
-			expect(screen.getByText("12 Rue de la Paix, Paris")).toBeDefined()
+			expect(screen.getByText("12 Rue de la Paix, Paris")).toBeInTheDocument()
 		})
 
 		it("filters out empty parts from address line", () => {
@@ -195,7 +195,7 @@ describe("AddressSelector", () => {
 			)
 
 			// With empty city, the comma should not appear
-			expect(screen.getByText("12 Rue de la Paix")).toBeDefined()
+			expect(screen.getByText("12 Rue de la Paix")).toBeInTheDocument()
 		})
 	})
 
@@ -214,7 +214,7 @@ describe("AddressSelector", () => {
 				/>
 			)
 
-			expect(screen.getByText("Par défaut")).toBeDefined()
+			expect(screen.getByText("Par défaut")).toBeInTheDocument()
 		})
 
 		it("does not show 'Par défaut' badge for non-default addresses", () => {

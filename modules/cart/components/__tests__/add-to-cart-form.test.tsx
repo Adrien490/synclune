@@ -119,7 +119,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
 
-			expect(screen.getByText("Ajouter au panier")).toBeDefined();
+			expect(screen.getByText("Ajouter au panier")).toBeInTheDocument();
 		});
 
 		it("renders an enabled submit button", () => {
@@ -158,7 +158,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={null} />);
 
-			expect(screen.getByText("Produit non disponible")).toBeDefined();
+			expect(screen.getByText("Produit non disponible")).toBeInTheDocument();
 		});
 
 		it("renders disabled button when selectedSku is null", () => {
@@ -187,7 +187,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={null} />);
 
-			expect(screen.getByText("Choisissez la couleur")).toBeDefined();
+			expect(screen.getByText("Choisissez la couleur")).toBeInTheDocument();
 		});
 
 		it("shows 'Choisissez le matériau' when material is required and not selected", () => {
@@ -205,7 +205,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={null} />);
 
-			expect(screen.getByText("Choisissez le matériau")).toBeDefined();
+			expect(screen.getByText("Choisissez le matériau")).toBeInTheDocument();
 		});
 
 		it("shows combined message when both color and size are required and missing", () => {
@@ -223,7 +223,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={null} />);
 
-			expect(screen.getByText("Choisissez la couleur et la taille")).toBeDefined();
+			expect(screen.getByText("Choisissez la couleur et la taille")).toBeInTheDocument();
 		});
 	});
 
@@ -235,7 +235,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
 
-			expect(screen.getByText("Indisponible")).toBeDefined();
+			expect(screen.getByText("Indisponible")).toBeInTheDocument();
 		});
 
 		it("renders 'Indisponible' when SKU is inactive", () => {
@@ -245,7 +245,7 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
 
-			expect(screen.getByText("Indisponible")).toBeDefined();
+			expect(screen.getByText("Indisponible")).toBeInTheDocument();
 		});
 
 		it("renders a disabled button when SKU is unavailable", () => {
@@ -280,8 +280,8 @@ describe("AddToCartForm", () => {
 
 			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
 
-			expect(screen.getByTestId("loader-icon")).toBeDefined();
-			expect(screen.getByText("Ajout en cours...")).toBeDefined();
+			expect(screen.getByTestId("loader-icon")).toBeInTheDocument();
+			expect(screen.getByText("Ajout en cours...")).toBeInTheDocument();
 		});
 
 		it("disables button when isPending", () => {

@@ -111,7 +111,7 @@ describe("SSR / not yet mounted", () => {
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
 
 		expect(isParallaxActive()).toBe(false);
-		expect(screen.getByTestId("parallax-image")).toBeDefined();
+		expect(screen.getByTestId("parallax-image")).toBeInTheDocument();
 	});
 });
 
@@ -126,7 +126,7 @@ describe("prefers-reduced-motion enabled", () => {
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
 
 		expect(isParallaxActive()).toBe(false);
-		expect(screen.getByTestId("parallax-image")).toBeDefined();
+		expect(screen.getByTestId("parallax-image")).toBeInTheDocument();
 	});
 });
 
@@ -143,7 +143,7 @@ describe("prefers-reduced-motion not yet resolved (null)", () => {
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
 
 		expect(isParallaxActive()).toBe(false);
-		expect(screen.getByTestId("parallax-image")).toBeDefined();
+		expect(screen.getByTestId("parallax-image")).toBeInTheDocument();
 	});
 });
 
@@ -160,7 +160,7 @@ describe("touch device with disableOnTouch=true (default)", () => {
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
 
 		expect(isParallaxActive()).toBe(false);
-		expect(screen.getByTestId("parallax-image")).toBeDefined();
+		expect(screen.getByTestId("parallax-image")).toBeInTheDocument();
 	});
 
 	it("renders static image even with explicit disableOnTouch=true", () => {
@@ -201,7 +201,7 @@ describe("desktop with motion allowed", () => {
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
 
 		expect(isParallaxActive()).toBe(true);
-		expect(screen.getByTestId("parallax-image")).toBeDefined();
+		expect(screen.getByTestId("parallax-image")).toBeInTheDocument();
 	});
 
 	it("renders the image inside the parallax wrapper", () => {

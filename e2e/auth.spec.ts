@@ -1,9 +1,8 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("Authentification - Connexion", () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto("/connexion")
-		await page.waitForLoadState("domcontentloaded")
+	test.beforeEach(async ({ authPage }) => {
+		await authPage.goto()
 	})
 
 	test("la page de connexion charge correctement", async ({ page }) => {
@@ -16,39 +15,30 @@ test.describe("Authentification - Connexion", () => {
 		await expect(heading).toBeVisible()
 	})
 
-	test("la page de connexion affiche le champ email", async ({ page }) => {
-		const emailInput = page.getByRole("textbox", { name: /Email/i })
-		await expect(emailInput).toBeVisible()
-		await expect(emailInput).toHaveAttribute("type", "email")
+	test("la page de connexion affiche le champ email", async ({ authPage }) => {
+		await expect(authPage.emailInput).toBeVisible()
+		await expect(authPage.emailInput).toHaveAttribute("type", "email")
 	})
 
-	test("la page de connexion affiche le champ mot de passe", async ({ page }) => {
-		// Le champ mot de passe est de type password (pas textbox)
-		const passwordInput = page.locator('input[type="password"]')
-		await expect(passwordInput).toBeVisible()
+	test("la page de connexion affiche le champ mot de passe", async ({ authPage }) => {
+		await expect(authPage.passwordInput).toBeVisible()
 	})
 
-	test("la page de connexion affiche le bouton de soumission", async ({ page }) => {
-		const submitButton = page.getByRole("button", { name: /Se connecter/i })
-		await expect(submitButton).toBeVisible()
+	test("la page de connexion affiche le bouton de soumission", async ({ authPage }) => {
+		await expect(authPage.submitButton).toBeVisible()
 	})
 
-	test("la page de connexion affiche le lien «Mot de passe oublié ?»", async ({ page }) => {
-		const forgotLink = page.getByRole("link", { name: /Mot de passe oublié/i })
-		await expect(forgotLink).toBeVisible()
-		await expect(forgotLink).toHaveAttribute("href", "/mot-de-passe-oublie")
+	test("la page de connexion affiche le lien «Mot de passe oublié ?»", async ({ authPage }) => {
+		await expect(authPage.forgotPasswordLink).toBeVisible()
+		await expect(authPage.forgotPasswordLink).toHaveAttribute("href", "/mot-de-passe-oublie")
 	})
 
-	test("la page de connexion affiche un lien vers l'inscription", async ({ page }) => {
-		const signUpLink = page.getByRole("link", { name: /Inscrivez-vous|Créez|S'inscrire/i })
-		await expect(signUpLink).toBeAttached()
+	test("la page de connexion affiche un lien vers l'inscription", async ({ authPage }) => {
+		await expect(authPage.signUpLink).toBeAttached()
 	})
 
-	test("la page de connexion affiche les boutons de connexion sociale", async ({ page }) => {
-		// Les boutons Google/GitHub doivent être présents
-		const socialButtons = page.getByRole("button", { name: /Google|GitHub|Continuer avec/i })
-		// Au moins un bouton social doit être présent
-		await expect(socialButtons.first()).toBeAttached()
+	test("la page de connexion affiche les boutons de connexion sociale", async ({ authPage }) => {
+		await expect(authPage.socialButtons.first()).toBeAttached()
 	})
 
 	test("la page de connexion affiche le lien de retour au site", async ({ page }) => {
@@ -57,37 +47,29 @@ test.describe("Authentification - Connexion", () => {
 		await expect(backLink).toHaveAttribute("href", "/")
 	})
 
-	test("le formulaire de connexion montre des erreurs de validation pour un email vide", async ({ page }) => {
-		// Remplir le mot de passe sans l'email, puis tenter de soumettre
-		const passwordInput = page.locator('input[type="password"]')
-		await passwordInput.fill("motdepasse")
+	test("le formulaire de connexion montre des erreurs de validation pour un email vide", async ({ page, authPage }) => {
+		await authPage.passwordInput.fill("motdepasse")
 
-		// Cliquer sur le champ email pour déclencher la validation onChange
-		const emailInput = page.getByRole("textbox", { name: /Email/i })
-		await emailInput.click()
-		await emailInput.fill("invalide")
-		await emailInput.blur()
+		await authPage.emailInput.click()
+		await authPage.emailInput.fill("invalide")
+		await authPage.emailInput.blur()
 
-		// Un message d'erreur de validation email doit apparaître
 		const errorMessage = page.getByText(/Format d'email invalide|email invalide/i)
 		await expect(errorMessage).toBeVisible()
 	})
 
-	test("le formulaire de connexion montre une erreur pour un email invalide", async ({ page }) => {
-		const emailInput = page.getByRole("textbox", { name: /Email/i })
-		await emailInput.fill("ceci-nest-pas-un-email")
-		await emailInput.blur()
+	test("le formulaire de connexion montre une erreur pour un email invalide", async ({ page, authPage }) => {
+		await authPage.emailInput.fill("ceci-nest-pas-un-email")
+		await authPage.emailInput.blur()
 
 		const errorMessage = page.getByText(/Format d'email invalide/i)
 		await expect(errorMessage).toBeVisible()
 	})
 
-	test("un email valide ne déclenche pas d'erreur de format", async ({ page }) => {
-		const emailInput = page.getByRole("textbox", { name: /Email/i })
-		await emailInput.fill("test@example.com")
-		await emailInput.blur()
+	test("un email valide ne déclenche pas d'erreur de format", async ({ page, authPage }) => {
+		await authPage.emailInput.fill("test@example.com")
+		await authPage.emailInput.blur()
 
-		// Aucune erreur de format ne doit apparaître
 		const errorMessage = page.getByText(/Format d'email invalide/i)
 		await expect(errorMessage).not.toBeVisible()
 	})
@@ -110,19 +92,15 @@ test.describe("Authentification - Inscription", () => {
 	})
 
 	test("la page d'inscription affiche les champs requis", async ({ page }) => {
-		// Champ prénom
 		const nameInput = page.getByRole("textbox", { name: /Prénom/i })
 		await expect(nameInput).toBeVisible()
 
-		// Champ email
 		const emailInput = page.getByRole("textbox", { name: /^Email$/i })
 		await expect(emailInput).toBeVisible()
 
-		// Champ confirmation email
 		const confirmEmailInput = page.getByRole("textbox", { name: /Confirmer l'email/i })
 		await expect(confirmEmailInput).toBeVisible()
 
-		// Champ mot de passe
 		const passwordInput = page.locator('input[type="password"]')
 		await expect(passwordInput).toBeVisible()
 	})
@@ -171,14 +149,13 @@ test.describe("Authentification - Inscription", () => {
 		await confirmEmailInput.fill("autre@example.com")
 		await confirmEmailInput.blur()
 
-		// Les emails ne correspondent pas
 		const errorMessage = page.getByText(/Les emails ne correspondent pas/i)
 		await expect(errorMessage).toBeVisible()
 	})
 
 	test("le formulaire d'inscription valide la longueur du prénom", async ({ page }) => {
 		const nameInput = page.getByRole("textbox", { name: /Prénom/i })
-		await nameInput.fill("A") // Trop court (min 2 chars)
+		await nameInput.fill("A")
 		await nameInput.blur()
 
 		const errorMessage = page.getByText(/au moins 2 caractères/i)
@@ -187,7 +164,7 @@ test.describe("Authentification - Inscription", () => {
 
 	test("le formulaire d'inscription valide la longueur du mot de passe", async ({ page }) => {
 		const passwordInput = page.locator('input[type="password"]').first()
-		await passwordInput.fill("court") // Trop court (min 8 chars)
+		await passwordInput.fill("court")
 		await passwordInput.blur()
 
 		const errorMessage = page.getByText(/au moins 8 caractères/i)

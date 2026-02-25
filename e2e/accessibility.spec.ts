@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("Accessibilité - Homepage", () => {
 	test.beforeEach(async ({ page }) => {
@@ -61,17 +61,15 @@ test.describe("Accessibilité - Homepage", () => {
 		await expect(focusedElement).toBeAttached()
 	})
 
-	test("le bouton panier est accessible au clavier", async ({ page }) => {
-		const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
-		await cartButton.focus()
-		await expect(cartButton).toBeFocused()
+	test("le bouton panier est accessible au clavier", async ({ cartPage }) => {
+		await cartPage.openButton.focus()
+		await expect(cartPage.openButton).toBeFocused()
 
 		// Activer avec Enter
-		await page.keyboard.press("Enter")
+		await cartPage.openButton.page().keyboard.press("Enter")
 
 		// Le sheet doit s'ouvrir
-		const cartDialog = page.getByRole("dialog")
-		await expect(cartDialog).toBeVisible()
+		await expect(cartPage.dialog).toBeVisible()
 	})
 
 	test("le menu mobile est accessible au clavier", async ({ page }) => {
@@ -112,9 +110,8 @@ test.describe("Accessibilité - Homepage", () => {
 })
 
 test.describe("Accessibilité - Page produits", () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("networkidle")
+	test.beforeEach(async ({ productCatalogPage }) => {
+		await productCatalogPage.goto()
 	})
 
 	test("la page /produits n'a qu'un seul h1", async ({ page }) => {
@@ -136,29 +133,23 @@ test.describe("Accessibilité - Page produits", () => {
 		}
 	})
 
-	test("les cartes produit sont navigables au clavier", async ({ page }) => {
-		const productLinks = page.locator('a[href*="/creations/"]')
-		const count = await productLinks.count()
+	test("les cartes produit sont navigables au clavier", async ({ productCatalogPage }) => {
+		const count = await productCatalogPage.productLinks.count()
 
 		if (count === 0) return // Pas de produits, test ignoré
 
-		// La première carte produit doit être focusable
-		await productLinks.first().focus()
-		await expect(productLinks.first()).toBeFocused()
+		await productCatalogPage.productLinks.first().focus()
+		await expect(productCatalogPage.productLinks.first()).toBeFocused()
 	})
 })
 
 test.describe("Accessibilité - Formulaires auth", () => {
-	test("le formulaire de connexion a des labels associés à ses champs", async ({ page }) => {
-		await page.goto("/connexion")
-		await page.waitForLoadState("domcontentloaded")
+	test("le formulaire de connexion a des labels associés à ses champs", async ({ authPage }) => {
+		await authPage.goto()
 
-		// Les champs doivent avoir des labels explicites
-		const emailInput = page.getByRole("textbox", { name: /Email/i })
-		await expect(emailInput).toBeVisible()
+		await expect(authPage.emailInput).toBeVisible()
 
-		// Le label est associé au champ (via for/id ou aria-labelledby)
-		const emailLabel = page.locator('label').filter({ hasText: /Email/i }).first()
+		const emailLabel = authPage.emailInput.page().locator('label').filter({ hasText: /Email/i }).first()
 		await expect(emailLabel).toBeAttached()
 	})
 
@@ -166,7 +157,6 @@ test.describe("Accessibilité - Formulaires auth", () => {
 		await page.goto("/inscription")
 		await page.waitForLoadState("domcontentloaded")
 
-		// Champ prénom avec label
 		const nameInput = page.getByRole("textbox", { name: /Prénom/i })
 		await expect(nameInput).toBeVisible()
 
@@ -174,68 +164,46 @@ test.describe("Accessibilité - Formulaires auth", () => {
 		await expect(nameLabel).toBeAttached()
 	})
 
-	test("les messages d'erreur sont annoncés via aria-live", async ({ page }) => {
-		await page.goto("/connexion")
-		await page.waitForLoadState("domcontentloaded")
+	test("les messages d'erreur sont annoncés via aria-live", async ({ page, authPage }) => {
+		await authPage.goto()
 
-		// Déclencher une erreur de validation
-		const emailInput = page.getByRole("textbox", { name: /Email/i })
-		await emailInput.fill("invalide")
-		await emailInput.blur()
+		await authPage.emailInput.fill("invalide")
+		await authPage.emailInput.blur()
 
-		// Le message d'erreur doit être visible
 		const errorMessage = page.getByText(/Format d'email invalide/i)
 		await expect(errorMessage).toBeVisible()
 
-		// Vérifier que le champ a aria-invalid ou un role d'alert
-		// (la validation TanStack Form marque les champs invalides)
-		const inputInvalid = await emailInput.getAttribute("aria-invalid")
-		// aria-invalid peut être "true" ou absent selon l'implémentation
-		// L'important c'est que le message d'erreur soit visible et lisible
 		expect(errorMessage).toBeTruthy()
 	})
 
-	test("les boutons de soumission ont des textes descriptifs", async ({ page }) => {
-		await page.goto("/connexion")
-		await page.waitForLoadState("domcontentloaded")
+	test("les boutons de soumission ont des textes descriptifs", async ({ authPage }) => {
+		await authPage.goto()
 
-		const submitButton = page.getByRole("button", { name: /Se connecter/i })
-		await expect(submitButton).toBeVisible()
+		await expect(authPage.submitButton).toBeVisible()
 
-		// Le bouton doit avoir un texte accessible
-		const buttonText = await submitButton.textContent()
+		const buttonText = await authPage.submitButton.textContent()
 		expect(buttonText?.trim().length).toBeGreaterThan(0)
 	})
 })
 
 test.describe("Accessibilité - Cart Sheet", () => {
-	test("le cart sheet a les attributs ARIA corrects quand ouvert", async ({ page }) => {
-		await page.goto("/")
-		await page.waitForLoadState("domcontentloaded")
+	test("le cart sheet a les attributs ARIA corrects quand ouvert", async ({ cartPage }) => {
+		await cartPage.openButton.page().goto("/")
+		await cartPage.openButton.page().waitForLoadState("domcontentloaded")
 
-		const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
-		await cartButton.click()
-
-		const cartDialog = page.getByRole("dialog")
-		await expect(cartDialog).toBeVisible()
+		await cartPage.open()
 
 		// Le dialog doit avoir un titre accessible (SheetTitle)
-		await expect(cartDialog.getByText(/Mon panier/i)).toBeVisible()
+		await expect(cartPage.title).toBeVisible()
 	})
 
-	test("le focus est géré correctement à l'ouverture du cart sheet", async ({ page }) => {
+	test("le focus est géré correctement à l'ouverture du cart sheet", async ({ page, cartPage }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
 
-		const cartButton = page.getByRole("button", { name: /Ouvrir mon panier/i })
-		await cartButton.click()
-
-		// Après l'ouverture, attendre que le dialog soit visible (inclut l'animation)
-		const cartDialog = page.getByRole("dialog")
-		await expect(cartDialog).toBeVisible()
+		await cartPage.open()
 
 		// Vérifier qu'un élément dans le dialog est focusé
-		// (soit le bouton de fermeture, soit un lien)
 		const focusedElement = page.locator(":focus")
 		await expect(focusedElement).toBeAttached()
 	})
@@ -254,7 +222,6 @@ test.describe("Accessibilité - Structure des pages", () => {
 			await page.goto(path)
 			await page.waitForLoadState("domcontentloaded")
 
-			// Chaque page doit avoir un élément main pour la navigation par landmarks
 			const mainElement = page.locator("main, [role='main']").first()
 			await expect(mainElement).toBeAttached()
 		})
@@ -263,7 +230,6 @@ test.describe("Accessibilité - Structure des pages", () => {
 			await page.goto(path)
 			await page.waitForLoadState("domcontentloaded")
 
-			// Vérifier qu'il n'y a pas d'images sans alt (sauf aria-hidden)
 			const imagesWithoutAlt = page.locator('img:not([alt]):not([aria-hidden="true"])')
 			const count = await imagesWithoutAlt.count()
 			expect(count).toBe(0)

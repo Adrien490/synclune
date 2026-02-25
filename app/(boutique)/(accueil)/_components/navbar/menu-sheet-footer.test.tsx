@@ -49,7 +49,7 @@ describe("MenuSheetFooter", () => {
 		render(<MenuSheetFooter isAdmin />);
 
 		const adminLink = screen.getByLabelText("Tableau de bord administrateur");
-		expect(adminLink).toBeDefined();
+		expect(adminLink).toBeInTheDocument();
 		expect(adminLink.getAttribute("href")).toBe("/admin");
 	});
 
@@ -57,13 +57,13 @@ describe("MenuSheetFooter", () => {
 		render(<MenuSheetFooter isAdmin={false} />);
 
 		const year = new Date().getFullYear().toString();
-		expect(screen.getByText(new RegExp(year))).toBeDefined();
+		expect(screen.getByText(new RegExp(year))).toBeInTheDocument();
 	});
 
 	it("renders in a footer element", () => {
 		render(<MenuSheetFooter isAdmin={false} />);
 
 		const footer = document.querySelector("footer");
-		expect(footer).toBeDefined();
+		expect(footer).toBeInTheDocument();
 	});
 });

@@ -14,17 +14,49 @@ export default defineConfig({
 		video: "retain-on-failure",
 	},
 	projects: [
+		// Setup projects for authentication
+		{
+			name: "setup",
+			testMatch: /auth\.setup\.ts/,
+		},
+
+		// Unauthenticated tests (existing)
 		{
 			name: "chromium",
 			use: { ...devices["Desktop Chrome"] },
+			testIgnore: /authenticated\//,
 		},
 		{
 			name: "firefox",
 			use: { ...devices["Desktop Firefox"] },
+			testIgnore: /authenticated\//,
 		},
 		{
 			name: "webkit",
 			use: { ...devices["Desktop Safari"] },
+			testIgnore: /authenticated\//,
+		},
+
+		// Authenticated tests (admin)
+		{
+			name: "authenticated-admin",
+			use: {
+				...devices["Desktop Chrome"],
+				storageState: "e2e/.auth/admin.json",
+			},
+			testMatch: /authenticated\/admin/,
+			dependencies: ["setup"],
+		},
+
+		// Authenticated tests (user)
+		{
+			name: "authenticated-user",
+			use: {
+				...devices["Desktop Chrome"],
+				storageState: "e2e/.auth/user.json",
+			},
+			testMatch: /authenticated\/user/,
+			dependencies: ["setup"],
 		},
 	],
 	webServer: {

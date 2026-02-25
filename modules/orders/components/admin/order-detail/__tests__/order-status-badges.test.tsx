@@ -104,7 +104,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("PENDING", "PENDING", "UNFULFILLED")}
 				/>
 			);
-			expect(screen.getByRole("group")).toBeDefined();
+			expect(screen.getByRole("group")).toBeInTheDocument();
 		});
 
 		it("sets aria-label on the group wrapper", () => {
@@ -151,7 +151,7 @@ describe("OrderStatusBadges", () => {
 			// Both order status and payment status are PENDING — use aria-label to disambiguate
 			expect(
 				screen.getByRole("status", { name: "Statut de la commande : En attente" })
-			).toBeDefined();
+			).toBeInTheDocument();
 		});
 
 		it("displays 'En traitement' for PROCESSING order status", () => {
@@ -160,7 +160,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("PROCESSING", "PAID", "PROCESSING")}
 				/>
 			);
-			expect(screen.getByText("En traitement")).toBeDefined();
+			expect(screen.getByText("En traitement")).toBeInTheDocument();
 		});
 
 		it("displays 'Expédiée' for SHIPPED order status", () => {
@@ -172,7 +172,7 @@ describe("OrderStatusBadges", () => {
 			// Use aria-label to target the order status badge specifically
 			expect(
 				screen.getByRole("status", { name: "Statut de la commande : Expédiée" })
-			).toBeDefined();
+			).toBeInTheDocument();
 		});
 
 		it("displays 'Livrée' for DELIVERED order status", () => {
@@ -183,7 +183,7 @@ describe("OrderStatusBadges", () => {
 			);
 			expect(
 				screen.getByRole("status", { name: "Statut de la commande : Livrée" })
-			).toBeDefined();
+			).toBeInTheDocument();
 		});
 
 		it("displays 'Annulée' for CANCELLED order status", () => {
@@ -192,7 +192,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("CANCELLED", "PENDING", "UNFULFILLED")}
 				/>
 			);
-			expect(screen.getByText("Annulée")).toBeDefined();
+			expect(screen.getByText("Annulée")).toBeInTheDocument();
 		});
 
 		it("sets aria-label for the order status badge", () => {
@@ -203,7 +203,7 @@ describe("OrderStatusBadges", () => {
 			);
 			expect(
 				screen.getByRole("status", { name: "Statut de la commande : En attente" })
-			).toBeDefined();
+			).toBeInTheDocument();
 		});
 	});
 
@@ -214,7 +214,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("PROCESSING", "PAID", "PROCESSING")}
 				/>
 			);
-			expect(screen.getByText("Payée")).toBeDefined();
+			expect(screen.getByText("Payée")).toBeInTheDocument();
 		});
 
 		it("displays 'Échouée' for FAILED payment status", () => {
@@ -223,7 +223,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("PENDING", "FAILED", "UNFULFILLED")}
 				/>
 			);
-			expect(screen.getByText("Échouée")).toBeDefined();
+			expect(screen.getByText("Échouée")).toBeInTheDocument();
 		});
 
 		it("displays 'Expirée' for EXPIRED payment status", () => {
@@ -232,7 +232,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("PENDING", "EXPIRED", "UNFULFILLED")}
 				/>
 			);
-			expect(screen.getByText("Expirée")).toBeDefined();
+			expect(screen.getByText("Expirée")).toBeInTheDocument();
 		});
 
 		it("displays 'Partiellement remboursée' for PARTIALLY_REFUNDED payment status", () => {
@@ -241,7 +241,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("DELIVERED", "PARTIALLY_REFUNDED", "DELIVERED")}
 				/>
 			);
-			expect(screen.getByText("Partiellement remboursée")).toBeDefined();
+			expect(screen.getByText("Partiellement remboursée")).toBeInTheDocument();
 		});
 
 		it("displays 'Remboursée' for REFUNDED payment status", () => {
@@ -250,7 +250,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("DELIVERED", "REFUNDED", "DELIVERED")}
 				/>
 			);
-			expect(screen.getByText("Remboursée")).toBeDefined();
+			expect(screen.getByText("Remboursée")).toBeInTheDocument();
 		});
 
 		it("sets aria-label for the payment status badge", () => {
@@ -261,7 +261,7 @@ describe("OrderStatusBadges", () => {
 			);
 			expect(
 				screen.getByRole("status", { name: "Statut du paiement : Payée" })
-			).toBeDefined();
+			).toBeInTheDocument();
 		});
 	});
 
@@ -272,7 +272,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("PENDING", "PENDING", "UNFULFILLED")}
 				/>
 			);
-			expect(screen.getByText("Non traitée")).toBeDefined();
+			expect(screen.getByText("Non traitée")).toBeInTheDocument();
 		});
 
 		it("displays 'En préparation' for PROCESSING fulfillment status", () => {
@@ -281,7 +281,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("PROCESSING", "PAID", "PROCESSING")}
 				/>
 			);
-			expect(screen.getByText("En préparation")).toBeDefined();
+			expect(screen.getByText("En préparation")).toBeInTheDocument();
 		});
 
 		it("displays 'Retournée' for RETURNED fulfillment status", () => {
@@ -290,7 +290,7 @@ describe("OrderStatusBadges", () => {
 					order={createOrder("DELIVERED", "PARTIALLY_REFUNDED", "RETURNED")}
 				/>
 			);
-			expect(screen.getByText("Retournée")).toBeDefined();
+			expect(screen.getByText("Retournée")).toBeInTheDocument();
 		});
 
 		it("sets aria-label for the fulfillment status badge", () => {
@@ -301,7 +301,7 @@ describe("OrderStatusBadges", () => {
 			);
 			expect(
 				screen.getByRole("status", { name: "Statut du traitement : Non traitée" })
-			).toBeDefined();
+			).toBeInTheDocument();
 		});
 	});
 

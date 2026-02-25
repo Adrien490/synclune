@@ -16,7 +16,14 @@ export default defineConfig({
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "text-summary", "html", "lcov"],
-			include: ["modules/**/*.ts", "modules/**/*.tsx", "shared/**/*.ts", "shared/**/*.tsx"],
+			include: [
+				"modules/**/*.ts",
+				"modules/**/*.tsx",
+				"shared/**/*.ts",
+				"shared/**/*.tsx",
+				"app/**/*.ts",
+				"app/**/*.tsx",
+			],
 			exclude: [
 				"**/__tests__/**",
 				"**/*.test.{ts,tsx}",
@@ -24,6 +31,15 @@ export default defineConfig({
 				"**/types/**",
 				"**/constants/**",
 				"node_modules/**",
+				"app/**/layout.tsx",
+				"app/**/loading.tsx",
+				"app/**/error.tsx",
+				"app/**/not-found.tsx",
+				"app/**/default.tsx",
+				"app/**/template.tsx",
+				"app/**/opengraph-image.tsx",
+				"app/api/**",
+				"app/serwist/**",
 			],
 			thresholds: {
 				statements: 80,

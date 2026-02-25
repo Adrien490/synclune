@@ -46,7 +46,7 @@ describe("MegaMenuColumn", () => {
 		render(<MegaMenuColumn title="Créations" items={items} />);
 
 		const heading = screen.getByRole("heading", { name: "Créations" });
-		expect(heading).toBeDefined();
+		expect(heading).toBeInTheDocument();
 		expect(heading.tagName).toBe("H3");
 	});
 
@@ -54,14 +54,14 @@ describe("MegaMenuColumn", () => {
 		render(<MegaMenuColumn title="Créations" items={items} />);
 
 		const region = screen.getByRole("region", { name: "Créations" });
-		expect(region).toBeDefined();
+		expect(region).toBeInTheDocument();
 	});
 
 	it("renders the first item as a primary CTA link", () => {
 		render(<MegaMenuColumn title="Créations" items={items} />);
 
 		const ctaLink = screen.getByRole("link", { name: /Toutes les créations/ });
-		expect(ctaLink).toBeDefined();
+		expect(ctaLink).toBeInTheDocument();
 		expect(ctaLink.getAttribute("href")).toBe("/produits");
 		// CTA has distinct styling (bg-accent/40)
 		expect(ctaLink.className).toContain("font-semibold");
@@ -98,7 +98,7 @@ describe("MegaMenuColumn", () => {
 		);
 
 		const viewAllLink = screen.getByRole("link", { name: /Voir tout/ });
-		expect(viewAllLink).toBeDefined();
+		expect(viewAllLink).toBeInTheDocument();
 		expect(viewAllLink.getAttribute("href")).toBe("/produits");
 	});
 

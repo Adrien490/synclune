@@ -83,10 +83,10 @@ describe("MegaMenuCreations", () => {
 	it("renders product types via MegaMenuColumn", () => {
 		render(<MegaMenuCreations productTypes={productTypes} />);
 
-		expect(screen.getByTestId("mega-menu-column")).toBeDefined();
-		expect(screen.getByText("Catégories")).toBeDefined();
-		expect(screen.getByText("Bagues")).toBeDefined();
-		expect(screen.getByText("Colliers")).toBeDefined();
+		expect(screen.getByTestId("mega-menu-column")).toBeInTheDocument();
+		expect(screen.getByText("Catégories")).toBeInTheDocument();
+		expect(screen.getByText("Bagues")).toBeInTheDocument();
+		expect(screen.getByText("Colliers")).toBeInTheDocument();
 	});
 
 	it("renders featured products with correct ROUTES.SHOP.PRODUCT links", () => {
@@ -112,8 +112,8 @@ describe("MegaMenuCreations", () => {
 			/>
 		);
 
-		expect(screen.getByText("99 €")).toBeDefined();
-		expect(screen.getByText("150 €")).toBeDefined();
+		expect(screen.getByText("99 €")).toBeInTheDocument();
+		expect(screen.getByText("150 €")).toBeInTheDocument();
 	});
 
 	it("renders the Nouveautés section header", () => {
@@ -124,7 +124,7 @@ describe("MegaMenuCreations", () => {
 			/>
 		);
 
-		expect(screen.getByText("Nouveautés")).toBeDefined();
+		expect(screen.getByText("Nouveautés")).toBeInTheDocument();
 	});
 
 	it("does not render featured section when no products", () => {

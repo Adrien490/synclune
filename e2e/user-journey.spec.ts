@@ -1,33 +1,19 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "./fixtures"
 
 test.describe("Parcours utilisateur authentifie", () => {
-	test("le formulaire de connexion accepte des identifiants et montre un feedback", async ({ page }) => {
-		await page.goto("/connexion")
-		await page.waitForLoadState("domcontentloaded")
+	test("le formulaire de connexion accepte des identifiants et montre un feedback", async ({ page, authPage }) => {
+		await authPage.goto()
 
-		// Fill in the login form
-		const emailInput = page.getByRole("textbox", { name: /Email/i })
-		const passwordInput = page.locator('input[type="password"]')
-		const submitButton = page.getByRole("button", { name: /Se connecter/i })
+		await authPage.login("test@example.com", "motdepasse123")
 
-		await emailInput.fill("test@example.com")
-		await passwordInput.fill("motdepasse123")
-		await submitButton.click()
-
-		// Should show some feedback (error for invalid credentials, or redirect)
+		// Wait for either error message or redirect away from login
 		const errorMessage = page.getByText(/Identifiants invalides|Email ou mot de passe incorrect|Erreur|invalide/i)
 
-		// Wait for either error message or navigation away from login
-		await Promise.race([
-			errorMessage.first().waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
-			page.waitForURL(url => !url.toString().includes("/connexion"), { timeout: 5000 }).catch(() => {}),
-		])
-
-		const redirected = !page.url().includes("/connexion")
-
-		// Either we got an error (expected with fake credentials) or were redirected (real account)
-		const hasError = await errorMessage.first().isVisible().catch(() => false)
-		expect(hasError || redirected).toBe(true)
+		await expect(async () => {
+			const redirected = !page.url().includes("/connexion")
+			const hasError = await errorMessage.first().isVisible()
+			expect(redirected || hasError).toBe(true)
+		}).toPass({ timeout: 5000 })
 	})
 
 	test("le formulaire d'inscription valide tous les champs avant soumission", async ({ page }) => {
@@ -88,16 +74,8 @@ test.describe("Parcours utilisateur authentifie", () => {
 		const confirmationMessage = page.getByText(/envoyé|vérifiez votre email|lien.*envoyé/i)
 		const errorMessage = page.getByText(/erreur|impossible/i)
 
-		await Promise.race([
-			confirmationMessage.first().waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
-			errorMessage.first().waitFor({ state: "visible", timeout: 5000 }).catch(() => {}),
-		])
-
-		const hasConfirmation = await confirmationMessage.first().isVisible().catch(() => false)
-		const hasError = await errorMessage.first().isVisible().catch(() => false)
-
 		// Either success confirmation or error (both are valid responses)
-		expect(hasConfirmation || hasError).toBe(true)
+		await expect(confirmationMessage.first().or(errorMessage.first())).toBeVisible({ timeout: 5000 })
 	})
 
 	test("les pages du compte redirigent les utilisateurs non connectes", async ({ page }) => {

@@ -165,8 +165,8 @@ describe("DiscountCodeInput", () => {
 		it("shows the collapsible trigger with promo code text", () => {
 			renderComponent()
 
-			expect(screen.getByTestId("collapsible-trigger")).toBeDefined()
-			expect(screen.getByText("J'ai un code promo")).toBeDefined()
+			expect(screen.getByTestId("collapsible-trigger")).toBeInTheDocument()
+			expect(screen.getByText("J'ai un code promo")).toBeInTheDocument()
 		})
 
 		it("does not show the applied discount badge when no discount", () => {
@@ -178,19 +178,19 @@ describe("DiscountCodeInput", () => {
 		it("renders the collapsible input area", () => {
 			renderComponent()
 
-			expect(screen.getByTestId("collapsible-content")).toBeDefined()
+			expect(screen.getByTestId("collapsible-content")).toBeInTheDocument()
 		})
 
 		it("renders the code input field", () => {
 			renderComponent()
 
-			expect(screen.getByRole("textbox", { name: "Code promo" })).toBeDefined()
+			expect(screen.getByRole("textbox", { name: "Code promo" })).toBeInTheDocument()
 		})
 
 		it("renders the apply button", () => {
 			renderComponent()
 
-			expect(screen.getByRole("button", { name: "Appliquer" })).toBeDefined()
+			expect(screen.getByRole("button", { name: "Appliquer" })).toBeInTheDocument()
 		})
 
 		it("starts with collapsed state (isOpen false) when no discount", () => {
@@ -206,7 +206,7 @@ describe("DiscountCodeInput", () => {
 			const discount = createDiscount({ code: "SAVE10" })
 			renderComponent({ appliedDiscount: discount })
 
-			expect(screen.getByText("SAVE10")).toBeDefined()
+			expect(screen.getByText("SAVE10")).toBeInTheDocument()
 		})
 
 		it("shows the formatted discount amount", () => {
@@ -214,14 +214,14 @@ describe("DiscountCodeInput", () => {
 			const discount = createDiscount({ discountAmount: 500 })
 			renderComponent({ appliedDiscount: discount })
 
-			expect(screen.getByText("-5.00 €")).toBeDefined()
+			expect(screen.getByText("-5.00 €")).toBeInTheDocument()
 		})
 
 		it("shows the remove (X) button when discount is applied", () => {
 			const discount = createDiscount()
 			renderComponent({ appliedDiscount: discount })
 
-			expect(screen.getByRole("button", { name: "Supprimer le code promo" })).toBeDefined()
+			expect(screen.getByRole("button", { name: "Supprimer le code promo" })).toBeInTheDocument()
 		})
 
 		it("does not render the collapsible input area when discount is applied", () => {
@@ -239,7 +239,7 @@ describe("DiscountCodeInput", () => {
 			const discount = createDiscount()
 			renderComponent({ appliedDiscount: discount })
 
-			expect(screen.getByText(discount.code)).toBeDefined()
+			expect(screen.getByText(discount.code)).toBeInTheDocument()
 			expect(screen.queryByTestId("collapsible")).toBeNull()
 		})
 	})
@@ -339,7 +339,7 @@ describe("DiscountCodeInput", () => {
 			await user.click(screen.getByRole("button", { name: "Appliquer" }))
 
 			await waitFor(() => {
-				expect(screen.getByText("Code expiré")).toBeDefined()
+				expect(screen.getByText("Code expiré")).toBeInTheDocument()
 			})
 		})
 
@@ -353,7 +353,7 @@ describe("DiscountCodeInput", () => {
 			await user.click(screen.getByRole("button", { name: "Appliquer" }))
 
 			await waitFor(() => {
-				expect(screen.getByText("Code invalide")).toBeDefined()
+				expect(screen.getByText("Code invalide")).toBeInTheDocument()
 			})
 		})
 
@@ -409,7 +409,7 @@ describe("DiscountCodeInput", () => {
 			await user.click(screen.getByRole("button", { name: "Appliquer" }))
 
 			await waitFor(() => {
-				expect(screen.getByRole("alert")).toBeDefined()
+				expect(screen.getByRole("alert")).toBeInTheDocument()
 			})
 
 			await user.type(input, "X")
