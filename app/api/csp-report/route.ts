@@ -25,9 +25,15 @@ export async function POST(request: Request) {
 
 		const body = await request.json();
 
-		// Log CSP violations in development, silently in production
 		if (process.env.NODE_ENV === "development") {
 			console.warn("[CSP Violation]", JSON.stringify(body, null, 2));
+		} else {
+			const report = body?.["csp-report"] ?? body;
+			console.warn("[CSP Violation]", JSON.stringify({
+				blockedUri: report?.["blocked-uri"],
+				violatedDirective: report?.["violated-directive"],
+				documentUri: report?.["document-uri"],
+			}));
 		}
 
 		return NextResponse.json({ status: "ok" }, { status: 204 });

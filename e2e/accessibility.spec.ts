@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright"
 import { test, expect } from "./fixtures"
 
 test.describe("Accessibilité - Homepage", () => {
@@ -233,6 +234,28 @@ test.describe("Accessibilité - Structure des pages", () => {
 			const imagesWithoutAlt = page.locator('img:not([alt]):not([aria-hidden="true"])')
 			const count = await imagesWithoutAlt.count()
 			expect(count).toBe(0)
+		})
+	}
+})
+
+test.describe("Accessibilité - Audit axe-core WCAG AA", () => {
+	const pagesToAudit = [
+		{ path: "/", name: "Homepage" },
+		{ path: "/produits", name: "Catalogue" },
+		{ path: "/connexion", name: "Connexion" },
+		{ path: "/inscription", name: "Inscription" },
+	]
+
+	for (const { path, name } of pagesToAudit) {
+		test(`${name} (${path}) passe l'audit axe-core WCAG AA`, async ({ page }) => {
+			await page.goto(path)
+			await page.waitForLoadState("domcontentloaded")
+
+			const results = await new AxeBuilder({ page })
+				.withTags(["wcag2a", "wcag2aa"])
+				.analyze()
+
+			expect(results.violations).toEqual([])
 		})
 	}
 })

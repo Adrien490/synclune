@@ -1,9 +1,28 @@
 import { render } from "@react-email/components"
 import { Resend } from "resend"
+import { withRetry } from "@/shared/utils/with-retry"
 import { EMAIL_FROM } from "../constants/email.constants"
 import type { EmailResult } from "../types/email.types"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResendClient(): Resend | null {
+	if (!process.env.RESEND_API_KEY) return null
+	return new Resend(process.env.RESEND_API_KEY)
+}
+
+function isRetryableEmailError(error: unknown): boolean {
+	if (error instanceof Error) {
+		const message = error.message.toLowerCase()
+		if (message.includes("fetch") || message.includes("network") || message.includes("timeout") || message.includes("econnrefused")) {
+			return true
+		}
+	}
+	// Resend API errors with statusCode
+	if (typeof error === "object" && error !== null && "statusCode" in error) {
+		const statusCode = (error as { statusCode: number }).statusCode
+		return statusCode >= 500
+	}
+	return false
+}
 
 export async function sendEmail(params: {
 	to: string | string[]
@@ -19,12 +38,31 @@ export async function sendEmail(params: {
 		return { success: false, error: "Missing recipient" }
 	}
 
+	const resend = getResendClient()
+	if (!resend) {
+		console.error("[EMAIL] RESEND_API_KEY not configured")
+		return { success: false, error: "RESEND_API_KEY not configured" }
+	}
+
 	const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to
 	try {
-		const { data, error } = await resend.emails.send({
-			from: EMAIL_FROM,
-			...params,
-		})
+		const { data, error } = await withRetry(
+			async () => {
+				const result = await resend.emails.send({
+					from: EMAIL_FROM,
+					...params,
+				})
+				if (result.error && isRetryableEmailError(result.error)) {
+					throw result.error
+				}
+				return result
+			},
+			{
+				maxAttempts: 3,
+				baseDelay: 1000,
+				isRetryable: isRetryableEmailError,
+			}
+		)
 		if (error) {
 			console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error)
 			return { success: false, error }

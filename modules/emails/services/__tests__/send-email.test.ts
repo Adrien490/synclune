@@ -24,6 +24,10 @@ vi.mock("@/shared/lib/email-config", () => ({
 	EMAIL_FROM: "Synclune <contact@synclune.fr>",
 }))
 
+vi.mock("@/shared/utils/with-retry", () => ({
+	withRetry: async (fn: () => Promise<unknown>) => fn(),
+}))
+
 import { sendEmail, renderAndSend } from "../send-email"
 
 // ============================================================================
@@ -33,6 +37,7 @@ import { sendEmail, renderAndSend } from "../send-email"
 describe("sendEmail", () => {
 	beforeEach(() => {
 		vi.resetAllMocks()
+		vi.stubEnv("RESEND_API_KEY", "re_test_123")
 		vi.spyOn(console, "error").mockImplementation(() => {})
 		vi.spyOn(console, "log").mockImplementation(() => {})
 	})
@@ -221,6 +226,19 @@ describe("sendEmail", () => {
 
 		expect(result).toEqual({ success: true, data: { id: "msg_single_arr" } })
 	})
+
+	it("should return error when RESEND_API_KEY is not configured", async () => {
+		vi.stubEnv("RESEND_API_KEY", "")
+
+		const result = await sendEmail({
+			to: "user@example.com",
+			subject: "Test",
+			html: "<p>Test</p>",
+		})
+
+		expect(result).toEqual({ success: false, error: "RESEND_API_KEY not configured" })
+		expect(mockResendEmailsSend).not.toHaveBeenCalled()
+	})
 })
 
 // ============================================================================
@@ -232,6 +250,7 @@ describe("renderAndSend", () => {
 
 	beforeEach(() => {
 		vi.resetAllMocks()
+		vi.stubEnv("RESEND_API_KEY", "re_test_123")
 		vi.spyOn(console, "error").mockImplementation(() => {})
 		vi.spyOn(console, "log").mockImplementation(() => {})
 	})

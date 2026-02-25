@@ -33,36 +33,44 @@ export async function GET(request: Request) {
 
 	const where = buildExportWhereClause(result.data);
 
-	const orders = await prisma.order.findMany({
-		where,
-		orderBy: { paidAt: "asc" },
-		select: {
-			orderNumber: true,
-			invoiceNumber: true,
-			createdAt: true,
-			paidAt: true,
-			customerName: true,
-			customerEmail: true,
-			subtotal: true,
-			discountAmount: true,
-			shippingCost: true,
-			total: true,
-			paymentMethod: true,
-			paymentStatus: true,
-			status: true,
-		},
-	});
+	try {
+		const orders = await prisma.order.findMany({
+			where,
+			orderBy: { paidAt: "asc" },
+			select: {
+				orderNumber: true,
+				invoiceNumber: true,
+				createdAt: true,
+				paidAt: true,
+				customerName: true,
+				customerEmail: true,
+				subtotal: true,
+				discountAmount: true,
+				shippingCost: true,
+				total: true,
+				paymentMethod: true,
+				paymentStatus: true,
+				status: true,
+			},
+		});
 
-	const csv = generateOrdersCsv(orders);
+		const csv = generateOrdersCsv(orders);
 
-	const now = new Date();
-	const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-	const filename = `livre-recettes-${dateStr}.csv`;
+		const now = new Date();
+		const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+		const filename = `livre-recettes-${dateStr}.csv`;
 
-	return new Response(csv, {
-		headers: {
-			"Content-Type": "text/csv; charset=utf-8",
-			"Content-Disposition": `attachment; filename="${filename}"`,
-		},
-	});
+		return new Response(csv, {
+			headers: {
+				"Content-Type": "text/csv; charset=utf-8",
+				"Content-Disposition": `attachment; filename="${filename}"`,
+			},
+		});
+	} catch (error) {
+		console.error("[EXPORT] Failed to export orders:", error);
+		return new Response(
+			JSON.stringify({ error: "Erreur lors de l'export" }),
+			{ status: 500, headers: { "Content-Type": "application/json" } }
+		);
+	}
 }
