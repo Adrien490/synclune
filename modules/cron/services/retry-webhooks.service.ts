@@ -6,6 +6,7 @@ import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
 import {
 	BATCH_DEADLINE_MS,
+	BATCH_SIZE_LARGE,
 	BATCH_SIZE_SMALL,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	THRESHOLDS,
@@ -23,38 +24,46 @@ async function recoverOrphanedProcessingEvents(): Promise<number> {
 		Date.now() - PROCESSING_ORPHAN_THRESHOLD_MS
 	);
 
-	const result = await prisma.webhookEvent.updateMany({
+	// Find orphaned IDs in bounded batches to avoid unbounded updateMany
+	const orphanedWithProcessedAt = await prisma.webhookEvent.findMany({
 		where: {
 			status: WebhookEventStatus.PROCESSING,
 			processedAt: { lt: orphanThreshold },
 		},
-		data: {
-			status: WebhookEventStatus.FAILED,
-			errorMessage: "Recovered from orphaned PROCESSING state",
-		},
+		select: { id: true },
+		take: BATCH_SIZE_LARGE,
 	});
 
-	// Also recover PROCESSING events with no processedAt (stuck before first update)
-	const noProcessedAtResult = await prisma.webhookEvent.updateMany({
+	const orphanedWithoutProcessedAt = await prisma.webhookEvent.findMany({
 		where: {
 			status: WebhookEventStatus.PROCESSING,
 			processedAt: null,
 			receivedAt: { lt: orphanThreshold },
 		},
+		select: { id: true },
+		take: BATCH_SIZE_LARGE,
+	});
+
+	const allIds = [
+		...orphanedWithProcessedAt.map((e) => e.id),
+		...orphanedWithoutProcessedAt.map((e) => e.id),
+	];
+
+	if (allIds.length === 0) return 0;
+
+	const result = await prisma.webhookEvent.updateMany({
+		where: { id: { in: allIds } },
 		data: {
 			status: WebhookEventStatus.FAILED,
 			errorMessage: "Recovered from orphaned PROCESSING state",
 		},
 	});
 
-	const total = result.count + noProcessedAtResult.count;
-	if (total > 0) {
-		console.warn(
-			`[CRON:retry-webhooks] Recovered ${total} orphaned PROCESSING events`
-		);
-	}
+	console.warn(
+		`[CRON:retry-webhooks] Recovered ${result.count} orphaned PROCESSING events`
+	);
 
-	return total;
+	return result.count;
 }
 
 /**
@@ -144,14 +153,20 @@ export async function retryFailedWebhooks(): Promise<{
 				continue;
 			}
 
-			// Mark as PROCESSING and increment attempts
-			await prisma.webhookEvent.update({
-				where: { id: webhookEvent.id },
+			// Optimistic lock: only claim if still FAILED (prevents double-processing)
+			const claimed = await prisma.webhookEvent.updateMany({
+				where: { id: webhookEvent.id, status: WebhookEventStatus.FAILED },
 				data: {
 					status: WebhookEventStatus.PROCESSING,
 					attempts: { increment: 1 },
 				},
 			});
+			if (claimed.count === 0) {
+				console.log(
+					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} already claimed, skipping`
+				);
+				continue;
+			}
 
 			retried++;
 

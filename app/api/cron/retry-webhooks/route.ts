@@ -26,7 +26,7 @@ export async function GET() {
 					permanentlyFailed: result.permanentlyFailed,
 					orphansRecovered: result.orphansRecovered,
 				},
-			}).catch(() => {});
+			}).catch((e) => console.error("[CRON:retry-webhooks] Failed to send admin alert", e));
 		}
 
 		return cronSuccess({

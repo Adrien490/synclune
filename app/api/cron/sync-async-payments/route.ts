@@ -21,7 +21,7 @@ export async function GET() {
 				job: "sync-async-payments",
 				errors: result.errors,
 				details: { checked: result.checked, updated: result.updated },
-			}).catch(() => {});
+			}).catch((e) => console.error("[CRON:sync-async-payments] Failed to send admin alert", e));
 		}
 
 		return cronSuccess({

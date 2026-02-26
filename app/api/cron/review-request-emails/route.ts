@@ -17,7 +17,7 @@ export async function GET() {
 				job: "review-request-emails",
 				errors: result.errors,
 				details: { found: result.found, sent: result.sent },
-			}).catch(() => {});
+			}).catch((e) => console.error("[CRON:review-request-emails] Failed to send admin alert", e));
 		}
 
 		return cronSuccess({

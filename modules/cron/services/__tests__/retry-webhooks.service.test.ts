@@ -62,21 +62,26 @@ describe("retryFailedWebhooks", () => {
 	});
 
 	it("should recover orphaned PROCESSING events first", async () => {
-		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.webhookEvent.findMany.mockResolvedValue([]);
+		const orphanEvents = [{ id: "orphan-1" }, { id: "orphan-2" }];
+		mockPrisma.webhookEvent.findMany
+			.mockResolvedValueOnce(orphanEvents) // orphans with processedAt
+			.mockResolvedValueOnce([]) // orphans without processedAt
+			.mockResolvedValueOnce([]); // failed events query
+		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 2 });
 
-		await retryFailedWebhooks();
+		const result = await retryFailedWebhooks();
 
-		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalledTimes(2);
-
-		const firstCall = mockPrisma.webhookEvent.updateMany.mock.calls[0][0];
-		expect(firstCall.where.status).toBe("PROCESSING");
-		expect(firstCall.data.status).toBe("FAILED");
-		expect(firstCall.data.errorMessage).toContain("orphaned");
+		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalledWith({
+			where: { id: { in: ["orphan-1", "orphan-2"] } },
+			data: {
+				status: "FAILED",
+				errorMessage: "Recovered from orphaned PROCESSING state",
+			},
+		});
+		expect(result!.orphansRecovered).toBe(2);
 	});
 
 	it("should return zero counts when no failed events exist", async () => {
-		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.webhookEvent.findMany.mockResolvedValue([]);
 
 		const result = await retryFailedWebhooks();
@@ -93,15 +98,17 @@ describe("retryFailedWebhooks", () => {
 	});
 
 	it("should skip unsupported event types", async () => {
-		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.webhookEvent.findMany.mockResolvedValue([
-			{
-				id: "evt-1",
-				stripeEventId: "evt_stripe_1",
-				eventType: "unsupported.event",
-				attempts: 1,
-			},
-		]);
+		mockPrisma.webhookEvent.findMany
+			.mockResolvedValueOnce([]) // orphans with processedAt
+			.mockResolvedValueOnce([]) // orphans without processedAt
+			.mockResolvedValueOnce([
+				{
+					id: "evt-1",
+					stripeEventId: "evt_stripe_1",
+					eventType: "unsupported.event",
+					attempts: 1,
+				},
+			]);
 		mockIsEventSupported.mockReturnValue(false);
 		mockPrisma.webhookEvent.update.mockResolvedValue({});
 
@@ -116,15 +123,17 @@ describe("retryFailedWebhooks", () => {
 	});
 
 	it("should skip events not found in Stripe (expired)", async () => {
-		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.webhookEvent.findMany.mockResolvedValue([
-			{
-				id: "evt-2",
-				stripeEventId: "evt_stripe_expired",
-				eventType: "payment_intent.succeeded",
-				attempts: 1,
-			},
-		]);
+		mockPrisma.webhookEvent.findMany
+			.mockResolvedValueOnce([]) // orphans with processedAt
+			.mockResolvedValueOnce([]) // orphans without processedAt
+			.mockResolvedValueOnce([
+				{
+					id: "evt-2",
+					stripeEventId: "evt_stripe_expired",
+					eventType: "payment_intent.succeeded",
+					attempts: 1,
+				},
+			]);
 		mockIsEventSupported.mockReturnValue(true);
 		mockStripe.events.retrieve.mockRejectedValue(new Error("Not found"));
 		mockPrisma.webhookEvent.update.mockResolvedValue({});
@@ -148,19 +157,23 @@ describe("retryFailedWebhooks", () => {
 			eventType: "payment_intent.succeeded",
 			attempts: 1,
 		};
-		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.webhookEvent.findMany.mockResolvedValue([mockEvent]);
+		mockPrisma.webhookEvent.findMany
+			.mockResolvedValueOnce([]) // orphans with processedAt
+			.mockResolvedValueOnce([]) // orphans without processedAt
+			.mockResolvedValueOnce([mockEvent]);
 		mockIsEventSupported.mockReturnValue(true);
 
 		const stripeEvent = { id: "evt_stripe_success", type: "payment_intent.succeeded" } as Stripe.Event;
 		mockStripe.events.retrieve.mockResolvedValue(stripeEvent);
+		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.webhookEvent.update.mockResolvedValue({});
 		mockDispatchEvent.mockResolvedValue({ tasks: [] });
 
 		const result = await retryFailedWebhooks();
 
-		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
-			where: { id: "evt-3" },
+		// Optimistic lock via updateMany
+		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalledWith({
+			where: { id: "evt-3", status: "FAILED" },
 			data: {
 				status: "PROCESSING",
 				attempts: { increment: 1 },
@@ -187,10 +200,13 @@ describe("retryFailedWebhooks", () => {
 			eventType: "payment_intent.succeeded",
 			attempts: 0,
 		};
-		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.webhookEvent.findMany.mockResolvedValue([mockEvent]);
+		mockPrisma.webhookEvent.findMany
+			.mockResolvedValueOnce([]) // orphans with processedAt
+			.mockResolvedValueOnce([]) // orphans without processedAt
+			.mockResolvedValueOnce([mockEvent]);
 		mockIsEventSupported.mockReturnValue(true);
 		mockStripe.events.retrieve.mockResolvedValue({} as Stripe.Event);
+		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.webhookEvent.update.mockResolvedValue({});
 		const mockTasks = [{ type: "send-email", data: {} }];
 		mockDispatchEvent.mockResolvedValue({ tasks: mockTasks });
@@ -207,17 +223,19 @@ describe("retryFailedWebhooks", () => {
 			eventType: "payment_intent.succeeded",
 			attempts: 2,
 		};
-		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.webhookEvent.findMany.mockResolvedValue([mockEvent]);
+		mockPrisma.webhookEvent.findMany
+			.mockResolvedValueOnce([]) // orphans with processedAt
+			.mockResolvedValueOnce([]) // orphans without processedAt
+			.mockResolvedValueOnce([mockEvent]);
 		mockIsEventSupported.mockReturnValue(true);
 		mockStripe.events.retrieve.mockResolvedValue({} as Stripe.Event);
-		mockPrisma.webhookEvent.update.mockResolvedValueOnce({});
+		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 1 }); // optimistic lock succeeds
 		mockDispatchEvent.mockRejectedValue(new Error("Handler crashed"));
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
 			attempts: 3,
 			status: "PROCESSING",
 		});
-		mockPrisma.webhookEvent.update.mockResolvedValueOnce({});
+		mockPrisma.webhookEvent.update.mockResolvedValue({});
 
 		const result = await retryFailedWebhooks();
 
@@ -226,7 +244,6 @@ describe("retryFailedWebhooks", () => {
 	});
 
 	it("should query only FAILED events with attempts below max", async () => {
-		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.webhookEvent.findMany.mockResolvedValue([]);
 
 		await retryFailedWebhooks();

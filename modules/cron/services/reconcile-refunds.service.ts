@@ -109,7 +109,7 @@ export async function reconcilePendingRefunds(): Promise<{
 				} else if (newStatus === RefundStatus.FAILED) {
 					const failureReason = stripeRefund.failure_reason || "Unknown failure";
 					await markRefundAsFailed(refund.id, failureReason);
-					sendRefundFailedAlert(refund, failureReason).catch(() => {});
+					sendRefundFailedAlert(refund, failureReason).catch((e) => console.error("[CRON:reconcile-refunds] Failed to send refund alert", e));
 					console.log(
 						`[CRON:reconcile-refunds] Refund ${refund.id} marked as FAILED`
 					);

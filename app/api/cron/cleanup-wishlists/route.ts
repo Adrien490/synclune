@@ -20,7 +20,7 @@ export async function GET() {
 			job: "cleanup-wishlists",
 			errors: 1,
 			details: { error: error instanceof Error ? error.message : String(error) },
-		}).catch(() => {});
+		}).catch((e) => console.error("[CRON:cleanup-wishlists] Failed to send admin alert", e));
 
 		return cronError(
 			error instanceof Error ? error.message : "Failed to cleanup wishlists"

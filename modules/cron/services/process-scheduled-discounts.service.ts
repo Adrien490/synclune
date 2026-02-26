@@ -1,7 +1,7 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
-import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
+import { BATCH_DEADLINE_MS, CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 
 /**
  * Activates and deactivates scheduled promotions.
@@ -22,6 +22,7 @@ export async function processScheduledDiscounts(): Promise<{
 	);
 
 	const now = new Date();
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
 
 	// 1. Find activation candidates (Prisma can't compare columns, so two-step)
 	const candidates = await prisma.discount.findMany({
@@ -50,6 +51,15 @@ export async function processScheduledDiscounts(): Promise<{
 		console.log(
 			`[CRON:process-scheduled-discounts] Activated ${activatedCount} discounts (${candidates.length - toActivate.length} skipped: manually deactivated)`
 		);
+	}
+
+	// Check deadline before deactivation phase
+	if (Date.now() > deadline) {
+		console.warn("[CRON:process-scheduled-discounts] Approaching timeout, skipping deactivation phase");
+		if (activatedCount > 0) {
+			updateTag(DISCOUNT_CACHE_TAGS.LIST);
+		}
+		return { activated: activatedCount, deactivated: 0, hasMore: true };
 	}
 
 	// 2. Deactivate expired promotions (bounded)

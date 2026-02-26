@@ -13,6 +13,7 @@ import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_THROTTLE_MS, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
+import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
 /**
  * Synchronizes async payment statuses by polling Stripe.
@@ -108,9 +109,22 @@ export async function syncAsyncPayments(): Promise<{
 						tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 					}
 				} catch (stockError) {
+					const stockErrorMessage = stockError instanceof Error ? stockError.message : String(stockError);
 					console.error(
 						`[STOCK-RESTORE-FAILED] Order ${order.orderNumber} (${order.id}): stock not restored after payment failure`,
-						stockError instanceof Error ? stockError.message : String(stockError)
+						stockErrorMessage
+					);
+					sendAdminCronFailedAlert({
+						job: "sync-async-payments",
+						errors: 1,
+						details: {
+							issue: "stock-restore-failed",
+							orderNumber: order.orderNumber,
+							orderId: order.id,
+							error: stockErrorMessage,
+						},
+					}).catch((e) =>
+						console.error("[CRON:sync-async-payments] Failed to send stock restore alert", e)
 					);
 				}
 				updated++;

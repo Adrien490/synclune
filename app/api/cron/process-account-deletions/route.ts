@@ -18,7 +18,7 @@ export async function GET() {
 				job: "process-account-deletions",
 				errors: result.errors,
 				details: { processed: result.processed, hasMore: result.hasMore },
-			}).catch(() => {});
+			}).catch((e) => console.error("[CRON:process-account-deletions] Failed to send admin alert", e));
 		}
 
 		return cronSuccess({

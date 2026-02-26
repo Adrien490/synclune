@@ -20,7 +20,7 @@ export async function GET() {
 				job: "reconcile-refunds",
 				errors: result.errors,
 				details: { checked: result.checked, updated: result.updated, staleAlerted: result.staleAlerted },
-			}).catch(() => {});
+			}).catch((e) => console.error("[CRON:reconcile-refunds] Failed to send admin alert", e));
 		}
 
 		return cronSuccess({
