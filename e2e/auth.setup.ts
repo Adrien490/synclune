@@ -1,4 +1,4 @@
-import { test as setup, expect } from "@playwright/test"
+import { test as setup, expect, type Page } from "@playwright/test"
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@synclune.fr"
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password123"
@@ -10,7 +10,7 @@ const USER_PASSWORD = process.env.E2E_USER_PASSWORD ?? "password123"
  * Falls back to UI login if the API call fails.
  */
 async function authenticateViaAPI(
-	page: Parameters<Parameters<typeof setup>[1]>[0]["page"],
+	page: Page,
 	email: string,
 	password: string,
 	storagePath: string,
