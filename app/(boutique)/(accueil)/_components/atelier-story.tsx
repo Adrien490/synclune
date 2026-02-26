@@ -102,7 +102,7 @@ export async function AtelierStory() {
 	return (
 		<section
 			id="atelier-story"
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.spacious}`}
+			className={`relative overflow-hidden bg-muted/20 mask-t-from-90% mask-t-to-100% mask-b-from-85% mask-b-to-100% ${SECTION_SPACING.spacious}`}
 			aria-labelledby="atelier-story-title"
 			data-content-type="about-creator"
 		>
@@ -120,20 +120,7 @@ export async function AtelierStory() {
 					</Fade>
 				</header>
 
-				{/* Main ambiance photo - reduced height on mobile for better flow */}
-				<Reveal y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} once>
-					<div className="-mx-4 sm:mx-0 mb-8 sm:mb-12">
-						<PlaceholderImage
-							className="aspect-3/2 sm:aspect-video max-h-[50vh] sm:max-h-none"
-							label="Atelier de création Synclune à Nantes - Léane travaillant sur ses bijoux artisanaux"
-						/>
-					</div>
-				</Reveal>
-
-				{/* Decorative animated separator */}
-				<SparklesDivider className="mb-8 sm:mb-12 py-0" />
-
-				{/* Confession text with staggered paragraphs */}
+				{/* Confession text with staggered paragraphs - content-first, image as payoff */}
 				<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration} inView once>
 					<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
 						{/* Catchy intro */}
@@ -166,6 +153,19 @@ export async function AtelierStory() {
 					</div>
 				</Fade>
 
+				{/* Decorative separator as narrative drumroll before photo reveal */}
+				<SparklesDivider className="my-8 sm:my-12 py-0" />
+
+				{/* Main ambiance photo - contained with rounded corners and bottom fade */}
+				<Reveal y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} once>
+					<div className="mb-8 sm:mb-12 mask-b-from-85% mask-b-to-100%">
+						<PlaceholderImage
+							className="aspect-3/2 sm:aspect-video max-h-[40vh] sm:max-h-none rounded-2xl"
+							label="Atelier de création Synclune à Nantes - Léane travaillant sur ses bijoux artisanaux"
+						/>
+					</div>
+				</Reveal>
+
 				{/* Polaroid gallery - 4 photos desktop, 2 mobile (via CSS) */}
 				<Reveal y={MOTION_CONFIG.section.grid.y} delay={0.3} duration={MOTION_CONFIG.section.title.duration} once>
 					<div className="mt-12 sm:mt-16">
@@ -181,7 +181,7 @@ export async function AtelierStory() {
 								y={MOTION_CONFIG.section.grid.y}
 								inView
 								once
-								className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-2 max-w-5xl mx-auto"
+								className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-2 max-w-5xl mx-auto"
 							>
 								{POLAROIDS.map((p) => (
 									<PolaroidFrame

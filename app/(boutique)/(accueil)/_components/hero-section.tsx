@@ -156,7 +156,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
       <ScrollIndicator
         targetIds={["latest-creations", "collections"]}
         ariaLabel="Voir la suite"
-        className="hidden sm:block"
+        className="block"
       />
     </section>
   );
