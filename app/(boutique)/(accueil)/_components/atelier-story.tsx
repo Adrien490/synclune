@@ -1,6 +1,7 @@
 import { Fade, HandDrawnUnderline, Reveal, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
+import { SectionTitle } from "@/shared/components/section-title";
 import { PolaroidFrame, type WashiTapeColor, type WashiTapePosition } from "@/shared/components/polaroid-frame";
 import { SparklesDivider } from "@/shared/components/section-divider";
 import { Button } from "@/shared/components/ui/button";
@@ -105,12 +106,20 @@ export async function AtelierStory() {
 			aria-labelledby="atelier-story-title"
 			data-content-type="about-creator"
 		>
-			{/* Descriptive title for SEO and screen readers */}
-			<h2 id="atelier-story-title" className="sr-only">
-				L'histoire de Léane, créatrice de bijoux artisanaux Synclune à Nantes
-			</h2>
-
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+				{/* Visible section header */}
+				<header className="mb-10 text-center lg:mb-14">
+					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
+						<SectionTitle id="atelier-story-title">Mon atelier</SectionTitle>
+						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
+					</Fade>
+					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
+						<p className="mt-5 text-lg/8 tracking-normal text-muted-foreground max-w-2xl mx-auto">
+							Depuis mon atelier à Nantes
+						</p>
+					</Fade>
+				</header>
+
 				{/* Main ambiance photo - reduced height on mobile for better flow */}
 				<Reveal y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} once>
 					<div className="-mx-4 sm:mx-0 mb-8 sm:mb-12">
@@ -127,14 +136,6 @@ export async function AtelierStory() {
 				{/* Confession text with staggered paragraphs */}
 				<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration} inView once>
 					<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
-						{/* Decorative badge (real h2 is sr-only above) */}
-						<span
-							className="inline-block text-sm uppercase tracking-[0.2em] text-muted-foreground font-medium"
-							aria-hidden="true"
-						>
-							Depuis mon atelier
-						</span>
-
 						{/* Catchy intro */}
 						<p className="text-2xl sm:text-3xl md:text-4xl font-light text-foreground tracking-tight">
 							Je vais vous faire une confidence.
@@ -213,12 +214,12 @@ export async function AtelierStory() {
 					<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay}
 						duration={MOTION_CONFIG.section.cta.duration} inView once className="text-center">
 						<p className="text-muted-foreground mb-4 text-base sm:text-lg">
-							Envie de voir mes créations de plus près ?
+							Envie d'un bijou qui vous ressemble vraiment ?
 						</p>
 						<Button asChild size="lg" variant="outline"
 							className="shadow-md hover:shadow-xl motion-safe:hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-[transform,box-shadow] motion-safe:duration-300"
 						>
-							<Link href="/produits">Découvrir les créations Synclune</Link>
+							<Link href="/personnalisation">Créer votre bijou sur-mesure</Link>
 						</Button>
 					</Fade>
 				</div>

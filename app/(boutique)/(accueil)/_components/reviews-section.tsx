@@ -157,8 +157,8 @@ export function ReviewsSection({
 							variant="outline"
 							className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
 						>
-							<Link href="/produits">
-								Découvrir nos créations
+							<Link href="/collections">
+								Explorer les collections
 							</Link>
 						</Button>
 					</Fade>

@@ -105,11 +105,15 @@ export default async function Page() {
         reviewStatsPromise={reviewStatsPromise}
       />
 
-      {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
-      <AtelierStory />
+      {/* 5. Atelier Story - Hidden on mobile to shorten scroll */}
+      <div className="hidden md:block">
+        <AtelierStory />
+      </div>
 
-      {/* 6. Creative Process - Step-by-step jewelry making */}
-      <CreativeProcess />
+      {/* 6. Creative Process - Hidden on mobile to shorten scroll */}
+      <div className="hidden md:block">
+        <CreativeProcess />
+      </div>
 
       {/* 7. FAQ - Frequently asked questions with JSON-LD */}
       <FaqSection />
