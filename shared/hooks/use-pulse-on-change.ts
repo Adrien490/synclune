@@ -12,22 +12,22 @@ import { useEffect, useState } from "react";
  */
 export function usePulseOnChange<T>(value: T, duration = 600): boolean {
 	const [shouldPulse, setShouldPulse] = useState(false);
+	const [pulseKey, setPulseKey] = useState(0);
 
 	// Render-time state adjustment: detect value changes without useEffect
 	const [prevValue, setPrevValue] = useState(value);
 	if (prevValue !== value) {
 		setPrevValue(value);
-		if (!shouldPulse) {
-			setShouldPulse(true);
-		}
+		setShouldPulse(true);
+		setPulseKey(pulseKey + 1);
 	}
 
-	// Reset pulse after duration
+	// Reset pulse after duration (pulseKey restarts the timer on mid-pulse changes)
 	useEffect(() => {
 		if (!shouldPulse) return;
 		const timeout = setTimeout(() => setShouldPulse(false), duration);
 		return () => clearTimeout(timeout);
-	}, [shouldPulse, duration]);
+	}, [shouldPulse, pulseKey, duration]);
 
 	return shouldPulse;
 }

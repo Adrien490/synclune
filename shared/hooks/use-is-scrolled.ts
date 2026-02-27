@@ -14,9 +14,7 @@ import { useEffect, useState, useRef } from "react";
  * @returns true si scrollY > threshold
  */
 export function useIsScrolled(threshold: number = 10): boolean {
-	const [isScrolled, setIsScrolled] = useState(() =>
-		typeof window !== "undefined" ? window.scrollY > threshold : false,
-	);
+	const [isScrolled, setIsScrolled] = useState(false);
 	const sentinelRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {

@@ -22,11 +22,7 @@ export interface RotatingWordProps {
  * Anti-CLS: width is locked to the longest word via an invisible placeholder.
  * Respects prefers-reduced-motion.
  */
-export function RotatingWord({
-	words,
-	duration = 3000,
-	className,
-}: RotatingWordProps) {
+export function RotatingWord({ words, duration = 3000, className }: RotatingWordProps) {
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const shouldReduceMotion = useReducedMotion();
 
@@ -58,14 +54,8 @@ export function RotatingWord({
 
 	const textStyles = "text-foreground font-medium whitespace-nowrap";
 
-	if (shouldReduceMotion) {
-		return (
-			<span className={pillStyles} style={{ contain: "layout paint" }} lang="fr">
-				<span className={textStyles}>{words[0]}</span>
-			</span>
-		);
-	}
-
+	// Always render same DOM structure to avoid hydration mismatch
+	// (useReducedMotion returns null on server, true/false on client)
 	return (
 		<span
 			className={pillStyles}
@@ -76,29 +66,21 @@ export function RotatingWord({
 			<span className="relative inline-flex items-center" aria-hidden="true">
 				<AnimatePresence mode="wait">
 					<motion.span
-						key={currentIndex}
-						initial={{ y: 20, opacity: 0, filter: "blur(4px)" }}
+						key={shouldReduceMotion ? "static" : currentIndex}
+						initial={shouldReduceMotion ? false : { y: 20, opacity: 0, filter: "blur(4px)" }}
 						animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-						exit={{ y: -20, opacity: 0, filter: "blur(4px)" }}
-						transition={{
-							duration: 0.35,
-							ease: [0.25, 0.1, 0.25, 1],
-						}}
-						className={cn(
-							textStyles,
-							"absolute inset-0 flex items-center justify-center",
-						)}
+						exit={shouldReduceMotion ? undefined : { y: -20, opacity: 0, filter: "blur(4px)" }}
+						transition={
+							shouldReduceMotion ? { duration: 0 } : { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }
+						}
+						className={cn(textStyles, "absolute inset-0 flex items-center justify-center")}
 					>
-						{words[currentIndex]}
+						{words[shouldReduceMotion ? 0 : currentIndex]}
 					</motion.span>
 				</AnimatePresence>
 
 				{/* Invisible placeholder - reserves width of the longest word */}
-				<span
-					className={cn(textStyles, "invisible select-none")}
-				>
-					{longestWord}
-				</span>
+				<span className={cn(textStyles, "invisible select-none")}>{longestWord}</span>
 			</span>
 		</span>
 	);

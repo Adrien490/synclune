@@ -33,24 +33,23 @@ export function SplitText({ children, stagger = 0.08, className }: SplitTextProp
 	const prefersReducedMotion = useReducedMotion();
 	const words = children.split(" ");
 
-	// Reduced motion: render immediately without animation
-	if (prefersReducedMotion) {
-		return <span className={className}>{children}</span>;
-	}
-
+	// Always render same DOM structure to avoid hydration mismatch
+	// (useReducedMotion returns null on server, true/false on client)
 	return (
 		<motion.span
 			className={className}
-			initial="hidden"
+			initial={prefersReducedMotion ? "visible" : "hidden"}
 			animate="visible"
-			transition={{ staggerChildren: stagger }}
+			transition={prefersReducedMotion ? { duration: 0 } : { staggerChildren: stagger }}
 			aria-label={children}
 		>
 			{words.map((word, i) => (
 				<motion.span
 					key={`${word}-${i}`}
 					variants={wordVariants}
-					transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+					transition={
+						prefersReducedMotion ? { duration: 0 } : { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }
+					}
 					className="inline-block"
 					aria-hidden="true"
 				>

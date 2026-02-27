@@ -3,7 +3,7 @@
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
 import { useInView, useMotionValue, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";
 import type { ParticleBackgroundProps } from "./types";
@@ -67,39 +67,33 @@ export function ParticleBackground({
 	const isTouchDevice = useIsTouchDevice();
 
 	const [tabVisible, setTabVisible] = useState(true);
-	const [highContrast, setHighContrast] = useState(() =>
-		typeof window !== "undefined" ? window.matchMedia("(prefers-contrast: more)").matches : false,
+
+	// useSyncExternalStore: server snapshot = false, avoids hydration mismatch
+	const highContrast = useSyncExternalStore(
+		(cb) => {
+			const mql = window.matchMedia("(prefers-contrast: more)");
+			mql.addEventListener("change", cb);
+			return () => mql.removeEventListener("change", cb);
+		},
+		() => window.matchMedia("(prefers-contrast: more)").matches,
+		() => false,
 	);
-	const [forcedColors, setForcedColors] = useState(() =>
-		typeof window !== "undefined" ? window.matchMedia("(forced-colors: active)").matches : false,
+	const forcedColors = useSyncExternalStore(
+		(cb) => {
+			const mql = window.matchMedia("(forced-colors: active)");
+			mql.addEventListener("change", cb);
+			return () => mql.removeEventListener("change", cb);
+		},
+		() => window.matchMedia("(forced-colors: active)").matches,
+		() => false,
 	);
 
-	// Single effect for all environment listeners (visibility, media queries)
 	useEffect(() => {
 		function onVisibilityChange() {
 			setTabVisible(document.visibilityState === "visible");
 		}
 		document.addEventListener("visibilitychange", onVisibilityChange);
-
-		// Detect high contrast mode: reduce opacity 50%, increase blur 50%
-		const contrastMql = window.matchMedia("(prefers-contrast: more)");
-		function onContrastChange(e: MediaQueryListEvent) {
-			setHighContrast(e.matches);
-		}
-		contrastMql.addEventListener("change", onContrastChange);
-
-		// Detect forced-colors mode: hide particles entirely (colors are overridden)
-		const forcedMql = window.matchMedia("(forced-colors: active)");
-		function onForcedColorsChange(e: MediaQueryListEvent) {
-			setForcedColors(e.matches);
-		}
-		forcedMql.addEventListener("change", onForcedColorsChange);
-
-		return () => {
-			document.removeEventListener("visibilitychange", onVisibilityChange);
-			contrastMql.removeEventListener("change", onContrastChange);
-			forcedMql.removeEventListener("change", onForcedColorsChange);
-		};
+		return () => document.removeEventListener("visibilitychange", onVisibilityChange);
 	}, []);
 
 	const isInView = viewportInView && tabVisible;
