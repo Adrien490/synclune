@@ -72,7 +72,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 								containScroll: "trimSnaps",
 							}}
 							className="w-full group/carousel"
-							aria-label="Carousel de collections"
+							aria-label="Carrousel de collections"
 						>
 							<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
 								{collections.map((collection, index) => {

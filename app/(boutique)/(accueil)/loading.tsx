@@ -36,15 +36,11 @@ export default function HomeLoading() {
 			{/* 4. Reviews */}
 			<ReviewsSectionSkeleton />
 
-			{/* 5. Atelier Story - Hidden on mobile to shorten scroll */}
-			<div className="hidden md:block">
-				<AtelierStorySkeleton />
-			</div>
+			{/* 5. Atelier Story */}
+			<AtelierStorySkeleton />
 
-			{/* 6. Creative Process - Hidden on mobile to shorten scroll */}
-			<div className="hidden md:block">
-				<CreativeProcessSkeleton />
-			</div>
+			{/* 6. Creative Process */}
+			<CreativeProcessSkeleton />
 
 			{/* 7. FAQ */}
 			<FaqSectionSkeleton />

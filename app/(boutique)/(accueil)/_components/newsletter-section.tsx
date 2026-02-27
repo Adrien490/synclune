@@ -15,6 +15,7 @@ export async function NewsletterSection() {
 
 	return (
 		<section
+			id="newsletter"
 			data-section="newsletter"
 			aria-labelledby="newsletter-title"
 			aria-describedby="newsletter-subtitle"

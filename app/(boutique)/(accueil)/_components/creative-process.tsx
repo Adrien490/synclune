@@ -249,7 +249,7 @@ export async function CreativeProcess() {
 														/>
 													)}
 												</h3>
-												<p className="text-base/7 tracking-normal antialiased text-muted-foreground line-clamp-2 sm:line-clamp-none">
+												<p className="text-base/7 tracking-normal antialiased text-muted-foreground sm:line-clamp-none">
 													{step.description}
 												</p>
 											</div>

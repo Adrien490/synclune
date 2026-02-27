@@ -72,6 +72,8 @@ function LatestCreationsGrid({
 	const itemListSchema = {
 		"@context": "https://schema.org",
 		"@type": "ItemList",
+		name: "Nouvelles créations Synclune",
+		description: "Les dernières créations de bijoux artisanaux faits main",
 		numberOfItems: products.length,
 		itemListElement: products.map((product, index) => {
 			const defaultSku = product.skus.find(s => s.isDefault) ?? product.skus[0];

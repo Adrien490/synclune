@@ -17,13 +17,14 @@ import { FaqSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
+import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
 export const metadata: Metadata = {
   title: {
     absolute: "Synclune | Bijoux artisanaux faits main à Nantes",
   },
   description:
-    "Bijoux artisanaux colorés faits main à Nantes. Boucles d'oreilles, colliers, bracelets uniques. Créatrice Loire-Atlantique.",
+    "Bijoux faits main uniques et colorés. Boucles d'oreilles, colliers, bracelets créés avec amour par Léane à Nantes. Éditions limitées, livraison rapide.",
   keywords:
     "bijoux artisanaux Nantes, bijoux faits main Nantes, créatrice bijoux Nantes, bagues Nantes, colliers Nantes, boucles d'oreilles Nantes, bracelets Nantes, bijoux colorés Loire-Atlantique, atelier bijoux Nantes 44",
   alternates: {
@@ -100,10 +101,12 @@ export default async function Page() {
       </Suspense>
 
       {/* 4. Reviews - Social proof with featured customer reviews */}
-      <ReviewsSection
-        reviewsPromise={featuredReviewsPromise}
-        reviewStatsPromise={reviewStatsPromise}
-      />
+      <Suspense fallback={<ReviewsSectionSkeleton />}>
+        <ReviewsSection
+          reviewsPromise={featuredReviewsPromise}
+          reviewStatsPromise={reviewStatsPromise}
+        />
+      </Suspense>
 
       {/* 5. Atelier Story - Condensed on mobile */}
       <AtelierStory />

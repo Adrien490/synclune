@@ -137,10 +137,14 @@ export async function AtelierStory() {
 							className="space-y-4 sm:space-y-6 text-base sm:text-lg text-muted-foreground leading-relaxed"
 						>
 							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
-							<p className="hidden sm:block">
-								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span aria-hidden="true">😂</span>
+							<p>
+								<span className="sm:hidden">Des amies ont voulu les mêmes, puis des amies d'amies… et me voilà dans mon atelier à Nantes !</span>
+								<span className="hidden sm:inline">Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span aria-hidden="true">😂</span></span>
 							</p>
-							<p className="hidden sm:block">Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
+							<p>
+								<span className="sm:hidden">Chaque bijou est peint et assemblé à la main, en quelques exemplaires seulement.</span>
+								<span className="hidden sm:inline">Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</span>
+							</p>
 						</Stagger>
 
 						{/* Signature */}

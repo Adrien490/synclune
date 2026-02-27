@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   experimental: {
     optimizePackageImports: ["motion/react", "recharts"],
+    viewTransition: true,
   },
 
   async headers() {
