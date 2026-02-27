@@ -1,6 +1,6 @@
 import { test, expect } from "../fixtures"
 
-test.describe("Admin - Gestion des produits", () => {
+test.describe("Admin - Gestion des produits", { tag: ["@regression"] }, () => {
 	test("la page catalogue est accessible", async ({ adminPage }) => {
 		await adminPage.gotoProducts()
 

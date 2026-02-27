@@ -1,7 +1,7 @@
 import { test, expect } from "../fixtures"
 import { requireSeedData } from "../constants"
 
-test.describe("Wishlist - Favoris", () => {
+test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 	test("la page favoris est accessible", async ({ wishlistPage }) => {
 		await wishlistPage.goto()
 
@@ -31,6 +31,10 @@ test.describe("Wishlist - Favoris", () => {
 		// Toggle state should have changed
 		const isNowFavorited = await firstButton.getAttribute("aria-pressed")
 		expect(isNowFavorited).not.toBe(wasFavorited)
+
+		// Undo: restore original state to avoid accumulation
+		await firstButton.click()
+		await expect(firstButton).not.toHaveAttribute("aria-busy", "true", { timeout: 5000 })
 	})
 
 	test("ajouter un produit aux favoris depuis la page detail", async ({
@@ -48,10 +52,20 @@ test.describe("Wishlist - Favoris", () => {
 		const buttonCount = await wishlistButton.count()
 		test.skip(buttonCount === 0, "No wishlist button on product detail page")
 
+		const wasFavorited = await wishlistButton.first().getAttribute("aria-pressed")
+
 		await wishlistButton.first().click()
 		await expect(wishlistButton.first()).not.toHaveAttribute("aria-busy", "true", {
 			timeout: 5000,
 		})
+
+		// Undo: restore original state to avoid accumulation
+		if (wasFavorited !== "true") {
+			await wishlistButton.first().click()
+			await expect(wishlistButton.first()).not.toHaveAttribute("aria-busy", "true", {
+				timeout: 5000,
+			})
+		}
 	})
 
 	test("la page favoris affiche les produits ajoutes", async ({
@@ -86,6 +100,17 @@ test.describe("Wishlist - Favoris", () => {
 		const items = await wishlistPage.getItems()
 		const itemCount = await items.count()
 		expect(itemCount).toBeGreaterThan(0)
+
+		// Cleanup: go back and unfavorite
+		await productCatalogPage.goto()
+		await productCatalogPage.gotoFirstProduct()
+		const cleanupButton = page.getByRole("button", { name: /wishlist/i })
+		if (await cleanupButton.first().getAttribute("aria-pressed") === "true") {
+			await cleanupButton.first().click()
+			await expect(cleanupButton.first()).not.toHaveAttribute("aria-busy", "true", {
+				timeout: 5000,
+			})
+		}
 	})
 
 	test("retirer un produit depuis la page favoris", async ({
@@ -128,8 +153,7 @@ test.describe("Wishlist - Favoris", () => {
 		// Count should have decreased or empty state should show
 		await expect(async () => {
 			const itemsAfter = await wishlistPage.getItemCount()
-			const isEmpty = await wishlistPage.isEmpty()
-			expect(itemsAfter < itemsBefore || isEmpty).toBe(true)
+			expect(itemsAfter).toBeLessThan(itemsBefore)
 		}).toPass({ timeout: 5000 })
 	})
 })

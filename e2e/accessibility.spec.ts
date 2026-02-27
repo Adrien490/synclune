@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { test, expect } from "./fixtures"
 
-test.describe("Accessibilité - Homepage", () => {
+test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
@@ -110,7 +110,7 @@ test.describe("Accessibilité - Homepage", () => {
 	})
 })
 
-test.describe("Accessibilité - Page produits", () => {
+test.describe("Accessibilité - Page produits", { tag: ["@slow"] }, () => {
 	test.beforeEach(async ({ productCatalogPage }) => {
 		await productCatalogPage.goto()
 	})
@@ -144,7 +144,7 @@ test.describe("Accessibilité - Page produits", () => {
 	})
 })
 
-test.describe("Accessibilité - Formulaires auth", () => {
+test.describe("Accessibilité - Formulaires auth", { tag: ["@slow"] }, () => {
 	test("le formulaire de connexion a des labels associés à ses champs", async ({ authPage }) => {
 		await authPage.goto()
 
@@ -189,7 +189,7 @@ test.describe("Accessibilité - Formulaires auth", () => {
 	})
 })
 
-test.describe("Accessibilité - Cart Sheet", () => {
+test.describe("Accessibilité - Cart Sheet", { tag: ["@slow"] }, () => {
 	test("le cart sheet a les attributs ARIA corrects quand ouvert", async ({ cartPage }) => {
 		await cartPage.openButton.page().goto("/")
 		await cartPage.openButton.page().waitForLoadState("domcontentloaded")
@@ -212,7 +212,7 @@ test.describe("Accessibilité - Cart Sheet", () => {
 	})
 })
 
-test.describe("Accessibilité - Structure des pages", () => {
+test.describe("Accessibilité - Structure des pages", { tag: ["@slow"] }, () => {
 	const pagesToCheck = [
 		{ path: "/", name: "Homepage" },
 		{ path: "/produits", name: "Catalogue" },
@@ -240,7 +240,7 @@ test.describe("Accessibilité - Structure des pages", () => {
 	}
 })
 
-test.describe("Accessibilité - Audit axe-core WCAG AA", () => {
+test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () => {
 	const pagesToAudit = [
 		{ path: "/", name: "Homepage" },
 		{ path: "/produits", name: "Catalogue" },

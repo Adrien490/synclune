@@ -1,12 +1,12 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Panier", () => {
+test.describe("Panier", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
 	})
 
-	test("le bouton panier est présent dans la navbar", async ({ cartPage }) => {
+	test("le bouton panier est présent dans la navbar", { tag: ["@smoke"] }, async ({ cartPage }) => {
 		await expect(cartPage.openButton).toBeVisible()
 	})
 

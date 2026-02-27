@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures"
 import { requireSeedData } from "./constants"
 
-test.describe("Parcours checkout complet", () => {
+test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 	test.describe("Initiation du checkout depuis le panier", () => {
 		test("le bouton de paiement est absent quand le panier est vide", async ({ page, cartPage }) => {
 			await page.goto("/")

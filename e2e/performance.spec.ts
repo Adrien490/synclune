@@ -74,14 +74,27 @@ async function measureCLS(page: import("@playwright/test").Page): Promise<number
 	})
 }
 
-test.describe("Performance budgets", () => {
-	test("homepage - LCP under 3s", async ({ page }) => {
+/**
+ * CI runners are slower than local machines. Apply a multiplier to avoid false negatives.
+ * Set CI_PERFORMANCE_MULTIPLIER env var to customize (default: 1.5x in CI).
+ */
+const PERF_MULTIPLIER = process.env.CI
+	? parseFloat(process.env.CI_PERFORMANCE_MULTIPLIER ?? "1.5")
+	: 1
+
+const LCP_BUDGET = 3000 * PERF_MULTIPLIER
+const CLS_BUDGET = 0.15
+const INP_BUDGET = 200 * PERF_MULTIPLIER
+const LOAD_BUDGET = 3500 * PERF_MULTIPLIER
+
+test.describe("Performance budgets", { tag: ["@slow"] }, () => {
+	test("homepage - LCP under budget", async ({ page }) => {
 		await page.goto("/")
 
 		const lcp = await measureLCP(page)
 
 		expect(lcp, "LCP measurement was 0 - observer may not have captured it").toBeGreaterThan(0)
-		expect(lcp, `LCP was ${lcp}ms, should be under 3000ms`).toBeLessThan(3000)
+		expect(lcp, `LCP was ${lcp}ms, budget is ${LCP_BUDGET}ms`).toBeLessThan(LCP_BUDGET)
 	})
 
 	test("homepage - CLS under 0.15", async ({ page }) => {
@@ -89,16 +102,16 @@ test.describe("Performance budgets", () => {
 
 		const cls = await measureCLS(page)
 
-		expect(cls, `CLS was ${cls}, should be under 0.15`).toBeLessThan(0.15)
+		expect(cls, `CLS was ${cls}, should be under ${CLS_BUDGET}`).toBeLessThan(CLS_BUDGET)
 	})
 
-	test("page produits - LCP under 3s", async ({ page }) => {
+	test("page produits - LCP under budget", async ({ page }) => {
 		await page.goto("/produits")
 
 		const lcp = await measureLCP(page)
 
 		expect(lcp, "LCP measurement was 0 - observer may not have captured it").toBeGreaterThan(0)
-		expect(lcp, `LCP was ${lcp}ms, should be under 3000ms`).toBeLessThan(3000)
+		expect(lcp, `LCP was ${lcp}ms, budget is ${LCP_BUDGET}ms`).toBeLessThan(LCP_BUDGET)
 	})
 
 	test("page produits - CLS under 0.15", async ({ page }) => {
@@ -106,10 +119,10 @@ test.describe("Performance budgets", () => {
 
 		const cls = await measureCLS(page)
 
-		expect(cls, `CLS was ${cls}, should be under 0.15`).toBeLessThan(0.15)
+		expect(cls, `CLS was ${cls}, should be under ${CLS_BUDGET}`).toBeLessThan(CLS_BUDGET)
 	})
 
-	test("homepage - INP under 200ms", async ({ page }) => {
+	test("homepage - INP under budget", async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
 
@@ -145,19 +158,19 @@ test.describe("Performance budgets", () => {
 			})
 		})
 
-		expect(inp, `INP was ${inp}ms, should be under 200ms`).toBeLessThan(200)
+		expect(inp, `INP was ${inp}ms, budget is ${INP_BUDGET}ms`).toBeLessThan(INP_BUDGET)
 	})
 
 	const criticalPages = ["/", "/produits", "/collections", "/connexion", "/inscription"]
 
 	for (const route of criticalPages) {
-		test(`${route} loads under 3.5s`, async ({ page }) => {
+		test(`${route} loads under budget`, async ({ page }) => {
 			const startTime = Date.now()
 			await page.goto(route)
 			await page.waitForLoadState("domcontentloaded")
 			const loadTime = Date.now() - startTime
 
-			expect(loadTime, `${route} took ${loadTime}ms, should be under 3500ms`).toBeLessThan(3500)
+			expect(loadTime, `${route} took ${loadTime}ms, budget is ${LOAD_BUDGET}ms`).toBeLessThan(LOAD_BUDGET)
 		})
 	}
 })

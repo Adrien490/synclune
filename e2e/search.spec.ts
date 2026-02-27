@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Recherche produits", () => {
+test.describe("Recherche produits", { tag: ["@critical"] }, () => {
 	test("le champ de recherche est visible sur la page produits", async ({ searchPage }) => {
 		await searchPage.open()
 

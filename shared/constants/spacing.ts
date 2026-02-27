@@ -32,13 +32,13 @@ export const SECTION_SPACING = {
 
 	/**
 	 * Espacement large pour sections homepage
-	 * Usage : LatestCreations, Collections, CreativeProcess
+	 * Usage : LatestCreations, Collections
 	 */
 	section: SECTION_PADDING.lg,
 
 	/**
 	 * Espacement extra-large pour hero/featured
-	 * Usage : Hero, AtelierStory
+	 * Usage : Hero, AtelierSection
 	 */
 	spacious: SECTION_PADDING.xl,
 } as const;

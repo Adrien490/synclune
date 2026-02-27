@@ -1,6 +1,6 @@
 import { test, expect } from "../fixtures"
 
-test.describe("Admin - Tableau de bord (authentifié)", () => {
+test.describe("Admin - Tableau de bord (authentifié)", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/admin")
 		await page.waitForLoadState("domcontentloaded")
@@ -42,7 +42,7 @@ test.describe("Admin - Tableau de bord (authentifié)", () => {
 	})
 })
 
-test.describe("Admin - Page commandes (authentifié)", () => {
+test.describe("Admin - Page commandes (authentifié)", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ adminPage }) => {
 		await adminPage.gotoOrders()
 	})
@@ -64,7 +64,7 @@ test.describe("Admin - Page commandes (authentifié)", () => {
 	})
 })
 
-test.describe("Admin - Page produits (authentifié)", () => {
+test.describe("Admin - Page produits (authentifié)", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ adminPage }) => {
 		await adminPage.gotoProducts()
 	})
@@ -98,7 +98,7 @@ test.describe("Admin - Page produits (authentifié)", () => {
 	})
 })
 
-test.describe("Admin - Navigation cross-sections", () => {
+test.describe("Admin - Navigation cross-sections", { tag: ["@regression"] }, () => {
 	test("naviguer entre toutes les sections admin", async ({ page }) => {
 		const sections = [
 			{ url: "/admin", title: /Tableau de bord/i },

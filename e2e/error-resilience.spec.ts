@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures"
 import { requireSeedData } from "./constants"
 
-test.describe("Resilience aux erreurs", () => {
+test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
 	test("la page 404 affiche un message utilisateur", async ({ page }) => {
 		const response = await page.goto("/page-inexistante-xyz")
 		await page.waitForLoadState("domcontentloaded")

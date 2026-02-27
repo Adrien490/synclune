@@ -1,23 +1,22 @@
 import { test, expect } from "./fixtures"
+import { testEmail } from "./helpers/test-run"
 
-test.describe("Parcours inscription complète", () => {
+test.describe("Parcours inscription complète", { tag: ["@critical"] }, () => {
 	test("l'inscription avec des données valides soumet le formulaire et redirige", async ({ page }) => {
 		await page.goto("/inscription")
 		await page.waitForLoadState("domcontentloaded")
 
-		// Generate unique email to avoid conflicts
-		const uniqueId = Date.now()
-		const testEmail = `test-e2e-${uniqueId}@synclune-test.fr`
+		const email = testEmail("signup")
 
 		// Fill all required fields
 		const nameInput = page.getByRole("textbox", { name: /Prénom/i })
 		await nameInput.fill("TestUser")
 
 		const emailInput = page.getByRole("textbox", { name: /^Email$/i })
-		await emailInput.fill(testEmail)
+		await emailInput.fill(email)
 
 		const confirmEmailInput = page.getByRole("textbox", { name: /Confirmer l'email/i })
-		await confirmEmailInput.fill(testEmail)
+		await confirmEmailInput.fill(email)
 
 		const passwordInput = page.locator('input[type="password"]').first()
 		await passwordInput.fill("TestPassword123!")

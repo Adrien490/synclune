@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures"
 
-test.describe("PWA - Offline et Service Worker", () => {
+test.describe("PWA - Offline et Service Worker", { tag: ["@slow"] }, () => {
 	test("le manifest.json est accessible et valide", async ({ page }) => {
 		const response = await page.goto("/manifest.webmanifest")
 

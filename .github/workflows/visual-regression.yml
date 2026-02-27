@@ -1,0 +1,59 @@
+name: Visual Regression - Update Snapshots
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for updating snapshots"
+        required: true
+        type: string
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  update-snapshots:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      BETTER_AUTH_URL: http://localhost:3000
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm prisma generate
+      - name: Push database schema
+        run: pnpm prisma db push --skip-generate
+      - name: Seed database
+        run: pnpm seed
+      - name: Build application
+        run: pnpm build
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Update visual regression snapshots
+        run: pnpm e2e --grep "@slow" --update-snapshots --project=chromium
+      - name: Create PR with updated snapshots
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "test: update visual regression snapshots"
+          title: "test: update visual regression snapshots"
+          body: |
+            ## Visual Regression Snapshot Update
+
+            **Reason:** ${{ inputs.reason }}
+
+            Triggered manually via workflow dispatch.
+
+            Please review the screenshot diffs carefully before merging.
+          branch: update-visual-snapshots
+          delete-branch: true

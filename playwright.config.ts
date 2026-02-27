@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test"
 
 export default defineConfig({
 	testDir: "./e2e",
+	globalTeardown: "./e2e/global-teardown.ts",
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
@@ -9,7 +10,12 @@ export default defineConfig({
 	timeout: 30_000,
 	expect: { timeout: 7_000 },
 	reporter: process.env.CI
-		? [["github"], ["html", { open: "never" }], ["list"]]
+		? [
+				["github"],
+				["html", { open: "never" }],
+				["list"],
+				["./e2e/helpers/flakiness-reporter.ts", { budget: 3 }],
+			]
 		: [["html"]],
 	use: {
 		baseURL: "http://localhost:3000",
@@ -53,7 +59,7 @@ export default defineConfig({
 			testIgnore: /authenticated\//,
 		},
 
-		// Authenticated tests (admin)
+		// Authenticated tests (admin) - Chrome
 		{
 			name: "authenticated-admin",
 			use: {
@@ -64,7 +70,7 @@ export default defineConfig({
 			dependencies: ["setup"],
 		},
 
-		// Authenticated tests (user)
+		// Authenticated tests (user) - Chrome
 		{
 			name: "authenticated-user",
 			use: {
@@ -72,6 +78,30 @@ export default defineConfig({
 				storageState: "e2e/.auth/user.json",
 			},
 			testMatch: /authenticated\/user/,
+			dependencies: ["setup"],
+		},
+
+		// Authenticated tests (user) - Firefox
+		// Covers checkout/Stripe iframe differences
+		{
+			name: "authenticated-user-firefox",
+			use: {
+				...devices["Desktop Firefox"],
+				storageState: "e2e/.auth/user.json",
+			},
+			testMatch: /authenticated\/user-checkout-flow|authenticated\/user-auth-flows/,
+			dependencies: ["setup"],
+		},
+
+		// Authenticated tests (user) - WebKit
+		// Covers Safari-specific payment/session behavior
+		{
+			name: "authenticated-user-webkit",
+			use: {
+				...devices["Desktop Safari"],
+				storageState: "e2e/.auth/user.json",
+			},
+			testMatch: /authenticated\/user-checkout-flow|authenticated\/user-auth-flows/,
 			dependencies: ["setup"],
 		},
 	],

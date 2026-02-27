@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Navigation catalogue produits", () => {
+test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 	test("la page /produits charge correctement", async ({ page }) => {
 		await page.goto("/produits")
 		await page.waitForLoadState("domcontentloaded")

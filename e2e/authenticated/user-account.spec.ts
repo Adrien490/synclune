@@ -1,6 +1,6 @@
 import { test, expect } from "../fixtures"
 
-test.describe("Compte utilisateur - Tableau de bord", () => {
+test.describe("Compte utilisateur - Tableau de bord", { tag: ["@regression"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/compte")
 		await page.waitForLoadState("domcontentloaded")

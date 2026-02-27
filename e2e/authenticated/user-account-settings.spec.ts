@@ -1,6 +1,6 @@
 import { test, expect } from "../fixtures"
 
-test.describe("Parametres du compte", () => {
+test.describe("Parametres du compte", { tag: ["@regression"] }, () => {
 	test("la page parametres est accessible", async ({ page }) => {
 		await page.goto("/parametres")
 		await page.waitForLoadState("domcontentloaded")

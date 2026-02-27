@@ -1,7 +1,7 @@
 import { test, expect } from "../fixtures"
 import { requireSeedData } from "../constants"
 
-test.describe("Avis produits", () => {
+test.describe("Avis produits", { tag: ["@regression"] }, () => {
 	test("les avis sont visibles sur la page detail produit", async ({ page, productCatalogPage }) => {
 		await productCatalogPage.goto()
 
@@ -10,14 +10,14 @@ test.describe("Avis produits", () => {
 
 		await productCatalogPage.gotoFirstProduct()
 
-		// Look for reviews section on product page
-		const reviewsSection = page.getByText(/avis|commentaires|évaluations/i)
+		// Look for the reviews section heading specifically
+		const reviewsHeading = page.getByRole("heading", { name: /avis|commentaires|évaluations/i })
 		const emptyReviewsState = page.getByText(/aucun avis|soyez le premier/i)
 
-		// Either reviews are displayed or the empty state is shown
-		const hasReviews = await reviewsSection.first().isVisible()
-		const hasEmptyState = await emptyReviewsState.first().isVisible()
-		expect(hasReviews || hasEmptyState, "Neither reviews section nor empty state is visible").toBe(true)
+		// The reviews section (heading or empty state) must be present — assert each independently
+		await expect(
+			reviewsHeading.first().or(emptyReviewsState.first()),
+		).toBeVisible({ timeout: 5000 })
 	})
 
 	test("le formulaire d'avis est accessible pour les produits commandes", async ({ page, orderPage }) => {

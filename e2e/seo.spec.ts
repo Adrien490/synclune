@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures"
 
-test.describe("SEO et métadonnées - Homepage", () => {
+test.describe("SEO et métadonnées - Homepage", { tag: ["@slow"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
@@ -74,7 +74,7 @@ test.describe("SEO et métadonnées - Homepage", () => {
 	})
 })
 
-test.describe("SEO et métadonnées - Page produits", () => {
+test.describe("SEO et métadonnées - Page produits", { tag: ["@slow"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/produits")
 		await page.waitForLoadState("domcontentloaded")
@@ -113,7 +113,7 @@ test.describe("SEO et métadonnées - Page produits", () => {
 	})
 })
 
-test.describe("SEO et métadonnées - Page produit détail", () => {
+test.describe("SEO et métadonnées - Page produit détail", { tag: ["@slow"] }, () => {
 	test("la page détail produit a un JSON-LD de type Product", async ({ page, productCatalogPage }) => {
 		await productCatalogPage.goto()
 
@@ -161,7 +161,7 @@ test.describe("SEO et métadonnées - Page produit détail", () => {
 	})
 })
 
-test.describe("SEO - Pages légales", () => {
+test.describe("SEO - Pages légales", { tag: ["@slow"] }, () => {
 	test("la page CGV charge correctement", async ({ page }) => {
 		await page.goto("/cgv")
 		await page.waitForLoadState("domcontentloaded")
@@ -190,7 +190,7 @@ test.describe("SEO - Pages légales", () => {
 	})
 })
 
-test.describe("SEO - Attributs HTML globaux", () => {
+test.describe("SEO - Attributs HTML globaux", { tag: ["@slow"] }, () => {
 	const pagesToCheck = ["/", "/produits", "/collections", "/connexion", "/inscription"]
 
 	for (const path of pagesToCheck) {
@@ -204,7 +204,7 @@ test.describe("SEO - Attributs HTML globaux", () => {
 	}
 })
 
-test.describe("SEO - robots.txt et sitemap.xml", () => {
+test.describe("SEO - robots.txt et sitemap.xml", { tag: ["@slow"] }, () => {
 	test("robots.txt est accessible et retourne 200", async ({ page }) => {
 		const response = await page.goto("/robots.txt")
 
@@ -235,7 +235,7 @@ test.describe("SEO - robots.txt et sitemap.xml", () => {
 	})
 })
 
-test.describe("SEO - noindex sur pages privees", () => {
+test.describe("SEO - noindex sur pages privees", { tag: ["@slow"] }, () => {
 	test("la page /~offline a noindex", async ({ page }) => {
 		await page.goto("/~offline")
 		await page.waitForLoadState("domcontentloaded")

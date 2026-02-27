@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Acces admin - protection des routes", () => {
+test.describe("Acces admin - protection des routes", { tag: ["@critical"] }, () => {
 	test("toutes les routes admin redirigent vers connexion pour les non-authentifies", async ({ page }) => {
 		const adminRoutes = [
 			"/admin",

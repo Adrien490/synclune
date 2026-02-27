@@ -1,7 +1,7 @@
 import { test, expect } from "../fixtures"
 import { requireSeedData } from "../constants"
 
-test.describe("Gestion du panier - Manipulation des articles", () => {
+test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ productCatalogPage, cartPage }) => {
 		// Add a product to cart before each test
 		await productCatalogPage.goto()

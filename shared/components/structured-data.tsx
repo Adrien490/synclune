@@ -50,7 +50,7 @@ export function StructuredData({ reviewStatsPromise, reviewsPromise }: Structure
 	graphSchemas.push({
 		"@type": "Article",
 		headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
-		url: `${SITE_URL}/#atelier-story`,
+		url: `${SITE_URL}/#atelier-section`,
 		image: `${SITE_URL}/opengraph-image`,
 		datePublished: "2025-01-15",
 		dateModified: "2025-06-01",

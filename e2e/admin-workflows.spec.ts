@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Admin - elements UI visibles apres redirection", () => {
+test.describe("Admin - elements UI visibles apres redirection", { tag: ["@regression"] }, () => {
 	test("le formulaire de connexion a tous les elements requis", async ({ page, authPage }) => {
 		await page.goto("/admin")
 		await page.waitForLoadState("domcontentloaded")

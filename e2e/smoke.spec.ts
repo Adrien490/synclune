@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Smoke tests", () => {
+test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 	test("homepage loads with correct title", async ({ page }) => {
 		await page.goto("/")
 		await expect(page).toHaveTitle(/Synclune/)

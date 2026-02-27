@@ -1,6 +1,6 @@
 import { test, expect } from "../fixtures"
 
-test.describe("Detail de commande", () => {
+test.describe("Detail de commande", { tag: ["@regression"] }, () => {
 	test("la page commandes affiche la liste", async ({ orderPage }) => {
 		await orderPage.goto()
 
@@ -65,12 +65,29 @@ test.describe("Detail de commande", () => {
 		const sortCount = await orderPage.sortSelect.count()
 		test.skip(sortCount === 0, "No sort select found")
 
+		// Capture the initial order of items before sorting
+		const orderRowsBefore = await orderPage.getOrderRows()
+		const countBefore = await orderRowsBefore.count()
+		test.skip(countBefore < 2, "Need at least 2 orders to verify sort")
+
+		const firstOrderTextBefore = await orderRowsBefore.first().textContent()
+
+		// Open the sort select and pick a different option
 		await orderPage.sortSelect.click()
 
-		// Sort options should be visible
 		const sortOptions = page.getByRole("option")
 		const optionCount = await sortOptions.count()
 		expect(optionCount).toBeGreaterThan(0)
+
+		// Select the last option (likely a different sort order)
+		await sortOptions.last().click()
+
+		// Verify the order has actually changed by comparing first row content
+		await expect(async () => {
+			const orderRowsAfter = await orderPage.getOrderRows()
+			const firstOrderTextAfter = await orderRowsAfter.first().textContent()
+			expect(firstOrderTextAfter).not.toBe(firstOrderTextBefore)
+		}).toPass({ timeout: 5000 })
 	})
 
 	test("l'annulation de commande est disponible si eligible", async ({ page, orderPage }) => {

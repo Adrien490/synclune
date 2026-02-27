@@ -1,8 +1,8 @@
 import { test, expect } from "../fixtures"
 import { requireSeedData } from "../constants"
 
-test.describe("Parcours checkout authentifié", () => {
-	test("parcours d'achat complet : produit → panier → paiement → confirmation", async ({
+test.describe("Parcours checkout authentifié", { tag: ["@critical"] }, () => {
+	test("parcours d'achat complet : produit → panier → paiement → confirmation", { tag: ["@smoke"] }, async ({
 		page,
 		cartPage,
 		checkoutPage,

@@ -1,11 +1,11 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Authentification - Connexion", () => {
+test.describe("Authentification - Connexion", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ authPage }) => {
 		await authPage.goto()
 	})
 
-	test("la page de connexion charge correctement", async ({ page }) => {
+	test("la page de connexion charge correctement", { tag: ["@smoke"] }, async ({ page }) => {
 		await expect(page).toHaveURL(/\/connexion/)
 		await expect(page).toHaveTitle(/Connexion.*Synclune|Synclune.*Connexion/i)
 	})
@@ -75,7 +75,7 @@ test.describe("Authentification - Connexion", () => {
 	})
 })
 
-test.describe("Authentification - Inscription", () => {
+test.describe("Authentification - Inscription", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/inscription")
 		await page.waitForLoadState("domcontentloaded")
@@ -172,7 +172,7 @@ test.describe("Authentification - Inscription", () => {
 	})
 })
 
-test.describe("Authentification - Mot de passe oublié", () => {
+test.describe("Authentification - Mot de passe oublié", { tag: ["@regression"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/mot-de-passe-oublie")
 		await page.waitForLoadState("domcontentloaded")
@@ -220,7 +220,7 @@ test.describe("Authentification - Mot de passe oublié", () => {
 	})
 })
 
-test.describe("Authentification - Verification email", () => {
+test.describe("Authentification - Verification email", { tag: ["@regression"] }, () => {
 	test("la page /verifier-email charge sans erreur 500", async ({ page }) => {
 		const response = await page.goto("/verifier-email")
 		await page.waitForLoadState("domcontentloaded")
@@ -249,7 +249,7 @@ test.describe("Authentification - Verification email", () => {
 	})
 })
 
-test.describe("Authentification - Renvoyer verification", () => {
+test.describe("Authentification - Renvoyer verification", { tag: ["@regression"] }, () => {
 	test("la page /renvoyer-verification charge correctement", async ({ page }) => {
 		const response = await page.goto("/renvoyer-verification")
 		await page.waitForLoadState("domcontentloaded")
@@ -276,7 +276,7 @@ test.describe("Authentification - Renvoyer verification", () => {
 	})
 })
 
-test.describe("Authentification - Reinitialiser mot de passe", () => {
+test.describe("Authentification - Reinitialiser mot de passe", { tag: ["@regression"] }, () => {
 	test("la page /reinitialiser-mot-de-passe charge sans erreur 500", async ({ page }) => {
 		const response = await page.goto("/reinitialiser-mot-de-passe")
 		await page.waitForLoadState("domcontentloaded")

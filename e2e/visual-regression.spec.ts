@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures"
 import { requireSeedData } from "./constants"
 
-test.describe("Visual regression - Pages cles", () => {
+test.describe("Visual regression - Pages cles", { tag: ["@slow"] }, () => {
 	test("homepage - snapshot", async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")

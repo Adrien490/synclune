@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures"
 import { requireSeedData } from "./constants"
 
-test.describe("Parcours produit → panier", () => {
+test.describe("Parcours produit → panier", { tag: ["@critical"] }, () => {
 	test("naviguer vers un produit depuis le catalogue et voir les details", async ({ productCatalogPage }) => {
 		await productCatalogPage.goto()
 
@@ -25,7 +25,7 @@ test.describe("Parcours produit → panier", () => {
 		expect(await images.count()).toBeGreaterThan(0)
 	})
 
-	test("ajouter un produit au panier depuis la page detail", async ({ page, cartPage, productCatalogPage }) => {
+	test("ajouter un produit au panier depuis la page detail", { tag: ["@smoke"] }, async ({ page, cartPage, productCatalogPage }) => {
 		await productCatalogPage.goto()
 
 		expect(await productCatalogPage.productLinks.count(), "Seed data required").toBeGreaterThan(0)
@@ -42,7 +42,8 @@ test.describe("Parcours produit → panier", () => {
 			await expect(cartPage.dialog.or(toastOrFeedback.first())).toBeVisible({ timeout: 5000 })
 		} else {
 			// Product may require SKU selection first (variants)
-			const variantSelector = page.locator('[data-variant-selector], select, [role="radiogroup"]')
+			const variantSelector = page.getByRole("region", { name: /Choisissez vos options/i })
+				.or(page.locator('[role="radiogroup"]'))
 			expect(await variantSelector.count(), "No add-to-cart button or variant selector found").toBeGreaterThan(0)
 		}
 	})
@@ -72,6 +73,30 @@ test.describe("Parcours produit → panier", () => {
 		await expect(cartPage.emptyMessage).not.toBeVisible()
 
 		// Cart should contain at least one item
+		const cartContent = await cartPage.dialog.textContent()
+		expect(cartContent).toMatch(/\d+[,.]?\d*\s*€/)
+	})
+
+	test("selection de variante et ajout au panier", async ({ page, cartPage, productCatalogPage }) => {
+		await productCatalogPage.goto()
+
+		const productCount = await productCatalogPage.productLinks.count()
+		requireSeedData(test, productCount > 0, "No products found")
+
+		// Find a product with variants
+		const result = await productCatalogPage.addFirstVariantProductToCart(cartPage)
+		if (result.skipped) {
+			if (result.seedData) {
+				requireSeedData(test, false, result.reason)
+			}
+			test.skip(true, result.reason)
+			return
+		}
+
+		// Verify the cart shows the product
+		await expect(cartPage.emptyMessage).not.toBeVisible()
+
+		// Cart should contain a product with a price
 		const cartContent = await cartPage.dialog.textContent()
 		expect(cartContent).toMatch(/\d+[,.]?\d*\s*€/)
 	})

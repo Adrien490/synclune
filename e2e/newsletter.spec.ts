@@ -1,6 +1,7 @@
 import { test, expect } from "./fixtures"
+import { testEmail } from "./helpers/test-run"
 
-test.describe("Newsletter", () => {
+test.describe("Newsletter", { tag: ["@regression"] }, () => {
 	test("le formulaire newsletter est visible dans le footer", async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
@@ -68,7 +69,7 @@ test.describe("Newsletter", () => {
 
 		test.skip(await emailInput.count() === 0, "No newsletter form in footer")
 
-		await emailInput.first().fill(`test-e2e-${Date.now()}@example.com`)
+		await emailInput.first().fill(testEmail("newsletter"))
 
 		// Check consent if present
 		const consentCheckbox = footer.getByLabel(/J'accepte.*newsletter/i)
@@ -81,12 +82,9 @@ test.describe("Newsletter", () => {
 
 		await submitButton.click()
 
-		// Wait for success feedback specifically (not generic error alerts)
+		// Expect explicit success feedback — rate limit is a failure, not an acceptable state
 		const successFeedback = page.getByText(/Inscrit|Merci|confirmation|envoyé/i)
-		const rateLimitError = page.getByText(/trop de demandes|réessayer plus tard|rate limit/i)
-
-		// Either success message or rate limit (acceptable in CI), but NOT a generic error
-		await expect(successFeedback.first().or(rateLimitError.first())).toBeVisible({ timeout: 5000 })
+		await expect(successFeedback.first()).toBeVisible({ timeout: 5000 })
 	})
 
 	test("la page de confirmation newsletter existe", async ({ page }) => {

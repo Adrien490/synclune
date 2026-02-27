@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { test, expect } from "../fixtures"
 
-test.describe("Accessibilité - Pages authentifiées", () => {
+test.describe("Accessibilité - Pages authentifiées", { tag: ["@slow"] }, () => {
 	const authenticatedPages = [
 		{ path: "/compte", name: "Compte" },
 		{ path: "/compte/commandes", name: "Commandes" },

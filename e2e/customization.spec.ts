@@ -1,6 +1,7 @@
 import { test, expect } from "./fixtures"
+import { testEmail } from "./helpers/test-run"
 
-test.describe("Personnalisation - Demande sur mesure", () => {
+test.describe("Personnalisation - Demande sur mesure", { tag: ["@regression"] }, () => {
 	test("la page de personnalisation est accessible", async ({ page }) => {
 		await page.goto("/personnalisation")
 		await page.waitForLoadState("domcontentloaded")
@@ -76,7 +77,7 @@ test.describe("Personnalisation - Demande sur mesure", () => {
 		await page.getByLabel(/Prénom/i).fill("Marie")
 
 		const emailInput = page.getByLabel(/Adresse email/i).or(page.getByLabel(/Email/i))
-		await emailInput.first().fill(`test-e2e-${Date.now()}@example.com`)
+		await emailInput.first().fill(testEmail("customization"))
 
 		const descriptionField = page.getByLabel(/Décrivez votre projet/i).or(page.locator("textarea").first())
 		await descriptionField.fill("Je souhaite une bague sur mesure en argent avec une pierre naturelle.")
@@ -93,10 +94,8 @@ test.describe("Personnalisation - Demande sur mesure", () => {
 
 		await submitButton.click()
 
-		// Wait for success feedback specifically (not generic error alerts)
+		// Expect explicit success feedback — rate limit is a failure, not an acceptable state
 		const successFeedback = page.getByText(/envoyé|reçu|merci|confirmation/i)
-		const rateLimitError = page.getByText(/trop de demandes|réessayer plus tard|rate limit/i)
-
-		await expect(successFeedback.first().or(rateLimitError.first())).toBeVisible({ timeout: 10000 })
+		await expect(successFeedback.first()).toBeVisible({ timeout: 10000 })
 	})
 })

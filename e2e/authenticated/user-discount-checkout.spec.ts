@@ -1,7 +1,7 @@
 import { test, expect } from "../fixtures"
 import { requireSeedData } from "../constants"
 
-test.describe("Checkout - Codes promo", () => {
+test.describe("Checkout - Codes promo", { tag: ["@regression"] }, () => {
 	test.beforeEach(async ({ productCatalogPage, cartPage, page }) => {
 		// Add a product to cart and navigate to checkout
 		const result = await productCatalogPage.addFirstProductToCart(cartPage)

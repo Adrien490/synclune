@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Parcours utilisateur authentifie", () => {
+test.describe("Parcours utilisateur authentifie", { tag: ["@regression"] }, () => {
 	test("la connexion avec des identifiants invalides affiche une erreur", async ({ page, authPage }) => {
 		await authPage.goto()
 

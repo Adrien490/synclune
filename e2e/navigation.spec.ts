@@ -1,12 +1,12 @@
 import { test, expect } from "./fixtures"
 
-test.describe("Navigation principale", () => {
+test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/")
 		await page.waitForLoadState("domcontentloaded")
 	})
 
-	test("la homepage charge et affiche les sections clés", async ({ page }) => {
+	test("la homepage charge et affiche les sections clés", { tag: ["@smoke"] }, async ({ page }) => {
 		// Le titre de la page doit contenir Synclune
 		await expect(page).toHaveTitle(/Synclune/)
 

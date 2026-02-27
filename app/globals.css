@@ -179,6 +179,12 @@ html {
 	--chart-4: oklch(0.75 0.15 25); /* Corail lumineux - bijoux colorés */
 	--chart-5: oklch(0.7 0.1 300);
 
+	/* Polaroid caption colors (on white bg, WCAG AA 4.5:1+) */
+	--polaroid-caption-mauve: oklch(0.45 0.12 340);
+	--polaroid-caption-violet: oklch(0.44 0.12 290);
+	--polaroid-caption-green: oklch(0.42 0.1 155);
+	--polaroid-caption-brown: oklch(0.46 0.09 70);
+
 	/* Shadows */
 	--shadow-color: 0 0% 0%;
 	--spacing: 0.25rem;
@@ -864,6 +870,12 @@ textarea {
 	--chart-3: oklch(0.5 0.1 200);
 	--chart-4: oklch(0.75 0.15 25); /* Corail lumineux - bijoux colorés */
 	--chart-5: oklch(0.7 0.1 300);
+	/* Polaroid caption colors (on zinc-800, WCAG AA 4.5:1+) */
+	--polaroid-caption-mauve: oklch(0.78 0.1 340);
+	--polaroid-caption-violet: oklch(0.76 0.1 290);
+	--polaroid-caption-green: oklch(0.74 0.1 155);
+	--polaroid-caption-brown: oklch(0.78 0.07 70);
+
 	--radius: 0.5rem;
 	--sidebar: oklch(0.12 0.015 340); /* Dark mode avec touche rose */
 	--sidebar-foreground: oklch(0.92 0.005 270);

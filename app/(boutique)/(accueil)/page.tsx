@@ -11,8 +11,7 @@ import { StructuredData } from "@/shared/components/structured-data";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { AtelierStory } from "./_components/atelier-story";
-import { CreativeProcess } from "./_components/creative-process";
+import { AtelierSection } from "./_components/atelier-section";
 import { FaqSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
@@ -108,16 +107,13 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 5. Atelier Story - Condensed on mobile */}
-      <AtelierStory />
+      {/* 5. L'Atelier - Story + creative process merged */}
+      <AtelierSection />
 
-      {/* 6. Creative Process - Condensed on mobile */}
-      <CreativeProcess />
-
-      {/* 7. FAQ - Frequently asked questions with JSON-LD */}
+      {/* 6. FAQ - Frequently asked questions with JSON-LD */}
       <FaqSection />
 
-      {/* 8. Newsletter - Subscription with gift incentive */}
+      {/* 7. Newsletter - Subscription with gift incentive */}
       <NewsletterSection />
     </>
   );

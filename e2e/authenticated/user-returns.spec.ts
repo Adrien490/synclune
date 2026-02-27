@@ -1,6 +1,6 @@
 import { test, expect } from "../fixtures"
 
-test.describe("Retours et remboursements", () => {
+test.describe("Retours et remboursements", { tag: ["@regression"] }, () => {
 	test("la page commandes est accessible", async ({ orderPage }) => {
 		await orderPage.goto()
 

@@ -1,6 +1,6 @@
 import { test, expect } from "../fixtures"
 
-test.describe("Gestion des adresses", () => {
+test.describe("Gestion des adresses", { tag: ["@regression"] }, () => {
 	test("la page adresses est accessible", async ({ addressPage }) => {
 		await addressPage.goto()
 
@@ -51,9 +51,10 @@ test.describe("Gestion des adresses", () => {
 		await addressPage.goto()
 		await addressPage.openCreateDialog()
 
+		// Use identifiable test data for cleanup (firstName: "TestAddr")
 		await addressPage.fillAddressForm({
-			firstName: "Marie",
-			lastName: "Dupont",
+			firstName: "TestAddr",
+			lastName: "E2E",
 			address1: "12 rue de la Paix",
 			postalCode: "75002",
 			city: "Paris",

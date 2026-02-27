@@ -1,6 +1,5 @@
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
-import { AtelierStorySkeleton } from "./_components/atelier-story-skeleton";
-import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton";
+import { AtelierSectionSkeleton } from "./_components/atelier-section-skeleton";
 import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
@@ -12,7 +11,7 @@ import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
  * Reproduit EXACTEMENT la structure de la page réelle pour éviter le CLS
  *
  * Structure : Hero → LatestCreations → Collections → Reviews
- *           → AtelierStory → CreativeProcess → FAQ → Newsletter
+ *           → AtelierSection → FAQ → Newsletter
  */
 export default function HomeLoading() {
 	return (
@@ -36,16 +35,13 @@ export default function HomeLoading() {
 			{/* 4. Reviews */}
 			<ReviewsSectionSkeleton />
 
-			{/* 5. Atelier Story */}
-			<AtelierStorySkeleton />
+			{/* 5. L'Atelier */}
+			<AtelierSectionSkeleton />
 
-			{/* 6. Creative Process */}
-			<CreativeProcessSkeleton />
-
-			{/* 7. FAQ */}
+			{/* 6. FAQ */}
 			<FaqSectionSkeleton />
 
-			{/* 8. Newsletter */}
+			{/* 7. Newsletter */}
 			<NewsletterSectionSkeleton />
 		</div>
 	);
