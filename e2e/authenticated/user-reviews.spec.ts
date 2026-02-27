@@ -1,11 +1,12 @@
 import { test, expect } from "../fixtures"
+import { requireSeedData } from "../constants"
 
 test.describe("Avis produits", () => {
 	test("les avis sont visibles sur la page detail produit", async ({ page, productCatalogPage }) => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 
@@ -59,7 +60,7 @@ test.describe("Avis produits", () => {
 
 		const productLinks = page.locator('a[href*="/creations/"]')
 		const productCount = await productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productLinks.first().click()
 		await page.waitForLoadState("domcontentloaded")

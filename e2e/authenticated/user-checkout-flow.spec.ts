@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures"
+import { requireSeedData } from "../constants"
 
 test.describe("Parcours checkout authentifié", () => {
 	test("parcours d'achat complet : produit → panier → paiement → confirmation", async ({
@@ -11,7 +12,7 @@ test.describe("Parcours checkout authentifié", () => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 
@@ -60,7 +61,7 @@ test.describe("Parcours checkout authentifié", () => {
 	}) => {
 		// Add a product to cart first
 		await productCatalogPage.goto()
-		test.skip(await productCatalogPage.productLinks.count() === 0, "Seed data required")
+		requireSeedData(test, await productCatalogPage.productLinks.count() > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 		test.skip(await productCatalogPage.addToCartButton.count() === 0, "Product requires SKU selection")
@@ -90,7 +91,7 @@ test.describe("Parcours checkout authentifié", () => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 
@@ -132,7 +133,7 @@ test.describe("Parcours checkout authentifié", () => {
 		productCatalogPage,
 	}) => {
 		await productCatalogPage.goto()
-		test.skip(await productCatalogPage.productLinks.count() === 0, "Seed data required")
+		requireSeedData(test, await productCatalogPage.productLinks.count() > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 		test.skip(await productCatalogPage.addToCartButton.count() === 0, "Product requires SKU selection")

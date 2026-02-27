@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures"
+import { requireSeedData } from "../constants"
 
 test.describe("Wishlist - Favoris", () => {
 	test("la page favoris est accessible", async ({ wishlistPage }) => {
@@ -14,7 +15,7 @@ test.describe("Wishlist - Favoris", () => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		// Find a wishlist toggle button on the catalog page
 		const wishlistButton = page.getByRole("button", { name: /wishlist/i })
@@ -39,7 +40,7 @@ test.describe("Wishlist - Favoris", () => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 
@@ -62,7 +63,7 @@ test.describe("Wishlist - Favoris", () => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 
@@ -96,7 +97,7 @@ test.describe("Wishlist - Favoris", () => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 

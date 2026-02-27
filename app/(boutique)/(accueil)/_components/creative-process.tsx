@@ -173,12 +173,12 @@ export async function CreativeProcess() {
 				</header>
 
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
-					{/* Atelier placeholder - Image first on mobile */}
+					{/* Atelier placeholder - Hidden on mobile, shown on lg with 2-col layout */}
 					<Reveal
 						y={MOTION_CONFIG.section.content.y}
 						duration={MOTION_CONFIG.section.content.duration}
 						delay={MOTION_CONFIG.section.content.delay}
-						className="relative order-1 h-56 sm:h-80 lg:h-full"
+						className="relative order-1 hidden lg:block lg:h-full"
 					>
 						<PlaceholderImage className="h-full w-full rounded-2xl" label="Photo de l'atelier à venir" />
 					</Reveal>
@@ -249,7 +249,7 @@ export async function CreativeProcess() {
 														/>
 													)}
 												</h3>
-												<p className="text-base/7 tracking-normal antialiased text-muted-foreground">
+												<p className="text-base/7 tracking-normal antialiased text-muted-foreground line-clamp-2 sm:line-clamp-none">
 													{step.description}
 												</p>
 											</div>

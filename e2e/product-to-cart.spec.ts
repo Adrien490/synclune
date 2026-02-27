@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures"
+import { requireSeedData } from "./constants"
 
 test.describe("Parcours produit → panier", () => {
 	test("naviguer vers un produit depuis le catalogue et voir les details", async ({ productCatalogPage }) => {
@@ -91,7 +92,7 @@ test.describe("Parcours produit → panier", () => {
 		await expect(page).toHaveURL(/search=bague/, { timeout: 5000 })
 
 		// Either products or empty state should be visible
-		await page.waitForLoadState("networkidle")
+		await page.waitForLoadState("domcontentloaded")
 		const productCards = page.locator('article, [data-product-card], a[href*="/creations/"]')
 		const emptyState = page.getByText(/aucun (résultat|produit)/i)
 

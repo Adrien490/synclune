@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures"
+import { requireSeedData } from "../constants"
 
 test.describe("Gestion du panier - Manipulation des articles", () => {
 	test.beforeEach(async ({ productCatalogPage, cartPage }) => {
@@ -6,7 +7,7 @@ test.describe("Gestion du panier - Manipulation des articles", () => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required: no products found")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 

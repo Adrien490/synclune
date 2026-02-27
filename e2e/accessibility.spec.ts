@@ -16,8 +16,8 @@ test.describe("Accessibilité - Homepage", () => {
 	})
 
 	test("les images de la homepage ont des attributs alt", async ({ page }) => {
-		// Attendre le chargement des images
-		await page.waitForLoadState("networkidle")
+		// Wait for images to be present in the DOM
+		await page.waitForLoadState("domcontentloaded")
 
 		// Récupérer toutes les images non décoratives (sans aria-hidden)
 		const images = page.locator('img:not([aria-hidden="true"])')

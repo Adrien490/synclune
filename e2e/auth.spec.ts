@@ -219,3 +219,78 @@ test.describe("Authentification - Mot de passe oublié", () => {
 		await expect(errorMessage).toBeVisible()
 	})
 })
+
+test.describe("Authentification - Verification email", () => {
+	test("la page /verifier-email charge sans erreur 500", async ({ page }) => {
+		const response = await page.goto("/verifier-email")
+		await page.waitForLoadState("domcontentloaded")
+
+		expect(response?.status(), "/verifier-email returned 500").toBeLessThan(500)
+	})
+
+	test("la page /verifier-email affiche un contenu pertinent", async ({ page }) => {
+		await page.goto("/verifier-email")
+		await page.waitForLoadState("domcontentloaded")
+
+		// Without a valid token, should show error or resend form
+		const content = page.getByText(/vérif|email|renvoyer|token/i)
+		await expect(content.first()).toBeVisible()
+	})
+
+	test("la page /verifier-email a noindex", async ({ page }) => {
+		await page.goto("/verifier-email")
+		await page.waitForLoadState("domcontentloaded")
+
+		const robotsMeta = page.locator('meta[name="robots"]')
+		await expect(robotsMeta).toBeAttached()
+
+		const content = await robotsMeta.getAttribute("content")
+		expect(content).toMatch(/noindex/)
+	})
+})
+
+test.describe("Authentification - Renvoyer verification", () => {
+	test("la page /renvoyer-verification charge correctement", async ({ page }) => {
+		const response = await page.goto("/renvoyer-verification")
+		await page.waitForLoadState("domcontentloaded")
+
+		expect(response?.status(), "/renvoyer-verification returned 500").toBeLessThan(500)
+	})
+
+	test("la page /renvoyer-verification affiche un formulaire", async ({ page }) => {
+		await page.goto("/renvoyer-verification")
+		await page.waitForLoadState("domcontentloaded")
+
+		// Should have an email input and submit button
+		const emailInput = page.getByRole("textbox", { name: /Email/i })
+			.or(page.locator('input[type="email"]'))
+		await expect(emailInput.first()).toBeVisible()
+	})
+
+	test("la page /renvoyer-verification a un lien retour connexion", async ({ page }) => {
+		await page.goto("/renvoyer-verification")
+		await page.waitForLoadState("domcontentloaded")
+
+		const backLink = page.getByRole("link", { name: /connexion/i })
+		await expect(backLink.first()).toBeVisible()
+	})
+})
+
+test.describe("Authentification - Reinitialiser mot de passe", () => {
+	test("la page /reinitialiser-mot-de-passe charge sans erreur 500", async ({ page }) => {
+		const response = await page.goto("/reinitialiser-mot-de-passe")
+		await page.waitForLoadState("domcontentloaded")
+
+		expect(response?.status(), "/reinitialiser-mot-de-passe returned 500").toBeLessThan(500)
+	})
+
+	test("la page /reinitialiser-mot-de-passe affiche un contenu pertinent", async ({ page }) => {
+		await page.goto("/reinitialiser-mot-de-passe")
+		await page.waitForLoadState("domcontentloaded")
+
+		// Without a valid token, should show error or redirect
+		const content = page.getByText(/mot de passe|réinitialiser|token|erreur|expiré/i)
+			.or(page.getByRole("heading"))
+		await expect(content.first()).toBeVisible()
+	})
+})

@@ -17,3 +17,23 @@ export const SELECTORS = {
 	/** Product link pattern - matches /creations/{slug} */
 	PRODUCT_LINK: 'a[href*="/creations/"]',
 } as const
+
+/**
+ * Requires seed data to be present for a test to run.
+ * - In CI: fails the test immediately (seed data is guaranteed by the pipeline).
+ * - In local dev: skips the test gracefully.
+ *
+ * Use this for data that the seed script guarantees (products, collections).
+ * Do NOT use for state-dependent data (orders, reviews) or UI variants (SKU selection).
+ */
+export function requireSeedData(
+	testFn: { skip: (condition: boolean, message: string) => void },
+	condition: boolean,
+	message: string,
+): void {
+	if (condition) return
+	if (process.env.CI) {
+		throw new Error(`[CI] Seed data missing: ${message}`)
+	}
+	testFn.skip(true, message)
+}

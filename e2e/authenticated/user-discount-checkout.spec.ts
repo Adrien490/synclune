@@ -1,10 +1,14 @@
 import { test, expect } from "../fixtures"
+import { requireSeedData } from "../constants"
 
 test.describe("Checkout - Codes promo", () => {
 	test.beforeEach(async ({ productCatalogPage, cartPage, page }) => {
 		// Add a product to cart and navigate to checkout
 		const result = await productCatalogPage.addFirstProductToCart(cartPage)
 		if (result.skipped) {
+			if (result.seedData) {
+				requireSeedData(test, false, result.reason)
+			}
 			test.skip(true, result.reason)
 			return
 		}

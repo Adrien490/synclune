@@ -105,15 +105,11 @@ export default async function Page() {
         reviewStatsPromise={reviewStatsPromise}
       />
 
-      {/* 5. Atelier Story - Hidden on mobile to shorten scroll */}
-      <div className="hidden md:block">
-        <AtelierStory />
-      </div>
+      {/* 5. Atelier Story - Condensed on mobile */}
+      <AtelierStory />
 
-      {/* 6. Creative Process - Hidden on mobile to shorten scroll */}
-      <div className="hidden md:block">
-        <CreativeProcess />
-      </div>
+      {/* 6. Creative Process - Condensed on mobile */}
+      <CreativeProcess />
 
       {/* 7. FAQ - Frequently asked questions with JSON-LD */}
       <FaqSection />

@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures"
+import { requireSeedData } from "./constants"
 
 test.describe("Parcours checkout complet", () => {
 	test.describe("Initiation du checkout depuis le panier", () => {
@@ -18,11 +19,7 @@ test.describe("Parcours checkout complet", () => {
 			await productCatalogPage.goto()
 
 			const count = await productCatalogPage.productLinks.count()
-
-			if (count === 0) {
-				test.skip(true, "Seed data required: no products found")
-				return
-			}
+			requireSeedData(test, count > 0, "No products found")
 
 			await productCatalogPage.gotoFirstProduct()
 

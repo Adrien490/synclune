@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures"
+import { requireSeedData } from "./constants"
 
 test.describe("Resilience aux erreurs", () => {
 	test("la page 404 affiche un message utilisateur", async ({ page }) => {
@@ -61,7 +62,7 @@ test.describe("Resilience aux erreurs", () => {
 		await productCatalogPage.goto()
 
 		const productCount = await productCatalogPage.productLinks.count()
-		test.skip(productCount === 0, "Seed data required")
+		requireSeedData(test, productCount > 0, "No products found")
 
 		await productCatalogPage.gotoFirstProduct()
 
@@ -81,16 +82,36 @@ test.describe("Resilience aux erreurs", () => {
 		try {
 			await productCatalogPage.addToCartButton.first().click()
 
-			// Should show error feedback, not crash - wait for error state
+			// Page should not crash - heading should remain visible
+			const heading = page.getByRole("heading", { level: 1 })
+			await expect(heading).toBeVisible({ timeout: 5000 })
+
+			// Should show error feedback to the user (toast, alert, or error message)
 			const errorFeedback = page.locator('[role="alert"]')
-				.or(page.getByText(/erreur|impossible|réessayer/i))
-			await expect(async () => {
-				const heading = page.getByRole("heading", { level: 1 })
-				await expect(heading).toBeVisible()
-			}).toPass({ timeout: 5000 })
+				.or(page.getByText(/erreur|impossible|réessayer|échoué/i))
+			await expect(errorFeedback.first()).toBeVisible({ timeout: 5000 })
 		} finally {
-			// Always restore routes, even if test fails
 			await page.unroute(routePattern)
+		}
+	})
+
+	test("les erreurs reseau sur la recherche sont gerees gracieusement", async ({ page, productCatalogPage }) => {
+		await productCatalogPage.goto()
+
+		const searchCount = await productCatalogPage.searchInput.count()
+		test.skip(searchCount === 0, "No search input on products page")
+
+		// Intercept search API to simulate slow then failed response
+		await page.route("**/api/search**", (route) => route.abort("connectionrefused"))
+
+		try {
+			await productCatalogPage.searchInput.first().fill("bague")
+
+			// Page should not crash
+			const heading = page.getByRole("heading", { level: 1 })
+			await expect(heading).toBeVisible({ timeout: 5000 })
+		} finally {
+			await page.unroute("**/api/search**")
 		}
 	})
 
@@ -109,5 +130,24 @@ test.describe("Resilience aux erreurs", () => {
 
 		await page.waitForLoadState("domcontentloaded")
 		await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
+	})
+
+	test("un reseau lent ne bloque pas le rendu initial", async ({ page }) => {
+		// Simulate slow network by delaying API responses
+		await page.route("**/api/**", async (route) => {
+			await new Promise((r) => setTimeout(r, 3000))
+			await route.continue()
+		})
+
+		try {
+			await page.goto("/")
+			await page.waitForLoadState("domcontentloaded")
+
+			// Page should render even with slow API
+			const heading = page.getByRole("heading", { level: 1 })
+			await expect(heading).toBeVisible({ timeout: 10000 })
+		} finally {
+			await page.unroute("**/api/**")
+		}
 	})
 })

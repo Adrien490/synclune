@@ -3,6 +3,10 @@ import { expect } from "@playwright/test"
 import type { CartPage } from "./cart.page"
 import { SELECTORS } from "../constants"
 
+type AddToCartResult =
+	| { skipped: false }
+	| { skipped: true; reason: string; seedData: boolean }
+
 export class ProductCatalogPage {
 	readonly productLinks: Locator
 	readonly addToCartButton: Locator
@@ -37,24 +41,24 @@ export class ProductCatalogPage {
 	 * wait for the cart dialog to appear. Skips the test if no products
 	 * or no add-to-cart button is found (variant selection required).
 	 */
-	async addFirstProductToCart(cartPage: CartPage) {
+	async addFirstProductToCart(cartPage: CartPage): Promise<AddToCartResult> {
 		await this.goto()
 
 		const productCount = await this.productLinks.count()
 		if (productCount === 0) {
-			return { skipped: true as const, reason: "Seed data required: no products found" }
+			return { skipped: true, reason: "No products found", seedData: true }
 		}
 
 		await this.gotoFirstProduct()
 
 		const addButtonCount = await this.addToCartButton.count()
 		if (addButtonCount === 0) {
-			return { skipped: true as const, reason: "Product requires SKU selection" }
+			return { skipped: true, reason: "Product requires SKU selection", seedData: false }
 		}
 
 		await this.addToCartButton.first().click()
 		await expect(cartPage.dialog).toBeVisible({ timeout: 5000 })
 
-		return { skipped: false as const }
+		return { skipped: false }
 	}
 }

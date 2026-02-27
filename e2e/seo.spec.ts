@@ -203,3 +203,69 @@ test.describe("SEO - Attributs HTML globaux", () => {
 		})
 	}
 })
+
+test.describe("SEO - robots.txt et sitemap.xml", () => {
+	test("robots.txt est accessible et retourne 200", async ({ page }) => {
+		const response = await page.goto("/robots.txt")
+
+		expect(response?.status()).toBe(200)
+
+		const body = await response?.text()
+		expect(body).toBeTruthy()
+		expect(body).toContain("User-agent")
+	})
+
+	test("sitemap.xml est accessible et contient du XML valide", async ({ page }) => {
+		const response = await page.goto("/sitemap.xml")
+
+		expect(response?.status()).toBe(200)
+
+		const body = await response?.text()
+		expect(body).toBeTruthy()
+		expect(body).toContain("<?xml")
+		expect(body).toContain("<urlset")
+	})
+
+	test("sitemap.xml contient les pages principales", async ({ page }) => {
+		const response = await page.goto("/sitemap.xml")
+		const body = await response?.text()
+
+		expect(body).toContain("/produits")
+		expect(body).toContain("/collections")
+	})
+})
+
+test.describe("SEO - noindex sur pages privees", () => {
+	test("la page /~offline a noindex", async ({ page }) => {
+		await page.goto("/~offline")
+		await page.waitForLoadState("domcontentloaded")
+
+		const robotsMeta = page.locator('meta[name="robots"]')
+		await expect(robotsMeta).toBeAttached()
+
+		const content = await robotsMeta.getAttribute("content")
+		expect(content).toMatch(/noindex/)
+	})
+
+	test("la page /verifier-email a noindex", async ({ page }) => {
+		await page.goto("/verifier-email")
+		await page.waitForLoadState("domcontentloaded")
+
+		const robotsMeta = page.locator('meta[name="robots"]')
+		await expect(robotsMeta).toBeAttached()
+
+		const content = await robotsMeta.getAttribute("content")
+		expect(content).toMatch(/noindex/)
+	})
+
+	test("la page /renvoyer-verification a noindex", async ({ page }) => {
+		await page.goto("/renvoyer-verification")
+		await page.waitForLoadState("domcontentloaded")
+
+		const robotsMeta = page.locator('meta[name="robots"]')
+		await expect(robotsMeta).toBeAttached()
+
+		const content = await robotsMeta.getAttribute("content")
+		expect(content).toMatch(/noindex/)
+	})
+})

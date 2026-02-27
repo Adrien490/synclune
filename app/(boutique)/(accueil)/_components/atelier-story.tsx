@@ -137,10 +137,10 @@ export async function AtelierStory() {
 							className="space-y-4 sm:space-y-6 text-base sm:text-lg text-muted-foreground leading-relaxed"
 						>
 							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
-							<p>
+							<p className="hidden sm:block">
 								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span aria-hidden="true">😂</span>
 							</p>
-							<p>Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
+							<p className="hidden sm:block">Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
 						</Stagger>
 
 						{/* Signature */}
@@ -154,10 +154,10 @@ export async function AtelierStory() {
 				</Fade>
 
 				{/* Decorative separator as narrative drumroll before photo reveal */}
-				<SparklesDivider className="my-8 sm:my-12 py-0" />
+				<SparklesDivider className="hidden sm:flex my-8 sm:my-12 py-0" />
 
 				{/* Main ambiance photo - contained with rounded corners and bottom fade */}
-				<Reveal y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} once>
+				<Reveal y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} once className="hidden sm:block">
 					<div className="mb-8 sm:mb-12 mask-b-from-85% mask-b-to-100%">
 						<PlaceholderImage
 							className="aspect-3/2 sm:aspect-video max-h-[40vh] sm:max-h-none rounded-2xl"
