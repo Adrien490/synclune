@@ -58,7 +58,7 @@ vi.mock("../../schemas/refund.schemas", () => ({
 import { getOrderForRefund } from "../get-order-for-refund";
 import { getOrderForRefundSchema } from "../../schemas/refund.schemas";
 
-const mockSchema = getOrderForRefundSchema as { safeParse: ReturnType<typeof vi.fn> };
+const mockSchema = getOrderForRefundSchema as unknown as { safeParse: ReturnType<typeof vi.fn> };
 
 // ============================================================================
 // Factories

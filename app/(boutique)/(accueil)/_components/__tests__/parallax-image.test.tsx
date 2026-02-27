@@ -9,13 +9,12 @@ const {
 	useIsTouchDeviceMock,
 	useSyncExternalStoreMock,
 } = vi.hoisted(() => ({
-	useReducedMotionMock: vi.fn<[], boolean | null>(() => false),
-	useIsTouchDeviceMock: vi.fn<[], boolean>(() => false),
+	useReducedMotionMock: vi.fn<() => boolean | null>(() => false),
+	useIsTouchDeviceMock: vi.fn<() => boolean>(() => false),
 	// Default: simulate client (isMounted = true) — getClientSnapshot returns true
 	useSyncExternalStoreMock: vi.fn<
-		[() => void, () => unknown, (() => unknown)?],
-		unknown
-	>((_subscribe, getSnapshot) => getSnapshot()),
+		(subscribe: () => void, getSnapshot: () => unknown, getServerSnapshot?: () => unknown) => unknown
+	>((_subscribe: () => void, getSnapshot: () => unknown) => getSnapshot()),
 }));
 
 // Mock react — intercept useSyncExternalStore while keeping everything else real
@@ -77,8 +76,8 @@ afterEach(() => {
 	useReducedMotionMock.mockReturnValue(false);
 	useIsTouchDeviceMock.mockReturnValue(false);
 	// Default: client-side — run getClientSnapshot (returns true)
-	useSyncExternalStoreMock.mockImplementation((_subscribe, getSnapshot) =>
-		getSnapshot()
+	useSyncExternalStoreMock.mockImplementation(
+		(_subscribe: () => void, getSnapshot: () => unknown) => getSnapshot()
 	);
 });
 
@@ -104,8 +103,11 @@ describe("SSR / not yet mounted", () => {
 	it("renders static image without role=presentation when useSyncExternalStore returns server snapshot (false)", () => {
 		// Simulate SSR: always call getServerSnapshot, which returns false (isMounted = false)
 		useSyncExternalStoreMock.mockImplementation(
-			(_subscribe, _getSnapshot, getServerSnapshot) =>
-				getServerSnapshot ? getServerSnapshot() : false
+			(
+				_subscribe: () => void,
+				_getSnapshot: () => unknown,
+				getServerSnapshot?: () => unknown
+			) => (getServerSnapshot ? getServerSnapshot() : false)
 		);
 
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
@@ -138,7 +140,7 @@ describe("prefers-reduced-motion not yet resolved (null)", () => {
 	it("renders static image without role=presentation when null", () => {
 		// useReducedMotion returns null before the media query resolves.
 		// The component treats this as "not safe" (motion opt-in requires explicit false).
-		(useReducedMotionMock as ReturnType<typeof vi.fn>).mockReturnValue(null);
+		(useReducedMotionMock as unknown as ReturnType<typeof vi.fn>).mockReturnValue(null);
 
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
 

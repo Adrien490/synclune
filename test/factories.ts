@@ -82,6 +82,8 @@ export function createMockOrder(overrides: Record<string, unknown> = {}) {
 		shippingCost: 0,
 		invoiceNumber: null,
 		stripeCheckoutSessionId: null,
+		trackingNumber: null,
+		trackingUrl: null,
 		items: [
 			{
 				skuId: VALID_SKU_ID,

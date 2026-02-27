@@ -642,7 +642,7 @@ describe("POST /api/webhooks/stripe - post-webhook tasks", () => {
 		const tasks = [{ type: "INVALIDATE_CACHE", tags: ["products-list"] }];
 		mockDispatchEvent.mockResolvedValue({ success: true, tasks });
 		// after() is async but should not block the response
-		mockAfter.mockImplementation(() => {
+		mockAfter.mockImplementation(async (_fn: () => Promise<void>) => {
 			// Do not call fn immediately - simulates deferred execution
 		});
 

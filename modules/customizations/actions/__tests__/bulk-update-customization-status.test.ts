@@ -365,12 +365,14 @@ describe("bulkUpdateCustomizationStatus", () => {
 		// Two separate updateMany calls: one with respondedAt, one without
 		expect(mockPrisma.customizationRequest.updateMany).toHaveBeenCalledTimes(2);
 		const calls = mockPrisma.customizationRequest.updateMany.mock.calls;
-		const withRespondedAt = calls.find(
-			([arg]: [{ data: Record<string, unknown> }]) => arg.data.respondedAt !== undefined
-		);
-		const withoutRespondedAt = calls.find(
-			([arg]: [{ data: Record<string, unknown> }]) => arg.data.respondedAt === undefined
-		);
+		const withRespondedAt = calls.find((args: unknown[]) => {
+			const [arg] = args as [{ data: Record<string, unknown> }];
+			return arg.data.respondedAt !== undefined;
+		});
+		const withoutRespondedAt = calls.find((args: unknown[]) => {
+			const [arg] = args as [{ data: Record<string, unknown> }];
+			return arg.data.respondedAt === undefined;
+		});
 		expect(withRespondedAt).toBeDefined();
 		expect(withoutRespondedAt).toBeDefined();
 	});
@@ -413,7 +415,7 @@ describe("bulkUpdateCustomizationStatus", () => {
 		await bulkUpdateCustomizationStatus(undefined, createFormData());
 
 		const userTagCalls = mockUpdateTag.mock.calls
-			.map(([tag]: [string]) => tag)
+			.map((args: unknown[]) => { const [tag] = args as [string]; return tag; })
 			.filter((tag: string) => tag.startsWith("customization-requests-user-"));
 		expect(userTagCalls).toHaveLength(1);
 		expect(userTagCalls[0]).toBe("customization-requests-user-user_shared");

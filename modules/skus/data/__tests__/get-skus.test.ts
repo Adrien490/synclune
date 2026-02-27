@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { GetProductSkusParams } from "../../types/skus.types";
 
 // ============================================================================
 // Hoisted mocks
@@ -46,7 +47,7 @@ const EMPTY_PAGINATION = {
 	hasPreviousPage: false,
 };
 
-function makeValidatedParams(overrides: Record<string, unknown> = {}) {
+function makeValidatedParams(overrides: Partial<GetProductSkusParams> = {}): GetProductSkusParams {
 	return {
 		cursor: undefined,
 		direction: "forward",
@@ -58,13 +59,13 @@ function makeValidatedParams(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-function makeDefaultInput() {
+function makeDefaultInput(): GetProductSkusParams {
 	return {
-		cursor: undefined as string | undefined,
-		direction: "forward" as const,
+		cursor: undefined,
+		direction: "forward",
 		perPage: 20,
 		sortBy: "created-descending",
-		search: undefined as string | undefined,
+		search: undefined,
 		filters: undefined,
 	};
 }
@@ -162,7 +163,7 @@ describe("getProductSkus – admin sort fallback", () => {
 			data: makeValidatedParams({ sortBy: "created-descending" }),
 		});
 
-		await getProductSkus({ ...makeDefaultInput(), sortBy: undefined as unknown as string });
+		await getProductSkus({ ...makeDefaultInput(), sortBy: undefined as unknown as GetProductSkusParams["sortBy"] });
 
 		expect(mockFetchProductSkus).toHaveBeenCalledWith(
 			expect.objectContaining({ sortBy: "created-descending" })

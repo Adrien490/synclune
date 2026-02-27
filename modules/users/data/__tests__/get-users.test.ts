@@ -90,7 +90,7 @@ vi.mock("../../services/user-query-builder", () => ({
 import { getUsers } from "../get-users";
 import { getUsersSchema } from "../../schemas/user.schemas";
 
-const mockGetUsersSchema = getUsersSchema as { safeParse: ReturnType<typeof vi.fn> };
+const mockGetUsersSchema = getUsersSchema as unknown as { safeParse: ReturnType<typeof vi.fn> };
 
 // ============================================================================
 // Factories
@@ -107,6 +107,7 @@ function makeUser(overrides: Record<string, unknown> = {}) {
 
 function makeValidParams(overrides: Record<string, unknown> = {}) {
 	return {
+		direction: "forward" as const,
 		sortBy: "createdAt" as const,
 		sortOrder: "desc" as const,
 		perPage: 50,
@@ -238,12 +239,13 @@ describe("getUsers", () => {
 
 		// Pass params WITHOUT an explicit sortBy so !params?.sortBy is true
 		const paramsWithoutSortBy = {
+			direction: "forward" as const,
 			sortOrder: "desc" as const,
 			perPage: 50,
 			filters: {},
 		};
 
-		await getUsers(paramsWithoutSortBy);
+		await getUsers(paramsWithoutSortBy as Parameters<typeof getUsers>[0]);
 
 		// The final query should sort by updatedAt (fallback)
 		expect(mockPrisma.user.findMany).toHaveBeenCalledWith(

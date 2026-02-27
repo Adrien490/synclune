@@ -99,7 +99,7 @@ describe("useBackButtonClose", () => {
 				useBackButtonClose({ isOpen: true, onClose: vi.fn() })
 			)
 
-			const popstateCalls = addSpy.mock.calls.filter(([event]) => event === "popstate")
+			const popstateCalls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(popstateCalls.length).toBeGreaterThan(0)
 		})
 
@@ -110,7 +110,7 @@ describe("useBackButtonClose", () => {
 				useBackButtonClose({ isOpen: false, onClose: vi.fn() })
 			)
 
-			const popstateCalls = addSpy.mock.calls.filter(([event]) => event === "popstate")
+			const popstateCalls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(popstateCalls.length).toBe(0)
 		})
 
@@ -123,7 +123,7 @@ describe("useBackButtonClose", () => {
 
 			unmount()
 
-			const popstateCalls = removeSpy.mock.calls.filter(([event]) => event === "popstate")
+			const popstateCalls = (removeSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(popstateCalls.length).toBeGreaterThan(0)
 		})
 
@@ -138,7 +138,7 @@ describe("useBackButtonClose", () => {
 			isOpen = false
 			rerender()
 
-			const popstateCalls = removeSpy.mock.calls.filter(([event]) => event === "popstate")
+			const popstateCalls = (removeSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(popstateCalls.length).toBeGreaterThan(0)
 		})
 
@@ -288,13 +288,13 @@ describe("useBackButtonClose", () => {
 
 			// No listener or pushState yet
 			expect(window.history.pushState).not.toHaveBeenCalled()
-			expect(addSpy.mock.calls.filter(([e]) => e === "popstate").length).toBe(0)
+			expect((addSpy.mock.calls as [string, ...unknown[]][]).filter(([e]) => e === "popstate").length).toBe(0)
 
 			isOpen = true
 			rerender()
 
 			expect(window.history.pushState).toHaveBeenCalledTimes(1)
-			expect(addSpy.mock.calls.filter(([e]) => e === "popstate").length).toBeGreaterThan(0)
+			expect((addSpy.mock.calls as [string, ...unknown[]][]).filter(([e]) => e === "popstate").length).toBeGreaterThan(0)
 		})
 
 		it("closing (true -> false) removes popstate listener and resets ref so pushState fires again on next open", () => {
@@ -311,7 +311,7 @@ describe("useBackButtonClose", () => {
 			rerender()
 
 			// Listener removed
-			expect(removeSpy.mock.calls.filter(([e]) => e === "popstate").length).toBeGreaterThan(0)
+			expect((removeSpy.mock.calls as [string, ...unknown[]][]).filter(([e]) => e === "popstate").length).toBeGreaterThan(0)
 
 			// Re-open: pushState must fire again (ref was reset on close)
 			isOpen = true

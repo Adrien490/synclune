@@ -39,6 +39,7 @@ function createMockSku(overrides: Partial<SkuFromList> = {}): SkuFromList {
 		inventory: 10,
 		priceInclTax: 2500,
 		compareAtPrice: null,
+		size: null,
 		color: {
 			id: "color-1",
 			slug: "gold",

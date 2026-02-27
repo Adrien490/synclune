@@ -328,7 +328,7 @@ describe("downloadImage", () => {
 		// Restore default sharp mock: returns a valid format
 		mockSharp.mockReturnValue({
 			metadata: vi.fn().mockResolvedValue({ format: "jpeg" }),
-		} as ReturnType<typeof sharp>);
+		} as unknown as ReturnType<typeof sharp>);
 
 		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeResponse()));
 	});
@@ -511,7 +511,7 @@ describe("downloadImage", () => {
 	it("should throw when Sharp cannot identify the image format", async () => {
 		mockSharp.mockReturnValue({
 			metadata: vi.fn().mockResolvedValue({ format: undefined }),
-		} as ReturnType<typeof sharp>);
+		} as unknown as ReturnType<typeof sharp>);
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow(
 			"Buffer invalide: format d'image non reconnu par Sharp"
@@ -521,7 +521,7 @@ describe("downloadImage", () => {
 	it("should throw when Sharp metadata rejects (corrupt data)", async () => {
 		mockSharp.mockReturnValue({
 			metadata: vi.fn().mockRejectedValue(new Error("unsupported image format")),
-		} as ReturnType<typeof sharp>);
+		} as unknown as ReturnType<typeof sharp>);
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow("unsupported image format");
 	});
@@ -529,7 +529,7 @@ describe("downloadImage", () => {
 	it("should succeed when Sharp identifies a webp format", async () => {
 		mockSharp.mockReturnValue({
 			metadata: vi.fn().mockResolvedValue({ format: "webp" }),
-		} as ReturnType<typeof sharp>);
+		} as unknown as ReturnType<typeof sharp>);
 
 		vi.stubGlobal(
 			"fetch",

@@ -115,7 +115,7 @@ describe("buildLightboxSlides", () => {
 			[createVideoMedia({ url: "https://utfs.io/f/video.webm" })],
 			false
 		);
-		expect((slides[0] as Record<string, unknown>).sources).toEqual([
+		expect((slides[0] as unknown as Record<string, unknown>).sources).toEqual([
 			{ src: "https://utfs.io/f/video.webm", type: "video/webm" },
 		]);
 	});

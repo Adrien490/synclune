@@ -9,10 +9,10 @@ vi.mock("sharp", () => {
 	const mockSharp = vi.fn(() => ({ ensureAlpha: mockEnsureAlpha }));
 
 	// Expose internal mocks for per-test control
-	(mockSharp as Record<string, unknown>).__mockToBuffer = mockToBuffer;
-	(mockSharp as Record<string, unknown>).__mockRaw = mockRaw;
-	(mockSharp as Record<string, unknown>).__mockResize = mockResize;
-	(mockSharp as Record<string, unknown>).__mockEnsureAlpha = mockEnsureAlpha;
+	(mockSharp as unknown as Record<string, unknown>).__mockToBuffer = mockToBuffer;
+	(mockSharp as unknown as Record<string, unknown>).__mockRaw = mockRaw;
+	(mockSharp as unknown as Record<string, unknown>).__mockResize = mockResize;
+	(mockSharp as unknown as Record<string, unknown>).__mockEnsureAlpha = mockEnsureAlpha;
 
 	return { default: mockSharp };
 });
@@ -43,7 +43,7 @@ import {
 } from "../services/generate-thumbhash";
 import { THUMBHASH_CONFIG } from "../constants/media.constants";
 
-const mockSharp = vi.mocked(sharp) as ReturnType<typeof vi.fn> & Record<string, unknown>;
+const mockSharp = vi.mocked(sharp) as unknown as ReturnType<typeof vi.fn> & Record<string, unknown>;
 const mockRgbaToThumbHash = vi.mocked(rgbaToThumbHash);
 const mockThumbHashToDataURL = vi.mocked(thumbHashToDataURL);
 const mockDownloadImage = vi.mocked(downloadImage);

@@ -44,7 +44,7 @@ import {
 const mockShippingAddress = {
 	firstName: "Marie",
 	lastName: "Dupont",
-	address: "12 rue de la Paix",
+	address1: "12 rue de la Paix",
 	city: "Paris",
 	postalCode: "75001",
 	country: "FR",
@@ -52,11 +52,12 @@ const mockShippingAddress = {
 
 const mockItems = [
 	{
-		title: "Bague en or",
+		productTitle: "Bague en or",
+		skuColor: "Or jaune",
+		skuMaterial: null,
+		skuSize: "52",
 		quantity: 1,
-		unitPrice: 12000,
-		imageUrl: "https://test.com/image.jpg",
-		skuVariants: "Or jaune / Taille 52",
+		price: 12000,
 	},
 ]
 

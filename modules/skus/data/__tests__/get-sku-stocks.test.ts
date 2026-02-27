@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { GetSkuStocksReturn } from "../../types/inventory.types";
 
 // ============================================================================
 // Hoisted mocks
@@ -343,7 +344,7 @@ describe("getSkuStocks – error handling", () => {
 		vi.stubEnv("NODE_ENV", "development");
 		mockPrisma.productSku.findMany.mockRejectedValue(new Error("DB exploded"));
 
-		const result = (await getSkuStocks(makeDefaultParams())) as typeof result & { error?: string };
+		const result = await getSkuStocks(makeDefaultParams()) as GetSkuStocksReturn & { error?: string };
 
 		expect(result.error).toBe("DB exploded");
 		vi.unstubAllEnvs();
@@ -354,7 +355,7 @@ describe("getSkuStocks – error handling", () => {
 		vi.stubEnv("NODE_ENV", "production");
 		mockPrisma.productSku.findMany.mockRejectedValue(new Error("DB exploded"));
 
-		const result = (await getSkuStocks(makeDefaultParams())) as typeof result & { error?: string };
+		const result = await getSkuStocks(makeDefaultParams()) as GetSkuStocksReturn & { error?: string };
 
 		expect(result.error).toBe("Failed to fetch inventory items");
 		vi.unstubAllEnvs();

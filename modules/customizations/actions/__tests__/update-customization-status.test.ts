@@ -347,7 +347,7 @@ describe("updateCustomizationStatus", () => {
 
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
-		const updateTagCalls = mockUpdateTag.mock.calls.map(([tag]: [string]) => tag);
+		const updateTagCalls = mockUpdateTag.mock.calls.map((args: unknown[]) => { const [tag] = args as [string]; return tag; });
 		const hasUserTag = updateTagCalls.some((tag: string) =>
 			tag.startsWith("customization-requests-user-")
 		);

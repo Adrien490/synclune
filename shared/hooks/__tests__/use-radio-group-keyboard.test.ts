@@ -37,10 +37,10 @@ function makeKeyEvent(key: string): React.KeyboardEvent {
 // ---------------------------------------------------------------------------
 
 describe("useRadioGroupKeyboard", () => {
-	let onSelect: ReturnType<typeof vi.fn>
+	let onSelect: ReturnType<typeof vi.fn<(option: Option) => void>>
 
 	beforeEach(() => {
-		onSelect = vi.fn()
+		onSelect = vi.fn<(option: Option) => void>()
 	})
 
 	// -------------------------------------------------------------------------

@@ -58,7 +58,7 @@ vi.mock("../../schemas/discount.schemas", () => ({
 import { getDiscountByCode } from "../get-discount-by-code";
 import { getDiscountByCodeSchema } from "../../schemas/discount.schemas";
 
-const mockSchema = getDiscountByCodeSchema as { safeParse: ReturnType<typeof vi.fn> };
+const mockSchema = getDiscountByCodeSchema as unknown as { safeParse: ReturnType<typeof vi.fn> };
 
 // ============================================================================
 // Factories

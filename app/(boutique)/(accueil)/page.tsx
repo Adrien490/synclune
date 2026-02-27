@@ -15,6 +15,7 @@ import { AtelierSection } from "./_components/atelier-section";
 import { FaqSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
+import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
@@ -91,8 +92,10 @@ export default async function Page() {
         <HeroSection productsPromise={latestCreationsPromise} />
       </Suspense>
 
-      {/* 2. Latest Creations - 4 most recent products (manages its own inner Suspense) */}
-      <LatestCreations productsPromise={latestCreationsPromise} />
+      {/* 2. Latest Creations - 4 most recent products */}
+      <Suspense fallback={<LatestCreationsSkeleton />}>
+        <LatestCreations productsPromise={latestCreationsPromise} />
+      </Suspense>
 
       {/* 3. Collections - Thematic browsing with descriptions */}
       <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>

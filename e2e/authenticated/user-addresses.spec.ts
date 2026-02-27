@@ -13,13 +13,13 @@ test.describe("Gestion des adresses", { tag: ["@regression"] }, () => {
 		await expect(addressPage.addButton).toBeVisible()
 	})
 
-	test("ouvrir le formulaire d'ajout d'adresse", async ({ addressPage }) => {
+	test("ouvrir le formulaire d'ajout d'adresse", async ({ addressPage, page }) => {
 		await addressPage.goto()
 
 		await addressPage.openCreateDialog()
 
 		// Form fields should be visible
-		const firstNameInput = addressPage.page.getByLabel(/Prénom/i)
+		const firstNameInput = page.getByLabel(/Prénom/i)
 		await expect(firstNameInput.first()).toBeVisible()
 	})
 

@@ -49,7 +49,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 		children: React.ReactNode;
 		disabled?: boolean;
 		asChild?: boolean;
-		"aria-disabled"?: string;
+		"aria-disabled"?: boolean | "true" | "false";
 		"aria-describedby"?: string;
 	}) => {
 		if (asChild) {

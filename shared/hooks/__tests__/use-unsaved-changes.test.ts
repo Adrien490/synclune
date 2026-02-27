@@ -210,7 +210,7 @@ describe("useUnsavedChanges", () => {
 
 			renderHook(() => useUnsavedChanges(true))
 
-			const calls = addSpy.mock.calls.filter(([event]) => event === "beforeunload")
+			const calls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "beforeunload")
 			expect(calls.length).toBeGreaterThan(0)
 		})
 
@@ -219,7 +219,7 @@ describe("useUnsavedChanges", () => {
 
 			renderHook(() => useUnsavedChanges(false))
 
-			const calls = addSpy.mock.calls.filter(([event]) => event === "beforeunload")
+			const calls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "beforeunload")
 			expect(calls.length).toBe(0)
 		})
 
@@ -232,7 +232,7 @@ describe("useUnsavedChanges", () => {
 			dirty = false
 			rerender()
 
-			const calls = removeSpy.mock.calls.filter(([event]) => event === "beforeunload")
+			const calls = (removeSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "beforeunload")
 			expect(calls.length).toBeGreaterThan(0)
 		})
 
@@ -242,7 +242,7 @@ describe("useUnsavedChanges", () => {
 			const { unmount } = renderHook(() => useUnsavedChanges(true))
 			unmount()
 
-			const calls = removeSpy.mock.calls.filter(([event]) => event === "beforeunload")
+			const calls = (removeSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "beforeunload")
 			expect(calls.length).toBeGreaterThan(0)
 		})
 
@@ -281,7 +281,7 @@ describe("useUnsavedChanges", () => {
 
 			renderHook(() => useUnsavedChanges(false))
 
-			const beforeunloadCalls = addSpy.mock.calls.filter(([event]) => event === "beforeunload")
+			const beforeunloadCalls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "beforeunload")
 			expect(beforeunloadCalls.length).toBe(0)
 		})
 	})
@@ -298,7 +298,7 @@ describe("useUnsavedChanges", () => {
 				useUnsavedChanges(true, true, { interceptHistoryNavigation: true })
 			)
 
-			const calls = addSpy.mock.calls.filter(([event]) => event === "popstate")
+			const calls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(calls.length).toBeGreaterThan(0)
 		})
 
@@ -307,7 +307,7 @@ describe("useUnsavedChanges", () => {
 
 			renderHook(() => useUnsavedChanges(false))
 
-			const calls = addSpy.mock.calls.filter(([event]) => event === "popstate")
+			const calls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(calls.length).toBe(0)
 		})
 
@@ -318,7 +318,7 @@ describe("useUnsavedChanges", () => {
 				useUnsavedChanges(true, true, { interceptHistoryNavigation: false })
 			)
 
-			const calls = addSpy.mock.calls.filter(([event]) => event === "popstate")
+			const calls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(calls.length).toBe(0)
 		})
 
@@ -328,7 +328,7 @@ describe("useUnsavedChanges", () => {
 			const { unmount } = renderHook(() => useUnsavedChanges(true))
 			unmount()
 
-			const calls = removeSpy.mock.calls.filter(([event]) => event === "popstate")
+			const calls = (removeSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(calls.length).toBeGreaterThan(0)
 		})
 
@@ -341,7 +341,7 @@ describe("useUnsavedChanges", () => {
 			dirty = false
 			rerender()
 
-			const calls = removeSpy.mock.calls.filter(([event]) => event === "popstate")
+			const calls = (removeSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(calls.length).toBeGreaterThan(0)
 		})
 
@@ -547,7 +547,7 @@ describe("useUnsavedChanges", () => {
 			removeSpy.mockClear()
 			unmount()
 
-			const removedEvents = removeSpy.mock.calls.map(([event]) => event)
+			const removedEvents = (removeSpy.mock.calls as [string, ...unknown[]][]).map(([event]) => event)
 			expect(removedEvents).toContain("beforeunload")
 			expect(removedEvents).toContain("popstate")
 		})
@@ -570,7 +570,7 @@ describe("useUnsavedChanges", () => {
 
 			renderHook(() => useUnsavedChanges(true))
 
-			const popstateCalls = addSpy.mock.calls.filter(([event]) => event === "popstate")
+			const popstateCalls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(popstateCalls.length).toBeGreaterThan(0)
 		})
 
@@ -579,7 +579,7 @@ describe("useUnsavedChanges", () => {
 
 			renderHook(() => useUnsavedChanges(true, true, { interceptHistoryNavigation: false }))
 
-			const popstateCalls = addSpy.mock.calls.filter(([event]) => event === "popstate")
+			const popstateCalls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(popstateCalls.length).toBe(0)
 		})
 
@@ -588,7 +588,7 @@ describe("useUnsavedChanges", () => {
 
 			renderHook(() => useUnsavedChanges(true, true, { interceptHistoryNavigation: false }))
 
-			const beforeunloadCalls = addSpy.mock.calls.filter(([event]) => event === "beforeunload")
+			const beforeunloadCalls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "beforeunload")
 			expect(beforeunloadCalls.length).toBeGreaterThan(0)
 		})
 
@@ -669,7 +669,7 @@ describe("useUnsavedChanges", () => {
 				})
 			)
 
-			const popstateCalls = addSpy.mock.calls.filter(([event]) => event === "popstate")
+			const popstateCalls = (addSpy.mock.calls as [string, ...unknown[]][]).filter(([event]) => event === "popstate")
 			expect(popstateCalls.length).toBe(0)
 		})
 

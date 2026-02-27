@@ -17,7 +17,7 @@ vi.mock("@/modules/skus/services/sku-info-extraction.service", () => ({
 // ---------------------------------------------------------------------------
 
 import { useVariantValidation } from "../use-sku-validation"
-import type { VariantSelection } from "../types/sku.types"
+import type { VariantSelection } from "../../types/sku.types"
 import type { GetProductReturn } from "@/modules/products/types/product.types"
 import type { ProductVariantInfo } from "@/shared/types/product-sku.types"
 

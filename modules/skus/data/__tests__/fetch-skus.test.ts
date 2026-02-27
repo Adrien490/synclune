@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { GetProductSkusParams, GetProductSkusReturn } from "../../types/skus.types";
 
 // ============================================================================
 // Hoisted mocks
@@ -72,13 +73,13 @@ const EMPTY_PAGINATION = {
 	hasPreviousPage: false,
 };
 
-function makeParams(overrides: Record<string, unknown> = {}) {
+function makeParams(overrides: Partial<GetProductSkusParams> = {}): GetProductSkusParams {
 	return {
-		cursor: undefined as string | undefined,
-		direction: "forward" as const,
+		cursor: undefined,
+		direction: "forward",
 		perPage: 20,
 		sortBy: "created-descending",
-		search: undefined as string | undefined,
+		search: undefined,
 		filters: undefined,
 		...overrides,
 	};
@@ -176,7 +177,7 @@ describe("fetchProductSkus – sort order logic", () => {
 	});
 
 	it("falls back to createdAt desc for unknown sortBy prefix", async () => {
-		await fetchProductSkus(makeParams({ sortBy: "unknown-sort" }));
+		await fetchProductSkus(makeParams({ sortBy: "unknown-sort" as unknown as GetProductSkusParams["sortBy"] }));
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
@@ -335,7 +336,7 @@ describe("fetchProductSkus – error handling", () => {
 		vi.stubEnv("NODE_ENV", "development");
 		mockPrisma.productSku.findMany.mockRejectedValue(new Error("Connection refused"));
 
-		const result = (await fetchProductSkus(makeParams())) as typeof result & { error?: string };
+		const result = await fetchProductSkus(makeParams()) as GetProductSkusReturn & { error?: string };
 
 		expect(result.error).toBe("Connection refused");
 		vi.unstubAllEnvs();
@@ -345,7 +346,7 @@ describe("fetchProductSkus – error handling", () => {
 		vi.stubEnv("NODE_ENV", "production");
 		mockPrisma.productSku.findMany.mockRejectedValue(new Error("Connection refused"));
 
-		const result = (await fetchProductSkus(makeParams())) as typeof result & { error?: string };
+		const result = await fetchProductSkus(makeParams()) as GetProductSkusReturn & { error?: string };
 
 		expect(result.error).toBe("Failed to fetch product SKUs");
 		vi.unstubAllEnvs();
@@ -355,7 +356,7 @@ describe("fetchProductSkus – error handling", () => {
 		vi.stubEnv("NODE_ENV", "development");
 		mockPrisma.productSku.findMany.mockRejectedValue("string error");
 
-		const result = (await fetchProductSkus(makeParams())) as typeof result & { error?: string };
+		const result = await fetchProductSkus(makeParams()) as GetProductSkusReturn & { error?: string };
 
 		expect(result.error).toBe("Unknown error");
 		vi.unstubAllEnvs();

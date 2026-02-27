@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+import type { GetProductsParams } from "../../types/product.types"
 
 // ============================================================================
 // HOISTED MOCKS
@@ -126,13 +127,13 @@ function makeProduct(id: string, overrides: Record<string, unknown> = {}) {
 	}
 }
 
-const DEFAULT_PARAMS = {
+const DEFAULT_PARAMS: GetProductsParams = {
 	cursor: undefined,
 	direction: undefined,
 	perPage: 20,
 	sortBy: "created-descending",
 	filters: {},
-	status: "PUBLIC" as const,
+	status: "PUBLIC",
 }
 
 const EMPTY_PAGINATION = {
@@ -216,7 +217,7 @@ describe("getProducts", () => {
 		mockIsAdmin.mockResolvedValue(true)
 		setupValidParams({ sortBy: "created-descending" })
 
-		await getProducts({ ...DEFAULT_PARAMS, sortBy: undefined as unknown as string })
+		await getProducts({ ...DEFAULT_PARAMS, sortBy: undefined as unknown as GetProductsParams["sortBy"] })
 
 		// Admin path should have proceeded without error
 		expect(mockBuildProductWhereClause).toHaveBeenCalled()

@@ -78,7 +78,7 @@ vi.mock("@/shared/components/ui/badge", () => ({
 		children: React.ReactNode;
 		variant?: string;
 		className?: string;
-		"aria-hidden"?: string;
+		"aria-hidden"?: boolean | "true" | "false";
 	}) => (
 		<span data-testid={`badge-${variant}`} aria-hidden={ariaHidden} className={className}>
 			{children}

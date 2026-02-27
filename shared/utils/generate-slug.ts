@@ -12,7 +12,7 @@ import {
  * Type pour le client Prisma ou un client de transaction
  * Compatible avec $transaction() où certaines méthodes sont omises
  */
-type PrismaClientOrTransaction = Pick<
+export type PrismaClientOrTransaction = Pick<
 	PrismaClient,
 	"product" | "collection" | "productType" | "color" | "material"
 >;

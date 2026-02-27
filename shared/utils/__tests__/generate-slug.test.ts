@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { slugify, generateSlug } from "../generate-slug";
+import { slugify, generateSlug, type PrismaClientOrTransaction } from "../generate-slug";
 import { SLUG_MAX_LENGTH } from "@/shared/constants/slug-patterns";
 
 describe("slugify", () => {
@@ -53,13 +53,13 @@ describe("generateSlug", () => {
 	}
 
 	it("returns unique slug on first attempt", async () => {
-		const prisma = makeMockPrisma();
+		const prisma = makeMockPrisma() as unknown as PrismaClientOrTransaction;
 		const result = await generateSlug(prisma, "product", "Bague en Or");
 		expect(result).toBe("bague-en-or");
 	});
 
 	it("appends -2 when slug already exists", async () => {
-		const prisma = makeMockPrisma({ "bague-en-or": { id: "1" } });
+		const prisma = makeMockPrisma({ "bague-en-or": { id: "1" } }) as unknown as PrismaClientOrTransaction;
 		const result = await generateSlug(prisma, "product", "Bague en Or");
 		expect(result).toBe("bague-en-or-2");
 	});
@@ -69,52 +69,56 @@ describe("generateSlug", () => {
 			"bague": { id: "1" },
 			"bague-2": { id: "2" },
 			"bague-3": { id: "3" },
-		});
+		}) as unknown as PrismaClientOrTransaction;
 		const result = await generateSlug(prisma, "product", "Bague");
 		expect(result).toBe("bague-4");
 	});
 
 	it("truncates slug exceeding max length", async () => {
 		const longName = "a".repeat(SLUG_MAX_LENGTH + 20);
-		const prisma = makeMockPrisma();
+		const prisma = makeMockPrisma() as unknown as PrismaClientOrTransaction;
 		const result = await generateSlug(prisma, "product", longName);
 		expect(result.length).toBeLessThanOrEqual(SLUG_MAX_LENGTH);
 	});
 
 	it("throws on empty value", async () => {
-		const prisma = makeMockPrisma();
+		const prisma = makeMockPrisma() as unknown as PrismaClientOrTransaction;
 		await expect(generateSlug(prisma, "product", "")).rejects.toThrow(
 			"La valeur pour générer le slug ne peut pas être vide"
 		);
 	});
 
 	it("throws on whitespace-only value", async () => {
-		const prisma = makeMockPrisma();
+		const prisma = makeMockPrisma() as unknown as PrismaClientOrTransaction;
 		await expect(generateSlug(prisma, "product", "   ")).rejects.toThrow();
 	});
 
 	it("works with collection model", async () => {
-		const prisma = makeMockPrisma();
+		const rawPrisma = makeMockPrisma();
+		const prisma = rawPrisma as unknown as PrismaClientOrTransaction;
 		const result = await generateSlug(prisma, "collection", "Été 2024");
 		expect(result).toBe("ete-2024");
-		expect(prisma.collection.findUnique).toHaveBeenCalled();
+		expect(rawPrisma.collection.findUnique).toHaveBeenCalled();
 	});
 
 	it("works with productType model", async () => {
-		const prisma = makeMockPrisma();
+		const rawPrisma = makeMockPrisma();
+		const prisma = rawPrisma as unknown as PrismaClientOrTransaction;
 		await generateSlug(prisma, "productType", "Colliers");
-		expect(prisma.productType.findUnique).toHaveBeenCalled();
+		expect(rawPrisma.productType.findUnique).toHaveBeenCalled();
 	});
 
 	it("works with color model", async () => {
-		const prisma = makeMockPrisma();
+		const rawPrisma = makeMockPrisma();
+		const prisma = rawPrisma as unknown as PrismaClientOrTransaction;
 		await generateSlug(prisma, "color", "Or Rose");
-		expect(prisma.color.findUnique).toHaveBeenCalled();
+		expect(rawPrisma.color.findUnique).toHaveBeenCalled();
 	});
 
 	it("works with material model", async () => {
-		const prisma = makeMockPrisma();
+		const rawPrisma = makeMockPrisma();
+		const prisma = rawPrisma as unknown as PrismaClientOrTransaction;
 		await generateSlug(prisma, "material", "Argent 925");
-		expect(prisma.material.findUnique).toHaveBeenCalled();
+		expect(rawPrisma.material.findUnique).toHaveBeenCalled();
 	});
 });

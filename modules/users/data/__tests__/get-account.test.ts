@@ -70,7 +70,7 @@ vi.mock("../../schemas/accounts.schemas", () => ({
 import { getAccount, fetchAccount } from "../get-account";
 import { getAccountSchema } from "../../schemas/accounts.schemas";
 
-const mockGetAccountSchema = getAccountSchema as { safeParse: ReturnType<typeof vi.fn> };
+const mockGetAccountSchema = getAccountSchema as unknown as { safeParse: ReturnType<typeof vi.fn> };
 
 // ============================================================================
 // Factories

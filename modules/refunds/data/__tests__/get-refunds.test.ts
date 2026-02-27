@@ -96,7 +96,7 @@ vi.mock("@/shared/lib/pagination", () => ({
 import { getRefunds } from "../get-refunds";
 import { getRefundsSchema } from "../../schemas/refund.schemas";
 
-const mockSchema = getRefundsSchema as { safeParse: ReturnType<typeof vi.fn> };
+const mockSchema = getRefundsSchema as unknown as { safeParse: ReturnType<typeof vi.fn> };
 
 // ============================================================================
 // Factories

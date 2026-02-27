@@ -93,7 +93,7 @@ vi.mock("../../services/accounts-query-builder", () => ({
 import { getAccounts } from "../get-accounts";
 import { getAccountsSchema } from "../../schemas/accounts.schemas";
 
-const mockGetAccountsSchema = getAccountsSchema as { safeParse: ReturnType<typeof vi.fn> };
+const mockGetAccountsSchema = getAccountsSchema as unknown as { safeParse: ReturnType<typeof vi.fn> };
 
 // ============================================================================
 // Factories
@@ -118,6 +118,7 @@ function makeAccount(overrides: Record<string, unknown> = {}) {
 
 function makeValidParams(overrides: Record<string, unknown> = {}) {
 	return {
+		direction: "forward" as const,
 		sortBy: "createdAt" as const,
 		sortOrder: "desc" as const,
 		perPage: 50,

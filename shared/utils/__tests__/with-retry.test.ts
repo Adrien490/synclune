@@ -44,7 +44,7 @@ describe("withRetry", () => {
 		const promise = withRetry(fn, { baseDelay: 100 }).catch((e) => e)
 		// Advance through all delays: 100ms (attempt 0→1) + 200ms (attempt 1→2)
 		await vi.advanceTimersByTimeAsync(300)
-		const error = await promise
+		const error = await promise as Error
 
 		expect(error.message).toBe("persistent failure")
 		expect(fn).toHaveBeenCalledTimes(3)
@@ -60,7 +60,7 @@ describe("withRetry", () => {
 		const promise = withRetry(fn, { maxAttempts: 5, baseDelay: 10 }).catch((e) => e)
 		// Advance through delays: 10 + 20 + 40 + 80 = 150ms
 		await vi.advanceTimersByTimeAsync(150)
-		const error = await promise
+		const error = await promise as Error
 
 		expect(error.message).toBe("fail")
 		expect(fn).toHaveBeenCalledTimes(5)
