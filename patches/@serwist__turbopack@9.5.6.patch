@@ -1,0 +1,54 @@
+diff --git a/dist/chunks/index.schema.js b/dist/chunks/index.schema.js
+index 2a3be937ce7f78dc66b4f51925c23c1a62bc949c..34e764b329f096bd0e29179c5980b4dd3eade8cb 100644
+--- a/dist/chunks/index.schema.js
++++ b/dist/chunks/index.schema.js
+@@ -119,11 +119,15 @@ var logger = /*#__PURE__*/Object.freeze({
+ 
+ const loadNextConfig = async (cwd, isDev)=>{
+     const nextPhase = isDev ? PHASE_DEVELOPMENT_SERVER : PHASE_PRODUCTION_BUILD;
+-    // webpackIgnore is only supported by Next.js 15 and above, but it is necessary
+-    const nextConfig = await import(/* webpackIgnore: true */ 'next/dist/server/config.js');
+-    return nextConfig.default.default(nextPhase, cwd, {
+-        silent: false
+-    });
++    try {
++        // webpackIgnore is only supported by Next.js 15 and above, but it is necessary
++        const nextConfig = await import(/* webpackIgnore: true */ 'next/dist/server/config.js');
++        return nextConfig.default.default(nextPhase, cwd, {
++            silent: false
++        });
++    } catch {
++        return { distDir: ".next", basePath: "/", assetPrefix: "" };
++    }
+ };
+ const generateGlobPatterns = (distDir)=>[
+         `${distDir}static/**/*.{js,css,html,ico,apng,png,avif,jpg,jpeg,jfif,pjpeg,pjp,gif,svg,webp,json,webmanifest}`,
+diff --git a/src/lib/utils.ts b/src/lib/utils.ts
+index 3822a449ab52b3d8b8511cec1a5f38d2ae8ffa46..ab4d8846e441e57c5950744facf39c1ac3699db0 100644
+--- a/src/lib/utils.ts
++++ b/src/lib/utils.ts
+@@ -2,13 +2,17 @@ import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD } from "next/constants
+ 
+ export const loadNextConfig = async (cwd: string, isDev: boolean) => {
+   const nextPhase = isDev ? PHASE_DEVELOPMENT_SERVER : PHASE_PRODUCTION_BUILD;
+-  // webpackIgnore is only supported by Next.js 15 and above, but it is necessary
+-  // for loading `next/dist/server/config.js`.
+-  const nextConfig = await import(/* webpackIgnore: true */ "next/dist/server/config.js");
+-  // 1) what does `default.default` even mean
+-  return nextConfig.default.default(nextPhase, cwd, {
+-    silent: false,
+-  });
++  try {
++    // webpackIgnore is only supported by Next.js 15 and above, but it is necessary
++    // for loading `next/dist/server/config.js`.
++    const nextConfig = await import(/* webpackIgnore: true */ "next/dist/server/config.js");
++    // 1) what does `default.default` even mean
++    return nextConfig.default.default(nextPhase, cwd, {
++      silent: false,
++    });
++  } catch {
++    return { distDir: ".next", basePath: "/", assetPrefix: "" };
++  }
+ };
+ 
+ export const generateGlobPatterns = (distDir: string) => [
