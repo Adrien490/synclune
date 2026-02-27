@@ -1,0 +1,131 @@
+import { Reveal, Stagger } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { PlaceholderImage } from "@/shared/components/placeholder-image";
+import { PolaroidFrame, type WashiTapeColor, type WashiTapePosition } from "@/shared/components/polaroid-frame";
+import { cn } from "@/shared/utils/cn";
+import { PolaroidDoodles } from "./polaroid-doodles";
+
+// ─── Polaroid Config ────────────────────────────────────────────────────────
+
+type GlowColor = "pink" | "lavender" | "mint" | "yellow";
+
+interface PolaroidConfig {
+	caption: string;
+	label: string;
+	tiltDegree: number;
+	washiColor: WashiTapeColor;
+	washiPosition: WashiTapePosition;
+	captionColor: string;
+	captionRotate: number;
+	vintage: boolean;
+	glowColor: GlowColor;
+	scatterClass: string;
+	className?: string;
+}
+
+const GLOW_CLASSES: Record<GlowColor, string> = {
+	pink: "hover:shadow-[0_0_25px_var(--color-glow-pink),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	lavender: "hover:shadow-[0_0_25px_var(--color-glow-lavender),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	mint: "hover:shadow-[0_0_25px_var(--color-glow-mint),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	yellow: "hover:shadow-[0_0_25px_var(--color-glow-yellow),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+};
+
+const POLAROIDS: PolaroidConfig[] = [
+	{
+		caption: "Les mains dans les perles !",
+		label: "Mains de Léane assemblant un bijou",
+		tiltDegree: -3,
+		washiColor: "pink",
+		washiPosition: "top-left",
+		captionColor: "var(--polaroid-caption-mauve)",
+		captionRotate: -1.5,
+		vintage: true,
+		glowColor: "pink",
+		scatterClass: "lg:-translate-y-2 lg:translate-x-1",
+	},
+	{
+		caption: "Mes petits trésors",
+		label: "Perles et matériaux colorés Synclune",
+		tiltDegree: 1.5,
+		washiColor: "lavender",
+		washiPosition: "top-right",
+		captionColor: "var(--polaroid-caption-violet)",
+		captionRotate: 1,
+		vintage: true,
+		glowColor: "lavender",
+		scatterClass: "lg:translate-y-3 lg:-translate-x-1",
+	},
+	{
+		caption: "L'inspiration du jour",
+		label: "Carnet d'inspiration de Léane, créatrice Synclune",
+		tiltDegree: -1,
+		washiColor: "mint",
+		washiPosition: "top-left",
+		captionColor: "var(--polaroid-caption-green)",
+		captionRotate: -0.5,
+		vintage: true,
+		glowColor: "mint",
+		scatterClass: "lg:translate-y-1 lg:translate-x-2",
+		className: "hidden lg:block",
+	},
+	{
+		caption: "Mon coin créatif",
+		label: "Vue de l'atelier Synclune",
+		tiltDegree: 2.5,
+		washiColor: "peach",
+		washiPosition: "top-right",
+		captionColor: "var(--polaroid-caption-brown)",
+		captionRotate: 0.8,
+		vintage: true,
+		glowColor: "yellow",
+		scatterClass: "lg:-translate-y-3 lg:-translate-x-1",
+		className: "hidden lg:block",
+	},
+];
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
+export function PolaroidGallery() {
+	return (
+		<Reveal y={MOTION_CONFIG.section.grid.y} delay={0.3} duration={MOTION_CONFIG.section.title.duration} once>
+			<div className="mt-12 sm:mt-16">
+				<div
+					role="region"
+					aria-label="Galerie photos de l'atelier Synclune"
+					className="relative"
+				>
+					<PolaroidDoodles />
+					<Stagger
+						stagger={MOTION_CONFIG.stagger.slow}
+						y={MOTION_CONFIG.section.grid.y}
+						inView
+						once
+						className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-2 max-w-5xl mx-auto"
+					>
+						{POLAROIDS.map((p) => (
+							<PolaroidFrame
+								key={p.caption}
+								tiltDegree={p.tiltDegree}
+								caption={p.caption}
+								captionColor={p.captionColor}
+								captionRotate={p.captionRotate}
+								washiTape
+								washiColor={p.washiColor}
+								washiPosition={p.washiPosition}
+								vintage={p.vintage}
+								className={cn(
+									p.className,
+									p.scatterClass,
+									"motion-safe:transition-shadow motion-safe:duration-300",
+									GLOW_CLASSES[p.glowColor]
+								)}
+							>
+								<PlaceholderImage className="w-full h-full" label={p.label} />
+							</PolaroidFrame>
+						))}
+					</Stagger>
+				</div>
+			</div>
+		</Reveal>
+	);
+}

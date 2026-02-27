@@ -421,22 +421,16 @@ function CarouselDots({
 			className={cn("flex flex-col items-center gap-1 pt-4", className)}
 			{...props}
 		>
-			{/* Screen reader live announcement - must be outside tablist */}
-			<div aria-live="polite" aria-atomic="true" className="sr-only">
-				Diapositive {selectedIndex + 1} sur {scrollSnaps.length}
-			</div>
 			<div
 				className="flex justify-center"
-				role="tablist"
+				role="group"
 				aria-label="Navigation du carousel"
 			>
 				{scrollSnaps.map((_, index) => (
 					<button
 						key={index}
 						type="button"
-						role="tab"
-						aria-selected={index === selectedIndex}
-						aria-controls={`${carouselId}-content`}
+						aria-pressed={index === selectedIndex}
 						aria-label={`Aller à la diapositive ${index + 1}`}
 						onClick={() => api?.scrollTo(index)}
 						className={cn(

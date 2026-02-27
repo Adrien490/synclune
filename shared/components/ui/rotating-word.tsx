@@ -71,8 +71,9 @@ export function RotatingWord({
 			className={pillStyles}
 			style={{ contain: "layout paint" }}
 			lang="fr"
+			aria-label={words.join(" et ")}
 		>
-			<span className="relative inline-flex items-center">
+			<span className="relative inline-flex items-center" aria-hidden="true">
 				<AnimatePresence mode="wait">
 					<motion.span
 						key={currentIndex}
@@ -95,7 +96,6 @@ export function RotatingWord({
 				{/* Invisible placeholder - reserves width of the longest word */}
 				<span
 					className={cn(textStyles, "invisible select-none")}
-					aria-hidden="true"
 				>
 					{longestWord}
 				</span>

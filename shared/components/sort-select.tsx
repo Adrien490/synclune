@@ -86,7 +86,7 @@ export function SortSelect({
 							disabled={isPending}
 							className={cn(
 								"absolute right-9 sm:right-10 top-1/2 -translate-y-1/2 z-10",
-								"h-[36px] w-[36px] sm:h-[40px] sm:w-[40px]",
+								"h-9 w-9 sm:h-10 sm:w-10",
 								"text-muted-foreground hover:text-foreground",
 								"hover:bg-accent/50 active:bg-accent/70"
 							)}

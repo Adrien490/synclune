@@ -68,7 +68,7 @@ export function NewsletterForm() {
 		>
 			{/* Success message */}
 			{state?.status === ActionStatus.SUCCESS && state.message && (
-				<Alert>
+				<Alert role="status">
 					<AlertDescription>{state.message}</AlertDescription>
 				</Alert>
 			)}

@@ -107,7 +107,7 @@ export function CollectionCard({
 							aria-label={`Collection ${name} - Aucune image disponible`}
 						>
 							<Gem
-								className="w-12 h-12 sm:w-16 sm:h-16 text-primary/30 animate-pulse"
+								className="w-12 h-12 sm:w-16 sm:h-16 text-primary/30 motion-safe:animate-pulse"
 								aria-hidden="true"
 							/>
 							<span className="text-xs text-muted-foreground" aria-hidden="true">

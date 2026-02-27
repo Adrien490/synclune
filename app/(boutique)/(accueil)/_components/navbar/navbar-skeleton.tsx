@@ -24,31 +24,31 @@ export function NavbarSkeleton() {
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 						<div className="flex flex-1 items-center lg:flex-none min-w-0">
 							{/* Menu burger skeleton (mobile uniquement) - size-11 = 44px matches real burger */}
-							<div className="lg:hidden size-11 animate-pulse bg-muted/60 rounded-xl" />
+							<div className="lg:hidden size-11 motion-safe:animate-pulse bg-muted/60 rounded-xl" />
 
 							{/* Search icon skeleton (mobile only - between burger and logo) */}
-							<div className="sm:hidden size-11 animate-pulse bg-muted/60 rounded-xl" />
+							<div className="sm:hidden size-11 motion-safe:animate-pulse bg-muted/60 rounded-xl" />
 
 							{/* Logo skeleton (desktop uniquement) */}
 							<div className="hidden lg:flex items-center gap-3">
 								{/* Icône logo - size-12 = 48px matches Logo size={48} */}
-								<div className="size-12 animate-pulse bg-muted/60 rounded-lg" />
+								<div className="size-12 motion-safe:animate-pulse bg-muted/60 rounded-lg" />
 								{/* Texte "SYNCLUNE" */}
-								<div className="h-6 w-24 animate-pulse bg-muted/60 rounded-md" />
+								<div className="h-6 w-24 motion-safe:animate-pulse bg-muted/60 rounded-md" />
 							</div>
 						</div>
 
 						{/* Section centrale: Logo (mobile) / Navigation desktop */}
 						<div className="flex items-center justify-center lg:flex-1">
 							{/* Logo skeleton centré (mobile uniquement) - size-11 = 44px matches Logo size={44} */}
-							<div className="lg:hidden size-11 animate-pulse bg-muted/60 rounded-lg" />
+							<div className="lg:hidden size-11 motion-safe:animate-pulse bg-muted/60 rounded-lg" />
 
 							{/* Navigation desktop skeleton (cachée sur mobile) */}
 							{/* 3 items: Les créations, Les collections, Personnalisation (synchronisé avec getDesktopNavItems) */}
 							<div className="hidden lg:flex items-center gap-1">
-								<div className="h-9 w-24 animate-pulse bg-muted/60 rounded-lg" />
-								<div className="h-9 w-28 animate-pulse bg-muted/60 rounded-lg" />
-								<div className="h-9 w-28 animate-pulse bg-muted/60 rounded-lg" />
+								<div className="h-9 w-24 motion-safe:animate-pulse bg-muted/60 rounded-lg" />
+								<div className="h-9 w-28 motion-safe:animate-pulse bg-muted/60 rounded-lg" />
+								<div className="h-9 w-28 motion-safe:animate-pulse bg-muted/60 rounded-lg" />
 							</div>
 						</div>
 
@@ -56,16 +56,16 @@ export function NavbarSkeleton() {
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-2 sm:gap-3">
 								{/* Icône favoris skeleton (toujours visible) */}
-								<div className="size-11 animate-pulse bg-muted/60 rounded-xl" />
+								<div className="size-11 motion-safe:animate-pulse bg-muted/60 rounded-xl" />
 
 								{/* Icône recherche skeleton (visible sur sm+ seulement) */}
-								<div className="hidden sm:inline-flex size-11 animate-pulse bg-muted/60 rounded-xl" />
+								<div className="hidden sm:inline-flex size-11 motion-safe:animate-pulse bg-muted/60 rounded-xl" />
 
 								{/* Icône compte skeleton (visible sur sm+ seulement) */}
-								<div className="hidden sm:inline-flex size-11 animate-pulse bg-muted/60 rounded-xl" />
+								<div className="hidden sm:inline-flex size-11 motion-safe:animate-pulse bg-muted/60 rounded-xl" />
 
 								{/* Icône panier skeleton (toujours visible) */}
-								<div className="size-11 animate-pulse bg-muted/60 rounded-xl" />
+								<div className="size-11 motion-safe:animate-pulse bg-muted/60 rounded-xl" />
 							</div>
 						</div>
 					</div>

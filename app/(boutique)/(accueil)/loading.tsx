@@ -1,5 +1,5 @@
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
-import { AtelierSectionSkeleton } from "./_components/atelier-section-skeleton";
+import { AtelierSectionSkeleton } from "./_components/atelier-section";
 import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";

@@ -33,9 +33,9 @@ export function LatestCreationsSkeleton({
 				{/* Header skeleton */}
 				<header className="mb-8 text-center lg:mb-12">
 					{/* Titre skeleton - "Nouveaux bijoux" */}
-					<div className="h-10 w-64 mx-auto bg-muted animate-pulse rounded" />
+					<div className="h-10 w-64 mx-auto bg-muted motion-safe:animate-pulse rounded" />
 					{/* Sous-titre skeleton */}
-					<div className="mt-4 h-7 w-full max-w-md mx-auto bg-muted/50 animate-pulse rounded" />
+					<div className="mt-4 h-7 w-full max-w-md mx-auto bg-muted/50 motion-safe:animate-pulse rounded" />
 				</header>
 
 				<LatestCreationsGridSkeleton productsCount={productsCount} />
@@ -56,15 +56,15 @@ export function LatestCreationsGridSkeleton({
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12">
 				{Array.from({ length: productsCount }).map((_, i) => (
 					<div key={i} className="bg-card rounded-lg border-2 border-transparent shadow-sm overflow-hidden">
-						<div className="aspect-3/4 sm:aspect-4/5 bg-muted animate-pulse" />
+						<div className="aspect-3/4 sm:aspect-4/5 bg-muted motion-safe:animate-pulse" />
 
 						{/* Content padding */}
 						<div className="p-4 space-y-2">
 							{/* Title skeleton */}
-							<div className="h-6 bg-muted rounded animate-pulse" />
+							<div className="h-6 bg-muted rounded motion-safe:animate-pulse" />
 
 							{/* Price skeleton */}
-							<div className="h-5 w-20 bg-muted rounded animate-pulse" />
+							<div className="h-5 w-20 bg-muted rounded motion-safe:animate-pulse" />
 						</div>
 					</div>
 				))}
@@ -72,7 +72,7 @@ export function LatestCreationsGridSkeleton({
 
 			{/* CTA skeleton */}
 			<div className="text-center">
-				<div className="h-12 w-64 mx-auto bg-muted animate-pulse rounded-md shadow-lg" />
+				<div className="h-12 w-64 mx-auto bg-muted motion-safe:animate-pulse rounded-md shadow-lg" />
 			</div>
 		</>
 	);

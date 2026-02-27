@@ -134,7 +134,7 @@ function TableHead({
 			scope="col"
 			className={cn(
 				"text-foreground h-11 px-2 sm:px-3 text-left align-middle font-medium whitespace-nowrap",
-				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-0.5",
 				className
 			)}
 			{...props}
@@ -148,7 +148,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
 			data-slot="table-cell"
 			className={cn(
 				"p-2 sm:p-3 align-middle whitespace-nowrap",
-				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-0.5",
 				className
 			)}
 			{...props}
