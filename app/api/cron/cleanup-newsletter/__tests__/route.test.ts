@@ -10,12 +10,14 @@ const {
 	mockCronSuccess,
 	mockCronError,
 	mockCleanupUnconfirmedNewsletterSubscriptions,
+	mockUnsubscribeInactiveNewsletterSubscribers,
 } = vi.hoisted(() => ({
 	mockVerifyCronRequest: vi.fn(),
 	mockCronTimer: vi.fn(),
 	mockCronSuccess: vi.fn(),
 	mockCronError: vi.fn(),
 	mockCleanupUnconfirmedNewsletterSubscriptions: vi.fn(),
+	mockUnsubscribeInactiveNewsletterSubscribers: vi.fn(),
 }));
 
 vi.mock("@/modules/cron/lib/verify-cron", () => ({
@@ -27,6 +29,7 @@ vi.mock("@/modules/cron/lib/verify-cron", () => ({
 
 vi.mock("@/modules/cron/services/cleanup-newsletter.service", () => ({
 	cleanupUnconfirmedNewsletterSubscriptions: mockCleanupUnconfirmedNewsletterSubscriptions,
+	unsubscribeInactiveNewsletterSubscribers: mockUnsubscribeInactiveNewsletterSubscribers,
 }));
 
 import { GET, maxDuration } from "../route";
@@ -48,7 +51,7 @@ function makeErrorResponse(message: string) {
 }
 
 const DEFAULT_SERVICE_RESULT = {
-	deletedCount: 8,
+	deleted: 8,
 	hasMore: false,
 };
 
@@ -73,8 +76,12 @@ describe("GET /api/cron/cleanup-newsletter", () => {
 		mockVerifyCronRequest.mockResolvedValue(null);
 		mockCronTimer.mockReturnValue(1000);
 		mockCleanupUnconfirmedNewsletterSubscriptions.mockResolvedValue(DEFAULT_SERVICE_RESULT);
+		mockUnsubscribeInactiveNewsletterSubscribers.mockResolvedValue({
+			unsubscribed: 0,
+			hasMore: false,
+		});
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -125,10 +132,10 @@ describe("GET /api/cron/cleanup-newsletter", () => {
 			expect(mockCronSuccess).toHaveBeenCalledWith(
 				expect.objectContaining({
 					job: "cleanup-newsletter",
-					deletedCount: DEFAULT_SERVICE_RESULT.deletedCount,
+					unconfirmedDeleted: DEFAULT_SERVICE_RESULT.deleted,
 					hasMore: DEFAULT_SERVICE_RESULT.hasMore,
 				}),
-				1000
+				1000,
 			);
 		});
 
@@ -161,7 +168,7 @@ describe("GET /api/cron/cleanup-newsletter", () => {
 	describe("error handling", () => {
 		it("calls cronError when cleanupUnconfirmedNewsletterSubscriptions throws", async () => {
 			mockCleanupUnconfirmedNewsletterSubscriptions.mockRejectedValue(
-				new Error("DB connection lost")
+				new Error("DB connection lost"),
 			);
 
 			await GET();
@@ -172,7 +179,7 @@ describe("GET /api/cron/cleanup-newsletter", () => {
 		it("returns the response from cronError when service throws", async () => {
 			const errorResponse = makeErrorResponse("DB connection lost");
 			mockCleanupUnconfirmedNewsletterSubscriptions.mockRejectedValue(
-				new Error("DB connection lost")
+				new Error("DB connection lost"),
 			);
 			mockCronError.mockReturnValue(errorResponse);
 
@@ -182,9 +189,7 @@ describe("GET /api/cron/cleanup-newsletter", () => {
 		});
 
 		it("uses the error message when an Error instance is thrown", async () => {
-			mockCleanupUnconfirmedNewsletterSubscriptions.mockRejectedValue(
-				new Error("Prisma timeout")
-			);
+			mockCleanupUnconfirmedNewsletterSubscriptions.mockRejectedValue(new Error("Prisma timeout"));
 
 			await GET();
 
@@ -192,15 +197,11 @@ describe("GET /api/cron/cleanup-newsletter", () => {
 		});
 
 		it("uses fallback message when a non-Error value is thrown", async () => {
-			mockCleanupUnconfirmedNewsletterSubscriptions.mockRejectedValue(
-				"unexpected string error"
-			);
+			mockCleanupUnconfirmedNewsletterSubscriptions.mockRejectedValue("unexpected string error");
 
 			await GET();
 
-			expect(mockCronError).toHaveBeenCalledWith(
-				"Failed to cleanup newsletter subscriptions"
-			);
+			expect(mockCronError).toHaveBeenCalledWith("Failed to cleanup newsletter subscriptions");
 		});
 
 		it("uses fallback message when null is thrown", async () => {
@@ -208,9 +209,7 @@ describe("GET /api/cron/cleanup-newsletter", () => {
 
 			await GET();
 
-			expect(mockCronError).toHaveBeenCalledWith(
-				"Failed to cleanup newsletter subscriptions"
-			);
+			expect(mockCronError).toHaveBeenCalledWith("Failed to cleanup newsletter subscriptions");
 		});
 
 		it("does not call cronSuccess when the service throws", async () => {

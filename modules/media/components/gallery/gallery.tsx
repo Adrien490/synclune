@@ -8,7 +8,10 @@ import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { useReducedMotion } from "@/shared/hooks";
 import { cn } from "@/shared/utils/cn";
 
-import { PREFETCH_RANGE_FAST, PREFETCH_RANGE_SLOW } from "@/modules/media/constants/gallery.constants";
+import {
+	PREFETCH_RANGE_FAST,
+	PREFETCH_RANGE_SLOW,
+} from "@/modules/media/constants/gallery.constants";
 import { usePrefetchImages } from "@/modules/media/hooks/use-image-prefetch";
 import { usePrefetchVideos } from "@/modules/media/hooks/use-video-prefetch";
 import { parseGalleryParams } from "@/modules/media/schemas/gallery-params.schema";
@@ -24,10 +27,9 @@ import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
-const MediaLightbox = dynamic(
-	() => import("@/modules/media/components/media-lightbox"),
-	{ ssr: false }
-);
+const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
+	ssr: false,
+});
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
@@ -41,10 +43,7 @@ function GalleryLoadingSkeleton() {
 	return (
 		<SkeletonGroup label="Chargement de la galerie">
 			<div className="w-full">
-				<Skeleton
-					className="aspect-3/4 sm:aspect-4/5 rounded-3xl w-full"
-					variant="shimmer"
-				/>
+				<Skeleton className="aspect-3/4 w-full rounded-3xl sm:aspect-4/5" variant="shimmer" />
 			</div>
 		</SkeletonGroup>
 	);
@@ -73,7 +72,7 @@ function GalleryThumbnailList({
 	const isDesktop = variant === "desktop";
 
 	return (
-		<div className={isDesktop ? "hidden md:block order-1" : "md:hidden order-3 mt-3"}>
+		<div className={isDesktop ? "order-1 hidden md:block" : "order-3 mt-3 md:hidden"}>
 			<div
 				className={isDesktop ? "flex flex-col gap-2" : "flex flex-wrap gap-2"}
 				role="tablist"
@@ -89,7 +88,7 @@ function GalleryThumbnailList({
 						title={title}
 						onClick={() => onScrollTo(index)}
 						onError={() => onError(media.id)}
-						className={isDesktop ? "hover:shadow-sm" : "w-14 h-14"}
+						className={isDesktop ? "hover:shadow-sm" : "h-14 w-14"}
 						isLCPCandidate={index === 0}
 					/>
 				))}
@@ -131,7 +130,11 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const productType = product.type?.label;
 
 	// Extraire et valider les params URL pour les variants
-	const { color: colorSlug, material: materialSlug, size } = parseGalleryParams({
+	const {
+		color: colorSlug,
+		material: materialSlug,
+		size,
+	} = parseGalleryParams({
 		color: searchParams.get("color") || undefined,
 		material: searchParams.get("material") || undefined,
 		size: searchParams.get("size") || undefined,
@@ -149,9 +152,11 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Safari/Firefox ne supportent pas navigator.connection
 	// Fallback: mobile viewport sans connection API = traiter comme connexion modérée
 	const getEffectivePrefetchRange = (): number => {
-		const connection = typeof navigator !== "undefined"
-			? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
-			: undefined;
+		const connection =
+			typeof navigator !== "undefined"
+				? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection
+						?.effectiveType
+				: undefined;
 
 		// Si connection API disponible, l'utiliser
 		if (connection) {
@@ -205,15 +210,12 @@ function GalleryContent({ product, title }: GalleryProps) {
 		return () => {
 			emblaApi.off("select", onSelect);
 		};
-	}, [emblaApi, onSelect]);
+	}, [emblaApi]);
 
 	// Effect Event pour gérer la navigation clavier sans re-registration
 	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
 		// Ne pas capturer si focus dans un input/textarea
-		if (
-			e.target instanceof HTMLInputElement ||
-			e.target instanceof HTMLTextAreaElement
-		) {
+		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
 			return;
 		}
 
@@ -239,13 +241,15 @@ function GalleryContent({ product, title }: GalleryProps) {
 		}
 	});
 
-	// Navigation clavier (WCAG 2.1.1)
+	// Navigation clavier (WCAG 2.1.1) — scoped to gallery element
 	useEffect(() => {
 		if (!emblaApi || images.length <= 1) return;
+		const el = galleryRef.current;
+		if (!el) return;
 
-		window.addEventListener("keydown", onKeyDown);
-		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [emblaApi, images.length, onKeyDown]);
+		el.addEventListener("keydown", onKeyDown);
+		return () => el.removeEventListener("keydown", onKeyDown);
+	}, [emblaApi, images.length]);
 
 	// Navigation
 	const scrollPrev = () => emblaApi?.scrollPrev();
@@ -259,24 +263,22 @@ function GalleryContent({ product, title }: GalleryProps) {
 	if (!images.length) {
 		return (
 			<div className="gallery-empty">
-				<div className="relative aspect-3/4 sm:aspect-4/5 rounded-3xl bg-linear-card p-8 flex items-center justify-center overflow-hidden">
+				<div className="bg-linear-card relative flex aspect-3/4 items-center justify-center overflow-hidden rounded-3xl p-8 sm:aspect-4/5">
 					<div
 						className={cn(
-							"absolute inset-0 bg-linear-organic opacity-10 rounded-3xl",
-							!prefersReduced && "animate-pulse"
+							"bg-linear-organic absolute inset-0 rounded-3xl opacity-10",
+							!prefersReduced && "animate-pulse",
 						)}
 					/>
-					<div className="text-center space-y-3 z-10 relative">
+					<div className="relative z-10 space-y-3 text-center">
 						<span
 							className={cn("text-4xl", !prefersReduced && "animate-bounce")}
 							aria-hidden="true"
 						>
 							✨
 						</span>
-						<p className="text-sm font-medium text-primary">Photos en préparation</p>
-						<p className="text-sm leading-normal text-muted-foreground">
-							Un peu de patience !
-						</p>
+						<p className="text-primary text-sm font-medium">Photos en préparation</p>
+						<p className="text-muted-foreground text-sm leading-normal">Un peu de patience !</p>
 					</div>
 				</div>
 			</div>
@@ -289,12 +291,15 @@ function GalleryContent({ product, title }: GalleryProps) {
 		<>
 			<div
 				ref={galleryRef}
+				// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- gallery carousel needs keyboard navigation
+				tabIndex={0}
 				className={cn(
+					"outline-none",
 					"product-gallery w-full",
 					transitionClass,
 					"group-has-[[data-pending]]/product-details:blur-[1px]",
 					"group-has-[[data-pending]]/product-details:scale-[0.99]",
-					"group-has-[[data-pending]]/product-details:pointer-events-none"
+					"group-has-[[data-pending]]/product-details:pointer-events-none",
 				)}
 				role="region"
 				aria-label={`Galerie photos ${title}`}
@@ -308,7 +313,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 				<div
 					className={cn(
 						"grid gap-3 md:gap-4",
-						images.length > 1 ? "grid-cols-1 md:grid-cols-[60px_1fr] lg:grid-cols-[80px_1fr]" : "grid-cols-1"
+						images.length > 1
+							? "grid-cols-1 md:grid-cols-[60px_1fr] lg:grid-cols-[80px_1fr]"
+							: "grid-cols-1",
 					)}
 				>
 					{/* Thumbnails verticales - Desktop */}
@@ -325,33 +332,28 @@ function GalleryContent({ product, title }: GalleryProps) {
 					)}
 
 					{/* Image principale avec Embla */}
-					<div className="gallery-main relative group order-2">
+					<div className="gallery-main group relative order-2">
 						<div
 							className={cn(
-								"relative aspect-3/4 sm:aspect-4/5 overflow-hidden rounded-2xl sm:rounded-3xl",
-								"bg-linear-organic border-0 sm:border-2 sm:border-border",
-								"shadow-md sm:shadow-lg hover:shadow-lg",
-								transitionClass
+								"relative aspect-3/4 overflow-hidden rounded-2xl sm:aspect-4/5 sm:rounded-3xl",
+								"bg-linear-organic sm:border-border border-0 sm:border-2",
+								"shadow-md hover:shadow-lg sm:shadow-lg",
+								transitionClass,
 							)}
 						>
 							{/* Effet hover subtil */}
 							<div
 								className={cn(
-									"absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 pointer-events-none rounded-2xl sm:rounded-3xl z-10",
-									!prefersReduced && "transition-opacity duration-300"
+									"ring-primary/20 pointer-events-none absolute inset-0 z-10 rounded-2xl opacity-0 ring-1 group-hover:opacity-100 sm:rounded-3xl",
+									!prefersReduced && "transition-opacity duration-300",
 								)}
 							/>
 
 							{/* Compteur d'images */}
-							{images.length > 1 && (
-								<GalleryCounter current={current} total={images.length} />
-							)}
+							{images.length > 1 && <GalleryCounter current={current} total={images.length} />}
 
 							{/* Bouton zoom - Desktop uniquement */}
-							{currentMedia?.mediaType === "IMAGE" && (
-								<GalleryZoomButton onOpen={open} />
-							)}
-
+							{currentMedia?.mediaType === "IMAGE" && <GalleryZoomButton onOpen={open} />}
 
 							{/* Embla viewport */}
 							<div ref={emblaRef} className="absolute inset-0 overflow-hidden">
@@ -359,6 +361,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 									{images.map((media, index) => (
 										<GallerySlide
 											key={media.id}
+											id={`gallery-panel-${index}`}
 											media={media}
 											index={index}
 											title={title}
@@ -372,9 +375,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 							</div>
 
 							{/* Flèches navigation - Desktop uniquement */}
-							{images.length > 1 && (
-								<GalleryNavigation onPrev={scrollPrev} onNext={scrollNext} />
-							)}
+							{images.length > 1 && <GalleryNavigation onPrev={scrollPrev} onNext={scrollNext} />}
 						</div>
 					</div>
 

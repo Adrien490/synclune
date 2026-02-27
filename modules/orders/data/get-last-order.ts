@@ -33,9 +33,7 @@ export async function getLastOrder(): Promise<GetLastOrderReturn> {
 /**
  * Récupère la dernière commande d'un utilisateur depuis la DB avec cache
  */
-export async function fetchLastOrder(
-	userId: string
-): Promise<GetLastOrderReturn> {
+export async function fetchLastOrder(userId: string): Promise<GetLastOrderReturn> {
 	"use cache: private";
 	cacheLife("userOrders");
 	cacheTag(ORDERS_CACHE_TAGS.LAST_ORDER(userId));
@@ -54,7 +52,7 @@ export async function fetchLastOrder(
 		});
 
 		return lastOrder;
-	} catch (error) {
+	} catch {
 		return null;
 	}
 }

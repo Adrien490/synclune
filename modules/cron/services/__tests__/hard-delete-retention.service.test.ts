@@ -91,16 +91,16 @@ describe("hardDeleteExpiredRecords", () => {
 		await hardDeleteExpiredRecords();
 
 		expect(mockPrisma.productReview.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ take: BATCH_SIZE_LARGE })
+			expect.objectContaining({ take: BATCH_SIZE_LARGE }),
 		);
 		expect(mockPrisma.newsletterSubscriber.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ take: BATCH_SIZE_LARGE })
+			expect.objectContaining({ take: BATCH_SIZE_LARGE }),
 		);
 		expect(mockPrisma.customizationRequest.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ take: BATCH_SIZE_LARGE })
+			expect.objectContaining({ take: BATCH_SIZE_LARGE }),
 		);
 		expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ take: BATCH_SIZE_LARGE })
+			expect.objectContaining({ take: BATCH_SIZE_LARGE }),
 		);
 	});
 
@@ -112,18 +112,13 @@ describe("hardDeleteExpiredRecords", () => {
 		expect(mockPrisma.product.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ status: "ARCHIVED" }),
-			})
+			}),
 		);
 	});
 
 	it("should delete records by ID in a transaction", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue([
-			{ id: "review-1" },
-			{ id: "review-2" },
-		]);
-		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([
-			{ id: "sub-1" },
-		]);
+		mockPrisma.productReview.findMany.mockResolvedValue([{ id: "review-1" }, { id: "review-2" }]);
+		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([{ id: "sub-1" }]);
 		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
 		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
@@ -168,9 +163,7 @@ describe("hardDeleteExpiredRecords", () => {
 	});
 
 	it("should collect and delete UploadThing files after transaction", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue([
-			{ id: "review-1" },
-		]);
+		mockPrisma.productReview.findMany.mockResolvedValue([{ id: "review-1" }]);
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
 		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
 		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
@@ -190,9 +183,7 @@ describe("hardDeleteExpiredRecords", () => {
 
 		await hardDeleteExpiredRecords();
 
-		expect(mockDeleteFiles).toHaveBeenCalledWith([
-			"https://utfs.io/f/review-media-1",
-		]);
+		expect(mockDeleteFiles).toHaveBeenCalledWith(["https://utfs.io/f/review-media-1"]);
 		expect(mockDeleteFiles).toHaveBeenCalledWith([
 			"https://utfs.io/f/sku-media-1",
 			"https://utfs.io/f/sku-thumb-1",
@@ -200,9 +191,7 @@ describe("hardDeleteExpiredRecords", () => {
 	});
 
 	it("should invalidate caches when records are deleted", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue([
-			{ id: "review-1" },
-		]);
+		mockPrisma.productReview.findMany.mockResolvedValue([{ id: "review-1" }]);
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
 		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
 		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
@@ -233,9 +222,7 @@ describe("hardDeleteExpiredRecords", () => {
 	});
 
 	it("should not fail when UploadThing review media deletion throws", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue([
-			{ id: "review-1" },
-		]);
+		mockPrisma.productReview.findMany.mockResolvedValue([{ id: "review-1" }]);
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
 		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
 		mockPrisma.product.findMany.mockResolvedValue([]);
@@ -299,15 +286,11 @@ describe("hardDeleteExpiredRecords", () => {
 
 		await hardDeleteExpiredRecords();
 
-		expect(mockDeleteFiles).toHaveBeenCalledWith([
-			"https://utfs.io/f/sku-1",
-		]);
+		expect(mockDeleteFiles).toHaveBeenCalledWith(["https://utfs.io/f/sku-1"]);
 	});
 
 	it("should skip UploadThing cleanup when approaching deadline", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue([
-			{ id: "review-1" },
-		]);
+		mockPrisma.productReview.findMany.mockResolvedValue([{ id: "review-1" }]);
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
 		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
 		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
@@ -326,7 +309,7 @@ describe("hardDeleteExpiredRecords", () => {
 
 		// Advance time past the deadline after the transaction
 		const startTime = Date.now();
-		mockPrisma.$transaction.mockImplementation(async (ops: unknown[]) => {
+		mockPrisma.$transaction.mockImplementation(async (_ops: unknown[]) => {
 			vi.setSystemTime(new Date(startTime + BATCH_DEADLINE_MS + 1));
 			return [{ count: 1 }, { count: 0 }, { count: 0 }, { count: 1 }];
 		});

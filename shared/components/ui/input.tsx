@@ -19,8 +19,8 @@ const inputBaseStyles = cn(
 	"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input min-h-11 w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
 	"transition-[color,box-shadow,border-color]",
 	"hover:border-ring/70",
-	"focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-	"aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+	"focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
+	"aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
 );
 
 function Input({
@@ -55,7 +55,7 @@ function Input({
 			{/* Icône de début */}
 			{hasStartIcon && (
 				<div
-					className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 [&>svg]:size-4"
+					className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 [&>svg]:size-4"
 					aria-hidden="true"
 				>
 					{startIcon}
@@ -70,19 +70,19 @@ function Input({
 					inputBaseStyles,
 					hasStartIcon && "pl-10",
 					(hasEndIcon || clearable) && "pr-10",
-					className
+					className,
 				)}
 				{...props}
 			/>
 
 			{/* Bouton effacer ou icône de fin */}
 			{(showClearButton || hasEndIcon) && (
-				<div className="absolute right-3 top-1/2 -translate-y-1/2">
+				<div className="absolute top-1/2 right-3 -translate-y-1/2">
 					{showClearButton ? (
 						<button
 							type="button"
 							onClick={onClear}
-							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mr-2 flex size-11 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2"
+							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mr-2 flex size-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
 							aria-label="Effacer le champ"
 						>
 							<X className="size-4" aria-hidden="true" />

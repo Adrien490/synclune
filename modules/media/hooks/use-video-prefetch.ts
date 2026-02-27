@@ -35,6 +35,8 @@ export function usePrefetchVideos({
 		if (typeof window === "undefined") return;
 		if (!enabled || medias.length === 0) return;
 
+		const videos = prefetchedVideosRef.current;
+
 		// Calculate indices to prefetch (with wrap for circular carousel)
 		const indicesToPrefetch: number[] = [];
 		for (let i = 1; i <= prefetchRange; i++) {
@@ -54,7 +56,7 @@ export function usePrefetchVideos({
 
 		// Create video elements to preload metadata
 		for (const url of videoUrlsToPrefetch) {
-			if (prefetchedVideosRef.current.has(url)) continue;
+			if (videos.has(url)) continue;
 
 			const video = document.createElement("video");
 			video.preload = "metadata";
@@ -64,25 +66,25 @@ export function usePrefetchVideos({
 			video.setAttribute("aria-hidden", "true");
 
 			// No need to add to DOM for preload
-			prefetchedVideosRef.current.set(url, video);
+			videos.set(url, video);
 		}
 
 		// Cleanup: remove videos that are no longer adjacent
-		for (const [url, video] of prefetchedVideosRef.current) {
+		for (const [url, video] of videos) {
 			if (!videoUrlsToPrefetch.has(url)) {
 				video.src = "";
 				video.load();
-				prefetchedVideosRef.current.delete(url);
+				videos.delete(url);
 			}
 		}
 
 		return () => {
 			// Cleanup on unmount
-			for (const [, video] of prefetchedVideosRef.current) {
+			for (const [, video] of videos) {
 				video.src = "";
 				video.load();
 			}
-			prefetchedVideosRef.current.clear();
+			videos.clear();
 		};
 	}, [medias, currentIndex, prefetchRange, enabled]);
 }

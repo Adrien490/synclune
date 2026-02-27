@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import type {
-	SkuData,
 	SkuValidationResult,
 	SkuDetailsResult,
 	BatchSkuValidationResult,
@@ -117,9 +116,7 @@ export async function validateSkuAndStock(input: {
 }
 
 // Action: Récupérer les détails complets d'un SKU pour l'affichage
-export async function getSkuDetails(input: {
-	skuId: string;
-}): Promise<SkuDetailsResult> {
+export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetailsResult> {
 	try {
 		// Validation des inputs
 		const validatedInput = getSkuDetailsSchema.parse(input);
@@ -262,12 +259,10 @@ export async function validateCartItemsWithDb(input: {
 
 		return {
 			success: !hasErrors,
-			error: hasErrors
-				? CART_ERROR_MESSAGES.VALIDATION_FAILED
-				: undefined,
+			error: hasErrors ? CART_ERROR_MESSAGES.VALIDATION_FAILED : undefined,
 			data: validationResults,
 		};
-	} catch (error) {
+	} catch (_error) {
 		return {
 			success: false,
 			error: CART_ERROR_MESSAGES.GENERAL_ERROR,
@@ -280,7 +275,7 @@ export async function validateCartItemsWithDb(input: {
  * Retourne une Map pour un accès O(1) aux résultats
  */
 export async function batchValidateSkusForMerge(
-	items: Array<{ skuId: string; quantity: number }>
+	items: Array<{ skuId: string; quantity: number }>,
 ): Promise<Map<string, BatchSkuValidationResult>> {
 	const skuIds = items.map((item) => item.skuId);
 	const quantityMap = new Map(items.map((item) => [item.skuId, item.quantity]));

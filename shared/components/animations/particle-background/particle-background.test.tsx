@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock ResizeObserver (not available in jsdom)
@@ -48,7 +48,7 @@ vi.mock("motion/react", () => {
 				get: (_target, prop: string) => {
 					// Return a component that renders the HTML element with forwarded props
 					const Component = ({ children, ...props }: Record<string, unknown>) => {
-						const { animate, transition, ...htmlProps } = props;
+						const { animate: _animate, transition: _transition, ...htmlProps } = props;
 						const Tag = prop as unknown as React.ElementType;
 						return <Tag {...htmlProps}>{children}</Tag>;
 					};
@@ -198,9 +198,7 @@ describe("ParticleBackground", () => {
 	});
 
 	it("renders mixed shapes when shape is an array", () => {
-		const { container } = render(
-			<ParticleBackground count={4} shape={["circle", "crescent"]} />,
-		);
+		const { container } = render(<ParticleBackground count={4} shape={["circle", "crescent"]} />);
 		const desktopWrapper = container.firstElementChild!.children[0];
 		// crescent is SVG, so we should find SVG elements
 		const svgs = desktopWrapper.querySelectorAll("svg");
@@ -287,16 +285,12 @@ describe("ParticleBackground", () => {
 	});
 
 	it("renders with scrollFade prop without crashing", () => {
-		expect(() =>
-			render(<ParticleBackground count={3} scrollFade />),
-		).not.toThrow();
+		expect(() => render(<ParticleBackground count={3} scrollFade />)).not.toThrow();
 		// Should render particles normally
 	});
 
 	it("renders sparkle animation style", () => {
-		const { container } = render(
-			<ParticleBackground count={3} animationStyle="sparkle" />,
-		);
+		const { container } = render(<ParticleBackground count={3} animationStyle="sparkle" />);
 		const desktopWrapper = container.firstElementChild!.children[0];
 		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
 	});
@@ -335,10 +329,13 @@ describe("ParticleBackground parallax", () => {
 	});
 
 	afterEach(() => {
-		vi.mocked(useMotionValue).mockImplementation((initial) => ({
-			get: () => initial,
-			set: vi.fn(),
-		}) as any);
+		vi.mocked(useMotionValue).mockImplementation(
+			(initial) =>
+				({
+					get: () => initial,
+					set: vi.fn(),
+				}) as any,
+		);
 	});
 
 	it("sets parallax offset on mousemove", () => {
@@ -351,8 +348,15 @@ describe("ParticleBackground parallax", () => {
 
 		// Mock getBoundingClientRect on the container (cached at effect setup)
 		vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-			left: 0, top: 0, width: 200, height: 200,
-			right: 200, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
+			left: 0,
+			top: 0,
+			width: 200,
+			height: 200,
+			right: 200,
+			bottom: 200,
+			x: 0,
+			y: 0,
+			toJSON: () => ({}),
 		} as DOMRect);
 
 		// Mark rect as stale so it refreshes on next mousemove
@@ -361,9 +365,13 @@ describe("ParticleBackground parallax", () => {
 		});
 
 		act(() => {
-			root.dispatchEvent(new MouseEvent("mousemove", {
-				clientX: 150, clientY: 100, bubbles: true,
-			}));
+			root.dispatchEvent(
+				new MouseEvent("mousemove", {
+					clientX: 150,
+					clientY: 100,
+					bubbles: true,
+				}),
+			);
 		});
 
 		// mouseX = ((150 - 0) / 200 - 0.5) * 2 * 20 = 0.25 * 40 = 10
@@ -473,9 +481,13 @@ describe("ParticleBackground parallax", () => {
 
 		// mousemove should cancel the ongoing lerp
 		act(() => {
-			root.dispatchEvent(new MouseEvent("mousemove", {
-				clientX: 50, clientY: 50, bubbles: true,
-			}));
+			root.dispatchEvent(
+				new MouseEvent("mousemove", {
+					clientX: 50,
+					clientY: 50,
+					bubbles: true,
+				}),
+			);
 		});
 
 		expect(cancelSpy).toHaveBeenCalled();
@@ -508,8 +520,15 @@ describe("ParticleBackground parallax", () => {
 
 		// Initial rect (from effect setup with default jsdom values)
 		const rectSpy = vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-			left: 100, top: 0, width: 200, height: 200,
-			right: 300, bottom: 200, x: 100, y: 0, toJSON: () => ({}),
+			left: 100,
+			top: 0,
+			width: 200,
+			height: 200,
+			right: 300,
+			bottom: 200,
+			x: 100,
+			y: 0,
+			toJSON: () => ({}),
 		} as DOMRect);
 
 		// Scroll marks rect stale (cheap — no getBoundingClientRect call)
@@ -519,9 +538,13 @@ describe("ParticleBackground parallax", () => {
 
 		// Next mousemove refreshes the rect and uses the new position
 		act(() => {
-			root.dispatchEvent(new MouseEvent("mousemove", {
-				clientX: 200, clientY: 100, bubbles: true,
-			}));
+			root.dispatchEvent(
+				new MouseEvent("mousemove", {
+					clientX: 200,
+					clientY: 100,
+					bubbles: true,
+				}),
+			);
 		});
 
 		// getBoundingClientRect should have been called during mousemove (stale refresh)

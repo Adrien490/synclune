@@ -1,39 +1,39 @@
-"use client"
+"use client";
 
-import { useEffect, useId, useRef, useEffectEvent } from "react"
-import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context"
+import { useEffect, useId, useRef, useState, useEffectEvent } from "react";
+import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context";
 
 const DEFAULT_MESSAGE =
-	"Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter cette page ?"
+	"Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter cette page ?";
 
 interface UseUnsavedChangesOptions {
 	/**
 	 * Message à afficher dans le modal de confirmation
 	 * (note : les navigateurs modernes ignorent les messages personnalisés pour beforeunload)
 	 */
-	message?: string
+	message?: string;
 	/**
 	 * Callback appelé quand la navigation est bloquée
 	 * (utile pour afficher des indicateurs visuels ou logs)
 	 */
-	onBlock?: () => void
+	onBlock?: () => void;
 	/**
 	 * Intercepter la navigation back/forward du navigateur
 	 * @default true
 	 */
-	interceptHistoryNavigation?: boolean
+	interceptHistoryNavigation?: boolean;
 }
 
 interface UseUnsavedChangesReturn {
 	/**
 	 * Indique si le hook bloque actuellement la navigation
 	 */
-	isBlocking: boolean
+	isBlocking: boolean;
 	/**
 	 * Permet temporairement la navigation (pour la prochaine navigation uniquement)
 	 * Utile après une sauvegarde réussie pour rediriger
 	 */
-	allowNavigation: () => void
+	allowNavigation: () => void;
 }
 
 /**
@@ -74,128 +74,124 @@ interface UseUnsavedChangesReturn {
 export function useUnsavedChanges(
 	isDirty: boolean,
 	enabled = true,
-	options: UseUnsavedChangesOptions = {}
+	options: UseUnsavedChangesOptions = {},
 ): UseUnsavedChangesReturn {
-	const {
-		message = DEFAULT_MESSAGE,
-		onBlock,
-		interceptHistoryNavigation = true,
-	} = options
+	const { message = DEFAULT_MESSAGE, onBlock, interceptHistoryNavigation = true } = options;
 
-	const id = useId()
-	const navigationGuard = useNavigationGuardOptional()
+	const id = useId();
+	const navigationGuard = useNavigationGuardOptional();
 
-	// Ref pour permettre temporairement la navigation
-	const allowNavigationRef = useRef(false)
+	// State pour permettre temporairement la navigation
+	const [allowNav, setAllowNav] = useState(false);
 
 	// Ref pour éviter les appels récursifs dans popstate
-	const isBlockingPopstateRef = useRef(false)
+	const isBlockingPopstateRef = useRef(false);
 
 	// Calculer si on bloque actuellement
-	const isBlocking = enabled && isDirty && !allowNavigationRef.current
+	const isBlocking = enabled && isDirty && !allowNav;
 
 	// Effect Event: reads onBlock without re-registering the guard on identity changes
 	const onGuardBlock = useEffectEvent(() => {
-		onBlock?.()
-	})
+		onBlock?.();
+	});
 
 	// Enregistrer/désenregistrer le guard dans le contexte
 	useEffect(() => {
-		if (!navigationGuard) return
+		if (!navigationGuard) return;
 		if (!isBlocking) {
-			navigationGuard.unregisterGuard(id)
-			return
+			navigationGuard.unregisterGuard(id);
+			return;
 		}
 
-		navigationGuard.registerGuard(id, { message, onBlock: () => onGuardBlock() })
+		navigationGuard.registerGuard(id, { message, onBlock: () => onGuardBlock() });
 
 		return () => {
-			navigationGuard.unregisterGuard(id)
-		}
-	}, [navigationGuard, id, isBlocking, message])
+			navigationGuard.unregisterGuard(id);
+		};
+	}, [navigationGuard, id, isBlocking, message]);
 
 	// Effect Event pour beforeunload - accède à message sans déclencher de re-registration
 	const onBeforeUnload = useEffectEvent((e: BeforeUnloadEvent) => {
-		e.preventDefault()
+		e.preventDefault();
 		// Pour les navigateurs plus anciens
-		e.returnValue = message
-		return message
-	})
+		e.returnValue = message;
+		return message;
+	});
 
 	// Handler pour beforeunload (fermeture/refresh navigateur)
 	useEffect(() => {
-		if (!isBlocking) return
+		if (!isBlocking) return;
 
-		window.addEventListener("beforeunload", onBeforeUnload)
+		window.addEventListener("beforeunload", onBeforeUnload);
 
 		return () => {
-			window.removeEventListener("beforeunload", onBeforeUnload)
-		}
-	}, [isBlocking, onBeforeUnload])
+			window.removeEventListener("beforeunload", onBeforeUnload);
+		};
+	}, [isBlocking]);
 
 	// Effect Event pour popstate - accède à message, id, onBlock sans déclencher de re-registration
 	const onPopState = useEffectEvent(() => {
-		if (isBlockingPopstateRef.current) return
+		if (isBlockingPopstateRef.current) return;
 
 		// Afficher la confirmation native pour popstate
 		// (le modal du contexte ne fonctionne pas bien avec popstate car
 		// l'URL a déjà changé quand popstate est déclenché)
-		// eslint-disable-next-line no-alert
-		const shouldLeave = window.confirm(message)
+
+		const shouldLeave = window.confirm(message);
 
 		if (shouldLeave) {
 			// Permettre la navigation
-			allowNavigationRef.current = true
-			window.history.back()
-			return
+			setAllowNav(true);
+			window.history.back();
+			return;
 		}
 
 		// Annuler la navigation - remettre l'URL
-		isBlockingPopstateRef.current = true
-		window.history.pushState({ guardId: id }, "", window.location.href)
-		isBlockingPopstateRef.current = false
+		isBlockingPopstateRef.current = true;
+		window.history.pushState({ guardId: id }, "", window.location.href);
+		isBlockingPopstateRef.current = false;
 
-		onBlock?.()
-	})
+		onBlock?.();
+	});
 
 	// Handler pour popstate (back/forward navigateur)
 	useEffect(() => {
-		if (!isBlocking || !interceptHistoryNavigation) return
+		if (!isBlocking || !interceptHistoryNavigation) return;
 
 		// Ajouter un état pour pouvoir intercepter le retour
-		window.history.pushState({ guardId: id }, "", window.location.href)
+		window.history.pushState({ guardId: id }, "", window.location.href);
 
-		window.addEventListener("popstate", onPopState)
+		window.addEventListener("popstate", onPopState);
 
 		return () => {
-			window.removeEventListener("popstate", onPopState)
-		}
-	}, [isBlocking, interceptHistoryNavigation, id, onPopState])
+			window.removeEventListener("popstate", onPopState);
+		};
+	}, [isBlocking, interceptHistoryNavigation, id]);
 
 	const allowNavigation = () => {
-		allowNavigationRef.current = true
+		setAllowNav(true);
 		// Réinitialiser après un tick pour permettre la navigation
 		setTimeout(() => {
-			allowNavigationRef.current = false
-		}, 100)
-	}
+			setAllowNav(false);
+		}, 100);
+	};
 
 	return {
 		isBlocking,
 		allowNavigation,
-	}
+	};
 }
 
 /**
  * Variante du hook qui accepte un objet pour une configuration plus explicite
  */
 export function useUnsavedChangesWithOptions(options: {
-	isDirty: boolean
-	enabled?: boolean
-	message?: string
-	onBlock?: () => void
-	interceptHistoryNavigation?: boolean
+	isDirty: boolean;
+	enabled?: boolean;
+	message?: string;
+	onBlock?: () => void;
+	interceptHistoryNavigation?: boolean;
 }): UseUnsavedChangesReturn {
-	const { isDirty, enabled = true, ...rest } = options
-	return useUnsavedChanges(isDirty, enabled, rest)
+	const { isDirty, enabled = true, ...rest } = options;
+	return useUnsavedChanges(isDirty, enabled, rest);
 }

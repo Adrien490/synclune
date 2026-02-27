@@ -57,10 +57,9 @@ export function FilterSheetWrapper({
 		<Button
 			variant="outline"
 			className={cn(
-				"relative gap-2 text-sm font-medium min-h-11 px-4 border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
-				activeFiltersCount > 0 &&
-					"border-primary/50 bg-primary/5 shadow-sm shadow-primary/10",
-				triggerClassName
+				"border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 relative min-h-11 gap-2 px-4 text-sm font-medium transition-all duration-200",
+				activeFiltersCount > 0 && "border-primary/50 bg-primary/5 shadow-primary/10 shadow-sm",
+				triggerClassName,
 			)}
 			aria-label={
 				activeFiltersCount > 0
@@ -68,13 +67,13 @@ export function FilterSheetWrapper({
 					: "Filtres"
 			}
 		>
-			<Filter className="w-4 h-4" aria-hidden="true" />
+			<Filter className="h-4 w-4" aria-hidden="true" />
 			<span>Filtres</span>
 			{activeFiltersCount > 0 && (
 				<>
 					<Badge
 						variant="default"
-						className="absolute -top-2.5 -right-2.5 h-5 min-w-5 flex items-center justify-center px-1 text-xs font-bold animate-in zoom-in-50 duration-200 shadow-sm"
+						className="animate-in zoom-in-50 absolute -top-2.5 -right-2.5 flex h-5 min-w-5 items-center justify-center px-1 text-xs font-bold shadow-sm duration-200"
 						aria-hidden="true"
 					>
 						{activeFiltersCount}
@@ -90,41 +89,36 @@ export function FilterSheetWrapper({
 
 	return (
 		<Sheet direction="right" open={controlledOpen} onOpenChange={controlledOnOpenChange}>
-			{!hideTrigger && (
-				<SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>
-			)}
+			{!hideTrigger && <SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>}
 
 			<SheetContent
-				className="w-full sm:w-100 md:w-110 p-0 flex flex-col h-full"
+				className="flex h-full w-full flex-col p-0 sm:w-100 md:w-110"
 				onKeyDown={handleKeyDown}
 				title={title}
 			>
 				<SheetHeader
-					className="relative px-6 py-5 border-b border-primary/10 bg-linear-to-r from-background via-primary/[0.02] to-background shrink-0"
-					role="banner"
+					className="border-primary/10 from-background via-primary/[0.02] to-background relative shrink-0 border-b bg-linear-to-r px-6 py-5"
 					aria-labelledby="filter-sheet-title"
 				>
 					<div className="flex items-center justify-between gap-4">
 						<div className="space-y-0.5">
 							<h2
 								id="filter-sheet-title"
-								className="text-lg font-semibold font-serif tracking-tight"
+								className="font-serif text-lg font-semibold tracking-tight"
 							>
 								{title}
 							</h2>
-							{description && (
-								<p className="text-sm text-muted-foreground">{description}</p>
-							)}
+							{description && <p className="text-muted-foreground text-sm">{description}</p>}
 						</div>
 						{hasActiveFilters && onClearAll && (
 							<Button
 								variant="ghost"
 								size="sm"
 								onClick={onClearAll}
-								className="text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0 min-h-9 transition-colors"
+								className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive min-h-9 shrink-0 text-xs transition-colors"
 								aria-label="Effacer tous les filtres"
 							>
-								<X className="w-3 h-3 mr-1" aria-hidden="true" />
+								<X className="mr-1 h-3 w-3" aria-hidden="true" />
 								<span className="hidden sm:inline">Tout effacer</span>
 								<span className="sm:hidden">Effacer</span>
 							</Button>
@@ -134,20 +128,20 @@ export function FilterSheetWrapper({
 					{/* Indeterminate progress bar */}
 					{isPending && (
 						<div
-							className="absolute bottom-0 left-0 right-0 h-0.5 overflow-hidden"
+							className="absolute right-0 bottom-0 left-0 h-0.5 overflow-hidden"
 							role="progressbar"
 							aria-label="Chargement des filtres"
 						>
-							<div className="h-full w-1/3 bg-primary animate-[progress-indeterminate_1.5s_ease-in-out_infinite]" />
+							<div className="bg-primary h-full w-1/3 animate-[progress-indeterminate_1.5s_ease-in-out_infinite]" />
 						</div>
 					)}
 				</SheetHeader>
 
-				<ScrollArea className="flex-1 min-h-0">
+				<ScrollArea className="min-h-0 flex-1">
 					<div
 						className={cn(
 							"px-6 py-4 transition-opacity duration-200",
-							isPending && "opacity-50 pointer-events-none"
+							isPending && "pointer-events-none opacity-50",
 						)}
 						role="region"
 						aria-label="Options de filtrage"
@@ -157,28 +151,18 @@ export function FilterSheetWrapper({
 					</div>
 					{/* Gradient indicateur de scroll */}
 					<div
-						className="pointer-events-none sticky bottom-0 h-8 bg-linear-to-t from-background to-transparent"
+						className="from-background pointer-events-none sticky bottom-0 h-8 bg-linear-to-t to-transparent"
 						aria-hidden="true"
 					/>
 				</ScrollArea>
 
-				<SheetFooter className="px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t border-primary/10 bg-background shrink-0">
+				<SheetFooter className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
 					{showCancelButton ? (
 						<>
 							{/* Mobile: boutons empilés */}
 							<div className="flex flex-col gap-2 sm:hidden">
-								<Button
-									type="button"
-									onClick={handleApply}
-									disabled={isPending}
-									className="w-full"
-								>
-									{isPending && (
-										<Loader2
-											className="h-4 w-4 animate-spin"
-											aria-hidden="true"
-										/>
-									)}
+								<Button type="button" onClick={handleApply} disabled={isPending} className="w-full">
+									{isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
 									{applyButtonText}
 								</Button>
 								<SheetClose asChild>
@@ -188,41 +172,21 @@ export function FilterSheetWrapper({
 								</SheetClose>
 							</div>
 							{/* Desktop: groupe de boutons */}
-							<ButtonGroup className="hidden sm:flex w-full" aria-label="Actions de filtrage">
+							<ButtonGroup className="hidden w-full sm:flex" aria-label="Actions de filtrage">
 								<SheetClose asChild className="flex-1">
 									<Button variant="secondary" disabled={isPending}>
 										{cancelButtonText}
 									</Button>
 								</SheetClose>
-								<Button
-									type="button"
-									onClick={handleApply}
-									disabled={isPending}
-									className="flex-1"
-								>
-									{isPending && (
-										<Loader2
-											className="h-4 w-4 animate-spin"
-											aria-hidden="true"
-										/>
-									)}
+								<Button type="button" onClick={handleApply} disabled={isPending} className="flex-1">
+									{isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
 									{applyButtonText}
 								</Button>
 							</ButtonGroup>
 						</>
 					) : (
-						<Button
-							type="button"
-							onClick={handleApply}
-							disabled={isPending}
-							className="w-full"
-						>
-							{isPending && (
-								<Loader2
-									className="h-4 w-4 animate-spin"
-									aria-hidden="true"
-								/>
-							)}
+						<Button type="button" onClick={handleApply} disabled={isPending} className="w-full">
+							{isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
 							{applyButtonText}
 						</Button>
 					)}

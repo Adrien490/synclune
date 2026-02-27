@@ -1,18 +1,18 @@
-import { Skeleton } from "@/shared/components/ui/skeleton"
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
-import { getReviews } from "../data/get-reviews"
-import { getProductReviewStats } from "../data/get-product-review-stats"
-import { ReviewsList } from "./reviews-list"
-import { ReviewSummaryCompact } from "./review-summary-compact"
-import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types"
+import { getReviews } from "../data/get-reviews";
+import { getProductReviewStats } from "../data/get-product-review-stats";
+import { ReviewsList } from "./reviews-list";
+import { ReviewSummaryCompact } from "./review-summary-compact";
+import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types";
 
 interface ProductReviewsSectionProps {
-	productId: string
-	productSlug: string
+	productId: string;
+	productSlug: string;
 	/** Filtre par note (1-5), passé depuis les searchParams de la page */
-	ratingFilter?: number
+	ratingFilter?: number;
 	/** Pre-fetched stats to avoid double fetch from parent page */
-	reviewStats?: ProductReviewStatistics
+	reviewStats?: ProductReviewStatistics;
 }
 
 /**
@@ -21,7 +21,7 @@ interface ProductReviewsSectionProps {
  */
 export async function ProductReviewsSection({
 	productId,
-	productSlug,
+	productSlug: _productSlug,
 	ratingFilter,
 	reviewStats,
 }: ProductReviewsSectionProps) {
@@ -34,27 +34,22 @@ export async function ProductReviewsSection({
 			filterRating: ratingFilter,
 		}),
 		reviewStats ? Promise.resolve(reviewStats) : getProductReviewStats(productId),
-	])
-	const reviews = (reviewsData?.reviews ?? []) as ReviewPublic[]
+	]);
+	const reviews = (reviewsData?.reviews ?? []) as ReviewPublic[];
 
 	// Nombre d'avis filtrés vs total
-	const isFiltered = ratingFilter !== undefined
-	const filteredCount = reviewsData.totalCount
+	const isFiltered = ratingFilter !== undefined;
+	const filteredCount = reviewsData.totalCount;
 
 	return (
-		<section
-			id="reviews"
-			className="scroll-mt-20"
-			aria-labelledby="reviews-title"
-		>
-
+		<section id="reviews" className="scroll-mt-20" aria-labelledby="reviews-title">
 			{/* En-tête de section */}
-			<div className="flex items-center justify-between mb-6">
+			<div className="mb-6 flex items-center justify-between">
 				<div className="flex items-center gap-3">
-					<h2 id="reviews-title" className="text-xl font-semibold">Avis clients</h2>
-					{stats.totalCount > 0 && (
-						<ReviewSummaryCompact stats={stats} />
-					)}
+					<h2 id="reviews-title" className="text-xl font-semibold">
+						Avis clients
+					</h2>
+					{stats.totalCount > 0 && <ReviewSummaryCompact stats={stats} />}
 				</div>
 			</div>
 
@@ -69,7 +64,7 @@ export async function ProductReviewsSection({
 				ratingFilter={ratingFilter}
 			/>
 		</section>
-	)
+	);
 }
 
 /**
@@ -83,11 +78,11 @@ export function ProductReviewsSectionSkeleton() {
 			</div>
 
 			{/* Skeleton résumé */}
-			<div className="flex flex-col sm:flex-row gap-6 sm:gap-10">
+			<div className="flex flex-col gap-6 sm:flex-row sm:gap-10">
 				<div className="flex flex-col items-center">
 					<Skeleton className="h-14 w-14" />
-					<Skeleton className="h-4 w-24 mt-2" />
-					<Skeleton className="h-3 w-16 mt-1" />
+					<Skeleton className="mt-2 h-4 w-24" />
+					<Skeleton className="mt-1 h-3 w-16" />
 				</div>
 				<div className="flex-1 space-y-2">
 					{Array.from({ length: 5 }).map((_, i) => (
@@ -103,7 +98,7 @@ export function ProductReviewsSectionSkeleton() {
 			{/* Skeleton avis */}
 			<div className="space-y-4">
 				{Array.from({ length: 3 }).map((_, i) => (
-					<div key={i} className="border rounded-lg p-4 space-y-4">
+					<div key={i} className="space-y-4 rounded-lg border p-4">
 						<div className="flex items-start gap-3">
 							<Skeleton className="size-10 rounded-full" />
 							<div className="space-y-1">
@@ -116,5 +111,5 @@ export function ProductReviewsSectionSkeleton() {
 				))}
 			</div>
 		</section>
-	)
+	);
 }

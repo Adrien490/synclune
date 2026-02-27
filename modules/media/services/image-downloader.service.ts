@@ -11,7 +11,7 @@
 
 import sharp from "sharp";
 import { withRetry as withRetryBase } from "@/shared/utils/with-retry";
-import type { DownloadImageOptions, RetryOptions, LogFn } from "../types/image-processing.types";
+import type { DownloadImageOptions, RetryOptions } from "../types/image-processing.types";
 import { IMAGE_DOWNLOADER_CONFIG } from "../constants/media.constants";
 
 export type { DownloadImageOptions, RetryOptions, LogFn } from "../types/image-processing.types";
@@ -75,14 +75,12 @@ export function isRetryableError(error: unknown): boolean {
  * Image-aware retry wrapper. Pre-configures the shared withRetry utility
  * with isRetryableError to skip retries on permanent HTTP 4xx errors.
  */
-export async function withRetry<T>(
-	fn: () => Promise<T>,
-	options: RetryOptions = {}
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
 	return withRetryBase(fn, {
 		maxAttempts: options.maxRetries ?? IMAGE_DOWNLOADER_CONFIG.MAX_RETRIES,
 		baseDelay: options.baseDelay ?? IMAGE_DOWNLOADER_CONFIG.RETRY_BASE_DELAY_MS,
 		isRetryable: isRetryableError,
+		jitter: false,
 	});
 }
 
@@ -99,7 +97,7 @@ export async function withRetry<T>(
  */
 export async function downloadImage(
 	url: string,
-	options: DownloadImageOptions = {}
+	options: DownloadImageOptions = {},
 ): Promise<Buffer> {
 	const timeout = options.downloadTimeout ?? IMAGE_DOWNLOADER_CONFIG.DOWNLOAD_TIMEOUT_MS;
 	const maxSize = options.maxImageSize ?? IMAGE_DOWNLOADER_CONFIG.MAX_IMAGE_SIZE;
@@ -130,7 +128,7 @@ export async function downloadImage(
 		const contentLength = response.headers.get("content-length");
 		if (contentLength && parseInt(contentLength, 10) > maxSize) {
 			throw new Error(
-				`Image trop volumineuse: ${(parseInt(contentLength, 10) / 1024 / 1024).toFixed(2)}MB (max: ${(maxSize / 1024 / 1024).toFixed(0)}MB)`
+				`Image trop volumineuse: ${(parseInt(contentLength, 10) / 1024 / 1024).toFixed(2)}MB (max: ${(maxSize / 1024 / 1024).toFixed(0)}MB)`,
 			);
 		}
 
@@ -140,7 +138,7 @@ export async function downloadImage(
 		// Double verification after download
 		if (buffer.length > maxSize) {
 			throw new Error(
-				`Image trop volumineuse: ${(buffer.length / 1024 / 1024).toFixed(2)}MB (max: ${(maxSize / 1024 / 1024).toFixed(0)}MB)`
+				`Image trop volumineuse: ${(buffer.length / 1024 / 1024).toFixed(2)}MB (max: ${(maxSize / 1024 / 1024).toFixed(0)}MB)`,
 			);
 		}
 

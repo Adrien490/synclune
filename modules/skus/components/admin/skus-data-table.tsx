@@ -1,7 +1,6 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
@@ -12,18 +11,12 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-import { ProductSkuActiveToggle } from "./sku-active-toggle";
 import { ProductSkuRowActions } from "./sku-row-actions";
 import { ProductVariantsSelectionToolbar } from "./skus-selection-toolbar";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
@@ -86,16 +79,13 @@ export async function ProductVariantsDataTable({
 									className="w-12"
 									aria-label="Sélection de variantes"
 								>
-									<TableSelectionCell
-										type="header"
-										itemIds={variantIds}
-									/>
+									<TableSelectionCell type="header" itemIds={variantIds} />
 								</TableHead>
 								<TableHead
 									key="image"
 									scope="col"
 									role="columnheader"
-									className="hidden md:table-cell w-20"
+									className="hidden w-20 md:table-cell"
 								>
 									Image
 								</TableHead>
@@ -133,11 +123,11 @@ export async function ProductVariantsDataTable({
 									key="stock"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell text-center"
+									className="hidden text-center sm:table-cell"
 								>
 									Stock
 								</TableHead>
-									<TableHead
+								<TableHead
 									key="actions"
 									scope="col"
 									role="columnheader"
@@ -149,34 +139,32 @@ export async function ProductVariantsDataTable({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{productSkus.map((sku) => {
+							{productSkus.map((sku) => {
 								const primaryImage = getPrimaryImage(sku);
 								const availableStock = getAvailableStock(sku);
 
 								return (
 									<TableRow key={sku.id}>
 										<TableCell role="gridcell">
-											<TableSelectionCell
-												type="row"
-												itemId={sku.id}
-											/>
+											<TableSelectionCell type="row" itemId={sku.id} />
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden md:table-cell py-3"
-										>
-											<div className="w-20 h-20 relative shrink-0 bg-muted rounded-md">
+										<TableCell role="gridcell" className="hidden py-3 md:table-cell">
+											<div className="bg-muted relative h-20 w-20 shrink-0 rounded-md">
 												{primaryImage ? (
 													primaryImage.mediaType === "VIDEO" ? (
 														<video
-															className="w-full h-full rounded-md object-cover"
+															className="h-full w-full rounded-md object-cover"
 															muted
 															loop
 															playsInline
 															preload="none"
 															aria-label={primaryImage.altText || `Vidéo variante ${sku.sku}`}
 														>
-															<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
+															<source
+																src={primaryImage.url}
+																type={getVideoMimeType(primaryImage.url)}
+															/>
+															<track kind="captions" srcLang="fr" label="Français" default />
 															Votre navigateur ne supporte pas la lecture de vidéos.
 														</video>
 													) : (
@@ -192,8 +180,8 @@ export async function ProductVariantsDataTable({
 														/>
 													)
 												) : (
-													<div className="flex w-full h-full items-center justify-center rounded-md bg-muted">
-														<Package className="h-8 w-8 text-muted-foreground" />
+													<div className="bg-muted flex h-full w-full items-center justify-center rounded-md">
+														<Package className="text-muted-foreground h-8 w-8" />
 													</div>
 												)}
 											</div>
@@ -214,16 +202,14 @@ export async function ProductVariantsDataTable({
 													<Tooltip>
 														<TooltipTrigger asChild>
 															<span
-																className="w-4 h-4 rounded-full border-2 border-border shadow-sm cursor-help"
+																className="border-border h-4 w-4 cursor-help rounded-full border-2 shadow-sm"
 																style={{ backgroundColor: sku.color.hex }}
 																aria-label={`Couleur : ${sku.color.name}`}
 															/>
 														</TooltipTrigger>
 														<TooltipContent>
 															<p>{sku.color.name}</p>
-															<p className="text-xs text-muted-foreground">
-																{sku.color.hex}
-															</p>
+															<p className="text-muted-foreground text-xs">{sku.color.hex}</p>
 														</TooltipContent>
 													</Tooltip>
 													<span className="text-sm">{sku.color.name}</span>
@@ -239,10 +225,7 @@ export async function ProductVariantsDataTable({
 												<span className="text-muted-foreground text-sm">—</span>
 											)}
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden 2xl:table-cell"
-										>
+										<TableCell role="gridcell" className="hidden 2xl:table-cell">
 											{sku.size ? (
 												<span className="text-sm">{sku.size}</span>
 											) : (
@@ -254,10 +237,7 @@ export async function ProductVariantsDataTable({
 												{(sku.priceInclTax / 100).toFixed(2)} €
 											</span>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell text-center"
-										>
+										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
 											<Badge
 												variant={
 													availableStock === 0
@@ -291,7 +271,7 @@ export async function ProductVariantsDataTable({
 										</TableCell>
 									</TableRow>
 								);
-								})}
+							})}
 						</TableBody>
 					</Table>
 				</TableScrollContainer>

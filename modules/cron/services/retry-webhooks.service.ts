@@ -20,9 +20,7 @@ const PROCESSING_ORPHAN_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
  * Re-marks them as FAILED so they can be retried on the next run.
  */
 async function recoverOrphanedProcessingEvents(): Promise<number> {
-	const orphanThreshold = new Date(
-		Date.now() - PROCESSING_ORPHAN_THRESHOLD_MS
-	);
+	const orphanThreshold = new Date(Date.now() - PROCESSING_ORPHAN_THRESHOLD_MS);
 
 	// Find orphaned IDs in bounded batches to avoid unbounded updateMany
 	const orphanedWithProcessedAt = await prisma.webhookEvent.findMany({
@@ -59,9 +57,7 @@ async function recoverOrphanedProcessingEvents(): Promise<number> {
 		},
 	});
 
-	console.warn(
-		`[CRON:retry-webhooks] Recovered ${result.count} orphaned PROCESSING events`
-	);
+	console.warn(`[CRON:retry-webhooks] Recovered ${result.count} orphaned PROCESSING events`);
 
 	return result.count;
 }
@@ -106,9 +102,7 @@ export async function retryFailedWebhooks(): Promise<{
 		take: BATCH_SIZE_SMALL,
 	});
 
-	console.log(
-		`[CRON:retry-webhooks] Found ${failedEvents.length} failed events to retry`
-	);
+	console.log(`[CRON:retry-webhooks] Found ${failedEvents.length} failed events to retry`);
 
 	let retried = 0;
 	let succeeded = 0;
@@ -125,7 +119,7 @@ export async function retryFailedWebhooks(): Promise<{
 			// Check if the event type is supported
 			if (!isEventSupported(webhookEvent.eventType)) {
 				console.log(
-					`[CRON:retry-webhooks] Skipping unsupported event type: ${webhookEvent.eventType}`
+					`[CRON:retry-webhooks] Skipping unsupported event type: ${webhookEvent.eventType}`,
 				);
 				await prisma.webhookEvent.update({
 					where: { id: webhookEvent.id },
@@ -138,10 +132,10 @@ export async function retryFailedWebhooks(): Promise<{
 			let stripeEvent: Stripe.Event;
 			try {
 				stripeEvent = await stripe.events.retrieve(webhookEvent.stripeEventId);
-			} catch (fetchError) {
+			} catch {
 				// Event no longer exists in Stripe (deleted after 30 days)
 				console.warn(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} not found in Stripe`
+					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} not found in Stripe`,
 				);
 				await prisma.webhookEvent.update({
 					where: { id: webhookEvent.id },
@@ -163,7 +157,7 @@ export async function retryFailedWebhooks(): Promise<{
 			});
 			if (claimed.count === 0) {
 				console.log(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} already claimed, skipping`
+					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} already claimed, skipping`,
 				);
 				continue;
 			}
@@ -188,13 +182,10 @@ export async function retryFailedWebhooks(): Promise<{
 				await executePostWebhookTasks(result.tasks);
 			}
 
-			console.log(
-				`[CRON:retry-webhooks] Successfully retried event ${webhookEvent.stripeEventId}`
-			);
+			console.log(`[CRON:retry-webhooks] Successfully retried event ${webhookEvent.stripeEventId}`);
 			succeeded++;
 		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : String(error);
+			const errorMessage = error instanceof Error ? error.message : String(error);
 
 			// Fetch current attempts from DB (may have been incremented in the try block)
 			const current = await prisma.webhookEvent.findUnique({
@@ -203,8 +194,7 @@ export async function retryFailedWebhooks(): Promise<{
 			});
 
 			// If the PROCESSING update didn't execute, increment attempts now
-			const needsIncrement =
-				current?.status !== WebhookEventStatus.PROCESSING;
+			const needsIncrement = current?.status !== WebhookEventStatus.PROCESSING;
 			const newAttempts = needsIncrement
 				? (current?.attempts ?? webhookEvent.attempts) + 1
 				: (current?.attempts ?? webhookEvent.attempts + 1);
@@ -222,12 +212,12 @@ export async function retryFailedWebhooks(): Promise<{
 
 			if (isPermanentlyFailed) {
 				console.error(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} permanently failed after ${newAttempts} attempts`
+					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} permanently failed after ${newAttempts} attempts`,
 				);
 				permanentlyFailed++;
 			} else {
 				console.warn(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} retry failed (attempt ${newAttempts}/${MAX_WEBHOOK_RETRY_ATTEMPTS})`
+					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} retry failed (attempt ${newAttempts}/${MAX_WEBHOOK_RETRY_ATTEMPTS})`,
 				);
 				errors++;
 			}
@@ -235,7 +225,7 @@ export async function retryFailedWebhooks(): Promise<{
 	}
 
 	console.log(
-		`[CRON:retry-webhooks] Retry completed: ${retried} retried, ${succeeded} succeeded, ${permanentlyFailed} permanently failed, ${errors} errors`
+		`[CRON:retry-webhooks] Retry completed: ${retried} retried, ${succeeded} succeeded, ${permanentlyFailed} permanently failed, ${errors} errors`,
 	);
 
 	return {

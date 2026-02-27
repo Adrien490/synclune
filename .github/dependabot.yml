@@ -1,0 +1,52 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    reviewers:
+      - adrienpoirier
+    labels:
+      - dependencies
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      radix:
+        patterns:
+          - "@radix-ui/*"
+      playwright:
+        patterns:
+          - "@playwright/*"
+          - "@axe-core/playwright"
+      stripe:
+        patterns:
+          - stripe
+          - "@stripe/*"
+      prisma:
+        patterns:
+          - prisma
+          - "@prisma/*"
+      testing:
+        patterns:
+          - vitest
+          - "@vitest/*"
+          - "@testing-library/*"
+      tailwind:
+        patterns:
+          - tailwindcss
+          - "@tailwindcss/*"
+          - tw-animate-css
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci

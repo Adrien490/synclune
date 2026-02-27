@@ -1,10 +1,4 @@
-import { TrendingUp, type LucideIcon } from "lucide-react";
-
-interface EmptyStateConfig {
-	icon: LucideIcon;
-	title: string;
-	description: string;
-}
+import { TrendingUp } from "lucide-react";
 
 /**
  * Configurations des états vides pour les charts

@@ -1,19 +1,12 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRef, useEffect, useState, useEffectEvent } from "react";
-import {
-	MOTION_CONFIG,
-	maybeReduceMotion,
-} from "@/shared/components/animations/motion.config";
+import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import type { SpeedDialAction, SpeedDialFabProps } from "@/shared/types/fab.types";
 import Link from "next/link";
@@ -77,7 +70,7 @@ export function SpeedDialFab({
 	useEffect(() => {
 		document.addEventListener("keydown", onKeyDown);
 		return () => document.removeEventListener("keydown", onKeyDown);
-	}, [onKeyDown]);
+	}, []);
 
 	// Effect Event pour gérer le click extérieur sans re-registration
 	const onClickOutside = useEffectEvent((e: MouseEvent) => {
@@ -96,15 +89,12 @@ export function SpeedDialFab({
 	useEffect(() => {
 		document.addEventListener("mousedown", onClickOutside);
 		return () => document.removeEventListener("mousedown", onClickOutside);
-	}, [onClickOutside]);
+	}, []);
 
 	// Respecter prefers-reduced-motion avec config globale
 	const prefersReducedMotion = useReducedMotion();
 	const reducedMotion = prefersReducedMotion ?? false;
-	const transition = maybeReduceMotion(
-		MOTION_CONFIG.spring.snappy,
-		reducedMotion
-	);
+	const transition = maybeReduceMotion(MOTION_CONFIG.spring.snappy, reducedMotion);
 
 	// Hook pour toggle la visibilité du FAB
 	const { isHidden, toggle, isPending } = useFabVisibility({
@@ -163,7 +153,7 @@ export function SpeedDialFab({
 						animate={{ opacity: 1, x: 0 }}
 						exit={reducedMotion ? undefined : { opacity: 0, x: 20 }}
 						transition={transition}
-						className={cn(visibilityClass, "fixed z-45 bottom-6 right-0")}
+						className={cn(visibilityClass, "fixed right-0 bottom-6 z-45")}
 					>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -180,9 +170,9 @@ export function SpeedDialFab({
 										"border-r-0",
 										"shadow-md",
 										"hover:bg-accent",
-										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 										"focus-visible:outline-none",
-										isPending && "cursor-wait opacity-70"
+										isPending && "cursor-wait opacity-70",
 									)}
 									aria-label={showTooltip}
 								>
@@ -215,7 +205,7 @@ export function SpeedDialFab({
 					animate={{ opacity: 1, scale: 1 }}
 					exit={reducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 					transition={transition}
-					className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6")}
+					className={cn(visibilityClass, "group fixed right-6 bottom-6 z-45")}
 				>
 					{/* Bouton pour cacher le FAB */}
 					<Tooltip>
@@ -229,23 +219,20 @@ export function SpeedDialFab({
 									"absolute -top-2 -right-2 z-10",
 									"size-7 rounded-full",
 									"bg-muted",
-									"border border-border",
+									"border-border border",
 									"shadow-sm",
 									"hover:bg-accent",
 									"active:scale-95",
 									"md:opacity-0 md:group-hover:opacity-100",
 									"focus-visible:opacity-100",
-									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+									"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1",
 									"focus-visible:outline-none",
-									"motion-safe:transition-[opacity,background-color] motion-safe:duration-normal",
-									isPending && "cursor-wait opacity-100"
+									"motion-safe:duration-normal motion-safe:transition-[opacity,background-color]",
+									isPending && "cursor-wait opacity-100",
 								)}
 								aria-label={hideTooltip}
 							>
-								<X
-									className={cn("size-4", isPending && "animate-pulse")}
-									aria-hidden="true"
-								/>
+								<X className={cn("size-4", isPending && "animate-pulse")} aria-hidden="true" />
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent side="top" sideOffset={4}>
@@ -261,24 +248,16 @@ export function SpeedDialFab({
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0 }}
 								transition={{ duration: 0.15 }}
-								className="absolute bottom-16 right-0 flex flex-col-reverse items-end gap-3"
+								className="absolute right-0 bottom-16 flex flex-col-reverse items-end gap-3"
 								role="menu"
 								aria-label="Actions rapides"
 							>
 								{actions.map((action, index) => (
 									<motion.div
 										key={action.id}
-										initial={
-											reducedMotion
-												? undefined
-												: { opacity: 0, y: 20, scale: 0.8 }
-										}
+										initial={reducedMotion ? undefined : { opacity: 0, y: 20, scale: 0.8 }}
 										animate={{ opacity: 1, y: 0, scale: 1 }}
-										exit={
-											reducedMotion
-												? undefined
-												: { opacity: 0, y: 10, scale: 0.8 }
-										}
+										exit={reducedMotion ? undefined : { opacity: 0, y: 10, scale: 0.8 }}
 										transition={{
 											...transition,
 											delay: reducedMotion ? 0 : index * 0.05,
@@ -286,7 +265,7 @@ export function SpeedDialFab({
 										className="flex items-center gap-3"
 									>
 										{/* Label de l'action */}
-										<span className="text-sm font-medium bg-popover text-popover-foreground px-3 py-1.5 rounded-md shadow-md border whitespace-nowrap">
+										<span className="bg-popover text-popover-foreground rounded-md border px-3 py-1.5 text-sm font-medium whitespace-nowrap shadow-md">
 											{action.label}
 										</span>
 
@@ -298,9 +277,9 @@ export function SpeedDialFab({
 												variant={action.variant === "secondary" ? "secondary" : "default"}
 												className={cn(
 													"size-12 rounded-full shadow-lg",
-													"hover:shadow-xl hover:scale-105",
+													"hover:scale-105 hover:shadow-xl",
 													"active:scale-95",
-													"motion-safe:transition-transform motion-safe:duration-normal"
+													"motion-safe:duration-normal motion-safe:transition-transform",
 												)}
 												role="menuitem"
 											>
@@ -315,9 +294,9 @@ export function SpeedDialFab({
 												variant={action.variant === "secondary" ? "secondary" : "default"}
 												className={cn(
 													"size-12 rounded-full shadow-lg",
-													"hover:shadow-xl hover:scale-105",
+													"hover:scale-105 hover:shadow-xl",
 													"active:scale-95",
-													"motion-safe:transition-transform motion-safe:duration-normal"
+													"motion-safe:duration-normal motion-safe:transition-transform",
 												)}
 												onClick={() => handleActionClick(action)}
 												role="menuitem"
@@ -339,8 +318,9 @@ export function SpeedDialFab({
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0 }}
-								transition={{ duration: 0.15 }}
-								className="fixed inset-0 bg-background/60 -z-10"
+								transition={{ duration: reducedMotion ? 0 : 0.15 }}
+								className="bg-background/60 fixed inset-0 -z-10"
+								role="presentation"
 								aria-hidden="true"
 								onClick={() => setIsOpen(false)}
 							/>
@@ -355,28 +335,23 @@ export function SpeedDialFab({
 								onClick={() => setIsOpen(!isOpen)}
 								size="lg"
 								className={cn(
-									"relative rounded-full shadow-lg cursor-pointer",
+									"relative cursor-pointer rounded-full shadow-lg",
 									"bg-primary hover:bg-primary/90",
 									"flex items-center justify-center",
 									"size-14 p-0",
-									"hover:shadow-xl hover:shadow-primary/25",
+									"hover:shadow-primary/25 hover:shadow-xl",
 									"active:scale-95",
-									"motion-safe:transition-[box-shadow,background-color] motion-safe:duration-normal",
-									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+									"motion-safe:duration-normal motion-safe:transition-[box-shadow,background-color]",
+									"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 									"focus-visible:outline-none",
-									className
+									className,
 								)}
 								aria-label={ariaLabel}
 								aria-expanded={isOpen}
 								aria-haspopup="menu"
-								aria-describedby={
-									ariaDescription ? `fab-description-${fabKey}` : undefined
-								}
+								aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
 							>
-								<motion.div
-									animate={{ rotate: isOpen ? 45 : 0 }}
-									transition={{ duration: 0.2 }}
-								>
+								<motion.div animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.2 }}>
 									{isOpen
 										? openIcon || <X className="size-6" aria-hidden="true" />
 										: mainIcon || <Plus className="size-6" aria-hidden="true" />}
@@ -386,9 +361,7 @@ export function SpeedDialFab({
 						<TooltipContent side="left" sideOffset={12}>
 							<p className="font-medium">{tooltip.title}</p>
 							{tooltip.description && (
-								<p className="text-xs text-muted-foreground">
-									{tooltip.description}
-								</p>
+								<p className="text-muted-foreground text-xs">{tooltip.description}</p>
 							)}
 						</TooltipContent>
 					</Tooltip>

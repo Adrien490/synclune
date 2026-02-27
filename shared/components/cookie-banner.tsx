@@ -43,9 +43,12 @@ export function CookieBanner() {
 	// Focus sur le bouton Accepter après animation (immédiat si reduced motion)
 	useEffect(() => {
 		if (shouldShow && acceptButtonRef.current) {
-			const timer = setTimeout(() => {
-				acceptButtonRef.current?.focus();
-			}, shouldReduceMotion ? 0 : 300);
+			const timer = setTimeout(
+				() => {
+					acceptButtonRef.current?.focus();
+				},
+				shouldReduceMotion ? 0 : 300,
+			);
 			return () => clearTimeout(timer);
 		}
 	}, [shouldShow, shouldReduceMotion]);
@@ -78,23 +81,23 @@ export function CookieBanner() {
 					animate={{ opacity: 1, y: 0 }}
 					exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeOut" }}
-					className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 md:bottom-6 md:left-6 md:right-auto z-50 w-auto max-w-[calc(100vw-2rem)] md:max-w-md"
+					className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-6 md:left-6 md:max-w-md"
 					role="region"
 					aria-label="Consentement cookies"
 					aria-describedby="cookie-description"
 					aria-live="polite"
 				>
 					<FocusScope trapped loop>
-						<div className="bg-background/95 backdrop-blur-md border border-primary/15 shadow-lg rounded-xl p-4 md:p-6 space-y-3 md:space-y-4">
-							<p className="text-base font-semibold text-foreground">
-								Cookies
-							</p>
+						<div className="bg-background/95 border-primary/15 space-y-3 rounded-xl border p-4 shadow-lg backdrop-blur-md md:space-y-4 md:p-6">
+							<p className="text-foreground text-base font-semibold">Cookies</p>
 
 							{/* Message */}
-							<p id="cookie-description" className="text-sm text-muted-foreground leading-relaxed">
-								Nous utilisons des cookies pour améliorer votre expérience.
+							<p id="cookie-description" className="text-muted-foreground text-sm leading-relaxed">
+								Nous utilisons des cookies optionnels à des fins de statistiques de navigation pour
+								améliorer votre expérience.
 								<span className="sr-only">
-									{" "}Votre choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.
+									{" "}
+									Votre choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.
 								</span>
 							</p>
 
@@ -102,14 +105,14 @@ export function CookieBanner() {
 							<div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
 								<Link
 									href="/cookies"
-									className="text-foreground underline hover:no-underline py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:rounded-sm"
+									className="text-foreground focus-visible:ring-ring/50 py-1 underline outline-none hover:no-underline focus-visible:rounded-sm focus-visible:ring-2"
 									aria-label="En savoir plus sur les cookies"
 								>
 									En savoir plus
 								</Link>
 								<Link
 									href="/confidentialite"
-									className="text-foreground underline hover:no-underline py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:rounded-sm"
+									className="text-foreground focus-visible:ring-ring/50 py-1 underline outline-none hover:no-underline focus-visible:rounded-sm focus-visible:ring-2"
 								>
 									Politique de confidentialité
 								</Link>
@@ -122,7 +125,7 @@ export function CookieBanner() {
 									onClick={acceptCookies}
 									variant="default"
 									size="sm"
-									className="flex-1 min-h-11"
+									className="min-h-11 flex-1"
 								>
 									Accepter
 								</Button>
@@ -130,7 +133,7 @@ export function CookieBanner() {
 									onClick={rejectCookies}
 									variant="secondary"
 									size="sm"
-									className="flex-1 min-h-11"
+									className="min-h-11 flex-1"
 								>
 									Refuser
 								</Button>

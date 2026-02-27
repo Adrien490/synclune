@@ -1,49 +1,36 @@
-"use client"
+"use client";
 
-import { Component, type ReactNode, useState, useRef, useEffect } from "react"
-import {
-	EmbeddedCheckout,
-	EmbeddedCheckoutProvider,
-} from "@stripe/react-stripe-js"
-import { getStripe } from "@/shared/lib/stripe-client"
-import {
-	Alert,
-	AlertDescription,
-	AlertTitle,
-} from "@/shared/components/ui/alert"
-import { Button } from "@/shared/components/ui/button"
-import {
-	Skeleton,
-	SkeletonGroup,
-} from "@/shared/components/ui/skeleton"
-import { AlertTriangle } from "lucide-react"
-import Link from "next/link"
+import { Component, type ReactNode, useState, useRef, useEffect } from "react";
+import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
+import { getStripe } from "@/shared/lib/stripe-client";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { Button } from "@/shared/components/ui/button";
+import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
+import { AlertTriangle } from "lucide-react";
+import Link from "next/link";
 
 interface EmbeddedCheckoutWrapperProps {
-	clientSecret: string
+	clientSecret: string;
 }
 
 interface ErrorBoundaryProps {
-	children: ReactNode
-	onRetry: () => void
+	children: ReactNode;
+	onRetry: () => void;
 }
 
 interface ErrorBoundaryState {
-	hasError: boolean
+	hasError: boolean;
 }
 
 /**
  * Error boundary to catch Stripe loading errors
  * (ad blockers, network errors, etc.)
  */
-class EmbeddedCheckoutErrorBoundary extends Component<
-	ErrorBoundaryProps,
-	ErrorBoundaryState
-> {
-	state: ErrorBoundaryState = { hasError: false }
+class EmbeddedCheckoutErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+	state: ErrorBoundaryState = { hasError: false };
 
 	static getDerivedStateFromError(): ErrorBoundaryState {
-		return { hasError: true }
+		return { hasError: true };
 	}
 
 	render() {
@@ -53,10 +40,8 @@ class EmbeddedCheckoutErrorBoundary extends Component<
 					<AlertTriangle className="h-4 w-4" />
 					<AlertTitle>Erreur de chargement</AlertTitle>
 					<AlertDescription className="space-y-3">
-						<p>
-							Le formulaire de paiement n'a pas pu se charger.
-						</p>
-						<ul className="text-sm space-y-1 list-disc pl-4">
+						<p>Le formulaire de paiement n'a pas pu se charger.</p>
+						<ul className="list-disc space-y-1 pl-4 text-sm">
 							<li>Désactivez votre bloqueur de publicités sur cette page</li>
 							<li>Vérifiez votre connexion internet</li>
 							<li>Essayez avec un autre navigateur</li>
@@ -71,9 +56,9 @@ class EmbeddedCheckoutErrorBoundary extends Component<
 						</div>
 					</AlertDescription>
 				</Alert>
-			)
+			);
 		}
-		return this.props.children
+		return this.props.children;
 	}
 }
 
@@ -82,7 +67,7 @@ class EmbeddedCheckoutErrorBoundary extends Component<
  */
 function EmbeddedCheckoutSkeleton() {
 	return (
-		<SkeletonGroup label="Chargement du formulaire de paiement" className="p-6 space-y-6">
+		<SkeletonGroup label="Chargement du formulaire de paiement" className="space-y-6 p-6">
 			{/* Email field */}
 			<div className="space-y-2">
 				<Skeleton className="h-4 w-24" />
@@ -110,7 +95,7 @@ function EmbeddedCheckoutSkeleton() {
 			{/* Pay button */}
 			<Skeleton className="h-12 w-full" shape="rounded" />
 		</SkeletonGroup>
-	)
+	);
 }
 
 /**
@@ -118,64 +103,60 @@ function EmbeddedCheckoutSkeleton() {
  * Displays the Stripe payment form embedded directly on the site
  * with skeleton loading, timeout detection, and error recovery without page reload
  */
-export function EmbeddedCheckoutWrapper({
-	clientSecret,
-}: EmbeddedCheckoutWrapperProps) {
-	const [stripeKey, setStripeKey] = useState(0)
-	const [isReady, setIsReady] = useState(false)
-	const [loadTimedOut, setLoadTimedOut] = useState(false)
-	const containerRef = useRef<HTMLDivElement>(null)
+export function EmbeddedCheckoutWrapper({ clientSecret }: EmbeddedCheckoutWrapperProps) {
+	const [stripeKey, setStripeKey] = useState(0);
+	const [isReady, setIsReady] = useState(false);
+	const [loadTimedOut, setLoadTimedOut] = useState(false);
+	const containerRef = useRef<HTMLDivElement>(null);
 
 	// Observe the container for Stripe iframe injection to detect readiness
 	useEffect(() => {
-		setIsReady(false)
-		setLoadTimedOut(false)
-		const container = containerRef.current
-		if (!container) return
+		queueMicrotask(() => setIsReady(false));
+		queueMicrotask(() => setLoadTimedOut(false));
+		const container = containerRef.current;
+		if (!container) return;
 
-		let timedOut = false
 		const timeoutId = setTimeout(() => {
-			timedOut = true
-			setLoadTimedOut(true)
-		}, 15_000)
+			queueMicrotask(() => setLoadTimedOut(true));
+		}, 15_000);
 
 		const observer = new MutationObserver(() => {
-			const iframe = container.querySelector("iframe")
+			const iframe = container.querySelector("iframe");
 			if (iframe) {
-				clearTimeout(timeoutId)
-				setIsReady(true)
-				observer.disconnect()
+				clearTimeout(timeoutId);
+				queueMicrotask(() => setIsReady(true));
+				observer.disconnect();
 			}
-		})
+		});
 
-		observer.observe(container, { childList: true, subtree: true })
+		observer.observe(container, { childList: true, subtree: true });
 
 		// Check if iframe already exists
 		if (container.querySelector("iframe")) {
-			clearTimeout(timeoutId)
-			setIsReady(true)
-			observer.disconnect()
+			clearTimeout(timeoutId);
+			queueMicrotask(() => setIsReady(true));
+			observer.disconnect();
 		}
 
 		return () => {
-			clearTimeout(timeoutId)
-			observer.disconnect()
-		}
-	}, [stripeKey])
+			clearTimeout(timeoutId);
+			observer.disconnect();
+		};
+	}, [stripeKey]);
 
 	const handleRetry = () => {
-		setStripeKey((k) => k + 1)
-	}
+		setStripeKey((k) => k + 1);
+	};
 
 	return (
 		<EmbeddedCheckoutErrorBoundary key={stripeKey} onRetry={handleRetry}>
 			<div role="region" aria-label="Formulaire de paiement securise">
 				{!isReady && <EmbeddedCheckoutSkeleton />}
 				{loadTimedOut && !isReady && (
-					<div className="text-center space-y-3 p-4">
-						<p className="text-sm text-muted-foreground">
-							Le formulaire de paiement prend plus de temps que prévu.
-							Si vous utilisez un bloqueur de publicités, essayez de le désactiver.
+					<div className="space-y-3 p-4 text-center">
+						<p className="text-muted-foreground text-sm">
+							Le formulaire de paiement prend plus de temps que prévu. Si vous utilisez un bloqueur
+							de publicités, essayez de le désactiver.
 						</p>
 						<Button variant="outline" size="sm" onClick={handleRetry}>
 							Réessayer
@@ -183,14 +164,11 @@ export function EmbeddedCheckoutWrapper({
 					</div>
 				)}
 				<div ref={containerRef} className={isReady ? "" : "hidden"}>
-					<EmbeddedCheckoutProvider
-						stripe={getStripe()}
-						options={{ clientSecret }}
-					>
+					<EmbeddedCheckoutProvider stripe={getStripe()} options={{ clientSecret }}>
 						<EmbeddedCheckout />
 					</EmbeddedCheckoutProvider>
 				</div>
 			</div>
 		</EmbeddedCheckoutErrorBoundary>
-	)
+	);
 }

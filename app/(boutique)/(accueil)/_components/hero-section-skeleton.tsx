@@ -6,7 +6,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  */
 export function HeroSectionSkeleton() {
 	return (
-		<section className="relative min-h-[calc(70dvh-4rem)] sm:min-h-[calc(80dvh-5rem)] lg:min-h-[calc(90dvh-5rem)] flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%">
+		<section className="relative flex min-h-[calc(60dvh-4rem)] items-center overflow-hidden mask-b-from-85% mask-b-to-100% pt-16 pb-10 sm:min-h-[calc(90dvh-5rem)] sm:pt-20 sm:pb-16 md:pt-28 md:pb-24 lg:min-h-screen">
 			{/* Background gradient */}
 			<div
 				className="absolute inset-0 bg-linear-to-br from-pink-50/20 via-transparent to-amber-50/20"
@@ -16,32 +16,32 @@ export function HeroSectionSkeleton() {
 			{/* Floating image placeholders — diamond layout, matches hero-floating-images breakpoints */}
 			<div className="absolute inset-0 z-0 hidden md:block" aria-hidden="true">
 				{/* Top-left — large (tabletVisible) */}
-				<Skeleton className="absolute left-[2%] xl:left-[4%] top-[12%] w-32 md:w-36 lg:w-40 xl:w-48 2xl:w-56 aspect-[4/5] rounded-2xl bg-muted/30 -rotate-8" />
+				<Skeleton className="bg-muted/30 absolute top-[12%] left-[2%] aspect-[4/5] w-32 -rotate-8 rounded-2xl md:w-36 lg:w-40 xl:left-[4%] xl:w-48 2xl:w-56" />
 				{/* Top-right — medium (desktop only) */}
-				<Skeleton className="absolute right-[3%] xl:right-[5%] top-[8%] hidden lg:block w-32 xl:w-40 2xl:w-48 aspect-[4/5] rounded-2xl bg-muted/30 rotate-5" />
+				<Skeleton className="bg-muted/30 absolute top-[8%] right-[3%] hidden aspect-[4/5] w-32 rotate-5 rounded-2xl lg:block xl:right-[5%] xl:w-40 2xl:w-48" />
 				{/* Bottom-left — small (desktop only) */}
-				<Skeleton className="absolute left-[12%] xl:left-[14%] bottom-[14%] hidden lg:block w-28 xl:w-34 2xl:w-40 aspect-[4/5] rounded-2xl bg-muted/30 rotate-3" />
+				<Skeleton className="bg-muted/30 absolute bottom-[14%] left-[12%] hidden aspect-[4/5] w-28 rotate-3 rounded-2xl lg:block xl:left-[14%] xl:w-34 2xl:w-40" />
 				{/* Bottom-right — medium (tabletVisible) */}
-				<Skeleton className="absolute right-[10%] xl:right-[12%] bottom-[18%] w-32 md:w-34 lg:w-32 xl:w-38 2xl:w-44 aspect-[4/5] rounded-2xl bg-muted/30 -rotate-4" />
+				<Skeleton className="bg-muted/30 absolute right-[10%] bottom-[18%] aspect-[4/5] w-32 -rotate-4 rounded-2xl md:w-34 lg:w-32 xl:right-[12%] xl:w-38 2xl:w-44" />
 			</div>
 
-			<div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
+			<div className="relative z-10 container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<div className="flex flex-col items-center">
 					{/* Contenu centré */}
-					<div className="space-y-5 sm:space-y-7 md:space-y-10 flex flex-col items-center">
+					<div className="flex flex-col items-center space-y-5 sm:space-y-7 md:space-y-10">
 						{/* Titre principal */}
-						<div className="space-y-4 sm:space-y-6 text-center w-full">
+						<div className="w-full space-y-4 text-center sm:space-y-6">
 							{/* Titre "Des bijoux colorés" */}
-							<Skeleton className="h-12 sm:h-16 lg:h-20 w-72 sm:w-80 mx-auto bg-muted/50" />
+							<Skeleton className="bg-muted/50 mx-auto h-12 w-72 sm:h-16 sm:w-80 lg:h-20" />
 
 							{/* Description */}
-							<Skeleton className="h-7 sm:h-8 w-full max-w-lg mx-auto bg-muted/30" />
+							<Skeleton className="bg-muted/30 mx-auto h-7 w-full max-w-lg sm:h-8" />
 						</div>
 
 						{/* CTA Buttons - centrés */}
-						<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-							<Skeleton className="h-11 w-full sm:w-48 bg-primary/20 rounded-lg" />
-							<Skeleton className="h-11 w-full sm:w-56 bg-muted/40 rounded-lg" />
+						<div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:gap-4">
+							<Skeleton className="bg-primary/20 h-11 w-full rounded-lg sm:w-48" />
+							<Skeleton className="bg-muted/40 h-11 w-full rounded-lg sm:w-56" />
 						</div>
 					</div>
 				</div>

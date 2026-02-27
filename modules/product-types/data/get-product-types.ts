@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { z } from "zod";
@@ -14,10 +11,7 @@ import {
 	GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE,
 	GET_PRODUCT_TYPES_SELECT,
 } from "../constants/product-type.constants";
-import {
-	getProductTypesSchema,
-	productTypeFiltersSchema,
-} from "../schemas/product-type.schemas";
+import { getProductTypesSchema } from "../schemas/product-type.schemas";
 import type {
 	GetProductTypesParams,
 	GetProductTypesParamsInput,
@@ -32,10 +26,7 @@ export {
 	PRODUCT_TYPES_SORT_LABELS,
 	PRODUCT_TYPES_SORT_OPTIONS,
 } from "../constants/product-type.constants";
-export {
-	productTypeFiltersSchema,
-	productTypeSortBySchema,
-} from "../schemas/product-type.schemas";
+export { productTypeFiltersSchema, productTypeSortBySchema } from "../schemas/product-type.schemas";
 export type {
 	GetProductTypesParams,
 	GetProductTypesParamsInput,
@@ -57,7 +48,7 @@ export { PRODUCT_TYPES_SORT_OPTIONS as SORT_OPTIONS } from "../constants/product
  * Accessible publiquement (pas de restriction admin)
  */
 export async function getProductTypes(
-	params: GetProductTypesParamsInput
+	params: GetProductTypesParamsInput,
 ): Promise<GetProductTypesReturn> {
 	try {
 		const validation = getProductTypesSchema.safeParse(params);
@@ -78,27 +69,24 @@ export async function getProductTypes(
 /**
  * Récupère les types de produits depuis la DB avec cache
  */
-async function fetchProductTypes(
-	params: GetProductTypesParams
-): Promise<GetProductTypesReturn> {
+async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProductTypesReturn> {
 	"use cache";
 	cacheProductTypes();
 
 	const take = Math.min(
 		Math.max(1, params.perPage || GET_PRODUCT_TYPES_DEFAULT_PER_PAGE),
-		GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE
+		GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE,
 	);
 
 	try {
 		const where = buildProductTypeWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.ProductTypeOrderByWithRelationInput[] =
-			params.sortBy.startsWith("label-")
-				? [{ label: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("products-")
-					? [{ products: { _count: direction } }, { id: "asc" }]
-					: [{ label: "asc" }, { id: "asc" }];
+		const orderBy: Prisma.ProductTypeOrderByWithRelationInput[] = params.sortBy.startsWith("label-")
+			? [{ label: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("products-")
+				? [{ products: { _count: direction } }, { id: "asc" }]
+				: [{ label: "asc" }, { id: "asc" }];
 
 		const cursorConfig = buildCursorPagination({
 			cursor: params.cursor,
@@ -117,7 +105,7 @@ async function fetchProductTypes(
 			productTypes,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return { productTypes: items, pagination };
@@ -141,4 +129,3 @@ async function fetchProductTypes(
 		return baseReturn as GetProductTypesReturn & { error: string };
 	}
 }
-

@@ -12,17 +12,14 @@ import type { ColorPickerOutputProps } from "./types";
 
 const formats = ["hex", "rgb", "css", "hsl"];
 
-export const ColorPickerOutput = ({
-	className,
-	...props
-}: ColorPickerOutputProps) => {
+export const ColorPickerOutput = ({ className: _className, ...props }: ColorPickerOutputProps) => {
 	const { mode, setMode } = useColorPicker();
 
 	return (
 		<Select onValueChange={setMode} value={mode}>
 			<SelectTrigger
 				data-slot="color-picker-output"
-				className="min-h-11 md:h-8 w-auto min-w-20 shrink-0 text-sm md:text-xs"
+				className="min-h-11 w-auto min-w-20 shrink-0 text-sm md:h-8 md:text-xs"
 				{...props}
 			>
 				<SelectValue placeholder="Mode" />

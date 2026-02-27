@@ -20,8 +20,18 @@ beforeAll(() => {
 
 // Mock next/link
 vi.mock("next/link", () => ({
-	default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-		<a href={href} {...props}>{children}</a>
+	default: ({
+		href,
+		children,
+		...props
+	}: {
+		href: string;
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => (
+		<a href={href} {...props}>
+			{children}
+		</a>
 	),
 }));
 
@@ -30,7 +40,16 @@ vi.mock("motion/react", () => {
 	const handler = {
 		get(_target: Record<string, unknown>, prop: string) {
 			// Return a component that renders the HTML element with non-motion props
-			return function MotionProxy({ children, animate, initial, exit, custom, variants, transition, ...rest }: Record<string, unknown>) {
+			return function MotionProxy({
+				children,
+				animate: _animate,
+				initial: _initial,
+				exit: _exit,
+				custom: _custom,
+				variants: _variants,
+				transition: _transition,
+				...rest
+			}: Record<string, unknown>) {
 				const El = prop as unknown as React.ElementType;
 				return <El {...rest}>{children as React.ReactNode}</El>;
 			};
@@ -47,8 +66,12 @@ vi.mock("motion/react", () => {
 vi.mock("@/shared/components/ui/sheet", () => ({
 	Sheet: ({ children }: { children: React.ReactNode }) => <div data-testid="sheet">{children}</div>,
 	SheetTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	SheetContent: ({ children }: { children: React.ReactNode }) => <div data-testid="sheet-content">{children}</div>,
-	SheetHeader: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+	SheetContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="sheet-content">{children}</div>
+	),
+	SheetHeader: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
+		<div {...props}>{children}</div>
+	),
 	SheetTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
 	SheetDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 	SheetClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -65,7 +88,9 @@ vi.mock("./menu-sheet-nav", () => ({
 }));
 
 vi.mock("./menu-sheet-footer", () => ({
-	MenuSheetFooter: ({ isAdmin }: { isAdmin: boolean }) => <div data-testid="menu-sheet-footer" data-admin={isAdmin} />,
+	MenuSheetFooter: ({ isAdmin }: { isAdmin: boolean }) => (
+		<div data-testid="menu-sheet-footer" data-admin={isAdmin} />
+	),
 }));
 
 // Mock useDialog
@@ -87,11 +112,14 @@ afterEach(() => {
 });
 
 const baseProps = {
-	navItems: [
-		{ href: "/", label: "Accueil", icon: "home" as const },
-	],
+	navItems: [{ href: "/", label: "Accueil", icon: "home" as const }],
 	productTypes: [{ slug: "bagues", label: "Bagues" }],
-	collections: [] as Array<{ slug: string; label: string; images: Array<{ url: string; blurDataUrl: string | null; alt: string | null }>; createdAt?: Date }>,
+	collections: [] as Array<{
+		slug: string;
+		label: string;
+		images: Array<{ url: string; blurDataUrl: string | null; alt: string | null }>;
+		createdAt?: Date;
+	}>,
 	isAdmin: false,
 	session: null,
 };

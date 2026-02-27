@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { cacheLife, cacheTag } from "next/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
@@ -20,7 +17,7 @@ import { getSortDirection } from "@/shared/utils/sort-direction";
  * Admin uniquement
  */
 export async function fetchProductSkus(
-	params: GetProductSkusParams
+	params: GetProductSkusParams,
 ): Promise<GetProductSkusReturn> {
 	"use cache";
 
@@ -33,16 +30,17 @@ export async function fetchProductSkus(
 		const direction = getSortDirection(params.sortBy);
 
 		// Toujours trier le SKU par défaut en premier, puis appliquer le tri sélectionné
-		const userSortConfig: Prisma.ProductSkuOrderByWithRelationInput[] =
-			params.sortBy.startsWith("sku-")
-				? [{ sku: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("price-")
-					? [{ priceInclTax: direction }, { id: "asc" }]
-					: params.sortBy.startsWith("stock-")
-						? [{ inventory: direction }, { id: "asc" }]
-						: params.sortBy.startsWith("created-")
-							? [{ createdAt: direction }, { id: "asc" }]
-							: [{ createdAt: "desc" }, { id: "asc" }];
+		const userSortConfig: Prisma.ProductSkuOrderByWithRelationInput[] = params.sortBy.startsWith(
+			"sku-",
+		)
+			? [{ sku: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("price-")
+				? [{ priceInclTax: direction }, { id: "asc" }]
+				: params.sortBy.startsWith("stock-")
+					? [{ inventory: direction }, { id: "asc" }]
+					: params.sortBy.startsWith("created-")
+						? [{ createdAt: direction }, { id: "asc" }]
+						: [{ createdAt: "desc" }, { id: "asc" }];
 
 		const orderBy: Prisma.ProductSkuOrderByWithRelationInput[] = [
 			{ isDefault: "desc" }, // SKU par défaut toujours en premier
@@ -51,7 +49,7 @@ export async function fetchProductSkus(
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_PRODUCT_SKUS_DEFAULT_PER_PAGE),
-			GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE
+			GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -71,7 +69,7 @@ export async function fetchProductSkus(
 			productSkus,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return {
@@ -79,12 +77,6 @@ export async function fetchProductSkus(
 			pagination,
 		};
 	} catch (error) {
-		// console.error("Product SKUs fetch error:", {
-		// 	error: error instanceof Error ? error.message : "Unknown error",
-		// 	params: JSON.stringify(params, null, 2),
-		// 	stack: error instanceof Error ? error.stack : undefined,
-		// });
-
 		const baseReturn = {
 			productSkus: [],
 			pagination: {

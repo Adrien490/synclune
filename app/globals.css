@@ -37,6 +37,23 @@ html {
 	--blur-3: 3px;
 
 	/* ==========================================
+	   FLUID TYPOGRAPHY (clamp-based)
+	   Range: 375px → 1024px viewport
+	   ========================================== */
+	/* 3rem (48px) → 4.5rem (72px) — hero headings */
+	--font-size-fluid-hero: clamp(3rem, 2.13rem + 3.7vw, 4.5rem);
+	--font-size-fluid-hero--line-height: 1.1;
+	/* 1.875rem (30px) → 3rem (48px) — section headings */
+	--font-size-fluid-section: clamp(1.875rem, 1.23rem + 2.77vw, 3rem);
+	--font-size-fluid-section--line-height: 1.2;
+	/* 1.5rem (24px) → 1.875rem (30px) — small section headings */
+	--font-size-fluid-section-sm: clamp(1.5rem, 1.28rem + 0.92vw, 1.875rem);
+	--font-size-fluid-section-sm--line-height: 1.5;
+	/* 1.5rem (24px) → 2.25rem (36px) — page headings */
+	--font-size-fluid-page: clamp(1.5rem, 1.07rem + 1.85vw, 2.25rem);
+	--font-size-fluid-page--line-height: 1.2;
+
+	/* ==========================================
 	   DURÉES D'ANIMATION STANDARDISÉES
 	   ========================================== */
 	--duration-fast: 150ms;
@@ -140,7 +157,9 @@ html {
 	   ========================================== */
 	--primary: oklch(0.8593 0.097 340.78); /* Rose foncé - WCAG AA (as background with dark text) */
 	--primary-foreground: oklch(0.1 0 0);
-	--primary-text: oklch(0.50 0.15 340.78); /* Rose foncé pour texte sur fond clair - WCAG AA 4.5:1+ */
+	--primary-text: oklch(
+		0.5 0.15 340.78
+	); /* Rose foncé pour texte sur fond clair - WCAG AA 4.5:1+ */
 
 	--secondary: oklch(0.9221 0.0871 86.29); /* Gris clair */
 	--secondary-foreground: oklch(0.13 0.01 270);
@@ -152,10 +171,14 @@ html {
 	--accent-foreground: oklch(0.13 0.01 270);
 
 	--muted: oklch(0.94 0.01 270);
-	--muted-foreground: oklch(0.55 0.01 270); /* Augmenté de 0.48 à 0.55 pour WCAG AAA (ratio 4.5:1+) */
+	--muted-foreground: oklch(
+		0.55 0.01 270
+	); /* Augmenté de 0.48 à 0.55 pour WCAG AAA (ratio 4.5:1+) */
 
 	--destructive: oklch(0.59 0.17 25);
 	--destructive-foreground: oklch(1 0 0);
+
+	--success: oklch(0.52 0.14 145);
 
 	--border: oklch(0.92 0.01 270);
 	--input: oklch(0.94 0.01 270);
@@ -190,21 +213,11 @@ html {
 	--spacing: 0.25rem;
 	--shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
 	--shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
-	--shadow-sm:
-		0 1px 3px 0 hsl(0 0% 0% / 0.1),
-		0 1px 2px -1px hsl(0 0% 0% / 0.1);
-	--shadow:
-		0 1px 3px 0 hsl(0 0% 0% / 0.1),
-		0 1px 2px -1px hsl(0 0% 0% / 0.1);
-	--shadow-md:
-		0 4px 6px -1px hsl(0 0% 0% / 0.1),
-		0 2px 4px -2px hsl(0 0% 0% / 0.1);
-	--shadow-lg:
-		0 10px 15px -3px hsl(0 0% 0% / 0.1),
-		0 4px 6px -4px hsl(0 0% 0% / 0.1);
-	--shadow-xl:
-		0 20px 25px -5px hsl(0 0% 0% / 0.1),
-		0 8px 10px -6px hsl(0 0% 0% / 0.1);
+	--shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+	--shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+	--shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
+	--shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+	--shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
 	--shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
 }
 
@@ -395,13 +408,7 @@ textarea {
 
 	@media (min-width: 640px) {
 		.mask-carousel-edges {
-			mask-image: linear-gradient(
-				to right,
-				transparent 0%,
-				black 3%,
-				black 97%,
-				transparent 100%
-			);
+			mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
 		}
 	}
 
@@ -754,7 +761,9 @@ textarea {
 	/* Realistic lift hover — desktop only, motion-safe */
 	.polaroid-hover {
 		--polaroid-rotate: 0deg;
-		transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
+		transition:
+			transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+			box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
 	@media (hover: hover) and (pointer: fine) {
@@ -891,21 +900,11 @@ textarea {
 	--spacing: 0.25rem;
 	--shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.25);
 	--shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.25);
-	--shadow-sm:
-		0 1px 3px 0 hsl(0 0% 0% / 0.4),
-		0 1px 2px -1px hsl(0 0% 0% / 0.4);
-	--shadow:
-		0 1px 3px 0 hsl(0 0% 0% / 0.4),
-		0 1px 2px -1px hsl(0 0% 0% / 0.4);
-	--shadow-md:
-		0 4px 6px -1px hsl(0 0% 0% / 0.4),
-		0 2px 4px -2px hsl(0 0% 0% / 0.4);
-	--shadow-lg:
-		0 10px 15px -3px hsl(0 0% 0% / 0.4),
-		0 4px 6px -4px hsl(0 0% 0% / 0.4);
-	--shadow-xl:
-		0 20px 25px -5px hsl(0 0% 0% / 0.4),
-		0 8px 10px -6px hsl(0 0% 0% / 0.4);
+	--shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+	--shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+	--shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
+	--shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -4px hsl(0 0% 0% / 0.4);
+	--shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.4), 0 8px 10px -6px hsl(0 0% 0% / 0.4);
 	--shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.6);
 }
 
@@ -920,11 +919,18 @@ textarea {
 		font-size: 14px;
 		font-weight: 500;
 		color: rgba(255, 255, 255, 0.9);
-		background: rgba(0, 0, 0, 0.6);
-		backdrop-filter: blur(8px);
+		background: rgba(0, 0, 0, 0.75);
 		padding: 8px 16px;
 		border-radius: 9999px;
 		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+		& .yarl__counter {
+			background: rgba(0, 0, 0, 0.6);
+			-webkit-backdrop-filter: blur(8px);
+			backdrop-filter: blur(8px);
+		}
 	}
 
 	/* Animation d'ouverture */
@@ -967,8 +973,7 @@ textarea {
 }
 
 [data-sonner-toast] {
-	background: oklch(from var(--card) l c h / 0.95) !important;
-	backdrop-filter: blur(4px);
+	background: var(--card) !important;
 	border: 1px solid oklch(from var(--border) l c h / 0.4) !important;
 	border-radius: var(--radius-xl) !important;
 	box-shadow:
@@ -976,6 +981,14 @@ textarea {
 		0 2px 6px -2px oklch(from var(--primary) l c h / 0.08) !important;
 	padding: 0.875rem 2.5rem 0.875rem 1rem !important;
 	gap: 0.75rem !important;
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+	[data-sonner-toast] {
+		background: oklch(from var(--card) l c h / 0.95) !important;
+		-webkit-backdrop-filter: blur(4px);
+		backdrop-filter: blur(4px);
+	}
 }
 
 .dark [data-sonner-toast] {
@@ -998,11 +1011,11 @@ textarea {
 
 /* Bordure latérale par type */
 [data-sonner-toast][data-type="success"] {
-	border-left: 3px solid var(--primary) !important;
+	border-left: 3px solid var(--success) !important;
 }
 
 [data-sonner-toast][data-type="error"] {
-	border-left: 3px solid var(--primary) !important;
+	border-left: 3px solid var(--destructive) !important;
 }
 
 [data-sonner-toast][data-type="warning"] {
@@ -1030,7 +1043,9 @@ textarea {
 	justify-content: center;
 	border-radius: var(--radius);
 	opacity: 0.4;
-	transition: opacity 150ms, background-color 150ms;
+	transition:
+		opacity 150ms,
+		background-color 150ms;
 	background: transparent;
 	border: none;
 	color: var(--muted-foreground);
@@ -1044,7 +1059,9 @@ textarea {
 
 /* Feedback swipe amélioré */
 [data-sonner-toast][data-swiping="true"] {
-	transition: transform 100ms ease-out, opacity 100ms ease-out;
+	transition:
+		transform 100ms ease-out,
+		opacity 100ms ease-out;
 }
 
 [data-sonner-toast][data-swipe-cancel] {
@@ -1131,7 +1148,9 @@ textarea {
 	border-right: none;
 	border-radius: var(--radius) 0 0 var(--radius);
 	min-height: 2.75rem;
-	transition: border-color 150ms, box-shadow 150ms;
+	transition:
+		border-color 150ms,
+		box-shadow 150ms;
 }
 
 .PhoneInput--synclune:focus-within .PhoneInputCountry {

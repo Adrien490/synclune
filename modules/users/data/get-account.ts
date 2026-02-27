@@ -26,9 +26,7 @@ export type {
 // MAIN FUNCTIONS
 // ============================================================================
 
-export async function getAccount(
-	params: GetAccountParams
-): Promise<GetAccountReturn | null> {
+export async function getAccount(params: GetAccountParams): Promise<GetAccountReturn | null> {
 	const admin = await isAdmin();
 	const session = await getSession();
 
@@ -47,7 +45,7 @@ export async function getAccount(
 
 export async function fetchAccount(
 	params: GetAccountParams,
-	context: FetchAccountContext
+	context: FetchAccountContext,
 ): Promise<GetAccountReturn | null> {
 	"use cache: private";
 	// Cache by userId if available, otherwise use generic dashboard cache
@@ -73,10 +71,7 @@ export async function fetchAccount(
 		});
 
 		return account;
-	} catch (error) {
-		if (process.env.NODE_ENV !== "production") {
-			// console.error("fetchAccount error:", error);
-		}
+	} catch {
 		return null;
 	}
 }

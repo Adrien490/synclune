@@ -1,11 +1,6 @@
 "use client";
 
-import {
-	Drawer,
-	DrawerClose,
-	DrawerContent,
-	DrawerTitle,
-} from "@/shared/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from "@/shared/components/ui/drawer";
 import {
 	Empty,
 	EmptyDescription,
@@ -80,9 +75,7 @@ export function Autocomplete<T>({
 	const remainingChars = minQueryLength - localValue.length;
 
 	// Delai de blur adapte mobile/desktop
-	const effectiveBlurDelay = isMobile
-		? AUTOCOMPLETE_DEFAULTS.blurDelayMobile
-		: blurDelay;
+	const effectiveBlurDelay = isMobile ? AUTOCOMPLETE_DEFAULTS.blurDelayMobile : blurDelay;
 
 	// Sync valeur externe → locale
 	useEffect(() => {
@@ -236,16 +229,14 @@ export function Autocomplete<T>({
 	};
 
 	// Taille d'image adaptee mobile/desktop
-	const effectiveImageSize = isMobile
-		? AUTOCOMPLETE_DEFAULTS.imageSizeMobile
-		: imageSize;
+	const effectiveImageSize = isMobile ? AUTOCOMPLETE_DEFAULTS.imageSizeMobile : imageSize;
 
 	// Composant de rendu d'un item (partage entre desktop et mobile)
 	const renderItem = (item: T, index: number, isActive: boolean) => {
 		const imageData = getItemImage?.(item);
 
 		return (
-			<motion.li
+			<motion.div
 				key={index}
 				id={getItemId(index)}
 				role="option"
@@ -254,8 +245,8 @@ export function Autocomplete<T>({
 				aria-setsize={items.length}
 				className={cn(
 					// Touch target min 44px sur mobile (WCAG)
-					"cursor-pointer select-none py-3 px-3 md:py-2 transition-colors duration-150",
-					isActive ? "bg-accent" : "bg-card hover:bg-muted"
+					"cursor-pointer px-3 py-3 transition-colors duration-150 select-none md:py-2",
+					isActive ? "bg-accent" : "bg-card hover:bg-muted",
 				)}
 				onClick={() => handleItemSelect(item)}
 				onMouseEnter={() => setActiveIndex(index)}
@@ -265,14 +256,14 @@ export function Autocomplete<T>({
 				transition={{
 					delay: Math.min(
 						index * AUTOCOMPLETE_ANIMATIONS.item.delayMultiplier,
-						AUTOCOMPLETE_ANIMATIONS.item.maxDelay
+						AUTOCOMPLETE_ANIMATIONS.item.maxDelay,
 					),
 				}}
 			>
 				<div className="flex items-center gap-3">
 					{imageData && (
 						<div
-							className="shrink-0 relative overflow-hidden rounded-sm"
+							className="relative shrink-0 overflow-hidden rounded-sm"
 							style={{ width: effectiveImageSize, height: effectiveImageSize }}
 						>
 							<Image
@@ -288,18 +279,16 @@ export function Autocomplete<T>({
 							/>
 						</div>
 					)}
-					<div className="flex flex-col min-w-0 flex-1">
-						<span className="text-sm font-medium truncate">
-							{getItemLabel(item)}
-						</span>
+					<div className="flex min-w-0 flex-1 flex-col">
+						<span className="truncate text-sm font-medium">{getItemLabel(item)}</span>
 						{getItemDescription && getItemDescription(item) && (
-							<span className="text-xs text-muted-foreground line-clamp-2">
+							<span className="text-muted-foreground line-clamp-2 text-xs">
 								{getItemDescription(item)}
 							</span>
 						)}
 					</div>
 				</div>
-			</motion.li>
+			</motion.div>
 		);
 	};
 
@@ -307,11 +296,11 @@ export function Autocomplete<T>({
 	const renderLoadingSkeletons = () => (
 		<>
 			{[...Array(loadingSkeletonCount)].map((_, i) => (
-				<li key={i} className="py-3 px-3 md:py-2" aria-hidden="true">
+				<li key={i} className="px-3 py-3 md:py-2" aria-hidden="true">
 					<div className="flex items-center gap-3">
 						{getItemImage && (
 							<Skeleton
-								className="rounded-sm shrink-0"
+								className="shrink-0 rounded-sm"
 								style={{
 									width: effectiveImageSize,
 									height: effectiveImageSize,
@@ -319,16 +308,10 @@ export function Autocomplete<T>({
 								}}
 							/>
 						)}
-						<div className="flex flex-col flex-1 gap-1.5">
-							<Skeleton
-								className="h-4 w-3/4"
-								style={{ animationDelay: `${i * 100}ms` }}
-							/>
+						<div className="flex flex-1 flex-col gap-1.5">
+							<Skeleton className="h-4 w-3/4" style={{ animationDelay: `${i * 100}ms` }} />
 							{getItemDescription && (
-								<Skeleton
-									className="h-3 w-1/2"
-									style={{ animationDelay: `${i * 100 + 50}ms` }}
-								/>
+								<Skeleton className="h-3 w-1/2" style={{ animationDelay: `${i * 100 + 50}ms` }} />
 							)}
 						</div>
 					</div>
@@ -346,9 +329,7 @@ export function Autocomplete<T>({
 						<SearchIcon className="size-6" strokeWidth={1.5} />
 					</EmptyMedia>
 					<EmptyTitle>{noResultsMessage}</EmptyTitle>
-					<EmptyDescription>
-						Essayez de modifier votre recherche
-					</EmptyDescription>
+					<EmptyDescription>Essayez de modifier votre recherche</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
 		</li>
@@ -363,7 +344,7 @@ export function Autocomplete<T>({
 				<Empty>
 					<EmptyHeader>
 						<EmptyMedia>
-							<AlertCircleIcon className="size-6 text-destructive" strokeWidth={1.5} />
+							<AlertCircleIcon className="text-destructive size-6" strokeWidth={1.5} />
 						</EmptyMedia>
 						<EmptyTitle className="text-destructive">{error}</EmptyTitle>
 						{onRetry && (
@@ -384,7 +365,7 @@ export function Autocomplete<T>({
 		return (
 			<li
 				role="presentation"
-				className="px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/30"
+				className="text-muted-foreground bg-muted/30 border-b px-3 py-1.5 text-xs"
 			>
 				{items.length} résultat{items.length > 1 ? "s" : ""}
 			</li>
@@ -445,9 +426,7 @@ export function Autocomplete<T>({
 						onClick={() => !disabled && setIsOpen(true)}
 						placeholder={localValue ? placeholder : "Appuyer pour rechercher..."}
 						startIcon={
-							showSearchIcon ? (
-								<SearchIcon className="size-4 text-muted-foreground" />
-							) : undefined
+							showSearchIcon ? <SearchIcon className="text-muted-foreground size-4" /> : undefined
 						}
 						className={cn("cursor-pointer", inputClassName)}
 						aria-haspopup="listbox"
@@ -457,15 +436,15 @@ export function Autocomplete<T>({
 
 				{/* Drawer fullscreen */}
 				<Drawer open={isOpen} onOpenChange={setIsOpen} direction="bottom">
-					<DrawerContent className="h-[100dvh] max-h-[100dvh] flex flex-col rounded-none">
+					<DrawerContent className="flex h-[100dvh] max-h-[100dvh] flex-col rounded-none">
 						{/* Titre masqué pour l'accessibilité */}
 						<DrawerTitle className="sr-only">Recherche</DrawerTitle>
 						{/* Header avec input de recherche */}
-						<div className="sticky top-0 bg-background border-b px-3 py-3 flex items-center gap-2">
+						<div className="bg-background sticky top-0 flex items-center gap-2 border-b px-3 py-3">
 							<DrawerClose asChild>
 								<button
 									type="button"
-									className="shrink-0 p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
+									className="hover:bg-muted -ml-2 shrink-0 rounded-full p-2 transition-colors"
 									aria-label="Fermer"
 								>
 									<ArrowLeftIcon className="size-5" />
@@ -479,7 +458,7 @@ export function Autocomplete<T>({
 								placeholder={placeholder}
 								startIcon={
 									showSearchIcon ? (
-										<SearchIcon className="size-4 text-muted-foreground" />
+										<SearchIcon className="text-muted-foreground size-4" />
 									) : undefined
 								}
 								clearable={showClearButton && localValue.length > 0 && !isLoading}
@@ -488,9 +467,7 @@ export function Autocomplete<T>({
 								className="flex-1"
 								aria-autocomplete="list"
 								aria-controls={listboxId}
-								aria-activedescendant={
-									activeIndex >= 0 ? getItemId(activeIndex) : undefined
-								}
+								aria-activedescendant={activeIndex >= 0 ? getItemId(activeIndex) : undefined}
 								aria-describedby={showMinQueryHint ? hintId : undefined}
 								autoComplete="off"
 							/>
@@ -501,7 +478,7 @@ export function Autocomplete<T>({
 							{showMinQueryHint && (
 								<motion.p
 									id={hintId}
-									className="text-sm text-muted-foreground px-4 py-2 border-b"
+									className="text-muted-foreground border-b px-4 py-2 text-sm"
 									initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
 									animate={AUTOCOMPLETE_ANIMATIONS.hint.animate}
 									exit={AUTOCOMPLETE_ANIMATIONS.hint.exit}
@@ -516,14 +493,14 @@ export function Autocomplete<T>({
 						{renderLiveRegion()}
 
 						{/* Liste des resultats */}
-						<ul
+						<div
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
 							className="flex-1 overflow-auto"
 						>
 							{renderListContent()}
-						</ul>
+						</div>
 					</DrawerContent>
 				</Drawer>
 			</>
@@ -549,9 +526,7 @@ export function Autocomplete<T>({
 						onKeyDown={handleKeyDown}
 						placeholder={placeholder}
 						startIcon={
-							showSearchIcon ? (
-								<SearchIcon className="size-4 text-muted-foreground" />
-							) : undefined
+							showSearchIcon ? <SearchIcon className="text-muted-foreground size-4" /> : undefined
 						}
 						clearable={showClearButton && localValue.length > 0 && !isLoading}
 						onClear={handleClear}
@@ -573,7 +548,7 @@ export function Autocomplete<T>({
 					{showMinQueryHint && (
 						<motion.p
 							id={hintId}
-							className="text-sm md:text-xs text-muted-foreground mt-1.5 ml-0.5"
+							className="text-muted-foreground mt-1.5 ml-0.5 text-sm md:text-xs"
 							initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
 							animate={AUTOCOMPLETE_ANIMATIONS.hint.animate}
 							exit={AUTOCOMPLETE_ANIMATIONS.hint.exit}
@@ -589,18 +564,18 @@ export function Autocomplete<T>({
 
 				<AnimatePresence>
 					{showResults && (
-						<motion.ul
+						<motion.div
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
-							className="absolute z-50 w-full mt-1 max-h-80 overflow-auto rounded-md border shadow-lg py-1 text-sm focus:outline-hidden bg-background"
+							className="bg-background absolute z-50 mt-1 max-h-80 w-full overflow-auto rounded-md border py-1 text-sm shadow-lg focus:outline-hidden"
 							initial={AUTOCOMPLETE_ANIMATIONS.dropdown.initial}
 							animate={AUTOCOMPLETE_ANIMATIONS.dropdown.animate}
 							exit={AUTOCOMPLETE_ANIMATIONS.dropdown.exit}
 							transition={AUTOCOMPLETE_ANIMATIONS.dropdown.transition}
 						>
 							{renderListContent()}
-						</motion.ul>
+						</motion.div>
 					)}
 				</AnimatePresence>
 			</div>

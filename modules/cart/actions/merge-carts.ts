@@ -3,7 +3,6 @@
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
-import { handleActionError, success, error } from "@/shared/lib/actions";
 import { ActionStatus } from "@/shared/types/server-action";
 import { batchValidateSkusForMerge } from "@/modules/cart/services/sku-validation.service";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -32,10 +31,7 @@ export type { MergeCartsResult } from "../types/cart.types";
  * @param userId ID de l'utilisateur connecté
  * @param sessionId SessionId du panier visiteur à fusionner
  */
-export async function mergeCarts(
-	userId: string,
-	sessionId: string
-): Promise<MergeCartsResult> {
+export async function mergeCarts(userId: string, sessionId: string): Promise<MergeCartsResult> {
 	try {
 		// 0a. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
 		// Empêche un attaquant de fusionner le panier d'un autre utilisateur
@@ -104,16 +100,11 @@ export async function mergeCarts(
 		// 4. Préparer et valider tous les SKUs en batch (UNE SEULE requête DB)
 		// Calculer les quantités finales selon la stratégie MAX
 		const itemsToValidate: Array<{ skuId: string; quantity: number }> = [];
-		const userItemsMap = new Map(
-			targetCart.items.map((item) => [item.skuId, item])
-		);
+		const userItemsMap = new Map(targetCart.items.map((item) => [item.skuId, item]));
 
 		for (const guestItem of guestCart.items) {
 			// Skip les produits inactifs (déjà chargé dans guestCart.items)
-			if (
-				!guestItem.sku.isActive ||
-				guestItem.sku.product.status !== "PUBLIC"
-			) {
+			if (!guestItem.sku.isActive || guestItem.sku.product.status !== "PUBLIC") {
 				continue;
 			}
 
@@ -176,10 +167,7 @@ export async function mergeCarts(
 
 				if (existingItem) {
 					// Stratégie MAX : garde la quantité la plus élevée
-					const maxQuantity = Math.max(
-						existingItem.quantity,
-						guestItem.quantity
-					);
+					const maxQuantity = Math.max(existingItem.quantity, guestItem.quantity);
 
 					await tx.cartItem.update({
 						where: { id: existingItem.id },
@@ -207,15 +195,15 @@ export async function mergeCarts(
 		// 7. Invalider les caches
 		const guestTags = getCartInvalidationTags(undefined, sessionId);
 		const userTags = getCartInvalidationTags(userId, undefined);
-		[...guestTags, ...userTags].forEach(tag => updateTag(tag));
+		[...guestTags, ...userTags].forEach((tag) => updateTag(tag));
 
 		// 8. Invalider le cache des compteurs de paniers pour les produits du guest cart
 		const productIds = new Set(
 			guestCart.items
-				.filter(item => item.sku.isActive && item.sku.product.status === "PUBLIC")
-				.map(item => item.sku.product.id)
+				.filter((item) => item.sku.isActive && item.sku.product.status === "PUBLIC")
+				.map((item) => item.sku.product.id),
 		);
-		productIds.forEach(productId => {
+		productIds.forEach((productId) => {
 			updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(productId));
 		});
 

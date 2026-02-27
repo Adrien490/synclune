@@ -1,0 +1,13 @@
+# Synclune browser support
+# Minimum: Chrome 111+, Safari 16.4+, Firefox 113+, Edge 111+ (March-May 2023)
+# Required features: oklch(), dvh/svh, container queries, :has()
+
+chrome >= 111
+edge >= 111
+firefox >= 113
+safari >= 16.4
+ios_saf >= 16.4
+
+# Exclude legacy
+not dead
+not op_mini all

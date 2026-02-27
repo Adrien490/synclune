@@ -4,17 +4,11 @@ import { prisma } from "@/shared/lib/prisma";
 
 import { GET_USER_ADDRESSES_DEFAULT_SELECT } from "../constants/user-addresses.constants";
 import { ADDRESSES_CACHE_TAGS } from "../constants/cache";
-import type {
-	GetUserAddressesReturn,
-	UserAddress,
-} from "../types/user-addresses.types";
+import type { GetUserAddressesReturn } from "../types/user-addresses.types";
 
 // Re-export pour compatibilité
 export { GET_USER_ADDRESSES_DEFAULT_SELECT } from "../constants/user-addresses.constants";
-export type {
-	GetUserAddressesReturn,
-	UserAddress,
-} from "../types/user-addresses.types";
+export type { GetUserAddressesReturn, UserAddress } from "../types/user-addresses.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -49,9 +43,7 @@ export async function getUserAddresses(): Promise<GetUserAddressesReturn | null>
  * @param userId - ID de l'utilisateur
  * @returns Liste des adresses triées par défaut puis date de création
  */
-export async function fetchUserAddresses(
-	userId: string
-): Promise<GetUserAddressesReturn> {
+export async function fetchUserAddresses(userId: string): Promise<GetUserAddressesReturn> {
 	"use cache: private";
 	cacheLife("cart");
 	cacheTag(ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId));

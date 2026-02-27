@@ -1,32 +1,19 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useRef } from "react"
-import { useStore } from "zustand"
+import { createContext, useContext, useState } from "react";
+import { useStore } from "zustand";
 
-import { createSheetStore } from "@/shared/stores/sheet-store"
-import type {
-	SheetId,
-	SheetStore,
-	SheetStoreProviderProps,
-} from "@/shared/types/store.types"
+import { createSheetStore } from "@/shared/stores/sheet-store";
+import type { SheetId, SheetStore, SheetStoreProviderProps } from "@/shared/types/store.types";
 
-export type SheetStoreApi = ReturnType<typeof createSheetStore>
+export type SheetStoreApi = ReturnType<typeof createSheetStore>;
 
-export const SheetStoreContext = createContext<SheetStoreApi | undefined>(
-	undefined
-)
+export const SheetStoreContext = createContext<SheetStoreApi | undefined>(undefined);
 
 export const SheetStoreProvider = ({ children }: SheetStoreProviderProps) => {
-	const storeRef = useRef<SheetStoreApi | null>(null);
-	if (storeRef.current === null) {
-		storeRef.current = createSheetStore();
-	}
+	const [store] = useState(() => createSheetStore());
 
-	return (
-		<SheetStoreContext.Provider value={storeRef.current}>
-			{children}
-		</SheetStoreContext.Provider>
-	);
+	return <SheetStoreContext.Provider value={store}>{children}</SheetStoreContext.Provider>;
 };
 
 export const useSheetStore = <T,>(selector: (store: SheetStore) => T): T => {

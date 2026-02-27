@@ -1,8 +1,6 @@
 "use client";
 
-import useEmblaCarousel, {
-	type UseEmblaCarouselType,
-} from "embla-carousel-react";
+import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 import { useEffectEvent } from "react";
@@ -63,7 +61,7 @@ function Carousel({
 			...opts,
 			axis: orientation === "horizontal" ? "x" : "y",
 		},
-		plugins
+		plugins,
 	);
 	const [canScrollPrev, setCanScrollPrev] = React.useState(false);
 	const [canScrollNext, setCanScrollNext] = React.useState(false);
@@ -132,7 +130,7 @@ function Carousel({
 			api?.off("select", () => onSelect(api));
 			api?.off("reInit", () => onReInit(api));
 		};
-	}, [api, onSelect, onReInit]);
+	}, [api]);
 
 	return (
 		<CarouselContext.Provider
@@ -140,8 +138,7 @@ function Carousel({
 				carouselRef,
 				api: api,
 				opts,
-				orientation:
-					orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
+				orientation: orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
 				scrollPrev,
 				scrollNext,
 				canScrollPrev,
@@ -189,7 +186,7 @@ function CarouselContent({ className, showFade = false, ...props }: CarouselCont
 					className={cn(
 						"flex",
 						orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
-						className
+						className,
 					)}
 					{...props}
 				/>
@@ -199,36 +196,36 @@ function CarouselContent({ className, showFade = false, ...props }: CarouselCont
 			{showFade && orientation === "horizontal" && canScrollPrev && (
 				<div
 					aria-hidden
-					className="pointer-events-none absolute left-0 top-0 h-full w-6 sm:w-10 z-10"
+					className="pointer-events-none absolute top-0 left-0 z-10 h-full w-6 sm:w-10"
 					style={{
-						background: "linear-gradient(to right, var(--background) 0%, transparent 100%)"
+						background: "linear-gradient(to right, var(--background) 0%, transparent 100%)",
 					}}
 				/>
 			)}
 			{showFade && orientation === "horizontal" && canScrollNext && (
 				<div
 					aria-hidden
-					className="pointer-events-none absolute right-0 top-0 h-full w-6 sm:w-10 z-10"
+					className="pointer-events-none absolute top-0 right-0 z-10 h-full w-6 sm:w-10"
 					style={{
-						background: "linear-gradient(to left, var(--background) 0%, transparent 100%)"
+						background: "linear-gradient(to left, var(--background) 0%, transparent 100%)",
 					}}
 				/>
 			)}
 			{showFade && orientation === "vertical" && canScrollPrev && (
 				<div
 					aria-hidden
-					className="pointer-events-none absolute top-0 left-0 w-full h-6 sm:h-10 z-10"
+					className="pointer-events-none absolute top-0 left-0 z-10 h-6 w-full sm:h-10"
 					style={{
-						background: "linear-gradient(to bottom, var(--background) 0%, transparent 100%)"
+						background: "linear-gradient(to bottom, var(--background) 0%, transparent 100%)",
 					}}
 				/>
 			)}
 			{showFade && orientation === "vertical" && canScrollNext && (
 				<div
 					aria-hidden
-					className="pointer-events-none absolute bottom-0 left-0 w-full h-6 sm:h-10 z-10"
+					className="pointer-events-none absolute bottom-0 left-0 z-10 h-6 w-full sm:h-10"
 					style={{
-						background: "linear-gradient(to top, var(--background) 0%, transparent 100%)"
+						background: "linear-gradient(to top, var(--background) 0%, transparent 100%)",
 					}}
 				/>
 			)}
@@ -264,15 +261,16 @@ function CarouselItem({ className, index, ...props }: CarouselItemProps) {
 			api.off("select", updateVisibility);
 			api.off("reInit", updateVisibility);
 		};
-	}, [api, index, updateVisibility]);
+	}, [api, index]);
 
 	return (
 		<div
 			role="group"
 			aria-roledescription="slide"
-			aria-label={index !== undefined && scrollSnaps.length > 0
-				? `Diapositive ${index + 1} sur ${scrollSnaps.length}`
-				: undefined
+			aria-label={
+				index !== undefined && scrollSnaps.length > 0
+					? `Diapositive ${index + 1} sur ${scrollSnaps.length}`
+					: undefined
 			}
 			aria-current={index !== undefined && isVisible ? true : undefined}
 			// inert replaces aria-hidden: hides from AT and prevents focus on descendants
@@ -281,7 +279,7 @@ function CarouselItem({ className, index, ...props }: CarouselItemProps) {
 			className={cn(
 				"min-w-0 shrink-0 grow-0 basis-full",
 				orientation === "horizontal" ? "pl-4" : "pt-4",
-				className
+				className,
 			)}
 			{...props}
 		/>
@@ -313,19 +311,19 @@ function CarouselPrevious({
 				// Touch targets 48px (WCAG 2.5.5)
 				"size-12",
 				// Shape and primary background
-				"rounded-full bg-primary",
+				"bg-primary rounded-full",
 				// Shadows
 				"shadow-lg hover:shadow-xl",
 				// Colors
 				"text-primary-foreground",
 				"hover:bg-primary/90 hover:scale-105",
 				// Focus visible (keyboard accessibility)
-				"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 				// Disabled states (opacity-60 pour contraste WCAG AA)
-				"disabled:opacity-60 disabled:pointer-events-none disabled:cursor-not-allowed",
+				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
 				// Smooth transitions
 				"transition-all duration-300",
-				className
+				className,
 			)}
 			disabled={!canScrollPrev}
 			onClick={scrollPrev}
@@ -362,19 +360,19 @@ function CarouselNext({
 				// Touch targets 48px (WCAG 2.5.5)
 				"size-12",
 				// Shape and primary background
-				"rounded-full bg-primary",
+				"bg-primary rounded-full",
 				// Shadows
 				"shadow-lg hover:shadow-xl",
 				// Colors
 				"text-primary-foreground",
 				"hover:bg-primary/90 hover:scale-105",
 				// Focus visible (keyboard accessibility)
-				"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 				// Disabled states (opacity-60 pour contraste WCAG AA)
-				"disabled:opacity-60 disabled:pointer-events-none disabled:cursor-not-allowed",
+				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
 				// Smooth transitions
 				"transition-all duration-300",
-				className
+				className,
 			)}
 			disabled={!canScrollNext}
 			onClick={scrollNext}
@@ -386,11 +384,8 @@ function CarouselNext({
 	);
 }
 
-function CarouselDots({
-	className,
-	...props
-}: React.ComponentProps<"div">) {
-	const { api, carouselId, scrollSnaps } = useCarousel();
+function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
+	const { api, scrollSnaps } = useCarousel();
 	const [selectedIndex, setSelectedIndex] = React.useState(0);
 
 	// Effect Event pour gérer onSelect sans re-registration
@@ -411,7 +406,7 @@ function CarouselDots({
 			api.off("select", onSelectDot);
 			api.off("reInit", onSelectDot);
 		};
-	}, [api, onSelectDot]);
+	}, [api]);
 
 	if (scrollSnaps.length <= 1) return null;
 
@@ -421,11 +416,7 @@ function CarouselDots({
 			className={cn("flex flex-col items-center gap-1 pt-4", className)}
 			{...props}
 		>
-			<div
-				className="flex justify-center"
-				role="group"
-				aria-label="Navigation du carousel"
-			>
+			<div className="flex justify-center" role="group" aria-label="Navigation du carousel">
 				{scrollSnaps.map((_, index) => (
 					<button
 						key={index}
@@ -435,31 +426,31 @@ function CarouselDots({
 						onClick={() => api?.scrollTo(index)}
 						className={cn(
 							// Touch target 44px (WCAG 2.5.5)
-							"relative w-11 h-11 flex items-center justify-center",
+							"relative flex h-11 w-11 items-center justify-center",
 							// Shape for visual feedback
 							"rounded-full",
 							// Visual feedback on clickable area
 							"hover:bg-muted/20 active:bg-muted/30",
 							// Animation with reduced motion respect
-							"motion-safe:active:scale-95 motion-safe:transition-all motion-safe:duration-100",
+							"motion-safe:transition-all motion-safe:duration-100 motion-safe:active:scale-95",
 							// Focus visible
-							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+							"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
 						)}
 					>
 						<span
 							className={cn(
 								"rounded-full",
 								// Animation with reduced motion respect (WCAG 2.3.3)
-								"motion-safe:transition-all motion-safe:duration-150 ease-out",
+								"ease-out motion-safe:transition-all motion-safe:duration-150",
 								index === selectedIndex
-									? "h-2.5 w-8 sm:h-3 sm:w-10 bg-primary shadow-md"
-									: "h-2.5 w-2.5 sm:h-3 sm:w-3 bg-muted-foreground/70 hover:bg-muted-foreground/90"
+									? "bg-primary h-2.5 w-8 shadow-md sm:h-3 sm:w-10"
+									: "bg-muted-foreground/70 hover:bg-muted-foreground/90 h-2.5 w-2.5 sm:h-3 sm:w-3",
 							)}
 						/>
 					</button>
 				))}
 			</div>
-			<span className="text-xs text-muted-foreground/70">
+			<span className="text-muted-foreground/70 text-xs">
 				{selectedIndex + 1} sur {scrollSnaps.length}
 			</span>
 		</div>

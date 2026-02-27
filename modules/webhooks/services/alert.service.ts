@@ -19,12 +19,7 @@ export async function sendWebhookFailedAlert({
 	attempts,
 	error,
 }: WebhookFailedAlertParams): Promise<{ success: boolean; error?: unknown }> {
-	const result = await sendWebhookFailedAlertEmail({
-		eventId,
-		eventType,
-		attempts,
-		error,
-	});
+	const result = await sendWebhookFailedAlertEmail({ eventId, eventType, attempts, error });
 
 	if (!result.success) {
 		console.error("[WEBHOOK_ALERT] Erreur envoi alerte:", result.error);

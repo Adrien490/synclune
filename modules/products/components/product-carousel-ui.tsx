@@ -9,11 +9,7 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@/shared/components/ui/carousel";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import Autoplay from "embla-carousel-autoplay";
 import { useReducedMotion } from "motion/react";
@@ -52,7 +48,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 			stopOnInteraction: false,
 			stopOnMouseEnter: true,
 			stopOnFocusIn: true,
-		})
+		}),
 	);
 
 	const plugins = prefersReducedMotion ? [] : [autoplayPlugin.current];
@@ -80,15 +76,12 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 
 	if (products.length === 0) {
 		return (
-			<div className="relative h-full min-h-80 sm:min-h-100 lg:min-h-120 rounded-2xl bg-muted flex flex-col items-center justify-center gap-3">
+			<div className="bg-muted relative flex h-full min-h-80 flex-col items-center justify-center gap-3 rounded-2xl sm:min-h-100 lg:min-h-120">
 				{/* R7: Icône SVG au lieu d'emoji */}
-				<div className="size-12 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-					<Sparkles
-						className="size-6 text-muted-foreground"
-						aria-hidden="true"
-					/>
+				<div className="bg-muted-foreground/10 flex size-12 items-center justify-center rounded-full">
+					<Sparkles className="text-muted-foreground size-6" aria-hidden="true" />
 				</div>
-				<p className="text-muted-foreground text-center px-4">
+				<p className="text-muted-foreground px-4 text-center">
 					Aucun produit disponible pour le moment
 				</p>
 			</div>
@@ -96,14 +89,15 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	}
 
 	return (
-		<div className="max-w-7xl mx-auto">
+		<div className="mx-auto max-w-7xl">
 			{/* R9: tabIndex pour focus clavier explicite */}
 			<div
 				role="region"
 				aria-label="Carrousel de produits vedettes"
 				aria-roledescription="carrousel"
+				// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- carousel needs keyboard navigation
 				tabIndex={0}
-				className="outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl"
+				className="focus-visible:ring-ring rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
 			>
 				{/* Annonce pour lecteurs d'écran */}
 				<div className="sr-only" aria-live="polite" aria-atomic="true">
@@ -119,14 +113,14 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 						align: "start",
 						loop: true,
 					}}
-					className="w-full h-full group/carousel"
+					className="group/carousel h-full w-full"
 				>
 					<CarouselContent className="h-full">
 						{products.map((product, index) => (
 							<CarouselItem key={product.id} className="h-full">
 								<Link
 									href={`/creations/${product.slug}`}
-									className="block relative h-full min-h-80 sm:min-h-100 lg:min-h-120 rounded-2xl overflow-hidden shadow-2xl group"
+									className="group relative block h-full min-h-80 overflow-hidden rounded-2xl shadow-2xl sm:min-h-100 lg:min-h-120"
 								>
 									<Image
 										src={product.image.url}
@@ -144,17 +138,17 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 									<div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
 									{/* R3: spacing bottom augmenté (pb-20 mobile) pour éviter chevauchement avec contrôles */}
-									<div className="absolute bottom-0 left-0 right-0 p-4 pb-20 sm:p-6 sm:pb-8 text-white z-10">
-										<h2 className="text-xl sm:text-2xl font-semibold mb-1 sm:mb-2 tracking-tight drop-shadow-lg line-clamp-2">
+									<div className="absolute right-0 bottom-0 left-0 z-10 p-4 pb-20 text-white sm:p-6 sm:pb-8">
+										<h2 className="mb-1 line-clamp-2 text-xl font-semibold tracking-tight drop-shadow-lg sm:mb-2 sm:text-2xl">
 											{product.title}
 										</h2>
-										<p className="text-base sm:text-lg font-medium drop-shadow-md">
+										<p className="text-base font-medium drop-shadow-md sm:text-lg">
 											{(product.price / 100).toFixed(2)} €
 										</p>
 									</div>
 
 									{/* Overlay decoratif */}
-									<div className="absolute inset-0 bg-linear-to-tr from-primary/10 via-transparent to-secondary/10 pointer-events-none" />
+									<div className="from-primary/10 to-secondary/10 pointer-events-none absolute inset-0 bg-linear-to-tr via-transparent" />
 								</Link>
 							</CarouselItem>
 						))}
@@ -168,18 +162,18 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							"flex",
 							// Position responsive
 							"bottom-4 left-4",
-							"sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2",
+							"sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2",
 							// Touch targets (WCAG 2.5.5)
 							"size-10 sm:size-12 md:size-10",
 							// Thème: primary avec opacité
-							"rounded-full bg-primary/80 border-0",
+							"bg-primary/80 rounded-full border-0",
 							"shadow-lg hover:shadow-xl",
 							"text-primary-foreground",
 							"hover:bg-primary hover:scale-105",
 							// Desktop: apparaît au survol
 							"sm:opacity-0 sm:group-hover/carousel:opacity-100 sm:focus-visible:opacity-100",
-							"disabled:opacity-40 disabled:pointer-events-none disabled:hover:scale-100",
-							"transition-all duration-300"
+							"disabled:pointer-events-none disabled:opacity-40 disabled:hover:scale-100",
+							"transition-all duration-300",
 						)}
 					/>
 					<CarouselNext
@@ -188,24 +182,24 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 						className={cn(
 							"flex",
 							// Position responsive
-							"bottom-4 right-4",
-							"sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2",
+							"right-4 bottom-4",
+							"sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2",
 							// Touch targets (WCAG 2.5.5)
 							"size-10 sm:size-12 md:size-10",
 							// Thème: primary avec opacité
-							"rounded-full bg-primary/80 border-0",
+							"bg-primary/80 rounded-full border-0",
 							"shadow-lg hover:shadow-xl",
 							"text-primary-foreground",
 							"hover:bg-primary hover:scale-105",
 							// Desktop: apparaît au survol
 							"sm:opacity-0 sm:group-hover/carousel:opacity-100 sm:focus-visible:opacity-100",
-							"disabled:opacity-40 disabled:pointer-events-none disabled:hover:scale-100",
-							"transition-all duration-300"
+							"disabled:pointer-events-none disabled:opacity-40 disabled:hover:scale-100",
+							"transition-all duration-300",
 						)}
 					/>
 
 					{/* Dots - utilise les variables thème */}
-					<div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 z-20">
+					<div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1">
 						{products.map((product, index) => (
 							<Tooltip key={index}>
 								<TooltipTrigger asChild>
@@ -215,11 +209,11 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 										size="icon"
 										className={cn(
 											// Zone tactile (WCAG 2.5.5)
-											"size-10 sm:size-11 p-0 cursor-pointer",
+											"size-10 cursor-pointer p-0 sm:size-11",
 											"flex items-center justify-center",
 											"transition-all duration-300",
 											// Thème: hover avec card
-											"hover:bg-card/10 rounded-full"
+											"hover:bg-card/10 rounded-full",
 										)}
 										aria-label={`Aller au produit ${index + 1}: ${product.title}`}
 										aria-current={current === index ? "true" : undefined}
@@ -229,25 +223,20 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 												"flex items-center justify-center rounded-full transition-all duration-300",
 												current === index
 													? // Actif: thème card/foreground
-														"size-6 sm:size-7 bg-card text-foreground text-xs font-semibold shadow-lg"
+														"bg-card text-foreground size-6 text-xs font-semibold shadow-lg sm:size-7"
 													: // Inactif: thème card avec opacité
-														"size-3 sm:size-3.5 bg-card/70 group-hover/carousel:bg-card/90"
+														"bg-card/70 group-hover/carousel:bg-card/90 size-3 sm:size-3.5",
 											)}
 										>
 											{current === index && (
-												<span className="text-[10px] sm:text-xs">
-													{index + 1}
-												</span>
+												<span className="text-[10px] sm:text-xs">{index + 1}</span>
 											)}
 										</span>
 									</Button>
 								</TooltipTrigger>
-								<TooltipContent
-									side="top"
-									className="hidden sm:block max-w-50"
-								>
-									<p className="text-sm font-medium truncate">{product.title}</p>
-									<p className="text-xs text-muted-foreground">
+								<TooltipContent side="top" className="hidden max-w-50 sm:block">
+									<p className="truncate text-sm font-medium">{product.title}</p>
+									<p className="text-muted-foreground text-xs">
 										{(product.price / 100).toFixed(2)} €
 									</p>
 								</TooltipContent>

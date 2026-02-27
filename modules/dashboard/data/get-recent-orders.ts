@@ -1,25 +1,16 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import {
-	cacheDashboard,
-	DASHBOARD_CACHE_TAGS,
-} from "@/modules/dashboard/constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { transformRecentOrders } from "../services/recent-orders-transformer.service";
 
 import {
 	GET_DASHBOARD_RECENT_ORDERS_SELECT,
 	DASHBOARD_RECENT_ORDERS_LIMIT,
 } from "../constants/dashboard.constants";
-import type {
-	RecentOrderItem,
-	GetRecentOrdersReturn,
-} from "../types/dashboard.types";
+import type { GetRecentOrdersReturn } from "../types/dashboard.types";
 
 // Re-export pour compatibilité
-export type {
-	RecentOrderItem,
-	GetRecentOrdersReturn,
-} from "../types/dashboard.types";
+export type { RecentOrderItem, GetRecentOrdersReturn } from "../types/dashboard.types";
 
 // ============================================================================
 // MAIN FUNCTION

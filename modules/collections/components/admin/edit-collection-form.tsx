@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { toast } from "sonner";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 import type { EditableCollection } from "@/modules/collections/types/editable-collection.types";
 
@@ -48,16 +47,18 @@ export function EditCollectionForm({
 		withCallbacks(
 			updateCollection,
 			createToastCallbacks({
-				onSuccess: (result) => {
-					
+				onSuccess: (_result) => {
 					onSuccess?.();
 					if (redirectOnSuccess) {
-						setTimeout(() => router.push("/admin/catalogue/collections"), FORM_SUCCESS_REDIRECT_DELAY_MS);
+						setTimeout(
+							() => router.push("/admin/catalogue/collections"),
+							FORM_SUCCESS_REDIRECT_DELAY_MS,
+						);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return (
@@ -72,9 +73,7 @@ export function EditCollectionForm({
 			<input type="hidden" name="id" value={collection.id} />
 			<input type="hidden" name="slug" value={collection.slug} />
 			<form.Subscribe selector={(state) => [state.values.status]}>
-				{([status]) => (
-					<input type="hidden" name="status" value={status as string} />
-				)}
+				{([status]) => <input type="hidden" name="status" value={status as string} />}
 			</form.Subscribe>
 
 			{/* Name Field */}
@@ -143,11 +142,7 @@ export function EditCollectionForm({
 			<div className="flex justify-end pt-4">
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
-						<Button
-							type="submit"
-							disabled={!canSubmit || isPending}
-							className="min-w-35"
-						>
+						<Button type="submit" disabled={!canSubmit || isPending} className="min-w-35">
 							{isPending ? "Enregistrement..." : "Enregistrer"}
 						</Button>
 					)}

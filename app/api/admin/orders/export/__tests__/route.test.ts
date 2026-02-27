@@ -4,21 +4,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockGetSession,
-	mockPrisma,
-	mockBuildExportWhereClause,
-	mockGenerateOrdersCsv,
-} = vi.hoisted(() => ({
-	mockGetSession: vi.fn(),
-	mockPrisma: {
-		order: {
-			findMany: vi.fn(),
+const { mockGetSession, mockPrisma, mockBuildExportWhereClause, mockGenerateOrdersCsv } =
+	vi.hoisted(() => ({
+		mockGetSession: vi.fn(),
+		mockPrisma: {
+			order: {
+				findMany: vi.fn(),
+			},
+			user: {
+				findUnique: vi.fn(),
+			},
 		},
-	},
-	mockBuildExportWhereClause: vi.fn(),
-	mockGenerateOrdersCsv: vi.fn(),
-}));
+		mockBuildExportWhereClause: vi.fn(),
+		mockGenerateOrdersCsv: vi.fn(),
+	}));
 
 vi.mock("@/modules/auth/lib/get-current-session", () => ({
 	getSession: mockGetSession,
@@ -26,6 +25,7 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("@/modules/orders/services/export-orders-csv.service", () => ({
@@ -85,6 +85,17 @@ describe("GET /api/admin/orders/export", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockGetSession.mockResolvedValue(makeAdminSession());
+		mockPrisma.user.findUnique.mockResolvedValue({
+			id: "admin-1",
+			email: "admin@synclune.fr",
+			name: "Admin",
+			role: "ADMIN",
+			image: null,
+			firstName: null,
+			lastName: null,
+			emailVerified: true,
+			stripeCustomerId: null,
+		});
 		mockBuildExportWhereClause.mockReturnValue({ paymentStatus: "PAID" });
 		mockPrisma.order.findMany.mockResolvedValue(SAMPLE_ORDERS);
 		mockGenerateOrdersCsv.mockReturnValue("CSV_CONTENT");
@@ -95,12 +106,12 @@ describe("GET /api/admin/orders/export", () => {
 	// ========================================================================
 
 	describe("authorization", () => {
-		it("returns 403 when no session exists", async () => {
+		it("returns 401 when no session exists", async () => {
 			mockGetSession.mockResolvedValue(null);
 
 			const response = await GET(makeRequest({ periodType: "all" }));
 
-			expect(response.status).toBe(403);
+			expect(response.status).toBe(401);
 		});
 
 		it("returns 403 for non-admin user", async () => {
@@ -111,12 +122,12 @@ describe("GET /api/admin/orders/export", () => {
 			expect(response.status).toBe(403);
 		});
 
-		it("returns 403 when session user has no id", async () => {
+		it("returns 401 when session user has no id", async () => {
 			mockGetSession.mockResolvedValue({ user: { role: "ADMIN" } });
 
 			const response = await GET(makeRequest({ periodType: "all" }));
 
-			expect(response.status).toBe(403);
+			expect(response.status).toBe(401);
 		});
 
 		it("does not query database when unauthorized", async () => {
@@ -190,7 +201,7 @@ describe("GET /api/admin/orders/export", () => {
 			await GET(makeRequest({ periodType: "all" }));
 
 			expect(mockBuildExportWhereClause).toHaveBeenCalledWith(
-				expect.objectContaining({ periodType: "all" })
+				expect.objectContaining({ periodType: "all" }),
 			);
 		});
 
@@ -200,7 +211,7 @@ describe("GET /api/admin/orders/export", () => {
 			expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: { paidAt: "asc" },
-				})
+				}),
 			);
 		});
 
@@ -217,9 +228,7 @@ describe("GET /api/admin/orders/export", () => {
 		});
 
 		it("works with month period type", async () => {
-			const response = await GET(
-				makeRequest({ periodType: "month", year: "2026", month: "1" })
-			);
+			const response = await GET(makeRequest({ periodType: "month", year: "2026", month: "1" }));
 
 			expect(response.status).toBe(200);
 		});
@@ -230,7 +239,7 @@ describe("GET /api/admin/orders/export", () => {
 					periodType: "custom",
 					dateFrom: "2026-01-01",
 					dateTo: "2026-01-31",
-				})
+				}),
 			);
 
 			expect(response.status).toBe(200);

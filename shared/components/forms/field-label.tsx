@@ -32,11 +32,13 @@ export function FieldLabel({
 		<div className="flex items-center gap-2">
 			<Label htmlFor={htmlFor} className={cn("text-sm font-medium", className)}>
 				{children}
-				{required && <span className="text-destructive ml-1">*</span>}
-				{optional && !required && (
-					<span className="text-muted-foreground text-xs ml-2 font-normal">
-						(Optionnel)
+				{required && (
+					<span className="text-destructive ml-1" aria-hidden="true">
+						*
 					</span>
+				)}
+				{optional && !required && (
+					<span className="text-muted-foreground ml-2 text-xs font-normal">(Optionnel)</span>
 				)}
 			</Label>
 			{tooltip && (
@@ -47,7 +49,7 @@ export function FieldLabel({
 								type="button"
 								variant="ghost"
 								size="icon"
-								className="h-auto w-auto p-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
+								className="text-muted-foreground hover:text-foreground h-auto w-auto p-0 hover:bg-transparent"
 								aria-label="Plus d'informations"
 							>
 								<HelpCircle className="h-3.5 w-3.5" />

@@ -1,8 +1,6 @@
 "use client";
 
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useTransition } from "react";
+import { useRefreshAction } from "@/shared/hooks/use-action-with-toast";
 import { refreshProductTypes } from "@/modules/product-types/actions/refresh-product-types";
 
 interface UseRefreshProductTypesOptions {
@@ -10,32 +8,7 @@ interface UseRefreshProductTypesOptions {
 }
 
 export function useRefreshProductTypes(options?: UseRefreshProductTypesOptions) {
-	const [isTransitionPending, startTransition] = useTransition();
-
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			refreshProductTypes,
-			createToastCallbacks({
-				showSuccessToast: false,
-				onSuccess: () => {
-					options?.onSuccess?.();
-				},
-			})
-		),
-		undefined
-	);
-
-	const refresh = () => {
-		startTransition(() => {
-			const formData = new FormData();
-			action(formData);
-		});
-	};
-
-	return {
-		state,
-		action,
-		isPending: isPending || isTransitionPending,
-		refresh,
-	};
+	return useRefreshAction(refreshProductTypes, {
+		onSuccess: options?.onSuccess,
+	});
 }

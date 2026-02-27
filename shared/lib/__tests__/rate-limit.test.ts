@@ -6,10 +6,7 @@ import {
 	getRateLimitStatus,
 } from "../rate-limit";
 
-// Ensure Upstash is not configured so in-memory path is used
 beforeEach(() => {
-	delete process.env.UPSTASH_REDIS_REST_URL;
-	delete process.env.UPSTASH_REDIS_REST_TOKEN;
 	delete process.env.RATE_LIMIT_WHITELIST;
 	delete process.env.RATE_LIMIT_BLACKLIST;
 });
@@ -215,7 +212,11 @@ describe("checkRateLimit - whitelist/blacklist", () => {
 
 		const { checkRateLimit: freshCheck } = await import("../rate-limit");
 
-		const result = await freshCheck("user:some-user", { limit: 100, windowMs: 60000 }, "10.0.0.203");
+		const result = await freshCheck(
+			"user:some-user",
+			{ limit: 100, windowMs: 60000 },
+			"10.0.0.203",
+		);
 		expect(result.success).toBe(false);
 		expect(result.error).toContain("Accès refusé");
 
@@ -274,7 +275,7 @@ describe("checkRateLimit - structured logging", () => {
 				type: "per-action",
 				identifier: id,
 				ip: "10.0.0.80",
-			})
+			}),
 		);
 
 		warnSpy.mockRestore();
@@ -292,7 +293,7 @@ describe("checkRateLimit - structured logging", () => {
 			"[RATE_LIMIT] Blocked:",
 			expect.objectContaining({
 				identifier: "user:***",
-			})
+			}),
 		);
 
 		warnSpy.mockRestore();
@@ -314,7 +315,7 @@ describe("checkRateLimit - structured logging", () => {
 			expect.objectContaining({
 				type: "global-ip",
 				ip,
-			})
+			}),
 		);
 
 		warnSpy.mockRestore();

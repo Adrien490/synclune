@@ -42,9 +42,9 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 	return (
 		<article
 			className={cn(
-				"group/item border rounded-lg p-3.5",
-				"grid grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr] gap-3.5",
-				hasIssue ? "border-destructive/50 bg-destructive/5" : "border-border"
+				"group/item rounded-lg border p-3.5",
+				"grid grid-cols-[5rem_1fr] gap-3.5 sm:grid-cols-[6rem_1fr]",
+				hasIssue ? "border-destructive/50 bg-destructive/5" : "border-border",
 			)}
 			aria-label={`${item.sku.product.title}, quantité ${item.quantity}`}
 		>
@@ -52,33 +52,28 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
-				className="relative size-20 sm:size-24 row-span-2 rounded-md overflow-hidden bg-muted active:opacity-80 transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50"
+				className="bg-muted focus-visible:ring-ring relative row-span-2 size-20 overflow-hidden rounded-md transition-opacity group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:opacity-80 sm:size-24"
 				aria-label={`Voir ${item.sku.product.title}`}
 			>
 				{primaryImage ? (
 					primaryImage.mediaType === "VIDEO" ? (
 						<video
-							className="w-full h-full object-cover"
+							className="h-full w-full object-cover"
 							autoPlay
 							muted
 							loop
 							playsInline
 							preload="none"
 							poster={primaryImage.thumbnailUrl ?? undefined}
-							aria-label={
-								primaryImage.altText || `Video du produit ${item.sku.product.title}`
-							}
+							aria-label={primaryImage.altText || `Video du produit ${item.sku.product.title}`}
 							aria-describedby={`video-desc-${item.id}`}
 						>
-							<source
-								src={primaryImage.url}
-								type={getVideoMimeType(primaryImage.url)}
-							/>
+							<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
 							{/* Track vide pour WCAG - vidéos produits sans audio */}
 							<track kind="captions" srcLang="fr" label="Français" default />
 							<p id={`video-desc-${item.id}`} className="sr-only">
-								Video de presentation du bijou {item.sku.product.title}. La video
-								est en lecture automatique et sans son.
+								Video de presentation du bijou {item.sku.product.title}. La video est en lecture
+								automatique et sans son.
 							</p>
 						</video>
 					) : (
@@ -94,31 +89,31 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 						/>
 					)
 				) : (
-					<div className="w-full h-full flex items-center justify-center text-muted-foreground">
+					<div className="text-muted-foreground flex h-full w-full items-center justify-center">
 						<span className="text-[10px]">Pas d&apos;image</span>
 					</div>
 				)}
 			</Link>
 
 			{/* Infos */}
-			<div className="flex-1 min-w-0 space-y-1">
+			<div className="min-w-0 flex-1 space-y-1">
 				{/* Nom */}
 				<Link
 					href={`/creations/${item.sku.product.slug}`}
 					onClick={onClose}
-					className="font-medium text-sm hover:text-foreground active:text-muted-foreground transition-colors line-clamp-2 sm:line-clamp-1 block rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50"
+					className="hover:text-foreground active:text-muted-foreground focus-visible:ring-ring line-clamp-2 block rounded text-sm font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:line-clamp-1"
 				>
 					{item.sku.product.title}
 				</Link>
 
 				{/* Attributs */}
-				<dl className="flex flex-wrap gap-x-1 text-xs text-muted-foreground">
+				<dl className="text-muted-foreground flex flex-wrap gap-x-1 text-xs">
 					{item.sku.color && (
 						<div className="inline-flex items-center gap-1">
 							<dt className="sr-only">Couleur</dt>
 							<dd className="inline-flex items-center gap-1">
 								<span
-									className="w-2.5 h-2.5 rounded-full border border-border inline-block"
+									className="border-border inline-block h-2.5 w-2.5 rounded-full border"
 									style={{ backgroundColor: item.sku.color.hex }}
 									aria-hidden="true"
 								/>
@@ -153,8 +148,8 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				{/* Prix final */}
 				<div
 					className={cn(
-						"tabular-nums font-medium text-sm",
-						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:motion-safe:animate-pulse"
+						"text-sm font-medium tabular-nums",
+						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:motion-safe:animate-pulse",
 					)}
 				>
 					{item.quantity > 1 ? (
@@ -169,15 +164,12 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					)}
 					{hasDiscount && (
 						<span className="ml-2 inline-flex items-center gap-1">
-							<span
-								className="text-xs text-muted-foreground line-through"
-								aria-hidden="true"
-							>
+							<span className="text-muted-foreground text-xs line-through" aria-hidden="true">
 								{formatEuro(item.sku.compareAtPrice!)}
 							</span>
 							<Badge
 								variant="secondary"
-								className="text-[10px] px-1 py-0 bg-accent/20"
+								className="bg-accent/20 px-1 py-0 text-[10px]"
 								aria-label={`Reduction de ${discountPercent} pourcent`}
 							>
 								-{discountPercent}%
@@ -194,18 +186,18 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				{hasIssue ? (
 					<div className="flex gap-1">
 						{isOutOfStock && (
-							<Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+							<Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
 								Rupture
 							</Badge>
 						)}
 						{isInactive && (
-							<Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+							<Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
 								Indisponible
 							</Badge>
 						)}
 					</div>
 				) : item.sku.inventory <= LOW_STOCK_THRESHOLD ? (
-					<p className="text-xs text-orange-600">
+					<p className="text-xs text-orange-800 dark:text-orange-400">
 						Plus que {item.sku.inventory} en stock
 					</p>
 				) : null}
@@ -215,7 +207,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 			<div className="flex items-center justify-between gap-2">
 				{/* Quantité - à gauche (rendu uniquement si inventory > 1) */}
 				{item.sku.inventory === 1 && !hasIssue ? (
-					<span className="text-xs text-orange-600 font-medium">
+					<span className="text-xs font-medium text-orange-800 dark:text-orange-400">
 						Dernière pièce !
 					</span>
 				) : (

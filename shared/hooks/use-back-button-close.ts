@@ -26,11 +26,7 @@ interface UseBackButtonCloseOptions {
  * });
  * ```
  */
-export function useBackButtonClose({
-	isOpen,
-	onClose,
-	id = "modal",
-}: UseBackButtonCloseOptions) {
+export function useBackButtonClose({ isOpen, onClose, id = "modal" }: UseBackButtonCloseOptions) {
 	const historyPushedRef = useRef(false);
 
 	// Pousser un état dans l'historique à l'ouverture
@@ -63,7 +59,7 @@ export function useBackButtonClose({
 
 		window.addEventListener("popstate", onPopState);
 		return () => window.removeEventListener("popstate", onPopState);
-	}, [isOpen, onPopState]);
+	}, [isOpen]);
 
 	// Fonction pour fermer proprement
 	const handleClose = () => {

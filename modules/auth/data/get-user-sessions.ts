@@ -5,16 +5,10 @@ import { SESSION_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { cacheDefault } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
 
-import type {
-	UserSession,
-	GetUserSessionsReturn,
-} from "../types/session.types";
+import type { GetUserSessionsReturn } from "../types/session.types";
 
 // Re-export pour compatibilité
-export type {
-	UserSession,
-	GetUserSessionsReturn,
-} from "../types/session.types";
+export type { UserSession, GetUserSessionsReturn } from "../types/session.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -48,7 +42,7 @@ export async function getUserSessions(): Promise<GetUserSessionsReturn> {
  */
 export async function fetchUserSessions(
 	userId: string,
-	currentSessionId?: string
+	currentSessionId?: string,
 ): Promise<GetUserSessionsReturn> {
 	"use cache: private";
 	cacheDefault(SESSION_CACHE_TAGS.SESSIONS(userId));
@@ -74,13 +68,10 @@ export async function fetchUserSessions(
 
 		return sessions.map((session) => ({
 			...session,
-			isCurrentSession: currentSessionId
-				? session.id === currentSessionId
-				: false,
+			isCurrentSession: currentSessionId ? session.id === currentSessionId : false,
 			isExpired: session.expiresAt < now,
 		}));
-	} catch (error) {
-		// console.error("Erreur lors de la récupération des sessions utilisateur:", error);
+	} catch {
 		return [];
 	}
 }

@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useInstallPromptStore } from "@/shared/providers/install-prompt-store-provider"
+import { useInstallPromptStore } from "@/shared/providers/install-prompt-store-provider";
 import {
 	useCookieConsentStore,
 	useHasConsented,
-} from "@/shared/providers/cookie-consent-store-provider"
-import { Button } from "./ui/button"
-import { Logo } from "./logo"
-import { AnimatePresence, motion, useReducedMotion } from "motion/react"
-import { FocusScope } from "@radix-ui/react-focus-scope"
-import { useEffect, useRef, useState } from "react"
-import type { BeforeInstallPromptEvent } from "@/shared/types/pwa.types"
+} from "@/shared/providers/cookie-consent-store-provider";
+import { Button } from "./ui/button";
+import { Logo } from "./logo";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { FocusScope } from "@radix-ui/react-focus-scope";
+import { useEffect, useRef, useState } from "react";
+import type { BeforeInstallPromptEvent } from "@/shared/types/pwa.types";
 
 /**
  * PWA install prompt banner — bottom-left, cookie-banner style.
@@ -26,141 +26,136 @@ import type { BeforeInstallPromptEvent } from "@/shared/types/pwa.types"
  * - Safe area for iOS bottom bar
  */
 export function InstallPromptBanner() {
-	const bannerVisible = useInstallPromptStore((s) => s.bannerVisible)
-	const _hasHydrated = useInstallPromptStore((s) => s._hasHydrated)
-	const dismissForSession = useInstallPromptStore((s) => s.dismissForSession)
-	const markInstalled = useInstallPromptStore((s) => s.markInstalled)
+	const bannerVisible = useInstallPromptStore((s) => s.bannerVisible);
+	const _hasHydrated = useInstallPromptStore((s) => s._hasHydrated);
+	const dismissForSession = useInstallPromptStore((s) => s.dismissForSession);
+	const markInstalled = useInstallPromptStore((s) => s.markInstalled);
 
-	const cookieBannerVisible = useCookieConsentStore((s) => s.bannerVisible)
-	const hasConsented = useHasConsented()
+	const cookieBannerVisible = useCookieConsentStore((s) => s.bannerVisible);
+	const hasConsented = useHasConsented();
 
-	const shouldReduceMotion = useReducedMotion()
-	const installButtonRef = useRef<HTMLButtonElement>(null)
+	const shouldReduceMotion = useReducedMotion();
+	const installButtonRef = useRef<HTMLButtonElement>(null);
 
-	const [deferredPrompt, setDeferredPrompt] =
-		useState<BeforeInstallPromptEvent | null>(null)
-	const [isStandalone, setIsStandalone] = useState(false)
-	const [isIOS, setIsIOS] = useState(false)
+	const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+	const [isStandalone, setIsStandalone] = useState(false);
+	const [isIOS, setIsIOS] = useState(false);
 
 	// Detect standalone mode and iOS
 	useEffect(() => {
 		const standalone =
 			window.matchMedia("(display-mode: standalone)").matches ||
-			("standalone" in navigator &&
-				(navigator as unknown as { standalone: boolean }).standalone)
-		setIsStandalone(!!standalone)
+			("standalone" in navigator && (navigator as unknown as { standalone: boolean }).standalone);
+		queueMicrotask(() => setIsStandalone(!!standalone));
 
-		const ua = navigator.userAgent
-		setIsIOS(/iPad|iPhone|iPod/.test(ua) && !("MSStream" in window))
-	}, [])
+		const ua = navigator.userAgent;
+		queueMicrotask(() => setIsIOS(/iPad|iPhone|iPod/.test(ua) && !("MSStream" in window)));
+	}, []);
 
 	// Listen for beforeinstallprompt event
 	useEffect(() => {
 		const handler = (e: BeforeInstallPromptEvent) => {
-			e.preventDefault()
-			setDeferredPrompt(e)
-		}
+			e.preventDefault();
+			setDeferredPrompt(e);
+		};
 
-		window.addEventListener("beforeinstallprompt", handler)
-		return () => window.removeEventListener("beforeinstallprompt", handler)
-	}, [])
+		window.addEventListener("beforeinstallprompt", handler);
+		return () => window.removeEventListener("beforeinstallprompt", handler);
+	}, []);
 
 	// Listen for appinstalled event
 	useEffect(() => {
 		const handler = () => {
-			markInstalled()
-			setDeferredPrompt(null)
-		}
+			markInstalled();
+			setDeferredPrompt(null);
+		};
 
-		window.addEventListener("appinstalled", handler)
-		return () => window.removeEventListener("appinstalled", handler)
-	}, [markInstalled])
+		window.addEventListener("appinstalled", handler);
+		return () => window.removeEventListener("appinstalled", handler);
+	}, [markInstalled]);
 
 	// Cookie banner must be resolved before showing install prompt
-	const cookieBannerResolved = hasConsented || !cookieBannerVisible
+	const cookieBannerResolved = hasConsented || !cookieBannerVisible;
 
 	const shouldShow =
 		_hasHydrated &&
 		bannerVisible &&
 		!isStandalone &&
 		cookieBannerResolved &&
-		(deferredPrompt !== null || isIOS)
+		(deferredPrompt !== null || isIOS);
 
 	// Focus on install button after animation
 	useEffect(() => {
 		if (shouldShow && installButtonRef.current) {
 			const timer = setTimeout(
 				() => installButtonRef.current?.focus(),
-				shouldReduceMotion ? 0 : 300
-			)
-			return () => clearTimeout(timer)
+				shouldReduceMotion ? 0 : 300,
+			);
+			return () => clearTimeout(timer);
 		}
-	}, [shouldShow, shouldReduceMotion])
+	}, [shouldShow, shouldReduceMotion]);
 
 	// Escape key dismisses
 	useEffect(() => {
-		if (!shouldShow) return
+		if (!shouldShow) return;
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
-				dismissForSession()
+				dismissForSession();
 			}
-		}
+		};
 
-		document.addEventListener("keydown", handleKeyDown)
-		return () => document.removeEventListener("keydown", handleKeyDown)
-	}, [shouldShow, dismissForSession])
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, [shouldShow, dismissForSession]);
 
 	async function handleInstall() {
-		if (!deferredPrompt) return
-		await deferredPrompt.prompt()
-		const { outcome } = await deferredPrompt.userChoice
+		if (!deferredPrompt) return;
+		await deferredPrompt.prompt();
+		const { outcome } = await deferredPrompt.userChoice;
 		if (outcome === "accepted") {
-			markInstalled()
+			markInstalled();
 		}
-		setDeferredPrompt(null)
+		setDeferredPrompt(null);
 	}
 
 	if (!_hasHydrated) {
-		return null
+		return null;
 	}
 
 	return (
 		<AnimatePresence>
 			{shouldShow && (
 				<motion.div
-					initial={
-						shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }
-					}
+					initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
-					exit={
-						shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }
-					}
+					exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					transition={{
 						duration: shouldReduceMotion ? 0 : 0.3,
 						ease: "easeOut",
 					}}
-					className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 md:bottom-6 md:left-6 md:right-auto z-50 w-auto max-w-[calc(100vw-2rem)] md:max-w-md"
+					className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-6 md:left-6 md:max-w-md"
 					role="region"
 					aria-label="Installer l'application"
 					aria-describedby="install-description"
 					aria-live="polite"
 				>
 					<FocusScope trapped loop>
-						<div className="bg-background/95 backdrop-blur-md border border-primary/15 shadow-lg rounded-xl p-4 md:p-6 space-y-3 md:space-y-4">
+						<div className="bg-background/95 border-primary/15 space-y-3 rounded-xl border p-4 shadow-lg backdrop-blur-md md:space-y-4 md:p-6">
 							<div className="flex items-center gap-3">
 								<Logo size={32} rounded="lg" />
-								<p className="text-base font-semibold text-foreground">
-									Installer Synclune
-								</p>
+								<p className="text-foreground text-base font-semibold">Installer Synclune</p>
 							</div>
 
 							{isIOS ? (
-								<p id="install-description" className="text-sm text-muted-foreground leading-relaxed">
+								<p
+									id="install-description"
+									className="text-muted-foreground text-sm leading-relaxed"
+								>
 									Appuyez sur{" "}
 									<span className="inline-flex items-center">
 										<svg
-											className="inline-block size-4 align-text-bottom mx-0.5"
+											className="mx-0.5 inline-block size-4 align-text-bottom"
 											viewBox="0 0 24 24"
 											fill="none"
 											stroke="currentColor"
@@ -175,13 +170,16 @@ export function InstallPromptBanner() {
 										</svg>
 										<span className="sr-only">Partager</span>
 									</span>{" "}
-									puis <strong>Sur l&apos;écran d&apos;accueil</strong> pour
-									installer l&apos;application.
+									puis <strong>Sur l&apos;écran d&apos;accueil</strong> pour installer
+									l&apos;application.
 								</p>
 							) : (
-								<p id="install-description" className="text-sm text-muted-foreground leading-relaxed">
-									Accédez à vos bijoux préférés directement depuis votre écran
-									d&apos;accueil, même hors ligne.
+								<p
+									id="install-description"
+									className="text-muted-foreground text-sm leading-relaxed"
+								>
+									Accédez à vos bijoux préférés directement depuis votre écran d&apos;accueil, même
+									hors ligne.
 								</p>
 							)}
 
@@ -192,7 +190,7 @@ export function InstallPromptBanner() {
 										onClick={dismissForSession}
 										variant="default"
 										size="sm"
-										className="flex-1 min-h-11"
+										className="min-h-11 flex-1"
 									>
 										Compris
 									</Button>
@@ -203,7 +201,7 @@ export function InstallPromptBanner() {
 											onClick={handleInstall}
 											variant="default"
 											size="sm"
-											className="flex-1 min-h-11"
+											className="min-h-11 flex-1"
 										>
 											Installer
 										</Button>
@@ -211,7 +209,7 @@ export function InstallPromptBanner() {
 											onClick={dismissForSession}
 											variant="secondary"
 											size="sm"
-											className="flex-1 min-h-11"
+											className="min-h-11 flex-1"
 											aria-label="Installer plus tard"
 										>
 											Plus tard
@@ -224,5 +222,5 @@ export function InstallPromptBanner() {
 				</motion.div>
 			)}
 		</AnimatePresence>
-	)
+	);
 }

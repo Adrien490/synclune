@@ -88,15 +88,14 @@ export function ColorSelector({
 		<fieldset
 			data-pending={isPending ? "" : undefined}
 			className="group/color space-y-3"
-			role="radiogroup"
 			aria-label="Sélection de couleur"
 		>
 			<div className="flex items-center justify-between">
 				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
 					{showMaterialLabel ? "Couleur / Matériau" : "Couleur"}
 					{optimisticColor && (
-						<span className="font-normal text-muted-foreground ml-1">
-							: {colors.find(c => (c.slug || c.id) === optimisticColor)?.name}
+						<span className="text-muted-foreground ml-1 font-normal">
+							: {colors.find((c) => (c.slug || c.id) === optimisticColor)?.name}
 						</span>
 					)}
 				</legend>
@@ -104,7 +103,7 @@ export function ColorSelector({
 					<Button
 						variant="ghost"
 						size="sm"
-						className="text-xs/5 tracking-normal antialiased text-muted-foreground group-has-[[data-pending]]/color:opacity-70"
+						className="text-muted-foreground text-xs/5 tracking-normal antialiased group-has-[[data-pending]]/color:opacity-70"
 						onClick={() => updateColor(null)}
 						type="button"
 					>
@@ -131,26 +130,26 @@ export function ColorSelector({
 							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
-								"group relative flex items-center gap-2.5 p-3.5 sm:p-3 rounded-xl sm:rounded-lg border-2 transition-all min-h-13 sm:min-h-11",
-								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
+								"group relative flex min-h-13 items-center gap-2.5 rounded-xl border-2 p-3.5 transition-all sm:min-h-11 sm:rounded-lg sm:p-3",
+								"hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50"
+								!isAvailable && "opacity-70 saturate-50",
 							)}
 						>
 							{color.hex && (
 								<div
-									className="w-8 h-8 sm:w-7 sm:h-7 rounded-full border-2 border-white shadow-sm shrink-0"
+									className="h-8 w-8 shrink-0 rounded-full border-2 border-white shadow-sm sm:h-7 sm:w-7"
 									style={{ backgroundColor: color.hex }}
 								/>
 							)}
 							<div className="text-left">
-								<span className="text-sm/6 tracking-normal antialiased font-medium">
+								<span className="text-sm/6 font-medium tracking-normal antialiased">
 									{color.name}
 								</span>
 								{!isAvailable && (
-									<p className="text-xs/5 tracking-normal antialiased text-muted-foreground">
+									<p className="text-muted-foreground text-xs/5 tracking-normal antialiased">
 										Indisponible
 									</p>
 								)}
@@ -159,9 +158,13 @@ export function ColorSelector({
 								<motion.div
 									initial={shouldReduceMotion ? {} : { scale: 0 }}
 									animate={{ scale: 1 }}
-									transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 15 }}
+									transition={
+										shouldReduceMotion
+											? { duration: 0 }
+											: { type: "spring", stiffness: 400, damping: 15 }
+									}
 								>
-									<Check className="w-4 h-4 text-primary ml-auto" aria-hidden="true" />
+									<Check className="text-primary ml-auto h-4 w-4" aria-hidden="true" />
 								</motion.div>
 							)}
 						</button>

@@ -25,12 +25,12 @@ import { cancelRefundSchema } from "../schemas/refund.schemas";
  */
 export async function cancelRefund(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
+		const { user: _adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -66,10 +66,7 @@ export async function cancelRefund(
 		}
 
 		// Vérifier le statut actuel - on ne peut annuler que PENDING ou APPROVED
-		if (
-			refund.status !== RefundStatus.PENDING &&
-			refund.status !== RefundStatus.APPROVED
-		) {
+		if (refund.status !== RefundStatus.PENDING && refund.status !== RefundStatus.APPROVED) {
 			return error(REFUND_ERROR_MESSAGES.CANNOT_CANCEL);
 		}
 
@@ -94,7 +91,9 @@ export async function cancelRefund(
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
 		}
 
-		return success(`Remboursement de ${(refund.amount / 100).toFixed(2)} € annulé pour la commande ${refund.order.orderNumber}`);
+		return success(
+			`Remboursement de ${(refund.amount / 100).toFixed(2)} € annulé pour la commande ${refund.order.orderNumber}`,
+		);
 	} catch (error) {
 		return handleActionError(error, REFUND_ERROR_MESSAGES.CANCEL_FAILED);
 	}

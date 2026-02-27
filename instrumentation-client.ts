@@ -1,23 +1,16 @@
-performance.mark("app-init")
+performance.mark("app-init");
 
-try {
-	window.addEventListener("error", (event) => {
-		console.error(
-			"[Instrumentation] Uncaught error:",
-			event.error ?? event.message
-		)
-	})
+window.addEventListener("error", (event) => {
+	console.error("[CLIENT_ERROR]", event.error);
+});
 
-	window.addEventListener("unhandledrejection", (event) => {
-		console.error("[Instrumentation] Unhandled rejection:", event.reason)
-	})
-} catch {
-	// Silently ignore if addEventListener is unavailable
-}
+window.addEventListener("unhandledrejection", (event) => {
+	console.error("[UNHANDLED_REJECTION]", event.reason);
+});
 
 export function onRouterTransitionStart(
 	url: string,
-	navigationType: "push" | "replace" | "traverse"
+	navigationType: "push" | "replace" | "traverse",
 ) {
-	performance.mark(`nav-${navigationType}-${url}`)
+	performance.mark(`nav-${navigationType}-${url}`);
 }

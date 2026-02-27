@@ -1,8 +1,4 @@
-import {
-	ChevronLeftIcon,
-	ChevronRightIcon,
-	MoreHorizontalIcon,
-} from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
 import * as React from "react";
 
 import { Button, buttonVariants } from "@/shared/components/ui/button";
@@ -19,10 +15,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
 	);
 }
 
-function PaginationContent({
-	className,
-	...props
-}: React.ComponentProps<"ul">) {
+function PaginationContent({ className, ...props }: React.ComponentProps<"ul">) {
 	return (
 		<ul
 			data-slot="pagination-content"
@@ -41,13 +34,9 @@ type PaginationLinkProps = {
 } & Pick<React.ComponentProps<typeof Button>, "size"> &
 	React.ComponentProps<"a">;
 
-function PaginationLink({
-	className,
-	isActive,
-	size = "icon",
-	...props
-}: PaginationLinkProps) {
+function PaginationLink({ className, isActive, size = "icon", ...props }: PaginationLinkProps) {
 	return (
+		// eslint-disable-next-line jsx-a11y/anchor-has-content -- content provided via spread props
 		<a
 			aria-current={isActive ? "page" : undefined}
 			data-slot="pagination-link"
@@ -57,17 +46,14 @@ function PaginationLink({
 					variant: isActive ? "outline" : "ghost",
 					size,
 				}),
-				className
+				className,
 			)}
 			{...props}
 		/>
 	);
 }
 
-function PaginationPrevious({
-	className,
-	...props
-}: React.ComponentProps<typeof PaginationLink>) {
+function PaginationPrevious({ className, ...props }: React.ComponentProps<typeof PaginationLink>) {
 	return (
 		<PaginationLink
 			aria-label="Aller à la page précédente"
@@ -81,10 +67,7 @@ function PaginationPrevious({
 	);
 }
 
-function PaginationNext({
-	className,
-	...props
-}: React.ComponentProps<typeof PaginationLink>) {
+function PaginationNext({ className, ...props }: React.ComponentProps<typeof PaginationLink>) {
 	return (
 		<PaginationLink
 			aria-label="Aller à la page suivante"
@@ -98,10 +81,7 @@ function PaginationNext({
 	);
 }
 
-function PaginationEllipsis({
-	className,
-	...props
-}: React.ComponentProps<"span">) {
+function PaginationEllipsis({ className, ...props }: React.ComponentProps<"span">) {
 	return (
 		<span
 			aria-hidden="true"

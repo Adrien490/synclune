@@ -16,6 +16,8 @@ export interface WithRetryOptions {
 	signal?: AbortSignal;
 	/** Optional predicate to classify retryable errors. When provided, non-retryable errors throw immediately. */
 	isRetryable?: (error: unknown) => boolean;
+	/** Add random jitter to prevent thundering herd (default: true) */
+	jitter?: boolean;
 }
 
 /**
@@ -37,10 +39,11 @@ export interface WithRetryOptions {
  */
 export async function withRetry<T>(
 	fn: () => Promise<T>,
-	options: WithRetryOptions = {}
+	options: WithRetryOptions = {},
 ): Promise<T> {
 	const maxAttempts = options.maxAttempts ?? 3;
 	const baseDelay = options.baseDelay ?? 1000;
+	const useJitter = options.jitter ?? true;
 	const { signal, isRetryable } = options;
 
 	let lastError: Error | null = null;
@@ -68,7 +71,9 @@ export async function withRetry<T>(
 
 			// Delay before next attempt (skip after last attempt)
 			if (attempt < maxAttempts - 1) {
-				const waitTime = baseDelay * Math.pow(2, attempt);
+				const exponential = baseDelay * Math.pow(2, attempt);
+				// Full jitter: random delay between 0 and exponential value
+				const waitTime = useJitter ? Math.round(Math.random() * exponential) : exponential;
 				await delay(waitTime);
 			}
 		}

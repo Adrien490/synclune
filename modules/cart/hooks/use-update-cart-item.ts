@@ -2,9 +2,10 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useRef, useTransition } from "react";
+import { useActionState, useEffect, useRef, useTransition } from "react";
 import { updateCartItem } from "@/modules/cart/actions/update-cart-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import type { ActionState } from "@/shared/types/server-action";
 
 interface UseUpdateCartItemOptions {
 	onSuccess?: (message: string) => void;
@@ -29,10 +30,13 @@ export const useUpdateCartItem = (options?: UseUpdateCartItemOptions) => {
 	// Ref pour stocker le delta pending (pour rollback)
 	const pendingDeltaRef = useRef<number>(0);
 
-	const [isTransitionPending, startTransition] = useTransition();
-
-	const [state, formAction, isActionPending] = useActionState(
-		withCallbacks(
+	// Wrapped action ref, built in useEffect to avoid ref access during render
+	const wrappedActionRef =
+		useRef<(prev: ActionState | undefined, formData: FormData) => Promise<ActionState>>(
+			updateCartItem,
+		);
+	useEffect(() => {
+		wrappedActionRef.current = withCallbacks(
 			updateCartItem,
 			createToastCallbacks({
 				showSuccessToast: false,
@@ -54,9 +58,16 @@ export const useUpdateCartItem = (options?: UseUpdateCartItemOptions) => {
 					adjustCart(-pendingDeltaRef.current);
 					pendingDeltaRef.current = 0;
 				},
-			})
-		),
-		undefined
+			}),
+		);
+	});
+
+	const [isTransitionPending, startTransition] = useTransition();
+
+	const [state, formAction, isActionPending] = useActionState(
+		async (prev: ActionState | undefined, formData: FormData) =>
+			wrappedActionRef.current(prev, formData),
+		undefined,
 	);
 
 	/**

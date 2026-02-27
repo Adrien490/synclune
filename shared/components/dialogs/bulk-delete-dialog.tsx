@@ -89,7 +89,7 @@ export function BulkDeleteDialog({
 	pendingLabel = "Suppression...",
 }: BulkDeleteDialogProps) {
 	const dialog = useAlertDialog<BulkDeleteData>(dialogId);
-	const { clearSelection } = useSelectionContext();
+	const { clearSelection: _clearSelection } = useSelectionContext();
 
 	const handleOpenChange = (open: boolean) => {
 		if (!open && !isPending) {
@@ -100,8 +100,7 @@ export function BulkDeleteDialog({
 	const ids = (dialog.data?.[idsDataKey] as string[] | undefined) ?? [];
 	const count = ids.length;
 
-	const renderedDescription =
-		typeof description === "function" ? description(count) : description;
+	const renderedDescription = typeof description === "function" ? description(count) : description;
 
 	const handleAction = (formData: FormData) => {
 		action(formData);
@@ -111,11 +110,7 @@ export function BulkDeleteDialog({
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={handleAction}>
-					<input
-						type="hidden"
-						name={idsFieldName}
-						value={JSON.stringify(ids)}
-					/>
+					<input type="hidden" name={idsFieldName} value={JSON.stringify(ids)} />
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>{title}</AlertDialogTitle>
@@ -127,11 +122,7 @@ export function BulkDeleteDialog({
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-						>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? pendingLabel : submitLabel}
 						</AlertDialogAction>

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { ProductCatalog } from "@/modules/products/components/product-catalog";
@@ -30,9 +30,7 @@ type BijouxPageProps = {
 	searchParams: Promise<ProductSearchParams>;
 };
 
-export async function generateMetadata({
-	searchParams,
-}: BijouxPageProps): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: BijouxPageProps): Promise<Metadata> {
 	const searchParamsData = await searchParams;
 
 	// Si seul le type est présent, rediriger vers la page catégorie dédiée
@@ -40,8 +38,7 @@ export async function generateMetadata({
 	if (typeParam && !Array.isArray(typeParam)) {
 		// Vérifier qu'il n'y a pas d'autres filtres actifs
 		const otherFilters = Object.keys(searchParamsData).filter(
-			(key) =>
-				!["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(key)
+			(key) => !["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(key),
 		);
 		if (otherFilters.length === 0) {
 			// La redirection sera gérée dans le composant page
@@ -51,8 +48,7 @@ export async function generateMetadata({
 
 	// Vérifier si des filtres sont actifs
 	const hasActiveFilters = Object.keys(searchParamsData).some(
-		(key) =>
-			!["cursor", "direction", "perPage", "sortBy", "search"].includes(key)
+		(key) => !["cursor", "direction", "perPage", "sortBy", "search"].includes(key),
 	);
 
 	return {
@@ -91,8 +87,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	if (typeParam && !Array.isArray(typeParam)) {
 		// Vérifier qu'il n'y a pas d'autres filtres actifs (sauf pagination/tri)
 		const otherFilters = Object.keys(searchParamsData).filter(
-			(key) =>
-				!["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(key)
+			(key) => !["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(key),
 		);
 		if (otherFilters.length === 0) {
 			// Construire l'URL de redirection avec les params de pagination/recherche
@@ -103,13 +98,12 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			if (searchParamsData.direction) redirectParams.set("direction", searchParamsData.direction);
 
 			const queryString = redirectParams.toString();
-			redirect(`/produits/${typeParam}${queryString ? `?${queryString}` : ""}`);
+			permanentRedirect(`/produits/${typeParam}${queryString ? `?${queryString}` : ""}`);
 		}
 	}
 
 	// Récupérer les données du catalogue
-	const { productTypes, colors, materials, maxPriceInEuros } =
-		await getCatalogData();
+	const { productTypes, colors, materials, maxPriceInEuros } = await getCatalogData();
 
 	// Parser les paramètres
 	const { perPage, searchTerm } = parsePaginationParams(searchParamsData);
@@ -128,13 +122,9 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	// JSON-LD
 	const jsonLd = buildCatalogJsonLd({
 		name: "Bijoux artisanaux faits main",
-		description:
-			"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes.",
+		description: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes.",
 		url: "https://synclune.fr/produits",
-		breadcrumbs: [
-			{ name: "Accueil", url: "https://synclune.fr" },
-			{ name: "Bijoux" },
-		],
+		breadcrumbs: [{ name: "Accueil", url: "https://synclune.fr" }, { name: "Bijoux" }],
 	});
 
 	return (

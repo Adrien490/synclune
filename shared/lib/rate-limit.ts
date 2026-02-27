@@ -1,88 +1,21 @@
 /**
- * Rate limiting with Upstash Redis (production) and in-memory fallback (dev)
+ * In-memory rate limiting
  *
- * In production (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN set):
- * - Uses Upstash Redis for distributed rate limiting across all Vercel instances
- * - Sliding window algorithm for accurate limiting
- *
- * In development (env vars absent):
- * - Falls back to in-memory Map (same as before)
- * - Works without any external dependencies
+ * Uses a Map-based sliding window for rate limiting.
+ * Sufficient for single-instance deployments; Arcjet handles distributed rate limiting.
  */
 
-import type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types"
+import type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types";
 
-export type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types"
-
-// ============================================================================
-// UPSTASH REDIS RATE LIMITER (lazy-initialized)
-// ============================================================================
-
-let sharedRedis: import("@upstash/redis").Redis | null = null;
-let upstashLimiterCache: Map<string, import("@upstash/ratelimit").Ratelimit> | null = null;
-let globalIpLimiter: import("@upstash/ratelimit").Ratelimit | null = null;
-
-function isUpstashConfigured(): boolean {
-	return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
-}
-
-async function getSharedRedis(): Promise<import("@upstash/redis").Redis> {
-	if (sharedRedis) return sharedRedis;
-
-	const { Redis } = await import("@upstash/redis");
-	sharedRedis = new Redis({
-		url: process.env.UPSTASH_REDIS_REST_URL!,
-		token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-	});
-
-	return sharedRedis;
-}
-
-async function getUpstashLimiter(limit: number, windowMs: number): Promise<import("@upstash/ratelimit").Ratelimit> {
-	if (!upstashLimiterCache) {
-		upstashLimiterCache = new Map();
-	}
-
-	const cacheKey = `${limit}:${windowMs}`;
-	const cached = upstashLimiterCache.get(cacheKey);
-	if (cached) return cached;
-
-	const { Ratelimit } = await import("@upstash/ratelimit");
-	const redis = await getSharedRedis();
-
-	const windowSeconds = Math.ceil(windowMs / 1000);
-	const limiter = new Ratelimit({
-		redis,
-		limiter: Ratelimit.slidingWindow(limit, `${windowSeconds} s`),
-		prefix: "synclune:rl",
-	});
-
-	upstashLimiterCache.set(cacheKey, limiter);
-	return limiter;
-}
-
-async function getGlobalIpLimiter(): Promise<import("@upstash/ratelimit").Ratelimit> {
-	if (globalIpLimiter) return globalIpLimiter;
-
-	const { Ratelimit } = await import("@upstash/ratelimit");
-	const redis = await getSharedRedis();
-
-	globalIpLimiter = new Ratelimit({
-		redis,
-		limiter: Ratelimit.slidingWindow(GLOBAL_IP_LIMIT, `${Math.ceil(GLOBAL_IP_WINDOW / 1000)} s`),
-		prefix: "synclune:rl:global-ip",
-	});
-
-	return globalIpLimiter;
-}
+export type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types";
 
 // ============================================================================
-// IN-MEMORY FALLBACK (dev / missing Upstash config)
+// IN-MEMORY RATE LIMITER
 // ============================================================================
 
 interface RateLimitEntry {
-	count: number
-	resetAt: number
+	count: number;
+	resetAt: number;
 }
 
 const rateLimitStore = new Map<string, RateLimitEntry>();
@@ -93,7 +26,7 @@ const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const MAX_STORE_SIZE = 10000;
 
 // ============================================================================
-// SHARED CONSTANTS
+// CONSTANTS
 // ============================================================================
 
 const GLOBAL_IP_LIMIT = 100;
@@ -155,7 +88,7 @@ function cleanupExpiredEntries(): void {
 
 	if (rateLimitStore.size > MAX_STORE_SIZE) {
 		const entries = Array.from(rateLimitStore.entries()).sort(
-			(a, b) => a[1].resetAt - b[1].resetAt
+			(a, b) => a[1].resetAt - b[1].resetAt,
 		);
 		const targetSize = Math.floor(MAX_STORE_SIZE * 0.9);
 		const toDelete = entries.slice(0, entries.length - targetSize);
@@ -176,8 +109,6 @@ function cleanupExpiredEntries(): void {
 /**
  * Checks and increments the rate limit counter for an identifier.
  *
- * Uses Upstash Redis when configured (production), falls back to in-memory (dev).
- *
  * Built-in protections:
  * - Whitelist: always-allowed IPs
  * - Blacklist: always-blocked IPs
@@ -191,7 +122,7 @@ function cleanupExpiredEntries(): void {
 export async function checkRateLimit(
 	identifier: string,
 	config: RateLimitConfig = {},
-	ipAddress?: string | null
+	ipAddress?: string | null,
 ): Promise<RateLimitResult> {
 	const { limit = 10, windowMs = 60000 } = config;
 	const now = Date.now();
@@ -217,75 +148,7 @@ export async function checkRateLimit(
 		};
 	}
 
-	// Use Upstash if configured
-	if (isUpstashConfigured()) {
-		return checkRateLimitUpstash(identifier, effectiveIp, limit, windowMs);
-	}
-
-	// Fallback to in-memory
 	return checkRateLimitInMemory(identifier, effectiveIp, limit, windowMs);
-}
-
-// ============================================================================
-// UPSTASH IMPLEMENTATION
-// ============================================================================
-
-async function checkRateLimitUpstash(
-	identifier: string,
-	ipAddress: string | null,
-	limit: number,
-	windowMs: number
-): Promise<RateLimitResult> {
-	try {
-		// Global IP limit check
-		if (ipAddress) {
-			const globalLimiter = await getGlobalIpLimiter();
-			const globalResult = await globalLimiter.limit(ipAddress);
-
-			if (!globalResult.success) {
-				const retryAfterSeconds = Math.ceil((globalResult.reset - Date.now()) / 1000);
-				logRateLimitBlock({ type: "global-ip", identifier, ip: ipAddress, limit: GLOBAL_IP_LIMIT, windowMs: GLOBAL_IP_WINDOW, retryAfterSeconds });
-				return {
-					success: false,
-					remaining: 0,
-					limit: GLOBAL_IP_LIMIT,
-					reset: globalResult.reset,
-					retryAfter: retryAfterSeconds,
-					error: `Trop de requêtes depuis votre adresse IP. Veuillez réessayer dans ${formatRetryAfter(retryAfterSeconds)}.`,
-				};
-			}
-		}
-
-		// Per-action rate limit
-		const limiter = await getUpstashLimiter(limit, windowMs);
-		const result = await limiter.limit(identifier);
-
-		const retryAfterSeconds = result.success
-			? undefined
-			: Math.ceil((result.reset - Date.now()) / 1000);
-
-		if (!result.success) {
-			logRateLimitBlock({ type: "per-action", identifier, ip: ipAddress, limit, windowMs, retryAfterSeconds: retryAfterSeconds! });
-		}
-
-		return {
-			success: result.success,
-			remaining: result.remaining,
-			limit,
-			reset: result.reset,
-			retryAfter: retryAfterSeconds,
-			error: result.success
-				? undefined
-				: `Trop de requêtes. Veuillez réessayer dans ${formatRetryAfter(retryAfterSeconds!)}.`,
-		};
-	} catch (error) {
-		// If Upstash fails, fall back to in-memory to avoid blocking requests
-		console.error(
-			"[RATE_LIMIT] Upstash error, falling back to in-memory:",
-			error instanceof Error ? error.message : String(error)
-		);
-		return checkRateLimitInMemory(identifier, ipAddress, limit, windowMs);
-	}
 }
 
 // ============================================================================
@@ -296,7 +159,7 @@ function checkRateLimitInMemory(
 	identifier: string,
 	ipAddress: string | null,
 	limit: number,
-	windowMs: number
+	windowMs: number,
 ): RateLimitResult {
 	const now = Date.now();
 	const key = `ratelimit:${identifier}`;
@@ -312,7 +175,14 @@ function checkRateLimitInMemory(
 
 		if (globalEntry.count >= GLOBAL_IP_LIMIT) {
 			const retryAfterSeconds = Math.ceil((globalEntry.resetAt - now) / 1000);
-			logRateLimitBlock({ type: "global-ip", identifier, ip: ipAddress, limit: GLOBAL_IP_LIMIT, windowMs: GLOBAL_IP_WINDOW, retryAfterSeconds });
+			logRateLimitBlock({
+				type: "global-ip",
+				identifier,
+				ip: ipAddress,
+				limit: GLOBAL_IP_LIMIT,
+				windowMs: GLOBAL_IP_WINDOW,
+				retryAfterSeconds,
+			});
 			return {
 				success: false,
 				remaining: 0,
@@ -347,7 +217,14 @@ function checkRateLimitInMemory(
 	const retryAfterSeconds = success ? undefined : Math.ceil((entry.resetAt - now) / 1000);
 
 	if (!success) {
-		logRateLimitBlock({ type: "per-action", identifier, ip: ipAddress, limit, windowMs, retryAfterSeconds: retryAfterSeconds! });
+		logRateLimitBlock({
+			type: "per-action",
+			identifier,
+			ip: ipAddress,
+			limit,
+			windowMs,
+			retryAfterSeconds: retryAfterSeconds!,
+		});
 	}
 
 	return {
@@ -372,7 +249,7 @@ function checkRateLimitInMemory(
 export function getRateLimitIdentifier(
 	userId?: string | null,
 	sessionId?: string | null,
-	ipAddress?: string | null
+	ipAddress?: string | null,
 ): string {
 	if (userId) return `user:${userId}`;
 	if (sessionId) return `session:${sessionId}`;
@@ -384,7 +261,7 @@ export function getRateLimitIdentifier(
  * Extracts the real client IP from Next.js headers
  */
 export async function getClientIp(
-	headers: Awaited<ReturnType<typeof import("next/headers").headers>>
+	headers: Awaited<ReturnType<typeof import("next/headers").headers>>,
 ): Promise<string | null> {
 	const forwardedFor = headers.get("x-forwarded-for");
 	if (forwardedFor) return forwardedFor.split(",")[0].trim();
@@ -405,9 +282,7 @@ export function resetRateLimit(identifier: string): void {
 /**
  * Gets current rate limiting stats for an identifier
  */
-export function getRateLimitStatus(
-	identifier: string
-): { count: number; resetAt: number } | null {
+export function getRateLimitStatus(identifier: string): { count: number; resetAt: number } | null {
 	const entry = rateLimitStore.get(`ratelimit:${identifier}`);
 	if (!entry || entry.resetAt < Date.now()) return null;
 	return { count: entry.count, resetAt: entry.resetAt };

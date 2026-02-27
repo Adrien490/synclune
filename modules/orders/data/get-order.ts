@@ -8,12 +8,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 
 import { GET_ORDER_SELECT } from "../constants/order.constants";
 import { getOrderSchema } from "../schemas/order.schemas";
-import type {
-	GetOrderParams,
-	GetOrderReturn,
-	FetchOrderContext,
-	OrderItem,
-} from "../types/order.types";
+import type { GetOrderParams, GetOrderReturn, FetchOrderContext } from "../types/order.types";
 
 // Re-export pour compatibilité
 export { GET_ORDER_SELECT } from "../constants/order.constants";
@@ -29,9 +24,7 @@ export type {
 // MAIN FUNCTIONS
 // ============================================================================
 
-export async function getOrder(
-	params: Partial<GetOrderParams>
-): Promise<GetOrderReturn | null> {
+export async function getOrder(params: Partial<GetOrderParams>): Promise<GetOrderReturn | null> {
 	const validation = getOrderSchema.safeParse(params ?? {});
 
 	if (!validation.success) {
@@ -50,7 +43,7 @@ export async function getOrder(
 
 export async function fetchOrder(
 	params: GetOrderParams,
-	context: FetchOrderContext
+	context: FetchOrderContext,
 ): Promise<GetOrderReturn | null> {
 	"use cache: private";
 	cacheLife("dashboard");

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
-import type { GetProductsReturn, SortField } from "@/modules/products/data/get-products";
+import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import type { ProductType } from "@/modules/product-types/types/product-type.types";
 import type { Color } from "@/modules/colors/types/color.types";
 import type { MaterialOption } from "@/modules/materials/types/materials.types";
@@ -24,8 +24,10 @@ import { ClearSearchButton } from "@/shared/components/clear-search-button";
 import { SearchInput } from "@/shared/components/search-input";
 
 // Lazy loading - filter sheet charge uniquement a l'ouverture
-const ProductFilterSheet = dynamic(
-	() => import("@/modules/products/components/product-filter-sheet").then((mod) => mod.ProductFilterSheet)
+const ProductFilterSheet = dynamic(() =>
+	import("@/modules/products/components/product-filter-sheet").then(
+		(mod) => mod.ProductFilterSheet,
+	),
 );
 
 // ============================================================================
@@ -125,12 +127,12 @@ export function ProductCatalog({
 
 			{/* Section principale avec catalogue */}
 			<section
-				className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10"
+				className="bg-background relative z-10 pt-4 pb-12 lg:pt-6 lg:pb-16"
 				aria-label="Catalogue des créations"
 			>
 				<div
 					id="product-container"
-					className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6"
+					className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8"
 				>
 					{/* Desktop Toolbar - hidden on mobile */}
 					<Toolbar

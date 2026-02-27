@@ -14,11 +14,14 @@ interface ErrorBoundaryProps {
 	errorMessage?: string;
 	/** Classes CSS pour le conteneur du fallback par defaut */
 	className?: string;
+	/** Max retry attempts before disabling retry button (default: 3) */
+	maxRetries?: number;
 }
 
 interface ErrorBoundaryState {
 	hasError: boolean;
 	error: Error | null;
+	retryCount: number;
 }
 
 /**
@@ -26,16 +29,13 @@ interface ErrorBoundaryState {
  * Capture les erreurs des composants enfants et affiche un fallback gracieux
  * avec possibilite de retry
  */
-export class ErrorBoundary extends Component<
-	ErrorBoundaryProps,
-	ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 	constructor(props: ErrorBoundaryProps) {
 		super(props);
-		this.state = { hasError: false, error: null };
+		this.state = { hasError: false, error: null, retryCount: 0 };
 	}
 
-	static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+	static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
 		return { hasError: true, error };
 	}
 
@@ -45,7 +45,11 @@ export class ErrorBoundary extends Component<
 	}
 
 	handleRetry = () => {
-		this.setState({ hasError: false, error: null });
+		this.setState((prev) => ({
+			hasError: false,
+			error: null,
+			retryCount: prev.retryCount + 1,
+		}));
 		this.props.onRetry?.();
 	};
 
@@ -55,28 +59,40 @@ export class ErrorBoundary extends Component<
 				return this.props.fallback;
 			}
 
+			const maxRetries = this.props.maxRetries ?? 3;
+			const canRetry = this.state.retryCount < maxRetries;
+
 			return (
 				<div
 					className={
 						this.props.className ??
-						"w-full aspect-square rounded-3xl bg-muted flex items-center justify-center"
+						"bg-muted flex aspect-square w-full items-center justify-center rounded-3xl"
 					}
 					role="alert"
 					aria-live="assertive"
 				>
-					<div className="text-center space-y-4 p-8">
-						<p className="text-sm font-medium text-muted-foreground">
-							{this.props.errorMessage ?? "Impossible de charger le contenu"}
+					<div className="space-y-4 p-8 text-center">
+						<p className="text-muted-foreground text-sm font-medium">
+							{canRetry
+								? (this.props.errorMessage ?? "Impossible de charger le contenu")
+								: "Le probleme persiste. Veuillez rafraichir la page."}
 						</p>
-						<Button
-							variant="secondary"
-							size="sm"
-							onClick={this.handleRetry}
-							className="gap-2"
-						>
-							<RotateCcw className="w-4 h-4" />
-							Reessayer
-						</Button>
+						{canRetry ? (
+							<Button variant="secondary" size="sm" onClick={this.handleRetry} className="gap-2">
+								<RotateCcw className="h-4 w-4" />
+								Reessayer
+							</Button>
+						) : (
+							<Button
+								variant="secondary"
+								size="sm"
+								onClick={() => window.location.reload()}
+								className="gap-2"
+							>
+								<RotateCcw className="h-4 w-4" />
+								Rafraichir la page
+							</Button>
+						)}
 					</div>
 				</div>
 			);

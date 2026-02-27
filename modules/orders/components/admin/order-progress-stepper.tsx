@@ -43,10 +43,7 @@ const STATUS_ORDER: Record<OrderStatus, number> = {
 // COMPONENT
 // ============================================================================
 
-export function OrderProgressStepper({
-	status,
-	paymentStatus,
-}: OrderProgressStepperProps) {
+export function OrderProgressStepper({ status, paymentStatus }: OrderProgressStepperProps) {
 	const isCancelled = status === OrderStatus.CANCELLED;
 	const currentStepIndex = STATUS_ORDER[status];
 	const isUnpaid = paymentStatus === PaymentStatus.PENDING;
@@ -63,8 +60,7 @@ export function OrderProgressStepper({
 						const isPending = isCancelled || currentStepIndex < index;
 
 						// État spécial : En attente + non payé
-						const isWaitingPayment =
-							step.key === OrderStatus.PENDING && isUnpaid && isCurrent;
+						const isWaitingPayment = step.key === OrderStatus.PENDING && isUnpaid && isCurrent;
 
 						return (
 							<li
@@ -77,9 +73,7 @@ export function OrderProgressStepper({
 									<div
 										className={cn(
 											"h-0.5 flex-1 transition-colors",
-											isCompleted || isCurrent
-												? "bg-primary"
-												: "bg-border"
+											isCompleted || isCurrent ? "bg-primary" : "bg-border",
 										)}
 										aria-hidden="true"
 									/>
@@ -94,13 +88,13 @@ export function OrderProgressStepper({
 											isCurrent && !isWaitingPayment && "border-primary bg-primary/10 text-primary",
 											isWaitingPayment && "border-amber-500 bg-amber-500/10 text-amber-600",
 											isPending && "border-muted-foreground/30 bg-muted text-muted-foreground",
-											isCurrent && "ring-4 ring-primary/20"
+											isCurrent && "ring-primary/20 ring-4",
 										)}
 									>
 										<Icon className="h-5 w-5" aria-hidden="true" />
 										{isCurrent && !isCancelled && (
 											<span
-												className="absolute inset-0 animate-ping rounded-full bg-primary/30"
+												className="bg-primary/30 absolute inset-0 rounded-full motion-safe:animate-ping"
 												aria-hidden="true"
 											/>
 										)}
@@ -110,7 +104,7 @@ export function OrderProgressStepper({
 											"text-xs font-medium transition-colors",
 											isCompleted && "text-primary",
 											isCurrent && "text-foreground",
-											isPending && "text-muted-foreground"
+											isPending && "text-muted-foreground",
 										)}
 									>
 										{step.label}
@@ -122,7 +116,7 @@ export function OrderProgressStepper({
 									<div
 										className={cn(
 											"h-0.5 flex-1 transition-colors",
-											isCompleted ? "bg-primary" : "bg-border"
+											isCompleted ? "bg-primary" : "bg-border",
 										)}
 										aria-hidden="true"
 									/>

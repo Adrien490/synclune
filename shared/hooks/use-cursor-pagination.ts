@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 // Note: useEffectEvent is a React 19 feature for stable event handlers in effects
 // See: https://react.dev/reference/react/useEffectEvent
-import { useEffect, useRef, useTransition, useEffectEvent } from "react"
+import { useEffect, useRef, useTransition, useEffectEvent } from "react";
 
-import type { UseCursorPaginationProps } from "@/shared/types/hook.types"
+import type { UseCursorPaginationProps } from "@/shared/types/hook.types";
 
-export type { UseCursorPaginationProps } from "@/shared/types/hook.types"
+export type { UseCursorPaginationProps } from "@/shared/types/hook.types";
 
 /**
  * Hook pour gérer la pagination avec cursor (Best Practices 2025)
@@ -31,7 +31,7 @@ export function useCursorPagination({
 	const [isPending, startTransition] = useTransition();
 	// Sentinel to distinguish "not yet initialized" from "cursor is undefined"
 	// Avoids spurious scroll-to-top on first render when cursor is also undefined
-	const UNINITIALIZED = useRef(Symbol("uninitialized")).current
+	const UNINITIALIZED = useRef(Symbol("uninitialized")).current;
 	const previousCursorRef = useRef<string | symbol | undefined>(UNINITIALIZED);
 
 	const perPage = Number(searchParams.get("perPage")) || DEFAULT_PER_PAGE;
@@ -44,9 +44,7 @@ export function useCursorPagination({
 		} else {
 			// Comportement par défaut : scroll to top
 			// Respecte prefers-reduced-motion pour l'accessibilité
-			const prefersReducedMotion = window.matchMedia(
-				"(prefers-reduced-motion: reduce)"
-			).matches;
+			const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 			window.scrollTo({
 				top: 0,
 				behavior: prefersReducedMotion ? "instant" : "smooth",
@@ -69,7 +67,7 @@ export function useCursorPagination({
 			previousCursorRef.current = cursor;
 			onCursorChange();
 		}
-	}, [cursor, onCursorChange]);
+	}, [cursor]);
 
 	const preserveParams = () => {
 		return new URLSearchParams(searchParams.toString());
@@ -104,11 +102,7 @@ export function useCursorPagination({
 	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
 		// Ne pas intercepter si on est dans un champ de saisie
 		const target = e.target as HTMLElement;
-		if (
-			target.tagName === "INPUT" ||
-			target.tagName === "TEXTAREA" ||
-			target.isContentEditable
-		) {
+		if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
 			return;
 		}
 
@@ -129,7 +123,7 @@ export function useCursorPagination({
 
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [enableKeyboardShortcuts, onKeyDown]);
+	}, [enableKeyboardShortcuts]);
 
 	// Effect Event: reads searchParams and router without re-triggering the prefetch effect
 	const onPrefetch = useEffectEvent((pCursor: string | null, direction: string) => {

@@ -19,22 +19,18 @@ interface ProductInfoProps {
  * - Note avis cliquable
  * - Bouton wishlist
  */
-export function ProductInfo({
-	product,
-	isInWishlist,
-	reviewStats,
-}: ProductInfoProps) {
+export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoProps) {
 	return (
 		<div className="space-y-4">
 			{/* Titre avec bouton wishlist - titre masque sur desktop car affiche dans PageHeader */}
 			<div className="flex items-start justify-between gap-4 sm:hidden">
 				<div className="flex-1 space-y-2">
-					<h1
-						className="text-3xl/10 font-medium tracking-normal text-foreground line-clamp-2"
+					<p
+						className="text-foreground line-clamp-2 text-3xl/10 font-medium tracking-normal"
 						itemProp="name"
 					>
 						{product.title}
-					</h1>
+					</p>
 					{/* Badge note cliquable - scrolle vers les avis */}
 					{reviewStats && <ReviewRatingLink stats={reviewStats} />}
 				</div>
@@ -53,7 +49,7 @@ export function ProductInfo({
 				{product.type && (
 					<Badge
 						variant="outline"
-						className="text-xs/5 sm:text-sm/6 tracking-normal antialiased font-medium px-3 py-1.5 sm:py-1 rounded-full border-primary/30"
+						className="border-primary/30 rounded-full px-3 py-1.5 text-xs/5 font-medium tracking-normal antialiased sm:py-1 sm:text-sm/6"
 					>
 						{product.type.label}
 					</Badge>
@@ -67,7 +63,7 @@ export function ProductInfo({
 				)}
 
 				{/* Bouton wishlist visible uniquement sur desktop - a droite du badge type */}
-				<div className="hidden sm:block ml-auto">
+				<div className="ml-auto hidden sm:block">
 					<WishlistButton
 						productTitle={product.title}
 						productId={product.id}

@@ -1,11 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { CheckCircle2, Clock, Heart, Package, Sparkles, UserPlus } from "lucide-react";
@@ -39,9 +34,7 @@ interface CheckoutSuccessPageProps {
  * SÉCURISÉ : Nécessite order_id + order_number (double vérification)
  * Accepte paymentStatus PENDING car le webhook peut ne pas avoir encore process
  */
-export default async function CheckoutSuccessPage({
-	searchParams,
-}: CheckoutSuccessPageProps) {
+export default async function CheckoutSuccessPage({ searchParams }: CheckoutSuccessPageProps) {
 	const params = await searchParams;
 	const orderId = params.order_id;
 	const orderNumber = params.order_number;
@@ -66,27 +59,25 @@ export default async function CheckoutSuccessPage({
 
 	return (
 		<div className="min-h-screen">
+			<h1 className="sr-only">Confirmation de commande</h1>
 			<section className="bg-background py-8 sm:py-10">
-				<div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
-					<Card className="border-2 border-primary/20 bg-linear-to-br from-primary/5 to-background">
-						<CardHeader className="text-center space-y-4 pb-6">
-							<div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-								<CheckCircle2 className="w-10 h-10 text-primary" />
+					<Card className="border-primary/20 from-primary/5 to-background border-2 bg-linear-to-br">
+						<CardHeader className="space-y-4 pb-6 text-center">
+							<div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+								<CheckCircle2 className="text-primary h-10 w-10" />
 							</div>
 							<CardTitle className="text-2xl sm:text-3xl">
-								Merci pour votre confiance !{" "}
-								<span aria-hidden="true">✨</span>
+								Merci pour votre confiance ! <span aria-hidden="true">✨</span>
 							</CardTitle>
 							<div className="space-y-2">
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									{isPending
 										? "Votre commande a été enregistrée"
 										: "Votre paiement a été accepté avec succès"}
 								</p>
-								<p className="text-lg font-semibold">
-									Commande #{order.orderNumber}
-								</p>
+								<p className="text-lg font-semibold">Commande #{order.orderNumber}</p>
 							</div>
 						</CardHeader>
 
@@ -97,20 +88,20 @@ export default async function CheckoutSuccessPage({
 									<Clock />
 									<AlertTitle>Paiement en cours de traitement</AlertTitle>
 									<AlertDescription>
-										Votre paiement est en cours de traitement. Vous recevrez un email
-										de confirmation dès que le paiement sera validé.
+										Votre paiement est en cours de traitement. Vous recevrez un email de
+										confirmation dès que le paiement sera validé.
 									</AlertDescription>
 								</Alert>
 							)}
 
 							{/* Articles commandés */}
 							{order.items.length > 0 && (
-								<div className="bg-muted/50 rounded-lg p-4 space-y-3">
-									<h3 className="font-semibold text-base">Articles commandés</h3>
+								<div className="bg-muted/50 space-y-3 rounded-lg p-4">
+									<h3 className="text-base font-semibold">Articles commandés</h3>
 									<div className="space-y-3">
 										{order.items.map((item) => (
 											<div key={item.id} className="flex gap-3 text-sm">
-												<div className="relative w-14 h-14 shrink-0 rounded-md overflow-hidden bg-muted border">
+												<div className="bg-muted relative h-14 w-14 shrink-0 overflow-hidden rounded-md border">
 													{item.skuImageUrl ? (
 														<Image
 															src={item.skuImageUrl}
@@ -121,22 +112,22 @@ export default async function CheckoutSuccessPage({
 															className="object-cover"
 														/>
 													) : (
-														<div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+														<div className="text-muted-foreground flex h-full w-full items-center justify-center text-xs">
 															N/A
 														</div>
 													)}
 												</div>
-												<div className="flex-1 min-w-0">
-													<p className="font-medium line-clamp-1">{item.productTitle}</p>
-													<div className="text-xs text-muted-foreground space-x-2">
+												<div className="min-w-0 flex-1">
+													<p className="line-clamp-1 font-medium">{item.productTitle}</p>
+													<div className="text-muted-foreground space-x-2 text-xs">
 														{item.skuSize && <span>Taille: {item.skuSize}</span>}
 														{item.skuColor && <span>Couleur: {item.skuColor}</span>}
 														{item.skuMaterial && <span>Matière: {item.skuMaterial}</span>}
 													</div>
-													<p className="text-xs text-muted-foreground">Qté: {item.quantity}</p>
+													<p className="text-muted-foreground text-xs">Qté: {item.quantity}</p>
 												</div>
-												<div className="text-right shrink-0">
-													<p className="tabular-nums font-medium">
+												<div className="shrink-0 text-right">
+													<p className="font-medium tabular-nums">
 														{formatEuro(item.price * item.quantity)}
 													</p>
 												</div>
@@ -147,8 +138,8 @@ export default async function CheckoutSuccessPage({
 							)}
 
 							{/* Récapitulatif montants */}
-							<div className="bg-muted/50 rounded-lg p-4 space-y-3">
-								<h3 className="font-semibold text-base">Récapitulatif</h3>
+							<div className="bg-muted/50 space-y-3 rounded-lg p-4">
+								<h3 className="text-base font-semibold">Récapitulatif</h3>
 								<div className="space-y-2 text-sm">
 									<div className="flex justify-between">
 										<span className="text-muted-foreground">Sous-total</span>
@@ -164,7 +155,7 @@ export default async function CheckoutSuccessPage({
 										<span className="text-muted-foreground">Livraison</span>
 										<span>{formatEuro(order.shippingCost)}</span>
 									</div>
-									<div className="border-t pt-2 flex justify-between font-semibold text-base">
+									<div className="flex justify-between border-t pt-2 text-base font-semibold">
 										<span>Total</span>
 										<span>{formatEuro(order.total)}</span>
 									</div>
@@ -172,10 +163,10 @@ export default async function CheckoutSuccessPage({
 							</div>
 
 							{/* Adresse de livraison */}
-							<div className="bg-muted/50 rounded-lg p-4 space-y-2">
-								<h3 className="font-semibold text-base">Adresse de livraison</h3>
-								<div className="text-sm text-muted-foreground">
-									<p className="font-medium text-foreground">
+							<div className="bg-muted/50 space-y-2 rounded-lg p-4">
+								<h3 className="text-base font-semibold">Adresse de livraison</h3>
+								<div className="text-muted-foreground text-sm">
+									<p className="text-foreground font-medium">
 										{order.shippingFirstName} {order.shippingLastName}
 									</p>
 									<p>{order.shippingAddress1}</p>
@@ -196,61 +187,54 @@ export default async function CheckoutSuccessPage({
 									Merci du fond du cœur <span aria-hidden="true">💕</span>
 								</AlertTitle>
 								<AlertDescription>
-									Je vais préparer votre commande avec le plus grand soin ! Chaque bijou
-									est emballé avec amour dans mon atelier.
+									Je vais préparer votre commande avec le plus grand soin ! Chaque bijou est emballé
+									avec amour dans mon atelier.
 								</AlertDescription>
 							</Alert>
 
 							{/* Prochaines étapes */}
 							<div className="space-y-4">
-								<h3 className="font-semibold flex items-center gap-2">
-									<Sparkles className="w-5 h-5 text-primary" />
+								<h3 className="flex items-center gap-2 font-semibold">
+									<Sparkles className="text-primary h-5 w-5" />
 									Que va-t-il se passer maintenant ?
 								</h3>
 
 								<div className="space-y-3">
-									<div className="flex gap-3 items-start">
-										<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-											<span className="text-sm font-semibold text-primary">
-												1
-											</span>
+									<div className="flex items-start gap-3">
+										<div className="bg-primary/10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+											<span className="text-primary text-sm font-semibold">1</span>
 										</div>
 										<div>
 											<p className="font-medium">Email de confirmation</p>
-											<p className="text-sm text-muted-foreground">
-												Vous allez recevoir un email récapitulatif dans
-												les prochaines minutes. Pensez à vérifier vos spams
-												si vous ne le recevez pas.
+											<p className="text-muted-foreground text-sm">
+												Vous allez recevoir un email récapitulatif dans les prochaines minutes.
+												Pensez à vérifier vos spams si vous ne le recevez pas.
 											</p>
 										</div>
 									</div>
 
-									<div className="flex gap-3 items-start">
-										<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-											<span className="text-sm font-semibold text-primary">
-												2
-											</span>
+									<div className="flex items-start gap-3">
+										<div className="bg-primary/10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+											<span className="text-primary text-sm font-semibold">2</span>
 										</div>
 										<div>
 											<p className="font-medium">Je prépare votre commande</p>
-											<p className="text-sm text-muted-foreground">
-												Votre bijou sera préparé avec soin et expédié dans les
-												prochains jours ouvrés.
+											<p className="text-muted-foreground text-sm">
+												Votre bijou sera préparé avec soin et expédié dans les prochains jours
+												ouvrés.
 											</p>
 										</div>
 									</div>
 
-									<div className="flex gap-3 items-start">
-										<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-											<span className="text-sm font-semibold text-primary">
-												3
-											</span>
+									<div className="flex items-start gap-3">
+										<div className="bg-primary/10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+											<span className="text-primary text-sm font-semibold">3</span>
 										</div>
 										<div>
 											<p className="font-medium">Suivi de livraison</p>
-											<p className="text-sm text-muted-foreground">
-												Vous recevrez un email avec le numéro de suivi dès que
-												votre colis sera expédié.
+											<p className="text-muted-foreground text-sm">
+												Vous recevrez un email avec le numéro de suivi dès que votre colis sera
+												expédié.
 											</p>
 										</div>
 									</div>
@@ -261,18 +245,20 @@ export default async function CheckoutSuccessPage({
 							{!session && (
 								<Card className="border-dashed">
 									<CardContent className="flex items-start gap-4 p-4">
-										<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-											<UserPlus className="w-5 h-5 text-primary" />
+										<div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+											<UserPlus className="text-primary h-5 w-5" />
 										</div>
 										<div className="space-y-2">
-											<h3 className="font-semibold">Créez votre compte pour suivre votre commande</h3>
-											<p className="text-sm text-muted-foreground">
+											<h3 className="font-semibold">
+												Créez votre compte pour suivre votre commande
+											</h3>
+											<p className="text-muted-foreground text-sm">
 												Accédez au suivi de votre commande, enregistrez vos adresses et simplifiez
 												vos prochains achats.
 											</p>
 											<Button asChild variant="outline" size="sm">
 												<Link href="/inscription">
-													<UserPlus className="w-4 h-4" />
+													<UserPlus className="h-4 w-4" />
 													Créer mon compte
 												</Link>
 											</Button>
@@ -282,10 +268,10 @@ export default async function CheckoutSuccessPage({
 							)}
 
 							{/* Actions */}
-							<div className="flex flex-col sm:flex-row gap-3 pt-4">
+							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
 								<Button asChild size="lg" className="flex-1">
 									<Link href="/">
-										<Package className="w-4 h-4 mr-2" />
+										<Package className="mr-2 h-4 w-4" />
 										Retour à l'accueil
 									</Link>
 								</Button>
@@ -297,10 +283,8 @@ export default async function CheckoutSuccessPage({
 					</Card>
 
 					{/* Message de support */}
-					<div className="mt-8 text-center space-y-2">
-						<p className="text-sm text-muted-foreground">
-							Une question sur votre commande ?
-						</p>
+					<div className="mt-8 space-y-2 text-center">
+						<p className="text-muted-foreground text-sm">Une question sur votre commande ?</p>
 						<Button asChild variant="link">
 							<Link href="/personnalisation">Écrivez-moi</Link>
 						</Button>

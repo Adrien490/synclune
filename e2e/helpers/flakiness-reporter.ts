@@ -1,4 +1,4 @@
-import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } from "@playwright/test/reporter"
+import type { FullResult, Reporter, TestCase, TestResult } from "@playwright/test/reporter";
 
 /**
  * Custom Playwright reporter that tracks test flakiness.
@@ -10,11 +10,11 @@ import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } fr
  * 3. Outputs a flakiness report for CI analysis
  */
 export default class FlakinessReporter implements Reporter {
-	private flakyTests: Array<{ title: string; file: string; retries: number }> = []
-	private budget: number
+	private flakyTests: Array<{ title: string; file: string; retries: number }> = [];
+	private budget: number;
 
 	constructor(options?: { budget?: number }) {
-		this.budget = options?.budget ?? 3
+		this.budget = options?.budget ?? 3;
 	}
 
 	onTestEnd(test: TestCase, result: TestResult) {
@@ -24,31 +24,31 @@ export default class FlakinessReporter implements Reporter {
 				title: test.title,
 				file: test.location.file,
 				retries: result.retry,
-			})
+			});
 		}
 	}
 
 	onEnd(_result: FullResult) {
 		if (this.flakyTests.length === 0) {
-			console.log("\n[flakiness] No flaky tests detected.")
-			return
+			console.log("\n[flakiness] No flaky tests detected.");
+			return;
 		}
 
-		console.log(`\n[flakiness] ${this.flakyTests.length} flaky test(s) detected:`)
+		console.log(`\n[flakiness] ${this.flakyTests.length} flaky test(s) detected:`);
 		for (const test of this.flakyTests) {
-			console.log(`  - ${test.title} (${test.file}) — ${test.retries} retries`)
+			console.log(`  - ${test.title} (${test.file}) — ${test.retries} retries`);
 		}
 
 		if (this.flakyTests.length > this.budget) {
 			console.error(
 				`\n[flakiness] BUDGET EXCEEDED: ${this.flakyTests.length} flaky tests > budget of ${this.budget}`,
-			)
+			);
 			// Note: Playwright doesn't support failing via reporter exit code directly.
 			// The CI pipeline should check for this message in the output.
 		}
 	}
 
 	printsToStdio() {
-		return true
+		return true;
 	}
 }

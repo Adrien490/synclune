@@ -7,7 +7,7 @@
  */
 
 import { slugify } from "@/shared/utils/generate-slug";
-import type { BaseProductSku, BaseProductDetailed } from "@/shared/types/product-sku.types";
+import type { BaseProductSku } from "@/shared/types/product-sku.types";
 import type { VariantSelectors } from "../types/sku.types";
 
 export type { VariantSelectors } from "../types/sku.types";
@@ -26,7 +26,7 @@ export type { VariantSelectors } from "../types/sku.types";
  */
 export function matchColor(
 	sku: BaseProductSku,
-	selectors: Pick<VariantSelectors, "colorSlug" | "colorHex" | "colorId">
+	selectors: Pick<VariantSelectors, "colorSlug" | "colorHex" | "colorId">,
 ): boolean {
 	const { colorSlug, colorHex, colorId } = selectors;
 
@@ -61,7 +61,7 @@ export function matchColor(
  */
 export function matchMaterial(
 	sku: BaseProductSku,
-	selectors: Pick<VariantSelectors, "material" | "materialSlug">
+	selectors: Pick<VariantSelectors, "material" | "materialSlug">,
 ): boolean {
 	const { material, materialSlug } = selectors;
 
@@ -86,10 +86,7 @@ export function matchMaterial(
  * @param selectors - Sélecteurs de variantes
  * @returns true si la taille correspond ou si aucune taille n'est sélectionnée
  */
-export function matchSize(
-	sku: BaseProductSku,
-	selectors: Pick<VariantSelectors, "size">
-): boolean {
+export function matchSize(sku: BaseProductSku, selectors: Pick<VariantSelectors, "size">): boolean {
 	const { size } = selectors;
 
 	// Aucune sélection = match par défaut
@@ -105,15 +102,8 @@ export function matchSize(
  * @param selectors - Sélecteurs de variantes
  * @returns true si toutes les variantes correspondent
  */
-export function matchSkuVariants(
-	sku: BaseProductSku,
-	selectors: VariantSelectors
-): boolean {
-	return (
-		matchColor(sku, selectors) &&
-		matchMaterial(sku, selectors) &&
-		matchSize(sku, selectors)
-	);
+export function matchSkuVariants(sku: BaseProductSku, selectors: VariantSelectors): boolean {
+	return matchColor(sku, selectors) && matchMaterial(sku, selectors) && matchSize(sku, selectors);
 }
 
 // ============================================================================
@@ -134,7 +124,7 @@ export function matchSkuVariants(
  */
 export function filterCompatibleSkus<
 	TSku extends BaseProductSku,
-	TProduct extends { skus?: TSku[] | null }
+	TProduct extends { skus?: TSku[] | null },
 >(product: TProduct, selectedVariants: VariantSelectors): TSku[] {
 	if (!product.skus) return [];
 

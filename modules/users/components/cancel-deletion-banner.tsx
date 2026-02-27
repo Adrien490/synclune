@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { useCancelAccountDeletion } from "@/modules/users/hooks/use-cancel-account-deletion";
@@ -9,17 +10,14 @@ interface CancelDeletionBannerProps {
 	deletionRequestedAt: Date;
 }
 
-export function CancelDeletionBanner({
-	deletionRequestedAt,
-}: CancelDeletionBannerProps) {
+export function CancelDeletionBanner({ deletionRequestedAt }: CancelDeletionBannerProps) {
 	const { action, isPending } = useCancelAccountDeletion();
+	const [now] = useState(() => Date.now());
 
-	const deletionDate = new Date(
-		new Date(deletionRequestedAt).getTime() + 30 * 24 * 60 * 60 * 1000
-	);
+	const deletionDate = new Date(new Date(deletionRequestedAt).getTime() + 30 * 24 * 60 * 60 * 1000);
 	const daysRemaining = Math.max(
 		0,
-		Math.ceil((deletionDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+		Math.ceil((deletionDate.getTime() - now) / (24 * 60 * 60 * 1000)),
 	);
 
 	return (
@@ -29,16 +27,13 @@ export function CancelDeletionBanner({
 			<AlertDescription className="space-y-3">
 				<p>
 					Votre compte sera définitivement supprimé dans{" "}
-					<strong>{daysRemaining} jour{daysRemaining > 1 ? "s" : ""}</strong>.
-					Toutes vos données personnelles seront effacées conformément au RGPD.
+					<strong>
+						{daysRemaining} jour{daysRemaining > 1 ? "s" : ""}
+					</strong>
+					. Toutes vos données personnelles seront effacées conformément au RGPD.
 				</p>
 				<form action={action}>
-					<Button
-						type="submit"
-						variant="outline"
-						size="sm"
-						disabled={isPending}
-					>
+					<Button type="submit" variant="outline" size="sm" disabled={isPending}>
 						{isPending && <Loader2 className="animate-spin" />}
 						{isPending ? "Annulation..." : "Annuler la suppression"}
 					</Button>

@@ -25,14 +25,11 @@ export type {
 // ============================================================================
 
 export async function getSession(
-	params: Partial<GetSessionParams>
+	params: Partial<GetSessionParams>,
 ): Promise<GetSessionReturn | null> {
 	const validation = getSessionSchema.safeParse(params ?? {});
 
 	if (!validation.success) {
-		if (process.env.NODE_ENV !== "production") {
-			// console.warn("getSession invalid params", validation.error.issues);
-		}
 		return null;
 	}
 
@@ -48,7 +45,7 @@ export async function getSession(
 
 export async function fetchSession(
 	params: GetSessionParams,
-	context: FetchSessionContext
+	context: FetchSessionContext,
 ): Promise<GetSessionReturn | null> {
 	"use cache";
 	cacheAuthSession(params.id);
@@ -77,10 +74,7 @@ export async function fetchSession(
 			...rest,
 			tokenMasked: token ? `${token.slice(0, 4)}...${token.slice(-2)}` : null,
 		};
-	} catch (error) {
-		if (process.env.NODE_ENV !== "production") {
-			// console.error("fetchSession error:", error);
-		}
+	} catch {
 		return null;
 	}
 }

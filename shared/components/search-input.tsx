@@ -1,59 +1,69 @@
-"use client"
+"use client";
 
-import { useEffect, useEffectEvent, useId, useImperativeHandle, useRef, useState, useTransition } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { AnimatePresence, motion, useReducedMotion } from "motion/react"
-import { Search, X } from "lucide-react"
+import {
+	useEffect,
+	useEffectEvent,
+	useId,
+	useImperativeHandle,
+	useRef,
+	useState,
+	useTransition,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Search, X } from "lucide-react";
 
-import { useAppForm } from "@/shared/components/forms"
-import { MiniDotsLoader } from "@/shared/components/loaders/mini-dots-loader"
-import { Button } from "@/shared/components/ui/button"
-import { Input } from "@/shared/components/ui/input"
-import { Spinner } from "@/shared/components/ui/spinner"
-import { cn } from "@/shared/utils/cn"
+import { useAppForm } from "@/shared/components/forms";
+import { MiniDotsLoader } from "@/shared/components/loaders/mini-dots-loader";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Spinner } from "@/shared/components/ui/spinner";
+import { cn } from "@/shared/utils/cn";
 
 export interface SearchInputHandle {
-	setValue: (value: string) => void
+	setValue: (value: string) => void;
 }
 
 type SearchInputProps = {
 	/** URL param name - manages URL state automatically */
-	paramName: string
+	paramName: string;
 	/** Placeholder text */
-	placeholder?: string
+	placeholder?: string;
 	/** Search mode: submit redirects to /produits, live updates param in place */
-	mode?: "submit" | "live"
+	mode?: "submit" | "live";
 	/** Size variant: sm (44px) for toolbars, md (48px) for dialogs */
-	size?: "sm" | "md"
+	size?: "sm" | "md";
 	/** Debounce delay in ms for live mode */
-	debounceMs?: number
+	debounceMs?: number;
 	/** Show external pending state */
-	isPending?: boolean
+	isPending?: boolean;
 	/** Auto focus input on mount */
-	autoFocus?: boolean
+	autoFocus?: boolean;
 	/** Additional class for the container */
-	className?: string
+	className?: string;
 	/** Aria label for the input */
-	ariaLabel?: string
+	ariaLabel?: string;
 	/** Callback before search navigation (for side effects like saving recent searches, closing dialogs) */
-	onSubmit?: (term: string) => void
+	onSubmit?: (term: string) => void;
 	/** Callback on Escape key (two-step: first clears input, then calls onEscape on second press) */
-	onEscape?: () => void
+	onEscape?: () => void;
 	/** Prevent blur on mobile after live search (for dialog contexts where keyboard should stay open) */
-	preventMobileBlur?: boolean
+	preventMobileBlur?: boolean;
 	/** Callback on every input value change (for live search debouncing in parent) */
-	onValueChange?: (value: string) => void
+	onValueChange?: (value: string) => void;
 	/** Number of search results for screen reader announcement (live mode) */
-	resultCount?: number
+	resultCount?: number;
 	/** In live mode, call this instead of updating URL */
-	onLiveSearch?: (value: string) => void
+	onLiveSearch?: (value: string) => void;
 	/** ID of the currently active descendant (for combobox pattern) */
-	activeDescendantId?: string
+	activeDescendantId?: string;
 	/** Whether the associated listbox/popup is expanded (enables combobox role) */
-	ariaExpanded?: boolean
+	ariaExpanded?: boolean;
+	/** Additional keydown handler on the input (composed with internal handler) */
+	onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 	/** Imperative handle ref */
-	ref?: React.Ref<SearchInputHandle>
-}
+	ref?: React.Ref<SearchInputHandle>;
+};
 
 const sizeStyles = {
 	sm: {
@@ -72,7 +82,7 @@ const sizeStyles = {
 		clearIcon: "size-5",
 		submitButton: "size-12 rounded-xl",
 	},
-}
+};
 
 /**
  * Self-sufficient search input component with automatic URL state management.
@@ -101,150 +111,146 @@ export function SearchInput({
 	onLiveSearch,
 	activeDescendantId,
 	ariaExpanded,
+	onKeyDown: externalKeyDown,
 	ref,
 }: SearchInputProps) {
-	const inputRef = useRef<HTMLInputElement>(null)
-	const [internalPending, startTransition] = useTransition()
-	const [maxLengthFlash, setMaxLengthFlash] = useState(false)
-	const shouldReduceMotion = useReducedMotion()
-	const statusId = useId()
-	const styles = sizeStyles[size]
+	const inputRef = useRef<HTMLInputElement>(null);
+	const [internalPending, startTransition] = useTransition();
+	const [maxLengthFlash, setMaxLengthFlash] = useState(false);
+	const shouldReduceMotion = useReducedMotion();
+	const statusId = useId();
+	const styles = sizeStyles[size];
 
-	const searchParams = useSearchParams()
-	const router = useRouter()
+	const searchParams = useSearchParams();
+	const router = useRouter();
 
-	const initialValue = mode === "live" ? searchParams.get(paramName) || "" : ""
-	const isPending = externalPending || internalPending
+	const initialValue = mode === "live" ? searchParams.get(paramName) || "" : "";
+	const isPending = externalPending || internalPending;
 
 	const form = useAppForm({
 		defaultValues: { search: initialValue },
-	})
+	});
 
 	useImperativeHandle(ref, () => ({
 		setValue: (value: string) => {
-			form.setFieldValue("search", value)
-			onValueChange?.(value)
+			form.setFieldValue("search", value);
+			onValueChange?.(value);
 		},
-	}))
+	}));
 
 	// Sync URL → form (live mode only)
 	// Uses a ref guard to avoid resetting the input during typing (before debounce fires)
-	const lastSyncedUrl = useRef(initialValue)
-	const urlValue = mode === "live" ? searchParams.get(paramName) || "" : ""
+	const lastSyncedUrl = useRef(initialValue);
+	const urlValue = mode === "live" ? searchParams.get(paramName) || "" : "";
 
 	// Effect Event: reads form and onValueChange without re-triggering the sync effect
 	const onUrlSync = useEffectEvent((newUrlValue: string) => {
-		lastSyncedUrl.current = newUrlValue
-		form.setFieldValue("search", newUrlValue)
-		onValueChange?.(newUrlValue)
-	})
+		lastSyncedUrl.current = newUrlValue;
+		form.setFieldValue("search", newUrlValue);
+		onValueChange?.(newUrlValue);
+	});
 
 	useEffect(() => {
-		if (mode !== "live") return
+		if (mode !== "live") return;
 		if (urlValue !== lastSyncedUrl.current) {
-			onUrlSync(urlValue)
+			onUrlSync(urlValue);
 		}
-	}, [urlValue, mode])
+	}, [urlValue, mode]);
 
 	const handleSearch = (searchValue: string) => {
-		const trimmed = searchValue.trim()
+		const trimmed = searchValue.trim();
 
 		if (mode === "submit") {
 			// Submit mode: redirect to /produits with search param
-			if (!trimmed) return
+			if (!trimmed) return;
 
-			onSubmit?.(trimmed)
+			onSubmit?.(trimmed);
 
 			startTransition(() => {
 				// Preserve existing URL params (filters, sort, etc.)
-				const newSearchParams = new URLSearchParams(searchParams.toString())
-				newSearchParams.set(paramName, trimmed)
+				const newSearchParams = new URLSearchParams(searchParams.toString());
+				newSearchParams.set(paramName, trimmed);
 				// Reset pagination
-				newSearchParams.delete("cursor")
-				newSearchParams.delete("direction")
-				router.push(`/produits?${newSearchParams.toString()}`)
-			})
+				newSearchParams.delete("cursor");
+				newSearchParams.delete("direction");
+				router.push(`/produits?${newSearchParams.toString()}`);
+			});
 		} else if (onLiveSearch) {
 			// Live mode with callback: bypass URL
-			onLiveSearch(trimmed)
-			return
+			onLiveSearch(trimmed);
+			return;
 		} else {
 			// Live mode: update URL param in place
-			const currentQs = searchParams.get(paramName) || ""
-			if (trimmed === currentQs.trim()) return
+			const currentQs = searchParams.get(paramName) || "";
+			if (trimmed === currentQs.trim()) return;
 
-			const newSearchParams = new URLSearchParams(searchParams.toString())
+			const newSearchParams = new URLSearchParams(searchParams.toString());
 
 			if (trimmed) {
-				newSearchParams.set(paramName, trimmed)
+				newSearchParams.set(paramName, trimmed);
 			} else {
-				newSearchParams.delete(paramName)
+				newSearchParams.delete(paramName);
 			}
 
 			// Reset pagination
-			newSearchParams.delete("cursor")
-			newSearchParams.delete("direction")
+			newSearchParams.delete("cursor");
+			newSearchParams.delete("direction");
 
 			startTransition(() => {
-				router.replace(`?${newSearchParams.toString()}`, { scroll: false })
-			})
+				router.replace(`?${newSearchParams.toString()}`, { scroll: false });
+			});
 
 			// Close keyboard on mobile (skip in dialog contexts)
 			if (!preventMobileBlur && typeof window !== "undefined" && window.innerWidth < 768) {
-				inputRef.current?.blur()
+				inputRef.current?.blur();
 			}
 		}
-	}
+	};
 
 	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
+		e.preventDefault();
 		if (mode === "submit") {
-			handleSearch(form.getFieldValue("search"))
+			handleSearch(form.getFieldValue("search"));
 		} else if (onSubmit) {
 			// Live mode: let consumers handle Enter (e.g. navigate to full results page)
-			onSubmit(form.getFieldValue("search"))
+			onSubmit(form.getFieldValue("search"));
 		}
-	}
+	};
 
 	const handleClear = () => {
-		form.setFieldValue("search", "")
-		onValueChange?.("")
+		form.setFieldValue("search", "");
+		onValueChange?.("");
 		if (mode === "live") {
-			lastSyncedUrl.current = ""
+			lastSyncedUrl.current = "";
 			if (onLiveSearch) {
-				onLiveSearch("")
+				onLiveSearch("");
 			} else {
-				handleSearch("")
+				handleSearch("");
 			}
 		}
-		inputRef.current?.focus()
-	}
+		inputRef.current?.focus();
+	};
 
 	const handleKeyDown = (e: React.KeyboardEvent, currentValue: string) => {
 		if (e.key === "Escape") {
-			e.preventDefault()
+			e.preventDefault();
 			if (currentValue) {
 				// First Escape: clear input, don't close dialog
-				e.stopPropagation()
-				handleClear()
+				e.stopPropagation();
+				handleClear();
 			} else if (onEscape) {
 				// Second Escape (empty input): close dialog
-				onEscape()
+				onEscape();
 			}
 			// If no content and no onEscape, let event propagate
 		}
 
 		// Flash border when maxLength reached
-		if (
-			currentValue.length >= 200 &&
-			e.key.length === 1 &&
-			!e.ctrlKey &&
-			!e.metaKey
-		) {
-			setMaxLengthFlash(true)
-			setTimeout(() => setMaxLengthFlash(false), 150)
+		if (currentValue.length >= 200 && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+			setMaxLengthFlash(true);
+			setTimeout(() => setMaxLengthFlash(false), 150);
 		}
-	}
+	};
 
 	return (
 		<form
@@ -256,19 +262,19 @@ export function SearchInput({
 			<div
 				className={cn(
 					"relative flex flex-1 items-center overflow-hidden",
-					"bg-background border border-input",
+					"bg-background border-input border",
 					"hover:border-muted-foreground/40",
-					"focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30",
+					"focus-within:border-ring focus-within:ring-ring/30 focus-within:ring-2",
 					"transition-all duration-200",
 					isPending && "border-ring/50",
-					maxLengthFlash && "ring-2 ring-destructive/50",
-					styles.container
+					maxLengthFlash && "ring-destructive/50 ring-2",
+					styles.container,
 				)}
 			>
 				<div
 					className={cn(
-						"absolute inset-y-0 flex items-center text-muted-foreground pointer-events-none",
-						styles.iconLeft
+						"text-muted-foreground pointer-events-none absolute inset-y-0 flex items-center",
+						styles.iconLeft,
 					)}
 				>
 					<AnimatePresence mode="wait">
@@ -303,8 +309,8 @@ export function SearchInput({
 						mode === "live"
 							? {
 									onChangeAsync: async ({ value }) => {
-										handleSearch(value)
-										return undefined
+										handleSearch(value);
+										return undefined;
 									},
 									onChangeAsyncDebounceMs: debounceMs,
 								}
@@ -316,6 +322,7 @@ export function SearchInput({
 							<Input
 								ref={inputRef}
 								autoComplete="off"
+								// eslint-disable-next-line jsx-a11y/no-autofocus
 								autoFocus={autoFocus}
 								role={ariaExpanded !== undefined ? "combobox" : undefined}
 								aria-expanded={ariaExpanded}
@@ -326,17 +333,20 @@ export function SearchInput({
 								maxLength={200}
 								value={field.state.value}
 								onChange={(e) => {
-									field.handleChange(e.target.value)
-									onValueChange?.(e.target.value)
+									field.handleChange(e.target.value);
+									onValueChange?.(e.target.value);
 								}}
-								onKeyDown={(e) => handleKeyDown(e, field.state.value)}
+								onKeyDown={(e) => {
+									handleKeyDown(e, field.state.value);
+									externalKeyDown?.(e);
+								}}
 								className={cn(
 									"border-none shadow-none focus-visible:ring-0",
 									"bg-transparent",
 									"placeholder:text-muted-foreground/50",
 									"transition-all duration-150",
 									"[&::-webkit-search-cancel-button]:appearance-none",
-									styles.input
+									styles.input,
 								)}
 								placeholder={placeholder}
 								aria-label={ariaLabel || placeholder}
@@ -359,8 +369,8 @@ export function SearchInput({
 											size="icon"
 											onClick={handleClear}
 											className={cn(
-												"text-muted-foreground hover:text-foreground active:scale-95 transition-all",
-												styles.clearButton
+												"text-muted-foreground hover:text-foreground transition-all active:scale-95",
+												styles.clearButton,
 											)}
 											aria-label="Effacer la recherche"
 										>
@@ -376,23 +386,18 @@ export function SearchInput({
 
 			{/* Submit button */}
 			{mode === "submit" ? (
-				<form.Subscribe
-					selector={(state) => state.values.search}
-					children={(search) => (
+				<form.Subscribe selector={(state) => state.values.search}>
+					{(search) => (
 						<Button
 							type="submit"
 							disabled={!search?.trim() || isPending}
 							className={cn("shrink-0", styles.submitButton)}
 							aria-label="Rechercher"
 						>
-							{isPending ? (
-								<Spinner className="size-4" />
-							) : (
-								<Search className="size-4" />
-							)}
+							{isPending ? <Spinner className="size-4" /> : <Search className="size-4" />}
 						</Button>
 					)}
-				/>
+				</form.Subscribe>
 			) : (
 				/* Bouton submit sr-only pour accessibilité clavier en mode live */
 				<button type="submit" className="sr-only">
@@ -401,12 +406,7 @@ export function SearchInput({
 			)}
 
 			{/* Live region for screen readers */}
-			<span
-				id={statusId}
-				role="status"
-				aria-live="polite"
-				className="sr-only"
-			>
+			<span id={statusId} role="status" aria-live="polite" className="sr-only">
 				{isPending
 					? "Recherche en cours..."
 					: resultCount !== undefined
@@ -416,5 +416,5 @@ export function SearchInput({
 						: ""}
 			</span>
 		</form>
-	)
+	);
 }

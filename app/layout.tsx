@@ -3,8 +3,8 @@ import { getCart } from "@/modules/cart/data/get-cart";
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 // Lazy-loaded: rarely shown (2nd visit + Chrome/Edge or iOS only)
-const InstallPromptBanner = dynamic(
-	() => import("@/shared/components/install-prompt-banner").then((mod) => mod.InstallPromptBanner)
+const InstallPromptBanner = dynamic(() =>
+	import("@/shared/components/install-prompt-banner").then((mod) => mod.InstallPromptBanner),
 );
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
@@ -22,12 +22,12 @@ import { Suspense } from "react";
 import "./globals.css";
 
 // Lazy loading des composants lourds - charges uniquement a l'ouverture
-const CartSheet = dynamic(
-	() => import("@/modules/cart/components/cart-sheet").then((mod) => mod.CartSheet)
+const CartSheet = dynamic(() =>
+	import("@/modules/cart/components/cart-sheet").then((mod) => mod.CartSheet),
 );
 
-const SkuSelectorDialog = dynamic(
-	() => import("@/modules/cart/components/sku-selector-dialog").then((mod) => mod.SkuSelectorDialog)
+const SkuSelectorDialog = dynamic(() =>
+	import("@/modules/cart/components/sku-selector-dialog").then((mod) => mod.SkuSelectorDialog),
 );
 
 export const metadata = rootMetadata;
@@ -53,6 +53,16 @@ export default async function RootLayout({
 			<body
 				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}
 			>
+				<noscript>
+					<div
+						style={{ padding: "2rem", textAlign: "center", fontFamily: "system-ui, sans-serif" }}
+					>
+						<p>
+							<strong>JavaScript est requis</strong> pour utiliser Synclune. Veuillez activer
+							JavaScript dans les paramètres de votre navigateur.
+						</p>
+					</div>
+				</noscript>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />
 					<IconSprite />
@@ -68,7 +78,7 @@ export default async function RootLayout({
 
 							<ErrorBoundary
 								errorMessage="Impossible de charger le panier"
-								className="fixed bottom-4 right-4 z-50 rounded-lg bg-muted shadow-lg flex items-center justify-center max-w-xs"
+								className="bg-muted fixed right-4 bottom-4 z-50 flex max-w-xs items-center justify-center rounded-lg shadow-lg"
 							>
 								<Suspense fallback={<CartSheetSkeleton />}>
 									<CartAndSkuLoader />

@@ -3,23 +3,17 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import { PageHeader } from "@/shared/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
 import { getCustomizationRequest } from "@/modules/customizations/data/get-customization-request";
-import { CUSTOMIZATION_STATUS_LABELS, CUSTOMIZATION_STATUS_COLORS } from "@/modules/customizations/constants/status.constants";
-import { formatDateTime } from "@/shared/utils/dates";
 import {
-	ArrowLeft,
-	Mail,
-	Phone,
-	User,
-	Package,
-	Sparkles,
-	FileText,
-} from "lucide-react";
+	CUSTOMIZATION_STATUS_LABELS,
+	CUSTOMIZATION_STATUS_COLORS,
+} from "@/modules/customizations/constants/status.constants";
+import { formatDateTime } from "@/shared/utils/dates";
+import { ArrowLeft, Mail, Phone, User, Package, Sparkles, FileText } from "lucide-react";
 import { UpdateStatusForm } from "@/modules/customizations/components/admin/update-status-form";
 
 export const metadata: Metadata = {
@@ -30,9 +24,7 @@ interface CustomizationDetailPageProps {
 	params: Promise<{ id: string }>;
 }
 
-export default async function CustomizationDetailPage({
-	params,
-}: CustomizationDetailPageProps) {
+export default async function CustomizationDetailPage({ params }: CustomizationDetailPageProps) {
 	await connection();
 	const { id } = await params;
 
@@ -46,23 +38,20 @@ export default async function CustomizationDetailPage({
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title={request.firstName}
-			/>
+			<PageHeader variant="compact" title={request.firstName} />
 
 			<div className="mb-6">
 				<Button variant="ghost" size="sm" asChild>
 					<Link href="/admin/marketing/personnalisations">
-						<ArrowLeft className="h-4 w-4 mr-2" />
+						<ArrowLeft className="mr-2 h-4 w-4" />
 						Retour à la liste
 					</Link>
 				</Button>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				{/* Colonne principale */}
-				<div className="lg:col-span-2 space-y-6">
+				<div className="space-y-6 lg:col-span-2">
 					{/* Informations client */}
 					<Card>
 						<CardHeader>
@@ -72,18 +61,16 @@ export default async function CustomizationDetailPage({
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div>
-									<p className="text-sm text-muted-foreground">Prénom</p>
-									<p className="font-medium">
-										{request.firstName}
-									</p>
+									<p className="text-muted-foreground text-sm">Prénom</p>
+									<p className="font-medium">{request.firstName}</p>
 								</div>
 								<div>
-									<p className="text-sm text-muted-foreground">Email</p>
+									<p className="text-muted-foreground text-sm">Email</p>
 									<a
 										href={`mailto:${request.email}`}
-										className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+										className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
 									>
 										<Mail className="h-4 w-4" />
 										{request.email}
@@ -91,10 +78,10 @@ export default async function CustomizationDetailPage({
 								</div>
 								{request.phone && (
 									<div>
-										<p className="text-sm text-muted-foreground">Téléphone</p>
+										<p className="text-muted-foreground text-sm">Téléphone</p>
 										<a
 											href={`tel:${request.phone}`}
-											className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+											className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
 										>
 											<Phone className="h-4 w-4" />
 											{request.phone}
@@ -102,7 +89,7 @@ export default async function CustomizationDetailPage({
 									</div>
 								)}
 								<div>
-									<p className="text-sm text-muted-foreground">Type de produit</p>
+									<p className="text-muted-foreground text-sm">Type de produit</p>
 									<p className="font-medium">{request.productTypeLabel}</p>
 								</div>
 							</div>
@@ -118,9 +105,7 @@ export default async function CustomizationDetailPage({
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<p className="whitespace-pre-wrap text-sm leading-relaxed">
-								{request.details}
-							</p>
+							<p className="text-sm leading-relaxed whitespace-pre-wrap">{request.details}</p>
 						</CardContent>
 					</Card>
 
@@ -134,16 +119,16 @@ export default async function CustomizationDetailPage({
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+								<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 									{request.inspirationProducts.map((product) => {
 										const primaryImage = product.skus[0]?.images[0];
 										return (
 											<Link
 												key={product.id}
 												href={`/admin/catalogue/produits/${product.slug}`}
-												className="group block rounded-lg border bg-card overflow-hidden hover:border-primary transition-colors"
+												className="group bg-card hover:border-primary block overflow-hidden rounded-lg border transition-colors"
 											>
-												<div className="aspect-square relative bg-muted">
+												<div className="bg-muted relative aspect-square">
 													{primaryImage ? (
 														<Image
 															src={primaryImage.url}
@@ -154,12 +139,12 @@ export default async function CustomizationDetailPage({
 														/>
 													) : (
 														<div className="absolute inset-0 flex items-center justify-center">
-															<Package className="h-8 w-8 text-muted-foreground" />
+															<Package className="text-muted-foreground h-8 w-8" />
 														</div>
 													)}
 												</div>
 												<div className="p-2">
-													<p className="text-sm font-medium truncate group-hover:text-primary">
+													<p className="group-hover:text-primary truncate text-sm font-medium">
 														{product.title}
 													</p>
 												</div>
@@ -170,7 +155,6 @@ export default async function CustomizationDetailPage({
 							</CardContent>
 						</Card>
 					)}
-
 				</div>
 
 				{/* Sidebar */}
@@ -192,10 +176,7 @@ export default async function CustomizationDetailPage({
 
 							<Separator />
 
-							<UpdateStatusForm
-								requestId={request.id}
-								currentStatus={request.status}
-							/>
+							<UpdateStatusForm requestId={request.id} currentStatus={request.status} />
 						</CardContent>
 					</Card>
 
@@ -232,14 +213,14 @@ export default async function CustomizationDetailPage({
 								<a
 									href={`mailto:${request.email}?subject=RE: Demande de personnalisation - Synclune`}
 								>
-									<Mail className="h-4 w-4 mr-2" />
+									<Mail className="mr-2 h-4 w-4" />
 									Répondre par email
 								</a>
 							</Button>
 							{request.phone && (
 								<Button variant="outline" className="w-full justify-start" asChild>
 									<a href={`tel:${request.phone}`}>
-										<Phone className="h-4 w-4 mr-2" />
+										<Phone className="mr-2 h-4 w-4" />
 										Appeler
 									</a>
 								</Button>

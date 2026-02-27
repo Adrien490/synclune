@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { cn } from "@/shared/utils/cn";
 
 interface Sparkle {
 	id: number;
@@ -18,10 +19,10 @@ interface LogoSparklesProps {
 }
 
 const SPARKLE_COLORS = [
-	"oklch(0.85 0.12 350)",  // Rose
-	"oklch(0.82 0.10 300)",  // Lavande
-	"oklch(0.88 0.10 80)",   // Doré
-	"oklch(0.85 0.08 160)",  // Menthe
+	"oklch(0.85 0.12 350)", // Rose
+	"oklch(0.82 0.10 300)", // Lavande
+	"oklch(0.88 0.10 80)", // Doré
+	"oklch(0.85 0.08 160)", // Menthe
 ];
 
 /**
@@ -65,7 +66,7 @@ export function LogoSparkles({ children, className }: LogoSparklesProps) {
 
 			const progress = frame / maxFrames;
 
-			setSparkles(prev =>
+			setSparkles((prev) =>
 				prev.map((sparkle, i) => {
 					const angle = (i / count) * Math.PI * 2;
 					const radius = 60 * (1 - Math.pow(1 - progress, 2));
@@ -74,7 +75,7 @@ export function LogoSparkles({ children, className }: LogoSparklesProps) {
 						x: centerX + Math.cos(angle) * radius,
 						y: centerY + Math.sin(angle) * radius - 30 * progress,
 					};
-				})
+				}),
 			);
 
 			requestAnimationFrame(animate);
@@ -92,43 +93,44 @@ export function LogoSparkles({ children, className }: LogoSparklesProps) {
 
 	return (
 		<>
-			<div
+			<button
+				type="button"
 				onClick={handleClick}
 				onKeyDown={handleKeyDown}
-				role="button"
-				tabIndex={0}
 				aria-label="Déclencher l'animation sparkles"
-				className={className}
+				className={cn("cursor-pointer appearance-none border-none bg-transparent p-0", className)}
 			>
 				{children}
-			</div>
+			</button>
 
-			{mounted && sparkles.length > 0 && createPortal(
-				<div className="fixed inset-0 pointer-events-none z-[9999]" aria-hidden="true">
-					{sparkles.map((sparkle, i) => (
-						<div
-							key={sparkle.id}
-							className="absolute"
-							style={{
-								left: sparkle.x,
-								top: sparkle.y,
-								transform: `translate(-50%, -50%) rotate(${sparkle.rotation}deg)`,
-								opacity: 1 - (i / sparkles.length) * 0.5,
-							}}
-						>
-							<svg
-								width={sparkle.size}
-								height={sparkle.size}
-								viewBox="0 0 24 24"
-								fill={sparkle.color}
+			{mounted &&
+				sparkles.length > 0 &&
+				createPortal(
+					<div className="pointer-events-none fixed inset-0 z-[9999]" aria-hidden="true">
+						{sparkles.map((sparkle, i) => (
+							<div
+								key={sparkle.id}
+								className="absolute"
+								style={{
+									left: sparkle.x,
+									top: sparkle.y,
+									transform: `translate(-50%, -50%) rotate(${sparkle.rotation}deg)`,
+									opacity: 1 - (i / sparkles.length) * 0.5,
+								}}
 							>
-								<path d="M12 2L13.09 8.26L18 6L14.74 11.09L21 12L14.74 12.91L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 12.91L3 12L9.26 11.09L6 6L10.91 8.26L12 2Z"/>
-							</svg>
-						</div>
-					))}
-				</div>,
-				document.body
-			)}
+								<svg
+									width={sparkle.size}
+									height={sparkle.size}
+									viewBox="0 0 24 24"
+									fill={sparkle.color}
+								>
+									<path d="M12 2L13.09 8.26L18 6L14.74 11.09L21 12L14.74 12.91L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 12.91L3 12L9.26 11.09L6 6L10.91 8.26L12 2Z" />
+								</svg>
+							</div>
+						))}
+					</div>,
+					document.body,
+				)}
 		</>
 	);
 }

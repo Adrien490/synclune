@@ -43,9 +43,11 @@ export function BulkUpdatePriceDialog() {
 	// Reset when dialog opens
 	useEffect(() => {
 		if (isOpen) {
-			setMode("percentage");
-			setValue(0);
-			setUpdateCompareAtPrice(false);
+			queueMicrotask(() => {
+				setMode("percentage");
+				setValue(0);
+				setUpdateCompareAtPrice(false);
+			});
 		}
 	}, [isOpen]);
 
@@ -62,9 +64,7 @@ export function BulkUpdatePriceDialog() {
 
 	const count = data?.skuIds?.length ?? 0;
 	const isValid =
-		count > 0 &&
-		((mode === "percentage" && value !== 0) ||
-			(mode === "absolute" && value > 0));
+		count > 0 && ((mode === "percentage" && value !== 0) || (mode === "absolute" && value > 0));
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && !isPending && close()}>
@@ -72,7 +72,7 @@ export function BulkUpdatePriceDialog() {
 				<form onSubmit={handleSubmit}>
 					<ResponsiveDialogHeader>
 						<div className="flex items-center gap-2">
-							<DollarSign className="h-5 w-5 text-primary" />
+							<DollarSign className="text-primary h-5 w-5" />
 							<ResponsiveDialogTitle>Modifier les prix</ResponsiveDialogTitle>
 						</div>
 						<ResponsiveDialogDescription>
@@ -80,7 +80,7 @@ export function BulkUpdatePriceDialog() {
 						</ResponsiveDialogDescription>
 					</ResponsiveDialogHeader>
 
-					<div className="py-6 space-y-6">
+					<div className="space-y-6 py-6">
 						{/* Mode selection */}
 						<div className="space-y-3">
 							<Label className="text-sm font-medium">Mode de modification</Label>
@@ -94,13 +94,13 @@ export function BulkUpdatePriceDialog() {
 							>
 								<div className="flex items-center space-x-2">
 									<RadioGroupItem value="percentage" id="mode-percentage" />
-									<Label htmlFor="mode-percentage" className="font-normal cursor-pointer">
+									<Label htmlFor="mode-percentage" className="cursor-pointer font-normal">
 										Pourcentage (+/-)
 									</Label>
 								</div>
 								<div className="flex items-center space-x-2">
 									<RadioGroupItem value="absolute" id="mode-absolute" />
-									<Label htmlFor="mode-absolute" className="font-normal cursor-pointer">
+									<Label htmlFor="mode-absolute" className="cursor-pointer font-normal">
 										Prix fixe
 									</Label>
 								</div>
@@ -118,17 +118,17 @@ export function BulkUpdatePriceDialog() {
 									type="number"
 									value={value}
 									onChange={(e) => setValue(parseFloat(e.target.value) || 0)}
-									className="text-lg font-semibold pr-10"
+									className="pr-10 text-lg font-semibold"
 									disabled={isPending}
 									step={mode === "absolute" ? "0.01" : "1"}
 									min={mode === "absolute" ? 0.01 : undefined}
 								/>
-								<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+								<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2">
 									{mode === "percentage" ? "%" : "EUR"}
 								</span>
 							</div>
 							{mode === "percentage" && (
-								<p className="text-xs text-muted-foreground">
+								<p className="text-muted-foreground text-xs">
 									Utilisez un nombre negatif pour reduire les prix (ex: -10 pour -10%)
 								</p>
 							)}
@@ -141,16 +141,13 @@ export function BulkUpdatePriceDialog() {
 								checked={updateCompareAtPrice}
 								onCheckedChange={(checked) => setUpdateCompareAtPrice(checked === true)}
 							/>
-							<Label
-								htmlFor="updateCompareAtPrice"
-								className="text-sm font-normal cursor-pointer"
-							>
+							<Label htmlFor="updateCompareAtPrice" className="cursor-pointer text-sm font-normal">
 								Appliquer egalement aux prix barres
 							</Label>
 						</div>
 
 						{/* Preview */}
-						<div className="p-3 rounded-md bg-muted text-sm">
+						<div className="bg-muted rounded-md p-3 text-sm">
 							{mode === "percentage" ? (
 								<>
 									Les prix seront{" "}
@@ -168,12 +165,7 @@ export function BulkUpdatePriceDialog() {
 					</div>
 
 					<ResponsiveDialogFooter>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={close}
-							disabled={isPending}
-						>
+						<Button type="button" variant="outline" onClick={close} disabled={isPending}>
 							Annuler
 						</Button>
 						<Button type="submit" disabled={!isValid || isPending}>

@@ -16,7 +16,7 @@ import { getInventoryInvalidationTags } from "../utils/cache.utils";
  */
 export async function adjustSkuStock(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// Extraire les données du FormData
@@ -59,7 +59,9 @@ export async function adjustSkuStock(
 					select: { inventory: true },
 				});
 				if (!sku) return error("Variante non trouvee");
-				return error(`Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demande: ${adjustment}`);
+				return error(
+					`Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demande: ${adjustment}`,
+				);
 			}
 		} else {
 			const result = await prisma.$executeRaw`
@@ -91,17 +93,16 @@ export async function adjustSkuStock(
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
 		tags.forEach((tag) => updateTag(tag));
 
-		console.log(
-			`[SKU:stock] ${sku.sku} adjusted by ${adjustment > 0 ? "+" : ""}${adjustment} (${sku.inventory - adjustment} -> ${sku.inventory})${reason ? ` reason: ${reason}` : ""}`
-		);
-
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
-		return success(`Stock de ${sku.sku} ajuste (${adjustmentText}). Nouveau stock: ${sku.inventory}`, {
-			skuId: sku.id,
-			previousInventory: sku.inventory - adjustment,
-			newInventory: sku.inventory,
-			adjustment,
-		});
+		return success(
+			`Stock de ${sku.sku} ajuste (${adjustmentText}). Nouveau stock: ${sku.inventory}`,
+			{
+				skuId: sku.id,
+				previousInventory: sku.inventory - adjustment,
+				newInventory: sku.inventory,
+				adjustment,
+			},
+		);
 	} catch (e) {
 		return handleActionError(e, "Impossible d'ajuster le stock");
 	}

@@ -1,8 +1,6 @@
 "use client";
 
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState } from "react";
+import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 import { deleteCollection } from "@/modules/collections/actions/delete-collection";
 
 interface UseDeleteCollectionOptions {
@@ -10,28 +8,11 @@ interface UseDeleteCollectionOptions {
 }
 
 export const useDeleteCollection = (options?: UseDeleteCollectionOptions) => {
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			deleteCollection,
-			createToastCallbacks({
-				onSuccess: (result: unknown) => {
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
-						options?.onSuccess?.(result.message);
-					}
-				},
-			})
-		),
-		undefined
-	);
-
-	return {
-		state,
-		action,
-		isPending,
-	};
+	return useActionWithToast(deleteCollection, {
+		onSuccess: (result) => {
+			if (result.message) {
+				options?.onSuccess?.(result.message);
+			}
+		},
+	});
 };

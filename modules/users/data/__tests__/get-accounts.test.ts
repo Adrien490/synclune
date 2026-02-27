@@ -93,7 +93,9 @@ vi.mock("../../services/accounts-query-builder", () => ({
 import { getAccounts } from "../get-accounts";
 import { getAccountsSchema } from "../../schemas/accounts.schemas";
 
-const mockGetAccountsSchema = getAccountsSchema as unknown as { safeParse: ReturnType<typeof vi.fn> };
+const mockGetAccountsSchema = getAccountsSchema as unknown as {
+	safeParse: ReturnType<typeof vi.fn>;
+};
 
 // ============================================================================
 // Factories
@@ -214,7 +216,7 @@ describe("getAccounts", () => {
 					accessToken: true,
 					refreshToken: true,
 				}),
-			})
+			}),
 		);
 	});
 
@@ -225,10 +227,10 @@ describe("getAccounts", () => {
 
 		// processCursorResults just returns items as-is for this test
 		mockProcessCursorResults.mockImplementation(
-			(items: Record<string, unknown>[], take: number, direction: string, cursor: string) => ({
+			(items: Record<string, unknown>[], _take: number, _direction: string, _cursor: string) => ({
 				items,
 				pagination: makePagination(),
-			})
+			}),
 		);
 
 		const result = await getAccounts(makeValidParams());
@@ -245,12 +247,10 @@ describe("getAccounts", () => {
 			makeAccount({ accessToken: null, refreshToken: null }),
 		]);
 
-		mockProcessCursorResults.mockImplementation(
-			(items: Record<string, unknown>[]) => ({
-				items,
-				pagination: makePagination(),
-			})
-		);
+		mockProcessCursorResults.mockImplementation((items: Record<string, unknown>[]) => ({
+			items,
+			pagination: makePagination(),
+		}));
 
 		const result = await getAccounts(makeValidParams());
 		const account = result.accounts[0] as Record<string, unknown>;
@@ -270,12 +270,10 @@ describe("getAccounts", () => {
 			}),
 		]);
 
-		mockProcessCursorResults.mockImplementation(
-			(items: Record<string, unknown>[]) => ({
-				items,
-				pagination: makePagination(),
-			})
-		);
+		mockProcessCursorResults.mockImplementation((items: Record<string, unknown>[]) => ({
+			items,
+			pagination: makePagination(),
+		}));
 
 		const result = await getAccounts(makeValidParams());
 		const account = result.accounts[0] as Record<string, unknown>;
@@ -294,12 +292,10 @@ describe("getAccounts", () => {
 			}),
 		]);
 
-		mockProcessCursorResults.mockImplementation(
-			(items: Record<string, unknown>[]) => ({
-				items,
-				pagination: makePagination(),
-			})
-		);
+		mockProcessCursorResults.mockImplementation((items: Record<string, unknown>[]) => ({
+			items,
+			pagination: makePagination(),
+		}));
 
 		const result = await getAccounts(makeValidParams());
 		const account = result.accounts[0] as Record<string, unknown>;
@@ -317,12 +313,10 @@ describe("getAccounts", () => {
 			}),
 		]);
 
-		mockProcessCursorResults.mockImplementation(
-			(items: Record<string, unknown>[]) => ({
-				items,
-				pagination: makePagination(),
-			})
-		);
+		mockProcessCursorResults.mockImplementation((items: Record<string, unknown>[]) => ({
+			items,
+			pagination: makePagination(),
+		}));
 
 		const result = await getAccounts(makeValidParams());
 		const account = result.accounts[0] as Record<string, unknown>;
@@ -354,9 +348,7 @@ describe("getAccounts", () => {
 
 		await getAccounts(makeValidParams({ perPage: 999 }));
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 200 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
 	});
 
 	it("adds secondary createdAt desc sort when sortBy is not createdAt", async () => {
@@ -370,9 +362,7 @@ describe("getAccounts", () => {
 		const call = mockPrisma.account.findMany.mock.calls[0][0] as {
 			orderBy: Record<string, unknown>[];
 		};
-		expect(call.orderBy).toEqual(
-			expect.arrayContaining([{ createdAt: "desc" }])
-		);
+		expect(call.orderBy).toEqual(expect.arrayContaining([{ createdAt: "desc" }]));
 	});
 
 	it("does not add secondary createdAt sort when sortBy is already createdAt", async () => {
@@ -387,9 +377,7 @@ describe("getAccounts", () => {
 			orderBy: Record<string, unknown>[];
 		};
 		// Should only have { createdAt: 'desc' } once plus { id: 'asc' }, not a duplicate
-		const createdAtEntries = call.orderBy.filter(
-			(o: Record<string, unknown>) => "createdAt" in o
-		);
+		const createdAtEntries = call.orderBy.filter((o: Record<string, unknown>) => "createdAt" in o);
 		expect(createdAtEntries).toHaveLength(1);
 	});
 });

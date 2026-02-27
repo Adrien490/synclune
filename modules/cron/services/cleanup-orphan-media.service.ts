@@ -1,7 +1,12 @@
 import { prisma } from "@/shared/lib/prisma";
 import { UTApi } from "uploadthing/server";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
-import { BATCH_DEADLINE_MS, DB_QUERY_BATCH_SIZE, MAX_PAGES_PER_RUN, UPLOADTHING_LIST_LIMIT } from "@/modules/cron/constants/limits";
+import {
+	BATCH_DEADLINE_MS,
+	DB_QUERY_BATCH_SIZE,
+	MAX_PAGES_PER_RUN,
+	UPLOADTHING_LIST_LIMIT,
+} from "@/modules/cron/constants/limits";
 
 /**
  * Cleans up orphaned UploadThing files not referenced in the database.
@@ -33,9 +38,7 @@ export async function cleanupOrphanMedia(): Promise<{
 		// Files uploaded via these routes will be deleted after 24h.
 		// See getAllReferencedFileKeys() for details.
 		const referencedKeys = await getAllReferencedFileKeys(deadline);
-		console.log(
-			`[CRON:cleanup-orphan-media] Found ${referencedKeys.size} referenced keys in DB`
-		);
+		console.log(`[CRON:cleanup-orphan-media] Found ${referencedKeys.size} referenced keys in DB`);
 
 		// 2. List UploadThing files with pagination
 		let offset = 0;
@@ -50,9 +53,7 @@ export async function cleanupOrphanMedia(): Promise<{
 			const files = response.files;
 			filesScanned += files.length;
 
-			console.log(
-				`[CRON:cleanup-orphan-media] Fetched ${files.length} files (offset: ${offset})`
-			);
+			console.log(`[CRON:cleanup-orphan-media] Fetched ${files.length} files (offset: ${offset})`);
 
 			if (files.length === 0) break;
 
@@ -62,9 +63,7 @@ export async function cleanupOrphanMedia(): Promise<{
 			const ageThreshold = Date.now() - 24 * 60 * 60 * 1000;
 			const orphanKeys = files
 				.filter(
-					(f) =>
-						!referencedKeys.has(f.key) &&
-						new Date(f.uploadedAt).getTime() < ageThreshold
+					(f) => !referencedKeys.has(f.key) && new Date(f.uploadedAt).getTime() < ageThreshold,
 				)
 				.map((f) => f.key);
 
@@ -73,13 +72,11 @@ export async function cleanupOrphanMedia(): Promise<{
 				try {
 					await utapi.deleteFiles(orphanKeys);
 					orphansDeleted += orphanKeys.length;
-					console.log(
-						`[CRON:cleanup-orphan-media] Deleted ${orphanKeys.length} orphan files`
-					);
+					console.log(`[CRON:cleanup-orphan-media] Deleted ${orphanKeys.length} orphan files`);
 				} catch (error) {
 					console.error(
 						"[CRON:cleanup-orphan-media] Error deleting orphan files:",
-						error instanceof Error ? error.message : String(error)
+						error instanceof Error ? error.message : String(error),
 					);
 					errors += orphanKeys.length;
 				}
@@ -91,12 +88,12 @@ export async function cleanupOrphanMedia(): Promise<{
 		}
 
 		console.log(
-			`[CRON:cleanup-orphan-media] Total: ${orphansDeleted} orphans deleted out of ${filesScanned} scanned`
+			`[CRON:cleanup-orphan-media] Total: ${orphansDeleted} orphans deleted out of ${filesScanned} scanned`,
 		);
 	} catch (error) {
 		console.error(
 			"[CRON:cleanup-orphan-media] Error during cleanup:",
-			error instanceof Error ? error.message : String(error)
+			error instanceof Error ? error.message : String(error),
 		);
 		// Re-throw to signal total failure to the route handler (returns cronError/500)
 		// A DB failure during key scan means we can't safely determine orphans
@@ -139,10 +136,12 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 
 	// 1. SkuMedia (url and thumbnailUrl) - paginated
 	let skuCursor: string | undefined;
-	// eslint-disable-next-line no-constant-condition
+
 	while (true) {
 		if (Date.now() > deadline) {
-			console.warn("[CRON:cleanup-orphan-media] Deadline reached during DB key scan, aborting safely");
+			console.warn(
+				"[CRON:cleanup-orphan-media] Deadline reached during DB key scan, aborting safely",
+			);
 			throw new Error("Deadline exceeded during DB key scan");
 		}
 		const batch = await prisma.skuMedia.findMany({
@@ -165,10 +164,12 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 
 	// 2. ReviewMedia - paginated
 	let reviewCursor: string | undefined;
-	// eslint-disable-next-line no-constant-condition
+
 	while (true) {
 		if (Date.now() > deadline) {
-			console.warn("[CRON:cleanup-orphan-media] Deadline reached during DB key scan, aborting safely");
+			console.warn(
+				"[CRON:cleanup-orphan-media] Deadline reached during DB key scan, aborting safely",
+			);
 			throw new Error("Deadline exceeded during DB key scan");
 		}
 		const batch = await prisma.reviewMedia.findMany({
@@ -187,10 +188,12 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 
 	// 3. User avatars (only those with non-null image) - paginated
 	let userCursor: string | undefined;
-	// eslint-disable-next-line no-constant-condition
+
 	while (true) {
 		if (Date.now() > deadline) {
-			console.warn("[CRON:cleanup-orphan-media] Deadline reached during DB key scan, aborting safely");
+			console.warn(
+				"[CRON:cleanup-orphan-media] Deadline reached during DB key scan, aborting safely",
+			);
 			throw new Error("Deadline exceeded during DB key scan");
 		}
 		const batch = await prisma.user.findMany({

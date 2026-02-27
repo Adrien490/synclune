@@ -71,8 +71,7 @@ export async function generateMetadata({
 
 	// Vérifier si des filtres additionnels sont actifs (hors type)
 	const hasAdditionalFilters = Object.keys(searchParamsData).some(
-		(key) =>
-			!["cursor", "direction", "perPage", "sortBy", "search"].includes(key)
+		(key) => !["cursor", "direction", "perPage", "sortBy", "search"].includes(key),
 	);
 
 	const title = `${productType.label} artisanaux faits main | Synclune - Nantes`;
@@ -114,16 +113,17 @@ export default async function ProductTypeCategoryPage({
 	const { productTypeSlug } = await params;
 	const searchParamsData = await searchParams;
 
-	// Récupérer le type de produit
-	const productType = await getProductTypeBySlug({ slug: productTypeSlug });
+	// Récupérer le type de produit et les données du catalogue en parallèle
+	const [productType, catalogData] = await Promise.all([
+		getProductTypeBySlug({ slug: productTypeSlug }),
+		getCatalogData(),
+	]);
 
 	if (!productType) {
 		notFound();
 	}
 
-	// Récupérer les données du catalogue
-	const { productTypes, colors, materials, maxPriceInEuros } =
-		await getCatalogData();
+	const { productTypes, colors, materials, maxPriceInEuros } = catalogData;
 
 	// Parser les paramètres
 	const { perPage, searchTerm } = parsePaginationParams(searchParamsData);

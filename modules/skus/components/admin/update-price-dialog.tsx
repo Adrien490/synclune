@@ -39,10 +39,12 @@ export function UpdatePriceDialog() {
 	// Reset values when dialog opens
 	useEffect(() => {
 		if (isOpen && data) {
-			setPrice((data.currentPrice / 100).toFixed(2));
-			setCompareAtPrice(
-				data.currentCompareAtPrice ? (data.currentCompareAtPrice / 100).toFixed(2) : ""
-			);
+			queueMicrotask(() => {
+				setPrice((data.currentPrice / 100).toFixed(2));
+				setCompareAtPrice(
+					data.currentCompareAtPrice ? (data.currentCompareAtPrice / 100).toFixed(2) : "",
+				);
+			});
 		}
 	}, [isOpen, data]);
 
@@ -74,7 +76,7 @@ export function UpdatePriceDialog() {
 						</ResponsiveDialogDescription>
 					</ResponsiveDialogHeader>
 
-					<div className="py-6 space-y-4">
+					<div className="space-y-4 py-6">
 						<div>
 							<Label htmlFor="price" className="text-sm font-medium">
 								Prix final (€)
@@ -87,10 +89,10 @@ export function UpdatePriceDialog() {
 									min="0.01"
 									value={price}
 									onChange={(e) => setPrice(e.target.value)}
-									className="text-lg font-semibold pr-8"
+									className="pr-8 text-lg font-semibold"
 									disabled={isPending}
 								/>
-								<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+								<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2">
 									€
 								</span>
 							</div>
@@ -112,12 +114,12 @@ export function UpdatePriceDialog() {
 									className="pr-8"
 									disabled={isPending}
 								/>
-								<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+								<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2">
 									€
 								</span>
 							</div>
 							{compareAtPrice && compareAtPriceValue <= priceValue && (
-								<p className="text-sm text-destructive mt-1">
+								<p className="text-destructive mt-1 text-sm">
 									Le prix barré doit être supérieur au prix de vente
 								</p>
 							)}
@@ -125,12 +127,7 @@ export function UpdatePriceDialog() {
 					</div>
 
 					<ResponsiveDialogFooter>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={close}
-							disabled={isPending}
-						>
+						<Button type="button" variant="outline" onClick={close} disabled={isPending}>
 							Annuler
 						</Button>
 						<Button type="submit" disabled={!isValid || isPending}>

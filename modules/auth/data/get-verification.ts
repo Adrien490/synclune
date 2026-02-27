@@ -4,18 +4,12 @@ import { prisma } from "@/shared/lib/prisma";
 import { GET_VERIFICATION_SELECT } from "../constants/verification.constants";
 import { cacheAuthVerifications } from "../utils/cache.utils";
 import { getVerificationSchema } from "../schemas/verification.schemas";
-import type {
-	GetVerificationParams,
-	GetVerificationReturn,
-} from "../types/verification.types";
+import type { GetVerificationParams, GetVerificationReturn } from "../types/verification.types";
 
 // Re-export pour compatibilité
 export { GET_VERIFICATION_SELECT } from "../constants/verification.constants";
 export { getVerificationSchema } from "../schemas/verification.schemas";
-export type {
-	GetVerificationParams,
-	GetVerificationReturn,
-} from "../types/verification.types";
+export type { GetVerificationParams, GetVerificationReturn } from "../types/verification.types";
 
 // ============================================================================
 // UTILS
@@ -41,7 +35,7 @@ function maskVerificationValue(value: string | null | undefined) {
  * Récupère une vérification par son ID (admin uniquement)
  */
 export async function getVerification(
-	params: Partial<GetVerificationParams>
+	params: Partial<GetVerificationParams>,
 ): Promise<GetVerificationReturn | null> {
 	const validation = getVerificationSchema.safeParse(params ?? {});
 
@@ -62,7 +56,7 @@ export async function getVerification(
  * Récupère une vérification depuis la DB avec cache
  */
 export async function fetchVerification(
-	params: GetVerificationParams
+	params: GetVerificationParams,
 ): Promise<GetVerificationReturn | null> {
 	"use cache";
 	cacheAuthVerifications();
@@ -83,7 +77,7 @@ export async function fetchVerification(
 			...rest,
 			valueMasked: maskVerificationValue(value),
 		};
-	} catch (error) {
+	} catch (_error) {
 		return null;
 	}
 }

@@ -60,6 +60,8 @@ export const RETENTION = {
 	/** Days to wait for newsletter confirmation before cleanup */
 	NEWSLETTER_CONFIRMATION_DAYS: 7,
 
+	/** Years of inactivity before unsubscribing confirmed newsletter subscribers */
+	NEWSLETTER_INACTIVITY_YEARS: 3,
 } as const;
 
 /**

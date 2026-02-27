@@ -40,9 +40,7 @@ import type { SkuSelectorDialogData } from "../types/dialog-data.types";
 
 // Lazy loading - size guide dialog loads only when opened
 const SizeGuideDialog = dynamic(() =>
-	import("@/modules/skus/components/size-guide-dialog").then(
-		(mod) => mod.SizeGuideDialog
-	)
+	import("@/modules/skus/components/size-guide-dialog").then((mod) => mod.SizeGuideDialog),
 );
 
 export type { SkuSelectorDialogData };
@@ -132,29 +130,22 @@ function buildAvailabilityMaps(
 	sizes: string[],
 	selectedColor: string,
 	selectedMaterial: string,
-	selectedSize: string
+	selectedSize: string,
 ): AvailabilityMaps {
-	const colorMap = new Map<string, boolean>(
-		colors.map((c) => [c.slug, false])
-	);
-	const materialMap = new Map<string, boolean>(
-		materials.map((m) => [m.slug, false])
-	);
+	const colorMap = new Map<string, boolean>(colors.map((c) => [c.slug, false]));
+	const materialMap = new Map<string, boolean>(materials.map((m) => [m.slug, false]));
 	const sizeMap = new Map<string, boolean>(sizes.map((s) => [s, false]));
 
 	for (const sku of activeSkus) {
 		if (sku.inventory <= 0) continue;
 
 		const skuColor = sku.color?.slug;
-		const skuMaterial = sku.material?.name
-			? slugify(sku.material.name)
-			: null;
+		const skuMaterial = sku.material?.name ? slugify(sku.material.name) : null;
 		const skuSize = sku.size;
 
 		// Color availability: matches selected material + size
 		if (skuColor && colorMap.has(skuColor) && !colorMap.get(skuColor)) {
-			const materialMatch =
-				!selectedMaterial || skuMaterial === selectedMaterial;
+			const materialMatch = !selectedMaterial || skuMaterial === selectedMaterial;
 			const sizeMatch = !selectedSize || skuSize === selectedSize;
 			if (materialMatch && sizeMatch) {
 				colorMap.set(skuColor, true);
@@ -162,11 +153,7 @@ function buildAvailabilityMaps(
 		}
 
 		// Material availability: matches selected color + size
-		if (
-			skuMaterial &&
-			materialMap.has(skuMaterial) &&
-			!materialMap.get(skuMaterial)
-		) {
+		if (skuMaterial && materialMap.has(skuMaterial) && !materialMap.get(skuMaterial)) {
 			const colorMatch = !selectedColor || skuColor === selectedColor;
 			const sizeMatch = !selectedSize || skuSize === selectedSize;
 			if (colorMatch && sizeMatch) {
@@ -177,8 +164,7 @@ function buildAvailabilityMaps(
 		// Size availability: matches selected color + material
 		if (skuSize && sizeMap.has(skuSize) && !sizeMap.get(skuSize)) {
 			const colorMatch = !selectedColor || skuColor === selectedColor;
-			const materialMatch =
-				!selectedMaterial || skuMaterial === selectedMaterial;
+			const materialMatch = !selectedMaterial || skuMaterial === selectedMaterial;
 			if (colorMatch && materialMatch) {
 				sizeMap.set(skuSize, true);
 			}
@@ -194,16 +180,14 @@ function buildAvailabilityMaps(
 function getImageForColor(
 	selectedColor: string,
 	activeSkus: ActiveSku[],
-	product: Product
+	product: Product,
 ): ImageSelection {
 	if (selectedColor) {
 		const skuWithColor = activeSkus.find(
-			(sku) => sku.color?.slug === selectedColor && sku.images?.length > 0
+			(sku) => sku.color?.slug === selectedColor && sku.images?.length > 0,
 		);
 		if (skuWithColor?.images?.length) {
-			const img =
-				skuWithColor.images.find((i) => i.isPrimary) ||
-				skuWithColor.images[0];
+			const img = skuWithColor.images.find((i) => i.isPrimary) || skuWithColor.images[0];
 			return {
 				url: img.url,
 				alt: img.altText || `${product.title} - ${selectedColor}`,
@@ -229,7 +213,7 @@ function computeValidationErrors(
 	requiresSize: boolean,
 	selectedColor: string,
 	selectedMaterial: string,
-	selectedSize: string
+	selectedSize: string,
 ): string[] {
 	const errors: string[] = [];
 	if (colors.length > 1 && !selectedColor) {
@@ -268,8 +252,7 @@ function ColorSelector({
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: colors,
 		getOptionId: (color) => color.slug,
-		isOptionDisabled: (color) =>
-			!(colorAvailability.get(color.slug) ?? false),
+		isOptionDisabled: (color) => !(colorAvailability.get(color.slug) ?? false),
 		onSelect: (color) => onSelect(color.slug),
 	});
 
@@ -287,29 +270,23 @@ function ColorSelector({
 				data-option-id={color.slug}
 				onClick={() => onSelect(color.slug)}
 				onKeyDown={(e) => handleKeyDown(e, index)}
-				tabIndex={
-					isSelected || (!selectedValue && index === 0) ? 0 : -1
-				}
+				tabIndex={isSelected || (!selectedValue && index === 0) ? 0 : -1}
 				disabled={!isAvailable || isPending}
 				className={cn(
-					"relative flex items-center gap-2 px-4 py-3 min-h-11 rounded-lg border-2 transition-all",
+					"relative flex min-h-11 items-center gap-2 rounded-lg border-2 px-4 py-3 transition-all",
 					"hover:shadow-sm active:scale-[0.98]",
-					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+					"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
 					"disabled:cursor-not-allowed",
-					isSelected
-						? "border-primary bg-primary/5"
-						: "border-border hover:border-primary/50",
+					isSelected ? "border-primary bg-primary/5" : "border-border hover:border-primary/50",
 					!isAvailable && "opacity-40 saturate-0",
-					needsCarousel && "shrink-0 snap-start"
+					needsCarousel && "shrink-0 snap-start",
 				)}
 				aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
 			>
 				<div
 					className={cn(
-						"w-6 h-6 sm:w-5 sm:h-5 rounded-full shadow-sm shrink-0",
-						isLightColor(color.hex, 0.85)
-							? "border-2 border-border"
-							: "border border-border/50"
+						"h-6 w-6 shrink-0 rounded-full shadow-sm sm:h-5 sm:w-5",
+						isLightColor(color.hex, 0.85) ? "border-border border-2" : "border-border/50 border",
 					)}
 					style={{ backgroundColor: color.hex }}
 				/>
@@ -324,18 +301,15 @@ function ColorSelector({
 							damping: 15,
 						}}
 					>
-						<Check
-							className="w-4 h-4 text-primary shrink-0"
-							aria-hidden="true"
-						/>
+						<Check className="text-primary h-4 w-4 shrink-0" aria-hidden="true" />
 					</motion.div>
 				)}
 				{!isAvailable && (
 					<div
-						className="absolute inset-0 flex items-center justify-center pointer-events-none"
+						className="pointer-events-none absolute inset-0 flex items-center justify-center"
 						aria-hidden="true"
 					>
-						<div className="w-full h-px bg-muted-foreground/50 rotate-[-8deg]" />
+						<div className="bg-muted-foreground/50 h-px w-full rotate-[-8deg]" />
 					</div>
 				)}
 			</button>
@@ -346,20 +320,13 @@ function ColorSelector({
 		<fieldset className="space-y-2" disabled={isPending}>
 			<legend id={COLOR_LEGEND_ID} className="text-sm font-medium">
 				Couleur
-				<span
-					className="text-destructive ml-0.5"
-					aria-hidden="true"
-				>
+				<span className="text-destructive ml-0.5" aria-hidden="true">
 					*
 				</span>
 				<span className="sr-only">(obligatoire)</span>
 				{selectedValue && (
-					<span className="font-normal text-muted-foreground ml-1">
-						:{" "}
-						{
-							colors.find((c) => c.slug === selectedValue)
-								?.name
-						}
+					<span className="text-muted-foreground ml-1 font-normal">
+						: {colors.find((c) => c.slug === selectedValue)?.name}
 					</span>
 				)}
 			</legend>
@@ -370,9 +337,7 @@ function ColorSelector({
 						role="radiogroup"
 						aria-labelledby={COLOR_LEGEND_ID}
 						aria-describedby={
-							hasValidationErrors && !selectedValue
-								? VALIDATION_ERROR_ID
-								: undefined
+							hasValidationErrors && !selectedValue ? VALIDATION_ERROR_ID : undefined
 						}
 						className="flex gap-2 pb-1"
 					>
@@ -384,11 +349,7 @@ function ColorSelector({
 					ref={containerRef}
 					role="radiogroup"
 					aria-labelledby={COLOR_LEGEND_ID}
-					aria-describedby={
-						hasValidationErrors && !selectedValue
-							? VALIDATION_ERROR_ID
-							: undefined
-					}
+					aria-describedby={hasValidationErrors && !selectedValue ? VALIDATION_ERROR_ID : undefined}
 					className="flex flex-wrap gap-2"
 				>
 					{colorButtons}
@@ -422,8 +383,7 @@ function MaterialSelector({
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: materials,
 		getOptionId: (material) => material.slug,
-		isOptionDisabled: (material) =>
-			!(materialAvailability.get(material.slug) ?? false),
+		isOptionDisabled: (material) => !(materialAvailability.get(material.slug) ?? false),
 		onSelect: (material) => onSelect(material.slug),
 	});
 
@@ -431,10 +391,7 @@ function MaterialSelector({
 		<fieldset className="space-y-2" disabled={isPending}>
 			<legend id={MATERIAL_LEGEND_ID} className="text-sm font-medium">
 				Matériau
-				<span
-					className="text-destructive ml-0.5"
-					aria-hidden="true"
-				>
+				<span className="text-destructive ml-0.5" aria-hidden="true">
 					*
 				</span>
 				<span className="sr-only">(obligatoire)</span>
@@ -443,17 +400,12 @@ function MaterialSelector({
 				ref={containerRef}
 				role="radiogroup"
 				aria-labelledby={MATERIAL_LEGEND_ID}
-				aria-describedby={
-					hasValidationErrors && !selectedValue
-						? VALIDATION_ERROR_ID
-						: undefined
-				}
-				className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+				aria-describedby={hasValidationErrors && !selectedValue ? VALIDATION_ERROR_ID : undefined}
+				className="grid grid-cols-1 gap-2 sm:grid-cols-2"
 			>
 				{materials.map((material, index) => {
 					const isSelected = material.slug === selectedValue;
-					const isAvailable =
-						materialAvailability.get(material.slug) ?? false;
+					const isAvailable = materialAvailability.get(material.slug) ?? false;
 
 					return (
 						<button
@@ -464,28 +416,21 @@ function MaterialSelector({
 							data-option-id={material.slug}
 							onClick={() => onSelect(material.slug)}
 							onKeyDown={(e) => handleKeyDown(e, index)}
-							tabIndex={
-								isSelected ||
-								(!selectedValue && index === 0)
-									? 0
-									: -1
-							}
+							tabIndex={isSelected || (!selectedValue && index === 0) ? 0 : -1}
 							disabled={!isAvailable || isPending}
 							className={cn(
-								"relative flex items-center justify-between px-4 py-3 min-h-11 rounded-lg border-2 transition-all",
+								"relative flex min-h-11 items-center justify-between rounded-lg border-2 px-4 py-3 transition-all",
 								"hover:shadow-sm active:scale-[0.98]",
-								"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+								"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
 								"disabled:cursor-not-allowed",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-40 saturate-0"
+								!isAvailable && "opacity-40 saturate-0",
 							)}
 							aria-label={`${material.name}${!isAvailable ? " (indisponible)" : ""}`}
 						>
-							<span className="text-sm">
-								{material.name}
-							</span>
+							<span className="text-sm">{material.name}</span>
 							{isSelected && (
 								<motion.div
 									initial={{ scale: 0 }}
@@ -496,18 +441,15 @@ function MaterialSelector({
 										damping: 15,
 									}}
 								>
-									<Check
-										className="w-4 h-4 text-primary shrink-0"
-										aria-hidden="true"
-									/>
+									<Check className="text-primary h-4 w-4 shrink-0" aria-hidden="true" />
 								</motion.div>
 							)}
 							{!isAvailable && (
 								<div
-									className="absolute inset-0 flex items-center justify-center pointer-events-none"
+									className="pointer-events-none absolute inset-0 flex items-center justify-center"
 									aria-hidden="true"
 								>
-									<div className="w-full h-px bg-muted-foreground/50 rotate-[-8deg]" />
+									<div className="bg-muted-foreground/50 h-px w-full rotate-[-8deg]" />
 								</div>
 							)}
 						</button>
@@ -545,8 +487,7 @@ function SizeSelectorGroup({
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: sizeOptions,
 		getOptionId: (option) => option.size,
-		isOptionDisabled: (option) =>
-			!(sizeAvailability.get(option.size) ?? false),
+		isOptionDisabled: (option) => !(sizeAvailability.get(option.size) ?? false),
 		onSelect: (option) => onSelect(option.size),
 	});
 
@@ -555,22 +496,15 @@ function SizeSelectorGroup({
 			<div className="flex items-center justify-between">
 				<legend id={SIZE_LEGEND_ID} className="text-sm font-medium">
 					Taille
-					<span
-						className="text-destructive ml-0.5"
-						aria-hidden="true"
-					>
+					<span className="text-destructive ml-0.5" aria-hidden="true">
 						*
 					</span>
 					<span className="sr-only">(obligatoire)</span>
 					{productTypeSlug === "ring" && (
-						<span className="font-normal text-muted-foreground ml-1">
-							(Diamètre)
-						</span>
+						<span className="text-muted-foreground ml-1 font-normal">(Diamètre)</span>
 					)}
 					{productTypeSlug === "bracelet" && (
-						<span className="font-normal text-muted-foreground ml-1">
-							(Tour de poignet)
-						</span>
+						<span className="text-muted-foreground ml-1 font-normal">(Tour de poignet)</span>
 					)}
 				</legend>
 				<SizeGuideDialog productTypeSlug={productTypeSlug} />
@@ -579,17 +513,12 @@ function SizeSelectorGroup({
 				ref={containerRef}
 				role="radiogroup"
 				aria-labelledby={SIZE_LEGEND_ID}
-				aria-describedby={
-					hasValidationErrors && !selectedValue
-						? VALIDATION_ERROR_ID
-						: undefined
-				}
-				className="grid grid-cols-3 sm:grid-cols-4 gap-2"
+				aria-describedby={hasValidationErrors && !selectedValue ? VALIDATION_ERROR_ID : undefined}
+				className="grid grid-cols-3 gap-2 sm:grid-cols-4"
 			>
 				{sizes.map((size, index) => {
 					const isSelected = size === selectedValue;
-					const isAvailable =
-						sizeAvailability.get(size) ?? false;
+					const isAvailable = sizeAvailability.get(size) ?? false;
 
 					return (
 						<button
@@ -600,28 +529,21 @@ function SizeSelectorGroup({
 							data-option-id={size}
 							onClick={() => onSelect(size)}
 							onKeyDown={(e) => handleKeyDown(e, index)}
-							tabIndex={
-								isSelected ||
-								(!selectedValue && index === 0)
-									? 0
-									: -1
-							}
+							tabIndex={isSelected || (!selectedValue && index === 0) ? 0 : -1}
 							disabled={!isAvailable || isPending}
 							className={cn(
-								"relative flex items-center justify-center px-2 py-3 min-h-11 rounded-lg border-2 transition-all",
+								"relative flex min-h-11 items-center justify-center rounded-lg border-2 px-2 py-3 transition-all",
 								"hover:shadow-sm active:scale-[0.98]",
-								"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+								"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
 								"disabled:cursor-not-allowed",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-40 saturate-0"
+								!isAvailable && "opacity-40 saturate-0",
 							)}
 							aria-label={`Taille ${size}${!isAvailable ? " (indisponible)" : ""}`}
 						>
-							<span className="text-sm font-medium truncate">
-								{size}
-							</span>
+							<span className="truncate text-sm font-medium">{size}</span>
 							{isSelected && (
 								<motion.div
 									initial={{ scale: 0 }}
@@ -633,18 +555,15 @@ function SizeSelectorGroup({
 									}}
 									className="absolute top-1.5 right-1.5"
 								>
-									<Check
-										className="w-3.5 h-3.5 text-primary"
-										aria-hidden="true"
-									/>
+									<Check className="text-primary h-3.5 w-3.5" aria-hidden="true" />
 								</motion.div>
 							)}
 							{!isAvailable && (
 								<div
-									className="absolute inset-0 flex items-center justify-center pointer-events-none"
+									className="pointer-events-none absolute inset-0 flex items-center justify-center"
 									aria-hidden="true"
 								>
-									<div className="w-full h-px bg-muted-foreground/50 rotate-[-8deg]" />
+									<div className="bg-muted-foreground/50 h-px w-full rotate-[-8deg]" />
 								</div>
 							)}
 						</button>
@@ -684,9 +603,7 @@ function QuantitySection({
 					type="button"
 					variant="outline"
 					size="icon"
-					onClick={() =>
-						onQuantityChange(Math.max(1, quantity - 1))
-					}
+					onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
 					disabled={isPending || quantity <= 1}
 					aria-label="Diminuer la quantité"
 				>
@@ -699,12 +616,10 @@ function QuantitySection({
 					value={quantity}
 					onChange={(e) => {
 						const val = parseInt(e.target.value, 10) || 1;
-						onQuantityChange(
-							Math.max(1, Math.min(maxQuantity, val))
-						);
+						onQuantityChange(Math.max(1, Math.min(maxQuantity, val)));
 					}}
 					disabled={isPending}
-					className="w-12 text-center text-lg font-semibold tabular-nums bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+					className="focus-visible:ring-ring w-12 [appearance:textfield] rounded-md bg-transparent text-center text-lg font-semibold tabular-nums focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 					aria-label="Quantité à ajouter au panier"
 					aria-describedby={QUANTITY_BOUNDS_ID}
 				/>
@@ -715,11 +630,7 @@ function QuantitySection({
 					type="button"
 					variant="outline"
 					size="icon"
-					onClick={() =>
-						onQuantityChange(
-							Math.min(maxQuantity, quantity + 1)
-						)
-					}
+					onClick={() => onQuantityChange(Math.min(maxQuantity, quantity + 1))}
 					disabled={isPending || quantity >= maxQuantity}
 					aria-label="Augmenter la quantité"
 				>
@@ -729,7 +640,7 @@ function QuantitySection({
 			{/* Subtotal when quantity > 1 */}
 			{quantity > 1 && selectedSku && (
 				<p
-					className="text-xs text-muted-foreground"
+					className="text-muted-foreground text-xs"
 					aria-label={`${quantity} fois ${formatEuro(displayPrice)}`}
 				>
 					{quantity} x {formatEuro(displayPrice)}
@@ -763,9 +674,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 			quantity: item.quantity,
 		})) ?? [];
 
-	const { isOpen, data, close } = useDialog<SkuSelectorDialogData>(
-		SKU_SELECTOR_DIALOG_ID
-	);
+	const { isOpen, data, close } = useDialog<SkuSelectorDialogData>(SKU_SELECTOR_DIALOG_ID);
 	const { action, isPending } = useAddToCart({
 		openSheetOnSuccess: true,
 		onSuccess: close,
@@ -788,17 +697,13 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 	// Pre-selects default SKU variants for better UX
 	useEffect(() => {
 		if (isOpen && product) {
-			const activeSkus =
-				product.skus?.filter((sku) => sku.isActive) || [];
-			const defaultSku =
-				activeSkus.find((sku) => sku.isDefault) ?? activeSkus[0];
-			const { colors, materials, sizes } =
-				extractVariantOptions(activeSkus);
+			const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
+			const defaultSku = activeSkus.find((sku) => sku.isDefault) ?? activeSkus[0];
+			const { colors, materials, sizes } = extractVariantOptions(activeSkus);
 
 			// m5: Validate preselectedColor exists in active colors
 			const validPreselectedColor =
-				preselectedColor &&
-				colors.some((c) => c.slug === preselectedColor)
+				preselectedColor && colors.some((c) => c.slug === preselectedColor)
 					? preselectedColor
 					: null;
 
@@ -810,16 +715,11 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 				"";
 
 			const initialMaterial =
-				(defaultSku?.material?.name
-					? slugify(defaultSku.material.name)
-					: "") ||
+				(defaultSku?.material?.name ? slugify(defaultSku.material.name) : "") ||
 				(materials.length === 1 ? materials[0].slug : "") ||
 				"";
 
-			const initialSize =
-				defaultSku?.size ||
-				(sizes.length === 1 ? sizes[0] : "") ||
-				"";
+			const initialSize = defaultSku?.size || (sizes.length === 1 ? sizes[0] : "") || "";
 
 			form.reset({
 				color: initialColor,
@@ -828,7 +728,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 				quantity: 1,
 			});
 		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps -- form.reset is stable
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- form.reset is stable
 	}, [isOpen, product, preselectedColor]);
 
 	const handleClose = () => {
@@ -846,30 +746,21 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 	if (!product) {
 		return (
 			<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-				<ResponsiveDialogContent
-					className="sm:max-w-130"
-					aria-busy="true"
-				>
+				<ResponsiveDialogContent className="sm:max-w-130" aria-busy="true">
 					<ResponsiveDialogHeader>
 						<ResponsiveDialogTitle className="sr-only">
 							Chargement des options du produit
 						</ResponsiveDialogTitle>
-						<Skeleton
-							className="h-6 w-40"
-							aria-hidden="true"
-						/>
+						<Skeleton className="h-6 w-40" aria-hidden="true" />
 						<ResponsiveDialogDescription className="sr-only">
 							Chargement en cours
 						</ResponsiveDialogDescription>
-						<Skeleton
-							className="h-4 w-32 mt-1"
-							aria-hidden="true"
-						/>
+						<Skeleton className="mt-1 h-4 w-32" aria-hidden="true" />
 					</ResponsiveDialogHeader>
 					<div className="space-y-6 py-4">
 						{/* Image + Prix skeleton */}
 						<div className="flex gap-4">
-							<Skeleton className="w-24 h-24 sm:w-40 sm:h-40 rounded-lg shrink-0" />
+							<Skeleton className="h-24 w-24 shrink-0 rounded-lg sm:h-40 sm:w-40" />
 							<div className="flex flex-col justify-center gap-2">
 								<Skeleton className="h-8 w-20" />
 							</div>
@@ -901,33 +792,26 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 		);
 	}
 
-	const activeSkus =
-		product.skus?.filter((sku) => sku.isActive) || [];
+	const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
 	const { colors, materials, sizes } = extractVariantOptions(activeSkus);
 
 	// Check for product unavailability
 	const noActiveSkus = activeSkus.length === 0;
-	const allOutOfStock =
-		activeSkus.length > 0 &&
-		activeSkus.every((sku) => sku.inventory <= 0);
+	const allOutOfStock = activeSkus.length > 0 && activeSkus.every((sku) => sku.inventory <= 0);
 
-	const hasAdjustableSizes = sizes.some((s) =>
-		s.toLowerCase().includes("ajustable")
-	);
+	const hasAdjustableSizes = sizes.some((s) => s.toLowerCase().includes("ajustable"));
 	const requiresSize =
 		!hasAdjustableSizes &&
 		sizes.length > 0 &&
 		PRODUCT_TYPES_REQUIRING_SIZE.includes(
-			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number]
+			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number],
 		);
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveDialogContent className="group/sku-selector sm:max-w-130 sm:max-h-[85vh]">
+			<ResponsiveDialogContent className="group/sku-selector sm:max-h-[85vh] sm:max-w-130">
 				<ResponsiveDialogHeader className="shrink-0">
-					<ResponsiveDialogTitle className="line-clamp-1">
-						{product.title}
-					</ResponsiveDialogTitle>
+					<ResponsiveDialogTitle className="line-clamp-1">{product.title}</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
 						Choisissez vos options pour ajouter au panier
 					</ResponsiveDialogDescription>
@@ -935,11 +819,8 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 
 				{/* Unavailable product message */}
 				{(noActiveSkus || allOutOfStock) && (
-					<div className="py-8 text-center space-y-3">
-						<p
-							role="alert"
-							className="text-muted-foreground"
-						>
+					<div className="space-y-3 py-8 text-center">
+						<p role="alert" className="text-muted-foreground">
 							{noActiveSkus
 								? "Ce produit n'est actuellement pas disponible"
 								: "Ce produit est actuellement en rupture de stock"}
@@ -948,10 +829,10 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 							href={`/creations/${product.slug}`}
 							onClick={handleClose}
 							aria-label={`Voir la fiche produit : ${product.title}`}
-							className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+							className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
 						>
 							Voir la fiche produit
-							<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+							<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
 						</Link>
 					</div>
 				)}
@@ -960,35 +841,19 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 				{!noActiveSkus && !allOutOfStock && (
 					<form
 						action={action}
-						className="flex flex-col flex-1 min-h-0"
+						className="flex min-h-0 flex-1 flex-col"
 						data-pending={isPending ? "" : undefined}
 					>
 						{/* Variant fields subscribe — isolated from quantity changes */}
-						<form.Subscribe
-							selector={(state) => state.values}
-						>
+						<form.Subscribe selector={(state) => state.values}>
 							{(values) => (
 								<SkuSelectorFormContent
 									key={product.id}
 									values={values}
-									onColorChange={(c) =>
-										form.setFieldValue("color", c)
-									}
-									onMaterialChange={(m) =>
-										form.setFieldValue(
-											"material",
-											m
-										)
-									}
-									onSizeChange={(s) =>
-										form.setFieldValue("size", s)
-									}
-									onQuantityChange={(q) =>
-										form.setFieldValue(
-											"quantity",
-											q
-										)
-									}
+									onColorChange={(c) => form.setFieldValue("color", c)}
+									onMaterialChange={(m) => form.setFieldValue("material", m)}
+									onSizeChange={(s) => form.setFieldValue("size", s)}
+									onQuantityChange={(q) => form.setFieldValue("quantity", q)}
 									product={product}
 									activeSkus={activeSkus}
 									colors={colors}
@@ -997,9 +862,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 									requiresSize={requiresSize}
 									cartItems={cartItems}
 									isPending={isPending}
-									shouldReduceMotion={
-										shouldReduceMotion
-									}
+									shouldReduceMotion={shouldReduceMotion}
 									handleClose={handleClose}
 								/>
 							)}
@@ -1055,11 +918,7 @@ function SkuSelectorFormContent({
 	shouldReduceMotion,
 	handleClose,
 }: SkuSelectorFormContentProps) {
-	const {
-		color: selectedColor,
-		material: selectedMaterial,
-		size: selectedSize,
-	} = values;
+	const { color: selectedColor, material: selectedMaterial, size: selectedSize } = values;
 
 	// Only show validation errors after submit attempt
 	const [showErrors, setShowErrors] = useState(false);
@@ -1072,21 +931,18 @@ function SkuSelectorFormContent({
 		sizes,
 		selectedColor,
 		selectedMaterial,
-		selectedSize
+		selectedSize,
 	);
 
 	// Find matching SKU
 	const selectedSku = activeSkus.find((sku) => {
 		if (sku.inventory <= 0) return false;
 		if (colors.length > 1) {
-			if (!selectedColor || sku.color?.slug !== selectedColor)
-				return false;
+			if (!selectedColor || sku.color?.slug !== selectedColor) return false;
 		}
 		if (materials.length > 1) {
 			if (!selectedMaterial) return false;
-			const skuMaterialSlug = sku.material?.name
-				? slugify(sku.material.name)
-				: null;
+			const skuMaterialSlug = sku.material?.name ? slugify(sku.material.name) : null;
 			if (skuMaterialSlug !== selectedMaterial) return false;
 		}
 		if (requiresSize && sizes.length > 0) {
@@ -1096,11 +952,7 @@ function SkuSelectorFormContent({
 	});
 
 	// Dynamic image based on selected color
-	const currentImage = getImageForColor(
-		selectedColor,
-		activeSkus,
-		product
-	);
+	const currentImage = getImageForColor(selectedColor, activeSkus, product);
 
 	// Validation
 	const validationErrors = computeValidationErrors(
@@ -1110,31 +962,22 @@ function SkuSelectorFormContent({
 		requiresSize,
 		selectedColor,
 		selectedMaterial,
-		selectedSize
+		selectedSize,
 	);
 
 	// Cart quantity check
 	const quantityInCart = selectedSku
-		? (cartItems.find((item) => item.skuId === selectedSku.id)
-				?.quantity ?? 0)
+		? (cartItems.find((item) => item.skuId === selectedSku.id)?.quantity ?? 0)
 		: 0;
-	const availableToAdd = selectedSku
-		? Math.max(0, selectedSku.inventory - quantityInCart)
-		: 0;
+	const availableToAdd = selectedSku ? Math.max(0, selectedSku.inventory - quantityInCart) : 0;
 
-	const canAddToCart =
-		selectedSku && validationErrors.length === 0 && availableToAdd > 0;
-	const displayPrice = selectedSku
-		? selectedSku.priceInclTax
-		: activeSkus[0]?.priceInclTax || 0;
+	const canAddToCart = selectedSku && validationErrors.length === 0 && availableToAdd > 0;
+	const displayPrice = selectedSku ? selectedSku.priceInclTax : activeSkus[0]?.priceInclTax || 0;
 
 	// Discount info
-	const compareAtPrice =
-		selectedSku?.compareAtPrice ?? activeSkus[0]?.compareAtPrice;
+	const compareAtPrice = selectedSku?.compareAtPrice ?? activeSkus[0]?.compareAtPrice;
 	const showDiscount = hasActiveDiscount(compareAtPrice, displayPrice);
-	const discountPercent = showDiscount
-		? calculateDiscountPercent(compareAtPrice, displayPrice)
-		: 0;
+	const discountPercent = showDiscount ? calculateDiscountPercent(compareAtPrice, displayPrice) : 0;
 
 	const maxQuantity = selectedSku
 		? Math.min(availableToAdd, MAX_QUANTITY_PER_ORDER)
@@ -1142,41 +985,27 @@ function SkuSelectorFormContent({
 
 	// Clamp quantity — when maxQuantity is 0 (stock exhausted), default to 1
 	// (the UI hides the quantity selector and disables submit in this case)
-	const quantity = maxQuantity > 0
-		? Math.min(values.quantity, maxQuantity)
-		: 1;
+	const quantity = maxQuantity > 0 ? Math.min(values.quantity, maxQuantity) : 1;
 
-	const hasVisibleErrors =
-		!canAddToCart &&
-		validationErrors.length > 0 &&
-		showErrors &&
-		!isPending;
+	const hasVisibleErrors = !canAddToCart && validationErrors.length > 0 && showErrors && !isPending;
 
 	return (
 		<>
 			{/* Hidden fields for form action */}
 			{selectedSku && (
 				<>
-					<input
-						type="hidden"
-						name="skuId"
-						value={selectedSku.id}
-					/>
-					<input
-						type="hidden"
-						name="quantity"
-						value={quantity}
-					/>
+					<input type="hidden" name="skuId" value={selectedSku.id} />
+					<input type="hidden" name="quantity" value={quantity} />
 				</>
 			)}
 
 			{/* Scrollable content with opacity effect during submit */}
 			<div
 				className={cn(
-					"relative flex-1 min-h-0 overflow-y-auto space-y-6 py-4 pb-6 pr-2 overscroll-contain",
+					"relative min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain py-4 pr-2 pb-6",
 					"group-has-[[data-pending]]/sku-selector:opacity-50",
 					"group-has-[[data-pending]]/sku-selector:pointer-events-none",
-					"transition-opacity duration-200"
+					"transition-opacity duration-200",
 				)}
 			>
 				{/* Image + Price */}
@@ -1196,21 +1025,15 @@ function SkuSelectorFormContent({
 							opacity: 1,
 						}}
 						transition={{ duration: 0.2 }}
-						className="relative w-24 h-24 sm:w-40 sm:h-40 rounded-lg overflow-hidden bg-muted shrink-0"
+						className="bg-muted relative h-24 w-24 shrink-0 overflow-hidden rounded-lg sm:h-40 sm:w-40"
 					>
 						<Image
 							src={currentImage.url}
 							alt={currentImage.alt}
 							fill
 							className="object-cover"
-							placeholder={
-								currentImage.blurDataUrl
-									? "blur"
-									: "empty"
-							}
-							blurDataURL={
-								currentImage.blurDataUrl ?? undefined
-							}
+							placeholder={currentImage.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={currentImage.blurDataUrl ?? undefined}
 							sizes="(min-width: 640px) 160px, 96px"
 							quality={85}
 						/>
@@ -1241,112 +1064,70 @@ function SkuSelectorFormContent({
 											}
 								}
 								transition={{
-									duration:
-										shouldReduceMotion
-											? 0.1
-											: 0.2,
+									duration: shouldReduceMotion ? 0.1 : 0.2,
 								}}
 								role="status"
 								aria-live="polite"
 							>
 								<div className="flex items-center gap-2">
-									<span className="tabular-nums text-2xl font-bold text-foreground">
-										{formatEuro(
-											displayPrice
-										)}
+									<span className="text-foreground text-2xl font-bold tabular-nums">
+										{formatEuro(displayPrice)}
 									</span>
-									{showDiscount &&
-										discountPercent >
-											0 && (
-											<span className="text-xs font-semibold text-white bg-destructive px-1.5 py-0.5 rounded">
-												-
-												{
-													discountPercent
-												}
-												%
-											</span>
-										)}
-								</div>
-								{showDiscount &&
-									compareAtPrice && (
-										<>
-											<span className="sr-only">
-												Prix
-												original
-												:{" "}
-												{formatEuro(
-													compareAtPrice
-												)}
-											</span>
-											<span
-												className="tabular-nums text-foreground/60 line-through text-sm"
-												aria-hidden="true"
-											>
-												{formatEuro(
-													compareAtPrice
-												)}
-											</span>
-										</>
+									{showDiscount && discountPercent > 0 && (
+										<span className="bg-destructive rounded px-1.5 py-0.5 text-xs font-semibold text-white">
+											-{discountPercent}%
+										</span>
 									)}
-								<span className="sr-only">
-									{" "}
-									- Prix du produit
-								</span>
+								</div>
+								{showDiscount && compareAtPrice && (
+									<>
+										<span className="sr-only">Prix original : {formatEuro(compareAtPrice)}</span>
+										<span
+											className="text-foreground/60 text-sm tabular-nums line-through"
+											aria-hidden="true"
+										>
+											{formatEuro(compareAtPrice)}
+										</span>
+									</>
+								)}
+								<span className="sr-only"> - Prix du produit</span>
 							</motion.div>
 						</AnimatePresence>
 						{/* Low stock badge */}
-						{selectedSku &&
-							selectedSku.inventory <=
-								STOCK_THRESHOLDS.LOW &&
-							availableToAdd > 0 && (
-								<motion.span
-									role="status"
-									animate={
-										shouldReduceMotion
-											? {}
-											: {
-													opacity:
-														[
-															1,
-															0.7,
-															1,
-														],
-												}
-									}
-									transition={{
-										repeat: Infinity,
-										duration: 2,
-										ease: "easeInOut",
-									}}
-									className="text-xs text-amber-600 mt-1 font-medium"
-								>
-									Plus que{" "}
-									{
-										selectedSku.inventory
-									}{" "}
-									en stock
-								</motion.span>
-							)}
-						{quantityInCart > 0 && (
-							<span
+						{selectedSku && selectedSku.inventory <= STOCK_THRESHOLDS.LOW && availableToAdd > 0 && (
+							<motion.span
 								role="status"
-								className="text-xs text-muted-foreground mt-1"
+								animate={
+									shouldReduceMotion
+										? {}
+										: {
+												opacity: [1, 0.7, 1],
+											}
+								}
+								transition={{
+									repeat: Infinity,
+									duration: 2,
+									ease: "easeInOut",
+								}}
+								className="mt-1 text-xs font-medium text-amber-600"
 							>
-								{quantityInCart} déjà
-								dans le panier
+								Plus que {selectedSku.inventory} en stock
+							</motion.span>
+						)}
+						{quantityInCart > 0 && (
+							<span role="status" className="text-muted-foreground mt-1 text-xs">
+								{quantityInCart} déjà dans le panier
 							</span>
 						)}
 						{/* Max stock badge */}
-						{selectedSku &&
-							availableToAdd === 0 && (
-								<span
-									role="status"
-									className="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded mt-1"
-								>
-									Stock maximum
-									atteint
-								</span>
-							)}
+						{selectedSku && availableToAdd === 0 && (
+							<span
+								role="status"
+								className="mt-1 inline-flex items-center rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700"
+							>
+								Stock maximum atteint
+							</span>
+						)}
 					</div>
 				</div>
 
@@ -1355,10 +1136,10 @@ function SkuSelectorFormContent({
 					href={`/creations/${product.slug}`}
 					onClick={handleClose}
 					aria-label={`Voir la fiche produit : ${product.title}`}
-					className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+					className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
 				>
 					Voir la fiche produit
-					<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+					<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
 				</Link>
 
 				{/* Color selector */}
@@ -1368,10 +1149,7 @@ function SkuSelectorFormContent({
 						selectedValue={selectedColor}
 						onSelect={onColorChange}
 						isPending={isPending}
-						hasValidationErrors={
-							validationErrors.length > 0 &&
-							showErrors
-						}
+						hasValidationErrors={validationErrors.length > 0 && showErrors}
 						colorAvailability={availability.color}
 					/>
 				)}
@@ -1383,10 +1161,7 @@ function SkuSelectorFormContent({
 						selectedValue={selectedMaterial}
 						onSelect={onMaterialChange}
 						isPending={isPending}
-						hasValidationErrors={
-							validationErrors.length > 0 &&
-							showErrors
-						}
+						hasValidationErrors={validationErrors.length > 0 && showErrors}
 						materialAvailability={availability.material}
 					/>
 				)}
@@ -1398,14 +1173,9 @@ function SkuSelectorFormContent({
 						selectedValue={selectedSize}
 						onSelect={onSizeChange}
 						isPending={isPending}
-						hasValidationErrors={
-							validationErrors.length > 0 &&
-							showErrors
-						}
+						hasValidationErrors={validationErrors.length > 0 && showErrors}
 						sizeAvailability={availability.size}
-						productTypeSlug={
-							product.type?.slug
-						}
+						productTypeSlug={product.type?.slug}
 					/>
 				)}
 
@@ -1424,15 +1194,14 @@ function SkuSelectorFormContent({
 			{/* End scrollable content */}
 
 			{/* Fixed footer */}
-			<ResponsiveDialogFooter className="shrink-0 pt-4 border-t mt-auto pb-[max(0px,env(safe-area-inset-bottom))]">
+			<ResponsiveDialogFooter className="mt-auto shrink-0 border-t pt-4 pb-[max(0px,env(safe-area-inset-bottom))]">
 				<Button
 					type="submit"
 					disabled={!canAddToCart || isPending}
 					className="w-full"
 					size="lg"
 					onClick={() => {
-						if (validationErrors.length > 0)
-							setShowErrors(true);
+						if (validationErrors.length > 0) setShowErrors(true);
 					}}
 				>
 					{isPending
@@ -1445,8 +1214,8 @@ function SkuSelectorFormContent({
 					role="alert"
 					aria-atomic="true"
 					className={cn(
-						"text-xs text-muted-foreground text-center mt-2",
-						!hasVisibleErrors && "sr-only"
+						"text-muted-foreground mt-2 text-center text-xs",
+						!hasVisibleErrors && "sr-only",
 					)}
 				>
 					{hasVisibleErrors

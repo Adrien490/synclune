@@ -142,7 +142,7 @@ describe("fetchProductSkus – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ sku: "asc" })])
+			expect.arrayContaining([expect.objectContaining({ sku: "asc" })]),
 		);
 	});
 
@@ -152,7 +152,7 @@ describe("fetchProductSkus – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ priceInclTax: "asc" })])
+			expect.arrayContaining([expect.objectContaining({ priceInclTax: "asc" })]),
 		);
 	});
 
@@ -162,7 +162,7 @@ describe("fetchProductSkus – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })])
+			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })]),
 		);
 	});
 
@@ -172,16 +172,18 @@ describe("fetchProductSkus – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ createdAt: "desc" })])
+			expect.arrayContaining([expect.objectContaining({ createdAt: "desc" })]),
 		);
 	});
 
 	it("falls back to createdAt desc for unknown sortBy prefix", async () => {
-		await fetchProductSkus(makeParams({ sortBy: "unknown-sort" as unknown as GetProductSkusParams["sortBy"] }));
+		await fetchProductSkus(
+			makeParams({ sortBy: "unknown-sort" as unknown as GetProductSkusParams["sortBy"] }),
+		);
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ createdAt: "desc" })])
+			expect.arrayContaining([expect.objectContaining({ createdAt: "desc" })]),
 		);
 	});
 
@@ -190,7 +192,7 @@ describe("fetchProductSkus – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ id: "asc" })])
+			expect.arrayContaining([expect.objectContaining({ id: "asc" })]),
 		);
 	});
 });
@@ -208,34 +210,27 @@ describe("fetchProductSkus – pagination clamping", () => {
 	it("clamps perPage to GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE (200)", async () => {
 		await fetchProductSkus(makeParams({ perPage: 9999 }));
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 200 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
 	});
 
 	it("falls back to default perPage when perPage is 0 (falsy)", async () => {
 		// When perPage is 0, `0 || DEFAULT` returns DEFAULT (20), not 0
 		await fetchProductSkus(makeParams({ perPage: 0 }));
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 20 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
 	});
 
 	it("uses GET_PRODUCT_SKUS_DEFAULT_PER_PAGE when perPage is falsy", async () => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		await fetchProductSkus(makeParams({ perPage: undefined as any }));
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 20 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
 	});
 
 	it("passes cursor and direction to buildCursorPagination", async () => {
 		await fetchProductSkus(makeParams({ cursor: "cursor-123", direction: "backward" }));
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ cursor: "cursor-123", direction: "backward" })
+			expect.objectContaining({ cursor: "cursor-123", direction: "backward" }),
 		);
 	});
 });
@@ -263,9 +258,7 @@ describe("fetchProductSkus – DB query", () => {
 
 		await fetchProductSkus(makeParams());
 
-		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where })
-		);
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
 	});
 
 	it("passes GET_PRODUCT_SKUS_DEFAULT_SELECT to Prisma select", async () => {
@@ -274,7 +267,7 @@ describe("fetchProductSkus – DB query", () => {
 		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, sku: true, inventory: true, images: true },
-			})
+			}),
 		);
 	});
 });
@@ -336,7 +329,9 @@ describe("fetchProductSkus – error handling", () => {
 		vi.stubEnv("NODE_ENV", "development");
 		mockPrisma.productSku.findMany.mockRejectedValue(new Error("Connection refused"));
 
-		const result = await fetchProductSkus(makeParams()) as GetProductSkusReturn & { error?: string };
+		const result = (await fetchProductSkus(makeParams())) as GetProductSkusReturn & {
+			error?: string;
+		};
 
 		expect(result.error).toBe("Connection refused");
 		vi.unstubAllEnvs();
@@ -346,7 +341,9 @@ describe("fetchProductSkus – error handling", () => {
 		vi.stubEnv("NODE_ENV", "production");
 		mockPrisma.productSku.findMany.mockRejectedValue(new Error("Connection refused"));
 
-		const result = await fetchProductSkus(makeParams()) as GetProductSkusReturn & { error?: string };
+		const result = (await fetchProductSkus(makeParams())) as GetProductSkusReturn & {
+			error?: string;
+		};
 
 		expect(result.error).toBe("Failed to fetch product SKUs");
 		vi.unstubAllEnvs();
@@ -356,7 +353,9 @@ describe("fetchProductSkus – error handling", () => {
 		vi.stubEnv("NODE_ENV", "development");
 		mockPrisma.productSku.findMany.mockRejectedValue("string error");
 
-		const result = await fetchProductSkus(makeParams()) as GetProductSkusReturn & { error?: string };
+		const result = (await fetchProductSkus(makeParams())) as GetProductSkusReturn & {
+			error?: string;
+		};
 
 		expect(result.error).toBe("Unknown error");
 		vi.unstubAllEnvs();

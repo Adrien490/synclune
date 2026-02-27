@@ -1,10 +1,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard, ORDERS_CACHE_TAGS } from "../constants/cache";
 import { z } from "zod";
@@ -14,17 +11,9 @@ import {
 	GET_ORDER_ITEMS_DEFAULT_PER_PAGE,
 	GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE,
 	GET_ORDER_ITEMS_DEFAULT_SORT_ORDER,
-	GET_ORDER_ITEMS_SORT_FIELDS,
 } from "../constants/order-items.constants";
-import {
-	getOrderItemsSchema,
-	orderItemFiltersSchema,
-	orderItemSortBySchema,
-} from "../schemas/order-items.schemas";
-import type {
-	GetOrderItemsReturn,
-	GetOrderItemsParams,
-} from "../types/order-items.types";
+import { getOrderItemsSchema } from "../schemas/order-items.schemas";
+import type { GetOrderItemsReturn, GetOrderItemsParams } from "../types/order-items.types";
 import { buildOrderItemsWhereClause } from "../services/order-items-query-builder";
 
 // Re-export pour compatibilité
@@ -39,10 +28,7 @@ export {
 	orderItemFiltersSchema,
 	orderItemSortBySchema,
 } from "../schemas/order-items.schemas";
-export type {
-	GetOrderItemsReturn,
-	GetOrderItemsParams,
-} from "../types/order-items.types";
+export type { GetOrderItemsReturn, GetOrderItemsParams } from "../types/order-items.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -53,9 +39,7 @@ export type {
  * - Admin : peut voir tous les items
  * - User : ne voit que ses propres items via order.userId
  */
-export async function getOrderItems(
-	params: GetOrderItemsParams
-): Promise<GetOrderItemsReturn> {
+export async function getOrderItems(params: GetOrderItemsParams): Promise<GetOrderItemsReturn> {
 	try {
 		const [admin, session] = await Promise.all([isAdmin(), getSession()]);
 
@@ -87,13 +71,12 @@ export async function getOrderItems(
  */
 async function fetchOrderItems(
 	params: GetOrderItemsParams,
-	userId?: string
+	userId?: string,
 ): Promise<GetOrderItemsReturn> {
 	"use cache: private";
 	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
 
-	const sortOrder = (params.sortOrder ||
-		GET_ORDER_ITEMS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = (params.sortOrder || GET_ORDER_ITEMS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
 
 	try {
 		const where = buildOrderItemsWhereClause(params);
@@ -112,7 +95,7 @@ async function fetchOrderItems(
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_ORDER_ITEMS_DEFAULT_PER_PAGE),
-			GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE
+			GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -132,7 +115,7 @@ async function fetchOrderItems(
 			orderItems,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return {

@@ -4,16 +4,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // ---------------------------------------------------------------------------
 // Hoisted mocks — values shared across vi.mock factories
 // ---------------------------------------------------------------------------
-const {
-	useReducedMotionMock,
-	useIsTouchDeviceMock,
-	useSyncExternalStoreMock,
-} = vi.hoisted(() => ({
+const { useReducedMotionMock, useIsTouchDeviceMock, useSyncExternalStoreMock } = vi.hoisted(() => ({
 	useReducedMotionMock: vi.fn<() => boolean | null>(() => false),
 	useIsTouchDeviceMock: vi.fn<() => boolean>(() => false),
 	// Default: simulate client (isMounted = true) — getClientSnapshot returns true
 	useSyncExternalStoreMock: vi.fn<
-		(subscribe: () => void, getSnapshot: () => unknown, getServerSnapshot?: () => unknown) => unknown
+		(
+			subscribe: () => void,
+			getSnapshot: () => unknown,
+			getServerSnapshot?: () => unknown,
+		) => unknown
 	>((_subscribe: () => void, getSnapshot: () => unknown) => getSnapshot()),
 }));
 
@@ -53,12 +53,8 @@ vi.mock("next/image", () => ({
 		[key: string]: unknown;
 	}) => (
 		// biome-ignore lint/a11y/useAltText: intentional empty alt in decorative tests
-		<img
-			src={src}
-			alt={alt}
-			aria-hidden={ariaHidden}
-			data-testid="parallax-image"
-		/>
+		// eslint-disable-next-line @next/next/no-img-element
+		<img src={src} alt={alt} aria-hidden={ariaHidden} data-testid="parallax-image" />
 	),
 }));
 
@@ -77,7 +73,7 @@ afterEach(() => {
 	useIsTouchDeviceMock.mockReturnValue(false);
 	// Default: client-side — run getClientSnapshot (returns true)
 	useSyncExternalStoreMock.mockImplementation(
-		(_subscribe: () => void, getSnapshot: () => unknown) => getSnapshot()
+		(_subscribe: () => void, getSnapshot: () => unknown) => getSnapshot(),
 	);
 });
 
@@ -103,11 +99,8 @@ describe("SSR / not yet mounted", () => {
 	it("renders static image without role=presentation when useSyncExternalStore returns server snapshot (false)", () => {
 		// Simulate SSR: always call getServerSnapshot, which returns false (isMounted = false)
 		useSyncExternalStoreMock.mockImplementation(
-			(
-				_subscribe: () => void,
-				_getSnapshot: () => unknown,
-				getServerSnapshot?: () => unknown
-			) => (getServerSnapshot ? getServerSnapshot() : false)
+			(_subscribe: () => void, _getSnapshot: () => unknown, getServerSnapshot?: () => unknown) =>
+				getServerSnapshot ? getServerSnapshot() : false,
 		);
 
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
@@ -211,9 +204,7 @@ describe("desktop with motion allowed", () => {
 
 		const presentation = document.querySelector('[role="presentation"]');
 		expect(presentation).not.toBeNull();
-		expect(
-			presentation?.querySelector('[data-testid="parallax-image"]')
-		).not.toBeNull();
+		expect(presentation?.querySelector('[data-testid="parallax-image"]')).not.toBeNull();
 	});
 });
 
@@ -230,9 +221,7 @@ describe("decorative prop", () => {
 	});
 
 	it("sets empty alt string when decorative=true", () => {
-		render(
-			<ParallaxImage {...DEFAULT_PROPS} alt="Should be empty" decorative />
-		);
+		render(<ParallaxImage {...DEFAULT_PROPS} alt="Should be empty" decorative />);
 
 		const img = screen.getByTestId("parallax-image");
 		expect(img.getAttribute("alt")).toBe("");
@@ -263,9 +252,7 @@ describe("intensity capping", () => {
 		render(<ParallaxImage {...DEFAULT_PROPS} intensity={30} />);
 
 		// height = 100 + safeIntensity * 2 — should be 130%, not 160%
-		const presentation = document.querySelector(
-			'[role="presentation"]'
-		) as HTMLElement | null;
+		const presentation = document.querySelector('[role="presentation"]') as HTMLElement | null;
 		expect(presentation).not.toBeNull();
 
 		const style = presentation?.getAttribute("style") ?? "";
@@ -276,9 +263,7 @@ describe("intensity capping", () => {
 	it("uses provided intensity when below the cap (intensity=8)", () => {
 		render(<ParallaxImage {...DEFAULT_PROPS} intensity={8} />);
 
-		const presentation = document.querySelector(
-			'[role="presentation"]'
-		) as HTMLElement | null;
+		const presentation = document.querySelector('[role="presentation"]') as HTMLElement | null;
 		expect(presentation).not.toBeNull();
 
 		const style = presentation?.getAttribute("style") ?? "";
@@ -289,9 +274,7 @@ describe("intensity capping", () => {
 	it("uses default intensity of 5 when not provided", () => {
 		render(<ParallaxImage {...DEFAULT_PROPS} />);
 
-		const presentation = document.querySelector(
-			'[role="presentation"]'
-		) as HTMLElement | null;
+		const presentation = document.querySelector('[role="presentation"]') as HTMLElement | null;
 		expect(presentation).not.toBeNull();
 
 		const style = presentation?.getAttribute("style") ?? "";

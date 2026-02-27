@@ -26,9 +26,7 @@ type UpdateNotesDialogData = {
 };
 
 export function UpdateNotesDialog() {
-	const { isOpen, data, close } = useDialog<UpdateNotesDialogData>(
-		UPDATE_NOTES_DIALOG_ID
-	);
+	const { isOpen, data, close } = useDialog<UpdateNotesDialogData>(UPDATE_NOTES_DIALOG_ID);
 	const [notes, setNotes] = useState("");
 	const { action, isPending } = useUpdateCustomizationNotes({
 		onSuccess: close,
@@ -37,7 +35,7 @@ export function UpdateNotesDialog() {
 	// Reset notes when dialog opens with new data
 	useEffect(() => {
 		if (isOpen && data) {
-			setNotes(data.currentNotes || "");
+			queueMicrotask(() => setNotes(data.currentNotes || ""));
 		}
 	}, [isOpen, data]);
 
@@ -58,8 +56,7 @@ export function UpdateNotesDialog() {
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Notes internes</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Demande de{" "}
-						<span className="font-semibold">{data?.clientName}</span>
+						Demande de <span className="font-semibold">{data?.clientName}</span>
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
@@ -72,7 +69,7 @@ export function UpdateNotesDialog() {
 						maxLength={2000}
 						aria-label="Notes internes pour la demande"
 					/>
-					<p className="mt-2 text-xs text-muted-foreground text-right">
+					<p className="text-muted-foreground mt-2 text-right text-xs">
 						{notes.length}/2000 caractères
 					</p>
 				</div>

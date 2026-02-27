@@ -8,7 +8,6 @@ import {
 	SelectGroup,
 	SelectItem,
 	SelectLabel,
-	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
 } from "@/shared/components/ui/select";
@@ -36,9 +35,7 @@ interface ResponsiveSelectGroup {
 
 type ResponsiveSelectOptions = ResponsiveSelectOption[] | ResponsiveSelectGroup[];
 
-function isGroupedOptions(
-	options: ResponsiveSelectOptions
-): options is ResponsiveSelectGroup[] {
+function isGroupedOptions(options: ResponsiveSelectOptions): options is ResponsiveSelectGroup[] {
 	return options.length > 0 && "options" in options[0];
 }
 
@@ -155,22 +152,14 @@ function ResponsiveSelect({
 							<SelectGroup key={group.label}>
 								<SelectLabel>{group.label}</SelectLabel>
 								{group.options.map((option) => (
-									<SelectItem
-										key={option.value}
-										value={option.value}
-										disabled={option.disabled}
-									>
+									<SelectItem key={option.value} value={option.value} disabled={option.disabled}>
 										{option.label}
 									</SelectItem>
 								))}
 							</SelectGroup>
 						))
 					: options.map((option) => (
-							<SelectItem
-								key={option.value}
-								value={option.value}
-								disabled={option.disabled}
-							>
+							<SelectItem key={option.value} value={option.value} disabled={option.disabled}>
 								{option.label}
 							</SelectItem>
 						))}

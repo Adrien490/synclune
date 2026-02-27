@@ -1,9 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
@@ -14,17 +11,9 @@ import {
 	GET_ACCOUNTS_DEFAULT_PER_PAGE,
 	GET_ACCOUNTS_MAX_RESULTS_PER_PAGE,
 	GET_ACCOUNTS_DEFAULT_SORT_ORDER,
-	GET_ACCOUNTS_SORT_FIELDS,
 } from "../constants/accounts.constants";
-import {
-	getAccountsSchema,
-	accountFiltersSchema,
-	accountSortBySchema,
-} from "../schemas/accounts.schemas";
-import type {
-	GetAccountsReturn,
-	GetAccountsParams,
-} from "../types/accounts.types";
+import { getAccountsSchema } from "../schemas/accounts.schemas";
+import type { GetAccountsReturn, GetAccountsParams } from "../types/accounts.types";
 import { buildAccountsWhereClause } from "../services/accounts-query-builder";
 
 // Re-export pour compatibilité
@@ -39,10 +28,7 @@ export {
 	accountFiltersSchema,
 	accountSortBySchema,
 } from "../schemas/accounts.schemas";
-export type {
-	GetAccountsReturn,
-	GetAccountsParams,
-} from "../types/accounts.types";
+export type { GetAccountsReturn, GetAccountsParams } from "../types/accounts.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -52,9 +38,7 @@ export type {
  * Action serveur pour récupérer les comptes (admin uniquement)
  * SÉCURITÉ : tokens JAMAIS exposés, même en admin
  */
-export async function getAccounts(
-	params: GetAccountsParams
-): Promise<GetAccountsReturn> {
+export async function getAccounts(params: GetAccountsParams): Promise<GetAccountsReturn> {
 	try {
 		const admin = await isAdmin();
 
@@ -82,19 +66,16 @@ export async function getAccounts(
  * Récupère la liste des comptes avec pagination, tri et filtrage
  * Admin uniquement avec sécurité renforcée
  */
-async function fetchAccounts(
-	params: GetAccountsParams
-): Promise<GetAccountsReturn> {
+async function fetchAccounts(params: GetAccountsParams): Promise<GetAccountsReturn> {
 	"use cache";
 	cacheLife("dashboard");
 	cacheTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 
-	const sortOrder = (params.sortOrder ||
-		GET_ACCOUNTS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = (params.sortOrder || GET_ACCOUNTS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
 
 	const take = Math.min(
 		Math.max(1, params.perPage || GET_ACCOUNTS_DEFAULT_PER_PAGE),
-		GET_ACCOUNTS_MAX_RESULTS_PER_PAGE
+		GET_ACCOUNTS_MAX_RESULTS_PER_PAGE,
 	);
 
 	try {
@@ -110,9 +91,7 @@ async function fetchAccounts(
 			{
 				[params.sortBy]: sortOrder,
 			} as Prisma.AccountOrderByWithRelationInput,
-			...(params.sortBy !== "createdAt"
-				? [{ createdAt: "desc" as const }]
-				: []),
+			...(params.sortBy !== "createdAt" ? [{ createdAt: "desc" as const }] : []),
 			{ id: "asc" },
 		];
 
@@ -129,12 +108,14 @@ async function fetchAccounts(
 
 		const now = new Date();
 		const accountsWithSecurityFields = accountsRaw.map(
-			(account: Prisma.AccountGetPayload<{
-				select: typeof GET_ACCOUNTS_DEFAULT_SELECT & {
-					accessToken: true;
-					refreshToken: true;
-				};
-			}>) => {
+			(
+				account: Prisma.AccountGetPayload<{
+					select: typeof GET_ACCOUNTS_DEFAULT_SELECT & {
+						accessToken: true;
+						refreshToken: true;
+					};
+				}>,
+			) => {
 				const { accessToken, refreshToken, ...accountWithoutTokens } = account;
 
 				return {
@@ -148,14 +129,14 @@ async function fetchAccounts(
 						? account.refreshTokenExpiresAt < now
 						: false,
 				};
-			}
+			},
 		);
 
 		const { items: accounts, pagination } = processCursorResults(
 			accountsWithSecurityFields,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return {

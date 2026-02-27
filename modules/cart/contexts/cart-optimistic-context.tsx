@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useTransition } from "react";
+import { createContext, useContext } from "react";
 
 export type CartOptimisticAction =
 	| { type: "remove"; itemId: string }

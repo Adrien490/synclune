@@ -48,17 +48,18 @@ export function GalleryThumbnail({
 		<button
 			type="button"
 			role="tab"
+			aria-controls={`gallery-panel-${index}`}
 			onClick={onClick}
 			className={cn(
-				"group relative overflow-hidden rounded-xl w-full aspect-square",
+				"group relative aspect-square w-full overflow-hidden rounded-xl",
 				"border-2",
 				transitionClass,
 				!prefersReduced && "active:scale-95",
-				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none",
+				"focus-visible:ring-primary outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
 				isActive
-					? "border-primary shadow-md ring-2 ring-primary/20"
+					? "border-primary ring-primary/20 shadow-md ring-2"
 					: "border-border hover:border-primary/50",
-				className
+				className,
 			)}
 			aria-label={`Voir ${isVideo ? "vidéo" : "photo"} ${index + 1}${isActive ? " (sélectionnée)" : ""}`}
 			aria-selected={isActive}
@@ -84,16 +85,12 @@ export function GalleryThumbnail({
 				</>
 			) : isVideo ? (
 				// Fallback pour vidéo sans thumbnail
-				<div
-					className="w-full h-full bg-muted"
-					role="img"
-					aria-label={alt}
-				>
+				<div className="bg-muted h-full w-full" role="img" aria-label={alt}>
 					<VideoPlayBadge />
 				</div>
 			) : (
 				<div
-					className="w-full h-full flex items-center justify-center bg-muted"
+					className="bg-muted flex h-full w-full items-center justify-center"
 					role="img"
 					aria-label={alt}
 				/>

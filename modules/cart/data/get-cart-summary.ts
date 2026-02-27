@@ -4,7 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 
 import { GET_CART_SUMMARY_SELECT } from "../constants/cart";
 import { cacheCartSummary } from "../constants/cache";
-import type { CartSummary, GetCartSummaryReturn } from "../types/cart.types";
+import type { GetCartSummaryReturn } from "../types/cart.types";
 
 // Re-export pour compatibilité
 export type { CartSummary, GetCartSummaryReturn } from "../types/cart.types";
@@ -22,7 +22,7 @@ export async function getCartSummary(): Promise<GetCartSummaryReturn> {
 	const session = await getSession();
 
 	const userId = session?.user?.id;
-	const sessionId = !userId ? (await getCartSessionId()) ?? undefined : undefined;
+	const sessionId = !userId ? ((await getCartSessionId()) ?? undefined) : undefined;
 
 	return fetchCartSummary(userId, sessionId);
 }
@@ -42,7 +42,7 @@ export async function getCartSummary(): Promise<GetCartSummaryReturn> {
  */
 export async function fetchCartSummary(
 	userId: string | undefined,
-	sessionId: string | undefined
+	sessionId: string | undefined,
 ): Promise<GetCartSummaryReturn> {
 	"use cache: private";
 	cacheCartSummary(userId, sessionId);
@@ -60,10 +60,7 @@ export async function fetchCartSummary(
 		const cart = await prisma.cart.findFirst({
 			where: {
 				...(userId ? { userId } : { sessionId: sessionId! }),
-				OR: [
-					{ expiresAt: null },
-					{ expiresAt: { gt: new Date() } },
-				],
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
 			},
 			select: GET_CART_SUMMARY_SELECT,
 		});
@@ -77,10 +74,7 @@ export async function fetchCartSummary(
 		}
 
 		const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-		const totalAmount = cart.items.reduce(
-			(sum, item) => sum + item.priceAtAdd * item.quantity,
-			0
-		);
+		const totalAmount = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
 
 		return {
 			itemCount,

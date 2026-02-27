@@ -4,11 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import {
-	success,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { success, notFound, handleActionError } from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { UserDataExport } from "../types/rgpd.types";
 
@@ -108,6 +104,7 @@ export async function exportUserData(): Promise<ActionState> {
 				name: user.name,
 				email: user.email,
 				createdAt: user.createdAt.toISOString(),
+				termsAcceptedAt: user.termsAcceptedAt?.toISOString() ?? null,
 			},
 			addresses: user.addresses.map((addr) => ({
 				firstName: addr.firstName,

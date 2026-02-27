@@ -1,6 +1,7 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
 import { generateThumbHashWithRetry } from "@/modules/media/services/generate-thumbhash";
@@ -25,7 +26,7 @@ async function generateBlurSafe(url: string): Promise<string | undefined> {
 // Vérifier que le token UploadThing est configuré au démarrage
 if (!process.env.UPLOADTHING_TOKEN) {
 	throw new Error(
-		"❌ UPLOADTHING_TOKEN n'est pas défini dans les variables d'environnement. L'upload de fichiers ne fonctionnera pas."
+		"❌ UPLOADTHING_TOKEN n'est pas défini dans les variables d'environnement. L'upload de fichiers ne fonctionnera pas.",
 	);
 }
 
@@ -45,10 +46,7 @@ const ALLOWED_VIDEO_TYPES = [
 	"video/x-msvideo", // .avi
 ] as const;
 
-const ALLOWED_DOCUMENT_TYPES = [
-	"application/pdf",
-	"text/plain",
-] as const;
+const ALLOWED_DOCUMENT_TYPES = ["application/pdf", "text/plain"] as const;
 
 /**
  * Valide le type MIME d'un fichier côté serveur
@@ -56,11 +54,11 @@ const ALLOWED_DOCUMENT_TYPES = [
  */
 function validateMimeType(
 	file: { type: string; name: string },
-	allowedTypes: readonly string[]
+	allowedTypes: readonly string[],
 ): void {
 	if (!allowedTypes.includes(file.type as never)) {
 		throw new UploadThingError(
-			`Type de fichier non autorisé: ${file.name} (${file.type}). Types acceptés: ${allowedTypes.join(", ")}`
+			`Type de fichier non autorisé: ${file.name} (${file.type}). Types acceptés: ${allowedTypes.join(", ")}`,
 		);
 	}
 }
@@ -69,15 +67,12 @@ function validateMimeType(
  * Valide la taille d'un fichier côté serveur
  * Double vérification après validation client
  */
-function validateFileSize(
-	file: { size: number; name: string },
-	maxSizeBytes: number
-): void {
+function validateFileSize(file: { size: number; name: string }, maxSizeBytes: number): void {
 	if (file.size > maxSizeBytes) {
 		const sizeMB = (file.size / 1024 / 1024).toFixed(2);
 		const maxSizeMB = (maxSizeBytes / 1024 / 1024).toFixed(0);
 		throw new UploadThingError(
-			`Fichier trop volumineux: ${file.name} (${sizeMB}MB). Taille max: ${maxSizeMB}MB`
+			`Fichier trop volumineux: ${file.name} (${sizeMB}MB). Taille max: ${maxSizeMB}MB`,
 		);
 	}
 }
@@ -101,24 +96,23 @@ export const ourFileRouter = {
 		image: { maxFileSize: "4MB", maxFileCount: 1 },
 	})
 		.middleware(async ({ files }) => {
-			// 1. Vérifier l'authentification et les permissions admin
-			const session = await getSession();
-			if (!session?.user) {
-				throw new UploadThingError("Vous devez être connecté pour uploader des médias");
-			}
-			if (session.user.role !== "ADMIN") {
-				throw new UploadThingError("Seuls les administrateurs peuvent uploader des photos de témoignages");
+			// 1. Vérifier l'authentification et les permissions admin (DB re-verification)
+			const admin = await requireAdminApiRoute();
+			if ("response" in admin) {
+				throw new UploadThingError(
+					"Seuls les administrateurs peuvent uploader des photos de témoignages",
+				);
 			}
 
 			// 2. Rate limiting
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
+			const rateLimitId = getRateLimitIdentifier(admin.user.id, null, clientIp);
 			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.TESTIMONIAL, clientIp);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter."
+					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter.",
 				);
 			}
 
@@ -129,8 +123,8 @@ export const ourFileRouter = {
 			}
 
 			return {
-				userId: session.user.id,
-				userName: session.user.name,
+				userId: admin.user.id,
+				userName: admin.user.name,
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
@@ -150,24 +144,23 @@ export const ourFileRouter = {
 		video: { maxFileSize: "512MB", maxFileCount: 6 },
 	})
 		.middleware(async ({ files }) => {
-			// 1. Vérifier l'authentification et les permissions admin
-			const session = await getSession();
-			if (!session?.user) {
-				throw new UploadThingError("Vous devez être connecté pour uploader des médias");
-			}
-			if (session.user.role !== "ADMIN") {
-				throw new UploadThingError("Seuls les administrateurs peuvent uploader des médias de catalogue");
+			// 1. Vérifier l'authentification et les permissions admin (DB re-verification)
+			const admin = await requireAdminApiRoute();
+			if ("response" in admin) {
+				throw new UploadThingError(
+					"Seuls les administrateurs peuvent uploader des médias de catalogue",
+				);
 			}
 
 			// 2. Rate limiting
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
+			const rateLimitId = getRateLimitIdentifier(admin.user.id, null, clientIp);
 			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CATALOG, clientIp);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter."
+					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter.",
 				);
 			}
 
@@ -184,14 +177,14 @@ export const ourFileRouter = {
 					validateFileSize(file, 16 * 1024 * 1024); // 16MB
 				} else {
 					throw new UploadThingError(
-						`Type de fichier non supporté: ${file.name} (${file.type}). Seules les images et vidéos sont acceptées.`
+						`Type de fichier non supporté: ${file.name} (${file.type}). Seules les images et vidéos sont acceptées.`,
 					);
 				}
 			}
 
 			return {
-				userId: session.user.id,
-				userName: session.user.name,
+				userId: admin.user.id,
+				userName: admin.user.name,
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
@@ -234,17 +227,16 @@ export const ourFileRouter = {
 			// 2. Rate limiting STRICT pour endpoint public
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(
-				session?.user?.id || null,
-				null,
-				clientIp
+			const rateLimitId = getRateLimitIdentifier(session?.user?.id || null, null, clientIp);
+			const rateLimit = await checkRateLimit(
+				rateLimitId,
+				UPLOAD_LIMITS.CONTACT_ATTACHMENT,
+				clientIp,
 			);
-			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CONTACT_ATTACHMENT, clientIp);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error ||
-						"Trop de tentatives d'upload. Veuillez réessayer plus tard."
+					rateLimit.error || "Trop de tentatives d'upload. Veuillez réessayer plus tard.",
 				);
 			}
 
@@ -259,9 +251,7 @@ export const ourFileRouter = {
 				} else if (isPdf || isText) {
 					validateMimeType(file, ALLOWED_DOCUMENT_TYPES);
 				} else {
-					throw new UploadThingError(
-						`Type de fichier non autorisé: ${file.name} (${file.type})`
-					);
+					throw new UploadThingError(`Type de fichier non autorisé: ${file.name} (${file.type})`);
 				}
 
 				validateFileSize(file, 4 * 1024 * 1024); // 4MB max
@@ -304,7 +294,7 @@ export const ourFileRouter = {
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter."
+					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter.",
 				);
 			}
 
@@ -332,5 +322,3 @@ export const ourFileRouter = {
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;
-
-

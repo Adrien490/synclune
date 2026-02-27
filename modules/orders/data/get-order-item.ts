@@ -31,7 +31,7 @@ export type {
  * - User : ne voit que ses propres items
  */
 export async function getOrderItem(
-	params: Partial<GetOrderItemParams>
+	params: Partial<GetOrderItemParams>,
 ): Promise<GetOrderItemReturn | null> {
 	const validation = getOrderItemSchema.safeParse(params ?? {});
 
@@ -54,7 +54,7 @@ export async function getOrderItem(
  */
 export async function fetchOrderItem(
 	params: GetOrderItemParams,
-	context: FetchOrderItemContext
+	context: FetchOrderItemContext,
 ): Promise<GetOrderItemReturn | null> {
 	"use cache: private";
 	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
@@ -77,7 +77,7 @@ export async function fetchOrderItem(
 		});
 
 		return orderItem;
-	} catch (error) {
+	} catch {
 		return null;
 	}
 }

@@ -2,10 +2,11 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useRef, useTransition } from "react";
+import { useActionState, useEffect, useRef, useTransition } from "react";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
+import type { ActionState } from "@/shared/types/server-action";
 
 interface UseAddToCartOptions {
 	onSuccess?: (message: string) => void;
@@ -31,10 +32,11 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 	// Ref pour stocker la quantité en cours pour le rollback
 	const pendingQuantityRef = useRef(1);
 
-	const [isTransitionPending, startTransition] = useTransition();
-
-	const [state, formAction, isActionPending] = useActionState(
-		withCallbacks(
+	// Wrapped action ref, built in useEffect to avoid ref access during render
+	const wrappedActionRef =
+		useRef<(prev: ActionState | undefined, formData: FormData) => Promise<ActionState>>(addToCart);
+	useEffect(() => {
+		wrappedActionRef.current = withCallbacks(
 			addToCart,
 			createToastCallbacks({
 				showSuccessToast: false,
@@ -58,9 +60,16 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 					// Sheet ne s'ouvre PAS en cas d'erreur
 					adjustCart(-pendingQuantityRef.current);
 				},
-			})
-		),
-		undefined
+			}),
+		);
+	});
+
+	const [isTransitionPending, startTransition] = useTransition();
+
+	const [state, formAction, isActionPending] = useActionState(
+		async (prev: ActionState | undefined, formData: FormData) =>
+			wrappedActionRef.current(prev, formData),
+		undefined,
 	);
 
 	const action = (formData: FormData) => {

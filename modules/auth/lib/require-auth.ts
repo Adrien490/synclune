@@ -66,10 +66,7 @@ async function fetchUserForAuth(userId: string): Promise<RequireAuthUser | null>
  * // ... logique métier avec user
  * ```
  */
-export async function requireAuth(): Promise<
-	| { user: RequireAuthUser }
-	| { error: ActionState }
-> {
+export async function requireAuth(): Promise<{ user: RequireAuthUser } | { error: ActionState }> {
 	const session = await getSession();
 
 	if (!session?.user?.id) {
@@ -112,6 +109,11 @@ export async function requireAdmin(): Promise<{ admin: true } | { error: ActionS
 	const session = await getSession();
 
 	if (session?.user?.role !== "ADMIN" || !session?.user?.id) {
+		console.warn("[SECURITY] Unauthorized admin access attempt", {
+			userId: session?.user?.id ?? "unauthenticated",
+			role: session?.user?.role ?? "none",
+			timestamp: new Date().toISOString(),
+		});
 		return {
 			error: {
 				status: ActionStatus.FORBIDDEN,
@@ -124,6 +126,12 @@ export async function requireAdmin(): Promise<{ admin: true } | { error: ActionS
 	const user = await fetchUserForAuth(session.user.id);
 
 	if (!user || user.role !== "ADMIN") {
+		console.warn("[SECURITY] Admin access denied - stale session (demoted or deleted)", {
+			userId: session.user.id,
+			sessionRole: session.user.role,
+			dbRole: user?.role ?? "user_not_found",
+			timestamp: new Date().toISOString(),
+		});
 		return {
 			error: {
 				status: ActionStatus.FORBIDDEN,
@@ -152,9 +160,51 @@ export async function requireAdmin(): Promise<{ admin: true } | { error: ActionS
  * // user.id, user.name, etc. sont disponibles
  * ```
  */
+/**
+ * Verifies that the current user is admin for API routes (not server actions).
+ *
+ * Unlike requireAdmin() which returns ActionState, this returns a Response
+ * suitable for route handlers. Re-verifies the role from DB to prevent
+ * stale cookie cache exploitation (5-min window after demotion).
+ *
+ * @returns The admin user or an HTTP Response error
+ */
+export async function requireAdminApiRoute(): Promise<
+	{ user: RequireAuthUser } | { response: Response }
+> {
+	const session = await getSession();
+
+	if (!session?.user?.id) {
+		return {
+			response: new Response("Accès non autorisé", { status: 401 }),
+		};
+	}
+
+	if (session.user.role !== "ADMIN") {
+		return {
+			response: new Response("Accès non autorisé", { status: 403 }),
+		};
+	}
+
+	// Re-verify admin role from DB (session cookie cache may be stale)
+	const user = await fetchUserForAuth(session.user.id);
+
+	if (!user || user.role !== "ADMIN") {
+		console.warn("[AUTH] Admin API route access denied - stale session", {
+			userId: session.user.id,
+			sessionRole: session.user.role,
+			dbRole: user?.role ?? "user_not_found",
+		});
+		return {
+			response: new Response("Accès non autorisé", { status: 403 }),
+		};
+	}
+
+	return { user };
+}
+
 export async function requireAdminWithUser(): Promise<
-	| { user: RequireAuthUser }
-	| { error: ActionState }
+	{ user: RequireAuthUser } | { error: ActionState }
 > {
 	const session = await getSession();
 
@@ -168,6 +218,11 @@ export async function requireAdminWithUser(): Promise<
 	}
 
 	if (session.user.role !== "ADMIN") {
+		console.warn("[SECURITY] Unauthorized admin access attempt", {
+			userId: session.user.id,
+			role: session.user.role,
+			timestamp: new Date().toISOString(),
+		});
 		return {
 			error: {
 				status: ActionStatus.FORBIDDEN,
@@ -189,6 +244,12 @@ export async function requireAdminWithUser(): Promise<
 
 	// Re-verify admin role from DB (session may be stale after demotion)
 	if (user.role !== "ADMIN") {
+		console.warn("[SECURITY] Admin access denied - stale session (demoted or deleted)", {
+			userId: session.user.id,
+			sessionRole: session.user.role,
+			dbRole: user.role,
+			timestamp: new Date().toISOString(),
+		});
 		return {
 			error: {
 				status: ActionStatus.FORBIDDEN,

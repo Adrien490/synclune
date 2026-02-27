@@ -4,12 +4,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { validateInput, success, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { UserDataExport } from "../export-user-data";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
@@ -109,6 +104,7 @@ export async function exportUserDataAdmin(userId: string): Promise<ActionState> 
 				name: user.name,
 				email: user.email,
 				createdAt: user.createdAt.toISOString(),
+				termsAcceptedAt: user.termsAcceptedAt?.toISOString() ?? null,
 			},
 			addresses: user.addresses.map((addr) => ({
 				firstName: addr.firstName,

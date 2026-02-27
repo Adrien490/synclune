@@ -1,8 +1,6 @@
 "use client";
 
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState } from "react";
+import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 import { deleteMaterial } from "@/modules/materials/actions/delete-material";
 
 interface UseDeleteMaterialOptions {
@@ -10,24 +8,11 @@ interface UseDeleteMaterialOptions {
 }
 
 export function useDeleteMaterial(options?: UseDeleteMaterialOptions) {
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			deleteMaterial,
-			createToastCallbacks({
-				onSuccess: (result: unknown) => {
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
-						options?.onSuccess?.(result.message);
-					}
-				},
-			})
-		),
-		undefined
-	);
-
-	return { state, action, isPending };
+	return useActionWithToast(deleteMaterial, {
+		onSuccess: (result) => {
+			if (result.message) {
+				options?.onSuccess?.(result.message);
+			}
+		},
+	});
 }

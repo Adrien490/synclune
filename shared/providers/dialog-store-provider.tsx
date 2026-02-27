@@ -1,31 +1,19 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useRef } from "react"
-import { useStore } from "zustand"
+import { createContext, useContext, useState } from "react";
+import { useStore } from "zustand";
 
-import { createDialogStore } from "@/shared/stores/dialog-store"
-import type {
-	DialogStore,
-	DialogStoreProviderProps,
-} from "@/shared/types/store.types"
+import { createDialogStore } from "@/shared/stores/dialog-store";
+import type { DialogStore, DialogStoreProviderProps } from "@/shared/types/store.types";
 
-export type DialogStoreApi = ReturnType<typeof createDialogStore>
+export type DialogStoreApi = ReturnType<typeof createDialogStore>;
 
-export const DialogStoreContext = createContext<DialogStoreApi | undefined>(
-	undefined
-)
+export const DialogStoreContext = createContext<DialogStoreApi | undefined>(undefined);
 
 export const DialogStoreProvider = ({ children }: DialogStoreProviderProps) => {
-	const storeRef = useRef<DialogStoreApi | null>(null);
-	if (storeRef.current === null) {
-		storeRef.current = createDialogStore();
-	}
+	const [store] = useState(() => createDialogStore());
 
-	return (
-		<DialogStoreContext.Provider value={storeRef.current}>
-			{children}
-		</DialogStoreContext.Provider>
-	);
+	return <DialogStoreContext.Provider value={store}>{children}</DialogStoreContext.Provider>;
 };
 
 export const useDialogStore = <T,>(selector: (store: DialogStore) => T): T => {
@@ -44,7 +32,7 @@ export const useDialogStore = <T,>(selector: (store: DialogStore) => T): T => {
  * @returns Object avec isOpen, open, close, toggle, data, clearData
  */
 export const useDialog = <T extends Record<string, unknown> = Record<string, unknown>>(
-	dialogId: string
+	dialogId: string,
 ) => {
 	const isOpen = useDialogStore((state) => state.isDialogOpen(dialogId));
 	const data = useDialogStore((state) => state.getDialogData<T>(dialogId));

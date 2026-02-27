@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
-import { GALLERY_ZOOM_LEVEL, VIDEO_LOAD_TIMEOUT } from "@/modules/media/constants/gallery.constants";
+import {
+	GALLERY_ZOOM_LEVEL,
+	VIDEO_LOAD_TIMEOUT,
+} from "@/modules/media/constants/gallery.constants";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { GalleryHoverZoom } from "@/shared/components/gallery/hover-zoom";
@@ -21,6 +23,7 @@ interface GallerySlideProps {
 	totalImages: number;
 	isActive: boolean;
 	onOpen: () => void;
+	id?: string;
 }
 
 function VideoLoadingSpinner() {
@@ -28,16 +31,16 @@ function VideoLoadingSpinner() {
 
 	return (
 		<div
-			className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10"
+			className="bg-muted/50 absolute inset-0 z-10 flex items-center justify-center"
 			role="status"
 			aria-label="Chargement de la vidéo"
 		>
 			<div className="relative">
-				<div className="w-10 h-10 border-3 border-primary/20 rounded-full" />
+				<div className="border-primary/20 h-10 w-10 rounded-full border-3" />
 				<div
 					className={cn(
-						"absolute inset-0 w-10 h-10 border-3 border-transparent border-t-primary rounded-full",
-						!prefersReduced && "animate-spin"
+						"border-t-primary absolute inset-0 h-10 w-10 rounded-full border-3 border-transparent",
+						!prefersReduced && "animate-spin",
 					)}
 				/>
 			</div>
@@ -53,23 +56,29 @@ interface VideoErrorFallbackProps {
 function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 	return (
 		<div
-			className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80 z-10"
-			style={poster ? { backgroundImage: `url(${poster})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+			className="bg-muted/80 absolute inset-0 z-10 flex flex-col items-center justify-center"
+			style={
+				poster
+					? {
+							backgroundImage: `url(${poster})`,
+							backgroundSize: "cover",
+							backgroundPosition: "center",
+						}
+					: undefined
+			}
 		>
-			<div className="flex flex-col items-center gap-3 p-4 rounded-xl bg-background/90 backdrop-blur-sm shadow-lg">
-				<AlertCircle className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
-				<p className="text-sm text-muted-foreground text-center">
-					Impossible de charger la vidéo
-				</p>
+			<div className="bg-background/90 flex flex-col items-center gap-3 rounded-xl p-4 shadow-lg backdrop-blur-sm">
+				<AlertCircle className="text-muted-foreground h-8 w-8" aria-hidden="true" />
+				<p className="text-muted-foreground text-center text-sm">Impossible de charger la vidéo</p>
 				<button
 					type="button"
 					onClick={(e) => {
 						e.stopPropagation();
 						onRetry();
 					}}
-					className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+					className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
 				>
-					<RefreshCw className="w-4 h-4" aria-hidden="true" />
+					<RefreshCw className="h-4 w-4" aria-hidden="true" />
 					Réessayer
 				</button>
 			</div>
@@ -87,6 +96,7 @@ export function GallerySlide({
 	totalImages,
 	isActive,
 	onOpen,
+	id,
 }: GallerySlideProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [videoState, setVideoState] = useState<VideoState>("loading");
@@ -143,24 +153,22 @@ export function GallerySlide({
 		return (
 			<button
 				type="button"
-				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in appearance-none border-0 p-0 bg-transparent text-left"
+				id={id}
+				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
 				onClick={onOpen}
 				aria-label="Ouvrir la vidéo en plein écran"
 			>
 				{videoState === "loading" && <VideoLoadingSpinner />}
 				{videoState === "error" && (
-					<VideoErrorFallback
-						onRetry={handleRetry}
-						poster={media.thumbnailUrl || undefined}
-					/>
+					<VideoErrorFallback onRetry={handleRetry} poster={media.thumbnailUrl || undefined} />
 				)}
 				<video
 					ref={videoRef}
 					preload="metadata"
 					className={cn(
-						"w-full h-full object-cover",
+						"h-full w-full object-cover",
 						transitionClass,
-						videoState !== "ready" ? "opacity-0" : "opacity-100"
+						videoState !== "ready" ? "opacity-0" : "opacity-100",
 					)}
 					muted
 					loop={!prefersReduced}
@@ -189,8 +197,7 @@ export function GallerySlide({
 	}
 
 	const alt =
-		media.alt ||
-		PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType);
+		media.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType);
 
 	// Image : rendu conditionnel desktop/mobile
 	// Desktop → Zoom hover
@@ -199,7 +206,8 @@ export function GallerySlide({
 		return (
 			<button
 				type="button"
-				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in appearance-none border-0 p-0 bg-transparent text-left"
+				id={id}
+				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
 				onClick={onOpen}
 				aria-label="Ouvrir l'image en plein écran"
 			>
@@ -217,10 +225,7 @@ export function GallerySlide({
 
 	// Mobile : Pinch-zoom natif (gère son propre onClick via onTap)
 	return (
-		<div
-			className="flex-[0_0_100%] min-w-0 h-full relative"
-			role="presentation"
-		>
+		<div id={id} role="tabpanel" className="relative h-full min-w-0 flex-[0_0_100%]">
 			<GalleryPinchZoom
 				src={media.url}
 				alt={alt}

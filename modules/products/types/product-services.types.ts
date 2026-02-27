@@ -1,5 +1,4 @@
 import { Prisma, MediaType } from "@/app/generated/prisma/client";
-import type { ColorSwatch, ProductFromList, SkuFromList } from "./product-list.types";
 import type {
 	StockStatus as SharedStockStatus,
 	ProductStockInfo as SharedProductStockInfo,

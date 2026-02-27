@@ -15,7 +15,7 @@ import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
  */
 export function getCheckoutFormOptions(
 	session: Session | null,
-	addresses: GetUserAddressesReturn | null
+	addresses: GetUserAddressesReturn | null,
 ) {
 	// Restaurer les données sauvegardées depuis localStorage (si disponible)
 	let savedDraft = null;
@@ -31,7 +31,7 @@ export function getCheckoutFormOptions(
 					savedDraft = null;
 				}
 			}
-		} catch (error) {
+		} catch {
 			// En cas d'erreur de parsing, ignorer et nettoyer
 			localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
 			savedDraft = null;
@@ -73,37 +73,17 @@ export function getCheckoutFormOptions(
 	return {
 		defaultValues: {
 			// Email pré-rempli pour les invités (vide), caché pour les connectés
-			email:
-				savedDraft?.email ||
-				(isGuest ? "" : session?.user?.email || ""),
+			email: savedDraft?.email || (isGuest ? "" : session?.user?.email || ""),
 
 			// Adresse de livraison (Baymard: fullName au lieu de firstName/lastName)
 			shipping: {
 				fullName: buildFullName(),
-				addressLine1:
-					savedDraft?.shipping?.addressLine1 ||
-					defaultAddress?.address1 ||
-					"",
-				addressLine2:
-					savedDraft?.shipping?.addressLine2 ||
-					defaultAddress?.address2 ||
-					"",
-				city:
-					savedDraft?.shipping?.city ||
-					defaultAddress?.city ||
-					"",
-				postalCode:
-					savedDraft?.shipping?.postalCode ||
-					defaultAddress?.postalCode ||
-					"",
-				country:
-					savedDraft?.shipping?.country ||
-					defaultAddress?.country ||
-					"FR",
-				phoneNumber:
-					savedDraft?.shipping?.phoneNumber ||
-					defaultAddress?.phone ||
-					"",
+				addressLine1: savedDraft?.shipping?.addressLine1 || defaultAddress?.address1 || "",
+				addressLine2: savedDraft?.shipping?.addressLine2 || defaultAddress?.address2 || "",
+				city: savedDraft?.shipping?.city || defaultAddress?.city || "",
+				postalCode: savedDraft?.shipping?.postalCode || defaultAddress?.postalCode || "",
+				country: savedDraft?.shipping?.country || defaultAddress?.country || "FR",
+				phoneNumber: savedDraft?.shipping?.phoneNumber || defaultAddress?.phone || "",
 			},
 
 			// Consentements

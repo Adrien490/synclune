@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
@@ -13,15 +10,9 @@ import {
 	GET_INVENTORY_DEFAULT_PER_PAGE,
 	GET_INVENTORY_MAX_RESULTS_PER_PAGE,
 	GET_INVENTORY_SELECT,
-	INVENTORY_SORT_LABELS,
-	INVENTORY_SORT_OPTIONS,
 } from "../constants/inventory.constants";
 import { getSkuStocksSchema } from "../schemas/inventory.schemas";
-import type {
-	GetSkuStocksParams,
-	GetSkuStocksReturn,
-	SkuStock,
-} from "../types/inventory.types";
+import type { GetSkuStocksParams, GetSkuStocksReturn } from "../types/inventory.types";
 import { buildInventoryWhereClause } from "../services/inventory-query-builder.service";
 
 // Re-export pour compatibilité
@@ -30,11 +21,7 @@ export {
 	INVENTORY_SORT_LABELS as SORT_LABELS,
 	INVENTORY_SORT_OPTIONS as SORT_OPTIONS,
 } from "../constants/inventory.constants";
-export type {
-	GetSkuStocksParams,
-	GetSkuStocksReturn,
-	SkuStock,
-} from "../types/inventory.types";
+export type { GetSkuStocksParams, GetSkuStocksReturn, SkuStock } from "../types/inventory.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -44,9 +31,7 @@ export type {
  * Récupère la liste des niveaux de stock par SKU
  * Protection: Nécessite un compte ADMIN
  */
-export async function getSkuStocks(
-	params: GetSkuStocksParams
-): Promise<GetSkuStocksReturn> {
+export async function getSkuStocks(params: GetSkuStocksParams): Promise<GetSkuStocksReturn> {
 	const admin = await isAdmin();
 	if (!admin) {
 		throw new Error("Accès non autorisé. Droits administrateur requis.");
@@ -60,9 +45,7 @@ export async function getSkuStocks(
 /**
  * Récupère les niveaux de stock SKU depuis la DB avec cache
  */
-async function fetchSkuStocks(
-	params: GetSkuStocksParams
-): Promise<GetSkuStocksReturn> {
+async function fetchSkuStocks(params: GetSkuStocksParams): Promise<GetSkuStocksReturn> {
 	"use cache";
 	cacheLife("dashboard");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
@@ -71,16 +54,17 @@ async function fetchSkuStocks(
 		const where = buildInventoryWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.ProductSkuOrderByWithRelationInput[] =
-			params.sortBy.startsWith("available-")
-				? [{ inventory: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("sku-")
-					? [{ sku: direction }, { id: "asc" }]
-					: [{ inventory: "asc" }, { id: "asc" }];
+		const orderBy: Prisma.ProductSkuOrderByWithRelationInput[] = params.sortBy.startsWith(
+			"available-",
+		)
+			? [{ inventory: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("sku-")
+				? [{ sku: direction }, { id: "asc" }]
+				: [{ inventory: "asc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_INVENTORY_DEFAULT_PER_PAGE),
-			GET_INVENTORY_MAX_RESULTS_PER_PAGE
+			GET_INVENTORY_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -100,7 +84,7 @@ async function fetchSkuStocks(
 			items,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return { items: processedItems, pagination };

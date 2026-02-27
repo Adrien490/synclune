@@ -8,19 +8,15 @@
  * Works in both server and client contexts with appropriate fallbacks
  *
  * Priority:
- * 1. NEXT_PUBLIC_BETTER_AUTH_URL (for auth callbacks)
- * 2. BETTER_AUTH_URL (server-side)
- * 3. NEXT_PUBLIC_SITE_URL (general site URL)
- * 4. Development fallback or production URL
+ * 1. BETTER_AUTH_URL (primary)
+ * 2. NEXT_PUBLIC_SITE_URL (general site URL)
+ * 3. Development fallback or production URL
  */
 export function getBaseUrl(): string {
 	return (
-		process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
 		process.env.BETTER_AUTH_URL ||
 		process.env.NEXT_PUBLIC_SITE_URL ||
-		(process.env.NODE_ENV === "development"
-			? "http://localhost:3000"
-			: "https://synclune.fr")
+		(process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://synclune.fr")
 	);
 }
 
@@ -48,8 +44,7 @@ export const ROUTES = {
 	ACCOUNT: {
 		ROOT: "/compte",
 		ORDERS: "/commandes",
-		ORDER_DETAIL: (orderIdOrNumber: string) =>
-			`/commandes/${orderIdOrNumber}`,
+		ORDER_DETAIL: (orderIdOrNumber: string) => `/commandes/${orderIdOrNumber}`,
 		FAVORITES: "/favoris",
 		REVIEWS: "/mes-avis",
 		ADDRESSES: "/adresses",

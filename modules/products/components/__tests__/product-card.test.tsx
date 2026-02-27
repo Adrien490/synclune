@@ -18,6 +18,7 @@ vi.mock("next/image", () => ({
 		alt: string;
 		fill?: boolean;
 		[key: string]: unknown;
+		// eslint-disable-next-line @next/next/no-img-element
 	}) => <img src={src} alt={alt} {...props} />,
 }));
 
@@ -180,7 +181,7 @@ describe("ProductCard", () => {
 					alt: "Bague Lune Argent",
 					mediaType: "IMAGE",
 				},
-			})
+			}),
 		);
 		render(<ProductCard product={createProduct()} />);
 		const img = screen.getByRole("img", { name: "Bague Lune Argent" });
@@ -198,7 +199,7 @@ describe("ProductCard", () => {
 						availableSkus: 0,
 						message: "Rupture de stock",
 					},
-				})
+				}),
 			);
 			render(<ProductCard product={createProduct()} />);
 			// Text appears twice: once in a sr-only accessibility span, once in the visible badge
@@ -225,7 +226,7 @@ describe("ProductCard", () => {
 						availableSkus: 1,
 						message: "Plus que 2 !",
 					},
-				})
+				}),
 			);
 			render(<ProductCard product={createProduct()} />);
 			expect(screen.getByText("Plus que 2 !")).toBeInTheDocument();
@@ -244,7 +245,7 @@ describe("ProductCard", () => {
 						availableSkus: 1,
 						message: "En stock",
 					},
-				})
+				}),
 			);
 			render(<ProductCard product={createProduct()} />);
 			// discount = round(1 - 3600/4800) * 100 = round(25) = 25%
@@ -252,17 +253,13 @@ describe("ProductCard", () => {
 		});
 
 		it("does not show discount badge when there is no compareAtPrice", () => {
-			mockGetProductCardData.mockReturnValue(
-				createCardData({ price: 4800, compareAtPrice: null })
-			);
+			mockGetProductCardData.mockReturnValue(createCardData({ price: 4800, compareAtPrice: null }));
 			render(<ProductCard product={createProduct()} />);
 			expect(screen.queryByTestId("badge-destructive")).toBeNull();
 		});
 
 		it("does not show discount badge when compareAtPrice equals price", () => {
-			mockGetProductCardData.mockReturnValue(
-				createCardData({ price: 4800, compareAtPrice: 4800 })
-			);
+			mockGetProductCardData.mockReturnValue(createCardData({ price: 4800, compareAtPrice: 4800 }));
 			render(<ProductCard product={createProduct()} />);
 			expect(screen.queryByTestId("badge-destructive")).toBeNull();
 		});
@@ -278,7 +275,7 @@ describe("ProductCard", () => {
 						availableSkus: 0,
 						message: "Rupture de stock",
 					},
-				})
+				}),
 			);
 			render(<ProductCard product={createProduct()} />);
 			// Stock badge takes priority: discount badge must not appear
@@ -294,7 +291,7 @@ describe("ProductCard", () => {
 						{ slug: "argent", hex: "#C0C0C0", name: "Argent", inStock: true },
 						{ slug: "or", hex: "#FFD700", name: "Or", inStock: true },
 					],
-				})
+				}),
 			);
 			render(<ProductCard product={createProduct()} />);
 			const list = screen.getByRole("list", { name: /couleurs disponibles/i });
@@ -305,7 +302,7 @@ describe("ProductCard", () => {
 			mockGetProductCardData.mockReturnValue(
 				createCardData({
 					colors: [{ slug: "argent", hex: "#C0C0C0", name: "Argent", inStock: true }],
-				})
+				}),
 			);
 			render(<ProductCard product={createProduct()} />);
 			expect(screen.queryByRole("list", { name: /couleurs disponibles/i })).toBeNull();
@@ -324,18 +321,14 @@ describe("ProductCard", () => {
 						{ slug: "argent", hex: "#C0C0C0", name: "Argent", inStock: true },
 						{ slug: "or", hex: "#FFD700", name: "Or", inStock: true },
 					],
-				})
+				}),
 			);
 			render(<ProductCard product={createProduct()} />);
 			// Color swatch links use title="<ColorName>" (aria-label is dropped by the link mock)
 			const argentLink = screen.getByTitle("Argent");
-			expect(argentLink.getAttribute("href")).toBe(
-				"/creations/bague-lune-argent?color=argent"
-			);
+			expect(argentLink.getAttribute("href")).toBe("/creations/bague-lune-argent?color=argent");
 			const orLink = screen.getByTitle("Or");
-			expect(orLink.getAttribute("href")).toBe(
-				"/creations/bague-lune-argent?color=or"
-			);
+			expect(orLink.getAttribute("href")).toBe("/creations/bague-lune-argent?color=or");
 		});
 	});
 

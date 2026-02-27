@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { Slider } from "@/shared/components/ui/slider";
-import {
-	priceToSlider,
-	sliderToPrice,
-	SLIDER_MAX,
-} from "../constants/price-filter";
+import { priceToSlider, sliderToPrice, SLIDER_MAX } from "../constants/price-filter";
 
 interface PriceRangeInputsProps {
 	value: [number, number];
@@ -23,11 +19,7 @@ interface PriceRangeInputsProps {
  * - Plus de precision dans la gamme 0-100€ (ou la majorite des produits se trouvent)
  * - Les prix eleves restent accessibles sans monopoliser le slider
  */
-export function PriceRangeInputs({
-	value,
-	onChange,
-	maxPrice,
-}: PriceRangeInputsProps) {
+export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputsProps) {
 	// Etat local pour permettre l'edition libre des inputs texte
 	const [minInput, setMinInput] = useState(String(value[0]));
 	const [maxInput, setMaxInput] = useState(String(value[1]));
@@ -38,16 +30,20 @@ export function PriceRangeInputs({
 		priceToSlider(value[1], maxPrice),
 	]);
 
+	// Extract values for clean dependency tracking
+	const minValue = value[0];
+	const maxValue = value[1];
+
 	// Synchroniser l'etat local quand la valeur externe change
 	useEffect(() => {
-		setMinInput(String(value[0]));
-		setSliderPosition((prev) => [priceToSlider(value[0], maxPrice), prev[1]]);
-	}, [value[0], maxPrice]);
+		queueMicrotask(() => setMinInput(String(minValue)));
+		queueMicrotask(() => setSliderPosition((prev) => [priceToSlider(minValue, maxPrice), prev[1]]));
+	}, [minValue, maxPrice]);
 
 	useEffect(() => {
-		setMaxInput(String(value[1]));
-		setSliderPosition((prev) => [prev[0], priceToSlider(value[1], maxPrice)]);
-	}, [value[1], maxPrice]);
+		queueMicrotask(() => setMaxInput(String(maxValue)));
+		queueMicrotask(() => setSliderPosition((prev) => [prev[0], priceToSlider(maxValue, maxPrice)]));
+	}, [maxValue, maxPrice]);
 
 	const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const inputValue = e.target.value;
@@ -103,11 +99,11 @@ export function PriceRangeInputs({
 
 	return (
 		<fieldset
-			className="space-y-3 border-0 p-0 m-0"
+			className="m-0 space-y-3 border-0 p-0"
 			role="group"
 			aria-labelledby="price-filter-label"
 		>
-			<legend id="price-filter-label" className="font-medium text-sm text-foreground">
+			<legend id="price-filter-label" className="text-foreground text-sm font-medium">
 				Prix (€)
 			</legend>
 			<div className="space-y-4">
@@ -156,7 +152,7 @@ export function PriceRangeInputs({
 							aria-label="Prix maximum"
 						/>
 					</div>
-					<span className="text-muted-foreground text-sm shrink-0">€</span>
+					<span className="text-muted-foreground shrink-0 text-sm">€</span>
 				</div>
 			</div>
 		</fieldset>

@@ -213,7 +213,7 @@ describe("approveRefund", () => {
 	it("should return NOT_FOUND when refund does not exist", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(null);
 
-		const result = await approveRefund(undefined, makeFormData());
+		const _result = await approveRefund(undefined, makeFormData());
 
 		expect(mockError).toHaveBeenCalledWith("Le remboursement n'existe pas.");
 	});
@@ -221,7 +221,7 @@ describe("approveRefund", () => {
 	it("should return ALREADY_APPROVED when status is APPROVED", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ status: "APPROVED" }));
 
-		const result = await approveRefund(undefined, makeFormData());
+		const _result = await approveRefund(undefined, makeFormData());
 
 		expect(mockError).toHaveBeenCalledWith("Ce remboursement est déjà approuvé.");
 	});
@@ -229,7 +229,7 @@ describe("approveRefund", () => {
 	it("should return ALREADY_PROCESSED when status is not PENDING", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ status: "COMPLETED" }));
 
-		const result = await approveRefund(undefined, makeFormData());
+		const _result = await approveRefund(undefined, makeFormData());
 
 		expect(mockError).toHaveBeenCalledWith("Ce remboursement a déjà été traité.");
 	});
@@ -268,8 +268,8 @@ describe("approveRefund", () => {
 
 		await approveRefund(undefined, makeFormData());
 
-		const userTagCalls = mockUpdateTag.mock.calls.filter(
-			([tag]) => (tag as string).startsWith("orders-user-"),
+		const userTagCalls = mockUpdateTag.mock.calls.filter(([tag]) =>
+			(tag as string).startsWith("orders-user-"),
 		);
 		expect(userTagCalls).toHaveLength(0);
 	});
@@ -330,8 +330,6 @@ describe("approveRefund", () => {
 
 		await approveRefund(undefined, makeFormData());
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("75.00"),
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("75.00"));
 	});
 });

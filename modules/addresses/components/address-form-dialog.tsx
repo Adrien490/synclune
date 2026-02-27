@@ -22,14 +22,10 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useStore } from "@tanstack/react-form";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useRef, useTransition } from "react";
-import { toast } from "sonner";
+import { useEffect, useRef, useTransition } from "react";
 
 import { ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
-import {
-	addressFormSchema,
-	addressFormDefaultValues,
-} from "../schemas/address-form.schema";
+import { addressFormSchema, addressFormDefaultValues } from "../schemas/address-form.schema";
 
 interface AddressDialogData extends Record<string, unknown> {
 	address?: UserAddress;
@@ -44,17 +40,15 @@ export function AddressFormDialog({
 	addressSuggestions = [],
 	addressSearchError = false,
 }: AddressFormDialogProps) {
-	const { isOpen, close, data } =
-		useDialog<AddressDialogData>(ADDRESS_DIALOG_ID);
+	const { isOpen, close, data } = useDialog<AddressDialogData>(ADDRESS_DIALOG_ID);
 	const address = data?.address;
 	const isDirtyRef = useRef(false);
 
 	const handleOpenChange = (open: boolean) => {
 		if (open) return;
 		if (isDirtyRef.current) {
-			// eslint-disable-next-line no-alert
 			const confirmed = window.confirm(
-				"Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer ?"
+				"Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer ?",
 			);
 			if (!confirmed) return;
 		}
@@ -63,7 +57,7 @@ export function AddressFormDialog({
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveDialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+			<ResponsiveDialogContent className="flex max-h-[85vh] max-w-2xl flex-col">
 				{/* Key pattern: remount form when address changes */}
 				<AddressFormContent
 					key={address?.id ?? "new"}
@@ -131,12 +125,13 @@ function AddressFormContent({
 		onSuccess: onClose,
 	});
 
-	const { action, isPending, state } =
-		mode === "create" ? createHook : updateHook;
+	const { action, isPending, state } = mode === "create" ? createHook : updateHook;
 
 	// Sync dirty state to parent ref for close confirmation
 	const isDirty = useStore(form.store, (s) => s.isDirty);
-	isDirtyRef.current = isDirty;
+	useEffect(() => {
+		isDirtyRef.current = isDirty;
+	});
 
 	return (
 		<>
@@ -153,11 +148,11 @@ function AddressFormContent({
 
 			<form
 				action={action}
-				className="flex flex-col flex-1 min-h-0"
+				className="flex min-h-0 flex-1 flex-col"
 				onSubmit={() => form.handleSubmit()}
 			>
-					{/* Contenu scrollable */}
-					<div className="flex-1 overflow-y-auto space-y-6 pr-2">
+				{/* Contenu scrollable */}
+				<div className="flex-1 space-y-6 overflow-y-auto pr-2">
 					{/* Success message */}
 					{state?.status === ActionStatus.SUCCESS && state.message && (
 						<Alert className="bg-primary/10 border-primary/20">
@@ -174,9 +169,7 @@ function AddressFormContent({
 						state?.message && (
 							<Alert variant="destructive">
 								<XCircle aria-hidden="true" />
-								<AlertDescription className="font-medium">
-									{state.message}
-								</AlertDescription>
+								<AlertDescription className="font-medium">{state.message}</AlertDescription>
 							</Alert>
 						)}
 
@@ -248,7 +241,9 @@ function AddressFormContent({
 								<div className="space-y-2">
 									<Label htmlFor={field.name}>
 										Adresse
-										<span className="text-destructive ml-1" aria-hidden="true">*</span>
+										<span className="text-destructive ml-1" aria-hidden="true">
+											*
+										</span>
 										<span className="sr-only">(requis)</span>
 									</Label>
 									<Autocomplete<SearchAddressResult>
@@ -260,15 +255,12 @@ function AddressFormContent({
 											field.handleChange(
 												selectedAddress.street && selectedAddress.housenumber
 													? `${selectedAddress.housenumber} ${selectedAddress.street}`
-													: selectedAddress.label
+													: selectedAddress.label,
 											);
 
 											// Mise à jour des autres champs
 											if (selectedAddress.postcode) {
-												form.setFieldValue(
-													"postalCode",
-													selectedAddress.postcode
-												);
+												form.setFieldValue("postalCode", selectedAddress.postcode);
 											}
 											if (selectedAddress.city) {
 												form.setFieldValue("city", selectedAddress.city);
@@ -284,18 +276,24 @@ function AddressFormContent({
 										placeholder="Rechercher une adresse..."
 										isLoading={isPendingAddress}
 										disabled={isPending}
-										error={addressSearchError ? "La recherche d'adresse est temporairement indisponible" : undefined}
+										error={
+											addressSearchError
+												? "La recherche d'adresse est temporairement indisponible"
+												: undefined
+										}
 										noResultsMessage="Aucune adresse trouvée"
 										minQueryLength={3}
 										debounceMs={0}
 										aria-required="true"
 										aria-invalid={field.state.meta.errors.length > 0}
-										aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
+										aria-describedby={
+											field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
+										}
 									/>
 									{field.state.meta.errors.length > 0 && (
 										<p
 											id={`${field.name}-error`}
-											className="text-sm text-destructive font-medium"
+											className="text-destructive text-sm font-medium"
 											role="alert"
 											aria-live="assertive"
 										>
@@ -317,9 +315,7 @@ function AddressFormContent({
 										enterKeyHint="next"
 										disabled={isPending}
 									/>
-									<p className="text-xs text-muted-foreground">
-										Appartement, bâtiment, etc.
-									</p>
+									<p className="text-muted-foreground text-xs">Appartement, bâtiment, etc.</p>
 								</div>
 							)}
 						</form.AppField>
@@ -361,15 +357,9 @@ function AddressFormContent({
 						<form.AppField name="country">
 							{(field) => (
 								<div className="space-y-2">
-									<field.InputField
-										label="Pays"
-										type="text"
-										disabled={true}
-										required
-									/>
-									<p className="text-xs text-muted-foreground">
-										Actuellement, seules les livraisons en France sont
-										disponibles
+									<field.InputField label="Pays" type="text" disabled={true} required />
+									<p className="text-muted-foreground text-xs">
+										Actuellement, seules les livraisons en France sont disponibles
 									</p>
 								</div>
 							)}
@@ -388,20 +378,15 @@ function AddressFormContent({
 							)}
 						</form.AppField>
 					</div>
+				</div>
+				{/* Fin du contenu scrollable */}
 
-					</div>
-					{/* Fin du contenu scrollable */}
-
-					{/* Footer fixe */}
-				<div className="shrink-0 flex justify-end pt-4 border-t mt-4">
+				{/* Footer fixe */}
+				<div className="mt-4 flex shrink-0 justify-end border-t pt-4">
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending
-									? "Enregistrement..."
-									: mode === "create"
-										? "Ajouter"
-										: "Enregistrer"}
+								{isPending ? "Enregistrement..." : mode === "create" ? "Ajouter" : "Enregistrer"}
 							</Button>
 						)}
 					</form.Subscribe>

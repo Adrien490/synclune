@@ -6,7 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 
 import { GET_CART_SELECT } from "../constants/cart";
 import { CART_CACHE_TAGS } from "../constants/cache";
-import type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
+import type { GetCartReturn } from "../types/cart.types";
 
 // Re-export pour compatibilité
 export { GET_CART_SELECT } from "../constants/cart";
@@ -42,10 +42,7 @@ export async function getCart(): Promise<GetCartReturn> {
 /**
  * Récupère le panier de l'utilisateur ou du visiteur depuis la DB avec use cache
  */
-export async function fetchCart(
-	userId?: string,
-	sessionId?: string
-): Promise<GetCartReturn> {
+export async function fetchCart(userId?: string, sessionId?: string): Promise<GetCartReturn> {
 	"use cache: private";
 	cacheLife("cart");
 	cacheTag(CART_CACHE_TAGS.CART(userId, sessionId));

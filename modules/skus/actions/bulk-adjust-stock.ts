@@ -13,7 +13,7 @@ import { BULK_SKU_LIMITS } from "../constants/sku.constants";
 
 export async function bulkAdjustStock(
 	prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
@@ -90,7 +90,7 @@ export async function bulkAdjustStock(
 						.map((s) => `${s.sku} (stock: ${s.inventory})`)
 						.join(", ");
 					throw new BusinessError(
-						`Stock insuffisant pour ${insufficientSkus.length} variante(s): ${details}${insufficientSkus.length > 3 ? "..." : ""}. Operation annulee.`
+						`Stock insuffisant pour ${insufficientSkus.length} variante(s): ${details}${insufficientSkus.length > 3 ? "..." : ""}. Operation annulee.`,
 					);
 				}
 			});
@@ -121,8 +121,8 @@ export async function bulkAdjustStock(
 			};
 		}
 
-		console.log(
-			`[SKU:stock-bulk] ${mode} ${value} applied to ${skusData.length} SKU(s): ${skusData.map((s) => s.sku).join(", ")}`
+		console.warn(
+			`[SKU:stock-bulk] ${mode} ${value} applied to ${skusData.length} SKU(s): ${skusData.map((s) => s.sku).join(", ")}`,
 		);
 
 		// Invalider le cache

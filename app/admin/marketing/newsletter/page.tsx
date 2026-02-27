@@ -25,21 +25,17 @@ interface NewsletterPageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function NewsletterPage({
-	searchParams,
-}: NewsletterPageProps) {
+export default async function NewsletterPage({ searchParams }: NewsletterPageProps) {
 	const params = await searchParams;
-	const stats = await getNewsletterStats();
+	const statsPromise = getNewsletterStats();
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as
-		| "forward"
-		| "backward";
+	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
 	const sortByParam = getFirstParam(params.sortBy);
 	const sortBy =
 		sortByParam &&
 		Object.values(SORT_OPTIONS).includes(
-			sortByParam as (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS]
+			sortByParam as (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS],
 		)
 			? (sortByParam as (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS])
 			: SORT_OPTIONS.SUBSCRIBED_DESC;
@@ -60,6 +56,8 @@ export default async function NewsletterPage({
 		},
 	});
 
+	const stats = await statsPromise;
+
 	// Convertir SORT_OPTIONS et SORT_LABELS en format attendu par SortSelect
 	const sortOptions = Object.values(SORT_OPTIONS).map((value) => ({
 		value,
@@ -68,52 +66,41 @@ export default async function NewsletterPage({
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title="Newsletter"
-			/>
+			<PageHeader variant="compact" title="Newsletter" />
 
 			{/* Statistiques */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<div className="rounded-lg border bg-card p-6">
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium text-muted-foreground">
-								Total abonnés
-							</p>
-							<p className="text-2xl font-bold mt-1">
-								{stats.totalSubscribers}
-							</p>
+							<p className="text-muted-foreground text-sm font-medium">Total abonnés</p>
+							<p className="mt-1 text-2xl font-bold">{stats.totalSubscribers}</p>
 						</div>
-						<Users className="h-8 w-8 text-muted-foreground" />
+						<Users className="text-muted-foreground h-8 w-8" />
 					</div>
 				</div>
 
-				<div className="rounded-lg border bg-card p-6">
+				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium text-muted-foreground">
-								Abonnés actifs
-							</p>
-							<p className="text-2xl font-bold mt-1 text-secondary-foreground">
+							<p className="text-muted-foreground text-sm font-medium">Abonnés actifs</p>
+							<p className="text-secondary-foreground mt-1 text-2xl font-bold">
 								{stats.activeSubscribers}
 							</p>
 						</div>
-						<Mail className="h-8 w-8 text-secondary-foreground" />
+						<Mail className="text-secondary-foreground h-8 w-8" />
 					</div>
 				</div>
 
-				<div className="rounded-lg border bg-card p-6">
+				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium text-muted-foreground">
-								Désabonnés
-							</p>
-							<p className="text-2xl font-bold mt-1 text-muted-foreground">
+							<p className="text-muted-foreground text-sm font-medium">Désabonnés</p>
+							<p className="text-muted-foreground mt-1 text-2xl font-bold">
 								{stats.inactiveSubscribers}
 							</p>
 						</div>
-						<Users className="h-8 w-8 text-muted-foreground" />
+						<Users className="text-muted-foreground h-8 w-8" />
 					</div>
 				</div>
 			</div>
@@ -121,7 +108,9 @@ export default async function NewsletterPage({
 			<Toolbar
 				ariaLabel="Barre d'outils de gestion des abonnés"
 				search={
-					<SearchInput mode="live" size="sm"
+					<SearchInput
+						mode="live"
+						size="sm"
 						paramName="search"
 						placeholder="Rechercher un email..."
 						ariaLabel="Rechercher un abonné par email"

@@ -30,11 +30,7 @@ interface MaterialSelectorProps {
  * - Affichage en grid 2 colonnes
  * - Navigation clavier (fleches)
  */
-export function MaterialSelector({
-	materials,
-	product,
-	defaultSku,
-}: MaterialSelectorProps) {
+export function MaterialSelector({ materials, product, defaultSku }: MaterialSelectorProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -88,18 +84,15 @@ export function MaterialSelector({
 		<fieldset
 			data-pending={isPending ? "" : undefined}
 			className="group/material space-y-3"
-			role="radiogroup"
 			aria-label="Sélection de matériau"
 		>
 			<div className="flex items-center justify-between">
-				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
-					Matériau
-				</legend>
+				<legend className="text-sm/6 font-semibold tracking-tight antialiased">Matériau</legend>
 				{optimisticMaterial && (
 					<Button
 						variant="ghost"
 						size="sm"
-						className="text-xs/5 tracking-normal antialiased text-muted-foreground group-has-[[data-pending]]/material:opacity-70"
+						className="text-muted-foreground text-xs/5 tracking-normal antialiased group-has-[[data-pending]]/material:opacity-70"
 						onClick={() => updateMaterial(null)}
 						type="button"
 					>
@@ -110,8 +103,7 @@ export function MaterialSelector({
 			<div ref={containerRef} className="grid grid-cols-2 gap-2">
 				{materials.map((material, index) => {
 					// Comparaison insensible à la casse pour éviter les problèmes de matching
-					const isSelected =
-						material.name.toLowerCase() === optimisticMaterial?.toLowerCase();
+					const isSelected = material.name.toLowerCase() === optimisticMaterial?.toLowerCase();
 					const isAvailable = isMaterialAvailable(material.name);
 
 					return (
@@ -126,24 +118,28 @@ export function MaterialSelector({
 							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
-								"flex items-center justify-between p-3 rounded-lg border text-left transition-all",
-								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95",
+								"flex items-center justify-between rounded-lg border p-3 text-left transition-all",
+								"hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50"
+								!isAvailable && "opacity-70 saturate-50",
 							)}
 						>
-							<span className="text-sm/6 tracking-normal antialiased font-medium">
+							<span className="text-sm/6 font-medium tracking-normal antialiased">
 								{material.name}
 							</span>
 							{isSelected && (
 								<motion.div
 									initial={shouldReduceMotion ? {} : { scale: 0 }}
 									animate={{ scale: 1 }}
-									transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 15 }}
+									transition={
+										shouldReduceMotion
+											? { duration: 0 }
+											: { type: "spring", stiffness: 400, damping: 15 }
+									}
 								>
-									<Check className="w-4 h-4 text-primary" aria-hidden="true" />
+									<Check className="text-primary h-4 w-4" aria-hidden="true" />
 								</motion.div>
 							)}
 						</button>

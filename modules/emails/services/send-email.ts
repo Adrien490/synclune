@@ -1,77 +1,89 @@
-import { render } from "@react-email/components"
-import { Resend } from "resend"
-import { withRetry } from "@/shared/utils/with-retry"
-import { EMAIL_FROM } from "../constants/email.constants"
-import type { EmailResult } from "../types/email.types"
+import { render } from "@react-email/components";
+import { Resend } from "resend";
+import { withRetry } from "@/shared/utils/with-retry";
+import { resendCircuitBreaker, CircuitBreakerError } from "@/shared/lib/circuit-breaker";
+import { EMAIL_FROM } from "../constants/email.constants";
+import type { EmailResult } from "../types/email.types";
 
 function getResendClient(): Resend | null {
-	if (!process.env.RESEND_API_KEY) return null
-	return new Resend(process.env.RESEND_API_KEY)
+	if (!process.env.RESEND_API_KEY) return null;
+	return new Resend(process.env.RESEND_API_KEY);
 }
 
 function isRetryableEmailError(error: unknown): boolean {
 	if (error instanceof Error) {
-		const message = error.message.toLowerCase()
-		if (message.includes("fetch") || message.includes("network") || message.includes("timeout") || message.includes("econnrefused")) {
-			return true
+		const message = error.message.toLowerCase();
+		if (
+			message.includes("fetch") ||
+			message.includes("network") ||
+			message.includes("timeout") ||
+			message.includes("econnrefused")
+		) {
+			return true;
 		}
 	}
 	// Resend API errors with statusCode
 	if (typeof error === "object" && error !== null && "statusCode" in error) {
-		const statusCode = (error as { statusCode: number }).statusCode
-		return statusCode >= 500
+		const statusCode = (error as { statusCode: number }).statusCode;
+		return statusCode >= 500;
 	}
-	return false
+	return false;
 }
 
 export async function sendEmail(params: {
-	to: string | string[]
-	subject: string
-	html: string
-	text?: string
-	replyTo?: string
-	headers?: Record<string, string>
-	tags?: Array<{ name: string; value: string }>
+	to: string | string[];
+	subject: string;
+	html: string;
+	text?: string;
+	replyTo?: string;
+	headers?: Record<string, string>;
+	tags?: Array<{ name: string; value: string }>;
 }): Promise<EmailResult> {
 	if (!params.to || (Array.isArray(params.to) && params.to.length === 0)) {
-		console.error("[EMAIL] Missing recipient")
-		return { success: false, error: "Missing recipient" }
+		console.error("[EMAIL] Missing recipient");
+		return { success: false, error: "Missing recipient" };
 	}
 
-	const resend = getResendClient()
+	const resend = getResendClient();
 	if (!resend) {
-		console.error("[EMAIL] RESEND_API_KEY not configured")
-		return { success: false, error: "RESEND_API_KEY not configured" }
+		console.error("[EMAIL] RESEND_API_KEY not configured");
+		return { success: false, error: "RESEND_API_KEY not configured" };
 	}
 
-	const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to
+	const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to;
 	try {
-		const { data, error } = await withRetry(
-			async () => {
-				const result = await resend.emails.send({
-					from: EMAIL_FROM,
-					...params,
-				})
-				if (result.error && isRetryableEmailError(result.error)) {
-					throw result.error
-				}
-				return result
-			},
-			{
-				maxAttempts: 3,
-				baseDelay: 1000,
-				isRetryable: isRetryableEmailError,
-			}
-		)
+		const { data, error } = await resendCircuitBreaker.execute(() =>
+			withRetry(
+				async () => {
+					const result = await resend.emails.send({
+						from: EMAIL_FROM,
+						...params,
+					});
+					if (result.error && isRetryableEmailError(result.error)) {
+						throw result.error;
+					}
+					return result;
+				},
+				{
+					maxAttempts: 3,
+					baseDelay: 1000,
+					isRetryable: isRetryableEmailError,
+				},
+			),
+		);
 		if (error) {
-			console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error)
-			return { success: false, error }
+			console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error);
+			return { success: false, error };
 		}
-		console.log(`[EMAIL] Sent "${params.subject}" to ${recipient}`)
-		return { success: true, data: data! }
+		console.log(`[EMAIL] Sent "${params.subject}" to ${recipient}`);
+		return { success: true, data: data! };
 	} catch (error) {
-		console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error)
-		return { success: false, error }
+		if (error instanceof CircuitBreakerError) {
+			console.warn(`[EMAIL] Circuit breaker OPEN, skipping "${params.subject}" to ${recipient}`);
+			return { success: false, error: "Email service temporarily unavailable" };
+		}
+		console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error);
+		return { success: false, error };
 	}
 }
 
@@ -80,22 +92,25 @@ export async function sendEmail(params: {
  */
 export async function renderAndSend(
 	component: React.ReactElement,
-	params: Omit<Parameters<typeof sendEmail>[0], "html" | "text">
+	params: Omit<Parameters<typeof sendEmail>[0], "html" | "text">,
 ): Promise<EmailResult> {
 	if (!params.to || (Array.isArray(params.to) && params.to.length === 0)) {
-		console.error("[EMAIL] Missing recipient")
-		return { success: false, error: "Missing recipient" }
+		console.error("[EMAIL] Missing recipient");
+		return { success: false, error: "Missing recipient" };
 	}
 
-	let html: string
-	let text: string
+	let html: string;
+	let text: string;
 	try {
-		html = await render(component)
-		text = await render(component, { plainText: true })
+		html = await render(component);
+		text = await render(component, { plainText: true });
 	} catch (renderError) {
-		const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to
-		console.error(`[EMAIL] Failed to render template for "${params.subject}" to ${recipient}:`, renderError)
-		return { success: false, error: renderError }
+		const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to;
+		console.error(
+			`[EMAIL] Failed to render template for "${params.subject}" to ${recipient}:`,
+			renderError,
+		);
+		return { success: false, error: renderError };
 	}
-	return sendEmail({ ...params, html, text })
+	return sendEmail({ ...params, html, text });
 }

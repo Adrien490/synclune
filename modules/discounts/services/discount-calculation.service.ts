@@ -62,7 +62,7 @@ export function calculateDiscountAmount({
  */
 export function calculateEligibleSubtotal(
 	cartItems: CartItemForDiscount[],
-	excludeSaleItems: boolean
+	excludeSaleItems: boolean,
 ): { eligibleSubtotal: number; totalSubtotal: number } {
 	let eligibleSubtotal = 0;
 	let totalSubtotal = 0;
@@ -112,10 +112,7 @@ export function calculateDiscountWithExclusion({
 	cartItems,
 	excludeSaleItems,
 }: CalculateDiscountWithExclusionParams): number {
-	const { eligibleSubtotal, totalSubtotal } = calculateEligibleSubtotal(
-		cartItems,
-		excludeSaleItems
-	);
+	const { eligibleSubtotal } = calculateEligibleSubtotal(cartItems, excludeSaleItems);
 
 	if (eligibleSubtotal <= 0) return 0;
 

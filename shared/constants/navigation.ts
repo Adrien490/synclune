@@ -1,6 +1,6 @@
-import type { MinimalSession } from "@/shared/types/session.types"
-import type { MegaMenuProduct, NavItemChild, NavItemWithChildren } from "@/shared/types/navigation.types"
-import { ROUTES } from "@/shared/constants/urls"
+import type { MinimalSession } from "@/shared/types/session.types";
+import type { MegaMenuProduct, NavItemWithChildren } from "@/shared/types/navigation.types";
+import { ROUTES } from "@/shared/constants/urls";
 
 export type {
 	NavCategory,
@@ -9,13 +9,12 @@ export type {
 	NavItemWithChildren,
 	NavItem,
 	MegaMenuProduct,
-} from "@/shared/types/navigation.types"
+} from "@/shared/types/navigation.types";
 
 /**
  * Constantes pour limiter les items affichés dans les menus
  */
-export const MAX_COLLECTIONS_IN_MENU = 3
-
+export const MAX_COLLECTIONS_IN_MENU = 3;
 
 /**
  * Navigation desktop - Toujours visible sur écran ≥1024px
@@ -25,7 +24,12 @@ export const MAX_COLLECTIONS_IN_MENU = 3
  */
 export const desktopNavItems = [
 	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations", icon: "gem", hasDropdown: true },
-	{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections", icon: "folder-open", hasDropdown: true },
+	{
+		href: ROUTES.SHOP.COLLECTIONS,
+		label: "Les collections",
+		icon: "folder-open",
+		hasDropdown: true,
+	},
 	{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
 ] as const;
 
@@ -58,8 +62,14 @@ export const desktopNavItems = [
 export function getMobileNavItems(
 	session: MinimalSession | null,
 	productTypes?: Array<{ slug: string; label: string }>,
-	collections?: Array<{ slug: string; label: string; description?: string | null; imageUrl?: string | null; blurDataUrl?: string | null }>,
-	isAdmin?: boolean
+	collections?: Array<{
+		slug: string;
+		label: string;
+		description?: string | null;
+		imageUrl?: string | null;
+		blurDataUrl?: string | null;
+	}>,
+	isAdmin?: boolean,
 ): NavItemWithChildren[] {
 	// Item "Les créations" avec collapsible des types
 	const bijouxItem: NavItemWithChildren = {
@@ -74,7 +84,7 @@ export function getMobileNavItems(
 						href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
 						label: type.label,
 					})),
-			  ]
+				]
 			: undefined,
 	};
 
@@ -98,7 +108,7 @@ export function getMobileNavItems(
 						imageUrl: collection.imageUrl,
 						blurDataUrl: collection.blurDataUrl,
 					})),
-			  ]
+				]
 			: undefined,
 	};
 
@@ -176,7 +186,7 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 						href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
 						label: type.label,
 					})),
-			  ]
+				]
 			: undefined,
 	};
 
@@ -197,7 +207,7 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 						images: collection.images,
 						createdAt: collection.createdAt,
 					})),
-			  ]
+				]
 			: undefined,
 	};
 

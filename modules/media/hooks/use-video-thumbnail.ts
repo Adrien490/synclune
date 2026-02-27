@@ -88,7 +88,7 @@ function createCanvas(width: number, height: number): { canvas: CanvasType; ctx:
 function generateBlurFromCanvas(
 	sourceCanvas: CanvasType,
 	ctx: ContextType,
-	size: number = CLIENT_THUMBNAIL_CONFIG.blurSize
+	size: number = CLIENT_THUMBNAIL_CONFIG.blurSize,
 ): string {
 	const { canvas: blurCanvas, ctx: blurCtx } = createCanvas(size, size);
 
@@ -121,7 +121,7 @@ function isFrameValid(ctx: ContextType, width: number, height: number): boolean 
 
 	let blackPixels = 0;
 	let whitePixels = 0;
-	let validPixels = 0;
+	let _validPixels = 0;
 	const totalSamples = Math.floor(pixels.length / FRAME_VALIDATION.SAMPLE_FACTOR);
 
 	for (let i = 0; i < pixels.length; i += FRAME_VALIDATION.SAMPLE_FACTOR) {
@@ -129,12 +129,20 @@ function isFrameValid(ctx: ContextType, width: number, height: number): boolean 
 		const g = pixels[i + 1];
 		const b = pixels[i + 2];
 
-		if (r < FRAME_VALIDATION.BLACK_THRESHOLD && g < FRAME_VALIDATION.BLACK_THRESHOLD && b < FRAME_VALIDATION.BLACK_THRESHOLD) {
+		if (
+			r < FRAME_VALIDATION.BLACK_THRESHOLD &&
+			g < FRAME_VALIDATION.BLACK_THRESHOLD &&
+			b < FRAME_VALIDATION.BLACK_THRESHOLD
+		) {
 			blackPixels++;
-		} else if (r > FRAME_VALIDATION.WHITE_THRESHOLD && g > FRAME_VALIDATION.WHITE_THRESHOLD && b > FRAME_VALIDATION.WHITE_THRESHOLD) {
+		} else if (
+			r > FRAME_VALIDATION.WHITE_THRESHOLD &&
+			g > FRAME_VALIDATION.WHITE_THRESHOLD &&
+			b > FRAME_VALIDATION.WHITE_THRESHOLD
+		) {
 			whitePixels++;
 		} else {
-			validPixels++;
+			_validPixels++;
 		}
 	}
 
@@ -142,7 +150,10 @@ function isFrameValid(ctx: ContextType, width: number, height: number): boolean 
 	const blackRatio = blackPixels / totalSamples;
 	const whiteRatio = whitePixels / totalSamples;
 
-	return blackRatio < FRAME_VALIDATION.INVALID_PIXEL_RATIO && whiteRatio < FRAME_VALIDATION.INVALID_PIXEL_RATIO;
+	return (
+		blackRatio < FRAME_VALIDATION.INVALID_PIXEL_RATIO &&
+		whiteRatio < FRAME_VALIDATION.INVALID_PIXEL_RATIO
+	);
 }
 
 // ============================================================================
@@ -156,7 +167,7 @@ function waitForVideoEvent<K extends keyof HTMLVideoElementEventMap>(
 	video: HTMLVideoElement,
 	eventName: K,
 	timeout: number = VIDEO_EVENT_TIMEOUTS.DEFAULT_MS,
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<void> {
 	return new Promise((resolve, reject) => {
 		// Check if already aborted
@@ -204,7 +215,7 @@ function waitForVideoEvent<K extends keyof HTMLVideoElementEventMap>(
  */
 async function loadVideo(
 	videoFile: File,
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<{ video: HTMLVideoElement; objectUrl: string }> {
 	const video = document.createElement("video");
 	const objectUrl = URL.createObjectURL(videoFile);
@@ -222,7 +233,12 @@ async function loadVideo(
 	video.load();
 
 	try {
-		await waitForVideoEvent(video, "loadedmetadata", VIDEO_EVENT_TIMEOUTS.LOADED_METADATA_MS, signal);
+		await waitForVideoEvent(
+			video,
+			"loadedmetadata",
+			VIDEO_EVENT_TIMEOUTS.LOADED_METADATA_MS,
+			signal,
+		);
 
 		// Verify dimensions
 		if (video.videoWidth === 0 || video.videoHeight === 0) {
@@ -242,12 +258,12 @@ async function loadVideo(
 async function captureFrameAtPosition(
 	video: HTMLVideoElement,
 	position: number,
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<{ canvas: CanvasType; ctx: ContextType; width: number; height: number } | null> {
 	// Calculate capture time
 	const captureTime = Math.min(
 		THUMBNAIL_CONFIG.maxCaptureTime,
-		Math.max(0.1, video.duration * position)
+		Math.max(0.1, video.duration * position),
 	);
 
 	video.currentTime = captureTime;
@@ -256,7 +272,7 @@ async function captureFrameAtPosition(
 		await waitForVideoEvent(video, "seeked", VIDEO_EVENT_TIMEOUTS.SEEKED_MS, signal);
 
 		// Short delay to ensure the frame is decoded
-		await new Promise(resolve => setTimeout(resolve, UI_DELAYS.VIDEO_FRAME_STABILIZATION_MS));
+		await new Promise((resolve) => setTimeout(resolve, UI_DELAYS.VIDEO_FRAME_STABILIZATION_MS));
 
 		// Calculate dimensions
 		const aspectRatio = video.videoHeight / video.videoWidth;
@@ -303,7 +319,7 @@ async function captureFrameAtPosition(
  */
 export async function generateVideoThumbnail(
 	videoFile: File,
-	options: VideoThumbnailOptions = {}
+	options: VideoThumbnailOptions = {},
 ): Promise<VideoThumbnailResult> {
 	const {
 		width = CLIENT_THUMBNAIL_CONFIG.width,
@@ -327,7 +343,12 @@ export async function generateVideoThumbnail(
 
 	try {
 		// Try multiple positions until a valid frame is found
-		let capturedFrame: { canvas: CanvasType; ctx: ContextType; width: number; height: number } | null = null;
+		let capturedFrame: {
+			canvas: CanvasType;
+			ctx: ContextType;
+			width: number;
+			height: number;
+		} | null = null;
 		let capturedPosition = 0;
 
 		for (const position of capturePositions) {
@@ -349,7 +370,7 @@ export async function generateVideoThumbnail(
 			const captureTime = Math.min(maxCaptureTime, Math.max(0.1, video.duration * firstPosition));
 			video.currentTime = captureTime;
 			await waitForVideoEvent(video, "seeked", VIDEO_EVENT_TIMEOUTS.SEEKED_MS, signal);
-			await new Promise(resolve => setTimeout(resolve, UI_DELAYS.VIDEO_FRAME_STABILIZATION_MS));
+			await new Promise((resolve) => setTimeout(resolve, UI_DELAYS.VIDEO_FRAME_STABILIZATION_MS));
 
 			const aspectRatio = video.videoHeight / video.videoWidth;
 			const height = Math.round(width * aspectRatio);
@@ -381,7 +402,7 @@ export async function generateVideoThumbnail(
 						else reject(new Error("Echec de la conversion du canvas en blob"));
 					},
 					CLIENT_THUMBNAIL_CONFIG.format,
-					quality
+					quality,
 				);
 			});
 		}
@@ -389,11 +410,9 @@ export async function generateVideoThumbnail(
 		// Create the thumbnail file with a unique name
 		const timestamp = Date.now();
 		const randomSuffix = Math.random().toString(36).substring(2, 8);
-		const thumbnailFile = new File(
-			[blob],
-			`thumb-${timestamp}-${randomSuffix}.jpg`,
-			{ type: "image/jpeg" }
-		);
+		const thumbnailFile = new File([blob], `thumb-${timestamp}-${randomSuffix}.jpg`, {
+			type: "image/jpeg",
+		});
 
 		// Create the preview URL
 		const previewUrl = URL.createObjectURL(blob);
@@ -413,4 +432,3 @@ export async function generateVideoThumbnail(
 		video.load();
 	}
 }
-

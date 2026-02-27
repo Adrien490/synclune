@@ -3,10 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
-import type {
-	GetProductReturn,
-	ProductSku,
-} from "@/modules/products/types/product.types";
+import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
 import { Loader2 } from "lucide-react";
@@ -23,15 +20,17 @@ interface AddToCartFormProps {
  * Les badges de réassurance sont dans ProductReassurance (RSC).
  * La quantité est toujours 1, modifiable ensuite dans le panier.
  */
-export function AddToCartForm({
-	product,
-	selectedSku,
-}: AddToCartFormProps) {
+export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
 	const { action, isPending } = useAddToCart();
 	const searchParams = useSearchParams();
 
 	// Validation des variantes pour message explicite
-	const { validationErrors, requiresColor, requiresMaterial, requiresSize } = useVariantValidation({
+	const {
+		validationErrors: _validationErrors,
+		requiresColor,
+		requiresMaterial,
+		requiresSize,
+	} = useVariantValidation({
 		product,
 		selection: {
 			color: searchParams.get("color"),
@@ -57,9 +56,7 @@ export function AddToCartForm({
 	const hasOnlyOneSku = product.skus && product.skus.length === 1;
 
 	// Vérifier si le SKU est disponible
-	const isAvailable = selectedSku
-		? selectedSku.inventory > 0 && selectedSku.isActive
-		: false;
+	const isAvailable = selectedSku ? selectedSku.inventory > 0 && selectedSku.isActive : false;
 
 	const canAddToCart = selectedSku && isAvailable;
 
@@ -84,17 +81,17 @@ export function AddToCartForm({
 			<Button
 				type="submit"
 				className={cn(
-					"w-full shadow-lg tracking-wide",
+					"w-full tracking-wide shadow-lg",
 					// Style amélioré pour meilleur contraste
 					"bg-primary hover:bg-primary/90",
 					"text-primary-foreground font-semibold",
 					// Animation fluide
-					"transition-all duration-300 transform-gpu",
+					"transform-gpu transition-all duration-300",
 					"hover:scale-[1.02] hover:shadow-xl",
 					"active:scale-[0.98]",
 					// Anneau de focus accessible
-					"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-					)}
+					"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2",
+				)}
 				disabled={!canAddToCart || isPending}
 				size="lg"
 			>

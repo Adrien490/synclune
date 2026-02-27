@@ -25,7 +25,7 @@ const STRIPE_REASON_MAP: Record<string, Stripe.RefundCreateParams.Reason> = {
  * @returns Résultat avec l'ID du remboursement Stripe ou erreur
  */
 export async function createStripeRefund(
-	params: CreateStripeRefundParams
+	params: CreateStripeRefundParams,
 ): Promise<StripeRefundResult> {
 	try {
 		// Valider qu'on a soit un paymentIntentId soit un chargeId
@@ -75,7 +75,7 @@ export async function createStripeRefund(
 			// P0.3: Idempotence - si déjà remboursé, c'est un succès
 			// Peut arriver si retry webhook ou hash collision idempotency key
 			if (error.code === "charge_already_refunded") {
-				console.log("[STRIPE_REFUND] Charge already refunded, treating as success (idempotence)");
+				console.warn("[STRIPE_REFUND] Charge already refunded, treating as success (idempotence)");
 
 				// Recover the existing refund ID from Stripe
 				// Fetch multiple refunds and match by metadata or amount to avoid
@@ -90,25 +90,29 @@ export async function createStripeRefund(
 
 					// Match priority: metadata refund_id > amount + recent timestamp > first refund
 					const byMetadata = params.metadata?.refund_id
-						? existingRefunds.data.find(r => r.metadata?.refund_id === params.metadata!.refund_id)
+						? existingRefunds.data.find((r) => r.metadata?.refund_id === params.metadata!.refund_id)
 						: undefined;
 
 					// Match by amount AND creation time proximity (within 1 hour) for safety
 					const oneHourAgo = Math.floor(Date.now() / 1000) - 3600;
 					const byAmountAndTime = existingRefunds.data.find(
-						r => r.amount === params.amount && r.created >= oneHourAgo
+						(r) => r.amount === params.amount && r.created >= oneHourAgo,
 					);
-					const byAmount = existingRefunds.data.find(r => r.amount === params.amount);
+					const byAmount = existingRefunds.data.find((r) => r.amount === params.amount);
 
 					const matched = byMetadata ?? byAmountAndTime ?? byAmount ?? existingRefunds.data[0];
 					existingRefundId = matched?.id;
 
 					// Warn when using weak fallback matching (no metadata)
 					if (!byMetadata && existingRefundId) {
-						const matchType = byAmountAndTime ? "amount+time" : byAmount ? "amount-only" : "first-refund";
+						const matchType = byAmountAndTime
+							? "amount+time"
+							: byAmount
+								? "amount-only"
+								: "first-refund";
 						console.warn(
 							`[STRIPE_REFUND] Recovered refund via fallback (${matchType}): ${existingRefundId}. ` +
-							`No metadata match available. Verify manually if multiple partial refunds exist.`
+								`No metadata match available. Verify manually if multiple partial refunds exist.`,
 						);
 					}
 				} catch {
@@ -141,9 +145,7 @@ export async function createStripeRefund(
  * @param refundId ID du remboursement Stripe (re_xxx)
  * @returns Statut du remboursement
  */
-export async function getStripeRefundStatus(
-	refundId: string
-): Promise<StripeRefundStatus | null> {
+export async function getStripeRefundStatus(refundId: string): Promise<StripeRefundStatus | null> {
 	try {
 		const refund = await stripe.refunds.retrieve(refundId);
 		return refund.status as StripeRefundStatus | null;
@@ -152,4 +154,3 @@ export async function getStripeRefundStatus(
 		return null;
 	}
 }
-

@@ -1,0 +1,26 @@
+[
+	{
+		"name": "First Load JS (shared)",
+		"path": ".next/static/chunks/*.js",
+		"limit": "120 kB",
+		"gzip": true
+	},
+	{
+		"name": "Homepage",
+		"path": ".next/static/chunks/app/(boutique)/(accueil)/*.js",
+		"limit": "80 kB",
+		"gzip": true
+	},
+	{
+		"name": "Product page",
+		"path": ".next/static/chunks/app/(boutique)/produits/**/*.js",
+		"limit": "80 kB",
+		"gzip": true
+	},
+	{
+		"name": "Auth pages",
+		"path": ".next/static/chunks/app/(auth)/**/*.js",
+		"limit": "50 kB",
+		"gzip": true
+	}
+]

@@ -5,24 +5,33 @@ import { ActionStatus } from "@/shared/types/server-action";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrisma, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockValidateInput, mockHandleActionError, mockSuccess, mockError, mockSanitizeText } =
-	vi.hoisted(() => ({
-		mockPrisma: {
-			address: {
-				count: vi.fn(),
-				create: vi.fn(),
-			},
-			$transaction: vi.fn(),
+const {
+	mockPrisma,
+	mockRequireAuth,
+	mockEnforceRateLimit,
+	mockUpdateTag,
+	mockValidateInput,
+	mockHandleActionError,
+	mockSuccess,
+	mockError,
+	mockSanitizeText,
+} = vi.hoisted(() => ({
+	mockPrisma: {
+		address: {
+			count: vi.fn(),
+			create: vi.fn(),
 		},
-		mockRequireAuth: vi.fn(),
-		mockEnforceRateLimit: vi.fn(),
-		mockUpdateTag: vi.fn(),
-		mockValidateInput: vi.fn(),
-		mockHandleActionError: vi.fn(),
-		mockSuccess: vi.fn(),
-		mockError: vi.fn(),
-		mockSanitizeText: vi.fn(),
-	}));
+		$transaction: vi.fn(),
+	},
+	mockRequireAuth: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
+	mockUpdateTag: vi.fn(),
+	mockValidateInput: vi.fn(),
+	mockHandleActionError: vi.fn(),
+	mockSuccess: vi.fn(),
+	mockError: vi.fn(),
+	mockSanitizeText: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -58,7 +67,7 @@ vi.mock("@/shared/schemas/address-schema", () => ({
 	addressSchema: {},
 }));
 
-// Mock rate-limit-config to avoid real Arcjet/Upstash init
+// Mock rate-limit-config to avoid real Arcjet init
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADDRESS_LIMITS: { MUTATE: "address-mutate" },
 }));
@@ -118,9 +127,11 @@ describe("createAddress", () => {
 		mockSanitizeText.mockImplementation((text: string) => text);
 
 		// Default: transaction executes the callback with prisma-like tx
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
-			return fn(mockPrisma);
-		});
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				return fn(mockPrisma);
+			},
+		);
 
 		// Default: user has 2 addresses (not first, not at limit)
 		mockPrisma.address.count.mockResolvedValue(2);

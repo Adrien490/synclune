@@ -1,10 +1,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 
 import {
@@ -14,14 +11,9 @@ import {
 	GET_SESSIONS_DEFAULT_SORT_BY,
 	GET_SESSIONS_DEFAULT_SORT_ORDER,
 	GET_SESSIONS_ADMIN_FALLBACK_SORT_BY,
-	GET_SESSIONS_SORT_FIELDS,
 } from "../constants/session.constants";
 import { cacheAuthSessions } from "../utils/cache.utils";
-import {
-	getSessionsSchema,
-	sessionFiltersSchema,
-	sessionSortBySchema,
-} from "../schemas/session.schemas";
+import { getSessionsSchema } from "../schemas/session.schemas";
 import type { GetSessionsParams, GetSessionsReturn } from "../types/session.types";
 import { buildSessionWhereClause } from "../services/session-query-builder";
 
@@ -31,13 +23,8 @@ export {
 	GET_SESSIONS_DEFAULT_PER_PAGE,
 	GET_SESSIONS_MAX_RESULTS_PER_PAGE,
 	GET_SESSIONS_DEFAULT_SORT_BY,
-	GET_SESSIONS_SORT_FIELDS,
 } from "../constants/session.constants";
-export {
-	getSessionsSchema,
-	sessionFiltersSchema,
-	sessionSortBySchema,
-} from "../schemas/session.schemas";
+export { getSessionsSchema } from "../schemas/session.schemas";
 export type {
 	GetSessionsParams,
 	GetSessionsReturn,
@@ -66,9 +53,7 @@ function maskToken(token: string): string | undefined {
  * - User : ne voit que ses propres sessions
  * SÉCURITÉ : Token JAMAIS exposé en clair
  */
-export async function getSessions(
-	params: GetSessionsParams
-): Promise<GetSessionsReturn> {
+export async function getSessions(params: GetSessionsParams): Promise<GetSessionsReturn> {
 	const [admin, session] = await Promise.all([isAdmin(), getSession()]);
 
 	if (!admin && !session?.user?.id) {
@@ -83,11 +68,7 @@ export async function getSessions(
 
 	let validatedParams = validation.data;
 
-	if (
-		admin &&
-		validatedParams.sortBy === GET_SESSIONS_DEFAULT_SORT_BY &&
-		!params?.sortBy
-	) {
+	if (admin && validatedParams.sortBy === GET_SESSIONS_DEFAULT_SORT_BY && !params?.sortBy) {
 		validatedParams = {
 			...validatedParams,
 			sortBy: GET_SESSIONS_ADMIN_FALLBACK_SORT_BY,
@@ -106,13 +87,12 @@ export async function getSessions(
  */
 async function fetchSessions(
 	params: GetSessionsParams,
-	userId?: string
+	userId?: string,
 ): Promise<GetSessionsReturn> {
 	"use cache: private";
 	cacheAuthSessions(userId);
 
-	const sortOrder = (params.sortOrder ||
-		GET_SESSIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = (params.sortOrder || GET_SESSIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
 
 	try {
 		const where = buildSessionWhereClause(params);
@@ -131,7 +111,7 @@ async function fetchSessions(
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_SESSIONS_DEFAULT_PER_PAGE),
-			GET_SESSIONS_MAX_RESULTS_PER_PAGE
+			GET_SESSIONS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -150,8 +130,12 @@ async function fetchSessions(
 			...cursorConfig,
 		});
 
-		const { items: sessionsWithoutTransform, pagination } =
-			processCursorResults(sessionsRaw, take, params.direction, params.cursor);
+		const { items: sessionsWithoutTransform, pagination } = processCursorResults(
+			sessionsRaw,
+			take,
+			params.direction,
+			params.cursor,
+		);
 
 		const now = new Date();
 		const sessions = sessionsWithoutTransform.map((session) => {

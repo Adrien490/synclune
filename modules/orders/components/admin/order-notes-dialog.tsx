@@ -41,13 +41,15 @@ export function OrderNotesDialog() {
 
 	useEffect(() => {
 		if (isOpen && data?.orderId) {
-			fetch(data.orderId);
-			setNewNote("");
+			queueMicrotask(() => {
+				fetch(data.orderId);
+				setNewNote("");
+			});
 		}
 		if (!isOpen) {
-			reset();
+			queueMicrotask(() => reset());
 		}
-	}, [isOpen, data?.orderId]);
+	}, [isOpen, data?.orderId, fetch, reset]);
 
 	const handleAddNote = () => {
 		if (!data?.orderId || !newNote.trim()) return;
@@ -65,7 +67,7 @@ export function OrderNotesDialog() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<ResponsiveDialogContent className="sm:max-w-150 max-h-[80vh] flex flex-col">
+			<ResponsiveDialogContent className="flex max-h-[80vh] flex-col sm:max-w-150">
 				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>Notes internes</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
@@ -74,7 +76,7 @@ export function OrderNotesDialog() {
 				</ResponsiveDialogHeader>
 
 				{/* Formulaire d'ajout */}
-				<div className="shrink-0 space-y-2 pb-4 border-b">
+				<div className="shrink-0 space-y-2 border-b pb-4">
 					<Textarea
 						placeholder="Ajouter une note..."
 						value={newNote}
@@ -82,11 +84,7 @@ export function OrderNotesDialog() {
 						className="min-h-20 resize-none"
 					/>
 					<div className="flex justify-end">
-						<Button
-							onClick={handleAddNote}
-							disabled={isPendingAdd || !newNote.trim()}
-							size="sm"
-						>
+						<Button onClick={handleAddNote} disabled={isPendingAdd || !newNote.trim()} size="sm">
 							{isPendingAdd ? (
 								<Loader2 className="h-4 w-4 animate-spin" />
 							) : (
@@ -98,30 +96,25 @@ export function OrderNotesDialog() {
 				</div>
 
 				{/* Liste des notes */}
-				<div className="flex-1 overflow-auto space-y-3 py-4">
+				<div className="flex-1 space-y-3 overflow-auto py-4">
 					{isPendingFetch ? (
 						<div className="flex items-center justify-center py-8">
-							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+							<Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
 						</div>
 					) : fetchError ? (
-						<div className="text-center py-8 text-destructive">{fetchError}</div>
+						<div className="text-destructive py-8 text-center">{fetchError}</div>
 					) : notes.length === 0 ? (
-						<div className="text-center py-8 text-muted-foreground">
-							<StickyNote className="h-12 w-12 mx-auto mb-3 opacity-50" />
+						<div className="text-muted-foreground py-8 text-center">
+							<StickyNote className="mx-auto mb-3 h-12 w-12 opacity-50" />
 							<p>Aucune note pour cette commande</p>
 						</div>
 					) : (
 						notes.map((note) => (
-							<div
-								key={note.id}
-								className="p-3 rounded-lg bg-muted group relative"
-							>
+							<div key={note.id} className="bg-muted group relative rounded-lg p-3">
 								<div className="flex items-start justify-between gap-2">
-									<div className="flex-1 min-w-0">
-										<p className="text-sm whitespace-pre-wrap wrap-break-words">
-											{note.content}
-										</p>
-										<div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+									<div className="min-w-0 flex-1">
+										<p className="wrap-break-words text-sm whitespace-pre-wrap">{note.content}</p>
+										<div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
 											<span className="font-medium">{note.authorName}</span>
 											<span>•</span>
 											<span>
@@ -134,7 +127,7 @@ export function OrderNotesDialog() {
 									<Button
 										variant="ghost"
 										size="icon"
-										className="h-7 w-7 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-destructive hover:text-destructive"
+										className="text-destructive hover:text-destructive h-7 w-7 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
 										onClick={() => handleDeleteNote(note.id)}
 										disabled={isPendingDelete}
 									>
@@ -150,7 +143,7 @@ export function OrderNotesDialog() {
 					)}
 				</div>
 
-				<div className="shrink-0 flex justify-end pt-4 border-t">
+				<div className="flex shrink-0 justify-end border-t pt-4">
 					<Button variant="outline" onClick={close}>
 						Fermer
 					</Button>

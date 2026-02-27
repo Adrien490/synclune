@@ -5,13 +5,14 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "Page introuvable",
-	description: "La page que vous recherchez n'existe pas ou a été déplacée. Découvrez nos bijoux artisanaux faits main.",
+	description:
+		"La page que vous recherchez n'existe pas ou a été déplacée. Découvrez nos bijoux artisanaux faits main.",
 	robots: { index: false },
 };
 
 export default function NotFound() {
 	return (
-		<main className="relative min-h-screen bg-linear-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center px-4">
+		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-screen items-center justify-center bg-linear-to-br px-4">
 			<ParticleBackground
 				count={8}
 				shape={["heart", "diamond", "circle"]}
@@ -19,29 +20,26 @@ export default function NotFound() {
 				opacity={[0.15, 0.35]}
 				blur={[8, 24]}
 			/>
-			<div className="relative z-10 text-center space-y-8 max-w-2xl mx-auto">
+			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<div className="space-y-4">
-					<h1 className="text-8xl font-bold text-muted-foreground/30 mb-4">
-						<span className="sr-only">404</span>{" "}😥
+					<p className="text-muted-foreground/30 mb-4 text-8xl font-bold" aria-hidden="true">
+						😥
+					</p>
+					<h1 className="font-display text-foreground text-3xl font-semibold md:text-4xl">
+						<span className="sr-only">Erreur 404 — </span>Oups, vous vous êtes surement perdu 💔
 					</h1>
-					<h2 className="text-3xl md:text-4xl font-display font-semibold text-foreground">
-						Oups, vous vous êtes surement perdu 💔
-					</h2>
-					<p className="text-lg md:text-xl text-muted-foreground">
-						J'ai plein d'autres créations à vous montrer qui, elles, existent vraiment (à l'instar de cette page)
+					<p className="text-muted-foreground text-lg md:text-xl">
+						J'ai plein d'autres créations à vous montrer qui, elles, existent vraiment (à l'instar
+						de cette page)
 					</p>
 				</div>
 
-				<div className="flex flex-col sm:flex-row gap-4 justify-center">
+				<div className="flex flex-col justify-center gap-4 sm:flex-row">
 					<Button asChild size="lg">
-						<Link href="/">
-							Retour à l'accueil
-						</Link>
+						<Link href="/">Retour à l'accueil</Link>
 					</Button>
 					<Button asChild variant="secondary" size="lg">
-						<Link href="/produits">
-							Découvrir mes créations
-						</Link>
+						<Link href="/produits">Découvrir mes créations</Link>
 					</Button>
 				</div>
 			</div>

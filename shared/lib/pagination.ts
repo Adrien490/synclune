@@ -1,25 +1,28 @@
 import type {
 	CursorPaginationParams,
 	CursorPaginationResult,
-	PaginationInfo,
-} from "@/shared/types/pagination.types"
+} from "@/shared/types/pagination.types";
 
-export type { CursorPaginationParams, PaginationInfo, CursorPaginationResult } from "@/shared/types/pagination.types"
+export type {
+	CursorPaginationParams,
+	PaginationInfo,
+	CursorPaginationResult,
+} from "@/shared/types/pagination.types";
 
 /**
  * Default number of items per page
  */
-export const DEFAULT_PER_PAGE = 20
+export const DEFAULT_PER_PAGE = 20;
 
 /**
  * Available options for items per page
  */
-export const PER_PAGE_OPTIONS = [20, 50, 100, 200] as const
+export const PER_PAGE_OPTIONS = [20, 50, 100, 200] as const;
 
 /**
  * Default direction for cursor pagination
  */
-export const DEFAULT_DIRECTION = "forward" as const
+export const DEFAULT_DIRECTION = "forward" as const;
 
 /**
  * Helper to build cursor-based pagination for Prisma queries
@@ -39,7 +42,7 @@ export function buildCursorPagination(params: CursorPaginationParams): {
 
 	// Guard against invalid take values (defense in depth — Zod validates upstream)
 	if (take <= 0) {
-		throw new Error(`take must be positive, got ${take}`)
+		throw new Error(`take must be positive, got ${take}`);
 	}
 
 	// Première page : pas de cursor
@@ -84,11 +87,11 @@ export function processCursorResults<T extends { id: string }>(
 	items: T[],
 	requestedTake: number,
 	direction: "forward" | "backward" = "forward",
-	currentCursor?: string
+	currentCursor?: string,
 ): CursorPaginationResult<T> {
 	// Guard against invalid take values that would break hasMore detection
 	if (requestedTake <= 0) {
-		throw new Error(`requestedTake must be positive, got ${requestedTake}`)
+		throw new Error(`requestedTake must be positive, got ${requestedTake}`);
 	}
 
 	// Pas de résultats
@@ -118,10 +121,7 @@ export function processCursorResults<T extends { id: string }>(
 			pagination: {
 				// nextCursor : dernier élément de cette page (pour aller forward)
 				// Permet de retourner à la page suivante en fetchant APRÈS ce cursor
-				nextCursor:
-					actualItems.length > 0
-						? actualItems[actualItems.length - 1].id
-						: null,
+				nextCursor: actualItems.length > 0 ? actualItems[actualItems.length - 1].id : null,
 				// prevCursor : premier élément (pour continuer backward) SI il y a plus avant
 				prevCursor: hasMore ? actualItems[0].id : null,
 				// hasNextPage : on peut aller forward SI on a utilisé un cursor
@@ -151,4 +151,3 @@ export function processCursorResults<T extends { id: string }>(
 		},
 	};
 }
-

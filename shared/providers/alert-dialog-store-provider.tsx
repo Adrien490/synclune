@@ -1,45 +1,32 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useRef } from "react"
-import { useStore } from "zustand"
+import { createContext, useContext, useState } from "react";
+import { useStore } from "zustand";
 
-import { createAlertDialogStore } from "@/shared/stores/alert-dialog-store"
+import { createAlertDialogStore } from "@/shared/stores/alert-dialog-store";
 import type {
 	AlertDialogData,
 	AlertDialogStore,
 	AlertDialogStoreProviderProps,
-} from "@/shared/types/store.types"
+} from "@/shared/types/store.types";
 
-export type AlertDialogStoreApi = ReturnType<typeof createAlertDialogStore>
+export type AlertDialogStoreApi = ReturnType<typeof createAlertDialogStore>;
 
-export const AlertDialogStoreContext = createContext<
-	AlertDialogStoreApi | undefined
->(undefined)
+export const AlertDialogStoreContext = createContext<AlertDialogStoreApi | undefined>(undefined);
 
-export const AlertDialogStoreProvider = ({
-	children,
-}: AlertDialogStoreProviderProps) => {
-	const storeRef = useRef<AlertDialogStoreApi | null>(null);
-	if (storeRef.current === null) {
-		storeRef.current = createAlertDialogStore();
-	}
+export const AlertDialogStoreProvider = ({ children }: AlertDialogStoreProviderProps) => {
+	const [store] = useState(() => createAlertDialogStore());
 
 	return (
-		<AlertDialogStoreContext.Provider value={storeRef.current}>
-			{children}
-		</AlertDialogStoreContext.Provider>
+		<AlertDialogStoreContext.Provider value={store}>{children}</AlertDialogStoreContext.Provider>
 	);
 };
 
-export const useAlertDialogStore = <T,>(
-	selector: (store: AlertDialogStore) => T
-): T => {
+export const useAlertDialogStore = <T,>(selector: (store: AlertDialogStore) => T): T => {
 	const alertDialogStoreContext = useContext(AlertDialogStoreContext);
 
 	if (!alertDialogStoreContext) {
-		throw new Error(
-			`useAlertDialogStore must be used within AlertDialogStoreProvider`
-		);
+		throw new Error(`useAlertDialogStore must be used within AlertDialogStoreProvider`);
 	}
 
 	return useStore(alertDialogStoreContext, selector);
@@ -60,22 +47,12 @@ export const useAlertDialogStore = <T,>(
  * const data = deleteDialog.data as { itemId: string; itemName: string };
  * <AlertDialog open={deleteDialog.isOpen} onOpenChange={(open) => !open && deleteDialog.close()}>
  */
-export const useAlertDialog = <T extends AlertDialogData = AlertDialogData>(
-	dialogId: string
-) => {
-	const isOpen = useAlertDialogStore((state) =>
-		state.isAlertDialogOpen(dialogId)
-	);
-	const data = useAlertDialogStore((state) =>
-		state.getAlertDialogData<T>(dialogId)
-	);
+export const useAlertDialog = <T extends AlertDialogData = AlertDialogData>(dialogId: string) => {
+	const isOpen = useAlertDialogStore((state) => state.isAlertDialogOpen(dialogId));
+	const data = useAlertDialogStore((state) => state.getAlertDialogData<T>(dialogId));
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
-	const closeAlertDialog = useAlertDialogStore(
-		(state) => state.closeAlertDialog
-	);
-	const clearAlertDialogData = useAlertDialogStore(
-		(state) => state.clearAlertDialogData
-	);
+	const closeAlertDialog = useAlertDialogStore((state) => state.closeAlertDialog);
+	const clearAlertDialogData = useAlertDialogStore((state) => state.clearAlertDialogData);
 
 	return {
 		isOpen,

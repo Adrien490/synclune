@@ -11,11 +11,7 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { AlertCircle, CreditCard, Info, Loader2, Lock, Mail, MapPin } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import {
-	VisaIcon,
-	MastercardIcon,
-	CBIcon,
-} from "@/shared/components/icons/payment-icons";
+import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import { StripeWordmark } from "./stripe-wordmark";
 import {
 	SORTED_SHIPPING_COUNTRIES,
@@ -66,11 +62,7 @@ interface CheckoutFormProps {
  * Gère le state partagé via TanStack Form entre le formulaire et le récapitulatif
  * Élimine le besoin de callbacks onCountryChange/onPostalCodeChange
  */
-export function CheckoutForm({
-	cart,
-	session,
-	addresses,
-}: CheckoutFormProps) {
+export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
 
 	// State pour le paiement Stripe
@@ -79,18 +71,17 @@ export function CheckoutForm({
 		orderId: string;
 		orderNumber: string;
 	} | null>(null);
-	const [submittedAddress, setSubmittedAddress] =
-		useState<SubmittedAddress | null>(null);
+	const [submittedAddress, setSubmittedAddress] = useState<SubmittedAddress | null>(null);
 
 	// State for discount code
-	const [appliedDiscount, setAppliedDiscount] = useState<
-		NonNullable<ValidateDiscountCodeReturn["discount"]> | null
-	>(null);
+	const [appliedDiscount, setAppliedDiscount] = useState<NonNullable<
+		ValidateDiscountCodeReturn["discount"]
+	> | null>(null);
 
 	// State for address selector
 	const defaultAddress = addresses?.find((a) => a.isDefault) ?? addresses?.[0] ?? null;
 	const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-		defaultAddress?.id ?? null
+		defaultAddress?.id ?? null,
 	);
 
 	// Ref for focus management
@@ -139,7 +130,7 @@ export function CheckoutForm({
 		// Focus first form field after transition
 		requestAnimationFrame(() => {
 			const firstInput = document.querySelector<HTMLInputElement>(
-				'input[name="email"], input[name="shipping.fullName"]'
+				'input[name="email"], input[name="shipping.fullName"]',
 			);
 			firstInput?.focus();
 		});
@@ -174,10 +165,10 @@ export function CheckoutForm({
 	// Progressive disclosure states
 	const initialCountry = form.state.values.shipping?.country;
 	const [showCountrySelect, setShowCountrySelect] = useState(
-		initialCountry !== undefined && initialCountry !== "FR"
+		initialCountry !== undefined && initialCountry !== "FR",
 	);
 	const [showAddressLine2, setShowAddressLine2] = useState(
-		!!form.state.values.shipping?.addressLine2
+		!!form.state.values.shipping?.addressLine2,
 	);
 
 	// Calculer le total
@@ -200,10 +191,10 @@ export function CheckoutForm({
 			};
 
 	return (
-		<div className="grid lg:grid-cols-[1fr_340px] gap-6">
+		<div className="grid gap-6 lg:grid-cols-[1fr_340px]">
 			{/* Formulaire / Paiement */}
 			<div>
-				<Card className="shadow-sm py-0">
+				<Card className="py-0 shadow-sm">
 					<CardContent className="p-5 sm:p-6 lg:p-8">
 						{/* Accessible heading for focus management */}
 						<h1 ref={headingRef} tabIndex={-1} className="sr-only">
@@ -211,534 +202,546 @@ export function CheckoutForm({
 						</h1>
 						<ErrorBoundary
 							errorMessage="Impossible de charger le formulaire"
-							className="p-8 rounded-lg border bg-muted/50"
+							className="bg-muted/50 rounded-lg border p-8"
 						>
 							<AnimatePresence mode="wait">
-							{clientSecret && submittedAddress ? (
-								<motion.div key="payment" className="space-y-6" {...fadeSlide}>
-									{/* Step indicator */}
-									<CheckoutStepIndicator currentStep={2} />
-
-									{/* Résumé de l'adresse de livraison (Baymard: toujours visible) */}
-									<AddressSummary address={submittedAddress} onEdit={handleEdit} />
-
-									{/* En-tête paiement */}
-									<h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-										<CreditCard className="w-5 h-5" />
-										Paiement sécurisé
-									</h2>
-
-									{/* Stripe embed */}
-									<div className="rounded-xl border bg-card overflow-hidden">
-										<EmbeddedCheckoutWrapper clientSecret={clientSecret} />
-									</div>
-
-									{/* Trust footer compact */}
-									<div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
-										<span className="inline-flex items-center gap-1">
-											<Lock className="w-3 h-3" />
-											Paiement sécurisé
-										</span>
-										<span aria-hidden="true" className="hidden sm:inline">·</span>
-										<span className="inline-flex items-center gap-1.5">
-											<VisaIcon className="h-4 w-auto" />
-											<MastercardIcon className="h-4 w-auto" />
-											<CBIcon className="h-4 w-auto" />
-										</span>
-										<span aria-hidden="true" className="hidden sm:inline">·</span>
-										<span className="inline-flex items-center gap-1">
-											Propulsé par <StripeWordmark className="h-4 w-auto opacity-50" />
-										</span>
-									</div>
-
-									{/* Info commande */}
-									{orderInfo && (
-										<p className="text-xs text-muted-foreground text-center">
-											Commande n°{orderInfo.orderNumber}
-										</p>
-									)}
-								</motion.div>
-							) : (
-								<motion.form
-									key="address"
-									{...fadeSlide}
-									action={action}
-									className="space-y-6"
-									onSubmit={() => {
-										// Capturer les valeurs avant soumission pour le résumé
-										formValuesRef.current = {
-											email: form.state.values.email as string | undefined,
-											shipping: form.state.values.shipping as {
-												fullName: string;
-												addressLine1: string;
-												addressLine2?: string;
-												city: string;
-												postalCode: string;
-												country: string;
-												phoneNumber: string;
-											},
-										};
-										void form.handleSubmit();
-									}}
-								>
-									{/* Hidden inputs */}
-									<input
-										type="hidden"
-										name="cartItems"
-										value={JSON.stringify(
-											cart.items.map((item) => ({
-												skuId: item.sku.id,
-												quantity: item.quantity,
-												priceAtAdd: item.priceAtAdd,
-											}))
-										)}
-									/>
-
-									<form.Subscribe selector={(state) => [state.values]}>
-										{([values]) => {
-											const v = values as Record<string, unknown>;
-											const shippingValues = v?.shipping as
-												| Record<string, string>
-												| undefined;
-											return (
-												<>
-													<input
-														type="hidden"
-														name="shippingAddress"
-														value={JSON.stringify({
-															fullName: shippingValues?.fullName || "",
-															addressLine1: shippingValues?.addressLine1 || "",
-															addressLine2: shippingValues?.addressLine2 || "",
-															city: shippingValues?.city || "",
-															postalCode: shippingValues?.postalCode || "",
-															country: shippingValues?.country || "FR",
-															phoneNumber: shippingValues?.phoneNumber || "",
-														})}
-													/>
-													{isGuest && (
-														<input
-															type="hidden"
-															name="email"
-															value={(v?.email as string) || ""}
-														/>
-													)}
-													<input
-														type="hidden"
-														name="discountCode"
-														value={appliedDiscount?.code ?? ""}
-													/>
-												</>
-											);
-										}}
-									</form.Subscribe>
-
-									{/* All visible fields wrapped in fieldset for disabled state during submission */}
-									<fieldset disabled={isPending} className="space-y-5 disabled:opacity-60">
+								{clientSecret && submittedAddress ? (
+									<motion.div key="payment" className="space-y-6" {...fadeSlide}>
 										{/* Step indicator */}
-										<CheckoutStepIndicator currentStep={1} />
+										<CheckoutStepIndicator currentStep={2} />
 
-										{/* Step 1 heading */}
-										<h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-											<MapPin className="w-5 h-5" />
-											Adresse de livraison
+										{/* Résumé de l'adresse de livraison (Baymard: toujours visible) */}
+										<AddressSummary address={submittedAddress} onEdit={handleEdit} />
+
+										{/* En-tête paiement */}
+										<h2 className="flex items-center gap-2 text-base font-semibold sm:text-lg">
+											<CreditCard className="h-5 w-5" />
+											Paiement sécurisé
 										</h2>
 
-										{/* Légende champs obligatoires (Baymard: 94% des sites échouent à clarifier) */}
-										<p className="text-sm text-muted-foreground">
-											Les champs marqués d'un <span className="text-destructive">*</span> sont
-											obligatoires.
-										</p>
+										{/* Stripe embed */}
+										<div className="bg-card overflow-hidden rounded-xl border">
+											<EmbeddedCheckoutWrapper clientSecret={clientSecret} />
+										</div>
 
-										{/* Message d'erreur (ignore validation errors - handled by field validators) */}
-										{state?.status !== ActionStatus.SUCCESS &&
-											state?.status !== ActionStatus.VALIDATION_ERROR &&
-											state?.message && (
-												<Alert variant="destructive" role="alert" aria-live="assertive">
-													<AlertDescription>{state.message}</AlertDescription>
-												</Alert>
+										{/* Trust footer compact */}
+										<div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
+											<span className="inline-flex items-center gap-1">
+												<Lock className="h-3 w-3" />
+												Paiement sécurisé
+											</span>
+											<span aria-hidden="true" className="hidden sm:inline">
+												·
+											</span>
+											<span className="inline-flex items-center gap-1.5">
+												<VisaIcon className="h-4 w-auto" />
+												<MastercardIcon className="h-4 w-auto" />
+												<CBIcon className="h-4 w-auto" />
+											</span>
+											<span aria-hidden="true" className="hidden sm:inline">
+												·
+											</span>
+											<span className="inline-flex items-center gap-1">
+												Propulsé par <StripeWordmark className="h-4 w-auto opacity-50" />
+											</span>
+										</div>
+
+										{/* Info commande */}
+										{orderInfo && (
+											<p className="text-muted-foreground text-center text-xs">
+												Commande n°{orderInfo.orderNumber}
+											</p>
+										)}
+									</motion.div>
+								) : (
+									<motion.form
+										key="address"
+										{...fadeSlide}
+										action={action}
+										className="space-y-6"
+										onSubmit={() => {
+											// Capturer les valeurs avant soumission pour le résumé
+											formValuesRef.current = {
+												email: form.state.values.email as string | undefined,
+												shipping: form.state.values.shipping as {
+													fullName: string;
+													addressLine1: string;
+													addressLine2?: string;
+													city: string;
+													postalCode: string;
+													country: string;
+													phoneNumber: string;
+												},
+											};
+											void form.handleSubmit();
+										}}
+									>
+										{/* Hidden inputs */}
+										<input
+											type="hidden"
+											name="cartItems"
+											value={JSON.stringify(
+												cart.items.map((item) => ({
+													skuId: item.sku.id,
+													quantity: item.quantity,
+													priceAtAdd: item.priceAtAdd,
+												})),
 											)}
+										/>
 
-										{/* Error summary for screen readers */}
-										<form.Subscribe
-											selector={(s) => ({
-												submissionAttempts: s.submissionAttempts,
-												canSubmit: s.canSubmit,
-												fieldMeta: s.fieldMeta,
-											})}
-										>
-											{({ submissionAttempts, canSubmit, fieldMeta }) => {
-												if (submissionAttempts === 0 || canSubmit) return null;
-
-												const fieldErrors = Object.entries(
-													fieldMeta as Record<string, { errors: string[] }>,
-												)
-													.filter(([, meta]) => meta.errors.length > 0)
-													.map(([name, meta]) => ({
-														name,
-														label: CHECKOUT_FIELD_LABELS[name] ?? name,
-														message: meta.errors[0] as string,
-													}));
-
-												if (fieldErrors.length === 0) return null;
-
+										<form.Subscribe selector={(state) => [state.values]}>
+											{([values]) => {
+												const v = values as Record<string, unknown>;
+												const shippingValues = v?.shipping as Record<string, string> | undefined;
 												return (
-													<Alert variant="destructive" role="alert" aria-live="assertive">
-														<AlertCircle className="size-4" />
-														<AlertTitle>
-															{fieldErrors.length === 1
-																? "1 erreur trouvée"
-																: `${fieldErrors.length} erreurs trouvées`}
-														</AlertTitle>
-														<AlertDescription>
-															<ul className="mt-1 space-y-1">
-																{fieldErrors.map(({ name, label, message }) => (
-																	<li key={name}>
-																		<a
-																			href={`#${name}`}
-																			className="underline hover:no-underline"
-																			onClick={(e) => {
-																				e.preventDefault();
-																				document.getElementById(name)?.focus();
-																			}}
-																		>
-																			{label}
-																		</a>{" "}
-																		: {message}
-																	</li>
-																))}
-															</ul>
-														</AlertDescription>
-													</Alert>
+													<>
+														<input
+															type="hidden"
+															name="shippingAddress"
+															value={JSON.stringify({
+																fullName: shippingValues?.fullName || "",
+																addressLine1: shippingValues?.addressLine1 || "",
+																addressLine2: shippingValues?.addressLine2 || "",
+																city: shippingValues?.city || "",
+																postalCode: shippingValues?.postalCode || "",
+																country: shippingValues?.country || "FR",
+																phoneNumber: shippingValues?.phoneNumber || "",
+															})}
+														/>
+														{isGuest && (
+															<input
+																type="hidden"
+																name="email"
+																value={(v?.email as string) || ""}
+															/>
+														)}
+														<input
+															type="hidden"
+															name="discountCode"
+															value={appliedDiscount?.code ?? ""}
+														/>
+													</>
 												);
 											}}
 										</form.Subscribe>
 
-										{/* Email (guests uniquement) */}
-										{isGuest && (
-											<>
+										{/* All visible fields wrapped in fieldset for disabled state during submission */}
+										<fieldset disabled={isPending} className="space-y-5 disabled:opacity-60">
+											{/* Step indicator */}
+											<CheckoutStepIndicator currentStep={1} />
+
+											{/* Step 1 heading */}
+											<h2 className="flex items-center gap-2 text-base font-semibold sm:text-lg">
+												<MapPin className="h-5 w-5" />
+												Adresse de livraison
+											</h2>
+
+											{/* Légende champs obligatoires (Baymard: 94% des sites échouent à clarifier) */}
+											<p className="text-muted-foreground text-sm">
+												Les champs marqués d'un <span className="text-destructive">*</span> sont
+												obligatoires.
+											</p>
+
+											{/* Message d'erreur (ignore validation errors - handled by field validators) */}
+											{state?.status !== ActionStatus.SUCCESS &&
+												state?.status !== ActionStatus.VALIDATION_ERROR &&
+												state?.message && (
+													<Alert variant="destructive" role="alert" aria-live="assertive">
+														<AlertDescription>{state.message}</AlertDescription>
+													</Alert>
+												)}
+
+											{/* Error summary for screen readers */}
+											<form.Subscribe
+												selector={(s) => ({
+													submissionAttempts: s.submissionAttempts,
+													canSubmit: s.canSubmit,
+													fieldMeta: s.fieldMeta,
+												})}
+											>
+												{({ submissionAttempts, canSubmit, fieldMeta }) => {
+													if (submissionAttempts === 0 || canSubmit) return null;
+
+													const fieldErrors = Object.entries(
+														fieldMeta as Record<string, { errors: string[] }>,
+													)
+														.filter(([, meta]) => meta.errors.length > 0)
+														.map(([name, meta]) => ({
+															name,
+															label: CHECKOUT_FIELD_LABELS[name] ?? name,
+															message: meta.errors[0] as string,
+														}));
+
+													if (fieldErrors.length === 0) return null;
+
+													return (
+														<Alert variant="destructive" role="alert" aria-live="assertive">
+															<AlertCircle className="size-4" />
+															<AlertTitle>
+																{fieldErrors.length === 1
+																	? "1 erreur trouvée"
+																	: `${fieldErrors.length} erreurs trouvées`}
+															</AlertTitle>
+															<AlertDescription>
+																<ul className="mt-1 space-y-1">
+																	{fieldErrors.map(({ name, label, message }) => (
+																		<li key={name}>
+																			<a
+																				href={`#${name}`}
+																				className="underline hover:no-underline"
+																				onClick={(e) => {
+																					e.preventDefault();
+																					document.getElementById(name)?.focus();
+																				}}
+																			>
+																				{label}
+																			</a>{" "}
+																			: {message}
+																		</li>
+																	))}
+																</ul>
+															</AlertDescription>
+														</Alert>
+													);
+												}}
+											</form.Subscribe>
+
+											{/* Email (guests uniquement) */}
+											{isGuest && (
+												<>
+													<form.AppField
+														name="email"
+														validators={{
+															onChange: ({ value }: { value: string }) => {
+																if (!value) return "L'adresse email est requise";
+																if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+																	return "Entrez une adresse email valide";
+																}
+															},
+														}}
+													>
+														{(field) => (
+															<div className="space-y-2">
+																<field.InputField
+																	label="Adresse email"
+																	type="email"
+																	required
+																	inputMode="email"
+																	autoComplete="email"
+																	enterKeyHint="next"
+																	spellCheck={false}
+																	autoCorrect="off"
+																	// eslint-disable-next-line jsx-a11y/no-autofocus
+																	autoFocus
+																	placeholder="votre@email.com"
+																/>
+																<div className="text-muted-foreground flex items-start gap-1.5 text-sm">
+																	<Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+																	<span>
+																		Vous avez déjà un compte ?{" "}
+																		<Link
+																			href="/connexion?callbackURL=/paiement"
+																			className="text-foreground font-medium underline hover:no-underline"
+																			onClick={() => {
+																				if (typeof window !== "undefined") {
+																					const shipping = form.state.values.shipping as
+																						| Record<string, string>
+																						| undefined;
+																					localStorage.setItem(
+																						STORAGE_KEYS.CHECKOUT_FORM_DRAFT,
+																						JSON.stringify({
+																							email: form.state.values.email || "",
+																							shipping: {
+																								fullName: shipping?.fullName || "",
+																								addressLine1: shipping?.addressLine1 || "",
+																								addressLine2: shipping?.addressLine2 || "",
+																								city: shipping?.city || "",
+																								postalCode: shipping?.postalCode || "",
+																								country: shipping?.country || "FR",
+																								phoneNumber: shipping?.phoneNumber || "",
+																							},
+																							timestamp: Date.now(),
+																						}),
+																					);
+																				}
+																			}}
+																		>
+																			Connectez-vous
+																		</Link>{" "}
+																		pour accéder à vos adresses enregistrées
+																	</span>
+																</div>
+															</div>
+														)}
+													</form.AppField>
+												</>
+											)}
+
+											{/* Email affiché pour utilisateurs connectés */}
+											{!isGuest && session?.user?.email && (
+												<div className="bg-muted/50 flex items-center gap-2 rounded-lg p-3 text-sm">
+													<Mail className="text-muted-foreground h-4 w-4" />
+													<span className="text-muted-foreground">Email :</span>
+													<span className="font-medium">{session.user.email}</span>
+												</div>
+											)}
+
+											{/* Address selector for logged-in users with multiple addresses */}
+											{!isGuest && addresses && addresses.length > 1 && (
+												<AddressSelector
+													addresses={addresses}
+													selectedAddressId={selectedAddressId}
+													onSelectAddress={handleSelectAddress}
+												/>
+											)}
+
+											{/* Nom complet (Baymard: champ unique réduit friction) */}
+											<form.AppField
+												name="shipping.fullName"
+												validators={{
+													onChange: ({ value }: { value: string }) => {
+														if (!value || value.trim().length < 2) {
+															return "Le nom complet doit contenir au moins 2 caractères";
+														}
+													},
+												}}
+											>
+												{(field) => (
+													<field.InputField
+														label="Nom complet"
+														required
+														autoComplete="name"
+														autoCapitalize="words"
+														autoCorrect="off"
+														enterKeyHint="next"
+														placeholder="Jean Dupont"
+													/>
+												)}
+											</form.AppField>
+
+											<form.AppField
+												name="shipping.addressLine1"
+												validators={{
+													onChange: ({ value }: { value: string }) => {
+														if (!value || value.trim().length < 5) {
+															return "L'adresse doit contenir au moins 5 caractères";
+														}
+													},
+												}}
+											>
+												{(field) => (
+													<field.InputField
+														label="Adresse"
+														required
+														autoComplete="address-line1"
+														enterKeyHint="next"
+														placeholder="12 rue des Fleurs"
+													/>
+												)}
+											</form.AppField>
+
+											{showAddressLine2 ? (
+												<form.AppField name="shipping.addressLine2">
+													{(field) => (
+														<field.InputField
+															label="Complément d'adresse"
+															optional
+															placeholder="Appartement, bâtiment, etc."
+															autoComplete="address-line2"
+															enterKeyHint="next"
+														/>
+													)}
+												</form.AppField>
+											) : (
+												<button
+													type="button"
+													aria-expanded={showAddressLine2}
+													className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mx-3 min-h-11 rounded-md px-3 text-left text-sm underline transition-colors hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+													onClick={() => setShowAddressLine2(true)}
+												>
+													+ Ajouter un complément d'adresse
+												</button>
+											)}
+
+											<div className="grid grid-cols-2 gap-3 sm:gap-6">
 												<form.AppField
-													name="email"
+													name="shipping.postalCode"
 													validators={{
 														onChange: ({ value }: { value: string }) => {
-															if (!value) return "L'adresse email est requise";
-															if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-																return "Entrez une adresse email valide";
+															if (!value) return "Le code postal est requis";
+															if (value.length < 3 || value.length > 10) {
+																return "Code postal invalide";
 															}
 														},
 													}}
 												>
 													{(field) => (
-														<div className="space-y-2">
-															<field.InputField
-																label="Adresse email"
-																type="email"
-																required
-																inputMode="email"
-																autoComplete="email"
-																enterKeyHint="next"
-																spellCheck={false}
-																autoCorrect="off"
-																autoFocus
-																placeholder="votre@email.com"
-															/>
-															<div className="text-sm text-muted-foreground flex items-start gap-1.5">
-																<Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-																<span>
-																	Vous avez déjà un compte ?{" "}
-																	<Link
-																		href="/connexion?callbackURL=/paiement"
-																		className="text-foreground underline hover:no-underline font-medium"
-																		onClick={() => {
-																			if (typeof window !== "undefined") {
-																				const shipping = form.state.values.shipping as
-																					| Record<string, string>
-																					| undefined;
-																				localStorage.setItem(
-																					STORAGE_KEYS.CHECKOUT_FORM_DRAFT,
-																					JSON.stringify({
-																						email: form.state.values.email || "",
-																						shipping: {
-																							fullName: shipping?.fullName || "",
-																							addressLine1: shipping?.addressLine1 || "",
-																							addressLine2: shipping?.addressLine2 || "",
-																							city: shipping?.city || "",
-																							postalCode: shipping?.postalCode || "",
-																							country: shipping?.country || "FR",
-																							phoneNumber: shipping?.phoneNumber || "",
-																						},
-																						timestamp: Date.now(),
-																					})
-																				);
-																			}
-																		}}
-																	>
-																		Connectez-vous
-																	</Link>{" "}
-																	pour accéder à vos adresses enregistrées
-																</span>
-															</div>
-														</div>
+														<field.InputField
+															label="Code postal"
+															required
+															inputMode="numeric"
+															pattern="[0-9]*"
+															autoComplete="postal-code"
+															autoCorrect="off"
+															enterKeyHint="next"
+															placeholder="75001"
+														/>
 													)}
 												</form.AppField>
-											</>
-										)}
 
-										{/* Email affiché pour utilisateurs connectés */}
-										{!isGuest && session?.user?.email && (
-											<div className="flex items-center gap-2 text-sm p-3 bg-muted/50 rounded-lg">
-												<Mail className="w-4 h-4 text-muted-foreground" />
-												<span className="text-muted-foreground">Email :</span>
-												<span className="font-medium">{session.user.email}</span>
-											</div>
-										)}
-
-										{/* Address selector for logged-in users with multiple addresses */}
-										{!isGuest && addresses && addresses.length > 1 && (
-											<AddressSelector
-												addresses={addresses}
-												selectedAddressId={selectedAddressId}
-												onSelectAddress={handleSelectAddress}
-											/>
-										)}
-
-										{/* Nom complet (Baymard: champ unique réduit friction) */}
-										<form.AppField
-											name="shipping.fullName"
-											validators={{
-												onChange: ({ value }: { value: string }) => {
-													if (!value || value.trim().length < 2) {
-														return "Le nom complet doit contenir au moins 2 caractères";
-													}
-												},
-											}}
-										>
-											{(field) => (
-												<field.InputField
-													label="Nom complet"
-													required
-													autoComplete="name"
-													autoCapitalize="words"
-													autoCorrect="off"
-													enterKeyHint="next"
-													placeholder="Jean Dupont"
-												/>
-											)}
-										</form.AppField>
-
-										<form.AppField
-											name="shipping.addressLine1"
-											validators={{
-												onChange: ({ value }: { value: string }) => {
-													if (!value || value.trim().length < 5) {
-														return "L'adresse doit contenir au moins 5 caractères";
-													}
-												},
-											}}
-										>
-											{(field) => (
-												<field.InputField
-													label="Adresse"
-													required
-													autoComplete="address-line1"
-													enterKeyHint="next"
-													placeholder="12 rue des Fleurs"
-												/>
-											)}
-										</form.AppField>
-
-										{showAddressLine2 ? (
-											<form.AppField name="shipping.addressLine2">
-												{(field) => (
-													<field.InputField
-														label="Complément d'adresse"
-														optional
-														placeholder="Appartement, bâtiment, etc."
-														autoComplete="address-line2"
-														enterKeyHint="next"
-													/>
-												)}
-											</form.AppField>
-										) : (
-											<button
-												type="button"
-												aria-expanded={showAddressLine2}
-												className="min-h-11 px-3 -mx-3 text-sm text-muted-foreground underline hover:no-underline hover:text-foreground text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-												onClick={() => setShowAddressLine2(true)}
-											>
-												+ Ajouter un complément d'adresse
-											</button>
-										)}
-
-										<div className="grid grid-cols-2 gap-3 sm:gap-6">
-											<form.AppField
-												name="shipping.postalCode"
-												validators={{
-													onChange: ({ value }: { value: string }) => {
-														if (!value) return "Le code postal est requis";
-														if (value.length < 3 || value.length > 10) {
-															return "Code postal invalide";
-														}
-													},
-												}}
-											>
-												{(field) => (
-													<field.InputField
-														label="Code postal"
-														required
-														inputMode="numeric"
-														pattern="[0-9]*"
-														autoComplete="postal-code"
-														autoCorrect="off"
-														enterKeyHint="next"
-														placeholder="75001"
-													/>
-												)}
-											</form.AppField>
-
-											<form.AppField
-												name="shipping.city"
-												validators={{
-													onChange: ({ value }: { value: string }) => {
-														if (!value || value.trim().length < 2) {
-															return "La ville est requise";
-														}
-													},
-												}}
-											>
-												{(field) => (
-													<field.InputField
-														label="Ville"
-														required
-														autoComplete="address-level2"
-														enterKeyHint="next"
-														placeholder="Paris"
-													/>
-												)}
-											</form.AppField>
-										</div>
-
-										{showCountrySelect ? (
-											<form.AppField
-												name="shipping.country"
-												validators={{
-													onChange: ({ value }: { value: string }) => {
-														if (!value) return "Le pays est requis";
-													},
-												}}
-											>
-												{(field) => (
-													<field.SelectField
-														label="Pays"
-														required
-														placeholder="Sélectionner un pays"
-														options={countryOptions}
-														autoComplete="country-name"
-													/>
-												)}
-											</form.AppField>
-										) : (
-											<div className="flex items-center justify-between min-h-11">
-												<span className="text-sm">
-													Pays : <strong>France</strong>
-													<span className="text-muted-foreground ml-1">
-														(Livraison UE disponible)
-													</span>
-												</span>
-												<button
-													type="button"
-													aria-expanded={showCountrySelect}
-													className="min-h-11 px-3 text-sm text-muted-foreground underline hover:no-underline hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-													onClick={() => setShowCountrySelect(true)}
+												<form.AppField
+													name="shipping.city"
+													validators={{
+														onChange: ({ value }: { value: string }) => {
+															if (!value || value.trim().length < 2) {
+																return "La ville est requise";
+															}
+														},
+													}}
 												>
-													Modifier
-												</button>
+													{(field) => (
+														<field.InputField
+															label="Ville"
+															required
+															autoComplete="address-level2"
+															enterKeyHint="next"
+															placeholder="Paris"
+														/>
+													)}
+												</form.AppField>
 											</div>
-										)}
 
-										<form.AppField name="shipping.phoneNumber">
-											{(field) => (
-												<div className="space-y-2">
-													<field.PhoneField
-														label="Téléphone"
-														required
-														defaultCountry={country}
-														placeholder="06 12 34 56 78"
-														enterKeyHint="done"
-													/>
-													<p className="text-sm text-muted-foreground">
-														Utilisé uniquement par le transporteur en cas de problème de
-														livraison.
-													</p>
+											{showCountrySelect ? (
+												<form.AppField
+													name="shipping.country"
+													validators={{
+														onChange: ({ value }: { value: string }) => {
+															if (!value) return "Le pays est requis";
+														},
+													}}
+												>
+													{(field) => (
+														<field.SelectField
+															label="Pays"
+															required
+															placeholder="Sélectionner un pays"
+															options={countryOptions}
+															autoComplete="country-name"
+														/>
+													)}
+												</form.AppField>
+											) : (
+												<div className="flex min-h-11 items-center justify-between">
+													<span className="text-sm">
+														Pays : <strong>France</strong>
+														<span className="text-muted-foreground ml-1">
+															(Livraison UE disponible)
+														</span>
+													</span>
+													<button
+														type="button"
+														aria-expanded={showCountrySelect}
+														className="text-muted-foreground hover:text-foreground focus-visible:ring-ring min-h-11 rounded-md px-3 text-sm underline transition-colors hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+														onClick={() => setShowCountrySelect(true)}
+													>
+														Modifier
+													</button>
 												</div>
 											)}
-										</form.AppField>
 
-										{/* Code promo */}
-										<DiscountCodeInput
-											subtotal={subtotal}
-											appliedDiscount={appliedDiscount}
-											onDiscountApplied={setAppliedDiscount}
-										/>
-
-										{/* CGV */}
-										<form.AppField
-											name="termsAccepted"
-											validators={{
-												onChange: ({ value }: { value: boolean }) => {
-													if (!value) {
-														return "Vous devez accepter les conditions générales de vente";
-													}
-												},
-											}}
-										>
-											{(field) => (
-												<div className="space-y-2">
-													<field.CheckboxField
-														label="J'accepte les conditions générales de vente"
-														required
-													/>
-													<div className="text-sm text-muted-foreground ml-8">
-														Consultez nos{" "}
-														<Link
-															href="/cgv"
-															className="text-foreground underline hover:no-underline"
-															target="_blank"
-															rel="noopener noreferrer"
-														>
-															conditions générales de vente
-														</Link>
+											<form.AppField name="shipping.phoneNumber">
+												{(field) => (
+													<div className="space-y-2">
+														<field.PhoneField
+															label="Téléphone"
+															required
+															defaultCountry={country}
+															placeholder="06 12 34 56 78"
+															enterKeyHint="done"
+														/>
+														<p className="text-muted-foreground text-sm">
+															Utilisé uniquement par le transporteur en cas de problème de
+															livraison.
+														</p>
 													</div>
-												</div>
-											)}
-										</form.AppField>
-									</fieldset>
-
-									{/* Baymard: Cadenas sur CTA renforce la sécurité perçue pour achats premium */}
-									<form.Subscribe selector={(s) => [s.canSubmit]}>
-										{([canSubmit]) => (
-											<Button
-												type="submit"
-												size="lg"
-												className="w-full text-base"
-												disabled={!canSubmit || isPending}
-												aria-busy={isPending}
-											>
-												{isPending ? (
-													<>
-														<Loader2 className="size-4 animate-spin" aria-hidden="true" />
-														<span>Validation...</span>
-													</>
-												) : (
-													<>
-														<Lock className="size-4" aria-hidden="true" />
-														<span>Paiement sécurisé · {formatEuro(total)}</span>
-													</>
 												)}
-											</Button>
-										)}
-									</form.Subscribe>
-								</motion.form>
-							)}
+											</form.AppField>
+
+											{/* Code promo */}
+											<DiscountCodeInput
+												subtotal={subtotal}
+												appliedDiscount={appliedDiscount}
+												onDiscountApplied={setAppliedDiscount}
+											/>
+
+											{/* CGV */}
+											<form.AppField
+												name="termsAccepted"
+												validators={{
+													onChange: ({ value }: { value: boolean }) => {
+														if (!value) {
+															return "Vous devez accepter les conditions générales de vente";
+														}
+													},
+												}}
+											>
+												{(field) => (
+													<div className="space-y-2">
+														<field.CheckboxField
+															label="J'accepte les conditions générales de vente"
+															required
+														/>
+														<div className="text-muted-foreground ml-8 text-sm">
+															Consultez nos{" "}
+															<Link
+																href="/cgv"
+																className="text-foreground underline hover:no-underline"
+																target="_blank"
+																rel="noopener noreferrer"
+															>
+																conditions générales de vente
+															</Link>{" "}
+															et notre{" "}
+															<Link
+																href="/confidentialite"
+																className="text-foreground underline hover:no-underline"
+																target="_blank"
+																rel="noopener noreferrer"
+															>
+																politique de confidentialité
+															</Link>
+														</div>
+													</div>
+												)}
+											</form.AppField>
+										</fieldset>
+
+										{/* Baymard: Cadenas sur CTA renforce la sécurité perçue pour achats premium */}
+										<form.Subscribe selector={(s) => [s.canSubmit]}>
+											{([canSubmit]) => (
+												<Button
+													type="submit"
+													size="lg"
+													className="w-full text-base"
+													disabled={!canSubmit || isPending}
+													aria-busy={isPending}
+												>
+													{isPending ? (
+														<>
+															<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+															<span>Validation...</span>
+														</>
+													) : (
+														<>
+															<Lock className="size-4" aria-hidden="true" />
+															<span>Paiement sécurisé · {formatEuro(total)}</span>
+														</>
+													)}
+												</Button>
+											)}
+										</form.Subscribe>
+									</motion.form>
+								)}
 							</AnimatePresence>
 						</ErrorBoundary>
 					</CardContent>

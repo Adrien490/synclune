@@ -29,14 +29,13 @@ type ResponsiveDialogContextValue = {
 	isMobile: boolean;
 };
 
-const ResponsiveDialogContext =
-	React.createContext<ResponsiveDialogContextValue | null>(null);
+const ResponsiveDialogContext = React.createContext<ResponsiveDialogContextValue | null>(null);
 
 function useResponsiveDialogContext() {
 	const context = React.useContext(ResponsiveDialogContext);
 	if (!context) {
 		throw new Error(
-			"Les composants ResponsiveDialog doivent être utilisés dans un ResponsiveDialog"
+			"Les composants ResponsiveDialog doivent être utilisés dans un ResponsiveDialog",
 		);
 	}
 	return context;
@@ -51,12 +50,7 @@ interface ResponsiveDialogProps {
 	forceMode?: "dialog" | "drawer";
 }
 
-function ResponsiveDialog({
-	children,
-	open,
-	onOpenChange,
-	forceMode,
-}: ResponsiveDialogProps) {
+function ResponsiveDialog({ children, open, onOpenChange, forceMode }: ResponsiveDialogProps) {
 	const isMobileDetected = useIsMobile();
 	const isMobile = forceMode ? forceMode === "drawer" : isMobileDetected;
 
@@ -82,8 +76,7 @@ function ResponsiveDialog({
 }
 
 // Props du contenu
-interface ResponsiveDialogContentProps
-	extends React.ComponentProps<typeof DialogContent> {}
+interface ResponsiveDialogContentProps extends React.ComponentProps<typeof DialogContent> {}
 
 function ResponsiveDialogContent({
 	children,
@@ -97,11 +90,11 @@ function ResponsiveDialogContent({
 		// Filtrer les props spécifiques à Dialog avant de passer à DrawerContent
 		// Ces props sont spécifiques à Radix Dialog et ne s'appliquent pas à Vaul Drawer
 		const {
-			onOpenAutoFocus,
-			onCloseAutoFocus,
-			onEscapeKeyDown,
-			onPointerDownOutside,
-			onInteractOutside,
+			onOpenAutoFocus: _onOpenAutoFocus,
+			onCloseAutoFocus: _onCloseAutoFocus,
+			onEscapeKeyDown: _onEscapeKeyDown,
+			onPointerDownOutside: _onPointerDownOutside,
+			onInteractOutside: _onInteractOutside,
 			...drawerProps
 		} = props;
 		// Filtrer uniquement les classes max-w-* (tailles desktop)
@@ -112,10 +105,7 @@ function ResponsiveDialogContent({
 			.join(" ");
 
 		return (
-			<DrawerContent
-				className={cn("flex flex-col", filteredClassName)}
-				{...drawerProps}
-			>
+			<DrawerContent className={cn("flex flex-col", filteredClassName)} {...drawerProps}>
 				{children}
 			</DrawerContent>
 		);
@@ -123,7 +113,7 @@ function ResponsiveDialogContent({
 
 	return (
 		<DialogContent
-			className={cn("p-6 gap-4 max-h-[90vh] overflow-y-auto", className)}
+			className={cn("max-h-[90vh] gap-4 overflow-y-auto p-6", className)}
 			showCloseButton={showCloseButton}
 			{...props}
 		>
@@ -133,10 +123,7 @@ function ResponsiveDialogContent({
 }
 
 // Header
-function ResponsiveDialogHeader({
-	className,
-	...props
-}: React.ComponentProps<"div">) {
+function ResponsiveDialogHeader({ className, ...props }: React.ComponentProps<"div">) {
 	const { isMobile } = useResponsiveDialogContext();
 
 	if (isMobile) {
@@ -147,10 +134,7 @@ function ResponsiveDialogHeader({
 }
 
 // Footer
-function ResponsiveDialogFooter({
-	className,
-	...props
-}: React.ComponentProps<"div">) {
+function ResponsiveDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 	const { isMobile } = useResponsiveDialogContext();
 
 	if (isMobile) {
@@ -161,10 +145,7 @@ function ResponsiveDialogFooter({
 }
 
 // Title
-function ResponsiveDialogTitle({
-	className,
-	...props
-}: React.ComponentProps<typeof DialogTitle>) {
+function ResponsiveDialogTitle({ className, ...props }: React.ComponentProps<typeof DialogTitle>) {
 	const { isMobile } = useResponsiveDialogContext();
 
 	if (isMobile) {
@@ -189,9 +170,7 @@ function ResponsiveDialogDescription({
 }
 
 // Close
-function ResponsiveDialogClose(
-	props: React.ComponentProps<typeof DialogClose>
-) {
+function ResponsiveDialogClose(props: React.ComponentProps<typeof DialogClose>) {
 	const { isMobile } = useResponsiveDialogContext();
 
 	if (isMobile) {
@@ -202,9 +181,7 @@ function ResponsiveDialogClose(
 }
 
 // Trigger
-function ResponsiveDialogTrigger(
-	props: React.ComponentProps<typeof DialogTrigger>
-) {
+function ResponsiveDialogTrigger(props: React.ComponentProps<typeof DialogTrigger>) {
 	const { isMobile } = useResponsiveDialogContext();
 
 	if (isMobile) {

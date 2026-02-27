@@ -18,6 +18,7 @@ vi.mock("next/image", () => ({
 		className?: string;
 		sizes?: string;
 		quality?: number;
+		// eslint-disable-next-line @next/next/no-img-element
 	}) => <img src={src} alt={alt} className={className} {...props} />,
 }));
 
@@ -80,7 +81,7 @@ describe("OrderItemsList", () => {
 						createItem({ id: "item-1" }),
 						createItem({ id: "item-2", productTitle: "Collier doré" }),
 					]}
-				/>
+				/>,
 			);
 			expect(screen.getByText(/Articles commandés \(2\)/)).toBeInTheDocument();
 		});
@@ -99,7 +100,7 @@ describe("OrderItemsList", () => {
 						createItem({ id: "item-1", productTitle: "Bague en argent" }),
 						createItem({ id: "item-2", productTitle: "Collier doré" }),
 					]}
-				/>
+				/>,
 			);
 			expect(screen.getByText("Bague en argent")).toBeInTheDocument();
 			expect(screen.getByText("Collier doré")).toBeInTheDocument();
@@ -116,7 +117,7 @@ describe("OrderItemsList", () => {
 							productImageUrl: "https://example.com/product.jpg",
 						}),
 					]}
-				/>
+				/>,
 			);
 			const img = screen.getByRole("img");
 			expect(img.getAttribute("src")).toBe("https://example.com/sku.jpg");
@@ -131,18 +132,14 @@ describe("OrderItemsList", () => {
 							productImageUrl: "https://example.com/product.jpg",
 						}),
 					]}
-				/>
+				/>,
 			);
 			const img = screen.getByRole("img");
 			expect(img.getAttribute("src")).toBe("https://example.com/product.jpg");
 		});
 
 		it("shows the image placeholder text when both skuImageUrl and productImageUrl are null", () => {
-			render(
-				<OrderItemsList
-					items={[createItem({ skuImageUrl: null, productImageUrl: null })]}
-				/>
-			);
+			render(<OrderItemsList items={[createItem({ skuImageUrl: null, productImageUrl: null })]} />);
 			expect(screen.queryByRole("img")).toBeNull();
 			expect(screen.getByText("Image")).toBeInTheDocument();
 		});
@@ -156,7 +153,7 @@ describe("OrderItemsList", () => {
 							productImageUrl: "https://example.com/product.jpg",
 						}),
 					]}
-				/>
+				/>,
 			);
 			const img = screen.getByRole("img");
 			expect(img.getAttribute("alt")).toBe("Bague en argent");
@@ -174,7 +171,7 @@ describe("OrderItemsList", () => {
 							skuSize: "52",
 						}),
 					]}
-				/>
+				/>,
 			);
 			expect(screen.getByText("Or • Argent 925 • 52")).toBeInTheDocument();
 		});
@@ -189,7 +186,7 @@ describe("OrderItemsList", () => {
 							skuSize: null,
 						}),
 					]}
-				/>
+				/>,
 			);
 			expect(screen.getByText("Or")).toBeInTheDocument();
 			// No bullet separators present when only one variant
@@ -206,7 +203,7 @@ describe("OrderItemsList", () => {
 							skuSize: "",
 						}),
 					]}
-				/>
+				/>,
 			);
 			expect(screen.getByText("Or jaune")).toBeInTheDocument();
 		});
@@ -221,7 +218,7 @@ describe("OrderItemsList", () => {
 							skuSize: null,
 						}),
 					]}
-				/>
+				/>,
 			);
 			// Verify no bullet separator text appears
 			expect(screen.queryByText(/•/)).toBeNull();
@@ -237,7 +234,7 @@ describe("OrderItemsList", () => {
 							skuSize: "M",
 						}),
 					]}
-				/>
+				/>,
 			);
 			expect(screen.getByText("Rose • M")).toBeInTheDocument();
 		});
@@ -258,38 +255,28 @@ describe("OrderItemsList", () => {
 	describe("pricing", () => {
 		it("shows the total price as price multiplied by quantity", () => {
 			// price=2500 (25.00€), quantity=2 -> total=5000 (50.00€)
-			render(
-				<OrderItemsList items={[createItem({ price: 2500, quantity: 2 })]} />
-			);
+			render(<OrderItemsList items={[createItem({ price: 2500, quantity: 2 })]} />);
 			expect(screen.getByText("50.00 €")).toBeInTheDocument();
 		});
 
 		it("shows the unit price when quantity is greater than 1", () => {
-			render(
-				<OrderItemsList items={[createItem({ price: 2500, quantity: 2 })]} />
-			);
+			render(<OrderItemsList items={[createItem({ price: 2500, quantity: 2 })]} />);
 			expect(screen.getByText("25.00 € / unité")).toBeInTheDocument();
 		});
 
 		it("does not show the unit price when quantity is 1", () => {
-			render(
-				<OrderItemsList items={[createItem({ price: 2500, quantity: 1 })]} />
-			);
+			render(<OrderItemsList items={[createItem({ price: 2500, quantity: 1 })]} />);
 			expect(screen.queryByText(/\/ unité/)).toBeNull();
 		});
 
 		it("shows total price for quantity 1 (price * 1)", () => {
-			render(
-				<OrderItemsList items={[createItem({ price: 3000, quantity: 1 })]} />
-			);
+			render(<OrderItemsList items={[createItem({ price: 3000, quantity: 1 })]} />);
 			expect(screen.getByText("30.00 €")).toBeInTheDocument();
 		});
 
 		it("shows the correct total for quantity 3 (price * 3)", () => {
 			// price=1500 (15.00€) * 3 = 4500 (45.00€)
-			render(
-				<OrderItemsList items={[createItem({ price: 1500, quantity: 3 })]} />
-			);
+			render(<OrderItemsList items={[createItem({ price: 1500, quantity: 3 })]} />);
 			expect(screen.getByText("45.00 €")).toBeInTheDocument();
 		});
 	});
@@ -312,7 +299,7 @@ describe("OrderItemsList", () => {
 							quantity: 2,
 						}),
 					]}
-				/>
+				/>,
 			);
 			expect(screen.getByText("Bague en argent")).toBeInTheDocument();
 			expect(screen.getByText("Bracelet doré")).toBeInTheDocument();

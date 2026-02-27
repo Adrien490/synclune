@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { Role } from "@/app/generated/prisma/client";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -44,19 +41,13 @@ export const userFiltersSchema = z
 			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
 			.max(new Date(), "Date cannot be in the future")
 			.optional(),
-		createdBefore: z.coerce
-			.date()
-			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
-			.optional(),
+		createdBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN, "Date too old").optional(),
 		updatedAfter: z.coerce
 			.date()
 			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
 			.max(new Date(), "Date cannot be in the future")
 			.optional(),
-		updatedBefore: z.coerce
-			.date()
-			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
-			.optional(),
+		updatedBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN, "Date too old").optional(),
 		hasOrders: z.boolean().optional(),
 		hasSessions: z.boolean().optional(),
 		minOrderCount: z.number().int().nonnegative().max(10000).optional(),
@@ -81,9 +72,7 @@ export const userFiltersSchema = z
 
 export const userSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
-		GET_USERS_SORT_FIELDS.includes(
-			value as (typeof GET_USERS_SORT_FIELDS)[number]
-		)
+		GET_USERS_SORT_FIELDS.includes(value as (typeof GET_USERS_SORT_FIELDS)[number])
 		? value
 		: GET_USERS_DEFAULT_SORT_BY;
 }, z.enum(GET_USERS_SORT_FIELDS));
@@ -119,14 +108,8 @@ import { USER_CONSTANTS, USER_ERROR_MESSAGES } from "@/modules/users/constants/p
 export const updateProfileSchema = z.object({
 	name: z
 		.string()
-		.min(
-			USER_CONSTANTS.MIN_NAME_LENGTH,
-			USER_ERROR_MESSAGES.NAME_TOO_SHORT
-		)
-		.max(
-			USER_CONSTANTS.MAX_NAME_LENGTH,
-			USER_ERROR_MESSAGES.NAME_TOO_LONG
-		)
+		.min(USER_CONSTANTS.MIN_NAME_LENGTH, USER_ERROR_MESSAGES.NAME_TOO_SHORT)
+		.max(USER_CONSTANTS.MAX_NAME_LENGTH, USER_ERROR_MESSAGES.NAME_TOO_LONG)
 		.trim(),
 });
 
@@ -143,7 +126,7 @@ export const deleteAccountSchema = z.object({
 		.string()
 		.refine(
 			(val) => val === USER_CONSTANTS.ACCOUNT_DELETION_CONFIRMATION,
-			`Veuillez saisir ${USER_CONSTANTS.ACCOUNT_DELETION_CONFIRMATION} pour confirmer`
+			`Veuillez saisir ${USER_CONSTANTS.ACCOUNT_DELETION_CONFIRMATION} pour confirmer`,
 		),
 });
 
@@ -161,6 +144,7 @@ export const exportUserDataResponseSchema = z.object({
 		name: z.string().nullable(),
 		email: z.email(),
 		createdAt: z.string().datetime(),
+		termsAcceptedAt: z.string().datetime().nullable(),
 	}),
 	addresses: z.array(
 		z.object({
@@ -173,7 +157,7 @@ export const exportUserDataResponseSchema = z.object({
 			country: z.string(),
 			phone: z.string(),
 			isDefault: z.boolean(),
-		})
+		}),
 	),
 	orders: z.array(
 		z.object({
@@ -191,7 +175,7 @@ export const exportUserDataResponseSchema = z.object({
 					skuSize: z.string().nullable(),
 					price: z.number(),
 					quantity: z.number().int().positive(),
-				})
+				}),
 			),
 			shippingAddress: z.object({
 				firstName: z.string(),
@@ -201,31 +185,33 @@ export const exportUserDataResponseSchema = z.object({
 				postalCode: z.string(),
 				country: z.string(),
 			}),
-		})
+		}),
 	),
 	wishlist: z.array(
 		z.object({
 			productTitle: z.string(),
 			addedAt: z.string().datetime(),
-		})
+		}),
 	),
 	discountUsages: z.array(
 		z.object({
 			code: z.string(),
 			amountApplied: z.number(),
 			usedAt: z.string().datetime(),
-		})
+		}),
 	),
-	newsletter: z.object({
-		email: z.string(),
-		status: z.string(),
-		subscribedAt: z.string().datetime(),
-		confirmedAt: z.string().datetime().nullable(),
-		unsubscribedAt: z.string().datetime().nullable(),
-		consentSource: z.string().nullable(),
-		consentTimestamp: z.string().datetime(),
-		ipAddress: z.string().nullable(),
-	}).nullable(),
+	newsletter: z
+		.object({
+			email: z.string(),
+			status: z.string(),
+			subscribedAt: z.string().datetime(),
+			confirmedAt: z.string().datetime().nullable(),
+			unsubscribedAt: z.string().datetime().nullable(),
+			consentSource: z.string().nullable(),
+			consentTimestamp: z.string().datetime(),
+			ipAddress: z.string().nullable(),
+		})
+		.nullable(),
 	reviews: z.array(
 		z.object({
 			productTitle: z.string().nullable(),
@@ -234,7 +220,7 @@ export const exportUserDataResponseSchema = z.object({
 			content: z.string(),
 			createdAt: z.string().datetime(),
 			updatedAt: z.string().datetime(),
-		})
+		}),
 	),
 	sessions: z.array(
 		z.object({
@@ -242,7 +228,7 @@ export const exportUserDataResponseSchema = z.object({
 			userAgent: z.string().nullable(),
 			createdAt: z.string().datetime(),
 			expiresAt: z.string().datetime(),
-		})
+		}),
 	),
 	customizationRequests: z.array(
 		z.object({
@@ -253,6 +239,6 @@ export const exportUserDataResponseSchema = z.object({
 			details: z.string(),
 			status: z.string(),
 			createdAt: z.string().datetime(),
-		})
+		}),
 	),
 });

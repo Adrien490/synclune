@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock next/font/google (imported transitively via barrel → unsaved-changes-dialog → alert-dialog → fonts)
 vi.mock("next/font/google", () => {
-	const fontMock = () => ({ className: "mock-font", variable: "--mock-font", style: { fontFamily: "mock" } });
+	const fontMock = () => ({
+		className: "mock-font",
+		variable: "--mock-font",
+		style: { fontFamily: "mock" },
+	});
 	return {
 		Inter: fontMock,
 		Cormorant_Garamond: fontMock,
@@ -13,8 +17,18 @@ vi.mock("next/font/google", () => {
 
 // Mock next/link
 vi.mock("next/link", () => ({
-	default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-		<a href={href} {...props}>{children}</a>
+	default: ({
+		href,
+		children,
+		...props
+	}: {
+		href: string;
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => (
+		<a href={href} {...props}>
+			{children}
+		</a>
 	),
 	useLinkStatus: () => ({ pending: false }),
 }));
@@ -27,11 +41,33 @@ vi.mock("next/navigation", () => ({
 
 // Mock NavigationMenu components to render children directly
 vi.mock("@/shared/components/ui/navigation-menu", () => ({
-	NavigationMenu: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <nav {...props}>{children}</nav>,
-	NavigationMenuList: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <ul {...props}>{children}</ul>,
+	NavigationMenu: ({
+		children,
+		...props
+	}: {
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => <nav {...props}>{children}</nav>,
+	NavigationMenuList: ({
+		children,
+		...props
+	}: {
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => <ul {...props}>{children}</ul>,
 	NavigationMenuItem: ({ children }: { children: React.ReactNode }) => <li>{children}</li>,
 	NavigationMenuLink: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	NavigationMenuTrigger: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <button type="button" {...props}>{children}</button>,
+	NavigationMenuTrigger: ({
+		children,
+		...props
+	}: {
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => (
+		<button type="button" {...props}>
+			{children}
+		</button>
+	),
 	NavigationMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	navigationMenuTriggerStyle: () => "",
 }));
@@ -108,11 +144,11 @@ describe("DesktopNav", () => {
 		expect(creationsButton).toBeInTheDocument();
 	});
 
-	it("marks the active dropdown trigger with aria-current=true", () => {
+	it("marks the active dropdown trigger with aria-current=page", () => {
 		render(<DesktopNav navItems={navItems} />);
 
 		const activeButton = screen.getByRole("button", { name: "Les créations" });
-		expect(activeButton.getAttribute("aria-current")).toBe("true");
+		expect(activeButton.getAttribute("aria-current")).toBe("page");
 	});
 
 	it("does not mark inactive items with aria-current", () => {

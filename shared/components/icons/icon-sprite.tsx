@@ -15,20 +15,10 @@
  */
 export function IconSprite() {
 	return (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			style={{ display: "none" }}
-			aria-hidden="true"
-		>
+		<svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }} aria-hidden="true">
 			<defs>
 				{/* Gradient rose-doré réutilisable */}
-				<linearGradient
-					id="gradient-rose-gold"
-					x1="0%"
-					y1="0%"
-					x2="100%"
-					y2="100%"
-				>
+				<linearGradient id="gradient-rose-gold" x1="0%" y1="0%" x2="100%" y2="100%">
 					<stop offset="0%" stopColor="var(--primary)" />
 					<stop offset="100%" stopColor="var(--secondary)" />
 				</linearGradient>
@@ -99,14 +89,7 @@ export function IconSprite() {
 
 				{/* Icône Compte */}
 				<symbol id="icon-account" viewBox="0 0 24 24">
-					<circle
-						cx="12"
-						cy="8"
-						r="4"
-						fill="none"
-						stroke="var(--primary)"
-						strokeWidth="1.5"
-					/>
+					<circle cx="12" cy="8" r="4" fill="none" stroke="var(--primary)" strokeWidth="1.5" />
 					<path
 						d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"
 						fill="none"
@@ -180,6 +163,7 @@ export function SpriteIcon({
 			className={className}
 			role={ariaLabel ? "img" : undefined}
 			aria-label={ariaLabel}
+			aria-hidden={ariaLabel ? undefined : true}
 		>
 			{ariaLabel && <title>{ariaLabel}</title>}
 			<use href={`#${symbolId}`} />

@@ -18,11 +18,11 @@ export const callbackURLSchema = z
 
 /**
  * Schéma de validation pour les nouveaux mots de passe
- * Aligné sur AUTH_PASSWORD_CONFIG.minLength (8 caractères)
+ * Aligned with AUTH_PASSWORD_CONFIG.minLength (12 chars, OWASP recommendation)
  */
 export const newPasswordSchema = z
 	.string()
-	.min(8, "Le mot de passe doit contenir au moins 8 caractères")
+	.min(12, "Le mot de passe doit contenir au moins 12 caractères")
 	.max(128, "Le mot de passe ne doit pas dépasser 128 caractères");
 
 // ============================================================================
@@ -31,16 +31,14 @@ export const newPasswordSchema = z
 
 export const changePasswordSchema = z
 	.object({
-		currentPassword: z
-			.string()
-			.min(1, "Le mot de passe actuel est requis"),
+		currentPassword: z.string().min(1, "Le mot de passe actuel est requis"),
 		newPassword: z
 			.string()
-			.min(8, "Le nouveau mot de passe doit contenir au moins 8 caractères")
+			.min(12, "Le nouveau mot de passe doit contenir au moins 12 caractères")
 			.max(128, "Le nouveau mot de passe ne doit pas dépasser 128 caractères"),
 		confirmPassword: z
 			.string()
-			.min(8, "Le mot de passe doit contenir au moins 8 caractères")
+			.min(12, "Le mot de passe doit contenir au moins 12 caractères")
 			.max(128, "Le mot de passe ne doit pas dépasser 128 caractères"),
 	})
 	.refine((data) => data.newPassword === data.confirmPassword, {
@@ -85,8 +83,12 @@ export type SignInSocialInput = z.infer<typeof signInSocialSchema>;
 
 export const signUpEmailSchema = z
 	.object({
-		email: z.email({ message: "Vérifiez le format de votre email (ex: nom@domaine.com)" }).transform((e) => e.toLowerCase()),
-		confirmEmail: z.email({ message: "Vérifiez le format de votre email" }).transform((e) => e.toLowerCase()),
+		email: z
+			.email({ message: "Vérifiez le format de votre email (ex: nom@domaine.com)" })
+			.transform((e) => e.toLowerCase()),
+		confirmEmail: z
+			.email({ message: "Vérifiez le format de votre email" })
+			.transform((e) => e.toLowerCase()),
 		password: newPasswordSchema,
 		name: z
 			.string()
@@ -121,9 +123,7 @@ export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchem
 export const resetPasswordSchema = z
 	.object({
 		password: newPasswordSchema,
-		confirmPassword: z
-			.string()
-			.min(1, "La confirmation du mot de passe est requise"),
+		confirmPassword: z.string().min(1, "La confirmation du mot de passe est requise"),
 		token: z.string().min(1, "Le token est requis"),
 	})
 	.refine((data) => data.password === data.confirmPassword, {

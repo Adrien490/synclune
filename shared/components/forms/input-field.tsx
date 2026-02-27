@@ -4,7 +4,6 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
 import { Input } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
-import { cn } from "@/shared/utils/cn";
 
 interface HTMLInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	/** Label affiché au-dessus du champ */
@@ -88,7 +87,7 @@ export const InputField = ({
 		fieldValue === null ||
 		fieldValue === "" ||
 		(typeof fieldValue === "number" && isNaN(fieldValue));
-	const displayValue = type === "number" ? (isEmpty ? "" : fieldValue) : fieldValue ?? "";
+	const displayValue = type === "number" ? (isEmpty ? "" : fieldValue) : (fieldValue ?? "");
 
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
@@ -109,9 +108,7 @@ export const InputField = ({
 				onChange={handleChange}
 				onBlur={field.handleBlur}
 				aria-invalid={field.state.meta.errors.length > 0}
-				aria-describedby={
-					field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
-				}
+				aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
 				aria-required={required}
 				// Props mobile PWA
 				inputMode={inputMode}

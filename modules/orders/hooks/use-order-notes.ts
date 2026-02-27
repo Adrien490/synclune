@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { addOrderNote } from "@/modules/orders/actions/add-order-note";
 import { deleteOrderNote } from "@/modules/orders/actions/delete-order-note";
 import { getOrderNotes } from "@/modules/orders/data/get-order-notes";
@@ -18,33 +18,48 @@ export function useOrderNotes() {
 	const addSuccessRef = useRef<(() => void) | undefined>(undefined);
 	const removeSuccessRef = useRef<(() => void) | undefined>(undefined);
 
-	const [, addFormAction, isAddActionPending] = useActionState(
-		withCallbacks(
+	// Wrapped action refs, built in useEffect to avoid ref access during render
+	const wrappedAddRef = useRef<
+		(prev: ActionState | undefined, formData: FormData) => Promise<ActionState>
+	>(async (_prev: ActionState | undefined, formData: FormData) =>
+		addOrderNote(formData.get("orderId") as string, formData.get("content") as string),
+	);
+	const wrappedRemoveRef = useRef<
+		(prev: ActionState | undefined, formData: FormData) => Promise<ActionState>
+	>(async (_prev: ActionState | undefined, formData: FormData) =>
+		deleteOrderNote(formData.get("noteId") as string),
+	);
+	useEffect(() => {
+		wrappedAddRef.current = withCallbacks(
 			async (_prev: ActionState | undefined, formData: FormData) =>
-				addOrderNote(
-					formData.get("orderId") as string,
-					formData.get("content") as string
-				),
+				addOrderNote(formData.get("orderId") as string, formData.get("content") as string),
 			createToastCallbacks({
 				onSuccess: () => {
 					addSuccessRef.current?.();
 				},
-			})
-		),
-		undefined
-	);
-
-	const [, removeFormAction, isRemoveActionPending] = useActionState(
-		withCallbacks(
+			}),
+		);
+		wrappedRemoveRef.current = withCallbacks(
 			async (_prev: ActionState | undefined, formData: FormData) =>
 				deleteOrderNote(formData.get("noteId") as string),
 			createToastCallbacks({
 				onSuccess: () => {
 					removeSuccessRef.current?.();
 				},
-			})
-		),
-		undefined
+			}),
+		);
+	});
+
+	const [, addFormAction, isAddActionPending] = useActionState(
+		async (prev: ActionState | undefined, formData: FormData) =>
+			wrappedAddRef.current(prev, formData),
+		undefined,
+	);
+
+	const [, removeFormAction, isRemoveActionPending] = useActionState(
+		async (prev: ActionState | undefined, formData: FormData) =>
+			wrappedRemoveRef.current(prev, formData),
+		undefined,
 	);
 
 	const add = (orderId: string, content: string, onSuccess?: () => void) => {

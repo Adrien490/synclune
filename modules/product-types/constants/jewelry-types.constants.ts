@@ -1,6 +1,6 @@
 // Plus besoin d'importer ProductType - maintenant un modèle dynamique
 
-import type { JewelryTypeConfig, JewelrySubType } from "../types/jewelry.types";
+import type { JewelryTypeConfig } from "../types/jewelry.types";
 
 // Re-export pour retrocompatibilite
 export type { JewelryTypeConfig, JewelrySubType } from "../types/jewelry.types";
@@ -103,8 +103,7 @@ export const JEWELRY_TYPES: Record<string, JewelryTypeConfig> = {
 	EARRINGS: {
 		key: "EARRINGS",
 		label: "Boucles d'oreilles",
-		description:
-			"Sublimez votre visage avec nos boucles d'oreilles délicates et raffinées.",
+		description: "Sublimez votre visage avec nos boucles d'oreilles délicates et raffinées.",
 		image:
 			"https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=400&h=400&fit=crop&crop=center",
 		icon: "👂",
@@ -113,8 +112,7 @@ export const JEWELRY_TYPES: Record<string, JewelryTypeConfig> = {
 	ENGRAVINGS: {
 		key: "ENGRAVINGS",
 		label: "Gravures",
-		description:
-			"Personnalisez vos bijoux avec nos services de gravure artisanale.",
+		description: "Personnalisez vos bijoux avec nos services de gravure artisanale.",
 		image:
 			"https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=400&h=400&fit=crop&crop=center",
 		icon: "✍️",

@@ -169,6 +169,13 @@ vi.mock("@/shared/lib/media-validation", () => ({
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: mockStripe,
 	getInvoiceFooter: mockGetInvoiceFooter,
+	withStripeCircuitBreaker: async (fn: () => Promise<unknown>) => fn(),
+	CircuitBreakerError: class CircuitBreakerError extends Error {
+		constructor(name: string) {
+			super(`Circuit breaker OPEN for ${name}`);
+			this.name = "CircuitBreakerError";
+		}
+	},
 }));
 
 vi.mock("@/shared/constants/currency", () => ({
@@ -194,9 +201,7 @@ import { createCheckoutSession } from "../create-checkout-session";
 // TEST DATA
 // ============================================================================
 
-const VALID_CART_ITEMS = [
-	{ skuId: "sku-001", quantity: 1, priceAtAdd: 4500 },
-];
+const VALID_CART_ITEMS = [{ skuId: "sku-001", quantity: 1, priceAtAdd: 4500 }];
 
 const VALID_SHIPPING_ADDRESS = {
 	fullName: "Marie Dupont",
@@ -208,12 +213,14 @@ const VALID_SHIPPING_ADDRESS = {
 	phoneNumber: "+33612345678",
 };
 
-function createFormData(overrides: Partial<{
-	cartItems: unknown;
-	shippingAddress: unknown;
-	email: string;
-	discountCode: string;
-}> = {}): FormData {
+function createFormData(
+	overrides: Partial<{
+		cartItems: unknown;
+		shippingAddress: unknown;
+		email: string;
+		discountCode: string;
+	}> = {},
+): FormData {
 	const fd = new FormData();
 	fd.set("cartItems", JSON.stringify(overrides.cartItems ?? VALID_CART_ITEMS));
 	fd.set("shippingAddress", JSON.stringify(overrides.shippingAddress ?? VALID_SHIPPING_ADDRESS));
@@ -295,22 +302,24 @@ function setupDefaults() {
 	mockGetValidImageUrl.mockImplementation((url: string | null | undefined) => url || null);
 
 	// Transaction: execute callback with tx mock
-	mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
-		// Create a tx mock with $queryRaw and $executeRaw
-		const tx = {
-			...mockPrisma,
-			$queryRaw: vi.fn().mockResolvedValue([
-				{
-					isActive: true,
-					inventory: 10,
-					productTitle: "Bague Lune",
-					productStatus: "PUBLIC",
-				},
-			]),
-			$executeRaw: vi.fn().mockResolvedValue(1),
-		};
-		return fn(tx as unknown as typeof mockPrisma);
-	});
+	mockPrisma.$transaction.mockImplementation(
+		async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+			// Create a tx mock with $queryRaw and $executeRaw
+			const tx = {
+				...mockPrisma,
+				$queryRaw: vi.fn().mockResolvedValue([
+					{
+						isActive: true,
+						inventory: 10,
+						productTitle: "Bague Lune",
+						productStatus: "PUBLIC",
+					},
+				]),
+				$executeRaw: vi.fn().mockResolvedValue(1),
+			};
+			return fn(tx as unknown as typeof mockPrisma);
+		},
+	);
 
 	mockPrisma.order.create.mockResolvedValue(MOCK_ORDER);
 	mockPrisma.orderItem.create.mockResolvedValue({});
@@ -441,7 +450,10 @@ describe("createCheckoutSession", () => {
 		it("should create Stripe customer for guest with email", async () => {
 			mockStripe.customers.create.mockResolvedValue({ id: "cus_new_guest" });
 
-			const result = await createCheckoutSession(undefined, createFormData({ email: "guest@example.com" }));
+			const result = await createCheckoutSession(
+				undefined,
+				createFormData({ email: "guest@example.com" }),
+			);
 
 			expect(result.status).toBe(ActionStatus.SUCCESS);
 			expect(mockStripe.customers.create).toHaveBeenCalledWith(
@@ -779,9 +791,16 @@ describe("createCheckoutSession", () => {
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
 				const tx = {
 					...mockPrisma,
-					$queryRaw: vi.fn()
-						.mockResolvedValueOnce([ // SKU stock check
-							{ isActive: true, inventory: 10, productTitle: "Bague Lune", productStatus: "PUBLIC" },
+					$queryRaw: vi
+						.fn()
+						.mockResolvedValueOnce([
+							// SKU stock check
+							{
+								isActive: true,
+								inventory: 10,
+								productTitle: "Bague Lune",
+								productStatus: "PUBLIC",
+							},
 						])
 						.mockResolvedValueOnce([DISCOUNT_ROW]), // Discount lookup
 					$executeRaw: vi.fn().mockResolvedValue(1), // Discount usage update
@@ -793,7 +812,10 @@ describe("createCheckoutSession", () => {
 			mockCalculateDiscountWithExclusion.mockReturnValue(900);
 			mockStripe.coupons.create.mockResolvedValue({ id: "coupon_abc" });
 
-			const result = await createCheckoutSession(undefined, createFormData({ discountCode: "PROMO20" }));
+			const result = await createCheckoutSession(
+				undefined,
+				createFormData({ discountCode: "PROMO20" }),
+			);
 
 			expect(result.status).toBe(ActionStatus.SUCCESS);
 			expect(mockStripe.coupons.create).toHaveBeenCalledWith(
@@ -815,9 +837,16 @@ describe("createCheckoutSession", () => {
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
 				const tx = {
 					...mockPrisma,
-					$queryRaw: vi.fn()
-						.mockResolvedValueOnce([ // SKU stock check
-							{ isActive: true, inventory: 10, productTitle: "Bague Lune", productStatus: "PUBLIC" },
+					$queryRaw: vi
+						.fn()
+						.mockResolvedValueOnce([
+							// SKU stock check
+							{
+								isActive: true,
+								inventory: 10,
+								productTitle: "Bague Lune",
+								productStatus: "PUBLIC",
+							},
 						])
 						.mockResolvedValueOnce([]), // No discount found
 					$executeRaw: vi.fn(),
@@ -825,7 +854,10 @@ describe("createCheckoutSession", () => {
 				return fn(tx);
 			});
 
-			const result = await createCheckoutSession(undefined, createFormData({ discountCode: "INVALID" }));
+			const result = await createCheckoutSession(
+				undefined,
+				createFormData({ discountCode: "INVALID" }),
+			);
 
 			expect(mockHandleActionError).toHaveBeenCalled();
 			expect(result.status).toBe(ActionStatus.ERROR);
@@ -835,9 +867,16 @@ describe("createCheckoutSession", () => {
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
 				const tx = {
 					...mockPrisma,
-					$queryRaw: vi.fn()
-						.mockResolvedValueOnce([ // SKU stock check
-							{ isActive: true, inventory: 10, productTitle: "Bague Lune", productStatus: "PUBLIC" },
+					$queryRaw: vi
+						.fn()
+						.mockResolvedValueOnce([
+							// SKU stock check
+							{
+								isActive: true,
+								inventory: 10,
+								productTitle: "Bague Lune",
+								productStatus: "PUBLIC",
+							},
 						])
 						.mockResolvedValueOnce([DISCOUNT_ROW]), // Discount found
 					$executeRaw: vi.fn().mockResolvedValue(0), // Atomic update: 0 rows = limit reached
@@ -848,7 +887,10 @@ describe("createCheckoutSession", () => {
 			mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
 			mockCalculateDiscountWithExclusion.mockReturnValue(900);
 
-			const result = await createCheckoutSession(undefined, createFormData({ discountCode: "PROMO20" }));
+			const result = await createCheckoutSession(
+				undefined,
+				createFormData({ discountCode: "PROMO20" }),
+			);
 
 			expect(mockHandleActionError).toHaveBeenCalled();
 			expect(result.status).toBe(ActionStatus.ERROR);
@@ -858,9 +900,15 @@ describe("createCheckoutSession", () => {
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
 				const tx = {
 					...mockPrisma,
-					$queryRaw: vi.fn()
+					$queryRaw: vi
+						.fn()
 						.mockResolvedValueOnce([
-							{ isActive: true, inventory: 10, productTitle: "Bague Lune", productStatus: "PUBLIC" },
+							{
+								isActive: true,
+								inventory: 10,
+								productTitle: "Bague Lune",
+								productStatus: "PUBLIC",
+							},
 						])
 						.mockResolvedValueOnce([DISCOUNT_ROW]),
 					$executeRaw: vi.fn().mockResolvedValue(1),
@@ -908,12 +956,30 @@ describe("createCheckoutSession", () => {
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
 				const tx = {
 					...mockPrisma,
-					$queryRaw: vi.fn()
+					$queryRaw: vi
+						.fn()
 						.mockResolvedValueOnce([
-							{ isActive: true, inventory: 10, productTitle: "Bague Lune", productStatus: "PUBLIC" },
+							{
+								isActive: true,
+								inventory: 10,
+								productTitle: "Bague Lune",
+								productStatus: "PUBLIC",
+							},
 						])
 						.mockResolvedValueOnce([
-							{ id: "disc-001", code: "PROMO20", type: "PERCENTAGE", value: 20, minOrderAmount: null, maxUsageCount: null, maxUsagePerUser: null, usageCount: 0, startsAt: new Date(), endsAt: null, isActive: true },
+							{
+								id: "disc-001",
+								code: "PROMO20",
+								type: "PERCENTAGE",
+								value: 20,
+								minOrderAmount: null,
+								maxUsageCount: null,
+								maxUsagePerUser: null,
+								usageCount: 0,
+								startsAt: new Date(),
+								endsAt: null,
+								isActive: true,
+							},
 						]),
 					$executeRaw: vi.fn().mockResolvedValue(1),
 				};
@@ -950,12 +1016,30 @@ describe("createCheckoutSession", () => {
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
 				const tx = {
 					...mockPrisma,
-					$queryRaw: vi.fn()
+					$queryRaw: vi
+						.fn()
 						.mockResolvedValueOnce([
-							{ isActive: true, inventory: 10, productTitle: "Bague Lune", productStatus: "PUBLIC" },
+							{
+								isActive: true,
+								inventory: 10,
+								productTitle: "Bague Lune",
+								productStatus: "PUBLIC",
+							},
 						])
 						.mockResolvedValueOnce([
-							{ id: "disc-001", code: "PROMO20", type: "PERCENTAGE", value: 20, minOrderAmount: null, maxUsageCount: null, maxUsagePerUser: null, usageCount: 0, startsAt: new Date(), endsAt: null, isActive: true },
+							{
+								id: "disc-001",
+								code: "PROMO20",
+								type: "PERCENTAGE",
+								value: 20,
+								minOrderAmount: null,
+								maxUsageCount: null,
+								maxUsagePerUser: null,
+								usageCount: 0,
+								startsAt: new Date(),
+								endsAt: null,
+								isActive: true,
+							},
 						]),
 					$executeRaw: vi.fn().mockResolvedValue(1),
 				};

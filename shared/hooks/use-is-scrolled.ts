@@ -14,13 +14,12 @@ import { useEffect, useState, useRef } from "react";
  * @returns true si scrollY > threshold
  */
 export function useIsScrolled(threshold: number = 10): boolean {
-	const [isScrolled, setIsScrolled] = useState(false);
+	const [isScrolled, setIsScrolled] = useState(() =>
+		typeof window !== "undefined" ? window.scrollY > threshold : false,
+	);
 	const sentinelRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
-		// Initial check synchrone pour éviter flash
-		setIsScrolled(window.scrollY > threshold);
-
 		// Créer un élément sentinel invisible en haut de la page
 		const sentinel = document.createElement("div");
 		sentinel.style.cssText = `
@@ -44,7 +43,7 @@ export function useIsScrolled(threshold: number = 10): boolean {
 			{
 				threshold: 0,
 				rootMargin: "0px",
-			}
+			},
 		);
 
 		observer.observe(sentinel);

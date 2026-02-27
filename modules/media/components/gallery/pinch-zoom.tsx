@@ -4,7 +4,10 @@ import { useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion, usePinchZoom } from "@/shared/hooks";
-import { MAIN_IMAGE_QUALITY, GALLERY_MAIN_SIZES } from "@/modules/media/constants/image-config.constants";
+import {
+	MAIN_IMAGE_QUALITY,
+	GALLERY_MAIN_SIZES,
+} from "@/modules/media/constants/image-config.constants";
 import { PINCH_ZOOM_CONFIG } from "@/modules/media/constants/gallery.constants";
 
 interface GalleryPinchZoomProps {
@@ -43,13 +46,7 @@ export function GalleryPinchZoom({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReduced = useReducedMotion();
 
-	const {
-		scale,
-		position,
-		isZoomed,
-		isInteracting,
-		handleKeyDown,
-	} = usePinchZoom({
+	const { scale, position, isZoomed, isInteracting, handleKeyDown } = usePinchZoom({
 		containerRef,
 		isActive,
 		onTap,
@@ -64,27 +61,29 @@ export function GalleryPinchZoom({
 		: `${alt}. Double-tapez ou appuyez sur + pour zoomer. Entrée pour ouvrir en plein écran.`;
 
 	return (
+		// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- false positive: role="application" is interactive per WAI-ARIA spec
 		<div
 			ref={containerRef}
-			role="img"
+			role="application"
 			aria-label={ariaLabel}
 			aria-roledescription="Image zoomable"
+			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- false positive: role="application" is interactive per WAI-ARIA spec
 			tabIndex={0}
 			onKeyDown={handleKeyDown}
 			className={cn(
-				"relative w-full h-full overflow-hidden",
+				"relative h-full w-full overflow-hidden",
 				"outline-none",
-				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-				"active:scale-[0.99] transition-transform", // Feedback tactile
-				isZoomed ? "touch-none cursor-grab" : "touch-manipulation cursor-zoom-in"
+				"focus-visible:ring-primary focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2",
+				"transition-transform active:scale-[0.99]", // Feedback tactile
+				isZoomed ? "cursor-grab touch-none" : "cursor-zoom-in touch-manipulation",
 			)}
 			style={{ touchAction: isZoomed ? "none" : "manipulation" }}
 		>
 			{/* Container image transformable */}
 			<div
 				className={cn(
-					"relative w-full h-full",
-					transitionClass // Toujours appliqué pour smooth double-tap
+					"relative h-full w-full",
+					transitionClass, // Toujours appliqué pour smooth double-tap
 				)}
 				style={{
 					transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
@@ -96,7 +95,7 @@ export function GalleryPinchZoom({
 					src={src}
 					alt="" // Alt vide car géré par le container parent
 					fill
-					className="object-cover pointer-events-none select-none"
+					className="pointer-events-none object-cover select-none"
 					preload={preload}
 					quality={MAIN_IMAGE_QUALITY}
 					sizes={GALLERY_MAIN_SIZES}
@@ -111,10 +110,10 @@ export function GalleryPinchZoom({
 				<div
 					className={cn(
 						"absolute top-3 right-3 z-10",
-						"bg-black/60 backdrop-blur-sm text-white",
-						"px-2.5 py-1 rounded-full text-xs font-medium tabular-nums",
+						"bg-black/60 text-white backdrop-blur-sm",
+						"rounded-full px-2.5 py-1 text-xs font-medium tabular-nums",
 						"pointer-events-none select-none",
-						!prefersReduced && "animate-in fade-in duration-200"
+						!prefersReduced && "animate-in fade-in duration-200",
 					)}
 					aria-hidden="true"
 				>
@@ -132,13 +131,13 @@ export function GalleryPinchZoom({
 			{/* Instructions au focus (mobile/desktop) */}
 			<div
 				className={cn(
-					"absolute bottom-3 left-1/2 -translate-x-1/2 z-10",
-					"bg-black/60 backdrop-blur-sm text-white",
-					"px-3 py-1.5 rounded-full text-xs font-medium",
+					"absolute bottom-3 left-1/2 z-10 -translate-x-1/2",
+					"bg-black/60 text-white backdrop-blur-sm",
+					"rounded-full px-3 py-1.5 text-xs font-medium",
 					"pointer-events-none select-none",
 					"opacity-0 focus-within:opacity-100",
 					"hidden sm:block", // Visible uniquement au focus clavier (desktop)
-					!prefersReduced && "transition-opacity duration-200"
+					!prefersReduced && "transition-opacity duration-200",
 				)}
 				aria-hidden="true"
 			>

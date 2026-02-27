@@ -64,11 +64,11 @@ describe("callbackURLSchema", () => {
 
 describe("newPasswordSchema", () => {
 	it("accepts a valid password of 8+ characters", () => {
-		const result = newPasswordSchema.safeParse("secureP@ss1");
+		const result = newPasswordSchema.safeParse("secureP@ss1XY");
 		expect(result.success).toBe(true);
 	});
 
-	it("rejects a password shorter than 8 characters", () => {
+	it("rejects a password shorter than 12 characters", () => {
 		const result = newPasswordSchema.safeParse("short1!");
 		expect(result.success).toBe(false);
 	});
@@ -78,8 +78,8 @@ describe("newPasswordSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("accepts a password of exactly 8 characters", () => {
-		const result = newPasswordSchema.safeParse("12345678");
+	it("accepts a password of exactly 12 characters", () => {
+		const result = newPasswordSchema.safeParse("123456789012");
 		expect(result.success).toBe(true);
 	});
 
@@ -201,7 +201,7 @@ describe("signUpEmailSchema", () => {
 	const validInput = {
 		email: "newuser@example.com",
 		confirmEmail: "newuser@example.com",
-		password: "SecurePass1",
+		password: "SecurePass1XYZ",
 		name: "Alice",
 		termsAccepted: true as const,
 	};

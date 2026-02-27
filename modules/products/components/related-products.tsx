@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
@@ -34,10 +35,7 @@ interface RelatedProductsProps {
  * <RelatedProducts currentProductSlug="boucles-oreilles-rose" limit={8} />
  * ```
  */
-export async function RelatedProducts({
-	currentProductSlug,
-	limit = 8,
-}: RelatedProductsProps) {
+export async function RelatedProducts({ currentProductSlug, limit = 8 }: RelatedProductsProps) {
 	// Récupérer les produits similaires et les Product IDs wishlist en parallèle
 	const [relatedProducts, wishlistProductIds] = await Promise.all([
 		getRelatedProducts({
@@ -57,12 +55,8 @@ export async function RelatedProducts({
 			{/* En-tête de section avec animation reveal */}
 			<Reveal y={20} amount={0.3}>
 				<div className="space-y-2">
-					<h2
-						id="related-products-heading"
-						className="text-2xl font-semibold tracking-tight"
-					>
-						D'autres créations que vous pourriez aimer{" "}
-						<span aria-hidden="true">😊</span>
+					<h2 id="related-products-heading" className="text-2xl font-semibold tracking-tight">
+						D'autres créations que vous pourriez aimer <span aria-hidden="true">😊</span>
 					</h2>
 				</div>
 			</Reveal>
@@ -74,14 +68,14 @@ export async function RelatedProducts({
 						align: "center",
 						containScroll: "trimSnaps",
 					}}
-					className="w-full group/carousel"
+					className="group/carousel w-full"
 					aria-label="Carousel de produits similaires"
 				>
-					<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
-						{relatedProducts.map((product, index) => (
+					<CarouselContent className="-ml-4 py-4 sm:-ml-6" showFade>
+						{relatedProducts.map((product) => (
 							<CarouselItem
 								key={product.id}
-								className="pl-4 sm:pl-6 basis-[47%] sm:basis-[clamp(200px,48vw,280px)] md:basis-1/3 lg:basis-1/4"
+								className="basis-[47%] pl-4 sm:basis-[clamp(200px,48vw,280px)] sm:pl-6 md:basis-1/3 lg:basis-1/4"
 							>
 								<ProductCard
 									product={product}
@@ -96,11 +90,11 @@ export async function RelatedProducts({
 					{relatedProducts.length > 3 && (
 						<>
 							<CarouselPrevious
-								className="hidden md:flex left-4 top-[40%] opacity-0 disabled:opacity-0 group-hover/carousel:opacity-100 focus-visible:opacity-100 transition-opacity duration-300"
+								className="top-[40%] left-4 hidden opacity-0 transition-opacity duration-300 group-hover/carousel:opacity-100 focus-visible:opacity-100 disabled:opacity-0 md:flex"
 								aria-label="Voir les produits précédents"
 							/>
 							<CarouselNext
-								className="hidden md:flex right-4 top-[40%] opacity-0 disabled:opacity-0 group-hover/carousel:opacity-100 focus-visible:opacity-100 transition-opacity duration-300"
+								className="top-[40%] right-4 hidden opacity-0 transition-opacity duration-300 group-hover/carousel:opacity-100 focus-visible:opacity-100 disabled:opacity-0 md:flex"
 								aria-label="Voir les produits suivants"
 							/>
 						</>
@@ -114,13 +108,13 @@ export async function RelatedProducts({
 			{/* CTA pour voir plus de produits */}
 			{relatedProducts.length >= limit && (
 				<div className="flex justify-center pt-4">
-					<a
+					<Link
 						href="/produits"
-						className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:underline underline-offset-4 transition-all duration-200 hover:gap-3"
+						className="text-foreground inline-flex items-center gap-2 text-sm font-medium underline-offset-4 transition-all duration-200 hover:gap-3 hover:underline"
 					>
 						Découvrir toutes les créations
 						<span className="text-xs">→</span>
-					</a>
+					</Link>
 				</div>
 			)}
 		</aside>

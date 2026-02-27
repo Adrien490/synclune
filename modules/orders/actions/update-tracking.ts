@@ -1,9 +1,6 @@
 "use server";
 
-import {
-	OrderStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/client";
+import { OrderStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails";
@@ -12,7 +9,11 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
-import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
+import {
+	getCarrierLabel,
+	getTrackingUrl,
+	type Carrier,
+} from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -32,7 +33,7 @@ import { extractCustomerFirstName } from "../utils/customer-name";
  */
 export async function updateTracking(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -62,8 +63,7 @@ export async function updateTracking(
 		// Générer l'URL de suivi si non fournie
 		const carrierValue = (validated.data.carrier || "autre") as Carrier;
 		const finalTrackingUrl =
-			validated.data.trackingUrl ||
-			getTrackingUrl(carrierValue, validated.data.trackingNumber);
+			validated.data.trackingUrl || getTrackingUrl(carrierValue, validated.data.trackingNumber);
 
 		// Transaction: fetch + validate status + update + audit atomically (prevents race condition)
 		const order = await prisma.$transaction(async (tx) => {
@@ -131,14 +131,19 @@ export async function updateTracking(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
+			updateTag(tag),
+		);
 
 		// Envoyer l'email de mise à jour du suivi au client
 		let emailSent = false;
 		if (validated.data.sendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
-			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
+			const customerFirstName = extractCustomerFirstName(
+				order.customerName,
+				order.shippingFirstName,
+			);
 
 			// Formater la date de livraison estimée
 			const estimatedDeliveryStr = validated.data.estimatedDelivery
@@ -147,7 +152,7 @@ export async function updateTracking(
 						year: "numeric",
 						month: "long",
 						day: "numeric",
-				  })
+					})
 				: "3-5 jours ouvres";
 
 			try {
@@ -175,7 +180,9 @@ export async function updateTracking(
 		}
 
 		const emailMessage = emailSent ? " Email envoye au client." : "";
-		return success(`Suivi mis a jour. Nouveau numero : ${validated.data.trackingNumber}.${emailMessage}`);
+		return success(
+			`Suivi mis a jour. Nouveau numero : ${validated.data.trackingNumber}.${emailMessage}`,
+		);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise a jour du suivi.");
 	}

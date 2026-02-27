@@ -2,16 +2,10 @@ import { cacheUserAccounts } from "../constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCurrentUser } from "./get-current-user";
 
-import type {
-	UserAccount,
-	GetUserAccountsReturn,
-} from "../types/user-accounts.types";
+import type { GetUserAccountsReturn } from "../types/user-accounts.types";
 
 // Re-export pour compatibilité
-export type {
-	UserAccount,
-	GetUserAccountsReturn,
-} from "../types/user-accounts.types";
+export type { UserAccount, GetUserAccountsReturn } from "../types/user-accounts.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -40,9 +34,7 @@ export async function getUserAccounts(): Promise<GetUserAccountsReturn> {
  * SÉCURITÉ: Tokens JAMAIS exposés
  * @param userId L'ID de l'utilisateur
  */
-export async function fetchUserAccounts(
-	userId: string
-): Promise<GetUserAccountsReturn> {
+export async function fetchUserAccounts(userId: string): Promise<GetUserAccountsReturn> {
 	"use cache: private";
 	cacheUserAccounts(userId);
 
@@ -66,7 +58,7 @@ export async function fetchUserAccounts(
 		});
 
 		return accounts;
-	} catch (error) {
+	} catch (_error) {
 		return [];
 	}
 }

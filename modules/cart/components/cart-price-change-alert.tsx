@@ -25,8 +25,11 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 	const { action, isPending } = useUpdateCartPrices();
 
 	// Calcul des changements de prix via le service
-	const { itemsWithPriceChange, itemsWithPriceDecrease, totalSavings } =
-		detectPriceChanges(items);
+	const {
+		itemsWithPriceChange,
+		itemsWithPriceDecrease: _itemsWithPriceDecrease,
+		totalSavings,
+	} = detectPriceChanges(items);
 
 	if (itemsWithPriceChange.length === 0) {
 		return null;
@@ -38,15 +41,17 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 
 	return (
 		<div
-			className="px-6 py-2.5 bg-blue-50 dark:bg-blue-950/20 border-b border-blue-200 dark:border-blue-800 text-xs sm:text-sm text-blue-700 dark:text-blue-300"
+			className="border-b border-blue-200 bg-blue-50 px-6 py-2.5 text-xs text-blue-700 sm:text-sm dark:border-blue-800 dark:bg-blue-950/20 dark:text-blue-300"
 			role="alert"
 			aria-live="polite"
 		>
-			<p className="font-medium mb-1">
-				<span role="img" aria-hidden="true">💎</span>
+			<p className="mb-1 font-medium">
+				<span role="img" aria-hidden="true">
+					💎
+				</span>
 				<span className="sr-only">Information :</span> Prix mis à jour
 			</p>
-			<ul className="list-disc list-inside space-y-0.5 text-blue-600/90 dark:text-blue-400/90">
+			<ul className="list-inside list-disc space-y-0.5 text-blue-600/90 dark:text-blue-400/90">
 				{itemsWithPriceChange.map((item) => {
 					const priceIncreased = isPriceIncrease(item);
 					return (
@@ -54,47 +59,59 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 							{item.sku.product.title}:{" "}
 							<span className="line-through">{formatEuro(item.priceAtAdd)}</span> →{" "}
 							<span
-								className={priceIncreased ? "font-semibold text-orange-600" : "font-semibold text-green-600"}
+								className={
+									priceIncreased ? "font-semibold text-orange-600" : "font-semibold text-green-600"
+								}
 							>
 								{formatEuro(item.sku.priceInclTax)}
 							</span>
 							{priceIncreased ? (
-								<span role="img" aria-label="prix en hausse"> 📈</span>
+								<span role="img" aria-label="prix en hausse">
+									{" "}
+									📈
+								</span>
 							) : (
-								<span role="img" aria-label="prix en baisse"> 📉</span>
+								<span role="img" aria-label="prix en baisse">
+									{" "}
+									📉
+								</span>
 							)}
 						</li>
 					);
 				})}
 			</ul>
 			<p className="mt-2 text-xs text-blue-600/80 dark:text-blue-400/80">
-				Les prix ont changé depuis votre ajout au panier. Votre panier conserve les prix au moment de l'ajout pour éviter toute surprise.
+				Les prix ont changé depuis votre ajout au panier. Votre panier conserve les prix au moment
+				de l'ajout pour éviter toute surprise.
 			</p>
 
 			{/* Bouton pour actualiser les prix */}
-			<div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+			<div className="mt-3 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
 				<Button
 					onClick={handleUpdatePrices}
 					disabled={isPending}
 					size="sm"
 					variant="outline"
-					className="w-full sm:w-auto border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+					className="w-full border-blue-300 text-blue-700 hover:bg-blue-100 sm:w-auto dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/30"
 				>
 					{isPending ? (
 						<>
-							<RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+							<RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" />
 							Mise à jour...
 						</>
 					) : (
 						<>
-							<RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+							<RefreshCw className="mr-1.5 h-3.5 w-3.5" />
 							Actualiser les prix
 						</>
 					)}
 				</Button>
 				{totalSavings > 0 && (
-					<p className="text-xs text-green-600 dark:text-green-400 font-medium text-center sm:text-left">
-						<span role="img" aria-hidden="true">💚</span> Économise {formatEuro(totalSavings)} en actualisant !
+					<p className="text-center text-xs font-medium text-green-600 sm:text-left dark:text-green-400">
+						<span role="img" aria-hidden="true">
+							💚
+						</span>{" "}
+						Économise {formatEuro(totalSavings)} en actualisant !
 					</p>
 				)}
 			</div>

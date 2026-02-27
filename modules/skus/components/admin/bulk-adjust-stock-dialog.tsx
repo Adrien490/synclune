@@ -41,8 +41,10 @@ export function BulkAdjustStockDialog() {
 	// Reset when dialog opens
 	useEffect(() => {
 		if (isOpen) {
-			setMode("relative");
-			setValue(0);
+			queueMicrotask(() => {
+				setMode("relative");
+				setValue(0);
+			});
 		}
 	}, [isOpen]);
 
@@ -56,9 +58,7 @@ export function BulkAdjustStockDialog() {
 
 	const count = data?.skuIds?.length ?? 0;
 	const isValid =
-		count > 0 &&
-		((mode === "relative" && value !== 0) ||
-			(mode === "absolute" && value >= 0));
+		count > 0 && ((mode === "relative" && value !== 0) || (mode === "absolute" && value >= 0));
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && !isPending && close()}>
@@ -66,7 +66,7 @@ export function BulkAdjustStockDialog() {
 				<form onSubmit={handleSubmit}>
 					<ResponsiveDialogHeader>
 						<div className="flex items-center gap-2">
-							<Package className="h-5 w-5 text-primary" />
+							<Package className="text-primary h-5 w-5" />
 							<ResponsiveDialogTitle>Ajuster le stock</ResponsiveDialogTitle>
 						</div>
 						<ResponsiveDialogDescription>
@@ -74,7 +74,7 @@ export function BulkAdjustStockDialog() {
 						</ResponsiveDialogDescription>
 					</ResponsiveDialogHeader>
 
-					<div className="py-6 space-y-6">
+					<div className="space-y-6 py-6">
 						{/* Mode selection */}
 						<div className="space-y-3">
 							<Label className="text-sm font-medium">Mode d&apos;ajustement</Label>
@@ -88,13 +88,13 @@ export function BulkAdjustStockDialog() {
 							>
 								<div className="flex items-center space-x-2">
 									<RadioGroupItem value="relative" id="mode-relative" />
-									<Label htmlFor="mode-relative" className="font-normal cursor-pointer">
+									<Label htmlFor="mode-relative" className="cursor-pointer font-normal">
 										Ajuster (+/-)
 									</Label>
 								</div>
 								<div className="flex items-center space-x-2">
 									<RadioGroupItem value="absolute" id="mode-absolute" />
-									<Label htmlFor="mode-absolute" className="font-normal cursor-pointer">
+									<Label htmlFor="mode-absolute" className="cursor-pointer font-normal">
 										Definir une valeur
 									</Label>
 								</div>
@@ -142,7 +142,7 @@ export function BulkAdjustStockDialog() {
 						</div>
 
 						{/* Preview */}
-						<div className="p-3 rounded-md bg-muted text-sm">
+						<div className="bg-muted rounded-md p-3 text-sm">
 							{mode === "relative" ? (
 								<>
 									Le stock de chaque variante sera{" "}
@@ -160,12 +160,7 @@ export function BulkAdjustStockDialog() {
 					</div>
 
 					<ResponsiveDialogFooter>
-						<Button
-							type="button"
-							variant="outline"
-							onClick={close}
-							disabled={isPending}
-						>
+						<Button type="button" variant="outline" onClick={close} disabled={isPending}>
 							Annuler
 						</Button>
 						<Button type="submit" disabled={!isValid || isPending}>

@@ -1,19 +1,12 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useRef, useEffect, useEffectEvent } from "react";
-import {
-	MOTION_CONFIG,
-	maybeReduceMotion,
-} from "@/shared/components/animations/motion.config";
+import { useRef, useState, useEffect, useEffectEvent } from "react";
+import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import type { FabProps } from "@/shared/types/fab.types";
 
@@ -61,11 +54,11 @@ export function Fab({
 	const mainButtonRef = useRef<HTMLButtonElement>(null);
 	const statusRef = useRef<HTMLDivElement>(null);
 	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const isFirstRender = useRef(true);
+	const [hasMounted, setHasMounted] = useState(false);
 
 	// Marquer que le premier rendu est passé
 	useEffect(() => {
-		isFirstRender.current = false;
+		queueMicrotask(() => setHasMounted(true));
 	}, []);
 
 	// Cleanup du timeout au démontage
@@ -80,10 +73,7 @@ export function Fab({
 	// Respecter prefers-reduced-motion avec config globale
 	const prefersReducedMotion = useReducedMotion();
 	const reducedMotion = prefersReducedMotion ?? false;
-	const transition = maybeReduceMotion(
-		MOTION_CONFIG.spring.snappy,
-		reducedMotion
-	);
+	const transition = maybeReduceMotion(MOTION_CONFIG.spring.snappy, reducedMotion);
 
 	// Hook pour toggle la visibilité
 	const { isHidden, toggle, isPending } = useFabVisibility({
@@ -139,7 +129,7 @@ export function Fab({
 	const visibilityClass = hideOnMobile ? "hidden md:block" : "block";
 
 	// Déterminer si on doit animer (pas au premier rendu)
-	const shouldAnimate = !isFirstRender.current && !reducedMotion;
+	const shouldAnimate = hasMounted && !reducedMotion;
 
 	return (
 		<>
@@ -154,7 +144,7 @@ export function Fab({
 						animate={{ opacity: 1, x: 0 }}
 						exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 20 }}
 						transition={transition}
-						className={cn(visibilityClass, "fixed z-45 bottom-6 right-0", containerClassName)}
+						className={cn(visibilityClass, "fixed right-0 bottom-6 z-45", containerClassName)}
 					>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -171,10 +161,10 @@ export function Fab({
 										"border-r-0",
 										"shadow-md",
 										"hover:bg-accent",
-										"active:scale-95 transition-transform",
-										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+										"transition-transform active:scale-95",
+										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 										"focus-visible:outline-none",
-										isPending && "cursor-wait opacity-70"
+										isPending && "cursor-wait opacity-70",
 									)}
 									aria-label={showTooltip}
 									aria-expanded={false}
@@ -199,7 +189,7 @@ export function Fab({
 						animate={{ opacity: 1, x: 0 }}
 						exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -20 }}
 						transition={transition}
-						className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6", containerClassName)}
+						className={cn(visibilityClass, "group fixed right-6 bottom-6 z-45", containerClassName)}
 					>
 						{/* Bouton pour cacher le FAB */}
 						<Tooltip>
@@ -213,30 +203,27 @@ export function Fab({
 										"absolute -top-2 -right-2 z-10",
 										"size-7 rounded-full",
 										"bg-muted",
-										"border border-border",
+										"border-border border",
 										"shadow-sm",
 										"hover:bg-accent",
 										"active:scale-95",
 										"flex",
 										"md:opacity-0 md:group-hover:opacity-100",
 										"focus-visible:opacity-100",
-										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1",
 										"focus-visible:outline-none",
-										"motion-safe:transition-[opacity,background-color] motion-safe:duration-normal",
-										isPending && "cursor-wait md:opacity-100"
+										"motion-safe:duration-normal motion-safe:transition-[opacity,background-color]",
+										isPending && "cursor-wait md:opacity-100",
 									)}
 									aria-label={hideTooltip}
 									aria-expanded={true}
 								>
-									<X
-										className={cn("size-4", isPending && "animate-pulse")}
-										aria-hidden="true"
-									/>
+									<X className={cn("size-4", isPending && "animate-pulse")} aria-hidden="true" />
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent side="top" sideOffset={4}>
 								<p className="text-xs">{hideTooltip}</p>
-								<p className="text-xs text-muted-foreground">Échap</p>
+								<p className="text-muted-foreground text-xs">Échap</p>
 							</TooltipContent>
 						</Tooltip>
 
@@ -249,15 +236,15 @@ export function Fab({
 										asChild
 										size="lg"
 										className={cn(
-											"relative rounded-full shadow-lg cursor-pointer",
+											"relative cursor-pointer rounded-full shadow-lg",
 											"bg-primary hover:bg-primary/90",
 											"flex items-center justify-center",
 											"size-14 p-0",
-											"hover:shadow-xl hover:shadow-primary/25",
+											"hover:shadow-primary/25 hover:shadow-xl",
 											"active:scale-95",
-											"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+											"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 											"focus-visible:outline-none",
-											className
+											className,
 										)}
 									>
 										<a
@@ -268,7 +255,7 @@ export function Fab({
 										>
 											{icon}
 											{badge && (
-												<div className="absolute -top-1.5 -right-1.5 pointer-events-none">
+												<div className="pointer-events-none absolute -top-1.5 -right-1.5">
 													{badge}
 												</div>
 											)}
@@ -280,15 +267,15 @@ export function Fab({
 										onClick={onClick}
 										size="lg"
 										className={cn(
-											"relative rounded-full shadow-lg cursor-pointer",
+											"relative cursor-pointer rounded-full shadow-lg",
 											"bg-primary hover:bg-primary/90",
 											"flex items-center justify-center",
 											"size-14 p-0",
-											"hover:shadow-xl hover:shadow-primary/25",
+											"hover:shadow-primary/25 hover:shadow-xl",
 											"active:scale-95",
-											"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+											"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 											"focus-visible:outline-none",
-											className
+											className,
 										)}
 										aria-label={ariaLabel}
 										aria-haspopup={ariaHasPopup}
@@ -296,7 +283,7 @@ export function Fab({
 									>
 										{icon}
 										{badge && (
-											<div className="absolute -top-1.5 -right-1.5 pointer-events-none">
+											<div className="pointer-events-none absolute -top-1.5 -right-1.5">
 												{badge}
 											</div>
 										)}
@@ -306,9 +293,7 @@ export function Fab({
 							<TooltipContent side="left" sideOffset={12}>
 								<p className="font-medium">{tooltip.title}</p>
 								{tooltip.description && (
-									<p className="text-xs text-muted-foreground">
-										{tooltip.description}
-									</p>
+									<p className="text-muted-foreground text-xs">{tooltip.description}</p>
 								)}
 							</TooltipContent>
 						</Tooltip>

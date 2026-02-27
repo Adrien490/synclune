@@ -124,7 +124,7 @@ describe("getSkuStocks – auth guard", () => {
 		mockIsAdmin.mockResolvedValue(false);
 
 		await expect(getSkuStocks(makeDefaultParams())).rejects.toThrow(
-			"Accès non autorisé. Droits administrateur requis."
+			"Accès non autorisé. Droits administrateur requis.",
 		);
 	});
 
@@ -180,7 +180,7 @@ describe("getSkuStocks – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })])
+			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })]),
 		);
 	});
 
@@ -189,7 +189,7 @@ describe("getSkuStocks – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ sku: "asc" })])
+			expect.arrayContaining([expect.objectContaining({ sku: "asc" })]),
 		);
 	});
 
@@ -198,7 +198,7 @@ describe("getSkuStocks – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })])
+			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })]),
 		);
 	});
 
@@ -207,7 +207,7 @@ describe("getSkuStocks – sort order logic", () => {
 
 		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
 		expect(callArg.orderBy).toEqual(
-			expect.arrayContaining([expect.objectContaining({ id: "asc" })])
+			expect.arrayContaining([expect.objectContaining({ id: "asc" })]),
 		);
 	});
 });
@@ -225,34 +225,27 @@ describe("getSkuStocks – pagination", () => {
 	it("clamps perPage to GET_INVENTORY_MAX_RESULTS_PER_PAGE (200)", async () => {
 		await getSkuStocks({ ...makeDefaultParams(), perPage: 999 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 200 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
 	});
 
 	it("falls back to default perPage when perPage is 0 (falsy)", async () => {
 		// When perPage is 0, `0 || DEFAULT` returns DEFAULT (50), not 0
 		await getSkuStocks({ ...makeDefaultParams(), perPage: 0 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 50 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 50 }));
 	});
 
 	it("uses GET_INVENTORY_DEFAULT_PER_PAGE when perPage is falsy", async () => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		await getSkuStocks({ ...makeDefaultParams(), perPage: undefined as any });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 50 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 50 }));
 	});
 
 	it("passes cursor and direction to buildCursorPagination", async () => {
 		await getSkuStocks({ ...makeDefaultParams(), cursor: "cursor-abc", direction: "backward" });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ cursor: "cursor-abc", direction: "backward" })
+			expect.objectContaining({ cursor: "cursor-abc", direction: "backward" }),
 		);
 	});
 });
@@ -280,16 +273,14 @@ describe("getSkuStocks – DB query", () => {
 
 		await getSkuStocks(makeDefaultParams());
 
-		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where })
-		);
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
 	});
 
 	it("passes GET_INVENTORY_SELECT to Prisma select", async () => {
 		await getSkuStocks(makeDefaultParams());
 
 		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ select: { id: true, sku: true, inventory: true } })
+			expect.objectContaining({ select: { id: true, sku: true, inventory: true } }),
 		);
 	});
 });
@@ -344,7 +335,9 @@ describe("getSkuStocks – error handling", () => {
 		vi.stubEnv("NODE_ENV", "development");
 		mockPrisma.productSku.findMany.mockRejectedValue(new Error("DB exploded"));
 
-		const result = await getSkuStocks(makeDefaultParams()) as GetSkuStocksReturn & { error?: string };
+		const result = (await getSkuStocks(makeDefaultParams())) as GetSkuStocksReturn & {
+			error?: string;
+		};
 
 		expect(result.error).toBe("DB exploded");
 		vi.unstubAllEnvs();
@@ -355,7 +348,9 @@ describe("getSkuStocks – error handling", () => {
 		vi.stubEnv("NODE_ENV", "production");
 		mockPrisma.productSku.findMany.mockRejectedValue(new Error("DB exploded"));
 
-		const result = await getSkuStocks(makeDefaultParams()) as GetSkuStocksReturn & { error?: string };
+		const result = (await getSkuStocks(makeDefaultParams())) as GetSkuStocksReturn & {
+			error?: string;
+		};
 
 		expect(result.error).toBe("Failed to fetch inventory items");
 		vi.unstubAllEnvs();

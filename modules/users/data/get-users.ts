@@ -1,9 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { cacheLife, cacheTag } from "next/cache";
 import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
@@ -17,14 +14,9 @@ import {
 	GET_USERS_DEFAULT_SORT_BY,
 	GET_USERS_DEFAULT_SORT_ORDER,
 	GET_USERS_ADMIN_FALLBACK_SORT_BY,
-	GET_USERS_SORT_FIELDS,
 } from "../constants/user.constants";
-import {
-	getUsersSchema,
-	userFiltersSchema,
-	userSortBySchema,
-} from "../schemas/user.schemas";
-import type { GetUsersParams, GetUsersReturn, User } from "../types/user.types";
+import { getUsersSchema } from "../schemas/user.schemas";
+import type { GetUsersParams, GetUsersReturn } from "../types/user.types";
 import { buildUserWhereClause } from "../services/user-query-builder";
 
 // ============================================================================
@@ -34,9 +26,7 @@ import { buildUserWhereClause } from "../services/user-query-builder";
 /**
  * Action serveur pour récupérer les utilisateurs (admin uniquement)
  */
-export async function getUsers(
-	params: GetUsersParams
-): Promise<GetUsersReturn> {
+export async function getUsers(params: GetUsersParams): Promise<GetUsersReturn> {
 	try {
 		const admin = await isAdmin();
 
@@ -52,10 +42,7 @@ export async function getUsers(
 
 		let validatedParams = validation.data;
 
-		if (
-			validatedParams.sortBy === GET_USERS_DEFAULT_SORT_BY &&
-			!params?.sortBy
-		) {
+		if (validatedParams.sortBy === GET_USERS_DEFAULT_SORT_BY && !params?.sortBy) {
 			validatedParams = {
 				...validatedParams,
 				sortBy: GET_USERS_ADMIN_FALLBACK_SORT_BY,
@@ -90,14 +77,13 @@ export async function getUsers(
  */
 async function fetchUsers(
 	params: GetUsersParams,
-	fuzzyIds?: string[] | null
+	fuzzyIds?: string[] | null,
 ): Promise<GetUsersReturn> {
 	"use cache";
 	cacheLife("dashboard");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 
-	const sortOrder = (params.sortOrder ||
-		GET_USERS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = (params.sortOrder || GET_USERS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
 
 	try {
 		const where = buildUserWhereClause(params, fuzzyIds);
@@ -111,7 +97,7 @@ async function fetchUsers(
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_USERS_DEFAULT_PER_PAGE),
-			GET_USERS_MAX_RESULTS_PER_PAGE
+			GET_USERS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -131,7 +117,7 @@ async function fetchUsers(
 			users,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return {

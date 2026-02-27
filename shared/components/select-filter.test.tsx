@@ -37,11 +37,11 @@ vi.mock("@/shared/components/ui/select", () => ({
 			{children}
 		</button>
 	),
-	SelectValue: ({ placeholder }: any) => (
-		<span data-testid="select-value">{placeholder}</span>
-	),
+	SelectValue: ({ placeholder }: any) => <span data-testid="select-value">{placeholder}</span>,
 	SelectContent: ({ children, className }: any) => (
-		<div data-testid="select-content" className={className}>{children}</div>
+		<div data-testid="select-content" className={className}>
+			{children}
+		</div>
 	),
 	SelectItem: ({ children, value }: any) => (
 		<div data-testid={`select-item-${value}`}>{children}</div>
@@ -50,7 +50,9 @@ vi.mock("@/shared/components/ui/select", () => ({
 
 vi.mock("@/shared/components/ui/scroll-area", () => ({
 	ScrollArea: ({ children, style }: any) => (
-		<div data-testid="scroll-area" style={style}>{children}</div>
+		<div data-testid="scroll-area" style={style}>
+			{children}
+		</div>
 	),
 }));
 
@@ -426,6 +428,7 @@ describe("SelectFilter", () => {
 
 			render(
 				// biome-ignore lint/a11y/useKeyWithClickEvents: test helper
+				// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- test wrapper
 				<div onClick={parentClick}>
 					<SelectFilter filterKey="status" label="Statut" options={mockOptions} />
 				</div>,
@@ -471,12 +474,7 @@ describe("SelectFilter", () => {
 	describe("responsive", () => {
 		it("applies viewport-aware maxHeight on ScrollArea", () => {
 			render(
-				<SelectFilter
-					filterKey="status"
-					label="Statut"
-					options={mockOptions}
-					maxHeight={500}
-				/>,
+				<SelectFilter filterKey="status" label="Statut" options={mockOptions} maxHeight={500} />,
 			);
 
 			const scrollArea = screen.getByTestId("scroll-area");
@@ -503,28 +501,14 @@ describe("SelectFilter", () => {
 	describe("noPrefix option", () => {
 		it("reads from unprefixed URL param", () => {
 			setSearchParams({ status: "ACTIVE" });
-			render(
-				<SelectFilter
-					filterKey="status"
-					label="Statut"
-					options={mockOptions}
-					noPrefix
-				/>,
-			);
+			render(<SelectFilter filterKey="status" label="Statut" options={mockOptions} noPrefix />);
 
 			const select = screen.getByTestId("select");
 			expect(select).toHaveAttribute("data-value", "ACTIVE");
 		});
 
 		it("writes to unprefixed URL param", () => {
-			render(
-				<SelectFilter
-					filterKey="status"
-					label="Statut"
-					options={mockOptions}
-					noPrefix
-				/>,
-			);
+			render(<SelectFilter filterKey="status" label="Statut" options={mockOptions} noPrefix />);
 
 			const changeButton = screen.getByTestId("select-change");
 			fireEvent.click(changeButton);

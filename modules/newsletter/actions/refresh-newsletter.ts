@@ -11,7 +11,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshNewsletter(
 	_prevState: ActionState | undefined,
-	_formData: FormData
+	_formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const admin = await requireAdminWithUser();
@@ -20,7 +20,7 @@ export async function refreshNewsletter(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_NEWSLETTER_LIMITS.REFRESH);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		console.info("[REFRESH_NEWSLETTER] Cache refreshed by admin:", admin.user.id);
+		console.warn("[REFRESH_NEWSLETTER] Cache refreshed by admin:", admin.user.id);
 
 		updateTag(NEWSLETTER_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);

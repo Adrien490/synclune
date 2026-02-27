@@ -7,8 +7,10 @@ import { cn } from "@/shared/utils/cn";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-interface PasswordInputFieldProps
-	extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
+interface PasswordInputFieldProps extends Omit<
+	React.InputHTMLAttributes<HTMLInputElement>,
+	"type"
+> {
 	/** Label affiché au-dessus du champ */
 	label?: string;
 }
@@ -51,9 +53,8 @@ export const PasswordInputField = ({
 		<button
 			type="button"
 			onClick={() => setShowPassword(!showPassword)}
-			className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2"
+			className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm p-0.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
 			aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-			tabIndex={-1}
 		>
 			{showPassword ? (
 				<EyeOff className="size-4" aria-hidden="true" />
@@ -85,9 +86,7 @@ export const PasswordInputField = ({
 				onChange={handleChange}
 				onBlur={field.handleBlur}
 				aria-invalid={field.state.meta.errors.length > 0}
-				aria-describedby={
-					field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
-				}
+				aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
 				aria-required={required}
 				autoComplete={autoComplete}
 				className={cn("pr-10", className)}

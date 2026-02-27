@@ -45,8 +45,8 @@ export async function SubscribersDataTable({
 							<TableRow>
 								<TableHead className="w-[35%]">Email</TableHead>
 								<TableHead className="w-[20%]">Statut</TableHead>
-								<TableHead className="hidden sm:table-cell w-[25%]">Date d'inscription</TableHead>
-								<TableHead className="hidden md:table-cell w-[20%]">Dernière mise à jour</TableHead>
+								<TableHead className="hidden w-[25%] sm:table-cell">Date d'inscription</TableHead>
+								<TableHead className="hidden w-[20%] md:table-cell">Dernière mise à jour</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -62,21 +62,21 @@ export async function SubscribersDataTable({
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.CONFIRMED]}
 											</span>
 										) : subscriber.status === NewsletterStatus.PENDING ? (
-											<span className="inline-flex items-center gap-1.5 text-sm text-yellow-600">
+											<span className="inline-flex items-center gap-1.5 text-sm text-yellow-700 dark:text-yellow-500">
 												<Clock className="h-4 w-4" aria-hidden="true" />
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.PENDING]}
 											</span>
 										) : (
-											<span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+											<span className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
 												<XCircle className="h-4 w-4" aria-hidden="true" />
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.UNSUBSCRIBED]}
 											</span>
 										)}
 									</TableCell>
-									<TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+									<TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
 										{formatDateShort(subscriber.subscribedAt)}
 									</TableCell>
-									<TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+									<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
 										{formatDateShort(subscriber.updatedAt)}
 									</TableCell>
 								</TableRow>

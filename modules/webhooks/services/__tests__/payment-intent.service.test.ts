@@ -83,7 +83,7 @@ describe("markOrderAsPaid", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx)
+			cb(mockTx),
 		);
 	});
 
@@ -137,7 +137,6 @@ describe("extractPaymentFailureDetails", () => {
 				decline_code: "insufficient_funds",
 				message: "Your card has insufficient funds.",
 			},
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any;
 
 		const result = extractPaymentFailureDetails(paymentIntent);
@@ -150,7 +149,6 @@ describe("extractPaymentFailureDetails", () => {
 	});
 
 	it("should return null values when last_payment_error is absent", () => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const paymentIntent = { last_payment_error: null } as any;
 
 		const result = extractPaymentFailureDetails(paymentIntent);
@@ -171,7 +169,7 @@ describe("restoreStockForOrder", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx)
+			cb(mockTx),
 		);
 	});
 
@@ -259,7 +257,7 @@ describe("restoreStockForOrder", () => {
 				data: expect.objectContaining({
 					inventory: { increment: 5 },
 				}),
-			})
+			}),
 		);
 
 		// sku-b should be incremented by 1
@@ -269,7 +267,7 @@ describe("restoreStockForOrder", () => {
 				data: expect.objectContaining({
 					inventory: { increment: 1 },
 				}),
-			})
+			}),
 		);
 
 		expect(result.restoredSkuIds).toHaveLength(2);
@@ -318,7 +316,7 @@ describe("markOrderAsFailed", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx)
+			cb(mockTx),
 		);
 	});
 
@@ -383,7 +381,7 @@ describe("markOrderAsCancelled", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx)
+			cb(mockTx),
 		);
 	});
 
@@ -418,7 +416,9 @@ describe("markOrderAsCancelled", () => {
 	it("should handle order not found gracefully without throwing", async () => {
 		mockTx.order.findUnique.mockResolvedValue(null);
 
-		await expect(markOrderAsCancelled("nonexistent-order", "pi_cancelled123")).resolves.toBeUndefined();
+		await expect(
+			markOrderAsCancelled("nonexistent-order", "pi_cancelled123"),
+		).resolves.toBeUndefined();
 
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
@@ -448,7 +448,7 @@ describe("initiateAutomaticRefund", () => {
 					reason: "payment_failed",
 				}),
 			}),
-			expect.any(Object)
+			expect.any(Object),
 		);
 	});
 
@@ -514,7 +514,7 @@ describe("sendRefundFailureAlert", () => {
 				errorMessage: "Insufficient funds",
 				stripePaymentIntentId: "pi_xyz",
 				dashboardUrl: "https://synclune.fr/admin/ventes/commandes/order-42",
-			})
+			}),
 		);
 	});
 
@@ -522,7 +522,7 @@ describe("sendRefundFailureAlert", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 
 		await expect(
-			sendRefundFailureAlert("nonexistent-order", "pi_xyz", "other", "Unknown error")
+			sendRefundFailureAlert("nonexistent-order", "pi_xyz", "other", "Unknown error"),
 		).resolves.toBeUndefined();
 
 		expect(mockSendAdminRefundFailedAlert).not.toHaveBeenCalled();

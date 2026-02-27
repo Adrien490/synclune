@@ -13,10 +13,7 @@ interface TableScrollContainerProps {
  * Affiche des gradients pour indiquer qu'il y a plus de contenu
  * visible uniquement sur mobile/tablet
  */
-export function TableScrollContainer({
-	children,
-	className,
-}: TableScrollContainerProps) {
+export function TableScrollContainer({ children, className }: TableScrollContainerProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [canScrollLeft, setCanScrollLeft] = useState(false);
 	const [canScrollRight, setCanScrollRight] = useState(false);
@@ -51,11 +48,11 @@ export function TableScrollContainer({
 			{/* Indicateur scroll gauche */}
 			<div
 				className={cn(
-					"absolute left-0 top-0 bottom-0 w-4 pointer-events-none z-10",
-					"bg-linear-to-r from-background to-transparent",
+					"pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-4",
+					"from-background bg-linear-to-r to-transparent",
 					"transition-opacity duration-200",
 					"lg:hidden", // Visible uniquement sur mobile/tablet
-					canScrollLeft ? "opacity-100" : "opacity-0"
+					canScrollLeft ? "opacity-100" : "opacity-0",
 				)}
 				aria-hidden="true"
 			/>
@@ -63,7 +60,8 @@ export function TableScrollContainer({
 			{/* Container scrollable */}
 			<div
 				ref={scrollRef}
-				className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+				className="focus-visible:ring-ring overflow-x-auto focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
+				// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable container needs keyboard access
 				tabIndex={0}
 				role="region"
 				aria-label="Tableau avec scroll horizontal"
@@ -74,20 +72,18 @@ export function TableScrollContainer({
 			{/* Indicateur scroll droite */}
 			<div
 				className={cn(
-					"absolute right-0 top-0 bottom-0 w-4 pointer-events-none z-10",
-					"bg-linear-to-l from-background to-transparent",
+					"pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-4",
+					"from-background bg-linear-to-l to-transparent",
 					"transition-opacity duration-200",
 					"lg:hidden", // Visible uniquement sur mobile/tablet
-					canScrollRight ? "opacity-100" : "opacity-0"
+					canScrollRight ? "opacity-100" : "opacity-0",
 				)}
 				aria-hidden="true"
 			/>
 
 			{/* Message pour lecteurs d'écran */}
 			{(canScrollLeft || canScrollRight) && (
-				<span className="sr-only">
-					Faites défiler horizontalement pour voir plus de colonnes
-				</span>
+				<span className="sr-only">Faites défiler horizontalement pour voir plus de colonnes</span>
 			)}
 		</div>
 	);

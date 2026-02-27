@@ -4,7 +4,6 @@ import { useActionState, useTransition } from "react";
 import { moderateReview } from "../actions/moderate-review";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import type { ActionState } from "@/shared/types/server-action";
 
 interface UseReviewModerationOptions {
 	onSuccess?: () => void;
@@ -23,9 +22,9 @@ export function useReviewModeration(options?: UseReviewModerationOptions) {
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const toggleStatus = (reviewId: string) => {

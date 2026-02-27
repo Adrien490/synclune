@@ -1,8 +1,6 @@
 "use client";
 
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState } from "react";
+import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 import { deleteColor } from "@/modules/colors/actions/delete-color";
 
 interface UseDeleteColorOptions {
@@ -10,24 +8,11 @@ interface UseDeleteColorOptions {
 }
 
 export function useDeleteColor(options?: UseDeleteColorOptions) {
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			deleteColor,
-			createToastCallbacks({
-				onSuccess: (result: unknown) => {
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
-						options?.onSuccess?.(result.message);
-					}
-				},
-			})
-		),
-		undefined
-	);
-
-	return { state, action, isPending };
+	return useActionWithToast(deleteColor, {
+		onSuccess: (result) => {
+			if (result.message) {
+				options?.onSuccess?.(result.message);
+			}
+		},
+	});
 }

@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+build
+dist
+coverage
+app/generated
+prisma/migrations
+public/sw*
+public/swe-worker*
+pnpm-lock.yaml
+*.min.js
+*.min.css

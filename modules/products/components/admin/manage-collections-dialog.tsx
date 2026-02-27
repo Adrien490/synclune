@@ -11,7 +11,6 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useUpdateProductCollections } from "@/modules/products/hooks/use-update-product-collections";
 import {
@@ -33,7 +32,7 @@ type Collection = { id: string; name: string };
 
 export function ManageCollectionsDialog() {
 	const { isOpen, data, close } = useDialog<ManageCollectionsDialogData>(
-		MANAGE_COLLECTIONS_DIALOG_ID
+		MANAGE_COLLECTIONS_DIALOG_ID,
 	);
 	const [collections, setCollections] = useState<Collection[]>([]);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -95,20 +94,20 @@ export function ManageCollectionsDialog() {
 					<div className="py-6">
 						{isLoadingData ? (
 							<div className="flex items-center justify-center py-8">
-								<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+								<Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
 							</div>
 						) : collections.length === 0 ? (
-							<div className="text-center py-8 text-muted-foreground">
-								<FolderOpen className="h-8 w-8 mx-auto mb-2" />
+							<div className="text-muted-foreground py-8 text-center">
+								<FolderOpen className="mx-auto mb-2 h-8 w-8" />
 								<p>Aucune collection disponible</p>
 							</div>
 						) : (
-							<div className="space-y-3 max-h-75 overflow-y-auto">
+							<div className="max-h-75 space-y-3 overflow-y-auto">
 								{collections.map((collection) => (
-									<div
+									<label
 										key={collection.id}
-										className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted cursor-pointer"
-										onClick={() => handleToggle(collection.id)}
+										htmlFor={collection.id}
+										className="hover:bg-muted flex cursor-pointer items-center space-x-3 rounded-md p-2"
 									>
 										<Checkbox
 											id={collection.id}
@@ -116,13 +115,8 @@ export function ManageCollectionsDialog() {
 											onCheckedChange={() => handleToggle(collection.id)}
 											disabled={isPending}
 										/>
-										<Label
-											htmlFor={collection.id}
-											className="flex-1 cursor-pointer font-normal"
-										>
-											{collection.name}
-										</Label>
-									</div>
+										<span className="flex-1 cursor-pointer font-normal">{collection.name}</span>
+									</label>
 								))}
 							</div>
 						)}

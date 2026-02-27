@@ -36,7 +36,7 @@ export function EditProductMediaSection({
 	productTitle,
 	maxCount,
 	uploadMedia,
-	isMediaUploading,
+	isMediaUploading: _isMediaUploading,
 }: EditProductMediaSectionProps) {
 	const media = field.state.value as MediaItem[];
 
@@ -62,7 +62,7 @@ export function EditProductMediaSection({
 							altText: m.altText ?? undefined,
 							thumbnailUrl: m.thumbnailUrl ?? undefined,
 							blurDataUrl: m.blurDataUrl ?? undefined,
-						})
+						}),
 					);
 				}}
 				skipUtapiDelete={true}
@@ -76,7 +76,7 @@ export function EditProductMediaSection({
 
 							if (files.length > remaining) {
 								toast.warning(
-									`Seulement ${remaining} média${remaining > 1 ? "s ont" : " a"} été ajouté${remaining > 1 ? "s" : ""}`
+									`Seulement ${remaining} média${remaining > 1 ? "s ont" : " a"} été ajouté${remaining > 1 ? "s" : ""}`,
 								);
 							}
 
@@ -95,7 +95,7 @@ export function EditProductMediaSection({
 						onUploadError={(error) => {
 							toast.error(`Erreur: ${error.message}`);
 						}}
-						className="w-full *:after:hidden! *:before:hidden! [&>*::after]:hidden! [&>*::before]:hidden! ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden"
+						className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
 						aria-label="Zone d'upload des médias"
 						appearance={{
 							container: ({ isDragActive, isUploading }) => ({
@@ -124,9 +124,7 @@ export function EditProductMediaSection({
 									: "0 1px 3px rgba(0, 0, 0, 0.1)",
 							}),
 							uploadIcon: ({ isDragActive, isUploading }) => ({
-								color: isDragActive
-									? "hsl(var(--primary))"
-									: "hsl(var(--primary) / 0.7)",
+								color: isDragActive ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.7)",
 								width: "2.5rem",
 								height: "2.5rem",
 								transition: "all 0.2s ease-in-out",
@@ -134,9 +132,7 @@ export function EditProductMediaSection({
 								opacity: isUploading ? 0.5 : 1,
 							}),
 							label: ({ isDragActive, isUploading }) => ({
-								color: isDragActive
-									? "hsl(var(--primary))"
-									: "hsl(var(--foreground))",
+								color: isDragActive ? "hsl(var(--primary))" : "hsl(var(--foreground))",
 								fontSize: "0.9rem",
 								fontWeight: "500",
 								textAlign: "center",
@@ -154,19 +150,18 @@ export function EditProductMediaSection({
 							}),
 						}}
 						content={{
-							uploadIcon: ({
-								isDragActive,
-								isUploading,
-								uploadProgress,
-							}) => {
+							uploadIcon: ({ isDragActive, isUploading, uploadProgress }) => {
 								if (isUploading) {
 									return (
 										<div
-											className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg z-10"
+											className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-sm"
 											role="status"
 											aria-live="polite"
 										>
-											<UploadProgress progress={uploadProgress} isProcessing={uploadProgress >= 100} />
+											<UploadProgress
+												progress={uploadProgress}
+												isProcessing={uploadProgress >= 100}
+											/>
 										</div>
 									);
 								}
@@ -174,9 +169,7 @@ export function EditProductMediaSection({
 									<Upload
 										className={cn(
 											"h-12 w-12 transition-all duration-200",
-											isDragActive
-												? "text-primary scale-110"
-												: "text-primary/70"
+											isDragActive ? "text-primary scale-110" : "text-primary/70",
 										)}
 									/>
 								);
@@ -187,31 +180,24 @@ export function EditProductMediaSection({
 								if (isDragActive) {
 									return (
 										<div className="text-center">
-											<p className="text-sm font-medium text-primary">
-												Relâchez pour ajouter
-											</p>
+											<p className="text-primary text-sm font-medium">Relâchez pour ajouter</p>
 										</div>
 									);
 								}
 
 								const remaining = maxCount - media.length;
 								return (
-									<div className="text-center space-y-1">
-										<p className="text-sm font-medium">
-											Glissez vos médias ici
-										</p>
-										<p className="text-xs text-muted-foreground">
-											{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 16MB (image) / 512MB (vidéo)
+									<div className="space-y-1 text-center">
+										<p className="text-sm font-medium">Glissez vos médias ici</p>
+										<p className="text-muted-foreground text-xs">
+											{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 16MB
+											(image) / 512MB (vidéo)
 										</p>
 									</div>
 								);
 							},
 							allowedContent: () => null,
-							button: () => (
-								<span className="sr-only">
-									Sélectionner des médias
-								</span>
-							),
+							button: () => <span className="sr-only">Sélectionner des médias</span>,
 						}}
 						config={{
 							mode: "auto",
@@ -220,17 +206,15 @@ export function EditProductMediaSection({
 				)}
 			/>
 			{field.state.meta.errors.length > 0 && (
-				<ul
-					className="text-sm text-destructive mt-2 list-none space-y-1"
-					role="alert"
-				>
+				<ul className="text-destructive mt-2 list-none space-y-1 text-sm" role="alert">
 					{(field.state.meta.errors as string[]).map((error, i) => (
 						<li key={i}>{error}</li>
 					))}
 				</ul>
 			)}
-			<p className="text-xs text-muted-foreground">
-				⚠️ La première position doit être une image (pas une vidéo) • Format carré recommandé • 1200x1200px min
+			<p className="text-muted-foreground text-xs">
+				⚠️ La première position doit être une image (pas une vidéo) • Format carré recommandé •
+				1200x1200px min
 			</p>
 		</div>
 	);

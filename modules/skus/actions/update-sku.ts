@@ -14,7 +14,7 @@ import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
 } from "../utils/parse-media-from-form";
-import { BusinessError, validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour mettre à jour une variante de produit (Product SKU)
@@ -22,7 +22,7 @@ import { BusinessError, validateInput, handleActionError, success, error } from 
  */
 export async function updateProductSku(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
@@ -91,8 +91,7 @@ export async function updateProductSku(
 		if (validatedData.primaryImage) {
 			// VALIDATION: Le media principal DOIT être une IMAGE (jamais une VIDEO)
 			const primaryMediaType =
-				validatedData.primaryImage.mediaType ||
-				detectMediaType(validatedData.primaryImage.url);
+				validatedData.primaryImage.mediaType || detectMediaType(validatedData.primaryImage.url);
 			if (primaryMediaType === "VIDEO") {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,
@@ -113,7 +112,7 @@ export async function updateProductSku(
 					...media,
 					isPrimary: false,
 					position: index + 1,
-				}))
+				})),
 			);
 		}
 
@@ -188,7 +187,7 @@ export async function updateProductSku(
 					.join(", ");
 
 				throw new BusinessError(
-					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe déjà pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`
+					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe déjà pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`,
 				);
 			}
 
@@ -266,11 +265,7 @@ export async function updateProductSku(
 		});
 
 		// 8. Build success message
-		const variantDetails = [
-			productSku.color?.name,
-			productSku.material?.name,
-			productSku.size,
-		]
+		const variantDetails = [productSku.color?.name, productSku.material?.name, productSku.size]
 			.filter(Boolean)
 			.join(" - ");
 
@@ -283,7 +278,7 @@ export async function updateProductSku(
 			productSku.sku,
 			productSku.productId,
 			productSku.product.slug,
-			productSku.id // Invalide aussi le cache stock temps réel
+			productSku.id, // Invalide aussi le cache stock temps réel
 		);
 		tags.forEach((tag) => updateTag(tag));
 

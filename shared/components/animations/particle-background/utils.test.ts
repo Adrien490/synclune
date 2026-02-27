@@ -413,7 +413,7 @@ describe("ANIMATION_PRESETS", () => {
 		const result = ANIMATION_PRESETS.rise(p);
 		expect(result.y).toEqual(["0%", "-25%", "-50%", "-25%", "0%"]);
 		expect(result.x).toEqual(["0%", "5%", "-3%", "-5%", "0%"]);
-		expect((result.opacity as number[])).toHaveLength(5);
+		expect(result.opacity as number[]).toHaveLength(5);
 	});
 
 	it("rise preset fades at mid-point and clamps peak opacity", () => {
@@ -451,13 +451,7 @@ describe("ANIMATION_PRESETS", () => {
 		const p = makeParticle({ opacity: 0.3 });
 		const result = ANIMATION_PRESETS.breathe(p);
 		expect(result.scale).toEqual([1, 1.3, 1, 0.85, 1]);
-		expect(result.opacity).toEqual([
-			0.3,
-			Math.min(0.3 * 1.3, 1),
-			0.3,
-			0.3 * 0.7,
-			0.3,
-		]);
+		expect(result.opacity).toEqual([0.3, Math.min(0.3 * 1.3, 1), 0.3, 0.3 * 0.7, 0.3]);
 		// No x/y movement
 		expect(result.x).toBeUndefined();
 		expect(result.y).toBeUndefined();
@@ -476,11 +470,12 @@ describe("ANIMATION_PRESETS", () => {
 
 	it("all presets return valid TargetAndTransition objects", () => {
 		const p = makeParticle();
-		for (const [name, preset] of Object.entries(ANIMATION_PRESETS)) {
+		for (const [_name, preset] of Object.entries(ANIMATION_PRESETS)) {
 			const result = preset(p);
 			expect(result).toBeDefined();
 			// Every preset should have at least opacity or scale
-			const hasAnimatableProperty = "opacity" in result || "scale" in result || "x" in result || "y" in result;
+			const hasAnimatableProperty =
+				"opacity" in result || "scale" in result || "x" in result || "y" in result;
 			expect(hasAnimatableProperty).toBe(true);
 		}
 	});

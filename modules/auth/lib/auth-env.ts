@@ -12,8 +12,8 @@
 export const AUTH_PASSWORD_CONFIG = {
 	/** Duree de validite du token de reinitialisation (en secondes) - 1 heure */
 	resetTokenExpiresIn: 3600,
-	/** Longueur minimale du mot de passe */
-	minLength: 8,
+	/** Longueur minimale du mot de passe (OWASP recommends 12+) */
+	minLength: 12,
 	/** Longueur maximale du mot de passe */
 	maxLength: 128,
 } as const;
@@ -71,14 +71,9 @@ export const AUTH_RATE_LIMIT_RULES = {
  * @logs Warning en dev/test si une variable critique est manquante
  */
 export function validateAuthEnvironment(): void {
-	const requiredEnvVars = [
-		"BETTER_AUTH_SECRET",
-		"BETTER_AUTH_URL",
-	];
+	const requiredEnvVars = ["BETTER_AUTH_SECRET", "BETTER_AUTH_URL"];
 
-	const missing = requiredEnvVars.filter(
-		(envVar) => !process.env[envVar]
-	);
+	const missing = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 	if (missing.length > 0) {
 		const message = `Variables d'environnement manquantes pour l'authentification: ${missing.join(", ")}`;

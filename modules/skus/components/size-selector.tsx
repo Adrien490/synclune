@@ -11,8 +11,8 @@ import type { Size } from "@/modules/skus/types/sku-selector.types";
 import dynamic from "next/dynamic";
 
 // Lazy loading - dialog charge uniquement a l'ouverture
-const SizeGuideDialog = dynamic(
-	() => import("./size-guide-dialog").then((mod) => mod.SizeGuideDialog)
+const SizeGuideDialog = dynamic(() =>
+	import("./size-guide-dialog").then((mod) => mod.SizeGuideDialog),
 );
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { Check } from "lucide-react";
@@ -106,7 +106,6 @@ export function SizeSelector({
 		<fieldset
 			data-pending={isPending ? "" : undefined}
 			className="group/size space-y-3"
-			role="radiogroup"
 			aria-label="Sélection de taille"
 		>
 			<div className="flex items-center justify-between">
@@ -119,7 +118,7 @@ export function SizeSelector({
 						<Button
 							variant="ghost"
 							size="sm"
-							className="text-xs/5 tracking-normal antialiased text-muted-foreground group-has-[[data-pending]]/size:opacity-70"
+							className="text-muted-foreground text-xs/5 tracking-normal antialiased group-has-[[data-pending]]/size:opacity-70"
 							onClick={() => updateSize(null)}
 							type="button"
 						>
@@ -128,7 +127,10 @@ export function SizeSelector({
 					)}
 				</div>
 			</div>
-			<div ref={containerRef} className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2.5 sm:gap-2">
+			<div
+				ref={containerRef}
+				className="xs:grid-cols-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-2"
+			>
 				{sizes.map((sizeOption, index) => {
 					const isSelected = sizeOption.size === optimisticSize;
 					const isAvailable = isSizeAvailable(sizeOption.size);
@@ -145,25 +147,29 @@ export function SizeSelector({
 							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
-								"relative p-3 sm:p-2.5 min-h-13 sm:min-h-11 flex items-center justify-center text-center rounded-xl sm:rounded-lg border-2 transition-all",
-								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
+								"relative flex min-h-13 items-center justify-center rounded-xl border-2 p-3 text-center transition-all sm:min-h-11 sm:rounded-lg sm:p-2.5",
+								"hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50"
+								!isAvailable && "opacity-70 saturate-50",
 							)}
 						>
-							<span className="text-sm/6 tracking-normal antialiased font-medium">
+							<span className="text-sm/6 font-medium tracking-normal antialiased">
 								{sizeOption.size}
 							</span>
 							{isSelected && (
 								<motion.div
 									initial={shouldReduceMotion ? {} : { scale: 0 }}
 									animate={{ scale: 1 }}
-									transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 15 }}
+									transition={
+										shouldReduceMotion
+											? { duration: 0 }
+											: { type: "spring", stiffness: 400, damping: 15 }
+									}
 									className="absolute top-1.5 right-1.5"
 								>
-									<Check className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+									<Check className="text-primary h-3.5 w-3.5" aria-hidden="true" />
 								</motion.div>
 							)}
 						</button>

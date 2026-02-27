@@ -58,7 +58,12 @@ export function MenuSheet({
 	useEdgeSwipe(openMenu, isOpen);
 
 	return (
-		<Sheet direction="left" open={isOpen} onOpenChange={(open) => (open ? openMenu() : closeMenu())} preventScrollRestoration>
+		<Sheet
+			direction="left"
+			open={isOpen}
+			onOpenChange={(open) => (open ? openMenu() : closeMenu())}
+			preventScrollRestoration
+		>
 			<SheetTrigger asChild>
 				<button
 					type="button"
@@ -71,12 +76,9 @@ export function MenuSheet({
 				</button>
 			</SheetTrigger>
 
-			<SheetContent
-				className="w-[min(88vw,340px)] sm:w-80 sm:max-w-md border-r bg-background/95 p-0! flex flex-col"
-			>
-
+			<SheetContent className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md">
 				{/* Header sr-only */}
-				<SheetHeader className="p-0! sr-only">
+				<SheetHeader className="sr-only p-0!">
 					<SheetTitle>Menu de navigation</SheetTitle>
 					<SheetDescription>
 						Menu de navigation de Synclune - Découvrez nos bijoux et collections
@@ -84,7 +86,7 @@ export function MenuSheet({
 				</SheetHeader>
 
 				{/* Scrollable content */}
-				<div className="flex-1 min-h-0">
+				<div className="min-h-0 flex-1">
 					<ScrollFade axis="vertical" className="h-full" hideScrollbar={false}>
 						<MenuSheetNav
 							navItems={navItems}
@@ -105,7 +107,9 @@ export function MenuSheet({
 /** Detect swipe-from-left-edge to open menu (mobile native UX pattern) */
 function useEdgeSwipe(onOpen: () => void, isOpen: boolean) {
 	const onOpenRef = useRef(onOpen);
-	onOpenRef.current = onOpen;
+	useEffect(() => {
+		onOpenRef.current = onOpen;
+	});
 
 	useEffect(() => {
 		// Skip on desktop (pointer: fine) and when menu is already open
@@ -181,40 +185,48 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 		>
 			{/* Top bar → top-left to bottom-right diagonal */}
 			<motion.line
-				x1="3" x2="17" y1="5" y2="5"
+				x1="3"
+				x2="17"
+				y1="5"
+				y2="5"
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
 				initial={{ x1: 3, x2: 17, y1: 5, y2: 5, opacity: 1 }}
-				animate={isOpen
-					? { x1: 4, x2: 16, y1: 4, y2: 16, opacity: 1 }
-					: { x1: 3, x2: 17, y1: 5, y2: 5, opacity: 1 }
+				animate={
+					isOpen
+						? { x1: 4, x2: 16, y1: 4, y2: 16, opacity: 1 }
+						: { x1: 3, x2: 17, y1: 5, y2: 5, opacity: 1 }
 				}
 				transition={transition}
 			/>
 			{/* Middle bar → fades out */}
 			<motion.line
-				x1="3" x2="17" y1="10" y2="10"
+				x1="3"
+				x2="17"
+				y1="10"
+				y2="10"
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
 				initial={{ opacity: 1 }}
-				animate={isOpen
-					? { opacity: 0 }
-					: { opacity: 1 }
-				}
+				animate={isOpen ? { opacity: 0 } : { opacity: 1 }}
 				transition={transition}
 			/>
 			{/* Bottom bar → bottom-left to top-right diagonal */}
 			<motion.line
-				x1="3" x2="17" y1="15" y2="15"
+				x1="3"
+				x2="17"
+				y1="15"
+				y2="15"
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
 				initial={{ x1: 3, x2: 17, y1: 15, y2: 15, opacity: 1 }}
-				animate={isOpen
-					? { x1: 4, x2: 16, y1: 16, y2: 4, opacity: 1 }
-					: { x1: 3, x2: 17, y1: 15, y2: 15, opacity: 1 }
+				animate={
+					isOpen
+						? { x1: 4, x2: 16, y1: 16, y2: 4, opacity: 1 }
+						: { x1: 3, x2: 17, y1: 15, y2: 15, opacity: 1 }
 				}
 				transition={transition}
 			/>

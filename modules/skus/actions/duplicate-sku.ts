@@ -6,7 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_DUPLICATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError } from "@/shared/lib/actions";
 import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -24,7 +24,7 @@ import { updateTag } from "next/cache";
  */
 export async function duplicateSku(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
@@ -78,13 +78,10 @@ export async function duplicateSku(
 		}
 
 		// 4. Générer un nouveau code SKU unique via le service
-		const skuResult = await generateUniqueTechnicalName(
-			original.sku,
-			async (sku) => {
-				const existing = await prisma.productSku.findUnique({ where: { sku } });
-				return existing !== null;
-			}
-		);
+		const skuResult = await generateUniqueTechnicalName(original.sku, async (sku) => {
+			const existing = await prisma.productSku.findUnique({ where: { sku } });
+			return existing !== null;
+		});
 
 		if (!skuResult.success) {
 			return {
@@ -127,7 +124,7 @@ export async function duplicateSku(
 			duplicate.sku,
 			original.productId,
 			original.product?.slug,
-			duplicate.id
+			duplicate.id,
 		);
 		tags.forEach((tag) => updateTag(tag));
 

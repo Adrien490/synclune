@@ -44,8 +44,10 @@ export function DiscountUsagesDialog() {
 
 	useEffect(() => {
 		if (isOpen && data) {
-			setIsLoading(true);
-			setError(null);
+			queueMicrotask(() => {
+				setIsLoading(true);
+				setError(null);
+			});
 
 			getDiscountUsages(data.discountId)
 				.then((result) => {
@@ -78,23 +80,23 @@ export function DiscountUsagesDialog() {
 				<div className="flex-1 overflow-auto">
 					{isLoading ? (
 						<div className="flex items-center justify-center py-12">
-							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+							<Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
 						</div>
 					) : error ? (
-						<div className="text-center py-12 text-destructive">{error}</div>
+						<div className="text-destructive py-12 text-center">{error}</div>
 					) : usages.length === 0 ? (
-						<div className="text-center py-12 text-muted-foreground">
-							<Receipt className="h-12 w-12 mx-auto mb-3 opacity-50" />
+						<div className="text-muted-foreground py-12 text-center">
+							<Receipt className="mx-auto mb-3 h-12 w-12 opacity-50" />
 							<p>Ce code n'a pas encore été utilisé</p>
 						</div>
 					) : (
 						<>
-							<div className="mb-4 p-3 rounded-lg bg-muted">
+							<div className="bg-muted mb-4 rounded-lg p-3">
 								<div className="flex justify-between text-sm">
 									<span>Nombre d'utilisations:</span>
 									<span className="font-semibold">{usages.length}</span>
 								</div>
-								<div className="flex justify-between text-sm mt-1">
+								<div className="mt-1 flex justify-between text-sm">
 									<span>Montant total des réductions:</span>
 									<span className="font-semibold text-green-600">
 										{(totalAmount / 100).toFixed(2)} €
@@ -114,7 +116,7 @@ export function DiscountUsagesDialog() {
 								<TableBody>
 									{usages.map((usage) => (
 										<TableRow key={usage.id}>
-											<TableCell className="text-sm text-muted-foreground">
+											<TableCell className="text-muted-foreground text-sm">
 												{format(new Date(usage.createdAt), "d MMM yyyy HH:mm", {
 													locale: fr,
 												})}
@@ -122,23 +124,17 @@ export function DiscountUsagesDialog() {
 											<TableCell>
 												{usage.user ? (
 													<div className="text-sm">
-														<div className="font-medium">
-															{usage.user.name || "Sans nom"}
-														</div>
-														<div className="text-muted-foreground text-xs">
-															{usage.user.email}
-														</div>
+														<div className="font-medium">{usage.user.name || "Sans nom"}</div>
+														<div className="text-muted-foreground text-xs">{usage.user.email}</div>
 													</div>
 												) : (
-													<span className="text-muted-foreground text-sm">
-														Invité
-													</span>
+													<span className="text-muted-foreground text-sm">Invité</span>
 												)}
 											</TableCell>
 											<TableCell>
 												<Link
 													href={`/admin/ventes/commandes/${usage.order.id}`}
-													className="flex items-center gap-1 text-sm text-primary hover:underline"
+													className="text-primary flex items-center gap-1 text-sm hover:underline"
 												>
 													{usage.order.orderNumber}
 													<ExternalLink className="h-3 w-3" />
@@ -155,7 +151,7 @@ export function DiscountUsagesDialog() {
 					)}
 				</div>
 
-				<div className="flex justify-end pt-4 border-t">
+				<div className="flex justify-end border-t pt-4">
 					<Button variant="outline" onClick={close}>
 						Fermer
 					</Button>

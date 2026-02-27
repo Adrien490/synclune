@@ -1,4 +1,8 @@
-import { sendPasswordChangedEmail, sendPasswordResetEmail, sendVerificationEmail } from "@/modules/emails/services/auth-emails";
+import {
+	sendPasswordChangedEmail,
+	sendPasswordResetEmail,
+	sendVerificationEmail,
+} from "@/modules/emails/services/auth-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ActionStatus } from "@/shared/types/server-action";
 import { stripe } from "@better-auth/stripe";
@@ -63,7 +67,7 @@ export const auth = betterAuth({
 					url,
 				});
 			} catch (error) {
-				console.error("[AUTH] Failed to send password reset email:", error)
+				console.error("[AUTH] Failed to send password reset email:", error);
 			}
 		},
 		onPasswordReset: async ({ user }) => {
@@ -100,7 +104,7 @@ export const auth = betterAuth({
 					url: verificationUrl,
 				});
 			} catch (error) {
-				console.error("[AUTH] Failed to send verification email:", error)
+				console.error("[AUTH] Failed to send verification email:", error);
 			}
 		},
 		sendOnSignUp: true, // Envoi automatique à l'inscription
@@ -151,7 +155,7 @@ export const auth = betterAuth({
 			createCustomerOnSignUp: true,
 
 			// 🔴 CORRECTION : Hook appelé après création du Customer Stripe
-			onCustomerCreate: async ({ stripeCustomer, user }, request) => {
+			onCustomerCreate: async ({ stripeCustomer: _stripeCustomer, user }, _request) => {
 				// Create cart and wishlist automatically on signup
 				try {
 					await prisma.$transaction(async (tx) => {
@@ -168,7 +172,6 @@ export const auth = betterAuth({
 								userId: user.id,
 							},
 						});
-
 					});
 				} catch (error) {
 					// Don't block signup if cart/wishlist creation fails - they'll be created on first use (via upsert)
@@ -186,7 +189,7 @@ export const auth = betterAuth({
 			},
 
 			// 🔴 CORRECTION : Personnaliser les paramètres de création du Customer Stripe
-			getCustomerCreateParams: async (user, request) => {
+			getCustomerCreateParams: async (user, _request) => {
 				return {
 					// Ajouter le nom complet si disponible
 					name: user.name || user.email,
@@ -206,8 +209,7 @@ export const auth = betterAuth({
 			},
 
 			// 🔴 CORRECTION : Handler global pour tous les événements Stripe (monitoring)
-			onEvent: async (event) => {
-
+			onEvent: async (_event) => {
 				// TODO: Optionnel - Envoyer à un système de monitoring
 				// if (process.env.NODE_ENV === "production") {
 				//   await monitoring.logEvent('stripe_webhook_received', {
@@ -216,7 +218,6 @@ export const auth = betterAuth({
 				//     created: event.created
 				//   });
 				// }
-
 				// Les événements de paiement sont gérés par /api/webhooks/stripe
 				// Ce hook est principalement pour le monitoring et les événements customer
 			},
@@ -234,6 +235,27 @@ export const auth = betterAuth({
 		cookieCache: AUTH_SESSION_CONFIG.cookieCache,
 	},
 	hooks: {
+		before: createAuthMiddleware(async (ctx) => {
+			// Security audit logging for auth-sensitive endpoints
+			const path = ctx.path;
+			const isAuthAttempt =
+				path === "/sign-in/email" ||
+				path === "/sign-up/email" ||
+				path === "/reset-password" ||
+				path === "/forget-password";
+
+			if (isAuthAttempt) {
+				const ip =
+					ctx.headers?.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+					ctx.headers?.get("x-real-ip") ??
+					"unknown";
+				console.warn("[SECURITY] Auth attempt", {
+					path,
+					ip,
+					timestamp: new Date().toISOString(),
+				});
+			}
+		}),
 		after: createAuthMiddleware(async (ctx) => {
 			const newSession = ctx.context.newSession;
 
@@ -249,10 +271,7 @@ export const auth = betterAuth({
 			if (cartSessionId) {
 				try {
 					const { mergeCarts } = await import("@/modules/cart/actions/merge-carts");
-					const cartResult = await mergeCarts(
-						newSession.user.id,
-						cartSessionId
-					);
+					const cartResult = await mergeCarts(newSession.user.id, cartSessionId);
 
 					if (cartResult.status === ActionStatus.SUCCESS) {
 						// ✅ Merge réussi : supprimer le cookie
@@ -261,21 +280,19 @@ export const auth = betterAuth({
 							path: "/",
 						});
 					}
-				} catch (error) {
+				} catch (_error) {
 					// Ignore - Cookie preserved for retry
 				}
 			}
 
 			// ❤️ MERGE DE LA WISHLIST (import dynamique pour éviter le cycle de dépendances)
 			const wishlistSessionId = ctx.getCookie("wishlist_session");
-			const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+			const UUID_V4_REGEX =
+				/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 			if (wishlistSessionId && UUID_V4_REGEX.test(wishlistSessionId)) {
 				try {
 					const { mergeWishlists } = await import("@/modules/wishlist/actions/merge-wishlists");
-					const wishlistResult = await mergeWishlists(
-						newSession.user.id,
-						wishlistSessionId
-					);
+					const wishlistResult = await mergeWishlists(newSession.user.id, wishlistSessionId);
 
 					if (wishlistResult.status === ActionStatus.SUCCESS) {
 						// ✅ Merge réussi : supprimer le cookie
@@ -286,7 +303,7 @@ export const auth = betterAuth({
 					}
 				} catch (error) {
 					// Log l'erreur pour debugging mais continue (cookie preserved for retry)
-					console.error('[AUTH] Wishlist merge failed:', error);
+					console.error("[AUTH] Wishlist merge failed:", error);
 				}
 			}
 
@@ -314,7 +331,7 @@ export const auth = betterAuth({
 						updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(newSession.user.id));
 					}
 				} catch (error) {
-					console.error('[AUTH] Guest order linking failed:', error);
+					console.error("[AUTH] Guest order linking failed:", error);
 				}
 			}
 		}),

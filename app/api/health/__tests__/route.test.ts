@@ -4,13 +4,40 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockQueryRawUnsafe } = vi.hoisted(() => ({
-	mockQueryRawUnsafe: vi.fn(),
+const { mockQueryRaw, mockStripeBalance } = vi.hoisted(() => ({
+	mockQueryRaw: vi.fn(),
+	mockStripeBalance: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
-		$queryRawUnsafe: mockQueryRawUnsafe,
+		$queryRaw: mockQueryRaw,
+	},
+}));
+
+vi.mock("@/shared/lib/circuit-breaker", () => ({
+	stripeCircuitBreaker: {
+		get isAvailable() {
+			return true;
+		},
+		get state() {
+			return "CLOSED";
+		},
+	},
+	resendCircuitBreaker: {
+		get isAvailable() {
+			return true;
+		},
+		get state() {
+			return "CLOSED";
+		},
+	},
+}));
+
+vi.mock("stripe", () => ({
+	default: class MockStripe {
+		balance = { retrieve: mockStripeBalance };
+		constructor() {}
 	},
 }));
 
@@ -23,73 +50,64 @@ import { GET } from "../route";
 describe("GET /api/health", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_123");
+		vi.stubEnv("RESEND_API_KEY", "re_test_123");
 	});
 
-	describe("healthy database", () => {
-		it("returns 200 with status ok when database is reachable", async () => {
-			mockQueryRawUnsafe.mockResolvedValue([{ "?column?": 1 }]);
+	describe("all services healthy", () => {
+		it("returns 200 with status ok when all services are reachable", async () => {
+			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
+			mockStripeBalance.mockResolvedValue({ available: [] });
 
 			const response = await GET();
 
 			expect(response.status).toBe(200);
 			const body = await response.json();
-			expect(body).toEqual({ status: "ok" });
+			expect(body.status).toBe("ok");
+			expect(body.services.database.status).toBe("ok");
+			expect(body.services.stripe.status).toBe("ok");
+			expect(body.services.resend.status).toBe("ok");
+			expect(body.timestamp).toBeDefined();
 		});
 
-		it("executes SELECT 1 to verify connectivity", async () => {
-			mockQueryRawUnsafe.mockResolvedValue([{ "?column?": 1 }]);
+		it("includes latency measurements for database and stripe", async () => {
+			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
+			mockStripeBalance.mockResolvedValue({ available: [] });
 
-			await GET();
+			const response = await GET();
+			const body = await response.json();
 
-			expect(mockQueryRawUnsafe).toHaveBeenCalledWith("SELECT 1");
-		});
-
-		it("calls the database exactly once", async () => {
-			mockQueryRawUnsafe.mockResolvedValue([{ "?column?": 1 }]);
-
-			await GET();
-
-			expect(mockQueryRawUnsafe).toHaveBeenCalledOnce();
+			expect(typeof body.services.database.latencyMs).toBe("number");
+			expect(typeof body.services.stripe.latencyMs).toBe("number");
 		});
 	});
 
-	describe("unreachable database", () => {
-		it("returns 503 when database throws", async () => {
-			mockQueryRawUnsafe.mockRejectedValue(new Error("Connection refused"));
-
-			const response = await GET();
-
-			expect(response.status).toBe(503);
-		});
-
-		it("returns error status and message when database is down", async () => {
-			mockQueryRawUnsafe.mockRejectedValue(new Error("Connection refused"));
-
-			const response = await GET();
-
-			const body = await response.json();
-			expect(body).toEqual({
-				status: "error",
-				message: "Database unreachable",
-			});
-		});
-
-		it("handles non-Error exceptions", async () => {
-			mockQueryRawUnsafe.mockRejectedValue("unexpected failure");
+	describe("database down", () => {
+		it("returns 503 when database is unreachable", async () => {
+			mockQueryRaw.mockRejectedValue(new Error("Connection refused"));
+			mockStripeBalance.mockResolvedValue({ available: [] });
 
 			const response = await GET();
 
 			expect(response.status).toBe(503);
 			const body = await response.json();
 			expect(body.status).toBe("error");
+			expect(body.services.database.status).toBe("error");
+			expect(body.services.database.message).toContain("Connection refused");
 		});
+	});
 
-		it("handles timeout errors", async () => {
-			mockQueryRawUnsafe.mockRejectedValue(new Error("Query timed out"));
+	describe("stripe down", () => {
+		it("returns 503 when Stripe is unreachable", async () => {
+			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
+			mockStripeBalance.mockRejectedValue(new Error("Stripe timeout"));
 
 			const response = await GET();
 
 			expect(response.status).toBe(503);
+			const body = await response.json();
+			expect(body.status).toBe("error");
+			expect(body.services.stripe.status).toBe("error");
 		});
 	});
 });

@@ -2,7 +2,6 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { Button, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES, REFUND_REASON_LABELS } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
-import { FlexRow } from "./_components/flex-row";
 
 interface RefundRejectedEmailProps {
 	orderNumber: string;
@@ -19,9 +18,7 @@ export const RefundRejectedEmail = ({
 	reason,
 	orderDetailsUrl,
 }: RefundRejectedEmailProps) => {
-	const reasonLabel = reason
-		? REFUND_REASON_LABELS[reason] || reason
-		: null;
+	const reasonLabel = reason ? REFUND_REASON_LABELS[reason] || reason : null;
 
 	return (
 		<EmailLayout preview={`Demande de remboursement de ${formatEuro(refundAmount)} refusée`}>
@@ -29,10 +26,9 @@ export const RefundRejectedEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Demande de remboursement refusée</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, nous avons examiné votre demande de
-					remboursement de {formatEuro(refundAmount)} pour la commande{" "}
-					<strong>{orderNumber}</strong> et celle-ci n'a malheureusement
-					pas pu être acceptée.
+					Bonjour {customerName}, nous avons examiné votre demande de remboursement de{" "}
+					{formatEuro(refundAmount)} pour la commande <strong>{orderNumber}</strong> et celle-ci n'a
+					malheureusement pas pu être acceptée.
 				</Text>
 			</Section>
 
@@ -40,9 +36,7 @@ export const RefundRejectedEmail = ({
 			{reasonLabel && (
 				<Section style={{ marginBottom: "24px" }}>
 					<Section style={EMAIL_STYLES.section.card}>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>
-							Motif
-						</Text>
+						<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>Motif</Text>
 						<Text
 							style={{
 								margin: 0,
@@ -59,9 +53,8 @@ export const RefundRejectedEmail = ({
 			{/* Info contact */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.text.body}>
-					Si vous avez des questions ou souhaitez contester cette décision,
-					n'hésitez pas à nous contacter. Notre équipe est à votre disposition
-					pour vous accompagner.
+					Si vous avez des questions ou souhaitez contester cette décision, n'hésitez pas à nous
+					contacter. Notre équipe est à votre disposition pour vous accompagner.
 				</Text>
 			</Section>
 

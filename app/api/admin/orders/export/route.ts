@@ -1,4 +1,4 @@
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { exportInvoicesSchema } from "@/modules/orders/schemas/order.schemas";
 import {
@@ -7,10 +7,8 @@ import {
 } from "@/modules/orders/services/export-orders-csv.service";
 
 export async function GET(request: Request) {
-	const session = await getSession();
-	if (session?.user?.role !== "ADMIN" || !session?.user?.id) {
-		return new Response("Accès non autorisé", { status: 403 });
-	}
+	const admin = await requireAdminApiRoute();
+	if ("response" in admin) return admin.response;
 
 	const { searchParams } = new URL(request.url);
 	const input = {
@@ -25,10 +23,10 @@ export async function GET(request: Request) {
 
 	const result = exportInvoicesSchema.safeParse(input);
 	if (!result.success) {
-		return new Response(
-			JSON.stringify({ error: result.error.issues[0]?.message }),
-			{ status: 400, headers: { "Content-Type": "application/json" } }
-		);
+		return new Response(JSON.stringify({ error: result.error.issues[0]?.message }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		});
 	}
 
 	const where = buildExportWhereClause(result.data);
@@ -68,9 +66,9 @@ export async function GET(request: Request) {
 		});
 	} catch (error) {
 		console.error("[EXPORT] Failed to export orders:", error);
-		return new Response(
-			JSON.stringify({ error: "Erreur lors de l'export" }),
-			{ status: 500, headers: { "Content-Type": "application/json" } }
-		);
+		return new Response(JSON.stringify({ error: "Erreur lors de l'export" }), {
+			status: 500,
+			headers: { "Content-Type": "application/json" },
+		});
 	}
 }

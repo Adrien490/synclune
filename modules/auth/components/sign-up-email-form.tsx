@@ -13,7 +13,7 @@ import { useEffect, useRef } from "react";
 
 export function SignUpEmailForm() {
 	const { state, action, isPending } = useSignUpEmail({
-		onSuccess: (message: string) => {
+		onSuccess: (_message: string) => {
 			form.reset();
 		},
 	});
@@ -42,11 +42,7 @@ export function SignUpEmailForm() {
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
 			<RequiredFieldsNote />
 
 			{state?.message && state.status !== ActionStatus.VALIDATION_ERROR && (
@@ -97,7 +93,7 @@ export function SignUpEmailForm() {
 								required
 								aria-describedby="name-hint"
 							/>
-							<p id="name-hint" className="text-xs text-muted-foreground">
+							<p id="name-hint" className="text-muted-foreground text-xs">
 								Sera utilisé pour personnaliser vos communications
 							</p>
 						</div>
@@ -128,7 +124,7 @@ export function SignUpEmailForm() {
 								required
 								aria-describedby="email-hint"
 							/>
-							<p id="email-hint" className="text-xs text-muted-foreground">
+							<p id="email-hint" className="text-muted-foreground text-xs">
 								Utilisé uniquement pour la confirmation de compte et les notifications de commande
 							</p>
 						</div>
@@ -194,7 +190,6 @@ export function SignUpEmailForm() {
 						</div>
 					)}
 				</form.AppField>
-
 			</div>
 
 			{/* Checkbox consentement RGPD */}
@@ -242,11 +237,7 @@ export function SignUpEmailForm() {
 
 			<form.Subscribe selector={(state) => [state.canSubmit]}>
 				{([canSubmit]) => (
-					<Button
-						disabled={!canSubmit || isPending}
-						className="w-full"
-						type="submit"
-					>
+					<Button disabled={!canSubmit || isPending} className="w-full" type="submit">
 						{isPending ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />

@@ -8,11 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Calendar } from "@/shared/components/ui/calendar";
 import { Field, FieldError } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/shared/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
 import { FieldLabel } from "./field-label";
@@ -139,8 +135,7 @@ export function DateTimeField({
 							className={cn(
 								"min-h-11 w-full justify-start text-left font-normal",
 								!selectedDate && "text-muted-foreground",
-								field.state.meta.errors.length > 0 &&
-									"border-destructive ring-destructive/20"
+								field.state.meta.errors.length > 0 && "border-destructive ring-destructive/20",
 							)}
 						>
 							<CalendarIcon className="mr-2 size-4" />
@@ -156,8 +151,11 @@ export function DateTimeField({
 						/>
 						{!dateOnly && selectedDate && (
 							<div className="border-t p-3">
-								<label className="text-sm font-medium">Heure</label>
+								<label htmlFor={`${field.name}-time`} className="text-sm font-medium">
+									Heure
+								</label>
 								<Input
+									id={`${field.name}-time`}
 									type="time"
 									value={currentTime}
 									onChange={handleTimeChange}

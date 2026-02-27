@@ -15,9 +15,9 @@ export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 	// >4 images = fraction counter (ultra compact)
 	if (total > 4) {
 		return (
-			<div className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+			<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 sm:hidden">
 				<div
-					className="bg-black/50 backdrop-blur-sm rounded-full px-2.5 py-1 text-xs font-medium text-white tabular-nums"
+					className="rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white tabular-nums backdrop-blur-sm"
 					role="status"
 					aria-live="polite"
 					aria-label={`Image ${current + 1} sur ${total}`}
@@ -30,9 +30,9 @@ export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 
 	// ≤4 images = dots compacts avec touch targets WCAG (44px minimum)
 	return (
-		<div className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20">
+		<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 sm:hidden">
 			<div
-				className="flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-1 py-0.5"
+				className="flex items-center gap-1 rounded-full bg-black/50 px-1 py-0.5 backdrop-blur-sm"
 				role="tablist"
 				aria-label="Navigation galerie"
 			>
@@ -41,18 +41,17 @@ export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 						key={i}
 						type="button"
 						role="tab"
+						aria-controls={`gallery-panel-${i}`}
 						onClick={() => onSelect(i)}
 						aria-label={`Image ${i + 1} sur ${total}`}
 						aria-selected={i === current}
-						className="min-h-11 min-w-11 flex items-center justify-center touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 rounded-full"
+						className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 focus-visible:outline-none"
 					>
 						<span
 							className={cn(
 								"rounded-full",
 								!prefersReduced && "transition-all duration-200",
-								i === current
-									? "bg-white w-2.5 h-2.5"
-									: "bg-white/80 w-2 h-2"
+								i === current ? "h-2.5 w-2.5 bg-white" : "h-2 w-2 bg-white/80",
 							)}
 						/>
 					</button>

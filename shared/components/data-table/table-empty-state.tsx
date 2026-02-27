@@ -1,7 +1,6 @@
 import {
 	Empty,
 	EmptyActions,
-	EmptyContent,
 	EmptyDescription,
 	EmptyHeader,
 	EmptyMedia,

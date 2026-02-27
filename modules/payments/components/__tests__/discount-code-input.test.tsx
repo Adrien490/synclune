@@ -1,33 +1,33 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Hoisted mocks ──────────────────────────────────────────────────────────
 
 const { mockValidateDiscountCode, mockFormatEuro } = vi.hoisted(() => ({
 	mockValidateDiscountCode: vi.fn(),
 	mockFormatEuro: vi.fn((n: number) => `${(n / 100).toFixed(2)} €`),
-}))
+}));
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
 vi.mock("@/modules/discounts/actions/validate-discount-code", () => ({
 	validateDiscountCode: mockValidateDiscountCode,
-}))
+}));
 
 vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: mockFormatEuro,
-}))
+}));
 
 vi.mock("@/shared/components/ui/collapsible", () => ({
 	Collapsible: ({
 		children,
 		open,
-		onOpenChange,
+		onOpenChange: _onOpenChange,
 	}: {
-		children: React.ReactNode
-		open?: boolean
-		onOpenChange?: (open: boolean) => void
+		children: React.ReactNode;
+		open?: boolean;
+		onOpenChange?: (open: boolean) => void;
 	}) => (
 		<div data-testid="collapsible" data-open={open}>
 			{children}
@@ -41,19 +41,15 @@ vi.mock("@/shared/components/ui/collapsible", () => ({
 		className,
 		onClick,
 	}: {
-		children: React.ReactNode
-		className?: string
-		onClick?: () => void
+		children: React.ReactNode;
+		className?: string;
+		onClick?: () => void;
 	}) => (
-		<button
-			data-testid="collapsible-trigger"
-			className={className}
-			onClick={onClick}
-		>
+		<button data-testid="collapsible-trigger" className={className} onClick={onClick}>
 			{children}
 		</button>
 	),
-}))
+}));
 
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
@@ -63,22 +59,17 @@ vi.mock("@/shared/components/ui/button", () => ({
 		onClick,
 		variant,
 	}: {
-		children: React.ReactNode
-		disabled?: boolean
-		type?: "button" | "submit" | "reset"
-		onClick?: () => void
-		variant?: string
+		children: React.ReactNode;
+		disabled?: boolean;
+		type?: "button" | "submit" | "reset";
+		onClick?: () => void;
+		variant?: string;
 	}) => (
-		<button
-			type={type ?? "button"}
-			disabled={disabled}
-			data-variant={variant}
-			onClick={onClick}
-		>
+		<button type={type ?? "button"} disabled={disabled} data-variant={variant} onClick={onClick}>
 			{children}
 		</button>
 	),
-}))
+}));
 
 vi.mock("@/shared/components/ui/input", () => ({
 	Input: ({
@@ -92,15 +83,15 @@ vi.mock("@/shared/components/ui/input", () => ({
 		disabled,
 		onKeyDown,
 	}: {
-		value: string
-		onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-		placeholder?: string
-		className?: string
-		"aria-label"?: string
-		"aria-invalid"?: boolean
-		"aria-describedby"?: string
-		disabled?: boolean
-		onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
+		value: string;
+		onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+		placeholder?: string;
+		className?: string;
+		"aria-label"?: string;
+		"aria-invalid"?: boolean;
+		"aria-describedby"?: string;
+		disabled?: boolean;
+		onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 	}) => (
 		<input
 			value={value}
@@ -114,7 +105,7 @@ vi.mock("@/shared/components/ui/input", () => ({
 			onKeyDown={onKeyDown}
 		/>
 	),
-}))
+}));
 
 vi.mock("lucide-react", () => ({
 	ChevronRight: ({ className }: { className?: string }) => (
@@ -125,18 +116,18 @@ vi.mock("lucide-react", () => ({
 	),
 	Tag: () => <svg data-testid="tag-icon" />,
 	X: () => <svg data-testid="x-icon" />,
-}))
+}));
 
 // ─── Import under test ───────────────────────────────────────────────────────
 
-import { DiscountCodeInput } from "../discount-code-input"
-import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types"
+import { DiscountCodeInput } from "../discount-code-input";
+import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 
-afterEach(cleanup)
+afterEach(cleanup);
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
-type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>
+type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
 
 function createDiscount(overrides: Partial<AppliedDiscount> = {}): AppliedDiscount {
 	return {
@@ -146,7 +137,7 @@ function createDiscount(overrides: Partial<AppliedDiscount> = {}): AppliedDiscou
 		value: 10,
 		discountAmount: 500,
 		...overrides,
-	}
+	};
 }
 
 function renderComponent(props: Partial<React.ComponentProps<typeof DiscountCodeInput>> = {}) {
@@ -154,8 +145,8 @@ function renderComponent(props: Partial<React.ComponentProps<typeof DiscountCode
 		subtotal: 5000,
 		appliedDiscount: null as AppliedDiscount | null,
 		onDiscountApplied: vi.fn(),
-	}
-	return render(<DiscountCodeInput {...defaults} {...props} />)
+	};
+	return render(<DiscountCodeInput {...defaults} {...props} />);
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -163,302 +154,302 @@ function renderComponent(props: Partial<React.ComponentProps<typeof DiscountCode
 describe("DiscountCodeInput", () => {
 	describe("no discount applied state", () => {
 		it("shows the collapsible trigger with promo code text", () => {
-			renderComponent()
+			renderComponent();
 
-			expect(screen.getByTestId("collapsible-trigger")).toBeInTheDocument()
-			expect(screen.getByText("J'ai un code promo")).toBeInTheDocument()
-		})
+			expect(screen.getByTestId("collapsible-trigger")).toBeInTheDocument();
+			expect(screen.getByText("J'ai un code promo")).toBeInTheDocument();
+		});
 
 		it("does not show the applied discount badge when no discount", () => {
-			renderComponent()
+			renderComponent();
 
-			expect(screen.queryByRole("button", { name: "Supprimer le code promo" })).toBeNull()
-		})
+			expect(screen.queryByRole("button", { name: "Supprimer le code promo" })).toBeNull();
+		});
 
 		it("renders the collapsible input area", () => {
-			renderComponent()
+			renderComponent();
 
-			expect(screen.getByTestId("collapsible-content")).toBeInTheDocument()
-		})
+			expect(screen.getByTestId("collapsible-content")).toBeInTheDocument();
+		});
 
 		it("renders the code input field", () => {
-			renderComponent()
+			renderComponent();
 
-			expect(screen.getByRole("textbox", { name: "Code promo" })).toBeInTheDocument()
-		})
+			expect(screen.getByRole("textbox", { name: "Code promo" })).toBeInTheDocument();
+		});
 
 		it("renders the apply button", () => {
-			renderComponent()
+			renderComponent();
 
-			expect(screen.getByRole("button", { name: "Appliquer" })).toBeInTheDocument()
-		})
+			expect(screen.getByRole("button", { name: "Appliquer" })).toBeInTheDocument();
+		});
 
 		it("starts with collapsed state (isOpen false) when no discount", () => {
-			renderComponent()
+			renderComponent();
 
-			const collapsible = screen.getByTestId("collapsible")
-			expect(collapsible.getAttribute("data-open")).toBe("false")
-		})
-	})
+			const collapsible = screen.getByTestId("collapsible");
+			expect(collapsible.getAttribute("data-open")).toBe("false");
+		});
+	});
 
 	describe("applied discount state", () => {
 		it("shows the applied discount badge when discount is provided", () => {
-			const discount = createDiscount({ code: "SAVE10" })
-			renderComponent({ appliedDiscount: discount })
+			const discount = createDiscount({ code: "SAVE10" });
+			renderComponent({ appliedDiscount: discount });
 
-			expect(screen.getByText("SAVE10")).toBeInTheDocument()
-		})
+			expect(screen.getByText("SAVE10")).toBeInTheDocument();
+		});
 
 		it("shows the formatted discount amount", () => {
-			mockFormatEuro.mockImplementation((n: number) => `${(n / 100).toFixed(2)} €`)
-			const discount = createDiscount({ discountAmount: 500 })
-			renderComponent({ appliedDiscount: discount })
+			mockFormatEuro.mockImplementation((n: number) => `${(n / 100).toFixed(2)} €`);
+			const discount = createDiscount({ discountAmount: 500 });
+			renderComponent({ appliedDiscount: discount });
 
-			expect(screen.getByText("-5.00 €")).toBeInTheDocument()
-		})
+			expect(screen.getByText("-5.00 €")).toBeInTheDocument();
+		});
 
 		it("shows the remove (X) button when discount is applied", () => {
-			const discount = createDiscount()
-			renderComponent({ appliedDiscount: discount })
+			const discount = createDiscount();
+			renderComponent({ appliedDiscount: discount });
 
-			expect(screen.getByRole("button", { name: "Supprimer le code promo" })).toBeInTheDocument()
-		})
+			expect(screen.getByRole("button", { name: "Supprimer le code promo" })).toBeInTheDocument();
+		});
 
 		it("does not render the collapsible input area when discount is applied", () => {
-			const discount = createDiscount()
-			renderComponent({ appliedDiscount: discount })
+			const discount = createDiscount();
+			renderComponent({ appliedDiscount: discount });
 
-			expect(screen.queryByTestId("collapsible-trigger")).toBeNull()
-			expect(screen.queryByTestId("collapsible-content")).toBeNull()
-		})
+			expect(screen.queryByTestId("collapsible-trigger")).toBeNull();
+			expect(screen.queryByTestId("collapsible-content")).toBeNull();
+		});
 
 		it("starts open when discount is already applied (isOpen initialized to true)", () => {
 			// When appliedDiscount is set, the component renders the badge view directly,
 			// so the collapsible is not rendered. The isOpen state initialises to !!appliedDiscount.
 			// We verify this by checking the badge view is shown instead of the collapsible.
-			const discount = createDiscount()
-			renderComponent({ appliedDiscount: discount })
+			const discount = createDiscount();
+			renderComponent({ appliedDiscount: discount });
 
-			expect(screen.getByText(discount.code)).toBeInTheDocument()
-			expect(screen.queryByTestId("collapsible")).toBeNull()
-		})
-	})
+			expect(screen.getByText(discount.code)).toBeInTheDocument();
+			expect(screen.queryByTestId("collapsible")).toBeNull();
+		});
+	});
 
 	describe("remove discount", () => {
 		it("calls onDiscountApplied(null) when the remove button is clicked", async () => {
-			const user = userEvent.setup()
-			const onDiscountApplied = vi.fn()
-			const discount = createDiscount()
+			const user = userEvent.setup();
+			const onDiscountApplied = vi.fn();
+			const discount = createDiscount();
 
-			renderComponent({ appliedDiscount: discount, onDiscountApplied })
+			renderComponent({ appliedDiscount: discount, onDiscountApplied });
 
-			await user.click(screen.getByRole("button", { name: "Supprimer le code promo" }))
+			await user.click(screen.getByRole("button", { name: "Supprimer le code promo" }));
 
-			expect(onDiscountApplied).toHaveBeenCalledWith(null)
-		})
+			expect(onDiscountApplied).toHaveBeenCalledWith(null);
+		});
 
 		it("calls onDiscountApplied exactly once on remove click", async () => {
-			const user = userEvent.setup()
-			const onDiscountApplied = vi.fn()
-			const discount = createDiscount()
+			const user = userEvent.setup();
+			const onDiscountApplied = vi.fn();
+			const discount = createDiscount();
 
-			renderComponent({ appliedDiscount: discount, onDiscountApplied })
+			renderComponent({ appliedDiscount: discount, onDiscountApplied });
 
-			await user.click(screen.getByRole("button", { name: "Supprimer le code promo" }))
+			await user.click(screen.getByRole("button", { name: "Supprimer le code promo" }));
 
-			expect(onDiscountApplied).toHaveBeenCalledOnce()
-		})
-	})
+			expect(onDiscountApplied).toHaveBeenCalledOnce();
+		});
+	});
 
 	describe("input auto-uppercase", () => {
 		it("auto-uppercases typed text", async () => {
-			const user = userEvent.setup()
-			renderComponent()
+			const user = userEvent.setup();
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" }) as HTMLInputElement
+			const input = screen.getByRole("textbox", { name: "Code promo" }) as HTMLInputElement;
 
-			await user.type(input, "save10")
+			await user.type(input, "save10");
 
-			expect(input.value).toBe("SAVE10")
-		})
+			expect(input.value).toBe("SAVE10");
+		});
 
 		it("uppercases mixed-case input", async () => {
-			const user = userEvent.setup()
-			renderComponent()
+			const user = userEvent.setup();
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" }) as HTMLInputElement
+			const input = screen.getByRole("textbox", { name: "Code promo" }) as HTMLInputElement;
 
-			await user.type(input, "SuMmEr")
+			await user.type(input, "SuMmEr");
 
-			expect(input.value).toBe("SUMMER")
-		})
-	})
+			expect(input.value).toBe("SUMMER");
+		});
+	});
 
 	describe("apply discount code", () => {
 		beforeEach(() => {
-			mockValidateDiscountCode.mockClear()
-		})
+			mockValidateDiscountCode.mockClear();
+		});
 
 		it("calls validateDiscountCode with uppercased code and subtotal on apply click", async () => {
-			const user = userEvent.setup()
-			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" })
-			renderComponent({ subtotal: 5000 })
+			const user = userEvent.setup();
+			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" });
+			renderComponent({ subtotal: 5000 });
 
-			const input = screen.getByRole("textbox", { name: "Code promo" })
-			await user.type(input, "save10")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			const input = screen.getByRole("textbox", { name: "Code promo" });
+			await user.type(input, "save10");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
 			await waitFor(() => {
-				expect(mockValidateDiscountCode).toHaveBeenCalledWith("SAVE10", 5000)
-			})
-		})
+				expect(mockValidateDiscountCode).toHaveBeenCalledWith("SAVE10", 5000);
+			});
+		});
 
 		it("calls onDiscountApplied with discount data on success", async () => {
-			const user = userEvent.setup()
-			const discount = createDiscount({ code: "SAVE10" })
-			const onDiscountApplied = vi.fn()
-			mockValidateDiscountCode.mockResolvedValue({ valid: true, discount })
-			renderComponent({ subtotal: 5000, onDiscountApplied })
+			const user = userEvent.setup();
+			const discount = createDiscount({ code: "SAVE10" });
+			const onDiscountApplied = vi.fn();
+			mockValidateDiscountCode.mockResolvedValue({ valid: true, discount });
+			renderComponent({ subtotal: 5000, onDiscountApplied });
 
-			const input = screen.getByRole("textbox", { name: "Code promo" })
-			await user.type(input, "save10")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			const input = screen.getByRole("textbox", { name: "Code promo" });
+			await user.type(input, "save10");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
 			await waitFor(() => {
-				expect(onDiscountApplied).toHaveBeenCalledWith(discount)
-			})
-		})
+				expect(onDiscountApplied).toHaveBeenCalledWith(discount);
+			});
+		});
 
 		it("shows error message when code is invalid", async () => {
-			const user = userEvent.setup()
-			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code expiré" })
-			renderComponent()
+			const user = userEvent.setup();
+			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code expiré" });
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" })
-			await user.type(input, "OLDCODE")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			const input = screen.getByRole("textbox", { name: "Code promo" });
+			await user.type(input, "OLDCODE");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
 			await waitFor(() => {
-				expect(screen.getByText("Code expiré")).toBeInTheDocument()
-			})
-		})
+				expect(screen.getByText("Code expiré")).toBeInTheDocument();
+			});
+		});
 
 		it("shows fallback error 'Code invalide' when error is undefined", async () => {
-			const user = userEvent.setup()
-			mockValidateDiscountCode.mockResolvedValue({ valid: false })
-			renderComponent()
+			const user = userEvent.setup();
+			mockValidateDiscountCode.mockResolvedValue({ valid: false });
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" })
-			await user.type(input, "BAD")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			const input = screen.getByRole("textbox", { name: "Code promo" });
+			await user.type(input, "BAD");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
 			await waitFor(() => {
-				expect(screen.getByText("Code invalide")).toBeInTheDocument()
-			})
-		})
+				expect(screen.getByText("Code invalide")).toBeInTheDocument();
+			});
+		});
 
 		it("shows error with role=alert", async () => {
-			const user = userEvent.setup()
-			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" })
-			renderComponent()
+			const user = userEvent.setup();
+			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" });
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" })
-			await user.type(input, "BAD")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			const input = screen.getByRole("textbox", { name: "Code promo" });
+			await user.type(input, "BAD");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
 			await waitFor(() => {
-				const alert = screen.getByRole("alert")
-				expect(alert.textContent).toContain("Code invalide")
-			})
-		})
+				const alert = screen.getByRole("alert");
+				expect(alert.textContent).toContain("Code invalide");
+			});
+		});
 
 		it("does not call validateDiscountCode when input is empty", async () => {
-			const user = userEvent.setup()
-			renderComponent()
+			const user = userEvent.setup();
+			renderComponent();
 
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
-			expect(mockValidateDiscountCode).not.toHaveBeenCalled()
-		})
+			expect(mockValidateDiscountCode).not.toHaveBeenCalled();
+		});
 
 		it("does not call validateDiscountCode when input is only whitespace", async () => {
-			const user = userEvent.setup()
-			renderComponent()
+			const user = userEvent.setup();
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" })
-			await user.type(input, "   ")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			const input = screen.getByRole("textbox", { name: "Code promo" });
+			await user.type(input, "   ");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
-			expect(mockValidateDiscountCode).not.toHaveBeenCalled()
-		})
+			expect(mockValidateDiscountCode).not.toHaveBeenCalled();
+		});
 
 		it("disables apply button when input is empty", () => {
-			renderComponent()
+			renderComponent();
 
-			const applyButton = screen.getByRole("button", { name: "Appliquer" }) as HTMLButtonElement
-			expect(applyButton.disabled).toBe(true)
-		})
+			const applyButton = screen.getByRole("button", { name: "Appliquer" }) as HTMLButtonElement;
+			expect(applyButton.disabled).toBe(true);
+		});
 
 		it("clears error message when user starts typing again after an error", async () => {
-			const user = userEvent.setup()
-			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" })
-			renderComponent()
+			const user = userEvent.setup();
+			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" });
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" })
-			await user.type(input, "BAD")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
-
-			await waitFor(() => {
-				expect(screen.getByRole("alert")).toBeInTheDocument()
-			})
-
-			await user.type(input, "X")
+			const input = screen.getByRole("textbox", { name: "Code promo" });
+			await user.type(input, "BAD");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
 			await waitFor(() => {
-				expect(screen.queryByRole("alert")).toBeNull()
-			})
-		})
+				expect(screen.getByRole("alert")).toBeInTheDocument();
+			});
+
+			await user.type(input, "X");
+
+			await waitFor(() => {
+				expect(screen.queryByRole("alert")).toBeNull();
+			});
+		});
 
 		it("clears the input field after a successful apply", async () => {
-			const user = userEvent.setup()
-			const discount = createDiscount({ code: "SAVE10" })
-			mockValidateDiscountCode.mockResolvedValue({ valid: true, discount })
-			renderComponent()
+			const user = userEvent.setup();
+			const discount = createDiscount({ code: "SAVE10" });
+			mockValidateDiscountCode.mockResolvedValue({ valid: true, discount });
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" }) as HTMLInputElement
-			await user.type(input, "SAVE10")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			const input = screen.getByRole("textbox", { name: "Code promo" }) as HTMLInputElement;
+			await user.type(input, "SAVE10");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
 			await waitFor(() => {
-				expect(input.value).toBe("")
-			})
-		})
+				expect(input.value).toBe("");
+			});
+		});
 
 		it("submits code on Enter key press", async () => {
-			const user = userEvent.setup()
-			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" })
-			renderComponent({ subtotal: 5000 })
+			const user = userEvent.setup();
+			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" });
+			renderComponent({ subtotal: 5000 });
 
-			const input = screen.getByRole("textbox", { name: "Code promo" })
-			await user.type(input, "ENTERCODE{Enter}")
+			const input = screen.getByRole("textbox", { name: "Code promo" });
+			await user.type(input, "ENTERCODE{Enter}");
 
 			await waitFor(() => {
-				expect(mockValidateDiscountCode).toHaveBeenCalledWith("ENTERCODE", 5000)
-			})
-		})
+				expect(mockValidateDiscountCode).toHaveBeenCalledWith("ENTERCODE", 5000);
+			});
+		});
 
 		it("sets aria-invalid on the input when there is an error", async () => {
-			const user = userEvent.setup()
-			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" })
-			renderComponent()
+			const user = userEvent.setup();
+			mockValidateDiscountCode.mockResolvedValue({ valid: false, error: "Code invalide" });
+			renderComponent();
 
-			const input = screen.getByRole("textbox", { name: "Code promo" }) as HTMLInputElement
-			await user.type(input, "BAD")
-			await user.click(screen.getByRole("button", { name: "Appliquer" }))
+			const input = screen.getByRole("textbox", { name: "Code promo" }) as HTMLInputElement;
+			await user.type(input, "BAD");
+			await user.click(screen.getByRole("button", { name: "Appliquer" }));
 
 			await waitFor(() => {
-				expect(input.getAttribute("aria-invalid")).toBe("true")
-			})
-		})
-	})
-})
+				expect(input.getAttribute("aria-invalid")).toBe("true");
+			});
+		});
+	});
+});

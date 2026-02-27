@@ -29,11 +29,7 @@ const wordVariants = {
  * - Text stays visible during hydration for LCP (no opacity:0 in hidden variant)
  * - Respects prefers-reduced-motion: renders without animation
  */
-export function SplitText({
-	children,
-	stagger = 0.08,
-	className,
-}: SplitTextProps) {
+export function SplitText({ children, stagger = 0.08, className }: SplitTextProps) {
 	const prefersReducedMotion = useReducedMotion();
 	const words = children.split(" ");
 
@@ -48,7 +44,6 @@ export function SplitText({
 			initial="hidden"
 			animate="visible"
 			transition={{ staggerChildren: stagger }}
-			role="text"
 			aria-label={children}
 		>
 			{words.map((word, i) => (

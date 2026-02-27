@@ -33,10 +33,9 @@ import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { UI_DELAYS } from "@/modules/media/constants/media.constants";
 
 // Lazy loading - lightbox loaded only on open
-const MediaLightbox = dynamic(
-	() => import("@/modules/media/components/media-lightbox"),
-	{ ssr: false }
-);
+const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
+	ssr: false,
+});
 import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "./delete-gallery-media-alert-dialog";
 import { SortableMediaItem } from "./sortable-media-item";
 import type { Slide } from "yet-another-react-lightbox";
@@ -107,7 +106,7 @@ export function MediaUploadGrid({
 
 		// Show the hint only if there are at least 2 medias
 		if (hasMultipleMedia) {
-			setShowLongPressHint(true);
+			queueMicrotask(() => setShowLongPressHint(true));
 			const timer = setTimeout(() => {
 				setShowLongPressHint(false);
 				try {
@@ -135,7 +134,7 @@ export function MediaUploadGrid({
 		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
-		})
+		}),
 	);
 
 	// Prepare slides for the lightbox
@@ -173,7 +172,9 @@ export function MediaUploadGrid({
 		// Screen reader announcement
 		const draggedMedia = media[draggedIndex];
 		const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
-		setAnnouncement(`${mediaType} ${draggedIndex + 1} sélectionnée. Utilisez les flèches pour déplacer.`);
+		setAnnouncement(
+			`${mediaType} ${draggedIndex + 1} sélectionnée. Utilisez les flèches pour déplacer.`,
+		);
 	};
 
 	// Handle drag end
@@ -259,14 +260,11 @@ export function MediaUploadGrid({
 				onDragEnd={handleDragEnd}
 				onDragCancel={handleDragCancel}
 			>
-				<SortableContext
-					items={media.map((m) => m.url)}
-					strategy={rectSortingStrategy}
-				>
+				<SortableContext items={media.map((m) => m.url)} strategy={rectSortingStrategy}>
 					{/* Keyboard drag & drop instructions (screen readers) */}
 					<span id="drag-instructions" className="sr-only">
-						Utilisez Espace ou Entrée pour saisir un élément, les flèches pour le déplacer,
-						Espace ou Entrée pour déposer, Échap pour annuler.
+						Utilisez Espace ou Entrée pour saisir un élément, les flèches pour le déplacer, Espace
+						ou Entrée pour déposer, Échap pour annuler.
 					</span>
 
 					{/* aria-live region for drag & drop announcements */}
@@ -275,7 +273,7 @@ export function MediaUploadGrid({
 					</div>
 
 					<div
-						className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3 lg:gap-4 w-full"
+						className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4"
 						role="list"
 						aria-label="Médias du produit"
 					>
@@ -304,19 +302,20 @@ export function MediaUploadGrid({
 
 						{/* Upload zone */}
 						{canAddMore && renderUploadZone && (
-							<div className="aspect-square rounded-lg overflow-hidden">
-								{renderUploadZone()}
-							</div>
+							<div className="aspect-square overflow-hidden rounded-lg">{renderUploadZone()}</div>
 						)}
 					</div>
 				</SortableContext>
 
 				{/* DragOverlay for better visual feedback during drag */}
-				<DragOverlay adjustScale={!shouldReduceMotion} modifiers={[snapCenterToCursor, restrictToWindowEdges]}>
+				<DragOverlay
+					adjustScale={!shouldReduceMotion}
+					modifiers={[snapCenterToCursor, restrictToWindowEdges]}
+				>
 					{activeMedia ? (
-						<div className="aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-2xl bg-muted">
+						<div className="border-primary bg-muted aspect-square overflow-hidden rounded-lg border-2 shadow-2xl">
 							{activeMedia.mediaType === "VIDEO" ? (
-								<div className="relative w-full h-full">
+								<div className="relative h-full w-full">
 									{activeMedia.thumbnailUrl ? (
 										<Image
 											src={activeMedia.thumbnailUrl}
@@ -326,13 +325,13 @@ export function MediaUploadGrid({
 											sizes="150px"
 										/>
 									) : (
-										<div className="w-full h-full bg-muted flex items-center justify-center">
-											<Play className="w-8 h-8 text-muted-foreground" />
+										<div className="bg-muted flex h-full w-full items-center justify-center">
+											<Play className="text-muted-foreground h-8 w-8" />
 										</div>
 									)}
 									<div className="absolute inset-0 flex items-center justify-center">
-										<div className="bg-black/70 rounded-full p-2">
-											<Play className="w-5 h-5 text-white" fill="white" />
+										<div className="rounded-full bg-black/70 p-2">
+											<Play className="h-5 w-5 text-white" fill="white" />
 										</div>
 									</div>
 								</div>
@@ -363,9 +362,7 @@ export function MediaUploadGrid({
 }
 
 // Wrapper with ErrorBoundary
-export function MediaUploadGridWithErrorBoundary(
-	props: MediaUploadGridProps
-) {
+export function MediaUploadGridWithErrorBoundary(props: MediaUploadGridProps) {
 	return (
 		<ErrorBoundary errorMessage="Impossible de charger la grille de medias">
 			<MediaUploadGrid {...props} />

@@ -15,7 +15,7 @@ import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
 } from "../utils/parse-media-from-form";
-import { BusinessError, validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour creer une variante de produit (Product SKU)
@@ -23,7 +23,7 @@ import { BusinessError, validateInput, handleActionError, success, error } from 
  */
 export async function createProductSku(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
@@ -43,7 +43,9 @@ export async function createProductSku(
 			productId: formData.get("productId") as string,
 			sku: (formData.get("sku") as string) || "",
 			priceInclTaxEuros: Number(formData.get("priceInclTaxEuros")) || 0,
-			compareAtPriceEuros: formData.get("compareAtPriceEuros") ? Number(formData.get("compareAtPriceEuros")) : undefined,
+			compareAtPriceEuros: formData.get("compareAtPriceEuros")
+				? Number(formData.get("compareAtPriceEuros"))
+				: undefined,
 			inventory: Number(formData.get("inventory")) || 0,
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
@@ -90,11 +92,13 @@ export async function createProductSku(
 		}> = [];
 		if (validatedData.primaryImage) {
 			// VALIDATION: Le media principal DOIT etre une IMAGE (jamais une VIDEO)
-			const primaryMediaType = validatedData.primaryImage.mediaType || detectMediaType(validatedData.primaryImage.url);
+			const primaryMediaType =
+				validatedData.primaryImage.mediaType || detectMediaType(validatedData.primaryImage.url);
 			if (primaryMediaType === "VIDEO") {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,
-					message: "Le média principal ne peut pas être une vidéo. Veuillez sélectionner une image comme média principal.",
+					message:
+						"Le média principal ne peut pas être une vidéo. Veuillez sélectionner une image comme média principal.",
 				};
 			}
 			allMedia.push({
@@ -110,7 +114,7 @@ export async function createProductSku(
 					...media,
 					isPrimary: false,
 					position: index + 1,
-				}))
+				})),
 			);
 		}
 
@@ -172,7 +176,7 @@ export async function createProductSku(
 					.join(", ");
 
 				throw new BusinessError(
-					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe déjà pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`
+					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe déjà pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`,
 				);
 			}
 
@@ -191,8 +195,7 @@ export async function createProductSku(
 
 			// Generate SKU with cryptographically secure random ID
 			const skuValue =
-				validatedData.sku?.trim() ||
-				`SKU-${randomUUID().split("-")[0].toUpperCase()}`;
+				validatedData.sku?.trim() || `SKU-${randomUUID().split("-")[0].toUpperCase()}`;
 
 			// Create SKU
 			const createdSku = await tx.productSku.create({
@@ -250,11 +253,7 @@ export async function createProductSku(
 		});
 
 		// 8. Build success message
-		const variantDetails = [
-			productSku.color?.name,
-			productSku.material?.name,
-			productSku.size,
-		]
+		const variantDetails = [productSku.color?.name, productSku.material?.name, productSku.size]
 			.filter(Boolean)
 			.join(" - ");
 
@@ -267,9 +266,9 @@ export async function createProductSku(
 			productSku.sku,
 			validatedData.productId,
 			productSku.product.slug,
-			productSku.id // Invalide aussi le cache stock temps réel
+			productSku.id, // Invalide aussi le cache stock temps réel
 		);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		// 10. Success - Return ActionState format
 		return {

@@ -115,7 +115,7 @@ export function GalleryHoverZoom({
 
 	if (!enabled) {
 		return (
-			<div className={cn("relative w-full h-full", className)}>
+			<div className={cn("relative h-full w-full", className)}>
 				<Image
 					src={src}
 					alt={alt}
@@ -132,12 +132,13 @@ export function GalleryHoverZoom({
 	}
 
 	return (
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions -- hover zoom container for desktop mouse interaction
 		<div
 			ref={containerRef}
 			className={cn(
-				"relative w-full h-full overflow-hidden group/zoom",
+				"group/zoom relative h-full w-full overflow-hidden",
 				"cursor-crosshair",
-				className
+				className,
 			)}
 			onMouseMove={handleMouseMove}
 			onMouseEnter={handleMouseEnter}

@@ -5,10 +5,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
-import {
-	MOTION_CONFIG,
-	maybeReduceMotion,
-} from "@/shared/components/animations/motion.config";
+import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 
 interface AnnouncementBarProps {
 	message: string;
@@ -73,7 +70,7 @@ export function AnnouncementBar({
 		} catch {
 			// localStorage unavailable
 		}
-		setIsVisible(true);
+		queueMicrotask(() => setIsVisible(true));
 	}, [fullKey]);
 
 	// Set CSS variable for navbar offset (with safe-area)
@@ -90,10 +87,7 @@ export function AnnouncementBar({
 	useEffect(() => {
 		return () => {
 			if (!isDismissingRef.current) {
-				document.documentElement.style.setProperty(
-					"--announcement-bar-height",
-					"0px",
-				);
+				document.documentElement.style.setProperty("--announcement-bar-height", "0px");
 			}
 		};
 	}, []);
@@ -104,17 +98,12 @@ export function AnnouncementBar({
 
 		// Delay CSS variable reset to sync with exit animation
 		setTimeout(() => {
-			document.documentElement.style.setProperty(
-				"--announcement-bar-height",
-				"0px",
-			);
+			document.documentElement.style.setProperty("--announcement-bar-height", "0px");
 		}, EXIT_ANIMATION_DURATION);
 
 		// Move focus to main content after dismiss (C2 - WCAG 2.4.3)
 		requestAnimationFrame(() => {
-			const nextFocus = document.querySelector<HTMLElement>(
-				"#main-content, nav a",
-			);
+			const nextFocus = document.querySelector<HTMLElement>("#main-content, nav a");
 			nextFocus?.focus({ preventScroll: true });
 		});
 
@@ -126,10 +115,7 @@ export function AnnouncementBar({
 		}
 	};
 
-	const springTransition = maybeReduceMotion(
-		MOTION_CONFIG.spring.bar,
-		!!prefersReducedMotion,
-	);
+	const springTransition = maybeReduceMotion(MOTION_CONFIG.spring.bar, !!prefersReducedMotion);
 
 	// Validate link prop (N4)
 	const safeLink = link && isSafeLink(link) ? link : undefined;
@@ -141,28 +127,16 @@ export function AnnouncementBar({
 					ref={barRef}
 					role="region"
 					aria-label="Barre d'annonce promotionnelle"
-					initial={
-						prefersReducedMotion
-							? { opacity: 0 }
-							: { y: "-100%", opacity: 0 }
-					}
-					animate={
-						prefersReducedMotion
-							? { opacity: 1 }
-							: { y: 0, opacity: 1 }
-					}
-					exit={
-						prefersReducedMotion
-							? { opacity: 0 }
-							: { y: "-100%", opacity: 0 }
-					}
+					initial={prefersReducedMotion ? { opacity: 0 } : { y: "-100%", opacity: 0 }}
+					animate={prefersReducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+					exit={prefersReducedMotion ? { opacity: 0 } : { y: "-100%", opacity: 0 }}
 					transition={springTransition}
 					// P4: Scope Escape key to the bar
 					onKeyDown={(e) => {
 						if (e.key === "Escape") dismiss();
 					}}
 					className={cn(
-						"fixed top-0 inset-x-0 z-50",
+						"fixed inset-x-0 top-0 z-50",
 						"h-[var(--ab-height)]",
 						"flex items-center justify-center",
 						"bg-primary text-primary-foreground",
@@ -172,16 +146,13 @@ export function AnnouncementBar({
 					)}
 				>
 					{/* Shimmer sweep effect */}
-					<div
-						aria-hidden="true"
-						className="pointer-events-none absolute inset-0 overflow-hidden"
-					>
+					<div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
 						<div className="absolute inset-0 animate-[announcement-shimmer_3s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent motion-reduce:hidden" />
 					</div>
 
 					<div
 						className={cn(
-							"relative flex items-center gap-2 text-center line-clamp-1",
+							"relative line-clamp-1 flex items-center gap-2 text-center",
 							"pl-[max(2.5rem,env(safe-area-inset-left))]",
 							"pr-[max(2.5rem,env(safe-area-inset-right))]",
 						)}
@@ -192,16 +163,13 @@ export function AnnouncementBar({
 						<span>{message}</span>
 						{safeLink && linkText && (
 							<>
-								<span
-									aria-hidden="true"
-									className="text-primary-foreground/50"
-								>
+								<span aria-hidden="true" className="text-primary-foreground/50">
 									&middot;
 								</span>
 								<Link
 									href={safeLink}
 									aria-label={`${linkText} - ${message}`}
-									className="underline underline-offset-2 font-semibold hover:no-underline transition-[text-decoration] duration-fast"
+									className="duration-fast font-semibold underline underline-offset-2 transition-[text-decoration] hover:no-underline"
 								>
 									{linkText}
 								</Link>
@@ -215,7 +183,7 @@ export function AnnouncementBar({
 					<button
 						type="button"
 						onClick={dismiss}
-						className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 min-w-11 min-h-11 flex items-center justify-center rounded-full hover:bg-primary-foreground/15 transition-colors"
+						className="hover:bg-primary-foreground/15 absolute top-1/2 right-2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full transition-colors sm:right-3"
 						aria-label="Fermer la barre d'annonce"
 					>
 						<X size={16} aria-hidden="true" />

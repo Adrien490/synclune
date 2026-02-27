@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect, useEffectEvent, type RefObject } from "react";
-import { getDistance, getCenter, clampPosition, getZoomToPointPosition, type Point } from "@/shared/utils/touch-geometry";
+import {
+	getDistance,
+	getCenter,
+	clampPosition,
+	getZoomToPointPosition,
+	type Point,
+} from "@/shared/utils/touch-geometry";
 
 // ============================================
 // TYPES
@@ -117,14 +123,16 @@ export function usePinchZoom({
 
 	const isZoomed = scale > config.minScale;
 
-	// Reset au changement de slide/désactivation
-	useEffect(() => {
+	// Reset au changement de slide/désactivation (render-time state adjustment)
+	const [prevIsActive, setPrevIsActive] = useState(isActive);
+	if (prevIsActive !== isActive) {
+		setPrevIsActive(isActive);
 		if (!isActive) {
 			setScale(config.minScale);
 			setPosition({ x: 0, y: 0 });
 			setIsInteracting(false);
 		}
-	}, [isActive, config.minScale]);
+	}
 
 	// Cleanup timeout
 	useEffect(() => {
@@ -143,7 +151,9 @@ export function usePinchZoom({
 	const zoomIn = () => {
 		const newScale = Math.min(config.maxScale, scale + config.keyboardZoomStep);
 		setScale(newScale);
-		setPosition(clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null));
+		setPosition(
+			clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null),
+		);
 	};
 
 	const zoomOut = () => {
@@ -152,7 +162,9 @@ export function usePinchZoom({
 		if (newScale === config.minScale) {
 			setPosition({ x: 0, y: 0 });
 		} else {
-			setPosition(clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null));
+			setPosition(
+				clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null),
+			);
 		}
 	};
 
@@ -182,44 +194,36 @@ export function usePinchZoom({
 			case "ArrowLeft":
 				if (isZoomed) {
 					e.preventDefault();
-					setPosition(clampPosition(
-						{ x: position.x + config.keyboardPanStep, y: position.y },
-						scale,
-						rect
-					));
+					setPosition(
+						clampPosition({ x: position.x + config.keyboardPanStep, y: position.y }, scale, rect),
+					);
 				}
 				break;
 
 			case "ArrowRight":
 				if (isZoomed) {
 					e.preventDefault();
-					setPosition(clampPosition(
-						{ x: position.x - config.keyboardPanStep, y: position.y },
-						scale,
-						rect
-					));
+					setPosition(
+						clampPosition({ x: position.x - config.keyboardPanStep, y: position.y }, scale, rect),
+					);
 				}
 				break;
 
 			case "ArrowUp":
 				if (isZoomed) {
 					e.preventDefault();
-					setPosition(clampPosition(
-						{ x: position.x, y: position.y + config.keyboardPanStep },
-						scale,
-						rect
-					));
+					setPosition(
+						clampPosition({ x: position.x, y: position.y + config.keyboardPanStep }, scale, rect),
+					);
 				}
 				break;
 
 			case "ArrowDown":
 				if (isZoomed) {
 					e.preventDefault();
-					setPosition(clampPosition(
-						{ x: position.x, y: position.y - config.keyboardPanStep },
-						scale,
-						rect
-					));
+					setPosition(
+						clampPosition({ x: position.x, y: position.y - config.keyboardPanStep }, scale, rect),
+					);
 				}
 				break;
 
@@ -274,7 +278,7 @@ export function usePinchZoom({
 			// Calculer la distance totale depuis le début du geste
 			const totalDistance = Math.hypot(
 				center.x - startTouchCenter.current.x,
-				center.y - startTouchCenter.current.y
+				center.y - startTouchCenter.current.y,
 			);
 
 			// Ne marquer comme "moved" que si la distance dépasse le threshold
@@ -284,7 +288,10 @@ export function usePinchZoom({
 
 			const newDistance = getDistance(e.touches);
 			const ratio = newDistance / initialDistance.current;
-			const newScale = Math.min(config.maxScale, Math.max(config.minScale, initialScale.current * ratio));
+			const newScale = Math.min(
+				config.maxScale,
+				Math.max(config.minScale, initialScale.current * ratio),
+			);
 
 			// Point focal en coordonnées relatives au centre du container
 			const focalX = center.x - rect.left - rect.width / 2;
@@ -299,7 +306,7 @@ export function usePinchZoom({
 					y: focalY - (focalY - position.y) * scaleRatio,
 				},
 				newScale,
-				rect
+				rect,
 			);
 
 			setScale(newScale);
@@ -312,7 +319,7 @@ export function usePinchZoom({
 			// Calculer la distance totale depuis le début du geste
 			const totalDistance = Math.hypot(
 				touch.clientX - startTouchCenter.current.x,
-				touch.clientY - startTouchCenter.current.y
+				touch.clientY - startTouchCenter.current.y,
 			);
 
 			// Ne marquer comme "moved" que si la distance dépasse le threshold
@@ -329,7 +336,7 @@ export function usePinchZoom({
 					y: initialPosition.current.y + deltaY,
 				},
 				scale,
-				rect
+				rect,
 			);
 
 			setPosition(newPosition);
@@ -338,7 +345,7 @@ export function usePinchZoom({
 			const touch = e.touches[0];
 			const totalDistance = Math.hypot(
 				touch.clientX - startTouchCenter.current.x,
-				touch.clientY - startTouchCenter.current.y
+				touch.clientY - startTouchCenter.current.y,
 			);
 
 			if (totalDistance > config.moveThreshold) {
@@ -399,7 +406,7 @@ export function usePinchZoom({
 						const newPosition = getZoomToPointPosition(
 							{ x: touch.clientX, y: touch.clientY },
 							rect,
-							config.doubleTapScale
+							config.doubleTapScale,
 						);
 						setScale(config.doubleTapScale);
 						setPosition(newPosition);
@@ -438,7 +445,7 @@ export function usePinchZoom({
 			container.removeEventListener("touchmove", handleTouchMove);
 			container.removeEventListener("touchend", handleTouchEnd);
 		};
-	}, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+	}, [containerRef]);
 
 	// Effect Event: reads scale without re-attaching the resize listener on every scale change
 	const onResize = useEffectEvent(() => {

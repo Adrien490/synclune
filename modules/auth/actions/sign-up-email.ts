@@ -2,6 +2,7 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { error, success, unauthorized, validateInput } from "@/shared/lib/actions";
+import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { signUpEmailSchema } from "../schemas/auth.schemas";
@@ -9,7 +10,7 @@ import { checkArcjetProtection } from "../utils/arcjet-protection";
 
 export const signUpEmail = async (
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
@@ -47,13 +48,21 @@ export const signUpEmail = async (
 				return error("Une erreur est survenue lors de l'inscription");
 			}
 
+			// Persist terms acceptance timestamp (RGPD proof of consent)
+			if (response.user?.id) {
+				await prisma.user.update({
+					where: { id: response.user.id },
+					data: { termsAcceptedAt: new Date() },
+				});
+			}
+
 			return success(
-				"Inscription réussie ! Un email de vérification vous a été envoyé. Veuillez vérifier votre boîte de réception pour activer votre compte."
+				"Inscription réussie ! Un email de vérification vous a été envoyé. Veuillez vérifier votre boîte de réception pour activer votre compte.",
 			);
 		} catch {
 			// Message générique pour éviter l'énumération d'emails
 			return error(
-				"Une erreur est survenue lors de l'inscription. Si cet email est déjà utilisé, essayez de vous connecter."
+				"Une erreur est survenue lors de l'inscription. Si cet email est déjà utilisé, essayez de vous connecter.",
 			);
 		}
 	} catch {

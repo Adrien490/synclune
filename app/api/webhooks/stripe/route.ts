@@ -22,18 +22,15 @@ import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.servic
  * - Refund.stripeRefundId @unique (évite double remboursement)
  */
 export async function POST(req: Request) {
-	const correlationId = crypto.randomUUID().slice(0, 8); // ID court pour les logs
+	const correlationId = crypto.randomUUID().slice(0, 8);
 
 	try {
-		console.log(`📥 [WEBHOOK:${correlationId}] Incoming webhook request`);
+		console.log(`📥 [webhook:${correlationId}] Incoming webhook request`);
 
 		// 1. Validation des variables d'environnement
 		if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-			console.error(`❌ [WEBHOOK:${correlationId}] Stripe configuration missing`);
-			return NextResponse.json(
-				{ error: "Stripe configuration missing" },
-				{ status: 500 }
-			);
+			console.error(`❌ [webhook:${correlationId}] Stripe configuration missing`);
+			return NextResponse.json({ error: "Stripe configuration missing" }, { status: 500 });
 		}
 
 		const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -55,7 +52,7 @@ export async function POST(req: Request) {
 				{
 					error: `Webhook Error: ${err instanceof Error ? err.message : "Unknown error"}`,
 				},
-				{ status: 400 }
+				{ status: 400 },
 			);
 		}
 
@@ -63,10 +60,13 @@ export async function POST(req: Request) {
 		// Rejeter les événements trop anciens pour éviter les attaques de replay
 		const eventAgeSeconds = Math.floor(Date.now() / 1000) - event.created;
 		if (eventAgeSeconds > ANTI_REPLAY_WINDOW_SECONDS) {
-			console.warn(`⚠️ [WEBHOOK:${correlationId}] Event ${event.id} too old (${eventAgeSeconds}s), rejecting for anti-replay`);
+			console.warn(
+				`⚠️ [webhook:${correlationId}] Event too old (${eventAgeSeconds}s), rejecting for anti-replay:`,
+				event.id,
+			);
 			return NextResponse.json(
 				{ error: "Event too old (anti-replay protection)" },
-				{ status: 400 }
+				{ status: 400 },
 			);
 		}
 
@@ -81,7 +81,10 @@ export async function POST(req: Request) {
 			existingEvent?.status === WebhookEventStatus.COMPLETED ||
 			existingEvent?.status === WebhookEventStatus.SKIPPED
 		) {
-			console.log(`⏭️ [WEBHOOK:${correlationId}] Event ${event.id} already processed (${existingEvent.status}), skipping`);
+			console.log(
+				`⏭️ [webhook:${correlationId}] Event already processed (${existingEvent.status}):`,
+				event.id,
+			);
 			return NextResponse.json({ received: true, status: "duplicate" });
 		}
 
@@ -124,13 +127,13 @@ export async function POST(req: Request) {
 			const tasks = result?.tasks;
 			if (tasks?.length) {
 				after(async () => {
-					console.log(`📧 [WEBHOOK:${correlationId}] Executing ${tasks.length} post-webhook tasks...`);
+					console.log(`📧 [webhook:${correlationId}] Executing ${tasks.length} post-webhook tasks`);
 					await executePostWebhookTasks(tasks);
-					console.log(`✅ [WEBHOOK:${correlationId}] All post-webhook tasks completed`);
+					console.log(`📧 [webhook:${correlationId}] Post-webhook tasks completed`);
 				});
 			}
 
-			console.log(`✅ [WEBHOOK:${correlationId}] Event ${event.type} processed successfully`);
+			console.log(`✅ [webhook:${correlationId}] ${event.type} processed successfully`);
 
 			return response;
 		} catch (error) {
@@ -156,13 +159,10 @@ export async function POST(req: Request) {
 				});
 			}
 
-			console.error(`❌ [WEBHOOK:${correlationId}] Error processing webhook event:`, error);
+			console.error(`❌ [webhook:${correlationId}] Error processing webhook event:`, error);
 			throw error;
 		}
 	} catch {
-		return NextResponse.json(
-			{ error: "Webhook handler failed" },
-			{ status: 500 }
-		);
+		return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
 	}
 }

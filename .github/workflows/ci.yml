@@ -25,7 +25,7 @@ jobs:
         if: always()
         with:
           files: ./coverage/lcov.info
-          fail_ci_if_error: false
+          fail_ci_if_error: true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -66,6 +66,8 @@ jobs:
         run: pnpm seed
       - name: Build application
         run: pnpm build
+      - name: Check bundle size
+        run: pnpm size
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(pnpm ls @playwright/test --json | jq -r '.[0].devDependencies["@playwright/test"].version')" >> $GITHUB_OUTPUT

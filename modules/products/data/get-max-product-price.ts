@@ -41,7 +41,7 @@ export async function getMaxProductPrice(): Promise<number> {
 		// et arrondir à la dizaine supérieure pour une meilleure UX
 		const finalMaxPrice = maxPrice > 0 ? maxPrice : 20000; // 200€ par défaut
 		return Math.ceil(finalMaxPrice / 1000) * 1000; // Arrondir aux 10€ supérieurs (prix en centimes)
-	} catch (error) {
+	} catch {
 		// Retourner une valeur par défaut en cas d'erreur
 		return 20000; // 200€ par défaut (prix en centimes)
 	}

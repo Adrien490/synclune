@@ -67,8 +67,12 @@ export function ParticleBackground({
 	const isTouchDevice = useIsTouchDevice();
 
 	const [tabVisible, setTabVisible] = useState(true);
-	const [highContrast, setHighContrast] = useState(false);
-	const [forcedColors, setForcedColors] = useState(false);
+	const [highContrast, setHighContrast] = useState(() =>
+		typeof window !== "undefined" ? window.matchMedia("(prefers-contrast: more)").matches : false,
+	);
+	const [forcedColors, setForcedColors] = useState(() =>
+		typeof window !== "undefined" ? window.matchMedia("(forced-colors: active)").matches : false,
+	);
 
 	// Single effect for all environment listeners (visibility, media queries)
 	useEffect(() => {
@@ -79,7 +83,6 @@ export function ParticleBackground({
 
 		// Detect high contrast mode: reduce opacity 50%, increase blur 50%
 		const contrastMql = window.matchMedia("(prefers-contrast: more)");
-		setHighContrast(contrastMql.matches);
 		function onContrastChange(e: MediaQueryListEvent) {
 			setHighContrast(e.matches);
 		}
@@ -87,7 +90,6 @@ export function ParticleBackground({
 
 		// Detect forced-colors mode: hide particles entirely (colors are overridden)
 		const forcedMql = window.matchMedia("(forced-colors: active)");
-		setForcedColors(forcedMql.matches);
 		function onForcedColorsChange(e: MediaQueryListEvent) {
 			setForcedColors(e.matches);
 		}
@@ -204,8 +206,26 @@ export function ParticleBackground({
 	const mobileDuration = 12 / safeSpeed;
 
 	// Desktop: duree 20s, Mobile: duree 12s (economie batterie)
-	const desktopParticles = generateParticles(safeCount, size, opacity, colors, blur, depthParallax, shapes, desktopDuration);
-	const mobileParticles = generateParticles(Math.ceil(safeCount / 2), size, opacity, colors, mobileBlur, depthParallax, shapes, mobileDuration);
+	const desktopParticles = generateParticles(
+		safeCount,
+		size,
+		opacity,
+		colors,
+		blur,
+		depthParallax,
+		shapes,
+		desktopDuration,
+	);
+	const mobileParticles = generateParticles(
+		Math.ceil(safeCount / 2),
+		size,
+		opacity,
+		colors,
+		mobileBlur,
+		depthParallax,
+		shapes,
+		mobileDuration,
+	);
 
 	const sharedProps = {
 		isInView,
@@ -220,11 +240,16 @@ export function ParticleBackground({
 			ref={containerRef}
 			aria-hidden="true"
 			data-testid="particle-background"
-			className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}
+			className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}
 			style={{ contain: "layout paint" }}
 		>
 			<div className="hidden md:contents">
-				<ParticleSet particles={desktopParticles} mouseX={mouseX} mouseY={mouseY} {...sharedProps} />
+				<ParticleSet
+					particles={desktopParticles}
+					mouseX={mouseX}
+					mouseY={mouseY}
+					{...sharedProps}
+				/>
 			</div>
 			<div className="contents md:hidden">
 				<ParticleSet particles={mobileParticles} {...sharedProps} />

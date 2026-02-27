@@ -23,26 +23,26 @@ export const CUSTOMIZATION_STATUS_COLORS: Record<
 	{ bg: string; text: string; dot: string; symbol: string }
 > = {
 	PENDING: {
-		bg: "bg-amber-50",
-		text: "text-amber-700",
+		bg: "bg-amber-50 dark:bg-amber-950",
+		text: "text-amber-700 dark:text-amber-300",
 		dot: "bg-amber-500",
 		symbol: "⏳",
 	},
 	IN_PROGRESS: {
-		bg: "bg-blue-50",
-		text: "text-blue-700",
+		bg: "bg-blue-50 dark:bg-blue-950",
+		text: "text-blue-700 dark:text-blue-300",
 		dot: "bg-blue-500",
 		symbol: "⚙",
 	},
 	COMPLETED: {
-		bg: "bg-green-50",
-		text: "text-green-700",
+		bg: "bg-green-50 dark:bg-green-950",
+		text: "text-green-700 dark:text-green-300",
 		dot: "bg-green-500",
 		symbol: "✓",
 	},
 	CANCELLED: {
-		bg: "bg-gray-50",
-		text: "text-gray-700",
+		bg: "bg-gray-50 dark:bg-gray-950",
+		text: "text-gray-700 dark:text-gray-300",
 		dot: "bg-gray-500",
 		symbol: "✗",
 	},
@@ -55,21 +55,15 @@ export const CUSTOMIZATION_STATUS_OPTIONS = Object.entries(CUSTOMIZATION_STATUS_
 	([value, label]) => ({
 		value: value as CustomizationRequestStatus,
 		label,
-	})
+	}),
 );
 
 /**
  * Statuts considérés comme "ouverts" (non finalisés)
  */
-export const OPEN_STATUSES: CustomizationRequestStatus[] = [
-	"PENDING",
-	"IN_PROGRESS",
-] as const;
+export const OPEN_STATUSES: CustomizationRequestStatus[] = ["PENDING", "IN_PROGRESS"] as const;
 
 /**
  * Statuts considérés comme "fermés" (finalisés)
  */
-export const CLOSED_STATUSES: CustomizationRequestStatus[] = [
-	"COMPLETED",
-	"CANCELLED",
-] as const;
+export const CLOSED_STATUSES: CustomizationRequestStatus[] = ["COMPLETED", "CANCELLED"] as const;

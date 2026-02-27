@@ -5,7 +5,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { GET_USER_SELECT } from "../constants/user.constants";
 import { getUserSchema } from "../schemas/user.schemas";
-import type { GetUserParams, GetUserReturn, UserDetail } from "../types/user.types";
+import type { GetUserParams, GetUserReturn } from "../types/user.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -20,15 +20,10 @@ import type { GetUserParams, GetUserReturn, UserDetail } from "../types/user.typ
  * @param params - Paramètres optionnels (userId)
  * @returns L'utilisateur ou null
  */
-export async function getUser(
-	params?: Partial<GetUserParams>
-): Promise<GetUserReturn> {
+export async function getUser(params?: Partial<GetUserParams>): Promise<GetUserReturn> {
 	const validation = getUserSchema.safeParse(params ?? {});
 
 	if (!validation.success) {
-		if (process.env.NODE_ENV !== "production") {
-			// console.warn("getUser invalid params", validation.error.issues);
-		}
 		return null;
 	}
 
@@ -80,10 +75,7 @@ export async function fetchUser(userId: string): Promise<GetUserReturn> {
 		});
 
 		return user;
-	} catch (error) {
-		if (process.env.NODE_ENV !== "production") {
-			// console.error("fetchUser error:", error);
-		}
+	} catch {
 		return null;
 	}
 }

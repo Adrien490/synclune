@@ -1,8 +1,5 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { cacheWishlist } from "@/modules/wishlist/constants/cache";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
@@ -13,12 +10,7 @@ import {
 	GET_WISHLIST_DEFAULT_PER_PAGE,
 	GET_WISHLIST_MAX_RESULTS_PER_PAGE,
 } from "../constants/wishlist.constants";
-import type {
-	GetWishlistParams,
-	GetWishlistReturn,
-	Wishlist,
-	WishlistItem,
-} from "../types/wishlist.types";
+import type { GetWishlistParams, GetWishlistReturn } from "../types/wishlist.types";
 
 // Re-export types for components that import from data/
 export type {
@@ -40,9 +32,7 @@ export type {
  * @param params - Paramètres de pagination (cursor, direction, perPage)
  * @returns Wishlist items paginés avec informations de pagination
  */
-export async function getWishlist(
-	params: GetWishlistParams = {}
-): Promise<GetWishlistReturn> {
+export async function getWishlist(params: GetWishlistParams = {}): Promise<GetWishlistReturn> {
 	const session = await getSession();
 	const userId = session?.user?.id;
 	const sessionId = !userId ? await getWishlistSessionId() : null;
@@ -61,7 +51,7 @@ export async function getWishlist(
 export async function fetchWishlist(
 	userId?: string,
 	sessionId?: string,
-	params: GetWishlistParams = {}
+	params: GetWishlistParams = {},
 ): Promise<GetWishlistReturn> {
 	"use cache: private";
 
@@ -84,7 +74,7 @@ export async function fetchWishlist(
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_WISHLIST_DEFAULT_PER_PAGE),
-			GET_WISHLIST_MAX_RESULTS_PER_PAGE
+			GET_WISHLIST_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -134,7 +124,7 @@ export async function fetchWishlist(
 			items,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return {

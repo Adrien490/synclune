@@ -1,9 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { cacheLife, cacheTag } from "next/cache";
@@ -13,10 +10,8 @@ import {
 	GET_REFUNDS_DEFAULT_PER_PAGE,
 	GET_REFUNDS_MAX_RESULTS_PER_PAGE,
 	GET_REFUNDS_SELECT,
-	SORT_OPTIONS,
-	SORT_LABELS,
 } from "../constants/refund.constants";
-import { getRefundsSchema, refundFiltersSchema, refundSortBySchema } from "../schemas/refund.schemas";
+import { getRefundsSchema } from "../schemas/refund.schemas";
 import { buildRefundWhereClause } from "../services/refund-query-builder";
 import type { GetRefundsParams, GetRefundsReturn } from "../types/refund.types";
 
@@ -41,9 +36,7 @@ export type {
 /**
  * Récupère la liste des remboursements avec pagination
  */
-export async function getRefunds(
-	params: GetRefundsParams
-): Promise<GetRefundsReturn> {
+export async function getRefunds(params: GetRefundsParams): Promise<GetRefundsReturn> {
 	const validation = getRefundsSchema.safeParse(params);
 
 	if (!validation.success) {
@@ -78,9 +71,7 @@ export async function getRefunds(
 /**
  * Récupère les refunds depuis la DB
  */
-async function fetchRefunds(
-	params: GetRefundsParams
-): Promise<GetRefundsReturn> {
+async function fetchRefunds(params: GetRefundsParams): Promise<GetRefundsReturn> {
 	"use cache";
 	cacheLife("dashboard");
 	cacheTag(ORDERS_CACHE_TAGS.LIST);
@@ -89,16 +80,15 @@ async function fetchRefunds(
 		const where = buildRefundWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.RefundOrderByWithRelationInput[] =
-			params.sortBy.startsWith("amount-")
-				? [{ amount: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("status-")
-					? [{ status: direction }, { id: "asc" }]
-					: [{ createdAt: direction }, { id: "asc" }];
+		const orderBy: Prisma.RefundOrderByWithRelationInput[] = params.sortBy.startsWith("amount-")
+			? [{ amount: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("status-")
+				? [{ status: direction }, { id: "asc" }]
+				: [{ createdAt: direction }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_REFUNDS_DEFAULT_PER_PAGE),
-			GET_REFUNDS_MAX_RESULTS_PER_PAGE
+			GET_REFUNDS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -118,7 +108,7 @@ async function fetchRefunds(
 			refunds,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return { refunds: items, pagination };

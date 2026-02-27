@@ -1,12 +1,12 @@
 "use server";
 
-import { Prisma, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError } from "@/shared/lib/actions";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
@@ -17,7 +17,6 @@ import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
 import { processRefundSchema } from "../schemas/refund.schemas";
-
 
 // Type pour le résultat de la query raw
 type RefundLockRow = {
@@ -60,12 +59,12 @@ type CompletedRefundRow = {
  */
 export async function processRefund(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
+		const { user: _adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.PROCESS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -295,9 +294,7 @@ export async function processRefund(
 			}
 		}
 		const restockMessage =
-			restockedCount > 0
-				? ` Stock restauré pour ${restockedCount} article(s).`
-				: "";
+			restockedCount > 0 ? ` Stock restauré pour ${restockedCount} article(s).` : "";
 
 		return {
 			status: ActionStatus.SUCCESS,

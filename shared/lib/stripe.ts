@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { stripeCircuitBreaker, CircuitBreakerError } from "./circuit-breaker";
 
 /**
  * Instance Stripe centralisée pour toute l'application
@@ -12,6 +13,23 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 	apiVersion: "2026-02-25.clover",
 	maxNetworkRetries: 2,
 });
+
+export { CircuitBreakerError };
+
+/**
+ * Execute a Stripe API call through the circuit breaker.
+ * Fails fast when Stripe is known to be down, preventing cascade failures.
+ *
+ * @example
+ * ```ts
+ * const session = await withStripeCircuitBreaker(() =>
+ *   stripe.checkout.sessions.create({ ... })
+ * );
+ * ```
+ */
+export async function withStripeCircuitBreaker<T>(fn: () => Promise<T>): Promise<T> {
+	return stripeCircuitBreaker.execute(fn);
+}
 
 /**
  * Récupère une instance Stripe de manière sécurisée
@@ -60,34 +78,26 @@ export function getStripeClient(): Stripe | null {
  * - VENDOR_OPERATION_NATURE
  */
 export function getVendorLegalInfo() {
-  return {
-    company_legal_name:
-      process.env.VENDOR_LEGAL_NAME || "TADDEI LEANE - Entrepreneur Individuel",
-    company_trade_name: process.env.VENDOR_TRADE_NAME || "Synclune",
-    company_siret: process.env.VENDOR_SIRET || "839 183 027 00037",
-    company_siren: process.env.VENDOR_SIREN || "839 183 027",
-    company_vat: process.env.VENDOR_VAT_NUMBER || "FR35839183027",
-    company_ape: process.env.VENDOR_APE_CODE || "47.91B",
-    company_address:
-      process.env.VENDOR_FULL_ADDRESS ||
-      "77 Boulevard du Tertre, 44100 Nantes, France",
-    company_email: process.env.VENDOR_EMAIL || "contact@synclune.fr",
-    insurance_company:
-      process.env.VENDOR_INSURANCE_COMPANY || "En cours de souscription",
-    insurance_contact:
-      process.env.VENDOR_INSURANCE_CONTACT || "contact@synclune.fr",
-    insurance_coverage: process.env.VENDOR_INSURANCE_COVERAGE || "France",
-    vat_exemption:
-      process.env.VENDOR_VAT_EXEMPTION_TEXT ||
-      "TVA non applicable, art. 293 B du CGI",
-    late_payment_penalty_rate:
-      process.env.VENDOR_LATE_PAYMENT_PENALTY_RATE || "12,40%",
-    recovery_fee: process.env.VENDOR_RECOVERY_FEE || "40 €",
-    operation_nature: process.env.VENDOR_OPERATION_NATURE || "Livraison de biens",
-    registry:
-      process.env.VENDOR_REGISTRY ||
-      "Inscrite au Répertoire National des Entreprises (RNE)",
-  } as const;
+	return {
+		company_legal_name: process.env.VENDOR_LEGAL_NAME || "TADDEI LEANE - Entrepreneur Individuel",
+		company_trade_name: process.env.VENDOR_TRADE_NAME || "Synclune",
+		company_siret: process.env.VENDOR_SIRET || "839 183 027 00037",
+		company_siren: process.env.VENDOR_SIREN || "839 183 027",
+		company_vat: process.env.VENDOR_VAT_NUMBER || "FR35839183027",
+		company_ape: process.env.VENDOR_APE_CODE || "47.91B",
+		company_address:
+			process.env.VENDOR_FULL_ADDRESS || "77 Boulevard du Tertre, 44100 Nantes, France",
+		company_email: process.env.VENDOR_EMAIL || "contact@synclune.fr",
+		insurance_company: process.env.VENDOR_INSURANCE_COMPANY || "En cours de souscription",
+		insurance_contact: process.env.VENDOR_INSURANCE_CONTACT || "contact@synclune.fr",
+		insurance_coverage: process.env.VENDOR_INSURANCE_COVERAGE || "France",
+		vat_exemption: process.env.VENDOR_VAT_EXEMPTION_TEXT || "TVA non applicable, art. 293 B du CGI",
+		late_payment_penalty_rate: process.env.VENDOR_LATE_PAYMENT_PENALTY_RATE || "12,40%",
+		recovery_fee: process.env.VENDOR_RECOVERY_FEE || "40 €",
+		operation_nature: process.env.VENDOR_OPERATION_NATURE || "Livraison de biens",
+		registry:
+			process.env.VENDOR_REGISTRY || "Inscrite au Répertoire National des Entreprises (RNE)",
+	} as const;
 }
 
 /**
@@ -95,15 +105,15 @@ export function getVendorLegalInfo() {
  * Contient toutes les mentions légales obligatoires
  */
 export function getInvoiceFooter(): string {
-  const info = getVendorLegalInfo();
+	const info = getVendorLegalInfo();
 
-  const insuranceText =
-    info.insurance_company === "En cours de souscription"
-      ? `Assurance RC Pro : ${info.insurance_company} - Pour toute question : ${info.insurance_contact}`
-      : `Assurance RC Pro : ${info.insurance_company}
+	const insuranceText =
+		info.insurance_company === "En cours de souscription"
+			? `Assurance RC Pro : ${info.insurance_company} - Pour toute question : ${info.insurance_contact}`
+			: `Assurance RC Pro : ${info.insurance_company}
 Contact assureur : ${info.insurance_contact}`;
 
-  return `
+	return `
 ${info.company_legal_name}
 SIRET : ${info.company_siret} • SIREN : ${info.company_siren}
 ${info.company_address}

@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { z } from "zod";
@@ -13,10 +10,8 @@ import {
 	GET_DISCOUNTS_DEFAULT_PER_PAGE,
 	GET_DISCOUNTS_MAX_RESULTS_PER_PAGE,
 	GET_DISCOUNTS_SELECT,
-	DISCOUNTS_SORT_OPTIONS,
-	DISCOUNTS_SORT_LABELS,
 } from "../constants/discount.constants";
-import { getDiscountsSchema, discountFiltersSchema, discountSortBySchema } from "../schemas/discount.schemas";
+import { getDiscountsSchema } from "../schemas/discount.schemas";
 import { buildDiscountWhereClause } from "../services/discount-query-builder";
 import type { GetDiscountsParams, GetDiscountsReturn } from "../types/discount.types";
 
@@ -45,9 +40,7 @@ export { DISCOUNTS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/discount.co
 /**
  * Récupère la liste des codes promo avec pagination
  */
-export async function getDiscounts(
-	params: GetDiscountsParams
-): Promise<GetDiscountsReturn> {
+export async function getDiscounts(params: GetDiscountsParams): Promise<GetDiscountsReturn> {
 	try {
 		const validation = getDiscountsSchema.safeParse(params);
 
@@ -67,9 +60,7 @@ export async function getDiscounts(
 /**
  * Récupère les discounts depuis la DB avec cache
  */
-async function fetchDiscounts(
-	params: GetDiscountsParams
-): Promise<GetDiscountsReturn> {
+async function fetchDiscounts(params: GetDiscountsParams): Promise<GetDiscountsReturn> {
 	"use cache";
 	cacheDiscounts();
 
@@ -77,18 +68,17 @@ async function fetchDiscounts(
 		const where = buildDiscountWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.DiscountOrderByWithRelationInput[] =
-			params.sortBy.startsWith("code-")
-				? [{ code: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("created-")
-					? [{ createdAt: direction }, { id: "asc" }]
-					: params.sortBy.startsWith("usage-")
-						? [{ usageCount: direction }, { id: "asc" }]
-						: [{ createdAt: "desc" }, { id: "asc" }];
+		const orderBy: Prisma.DiscountOrderByWithRelationInput[] = params.sortBy.startsWith("code-")
+			? [{ code: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("created-")
+				? [{ createdAt: direction }, { id: "asc" }]
+				: params.sortBy.startsWith("usage-")
+					? [{ usageCount: direction }, { id: "asc" }]
+					: [{ createdAt: "desc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_DISCOUNTS_DEFAULT_PER_PAGE),
-			GET_DISCOUNTS_MAX_RESULTS_PER_PAGE
+			GET_DISCOUNTS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -108,7 +98,7 @@ async function fetchDiscounts(
 			discounts,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return { discounts: items, pagination };

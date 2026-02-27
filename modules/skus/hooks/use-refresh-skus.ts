@@ -1,8 +1,6 @@
 "use client";
 
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useTransition } from "react";
+import { useRefreshAction } from "@/shared/hooks/use-action-with-toast";
 import { refreshSkus } from "@/modules/skus/actions/refresh-skus";
 
 interface UseRefreshSkusOptions {
@@ -11,35 +9,8 @@ interface UseRefreshSkusOptions {
 }
 
 export function useRefreshSkus(options?: UseRefreshSkusOptions) {
-	const [isTransitionPending, startTransition] = useTransition();
-
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			refreshSkus,
-			createToastCallbacks({
-				showSuccessToast: false,
-				onSuccess: () => {
-					options?.onSuccess?.();
-				},
-			})
-		),
-		undefined
-	);
-
-	const refresh = () => {
-		startTransition(() => {
-			const formData = new FormData();
-			if (options?.productId) {
-				formData.append("productId", options.productId);
-			}
-			action(formData);
-		});
-	};
-
-	return {
-		state,
-		action,
-		isPending: isPending || isTransitionPending,
-		refresh,
-	};
+	return useRefreshAction(refreshSkus, {
+		onSuccess: options?.onSuccess,
+		params: options?.productId ? { productId: options.productId } : undefined,
+	});
 }

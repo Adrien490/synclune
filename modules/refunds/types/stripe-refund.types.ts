@@ -1,17 +1,15 @@
-import type Stripe from "stripe"
-
 export interface CreateStripeRefundParams {
 	/** ID du PaymentIntent (pi_xxx) ou du Charge (ch_xxx) */
-	paymentIntentId?: string
-	chargeId?: string
+	paymentIntentId?: string;
+	chargeId?: string;
 	/** Montant à rembourser en centimes */
-	amount: number
+	amount: number;
 	/** Raison du remboursement (RefundReason interne, mappée vers Stripe) */
-	reason?: string
+	reason?: string;
 	/** Métadonnées additionnelles */
-	metadata?: Record<string, string>
+	metadata?: Record<string, string>;
 	/** Clé d'idempotence pour éviter les doublons */
-	idempotencyKey?: string
+	idempotencyKey?: string;
 }
 
 export type StripeRefundStatus =
@@ -19,12 +17,12 @@ export type StripeRefundStatus =
 	| "requires_action"
 	| "succeeded"
 	| "failed"
-	| "canceled"
+	| "canceled";
 
 export interface StripeRefundResult {
-	success: boolean
-	pending?: boolean
-	refundId?: string
-	status?: StripeRefundStatus
-	error?: string
+	success: boolean;
+	pending?: boolean;
+	refundId?: string;
+	status?: StripeRefundStatus;
+	error?: string;
 }

@@ -13,24 +13,18 @@ interface TableProps extends React.ComponentProps<"table"> {
 	caption?: string;
 }
 
-function Table({
-	className,
-	stickyHeader,
-	striped,
-	caption,
-	children,
-	...props
-}: TableProps) {
+function Table({ className, stickyHeader, striped, caption, children, ...props }: TableProps) {
 	return (
 		<div
 			data-slot="table-container"
 			role="region"
 			aria-label={caption || "Tableau de données"}
+			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable container needs keyboard access
 			tabIndex={0}
 			className={cn(
 				"relative w-full overflow-x-auto scroll-smooth",
-				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-				stickyHeader && "max-h-[70vh] overflow-y-auto"
+				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+				stickyHeader && "max-h-[70vh] overflow-y-auto",
 			)}
 		>
 			<table
@@ -39,7 +33,7 @@ function Table({
 				className={cn(
 					"w-full caption-bottom text-sm",
 					striped && "[&_tbody_tr:nth-child(even)]:bg-muted/30",
-					className
+					className,
 				)}
 				{...props}
 			>
@@ -55,18 +49,14 @@ interface TableHeaderProps extends React.ComponentProps<"thead"> {
 	sticky?: boolean;
 }
 
-function TableHeader({
-	className,
-	sticky,
-	...props
-}: TableHeaderProps) {
+function TableHeader({ className, sticky, ...props }: TableHeaderProps) {
 	return (
 		<thead
 			data-slot="table-header"
 			className={cn(
 				"[&_tr]:border-b",
-				sticky && "sticky top-0 z-10 bg-background shadow-sm",
-				className
+				sticky && "bg-background sticky top-0 z-10 shadow-sm",
+				className,
 			)}
 			{...props}
 		/>
@@ -78,11 +68,7 @@ interface TableBodyProps extends React.ComponentProps<"tbody"> {
 	isLoading?: boolean;
 }
 
-function TableBody({
-	className,
-	isLoading,
-	...props
-}: TableBodyProps) {
+function TableBody({ className, isLoading, ...props }: TableBodyProps) {
 	return (
 		<tbody
 			data-slot="table-body"
@@ -90,8 +76,8 @@ function TableBody({
 			aria-live={isLoading ? "polite" : undefined}
 			className={cn(
 				"[&_tr:last-child]:border-0",
-				isLoading && "opacity-50 pointer-events-none",
-				className
+				isLoading && "pointer-events-none opacity-50",
+				className,
 			)}
 			{...props}
 		/>
@@ -102,10 +88,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
 	return (
 		<tfoot
 			data-slot="table-footer"
-			className={cn(
-				"bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
-				className
-			)}
+			className={cn("bg-muted/50 border-t font-medium [&>tr]:last:border-b-0", className)}
 			{...props}
 		/>
 	);
@@ -117,25 +100,22 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 			data-slot="table-row"
 			className={cn(
 				"hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
-				className
+				className,
 			)}
 			{...props}
 		/>
 	);
 }
 
-function TableHead({
-	className,
-	...props
-}: React.ComponentProps<"th">) {
+function TableHead({ className, ...props }: React.ComponentProps<"th">) {
 	return (
 		<th
 			data-slot="table-head"
 			scope="col"
 			className={cn(
-				"text-foreground h-11 px-2 sm:px-3 text-left align-middle font-medium whitespace-nowrap",
+				"text-foreground h-11 px-2 text-left align-middle font-medium whitespace-nowrap sm:px-3",
 				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-0.5",
-				className
+				className,
 			)}
 			{...props}
 		/>
@@ -147,19 +127,16 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
 		<td
 			data-slot="table-cell"
 			className={cn(
-				"p-2 sm:p-3 align-middle whitespace-nowrap",
+				"p-2 align-middle whitespace-nowrap sm:p-3",
 				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-0.5",
-				className
+				className,
 			)}
 			{...props}
 		/>
 	);
 }
 
-function TableCaption({
-	className,
-	...props
-}: React.ComponentProps<"caption">) {
+function TableCaption({ className, ...props }: React.ComponentProps<"caption">) {
 	return (
 		<caption
 			data-slot="table-caption"
@@ -169,19 +146,6 @@ function TableCaption({
 	);
 }
 
-export {
-	Table,
-	TableBody,
-	TableCaption,
-	TableCell,
-	TableFooter,
-	TableHead,
-	TableHeader,
-	TableRow,
-};
+export { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow };
 
-export type {
-	TableProps,
-	TableHeaderProps,
-	TableBodyProps,
-};
+export type { TableProps, TableHeaderProps, TableBodyProps };

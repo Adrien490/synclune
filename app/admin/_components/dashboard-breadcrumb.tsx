@@ -140,75 +140,67 @@ export function DashboardBreadcrumb() {
 	}
 
 	return (
-		<Breadcrumb className="hidden md:block min-w-0" aria-label="Fil d'Ariane">
-				<BreadcrumbList className="flex-nowrap">
-					{/* Premier segment (Tableau de bord) */}
-					<BreadcrumbItem className="shrink-0">
-						{visibleSegments[0].isCurrentPage ? (
-							<BreadcrumbPage title={visibleSegments[0].label}>
-								{visibleSegments[0].label}
-							</BreadcrumbPage>
-						) : (
-							<BreadcrumbLink
-								href={visibleSegments[0].href}
-								title={visibleSegments[0].label}
-							>
-								{visibleSegments[0].label}
-							</BreadcrumbLink>
-						)}
-					</BreadcrumbItem>
-
-					{/* Segments collapsés avec dropdown */}
-					{shouldCollapse && collapsedSegments.length > 0 && (
-						<>
-							<BreadcrumbSeparator className="shrink-0" />
-							<BreadcrumbItem className="shrink-0">
-								<DropdownMenu>
-									<DropdownMenuTrigger
-										className="flex items-center gap-1 hover:text-foreground transition-colors"
-										aria-label="Afficher plus de segments"
-									>
-										<MoreHorizontal className="h-4 w-4" />
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="start">
-										{collapsedSegments.map((segment) => (
-											<DropdownMenuItem key={segment.href} asChild>
-												<Link href={segment.href}>{segment.label}</Link>
-											</DropdownMenuItem>
-										))}
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</BreadcrumbItem>
-						</>
+		<Breadcrumb className="hidden min-w-0 md:block" aria-label="Fil d'Ariane">
+			<BreadcrumbList className="flex-nowrap">
+				{/* Premier segment (Tableau de bord) */}
+				<BreadcrumbItem className="shrink-0">
+					{visibleSegments[0].isCurrentPage ? (
+						<BreadcrumbPage title={visibleSegments[0].label}>
+							{visibleSegments[0].label}
+						</BreadcrumbPage>
+					) : (
+						<BreadcrumbLink href={visibleSegments[0].href} title={visibleSegments[0].label}>
+							{visibleSegments[0].label}
+						</BreadcrumbLink>
 					)}
+				</BreadcrumbItem>
 
-					{/* Remaining visible segments (skip the first one) */}
-					{visibleSegments.slice(1).map(
-						(segment, index) => (
-							<Fragment key={segment.href}>
-								<BreadcrumbSeparator className="shrink-0" />
-								<BreadcrumbItem className="min-w-0">
-									{segment.isCurrentPage ? (
-										<BreadcrumbPage
-											className="max-w-45 truncate"
-											title={segment.label}
-										>
-											{segment.label}
-										</BreadcrumbPage>
-									) : (
-										<BreadcrumbLink
-											href={segment.href}
-											className="max-w-35 truncate"
-											title={segment.label}
-										>
-											{segment.label}
-										</BreadcrumbLink>
-									)}
-								</BreadcrumbItem>
-							</Fragment>
-						)
-					)}
-				</BreadcrumbList>
+				{/* Segments collapsés avec dropdown */}
+				{shouldCollapse && collapsedSegments.length > 0 && (
+					<>
+						<BreadcrumbSeparator className="shrink-0" />
+						<BreadcrumbItem className="shrink-0">
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									className="hover:text-foreground flex items-center gap-1 transition-colors"
+									aria-label="Afficher plus de segments"
+								>
+									<MoreHorizontal className="h-4 w-4" />
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="start">
+									{collapsedSegments.map((segment) => (
+										<DropdownMenuItem key={segment.href} asChild>
+											<Link href={segment.href}>{segment.label}</Link>
+										</DropdownMenuItem>
+									))}
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</BreadcrumbItem>
+					</>
+				)}
+
+				{/* Remaining visible segments (skip the first one) */}
+				{visibleSegments.slice(1).map((segment, _index) => (
+					<Fragment key={segment.href}>
+						<BreadcrumbSeparator className="shrink-0" />
+						<BreadcrumbItem className="min-w-0">
+							{segment.isCurrentPage ? (
+								<BreadcrumbPage className="max-w-45 truncate" title={segment.label}>
+									{segment.label}
+								</BreadcrumbPage>
+							) : (
+								<BreadcrumbLink
+									href={segment.href}
+									className="max-w-35 truncate"
+									title={segment.label}
+								>
+									{segment.label}
+								</BreadcrumbLink>
+							)}
+						</BreadcrumbItem>
+					</Fragment>
+				))}
+			</BreadcrumbList>
 		</Breadcrumb>
 	);
 }

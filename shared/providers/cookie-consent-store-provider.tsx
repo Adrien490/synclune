@@ -1,32 +1,25 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useRef, useEffect } from "react"
-import { useStore } from "zustand"
+import { createContext, useContext, useState, useEffect } from "react";
+import { useStore } from "zustand";
 
 import {
 	createCookieConsentStore,
 	CURRENT_POLICY_VERSION,
-} from "@/shared/stores/cookie-consent-store"
+} from "@/shared/stores/cookie-consent-store";
 import type {
 	CookieConsentStore,
 	CookieConsentStoreProviderProps,
-} from "@/shared/types/store.types"
+} from "@/shared/types/store.types";
 
-export type CookieConsentStoreApi = ReturnType<
-	typeof createCookieConsentStore
->
+export type CookieConsentStoreApi = ReturnType<typeof createCookieConsentStore>;
 
-export const CookieConsentStoreContext = createContext<
-	CookieConsentStoreApi | undefined
->(undefined)
+export const CookieConsentStoreContext = createContext<CookieConsentStoreApi | undefined>(
+	undefined,
+);
 
-export const CookieConsentStoreProvider = ({
-	children,
-}: CookieConsentStoreProviderProps) => {
-	const storeRef = useRef<CookieConsentStoreApi | null>(null);
-	if (storeRef.current === null) {
-		storeRef.current = createCookieConsentStore();
-	}
+export const CookieConsentStoreProvider = ({ children }: CookieConsentStoreProviderProps) => {
+	const [store] = useState(() => createCookieConsentStore());
 
 	// NÉCESSAIRE: useEffect pour marquer l'hydratation comme terminée
 	// Zustand persist middleware appelle onRehydrateStorage uniquement s'il y a des données persistées.
@@ -34,30 +27,24 @@ export const CookieConsentStoreProvider = ({
 	// Ce useEffect sert de fallback pour garantir que _hasHydrated passe à true après le mount client.
 	// Cela évite un flash où le banner de cookies s'affiche puis disparaît.
 	useEffect(() => {
-		if (storeRef.current) {
-			const currentState = storeRef.current.getState();
-			if (!currentState._hasHydrated) {
-				storeRef.current.setState({ _hasHydrated: true });
-			}
+		const currentState = store.getState();
+		if (!currentState._hasHydrated) {
+			store.setState({ _hasHydrated: true });
 		}
-	}, []);
+	}, [store]);
 
 	return (
-		<CookieConsentStoreContext.Provider value={storeRef.current}>
+		<CookieConsentStoreContext.Provider value={store}>
 			{children}
 		</CookieConsentStoreContext.Provider>
 	);
 };
 
-export const useCookieConsentStore = <T,>(
-	selector: (store: CookieConsentStore) => T
-): T => {
+export const useCookieConsentStore = <T,>(selector: (store: CookieConsentStore) => T): T => {
 	const cookieConsentStoreContext = useContext(CookieConsentStoreContext);
 
 	if (!cookieConsentStoreContext) {
-		throw new Error(
-			`useCookieConsentStore must be used within CookieConsentStoreProvider`
-		);
+		throw new Error(`useCookieConsentStore must be used within CookieConsentStoreProvider`);
 	}
 
 	return useStore(cookieConsentStoreContext, selector);
@@ -68,7 +55,5 @@ export const useCookieConsentStore = <T,>(
  * @returns true si consentement déjà donné
  */
 export const useHasConsented = (): boolean => {
-	return useCookieConsentStore(
-		(state) => state.policyVersion >= CURRENT_POLICY_VERSION
-	);
+	return useCookieConsentStore((state) => state.policyVersion >= CURRENT_POLICY_VERSION);
 };
