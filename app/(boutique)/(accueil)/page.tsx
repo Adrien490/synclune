@@ -24,8 +24,17 @@ export const metadata: Metadata = {
   },
   description:
     "Bijoux faits main uniques et colorés. Boucles d'oreilles, colliers, bracelets créés avec amour par Léane à Nantes. Éditions limitées, livraison rapide.",
-  keywords:
-    "bijoux artisanaux Nantes, bijoux faits main Nantes, créatrice bijoux Nantes, bagues Nantes, colliers Nantes, boucles d'oreilles Nantes, bracelets Nantes, bijoux colorés Loire-Atlantique, atelier bijoux Nantes 44",
+  keywords: [
+    "bijoux artisanaux Nantes",
+    "bijoux faits main Nantes",
+    "créatrice bijoux Nantes",
+    "bagues Nantes",
+    "colliers Nantes",
+    "boucles d'oreilles Nantes",
+    "bracelets Nantes",
+    "bijoux colorés Loire-Atlantique",
+    "atelier bijoux Nantes 44",
+  ],
   alternates: {
     canonical: "/",
   },

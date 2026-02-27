@@ -25,8 +25,6 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 	return (
 		<article
 			aria-label={`Avis de ${userName} — ${review.rating} sur 5 étoiles`}
-			itemScope
-			itemType="https://schema.org/Review"
 			className={cn(
 				"overflow-hidden rounded-lg border-2 border-transparent bg-card text-card-foreground",
 				"shadow-sm transition-[shadow,border-color] duration-300 ease-out",

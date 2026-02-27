@@ -35,34 +35,37 @@ export function StructuredData({ reviewStatsPromise, reviewsPromise }: Structure
 		({ "@context": _, ...rest }) => rest,
 	);
 
-	// BreadcrumbList for homepage
-	graphSchemas.push({
-		"@type": "BreadcrumbList",
-		itemListElement: [{
-			"@type": "ListItem",
-			position: 1,
-			name: "Accueil",
-			item: SITE_URL,
-		}],
-	});
+	// Homepage-specific schemas (only when reviewsPromise is provided)
+	if (reviewsPromise) {
+		// BreadcrumbList for homepage
+		graphSchemas.push({
+			"@type": "BreadcrumbList",
+			itemListElement: [{
+				"@type": "ListItem",
+				position: 1,
+				name: "Accueil",
+				item: SITE_URL,
+			}],
+		});
 
-	// Article schema for the atelier story section (centralized here)
-	graphSchemas.push({
-		"@type": "Article",
-		headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
-		url: `${SITE_URL}/#atelier-section`,
-		image: `${SITE_URL}/opengraph-image`,
-		datePublished: "2025-01-15",
-		dateModified: "2025-06-01",
-		author: {
-			"@id": `${SITE_URL}/#founder`,
-		},
-		about: {
-			"@type": "Brand",
-			name: "Synclune",
-			description: "Bijoux artisanaux faits main à Nantes",
-		},
-	});
+		// Article schema for the atelier story section
+		graphSchemas.push({
+			"@type": "Article",
+			headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
+			url: `${SITE_URL}/#atelier-section`,
+			image: `${SITE_URL}/opengraph-image`,
+			datePublished: "2025-01-15",
+			dateModified: process.env.DEPLOY_DATE ?? "2025-06-01",
+			author: {
+				"@id": `${SITE_URL}/#founder`,
+			},
+			about: {
+				"@type": "Brand",
+				name: "Synclune",
+				description: "Bijoux artisanaux faits main à Nantes",
+			},
+		});
+	}
 
 	// Individual Review schemas for rich snippets
 	for (const review of reviews) {
