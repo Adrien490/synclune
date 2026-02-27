@@ -100,13 +100,10 @@ export function NewsletterForm() {
 					>
 						{(field) => (
 							<div className="space-y-2">
-								<FieldLabel
-									htmlFor={field.name}
-									className="text-sm font-medium"
-								>
+								<FieldLabel htmlFor={field.name} className="text-sm font-medium">
 									Adresse email
 								</FieldLabel>
-								<div className="flex flex-col sm:flex-row gap-3">
+								<div className="flex flex-col gap-3 sm:flex-row">
 									<div className="flex-1">
 										{/* ✅ Using pre-bound InputField component */}
 										<field.InputField
@@ -116,7 +113,7 @@ export function NewsletterForm() {
 											spellCheck={false}
 											autoCorrect="off"
 											disabled={isPending || isSuccess}
-											className="h-12 text-base bg-background/80 backdrop-blur-sm border-2 focus:border-primary"
+											className="bg-background/80 focus:border-primary h-12 border-2 text-base backdrop-blur-sm"
 											aria-label="Votre adresse email pour la newsletter"
 											aria-invalid={hasServerError || undefined}
 											aria-describedby={hasServerError ? serverErrorId : undefined}
@@ -131,11 +128,11 @@ export function NewsletterForm() {
 												type="submit"
 												size="lg"
 												disabled={!canSubmit || isPending || isSuccess}
-												className="h-12 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all duration-300"
+												className="h-12 px-6 shadow-lg transition-all duration-300 hover:shadow-xl sm:px-8"
 											>
 												{isSuccess ? (
 													<>
-														<Sparkles className="w-4 h-4 mr-2" />
+														<Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
 														Inscrit(e)
 													</>
 												) : isPending ? (
@@ -169,9 +166,10 @@ export function NewsletterForm() {
 											J'accepte de recevoir la newsletter et j'ai lu la{" "}
 											<Link
 												href="/confidentialite"
-												className="underline hover:bg-accent hover:text-accent-foreground transition-colors px-1 rounded-sm"
+												className="hover:bg-accent hover:text-accent-foreground rounded-sm px-1 underline transition-colors"
 												target="_blank"
 												rel="noopener noreferrer"
+												aria-label="Politique de confidentialité (nouvelle fenêtre)"
 											>
 												Politique de confidentialité
 											</Link>

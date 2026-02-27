@@ -82,10 +82,10 @@ export function CookieBanner() {
 					exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeOut" }}
 					className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-6 md:left-6 md:max-w-md"
-					role="region"
+					role="alertdialog"
+					aria-modal="true"
 					aria-label="Consentement cookies"
 					aria-describedby="cookie-description"
-					aria-live="polite"
 				>
 					<FocusScope trapped loop>
 						<div className="bg-background/95 border-primary/15 space-y-3 rounded-xl border p-4 shadow-lg backdrop-blur-md md:space-y-4 md:p-6">

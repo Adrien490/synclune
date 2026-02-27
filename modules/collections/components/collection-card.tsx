@@ -55,15 +55,14 @@ export function CollectionCard({
 		<article aria-labelledby={titleId}>
 			<Link
 				href={`/collections/${slug}`}
-				aria-label={`Voir la collection ${name}`}
 				className={cn(
 					"group block min-w-0",
-					"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:rounded-lg",
+					"focus-visible:ring-primary/50 focus-visible:rounded-lg focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:outline-none",
 				)}
 			>
 				<div
 					className={cn(
-						"relative overflow-hidden rounded-lg bg-card",
+						"bg-card relative overflow-hidden rounded-lg",
 						// COHERENCE ProductCard: border-2 transparent
 						"border-2 border-transparent shadow-sm",
 						"transition-[transform,border-color,box-shadow] duration-300 ease-out",
@@ -76,7 +75,7 @@ export function CollectionCard({
 						// COHERENCE ProductCard: transform subtil (version plus douce)
 						"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
 						// COHERENCE ProductCard: focus state
-						"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
+						"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
 						// Mobile tap feedback
 						"active:scale-[0.98] active:transition-transform active:duration-75",
 						// COHERENCE ProductCard: GPU optimization
@@ -103,32 +102,32 @@ export function CollectionCard({
 					) : (
 						<div
 							role="img"
-							className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10 rounded-t-lg flex flex-col items-center justify-center gap-3"
+							className="from-primary/5 to-primary/10 relative flex aspect-square flex-col items-center justify-center gap-3 overflow-hidden rounded-t-lg bg-gradient-to-br"
 							aria-label={`Collection ${name} - Aucune image disponible`}
 						>
 							<Gem
-								className="w-12 h-12 sm:w-16 sm:h-16 text-primary/30 motion-safe:animate-pulse"
+								className="text-primary/30 h-12 w-12 motion-safe:animate-pulse sm:h-16 sm:w-16"
 								aria-hidden="true"
 							/>
-							<span className="text-xs text-muted-foreground" aria-hidden="true">
+							<span className="text-muted-foreground text-xs" aria-hidden="true">
 								Bientôt disponible
 							</span>
 						</div>
 					)}
 
 					{/* Titre avec elements decoratifs */}
-					<div className="px-4 pb-4 sm:px-5 sm:pb-5 text-center">
+					<div className="px-4 pb-4 text-center sm:px-5 sm:pb-5">
 						{/* Gradient divider — expands on hover */}
 						<div
 							className={cn(
-								"w-16 h-0.5 mx-auto mb-3",
-								"bg-linear-to-r from-transparent via-primary/50 to-transparent",
-								"transition-[transform,opacity] duration-300 origin-center",
+								"mx-auto mb-3 h-0.5 w-16",
+								"via-primary/50 bg-linear-to-r from-transparent to-transparent",
+								"origin-center transition-[transform,opacity] duration-300",
 								"scale-x-75",
 								// Motion-reduce: pas d'animation de scale
 								"motion-reduce:scale-x-100",
 								"motion-safe:can-hover:group-hover:scale-x-100 motion-safe:can-hover:group-hover:via-primary/60",
-								"motion-safe:group-focus-within:scale-x-100 group-focus-within:via-primary/60",
+								"group-focus-within:via-primary/60 motion-safe:group-focus-within:scale-x-100",
 							)}
 							aria-hidden="true"
 						/>
@@ -136,8 +135,8 @@ export function CollectionCard({
 						<HeadingTag
 							id={titleId}
 							className={cn(
-								"line-clamp-2 wrap-break-words",
-								"text-base sm:text-lg tracking-wide",
+								"wrap-break-words line-clamp-2",
+								"text-base tracking-wide sm:text-lg",
 								"text-foreground",
 							)}
 						>
@@ -146,14 +145,14 @@ export function CollectionCard({
 
 						{/* Description (hidden on mobile for space) */}
 						{description && (
-							<p className="sr-only sm:not-sr-only sm:block mt-1.5 text-xs text-muted-foreground line-clamp-2">
+							<p className="text-muted-foreground sr-only mt-1.5 line-clamp-2 text-xs sm:not-sr-only sm:block">
 								{description}
 							</p>
 						)}
 
 						{/* Price range */}
 						{priceRange && (
-							<p className="mt-1.5 text-xs font-medium text-foreground/80">
+							<p className="text-foreground/80 mt-1.5 text-xs font-medium">
 								<span className="sr-only">Prix : </span>
 								{priceRange.min === priceRange.max
 									? `${formatEuro(priceRange.min, { compact: true })}`
@@ -162,7 +161,7 @@ export function CollectionCard({
 						)}
 
 						{productCount !== undefined && productCount > 0 && (
-							<p className="mt-2 text-xs text-muted-foreground">
+							<p className="text-muted-foreground mt-2 text-xs">
 								{productCount} article{productCount > 1 ? "s" : ""}
 							</p>
 						)}

@@ -3,40 +3,27 @@
 import { Button } from "@/shared/components/ui/button";
 import { toggleNewsletter } from "@/modules/newsletter/actions/toggle-newsletter";
 import { Bell, BellOff, Loader2 } from "lucide-react";
-import { useActionState } from "react";
-import { useEffect } from "react";
-import { toast } from "sonner";
-import { ActionStatus } from "@/shared/types/server-action";
+import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 
 interface NewsletterSettingsCardProps {
 	isSubscribed: boolean;
 }
 
-export function NewsletterSettingsCard({
-	isSubscribed,
-}: NewsletterSettingsCardProps) {
-	const [state, action, isPending] = useActionState(toggleNewsletter, undefined);
-
-	useEffect(() => {
-		if (state?.status === ActionStatus.SUCCESS && state.message) {
-			toast.success(state.message);
-		} else if (state?.status && state.status !== ActionStatus.SUCCESS && state.message) {
-			toast.error(state.message);
-		}
-	}, [state]);
+export function NewsletterSettingsCard({ isSubscribed }: NewsletterSettingsCardProps) {
+	const { action, isPending } = useActionWithToast(toggleNewsletter);
 
 	return (
 		<section className="space-y-4">
 			<div>
-				<h2 className="text-base font-semibold flex items-center gap-2">
-					<Bell className="size-4 text-muted-foreground" />
+				<h2 className="flex items-center gap-2 text-base font-semibold">
+					<Bell className="text-muted-foreground size-4" />
 					Newsletter
 				</h2>
-				<p className="text-sm text-muted-foreground mt-0.5">
+				<p className="text-muted-foreground mt-0.5 text-sm">
 					Recevez nos nouveautés et offres exclusives
 				</p>
 			</div>
-			<div className="border-t border-border/60 pt-4">
+			<div className="border-border/60 border-t pt-4">
 				<div className="space-y-3">
 					<div className="flex items-center gap-2 text-sm">
 						{isSubscribed ? (
@@ -52,11 +39,7 @@ export function NewsletterSettingsCard({
 						)}
 					</div>
 					<form action={action}>
-						<input
-							type="hidden"
-							name="action"
-							value={isSubscribed ? "unsubscribe" : "subscribe"}
-						/>
+						<input type="hidden" name="action" value={isSubscribed ? "unsubscribe" : "subscribe"} />
 						<Button
 							type="submit"
 							variant={isSubscribed ? "outline" : "default"}
@@ -64,17 +47,13 @@ export function NewsletterSettingsCard({
 							disabled={isPending}
 						>
 							{isPending ? (
-								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 							) : isSubscribed ? (
-								<BellOff className="h-4 w-4 mr-2" />
+								<BellOff className="mr-2 h-4 w-4" />
 							) : (
-								<Bell className="h-4 w-4 mr-2" />
+								<Bell className="mr-2 h-4 w-4" />
 							)}
-							{isPending
-								? "Traitement..."
-								: isSubscribed
-									? "Se désinscrire"
-									: "S'inscrire"}
+							{isPending ? "Traitement..." : isSubscribed ? "Se désinscrire" : "S'inscrire"}
 						</Button>
 					</form>
 				</div>

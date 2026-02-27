@@ -135,10 +135,10 @@ export function InstallPromptBanner() {
 						ease: "easeOut",
 					}}
 					className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-6 md:left-6 md:max-w-md"
-					role="region"
+					role="alertdialog"
+					aria-modal="true"
 					aria-label="Installer l'application"
 					aria-describedby="install-description"
-					aria-live="polite"
 				>
 					<FocusScope trapped loop>
 						<div className="bg-background/95 border-primary/15 space-y-3 rounded-xl border p-4 shadow-lg backdrop-blur-md md:space-y-4 md:p-6">

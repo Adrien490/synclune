@@ -10,10 +10,7 @@ import {
 	useReducedMotion,
 	useScroll,
 } from "motion/react";
-import {
-	MOTION_CONFIG,
-	maybeReduceMotion,
-} from "@/shared/components/animations/motion.config";
+import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 
 const SCROLL_THRESHOLD = 1200;
 
@@ -30,7 +27,7 @@ function ScrollRing() {
 			width={ringSize}
 			height={ringSize}
 			viewBox={`0 0 ${ringSize} ${ringSize}`}
-			className="absolute inset-0 -rotate-90 pointer-events-none"
+			className="pointer-events-none absolute inset-0 -rotate-90"
 			aria-hidden="true"
 		>
 			{/* Track */}
@@ -67,10 +64,7 @@ export function ScrollToTop() {
 
 	const prefersReducedMotion = useReducedMotion();
 	const reducedMotion = prefersReducedMotion ?? false;
-	const transition = maybeReduceMotion(
-		MOTION_CONFIG.spring.snappy,
-		reducedMotion,
-	);
+	const transition = maybeReduceMotion(MOTION_CONFIG.spring.snappy, reducedMotion);
 
 	// Unified scroll tracking via Framer Motion
 	const { scrollY } = useScroll();
@@ -85,9 +79,7 @@ export function ScrollToTop() {
 	// SR announcements + cleanup in a single effect
 	useEffect(() => {
 		if (statusRef.current) {
-			statusRef.current.textContent = visible
-				? "Retour en haut disponible"
-				: "";
+			statusRef.current.textContent = visible ? "Retour en haut disponible" : "";
 
 			if (statusTimeoutRef.current) {
 				clearTimeout(statusTimeoutRef.current);
@@ -114,12 +106,7 @@ export function ScrollToTop() {
 	return (
 		<>
 			{/* Screen reader announcements */}
-			<div
-				ref={statusRef}
-				role="status"
-				aria-live="polite"
-				className="sr-only"
-			/>
+			<div ref={statusRef} role="status" aria-live="polite" className="sr-only" />
 
 			<AnimatePresence>
 				{visible && (
@@ -127,34 +114,22 @@ export function ScrollToTop() {
 						type="button"
 						onClick={scrollToTop}
 						aria-label="Retour en haut de la page"
-						initial={
-							reducedMotion
-								? { opacity: 0 }
-								: { opacity: 0, y: 16, scale: 0.9 }
-						}
-						animate={
-							reducedMotion
-								? { opacity: 1 }
-								: { opacity: 1, y: 0, scale: 1 }
-						}
-						exit={
-							reducedMotion
-								? { opacity: 0 }
-								: { opacity: 0, y: 16, scale: 0.9 }
-						}
+						initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.9 }}
+						animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+						exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.9 }}
 						transition={transition}
 						whileHover={reducedMotion ? undefined : { scale: 1.05 }}
 						whileTap={reducedMotion ? undefined : { scale: 0.95 }}
 						className={cn(
-							"fixed bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] md:bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] z-40",
-							"size-12 rounded-full bg-background/90 backdrop-blur-md shadow-md",
-							"hidden md:flex items-center justify-center cursor-pointer",
+							"fixed right-[max(1.5rem,env(safe-area-inset-right))] bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] z-40 md:bottom-[max(1.5rem,env(safe-area-inset-bottom))]",
+							"bg-background/90 size-12 rounded-full shadow-md backdrop-blur-md",
+							"hidden cursor-pointer items-center justify-center md:flex",
 							"hover:bg-background hover:shadow-lg",
-							"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
+							"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 						)}
 					>
 						{!reducedMotion && <ScrollRing />}
-						<ChevronUp className="size-5" />
+						<ChevronUp className="size-5" aria-hidden="true" />
 					</motion.button>
 				)}
 			</AnimatePresence>

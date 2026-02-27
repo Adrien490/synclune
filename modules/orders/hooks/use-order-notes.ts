@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { addOrderNote } from "@/modules/orders/actions/add-order-note";
 import { deleteOrderNote } from "@/modules/orders/actions/delete-order-note";
 import { getOrderNotes } from "@/modules/orders/data/get-order-notes";
@@ -18,47 +18,31 @@ export function useOrderNotes() {
 	const addSuccessRef = useRef<(() => void) | undefined>(undefined);
 	const removeSuccessRef = useRef<(() => void) | undefined>(undefined);
 
-	// Wrapped action refs, built in useEffect to avoid ref access during render
-	const wrappedAddRef = useRef<
-		(prev: ActionState | undefined, formData: FormData) => Promise<ActionState>
-	>(async (_prev: ActionState | undefined, formData: FormData) =>
-		addOrderNote(formData.get("orderId") as string, formData.get("content") as string),
-	);
-	const wrappedRemoveRef = useRef<
-		(prev: ActionState | undefined, formData: FormData) => Promise<ActionState>
-	>(async (_prev: ActionState | undefined, formData: FormData) =>
-		deleteOrderNote(formData.get("noteId") as string),
-	);
-	useEffect(() => {
-		wrappedAddRef.current = withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				addOrderNote(formData.get("orderId") as string, formData.get("content") as string),
-			createToastCallbacks({
-				onSuccess: () => {
-					addSuccessRef.current?.();
-				},
-			}),
-		);
-		wrappedRemoveRef.current = withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				deleteOrderNote(formData.get("noteId") as string),
-			createToastCallbacks({
-				onSuccess: () => {
-					removeSuccessRef.current?.();
-				},
-			}),
-		);
-	});
-
 	const [, addFormAction, isAddActionPending] = useActionState(
-		async (prev: ActionState | undefined, formData: FormData) =>
-			wrappedAddRef.current(prev, formData),
+		async (_prev: ActionState | undefined, formData: FormData) =>
+			withCallbacks(
+				async (_p: ActionState | undefined, fd: FormData) =>
+					addOrderNote(fd.get("orderId") as string, fd.get("content") as string),
+				createToastCallbacks({
+					onSuccess: () => {
+						addSuccessRef.current?.();
+					},
+				}),
+			)(_prev, formData),
 		undefined,
 	);
 
 	const [, removeFormAction, isRemoveActionPending] = useActionState(
-		async (prev: ActionState | undefined, formData: FormData) =>
-			wrappedRemoveRef.current(prev, formData),
+		async (_prev: ActionState | undefined, formData: FormData) =>
+			withCallbacks(
+				async (_p: ActionState | undefined, fd: FormData) =>
+					deleteOrderNote(fd.get("noteId") as string),
+				createToastCallbacks({
+					onSuccess: () => {
+						removeSuccessRef.current?.();
+					},
+				}),
+			)(_prev, formData),
 		undefined,
 	);
 

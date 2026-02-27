@@ -60,7 +60,7 @@ function ColorSwatchList({
 }) {
 	return (
 		<ul
-			className="relative z-30 flex items-center gap-1.5 list-none p-0 m-0"
+			className="relative z-30 m-0 flex list-none items-center gap-1.5 p-0"
 			aria-label={`${colors.length} couleurs disponibles pour ${title}`}
 		>
 			{colors.slice(0, 5).map((color) => (
@@ -68,11 +68,11 @@ function ColorSwatchList({
 					<Link
 						href={`${productUrl}?color=${color.slug}`}
 						className={cn(
-							"relative block size-6 sm:size-7 rounded-full border border-foreground/15 shrink-0",
-							"transition-transform duration-150 motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5",
-							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-							"after:absolute after:content-[''] after:-inset-2 after:rounded-full",
-							!color.inStock && "opacity-50"
+							"border-foreground/15 relative block size-6 shrink-0 rounded-full border sm:size-7",
+							"motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5 transition-transform duration-150",
+							"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
+							"after:absolute after:-inset-2 after:rounded-full after:content-['']",
+							!color.inStock && "opacity-50",
 						)}
 						style={{ backgroundColor: color.hex }}
 						title={color.name}
@@ -83,7 +83,7 @@ function ColorSwatchList({
 								aria-hidden="true"
 								className="absolute inset-0 flex items-center justify-center"
 							>
-								<span className="block w-[130%] h-[3px] bg-foreground rotate-[-45deg] rounded-full shadow-[0_0_0_1.5px_white]" />
+								<span className="bg-foreground block h-[3px] w-[130%] rotate-[-45deg] rounded-full shadow-[0_0_0_1.5px_white]" />
 							</span>
 						)}
 					</Link>
@@ -93,7 +93,7 @@ function ColorSwatchList({
 				<li>
 					<Link
 						href={productUrl}
-						className="relative z-30 text-xs text-muted-foreground min-h-11 min-w-11 flex items-center justify-center"
+						className="text-muted-foreground relative z-30 flex min-h-11 min-w-11 items-center justify-center text-xs"
 						aria-label={`Voir les ${colors.length} couleurs disponibles pour ${title}`}
 					>
 						+{colors.length - 5}
@@ -127,12 +127,7 @@ function ColorSwatchList({
  * <ProductCard product={product} index={0} />
  * ```
  */
-export function ProductCard({
-	product,
-	index,
-	isInWishlist = false,
-	sectionId,
-}: ProductCardProps) {
+export function ProductCard({ product, index, isInWishlist = false, sectionId }: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
 
@@ -152,9 +147,7 @@ export function ProductCard({
 
 	// Discount percentage for promo badge
 	const hasDiscount = compareAtPrice !== null && compareAtPrice > price && price > 0;
-	const discountPercent = hasDiscount
-		? Math.round((1 - price / compareAtPrice) * 100)
-		: 0;
+	const discountPercent = hasDiscount ? Math.round((1 - price / compareAtPrice) * 100) : 0;
 
 	// Stock badges take priority over promo badge (same position)
 	const showPromoBadge = hasDiscount && stockStatus !== "out_of_stock" && !showUrgencyBadge;
@@ -169,22 +162,25 @@ export function ProductCard({
 		badgeDescriptions.push(stockMessage);
 	} else if (showUrgencyBadge) {
 		badgeDescriptions.push(
-			`Stock limité : plus que ${inventory} exemplaire${inventory > 1 ? "s" : ""} disponible${inventory > 1 ? "s" : ""}`
+			`Stock limité : plus que ${inventory} exemplaire${inventory > 1 ? "s" : ""} disponible${inventory > 1 ? "s" : ""}`,
 		);
 	}
 	if (showPromoBadge) {
 		badgeDescriptions.push(`Promotion : -${discountPercent}%`);
 	}
-	const badgeDescId = badgeDescriptions.length > 0
-		? sectionId ? `product-badges-${sectionId}-${product.id}` : `product-badges-${product.id}`
-		: undefined;
+	const badgeDescId =
+		badgeDescriptions.length > 0
+			? sectionId
+				? `product-badges-${sectionId}-${product.id}`
+				: `product-badges-${product.id}`
+			: undefined;
 
 	return (
 		<article
 			aria-labelledby={titleId}
 			aria-describedby={badgeDescId}
 			className={cn(
-				"product-card grid relative overflow-hidden bg-card rounded-lg sm:rounded-xl group border-2 border-transparent gap-4",
+				"product-card bg-card group relative grid gap-4 overflow-hidden rounded-lg border-2 border-transparent sm:rounded-xl",
 				"transition-[transform,border-color,box-shadow] duration-300 ease-out",
 				// Disable transforms for motion-reduce, keep color transitions (WCAG 2.3.3)
 				"motion-reduce:transition-colors",
@@ -194,8 +190,8 @@ export function ProductCard({
 				// Lift effect on hover (scale + translateY)
 				"motion-safe:can-hover:hover:scale-[1.02]",
 				// Focus state for keyboard navigation
-				"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
-				"can-hover:group-hover:will-change-transform"
+				"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
+				"can-hover:group-hover:will-change-transform",
 			)}
 		>
 			{/* sr-only badge descriptions for screen readers */}
@@ -207,39 +203,32 @@ export function ProductCard({
 
 			{/* Image container with interactive buttons */}
 			{/* bg-muted acts as CSS-only fallback if image fails to load */}
-			<div className={cn(
-				"product-card-media relative overflow-hidden bg-muted rounded-lg sm:rounded-xl",
-				"aspect-3/4 sm:aspect-4/5",
-				// Gradient overlay on hover
-				"after:absolute after:inset-0 after:z-[5] after:bg-gradient-to-t after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity after:duration-300 motion-safe:can-hover:group-hover:after:opacity-100",
-			)}>
-
+			<div
+				className={cn(
+					"product-card-media bg-muted relative overflow-hidden rounded-lg sm:rounded-xl",
+					"aspect-3/4 sm:aspect-4/5",
+					// Gradient overlay on hover
+					"motion-safe:can-hover:group-hover:after:opacity-100 after:absolute after:inset-0 after:z-[5] after:bg-gradient-to-t after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity after:duration-300",
+				)}
+			>
 				{/* Status badges — stock badges take priority over promo (same position) */}
 				{stockStatus === "out_of_stock" && (
 					<CardBadge
 						variant="secondary"
-						className="backdrop-blur-sm bg-foreground/80 text-background border-0"
+						className="bg-foreground/80 text-background border-0 backdrop-blur-sm"
 					>
 						{stockMessage}
 					</CardBadge>
 				)}
-				{showUrgencyBadge && (
-					<CardBadge variant="warning">
-						{stockMessage}
-					</CardBadge>
-				)}
-				{showPromoBadge && (
-					<CardBadge variant="destructive">
-						-{discountPercent}%
-					</CardBadge>
-				)}
+				{showUrgencyBadge && <CardBadge variant="warning">{stockMessage}</CardBadge>}
+				{showPromoBadge && <CardBadge variant="destructive">-{discountPercent}%</CardBadge>}
 
 				{/* Wishlist button (client island) */}
 				<WishlistButton
 					productId={product.id}
 					isInWishlist={isInWishlist}
 					productTitle={title}
-					className="absolute top-2.5 right-2.5 z-30 opacity-100 scale-90 sm:opacity-0 sm:scale-90 motion-safe:can-hover:sm:group-hover:opacity-100 motion-safe:can-hover:sm:group-hover:scale-100 sm:focus-within:opacity-100 sm:focus-within:scale-100 sm:has-[:focus-visible]:opacity-100 transition-[opacity,transform] duration-200"
+					className="motion-safe:can-hover:sm:group-hover:opacity-100 motion-safe:can-hover:sm:group-hover:scale-100 absolute top-2.5 right-2.5 z-30 scale-90 opacity-100 transition-[opacity,transform] duration-200 sm:scale-90 sm:opacity-0 sm:focus-within:scale-100 sm:focus-within:opacity-100 sm:has-[:focus-visible]:opacity-100"
 				/>
 
 				<div className="absolute inset-0">
@@ -248,8 +237,9 @@ export function ProductCard({
 						alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 						fill
 						className={cn(
-							"object-cover rounded-lg sm:rounded-xl",
-							!secondaryImage && "motion-safe:transition-[transform] motion-safe:duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
+							"rounded-lg object-cover sm:rounded-xl",
+							!secondaryImage &&
+								"motion-safe:can-hover:group-hover:scale-[1.08] ease-out motion-safe:transition-[transform] motion-safe:duration-300",
 						)}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
@@ -261,7 +251,7 @@ export function ProductCard({
 							src={secondaryImage.url}
 							alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 							fill
-							className="object-cover rounded-lg sm:rounded-xl opacity-0 scale-[1.02] motion-safe:transition-[opacity,transform] motion-safe:duration-500 ease-out can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100"
+							className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-lg object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500 sm:rounded-xl"
 							loading="lazy"
 							sizes={IMAGE_SIZES.PRODUCT_CARD}
 						/>
@@ -280,19 +270,15 @@ export function ProductCard({
 			</div>
 
 			{/* Card content — no position:relative so stretched link ::after reaches the article */}
-			<div className="flex flex-col gap-3 sm:gap-3.5 px-3 pb-4 sm:px-4 sm:pb-5 lg:px-5 lg:pb-6 pt-1 overflow-hidden">
+			<div className="flex flex-col gap-3 overflow-hidden px-3 pt-1 pb-4 sm:gap-3.5 sm:px-4 sm:pb-5 lg:px-5 lg:pb-6">
 				{/* Stretched link: title link with ::after covering the entire card */}
 				<Link
 					href={productUrl}
-					title={title}
-					className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm after:absolute after:inset-0 after:z-10"
+					className="focus-visible:outline-ring block after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2"
 				>
 					<h3
 						id={titleId}
-						className={cn(
-							"font-sans text-foreground tracking-normal",
-							"text-base sm:text-lg",
-						)}
+						className={cn("text-foreground font-sans tracking-normal", "text-base sm:text-lg")}
 					>
 						{title}
 					</h3>
@@ -300,11 +286,7 @@ export function ProductCard({
 
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (
-					<ColorSwatchList
-						colors={colors}
-						productUrl={productUrl}
-						title={title}
-					/>
+					<ColorSwatchList colors={colors} productUrl={productUrl} title={title} />
 				)}
 
 				{/* Prix */}

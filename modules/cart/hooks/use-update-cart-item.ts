@@ -2,7 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useEffect, useRef, useTransition } from "react";
+import { useActionState, useRef, useTransition } from "react";
 import { updateCartItem } from "@/modules/cart/actions/update-cart-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import type { ActionState } from "@/shared/types/server-action";
@@ -30,43 +30,34 @@ export const useUpdateCartItem = (options?: UseUpdateCartItemOptions) => {
 	// Ref pour stocker le delta pending (pour rollback)
 	const pendingDeltaRef = useRef<number>(0);
 
-	// Wrapped action ref, built in useEffect to avoid ref access during render
-	const wrappedActionRef =
-		useRef<(prev: ActionState | undefined, formData: FormData) => Promise<ActionState>>(
-			updateCartItem,
-		);
-	useEffect(() => {
-		wrappedActionRef.current = withCallbacks(
-			updateCartItem,
-			createToastCallbacks({
-				showSuccessToast: false,
-				onSuccess: (result: unknown) => {
-					// Reset le delta après succès
-					pendingDeltaRef.current = 0;
-
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
-						options?.onSuccess?.(result.message);
-					}
-				},
-				onError: () => {
-					// Rollback du badge navbar
-					adjustCart(-pendingDeltaRef.current);
-					pendingDeltaRef.current = 0;
-				},
-			}),
-		);
-	});
-
 	const [isTransitionPending, startTransition] = useTransition();
 
 	const [state, formAction, isActionPending] = useActionState(
 		async (prev: ActionState | undefined, formData: FormData) =>
-			wrappedActionRef.current(prev, formData),
+			withCallbacks(
+				updateCartItem,
+				createToastCallbacks({
+					showSuccessToast: false,
+					onSuccess: (result: unknown) => {
+						// Reset le delta après succès
+						pendingDeltaRef.current = 0;
+
+						if (
+							result &&
+							typeof result === "object" &&
+							"message" in result &&
+							typeof result.message === "string"
+						) {
+							options?.onSuccess?.(result.message);
+						}
+					},
+					onError: () => {
+						// Rollback du badge navbar
+						adjustCart(-pendingDeltaRef.current);
+						pendingDeltaRef.current = 0;
+					},
+				}),
+			)(prev, formData),
 		undefined,
 	);
 

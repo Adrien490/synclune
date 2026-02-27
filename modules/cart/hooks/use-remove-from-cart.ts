@@ -2,7 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useEffect, useRef, useTransition } from "react";
+import { useActionState, useRef, useTransition } from "react";
 import { removeFromCart } from "@/modules/cart/actions/remove-from-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import type { ActionState } from "@/shared/types/server-action";
@@ -26,39 +26,30 @@ export const useRemoveFromCart = (options?: UseRemoveFromCartOptions) => {
 	// Ref pour stocker la quantité pending (pour rollback)
 	const pendingQuantityRef = useRef<number>(0);
 
-	// Wrapped action ref, built in useEffect to avoid ref access during render
-	const wrappedActionRef =
-		useRef<(prev: ActionState | undefined, formData: FormData) => Promise<ActionState>>(
-			removeFromCart,
-		);
-	useEffect(() => {
-		wrappedActionRef.current = withCallbacks(
-			removeFromCart,
-			createToastCallbacks({
-				showSuccessToast: false,
-				onSuccess: (result: unknown) => {
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
-						options?.onSuccess?.(result.message);
-					}
-				},
-				onError: () => {
-					// Rollback du badge navbar
-					adjustCart(pendingQuantityRef.current);
-				},
-			}),
-		);
-	});
-
 	const [isTransitionPending, startTransition] = useTransition();
 
 	const [state, formAction, isActionPending] = useActionState(
 		async (prev: ActionState | undefined, formData: FormData) =>
-			wrappedActionRef.current(prev, formData),
+			withCallbacks(
+				removeFromCart,
+				createToastCallbacks({
+					showSuccessToast: false,
+					onSuccess: (result: unknown) => {
+						if (
+							result &&
+							typeof result === "object" &&
+							"message" in result &&
+							typeof result.message === "string"
+						) {
+							options?.onSuccess?.(result.message);
+						}
+					},
+					onError: () => {
+						// Rollback du badge navbar
+						adjustCart(pendingQuantityRef.current);
+					},
+				}),
+			)(prev, formData),
 		undefined,
 	);
 

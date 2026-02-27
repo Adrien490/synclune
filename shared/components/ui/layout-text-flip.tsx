@@ -71,7 +71,7 @@ export function LayoutTextFlip({
 		// Transition hover
 		"transition-shadow duration-300",
 		"hover:shadow-lg hover:shadow-primary/25",
-		wordsClassName
+		wordsClassName,
 	);
 
 	// Styles pour le texte
@@ -80,7 +80,7 @@ export function LayoutTextFlip({
 	// Mode reduced motion : affichage statique
 	if (shouldReduceMotion) {
 		return (
-			<span className="inline-flex items-center gap-[0.35em] flex-wrap justify-center">
+			<span className="inline-flex flex-wrap items-center justify-center gap-[0.35em]">
 				<span className={textClassName}>{text}</span>
 				<span className={pillStyles} style={{ contain: "layout paint" }}>
 					<span className={textStyles}>{words[0]}</span>
@@ -90,18 +90,17 @@ export function LayoutTextFlip({
 	}
 
 	return (
-		<span className="inline-flex items-center gap-[0.35em] flex-wrap justify-center">
+		<span className="inline-flex flex-wrap items-center justify-center gap-[0.35em]">
 			<span className={textClassName}>{text}</span>
 
-			{/* Pill avec le texte animé - aria-live pour annoncer les changements aux lecteurs d'écran */}
+			{/* Pill avec le texte animé - aria-label statique pour éviter les annonces répétées */}
 			<span
 				className={pillStyles}
 				style={{ contain: "layout paint" }}
-				aria-live="polite"
-				aria-atomic="true"
+				aria-label={words.join(" et ")}
 			>
 				{/* Container relatif pour le positionnement */}
-				<span className="relative inline-flex items-center">
+				<span className="relative inline-flex items-center" aria-hidden="true">
 					{/* Texte animé - position absolute */}
 					<AnimatePresence mode="wait">
 						<motion.span
@@ -117,9 +116,7 @@ export function LayoutTextFlip({
 					</AnimatePresence>
 
 					{/* Placeholder invisible - réserve la largeur du mot le plus long */}
-					<span className={cn(textStyles, "invisible select-none")} aria-hidden="true">
-						{longestWord}
-					</span>
+					<span className={cn(textStyles, "invisible select-none")}>{longestWord}</span>
 				</span>
 			</span>
 		</span>
