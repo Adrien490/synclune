@@ -7,6 +7,7 @@ import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/stat
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -33,7 +34,7 @@ import { extractCustomerFirstName } from "../utils/customer-name";
  */
 export async function cancelOrder(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -82,15 +83,16 @@ export async function cancelOrder(
 
 			// Validate via state machine service (blocks SHIPPED, DELIVERED, CANCELLED)
 			if (!canCancelOrder(found)) {
-				const _error = found.status === OrderStatus.CANCELLED ? "already_cancelled" as const : "cannot_cancel" as const;
+				const _error =
+					found.status === OrderStatus.CANCELLED
+						? ("already_cancelled" as const)
+						: ("cannot_cancel" as const);
 				return { ...found, _error };
 			}
 
 			// Déterminer le nouveau paymentStatus
 			const newPaymentStatus =
-				found.paymentStatus === PaymentStatus.PAID
-					? PaymentStatus.REFUNDED
-					: found.paymentStatus;
+				found.paymentStatus === PaymentStatus.PAID ? PaymentStatus.REFUNDED : found.paymentStatus;
 
 			// Ne restaurer le stock QUE si la commande était PENDING
 			const shouldRestoreStock = found.paymentStatus === PaymentStatus.PENDING;
@@ -136,7 +138,11 @@ export async function cancelOrder(
 				},
 			});
 
-			return { ...found, _newPaymentStatus: newPaymentStatus, _shouldRestoreStock: shouldRestoreStock };
+			return {
+				...found,
+				_newPaymentStatus: newPaymentStatus,
+				_shouldRestoreStock: shouldRestoreStock,
+			};
 		});
 
 		if (!order) {
@@ -157,13 +163,31 @@ export async function cancelOrder(
 			};
 		}
 
+		// Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.cancel",
+			targetType: "order",
+			targetId: id,
+			metadata: {
+				orderNumber: order.orderNumber,
+				previousStatus: order.status,
+				reason: sanitizedReason,
+				stockRestored: order._shouldRestoreStock,
+			},
+		});
+
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
 		// Envoyer l'email de confirmation d'annulation au client
 		let emailSent = false;
 		if (order.customerEmail) {
-			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
+			const customerFirstName = extractCustomerFirstName(
+				order.customerName,
+				order.shippingFirstName,
+			);
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
@@ -188,13 +212,18 @@ export async function cancelOrder(
 				? " Le statut de paiement a été passé à REFUNDED."
 				: "";
 
-		const stockMessage = order._shouldRestoreStock && order.items.length > 0
-			? ` Stock restauré pour ${order.items.length} article(s).`
-			: order.items.length > 0 && !order._shouldRestoreStock
-				? " Stock non restauré (commande déjà payée/traitée)."
-				: "";
+		const stockMessage =
+			order._shouldRestoreStock && order.items.length > 0
+				? ` Stock restauré pour ${order.items.length} article(s).`
+				: order.items.length > 0 && !order._shouldRestoreStock
+					? " Stock non restauré (commande déjà payée/traitée)."
+					: "";
 
-		const emailMessage = emailSent ? " Email envoyé au client." : order.customerEmail ? " (Échec envoi email)" : "";
+		const emailMessage = emailSent
+			? " Email envoyé au client."
+			: order.customerEmail
+				? " (Échec envoi email)"
+				: "";
 
 		return {
 			status: ActionStatus.SUCCESS,

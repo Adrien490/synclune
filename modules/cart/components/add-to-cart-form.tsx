@@ -86,8 +86,8 @@ export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
 					"bg-primary hover:bg-primary/90",
 					"text-primary-foreground font-semibold",
 					// Animation fluide
-					"transform-gpu transition-all duration-300",
-					"hover:scale-[1.02] hover:shadow-xl",
+					"transform-gpu transition-[transform,box-shadow] duration-300",
+					"can-hover:hover:scale-[1.02] can-hover:hover:shadow-xl",
 					"active:scale-[0.98]",
 					// Anneau de focus accessible
 					"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2",

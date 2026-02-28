@@ -1,5 +1,3 @@
-import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton";
-import { getCart } from "@/modules/cart/data/get-cart";
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 // Lazy-loaded: rarely shown (2nd visit + Chrome/Edge or iOS only)
@@ -10,7 +8,6 @@ import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
-import { StructuredDataAsync } from "@/shared/components/structured-data-async";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
@@ -20,15 +17,6 @@ import { cormorantGaramond, inter, petitFormalScript } from "@/shared/styles/fon
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import "./globals.css";
-
-// Lazy loading des composants lourds - charges uniquement a l'ouverture
-const CartSheet = dynamic(() =>
-	import("@/modules/cart/components/cart-sheet").then((mod) => mod.CartSheet),
-);
-
-const SkuSelectorDialog = dynamic(() =>
-	import("@/modules/cart/components/sku-selector-dialog").then((mod) => mod.SkuSelectorDialog),
-);
 
 export const metadata = rootMetadata;
 export const viewport = rootViewport;
@@ -49,6 +37,9 @@ export default async function RootLayout({
 				{/* Preconnect to Stripe for faster checkout initialization */}
 				<link rel="dns-prefetch" href="https://js.stripe.com" />
 				<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
+				{/* Preconnect to Google Fonts for faster font loading */}
+				<link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 			</head>
 			<body
 				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}
@@ -76,38 +67,14 @@ export default async function RootLayout({
 							<ConditionalAnalytics />
 							{children}
 
-							<ErrorBoundary
-								errorMessage="Impossible de charger le panier"
-								className="bg-muted fixed right-4 bottom-4 z-50 flex max-w-xs items-center justify-center rounded-lg shadow-lg"
-							>
-								<Suspense fallback={<CartSheetSkeleton />}>
-									<CartAndSkuLoader />
-								</Suspense>
-							</ErrorBoundary>
 							<UnsavedChangesDialog />
 							<CookieBanner />
 							<InstallPromptBanner />
 						</Suspense>
 					</RootProviders>
 					<AppToaster />
-					{/* JSON-LD global - placé dans body comme recommandé par Next.js */}
-					<ErrorBoundary fallback={null}>
-						<Suspense fallback={null}>
-							<StructuredDataAsync />
-						</Suspense>
-					</ErrorBoundary>
 				</SerwistProvider>
 			</body>
 		</html>
-	);
-}
-
-async function CartAndSkuLoader() {
-	const cart = await getCart();
-	return (
-		<>
-			<CartSheet cart={cart} />
-			<SkuSelectorDialog cart={cart} />
-		</>
 	);
 }

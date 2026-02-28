@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockIsAdmin,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		color: { findFirst: vi.fn() },
 	},
@@ -51,7 +46,12 @@ vi.mock("../../constants/color.constants", () => ({
 	GET_COLORS_DEFAULT_PER_PAGE: 20,
 	GET_COLORS_MAX_RESULTS_PER_PAGE: 200,
 	GET_COLORS_DEFAULT_SORT_BY: "name-ascending",
-	GET_COLORS_SORT_FIELDS: ["name-ascending", "name-descending", "skuCount-ascending", "skuCount-descending"],
+	GET_COLORS_SORT_FIELDS: [
+		"name-ascending",
+		"name-descending",
+		"skuCount-ascending",
+		"skuCount-descending",
+	],
 }));
 
 import { getColorBySlug } from "../get-color";
@@ -108,7 +108,7 @@ describe("getColorBySlug", () => {
 		expect(mockPrisma.color.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { slug: "rouge", isActive: true },
-			})
+			}),
 		);
 	});
 
@@ -121,7 +121,7 @@ describe("getColorBySlug", () => {
 		expect(mockPrisma.color.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -132,7 +132,7 @@ describe("getColorBySlug", () => {
 
 		await getColorBySlug({ slug: "rouge", includeInactive: true });
 
-		const call = mockPrisma.color.findFirst.mock.calls[0][0];
+		const call = mockPrisma.color.findFirst.mock.calls[0]![0];
 		expect(call.where).not.toHaveProperty("isActive");
 	});
 
@@ -145,7 +145,7 @@ describe("getColorBySlug", () => {
 		expect(mockPrisma.color.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -158,7 +158,7 @@ describe("getColorBySlug", () => {
 		expect(mockPrisma.color.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -171,7 +171,7 @@ describe("getColorBySlug", () => {
 		expect(mockPrisma.color.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ slug: "bleu-nuit" }),
-			})
+			}),
 		);
 	});
 
@@ -227,7 +227,7 @@ describe("getColorBySlug", () => {
 					createdAt: true,
 					updatedAt: true,
 				},
-			})
+			}),
 		);
 	});
 });

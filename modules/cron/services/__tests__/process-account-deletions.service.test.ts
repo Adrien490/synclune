@@ -1,14 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockDeleteUploadThingFileFromUrl, mockDeleteUploadThingFilesFromUrls } = vi.hoisted(() => ({
-	mockPrisma: {
-		user: { findMany: vi.fn() },
-		reviewMedia: { findMany: vi.fn() },
-		$transaction: vi.fn(),
-	},
-	mockDeleteUploadThingFileFromUrl: vi.fn(),
-	mockDeleteUploadThingFilesFromUrls: vi.fn(),
-}));
+const { mockPrisma, mockDeleteUploadThingFileFromUrl, mockDeleteUploadThingFilesFromUrls } =
+	vi.hoisted(() => ({
+		mockPrisma: {
+			user: { findMany: vi.fn() },
+			reviewMedia: { findMany: vi.fn() },
+			$transaction: vi.fn(),
+		},
+		mockDeleteUploadThingFileFromUrl: vi.fn(),
+		mockDeleteUploadThingFilesFromUrls: vi.fn(),
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -68,10 +69,10 @@ describe("processAccountDeletions", () => {
 			take: 25,
 		});
 
-		const call = mockPrisma.user.findMany.mock.calls[0][0];
+		const call = mockPrisma.user.findMany.mock.calls[0]![0];
 		const gracePeriodEnd = call.where.deletionRequestedAt.lt;
 		const expectedDate = new Date(
-			Date.now() - RETENTION.GDPR_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+			Date.now() - RETENTION.GDPR_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
 		);
 		expect(gracePeriodEnd.getTime()).toBe(expectedDate.getTime());
 	});
@@ -92,7 +93,7 @@ describe("processAccountDeletions", () => {
 		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 
-		const transactionFn = mockPrisma.$transaction.mock.calls[0][0];
+		const transactionFn = mockPrisma.$transaction.mock.calls[0]![0];
 		const mockTx = {
 			user: {
 				findUnique: vi.fn().mockResolvedValue({ accountStatus: "PENDING_DELETION" }),
@@ -154,7 +155,7 @@ describe("processAccountDeletions", () => {
 
 		await processAccountDeletions();
 
-		const transactionFn = mockPrisma.$transaction.mock.calls[0][0];
+		const transactionFn = mockPrisma.$transaction.mock.calls[0]![0];
 		const mockTx = {
 			user: {
 				findUnique: vi.fn().mockResolvedValue({ accountStatus: "PENDING_DELETION" }),
@@ -216,9 +217,7 @@ describe("processAccountDeletions", () => {
 
 		await processAccountDeletions();
 
-		expect(mockDeleteUploadThingFileFromUrl).toHaveBeenCalledWith(
-			"https://utfs.io/f/abc123"
-		);
+		expect(mockDeleteUploadThingFileFromUrl).toHaveBeenCalledWith("https://utfs.io/f/abc123");
 	});
 
 	it("should delete review media from UploadThing after successful transaction", async () => {
@@ -260,9 +259,7 @@ describe("processAccountDeletions", () => {
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
-		mockDeleteUploadThingFileFromUrl.mockRejectedValue(
-			new Error("UploadThing API error")
-		);
+		mockDeleteUploadThingFileFromUrl.mockRejectedValue(new Error("UploadThing API error"));
 
 		const result = await processAccountDeletions();
 
@@ -281,9 +278,7 @@ describe("processAccountDeletions", () => {
 			{ url: "https://utfs.io/f/failing-review" },
 		]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
-		mockDeleteUploadThingFilesFromUrls.mockRejectedValue(
-			new Error("UploadThing batch error")
-		);
+		mockDeleteUploadThingFilesFromUrls.mockRejectedValue(new Error("UploadThing batch error"));
 
 		const result = await processAccountDeletions();
 

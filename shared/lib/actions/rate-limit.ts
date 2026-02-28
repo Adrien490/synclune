@@ -8,10 +8,7 @@
  * sont dans @/modules/auth/lib/rate-limit-helpers
  */
 
-import {
-	checkRateLimit,
-	type RateLimitConfig,
-} from "@/shared/lib/rate-limit";
+import { checkRateLimit, type RateLimitConfig } from "@/shared/lib/rate-limit";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 /**
@@ -33,7 +30,7 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 export async function enforceRateLimit(
 	identifier: string,
 	limit: RateLimitConfig,
-	ipAddress?: string | null
+	ipAddress?: string | null,
 ): Promise<{ success: true } | { error: ActionState }> {
 	const check = await checkRateLimit(identifier, limit, ipAddress);
 
@@ -42,10 +39,6 @@ export async function enforceRateLimit(
 			error: {
 				status: ActionStatus.ERROR,
 				message: check.error || "Trop de requêtes. Veuillez réessayer plus tard.",
-				data: {
-					retryAfter: check.retryAfter,
-					reset: check.reset,
-				},
 			},
 		};
 	}

@@ -5,12 +5,7 @@ import type Stripe from "stripe";
 // Hoisted mocks - must be declared before any imports
 // ============================================================================
 
-const {
-	mockTx,
-	mockPrisma,
-	mockGetBaseUrl,
-	mockROUTES,
-} = vi.hoisted(() => {
+const { mockTx, mockPrisma, mockGetBaseUrl, mockROUTES } = vi.hoisted(() => {
 	const mockTx = {
 		dispute: {
 			create: vi.fn(),
@@ -113,7 +108,14 @@ function makeDispute(overrides: Partial<Stripe.Dispute> = {}): Stripe.Dispute {
 	} as unknown as Stripe.Dispute;
 }
 
-function makeOrder(overrides: Partial<{ id: string; orderNumber: string; customerEmail: string | null; paymentStatus: string }> = {}) {
+function makeOrder(
+	overrides: Partial<{
+		id: string;
+		orderNumber: string;
+		customerEmail: string | null;
+		paymentStatus: string;
+	}> = {},
+) {
 	return {
 		id: "order-1",
 		orderNumber: "SYN-001",
@@ -134,7 +136,7 @@ describe("handleDisputeCreated", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(makeOrder());
 		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx)
+			cb(mockTx),
 		);
 		mockTx.dispute.create.mockResolvedValue({});
 		mockTx.orderNote.create.mockResolvedValue({});
@@ -192,7 +194,7 @@ describe("handleDisputeCreated", () => {
 		const dispute = makeDispute({ payment_intent: null as unknown as string });
 
 		await expect(handleDisputeCreated(dispute)).rejects.toThrow(
-			"Dispute dp_test_1 has no payment_intent"
+			"Dispute dp_test_1 has no payment_intent",
 		);
 
 		expect(mockPrisma.order.findUnique).not.toHaveBeenCalled();
@@ -203,7 +205,7 @@ describe("handleDisputeCreated", () => {
 		const dispute = makeDispute();
 
 		await expect(handleDisputeCreated(dispute)).rejects.toThrow(
-			"No order found for dispute dp_test_1 (PI: pi_test_1)"
+			"No order found for dispute dp_test_1 (PI: pi_test_1)",
 		);
 
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
@@ -237,7 +239,7 @@ describe("handleDisputeCreated", () => {
 
 		await handleDisputeCreated(dispute);
 
-		const createCall = mockTx.orderNote.create.mock.calls[0][0];
+		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
 		expect(createCall.data.content).toContain("bank_cannot_process");
 	});
 
@@ -246,7 +248,7 @@ describe("handleDisputeCreated", () => {
 
 		await handleDisputeCreated(dispute);
 
-		const createCall = mockTx.orderNote.create.mock.calls[0][0];
+		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
 		expect(createCall.data.content).toContain("Deadline de réponse: N/A");
 	});
 
@@ -269,7 +271,7 @@ describe("handleDisputeCreated", () => {
 		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { stripePaymentIntentId: "pi_object_1" },
-			})
+			}),
 		);
 	});
 
@@ -295,7 +297,7 @@ describe("handleDisputeClosed", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(makeOrder());
 		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx)
+			cb(mockTx),
 		);
 		mockTx.dispute.findUnique.mockResolvedValue({ id: "dispute-1" });
 		mockTx.dispute.update.mockResolvedValue({});
@@ -318,7 +320,7 @@ describe("handleDisputeClosed", () => {
 		});
 
 		// Verify note content reflects a won dispute
-		const createCall = mockTx.orderNote.create.mock.calls[0][0];
+		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
 		expect(createCall.data.content).toContain("[LITIGE CLOTURE] Litige dp_test_1 clôturé: gagné");
 		expect(createCall.data.content).not.toContain("Le montant a été débité par Stripe.");
 
@@ -349,7 +351,7 @@ describe("handleDisputeClosed", () => {
 		});
 
 		// Verify note content reflects a lost dispute
-		const createCall = mockTx.orderNote.create.mock.calls[0][0];
+		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
 		expect(createCall.data.content).toContain("[LITIGE CLOTURE] Litige dp_test_1 clôturé: perdu");
 		expect(createCall.data.content).toContain("Le montant a été débité par Stripe.");
 
@@ -382,7 +384,7 @@ describe("handleDisputeClosed", () => {
 		const dispute = makeDispute({ payment_intent: null as unknown as string });
 
 		await expect(handleDisputeClosed(dispute)).rejects.toThrow(
-			"Dispute dp_test_1 closed has no payment_intent"
+			"Dispute dp_test_1 closed has no payment_intent",
 		);
 
 		expect(mockPrisma.order.findUnique).not.toHaveBeenCalled();
@@ -393,7 +395,7 @@ describe("handleDisputeClosed", () => {
 		const dispute = makeDispute({ status: "won" });
 
 		await expect(handleDisputeClosed(dispute)).rejects.toThrow(
-			"No order found for closed dispute dp_test_1 (PI: pi_test_1)"
+			"No order found for closed dispute dp_test_1 (PI: pi_test_1)",
 		);
 
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
@@ -448,7 +450,7 @@ describe("handleDisputeClosed", () => {
 		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { stripePaymentIntentId: "pi_object_2" },
-			})
+			}),
 		);
 	});
 

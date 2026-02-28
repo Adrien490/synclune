@@ -132,7 +132,7 @@ describe("getAvailableColorsForList", () => {
 			color: makeColor("argent", "#C0C0C0", "Argent"),
 		});
 		const result = getAvailableColorsForList(makeProduct([sku]));
-		expect(result[0].inStock).toBe(false);
+		expect(result[0]!.inStock).toBe(false);
 	});
 
 	it("should mark color as inStock=true if at least one sku of that color is in stock", () => {
@@ -140,12 +140,16 @@ describe("getAvailableColorsForList", () => {
 		const skuOutOfStock = makeSku({ inventory: 0, color: makeColor("or", "#FFD700", "Or") });
 		const result = getAvailableColorsForList(makeProduct([skuOutOfStock, skuInStock]));
 		expect(result).toHaveLength(1);
-		expect(result[0].inStock).toBe(true);
+		expect(result[0]!.inStock).toBe(true);
 	});
 
 	it("should deduplicate colors by slug", () => {
 		const sku1 = makeSku({ color: makeColor("or", "#FFD700", "Or"), inventory: 5 });
-		const sku2 = makeSku({ color: makeColor("or", "#FFD700", "Or"), inventory: 3, size: "54" } as unknown as SkuLike);
+		const sku2 = makeSku({
+			color: makeColor("or", "#FFD700", "Or"),
+			inventory: 3,
+			size: "54",
+		} as unknown as SkuLike);
 		const result = getAvailableColorsForList(makeProduct([sku1, sku2]));
 		expect(result).toHaveLength(1);
 	});

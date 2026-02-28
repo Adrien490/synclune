@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockIsAdmin,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		material: { findFirst: vi.fn() },
 	},
@@ -117,7 +112,7 @@ describe("getMaterialBySlug", () => {
 		expect(mockPrisma.material.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { slug: "argent", isActive: true },
-			})
+			}),
 		);
 	});
 
@@ -130,7 +125,7 @@ describe("getMaterialBySlug", () => {
 		expect(mockPrisma.material.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -141,7 +136,7 @@ describe("getMaterialBySlug", () => {
 
 		await getMaterialBySlug({ slug: "argent", includeInactive: true });
 
-		const call = mockPrisma.material.findFirst.mock.calls[0][0];
+		const call = mockPrisma.material.findFirst.mock.calls[0]![0];
 		expect(call.where).not.toHaveProperty("isActive");
 	});
 
@@ -154,7 +149,7 @@ describe("getMaterialBySlug", () => {
 		expect(mockPrisma.material.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -167,7 +162,7 @@ describe("getMaterialBySlug", () => {
 		expect(mockPrisma.material.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -180,7 +175,7 @@ describe("getMaterialBySlug", () => {
 		expect(mockPrisma.material.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ slug: "or-jaune" }),
-			})
+			}),
 		);
 	});
 
@@ -237,7 +232,7 @@ describe("getMaterialBySlug", () => {
 					createdAt: true,
 					updatedAt: true,
 				},
-			})
+			}),
 		);
 	});
 });

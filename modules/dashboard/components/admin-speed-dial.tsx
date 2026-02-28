@@ -1,10 +1,6 @@
 "use client";
 
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { MessageSquare } from "lucide-react";
 
@@ -17,7 +13,7 @@ interface AdminSpeedDialProps {
  */
 export function AdminSpeedDial({ email }: AdminSpeedDialProps) {
 	return (
-		<div className="hidden md:block fixed z-45 bottom-6 right-6">
+		<div className="fixed right-6 bottom-6 z-45 hidden md:block">
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<a
@@ -26,9 +22,9 @@ export function AdminSpeedDial({ email }: AdminSpeedDialProps) {
 							"flex items-center justify-center",
 							"size-14 rounded-full",
 							"bg-primary text-primary-foreground",
-							"shadow-lg hover:shadow-xl hover:shadow-primary/25",
+							"can-hover:hover:shadow-xl can-hover:hover:shadow-primary/25 shadow-lg",
 							"hover:bg-primary/90",
-							"active:scale-95 transition-all"
+							"transition-all active:scale-95",
 						)}
 						aria-label="Envoyer un email à Adrien"
 					>
@@ -37,9 +33,7 @@ export function AdminSpeedDial({ email }: AdminSpeedDialProps) {
 				</TooltipTrigger>
 				<TooltipContent side="left" sideOffset={12}>
 					<p className="font-medium">Contacter Adri</p>
-					<p className="text-xs text-muted-foreground">
-						Bug, feature ou question
-					</p>
+					<p className="text-muted-foreground text-xs">Bug, feature ou question</p>
 				</TooltipContent>
 			</Tooltip>
 		</div>

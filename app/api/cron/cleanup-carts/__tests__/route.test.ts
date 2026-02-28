@@ -4,14 +4,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockVerifyCronRequest, mockCronTimer, mockCronSuccess, mockCronError, mockCleanupExpiredCarts } =
-	vi.hoisted(() => ({
-		mockVerifyCronRequest: vi.fn(),
-		mockCronTimer: vi.fn(),
-		mockCronSuccess: vi.fn(),
-		mockCronError: vi.fn(),
-		mockCleanupExpiredCarts: vi.fn(),
-	}));
+const {
+	mockVerifyCronRequest,
+	mockCronTimer,
+	mockCronSuccess,
+	mockCronError,
+	mockCleanupExpiredCarts,
+} = vi.hoisted(() => ({
+	mockVerifyCronRequest: vi.fn(),
+	mockCronTimer: vi.fn(),
+	mockCronSuccess: vi.fn(),
+	mockCronError: vi.fn(),
+	mockCleanupExpiredCarts: vi.fn(),
+}));
 
 vi.mock("@/modules/cron/lib/verify-cron", () => ({
 	verifyCronRequest: mockVerifyCronRequest,
@@ -71,7 +76,7 @@ describe("GET /api/cron/cleanup-carts", () => {
 		mockCronTimer.mockReturnValue(1000);
 		mockCleanupExpiredCarts.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -126,14 +131,14 @@ describe("GET /api/cron/cleanup-carts", () => {
 					orphanedItemsCount: DEFAULT_SERVICE_RESULT.orphanedItemsCount,
 					hasMore: DEFAULT_SERVICE_RESULT.hasMore,
 				}),
-				1000
+				1000,
 			);
 		});
 
 		it("includes the job name 'cleanup-carts' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("cleanup-carts");
 		});
 
@@ -142,7 +147,7 @@ describe("GET /api/cron/cleanup-carts", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(9999);
 		});
 
@@ -170,7 +175,7 @@ describe("GET /api/cron/cleanup-carts", () => {
 					orphanedItemsCount: 7,
 					hasMore: true,
 				}),
-				expect.any(Number)
+				expect.any(Number),
 			);
 		});
 	});

@@ -84,10 +84,10 @@ describe("generateParticles", () => {
 			count: 6,
 			shapes: ["circle", "diamond", "heart"],
 		});
-		expect(particles[0].shape).toBe("circle");
-		expect(particles[1].shape).toBe("diamond");
-		expect(particles[2].shape).toBe("heart");
-		expect(particles[3].shape).toBe("circle");
+		expect(particles[0]!.shape).toBe("circle");
+		expect(particles[1]!.shape).toBe("diamond");
+		expect(particles[2]!.shape).toBe("heart");
+		expect(particles[3]!.shape).toBe("circle");
 	});
 
 	it("positions particles within 5-95% range", () => {
@@ -136,9 +136,9 @@ describe("generateParticles", () => {
 			params.baseDuration,
 		);
 		// Verify a few values are deterministic
-		expect(a[0].x).toMatchInlineSnapshot(`23.007253880500684`);
-		expect(a[0].y).toMatchInlineSnapshot(`92.75422286465073`);
-		expect(a[2].size).toMatchInlineSnapshot(`31.782037667574514`);
+		expect(a[0]!.x).toMatchInlineSnapshot(`23.007253880500684`);
+		expect(a[0]!.y).toMatchInlineSnapshot(`92.75422286465073`);
+		expect(a[2]!.size).toMatchInlineSnapshot(`31.782037667574514`);
 	});
 
 	it("handles scalar blur (no array)", () => {

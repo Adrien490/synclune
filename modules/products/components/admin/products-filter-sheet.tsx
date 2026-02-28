@@ -81,9 +81,7 @@ export function ProductsFilterSheet({
 			formData.typeIds.forEach((id) => params.append("filter_typeId", id));
 		}
 		if (formData.collectionIds.length > 0) {
-			formData.collectionIds.forEach((id) =>
-				params.append("filter_collectionId", id)
-			);
+			formData.collectionIds.forEach((id) => params.append("filter_collectionId", id));
 		}
 		if (
 			formData.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
@@ -141,7 +139,7 @@ export function ProductsFilterSheet({
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}
-			onApply={() => form.handleSubmit()}
+			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
 			triggerClassName={className}
 		>
@@ -149,7 +147,7 @@ export function ProductsFilterSheet({
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 				className="space-y-6"
 			>
@@ -157,21 +155,17 @@ export function ProductsFilterSheet({
 				<form.Field name="priceRange">
 					{(field) => (
 						<fieldset className="space-y-3">
-							<legend className="font-medium text-sm text-foreground">
-								Prix final (€)
-							</legend>
+							<legend className="text-foreground text-sm font-medium">Prix final (€)</legend>
 							<div className="space-y-3">
 								<Slider
 									value={field.state.value}
-									onValueChange={(value) =>
-										field.handleChange([value[0], value[1]])
-									}
+									onValueChange={(value) => field.handleChange([value[0]!, value[1]!])}
 									max={MAX_PRICE}
 									min={0}
 									step={100}
 									className="w-full"
 								/>
-								<div className="flex items-center justify-between text-sm text-muted-foreground">
+								<div className="text-muted-foreground flex items-center justify-between text-sm">
 									<span>{(field.state.value[0] / 100).toFixed(2)}€</span>
 									<span>{(field.state.value[1] / 100).toFixed(2)}€</span>
 								</div>
@@ -188,17 +182,12 @@ export function ProductsFilterSheet({
 						<form.Field name="typeIds" mode="array">
 							{(field) => (
 								<fieldset className="space-y-3">
-									<legend className="font-medium text-sm text-foreground">
-										Types de produit
-									</legend>
-									<div className="space-y-2 max-h-48 overflow-y-auto">
+									<legend className="text-foreground text-sm font-medium">Types de produit</legend>
+									<div className="max-h-48 space-y-2 overflow-y-auto">
 										{productTypes.map((type) => {
 											const isSelected = field.state.value.includes(type.id);
 											return (
-												<div
-													key={type.id}
-													className="flex items-center space-x-2"
-												>
+												<div key={type.id} className="flex items-center space-x-2">
 													<Checkbox
 														id={`type-${type.id}`}
 														checked={isSelected}
@@ -206,9 +195,7 @@ export function ProductsFilterSheet({
 															if (checked && !isSelected) {
 																field.pushValue(type.id);
 															} else if (!checked && isSelected) {
-																const index = field.state.value.indexOf(
-																	type.id
-																);
+																const index = field.state.value.indexOf(type.id);
 																field.removeValue(index);
 															}
 														}}
@@ -216,7 +203,7 @@ export function ProductsFilterSheet({
 													/>
 													<Label
 														htmlFor={`type-${type.id}`}
-														className="text-sm font-normal cursor-pointer flex-1"
+														className="flex-1 cursor-pointer text-sm font-normal"
 													>
 														{type.label}
 													</Label>
@@ -237,19 +224,12 @@ export function ProductsFilterSheet({
 						<form.Field name="collectionIds" mode="array">
 							{(field) => (
 								<fieldset className="space-y-3">
-									<legend className="font-medium text-sm text-foreground">
-										Collections
-									</legend>
-									<div className="space-y-2 max-h-48 overflow-y-auto">
+									<legend className="text-foreground text-sm font-medium">Collections</legend>
+									<div className="max-h-48 space-y-2 overflow-y-auto">
 										{collections.map((collection) => {
-											const isSelected = field.state.value.includes(
-												collection.id
-											);
+											const isSelected = field.state.value.includes(collection.id);
 											return (
-												<div
-													key={collection.id}
-													className="flex items-center space-x-2"
-												>
+												<div key={collection.id} className="flex items-center space-x-2">
 													<Checkbox
 														id={`collection-${collection.id}`}
 														checked={isSelected}
@@ -257,9 +237,7 @@ export function ProductsFilterSheet({
 															if (checked && !isSelected) {
 																field.pushValue(collection.id);
 															} else if (!checked && isSelected) {
-																const index = field.state.value.indexOf(
-																	collection.id
-																);
+																const index = field.state.value.indexOf(collection.id);
 																field.removeValue(index);
 															}
 														}}
@@ -267,7 +245,7 @@ export function ProductsFilterSheet({
 													/>
 													<Label
 														htmlFor={`collection-${collection.id}`}
-														className="text-sm font-normal cursor-pointer flex-1"
+														className="flex-1 cursor-pointer text-sm font-normal"
 													>
 														{collection.name}
 													</Label>

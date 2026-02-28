@@ -33,7 +33,7 @@ export function CollectionImagesGrid({
 	if (count === 1) {
 		return (
 			<SingleImageLayout
-				image={images[0]}
+				image={images[0]!}
 				collectionName={collectionName}
 				isAboveFold={isAboveFold}
 				ariaLabel={ariaLabel}
@@ -96,15 +96,16 @@ function SingleImageLayout({
 	ariaLabel,
 	variant,
 }: LayoutProps & { image: CollectionImage }) {
-	const sizes = variant === "compact"
-		? COLLECTION_IMAGE_SIZES_COMPACT.SINGLE
-		: "(max-width: 374px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw";
+	const sizes =
+		variant === "compact"
+			? COLLECTION_IMAGE_SIZES_COMPACT.SINGLE
+			: "(max-width: 374px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw";
 
 	return (
 		<div
 			role="group"
 			aria-label={ariaLabel}
-			className="relative aspect-square overflow-hidden rounded-t-lg bg-muted"
+			className="bg-muted relative aspect-square overflow-hidden rounded-t-lg"
 		>
 			<CollectionImageItem
 				image={image}
@@ -126,9 +127,10 @@ function TwoImagesLayout({
 	ariaLabel,
 	variant,
 }: LayoutProps & { images: CollectionImage[] }) {
-	const sizes = variant === "compact"
-		? COLLECTION_IMAGE_SIZES_COMPACT.TWO_IMAGES
-		: "(max-width: 640px) 50vw, 25vw";
+	const sizes =
+		variant === "compact"
+			? COLLECTION_IMAGE_SIZES_COMPACT.TWO_IMAGES
+			: "(max-width: 640px) 50vw, 25vw";
 
 	return (
 		<div
@@ -137,7 +139,10 @@ function TwoImagesLayout({
 			className="grid grid-cols-2 gap-0.5 overflow-hidden rounded-t-lg"
 		>
 			{images.map((image, i) => (
-				<div key={`${collectionName}-${i}`} className="relative aspect-square overflow-hidden bg-muted">
+				<div
+					key={`${collectionName}-${i}`}
+					className="bg-muted relative aspect-square overflow-hidden"
+				>
 					<CollectionImageItem
 						image={image}
 						collectionName={collectionName}
@@ -160,12 +165,14 @@ function ThreeImagesLayout({
 	ariaLabel,
 	variant,
 }: LayoutProps & { images: CollectionImage[] }) {
-	const mainSizes = variant === "compact"
-		? COLLECTION_IMAGE_SIZES_COMPACT.THREE_IMAGES
-		: "(max-width: 640px) 50vw, 33vw";
-	const secondarySizes = variant === "compact"
-		? COLLECTION_IMAGE_SIZES_COMPACT.THREE_IMAGES
-		: "(max-width: 640px) 50vw, 25vw";
+	const mainSizes =
+		variant === "compact"
+			? COLLECTION_IMAGE_SIZES_COMPACT.THREE_IMAGES
+			: "(max-width: 640px) 50vw, 33vw";
+	const secondarySizes =
+		variant === "compact"
+			? COLLECTION_IMAGE_SIZES_COMPACT.THREE_IMAGES
+			: "(max-width: 640px) 50vw, 25vw";
 
 	return (
 		<div
@@ -174,9 +181,9 @@ function ThreeImagesLayout({
 			className="grid grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-t-lg"
 		>
 			{/* Grande image - span 2 rows */}
-			<div className="relative row-span-2 overflow-hidden bg-muted">
+			<div className="bg-muted relative row-span-2 overflow-hidden">
 				<CollectionImageItem
-					image={images[0]}
+					image={images[0]!}
 					collectionName={collectionName}
 					index={0}
 					isAboveFold={isAboveFold}
@@ -186,7 +193,10 @@ function ThreeImagesLayout({
 			</div>
 			{/* 2 petites images */}
 			{images.slice(1, 3).map((image, i) => (
-				<div key={`${collectionName}-${i + 1}`} className="relative aspect-square overflow-hidden bg-muted">
+				<div
+					key={`${collectionName}-${i + 1}`}
+					className="bg-muted relative aspect-square overflow-hidden"
+				>
 					<CollectionImageItem
 						image={image}
 						collectionName={collectionName}
@@ -208,15 +218,18 @@ function BentoGridLayout({
 	ariaLabel,
 	variant,
 }: LayoutProps & { images: CollectionImage[] }) {
-	const mainSizes = variant === "compact"
-		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_MAIN
-		: "(max-width: 640px) 50vw, 33vw";
-	const secondarySizes = variant === "compact"
-		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
-		: "(max-width: 640px) 25vw, 15vw";
-	const hiddenSecondarySizes = variant === "compact"
-		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
-		: "(max-width: 640px) 0px, 15vw";
+	const mainSizes =
+		variant === "compact"
+			? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_MAIN
+			: "(max-width: 640px) 50vw, 33vw";
+	const secondarySizes =
+		variant === "compact"
+			? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
+			: "(max-width: 640px) 25vw, 15vw";
+	const hiddenSecondarySizes =
+		variant === "compact"
+			? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
+			: "(max-width: 640px) 0px, 15vw";
 
 	return (
 		<div
@@ -233,13 +246,13 @@ function BentoGridLayout({
 			{/* Image principale - span rows */}
 			<div
 				className={cn(
-					"relative overflow-hidden bg-muted",
+					"bg-muted relative overflow-hidden",
 					"aspect-square",
 					"sm:row-span-3 sm:aspect-auto",
 				)}
 			>
 				<CollectionImageItem
-					image={images[0]}
+					image={images[0]!}
 					collectionName={collectionName}
 					index={0}
 					isAboveFold={isAboveFold}
@@ -258,7 +271,7 @@ function BentoGridLayout({
 					<div
 						key={`${collectionName}-${actualIndex}`}
 						className={cn(
-							"relative aspect-square overflow-hidden bg-muted",
+							"bg-muted relative aspect-square overflow-hidden",
 							// Image 4 visible uniquement sur desktop (sm+)
 							isImage4 && "hidden sm:block",
 						)}

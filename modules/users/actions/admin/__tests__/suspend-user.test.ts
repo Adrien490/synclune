@@ -254,29 +254,25 @@ describe("suspendUser", () => {
 
 		// The action passes an array to $transaction (array pattern, not callback pattern)
 		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Array));
-		const passedArray: unknown[] = mockPrisma.$transaction.mock.calls[0][0];
+		const passedArray: unknown[] = mockPrisma.$transaction.mock.calls[0]![0];
 		expect(passedArray).toHaveLength(2);
 	});
 
 	it("should return success with user display name", async () => {
 		const result = await suspendUser(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("Marie Dupont")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("Marie Dupont"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
 	it("should fall back to email in success message when name is null", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ name: null, email: "marie@example.com" })
+			makeUser({ name: null, email: "marie@example.com" }),
 		);
 
 		await suspendUser(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("marie@example.com")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("marie@example.com"));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -311,7 +307,7 @@ describe("suspendUser", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la suspension de l'utilisateur"
+			"Erreur lors de la suspension de l'utilisateur",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

@@ -242,10 +242,7 @@ describe("POST /api/webhooks/stripe - signature validation", () => {
 		const req = makeRequest();
 		const response = await POST(req);
 
-		expect(mockNextResponseJson).toHaveBeenCalledWith(
-			{ error: "No signature" },
-			{ status: 400 },
-		);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({ error: "No signature" }, { status: 400 });
 		expect(response.status).toBe(400);
 	});
 
@@ -267,15 +264,13 @@ describe("POST /api/webhooks/stripe - signature validation", () => {
 		const response = await POST(req);
 
 		expect(mockNextResponseJson).toHaveBeenCalledWith(
-			{
-				error: "Webhook Error: No signatures found matching the expected signature for payload",
-			},
+			{ error: "Invalid signature" },
 			{ status: 400 },
 		);
 		expect(response.status).toBe(400);
 	});
 
-	it("should include unknown error message when constructEvent throws a non-Error", async () => {
+	it("should return static error message when constructEvent throws a non-Error", async () => {
 		mockConstructEvent.mockImplementation(() => {
 			throw "not an error object";
 		});
@@ -284,7 +279,7 @@ describe("POST /api/webhooks/stripe - signature validation", () => {
 		const response = await POST(req);
 
 		expect(mockNextResponseJson).toHaveBeenCalledWith(
-			{ error: "Webhook Error: Unknown error" },
+			{ error: "Invalid signature" },
 			{ status: 400 },
 		);
 		expect(response.status).toBe(400);
@@ -296,11 +291,7 @@ describe("POST /api/webhooks/stripe - signature validation", () => {
 
 		await POST(req);
 
-		expect(mockConstructEvent).toHaveBeenCalledWith(
-			body,
-			"t=123,v1=valid_sig",
-			"whsec_test_123",
-		);
+		expect(mockConstructEvent).toHaveBeenCalledWith(body, "t=123,v1=valid_sig", "whsec_test_123");
 	});
 });
 

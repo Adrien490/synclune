@@ -1,30 +1,30 @@
-"use client"
+"use client";
 
-import { useState, useId } from "react"
-import { cn } from "@/shared/utils/cn"
-import { StarIcon } from "@/shared/components/icons/star-icon"
+import { useState, useId } from "react";
+import { cn } from "@/shared/utils/cn";
+import { StarIcon } from "@/shared/components/icons/star-icon";
 
 interface RatingStarsProps {
 	/** Note actuelle (0-maxRating, supporte les décimales) */
-	rating: number
+	rating: number;
 	/** Note maximale (par défaut: 5) */
-	maxRating?: number
+	maxRating?: number;
 	/** Taille des étoiles */
-	size?: "sm" | "md" | "lg"
+	size?: "sm" | "md" | "lg";
 	/** Mode interactif (input) */
-	interactive?: boolean
+	interactive?: boolean;
 	/** Callback lors du changement de note */
-	onChange?: (rating: number) => void
+	onChange?: (rating: number) => void;
 	/** Classes CSS additionnelles */
-	className?: string
+	className?: string;
 	/** Afficher la note en texte */
-	showRating?: boolean
+	showRating?: boolean;
 	/** Label personnalisé pour l'accessibilité */
-	ariaLabel?: string
+	ariaLabel?: string;
 	/** Champ requis (mode interactif) */
-	required?: boolean
+	required?: boolean;
 	/** Désactiver les interactions (mode interactif) */
-	disabled?: boolean
+	disabled?: boolean;
 }
 
 /**
@@ -52,52 +52,52 @@ export function RatingStars({
 	required = false,
 	disabled = false,
 }: RatingStarsProps) {
-	const [hoverRating, setHoverRating] = useState<number | null>(null)
-	const baseId = useId()
+	const [hoverRating, setHoverRating] = useState<number | null>(null);
+	const baseId = useId();
 
 	const handleClick = (star: number) => {
 		if (interactive && onChange) {
-			onChange(star)
+			onChange(star);
 		}
-	}
+	};
 
 	const handleKeyDown = (star: number, e: React.KeyboardEvent) => {
-		if (!interactive || !onChange) return
+		if (!interactive || !onChange) return;
 
 		switch (e.key) {
 			case "Enter":
 			case " ":
-				e.preventDefault()
-				onChange(star)
-				break
+				e.preventDefault();
+				onChange(star);
+				break;
 			case "ArrowRight":
 			case "ArrowUp":
-				e.preventDefault()
+				e.preventDefault();
 				if (star < maxRating) {
-					onChange(star + 1)
-					const container = e.currentTarget.parentElement
-					const next = container?.querySelector<HTMLButtonElement>(`[data-star="${star + 1}"]`)
-					next?.focus()
+					onChange(star + 1);
+					const container = e.currentTarget.parentElement;
+					const next = container?.querySelector<HTMLButtonElement>(`[data-star="${star + 1}"]`);
+					next?.focus();
 				}
-				break
+				break;
 			case "ArrowLeft":
 			case "ArrowDown":
-				e.preventDefault()
+				e.preventDefault();
 				if (star > 1) {
-					onChange(star - 1)
-					const container = e.currentTarget.parentElement
-					const prev = container?.querySelector<HTMLButtonElement>(`[data-star="${star - 1}"]`)
-					prev?.focus()
+					onChange(star - 1);
+					const container = e.currentTarget.parentElement;
+					const prev = container?.querySelector<HTMLButtonElement>(`[data-star="${star - 1}"]`);
+					prev?.focus();
 				}
-				break
+				break;
 		}
-	}
+	};
 
 	// Label par défaut ou personnalisé
 	const defaultLabel = interactive
 		? "Sélection de la note"
-		: `Note : ${rating.toFixed(1).replace(".", ",")} sur ${maxRating}`
-	const label = ariaLabel ?? defaultLabel
+		: `Note : ${rating.toFixed(1).replace(".", ",")} sur ${maxRating}`;
+	const label = ariaLabel ?? defaultLabel;
 
 	return (
 		<div
@@ -108,19 +108,21 @@ export function RatingStars({
 			aria-valuemin={!interactive ? 0 : undefined}
 			aria-valuemax={!interactive ? maxRating : undefined}
 			aria-required={interactive && required ? true : undefined}
-			style={{
-				"--star-filled": "rgb(251 191 36)",
-				"--star-empty": "rgb(156 163 175 / 0.5)",
-			} as React.CSSProperties}
+			style={
+				{
+					"--star-filled": "var(--secondary)",
+					"--star-empty": "var(--muted-foreground)",
+				} as React.CSSProperties
+			}
 		>
 			{Array.from({ length: maxRating }, (_, i) => {
-				const star = i + 1
-				const displayRating = interactive ? (hoverRating ?? rating) : rating
+				const star = i + 1;
+				const displayRating = interactive ? (hoverRating ?? rating) : rating;
 
 				// Calcul du remplissage : plein (1), partiel (0-1), ou vide (0)
-				const fillPercentage = Math.min(1, Math.max(0, displayRating - i))
-				const isFilled = fillPercentage >= 1
-				const gradientId = `${baseId}-star-${i}`
+				const fillPercentage = Math.min(1, Math.max(0, displayRating - i));
+				const isFilled = fillPercentage >= 1;
+				const gradientId = `${baseId}-star-${i}`;
 
 				if (interactive) {
 					return (
@@ -136,22 +138,18 @@ export function RatingStars({
 							onMouseEnter={() => !disabled && setHoverRating(star)}
 							onMouseLeave={() => setHoverRating(null)}
 							className={cn(
-								"p-2 min-h-11 min-w-11 flex items-center justify-center rounded-sm",
-								"focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-3",
+								"flex min-h-11 min-w-11 items-center justify-center rounded-sm p-2",
+								"focus-visible:ring-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-3",
 								"motion-safe:transition-all",
 								disabled
 									? "cursor-not-allowed opacity-50"
-									: "cursor-pointer motion-safe:hover:scale-110"
+									: "cursor-pointer motion-safe:hover:scale-110",
 							)}
 							aria-label={`${star} étoile${star > 1 ? "s" : ""}`}
 						>
-							<StarIcon
-								fillPercentage={isFilled ? 1 : 0}
-								size={size}
-								gradientId={gradientId}
-							/>
+							<StarIcon fillPercentage={isFilled ? 1 : 0} size={size} gradientId={gradientId} />
 						</button>
-					)
+					);
 				}
 
 				return (
@@ -161,14 +159,14 @@ export function RatingStars({
 						size={size}
 						gradientId={gradientId}
 					/>
-				)
+				);
 			})}
 
 			{showRating && (
-				<span className="ml-1.5 text-sm font-medium text-foreground">
+				<span className="text-foreground ml-1.5 text-sm font-medium">
 					{rating.toFixed(1).replace(".", ",")}
 				</span>
 			)}
 		</div>
-	)
+	);
 }

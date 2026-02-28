@@ -58,10 +58,10 @@ export async function updateProductSku(
 		const result = updateProductSkuSchema.safeParse(rawData);
 		if (!result.success) {
 			const firstError = result.error.issues[0];
-			const errorPath = firstError.path.join(".");
+			const errorPath = firstError?.path.join(".");
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: `${errorPath}: ${firstError.message}`,
+				message: firstError ? `${errorPath}: ${firstError.message}` : "Données invalides.",
 			};
 		}
 

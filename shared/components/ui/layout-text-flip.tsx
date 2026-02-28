@@ -1,5 +1,6 @@
 "use client";
 
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useEffectEvent, useState } from "react";
@@ -108,7 +109,10 @@ export function LayoutTextFlip({
 							initial={{ y: 20, opacity: 0, filter: "blur(4px)" }}
 							animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
 							exit={{ y: -20, opacity: 0, filter: "blur(4px)" }}
-							transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+							transition={{
+								duration: MOTION_CONFIG.duration.medium,
+								ease: MOTION_CONFIG.easing.easeInOut,
+							}}
 							className={cn(textStyles, "absolute inset-0 flex items-center justify-center")}
 						>
 							{words[currentIndex]}

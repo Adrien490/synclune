@@ -4,10 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockFindMany,
-	mockCacheCollections,
-} = vi.hoisted(() => ({
+const { mockFindMany, mockCacheCollections } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
 	mockCacheCollections: vi.fn(),
 }));
@@ -86,7 +83,7 @@ describe("getCollectionOptions", () => {
 						in: expect.arrayContaining(["DRAFT", "PUBLIC"]),
 					},
 				},
-			})
+			}),
 		);
 	});
 
@@ -98,7 +95,7 @@ describe("getCollectionOptions", () => {
 		await getCollectionOptions();
 
 		// Assert
-		const callArg = mockFindMany.mock.calls[0][0];
+		const callArg = mockFindMany.mock.calls[0]![0];
 		expect(callArg.where.status.in).not.toContain("ARCHIVED");
 	});
 
@@ -113,7 +110,7 @@ describe("getCollectionOptions", () => {
 		expect(mockFindMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: { name: "asc" },
-			})
+			}),
 		);
 	});
 
@@ -128,7 +125,7 @@ describe("getCollectionOptions", () => {
 		expect(mockFindMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, name: true },
-			})
+			}),
 		);
 	});
 

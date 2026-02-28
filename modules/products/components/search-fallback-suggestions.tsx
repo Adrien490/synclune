@@ -36,32 +36,31 @@ export async function SearchFallbackSuggestions({
 	suggestion,
 }: SearchFallbackSuggestionsProps) {
 	// Fetch en parallele les dernieres creations, categories et wishlist
-	const [latestResult, productTypesResult, wishlistProductIds] =
-		await Promise.all([
-			getProducts({
-				perPage: 4,
-				sortBy: "created-descending",
-				filters: {
-					status: "PUBLIC",
-					stockStatus: "in_stock",
-				},
-			}),
-			getProductTypes({
-				perPage: 20,
-				sortBy: "label-ascending",
-				filters: {
-					isActive: true,
-					hasProducts: true,
-				},
-			}),
-			getWishlistProductIds(),
-		]);
+	const [latestResult, productTypesResult, wishlistProductIds] = await Promise.all([
+		getProducts({
+			perPage: 4,
+			sortBy: "created-descending",
+			filters: {
+				status: "PUBLIC",
+				stockStatus: "in_stock",
+			},
+		}),
+		getProductTypes({
+			perPage: 20,
+			sortBy: "label-ascending",
+			filters: {
+				isActive: true,
+				hasProducts: true,
+			},
+		}),
+		getWishlistProductIds(),
+	]);
 
 	const latestProducts = latestResult.products;
 	const productTypes = productTypesResult.productTypes;
 
 	return (
-		<div className="space-y-8 mt-4 mb-12 sm:my-12">
+		<div className="mt-4 mb-12 space-y-8 sm:my-12">
 			{/* Section principale avec message et actions */}
 			<Empty>
 				<EmptyHeader>
@@ -81,19 +80,15 @@ export async function SearchFallbackSuggestions({
 						)}
 					</EmptyDescription>
 				</EmptyHeader>
-
-				</Empty>
+			</Empty>
 
 			{/* Dernières créations */}
 			{latestProducts.length > 0 && (
 				<section aria-labelledby="latest-products-heading" className="space-y-4">
-					<h2
-						id="latest-products-heading"
-						className="text-lg font-semibold text-center"
-					>
+					<h2 id="latest-products-heading" className="text-center text-lg font-semibold">
 						Nos dernières créations
 					</h2>
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+					<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
 						{latestProducts.map((product, index) => (
 							<ProductCard
 								key={product.id}
@@ -110,21 +105,12 @@ export async function SearchFallbackSuggestions({
 			{/* Navigation par categorie */}
 			{productTypes.length > 0 && (
 				<section aria-labelledby="categories-heading" className="space-y-4">
-					<h2
-						id="categories-heading"
-						className="text-lg font-semibold text-center"
-					>
+					<h2 id="categories-heading" className="text-center text-lg font-semibold">
 						Explorer par catégorie
 					</h2>
 					<div className="flex flex-wrap justify-center gap-2">
 						{productTypes.map((type) => (
-							<Button
-								key={type.slug}
-								asChild
-								variant="outline"
-								size="sm"
-								className="rounded-full"
-							>
+							<Button key={type.slug} asChild variant="outline" size="sm" className="rounded-full">
 								<Link href={`/produits/${type.slug}`}>{type.label}</Link>
 							</Button>
 						))}
@@ -158,22 +144,22 @@ function SuggestionLink({ suggestion }: { suggestion: string }) {
  */
 export function SearchFallbackSuggestionsSkeleton() {
 	return (
-		<div className="space-y-8 mt-4 mb-12 sm:my-12">
+		<div className="mt-4 mb-12 space-y-8 sm:my-12">
 			{/* Header skeleton */}
 			<div className="flex flex-col items-center gap-4 text-center">
 				<Skeleton className="size-12 rounded-full" />
 				<Skeleton className="h-6 w-64" />
 				<Skeleton className="h-4 w-80" />
-				<Skeleton className="h-10 w-40 mt-2" />
+				<Skeleton className="mt-2 h-10 w-40" />
 			</div>
 
 			{/* Popular products skeleton */}
 			<div className="space-y-4">
-				<Skeleton className="h-6 w-48 mx-auto" />
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+				<Skeleton className="mx-auto h-6 w-48" />
+				<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
 					{[...Array(4)].map((_, i) => (
 						<div key={i} className="space-y-3">
-							<Skeleton className="aspect-square rounded-lg" />
+							<Skeleton className="aspect-3/4 rounded-lg sm:aspect-4/5" />
 							<Skeleton className="h-4 w-3/4" />
 							<Skeleton className="h-4 w-1/2" />
 						</div>
@@ -183,7 +169,7 @@ export function SearchFallbackSuggestionsSkeleton() {
 
 			{/* Categories skeleton */}
 			<div className="space-y-4">
-				<Skeleton className="h-6 w-40 mx-auto" />
+				<Skeleton className="mx-auto h-6 w-40" />
 				<div className="flex flex-wrap justify-center gap-2">
 					{[...Array(6)].map((_, i) => (
 						<Skeleton key={i} className="h-8 w-20 rounded-full" />

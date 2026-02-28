@@ -37,36 +37,16 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../app/generated/prisma/client";
 import { UTApi } from "uploadthing/server";
 import { VIDEO_MIGRATION_CONFIG } from "../modules/media/constants/media.constants";
-import {
-	isValidCuid,
-	isValidUploadThingUrl,
-} from "../modules/media/utils/validate-media-file";
+import { isValidCuid, isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
 import type { MediaItem, ProcessResult } from "../modules/media/types/script.types";
 import { requireScriptEnvVars } from "../shared/utils/script-env";
-import {
-	delay,
-	withRetry,
-	createScriptLogger,
-	processInBatches,
-} from "./lib/script-utils";
+import { delay, withRetry, createScriptLogger, processInBatches } from "./lib/script-utils";
 
 // ============================================================================
 // FFMPEG PATH RESOLUTION
 // ============================================================================
 
-let ffmpegStaticPath: string | null = null;
-try {
-	// eslint-disable-next-line @typescript-eslint/no-require-imports
-	ffmpegStaticPath = require("ffmpeg-static") as string;
-} catch {
-	// ffmpeg-static non disponible
-}
-
 function findFFmpegPath(): string | null {
-	if (ffmpegStaticPath && existsSync(ffmpegStaticPath)) {
-		return ffmpegStaticPath;
-	}
-
 	try {
 		const systemPath = execSync("which ffmpeg", { encoding: "utf-8" }).trim();
 		if (systemPath && existsSync(systemPath)) {
@@ -76,11 +56,7 @@ function findFFmpegPath(): string | null {
 		// which ffmpeg a échoué
 	}
 
-	const commonPaths = [
-		"/opt/homebrew/bin/ffmpeg",
-		"/usr/local/bin/ffmpeg",
-		"/usr/bin/ffmpeg",
-	];
+	const commonPaths = ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg"];
 
 	for (const path of commonPaths) {
 		if (existsSync(path)) {
@@ -137,7 +113,11 @@ process.on("SIGINT", () => {
 // LOGGING
 // ============================================================================
 
-const { logSuccess, logWarn: logWarning, logError } = createScriptLogger({
+const {
+	logSuccess,
+	logWarn: logWarning,
+	logError,
+} = createScriptLogger({
 	jsonEnabled: JSON_LOGS,
 });
 
@@ -161,7 +141,7 @@ const RETRY_OPTIONS = {
 async function execFileWithTimeout(
 	command: string,
 	args: string[],
-	timeout: number
+	timeout: number,
 ): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
 		const child: ChildProcess = execFile(command, args, (error, stdout, stderr) => {
@@ -207,13 +187,17 @@ async function hasAudioTrack(videoPath: string): Promise<boolean> {
 		const { stdout } = await execFileWithTimeout(
 			ffprobePath,
 			[
-				"-v", "error",
-				"-select_streams", "a",
-				"-show_entries", "stream=codec_type",
-				"-of", "csv=p=0",
+				"-v",
+				"error",
+				"-select_streams",
+				"a",
+				"-show_entries",
+				"stream=codec_type",
+				"-of",
+				"csv=p=0",
 				videoPath,
 			],
-			10000
+			10000,
 		);
 		return stdout.trim().includes("audio");
 	} catch {
@@ -241,7 +225,7 @@ async function downloadVideo(url: string, outputPath: string): Promise<void> {
 	const contentLength = headResponse.headers.get("content-length");
 	if (contentLength && parseInt(contentLength, 10) > MAX_VIDEO_SIZE) {
 		throw new Error(
-			`Vidéo trop volumineuse: ${Math.round(parseInt(contentLength, 10) / 1024 / 1024)}MB`
+			`Vidéo trop volumineuse: ${Math.round(parseInt(contentLength, 10) / 1024 / 1024)}MB`,
 		);
 	}
 
@@ -276,12 +260,15 @@ async function stripAudio(inputPath: string, outputPath: string): Promise<void> 
 	}
 
 	const args = [
-		"-y",              // Écraser si existant
-		"-i", inputPath,   // Fichier d'entrée
-		"-c:v", "copy",    // Copier le flux vidéo sans re-encoding
-		"-an",             // Supprimer la piste audio
-		"-movflags", "+faststart", // Optimiser pour streaming progressif (moov atom au début)
-		outputPath,        // Fichier de sortie
+		"-y", // Écraser si existant
+		"-i",
+		inputPath, // Fichier d'entrée
+		"-c:v",
+		"copy", // Copier le flux vidéo sans re-encoding
+		"-an", // Supprimer la piste audio
+		"-movflags",
+		"+faststart", // Optimiser pour streaming progressif (moov atom au début)
+		outputPath, // Fichier de sortie
 	];
 
 	await execFileWithTimeout(FFMPEG_PATH, args, FFMPEG_TIMEOUT);
@@ -327,7 +314,11 @@ function extractFileKey(url: string): string | null {
 /**
  * Traite une vidéo : télécharge, supprime audio, upload, met à jour DB
  */
-async function processVideo(media: MediaItem, index: number, total: number): Promise<ProcessResult> {
+async function processVideo(
+	media: MediaItem,
+	index: number,
+	total: number,
+): Promise<ProcessResult> {
 	if (shuttingDown) {
 		return { id: media.id, success: false, error: "Script interrompu" };
 	}
@@ -373,7 +364,9 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 		const outputStats = statSync(outputPath);
 		const savedBytes = inputStats.size - outputStats.size;
 		const savedPercent = ((savedBytes / inputStats.size) * 100).toFixed(1);
-		console.log(`  Taille: ${(inputStats.size / 1024 / 1024).toFixed(2)}MB → ${(outputStats.size / 1024 / 1024).toFixed(2)}MB (-${savedPercent}%)`);
+		console.log(
+			`  Taille: ${(inputStats.size / 1024 / 1024).toFixed(2)}MB → ${(outputStats.size / 1024 / 1024).toFixed(2)}MB (-${savedPercent}%)`,
+		);
 
 		// 4. Upload la nouvelle vidéo
 		console.log("  Upload de la nouvelle vidéo...");
@@ -430,7 +423,10 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 	}
 }
 
-async function processVideosInBatches(videos: MediaItem[], batchSize: number): Promise<ProcessResult[]> {
+async function processVideosInBatches(
+	videos: MediaItem[],
+	batchSize: number,
+): Promise<ProcessResult[]> {
 	return processInBatches({
 		items: videos,
 		batchSize,
@@ -468,10 +464,7 @@ async function main(): Promise<void> {
 		console.error("  Ubuntu: sudo apt install ffmpeg");
 		process.exit(1);
 	}
-	const ffmpegSource = ffmpegStaticPath && FFMPEG_PATH === ffmpegStaticPath
-		? "ffmpeg-static (npm)"
-		: "système";
-	console.log(`✅ FFmpeg disponible (${ffmpegSource})`);
+	console.log(`✅ FFmpeg disponible`);
 
 	// Mode CHECK
 	if (CHECK_ONLY) {

@@ -36,7 +36,13 @@ describe("cleanupExpiredCarts", () => {
 	});
 
 	it("should delete expired guest carts (expiresAt < now, userId null)", async () => {
-		const cartIds = [{ id: "cart-a" }, { id: "cart-b" }, { id: "cart-c" }, { id: "cart-d" }, { id: "cart-e" }];
+		const cartIds = [
+			{ id: "cart-a" },
+			{ id: "cart-b" },
+			{ id: "cart-c" },
+			{ id: "cart-d" },
+			{ id: "cart-e" },
+		];
 		mockPrisma.cart.findMany.mockResolvedValue(cartIds);
 		mockPrisma.cart.deleteMany.mockResolvedValue({ count: 5 });
 
@@ -63,11 +69,11 @@ describe("cleanupExpiredCarts", () => {
 
 		expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
 		// Check that the SQL query uses the expected pattern
-		const sqlQuery = mockPrisma.$executeRaw.mock.calls[0][0];
+		const sqlQuery = mockPrisma.$executeRaw.mock.calls[0]![0];
 		expect(sqlQuery.join("")).toContain('DELETE FROM "CartItem"');
-		expect(sqlQuery.join("")).toContain('NOT EXISTS');
+		expect(sqlQuery.join("")).toContain("NOT EXISTS");
 		expect(sqlQuery.join("")).toContain('SELECT 1 FROM "Cart"');
-		expect(sqlQuery.join("")).toContain('LIMIT');
+		expect(sqlQuery.join("")).toContain("LIMIT");
 	});
 
 	it("should return correct counts for deleted carts and orphaned items", async () => {
@@ -132,7 +138,7 @@ describe("cleanupExpiredCarts", () => {
 	it("should only target guest carts (userId: null)", async () => {
 		await cleanupExpiredCarts();
 
-		const whereClause = mockPrisma.cart.findMany.mock.calls[0][0].where;
+		const whereClause = mockPrisma.cart.findMany.mock.calls[0]![0].where;
 		expect(whereClause.userId).toBeNull();
 	});
 
@@ -142,7 +148,7 @@ describe("cleanupExpiredCarts", () => {
 
 		await cleanupExpiredCarts();
 
-		const whereClause = mockPrisma.cart.findMany.mock.calls[0][0].where;
+		const whereClause = mockPrisma.cart.findMany.mock.calls[0]![0].where;
 		expect(whereClause.expiresAt.lt).toEqual(mockDate);
 	});
 
@@ -156,17 +162,13 @@ describe("cleanupExpiredCarts", () => {
 		await cleanupExpiredCarts();
 
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-carts] Starting expired carts cleanup..."
+			"[CRON:cleanup-carts] Starting expired carts cleanup...",
 		);
+		expect(consoleLogSpy).toHaveBeenCalledWith("[CRON:cleanup-carts] Deleted 8 expired carts");
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-carts] Deleted 8 expired carts"
+			"[CRON:cleanup-carts] Cleaned up 4 orphaned cart items",
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-carts] Cleaned up 4 orphaned cart items"
-		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-carts] Cleanup completed"
-		);
+		expect(consoleLogSpy).toHaveBeenCalledWith("[CRON:cleanup-carts] Cleanup completed");
 	});
 
 	it("should not log orphaned items message when count is zero", async () => {
@@ -176,9 +178,7 @@ describe("cleanupExpiredCarts", () => {
 		await cleanupExpiredCarts();
 
 		const logCalls = consoleLogSpy.mock.calls.map((call) => call[0]);
-		expect(logCalls).not.toContain(
-			expect.stringContaining("Cleaned up 0 orphaned cart items")
-		);
+		expect(logCalls).not.toContain(expect.stringContaining("Cleaned up 0 orphaned cart items"));
 	});
 
 	it("should log warning when delete limit is reached", async () => {
@@ -191,7 +191,7 @@ describe("cleanupExpiredCarts", () => {
 		await cleanupExpiredCarts();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-carts] Delete limit reached, remaining carts will be cleaned on next run"
+			"[CRON:cleanup-carts] Delete limit reached, remaining carts will be cleaned on next run",
 		);
 	});
 

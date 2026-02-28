@@ -44,6 +44,9 @@ vi.mock("../schemas/auth.schemas", () => ({ signUpEmailSchema: {} }));
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: { user: { update: mockPrismaUserUpdate } },
 }));
+vi.mock("../../services/hibp.service", () => ({
+	checkPasswordBreached: vi.fn().mockResolvedValue(0),
+}));
 
 import { signUpEmail } from "../sign-up-email";
 
@@ -53,7 +56,6 @@ import { signUpEmail } from "../sign-up-email";
 
 const validFormData = createMockFormData({
 	email: "new@example.com",
-	confirmEmail: "new@example.com",
 	password: "SecureP@ss123",
 	name: "Marie Dupont",
 	termsAccepted: "true",

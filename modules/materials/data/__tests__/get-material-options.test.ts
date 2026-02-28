@@ -75,7 +75,7 @@ describe("getMaterialOptions", () => {
 		expect(mockPrisma.material.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { isActive: true },
-			})
+			}),
 		);
 	});
 
@@ -98,7 +98,7 @@ describe("getMaterialOptions", () => {
 						},
 					},
 				},
-			})
+			}),
 		);
 	});
 
@@ -110,7 +110,7 @@ describe("getMaterialOptions", () => {
 		expect(mockPrisma.material.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: { name: "asc" },
-			})
+			}),
 		);
 	});
 
@@ -159,7 +159,7 @@ describe("getMaterialOptions", () => {
 
 		await getMaterialOptions();
 
-		const call = mockPrisma.material.findMany.mock.calls[0][0];
+		const call = mockPrisma.material.findMany.mock.calls[0]![0];
 		expect(call.select._count.select.skus).toEqual({ where: { isActive: true } });
 	});
 });

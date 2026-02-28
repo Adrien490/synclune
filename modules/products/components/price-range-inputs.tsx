@@ -112,10 +112,10 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 					<Slider
 						value={sliderPosition}
 						onValueChange={(newPos) => {
-							setSliderPosition([newPos[0], newPos[1]]);
+							setSliderPosition([newPos[0]!, newPos[1]!]);
 							// Convertir les positions en prix reels
-							const newMinPrice = sliderToPrice(newPos[0], maxPrice);
-							const newMaxPrice = sliderToPrice(newPos[1], maxPrice);
+							const newMinPrice = sliderToPrice(newPos[0]!, maxPrice);
+							const newMaxPrice = sliderToPrice(newPos[1]!, maxPrice);
 							onChange([newMinPrice, newMaxPrice]);
 						}}
 						max={SLIDER_MAX}

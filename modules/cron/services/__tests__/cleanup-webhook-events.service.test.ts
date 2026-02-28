@@ -61,7 +61,7 @@ describe("cleanupOldWebhookEvents", () => {
 
 		expect(result.completedDeleted).toBe(15);
 
-		const completedFindCall = mockPrisma.webhookEvent.findMany.mock.calls[0][0];
+		const completedFindCall = mockPrisma.webhookEvent.findMany.mock.calls[0]![0];
 		expect(completedFindCall.where.status).toBe(WebhookEventStatus.COMPLETED);
 		expect(completedFindCall.where.processedAt.lt).toBeInstanceOf(Date);
 		expect(completedFindCall.select).toEqual({ id: true });
@@ -70,7 +70,9 @@ describe("cleanupOldWebhookEvents", () => {
 		// Verify retention date (90 days ago)
 		const retentionDate = completedFindCall.where.processedAt.lt;
 		const expectedDate = new Date("2026-02-16T10:00:00Z");
-		expectedDate.setTime(expectedDate.getTime() - RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000);
+		expectedDate.setTime(
+			expectedDate.getTime() - RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000,
+		);
 		expect(retentionDate.getTime()).toBe(expectedDate.getTime());
 
 		expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenNthCalledWith(1, {
@@ -95,7 +97,7 @@ describe("cleanupOldWebhookEvents", () => {
 
 		expect(result.failedDeleted).toBe(8);
 
-		const failedFindCall = mockPrisma.webhookEvent.findMany.mock.calls[1][0];
+		const failedFindCall = mockPrisma.webhookEvent.findMany.mock.calls[1]![0];
 		expect(failedFindCall.where.status).toBe(WebhookEventStatus.FAILED);
 		expect(failedFindCall.where.processedAt.lt).toBeInstanceOf(Date);
 		expect(failedFindCall.select).toEqual({ id: true });
@@ -104,7 +106,9 @@ describe("cleanupOldWebhookEvents", () => {
 		// Verify retention date (180 days ago)
 		const retentionDate = failedFindCall.where.processedAt.lt;
 		const expectedDate = new Date("2026-02-16T10:00:00Z");
-		expectedDate.setTime(expectedDate.getTime() - RETENTION.WEBHOOK_FAILED_DAYS * 24 * 60 * 60 * 1000);
+		expectedDate.setTime(
+			expectedDate.getTime() - RETENTION.WEBHOOK_FAILED_DAYS * 24 * 60 * 60 * 1000,
+		);
 		expect(retentionDate.getTime()).toBe(expectedDate.getTime());
 
 		expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenNthCalledWith(2, {
@@ -129,7 +133,7 @@ describe("cleanupOldWebhookEvents", () => {
 
 		expect(result.skippedDeleted).toBe(12);
 
-		const skippedFindCall = mockPrisma.webhookEvent.findMany.mock.calls[2][0];
+		const skippedFindCall = mockPrisma.webhookEvent.findMany.mock.calls[2]![0];
 		expect(skippedFindCall.where.status).toBe(WebhookEventStatus.SKIPPED);
 		expect(skippedFindCall.where.receivedAt.lt).toBeInstanceOf(Date);
 		expect(skippedFindCall.select).toEqual({ id: true });
@@ -138,7 +142,9 @@ describe("cleanupOldWebhookEvents", () => {
 		// Verify retention date (90 days ago)
 		const retentionDate = skippedFindCall.where.receivedAt.lt;
 		const expectedDate = new Date("2026-02-16T10:00:00Z");
-		expectedDate.setTime(expectedDate.getTime() - RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000);
+		expectedDate.setTime(
+			expectedDate.getTime() - RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000,
+		);
 		expect(retentionDate.getTime()).toBe(expectedDate.getTime());
 
 		expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenNthCalledWith(3, {
@@ -163,7 +169,7 @@ describe("cleanupOldWebhookEvents", () => {
 
 		expect(result.staleDeleted).toBe(3);
 
-		const staleFindCall = mockPrisma.webhookEvent.findMany.mock.calls[3][0];
+		const staleFindCall = mockPrisma.webhookEvent.findMany.mock.calls[3]![0];
 		expect(staleFindCall.where.status.in).toEqual([
 			WebhookEventStatus.PROCESSING,
 			WebhookEventStatus.PENDING,
@@ -175,7 +181,9 @@ describe("cleanupOldWebhookEvents", () => {
 		// Verify retention date (90 days ago)
 		const retentionDate = staleFindCall.where.receivedAt.lt;
 		const expectedDate = new Date("2026-02-16T10:00:00Z");
-		expectedDate.setTime(expectedDate.getTime() - RETENTION.WEBHOOK_STALE_DAYS * 24 * 60 * 60 * 1000);
+		expectedDate.setTime(
+			expectedDate.getTime() - RETENTION.WEBHOOK_STALE_DAYS * 24 * 60 * 60 * 1000,
+		);
 		expect(retentionDate.getTime()).toBe(expectedDate.getTime());
 
 		expect(mockPrisma.webhookEvent.deleteMany).toHaveBeenNthCalledWith(4, {
@@ -190,31 +198,31 @@ describe("cleanupOldWebhookEvents", () => {
 			mockPrisma.webhookEvent.findMany.mock.calls;
 
 		// COMPLETED: 90 days
-		const completedRetention = completedFind[0].where.processedAt.lt;
+		const completedRetention = completedFind![0].where.processedAt.lt;
 		expect(completedRetention.getTime()).toBe(
 			new Date("2026-02-16T10:00:00Z").getTime() -
-				RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000
+				RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000,
 		);
 
 		// FAILED: 180 days
-		const failedRetention = failedFind[0].where.processedAt.lt;
+		const failedRetention = failedFind![0].where.processedAt.lt;
 		expect(failedRetention.getTime()).toBe(
 			new Date("2026-02-16T10:00:00Z").getTime() -
-				RETENTION.WEBHOOK_FAILED_DAYS * 24 * 60 * 60 * 1000
+				RETENTION.WEBHOOK_FAILED_DAYS * 24 * 60 * 60 * 1000,
 		);
 
 		// SKIPPED: 90 days
-		const skippedRetention = skippedFind[0].where.receivedAt.lt;
+		const skippedRetention = skippedFind![0].where.receivedAt.lt;
 		expect(skippedRetention.getTime()).toBe(
 			new Date("2026-02-16T10:00:00Z").getTime() -
-				RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000
+				RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000,
 		);
 
 		// STALE: 90 days
-		const staleRetention = staleFind[0].where.receivedAt.lt;
+		const staleRetention = staleFind![0].where.receivedAt.lt;
 		expect(staleRetention.getTime()).toBe(
 			new Date("2026-02-16T10:00:00Z").getTime() -
-				RETENTION.WEBHOOK_STALE_DAYS * 24 * 60 * 60 * 1000
+				RETENTION.WEBHOOK_STALE_DAYS * 24 * 60 * 60 * 1000,
 		);
 	});
 
@@ -252,10 +260,10 @@ describe("cleanupOldWebhookEvents", () => {
 
 		// Verify findMany order: COMPLETED, FAILED, SKIPPED, STALE
 		const findCalls = mockPrisma.webhookEvent.findMany.mock.calls;
-		expect(findCalls[0][0].where.status).toBe(WebhookEventStatus.COMPLETED);
-		expect(findCalls[1][0].where.status).toBe(WebhookEventStatus.FAILED);
-		expect(findCalls[2][0].where.status).toBe(WebhookEventStatus.SKIPPED);
-		expect(findCalls[3][0].where.status.in).toEqual([
+		expect(findCalls[0]![0].where.status).toBe(WebhookEventStatus.COMPLETED);
+		expect(findCalls[1]![0].where.status).toBe(WebhookEventStatus.FAILED);
+		expect(findCalls[2]![0].where.status).toBe(WebhookEventStatus.SKIPPED);
+		expect(findCalls[3]![0].where.status.in).toEqual([
 			WebhookEventStatus.PROCESSING,
 			WebhookEventStatus.PENDING,
 		]);
@@ -266,8 +274,8 @@ describe("cleanupOldWebhookEvents", () => {
 
 		const [completedFind, failedFind] = mockPrisma.webhookEvent.findMany.mock.calls;
 
-		expect(completedFind[0].where).toHaveProperty("processedAt");
-		expect(failedFind[0].where).toHaveProperty("processedAt");
+		expect(completedFind![0].where).toHaveProperty("processedAt");
+		expect(failedFind![0].where).toHaveProperty("processedAt");
 	});
 
 	it("should use receivedAt for SKIPPED and STALE status", async () => {
@@ -277,8 +285,8 @@ describe("cleanupOldWebhookEvents", () => {
 		const skippedFind = findCalls[2];
 		const staleFind = findCalls[3];
 
-		expect(skippedFind[0].where).toHaveProperty("receivedAt");
-		expect(staleFind[0].where).toHaveProperty("receivedAt");
+		expect(skippedFind![0].where).toHaveProperty("receivedAt");
+		expect(staleFind![0].where).toHaveProperty("receivedAt");
 	});
 
 	it("should pass found IDs to deleteMany", async () => {
@@ -326,7 +334,7 @@ describe("cleanupOldWebhookEvents", () => {
 		await cleanupOldWebhookEvents();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-webhook-events] Completed events delete limit reached, remaining will be cleaned on next run"
+			"[CRON:cleanup-webhook-events] Completed events delete limit reached, remaining will be cleaned on next run",
 		);
 	});
 
@@ -347,7 +355,7 @@ describe("cleanupOldWebhookEvents", () => {
 		await cleanupOldWebhookEvents();
 
 		expect(consoleWarnSpy).not.toHaveBeenCalledWith(
-			expect.stringContaining("delete limit reached")
+			expect.stringContaining("delete limit reached"),
 		);
 	});
 
@@ -368,7 +376,7 @@ describe("cleanupOldWebhookEvents", () => {
 		await cleanupOldWebhookEvents();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-webhook-events] Deleted 5 stale PROCESSING/PENDING events"
+			"[CRON:cleanup-webhook-events] Deleted 5 stale PROCESSING/PENDING events",
 		);
 	});
 

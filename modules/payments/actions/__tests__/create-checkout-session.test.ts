@@ -500,7 +500,7 @@ describe("createCheckoutSession", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	describe("rate limiting", () => {
-		it("should return rate limit error with retryAfter data", async () => {
+		it("should return rate limit error", async () => {
 			mockCheckRateLimit.mockResolvedValue({
 				success: false,
 				error: "Trop de tentatives",
@@ -511,10 +511,7 @@ describe("createCheckoutSession", () => {
 			const result = await createCheckoutSession(undefined, createFormData());
 
 			expect(result.status).toBe(ActionStatus.ERROR);
-			expect(result.data).toEqual({
-				retryAfter: 30,
-				reset: 1708444800,
-			});
+			expect(result.message).toBe("Trop de tentatives");
 		});
 
 		it("should not call Stripe when rate limited", async () => {

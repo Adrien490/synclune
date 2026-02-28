@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const {
-	mockPrisma,
-	mockSendReviewRequestEmailInternal,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockSendReviewRequestEmailInternal } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn() },
 	},
@@ -42,7 +39,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 
 		await sendDelayedReviewRequestEmails();
 
-		const call = mockPrisma.order.findMany.mock.calls[0][0];
+		const call = mockPrisma.order.findMany.mock.calls[0]![0];
 		expect(call.where.deletedAt).toBeNull();
 		expect(call.where.fulfillmentStatus).toBe("DELIVERED");
 		expect(call.where.reviewRequestSentAt).toBeNull();
@@ -56,7 +53,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 
 		await sendDelayedReviewRequestEmails();
 
-		const call = mockPrisma.order.findMany.mock.calls[0][0];
+		const call = mockPrisma.order.findMany.mock.calls[0]![0];
 		const now = Date.now();
 
 		// lt threshold = 2 days ago
@@ -88,9 +85,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 	});
 
 	it("should count errors when sendReviewRequestEmailInternal returns non-success", async () => {
-		const orders = [
-			{ id: "order-1", orderNumber: "SYN-001", customerEmail: "a@test.com" },
-		];
+		const orders = [{ id: "order-1", orderNumber: "SYN-001", customerEmail: "a@test.com" }];
 		mockPrisma.order.findMany.mockResolvedValue(orders);
 		mockSendReviewRequestEmailInternal.mockResolvedValue({
 			status: ActionStatus.ERROR,
@@ -103,13 +98,9 @@ describe("sendDelayedReviewRequestEmails", () => {
 	});
 
 	it("should count errors when sendReviewRequestEmailInternal throws", async () => {
-		const orders = [
-			{ id: "order-1", orderNumber: "SYN-001", customerEmail: "a@test.com" },
-		];
+		const orders = [{ id: "order-1", orderNumber: "SYN-001", customerEmail: "a@test.com" }];
 		mockPrisma.order.findMany.mockResolvedValue(orders);
-		mockSendReviewRequestEmailInternal.mockRejectedValue(
-			new Error("Network error")
-		);
+		mockSendReviewRequestEmailInternal.mockRejectedValue(new Error("Network error"));
 
 		const result = await sendDelayedReviewRequestEmails();
 

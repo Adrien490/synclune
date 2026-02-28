@@ -74,17 +74,13 @@ describe("syncAsyncPayments", () => {
 
 		await syncAsyncPayments();
 
-		const call = mockPrisma.order.findMany.mock.calls[0][0];
+		const call = mockPrisma.order.findMany.mock.calls[0]![0];
 		expect(call.where.paymentStatus).toBe("PENDING");
 		expect(call.where.stripePaymentIntentId).toEqual({ not: null });
 		expect(call.where.deletedAt).toBeNull();
 
-		const minAge = new Date(
-			Date.now() - THRESHOLDS.ASYNC_PAYMENT_MIN_AGE_MS
-		);
-		const maxAge = new Date(
-			Date.now() - THRESHOLDS.ASYNC_PAYMENT_MAX_AGE_MS
-		);
+		const minAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MIN_AGE_MS);
+		const maxAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MAX_AGE_MS);
 		expect(call.where.createdAt.gte.getTime()).toBe(maxAge.getTime());
 		expect(call.where.createdAt.lt.getTime()).toBe(minAge.getTime());
 	});
@@ -125,11 +121,7 @@ describe("syncAsyncPayments", () => {
 
 		const result = await syncAsyncPayments();
 
-		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith(
-			"order-2",
-			"pi_canceled",
-			failureDetails
-		);
+		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith("order-2", "pi_canceled", failureDetails);
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-2");
 		expect(result!.updated).toBe(1);
 		expect(result!.hasMore).toBe(false);
@@ -185,9 +177,7 @@ describe("syncAsyncPayments", () => {
 			paymentStatus: "PENDING",
 		};
 		mockPrisma.order.findMany.mockResolvedValue([order]);
-		mockStripe.paymentIntents.retrieve.mockRejectedValue(
-			new Error("Stripe API error")
-		);
+		mockStripe.paymentIntents.retrieve.mockRejectedValue(new Error("Stripe API error"));
 
 		const result = await syncAsyncPayments();
 
@@ -279,16 +269,14 @@ describe("syncAsyncPayments", () => {
 		});
 		const failureDetails = { reason: "canceled" };
 		mockExtractPaymentFailureDetails.mockReturnValue(failureDetails);
-		mockRestoreStockForOrder.mockRejectedValue(
-			new Error("Stock restore failed")
-		);
+		mockRestoreStockForOrder.mockRejectedValue(new Error("Stock restore failed"));
 
 		const result = await syncAsyncPayments();
 
 		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith(
 			"order-stock-fail",
 			"pi_canceled",
-			failureDetails
+			failureDetails,
 		);
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-stock-fail");
 		expect(result!.updated).toBe(1);

@@ -91,7 +91,7 @@ const randomBetween = (min: number, max: number, seed: number): number =>
 const generateSparkles = (
 	count: number,
 	sizeRange: [number, number],
-	glowIntensity: number
+	glowIntensity: number,
 ): Sparkle[] => {
 	return Array.from({ length: count }, (_, i) => {
 		const seed = i * 1000; // Base seed unique par particule
@@ -103,7 +103,7 @@ const generateSparkles = (
 			top: randomBetween(0, 100, seed + 3),
 			delay: randomBetween(0, DEFAULT_CONFIG.DELAY_MAX, seed + 4),
 			duration: randomBetween(DEFAULT_CONFIG.DURATION_MIN, DEFAULT_CONFIG.DURATION_MAX, seed + 5),
-			color: SPARKLE_COLORS[i % SPARKLE_COLORS.length], // Déterministe via index
+			color: SPARKLE_COLORS[i % SPARKLE_COLORS.length]!, // Déterministe via index
 			glowSize: size * DEFAULT_CONFIG.GLOW_MULTIPLIER * glowIntensity,
 		};
 	});
@@ -116,13 +116,7 @@ const generateSparkles = (
 /**
  * Composant interne pour rendre un set de paillettes
  */
-const SparkleSet = ({
-	sparkles,
-	isInView,
-}: {
-	sparkles: Sparkle[];
-	isInView: boolean;
-}) => {
+const SparkleSet = ({ sparkles, isInView }: { sparkles: Sparkle[]; isInView: boolean }) => {
 	if (!isInView) return null;
 
 	return (
@@ -134,16 +128,18 @@ const SparkleSet = ({
 				return (
 					<div
 						key={sparkle.id}
-						className="absolute rounded-full animate-glitter-twinkle"
-						style={{
-							left: `${sparkle.left}%`,
-							top: `${sparkle.top}%`,
-							width: totalRadius * 2,
-							height: totalRadius * 2,
-							background: `radial-gradient(circle, ${sparkle.color} ${coreRadius}px, transparent ${totalRadius}px)`,
-							"--sparkle-duration": `${sparkle.duration}s`,
-							"--sparkle-delay": `${sparkle.delay}s`,
-						} as React.CSSProperties}
+						className="animate-glitter-twinkle absolute rounded-full"
+						style={
+							{
+								left: `${sparkle.left}%`,
+								top: `${sparkle.top}%`,
+								width: totalRadius * 2,
+								height: totalRadius * 2,
+								background: `radial-gradient(circle, ${sparkle.color} ${coreRadius}px, transparent ${totalRadius}px)`,
+								"--sparkle-duration": `${sparkle.duration}s`,
+								"--sparkle-delay": `${sparkle.delay}s`,
+							} as React.CSSProperties
+						}
 					/>
 				);
 			})}
@@ -172,16 +168,21 @@ const GlitterSparklesBase = ({
 
 	// Génération des paillettes pour desktop et mobile
 	// CSS gère l'affichage conditionnel, évitant le flash d'hydratation
-	const desktopSparkles = generateSparkles(count ?? DEFAULT_CONFIG.COUNT_DESKTOP, sizeRange, glowIntensity);
-	const mobileSparkles = generateSparkles(count ?? DEFAULT_CONFIG.COUNT_MOBILE, sizeRange, glowIntensity);
+	const desktopSparkles = generateSparkles(
+		count ?? DEFAULT_CONFIG.COUNT_DESKTOP,
+		sizeRange,
+		glowIntensity,
+	);
+	const mobileSparkles = generateSparkles(
+		count ?? DEFAULT_CONFIG.COUNT_MOBILE,
+		sizeRange,
+		glowIntensity,
+	);
 
 	return (
 		<div
 			ref={containerRef}
-			className={cn(
-				"absolute inset-0 overflow-hidden pointer-events-none",
-				className
-			)}
+			className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}
 			style={{ contain: "layout paint" }}
 			aria-hidden="true"
 			data-testid="glitter-sparkles"

@@ -40,10 +40,7 @@ export function MaterialsFilterSheet({ className }: MaterialsFilterSheetProps) {
 			params.set("page", "1");
 
 			if (value.isActive !== "all") {
-				params.set(
-					"filter_isActive",
-					value.isActive === "active" ? "true" : "false"
-				);
+				params.set("filter_isActive", value.isActive === "active" ? "true" : "false");
 			}
 
 			startTransition(() => {
@@ -78,26 +75,21 @@ export function MaterialsFilterSheet({ className }: MaterialsFilterSheetProps) {
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}
-			onApply={() => form.handleSubmit()}
+			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
 			triggerClassName={className}
 		>
 			<form
 				onSubmit={() => {
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 				className="space-y-6"
 			>
 				<form.Field name="isActive">
 					{(field) => (
 						<fieldset className="space-y-3">
-							<legend className="font-medium text-sm text-foreground">
-								Statut
-							</legend>
-							<RadioGroup
-								value={field.state.value}
-								onValueChange={field.handleChange}
-							>
+							<legend className="text-foreground text-sm font-medium">Statut</legend>
+							<RadioGroup value={field.state.value} onValueChange={field.handleChange}>
 								{[
 									{ value: "all", label: "Tous" },
 									{ value: "active", label: "Actifs" },
@@ -107,7 +99,7 @@ export function MaterialsFilterSheet({ className }: MaterialsFilterSheetProps) {
 										<RadioGroupItem value={value} id={`active-${value}`} />
 										<Label
 											htmlFor={`active-${value}`}
-											className="text-sm font-normal cursor-pointer"
+											className="cursor-pointer text-sm font-normal"
 										>
 											{label}
 										</Label>

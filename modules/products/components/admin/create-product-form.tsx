@@ -218,12 +218,12 @@ export function CreateProductForm({
 														container: ({ isDragActive }) => ({
 															border: "2px dashed",
 															borderColor: isDragActive
-																? "hsl(var(--primary))"
-																: "hsl(var(--muted-foreground) / 0.25)",
+																? "var(--primary)"
+																: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
 															borderRadius: "0.75rem",
 															backgroundColor: isDragActive
-																? "hsl(var(--primary) / 0.05)"
-																: "hsl(var(--muted) / 0.3)",
+																? "color-mix(in oklch, var(--primary) 5%, transparent)"
+																: "color-mix(in oklch, var(--muted) 30%, transparent)",
 															padding: "1.5rem",
 															height: "min(200px, 25vh)",
 															minHeight: "160px",
@@ -316,7 +316,7 @@ export function CreateProductForm({
 																		justifyContent: "center",
 																		cursor: "pointer",
 																		backgroundColor: isDragActive
-																			? "hsl(var(--primary) / 0.05)"
+																			? "color-mix(in oklch, var(--primary) 5%, transparent)"
 																			: "transparent",
 																	}),
 																	uploadIcon: () => ({ display: "none" }),

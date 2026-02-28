@@ -3,7 +3,12 @@ import "server-only";
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl && process.env.NODE_ENV !== "test") {
+	throw new Error("DATABASE_URL environment variable is not set");
+}
+
+const adapter = new PrismaNeon({ connectionString: databaseUrl! });
 
 /**
  * Client Prisma avec Neon serverless adapter
@@ -48,9 +53,7 @@ async function verifyPgTrgmExtension() {
 			SELECT extname::text FROM pg_extension WHERE extname = 'pg_trgm'
 		`;
 		if (result.length === 0) {
-			console.warn(
-				"[Prisma] Extension pg_trgm non installée - recherche fuzzy désactivée"
-			);
+			console.warn("[Prisma] Extension pg_trgm non installée - recherche fuzzy désactivée");
 		}
 	} catch (error) {
 		console.error("[Prisma] Erreur vérification pg_trgm:", error);
@@ -59,7 +62,7 @@ async function verifyPgTrgmExtension() {
 
 // Exécuter en dev uniquement (éviter ralentissement cold start en prod)
 if (process.env.NODE_ENV === "development") {
-	verifyPgTrgmExtension();
+	void verifyPgTrgmExtension();
 }
 
 /**
@@ -84,16 +87,23 @@ export const notDeleted = { deletedAt: null } as const;
  * await softDelete.refund(refundId);
  */
 export const softDelete = {
-  order: (id: string) => prisma.order.update({ where: { id }, data: { deletedAt: new Date() } }),
-  user: (id: string) => prisma.user.update({ where: { id }, data: { deletedAt: new Date() } }),
-  refund: (id: string) => prisma.refund.update({ where: { id }, data: { deletedAt: new Date() } }),
-  orderNote: (id: string) => prisma.orderNote.update({ where: { id }, data: { deletedAt: new Date() } }),
-  newsletterSubscriber: (id: string) => prisma.newsletterSubscriber.update({ where: { id }, data: { deletedAt: new Date() } }),
-  productReview: (id: string) => prisma.productReview.update({ where: { id }, data: { deletedAt: new Date() } }),
-  reviewResponse: (id: string) => prisma.reviewResponse.update({ where: { id }, data: { deletedAt: new Date() } }),
-  product: (id: string) => prisma.product.update({ where: { id }, data: { deletedAt: new Date() } }),
-  productSku: (id: string) => prisma.productSku.update({ where: { id }, data: { deletedAt: new Date() } }),
-  customizationRequest: (id: string) => prisma.customizationRequest.update({ where: { id }, data: { deletedAt: new Date() } }),
-  discount: (id: string) => prisma.discount.update({ where: { id }, data: { deletedAt: new Date() } }),
+	order: (id: string) => prisma.order.update({ where: { id }, data: { deletedAt: new Date() } }),
+	user: (id: string) => prisma.user.update({ where: { id }, data: { deletedAt: new Date() } }),
+	refund: (id: string) => prisma.refund.update({ where: { id }, data: { deletedAt: new Date() } }),
+	orderNote: (id: string) =>
+		prisma.orderNote.update({ where: { id }, data: { deletedAt: new Date() } }),
+	newsletterSubscriber: (id: string) =>
+		prisma.newsletterSubscriber.update({ where: { id }, data: { deletedAt: new Date() } }),
+	productReview: (id: string) =>
+		prisma.productReview.update({ where: { id }, data: { deletedAt: new Date() } }),
+	reviewResponse: (id: string) =>
+		prisma.reviewResponse.update({ where: { id }, data: { deletedAt: new Date() } }),
+	product: (id: string) =>
+		prisma.product.update({ where: { id }, data: { deletedAt: new Date() } }),
+	productSku: (id: string) =>
+		prisma.productSku.update({ where: { id }, data: { deletedAt: new Date() } }),
+	customizationRequest: (id: string) =>
+		prisma.customizationRequest.update({ where: { id }, data: { deletedAt: new Date() } }),
+	discount: (id: string) =>
+		prisma.discount.update({ where: { id }, data: { deletedAt: new Date() } }),
 };
-

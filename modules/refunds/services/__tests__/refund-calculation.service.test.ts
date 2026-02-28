@@ -41,9 +41,7 @@ import type { RefundItemValue } from "../../types/refund.types";
 // Helpers
 // ============================================================================
 
-function makeOrderItem(
-	overrides: Partial<OrderItemForRefundCalc> = {}
-): OrderItemForRefundCalc {
+function makeOrderItem(overrides: Partial<OrderItemForRefundCalc> = {}): OrderItemForRefundCalc {
 	return {
 		id: "item-1",
 		quantity: 3,
@@ -53,9 +51,7 @@ function makeOrderItem(
 	};
 }
 
-function makeRefundItem(
-	overrides: Partial<RefundItemValue> = {}
-): RefundItemValue {
+function makeRefundItem(overrides: Partial<RefundItemValue> = {}): RefundItemValue {
 	return {
 		orderItemId: "item-1",
 		quantity: 1,
@@ -178,10 +174,7 @@ describe("calculateRefundAmount", () => {
 
 describe("initializeRefundItems", () => {
 	it("should create items with quantity 0, not selected, and restock based on reason", () => {
-		const orderItems = [
-			makeOrderItem({ id: "item-1" }),
-			makeOrderItem({ id: "item-2" }),
-		];
+		const orderItems = [makeOrderItem({ id: "item-1" }), makeOrderItem({ id: "item-2" })];
 		const result = initializeRefundItems(orderItems, "CUSTOMER_REQUEST" as never);
 
 		expect(result).toHaveLength(2);
@@ -203,7 +196,7 @@ describe("initializeRefundItems", () => {
 		const orderItems = [makeOrderItem({ id: "item-1" })];
 		const result = initializeRefundItems(orderItems, "DEFECTIVE" as never);
 
-		expect(result[0].restock).toBe(false);
+		expect(result[0]!.restock).toBe(false);
 	});
 });
 
@@ -219,17 +212,15 @@ describe("updateItemsRestock", () => {
 		];
 		const result = updateItemsRestock(items, "CUSTOMER_REQUEST" as never);
 
-		expect(result[0].restock).toBe(true);
-		expect(result[1].restock).toBe(true);
+		expect(result[0]!.restock).toBe(true);
+		expect(result[1]!.restock).toBe(true);
 	});
 
 	it("should set restock to false for non-restockable reason", () => {
-		const items: RefundItemValue[] = [
-			makeRefundItem({ orderItemId: "item-1", restock: true }),
-		];
+		const items: RefundItemValue[] = [makeRefundItem({ orderItemId: "item-1", restock: true })];
 		const result = updateItemsRestock(items, "LOST_IN_TRANSIT" as never);
 
-		expect(result[0].restock).toBe(false);
+		expect(result[0]!.restock).toBe(false);
 	});
 
 	it("should preserve other item properties", () => {
@@ -238,9 +229,9 @@ describe("updateItemsRestock", () => {
 		];
 		const result = updateItemsRestock(items, "CUSTOMER_REQUEST" as never);
 
-		expect(result[0].orderItemId).toBe("item-1");
-		expect(result[0].quantity).toBe(3);
-		expect(result[0].selected).toBe(true);
+		expect(result[0]!.orderItemId).toBe("item-1");
+		expect(result[0]!.quantity).toBe(3);
+		expect(result[0]!.selected).toBe(true);
 	});
 });
 
@@ -315,14 +306,12 @@ describe("getSelectedItems", () => {
 		const result = getSelectedItems(items);
 
 		expect(result).toHaveLength(2);
-		expect(result[0].orderItemId).toBe("item-1");
-		expect(result[1].orderItemId).toBe("item-4");
+		expect(result[0]!.orderItemId).toBe("item-1");
+		expect(result[1]!.orderItemId).toBe("item-4");
 	});
 
 	it("should return empty array when nothing selected", () => {
-		const items: RefundItemValue[] = [
-			makeRefundItem({ selected: false, quantity: 1 }),
-		];
+		const items: RefundItemValue[] = [makeRefundItem({ selected: false, quantity: 1 })];
 		expect(getSelectedItems(items)).toHaveLength(0);
 	});
 

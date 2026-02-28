@@ -4,17 +4,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockFindFirst,
-	mockGetSession,
-	mockGetCartSessionId,
-	mockCacheCartSummary,
-} = vi.hoisted(() => ({
-	mockFindFirst: vi.fn(),
-	mockGetSession: vi.fn(),
-	mockGetCartSessionId: vi.fn(),
-	mockCacheCartSummary: vi.fn(),
-}));
+const { mockFindFirst, mockGetSession, mockGetCartSessionId, mockCacheCartSummary } = vi.hoisted(
+	() => ({
+		mockFindFirst: vi.fn(),
+		mockGetSession: vi.fn(),
+		mockGetCartSessionId: vi.fn(),
+		mockCacheCartSummary: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
@@ -82,7 +79,7 @@ describe("getCartSummary", () => {
 
 		// Assert
 		expect(mockFindFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: expect.objectContaining({ userId: "user-1" }) })
+			expect.objectContaining({ where: expect.objectContaining({ userId: "user-1" }) }),
 		);
 	});
 
@@ -97,7 +94,7 @@ describe("getCartSummary", () => {
 
 		// Assert
 		expect(mockFindFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: expect.objectContaining({ sessionId: "session-xyz" }) })
+			expect.objectContaining({ where: expect.objectContaining({ sessionId: "session-xyz" }) }),
 		);
 	});
 
@@ -158,7 +155,7 @@ describe("fetchCartSummary", () => {
 	it("calculates itemCount as sum of all item quantities", async () => {
 		// Arrange
 		mockFindFirst.mockResolvedValue(
-			makeCart([makeCartItem(2, 1000), makeCartItem(3, 500), makeCartItem(1, 2000)])
+			makeCart([makeCartItem(2, 1000), makeCartItem(3, 500), makeCartItem(1, 2000)]),
 		);
 
 		// Act
@@ -170,9 +167,7 @@ describe("fetchCartSummary", () => {
 
 	it("calculates totalAmount as sum of price multiplied by quantity for each item", async () => {
 		// Arrange
-		mockFindFirst.mockResolvedValue(
-			makeCart([makeCartItem(2, 1000), makeCartItem(3, 500)])
-		);
+		mockFindFirst.mockResolvedValue(makeCart([makeCartItem(2, 1000), makeCartItem(3, 500)]));
 
 		// Act
 		const result = await fetchCartSummary("user-1", undefined);
@@ -224,7 +219,7 @@ describe("fetchCartSummary", () => {
 
 		// Assert
 		expect(mockFindFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: expect.objectContaining({ userId: "user-1" }) })
+			expect.objectContaining({ where: expect.objectContaining({ userId: "user-1" }) }),
 		);
 	});
 
@@ -237,7 +232,7 @@ describe("fetchCartSummary", () => {
 
 		// Assert
 		expect(mockFindFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: expect.objectContaining({ sessionId: "session-xyz" }) })
+			expect.objectContaining({ where: expect.objectContaining({ sessionId: "session-xyz" }) }),
 		);
 	});
 
@@ -249,7 +244,7 @@ describe("fetchCartSummary", () => {
 		await fetchCartSummary("user-1", undefined);
 
 		// Assert
-		const callArg = mockFindFirst.mock.calls[0][0];
+		const callArg = mockFindFirst.mock.calls[0]![0];
 		expect(callArg.where.OR).toBeDefined();
 		expect(callArg.where.OR).toContainEqual({ expiresAt: null });
 		expect(callArg.where.OR).toContainEqual({ expiresAt: { gt: expect.any(Date) } });

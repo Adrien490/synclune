@@ -37,18 +37,18 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 					<Button
 						variant="outline"
 						size="sm"
-						className="text-xs gap-1.5 h-8 px-3 border-primary/30 hover:border-primary hover:bg-primary/5"
+						className="border-primary/30 hover:border-primary hover:bg-primary/5 h-10 gap-1.5 px-3 text-xs"
 						type="button"
 					>
-						<Ruler className="w-3.5 h-3.5" aria-hidden="true" />
+						<Ruler className="h-3.5 w-3.5" aria-hidden="true" />
 						Guide des tailles
 					</Button>
 				)}
 			</ResponsiveDialogTrigger>
-			<ResponsiveDialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+			<ResponsiveDialogContent className="flex max-h-[85vh] flex-col sm:max-w-lg">
 				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle className="flex items-center gap-2">
-						<Ruler className="w-5 h-5 text-primary" aria-hidden="true" />
+						<Ruler className="text-primary h-5 w-5" aria-hidden="true" />
 						Guide des tailles
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
@@ -56,17 +56,17 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				<Tabs defaultValue={defaultTab} className="mt-4 flex flex-col flex-1 min-h-0">
-					<TabsList className="shrink-0 grid w-full grid-cols-2">
+				<Tabs defaultValue={defaultTab} className="mt-4 flex min-h-0 flex-1 flex-col">
+					<TabsList className="grid w-full shrink-0 grid-cols-2">
 						<TabsTrigger value="rings">Bagues</TabsTrigger>
 						<TabsTrigger value="bracelets">Bracelets</TabsTrigger>
 					</TabsList>
 
 					{/* Guide Bagues */}
-					<TabsContent value="rings" className="flex-1 overflow-y-auto space-y-4 mt-4">
+					<TabsContent value="rings" className="mt-4 flex-1 space-y-4 overflow-y-auto">
 						<div className="space-y-3">
 							<h3 className="text-sm font-semibold">Comment mesurer ?</h3>
-							<ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+							<ol className="text-muted-foreground list-inside list-decimal space-y-2 text-sm">
 								<li>Enroulez une ficelle ou un ruban autour de votre doigt</li>
 								<li>Marquez l'endroit où les deux extrémités se rejoignent</li>
 								<li>Mesurez la longueur obtenue en millimètres</li>
@@ -74,44 +74,94 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 							</ol>
 						</div>
 
-						<div className="rounded-lg border overflow-hidden">
+						<div className="overflow-hidden rounded-lg border">
 							<table className="w-full text-sm">
-								<caption className="sr-only">Correspondances des tailles de bagues francaises</caption>
+								<caption className="sr-only">
+									Correspondances des tailles de bagues francaises
+								</caption>
 								<thead className="bg-muted/50">
 									<tr>
-										<th scope="col" className="px-3 py-2 text-left font-medium">Tour de doigt</th>
-										<th scope="col" className="px-3 py-2 text-left font-medium">Diametre</th>
-										<th scope="col" className="px-3 py-2 text-left font-medium">Taille FR</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">
+											Tour de doigt
+										</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">
+											Diametre
+										</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">
+											Taille FR
+										</th>
 									</tr>
 								</thead>
 								<tbody className="divide-y">
-									<tr><td className="px-3 py-2">44 mm</td><td className="px-3 py-2">14 mm</td><td className="px-3 py-2">44</td></tr>
-									<tr><td className="px-3 py-2">46 mm</td><td className="px-3 py-2">14.6 mm</td><td className="px-3 py-2">46</td></tr>
-									<tr><td className="px-3 py-2">48 mm</td><td className="px-3 py-2">15.3 mm</td><td className="px-3 py-2">48</td></tr>
-									<tr><td className="px-3 py-2">50 mm</td><td className="px-3 py-2">15.9 mm</td><td className="px-3 py-2">50</td></tr>
-									<tr><td className="px-3 py-2">52 mm</td><td className="px-3 py-2">16.5 mm</td><td className="px-3 py-2">52</td></tr>
-									<tr><td className="px-3 py-2">54 mm</td><td className="px-3 py-2">17.2 mm</td><td className="px-3 py-2">54</td></tr>
-									<tr><td className="px-3 py-2">56 mm</td><td className="px-3 py-2">17.8 mm</td><td className="px-3 py-2">56</td></tr>
-									<tr><td className="px-3 py-2">58 mm</td><td className="px-3 py-2">18.5 mm</td><td className="px-3 py-2">58</td></tr>
-									<tr><td className="px-3 py-2">60 mm</td><td className="px-3 py-2">19.1 mm</td><td className="px-3 py-2">60</td></tr>
-									<tr><td className="px-3 py-2">62 mm</td><td className="px-3 py-2">19.7 mm</td><td className="px-3 py-2">62</td></tr>
+									<tr>
+										<td className="px-3 py-2">44 mm</td>
+										<td className="px-3 py-2">14 mm</td>
+										<td className="px-3 py-2">44</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">46 mm</td>
+										<td className="px-3 py-2">14.6 mm</td>
+										<td className="px-3 py-2">46</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">48 mm</td>
+										<td className="px-3 py-2">15.3 mm</td>
+										<td className="px-3 py-2">48</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">50 mm</td>
+										<td className="px-3 py-2">15.9 mm</td>
+										<td className="px-3 py-2">50</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">52 mm</td>
+										<td className="px-3 py-2">16.5 mm</td>
+										<td className="px-3 py-2">52</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">54 mm</td>
+										<td className="px-3 py-2">17.2 mm</td>
+										<td className="px-3 py-2">54</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">56 mm</td>
+										<td className="px-3 py-2">17.8 mm</td>
+										<td className="px-3 py-2">56</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">58 mm</td>
+										<td className="px-3 py-2">18.5 mm</td>
+										<td className="px-3 py-2">58</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">60 mm</td>
+										<td className="px-3 py-2">19.1 mm</td>
+										<td className="px-3 py-2">60</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">62 mm</td>
+										<td className="px-3 py-2">19.7 mm</td>
+										<td className="px-3 py-2">62</td>
+									</tr>
 								</tbody>
 							</table>
 						</div>
 
-						<div className="flex items-start gap-2 p-3 bg-accent/50 rounded-lg text-sm">
-							<Info className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+						<div className="bg-accent/50 flex items-start gap-2 rounded-lg p-3 text-sm">
+							<Info className="text-primary mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
 							<p className="text-muted-foreground">
-								<strong className="text-foreground">Astuce :</strong> Mesurez en fin de journée quand vos doigts sont légèrement gonflés. En cas de doute, choisissez la taille supérieure.
+								<strong className="text-foreground">Astuce :</strong> Mesurez en fin de journée
+								quand vos doigts sont légèrement gonflés. En cas de doute, choisissez la taille
+								supérieure.
 							</p>
 						</div>
 					</TabsContent>
 
 					{/* Guide Bracelets */}
-					<TabsContent value="bracelets" className="flex-1 overflow-y-auto space-y-4 mt-4">
+					<TabsContent value="bracelets" className="mt-4 flex-1 space-y-4 overflow-y-auto">
 						<div className="space-y-3">
 							<h3 className="text-sm font-semibold">Comment mesurer ?</h3>
-							<ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+							<ol className="text-muted-foreground list-inside list-decimal space-y-2 text-sm">
 								<li>Enroulez un mètre ruban souple autour de votre poignet</li>
 								<li>Placez-le juste au-dessus de l'os du poignet</li>
 								<li>Notez la mesure en centimètres</li>
@@ -119,30 +169,57 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 							</ol>
 						</div>
 
-						<div className="rounded-lg border overflow-hidden">
+						<div className="overflow-hidden rounded-lg border">
 							<table className="w-full text-sm">
 								<caption className="sr-only">Correspondances des tailles de bracelets</caption>
 								<thead className="bg-muted/50">
 									<tr>
-										<th scope="col" className="px-3 py-2 text-left font-medium">Tour de poignet</th>
-										<th scope="col" className="px-3 py-2 text-left font-medium">Taille bracelet</th>
-										<th scope="col" className="px-3 py-2 text-left font-medium">Ajustement</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">
+											Tour de poignet
+										</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">
+											Taille bracelet
+										</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">
+											Ajustement
+										</th>
 									</tr>
 								</thead>
 								<tbody className="divide-y">
-									<tr><td className="px-3 py-2">13-14 cm</td><td className="px-3 py-2">15-16 cm</td><td className="px-3 py-2">XS</td></tr>
-									<tr><td className="px-3 py-2">14-15 cm</td><td className="px-3 py-2">16-17 cm</td><td className="px-3 py-2">S</td></tr>
-									<tr><td className="px-3 py-2">15-16 cm</td><td className="px-3 py-2">17-18 cm</td><td className="px-3 py-2">M</td></tr>
-									<tr><td className="px-3 py-2">16-17 cm</td><td className="px-3 py-2">18-19 cm</td><td className="px-3 py-2">L</td></tr>
-									<tr><td className="px-3 py-2">17-18 cm</td><td className="px-3 py-2">19-20 cm</td><td className="px-3 py-2">XL</td></tr>
+									<tr>
+										<td className="px-3 py-2">13-14 cm</td>
+										<td className="px-3 py-2">15-16 cm</td>
+										<td className="px-3 py-2">XS</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">14-15 cm</td>
+										<td className="px-3 py-2">16-17 cm</td>
+										<td className="px-3 py-2">S</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">15-16 cm</td>
+										<td className="px-3 py-2">17-18 cm</td>
+										<td className="px-3 py-2">M</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">16-17 cm</td>
+										<td className="px-3 py-2">18-19 cm</td>
+										<td className="px-3 py-2">L</td>
+									</tr>
+									<tr>
+										<td className="px-3 py-2">17-18 cm</td>
+										<td className="px-3 py-2">19-20 cm</td>
+										<td className="px-3 py-2">XL</td>
+									</tr>
 								</tbody>
 							</table>
 						</div>
 
-						<div className="flex items-start gap-2 p-3 bg-accent/50 rounded-lg text-sm">
-							<Info className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+						<div className="bg-accent/50 flex items-start gap-2 rounded-lg p-3 text-sm">
+							<Info className="text-primary mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
 							<p className="text-muted-foreground">
-								<strong className="text-foreground">Astuce :</strong> Si vous hésitez entre deux tailles, choisissez la plus grande pour un confort optimal.
+								<strong className="text-foreground">Astuce :</strong> Si vous hésitez entre deux
+								tailles, choisissez la plus grande pour un confort optimal.
 							</p>
 						</div>
 					</TabsContent>

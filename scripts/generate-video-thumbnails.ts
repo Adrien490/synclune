@@ -13,8 +13,9 @@
  * 6. Upload sur UploadThing et met a jour la base de donnees
  *
  * ============================================================================
- * FFmpeg: Utilise ffmpeg-static (inclus dans les dependances npm)
- * Fallback automatique vers FFmpeg systeme si disponible
+ * FFmpeg: Necessite ffmpeg installe sur le systeme
+ *   macOS:   brew install ffmpeg
+ *   Ubuntu:  sudo apt install ffmpeg
  * ============================================================================
  *
  * Variables d'environnement requises:
@@ -47,46 +48,21 @@ import {
 	THUMBNAIL_CONFIG,
 	VIDEO_MIGRATION_CONFIG,
 } from "../modules/media/constants/media.constants";
-import {
-	isValidCuid,
-	isValidUploadThingUrl,
-} from "../modules/media/utils/validate-media-file";
+import { isValidCuid, isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
 import type { MediaItem, ProcessResult } from "../modules/media/types/script.types";
 import { requireScriptEnvVars } from "../shared/utils/script-env";
-import {
-	delay,
-	withRetry,
-	createScriptLogger,
-	processInBatches,
-} from "./lib/script-utils";
+import { delay, withRetry, createScriptLogger, processInBatches } from "./lib/script-utils";
 
 // ============================================================================
 // FFMPEG PATH RESOLUTION
 // ============================================================================
 
 /**
- * Importer ffmpeg-static si disponible
- * Priorité: ffmpeg-static > système (homebrew/apt) > chemins communs
- */
-let ffmpegStaticPath: string | null = null;
-try {
-	// eslint-disable-next-line @typescript-eslint/no-require-imports
-	ffmpegStaticPath = require("ffmpeg-static") as string;
-} catch {
-	// ffmpeg-static non disponible
-}
-
-/**
  * Trouve le chemin vers FFmpeg
- * Priorité: ffmpeg-static > système (which ffmpeg) > chemins communs
+ * Priorité: système (which ffmpeg) > chemins communs
  */
 function findFFmpegPath(): string | null {
-	// 1. Essayer ffmpeg-static (package npm)
-	if (ffmpegStaticPath && existsSync(ffmpegStaticPath)) {
-		return ffmpegStaticPath;
-	}
-
-	// 2. Essayer le système (macOS/Linux)
+	// 1. Essayer le système (macOS/Linux)
 	try {
 		const systemPath = execSync("which ffmpeg", { encoding: "utf-8" }).trim();
 		if (systemPath && existsSync(systemPath)) {
@@ -96,7 +72,7 @@ function findFFmpegPath(): string | null {
 		// which ffmpeg a échoué
 	}
 
-	// 3. Chemins communs en fallback
+	// 2. Chemins communs en fallback
 	const commonPaths = [
 		"/opt/homebrew/bin/ffmpeg", // macOS Apple Silicon
 		"/usr/local/bin/ffmpeg", // macOS Intel / Linux
@@ -222,7 +198,11 @@ process.on("SIGINT", () => {
 // LOGS STRUCTURÉS (Sentry-ready)
 // ============================================================================
 
-const { logSuccess, logWarn: logWarning, logError } = createScriptLogger({
+const {
+	logSuccess,
+	logWarn: logWarning,
+	logError,
+} = createScriptLogger({
 	jsonEnabled: JSON_LOGS,
 });
 
@@ -268,7 +248,7 @@ const RETRY_OPTIONS = {
 async function execFileWithTimeout(
 	command: string,
 	args: string[],
-	timeout: number
+	timeout: number,
 ): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
 		const child: ChildProcess = execFile(command, args, (error, stdout, stderr) => {
@@ -289,7 +269,7 @@ async function execFileWithTimeout(
 }
 
 /**
- * Vérifie que FFmpeg est disponible (ffmpeg-static ou système)
+ * Vérifie que FFmpeg est disponible sur le système
  */
 async function checkFFmpegInstalled(): Promise<boolean> {
 	if (!FFMPEG_PATH) {
@@ -312,10 +292,14 @@ function buildFFmpegArgs(options: FFmpegOptions): string[] {
 
 	const args = [
 		"-y", // Écraser le fichier si existant
-		"-ss", timeInSeconds.toString(), // Position temporelle
-		"-i", inputPath, // Fichier d'entrée (pas de quotes, execFile gère)
-		"-vframes", "1", // Une seule frame
-		"-vf", `scale=${width}:-1`, // Redimensionner en gardant le ratio
+		"-ss",
+		timeInSeconds.toString(), // Position temporelle
+		"-i",
+		inputPath, // Fichier d'entrée (pas de quotes, execFile gère)
+		"-vframes",
+		"1", // Une seule frame
+		"-vf",
+		`scale=${width}:-1`, // Redimensionner en gardant le ratio
 	];
 
 	if (format === "webp") {
@@ -335,10 +319,14 @@ function buildFFmpegArgs(options: FFmpegOptions): string[] {
  */
 function buildFFmpegValidateArgs(videoPath: string): string[] {
 	return [
-		"-v", "error",
-		"-i", videoPath,
-		"-t", "0.1", // Lire seulement 0.1s
-		"-f", "null",
+		"-v",
+		"error",
+		"-i",
+		videoPath,
+		"-t",
+		"0.1", // Lire seulement 0.1s
+		"-f",
+		"null",
 		"-",
 	];
 }
@@ -348,12 +336,7 @@ function buildFFmpegValidateArgs(videoPath: string): string[] {
  * La durée est extraite du stderr de cette commande
  */
 function buildFFmpegInfoArgs(videoPath: string): string[] {
-	return [
-		"-i", videoPath,
-		"-f", "null",
-		"-t", "0",
-		"-",
-	];
+	return ["-i", videoPath, "-f", "null", "-t", "0", "-"];
 }
 
 /**
@@ -362,10 +345,14 @@ function buildFFmpegInfoArgs(videoPath: string): string[] {
 function buildBlurArgs(inputPath: string, outputPath: string): string[] {
 	return [
 		"-y",
-		"-i", inputPath,
-		"-vf", "scale=10:10",
-		"-c:v", "libwebp",
-		"-quality", "50",
+		"-i",
+		inputPath,
+		"-vf",
+		"scale=10:10",
+		"-c:v",
+		"libwebp",
+		"-quality",
+		"50",
 		outputPath,
 	];
 }
@@ -391,7 +378,9 @@ async function checkDiskSpace(minBytes: number = 1024 * 1024 * 1024): Promise<bo
 async function downloadVideo(url: string, outputPath: string): Promise<void> {
 	// Validation de l'URL avant téléchargement
 	if (!isValidUploadThingUrl(url)) {
-		throw new Error(`URL non autorisée: le domaine doit être UploadThing (${url.substring(0, 50)}...)`);
+		throw new Error(
+			`URL non autorisée: le domaine doit être UploadThing (${url.substring(0, 50)}...)`,
+		);
 	}
 
 	// Node.js 2025: utilise AbortSignal.timeout() natif au lieu de setTimeout manuel
@@ -410,7 +399,7 @@ async function downloadVideo(url: string, outputPath: string): Promise<void> {
 	const contentLength = headResponse.headers.get("content-length");
 	if (contentLength && parseInt(contentLength, 10) > MAX_VIDEO_SIZE) {
 		throw new Error(
-			`Vidéo trop volumineuse: ${Math.round(parseInt(contentLength, 10) / 1024 / 1024)}MB (max: ${MAX_VIDEO_SIZE / 1024 / 1024}MB)`
+			`Vidéo trop volumineuse: ${Math.round(parseInt(contentLength, 10) / 1024 / 1024)}MB (max: ${MAX_VIDEO_SIZE / 1024 / 1024}MB)`,
 		);
 	}
 
@@ -435,7 +424,7 @@ async function downloadVideo(url: string, outputPath: string): Promise<void> {
 	if (stats.size > MAX_VIDEO_SIZE) {
 		await unlink(outputPath);
 		throw new Error(
-			`Vidéo trop volumineuse: ${Math.round(stats.size / 1024 / 1024)}MB (max: ${MAX_VIDEO_SIZE / 1024 / 1024}MB)`
+			`Vidéo trop volumineuse: ${Math.round(stats.size / 1024 / 1024)}MB (max: ${MAX_VIDEO_SIZE / 1024 / 1024}MB)`,
 		);
 	}
 }
@@ -450,7 +439,7 @@ async function validateVideoFormat(videoPath: string): Promise<boolean> {
 		await execFileWithTimeout(
 			FFMPEG_PATH,
 			buildFFmpegValidateArgs(videoPath),
-			VIDEO_MIGRATION_CONFIG.validationTimeout
+			VIDEO_MIGRATION_CONFIG.validationTimeout,
 		);
 		return true;
 	} catch {
@@ -490,7 +479,7 @@ async function getVideoDuration(videoPath: string, mediaId?: string): Promise<nu
 		const { stderr } = await execFileWithTimeout(
 			FFMPEG_PATH,
 			buildFFmpegInfoArgs(videoPath),
-			VIDEO_MIGRATION_CONFIG.infoTimeout
+			VIDEO_MIGRATION_CONFIG.infoTimeout,
 		).catch((error: Error & { stderr?: string }) => {
 			// FFmpeg retourne une erreur mais stderr contient les infos
 			if (error.stderr) {
@@ -501,7 +490,10 @@ async function getVideoDuration(videoPath: string, mediaId?: string): Promise<nu
 
 		const duration = parseDurationFromStderr(stderr);
 		if (duration === null || duration <= 0) {
-			logWarning("duration_detection_failed", { mediaId, fallback: THUMBNAIL_CONFIG.fallbackDuration });
+			logWarning("duration_detection_failed", {
+				mediaId,
+				fallback: THUMBNAIL_CONFIG.fallbackDuration,
+			});
 			return THUMBNAIL_CONFIG.fallbackDuration;
 		}
 
@@ -509,7 +501,9 @@ async function getVideoDuration(videoPath: string, mediaId?: string): Promise<nu
 		if (duration > MAX_VIDEO_DURATION) {
 			const durationMin = Math.floor(duration / 60);
 			const durationSec = Math.round(duration % 60);
-			console.log(`    ⚠️  Vidéo longue: ${durationMin}m${durationSec}s (recommandé: <${MAX_VIDEO_DURATION / 60}min pour les produits)`);
+			console.log(
+				`    ⚠️  Vidéo longue: ${durationMin}m${durationSec}s (recommandé: <${MAX_VIDEO_DURATION / 60}min pour les produits)`,
+			);
 			logWarning("video_duration_warning", {
 				mediaId,
 				duration,
@@ -533,7 +527,7 @@ async function extractFrameAtSize(
 	outputPath: string,
 	timeInSeconds: number,
 	width: number,
-	quality: number
+	quality: number,
 ): Promise<void> {
 	if (!FFMPEG_PATH) {
 		throw new Error("FFmpeg n'est pas disponible");
@@ -587,7 +581,7 @@ async function extractFrameAtSize(
 async function extractThumbnail(
 	videoPath: string,
 	outputPath: string,
-	timeInSeconds: number
+	timeInSeconds: number,
 ): Promise<void> {
 	await extractFrameAtSize(videoPath, outputPath, timeInSeconds, THUMBNAIL_SIZE, THUMBNAIL_QUALITY);
 }
@@ -604,7 +598,11 @@ async function generateBlurDataUrl(thumbnailPath: string): Promise<string | null
 		const blurPath = thumbnailPath.replace(".webp", "-blur.webp");
 
 		// Arguments sécurisés pour FFmpeg (pas de shell interpretation)
-		await execFileWithTimeout(FFMPEG_PATH, buildBlurArgs(thumbnailPath, blurPath), VIDEO_MIGRATION_CONFIG.blurTimeout);
+		await execFileWithTimeout(
+			FFMPEG_PATH,
+			buildBlurArgs(thumbnailPath, blurPath),
+			VIDEO_MIGRATION_CONFIG.blurTimeout,
+		);
 
 		if (!existsSync(blurPath)) {
 			return null;
@@ -623,7 +621,9 @@ async function generateBlurDataUrl(thumbnailPath: string): Promise<string | null
 
 		return blurDataUrl;
 	} catch (error) {
-		console.log(`    Blur generation échouée: ${error instanceof Error ? error.message : String(error)}`);
+		console.log(
+			`    Blur generation échouée: ${error instanceof Error ? error.message : String(error)}`,
+		);
 		return null;
 	}
 }
@@ -648,7 +648,11 @@ async function uploadThumbnail(filePath: string, mediaId: string): Promise<strin
 /**
  * Traite une vidéo : télécharge, extrait frames, upload, met à jour DB
  */
-async function processVideo(media: MediaItem, index: number, total: number): Promise<ProcessResult> {
+async function processVideo(
+	media: MediaItem,
+	index: number,
+	total: number,
+): Promise<ProcessResult> {
 	// Verifier interruption avant traitement
 	if (shuttingDown) {
 		return { id: media.id, success: false, error: "Script interrompu (graceful shutdown)" };
@@ -658,7 +662,11 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 	if (!isValidCuid(media.id)) {
 		const errorMsg = `ID invalide (doit être un CUID): ${media.id}`;
 		console.error(`  ❌ ${errorMsg}`);
-		logError("invalid_media_id", { batchId: currentBatchId, mediaId: media.id, reason: "not_a_cuid" });
+		logError("invalid_media_id", {
+			batchId: currentBatchId,
+			mediaId: media.id,
+			reason: "not_a_cuid",
+		});
 		return { id: media.id, success: false, error: errorMsg };
 	}
 
@@ -730,7 +738,10 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 		// 6. Upload la miniature sur UploadThing
 		console.log("  Upload de la miniature...");
 		const startUpload = Date.now();
-		const thumbnailUrl = await withRetry(() => uploadThumbnail(thumbnailPath, media.id), RETRY_OPTIONS);
+		const thumbnailUrl = await withRetry(
+			() => uploadThumbnail(thumbnailPath, media.id),
+			RETRY_OPTIONS,
+		);
 		uploadMs = Date.now() - startUpload;
 		console.log(`  Thumbnail: ${thumbnailUrl.substring(0, 50)}...`);
 
@@ -747,7 +758,15 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 		dbUpdateMs = Date.now() - startDbUpdate;
 
 		const totalMs = Date.now() - startTotal;
-		const metrics = { totalMs, downloadMs, validationMs, extractionMs, blurMs, uploadMs, dbUpdateMs };
+		const metrics = {
+			totalMs,
+			downloadMs,
+			validationMs,
+			extractionMs,
+			blurMs,
+			uploadMs,
+			dbUpdateMs,
+		};
 
 		console.log(`  ✅ Traitement terminé en ${(totalMs / 1000).toFixed(1)}s`);
 
@@ -769,7 +788,7 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 				} catch (cleanupError) {
 					logWarning("file_cleanup_failed", { error: String(cleanupError), path: file });
 				}
-			})
+			}),
 		);
 	}
 }
@@ -780,7 +799,7 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
  */
 async function processVideosInBatches(
 	videos: MediaItem[],
-	batchSize: number
+	batchSize: number,
 ): Promise<ProcessResult[]> {
 	return processInBatches({
 		items: videos,
@@ -829,7 +848,6 @@ async function main(): Promise<void> {
 		console.error("❌ FFmpeg n'est pas disponible!");
 		console.error("");
 		console.error("Diagnostic:");
-		console.error(`  - ffmpeg-static (npm): ${ffmpegStaticPath ? `trouve (${ffmpegStaticPath})` : "non installe"}`);
 		console.error(`  - Chemin resolu: ${FFMPEG_PATH || "aucun"}`);
 
 		// Verifier les chemins communs
@@ -842,29 +860,22 @@ async function main(): Promise<void> {
 		}
 
 		console.error("");
-		console.error("Solutions:");
-		console.error("  1. Installer ffmpeg-static: pnpm add -D ffmpeg-static");
-		console.error("  2. Ou installer FFmpeg systeme:");
-		console.error("     macOS:   brew install ffmpeg");
-		console.error("     Ubuntu:  sudo apt install ffmpeg");
-		console.error("     Windows: choco install ffmpeg");
+		console.error("Installation:");
+		console.error("  macOS:   brew install ffmpeg");
+		console.error("  Ubuntu:  sudo apt install ffmpeg");
+		console.error("  Windows: choco install ffmpeg");
 		console.error("");
 		console.error("Verification: ffmpeg -version");
 
 		logError("ffmpeg_not_available", {
 			batchId: currentBatchId,
-			ffmpegStaticPath,
 			resolvedPath: FFMPEG_PATH,
 			foundSystemPaths: foundPaths,
 		});
 
 		process.exit(1);
 	}
-	// Indiquer la source de FFmpeg
-	const ffmpegSource = ffmpegStaticPath && FFMPEG_PATH === ffmpegStaticPath
-		? "ffmpeg-static (npm)"
-		: "système";
-	console.log(`✅ FFmpeg disponible (${ffmpegSource})`);
+	console.log(`✅ FFmpeg disponible`);
 	console.log(`   Chemin: ${FFMPEG_PATH}`);
 
 	// Mode CHECK: vérifier la connexion DB puis sortir
@@ -876,11 +887,24 @@ async function main(): Promise<void> {
 			});
 			console.log(`✅ Connexion DB OK - ${count} vidéo(s) à traiter`);
 			console.log("\n✅ Health check terminé avec succès");
-			logSuccess("health_check_passed", { batchId: currentBatchId, ffmpegInstalled: true, dbConnected: true, pendingVideos: count });
+			logSuccess("health_check_passed", {
+				batchId: currentBatchId,
+				ffmpegInstalled: true,
+				dbConnected: true,
+				pendingVideos: count,
+			});
 			return;
 		} catch (dbError) {
-			console.error("❌ Connexion DB échouée:", dbError instanceof Error ? dbError.message : String(dbError));
-			logError("health_check_failed", { batchId: currentBatchId, ffmpegInstalled: true, dbConnected: false, error: String(dbError) });
+			console.error(
+				"❌ Connexion DB échouée:",
+				dbError instanceof Error ? dbError.message : String(dbError),
+			);
+			logError("health_check_failed", {
+				batchId: currentBatchId,
+				ffmpegInstalled: true,
+				dbConnected: false,
+				error: String(dbError),
+			});
 			process.exit(1);
 		}
 	}

@@ -6,25 +6,25 @@
 // CONSTANTS
 // ============================================================================
 
-export const VALID_CUID = "cm1234567890abcdefghijklm"
-export const VALID_CUID_2 = "cm9876543210zyxwvutsrqpon"
-export const VALID_USER_ID = "user_cm1234567890abcdef"
-export const VALID_ORDER_ID = "order_cm1234567890abcde"
-export const VALID_SKU_ID = "sku_cm1234567890abcdefg"
-export const VALID_PRODUCT_ID = "prod_cm1234567890abcde"
+export const VALID_CUID = "cm1234567890abcdefghijklm";
+export const VALID_CUID_2 = "cm9876543210zyxwvutsrqpon";
+export const VALID_USER_ID = "user_cm1234567890abcdef";
+export const VALID_ORDER_ID = "order_cm1234567890abcde";
+export const VALID_SKU_ID = "sku_cm1234567890abcdefg";
+export const VALID_PRODUCT_ID = "prod_cm1234567890abcde";
 
 // ============================================================================
 // FORM DATA
 // ============================================================================
 
 export function createMockFormData(entries: Record<string, string | null>): FormData {
-	const formData = new FormData()
+	const formData = new FormData();
 	for (const [key, value] of Object.entries(entries)) {
 		if (value !== null) {
-			formData.set(key, value)
+			formData.set(key, value);
 		}
 	}
-	return formData
+	return formData;
 }
 
 // ============================================================================
@@ -40,7 +40,7 @@ export function createMockSession(overrides: Record<string, unknown> = {}) {
 			role: "USER",
 			...overrides,
 		},
-	}
+	};
 }
 
 export function createMockAdminSession(overrides: Record<string, unknown> = {}) {
@@ -52,7 +52,7 @@ export function createMockAdminSession(overrides: Record<string, unknown> = {}) 
 			role: "ADMIN",
 			...overrides,
 		},
-	}
+	};
 }
 
 // ============================================================================
@@ -96,7 +96,7 @@ export function createMockOrder(overrides: Record<string, unknown> = {}) {
 			},
 		],
 		...overrides,
-	}
+	};
 }
 
 // ============================================================================
@@ -115,7 +115,7 @@ export function createMockProduct(overrides: Record<string, unknown> = {}) {
 		updatedAt: new Date("2026-01-01"),
 		deletedAt: null,
 		...overrides,
-	}
+	};
 }
 
 // ============================================================================
@@ -136,7 +136,7 @@ export function createMockSku(overrides: Record<string, unknown> = {}) {
 		materialId: "material_123",
 		size: "M",
 		...overrides,
-	}
+	};
 }
 
 // ============================================================================
@@ -155,7 +155,7 @@ export function createMockUser(overrides: Record<string, unknown> = {}) {
 		updatedAt: new Date("2026-01-01"),
 		deletedAt: null,
 		...overrides,
-	}
+	};
 }
 
 // ============================================================================
@@ -176,7 +176,157 @@ export function createMockAddress(overrides: Record<string, unknown> = {}) {
 		phone: "+33612345678",
 		isDefault: false,
 		...overrides,
-	}
+	};
+}
+
+// ============================================================================
+// CARTS
+// ============================================================================
+
+export function createMockCart(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "cart_cm1234567890abcde",
+		userId: VALID_USER_ID,
+		sessionId: null,
+		items: [],
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		...overrides,
+	};
+}
+
+export function createMockCartItem(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "ci_cm1234567890abcdef",
+		cartId: "cart_cm1234567890abcde",
+		skuId: VALID_SKU_ID,
+		quantity: 1,
+		priceAtAdd: 4999,
+		addedAt: new Date("2026-01-15"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// DISCOUNTS
+// ============================================================================
+
+export function createMockDiscount(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "disc_cm1234567890abcde",
+		code: "PROMO20",
+		type: "PERCENTAGE",
+		value: 20,
+		isActive: true,
+		startsAt: new Date("2026-01-01"),
+		endsAt: new Date("2026-12-31"),
+		minOrderAmount: null,
+		maxUsageCount: null,
+		maxUsagePerUser: null,
+		usageCount: 0,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		deletedAt: null,
+		...overrides,
+	};
+}
+
+// ============================================================================
+// REFUNDS
+// ============================================================================
+
+export function createMockRefund(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "ref_cm1234567890abcde",
+		orderId: VALID_ORDER_ID,
+		stripeRefundId: null,
+		amount: 4999,
+		currency: "EUR",
+		reason: "OTHER",
+		status: "PENDING",
+		note: null,
+		failureReason: null,
+		processedAt: null,
+		createdAt: new Date("2026-01-15"),
+		updatedAt: new Date("2026-01-15"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// WEBHOOK EVENTS
+// ============================================================================
+
+export function createMockWebhookEvent(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "we_cm1234567890abcde",
+		stripeEventId: "evt_test_abc123",
+		type: "checkout.session.completed",
+		processed: false,
+		processingStartedAt: null,
+		processedAt: null,
+		error: null,
+		retryCount: 0,
+		createdAt: new Date("2026-01-15"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// REVIEWS
+// ============================================================================
+
+export function createMockReview(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "rev_cm1234567890abcde",
+		productId: VALID_PRODUCT_ID,
+		userId: VALID_USER_ID,
+		orderId: VALID_ORDER_ID,
+		rating: 5,
+		comment: "Magnifique bijou, je recommande !",
+		isVerifiedPurchase: true,
+		createdAt: new Date("2026-02-01"),
+		updatedAt: new Date("2026-02-01"),
+		deletedAt: null,
+		...overrides,
+	};
+}
+
+// ============================================================================
+// COLLECTIONS
+// ============================================================================
+
+export function createMockCollection(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "col_cm1234567890abcde",
+		title: "Ete 2026",
+		slug: "ete-2026",
+		description: "Collection estivale",
+		isActive: true,
+		position: 0,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		deletedAt: null,
+		...overrides,
+	};
+}
+
+// ============================================================================
+// NEWSLETTER
+// ============================================================================
+
+export function createMockNewsletterSubscriber(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "ns_cm1234567890abcde",
+		email: "subscriber@example.com",
+		isConfirmed: true,
+		confirmationToken: null,
+		confirmedAt: new Date("2026-01-05"),
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		deletedAt: null,
+		...overrides,
+	};
 }
 
 // ============================================================================
@@ -187,5 +337,5 @@ export function createMockAddress(overrides: Record<string, unknown> = {}) {
  * Creates a mock Prisma transaction that passes the mockPrisma object as tx
  */
 export function createMockTransaction(mockPrisma: Record<string, unknown>) {
-	return async (fn: (tx: unknown) => Promise<unknown>) => fn(mockPrisma)
+	return async (fn: (tx: unknown) => Promise<unknown>) => fn(mockPrisma);
 }

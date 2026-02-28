@@ -75,7 +75,7 @@ type BatchResult = {
  */
 export async function getSpellSuggestion(
 	searchTerm: string,
-	options: SuggestionOptions = {}
+	options: SuggestionOptions = {},
 ): Promise<SpellSuggestion | null> {
 	"use cache";
 	cacheLife("products");
@@ -108,9 +108,7 @@ export async function getSpellSuggestion(
 			: Prisma.empty;
 
 		// Build VALUES clause for all eligible words at once
-		const valuesFragments = eligibleWords.map((e) =>
-			Prisma.sql`(${e.word}, ${e.index})`
-		);
+		const valuesFragments = eligibleWords.map((e) => Prisma.sql`(${e.word}, ${e.index})`);
 		const valuesClause = Prisma.join(valuesFragments, ", ");
 
 		// Transaction with SET LOCAL to isolate the similarity threshold
@@ -182,7 +180,7 @@ export async function getSpellSuggestion(
 		const timeoutPromise = new Promise<never>((_, reject) => {
 			timeoutId = setTimeout(
 				() => reject(new Error("Spell suggestion timeout")),
-				SPELL_SUGGESTION_TIMEOUT_MS
+				SPELL_SUGGESTION_TIMEOUT_MS,
 			);
 		});
 
@@ -197,7 +195,7 @@ export async function getSpellSuggestion(
 				r.matchWord
 					? { word: r.matchWord, similarity: Number(r.similarity), source: r.source! }
 					: null,
-			])
+			]),
 		);
 
 		const corrections = wordEntries.map((entry) => ({
@@ -210,9 +208,7 @@ export async function getSpellSuggestion(
 		if (!hasCorrection) return null;
 
 		// Reconstruct the search term with corrections
-		const correctedTerm = corrections
-			.map((c) => c.match?.word ?? c.original)
-			.join(" ");
+		const correctedTerm = corrections.map((c) => c.match?.word ?? c.original).join(" ");
 
 		// Don't suggest if it's the same as the original
 		if (correctedTerm === term) return null;
@@ -221,6 +217,8 @@ export async function getSpellSuggestion(
 		const bestMatch = corrections
 			.filter((c) => c.match !== null)
 			.sort((a, b) => Number(b.match!.similarity) - Number(a.match!.similarity))[0];
+
+		if (!bestMatch) return null;
 
 		return {
 			term: correctedTerm,

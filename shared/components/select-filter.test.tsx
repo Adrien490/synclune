@@ -150,7 +150,7 @@ describe("useSelectFilter", () => {
 			});
 
 			expect(mockPush).toHaveBeenCalledTimes(1);
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("filter_status")).toBe("ACTIVE");
@@ -164,7 +164,7 @@ describe("useSelectFilter", () => {
 				result.current.setFilter("DRAFT");
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("status")).toBe("DRAFT");
@@ -179,7 +179,7 @@ describe("useSelectFilter", () => {
 				result.current.setFilter("ACTIVE");
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("filter_status")).toBe("ACTIVE");
@@ -196,7 +196,7 @@ describe("useSelectFilter", () => {
 				result.current.setFilter("");
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.has("filter_status")).toBe(false);
@@ -228,7 +228,7 @@ describe("useSelectFilter", () => {
 				result.current.clearFilter();
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.has("filter_status")).toBe(false);
@@ -243,7 +243,7 @@ describe("useSelectFilter", () => {
 				result.current.clearFilter();
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.has("filter_status")).toBe(false);
@@ -417,7 +417,7 @@ describe("SelectFilter", () => {
 			fireEvent.click(clearButton);
 
 			expect(mockPush).toHaveBeenCalled();
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 			expect(params.has("filter_status")).toBe(false);
 		});
@@ -455,7 +455,7 @@ describe("SelectFilter", () => {
 			fireEvent.click(changeButton);
 
 			expect(mockPush).toHaveBeenCalledTimes(1);
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 			expect(params.get("filter_status")).toBe("ACTIVE");
 		});
@@ -513,7 +513,7 @@ describe("SelectFilter", () => {
 			const changeButton = screen.getByTestId("select-change");
 			fireEvent.click(changeButton);
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 			expect(params.get("status")).toBe("ACTIVE");
 			expect(params.has("filter_status")).toBe(false);

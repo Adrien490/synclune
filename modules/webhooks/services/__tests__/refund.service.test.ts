@@ -126,16 +126,19 @@ describe("syncStripeRefunds", () => {
 		mockTx.refund.update.mockResolvedValue({});
 		mockTx.refund.upsert.mockResolvedValue({});
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx)
+			cb(mockTx),
 		);
 	});
 
 	it("should update existing refund status to COMPLETED when Stripe shows succeeded", async () => {
-		const charge = makeCharge([
-			{ id: "re_stripe_1", status: "succeeded", amount: 5000 },
-		]);
+		const charge = makeCharge([{ id: "re_stripe_1", status: "succeeded", amount: 5000 }]);
 		const existingRefunds = [
-			{ id: "refund-app-1", amount: 5000, status: "APPROVED" as const, stripeRefundId: "re_stripe_1" },
+			{
+				id: "refund-app-1",
+				amount: 5000,
+				status: "APPROVED" as const,
+				stripeRefundId: "re_stripe_1",
+			},
 		];
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
@@ -147,11 +150,14 @@ describe("syncStripeRefunds", () => {
 	});
 
 	it("should not update existing refund already at COMPLETED status", async () => {
-		const charge = makeCharge([
-			{ id: "re_stripe_1", status: "succeeded", amount: 5000 },
-		]);
+		const charge = makeCharge([{ id: "re_stripe_1", status: "succeeded", amount: 5000 }]);
 		const existingRefunds = [
-			{ id: "refund-app-1", amount: 5000, status: "COMPLETED" as const, stripeRefundId: "re_stripe_1" },
+			{
+				id: "refund-app-1",
+				amount: 5000,
+				status: "COMPLETED" as const,
+				stripeRefundId: "re_stripe_1",
+			},
 		];
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
@@ -169,7 +175,12 @@ describe("syncStripeRefunds", () => {
 				metadata: { refund_id: "refund-app-2" },
 			},
 		]);
-		const existingRefunds: Array<{ id: string; amount: number; status: "COMPLETED"; stripeRefundId: string | null }> = [];
+		const existingRefunds: Array<{
+			id: string;
+			amount: number;
+			status: "COMPLETED";
+			stripeRefundId: string | null;
+		}> = [];
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
@@ -180,7 +191,7 @@ describe("syncStripeRefunds", () => {
 					stripeRefundId: "re_stripe_2",
 					status: "COMPLETED",
 				}),
-			})
+			}),
 		);
 		expect(mockTx.refund.upsert).not.toHaveBeenCalled();
 	});
@@ -194,7 +205,12 @@ describe("syncStripeRefunds", () => {
 				metadata: { refund_id: "refund-app-3" },
 			},
 		]);
-		const existingRefunds: Array<{ id: string; amount: number; status: "COMPLETED"; stripeRefundId: string | null }> = [];
+		const existingRefunds: Array<{
+			id: string;
+			amount: number;
+			status: "COMPLETED";
+			stripeRefundId: string | null;
+		}> = [];
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
@@ -205,7 +221,7 @@ describe("syncStripeRefunds", () => {
 					stripeRefundId: "re_stripe_3",
 					status: "PENDING",
 				}),
-			})
+			}),
 		);
 	});
 
@@ -218,7 +234,12 @@ describe("syncStripeRefunds", () => {
 				currency: "eur",
 			},
 		]);
-		const existingRefunds: Array<{ id: string; amount: number; status: "COMPLETED"; stripeRefundId: string | null }> = [];
+		const existingRefunds: Array<{
+			id: string;
+			amount: number;
+			status: "COMPLETED";
+			stripeRefundId: string | null;
+		}> = [];
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
@@ -236,7 +257,7 @@ describe("syncStripeRefunds", () => {
 				update: expect.objectContaining({
 					status: "COMPLETED",
 				}),
-			})
+			}),
 		);
 	});
 
@@ -245,21 +266,27 @@ describe("syncStripeRefunds", () => {
 			{ id: "re_ok", status: "succeeded", amount: 5000, metadata: { refund_id: "app-ok" } },
 			{ id: "re_fail", status: "succeeded", amount: 3000, metadata: { refund_id: "app-fail" } },
 		]);
-		const existingRefunds: Array<{ id: string; amount: number; status: "COMPLETED"; stripeRefundId: string | null }> = [];
+		const existingRefunds: Array<{
+			id: string;
+			amount: number;
+			status: "COMPLETED";
+			stripeRefundId: string | null;
+		}> = [];
 
-		mockTx.refund.update
-			.mockResolvedValueOnce({})
-			.mockRejectedValueOnce(new Error("DB error"));
+		mockTx.refund.update.mockResolvedValueOnce({}).mockRejectedValueOnce(new Error("DB error"));
 
 		// Transaction should propagate the error (all-or-nothing)
 		await expect(syncStripeRefunds(charge, existingRefunds, "order-1")).rejects.toThrow("DB error");
 	});
 
 	it("should skip refunds without an ID", async () => {
-		const charge = makeCharge([
-			{ id: undefined, status: "succeeded", amount: 5000 },
-		]);
-		const existingRefunds: Array<{ id: string; amount: number; status: "COMPLETED"; stripeRefundId: string | null }> = [];
+		const charge = makeCharge([{ id: undefined, status: "succeeded", amount: 5000 }]);
+		const existingRefunds: Array<{
+			id: string;
+			amount: number;
+			status: "COMPLETED";
+			stripeRefundId: string | null;
+		}> = [];
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
@@ -422,9 +449,7 @@ describe("findRefundByStripeId", () => {
 	});
 
 	it("should return null when not found by stripeRefundId and not found by metadataRefundId either", async () => {
-		mockPrisma.refund.findUnique
-			.mockResolvedValueOnce(null)
-			.mockResolvedValueOnce(null);
+		mockPrisma.refund.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
 		const result = await findRefundByStripeId("re_not_found_1", "also-not-found");
 
@@ -518,14 +543,14 @@ describe("updateRefundStatus", () => {
 	it("should set processedAt only when new status is COMPLETED", async () => {
 		await updateRefundStatus("refund-1", "COMPLETED" as never, "succeeded", "APPROVED" as never);
 
-		const call = mockPrisma.refund.update.mock.calls[0][0];
+		const call = mockPrisma.refund.update.mock.calls[0]![0];
 		expect(call.data.processedAt).toEqual(new Date("2026-02-17T12:00:00Z"));
 	});
 
 	it("should not set processedAt when new status is not COMPLETED", async () => {
 		await updateRefundStatus("refund-1", "FAILED" as never, "failed", "APPROVED" as never);
 
-		const call = mockPrisma.refund.update.mock.calls[0][0];
+		const call = mockPrisma.refund.update.mock.calls[0]![0];
 		expect(call.data.processedAt).toBeUndefined();
 	});
 
@@ -608,7 +633,9 @@ describe("markRefundAsFailed", () => {
 	it("should propagate DB errors", async () => {
 		mockPrisma.refund.update.mockRejectedValue(new Error("DB connection lost"));
 
-		await expect(markRefundAsFailed("refund-1", "some_reason")).rejects.toThrow("DB connection lost");
+		await expect(markRefundAsFailed("refund-1", "some_reason")).rejects.toThrow(
+			"DB connection lost",
+		);
 	});
 });
 
@@ -653,7 +680,7 @@ describe("sendRefundFailedAlert", () => {
 		expect(mockSendAdminRefundFailedAlert).toHaveBeenCalledWith(
 			expect.objectContaining({
 				stripePaymentIntentId: "",
-			})
+			}),
 		);
 	});
 
@@ -671,7 +698,7 @@ describe("sendRefundFailedAlert", () => {
 		expect(mockSendAdminRefundFailedAlert).toHaveBeenCalledWith(
 			expect.objectContaining({
 				customerEmail: "Email non disponible",
-			})
+			}),
 		);
 	});
 

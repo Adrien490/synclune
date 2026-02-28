@@ -103,7 +103,7 @@ describe("getOrderForConfirmation", () => {
 						id: VALID_ORDER_ID,
 						orderNumber: VALID_ORDER_NUMBER,
 					}),
-				})
+				}),
 			);
 		});
 
@@ -113,21 +113,21 @@ describe("getOrderForConfirmation", () => {
 			expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: expect.objectContaining({ deletedAt: null }),
-				})
+				}),
 			);
 		});
 
 		it("includes id in the where clause", async () => {
 			await getOrderForConfirmation(VALID_ORDER_ID, VALID_ORDER_NUMBER);
 
-			const call = mockPrisma.order.findFirst.mock.calls[0][0];
+			const call = mockPrisma.order.findFirst.mock.calls[0]![0];
 			expect(call.where.id).toBe(VALID_ORDER_ID);
 		});
 
 		it("includes orderNumber in the where clause", async () => {
 			await getOrderForConfirmation(VALID_ORDER_ID, VALID_ORDER_NUMBER);
 
-			const call = mockPrisma.order.findFirst.mock.calls[0][0];
+			const call = mockPrisma.order.findFirst.mock.calls[0]![0];
 			expect(call.where.orderNumber).toBe(VALID_ORDER_NUMBER);
 		});
 	});
@@ -179,9 +179,7 @@ describe("getOrderForConfirmation", () => {
 		it("does not propagate DB exceptions", async () => {
 			mockPrisma.order.findFirst.mockRejectedValue(new Error("Prisma timeout"));
 
-			await expect(
-				getOrderForConfirmation(VALID_ORDER_ID, VALID_ORDER_NUMBER)
-			).resolves.toBeNull();
+			await expect(getOrderForConfirmation(VALID_ORDER_ID, VALID_ORDER_NUMBER)).resolves.toBeNull();
 		});
 	});
 });

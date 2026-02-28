@@ -11,19 +11,11 @@ import type {
 	UseMediaUploadReturn,
 	VideoThumbnailResult,
 } from "../types/hooks.types";
-import {
-	generateVideoThumbnail,
-	isThumbnailGenerationSupported,
-} from "./use-video-thumbnail";
+import { generateVideoThumbnail, isThumbnailGenerationSupported } from "./use-video-thumbnail";
 import { deleteUploadThingFilesFromUrls } from "../services/delete-uploadthing-files.service";
 
 // Re-export types for backwards compatibility
-export type {
-	UseMediaUploadOptions,
-	MediaUploadResult,
-	UploadProgress,
-	UseMediaUploadReturn,
-};
+export type { UseMediaUploadOptions, MediaUploadResult, UploadProgress, UseMediaUploadReturn };
 
 // ============================================================================
 // CONSTANTS
@@ -118,13 +110,15 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	};
 
 	const updateProgress = (update: Partial<UploadProgress>) => {
-		setProgress(prev => {
-			const newProgress = prev ? { ...prev, ...update } : {
-				total: 0,
-				completed: 0,
-				phase: "validating" as const,
-				...update,
-			};
+		setProgress((prev) => {
+			const newProgress = prev
+				? { ...prev, ...update }
+				: {
+						total: 0,
+						completed: 0,
+						phase: "validating" as const,
+						...update,
+					};
 			onProgress?.(newProgress);
 			return newProgress;
 		});
@@ -136,26 +130,24 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 	const validateFiles = (files: File[]): File[] => {
 		const oversized = files.filter(isOversized);
-		const validSizeFiles = files.filter(f => !isOversized(f));
+		const validSizeFiles = files.filter((f) => !isOversized(f));
 
 		if (oversized.length > 0) {
 			const details = oversized
 				.slice(0, 3)
-				.map(f => `${f.name} (${formatFileSize(f.size)})`)
+				.map((f) => `${f.name} (${formatFileSize(f.size)})`)
 				.join(", ");
 			const suffix = oversized.length > 3 ? ` et ${oversized.length - 3} autre(s)` : "";
 
-			toast.error(
-				`${oversized.length} fichier(s) trop volumineux`,
-				{ description: details + suffix }
-			);
+			toast.error(`${oversized.length} fichier(s) trop volumineux`, {
+				description: details + suffix,
+			});
 		}
 
 		if (validSizeFiles.length > maxFiles) {
-			toast.warning(
-				`Maximum ${maxFiles} fichiers`,
-				{ description: `${validSizeFiles.length - maxFiles} fichier(s) ignore(s)` }
-			);
+			toast.warning(`Maximum ${maxFiles} fichiers`, {
+				description: `${validSizeFiles.length - maxFiles} fichier(s) ignore(s)`,
+			});
 			return validSizeFiles.slice(0, maxFiles);
 		}
 
@@ -171,7 +163,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	 */
 	const uploadVideo = async (
 		videoFile: File,
-		signal: AbortSignal
+		signal: AbortSignal,
 	): Promise<MediaUploadResult | null> => {
 		let thumbnailUrl: string | undefined;
 		let blurDataUrl: string | undefined;
@@ -186,7 +178,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				// 2. Upload the thumbnail with retry
 				const thumbUploadResult = await withRetry(
 					() => startUpload([thumbnailResult!.thumbnailFile]),
-					{ maxAttempts: 3, baseDelay: 500, signal }
+					{ maxAttempts: 3, baseDelay: 500, signal },
 				);
 
 				if (thumbUploadResult?.[0]?.serverData?.url) {
@@ -209,10 +201,11 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		// 3. Upload the video with retry
 		try {
-			const videoUploadResult = await withRetry(
-				() => startUpload([videoFile]),
-				{ maxAttempts: 3, baseDelay: 1000, signal }
-			);
+			const videoUploadResult = await withRetry(() => startUpload([videoFile]), {
+				maxAttempts: 3,
+				baseDelay: 1000,
+				signal,
+			});
 
 			const serverData = videoUploadResult?.[0]?.serverData;
 			if (serverData?.url) {
@@ -242,7 +235,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	 */
 	const uploadImages = async (
 		imageFiles: File[],
-		signal: AbortSignal
+		signal: AbortSignal,
 	): Promise<MediaUploadResult[]> => {
 		if (imageFiles.length === 0) return [];
 
@@ -250,21 +243,22 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			throw new DOMException("Operation annulee", "AbortError");
 		}
 
-		const results = await withRetry(
-			() => startUpload(imageFiles),
-			{ maxAttempts: 3, baseDelay: 1000, signal }
-		);
+		const results = await withRetry(() => startUpload(imageFiles), {
+			maxAttempts: 3,
+			baseDelay: 1000,
+			signal,
+		});
 
 		const uploadResults: MediaUploadResult[] = [];
 
 		for (let i = 0; i < (results || []).length; i++) {
-			const result = results![i];
+			const result = results![i]!;
 			const serverData = result.serverData;
 			if (serverData?.url) {
 				uploadResults.push({
 					url: serverData.url,
 					mediaType: "IMAGE",
-					fileName: imageFiles[i].name,
+					fileName: imageFiles[i]!.name,
 					blurDataUrl: serverData.blurDataUrl ?? undefined,
 				});
 			}
@@ -278,7 +272,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	 */
 	const uploadVideos = async (
 		videoFiles: File[],
-		signal: AbortSignal
+		signal: AbortSignal,
 	): Promise<MediaUploadResult[]> => {
 		if (videoFiles.length === 0) return [];
 
@@ -291,11 +285,9 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			}
 
 			const batch = videoFiles.slice(i, i + videoConcurrency);
-			updateProgress({ current: batch.map(f => f.name).join(", ") });
+			updateProgress({ current: batch.map((f) => f.name).join(", ") });
 
-			const batchResults = await Promise.allSettled(
-				batch.map(file => uploadVideo(file, signal))
-			);
+			const batchResults = await Promise.allSettled(batch.map((file) => uploadVideo(file, signal)));
 
 			for (const result of batchResults) {
 				if (result.status === "fulfilled" && result.value) {
@@ -333,8 +325,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		}
 
 		// Separate images and videos
-		const images = validFiles.filter(f => getMediaType(f) === "IMAGE");
-		const videos = validFiles.filter(f => getMediaType(f) === "VIDEO");
+		const images = validFiles.filter((f) => getMediaType(f) === "IMAGE");
+		const videos = validFiles.filter((f) => getMediaType(f) === "VIDEO");
 		const totalFiles = images.length + videos.length;
 
 		updateProgress({ total: totalFiles, completed: 0, phase: "uploading" });

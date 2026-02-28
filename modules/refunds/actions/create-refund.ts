@@ -7,9 +7,9 @@ import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
-
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -37,7 +37,7 @@ const ACTIVE_REFUND_STATUSES = [
  */
 export async function createRefund(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -163,7 +163,7 @@ export async function createRefund(
 				// (filtered by active refund status in the query above)
 				const alreadyRefundedQuantity = orderItem.refundItems.reduce(
 					(sum, ri) => sum + ri.quantity,
-					0
+					0,
 				);
 				const availableQuantity = orderItem.quantity - alreadyRefundedQuantity;
 
@@ -173,9 +173,8 @@ export async function createRefund(
 
 				// Cap the amount to the maximum possible for this item
 				const maxItemAmount = orderItem.price * item.quantity;
-				const itemAmount = item.amount != null
-					? Math.min(item.amount, maxItemAmount)
-					: maxItemAmount;
+				const itemAmount =
+					item.amount != null ? Math.min(item.amount, maxItemAmount) : maxItemAmount;
 
 				// Utiliser le restock fourni, sinon déterminer automatiquement selon le motif
 				const shouldRestock = item.restock ?? shouldRestockByDefault(validated.data.reason);
@@ -225,13 +224,27 @@ export async function createRefund(
 			return { refund, totalAmount };
 		});
 
+		// Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "refund.create",
+			targetType: "refund",
+			targetId: result.refund.id,
+			metadata: {
+				orderId,
+				amount: result.totalAmount,
+				reason: validated.data.reason,
+			},
+		});
+
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 
 		return success(
 			`Demande de remboursement créée pour ${(result.totalAmount / 100).toFixed(2)} €`,
-			{ refundId: result.refund.id }
+			{ refundId: result.refund.id },
 		);
 	} catch (e) {
 		// Handle business errors from the transaction
@@ -248,11 +261,15 @@ export async function createRefund(
 			}
 			if (e.message.startsWith("QUANTITY_EXCEEDS:")) {
 				const available = e.message.split(":")[1];
-				return error(`${REFUND_ERROR_MESSAGES.QUANTITY_EXCEEDS_AVAILABLE} (Article: max ${available} disponible)`);
+				return error(
+					`${REFUND_ERROR_MESSAGES.QUANTITY_EXCEEDS_AVAILABLE} (Article: max ${available} disponible)`,
+				);
 			}
 			if (e.message.startsWith("AMOUNT_EXCEEDS:")) {
 				const max = Number(e.message.split(":")[1]);
-				return error(`${REFUND_ERROR_MESSAGES.AMOUNT_EXCEEDS_REMAINING} (Max: ${(max / 100).toFixed(2)} €)`);
+				return error(
+					`${REFUND_ERROR_MESSAGES.AMOUNT_EXCEEDS_REMAINING} (Max: ${(max / 100).toFixed(2)} €)`,
+				);
 			}
 		}
 		return handleActionError(e, REFUND_ERROR_MESSAGES.CREATE_FAILED);

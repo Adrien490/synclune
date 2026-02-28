@@ -22,20 +22,20 @@ export function CollectionMiniGrid({
 	if (count === 1) {
 		return (
 			<div
-				className="size-12 rounded-lg overflow-hidden bg-muted shrink-0"
+				className="bg-muted size-12 shrink-0 overflow-hidden rounded-lg"
 				role="img"
 				aria-label={`${count} photo${count > 1 ? "s" : ""} de la collection ${collectionName}`}
 			>
 				<Image
-					src={images[0].url}
+					src={images[0]!.url}
 					alt=""
 					width={48}
 					height={48}
 					className="size-full object-cover"
 					sizes="48px"
 					quality={COLLECTION_IMAGE_QUALITY}
-					placeholder={images[0].blurDataUrl ? "blur" : "empty"}
-					blurDataURL={images[0].blurDataUrl ?? undefined}
+					placeholder={images[0]!.blurDataUrl ? "blur" : "empty"}
+					blurDataURL={images[0]!.blurDataUrl ?? undefined}
 					aria-hidden="true"
 				/>
 			</div>
@@ -46,7 +46,7 @@ export function CollectionMiniGrid({
 	if (count === 2) {
 		return (
 			<div
-				className="size-12 rounded-lg overflow-hidden bg-muted shrink-0 grid grid-cols-2 gap-px"
+				className="bg-muted grid size-12 shrink-0 grid-cols-2 gap-px overflow-hidden rounded-lg"
 				role="img"
 				aria-label={`${count} photo${count > 1 ? "s" : ""} de la collection ${collectionName}`}
 			>
@@ -57,7 +57,7 @@ export function CollectionMiniGrid({
 						alt=""
 						width={24}
 						height={48}
-						className="w-full h-12 object-cover"
+						className="h-12 w-full object-cover"
 						sizes="24px"
 						quality={COLLECTION_IMAGE_QUALITY}
 						placeholder={image.blurDataUrl ? "blur" : "empty"}
@@ -72,7 +72,7 @@ export function CollectionMiniGrid({
 	// 3-4 images: grille 2x2
 	return (
 		<div
-			className="size-12 rounded-lg overflow-hidden bg-muted shrink-0 grid grid-cols-2 grid-rows-2 gap-px"
+			className="bg-muted grid size-12 shrink-0 grid-cols-2 grid-rows-2 gap-px overflow-hidden rounded-lg"
 			role="img"
 			aria-label={`${count} photo${count > 1 ? "s" : ""} de la collection ${collectionName}`}
 		>

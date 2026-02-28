@@ -1,6 +1,7 @@
 "use client";
 
-import { FieldError, FieldLabel, FieldSet } from "@/shared/components/ui/field";
+import { FieldError, FieldSet } from "@/shared/components/ui/field";
+import { FieldLabel } from "./field-label";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { useFieldContext } from "@/shared/lib/form-context";
@@ -33,13 +34,8 @@ export const RadioGroupField = ({
 	return (
 		<FieldSet data-invalid={hasErrors}>
 			{label && (
-				<FieldLabel id={labelId}>
-					{label}
-					{required && (
-						<span className="text-destructive ml-1" aria-label="requis">
-							*
-						</span>
-					)}
+				<FieldLabel required={required}>
+					<span id={labelId}>{label}</span>
 				</FieldLabel>
 			)}
 			<RadioGroup
@@ -49,7 +45,7 @@ export const RadioGroupField = ({
 					field.handleChange(value);
 					onValueChangeCallback?.(value);
 				}}
-				className="flex gap-4 flex-wrap"
+				className="flex flex-wrap gap-4"
 				aria-invalid={hasErrors}
 				aria-labelledby={label ? labelId : undefined}
 				aria-describedby={hasErrors ? errorId : undefined}
@@ -60,7 +56,7 @@ export const RadioGroupField = ({
 						<Label
 							key={option.value}
 							htmlFor={optionId}
-							className="flex items-center gap-2 cursor-pointer py-2 -my-2"
+							className="-my-2 flex cursor-pointer items-center gap-2 py-2"
 						>
 							<RadioGroupItem value={option.value} id={optionId} />
 							<span>{option.label}</span>

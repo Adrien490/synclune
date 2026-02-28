@@ -299,7 +299,7 @@ describe("updateCustomizationStatus", () => {
 
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
-		const updateCall = mockPrisma.customizationRequest.update.mock.calls[0][0];
+		const updateCall = mockPrisma.customizationRequest.update.mock.calls[0]![0];
 		expect(updateCall.data).not.toHaveProperty("respondedAt");
 	});
 
@@ -347,9 +347,12 @@ describe("updateCustomizationStatus", () => {
 
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
-		const updateTagCalls = mockUpdateTag.mock.calls.map((args: unknown[]) => { const [tag] = args as [string]; return tag; });
+		const updateTagCalls = mockUpdateTag.mock.calls.map((args: unknown[]) => {
+			const [tag] = args as [string];
+			return tag;
+		});
 		const hasUserTag = updateTagCalls.some((tag: string) =>
-			tag.startsWith("customization-requests-user-")
+			tag.startsWith("customization-requests-user-"),
 		);
 		expect(hasUserTag).toBe(false);
 	});
@@ -366,7 +369,7 @@ describe("updateCustomizationStatus", () => {
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
 		expect(mockSendCustomizationStatusEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ status: "IN_PROGRESS" })
+			expect.objectContaining({ status: "IN_PROGRESS" }),
 		);
 	});
 
@@ -382,7 +385,7 @@ describe("updateCustomizationStatus", () => {
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
 		expect(mockSendCustomizationStatusEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ status: "COMPLETED" })
+			expect.objectContaining({ status: "COMPLETED" }),
 		);
 	});
 
@@ -398,7 +401,7 @@ describe("updateCustomizationStatus", () => {
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
 		expect(mockSendCustomizationStatusEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ status: "CANCELLED" })
+			expect.objectContaining({ status: "CANCELLED" }),
 		);
 	});
 
@@ -425,7 +428,7 @@ describe("updateCustomizationStatus", () => {
 			expect.objectContaining({
 				email: "sanitized:marie@example.com",
 				firstName: "sanitized:Marie",
-			})
+			}),
 		);
 	});
 
@@ -441,7 +444,7 @@ describe("updateCustomizationStatus", () => {
 		expect(mockSendCustomizationStatusEmail).toHaveBeenCalledWith(
 			expect.objectContaining({
 				adminNotes: "sanitized:Notes de l'admin",
-			})
+			}),
 		);
 	});
 
@@ -460,16 +463,11 @@ describe("updateCustomizationStatus", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should call handleActionError when DB update throws", async () => {
-		mockPrisma.customizationRequest.update.mockRejectedValue(
-			new Error("DB connection failed")
-		);
+		mockPrisma.customizationRequest.update.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
-		expect(mockHandleActionError).toHaveBeenCalledWith(
-			expect.any(Error),
-			expect.any(String)
-		);
+		expect(mockHandleActionError).toHaveBeenCalledWith(expect.any(Error), expect.any(String));
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 });

@@ -1,10 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
-import {
-	Card,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
 import { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -44,26 +39,24 @@ export function SectionNavigation({
 					const Icon = link.icon;
 					return (
 						<Link key={link.href} href={link.href}>
-							<Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+							<Card className="can-hover:hover:shadow-md can-hover:hover:border-primary/50 h-full transition-all">
 								<CardHeader>
 									<div className="flex items-start justify-between">
 										<div className="flex items-center gap-3">
 											{Icon && (
-												<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-													<Icon className="h-5 w-5 text-primary" />
+												<div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+													<Icon className="text-primary h-5 w-5" />
 												</div>
 											)}
 											<div>
 												<CardTitle className="text-lg">{link.title}</CardTitle>
 												{link.description && (
-													<CardDescription className="mt-1">
-														{link.description}
-													</CardDescription>
+													<CardDescription className="mt-1">{link.description}</CardDescription>
 												)}
 											</div>
 										</div>
 										{link.badge && (
-											<span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+											<span className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs font-medium">
 												{link.badge}
 											</span>
 										)}

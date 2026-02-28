@@ -4,7 +4,7 @@ import { withSerwist } from "@serwist/turbopack";
 const nextConfig: NextConfig = {
 	cacheComponents: true,
 	experimental: {
-		optimizePackageImports: ["motion/react", "recharts"],
+		optimizePackageImports: ["motion/react", "recharts", "lucide-react"],
 	},
 
 	async headers() {

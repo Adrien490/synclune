@@ -1,44 +1,44 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockRenderAndSend } = vi.hoisted(() => ({
 	mockRenderAndSend: vi.fn(),
-}))
+}));
 
 vi.mock("../send-email", () => ({
 	renderAndSend: mockRenderAndSend,
-}))
+}));
 
 vi.mock("@/emails/admin-new-order-email", () => ({
 	AdminNewOrderEmail: vi.fn((props) => ({ type: "AdminNewOrderEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/admin-refund-failed-email", () => ({
 	AdminRefundFailedEmail: vi.fn((props) => ({ type: "AdminRefundFailedEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/admin-webhook-failed-email", () => ({
 	AdminWebhookFailedEmail: vi.fn((props) => ({ type: "AdminWebhookFailedEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/admin-invoice-failed-email", () => ({
 	AdminInvoiceFailedEmail: vi.fn((props) => ({ type: "AdminInvoiceFailedEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/admin-cron-failed-email", () => ({
 	AdminCronFailedEmail: vi.fn((props) => ({ type: "AdminCronFailedEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/admin-checkout-failed-email", () => ({
 	AdminCheckoutFailedEmail: vi.fn((props) => ({ type: "AdminCheckoutFailedEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/admin-dispute-alert-email", () => ({
 	AdminDisputeAlertEmail: vi.fn((props) => ({ type: "AdminDisputeAlertEmail", props })),
-}))
+}));
 
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_ADMIN: "admin@test.com",
-}))
+}));
 
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: vi.fn(() => "https://test.com"),
@@ -47,7 +47,7 @@ vi.mock("@/shared/constants/urls", () => ({
 			WEBHOOKS: "https://dashboard.stripe.com/webhooks",
 		},
 	},
-}))
+}));
 
 import {
 	sendAdminNewOrderEmail,
@@ -57,7 +57,7 @@ import {
 	sendAdminCheckoutFailedAlert,
 	sendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert,
-} from "../admin-emails"
+} from "../admin-emails";
 
 const mockShippingAddress = {
 	firstName: "Marie",
@@ -67,7 +67,7 @@ const mockShippingAddress = {
 	postalCode: "75001",
 	country: "FR",
 	phone: "+33612345678",
-}
+};
 
 const mockItems = [
 	{
@@ -78,13 +78,13 @@ const mockItems = [
 		quantity: 1,
 		price: 12000,
 	},
-]
+];
 
 describe("sendAdminNewOrderEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } });
+	});
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
 		await sendAdminNewOrderEmail({
@@ -98,7 +98,7 @@ describe("sendAdminNewOrderEmail", () => {
 			total: 12500,
 			shippingAddress: mockShippingAddress,
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -120,9 +120,9 @@ describe("sendAdminNewOrderEmail", () => {
 				to: "admin@test.com",
 				subject: "🎉 Nouvelle commande CMD-001 - 125.00€",
 				tags: [{ name: "category", value: "admin" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should format total correctly in subject", async () => {
 		await sendAdminNewOrderEmail({
@@ -136,11 +136,11 @@ describe("sendAdminNewOrderEmail", () => {
 			total: 9999,
 			shippingAddress: mockShippingAddress,
 			dashboardUrl: "https://test.com/admin/commandes/CMD-002",
-		})
+		});
 
-		const callArgs = mockRenderAndSend.mock.calls[0][1]
-		expect(callArgs.subject).toBe("🎉 Nouvelle commande CMD-002 - 99.99€")
-	})
+		const callArgs = mockRenderAndSend.mock.calls[0]![1];
+		expect(callArgs.subject).toBe("🎉 Nouvelle commande CMD-002 - 99.99€");
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendAdminNewOrderEmail({
@@ -154,17 +154,17 @@ describe("sendAdminNewOrderEmail", () => {
 			total: 12500,
 			shippingAddress: mockShippingAddress,
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-1" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-1" } });
+	});
+});
 
 describe("sendAdminRefundFailedAlert", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } });
+	});
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient and constructed stripeDashboardUrl", async () => {
 		await sendAdminRefundFailedAlert({
@@ -175,7 +175,7 @@ describe("sendAdminRefundFailedAlert", () => {
 			errorMessage: "Insufficient funds",
 			stripePaymentIntentId: "pi_test123",
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -195,9 +195,9 @@ describe("sendAdminRefundFailedAlert", () => {
 				to: "admin@test.com",
 				subject: "🚨 ACTION REQUISE : Échec remboursement CMD-001",
 				tags: [{ name: "category", value: "admin" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should construct stripeDashboardUrl from stripePaymentIntentId", async () => {
 		await sendAdminRefundFailedAlert({
@@ -208,7 +208,7 @@ describe("sendAdminRefundFailedAlert", () => {
 			errorMessage: "Error",
 			stripePaymentIntentId: "pi_unique456",
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -216,9 +216,9 @@ describe("sendAdminRefundFailedAlert", () => {
 					stripeDashboardUrl: "https://dashboard.stripe.com/payments/pi_unique456",
 				}),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendAdminRefundFailedAlert({
@@ -229,17 +229,17 @@ describe("sendAdminRefundFailedAlert", () => {
 			errorMessage: "Canceled",
 			stripePaymentIntentId: "pi_test123",
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-2" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-2" } });
+	});
+});
 
 describe("sendWebhookFailedAlertEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } });
+	});
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient and constructed URLs", async () => {
 		await sendWebhookFailedAlertEmail({
@@ -247,7 +247,7 @@ describe("sendWebhookFailedAlertEmail", () => {
 			eventType: "payment_intent.succeeded",
 			attempts: 3,
 			error: "Connection timeout",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -265,9 +265,9 @@ describe("sendWebhookFailedAlertEmail", () => {
 				to: "admin@test.com",
 				subject: "[ALERTE] Webhook payment_intent.succeeded échoué (3 tentatives)",
 				tags: [{ name: "category", value: "admin" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should use EXTERNAL_URLS.STRIPE.WEBHOOKS for stripeDashboardUrl", async () => {
 		await sendWebhookFailedAlertEmail({
@@ -275,7 +275,7 @@ describe("sendWebhookFailedAlertEmail", () => {
 			eventType: "checkout.session.completed",
 			attempts: 5,
 			error: "Database error",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -283,22 +283,22 @@ describe("sendWebhookFailedAlertEmail", () => {
 					stripeDashboardUrl: "https://dashboard.stripe.com/webhooks",
 				}),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should use getBaseUrl() to build adminDashboardUrl", async () => {
-		const { getBaseUrl } = await import("@/shared/constants/urls")
+		const { getBaseUrl } = await import("@/shared/constants/urls");
 
 		await sendWebhookFailedAlertEmail({
 			eventId: "evt_test123",
 			eventType: "payment_intent.succeeded",
 			attempts: 1,
 			error: "Error",
-		})
+		});
 
-		expect(getBaseUrl).toHaveBeenCalled()
-	})
+		expect(getBaseUrl).toHaveBeenCalled();
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendWebhookFailedAlertEmail({
@@ -306,24 +306,24 @@ describe("sendWebhookFailedAlertEmail", () => {
 			eventType: "payment_intent.succeeded",
 			attempts: 3,
 			error: "Error",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-3" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-3" } });
+	});
+});
 
 describe("sendAdminCronFailedAlert", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-4" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-4" } });
+	});
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
 		await sendAdminCronFailedAlert({
 			job: "cleanup-carts",
 			errors: 5,
 			details: { failedIds: ["abc", "def"] },
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -338,37 +338,37 @@ describe("sendAdminCronFailedAlert", () => {
 				to: "admin@test.com",
 				subject: "[ALERTE CRON] cleanup-carts — 5 erreur(s)",
 				tags: [{ name: "category", value: "admin" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should include error count in subject", async () => {
 		await sendAdminCronFailedAlert({
 			job: "sync-async-payments",
 			errors: 12,
 			details: {},
-		})
+		});
 
-		const callArgs = mockRenderAndSend.mock.calls[0][1]
-		expect(callArgs.subject).toBe("[ALERTE CRON] sync-async-payments — 12 erreur(s)")
-	})
+		const callArgs = mockRenderAndSend.mock.calls[0]![1];
+		expect(callArgs.subject).toBe("[ALERTE CRON] sync-async-payments — 12 erreur(s)");
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendAdminCronFailedAlert({
 			job: "cleanup-carts",
 			errors: 1,
 			details: {},
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-4" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-4" } });
+	});
+});
 
 describe("sendAdminCheckoutFailedAlert", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-5" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-5" } });
+	});
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
 		await sendAdminCheckoutFailedAlert({
@@ -376,7 +376,7 @@ describe("sendAdminCheckoutFailedAlert", () => {
 			customerEmail: "customer@test.com",
 			total: 12500,
 			errorMessage: "stripe.checkout.sessions.create failed",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -392,9 +392,9 @@ describe("sendAdminCheckoutFailedAlert", () => {
 				to: "admin@test.com",
 				subject: "[ALERTE CHECKOUT] Échec session Stripe — CMD-001",
 				tags: [{ name: "category", value: "admin" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendAdminCheckoutFailedAlert({
@@ -402,17 +402,17 @@ describe("sendAdminCheckoutFailedAlert", () => {
 			customerEmail: "customer@test.com",
 			total: 12500,
 			errorMessage: "Error",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-5" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-5" } });
+	});
+});
 
 describe("sendAdminDisputeAlert", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-6" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-6" } });
+	});
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
 		await sendAdminDisputeAlert({
@@ -424,7 +424,7 @@ describe("sendAdminDisputeAlert", () => {
 			deadline: "2026-03-10",
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
 			stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_test123",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -444,9 +444,9 @@ describe("sendAdminDisputeAlert", () => {
 				to: "admin@test.com",
 				subject: "[LITIGE] Commande CMD-001 — Action requise",
 				tags: [{ name: "category", value: "admin" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should accept null deadline", async () => {
 		await sendAdminDisputeAlert({
@@ -458,15 +458,15 @@ describe("sendAdminDisputeAlert", () => {
 			deadline: null,
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
 			stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_test123",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
 				props: expect.objectContaining({ deadline: null }),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendAdminDisputeAlert({
@@ -478,17 +478,17 @@ describe("sendAdminDisputeAlert", () => {
 			deadline: null,
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
 			stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_test123",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-6" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-6" } });
+	});
+});
 
 describe("sendAdminInvoiceFailedAlert", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-7" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-7" } });
+	});
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
 		await sendAdminInvoiceFailedAlert({
@@ -500,7 +500,7 @@ describe("sendAdminInvoiceFailedAlert", () => {
 			errorMessage: "PDF generation failed",
 			stripePaymentIntentId: "pi_test123",
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -520,9 +520,9 @@ describe("sendAdminInvoiceFailedAlert", () => {
 				to: "admin@test.com",
 				subject: "🚨 ACTION REQUISE : Échec génération facture CMD-001",
 				tags: [{ name: "category", value: "admin" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should accept undefined optional fields", async () => {
 		await sendAdminInvoiceFailedAlert({
@@ -531,7 +531,7 @@ describe("sendAdminInvoiceFailedAlert", () => {
 			amount: 12500,
 			errorMessage: "Error",
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -541,9 +541,9 @@ describe("sendAdminInvoiceFailedAlert", () => {
 					stripePaymentIntentId: undefined,
 				}),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendAdminInvoiceFailedAlert({
@@ -552,8 +552,8 @@ describe("sendAdminInvoiceFailedAlert", () => {
 			amount: 12500,
 			errorMessage: "Error",
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-7" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-7" } });
+	});
+});

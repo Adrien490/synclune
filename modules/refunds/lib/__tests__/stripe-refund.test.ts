@@ -113,7 +113,7 @@ describe("createStripeRefund", () => {
 			amount: 5000,
 		});
 
-		const callArgs = mockStripe.refunds.create.mock.calls[0][0];
+		const callArgs = mockStripe.refunds.create.mock.calls[0]![0];
 		expect(callArgs.payment_intent).toBe("pi_123");
 		expect(callArgs.charge).toBeUndefined();
 	});
@@ -126,7 +126,7 @@ describe("createStripeRefund", () => {
 			amount: 5000,
 		});
 
-		const callArgs = mockStripe.refunds.create.mock.calls[0][0];
+		const callArgs = mockStripe.refunds.create.mock.calls[0]![0];
 		expect(callArgs.charge).toBe("ch_456");
 		expect(callArgs.payment_intent).toBeUndefined();
 	});
@@ -140,10 +140,9 @@ describe("createStripeRefund", () => {
 			idempotencyKey: "refund_abc",
 		});
 
-		expect(mockStripe.refunds.create).toHaveBeenCalledWith(
-			expect.any(Object),
-			{ idempotencyKey: "refund_abc" },
-		);
+		expect(mockStripe.refunds.create).toHaveBeenCalledWith(expect.any(Object), {
+			idempotencyKey: "refund_abc",
+		});
 	});
 
 	it("should not pass idempotency key when not provided", async () => {
@@ -154,10 +153,7 @@ describe("createStripeRefund", () => {
 			amount: 5000,
 		});
 
-		expect(mockStripe.refunds.create).toHaveBeenCalledWith(
-			expect.any(Object),
-			{},
-		);
+		expect(mockStripe.refunds.create).toHaveBeenCalledWith(expect.any(Object), {});
 	});
 
 	it("should map FRAUD reason to fraudulent", async () => {
@@ -278,7 +274,12 @@ describe("createStripeRefund", () => {
 			);
 			mockStripe.refunds.list.mockResolvedValue({
 				data: [
-					{ id: "re_first", amount: 3000, created: Math.floor(Date.now() / 1000) - 7200, metadata: {} },
+					{
+						id: "re_first",
+						amount: 3000,
+						created: Math.floor(Date.now() / 1000) - 7200,
+						metadata: {},
+					},
 				],
 			});
 
@@ -298,9 +299,7 @@ describe("createStripeRefund", () => {
 			);
 			const now = Math.floor(Date.now() / 1000);
 			mockStripe.refunds.list.mockResolvedValue({
-				data: [
-					{ id: "re_fallback", amount: 5000, created: now - 100, metadata: {} },
-				],
+				data: [{ id: "re_fallback", amount: 5000, created: now - 100, metadata: {} }],
 			});
 
 			await createStripeRefund({
@@ -327,9 +326,7 @@ describe("createStripeRefund", () => {
 			});
 
 			expect(result).toEqual({ success: true, pending: false, refundId: undefined });
-			expect(warnSpy).toHaveBeenCalledWith(
-				"[STRIPE_REFUND] Could not recover existing refund ID",
-			);
+			expect(warnSpy).toHaveBeenCalledWith("[STRIPE_REFUND] Could not recover existing refund ID");
 			warnSpy.mockRestore();
 		});
 	});

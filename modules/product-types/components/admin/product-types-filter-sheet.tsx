@@ -14,9 +14,7 @@ interface FilterFormData {
 	isActive: string;
 }
 
-export function ProductTypesFilterSheet({
-	className,
-}: ProductTypesFilterSheetProps) {
+export function ProductTypesFilterSheet({ className }: ProductTypesFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -51,10 +49,7 @@ export function ProductTypesFilterSheet({
 
 		// Add isActive filter
 		if (formData.isActive !== "all") {
-			params.set(
-				"filter_isActive",
-				formData.isActive === "active" ? "true" : "false"
-			);
+			params.set("filter_isActive", formData.isActive === "active" ? "true" : "false");
 		}
 
 		startTransition(() => {
@@ -91,7 +86,7 @@ export function ProductTypesFilterSheet({
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}
-			onApply={() => form.handleSubmit()}
+			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
 			triggerClassName={className}
 		>
@@ -99,7 +94,7 @@ export function ProductTypesFilterSheet({
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 				className="space-y-6"
 			>
@@ -107,9 +102,7 @@ export function ProductTypesFilterSheet({
 				<form.Field name="isActive">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">
-								Statut actif
-							</legend>
+							<legend className="text-foreground mb-2 text-sm font-medium">Statut actif</legend>
 							{[
 								{ value: "all", label: "Tous" },
 								{ value: "active", label: "Actif uniquement" },

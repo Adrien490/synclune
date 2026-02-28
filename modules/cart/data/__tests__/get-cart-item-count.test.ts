@@ -4,19 +4,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockAggregate,
-	mockGetSession,
-	mockGetCartSessionId,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
-	mockAggregate: vi.fn(),
-	mockGetSession: vi.fn(),
-	mockGetCartSessionId: vi.fn(),
-	mockCacheLife: vi.fn(),
-	mockCacheTag: vi.fn(),
-}));
+const { mockAggregate, mockGetSession, mockGetCartSessionId, mockCacheLife, mockCacheTag } =
+	vi.hoisted(() => ({
+		mockAggregate: vi.fn(),
+		mockGetSession: vi.fn(),
+		mockGetCartSessionId: vi.fn(),
+		mockCacheLife: vi.fn(),
+		mockCacheTag: vi.fn(),
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
@@ -77,7 +72,7 @@ describe("getCartItemCount", () => {
 				where: expect.objectContaining({
 					cart: expect.objectContaining({ userId: "user-1" }),
 				}),
-			})
+			}),
 		);
 	});
 
@@ -96,7 +91,7 @@ describe("getCartItemCount", () => {
 				where: expect.objectContaining({
 					cart: expect.objectContaining({ sessionId: "session-abc" }),
 				}),
-			})
+			}),
 		);
 	});
 
@@ -206,7 +201,7 @@ describe("fetchCartItemCount", () => {
 		await fetchCartItemCount("user-1", undefined);
 
 		// Assert
-		const callArg = mockAggregate.mock.calls[0][0];
+		const callArg = mockAggregate.mock.calls[0]![0];
 		expect(callArg.where.cart.OR).toBeDefined();
 		expect(callArg.where.cart.OR).toContainEqual({ expiresAt: null });
 		expect(callArg.where.cart.OR).toContainEqual({ expiresAt: { gt: expect.any(Date) } });
@@ -225,7 +220,7 @@ describe("fetchCartItemCount", () => {
 				where: expect.objectContaining({
 					cart: expect.objectContaining({ userId: "user-99" }),
 				}),
-			})
+			}),
 		);
 	});
 
@@ -242,7 +237,7 @@ describe("fetchCartItemCount", () => {
 				where: expect.objectContaining({
 					cart: expect.objectContaining({ sessionId: "session-99" }),
 				}),
-			})
+			}),
 		);
 	});
 
@@ -257,7 +252,7 @@ describe("fetchCartItemCount", () => {
 		expect(mockAggregate).toHaveBeenCalledWith(
 			expect.objectContaining({
 				_sum: { quantity: true },
-			})
+			}),
 		);
 	});
 });

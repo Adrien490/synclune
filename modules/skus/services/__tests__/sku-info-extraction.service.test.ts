@@ -37,7 +37,10 @@ describe("extractVariantInfo", () => {
 		const product = {
 			skus: [
 				makeSku({ color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" } }),
-				makeSku({ id: "sku-2", color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" } }),
+				makeSku({
+					id: "sku-2",
+					color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				}),
 			],
 		};
 
@@ -48,7 +51,7 @@ describe("extractVariantInfo", () => {
 			expect.arrayContaining([
 				expect.objectContaining({ name: "Or Rose", slug: "or-rose" }),
 				expect.objectContaining({ name: "Argent", slug: "argent" }),
-			])
+			]),
 		);
 	});
 
@@ -67,7 +70,7 @@ describe("extractVariantInfo", () => {
 			expect.arrayContaining([
 				expect.objectContaining({ name: "Argent 925" }),
 				expect.objectContaining({ name: "Or 18K" }),
-			])
+			]),
 		);
 	});
 
@@ -87,7 +90,7 @@ describe("extractVariantInfo", () => {
 			expect.arrayContaining([
 				expect.objectContaining({ size: "S" }),
 				expect.objectContaining({ size: "M" }),
-			])
+			]),
 		);
 	});
 
@@ -143,24 +146,32 @@ describe("extractVariantInfo", () => {
 
 	it("should use material name as color fallback when no color is set", () => {
 		const product = {
-			skus: [
-				makeSku({ color: null, material: { id: "m1", name: "Or 18K" } }),
-			],
+			skus: [makeSku({ color: null, material: { id: "m1", name: "Or 18K" } })],
 		};
 
 		const info = extractVariantInfo(product);
 
 		expect(info.availableColors).toHaveLength(1);
-		expect(info.availableColors[0].name).toBe("Or 18K");
-		expect(info.availableColors[0].slug).toBe("or-18k");
+		expect(info.availableColors[0]!.name).toBe("Or 18K");
+		expect(info.availableColors[0]!.slug).toBe("or-18k");
 	});
 
 	it("should count availableSkus per color", () => {
 		const product = {
 			skus: [
-				makeSku({ id: "sku-1", color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" } }),
-				makeSku({ id: "sku-2", color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" }, size: "M" }),
-				makeSku({ id: "sku-3", color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" } }),
+				makeSku({
+					id: "sku-1",
+					color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				}),
+				makeSku({
+					id: "sku-2",
+					color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					size: "M",
+				}),
+				makeSku({
+					id: "sku-3",
+					color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				}),
 			],
 		};
 

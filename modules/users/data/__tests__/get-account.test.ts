@@ -4,21 +4,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockGetSession,
-	mockIsAdmin,
-	mockCacheUserAccounts,
-	mockCacheDefault,
-} = vi.hoisted(() => ({
-	mockPrisma: {
-		account: { findFirst: vi.fn() },
-	},
-	mockGetSession: vi.fn(),
-	mockIsAdmin: vi.fn(),
-	mockCacheUserAccounts: vi.fn(),
-	mockCacheDefault: vi.fn(),
-}));
+const { mockPrisma, mockGetSession, mockIsAdmin, mockCacheUserAccounts, mockCacheDefault } =
+	vi.hoisted(() => ({
+		mockPrisma: {
+			account: { findFirst: vi.fn() },
+		},
+		mockGetSession: vi.fn(),
+		mockIsAdmin: vi.fn(),
+		mockCacheUserAccounts: vi.fn(),
+		mockCacheDefault: vi.fn(),
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -152,7 +147,7 @@ describe("getAccount", () => {
 		await getAccount({ id: "acc-1" });
 
 		// For admin: the where clause should NOT restrict by userId
-		const call = mockPrisma.account.findFirst.mock.calls[0][0] as {
+		const call = mockPrisma.account.findFirst.mock.calls[0]![0] as {
 			where: Record<string, unknown>;
 		};
 		expect(call.where).not.toHaveProperty("userId");
@@ -206,14 +201,14 @@ describe("fetchAccount", () => {
 		expect(mockPrisma.account.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ id: "acc-1" }),
-			})
+			}),
 		);
 	});
 
 	it("does not restrict by userId when admin is true", async () => {
 		await fetchAccount({ id: "acc-1" }, { admin: true, userId: "user-1" });
 
-		const call = mockPrisma.account.findFirst.mock.calls[0][0] as {
+		const call = mockPrisma.account.findFirst.mock.calls[0]![0] as {
 			where: Record<string, unknown>;
 		};
 		expect(call.where).not.toHaveProperty("userId");
@@ -228,14 +223,14 @@ describe("fetchAccount", () => {
 					id: "acc-1",
 					userId: "user-1",
 				}),
-			})
+			}),
 		);
 	});
 
 	it("does not restrict by userId for non-admin without userId", async () => {
 		await fetchAccount({ id: "acc-1" }, { admin: false, userId: undefined });
 
-		const call = mockPrisma.account.findFirst.mock.calls[0][0] as {
+		const call = mockPrisma.account.findFirst.mock.calls[0]![0] as {
 			where: Record<string, unknown>;
 		};
 		expect(call.where).not.toHaveProperty("userId");
@@ -247,7 +242,7 @@ describe("fetchAccount", () => {
 		expect(mockPrisma.account.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: expect.objectContaining({ id: true, providerId: true }),
-			})
+			}),
 		);
 	});
 

@@ -4,11 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockGetCurrentUser,
-	mockCacheUserAccounts,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockGetCurrentUser, mockCacheUserAccounts } = vi.hoisted(() => ({
 	mockPrisma: {
 		account: { findMany: vi.fn() },
 	},
@@ -78,12 +74,15 @@ describe("getUserAccounts", () => {
 		expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-1" }),
-			})
+			}),
 		);
 	});
 
 	it("returns the linked accounts for authenticated user", async () => {
-		const accounts = [makeLinkedAccount(), makeLinkedAccount({ id: "acc-2", providerId: "github" })];
+		const accounts = [
+			makeLinkedAccount(),
+			makeLinkedAccount({ id: "acc-2", providerId: "github" }),
+		];
 		mockPrisma.account.findMany.mockResolvedValue(accounts);
 
 		const result = await getUserAccounts();
@@ -107,7 +106,7 @@ describe("getUserAccounts", () => {
 		expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-99" }),
-			})
+			}),
 		);
 	});
 });
@@ -134,7 +133,7 @@ describe("fetchUserAccounts", () => {
 		expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-1" }),
-			})
+			}),
 		);
 	});
 
@@ -146,7 +145,7 @@ describe("fetchUserAccounts", () => {
 				where: expect.objectContaining({
 					providerId: { not: "credential" },
 				}),
-			})
+			}),
 		);
 	});
 
@@ -161,7 +160,7 @@ describe("fetchUserAccounts", () => {
 					accountId: true,
 					createdAt: true,
 				},
-			})
+			}),
 		);
 	});
 
@@ -171,7 +170,7 @@ describe("fetchUserAccounts", () => {
 		expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: { createdAt: "desc" },
-			})
+			}),
 		);
 	});
 
@@ -206,16 +205,20 @@ describe("fetchUserAccounts", () => {
 	it("does not expose accessToken or refreshToken", async () => {
 		mockPrisma.account.findMany.mockResolvedValue([makeLinkedAccount()]);
 
-		const selectArg = mockPrisma.account.findMany.mock.calls[0]?.[0] as {
-			select: Record<string, unknown>;
-		} | undefined;
+		const selectArg = mockPrisma.account.findMany.mock.calls[0]?.[0] as
+			| {
+					select: Record<string, unknown>;
+			  }
+			| undefined;
 
 		// Run the function first
 		await fetchUserAccounts("user-1");
 
-		const select = (mockPrisma.account.findMany.mock.calls[0][0] as {
-			select: Record<string, unknown>;
-		}).select;
+		const select = (
+			mockPrisma.account.findMany.mock.calls[0]![0] as {
+				select: Record<string, unknown>;
+			}
+		).select;
 
 		expect(select).not.toHaveProperty("accessToken");
 		expect(select).not.toHaveProperty("refreshToken");

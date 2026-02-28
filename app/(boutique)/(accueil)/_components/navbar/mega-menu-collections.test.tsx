@@ -3,8 +3,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock next/link
 vi.mock("next/link", () => ({
-	default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-		<a href={href} {...props}>{children}</a>
+	default: ({
+		href,
+		children,
+		...props
+	}: {
+		href: string;
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => (
+		<a href={href} {...props}>
+			{children}
+		</a>
 	),
 }));
 
@@ -71,9 +81,7 @@ describe("MegaMenuCollections", () => {
 	});
 
 	it("returns null when only 'Toutes les collections' exists", () => {
-		const { container } = render(
-			<MegaMenuCollections collections={[collections[0]]} />
-		);
+		const { container } = render(<MegaMenuCollections collections={[collections[0]!]} />);
 		expect(container.innerHTML).toBe("");
 	});
 

@@ -39,12 +39,7 @@ const ALLOWED_IMAGE_TYPES = [
 	"image/avif",
 ] as const;
 
-const ALLOWED_VIDEO_TYPES = [
-	"video/mp4",
-	"video/webm",
-	"video/quicktime", // .mov
-	"video/x-msvideo", // .avi
-] as const;
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm"] as const;
 
 const ALLOWED_DOCUMENT_TYPES = ["application/pdf", "text/plain"] as const;
 

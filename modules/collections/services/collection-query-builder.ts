@@ -6,7 +6,7 @@ import type { CollectionFilters, GetCollectionsParams } from "../types/collectio
 // ============================================================================
 
 export function buildCollectionSearchConditions(
-	search: string
+	search: string,
 ): Prisma.CollectionWhereInput | null {
 	if (!search || search.trim().length === 0) return null;
 	const searchTerm = search.trim();
@@ -26,7 +26,7 @@ export function buildCollectionSearchConditions(
 }
 
 export function buildCollectionFilterConditions(
-	filters: CollectionFilters
+	filters: CollectionFilters,
 ): Prisma.CollectionWhereInput {
 	const conditions: Prisma.CollectionWhereInput = {};
 
@@ -67,7 +67,7 @@ export function buildCollectionFilterConditions(
 }
 
 export function buildCollectionWhereClause(
-	params: GetCollectionsParams
+	params: GetCollectionsParams,
 ): Prisma.CollectionWhereInput {
 	const conditions: Prisma.CollectionWhereInput[] = [];
 
@@ -84,7 +84,7 @@ export function buildCollectionWhereClause(
 	}
 
 	if (conditions.length === 0) return {};
-	if (conditions.length === 1) return conditions[0];
+	if (conditions.length === 1) return conditions[0]!;
 
 	return { AND: conditions };
 }

@@ -1,10 +1,8 @@
 "use client";
 
-import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
-import {
-	MultiSelect,
-	type MultiSelectOption,
-} from "@/shared/components/multi-select";
+import { Field, FieldError } from "@/shared/components/ui/field";
+import { FieldLabel } from "./field-label";
+import { MultiSelect, type MultiSelectOption } from "@/shared/components/multi-select";
 import { useFieldContext } from "@/shared/lib/form-context";
 
 interface MultiSelectFieldProps {
@@ -63,13 +61,8 @@ export const MultiSelectField = ({
 	return (
 		<Field data-invalid={hasError}>
 			{label && (
-				<FieldLabel htmlFor={field.name}>
+				<FieldLabel htmlFor={field.name} required={required}>
 					{label}
-					{required && (
-						<span className="text-destructive ml-1" aria-label="requis">
-							*
-						</span>
-					)}
 				</FieldLabel>
 			)}
 

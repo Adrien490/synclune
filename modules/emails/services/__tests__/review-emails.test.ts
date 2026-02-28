@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockRenderAndSend } = vi.hoisted(() => ({
 	mockRenderAndSend: vi.fn(),
-}))
+}));
 
 vi.mock("../send-email", () => ({
 	renderAndSend: mockRenderAndSend,
-}))
+}));
 
 vi.mock("@/emails/review-request-email", () => ({
 	ReviewRequestEmail: vi.fn((props) => ({ type: "ReviewRequestEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/review-response-email", () => ({
 	ReviewResponseEmail: vi.fn((props) => ({ type: "ReviewResponseEmail", props })),
-}))
+}));
 
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_SUBJECTS: {
@@ -22,9 +22,9 @@ vi.mock("../../constants/email.constants", () => ({
 		REVIEW_RESPONSE: "Nous avons répondu à votre avis - Synclune",
 	},
 	EMAIL_CONTACT: "contact@test.com",
-}))
+}));
 
-import { sendReviewRequestEmail, sendReviewResponseEmail } from "../review-emails"
+import { sendReviewRequestEmail, sendReviewResponseEmail } from "../review-emails";
 
 const mockProducts = [
 	{
@@ -39,13 +39,13 @@ const mockProducts = [
 		imageUrl: null,
 		skuVariants: null,
 	},
-]
+];
 
 describe("sendReviewRequestEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendReviewRequestEmail({
@@ -55,7 +55,7 @@ describe("sendReviewRequestEmail", () => {
 			products: mockProducts,
 			reviewUrl: "https://test.com/mes-avis?order=CMD-001",
 			unsubscribeUrl: "https://test.com/newsletter/desabonnement?token=abc",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -72,12 +72,12 @@ describe("sendReviewRequestEmail", () => {
 				subject: "Votre avis compte ! - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should include List-Unsubscribe headers", async () => {
-		const unsubscribeUrl = "https://test.com/newsletter/desabonnement?token=abc"
+		const unsubscribeUrl = "https://test.com/newsletter/desabonnement?token=abc";
 
 		await sendReviewRequestEmail({
 			to: "customer@test.com",
@@ -86,7 +86,7 @@ describe("sendReviewRequestEmail", () => {
 			products: mockProducts,
 			reviewUrl: "https://test.com/mes-avis?order=CMD-001",
 			unsubscribeUrl,
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.anything(),
@@ -95,9 +95,9 @@ describe("sendReviewRequestEmail", () => {
 					"List-Unsubscribe": `<${unsubscribeUrl}>`,
 					"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
 				},
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should not pass unsubscribeUrl to the component (not in component props)", async () => {
 		await sendReviewRequestEmail({
@@ -107,11 +107,11 @@ describe("sendReviewRequestEmail", () => {
 			products: mockProducts,
 			reviewUrl: "https://test.com/mes-avis?order=CMD-001",
 			unsubscribeUrl: "https://test.com/newsletter/desabonnement?token=abc",
-		})
+		});
 
-		const componentProps = mockRenderAndSend.mock.calls[0][0].props
-		expect(componentProps).not.toHaveProperty("unsubscribeUrl")
-	})
+		const componentProps = mockRenderAndSend.mock.calls[0]![0].props;
+		expect(componentProps).not.toHaveProperty("unsubscribeUrl");
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendReviewRequestEmail({
@@ -121,17 +121,17 @@ describe("sendReviewRequestEmail", () => {
 			products: mockProducts,
 			reviewUrl: "https://test.com/mes-avis?order=CMD-001",
 			unsubscribeUrl: "https://test.com/newsletter/desabonnement?token=abc",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-1" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-1" } });
+	});
+});
 
 describe("sendReviewResponseEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendReviewResponseEmail({
@@ -142,7 +142,7 @@ describe("sendReviewResponseEmail", () => {
 			responseContent: "Merci pour votre avis, Marie !",
 			responseAuthorName: "Synclune",
 			productUrl: "https://test.com/boutique/bague-en-or",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -161,9 +161,9 @@ describe("sendReviewResponseEmail", () => {
 				subject: "Nous avons répondu à votre avis - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should not include List-Unsubscribe headers", async () => {
 		await sendReviewResponseEmail({
@@ -174,11 +174,11 @@ describe("sendReviewResponseEmail", () => {
 			responseContent: "Merci !",
 			responseAuthorName: "Synclune",
 			productUrl: "https://test.com/boutique/bague-en-or",
-		})
+		});
 
-		const callArgs = mockRenderAndSend.mock.calls[0][1]
-		expect(callArgs).not.toHaveProperty("headers")
-	})
+		const callArgs = mockRenderAndSend.mock.calls[0]![1];
+		expect(callArgs).not.toHaveProperty("headers");
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendReviewResponseEmail({
@@ -189,8 +189,8 @@ describe("sendReviewResponseEmail", () => {
 			responseContent: "Merci !",
 			responseAuthorName: "Synclune",
 			productUrl: "https://test.com/boutique/bague-en-or",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-2" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-2" } });
+	});
+});

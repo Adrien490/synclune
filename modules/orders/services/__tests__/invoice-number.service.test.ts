@@ -47,8 +47,8 @@ describe("generateInvoiceNumber", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		// Default: transaction executes the callback with mockTx
-		mockPrisma.$transaction.mockImplementation(
-			(cb: (tx: typeof mockTx) => Promise<string>) => cb(mockTx)
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<string>) =>
+			cb(mockTx),
 		);
 	});
 
@@ -155,7 +155,7 @@ describe("generateInvoiceNumber", () => {
 
 			await generateInvoiceNumber();
 
-			const sqlArg = mockTx.$queryRaw.mock.calls[0][0];
+			const sqlArg = mockTx.$queryRaw.mock.calls[0]![0];
 			// Prisma.sql tagged template literals expose the SQL strings array
 			const sqlText = sqlArg.strings.join("");
 			expect(sqlText).toContain("FOR UPDATE");
@@ -167,7 +167,7 @@ describe("generateInvoiceNumber", () => {
 
 			await generateInvoiceNumber();
 
-			const sqlArg = mockTx.$queryRaw.mock.calls[0][0];
+			const sqlArg = mockTx.$queryRaw.mock.calls[0]![0];
 			const sqlText = sqlArg.strings.join("");
 			expect(sqlText).toContain('"Order"');
 			expect(sqlText).toContain('"invoiceNumber"');
@@ -181,7 +181,7 @@ describe("generateInvoiceNumber", () => {
 
 			await generateInvoiceNumber();
 
-			const sqlArg = mockTx.$queryRaw.mock.calls[0][0];
+			const sqlArg = mockTx.$queryRaw.mock.calls[0]![0];
 			const sqlText = sqlArg.strings.join("");
 			expect(sqlText).toContain("DESC");
 		});
@@ -191,7 +191,7 @@ describe("generateInvoiceNumber", () => {
 
 			await generateInvoiceNumber();
 
-			const sqlArg = mockTx.$queryRaw.mock.calls[0][0];
+			const sqlArg = mockTx.$queryRaw.mock.calls[0]![0];
 			const sqlText = sqlArg.strings.join("");
 			expect(sqlText).toContain("LIMIT 1");
 		});
@@ -256,10 +256,10 @@ describe("generateInvoiceNumber", () => {
 		});
 
 		it("should rethrow a P2001 Prisma error (wrong code) immediately without retrying", async () => {
-			const p2001Error = new Prisma.PrismaClientKnownRequestError(
-				"Record not found",
-				{ code: "P2001", clientVersion: "test" }
-			);
+			const p2001Error = new Prisma.PrismaClientKnownRequestError("Record not found", {
+				code: "P2001",
+				clientVersion: "test",
+			});
 			mockPrisma.$transaction.mockRejectedValue(p2001Error);
 
 			await expect(generateInvoiceNumber()).rejects.toThrow("Record not found");

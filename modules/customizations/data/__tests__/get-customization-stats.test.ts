@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockIsAdmin,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		customizationRequest: { count: vi.fn() },
 	},
@@ -135,56 +130,96 @@ describe("getCustomizationStats", () => {
 
 	it("excludes soft-deleted records from total count", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 10, pending: 0, inProgress: 0, completed: 0, open: 0, closed: 0, thisMonth: 0 });
+		setupCountMocks({
+			total: 10,
+			pending: 0,
+			inProgress: 0,
+			completed: 0,
+			open: 0,
+			closed: 0,
+			thisMonth: 0,
+		});
 
 		await getCustomizationStats();
 
 		expect(mockPrisma.customizationRequest.count).toHaveBeenCalledWith(
-			expect.objectContaining({ where: expect.objectContaining({ deletedAt: null }) })
+			expect.objectContaining({ where: expect.objectContaining({ deletedAt: null }) }),
 		);
 	});
 
 	it("filters pending count by PENDING status", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 10, pending: 3, inProgress: 0, completed: 0, open: 0, closed: 0, thisMonth: 0 });
+		setupCountMocks({
+			total: 10,
+			pending: 3,
+			inProgress: 0,
+			completed: 0,
+			open: 0,
+			closed: 0,
+			thisMonth: 0,
+		});
 
 		await getCustomizationStats();
 
 		const calls = mockPrisma.customizationRequest.count.mock.calls;
-		const pendingCall = calls[1][0];
+		const pendingCall = calls[1]![0];
 		expect(pendingCall.where).toMatchObject({ status: "PENDING", deletedAt: null });
 	});
 
 	it("filters inProgress count by IN_PROGRESS status", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 10, pending: 0, inProgress: 4, completed: 0, open: 0, closed: 0, thisMonth: 0 });
+		setupCountMocks({
+			total: 10,
+			pending: 0,
+			inProgress: 4,
+			completed: 0,
+			open: 0,
+			closed: 0,
+			thisMonth: 0,
+		});
 
 		await getCustomizationStats();
 
 		const calls = mockPrisma.customizationRequest.count.mock.calls;
-		const inProgressCall = calls[2][0];
+		const inProgressCall = calls[2]![0];
 		expect(inProgressCall.where).toMatchObject({ status: "IN_PROGRESS", deletedAt: null });
 	});
 
 	it("filters completed count by COMPLETED status", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 10, pending: 0, inProgress: 0, completed: 6, open: 0, closed: 0, thisMonth: 0 });
+		setupCountMocks({
+			total: 10,
+			pending: 0,
+			inProgress: 0,
+			completed: 6,
+			open: 0,
+			closed: 0,
+			thisMonth: 0,
+		});
 
 		await getCustomizationStats();
 
 		const calls = mockPrisma.customizationRequest.count.mock.calls;
-		const completedCall = calls[3][0];
+		const completedCall = calls[3]![0];
 		expect(completedCall.where).toMatchObject({ status: "COMPLETED", deletedAt: null });
 	});
 
 	it("filters open count using OPEN_STATUSES array", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 10, pending: 0, inProgress: 0, completed: 0, open: 7, closed: 0, thisMonth: 0 });
+		setupCountMocks({
+			total: 10,
+			pending: 0,
+			inProgress: 0,
+			completed: 0,
+			open: 7,
+			closed: 0,
+			thisMonth: 0,
+		});
 
 		await getCustomizationStats();
 
 		const calls = mockPrisma.customizationRequest.count.mock.calls;
-		const openCall = calls[4][0];
+		const openCall = calls[4]![0];
 		expect(openCall.where).toMatchObject({
 			status: { in: ["PENDING", "IN_PROGRESS"] },
 			deletedAt: null,
@@ -193,12 +228,20 @@ describe("getCustomizationStats", () => {
 
 	it("filters closed count using CLOSED_STATUSES array", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 10, pending: 0, inProgress: 0, completed: 0, open: 0, closed: 7, thisMonth: 0 });
+		setupCountMocks({
+			total: 10,
+			pending: 0,
+			inProgress: 0,
+			completed: 0,
+			open: 0,
+			closed: 7,
+			thisMonth: 0,
+		});
 
 		await getCustomizationStats();
 
 		const calls = mockPrisma.customizationRequest.count.mock.calls;
-		const closedCall = calls[5][0];
+		const closedCall = calls[5]![0];
 		expect(closedCall.where).toMatchObject({
 			status: { in: ["COMPLETED", "CANCELLED"] },
 			deletedAt: null,
@@ -207,12 +250,20 @@ describe("getCustomizationStats", () => {
 
 	it("filters thisMonth count using a start-of-month date", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 10, pending: 0, inProgress: 0, completed: 0, open: 0, closed: 0, thisMonth: 2 });
+		setupCountMocks({
+			total: 10,
+			pending: 0,
+			inProgress: 0,
+			completed: 0,
+			open: 0,
+			closed: 0,
+			thisMonth: 2,
+		});
 
 		await getCustomizationStats();
 
 		const calls = mockPrisma.customizationRequest.count.mock.calls;
-		const thisMonthCall = calls[6][0];
+		const thisMonthCall = calls[6]![0];
 		expect(thisMonthCall.where).toMatchObject({
 			deletedAt: null,
 			createdAt: { gte: expect.any(Date) },
@@ -226,7 +277,15 @@ describe("getCustomizationStats", () => {
 
 	it("runs all 7 counts in a single Promise.all call", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 5, pending: 1, inProgress: 1, completed: 1, open: 2, closed: 3, thisMonth: 1 });
+		setupCountMocks({
+			total: 5,
+			pending: 1,
+			inProgress: 1,
+			completed: 1,
+			open: 2,
+			closed: 3,
+			thisMonth: 1,
+		});
 
 		await getCustomizationStats();
 
@@ -244,7 +303,15 @@ describe("getCustomizationStats", () => {
 
 	it("calls cacheLife with dashboard profile", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 0, pending: 0, inProgress: 0, completed: 0, open: 0, closed: 0, thisMonth: 0 });
+		setupCountMocks({
+			total: 0,
+			pending: 0,
+			inProgress: 0,
+			completed: 0,
+			open: 0,
+			closed: 0,
+			thisMonth: 0,
+		});
 
 		await getCustomizationStats();
 
@@ -253,7 +320,15 @@ describe("getCustomizationStats", () => {
 
 	it("calls cacheTag with stats tag", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		setupCountMocks({ total: 0, pending: 0, inProgress: 0, completed: 0, open: 0, closed: 0, thisMonth: 0 });
+		setupCountMocks({
+			total: 0,
+			pending: 0,
+			inProgress: 0,
+			completed: 0,
+			open: 0,
+			closed: 0,
+			thisMonth: 0,
+		});
 
 		await getCustomizationStats();
 

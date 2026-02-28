@@ -22,5 +22,29 @@
 		"path": ".next/static/chunks/app/(auth)/**/*.js",
 		"limit": "50 kB",
 		"gzip": true
+	},
+	{
+		"name": "Cart page",
+		"path": ".next/static/chunks/app/(boutique)/panier/**/*.js",
+		"limit": "80 kB",
+		"gzip": true
+	},
+	{
+		"name": "Checkout",
+		"path": ".next/static/chunks/app/paiement/**/*.js",
+		"limit": "130 kB",
+		"gzip": true
+	},
+	{
+		"name": "Admin dashboard",
+		"path": ".next/static/chunks/app/admin/(dashboard)/**/*.js",
+		"limit": "200 kB",
+		"gzip": true
+	},
+	{
+		"name": "Admin catalogue",
+		"path": ".next/static/chunks/app/admin/catalogue/**/*.js",
+		"limit": "150 kB",
+		"gzip": true
 	}
 ]

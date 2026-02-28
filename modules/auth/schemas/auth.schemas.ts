@@ -81,28 +81,20 @@ export type SignInSocialInput = z.infer<typeof signInSocialSchema>;
 // SIGN UP EMAIL SCHEMA
 // ============================================================================
 
-export const signUpEmailSchema = z
-	.object({
-		email: z
-			.email({ message: "Vérifiez le format de votre email (ex: nom@domaine.com)" })
-			.transform((e) => e.toLowerCase()),
-		confirmEmail: z
-			.email({ message: "Vérifiez le format de votre email" })
-			.transform((e) => e.toLowerCase()),
-		password: newPasswordSchema,
-		name: z
-			.string()
-			.min(2, { message: "Le prénom doit contenir au moins 2 caractères" })
-			.max(100, { message: "Le prénom ne doit pas dépasser 100 caractères" }),
-		termsAccepted: z.literal(true, {
-			message: "Vous devez accepter les conditions générales et la politique de confidentialité",
-		}),
-		callbackURL: callbackURLSchema.optional(),
-	})
-	.refine((data) => data.email === data.confirmEmail, {
-		message: "Les emails ne correspondent pas",
-		path: ["confirmEmail"],
-	});
+export const signUpEmailSchema = z.object({
+	email: z
+		.email({ message: "Vérifiez le format de votre email (ex: nom@domaine.com)" })
+		.transform((e) => e.toLowerCase()),
+	password: newPasswordSchema,
+	name: z
+		.string()
+		.min(2, { message: "Le prénom doit contenir au moins 2 caractères" })
+		.max(100, { message: "Le prénom ne doit pas dépasser 100 caractères" }),
+	termsAccepted: z.literal(true, {
+		message: "Vous devez accepter les conditions générales et la politique de confidentialité",
+	}),
+	callbackURL: callbackURLSchema.optional(),
+});
 
 export type SignUpEmailInput = z.infer<typeof signUpEmailSchema>;
 

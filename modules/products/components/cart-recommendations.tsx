@@ -26,9 +26,7 @@ interface CartRecommendationsProps {
  * </Suspense>
  * ```
  */
-export async function CartRecommendations({
-	limit = 4,
-}: CartRecommendationsProps) {
+export async function CartRecommendations({ limit = 4 }: CartRecommendationsProps) {
 	// Récupérer les recommandations et les Product IDs wishlist en parallèle
 	const [recommendations, wishlistProductIds] = await Promise.all([
 		getRelatedProducts({ limit }),
@@ -46,14 +44,14 @@ export async function CartRecommendations({
 
 			{/* En-tête de section avec animation reveal */}
 			<Reveal y={20} amount={0.3}>
-				<div className="space-y-2 mb-6">
+				<div className="mb-6 space-y-2">
 					<h2
 						id="cart-recommendations-heading"
-						className="text-xl sm:text-2xl font-semibold tracking-tight"
+						className="text-xl font-semibold tracking-tight sm:text-2xl"
 					>
 						Vous pourriez aimer
 					</h2>
-					<p className="text-sm leading-normal text-muted-foreground">
+					<p className="text-muted-foreground text-sm leading-normal">
 						Des créations sélectionnées pour compléter votre commande
 					</p>
 				</div>
@@ -61,7 +59,7 @@ export async function CartRecommendations({
 
 			{/* Grille de produits avec animation stagger au scroll */}
 			<Stagger
-				className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+				className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4"
 				inView
 				stagger={0.08}
 				y={30}
@@ -80,4 +78,3 @@ export async function CartRecommendations({
 		</aside>
 	);
 }
-

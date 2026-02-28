@@ -8,7 +8,10 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { SKU_SELECTOR_DIALOG_ID } from "@/modules/cart/components/sku-selector-dialog";
 import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
-import { PRODUCT_FILTER_DIALOG_ID, PRODUCTS_SORT_LABELS } from "@/modules/products/constants/product.constants";
+import {
+	PRODUCT_FILTER_DIALOG_ID,
+	PRODUCTS_SORT_LABELS,
+} from "@/modules/products/constants/product.constants";
 import { countActiveFilters } from "@/modules/products/services/product-filter-params.service";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
@@ -48,8 +51,16 @@ interface ProductSortBarProps {
 export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) {
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
-	const { open: openSearch, close: closeSearch, isOpen: isSearchOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
-	const { open: openFilter, close: closeFilter, isOpen: isFilterOpen } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+	const {
+		open: openSearch,
+		close: closeSearch,
+		isOpen: isSearchOpen,
+	} = useDialog(QUICK_SEARCH_DIALOG_ID);
+	const {
+		open: openFilter,
+		close: closeFilter,
+		isOpen: isFilterOpen,
+	} = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const { isOpen: isSkuSelectorOpen } = useDialog(SKU_SELECTOR_DIALOG_ID);
 	const isAnySheetOpen = useSheetStore((state) => state.openSheet !== null);
 
@@ -71,7 +82,13 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 
 	// Live region for screen reader announcements
 	const announcementRef = useRef<HTMLSpanElement>(null);
-	const prevStateRef = useRef({ hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, search: searchParams.get("search") });
+	const prevStateRef = useRef({
+		hasActiveSearch,
+		hasActiveSort,
+		hasActiveFilters,
+		activeFiltersCount,
+		search: searchParams.get("search"),
+	});
 
 	useEffect(() => {
 		const prev = prevStateRef.current;
@@ -85,11 +102,18 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 
 		if (!changed) return;
 
-		prevStateRef.current = { hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, search: currentSearch };
+		prevStateRef.current = {
+			hasActiveSearch,
+			hasActiveSort,
+			hasActiveFilters,
+			activeFiltersCount,
+			search: currentSearch,
+		};
 
 		const parts = [
 			hasActiveSearch && `Recherche "${currentSearch}" active`,
-			hasActiveSort && `Tri : ${sortByValue ? (PRODUCTS_SORT_LABELS[sortByValue as keyof typeof PRODUCTS_SORT_LABELS] ?? "actif") : "actif"}`,
+			hasActiveSort &&
+				`Tri : ${sortByValue ? (PRODUCTS_SORT_LABELS[sortByValue as keyof typeof PRODUCTS_SORT_LABELS] ?? "actif") : "actif"}`,
 			hasActiveFilters &&
 				`${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}`,
 		]
@@ -103,7 +127,14 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 			if (announcementRef.current) announcementRef.current.textContent = "";
 		}, 3000);
 		return () => clearTimeout(timer);
-	}, [hasActiveSearch, hasActiveSort, hasActiveFilters, activeFiltersCount, searchParams, sortByValue]);
+	}, [
+		hasActiveSearch,
+		hasActiveSort,
+		hasActiveFilters,
+		activeFiltersCount,
+		searchParams,
+		sortByValue,
+	]);
 
 	// Keyboard navigation for toolbar (arrow keys)
 	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
@@ -133,7 +164,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 
 		if (nextIndex !== null) {
 			setFocusedIndex(nextIndex);
-			buttonRefs[nextIndex].current?.focus();
+			buttonRefs[nextIndex]?.current?.focus();
 		}
 	};
 
@@ -160,7 +191,11 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={sortButtonRef}
 						type="button"
-						onClick={() => { closeSearch(); closeFilter(); setSortOpen(true); }}
+						onClick={() => {
+							closeSearch();
+							closeFilter();
+							setSortOpen(true);
+						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
@@ -177,7 +212,10 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={searchButtonRef}
 						type="button"
-						onClick={() => { setSortOpen(false); openSearch(); }}
+						onClick={() => {
+							setSortOpen(false);
+							openSearch();
+						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
@@ -198,7 +236,10 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					<button
 						ref={filterButtonRef}
 						type="button"
-						onClick={() => { setSortOpen(false); openFilter(); }}
+						onClick={() => {
+							setSortOpen(false);
+							openFilter();
+						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
@@ -214,11 +255,16 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						<SlidersHorizontal className={bottomBarIconClass} aria-hidden="true" />
 						<span className={bottomBarLabelClass}>Filtrer</span>
 					</button>
-
 				</div>
 
 				{/* Live region pour screen readers */}
-				<span ref={announcementRef} role="status" aria-live="polite" aria-atomic="true" className="sr-only" />
+				<span
+					ref={announcementRef}
+					role="status"
+					aria-live="polite"
+					aria-atomic="true"
+					className="sr-only"
+				/>
 			</BottomBar>
 
 			{/* SortDrawer */}

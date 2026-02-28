@@ -101,12 +101,12 @@ export function EditProductMediaSection({
 							container: ({ isDragActive, isUploading }) => ({
 								border: "2px dashed",
 								borderColor: isDragActive
-									? "hsl(var(--primary))"
-									: "hsl(var(--muted-foreground) / 0.25)",
+									? "var(--primary)"
+									: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
 								borderRadius: "0.75rem",
 								backgroundColor: isDragActive
-									? "hsl(var(--primary) / 0.05)"
-									: "hsl(var(--muted) / 0.3)",
+									? "color-mix(in oklch, var(--primary) 5%, transparent)"
+									: "color-mix(in oklch, var(--muted) 30%, transparent)",
 								padding: "1.5rem",
 								transition: "all 0.2s ease-in-out",
 								height: "min(180px, 22vh)",
@@ -120,11 +120,13 @@ export function EditProductMediaSection({
 								opacity: isUploading ? 0.7 : 1,
 								position: "relative",
 								boxShadow: isDragActive
-									? "0 0 0 1px hsl(var(--primary) / 0.2), 0 4px 12px hsl(var(--primary) / 0.1)"
+									? "0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 12px color-mix(in oklch, var(--primary) 10%, transparent)"
 									: "0 1px 3px rgba(0, 0, 0, 0.1)",
 							}),
 							uploadIcon: ({ isDragActive, isUploading }) => ({
-								color: isDragActive ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.7)",
+								color: isDragActive
+									? "var(--primary)"
+									: "color-mix(in oklch, var(--primary) 70%, transparent)",
 								width: "2.5rem",
 								height: "2.5rem",
 								transition: "all 0.2s ease-in-out",
@@ -132,7 +134,7 @@ export function EditProductMediaSection({
 								opacity: isUploading ? 0.5 : 1,
 							}),
 							label: ({ isDragActive, isUploading }) => ({
-								color: isDragActive ? "hsl(var(--primary))" : "hsl(var(--foreground))",
+								color: isDragActive ? "var(--primary)" : "var(--foreground)",
 								fontSize: "0.9rem",
 								fontWeight: "500",
 								textAlign: "center",
@@ -142,7 +144,7 @@ export function EditProductMediaSection({
 								wordBreak: "break-word",
 							}),
 							allowedContent: ({ isUploading }) => ({
-								color: "hsl(var(--muted-foreground))",
+								color: "var(--muted-foreground)",
 								fontSize: "0.75rem",
 								textAlign: "center",
 								marginTop: "0.25rem",

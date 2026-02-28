@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockIsAdmin,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		productType: { findFirst: vi.fn() },
 	},
@@ -117,7 +112,7 @@ describe("getProductTypeBySlug", () => {
 		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { slug: "bague", isActive: true },
-			})
+			}),
 		);
 	});
 
@@ -130,7 +125,7 @@ describe("getProductTypeBySlug", () => {
 		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -141,7 +136,7 @@ describe("getProductTypeBySlug", () => {
 
 		await getProductTypeBySlug({ slug: "bague", includeInactive: true });
 
-		const call = mockPrisma.productType.findFirst.mock.calls[0][0];
+		const call = mockPrisma.productType.findFirst.mock.calls[0]![0];
 		expect(call.where).not.toHaveProperty("isActive");
 	});
 
@@ -154,7 +149,7 @@ describe("getProductTypeBySlug", () => {
 		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -167,7 +162,7 @@ describe("getProductTypeBySlug", () => {
 		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -180,7 +175,7 @@ describe("getProductTypeBySlug", () => {
 		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ slug: "bracelet" }),
-			})
+			}),
 		);
 	});
 
@@ -238,7 +233,7 @@ describe("getProductTypeBySlug", () => {
 					createdAt: true,
 					updatedAt: true,
 				},
-			})
+			}),
 		);
 	});
 });

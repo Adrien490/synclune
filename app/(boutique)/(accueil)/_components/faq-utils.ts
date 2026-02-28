@@ -15,10 +15,7 @@ export type AnswerSegment =
 	| { type: "text"; value: string }
 	| { type: "link"; text: string; href: string };
 
-export function parseAnswerSegments(
-	answer: string,
-	links?: FaqLink[],
-): AnswerSegment[] {
+export function parseAnswerSegments(answer: string, links?: FaqLink[]): AnswerSegment[] {
 	if (!links || links.length === 0) {
 		return [{ type: "text", value: answer }];
 	}
@@ -34,7 +31,7 @@ export function parseAnswerSegments(
 			segments.push({ type: "text", value: answer.slice(lastIndex, matchIndex) });
 		}
 
-		const linkIndex = Number.parseInt(match[1], 10);
+		const linkIndex = Number.parseInt(match[1]!, 10);
 		const link = links[linkIndex];
 
 		if (link) {
@@ -84,11 +81,9 @@ export function validateFaqPlaceholders(items: FaqItemData[]) {
 	for (const item of items) {
 		const matches = item.answer.matchAll(REGEX);
 		for (const match of matches) {
-			const idx = Number.parseInt(match[1], 10);
+			const idx = Number.parseInt(match[1]!, 10);
 			if (!item.links?.[idx]) {
-				console.warn(
-					`FAQ "${item.question}": placeholder {{link${idx}}} has no matching link`,
-				);
+				console.warn(`FAQ "${item.question}": placeholder {{link${idx}}} has no matching link`);
 			}
 		}
 	}

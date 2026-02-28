@@ -46,7 +46,7 @@ export function LogoSparkles({ children, className }: LogoSparklesProps) {
 			x: centerX,
 			y: centerY,
 			size: 10 + Math.random() * 10,
-			color: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)],
+			color: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)]!,
 			rotation: Math.random() * 360,
 		}));
 

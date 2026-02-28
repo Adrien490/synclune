@@ -18,7 +18,10 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
  * return success("Produit créé avec succès", { productId: product.id });
  * ```
  */
-export function success(message: string, data?: unknown): ActionState {
+export function success(
+	message: string,
+	data?: unknown,
+): ActionState & { status: ActionStatus.SUCCESS } {
 	return {
 		status: ActionStatus.SUCCESS,
 		message,
@@ -38,10 +41,7 @@ export function success(message: string, data?: unknown): ActionState {
  * return error("Une erreur est survenue");
  * ```
  */
-export function error(
-	message: string,
-	status: ActionStatus = ActionStatus.ERROR
-): ActionState {
+export function error(message: string, status: ActionStatus = ActionStatus.ERROR): ActionState {
 	return {
 		status,
 		message,
@@ -80,7 +80,7 @@ export function notFound(resource: string): ActionState {
  * ```
  */
 export function unauthorized(
-	message = "Vous devez être connecté pour effectuer cette action"
+	message = "Vous devez être connecté pour effectuer cette action",
 ): ActionState {
 	return {
 		status: ActionStatus.UNAUTHORIZED,

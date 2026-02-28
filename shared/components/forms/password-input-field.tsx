@@ -1,6 +1,7 @@
 "use client";
 
-import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
+import { Field, FieldError } from "@/shared/components/ui/field";
+import { FieldLabel } from "./field-label";
 import { Input } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
@@ -67,13 +68,8 @@ export const PasswordInputField = ({
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
 			{label && (
-				<FieldLabel htmlFor={field.name}>
+				<FieldLabel htmlFor={field.name} required={required}>
 					{label}
-					{required && (
-						<span className="text-destructive ml-1" aria-label="requis">
-							*
-						</span>
-					)}
 				</FieldLabel>
 			)}
 			<Input

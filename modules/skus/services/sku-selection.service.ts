@@ -42,7 +42,7 @@ export interface GetPrimarySkuOptions {
  */
 export function getPrimarySkuForList<
 	TSku extends BaseSkuForList,
-	TProduct extends { skus?: TSku[] | null }
+	TProduct extends { skus?: TSku[] | null },
 >(product: TProduct, options?: GetPrimarySkuOptions): TSku | null {
 	if (!product.skus || product.skus.length === 0) {
 		return null;
@@ -54,24 +54,19 @@ export function getPrimarySkuForList<
 	if (preferredColorSlug) {
 		// 1a. SKU de la couleur préférée en stock
 		const colorSkuInStock = product.skus.find(
-			(sku) =>
-				sku.isActive &&
-				sku.color?.slug === preferredColorSlug &&
-				sku.inventory > 0
+			(sku) => sku.isActive && sku.color?.slug === preferredColorSlug && sku.inventory > 0,
 		);
 		if (colorSkuInStock) return colorSkuInStock;
 
 		// 1b. SKU de la couleur préférée (même hors stock)
 		const colorSku = product.skus.find(
-			(sku) => sku.isActive && sku.color?.slug === preferredColorSlug
+			(sku) => sku.isActive && sku.color?.slug === preferredColorSlug,
 		);
 		if (colorSku) return colorSku;
 	}
 
 	// 2. SKU avec isDefault = true
-	const defaultFlagSku = product.skus.find(
-		(sku) => sku.isActive && sku.isDefault
-	);
+	const defaultFlagSku = product.skus.find((sku) => sku.isActive && sku.isDefault);
 	if (defaultFlagSku) return defaultFlagSku;
 
 	// 3. SKU en stock, trié par priceInclTax ASC
@@ -79,11 +74,11 @@ export function getPrimarySkuForList<
 		.filter((sku) => sku.isActive && sku.inventory > 0)
 		.sort((a, b) => a.priceInclTax - b.priceInclTax);
 
-	if (inStockSkus.length > 0) return inStockSkus[0];
+	if (inStockSkus.length > 0) return inStockSkus[0]!;
 
 	// 4. Premier SKU actif
 	const activeSku = product.skus.find((sku) => sku.isActive);
-	return activeSku || product.skus[0];
+	return activeSku ?? product.skus[0] ?? null;
 }
 
 /**
@@ -91,7 +86,7 @@ export function getPrimarySkuForList<
  */
 export function getStockInfoForList<
 	TSku extends BaseSkuForList,
-	TProduct extends { skus?: TSku[] | null }
+	TProduct extends { skus?: TSku[] | null },
 >(product: TProduct): ProductStockInfo {
 	const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
 	const totalInventory = activeSkus.reduce((sum, sku) => sum + sku.inventory, 0);

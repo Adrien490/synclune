@@ -167,9 +167,9 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							"size-10 sm:size-12 md:size-10",
 							// Thème: primary avec opacité
 							"bg-primary/80 rounded-full border-0",
-							"shadow-lg hover:shadow-xl",
+							"can-hover:hover:shadow-xl shadow-lg",
 							"text-primary-foreground",
-							"hover:bg-primary hover:scale-105",
+							"can-hover:hover:bg-primary can-hover:hover:scale-105",
 							// Desktop: apparaît au survol
 							"sm:opacity-0 sm:group-hover/carousel:opacity-100 sm:focus-visible:opacity-100",
 							"disabled:pointer-events-none disabled:opacity-40 disabled:hover:scale-100",
@@ -188,9 +188,9 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							"size-10 sm:size-12 md:size-10",
 							// Thème: primary avec opacité
 							"bg-primary/80 rounded-full border-0",
-							"shadow-lg hover:shadow-xl",
+							"can-hover:hover:shadow-xl shadow-lg",
 							"text-primary-foreground",
-							"hover:bg-primary hover:scale-105",
+							"can-hover:hover:bg-primary can-hover:hover:scale-105",
 							// Desktop: apparaît au survol
 							"sm:opacity-0 sm:group-hover/carousel:opacity-100 sm:focus-visible:opacity-100",
 							"disabled:pointer-events-none disabled:opacity-40 disabled:hover:scale-100",
@@ -211,7 +211,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 											// Zone tactile (WCAG 2.5.5)
 											"size-10 cursor-pointer p-0 sm:size-11",
 											"flex items-center justify-center",
-											"transition-all duration-300",
+											"transition-[background-color] duration-300",
 											// Thème: hover avec card
 											"hover:bg-card/10 rounded-full",
 										)}
@@ -220,16 +220,18 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 									>
 										<span
 											className={cn(
-												"flex items-center justify-center rounded-full transition-all duration-300",
+												"flex size-3 items-center justify-center rounded-full sm:size-3.5",
+												// Compositor-only: scale instead of size change
+												"motion-safe:transition-[transform,background-color,box-shadow] motion-safe:duration-300",
 												current === index
 													? // Actif: thème card/foreground
-														"bg-card text-foreground size-6 text-xs font-semibold shadow-lg sm:size-7"
+														"bg-card text-foreground scale-[2] font-semibold shadow-lg"
 													: // Inactif: thème card avec opacité
-														"bg-card/70 group-hover/carousel:bg-card/90 size-3 sm:size-3.5",
+														"bg-card/70 group-hover/carousel:bg-card/90 scale-100",
 											)}
 										>
 											{current === index && (
-												<span className="text-[10px] sm:text-xs">{index + 1}</span>
+												<span className="text-[5px] sm:text-[6px]">{index + 1}</span>
 											)}
 										</span>
 									</Button>

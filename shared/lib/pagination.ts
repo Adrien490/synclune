@@ -121,9 +121,9 @@ export function processCursorResults<T extends { id: string }>(
 			pagination: {
 				// nextCursor : dernier élément de cette page (pour aller forward)
 				// Permet de retourner à la page suivante en fetchant APRÈS ce cursor
-				nextCursor: actualItems.length > 0 ? actualItems[actualItems.length - 1].id : null,
+				nextCursor: actualItems.length > 0 ? actualItems[actualItems.length - 1]!.id : null,
 				// prevCursor : premier élément (pour continuer backward) SI il y a plus avant
-				prevCursor: hasMore ? actualItems[0].id : null,
+				prevCursor: hasMore ? actualItems[0]!.id : null,
 				// hasNextPage : on peut aller forward SI on a utilisé un cursor
 				hasNextPage: !!currentCursor,
 				// hasPreviousPage : il y a plus d'éléments avant SI hasMore
@@ -141,9 +141,9 @@ export function processCursorResults<T extends { id: string }>(
 		items: actualItems,
 		pagination: {
 			// nextCursor : dernier élément (pour continuer forward) SI il y a plus après
-			nextCursor: hasMore ? actualItems[actualItems.length - 1].id : null,
+			nextCursor: hasMore ? actualItems[actualItems.length - 1]!.id : null,
 			// prevCursor : premier élément (pour aller backward) SI on n'est pas à la page 1
-			prevCursor: currentCursor ? actualItems[0].id : null,
+			prevCursor: currentCursor ? actualItems[0]!.id : null,
 			// hasNextPage : il y a plus d'éléments après SI hasMore
 			hasNextPage: hasMore,
 			// hasPreviousPage : on peut aller backward SI on a un cursor (pas page 1)

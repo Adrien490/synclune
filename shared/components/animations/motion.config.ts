@@ -8,7 +8,9 @@ export const MOTION_CONFIG = {
 	duration: {
 		fast: 0.15, // 150ms - matches --duration-fast
 		normal: 0.2, // 200ms - matches --duration-normal
+		medium: 0.35, // 350ms - text flips, rotating words, checkout steps
 		slow: 0.3, // 300ms - matches --duration-slow
+		emphasis: 0.4, // 400ms - logo entrance, scroll reveals
 		slower: 0.5, // 500ms - matches --duration-slower
 		collapse: 0.28,
 	},
@@ -129,7 +131,7 @@ export const MOTION_CONFIG = {
  */
 export function maybeReduceMotion(
 	transition: Transition | undefined,
-	prefersReducedMotion: boolean
+	prefersReducedMotion: boolean,
 ): Transition {
 	if (prefersReducedMotion) {
 		return {
@@ -147,7 +149,7 @@ export function maybeReduceMotion(
 export function createTransition(
 	duration: number = MOTION_CONFIG.duration.normal,
 	easing: Transition["ease"] = MOTION_CONFIG.easing.easeOut,
-	prefersReducedMotion: boolean = false
+	prefersReducedMotion: boolean = false,
 ): Transition {
 	const transition: Transition = {
 		duration,

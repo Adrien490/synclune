@@ -4,9 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockQueryRaw, mockStripeBalance } = vi.hoisted(() => ({
+const { mockQueryRaw, mockStripeBalance, mockRequireAdminApiRoute } = vi.hoisted(() => ({
 	mockQueryRaw: vi.fn(),
 	mockStripeBalance: vi.fn(),
+	mockRequireAdminApiRoute: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -41,6 +42,10 @@ vi.mock("stripe", () => ({
 	},
 }));
 
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdminApiRoute: mockRequireAdminApiRoute,
+}));
+
 import { GET } from "../route";
 
 // ============================================================================
@@ -54,7 +59,27 @@ describe("GET /api/health", () => {
 		vi.stubEnv("RESEND_API_KEY", "re_test_123");
 	});
 
-	describe("all services healthy", () => {
+	describe("unauthenticated request", () => {
+		it("returns minimal status only", async () => {
+			mockRequireAdminApiRoute.mockResolvedValue({
+				response: new Response("Unauthorized", { status: 401 }),
+			});
+
+			const response = await GET();
+
+			expect(response.status).toBe(200);
+			const body = await response.json();
+			expect(body).toEqual({ status: "ok" });
+			expect(body.services).toBeUndefined();
+			expect(body.version).toBeUndefined();
+		});
+	});
+
+	describe("admin - all services healthy", () => {
+		beforeEach(() => {
+			mockRequireAdminApiRoute.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
+		});
+
 		it("returns 200 with status ok when all services are reachable", async () => {
 			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
 			mockStripeBalance.mockResolvedValue({ available: [] });
@@ -82,7 +107,11 @@ describe("GET /api/health", () => {
 		});
 	});
 
-	describe("database down", () => {
+	describe("admin - database down", () => {
+		beforeEach(() => {
+			mockRequireAdminApiRoute.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
+		});
+
 		it("returns 503 when database is unreachable", async () => {
 			mockQueryRaw.mockRejectedValue(new Error("Connection refused"));
 			mockStripeBalance.mockResolvedValue({ available: [] });
@@ -97,7 +126,11 @@ describe("GET /api/health", () => {
 		});
 	});
 
-	describe("stripe down", () => {
+	describe("admin - stripe down", () => {
+		beforeEach(() => {
+			mockRequireAdminApiRoute.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
+		});
+
 		it("returns 503 when Stripe is unreachable", async () => {
 			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
 			mockStripeBalance.mockRejectedValue(new Error("Stripe timeout"));

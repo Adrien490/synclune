@@ -1,6 +1,8 @@
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Fade } from "@/shared/components/animations/fade";
+import { Stagger } from "@/shared/components/animations/stagger";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { CheckCircle2, Clock, Heart, Package, Sparkles, UserPlus } from "lucide-react";
@@ -65,20 +67,26 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 					{/* Message de succès principal */}
 					<Card className="border-primary/20 from-primary/5 to-background border-2 bg-linear-to-br">
 						<CardHeader className="space-y-4 pb-6 text-center">
-							<div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
-								<CheckCircle2 className="text-primary h-10 w-10" />
-							</div>
-							<CardTitle className="text-2xl sm:text-3xl">
-								Merci pour votre confiance ! <span aria-hidden="true">✨</span>
-							</CardTitle>
-							<div className="space-y-2">
-								<p className="text-muted-foreground text-sm">
-									{isPending
-										? "Votre commande a été enregistrée"
-										: "Votre paiement a été accepté avec succès"}
-								</p>
-								<p className="text-lg font-semibold">Commande #{order.orderNumber}</p>
-							</div>
+							<Fade y={15} duration={0.5}>
+								<div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+									<CheckCircle2 className="text-primary h-10 w-10" />
+								</div>
+							</Fade>
+							<Fade y={10} delay={0.15}>
+								<CardTitle className="text-2xl sm:text-3xl">
+									Merci pour votre confiance ! <span aria-hidden="true">✨</span>
+								</CardTitle>
+							</Fade>
+							<Fade y={10} delay={0.25}>
+								<div className="space-y-2">
+									<p className="text-muted-foreground text-sm">
+										{isPending
+											? "Votre commande a été enregistrée"
+											: "Votre paiement a été accepté avec succès"}
+									</p>
+									<p className="text-lg font-semibold">Commande #{order.orderNumber}</p>
+								</div>
+							</Fade>
 						</CardHeader>
 
 						<CardContent className="space-y-6">
@@ -199,7 +207,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									Que va-t-il se passer maintenant ?
 								</h3>
 
-								<div className="space-y-3">
+								<Stagger className="space-y-3" stagger={0.1} y={15} delay={0.3}>
 									<div className="flex items-start gap-3">
 										<div className="bg-primary/10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
 											<span className="text-primary text-sm font-semibold">1</span>
@@ -238,7 +246,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 											</p>
 										</div>
 									</div>
-								</div>
+								</Stagger>
 							</div>
 
 							{/* Guest account creation CTA (Baymard: post-purchase account creation) */}
@@ -276,7 +284,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									</Link>
 								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href="/creations">Continuer mes achats</Link>
+									<Link href="/produits">Continuer mes achats</Link>
 								</Button>
 							</div>
 						</CardContent>

@@ -37,21 +37,15 @@ vi.mock("@/shared/components/ui/select", () => ({
 			{children}
 		</div>
 	),
-	SelectValue: ({ placeholder }: any) => (
-		<span data-testid="select-value">{placeholder}</span>
-	),
-	SelectContent: ({ children }: any) => (
-		<div data-testid="select-content">{children}</div>
-	),
+	SelectValue: ({ placeholder }: any) => <span data-testid="select-value">{placeholder}</span>,
+	SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
 	SelectItem: ({ children, value }: any) => (
 		<div data-testid={`select-item-${value}`}>{children}</div>
 	),
 }));
 
 vi.mock("@/shared/components/ui/scroll-area", () => ({
-	ScrollArea: ({ children }: any) => (
-		<div data-testid="scroll-area">{children}</div>
-	),
+	ScrollArea: ({ children }: any) => <div data-testid="scroll-area">{children}</div>,
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
@@ -135,7 +129,7 @@ describe("useSortSelect", () => {
 			});
 
 			expect(mockPush).toHaveBeenCalledTimes(1);
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("sortBy")).toBe("created_at_desc");
@@ -150,7 +144,7 @@ describe("useSortSelect", () => {
 				result.current.setSort("price_asc");
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("sortBy")).toBe("price_asc");
@@ -167,7 +161,7 @@ describe("useSortSelect", () => {
 				result.current.setSort("");
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.has("sortBy")).toBe(false);
@@ -213,7 +207,7 @@ describe("useSortSelect", () => {
 				result.current.clearSort();
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.has("sortBy")).toBe(false);
@@ -228,7 +222,7 @@ describe("useSortSelect", () => {
 				result.current.clearSort();
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.has("sortBy")).toBe(false);
@@ -282,13 +276,7 @@ describe("SortSelect", () => {
 
 	describe("rendering", () => {
 		it("renders label and placeholder", () => {
-			render(
-				<SortSelect
-					label="Trier par"
-					options={mockOptions}
-					placeholder="Choisir un tri"
-				/>,
-			);
+			render(<SortSelect label="Trier par" options={mockOptions} placeholder="Choisir un tri" />);
 
 			expect(screen.getByText("Trier par")).toBeInTheDocument();
 			expect(screen.getByText("Choisir un tri")).toBeInTheDocument();
@@ -311,11 +299,7 @@ describe("SortSelect", () => {
 
 		it("applies custom className", () => {
 			const { container } = render(
-				<SortSelect
-					label="Trier par"
-					options={mockOptions}
-					className="custom-class"
-				/>,
+				<SortSelect label="Trier par" options={mockOptions} className="custom-class" />,
 			);
 
 			const wrapper = container.querySelector('[data-testid="select"]')?.parentElement;
@@ -416,7 +400,7 @@ describe("SortSelect", () => {
 			fireEvent.click(clearButton);
 
 			expect(mockPush).toHaveBeenCalled();
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 			expect(params.has("sortBy")).toBe(false);
 		});
@@ -455,13 +439,7 @@ describe("SortSelect", () => {
 
 	describe("custom props", () => {
 		it("applies custom maxHeight to ScrollArea", () => {
-			render(
-				<SortSelect
-					label="Trier par"
-					options={mockOptions}
-					maxHeight={400}
-				/>,
-			);
+			render(<SortSelect label="Trier par" options={mockOptions} maxHeight={400} />);
 
 			const scrollArea = screen.getByTestId("scroll-area");
 			expect(scrollArea).toBeInTheDocument();

@@ -359,7 +359,7 @@ describe("getAccounts", () => {
 
 		await getAccounts(makeValidParams({ sortBy: "providerId" }));
 
-		const call = mockPrisma.account.findMany.mock.calls[0][0] as {
+		const call = mockPrisma.account.findMany.mock.calls[0]![0] as {
 			orderBy: Record<string, unknown>[];
 		};
 		expect(call.orderBy).toEqual(expect.arrayContaining([{ createdAt: "desc" }]));
@@ -373,7 +373,7 @@ describe("getAccounts", () => {
 
 		await getAccounts(makeValidParams({ sortBy: "createdAt" }));
 
-		const call = mockPrisma.account.findMany.mock.calls[0][0] as {
+		const call = mockPrisma.account.findMany.mock.calls[0]![0] as {
 			orderBy: Record<string, unknown>[];
 		};
 		// Should only have { createdAt: 'desc' } once plus { id: 'asc' }, not a duplicate

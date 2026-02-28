@@ -18,7 +18,7 @@ interface UseAddToCartOptions {
  * Hook pour ajouter un article au panier
  * Compatible avec useActionState de React 19
  *
- * Sheet s'ouvre uniquement apres confirmation serveur.
+ * Sheet s'ouvre immediatement (optimistic) avec data-pending styling.
  * Toast d'erreur uniquement en cas de probleme.
  */
 export const useAddToCart = (options?: UseAddToCartOptions) => {
@@ -41,11 +41,6 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 				createToastCallbacks({
 					showSuccessToast: false,
 					onSuccess: (result: unknown) => {
-						// Ouvrir le sheet APRES confirmation serveur
-						if (shouldOpenSheet) {
-							openSheet("cart");
-						}
-
 						if (
 							result &&
 							typeof result === "object" &&
@@ -72,6 +67,10 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 		startTransition(() => {
 			// Mise a jour optimistic du badge navbar avec la quantite reelle
 			adjustCart(quantity);
+			// Ouvrir le sheet immediatement (optimistic) — le contenu s'affiche avec data-pending styling
+			if (shouldOpenSheet) {
+				openSheet("cart");
+			}
 			formAction(formData);
 		});
 	};

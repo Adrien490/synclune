@@ -133,17 +133,13 @@ function buildWordGroupScoreFragment(word: string): Prisma.Sql {
  */
 export async function fuzzySearchProductIds(
 	searchTerm: string,
-	options: FuzzySearchOptions = {}
+	options: FuzzySearchOptions = {},
 ): Promise<FuzzySearchReturn> {
 	"use cache";
 	cacheLife("products");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
-	const {
-		threshold = FUZZY_SIMILARITY_THRESHOLD,
-		limit = FUZZY_MAX_RESULTS,
-		status,
-	} = options;
+	const { threshold = FUZZY_SIMILARITY_THRESHOLD, limit = FUZZY_MAX_RESULTS, status } = options;
 
 	const words = splitSearchTerms(searchTerm);
 	if (words.length === 0) return { ids: [], totalCount: 0 };
@@ -198,11 +194,11 @@ export async function fuzzySearchProductIds(
 			clearTimeout(timeoutId);
 		});
 		const durationMs = Math.round(performance.now() - startTime);
-		const totalCount = results.length > 0 ? Number(results[0].totalCount) : 0;
+		const totalCount = results.length > 0 ? Number(results[0]!.totalCount) : 0;
 
 		if (durationMs > 500) {
 			console.warn(
-				`[SEARCH] slow-fuzzy | term="${sanitizeForLog(searchTerm)}" | results=${totalCount} | duration=${durationMs}ms`
+				`[SEARCH] slow-fuzzy | term="${sanitizeForLog(searchTerm)}" | results=${totalCount} | duration=${durationMs}ms`,
 			);
 		}
 
@@ -213,7 +209,7 @@ export async function fuzzySearchProductIds(
 	} catch (error) {
 		const durationMs = Math.round(performance.now() - startTime);
 		console.warn(
-			`[SEARCH] fuzzy-error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`
+			`[SEARCH] fuzzy-error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`,
 		);
 		return { ids: [], totalCount: 0 };
 	}

@@ -1,5 +1,6 @@
 "use client";
 
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useEffectEvent, useState } from "react";
@@ -71,7 +72,9 @@ export function RotatingWord({ words, duration = 3000, className }: RotatingWord
 						animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
 						exit={shouldReduceMotion ? undefined : { y: -20, opacity: 0, filter: "blur(4px)" }}
 						transition={
-							shouldReduceMotion ? { duration: 0 } : { duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }
+							shouldReduceMotion
+								? { duration: 0 }
+								: { duration: MOTION_CONFIG.duration.medium, ease: MOTION_CONFIG.easing.easeInOut }
 						}
 						className={cn(textStyles, "absolute inset-0 flex items-center justify-center")}
 					>

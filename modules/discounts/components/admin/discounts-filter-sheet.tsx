@@ -56,11 +56,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 	const applyFilters = (formData: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
 
-		const filterKeys = [
-			"filter_type",
-			"filter_isActive",
-			"filter_hasUsages",
-		];
+		const filterKeys = ["filter_type", "filter_isActive", "filter_hasUsages"];
 		filterKeys.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
@@ -88,11 +84,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 		});
 
 		const params = new URLSearchParams(searchParams.toString());
-		const filterKeys = [
-			"filter_type",
-			"filter_isActive",
-			"filter_hasUsages",
-		];
+		const filterKeys = ["filter_type", "filter_isActive", "filter_hasUsages"];
 		filterKeys.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
@@ -115,7 +107,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}
-			onApply={() => form.handleSubmit()}
+			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
 			triggerClassName={className}
 		>
@@ -123,7 +115,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 				className="space-y-6"
 			>
@@ -131,13 +123,17 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 				<form.Field name="type">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">
-								Type
-							</legend>
+							<legend className="text-foreground mb-2 text-sm font-medium">Type</legend>
 							{[
 								{ value: "all", label: "Tous" },
-								{ value: DiscountType.PERCENTAGE, label: DISCOUNT_TYPE_LABELS[DiscountType.PERCENTAGE] },
-								{ value: DiscountType.FIXED_AMOUNT, label: DISCOUNT_TYPE_LABELS[DiscountType.FIXED_AMOUNT] },
+								{
+									value: DiscountType.PERCENTAGE,
+									label: DISCOUNT_TYPE_LABELS[DiscountType.PERCENTAGE],
+								},
+								{
+									value: DiscountType.FIXED_AMOUNT,
+									label: DISCOUNT_TYPE_LABELS[DiscountType.FIXED_AMOUNT],
+								},
 							].map(({ value, label }) => (
 								<RadioFilterItem
 									key={value}
@@ -164,9 +160,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 				<form.Field name="isActive">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">
-								Statut
-							</legend>
+							<legend className="text-foreground mb-2 text-sm font-medium">Statut</legend>
 							{[
 								{ value: "all", label: "Tous" },
 								{ value: "active", label: "Actifs" },
@@ -197,9 +191,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 				<form.Field name="hasUsages">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">
-								Utilisations
-							</legend>
+							<legend className="text-foreground mb-2 text-sm font-medium">Utilisations</legend>
 							{[
 								{ value: "all", label: "Tous" },
 								{ value: "with", label: "Avec utilisations" },

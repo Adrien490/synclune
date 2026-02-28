@@ -4,21 +4,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockIsAdmin,
-	mockGetCurrentSession,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
-	mockPrisma: {
-		session: { findFirst: vi.fn() },
-	},
-	mockIsAdmin: vi.fn(),
-	mockGetCurrentSession: vi.fn(),
-	mockCacheLife: vi.fn(),
-	mockCacheTag: vi.fn(),
-}));
+const { mockPrisma, mockIsAdmin, mockGetCurrentSession, mockCacheLife, mockCacheTag } = vi.hoisted(
+	() => ({
+		mockPrisma: {
+			session: { findFirst: vi.fn() },
+		},
+		mockIsAdmin: vi.fn(),
+		mockGetCurrentSession: vi.fn(),
+		mockCacheLife: vi.fn(),
+		mockCacheTag: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -143,7 +139,7 @@ describe("getSession", () => {
 
 		expect(result).not.toBeNull();
 		expect(mockPrisma.session.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { id: "session-1", userId: "user-1" } })
+			expect.objectContaining({ where: { id: "session-1", userId: "user-1" } }),
 		);
 	});
 
@@ -156,9 +152,9 @@ describe("getSession", () => {
 
 		expect(result).not.toBeNull();
 		expect(mockPrisma.session.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { id: "session-1" } })
+			expect.objectContaining({ where: { id: "session-1" } }),
 		);
-		const call = mockPrisma.session.findFirst.mock.calls[0][0];
+		const call = mockPrisma.session.findFirst.mock.calls[0]![0];
 		expect(call.where.userId).toBeUndefined();
 	});
 });
@@ -213,7 +209,7 @@ describe("fetchSession", () => {
 		await fetchSession({ id: "session-1" }, { admin: false, userId: "user-1" });
 
 		expect(mockPrisma.session.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { id: "session-1", userId: "user-1" } })
+			expect.objectContaining({ where: { id: "session-1", userId: "user-1" } }),
 		);
 	});
 
@@ -222,7 +218,7 @@ describe("fetchSession", () => {
 
 		await fetchSession({ id: "session-1" }, { admin: true, userId: "user-1" });
 
-		const call = mockPrisma.session.findFirst.mock.calls[0][0];
+		const call = mockPrisma.session.findFirst.mock.calls[0]![0];
 		expect(call.where.userId).toBeUndefined();
 	});
 

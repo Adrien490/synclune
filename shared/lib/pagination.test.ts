@@ -50,25 +50,18 @@ describe("buildCursorPagination", () => {
 	});
 
 	it("throws error when take is zero", () => {
-		expect(() => buildCursorPagination({ take: 0 })).toThrow(
-			"take must be positive, got 0",
-		);
+		expect(() => buildCursorPagination({ take: 0 })).toThrow("take must be positive, got 0");
 	});
 
 	it("throws error when take is negative", () => {
-		expect(() => buildCursorPagination({ take: -5 })).toThrow(
-			"take must be positive, got -5",
-		);
+		expect(() => buildCursorPagination({ take: -5 })).toThrow("take must be positive, got -5");
 	});
 
 	it("handles various take values correctly", () => {
 		expect(buildCursorPagination({ take: 10 }).take).toBe(11);
 		expect(buildCursorPagination({ take: 50 }).take).toBe(51);
 		expect(buildCursorPagination({ take: 100 }).take).toBe(101);
-		expect(
-			buildCursorPagination({ take: 10, cursor: "id", direction: "backward" })
-				.take,
-		).toBe(-11);
+		expect(buildCursorPagination({ take: 10, cursor: "id", direction: "backward" }).take).toBe(-11);
 	});
 });
 
@@ -81,15 +74,11 @@ describe("processCursorResults", () => {
 
 	describe("validation and edge cases", () => {
 		it("throws error when requestedTake is zero", () => {
-			expect(() => processCursorResults([], 0)).toThrow(
-				"requestedTake must be positive, got 0",
-			);
+			expect(() => processCursorResults([], 0)).toThrow("requestedTake must be positive, got 0");
 		});
 
 		it("throws error when requestedTake is negative", () => {
-			expect(() => processCursorResults([], -5)).toThrow(
-				"requestedTake must be positive, got -5",
-			);
+			expect(() => processCursorResults([], -5)).toThrow("requestedTake must be positive, got -5");
 		});
 
 		it("returns empty result for empty items array", () => {
@@ -256,7 +245,7 @@ describe("processCursorResults", () => {
 			const result = processCursorResults(items, 1, "backward", "item-7");
 
 			expect(result.items).toHaveLength(1);
-			expect(result.items[0].id).toBe("item-6"); // Sliced first item
+			expect(result.items[0]!.id).toBe("item-6"); // Sliced first item
 			expect(result.pagination).toEqual({
 				nextCursor: "item-6",
 				prevCursor: "item-6",
@@ -271,8 +260,8 @@ describe("processCursorResults", () => {
 			const items = createItems(11, 50); // Items 50-60
 			const result = processCursorResults(items, 10, "forward", "item-49");
 
-			expect(result.items[0].id).toBe("item-50"); // First item
-			expect(result.items[result.items.length - 1].id).toBe("item-59"); // Last item
+			expect(result.items[0]!.id).toBe("item-50"); // First item
+			expect(result.items[result.items.length - 1]!.id).toBe("item-59"); // Last item
 			expect(result.pagination.prevCursor).toBe("item-50"); // First item ID
 			expect(result.pagination.nextCursor).toBe("item-59"); // Last item ID
 		});
@@ -282,8 +271,8 @@ describe("processCursorResults", () => {
 			const result = processCursorResults(items, 10, "backward", "item-51");
 
 			expect(result.items).toHaveLength(10);
-			expect(result.items[0].id).toBe("item-41"); // First after slice
-			expect(result.items[result.items.length - 1].id).toBe("item-50"); // Last
+			expect(result.items[0]!.id).toBe("item-41"); // First after slice
+			expect(result.items[result.items.length - 1]!.id).toBe("item-50"); // Last
 			expect(result.pagination.prevCursor).toBe("item-41"); // First item ID
 			expect(result.pagination.nextCursor).toBe("item-50"); // Last item ID
 		});
@@ -316,18 +305,8 @@ describe("processCursorResults", () => {
 
 		it("defaults to forward when currentCursor is provided but direction is omitted", () => {
 			const items = createItems(11, 21);
-			const resultWithoutDirection = processCursorResults(
-				items,
-				10,
-				undefined,
-				"item-20",
-			);
-			const resultWithForward = processCursorResults(
-				items,
-				10,
-				"forward",
-				"item-20",
-			);
+			const resultWithoutDirection = processCursorResults(items, 10, undefined, "item-20");
+			const resultWithForward = processCursorResults(items, 10, "forward", "item-20");
 
 			expect(resultWithoutDirection).toEqual(resultWithForward);
 		});
@@ -354,12 +333,7 @@ describe("processCursorResults", () => {
 
 			// Last page: items 81-100
 			const lastPageItems = createItems(20, 81);
-			const lastPage = processCursorResults(
-				lastPageItems,
-				20,
-				"forward",
-				"item-80",
-			);
+			const lastPage = processCursorResults(lastPageItems, 20, "forward", "item-80");
 			expect(lastPage.items).toHaveLength(20);
 			expect(lastPage.pagination.hasNextPage).toBe(false);
 			expect(lastPage.pagination.hasPreviousPage).toBe(true);

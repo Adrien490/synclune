@@ -1,9 +1,6 @@
 "use client";
 
-import {
-	MOTION_CONFIG,
-	maybeReduceMotion,
-} from "@/shared/components/animations/motion.config";
+import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -74,12 +71,8 @@ export function FilterBadges({
 	onRemove,
 	onClearAll,
 }: FilterBadgesProps) {
-	const {
-		optimisticActiveFilters,
-		removeFilterOptimistic,
-		clearAllFiltersOptimistic,
-		isPending,
-	} = useFilter(filterOptions);
+	const { optimisticActiveFilters, removeFilterOptimistic, clearAllFiltersOptimistic, isPending } =
+		useFilter(filterOptions);
 
 	// Use external filters if provided, otherwise use internal hook
 	const activeFilters = activeFiltersProp ?? optimisticActiveFilters;
@@ -95,17 +88,14 @@ export function FilterBadges({
 	const handleRemoveWithFocus = (key: string, value?: string) => {
 		handleRemove(key, value);
 		requestAnimationFrame(() => {
-			const buttons =
-				containerRef.current?.querySelectorAll<HTMLButtonElement>(
-					'button[aria-label^="Supprimer"]'
-				);
+			const buttons = containerRef.current?.querySelectorAll<HTMLButtonElement>(
+				'button[aria-label^="Supprimer"]',
+			);
 			if (buttons && buttons.length > 0) {
-				buttons[0].focus();
+				buttons[0]?.focus();
 			} else {
 				containerRef.current
-					?.querySelector<HTMLButtonElement>(
-						'button[aria-label="Effacer tous les filtres"]'
-					)
+					?.querySelector<HTMLButtonElement>('button[aria-label="Effacer tous les filtres"]')
 					?.focus();
 			}
 		});
@@ -118,7 +108,7 @@ export function FilterBadges({
 		requestAnimationFrame(() => {
 			if (!parent) return;
 			const target = parent.querySelector<HTMLElement>(
-				'button, [href], input, select, [tabindex]:not([tabindex="-1"])'
+				'button, [href], input, select, [tabindex]:not([tabindex="-1"])',
 			);
 			target?.focus();
 		});
@@ -144,7 +134,7 @@ export function FilterBadges({
 
 	const motionTransition = maybeReduceMotion(
 		{ duration: MOTION_CONFIG.duration.fast },
-		shouldReduceMotion ?? false
+		shouldReduceMotion ?? false,
 	);
 
 	return (
@@ -155,10 +145,7 @@ export function FilterBadges({
 			aria-live="polite"
 			aria-busy={isPending}
 			data-pending={isPending ? "" : undefined}
-			className={cn(
-				"flex flex-wrap items-center gap-2 mb-4",
-				className
-			)}
+			className={cn("mb-4 flex flex-wrap items-center gap-2", className)}
 		>
 			{/* Visually hidden count for screen readers */}
 			<span className="sr-only">
@@ -166,7 +153,7 @@ export function FilterBadges({
 				{activeFilters.length > 1 ? "s" : ""}
 			</span>
 
-			<span className="text-sm leading-normal text-muted-foreground mr-2 hidden sm:inline">
+			<span className="text-muted-foreground mr-2 hidden text-sm leading-normal sm:inline">
 				{label}
 			</span>
 
@@ -194,11 +181,7 @@ export function FilterBadges({
 							variant="outline"
 							size="sm"
 							onClick={() => setShowAll(!showAll)}
-							className={cn(
-								"h-11 sm:h-8 px-3 gap-1.5",
-								"rounded-full",
-								"text-xs font-medium"
-							)}
+							className={cn("h-11 gap-1.5 px-3 sm:h-8", "rounded-full", "text-xs font-medium")}
 							aria-label={
 								showAll
 									? "Afficher moins de filtres"
@@ -235,11 +218,11 @@ export function FilterBadges({
 							size="sm"
 							onClick={handleClearAllWithFocus}
 							className={cn(
-								"h-11 sm:h-8 px-3",
-								"text-xs text-muted-foreground",
+								"h-11 px-3 sm:h-8",
+								"text-muted-foreground text-xs",
 								"hover:text-destructive hover:bg-destructive/10",
 								"underline underline-offset-2",
-								"transition-colors"
+								"transition-colors",
 							)}
 							aria-label="Effacer tous les filtres"
 						>

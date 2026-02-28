@@ -2,6 +2,7 @@ import {
 	sendPasswordChangedEmail,
 	sendPasswordResetEmail,
 	sendVerificationEmail,
+	sendWelcomeEmail,
 } from "@/modules/emails/services/auth-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -108,7 +109,7 @@ export const auth = betterAuth({
 			}
 		},
 		sendOnSignUp: true, // Envoi automatique à l'inscription
-		autoSignInAfterVerification: false, // Pas de connexion automatique après validation - l'utilisateur doit se connecter manuellement
+		autoSignInAfterVerification: true, // Auto-login after email verification to reduce friction
 	},
 
 	secret: process.env.BETTER_AUTH_SECRET,
@@ -177,9 +178,6 @@ export const auth = betterAuth({
 					// Don't block signup if cart/wishlist creation fails - they'll be created on first use (via upsert)
 					console.error("[AUTH] Cart/wishlist creation failed on signup:", error);
 				}
-
-				// TODO: Optionnel - Envoyer un email de bienvenue
-				// await sendWelcomeEmail(user.email);
 
 				// TODO: Optionnel - Logger dans un système de monitoring (Sentry, Datadog, etc.)
 				// await analytics.track('stripe_customer_created', {
@@ -258,6 +256,18 @@ export const auth = betterAuth({
 		}),
 		after: createAuthMiddleware(async (ctx) => {
 			const newSession = ctx.context.newSession;
+
+			// Send welcome email after successful email verification
+			if (ctx.path === "/verify-email" && newSession?.user) {
+				try {
+					await sendWelcomeEmail({
+						to: newSession.user.email,
+						userName: newSession.user.name ?? newSession.user.email,
+					});
+				} catch {
+					// Don't block verification if welcome email fails
+				}
+			}
 
 			// Vérifier qu'une nouvelle session a été créée (connexion/inscription réussie)
 			if (!newSession) {

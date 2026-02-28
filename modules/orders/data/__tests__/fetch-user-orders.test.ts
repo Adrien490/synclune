@@ -125,7 +125,7 @@ describe("fetchUserOrders", () => {
 		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ paymentStatus: "PAID" }),
-			})
+			}),
 		);
 	});
 
@@ -135,7 +135,7 @@ describe("fetchUserOrders", () => {
 		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ deletedAt: null }),
-			})
+			}),
 		);
 	});
 
@@ -145,14 +145,14 @@ describe("fetchUserOrders", () => {
 		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-abc" }),
-			})
+			}),
 		);
 	});
 
 	it("does not add search filter when search is undefined", async () => {
 		await fetchUserOrders("user-1", { ...defaultParams, search: undefined });
 
-		const call = mockPrisma.order.findMany.mock.calls[0][0];
+		const call = mockPrisma.order.findMany.mock.calls[0]![0];
 		expect(call.where).not.toHaveProperty("orderNumber");
 	});
 
@@ -164,7 +164,7 @@ describe("fetchUserOrders", () => {
 				where: expect.objectContaining({
 					orderNumber: { contains: "ORD-001", mode: "insensitive" },
 				}),
-			})
+			}),
 		);
 	});
 
@@ -174,7 +174,7 @@ describe("fetchUserOrders", () => {
 		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true },
-			})
+			}),
 		);
 	});
 
@@ -184,7 +184,7 @@ describe("fetchUserOrders", () => {
 		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -194,7 +194,7 @@ describe("fetchUserOrders", () => {
 		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -204,7 +204,7 @@ describe("fetchUserOrders", () => {
 		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ total: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -214,16 +214,14 @@ describe("fetchUserOrders", () => {
 		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ total: "asc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
 	it("calls buildCursorPagination with correct take from perPage", async () => {
 		await fetchUserOrders("user-1", { ...defaultParams, perPage: 5 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 5 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }));
 	});
 
 	it("spreads cursor pagination config into findMany call", async () => {
@@ -240,7 +238,7 @@ describe("fetchUserOrders", () => {
 				take: 11,
 				skip: 1,
 				cursor: { id: "order-10" },
-			})
+			}),
 		);
 	});
 
@@ -254,7 +252,7 @@ describe("fetchUserOrders", () => {
 			orders,
 			5,
 			defaultParams.direction,
-			defaultParams.cursor
+			defaultParams.cursor,
 		);
 	});
 
@@ -304,17 +302,13 @@ describe("fetchUserOrders", () => {
 	it("caps perPage at GET_USER_ORDERS_MAX_RESULTS_PER_PAGE (50)", async () => {
 		await fetchUserOrders("user-1", { ...defaultParams, perPage: 200 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 50 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 50 }));
 	});
 
 	it("uses default perPage when perPage is 0 (falsy fallback)", async () => {
 		// perPage: 0 is falsy, so `0 || GET_USER_ORDERS_DEFAULT_PER_PAGE` evaluates to 10
 		await fetchUserOrders("user-1", { ...defaultParams, perPage: 0 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 10 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }));
 	});
 });

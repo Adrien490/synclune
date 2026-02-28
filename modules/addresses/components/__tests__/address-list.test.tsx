@@ -111,6 +111,6 @@ describe("AddressList", () => {
 		// Only the empty state button should exist, not the header one
 		const buttons = screen.getAllByText(/Ajouter/);
 		expect(buttons).toHaveLength(1);
-		expect(buttons[0].textContent).toBe("Ajouter une adresse");
+		expect(buttons[0]!.textContent).toBe("Ajouter une adresse");
 	});
 });

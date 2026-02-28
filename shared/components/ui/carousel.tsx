@@ -439,12 +439,12 @@ function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
 					>
 						<span
 							className={cn(
-								"rounded-full",
-								// Animation with reduced motion respect (WCAG 2.3.3)
-								"ease-out motion-safe:transition-all motion-safe:duration-150",
+								"h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3",
+								// Compositor-only: scaleX instead of width change
+								"ease-out motion-safe:transition-[transform,background-color,box-shadow] motion-safe:duration-150",
 								index === selectedIndex
-									? "bg-primary h-2.5 w-8 shadow-md sm:h-3 sm:w-10"
-									: "bg-muted-foreground/70 hover:bg-muted-foreground/90 h-2.5 w-2.5 sm:h-3 sm:w-3",
+									? "bg-primary scale-x-[3.2] shadow-md sm:scale-x-[3.33]"
+									: "bg-muted-foreground/70 hover:bg-muted-foreground/90 scale-x-100",
 							)}
 						/>
 					</button>

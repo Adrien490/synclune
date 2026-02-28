@@ -199,12 +199,9 @@ describe("bulkRestoreUsers", () => {
 			expect.objectContaining({
 				where: expect.objectContaining({
 					id: { in: validIds },
-					OR: [
-						{ deletedAt: { not: null } },
-						{ suspendedAt: { not: null } },
-					],
+					OR: [{ deletedAt: { not: null } }, { suspendedAt: { not: null } }],
 				}),
-			})
+			}),
 		);
 	});
 
@@ -230,9 +227,7 @@ describe("bulkRestoreUsers", () => {
 
 		const result = await bulkRestoreUsers(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("2")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("2"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -242,7 +237,7 @@ describe("bulkRestoreUsers", () => {
 
 		await bulkRestoreUsers(undefined, validFormData);
 
-		const message = mockSuccess.mock.calls[0][0];
+		const message = mockSuccess.mock.calls[0]![0];
 		expect(message).not.toContain("utilisateurs");
 		expect(message).toContain("utilisateur");
 	});
@@ -282,7 +277,7 @@ describe("bulkRestoreUsers", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la restauration des utilisateurs"
+			"Erreur lors de la restauration des utilisateurs",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

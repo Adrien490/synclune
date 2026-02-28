@@ -13,15 +13,12 @@ import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
 import { FaqDoodles } from "./faq-doodles";
 import type { AnswerSegment, FaqItemData } from "./faq-utils";
-import {
-	generateFaqSchema,
-	parseAnswerSegments,
-	validateFaqPlaceholders,
-} from "./faq-utils";
+import { generateFaqSchema, parseAnswerSegments, validateFaqPlaceholders } from "./faq-utils";
 
 function renderSegments(segments: AnswerSegment[]): ReactNode {
-	if (segments.length === 1 && segments[0].type === "text") {
-		return segments[0].value;
+	const first = segments[0];
+	if (segments.length === 1 && first?.type === "text") {
+		return first.value;
 	}
 
 	return (
@@ -33,7 +30,7 @@ function renderSegments(segments: AnswerSegment[]): ReactNode {
 					<Link
 						key={i}
 						href={segment.href}
-						className="underline underline-offset-2 hover:text-primary transition-colors"
+						className="hover:text-primary underline underline-offset-2 transition-colors"
 					>
 						{segment.text}
 					</Link>
@@ -109,7 +106,7 @@ export async function FaqSection() {
 	return (
 		<section
 			className={cn(
-				"relative overflow-hidden bg-muted/20",
+				"bg-muted/20 relative overflow-hidden",
 				"mask-t-from-90% mask-t-to-100% mask-b-from-90% mask-b-to-100%",
 				SECTION_SPACING.section,
 			)}
@@ -118,7 +115,7 @@ export async function FaqSection() {
 			{/* Skip link for keyboard navigation */}
 			<a
 				href="#faq-cta-contact"
-				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-secondary focus:text-secondary-foreground focus:rounded-md focus:shadow-md"
+				className="focus:bg-secondary focus:text-secondary-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:shadow-md"
 			>
 				Passer au contact
 			</a>
@@ -133,13 +130,17 @@ export async function FaqSection() {
 			/>
 
 			<div className={CONTAINER_CLASS}>
-				<header className="text-center mb-10 lg:mb-12">
+				<header className="mb-10 text-center lg:mb-12">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="faq-title">Questions fréquentes</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
-					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
-						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-xl mx-auto">
+					<Fade
+						y={MOTION_CONFIG.section.subtitle.y}
+						delay={MOTION_CONFIG.section.subtitle.delay}
+						duration={MOTION_CONFIG.section.subtitle.duration}
+					>
+						<p className="text-muted-foreground mx-auto mt-4 max-w-xl text-lg/7 tracking-normal antialiased">
 							Retrouvez ici les réponses aux questions les plus posées
 						</p>
 					</Fade>
@@ -150,17 +151,33 @@ export async function FaqSection() {
 					<FaqAccordion items={accordionItems} />
 				</div>
 
-				<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration} inView once>
-					<div id="faq-cta-contact" className="mt-12 max-w-3xl mx-auto bg-primary/5 border border-primary/15 rounded-2xl p-6 sm:p-8 text-center">
+				<Fade
+					y={MOTION_CONFIG.section.cta.y}
+					delay={MOTION_CONFIG.section.cta.delay}
+					duration={MOTION_CONFIG.section.cta.duration}
+					inView
+					once
+				>
+					<div
+						id="faq-cta-contact"
+						className="bg-primary/5 border-primary/15 mx-auto mt-12 max-w-3xl rounded-2xl border p-6 text-center sm:p-8"
+					>
 						<p className="text-muted-foreground mb-1 text-base">
 							Vous n'avez pas trouvé votre réponse ?
 						</p>
-						<p className={cn(petitFormalScript.className, "text-sm text-foreground/70 italic mb-5")}>
+						<p
+							className={cn(petitFormalScript.className, "text-foreground/70 mb-5 text-sm italic")}
+						>
 							Écrivez-moi, je réponds toujours !
 						</p>
-						<Button asChild variant="outline" size="lg" className="gap-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out">
+						<Button
+							asChild
+							variant="outline"
+							size="lg"
+							className="gap-2 transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+						>
 							<a href={`mailto:${BRAND.contact.email}`}>
-								<MessageCircle className="w-4 h-4" aria-hidden="true" />
+								<MessageCircle className="h-4 w-4" aria-hidden="true" />
 								Me contacter
 							</a>
 						</Button>

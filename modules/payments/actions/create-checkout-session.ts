@@ -68,15 +68,9 @@ export const createCheckoutSession = async (
 		const rateLimit = await checkRateLimit(rateLimitId, PAYMENT_LIMITS.CREATE_SESSION, ipAddress);
 
 		if (!rateLimit.success) {
-			return {
-				...error(
-					rateLimit.error || "Trop de tentatives de paiement. Veuillez réessayer plus tard.",
-				),
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
-			};
+			return error(
+				rateLimit.error || "Trop de tentatives de paiement. Veuillez réessayer plus tard.",
+			);
 		}
 
 		// 3. Parse and validate form data
@@ -181,7 +175,7 @@ export const createCheckoutSession = async (
 					throw new BusinessError(`Produit introuvable : ${sku.product.title}`);
 				}
 
-				const currentSku = currentSkuRows[0];
+				const currentSku = currentSkuRows[0]!;
 				if (!currentSku.isActive || currentSku.productStatus !== "PUBLIC") {
 					throw new BusinessError(`Le produit ${currentSku.productTitle} n'est plus disponible`);
 				}
@@ -233,7 +227,7 @@ export const createCheckoutSession = async (
 					throw new BusinessError(DISCOUNT_ERROR_MESSAGES.NOT_FOUND);
 				}
 
-				const discount = discountRows[0];
+				const discount = discountRows[0]!;
 
 				const usageCounts = discount.maxUsagePerUser
 					? await getDiscountUsageCounts({

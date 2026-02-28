@@ -129,9 +129,7 @@ describe("cleanupExpiredSessions", () => {
 	it("should return combined token count (access + refresh)", async () => {
 		const accessIds = Array.from({ length: 7 }, (_, i) => ({ id: `at-${i}` }));
 		const refreshIds = Array.from({ length: 4 }, (_, i) => ({ id: `rt-${i}` }));
-		mockPrisma.account.findMany
-			.mockResolvedValueOnce(accessIds)
-			.mockResolvedValueOnce(refreshIds);
+		mockPrisma.account.findMany.mockResolvedValueOnce(accessIds).mockResolvedValueOnce(refreshIds);
 		mockPrisma.account.updateMany
 			.mockResolvedValueOnce({ count: 7 }) // access tokens
 			.mockResolvedValueOnce({ count: 4 }); // refresh tokens
@@ -162,9 +160,7 @@ describe("cleanupExpiredSessions", () => {
 		mockPrisma.session.deleteMany.mockResolvedValue({ count: 15 });
 		mockPrisma.verification.findMany.mockResolvedValue(verificationIds);
 		mockPrisma.verification.deleteMany.mockResolvedValue({ count: 23 });
-		mockPrisma.account.findMany
-			.mockResolvedValueOnce(accessIds)
-			.mockResolvedValueOnce(refreshIds);
+		mockPrisma.account.findMany.mockResolvedValueOnce(accessIds).mockResolvedValueOnce(refreshIds);
 		mockPrisma.account.updateMany
 			.mockResolvedValueOnce({ count: 10 })
 			.mockResolvedValueOnce({ count: 5 });
@@ -224,7 +220,7 @@ describe("cleanupExpiredSessions", () => {
 		await cleanupExpiredSessions();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Session delete limit reached, remaining will be cleaned on next run"
+			"[CRON:cleanup-sessions] Session delete limit reached, remaining will be cleaned on next run",
 		);
 	});
 
@@ -250,9 +246,7 @@ describe("cleanupExpiredSessions", () => {
 		mockPrisma.session.deleteMany.mockResolvedValue({ count: 8 });
 		mockPrisma.verification.findMany.mockResolvedValue(verificationIds);
 		mockPrisma.verification.deleteMany.mockResolvedValue({ count: 3 });
-		mockPrisma.account.findMany
-			.mockResolvedValueOnce(accessIds)
-			.mockResolvedValueOnce(refreshIds);
+		mockPrisma.account.findMany.mockResolvedValueOnce(accessIds).mockResolvedValueOnce(refreshIds);
 		mockPrisma.account.updateMany
 			.mockResolvedValueOnce({ count: 2 })
 			.mockResolvedValueOnce({ count: 1 });
@@ -260,20 +254,18 @@ describe("cleanupExpiredSessions", () => {
 		await cleanupExpiredSessions();
 
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Starting expired sessions cleanup..."
+			"[CRON:cleanup-sessions] Starting expired sessions cleanup...",
 		);
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Deleted 8 expired sessions"
+			"[CRON:cleanup-sessions] Deleted 8 expired sessions",
 		);
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Deleted 3 expired verifications"
+			"[CRON:cleanup-sessions] Deleted 3 expired verifications",
 		);
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Cleared 2 expired access tokens, 1 expired refresh tokens"
+			"[CRON:cleanup-sessions] Cleared 2 expired access tokens, 1 expired refresh tokens",
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Cleanup completed"
-		);
+		expect(consoleLogSpy).toHaveBeenCalledWith("[CRON:cleanup-sessions] Cleanup completed");
 	});
 
 	it("should use current timestamp for expiresAt comparison", async () => {
@@ -282,16 +274,16 @@ describe("cleanupExpiredSessions", () => {
 
 		await cleanupExpiredSessions();
 
-		const sessionWhere = mockPrisma.session.findMany.mock.calls[0][0].where;
+		const sessionWhere = mockPrisma.session.findMany.mock.calls[0]![0].where;
 		expect(sessionWhere.expiresAt.lt).toEqual(mockDate);
 
-		const verificationWhere = mockPrisma.verification.findMany.mock.calls[0][0].where;
+		const verificationWhere = mockPrisma.verification.findMany.mock.calls[0]![0].where;
 		expect(verificationWhere.expiresAt.lt).toEqual(mockDate);
 
-		const accessWhere = mockPrisma.account.findMany.mock.calls[0][0].where;
+		const accessWhere = mockPrisma.account.findMany.mock.calls[0]![0].where;
 		expect(accessWhere.accessTokenExpiresAt.lt).toEqual(mockDate);
 
-		const refreshWhere = mockPrisma.account.findMany.mock.calls[1][0].where;
+		const refreshWhere = mockPrisma.account.findMany.mock.calls[1]![0].where;
 		expect(refreshWhere.refreshTokenExpiresAt.lt).toEqual(mockDate);
 	});
 });

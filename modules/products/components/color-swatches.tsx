@@ -3,16 +3,8 @@
 import { useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { ColorSwatch as AriaColorSwatch } from "@/shared/components/aria-color-swatch";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/shared/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 import type { ColorSwatch } from "@/modules/products/types/product-list.types";
@@ -93,7 +85,7 @@ export function ColorSwatches({
 	const handleKeyDown = (
 		e: React.KeyboardEvent<HTMLButtonElement>,
 		index: number,
-		inPopover: boolean
+		inPopover: boolean,
 	) => {
 		if (!interactive) return;
 
@@ -117,27 +109,27 @@ export function ColorSwatches({
 			case "ArrowDown":
 				e.preventDefault();
 				if (currentEnabledIndex < enabledIndices.length - 1) {
-					nextIndex = enabledIndices[currentEnabledIndex + 1];
+					nextIndex = enabledIndices[currentEnabledIndex + 1] ?? null;
 				} else {
-					nextIndex = enabledIndices[0]; // Loop to start
+					nextIndex = enabledIndices[0] ?? null; // Loop to start
 				}
 				break;
 			case "ArrowLeft":
 			case "ArrowUp":
 				e.preventDefault();
 				if (currentEnabledIndex > 0) {
-					nextIndex = enabledIndices[currentEnabledIndex - 1];
+					nextIndex = enabledIndices[currentEnabledIndex - 1] ?? null;
 				} else {
-					nextIndex = enabledIndices[enabledIndices.length - 1]; // Loop to end
+					nextIndex = enabledIndices[enabledIndices.length - 1] ?? null; // Loop to end
 				}
 				break;
 			case "Home":
 				e.preventDefault();
-				nextIndex = enabledIndices[0];
+				nextIndex = enabledIndices[0] ?? null;
 				break;
 			case "End":
 				e.preventDefault();
-				nextIndex = enabledIndices[enabledIndices.length - 1];
+				nextIndex = enabledIndices[enabledIndices.length - 1] ?? null;
 				break;
 		}
 
@@ -147,11 +139,7 @@ export function ColorSwatches({
 	};
 
 	// Rendu d'une pastille couleur (réutilisé dans popover)
-	const renderSwatch = (
-		color: ColorSwatch,
-		index: number,
-		inPopover = false
-	) => {
+	const renderSwatch = (color: ColorSwatch, index: number, inPopover = false) => {
 		const isSelected = selectedColor === color.slug;
 		const swatchSize = inPopover ? "md" : size;
 		const isDisabled = !color.inStock || disabled;
@@ -184,15 +172,15 @@ export function ColorSwatches({
 					onKeyDown={(e) => handleKeyDown(e, index, inPopover)}
 					disabled={isDisabled}
 					className={cn(
-						"relative rounded-full border-2 motion-safe:transition-all motion-safe:active:scale-90 motion-safe:active:ring-4 motion-safe:active:ring-primary/20",
+						"motion-safe:active:ring-primary/20 relative rounded-full border-2 motion-safe:transition-all motion-safe:active:scale-90 motion-safe:active:ring-4",
 						sizeClasses[swatchSize],
-						"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+						"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
 						isSelected
-							? "border-primary ring-2 ring-primary/40 motion-safe:scale-110"
-							: "border-border/50 shadow-sm can-hover:hover:border-primary/50 motion-safe:can-hover:hover:scale-105",
-						!color.inStock && "opacity-40 cursor-not-allowed",
+							? "border-primary ring-primary/40 ring-2 motion-safe:scale-110"
+							: "border-border/50 can-hover:hover:border-primary/50 motion-safe:can-hover:hover:scale-105 shadow-sm",
+						!color.inStock && "cursor-not-allowed opacity-40",
 						// Contraste pour couleurs très claires (blanc, jaune pâle...)
-						!isSelected && isLightColor(color.hex, 0.85) && "ring-1 ring-border/30"
+						!isSelected && isLightColor(color.hex, 0.85) && "ring-border/30 ring-1",
 					)}
 				>
 					<AriaColorSwatch
@@ -201,11 +189,8 @@ export function ColorSwatches({
 						className="size-full rounded-full"
 					/>
 					{!color.inStock && (
-						<span
-							aria-hidden="true"
-							className="absolute inset-0 flex items-center justify-center"
-						>
-							<span className="block w-[130%] h-0.5 bg-foreground/70 rotate-[-45deg] rounded-full" />
+						<span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+							<span className="bg-foreground/70 block h-0.5 w-[130%] rotate-[-45deg] rounded-full" />
 						</span>
 					)}
 				</button>
@@ -219,19 +204,16 @@ export function ColorSwatches({
 					color={color.hex}
 					colorName={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
 					className={cn(
-						"rounded-full border border-border/50 shadow-sm motion-safe:transition-opacity",
+						"border-border/50 rounded-full border shadow-sm motion-safe:transition-opacity",
 						sizeClasses[swatchSize],
 						!color.inStock && "opacity-40",
 						// Contraste pour couleurs très claires (blanc, jaune pâle...)
-						isLightColor(color.hex, 0.85) && "ring-1 ring-border/30"
+						isLightColor(color.hex, 0.85) && "ring-border/30 ring-1",
 					)}
 				/>
 				{!color.inStock && (
-					<span
-						aria-hidden="true"
-						className="absolute inset-0 flex items-center justify-center"
-					>
-						<span className="block w-[130%] h-0.5 bg-foreground/70 rotate-[-45deg] rounded-full" />
+					<span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+						<span className="bg-foreground/70 block h-0.5 w-[130%] rotate-[-45deg] rounded-full" />
 					</span>
 				)}
 			</span>
@@ -244,20 +226,22 @@ export function ColorSwatches({
 				"flex items-center",
 				// Scroll horizontal sur mobile si beaucoup de couleurs
 				// pt-1 pour éviter le clipping du scale/ring au survol
-				interactive ? "overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-3 sm:gap-4 -mx-1 px-1 pt-1" : "flex-wrap gap-1.5 pt-1",
-				className
+				interactive
+					? "scrollbar-hide -mx-1 snap-x snap-mandatory gap-3 overflow-x-auto px-1 pt-1 sm:gap-4"
+					: "flex-wrap gap-1.5 pt-1",
+				className,
 			)}
 			aria-label={`${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
 		>
 			{visibleColors.map((color, index) =>
 				isTouchDevice ? (
-					<span key={color.slug} className={interactive ? "snap-start shrink-0" : undefined}>
+					<span key={color.slug} className={interactive ? "shrink-0 snap-start" : undefined}>
 						{renderSwatch(color, index)}
 					</span>
 				) : (
 					<Tooltip key={color.slug}>
 						<TooltipTrigger asChild>
-							<span className={interactive ? "snap-start shrink-0" : undefined}>
+							<span className={interactive ? "shrink-0 snap-start" : undefined}>
 								{renderSwatch(color, index)}
 							</span>
 						</TooltipTrigger>
@@ -266,7 +250,7 @@ export function ColorSwatches({
 							{!color.inStock && " (rupture)"}
 						</TooltipContent>
 					</Tooltip>
-				)
+				),
 			)}
 
 			{/* Badge +N avec Popover pour voir/sélectionner les couleurs masquées */}
@@ -277,9 +261,9 @@ export function ColorSwatches({
 							type="button"
 							onClick={(e) => e.stopPropagation()}
 							className={cn(
-								"flex items-center justify-center rounded-full bg-muted text-muted-foreground text-sm font-medium transition-colors",
-								"hover:bg-muted/80 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-								sizeClasses[size]
+								"bg-muted text-muted-foreground flex items-center justify-center rounded-full text-sm font-medium transition-colors",
+								"hover:bg-muted/80 focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
+								sizeClasses[size],
 							)}
 							aria-label={`Voir ${remainingCount} autre${remainingCount > 1 ? "s" : ""} couleur${remainingCount > 1 ? "s" : ""}`}
 							aria-expanded={isPopoverOpen}
@@ -295,16 +279,14 @@ export function ColorSwatches({
 						className="w-auto p-3"
 						onClick={(e) => e.stopPropagation()}
 					>
-						<p className="text-xs text-muted-foreground mb-2">
+						<p className="text-muted-foreground mb-2 text-xs">
 							{remainingCount} autre{remainingCount > 1 ? "s" : ""} couleur
 							{remainingCount > 1 ? "s" : ""}
 						</p>
 						<div className="flex flex-wrap gap-3">
 							{hiddenColors.map((color, index) =>
 								isTouchDevice ? (
-									<span key={color.slug}>
-										{renderSwatch(color, maxVisible + index, true)}
-									</span>
+									<span key={color.slug}>{renderSwatch(color, maxVisible + index, true)}</span>
 								) : (
 									<Tooltip key={color.slug}>
 										<TooltipTrigger asChild>
@@ -315,7 +297,7 @@ export function ColorSwatches({
 											{!color.inStock && " (rupture)"}
 										</TooltipContent>
 									</Tooltip>
-								)
+								),
 							)}
 						</div>
 					</PopoverContent>

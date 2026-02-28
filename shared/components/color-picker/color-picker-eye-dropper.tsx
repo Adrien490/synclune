@@ -7,10 +7,7 @@ import { PipetteIcon } from "lucide-react";
 import { useColorPicker } from "./color-picker";
 import type { ColorPickerEyeDropperProps } from "./types";
 
-export const ColorPickerEyeDropper = ({
-	className,
-	...props
-}: ColorPickerEyeDropperProps) => {
+export const ColorPickerEyeDropper = ({ className, ...props }: ColorPickerEyeDropperProps) => {
 	const { setHue, setSaturation, setLightness, setAlpha } = useColorPicker();
 
 	// Vérifier si l'API EyeDropper est supportée
@@ -28,9 +25,9 @@ export const ColorPickerEyeDropper = ({
 			const color = Color(result.sRGBHex);
 			const [h, s, l] = color.hsl().array();
 
-			setHue(h);
-			setSaturation(s);
-			setLightness(l);
+			setHue(h ?? 0);
+			setSaturation(s ?? 0);
+			setLightness(l ?? 0);
 			setAlpha(100);
 		} catch {
 			// L'utilisateur a annulé la sélection
@@ -45,7 +42,7 @@ export const ColorPickerEyeDropper = ({
 	return (
 		<Button
 			data-slot="color-picker-eye-dropper"
-			className={cn("shrink-0 text-muted-foreground", className)}
+			className={cn("text-muted-foreground shrink-0", className)}
 			onClick={handleEyeDropper}
 			size="icon"
 			variant="outline"

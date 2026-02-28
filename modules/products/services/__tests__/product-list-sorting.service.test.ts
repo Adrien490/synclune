@@ -1,36 +1,29 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect } from "vitest";
 
-import {
-	sortProducts,
-	orderByIds,
-	sortByCreatedAtDesc,
-} from "../product-list-sorting.service"
+import { sortProducts, orderByIds, sortByCreatedAtDesc } from "../product-list-sorting.service";
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
 type TestProduct = {
-	id: string
-	title: string
-	createdAt: Date | string
-	updatedAt: Date | string
-	status: string
+	id: string;
+	title: string;
+	createdAt: Date | string;
+	updatedAt: Date | string;
+	status: string;
 	skus: Array<{
-		isActive: boolean
-		priceInclTax: number
-	}>
-	type?: { label: string } | null
+		isActive: boolean;
+		priceInclTax: number;
+	}>;
+	type?: { label: string } | null;
 	reviewStats?: {
-		averageRating: number
-		totalCount: number
-	} | null
-}
+		averageRating: number;
+		totalCount: number;
+	} | null;
+};
 
-function makeProduct(
-	id: string,
-	overrides: Partial<TestProduct> = {}
-): TestProduct {
+function makeProduct(id: string, overrides: Partial<TestProduct> = {}): TestProduct {
 	return {
 		id,
 		title: `Product ${id}`,
@@ -41,7 +34,7 @@ function makeProduct(
 		type: null,
 		reviewStats: null,
 		...overrides,
-	}
+	};
 }
 
 // ============================================================================
@@ -56,46 +49,38 @@ describe("sortProducts", () => {
 			makeProduct("c", { title: "Collier" }),
 			makeProduct("a", { title: "Alliance" }),
 			makeProduct("b", { title: "Bracelet" }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "title-ascending")
+		const result = sortProducts(products as never[], "title-ascending");
 
-		expect(result.map((p) => p.title)).toEqual([
-			"Alliance",
-			"Bracelet",
-			"Collier",
-		])
-	})
+		expect(result.map((p) => p.title)).toEqual(["Alliance", "Bracelet", "Collier"]);
+	});
 
 	it("sorts by title descending", () => {
 		const products = [
 			makeProduct("a", { title: "Alliance" }),
 			makeProduct("c", { title: "Collier" }),
 			makeProduct("b", { title: "Bracelet" }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "title-descending")
+		const result = sortProducts(products as never[], "title-descending");
 
-		expect(result.map((p) => p.title)).toEqual([
-			"Collier",
-			"Bracelet",
-			"Alliance",
-		])
-	})
+		expect(result.map((p) => p.title)).toEqual(["Collier", "Bracelet", "Alliance"]);
+	});
 
 	it("uses French locale for title sorting", () => {
 		const products = [
 			makeProduct("e", { title: "Étoile" }),
 			makeProduct("a", { title: "Alliance" }),
 			makeProduct("b", { title: "Bague" }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "title-ascending")
+		const result = sortProducts(products as never[], "title-ascending");
 
 		// In French locale, É sorts after A and before B (or after B depending on implementation)
 		// The key thing is É is NOT sorted last like in ASCII
-		expect(result[0].title).toBe("Alliance")
-	})
+		expect(result[0]!.title).toBe("Alliance");
+	});
 
 	// ─── Price sorting ─────────────────────────────────────────────────
 
@@ -110,13 +95,13 @@ describe("sortProducts", () => {
 			makeProduct("cheap", {
 				skus: [{ isActive: true, priceInclTax: 1000 }],
 			}),
-		]
+		];
 
-		const result = sortProducts(products as never[], "price-ascending")
+		const result = sortProducts(products as never[], "price-ascending");
 
-		expect(result[0].id).toBe("cheap")
-		expect(result[1].id).toBe("expensive")
-	})
+		expect(result[0]!.id).toBe("cheap");
+		expect(result[1]!.id).toBe("expensive");
+	});
 
 	it("sorts by price descending", () => {
 		const products = [
@@ -126,13 +111,13 @@ describe("sortProducts", () => {
 			makeProduct("expensive", {
 				skus: [{ isActive: true, priceInclTax: 5000 }],
 			}),
-		]
+		];
 
-		const result = sortProducts(products as never[], "price-descending")
+		const result = sortProducts(products as never[], "price-descending");
 
-		expect(result[0].id).toBe("expensive")
-		expect(result[1].id).toBe("cheap")
-	})
+		expect(result[0]!.id).toBe("expensive");
+		expect(result[1]!.id).toBe("cheap");
+	});
 
 	it("ignores inactive SKUs for price calculation", () => {
 		const products = [
@@ -145,13 +130,13 @@ describe("sortProducts", () => {
 			makeProduct("b", {
 				skus: [{ isActive: true, priceInclTax: 2000 }],
 			}),
-		]
+		];
 
-		const result = sortProducts(products as never[], "price-ascending")
+		const result = sortProducts(products as never[], "price-ascending");
 
-		expect(result[0].id).toBe("b")
-		expect(result[1].id).toBe("a")
-	})
+		expect(result[0]!.id).toBe("b");
+		expect(result[1]!.id).toBe("a");
+	});
 
 	it("sorts products with no active SKUs to the end (Infinity price)", () => {
 		const products = [
@@ -159,13 +144,13 @@ describe("sortProducts", () => {
 			makeProduct("with-skus", {
 				skus: [{ isActive: true, priceInclTax: 1000 }],
 			}),
-		]
+		];
 
-		const result = sortProducts(products as never[], "price-ascending")
+		const result = sortProducts(products as never[], "price-ascending");
 
-		expect(result[0].id).toBe("with-skus")
-		expect(result[1].id).toBe("no-skus")
-	})
+		expect(result[0]!.id).toBe("with-skus");
+		expect(result[1]!.id).toBe("no-skus");
+	});
 
 	// ─── Created date sorting ──────────────────────────────────────────
 
@@ -173,25 +158,25 @@ describe("sortProducts", () => {
 		const products = [
 			makeProduct("new", { createdAt: new Date("2024-06-01") }),
 			makeProduct("old", { createdAt: new Date("2024-01-01") }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "created-ascending")
+		const result = sortProducts(products as never[], "created-ascending");
 
-		expect(result[0].id).toBe("old")
-		expect(result[1].id).toBe("new")
-	})
+		expect(result[0]!.id).toBe("old");
+		expect(result[1]!.id).toBe("new");
+	});
 
 	it("sorts by created date descending", () => {
 		const products = [
 			makeProduct("old", { createdAt: new Date("2024-01-01") }),
 			makeProduct("new", { createdAt: new Date("2024-06-01") }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "created-descending")
+		const result = sortProducts(products as never[], "created-descending");
 
-		expect(result[0].id).toBe("new")
-		expect(result[1].id).toBe("old")
-	})
+		expect(result[0]!.id).toBe("new");
+		expect(result[1]!.id).toBe("old");
+	});
 
 	// ─── Rating sorting ────────────────────────────────────────────────
 
@@ -203,13 +188,13 @@ describe("sortProducts", () => {
 			makeProduct("high", {
 				reviewStats: { averageRating: 4.5, totalCount: 10 },
 			}),
-		]
+		];
 
-		const result = sortProducts(products as never[], "rating-descending")
+		const result = sortProducts(products as never[], "rating-descending");
 
-		expect(result[0].id).toBe("high")
-		expect(result[1].id).toBe("low")
-	})
+		expect(result[0]!.id).toBe("high");
+		expect(result[1]!.id).toBe("low");
+	});
 
 	it("breaks rating ties by review count", () => {
 		const products = [
@@ -219,13 +204,13 @@ describe("sortProducts", () => {
 			makeProduct("many-reviews", {
 				reviewStats: { averageRating: 4.0, totalCount: 20 },
 			}),
-		]
+		];
 
-		const result = sortProducts(products as never[], "rating-descending")
+		const result = sortProducts(products as never[], "rating-descending");
 
-		expect(result[0].id).toBe("many-reviews")
-		expect(result[1].id).toBe("few-reviews")
-	})
+		expect(result[0]!.id).toBe("many-reviews");
+		expect(result[1]!.id).toBe("few-reviews");
+	});
 
 	it("treats products without reviewStats as rating 0", () => {
 		const products = [
@@ -233,13 +218,13 @@ describe("sortProducts", () => {
 			makeProduct("has-reviews", {
 				reviewStats: { averageRating: 3.0, totalCount: 1 },
 			}),
-		]
+		];
 
-		const result = sortProducts(products as never[], "rating-descending")
+		const result = sortProducts(products as never[], "rating-descending");
 
-		expect(result[0].id).toBe("has-reviews")
-		expect(result[1].id).toBe("no-reviews")
-	})
+		expect(result[0]!.id).toBe("has-reviews");
+		expect(result[1]!.id).toBe("no-reviews");
+	});
 
 	// ─── Admin sort fields ─────────────────────────────────────────────
 
@@ -247,50 +232,50 @@ describe("sortProducts", () => {
 		const products = [
 			makeProduct("old-update", { updatedAt: new Date("2024-01-01") }),
 			makeProduct("new-update", { updatedAt: new Date("2024-06-01") }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "updatedAt")
+		const result = sortProducts(products as never[], "updatedAt");
 
-		expect(result[0].id).toBe("new-update")
-		expect(result[1].id).toBe("old-update")
-	})
+		expect(result[0]!.id).toBe("new-update");
+		expect(result[1]!.id).toBe("old-update");
+	});
 
 	it("sorts by title (admin, alphabetical)", () => {
 		const products = [
 			makeProduct("b", { title: "Bracelet" }),
 			makeProduct("a", { title: "Alliance" }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "title")
+		const result = sortProducts(products as never[], "title");
 
-		expect(result[0].title).toBe("Alliance")
-		expect(result[1].title).toBe("Bracelet")
-	})
+		expect(result[0]!.title).toBe("Alliance");
+		expect(result[1]!.title).toBe("Bracelet");
+	});
 
 	it("sorts by type label (admin)", () => {
 		const products = [
 			makeProduct("b", { type: { label: "Collier" } }),
 			makeProduct("a", { type: { label: "Bague" } }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "type")
+		const result = sortProducts(products as never[], "type");
 
-		expect(result[0].id).toBe("a")
-		expect(result[1].id).toBe("b")
-	})
+		expect(result[0]!.id).toBe("a");
+		expect(result[1]!.id).toBe("b");
+	});
 
 	it("handles null type labels in type sort", () => {
 		const products = [
 			makeProduct("no-type", { type: null }),
 			makeProduct("has-type", { type: { label: "Bague" } }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "type")
+		const result = sortProducts(products as never[], "type");
 
 		// null type uses empty string, sorts before "Bague"
-		expect(result[0].id).toBe("no-type")
-		expect(result[1].id).toBe("has-type")
-	})
+		expect(result[0]!.id).toBe("no-type");
+		expect(result[1]!.id).toBe("has-type");
+	});
 
 	// ─── Default sorting ───────────────────────────────────────────────
 
@@ -298,13 +283,13 @@ describe("sortProducts", () => {
 		const products = [
 			makeProduct("old", { createdAt: new Date("2024-01-01") }),
 			makeProduct("new", { createdAt: new Date("2024-06-01") }),
-		]
+		];
 
-		const result = sortProducts(products as never[], "unknown-field")
+		const result = sortProducts(products as never[], "unknown-field");
 
-		expect(result[0].id).toBe("new")
-		expect(result[1].id).toBe("old")
-	})
+		expect(result[0]!.id).toBe("new");
+		expect(result[1]!.id).toBe("old");
+	});
 
 	// ─── Immutability ──────────────────────────────────────────────────
 
@@ -312,14 +297,14 @@ describe("sortProducts", () => {
 		const products = [
 			makeProduct("b", { title: "Bracelet" }),
 			makeProduct("a", { title: "Alliance" }),
-		]
-		const original = [...products]
+		];
+		const original = [...products];
 
-		sortProducts(products as never[], "title-ascending")
+		sortProducts(products as never[], "title-ascending");
 
-		expect(products).toEqual(original)
-	})
-})
+		expect(products).toEqual(original);
+	});
+});
 
 // ============================================================================
 // orderByIds
@@ -331,70 +316,68 @@ describe("orderByIds", () => {
 			{ id: "c", name: "C" },
 			{ id: "a", name: "A" },
 			{ id: "b", name: "B" },
-		]
+		];
 
-		const result = orderByIds(items, ["a", "b", "c"])
+		const result = orderByIds(items, ["a", "b", "c"]);
 
-		expect(result.map((i) => i.id)).toEqual(["a", "b", "c"])
-	})
+		expect(result.map((i) => i.id)).toEqual(["a", "b", "c"]);
+	});
 
 	it("puts items not in the ID list at the end", () => {
 		const items = [
 			{ id: "x", name: "X" },
 			{ id: "a", name: "A" },
 			{ id: "b", name: "B" },
-		]
+		];
 
-		const result = orderByIds(items, ["a", "b"])
+		const result = orderByIds(items, ["a", "b"]);
 
-		expect(result[0].id).toBe("a")
-		expect(result[1].id).toBe("b")
-		expect(result[2].id).toBe("x")
-	})
+		expect(result[0]!.id).toBe("a");
+		expect(result[1]!.id).toBe("b");
+		expect(result[2]!.id).toBe("x");
+	});
 
 	it("applies fallback sort for items not in ID list", () => {
 		const items = [
 			{ id: "z", name: "Z" },
 			{ id: "a", name: "A" },
 			{ id: "y", name: "Y" },
-		]
+		];
 
-		const result = orderByIds(items, ["a"], (a, b) =>
-			a.name.localeCompare(b.name)
-		)
+		const result = orderByIds(items, ["a"], (a, b) => a.name.localeCompare(b.name));
 
-		expect(result.map((i) => i.id)).toEqual(["a", "y", "z"])
-	})
+		expect(result.map((i) => i.id)).toEqual(["a", "y", "z"]);
+	});
 
 	it("handles empty ID list", () => {
 		const items = [
 			{ id: "a", name: "A" },
 			{ id: "b", name: "B" },
-		]
+		];
 
-		const result = orderByIds(items, [])
+		const result = orderByIds(items, []);
 
-		expect(result).toHaveLength(2)
-	})
+		expect(result).toHaveLength(2);
+	});
 
 	it("handles empty items list", () => {
-		const result = orderByIds([], ["a", "b"])
+		const result = orderByIds([], ["a", "b"]);
 
-		expect(result).toEqual([])
-	})
+		expect(result).toEqual([]);
+	});
 
 	it("does not mutate the original array", () => {
 		const items = [
 			{ id: "b", name: "B" },
 			{ id: "a", name: "A" },
-		]
-		const original = [...items]
+		];
+		const original = [...items];
 
-		orderByIds(items, ["a", "b"])
+		orderByIds(items, ["a", "b"]);
 
-		expect(items).toEqual(original)
-	})
-})
+		expect(items).toEqual(original);
+	});
+});
 
 // ============================================================================
 // sortByCreatedAtDesc
@@ -402,24 +385,24 @@ describe("orderByIds", () => {
 
 describe("sortByCreatedAtDesc", () => {
 	it("sorts newer items first", () => {
-		const a = { createdAt: new Date("2024-01-01") }
-		const b = { createdAt: new Date("2024-06-01") }
+		const a = { createdAt: new Date("2024-01-01") };
+		const b = { createdAt: new Date("2024-06-01") };
 
-		expect(sortByCreatedAtDesc(a, b)).toBeGreaterThan(0)
-		expect(sortByCreatedAtDesc(b, a)).toBeLessThan(0)
-	})
+		expect(sortByCreatedAtDesc(a, b)).toBeGreaterThan(0);
+		expect(sortByCreatedAtDesc(b, a)).toBeLessThan(0);
+	});
 
 	it("returns 0 for equal dates", () => {
-		const a = { createdAt: new Date("2024-01-01") }
-		const b = { createdAt: new Date("2024-01-01") }
+		const a = { createdAt: new Date("2024-01-01") };
+		const b = { createdAt: new Date("2024-01-01") };
 
-		expect(sortByCreatedAtDesc(a, b)).toBe(0)
-	})
+		expect(sortByCreatedAtDesc(a, b)).toBe(0);
+	});
 
 	it("works with string dates", () => {
-		const a = { createdAt: "2024-01-01T00:00:00Z" }
-		const b = { createdAt: "2024-06-01T00:00:00Z" }
+		const a = { createdAt: "2024-01-01T00:00:00Z" };
+		const b = { createdAt: "2024-06-01T00:00:00Z" };
 
-		expect(sortByCreatedAtDesc(a, b)).toBeGreaterThan(0)
-	})
-})
+		expect(sortByCreatedAtDesc(a, b)).toBeGreaterThan(0);
+	});
+});

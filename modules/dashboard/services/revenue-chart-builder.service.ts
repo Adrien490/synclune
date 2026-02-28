@@ -17,13 +17,13 @@ import type { RevenueDataPoint } from "../types/dashboard.types";
 export function fillMissingDates(
 	revenueMap: Map<string, number>,
 	startDate: Date,
-	days: number
+	days: number,
 ): RevenueDataPoint[] {
 	const data: RevenueDataPoint[] = [];
 
 	for (let i = 0; i < days; i++) {
 		const date = new Date(startDate.getTime() + i * 86_400_000);
-		const dateKey = date.toISOString().split("T")[0];
+		const dateKey = date.toISOString().split("T")[0]!;
 		data.push({
 			date: dateKey,
 			revenue: revenueMap.get(dateKey) || 0,
@@ -41,7 +41,7 @@ export function fillMissingDates(
  * @returns Map des revenus par date
  */
 export function buildRevenueMap(
-	rows: Array<{ date: string; revenue: bigint }>
+	rows: Array<{ date: string; revenue: bigint }>,
 ): Map<string, number> {
 	const revenueMap = new Map<string, number>();
 

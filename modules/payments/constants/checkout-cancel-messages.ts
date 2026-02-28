@@ -1,4 +1,4 @@
-import { AlertCircle, CreditCard, XCircle, type LucideIcon } from "lucide-react"
+import { AlertCircle, CreditCard, XCircle, type LucideIcon } from "lucide-react";
 
 /**
  * Messages d'erreur spécifiques pour la page d'annulation de paiement
@@ -27,8 +27,7 @@ export const CHECKOUT_CANCEL_MESSAGES: Record<
 	},
 	authentication_failed: {
 		title: "Authentification échouée",
-		description:
-			"L'authentification 3D Secure a échoué. Réessayez ou contactez votre banque.",
+		description: "L'authentification 3D Secure a échoué. Réessayez ou contactez votre banque.",
 		icon: XCircle,
 	},
 	processing_error: {
@@ -43,14 +42,20 @@ export const CHECKOUT_CANCEL_MESSAGES: Record<
 			"Vous avez annulé le processus de paiement. Aucun montant n'a été débité de votre compte.",
 		icon: AlertCircle,
 	},
-}
+};
 
 /**
  * Récupère le message d'erreur approprié pour un code donné
  * Retourne le message "canceled" par défaut
  */
-export function getCheckoutCancelMessage(reason?: string) {
-	return reason && CHECKOUT_CANCEL_MESSAGES[reason]
-		? CHECKOUT_CANCEL_MESSAGES[reason]
-		: CHECKOUT_CANCEL_MESSAGES.canceled
+export function getCheckoutCancelMessage(reason?: string): {
+	title: string;
+	description: string;
+	icon: LucideIcon;
+} {
+	if (reason) {
+		const message = CHECKOUT_CANCEL_MESSAGES[reason];
+		if (message) return message;
+	}
+	return CHECKOUT_CANCEL_MESSAGES["canceled"]!;
 }

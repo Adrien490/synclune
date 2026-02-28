@@ -5,6 +5,7 @@
  * Utilisent directement la session et Prisma pour éviter les cycles de dépendances.
  */
 
+import type { Prisma } from "@/app/generated/prisma/client";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
@@ -18,23 +19,13 @@ const REQUIRE_AUTH_USER_SELECT = {
 	name: true,
 	role: true,
 	image: true,
-	firstName: true,
-	lastName: true,
 	emailVerified: true,
 	stripeCustomerId: true,
 } as const;
 
-type RequireAuthUser = {
-	id: string;
-	email: string;
-	name: string | null;
-	role: string;
-	image: string | null;
-	firstName: string | null;
-	lastName: string | null;
-	emailVerified: boolean;
-	stripeCustomerId: string | null;
-};
+type RequireAuthUser = Prisma.UserGetPayload<{
+	select: typeof REQUIRE_AUTH_USER_SELECT;
+}>;
 
 /**
  * Récupère l'utilisateur depuis la DB pour les helpers d'auth

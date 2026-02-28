@@ -13,7 +13,7 @@ const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag, mockCacheSkuDetail
 		mockCacheLife: vi.fn(),
 		mockCacheTag: vi.fn(),
 		mockCacheSkuDetail: vi.fn(),
-	})
+	}),
 );
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -131,7 +131,7 @@ describe("getSkuByCode", () => {
 		expect(mockPrisma.productSku.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { sku: "SKU-001" },
-			})
+			}),
 		);
 	});
 
@@ -210,7 +210,7 @@ describe("getSkuById", () => {
 		expect(mockPrisma.productSku.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "sku-id-1" },
-			})
+			}),
 		);
 	});
 
@@ -219,7 +219,7 @@ describe("getSkuById", () => {
 
 		await getSkuById("sku-id-1");
 
-		const callArg = mockPrisma.productSku.findUnique.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findUnique.mock.calls[0]![0];
 		expect(callArg.select).toHaveProperty("images");
 	});
 
@@ -228,12 +228,14 @@ describe("getSkuById", () => {
 
 		await getSkuById("sku-id-1");
 
-		const callArg = mockPrisma.productSku.findUnique.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findUnique.mock.calls[0]![0];
 		expect(callArg.select).toHaveProperty("compareAtPrice", true);
 	});
 
 	it("returns the SKU with images when found", async () => {
-		const skuWithImages = makeSkuWithImages({ images: [{ id: "img-1", url: "https://example.com/img.jpg", isPrimary: true }] });
+		const skuWithImages = makeSkuWithImages({
+			images: [{ id: "img-1", url: "https://example.com/img.jpg", isPrimary: true }],
+		});
 		mockPrisma.productSku.findUnique.mockResolvedValue(skuWithImages);
 
 		const result = await getSkuById("sku-id-1");

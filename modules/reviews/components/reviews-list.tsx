@@ -1,32 +1,37 @@
 import {
 	Empty,
+	EmptyActions,
 	EmptyContent,
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
-} from "@/shared/components/ui/empty"
-import { Filter, MessageSquare } from "lucide-react"
+} from "@/shared/components/ui/empty";
+import { Button } from "@/shared/components/ui/button";
+import { Filter, MessageSquare } from "lucide-react";
+import Link from "next/link";
 
-import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types"
-import { ReviewCard } from "./review-card"
-import { ReviewPhotosGallery } from "./review-photos-gallery"
-import { ReviewSummary } from "./review-summary"
+import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types";
+import { ReviewCard } from "./review-card";
+import { ReviewPhotosGallery } from "./review-photos-gallery";
+import { ReviewSummary } from "./review-summary";
 
 interface ReviewsListProps {
 	/** Avis initiaux (déjà résolus) */
-	initialReviews: ReviewPublic[]
+	initialReviews: ReviewPublic[];
 	/** Statistiques du produit */
-	stats: ProductReviewStatistics
+	stats: ProductReviewStatistics;
 	/** Nombre total d'avis */
-	totalCount: number
+	totalCount: number;
 	/** ID du produit (pour chargement supplémentaire) */
-	productId?: string
+	productId?: string;
 	/** Curseur pour la pagination */
-	nextCursor?: string | null
+	nextCursor?: string | null;
 	/** Indique s'il y a plus d'avis à charger */
-	hasMore?: boolean
+	hasMore?: boolean;
 	/** Filtre par note actif */
-	ratingFilter?: number
+	ratingFilter?: number;
+	/** Utilisateur authentifie (pour afficher le CTA d'avis) */
+	isAuthenticated?: boolean;
 }
 
 /**
@@ -41,8 +46,9 @@ export function ReviewsList({
 	nextCursor: _nextCursor,
 	hasMore: _hasMore,
 	ratingFilter,
+	isAuthenticated,
 }: ReviewsListProps) {
-	const isFiltered = ratingFilter !== undefined
+	const isFiltered = ratingFilter !== undefined;
 
 	// Aucun avis (sans filtre)
 	if (stats.totalCount === 0) {
@@ -55,12 +61,17 @@ export function ReviewsList({
 					<EmptyTitle>Aucun avis pour le moment</EmptyTitle>
 				</EmptyHeader>
 				<EmptyContent>
-					<p className="text-sm text-muted-foreground">
-						Soyez le premier à donner votre avis !
-					</p>
+					<p className="text-muted-foreground text-sm">Soyez le premier à donner votre avis !</p>
 				</EmptyContent>
+				{isAuthenticated && (
+					<EmptyActions>
+						<Button variant="outline" asChild>
+							<Link href="/mes-avis">Donner mon avis</Link>
+						</Button>
+					</EmptyActions>
+				)}
 			</Empty>
-		)
+		);
 	}
 
 	// Aucun avis avec le filtre actif
@@ -75,16 +86,18 @@ export function ReviewsList({
 						<EmptyMedia variant="icon">
 							<Filter className="size-6" aria-hidden="true" />
 						</EmptyMedia>
-						<EmptyTitle>Aucun avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""}</EmptyTitle>
+						<EmptyTitle>
+							Aucun avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""}
+						</EmptyTitle>
 					</EmptyHeader>
 					<EmptyContent>
-						<p className="text-sm text-muted-foreground">
+						<p className="text-muted-foreground text-sm">
 							Essayez de sélectionner une autre note dans la distribution ci-dessus.
 						</p>
 					</EmptyContent>
 				</Empty>
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -94,8 +107,9 @@ export function ReviewsList({
 
 			{/* Indicateur de filtre actif */}
 			{isFiltered && (
-				<p className="text-sm text-muted-foreground" role="status" aria-live="polite">
-					{totalCount} avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""} sur {stats.totalCount} au total
+				<p className="text-muted-foreground text-sm" role="status" aria-live="polite">
+					{totalCount} avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""} sur{" "}
+					{stats.totalCount} au total
 				</p>
 			)}
 
@@ -103,7 +117,11 @@ export function ReviewsList({
 			{!isFiltered && <ReviewPhotosGallery reviews={initialReviews} />}
 
 			{/* Liste des avis */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4" role="feed" aria-label="Liste des avis clients">
+			<div
+				className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+				role="feed"
+				aria-label="Liste des avis clients"
+			>
 				{initialReviews.map((review, index) => (
 					<div
 						key={review.id}
@@ -118,5 +136,5 @@ export function ReviewsList({
 				))}
 			</div>
 		</div>
-	)
+	);
 }

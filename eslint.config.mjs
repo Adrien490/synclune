@@ -56,6 +56,12 @@ const eslintConfig = [
 	},
 	{
 		files: ["**/*.{ts,tsx}"],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname,
+			},
+		},
 		rules: {
 			"@typescript-eslint/no-unused-vars": [
 				"warn",
@@ -68,6 +74,7 @@ const eslintConfig = [
 			"@typescript-eslint/no-explicit-any": "warn",
 			"@typescript-eslint/no-empty-object-type": "off",
 			"@typescript-eslint/no-require-imports": "off",
+			"@typescript-eslint/no-floating-promises": "error",
 		},
 	},
 	{

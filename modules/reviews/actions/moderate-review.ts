@@ -1,22 +1,17 @@
-"use server"
+"use server";
 
-import { updateTag } from "next/cache"
-import { prisma, notDeleted } from "@/shared/lib/prisma"
-import { requireAdmin } from "@/modules/auth/lib/require-auth"
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
-import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config"
-import {
-	success,
-	notFound,
-	validationError,
-	handleActionError,
-} from "@/shared/lib/actions"
-import type { ActionState } from "@/shared/types/server-action"
+import { updateTag } from "next/cache";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config";
+import { success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
 
-import { getReviewModerationTags } from "../constants/cache"
-import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
-import { moderateReviewSchema } from "../schemas/review.schemas"
-import { updateProductReviewStats } from "../services/review-stats.service"
+import { getReviewModerationTags } from "../constants/cache";
+import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants";
+import { moderateReviewSchema } from "../schemas/review.schemas";
+import { updateProductReviewStats } from "../services/review-stats.service";
 
 /**
  * Modère un avis (toggle PUBLISHED <-> HIDDEN)
@@ -24,31 +19,33 @@ import { updateProductReviewStats } from "../services/review-stats.service"
  */
 export async function moderateReview(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const adminCheck = await requireAdmin()
-		if ("error" in adminCheck) return adminCheck.error
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.MODERATE)
-		if ("error" in rateLimit) return rateLimit.error
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.MODERATE);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraire et valider les données
 		const rawData = {
 			id: formData.get("id"),
-		}
+		};
 
-		const validation = moderateReviewSchema.safeParse(rawData)
+		const validation = moderateReviewSchema.safeParse(rawData);
 		if (!validation.success) {
-			const firstError = validation.error.issues[0]
-			const errorPath = firstError?.path.join(".")
+			const firstError = validation.error.issues[0];
+			const errorPath = firstError?.path.join(".");
 			return validationError(
-				errorPath ? `${errorPath}: ${firstError.message}` : firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA
-			)
+				errorPath
+					? `${errorPath}: ${firstError?.message}`
+					: firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA,
+			);
 		}
 
-		const { id } = validation.data
+		const { id } = validation.data;
 
 		// 3. Récupérer l'avis
 		const review = await prisma.productReview.findFirst({
@@ -61,38 +58,38 @@ export async function moderateReview(
 				productId: true,
 				status: true,
 			},
-		})
+		});
 
 		if (!review) {
-			return notFound("Avis")
+			return notFound("Avis");
 		}
 
 		// 4. Toggle le statut
-		const newStatus = review.status === "PUBLISHED" ? "HIDDEN" : "PUBLISHED"
+		const newStatus = review.status === "PUBLISHED" ? "HIDDEN" : "PUBLISHED";
 
 		await prisma.$transaction(async (tx) => {
 			// Mettre à jour le statut
 			await tx.productReview.update({
 				where: { id },
 				data: { status: newStatus },
-			})
+			});
 
 			// Recalculer les stats (car seuls les PUBLISHED comptent)
 			// Seulement si le produit existe encore
 			if (review.productId) {
-				await updateProductReviewStats(tx, review.productId)
+				await updateProductReviewStats(tx, review.productId);
 			}
-		})
+		});
 
 		// 5. Invalider le cache
-		const tags = getReviewModerationTags(review.productId, id)
-		tags.forEach((tag) => updateTag(tag))
+		const tags = getReviewModerationTags(review.productId, id);
+		tags.forEach((tag) => updateTag(tag));
 
 		const message =
-			newStatus === "HIDDEN" ? "Avis masqué avec succès" : "Avis republié avec succès"
+			newStatus === "HIDDEN" ? "Avis masqué avec succès" : "Avis republié avec succès";
 
-		return success(message, { status: newStatus })
+		return success(message, { status: newStatus });
 	} catch (e) {
-		return handleActionError(e, REVIEW_ERROR_MESSAGES.MODERATE_FAILED)
+		return handleActionError(e, REVIEW_ERROR_MESSAGES.MODERATE_FAILED);
 	}
 }

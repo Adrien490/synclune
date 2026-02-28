@@ -29,13 +29,25 @@ export function generateParticles(
 	blur: number | [number, number],
 	depthParallax: boolean,
 	shapes: ParticleShape[] = ["circle"],
-	baseDuration: number = DEFAULT_DURATION
+	baseDuration: number = DEFAULT_DURATION,
 ): Particle[] {
 	// Normalize tuples so min <= max
 	const safeSize: [number, number] = [Math.min(size[0], size[1]), Math.max(size[0], size[1])];
-	const safeOpacity: [number, number] = [Math.min(opacity[0], opacity[1]), Math.max(opacity[0], opacity[1])];
+	const safeOpacity: [number, number] = [
+		Math.min(opacity[0], opacity[1]),
+		Math.max(opacity[0], opacity[1]),
+	];
 
-	const cacheKey = JSON.stringify([count, safeSize, safeOpacity, colors, blur, depthParallax, shapes, baseDuration]);
+	const cacheKey = JSON.stringify([
+		count,
+		safeSize,
+		safeOpacity,
+		colors,
+		blur,
+		depthParallax,
+		shapes,
+		baseDuration,
+	]);
 	const cached = particleCache.get(cacheKey);
 	if (cached) return cached;
 
@@ -52,7 +64,7 @@ export function generateParticles(
 		const x = 5 + rand(3) * 90;
 		const y = 5 + rand(4) * 90;
 		// Offset 7 intentionally skipped to keep color selection independent from delay (offset 6)
-		const color = safeColors[Math.floor(rand(8) * safeColors.length)];
+		const color = safeColors[Math.floor(rand(8) * safeColors.length)]!;
 
 		// Blur correlated inversely to size: large particles are sharp (close), small ones are blurry (far)
 		const sizeNorm = (particleSize - safeSize[0]) / (safeSize[1] - safeSize[0] || 1);
@@ -63,8 +75,7 @@ export function generateParticles(
 		const depthFactor = maxBlur > 0 ? particleBlur / maxBlur : 0;
 		const parallaxMultiplier = depthParallax ? 1 + depthFactor * 0.5 : 1;
 		const particleDuration =
-			baseDuration * 0.7 * parallaxMultiplier +
-			rand(5) * baseDuration * 0.6 * parallaxMultiplier;
+			baseDuration * 0.7 * parallaxMultiplier + rand(5) * baseDuration * 0.6 * parallaxMultiplier;
 		const delay = rand(6) * baseDuration * 0.5;
 
 		return {
@@ -78,7 +89,7 @@ export function generateParticles(
 			delay,
 			blur: particleBlur,
 			depthFactor,
-			shape: shapes[i % shapes.length],
+			shape: shapes[i % shapes.length]!,
 		};
 	});
 
@@ -92,11 +103,7 @@ export function generateParticles(
 }
 
 /** Retourne les styles CSS pour une forme de particule */
-export function getShapeStyles(
-	shape: ParticleShape,
-	size: number,
-	color: string
-): CSSProperties {
+export function getShapeStyles(shape: ParticleShape, size: number, color: string): CSSProperties {
 	const config = SHAPE_CONFIGS[shape];
 
 	if (config.type === "css") {
@@ -129,7 +136,9 @@ export function isSvgShape(shape: ParticleShape): boolean {
 }
 
 /** Retourne la configuration SVG pour une forme */
-export function getSvgConfig(shape: ParticleShape): { viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" } | null {
+export function getSvgConfig(
+	shape: ParticleShape,
+): { viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" } | null {
 	const config = SHAPE_CONFIGS[shape];
 	if (config.type === "svg") {
 		return { viewBox: config.viewBox, path: config.path, fillRule: config.fillRule };

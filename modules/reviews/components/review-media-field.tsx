@@ -3,7 +3,12 @@
 import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "@/shared/components/forms/field-label";
 import { useFieldContext } from "@/shared/lib/form-context";
-import { ReviewMediaUpload, type ReviewMediaItem } from "./review-media-upload";
+import type { ReviewMediaItem } from "./review-media-upload";
+import dynamic from "next/dynamic";
+
+const ReviewMediaUpload = dynamic(() =>
+	import("./review-media-upload").then((mod) => mod.ReviewMediaUpload),
+);
 
 interface ReviewMediaFieldProps {
 	/** Label affiché au-dessus du champ */
@@ -32,11 +37,7 @@ interface ReviewMediaFieldProps {
  * </form.Field>
  * ```
  */
-export const ReviewMediaField = ({
-	label,
-	disabled,
-	className,
-}: ReviewMediaFieldProps) => {
+export const ReviewMediaField = ({ label, disabled, className }: ReviewMediaFieldProps) => {
 	const field = useFieldContext<ReviewMediaItem[]>();
 
 	return (

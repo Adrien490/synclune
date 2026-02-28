@@ -27,7 +27,10 @@ import { RecordProductView } from "@/modules/products/components/record-product-
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
 
-import { ProductReviewsSection, ProductReviewsSectionSkeleton } from "@/modules/reviews/components/product-reviews-section";
+import {
+	ProductReviewsSection,
+	ProductReviewsSectionSkeleton,
+} from "@/modules/reviews/components/product-reviews-section";
 
 // Pre-genere les chemins des produits publics au build time
 // Next.js 16 avec Cache Components requiert au moins un résultat
@@ -104,7 +107,7 @@ export default async function ProductPage({
 
 	// Calcul du SKU sélectionné depuis les paramètres URL
 	// Par défaut : product.skus[0] (SKU principal, trié par isDefault DESC)
-	let selectedSku = product.skus[0];
+	let selectedSku = product.skus[0]!;
 
 	if (Object.values(urlVariants).some((v) => v)) {
 		const exactSku = findSkuByVariants(product, urlVariants);
@@ -114,7 +117,7 @@ export default async function ProductPage({
 			// Sinon, prendre le premier SKU compatible
 			const compatibleSkus = filterCompatibleSkus(product, urlVariants);
 			if (compatibleSkus.length > 0) {
-				selectedSku = compatibleSkus[0];
+				selectedSku = compatibleSkus[0]!;
 			}
 		}
 	}
@@ -144,14 +147,16 @@ export default async function ProductPage({
 	const ratingFilter = parsedRating >= 1 && parsedRating <= 5 ? parsedRating : undefined;
 
 	return (
-		<div className="min-h-screen relative">
+		<div className="relative min-h-screen">
 			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
 			<RecordProductView slug={product.slug} />
 
 			{/* Structured Data JSON-LD pour SEO */}
 			<script
 				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+				}}
 			/>
 
 			{/* Particules précieuses pour pages produits */}
@@ -162,14 +167,11 @@ export default async function ProductPage({
 
 				{/* Contenu principal */}
 				<div className="bg-background pt-20 pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">
-					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-						<article
-							id="product-main"
-							className="space-y-12"
-						>
+					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+						<article id="product-main" className="space-y-12">
 							{/* Section principale - Galerie fixe et Informations scrollables */}
 							{/* group/product-details permet aux enfants de réagir au data-pending des sélecteurs */}
-							<div className="group/product-details grid gap-6 lg:gap-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+							<div className="group/product-details grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
 								{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
 								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
 									<Gallery product={product} title={product.title} />

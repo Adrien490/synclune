@@ -36,7 +36,7 @@ interface ResponsiveSelectGroup {
 type ResponsiveSelectOptions = ResponsiveSelectOption[] | ResponsiveSelectGroup[];
 
 function isGroupedOptions(options: ResponsiveSelectOptions): options is ResponsiveSelectGroup[] {
-	return options.length > 0 && "options" in options[0];
+	return options.length > 0 && options[0] !== undefined && "options" in options[0];
 }
 
 // ============================================================================

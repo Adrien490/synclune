@@ -4,10 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockEnforceRateLimitForCurrentUser,
-	mockFetchAddresses,
-} = vi.hoisted(() => ({
+const { mockEnforceRateLimitForCurrentUser, mockFetchAddresses } = vi.hoisted(() => ({
 	mockEnforceRateLimitForCurrentUser: vi.fn(),
 	mockFetchAddresses: vi.fn(),
 }));
@@ -71,7 +68,6 @@ function makeRateLimitError() {
 		error: {
 			status: "error" as const,
 			message: "Trop de requetes. Veuillez reessayer plus tard.",
-			data: { retryAfter: 60000 },
 		},
 	};
 }
@@ -105,7 +101,7 @@ describe("searchAddress", () => {
 		await searchAddress(makeSearchParams());
 
 		expect(mockEnforceRateLimitForCurrentUser).toHaveBeenCalledWith(
-			expect.objectContaining({ limit: 30, windowMs: 60000 })
+			expect.objectContaining({ limit: 30, windowMs: 60000 }),
 		);
 	});
 
@@ -133,7 +129,7 @@ describe("searchAddress", () => {
 		await searchAddress(params);
 
 		expect(mockFetchAddresses).toHaveBeenCalledWith(
-			expect.objectContaining({ text: "Bordeaux", maximumResponses: 8 })
+			expect.objectContaining({ text: "Bordeaux", maximumResponses: 8 }),
 		);
 	});
 
@@ -186,7 +182,7 @@ describe("searchAddress", () => {
 			expect.objectContaining({
 				text: "Nice",
 				type: "PositionOfInterest,StreetAddress",
-			})
+			}),
 		);
 	});
 });

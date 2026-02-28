@@ -178,7 +178,7 @@ describe("getSkuStocks – sort order logic", () => {
 	it("sorts by inventory when sortBy starts with 'available-'", async () => {
 		await getSkuStocks({ ...makeDefaultParams(), sortBy: "available-ascending" });
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })]),
 		);
@@ -187,7 +187,7 @@ describe("getSkuStocks – sort order logic", () => {
 	it("sorts by sku when sortBy starts with 'sku-'", async () => {
 		await getSkuStocks({ ...makeDefaultParams(), sortBy: "sku-ascending" });
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ sku: "asc" })]),
 		);
@@ -196,7 +196,7 @@ describe("getSkuStocks – sort order logic", () => {
 	it("falls back to inventory asc for unknown sortBy prefix", async () => {
 		await getSkuStocks({ ...makeDefaultParams(), sortBy: "unknown-sort" });
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })]),
 		);
@@ -205,7 +205,7 @@ describe("getSkuStocks – sort order logic", () => {
 	it("always includes secondary id sort as tiebreaker", async () => {
 		await getSkuStocks(makeDefaultParams());
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ id: "asc" })]),
 		);

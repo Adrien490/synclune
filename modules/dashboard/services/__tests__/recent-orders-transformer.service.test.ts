@@ -17,14 +17,8 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	},
 }));
 
-import {
-	transformRecentOrder,
-	transformRecentOrders,
-} from "../recent-orders-transformer.service";
-import {
-	OrderStatus,
-	PaymentStatus,
-} from "@/app/generated/prisma/client";
+import { transformRecentOrder, transformRecentOrders } from "../recent-orders-transformer.service";
+import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import type { OrderForTransform } from "../../types/dashboard.types";
 
 // ---------------------------------------------------------------------------
@@ -121,10 +115,10 @@ describe("transformRecentOrders", () => {
 		const result = transformRecentOrders(orders);
 
 		expect(result).toHaveLength(2);
-		expect(result[0].id).toBe("order-1");
-		expect(result[0].customerName).toBe("Alice");
-		expect(result[1].id).toBe("order-2");
-		expect(result[1].customerName).toBe("Invité");
+		expect(result[0]!.id).toBe("order-1");
+		expect(result[0]!.customerName).toBe("Alice");
+		expect(result[1]!.id).toBe("order-2");
+		expect(result[1]!.customerName).toBe("Invité");
 	});
 
 	it("should return an empty array for empty input", () => {

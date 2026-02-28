@@ -98,9 +98,7 @@ export function SkusFilterSheet({
 
 		// Ajouter les statuts de stock
 		if (formData.stockStatuses.length > 0) {
-			formData.stockStatuses.forEach((status) =>
-				params.append("filter_stockStatus", status)
-			);
+			formData.stockStatuses.forEach((status) => params.append("filter_stockStatus", status));
 		}
 
 		// Ajouter les couleurs
@@ -110,9 +108,7 @@ export function SkusFilterSheet({
 
 		// Ajouter les materiaux
 		if (formData.materialIds.length > 0) {
-			formData.materialIds.forEach((id) =>
-				params.append("filter_materialId", id)
-			);
+			formData.materialIds.forEach((id) => params.append("filter_materialId", id));
 		}
 
 		// Ajouter le statut actif/inactif
@@ -174,7 +170,7 @@ export function SkusFilterSheet({
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}
-			onApply={() => form.handleSubmit()}
+			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
 			triggerClassName={className}
 		>
@@ -182,7 +178,7 @@ export function SkusFilterSheet({
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 				className="space-y-6"
 			>
@@ -190,9 +186,7 @@ export function SkusFilterSheet({
 				<form.Field name="isActive">
 					{(field) => (
 						<fieldset className="space-y-3">
-							<legend className="font-medium text-sm text-foreground">
-								Statut de la variante
-							</legend>
+							<legend className="text-foreground text-sm font-medium">Statut de la variante</legend>
 							<RadioGroup
 								value={field.state.value}
 								onValueChange={(value) =>
@@ -205,7 +199,7 @@ export function SkusFilterSheet({
 										<RadioGroupItem value={value} id={`active-${value}`} />
 										<Label
 											htmlFor={`active-${value}`}
-											className="text-sm font-normal cursor-pointer flex-1"
+											className="flex-1 cursor-pointer text-sm font-normal"
 										>
 											{label}
 										</Label>
@@ -222,9 +216,7 @@ export function SkusFilterSheet({
 				<form.Field name="stockStatuses" mode="array">
 					{(field) => (
 						<fieldset className="space-y-3">
-							<legend className="font-medium text-sm text-foreground">
-								Statut du stock
-							</legend>
+							<legend className="text-foreground text-sm font-medium">Statut du stock</legend>
 							<div className="space-y-2">
 								{STOCK_STATUS_OPTIONS.map(({ value, label }) => {
 									const isSelected = field.state.value.includes(value);
@@ -245,7 +237,7 @@ export function SkusFilterSheet({
 											/>
 											<Label
 												htmlFor={`stock-${value}`}
-												className="text-sm font-normal cursor-pointer flex-1"
+												className="flex-1 cursor-pointer text-sm font-normal"
 											>
 												{label}
 											</Label>
@@ -265,17 +257,12 @@ export function SkusFilterSheet({
 						<form.Field name="colorIds" mode="array">
 							{(field) => (
 								<fieldset className="space-y-3">
-									<legend className="font-medium text-sm text-foreground">
-										Couleur
-									</legend>
-									<div className="space-y-2 max-h-48 overflow-y-auto">
+									<legend className="text-foreground text-sm font-medium">Couleur</legend>
+									<div className="max-h-48 space-y-2 overflow-y-auto">
 										{colorOptions.map((color) => {
 											const isSelected = field.state.value.includes(color.id);
 											return (
-												<div
-													key={color.id}
-													className="flex items-center space-x-2"
-												>
+												<div key={color.id} className="flex items-center space-x-2">
 													<Checkbox
 														id={`color-${color.id}`}
 														checked={isSelected}
@@ -283,21 +270,19 @@ export function SkusFilterSheet({
 															if (checked && !isSelected) {
 																field.pushValue(color.id);
 															} else if (!checked && isSelected) {
-																const index = field.state.value.indexOf(
-																	color.id
-																);
+																const index = field.state.value.indexOf(color.id);
 																field.removeValue(index);
 															}
 														}}
 														className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
 													/>
 													<span
-														className="w-4 h-4 rounded-full border border-border shrink-0"
+														className="border-border h-4 w-4 shrink-0 rounded-full border"
 														style={{ backgroundColor: color.hex }}
 													/>
 													<Label
 														htmlFor={`color-${color.id}`}
-														className="text-sm font-normal cursor-pointer flex-1"
+														className="flex-1 cursor-pointer text-sm font-normal"
 													>
 														{color.name}
 													</Label>
@@ -317,17 +302,12 @@ export function SkusFilterSheet({
 					<form.Field name="materialIds" mode="array">
 						{(field) => (
 							<fieldset className="space-y-3">
-								<legend className="font-medium text-sm text-foreground">
-									Matériau
-								</legend>
-								<div className="space-y-2 max-h-48 overflow-y-auto">
+								<legend className="text-foreground text-sm font-medium">Matériau</legend>
+								<div className="max-h-48 space-y-2 overflow-y-auto">
 									{materialOptions.map((material) => {
 										const isSelected = field.state.value.includes(material.id);
 										return (
-											<div
-												key={material.id}
-												className="flex items-center space-x-2"
-											>
+											<div key={material.id} className="flex items-center space-x-2">
 												<Checkbox
 													id={`material-${material.id}`}
 													checked={isSelected}
@@ -335,9 +315,7 @@ export function SkusFilterSheet({
 														if (checked && !isSelected) {
 															field.pushValue(material.id);
 														} else if (!checked && isSelected) {
-															const index = field.state.value.indexOf(
-																material.id
-															);
+															const index = field.state.value.indexOf(material.id);
 															field.removeValue(index);
 														}
 													}}
@@ -345,7 +323,7 @@ export function SkusFilterSheet({
 												/>
 												<Label
 													htmlFor={`material-${material.id}`}
-													className="text-sm font-normal cursor-pointer flex-1"
+													className="flex-1 cursor-pointer text-sm font-normal"
 												>
 													{material.name}
 												</Label>

@@ -11,9 +11,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
+import { Button } from "@/shared/components/ui/button";
 import { GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers";
 import { formatDateShort } from "@/shared/utils/dates";
 import { CheckCircle2, Clock, Mail, XCircle } from "lucide-react";
+import Link from "next/link";
 import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
 export interface SubscribersDataTableProps {
 	subscribersPromise: Promise<GetSubscribersReturn>;
@@ -32,6 +34,11 @@ export async function SubscribersDataTable({
 				icon={Mail}
 				title="Aucun abonne trouve"
 				description="Aucun abonne ne correspond aux criteres de recherche."
+				actionElement={
+					<Button variant="outline" asChild>
+						<Link href="/admin/marketing/newsletter">Reinitialiser la recherche</Link>
+					</Button>
+				}
 			/>
 		);
 	}

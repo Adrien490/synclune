@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 @plugin "tailwindcss-animate";
 
@@ -97,21 +96,11 @@ html {
 	--color-glow-mint: oklch(0.82 0.14 160 / 0.4);
 	--color-glow-yellow: oklch(0.92 0.09 86 / 0.5);
 
-	/* ==========================================
-	   PASTELS DOUX (Bijoux colorés)
-	   ========================================== */
-	--color-pastel-peach: var(--pastel-peach);
-	--color-pastel-lavender: var(--pastel-lavender);
-	--color-pastel-mint: var(--pastel-mint);
-	--color-pastel-blush: var(--pastel-blush);
-	--color-pastel-sky: var(--pastel-sky);
-	--color-pastel-cream: var(--pastel-cream);
-
 	--spacing-34: 8.5rem;
 	--spacing-38: 9.5rem;
 
 	--radius: 0.5rem;
-	--radius-sm: 0.5rem;
+	--radius-sm: 0.375rem;
 	--radius-md: 0.625rem;
 	--radius-lg: 1rem;
 	--radius-xl: 1.5rem;
@@ -179,6 +168,10 @@ html {
 	--destructive-foreground: oklch(1 0 0);
 
 	--success: oklch(0.52 0.14 145);
+	--success-foreground: oklch(1 0 0);
+
+	--warning: oklch(0.75 0.15 85);
+	--warning-foreground: oklch(0.1 0 0);
 
 	--border: oklch(0.92 0.01 270);
 	--input: oklch(0.94 0.01 270);
@@ -403,11 +396,19 @@ textarea {
 	/* Masque pour carousel avec fondu sur les bords */
 	/* Mobile: fondu visible à droite pour indiquer qu'il y a plus de contenu */
 	.mask-carousel-edges {
+		-webkit-mask-image: linear-gradient(to right, black 0%, black 70%, transparent 95%);
 		mask-image: linear-gradient(to right, black 0%, black 70%, transparent 95%);
 	}
 
 	@media (min-width: 640px) {
 		.mask-carousel-edges {
+			-webkit-mask-image: linear-gradient(
+				to right,
+				transparent 0%,
+				black 3%,
+				black 97%,
+				transparent 100%
+			);
 			mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
 		}
 	}
@@ -852,6 +853,25 @@ textarea {
 		content-visibility: auto;
 		contain-intrinsic-size: auto 600px;
 	}
+
+	/* ==========================================
+	   DRIFT — Offline page decorative shapes
+	   ========================================== */
+	@keyframes drift {
+		0%,
+		100% {
+			transform: translate(0, 0) rotate(0deg);
+		}
+		25% {
+			transform: translate(10px, -15px) rotate(5deg);
+		}
+		50% {
+			transform: translate(-5px, 10px) rotate(-3deg);
+		}
+		75% {
+			transform: translate(15px, 5px) rotate(3deg);
+		}
+	}
 }
 
 .dark {
@@ -873,6 +893,11 @@ textarea {
 	--destructive-foreground: oklch(0.95 0.005 270);
 	--border: oklch(0.18 0.015 270);
 	--input: oklch(0.15 0.015 270);
+	--primary-text: oklch(0.75 0.12 340.78); /* Rose clair pour texte sur fond dark - WCAG AA */
+	--success: oklch(0.62 0.14 145); /* Vert plus clair pour dark mode */
+	--success-foreground: oklch(1 0 0);
+	--warning: oklch(0.78 0.15 85); /* Ambre plus clair pour dark mode */
+	--warning-foreground: oklch(0.1 0 0);
 	--ring: oklch(0.8593 0.097 340.78);
 	--chart-1: oklch(0.8593 0.097 340.78);
 	--chart-2: oklch(0.9221 0.0871 86.29);
@@ -912,31 +937,29 @@ textarea {
    Lightbox Premium Styles (yet-another-react-lightbox)
    ============================================ */
 
-.synclune-lightbox {
-	/* Compteur d'images stylisé */
-	& .yarl__counter {
-		font-family: var(--font-geist-sans), system-ui, sans-serif;
-		font-size: 14px;
-		font-weight: 500;
-		color: rgba(255, 255, 255, 0.9);
-		background: rgba(0, 0, 0, 0.75);
-		padding: 8px 16px;
-		border-radius: 9999px;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-	}
+/* Compteur d'images stylisé */
+.synclune-lightbox .yarl__counter {
+	font-family: var(--font-geist-sans), system-ui, sans-serif;
+	font-size: 14px;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.9);
+	background: rgba(0, 0, 0, 0.75);
+	padding: 8px 16px;
+	border-radius: 9999px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-	@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-		& .yarl__counter {
-			background: rgba(0, 0, 0, 0.6);
-			-webkit-backdrop-filter: blur(8px);
-			backdrop-filter: blur(8px);
-		}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+	.synclune-lightbox .yarl__counter {
+		background: rgba(0, 0, 0, 0.6);
+		-webkit-backdrop-filter: blur(8px);
+		backdrop-filter: blur(8px);
 	}
+}
 
-	/* Animation d'ouverture */
-	& .yarl__slide {
-		animation: lightbox-slide-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-	}
+/* Animation d'ouverture */
+.synclune-lightbox .yarl__slide {
+	animation: lightbox-slide-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes lightbox-slide-in {
@@ -974,27 +997,34 @@ textarea {
 
 [data-sonner-toast] {
 	background: var(--card) !important;
-	border: 1px solid oklch(from var(--border) l c h / 0.4) !important;
+	border: 1px solid oklch(0.92 0.01 270 / 0.4) !important;
 	border-radius: var(--radius-xl) !important;
 	box-shadow:
-		0 4px 12px -2px oklch(from var(--primary) l c h / 0.12),
-		0 2px 6px -2px oklch(from var(--primary) l c h / 0.08) !important;
+		0 4px 12px -2px oklch(0.8593 0.097 340.78 / 0.12),
+		0 2px 6px -2px oklch(0.8593 0.097 340.78 / 0.08) !important;
 	padding: 0.875rem 2.5rem 0.875rem 1rem !important;
 	gap: 0.75rem !important;
 }
 
 @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
 	[data-sonner-toast] {
-		background: oklch(from var(--card) l c h / 0.95) !important;
+		background: oklch(1 0 0 / 0.95) !important;
 		-webkit-backdrop-filter: blur(4px);
 		backdrop-filter: blur(4px);
 	}
 }
 
 .dark [data-sonner-toast] {
+	border-color: oklch(0.18 0.015 270 / 0.4) !important;
 	box-shadow:
-		0 4px 12px -2px oklch(from var(--primary) l c h / 0.18),
-		0 2px 6px -2px oklch(from var(--primary) l c h / 0.12) !important;
+		0 4px 12px -2px oklch(0.8593 0.097 340.78 / 0.18),
+		0 2px 6px -2px oklch(0.8593 0.097 340.78 / 0.12) !important;
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+	.dark [data-sonner-toast] {
+		background: oklch(0.12 0.015 270 / 0.95) !important;
+	}
 }
 
 [data-sonner-toast] [data-title] {
@@ -1071,11 +1101,11 @@ textarea {
 
 /* Indicateur visuel de swipe (ombre directionnelle) */
 [data-sonner-toast][data-swiping="true"][data-swipe-direction="right"] {
-	box-shadow: -4px 0 12px -4px oklch(from var(--primary) l c h / 0.2) !important;
+	box-shadow: -4px 0 12px -4px oklch(0.8593 0.097 340.78 / 0.2) !important;
 }
 
 [data-sonner-toast][data-swiping="true"][data-swipe-direction="left"] {
-	box-shadow: 4px 0 12px -4px oklch(from var(--primary) l c h / 0.2) !important;
+	box-shadow: 4px 0 12px -4px oklch(0.8593 0.097 340.78 / 0.2) !important;
 }
 
 /* Descriptions tronquées sur mobile */
@@ -1162,7 +1192,7 @@ textarea {
 	height: 1rem;
 	border-radius: 2px;
 	overflow: hidden;
-	box-shadow: 0 0 0 1px oklch(from var(--border) l c h / 0.5);
+	box-shadow: 0 0 0 1px oklch(0.92 0.01 270 / 0.5);
 }
 
 .PhoneInput--synclune .PhoneInputCountryIcon--border {
@@ -1220,5 +1250,9 @@ textarea {
 
 /* Dark mode */
 .dark .PhoneInput--synclune .PhoneInputCountry {
-	background: oklch(from var(--input) l c h / 0.3);
+	background: oklch(0.15 0.015 270 / 0.3);
+}
+
+.dark .PhoneInput--synclune .PhoneInputCountryIcon {
+	box-shadow: 0 0 0 1px oklch(0.18 0.015 270 / 0.5);
 }

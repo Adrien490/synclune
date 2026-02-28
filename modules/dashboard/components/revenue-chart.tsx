@@ -15,7 +15,10 @@ import {
 	ChartTooltipContent,
 	type ChartConfig,
 } from "@/shared/components/ui/chart";
-import type { GetRevenueChartReturn, RevenueDataPoint } from "@/modules/dashboard/data/get-revenue-chart";
+import type {
+	GetRevenueChartReturn,
+	RevenueDataPoint,
+} from "@/modules/dashboard/data/get-revenue-chart";
 
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import { ChartEmpty } from "./chart-empty";
@@ -53,7 +56,7 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 	const hasRevenue = formattedData.some((item) => item.revenue > 0);
 
 	return (
-		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
+		<Card className={`${CHART_STYLES.card} can-hover:hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
 				<CardTitle className={CHART_STYLES.title}>Revenus des 30 derniers jours</CardTitle>
 				<CardDescription className={CHART_STYLES.description}>
@@ -66,51 +69,55 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 				) : (
 					<div role="figure" aria-label="Graphique des revenus sur 30 jours">
 						<span className="sr-only">
-							Graphique en ligne montrant l'evolution du chiffre d'affaires quotidien sur les 30 derniers jours
+							Graphique en ligne montrant l'evolution du chiffre d'affaires quotidien sur les 30
+							derniers jours
 						</span>
 						<ChartScrollContainer>
-							<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
-								<LineChart
-								accessibilityLayer
-								data={formattedData}
-								margin={{ top: 5, right: 10, bottom: 5, left: -10 }}
+							<ChartContainer
+								config={chartConfig}
+								className={`${CHART_STYLES.height.responsive} w-full`}
 							>
-								<CartesianGrid vertical={false} />
-								<XAxis
-									dataKey="date"
-									tickLine={false}
-									axisLine={false}
-									tickMargin={8}
-									interval="preserveStartEnd"
-									tick={{ fontSize: 11 }}
-									minTickGap={30}
-								/>
-								<ChartTooltip
-									content={
-										<ChartTooltipContent
-											labelFormatter={(value) => `Date: ${value}`}
-											formatter={(value) => `${Number(value).toFixed(2)} €`}
-										/>
-									}
-								/>
-								<ChartLegend
-									content={(props) => (
-										<ChartLegendContent
-											payload={props.payload}
-											verticalAlign={props.verticalAlign}
-										/>
-									)}
-								/>
-								<Line
-									dataKey="revenue"
-									type="monotone"
-									stroke="var(--color-revenue)"
-									strokeWidth={2}
-									dot={false}
-								/>
-							</LineChart>
-						</ChartContainer>
-					</ChartScrollContainer>
+								<LineChart
+									accessibilityLayer
+									data={formattedData}
+									margin={{ top: 5, right: 10, bottom: 5, left: -10 }}
+								>
+									<CartesianGrid vertical={false} />
+									<XAxis
+										dataKey="date"
+										tickLine={false}
+										axisLine={false}
+										tickMargin={8}
+										interval="preserveStartEnd"
+										tick={{ fontSize: 11 }}
+										minTickGap={30}
+									/>
+									<ChartTooltip
+										content={
+											<ChartTooltipContent
+												labelFormatter={(value) => `Date: ${value}`}
+												formatter={(value) => `${Number(value).toFixed(2)} €`}
+											/>
+										}
+									/>
+									<ChartLegend
+										content={(props) => (
+											<ChartLegendContent
+												payload={props.payload}
+												verticalAlign={props.verticalAlign}
+											/>
+										)}
+									/>
+									<Line
+										dataKey="revenue"
+										type="monotone"
+										stroke="var(--color-revenue)"
+										strokeWidth={2}
+										dot={false}
+									/>
+								</LineChart>
+							</ChartContainer>
+						</ChartScrollContainer>
 					</div>
 				)}
 			</CardContent>

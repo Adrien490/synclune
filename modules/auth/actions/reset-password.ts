@@ -6,10 +6,11 @@ import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { resetPasswordSchema } from "../schemas/auth.schemas";
 import { checkArcjetProtection } from "../utils/arcjet-protection";
+import { checkPasswordBreached } from "../services/hibp.service";
 
 export const resetPassword = async (
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
@@ -30,18 +31,26 @@ export const resetPassword = async (
 
 		const { password, token } = validation.data;
 
+		// Check new password against known breaches (HIBP k-anonymity)
+		const breachCount = await checkPasswordBreached(password);
+		if (breachCount > 0) {
+			return error(
+				"Ce mot de passe a été compromis dans une fuite de données. Veuillez en choisir un autre.",
+			);
+		}
+
 		await auth.api.resetPassword({
 			body: { newPassword: password, token },
 		});
 
 		return success(
-			"Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter."
+			"Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.",
 		);
 	} catch (err: unknown) {
 		if (err instanceof Error) {
 			if (err.message.includes("Invalid token") || err.message.includes("expired")) {
 				return error(
-					"Le lien de réinitialisation est invalide ou a expiré. Veuillez faire une nouvelle demande."
+					"Le lien de réinitialisation est invalide ou a expiré. Veuillez faire une nouvelle demande.",
 				);
 			}
 		}

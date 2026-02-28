@@ -28,7 +28,7 @@ export function ColorPickerSelection({ className, ...props }: ColorPickerSelecti
 	// Support touch et pointer events
 	const getEventCoordinates = (event: PointerEvent | TouchEvent) => {
 		if ("touches" in event && event.touches.length > 0) {
-			return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+			return { x: event.touches[0]!.clientX, y: event.touches[0]!.clientY };
 		}
 		if ("clientX" in event) {
 			return { x: event.clientX, y: event.clientY };

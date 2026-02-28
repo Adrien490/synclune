@@ -1105,6 +1105,36 @@ model WebhookEvent {
 }
 
 // ============================================================================
+// AUDIT LOG (Admin mutations tracking - OWASP A09)
+// ============================================================================
+
+/// Audit trail for admin mutations
+/// Tracks who did what, when, and on which resource
+/// Essential for incident response and accountability
+model AuditLog {
+  id String @id @default(cuid())
+
+  // Admin who performed the action
+  adminId   String  @db.VarChar(30)
+  adminName String  @db.VarChar(100) // Denormalized for persistence if admin deleted
+
+  // Action performed
+  action     String @db.VarChar(50) // e.g. "product.create", "order.cancel", "refund.process"
+  targetType String @db.VarChar(30) // e.g. "product", "order", "refund", "sku", "discount"
+  targetId   String @db.VarChar(30) // ID of the affected resource
+
+  // Additional context
+  metadata Json? // Flexible JSON for action-specific data (e.g. previous values, reason)
+
+  createdAt DateTime @default(now())
+
+  @@index([adminId, createdAt(sort: Desc)])
+  @@index([targetType, targetId])
+  @@index([action, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+}
+
+// ============================================================================
 // DEMANDES DE PERSONNALISATION
 // ============================================================================
 

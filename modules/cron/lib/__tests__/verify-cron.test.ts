@@ -92,7 +92,7 @@ describe("verifyCronRequest", () => {
 				await verifyCronRequest();
 
 				expect(console.error).toHaveBeenCalledWith(
-					"[CRON] CRON_SECRET environment variable is not set"
+					"[CRON] CRON_SECRET environment variable is not set",
 				);
 			});
 
@@ -187,7 +187,8 @@ describe("verifyCronRequest", () => {
 				await verifyCronRequest();
 
 				expect(console.warn).toHaveBeenCalledWith(
-					"[CRON] Unauthorized cron request attempt"
+					"[CRON] Unauthorized cron request attempt",
+					expect.objectContaining({ ip: expect.any(String) }),
 				);
 			});
 

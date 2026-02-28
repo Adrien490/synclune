@@ -82,7 +82,7 @@ describe("GET /api/cron/cleanup-orphan-media", () => {
 		mockCleanupOrphanMedia.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -134,14 +134,14 @@ describe("GET /api/cron/cleanup-orphan-media", () => {
 				expect.objectContaining({
 					job: "cleanup-orphan-media",
 				}),
-				1000
+				1000,
 			);
 		});
 
 		it("includes the job name 'cleanup-orphan-media' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("cleanup-orphan-media");
 		});
 
@@ -150,7 +150,7 @@ describe("GET /api/cron/cleanup-orphan-media", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(1111);
 		});
 
@@ -171,7 +171,7 @@ describe("GET /api/cron/cleanup-orphan-media", () => {
 				expect.objectContaining({
 					job: "cleanup-orphan-media",
 					errors: 1,
-				})
+				}),
 			);
 		});
 
@@ -183,7 +183,7 @@ describe("GET /api/cron/cleanup-orphan-media", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ error: "UploadThing API error" }),
-				})
+				}),
 			);
 		});
 
@@ -195,7 +195,7 @@ describe("GET /api/cron/cleanup-orphan-media", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ error: "string error value" }),
-				})
+				}),
 			);
 		});
 

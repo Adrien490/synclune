@@ -7,29 +7,22 @@
  * - Grille : grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6
  * - Cards : ProductCard structure
  */
-export function RecentlyViewedProductsSkeleton({
-	limit = 4,
-}: {
-	limit?: number
-}) {
+export function RecentlyViewedProductsSkeleton({ limit = 4 }: { limit?: number }) {
 	return (
-		<aside
-			className="space-y-6"
-			aria-label="Chargement des produits recemment vus"
-		>
+		<aside className="space-y-6" aria-label="Chargement des produits recemment vus">
 			{/* En-tete de section */}
 			<div className="space-y-2">
-				<div className="h-8 w-48 bg-muted animate-pulse rounded" />
+				<div className="bg-muted h-8 w-48 animate-pulse rounded" />
 			</div>
 
 			{/* Grille de produits */}
-			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+			<div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
 				{[...Array(limit)].map((_, index) => (
 					<ProductCardSkeleton key={index} />
 				))}
 			</div>
 		</aside>
-	)
+	);
 }
 
 /**
@@ -37,21 +30,21 @@ export function RecentlyViewedProductsSkeleton({
  */
 function ProductCardSkeleton() {
 	return (
-		<div className="product-card-skeleton bg-white rounded-lg shadow-sm overflow-hidden">
+		<div className="product-card-skeleton bg-card overflow-hidden rounded-lg shadow-sm">
 			{/* Image - aspect-4/5 full-bleed avec rounded-t-lg */}
-			<div className="aspect-4/5 bg-muted animate-pulse" />
+			<div className="bg-muted aspect-3/4 animate-pulse sm:aspect-4/5" />
 
 			{/* Contenu - p-4 flex flex-col gap-2 comme ProductCard */}
 			<div className="flex flex-col gap-2 p-4">
 				{/* Titre - line-clamp-2 text-lg (2 lignes) */}
 				<div className="space-y-2">
-					<div className="h-6 bg-muted animate-pulse rounded" />
-					<div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
+					<div className="bg-muted h-6 animate-pulse rounded" />
+					<div className="bg-muted h-6 w-3/4 animate-pulse rounded" />
 				</div>
 
 				{/* Prix */}
-				<div className="h-5 w-20 bg-muted animate-pulse rounded" />
+				<div className="bg-muted h-5 w-20 animate-pulse rounded" />
 			</div>
 		</div>
-	)
+	);
 }

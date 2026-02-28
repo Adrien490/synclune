@@ -4,13 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockGetSession,
-	mockIsAdmin,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockGetSession, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findFirst: vi.fn() },
 	},
@@ -154,7 +148,7 @@ describe("getOrder", () => {
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ orderNumber: "ORD-001" }),
-			})
+			}),
 		);
 		expect(result).toEqual(makeOrder());
 	});
@@ -181,111 +175,81 @@ describe("fetchOrder", () => {
 	});
 
 	it("uses ADMIN_ORDERS_LIST cache tag for admin", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: true, userId: "user-1" }
-		);
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: true, userId: "user-1" });
 
 		expect(mockCacheTag).toHaveBeenCalledWith("admin-orders-list");
 	});
 
 	it("uses USER_ORDERS cache tag for non-admin user", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: false, userId: "user-1" }
-		);
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: false, userId: "user-1" });
 
 		expect(mockCacheTag).toHaveBeenCalledWith("orders-user-user-1");
 	});
 
 	it("does not call cacheTag when not admin and no userId", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: false, userId: undefined }
-		);
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: false, userId: undefined });
 
 		expect(mockCacheTag).not.toHaveBeenCalled();
 	});
 
 	it("filters by userId for non-admin user", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: false, userId: "user-1" }
-		);
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: false, userId: "user-1" });
 
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-1" }),
-			})
+			}),
 		);
 	});
 
 	it("does not filter by userId for admin", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: true, userId: "user-1" }
-		);
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: true, userId: "user-1" });
 
-		const call = mockPrisma.order.findFirst.mock.calls[0][0];
+		const call = mockPrisma.order.findFirst.mock.calls[0]![0];
 		expect(call.where).not.toHaveProperty("userId");
 	});
 
 	it("includes notDeleted filter (deletedAt: null) in where clause", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: true, userId: "user-1" }
-		);
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: true, userId: "user-1" });
 
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ deletedAt: null }),
-			})
+			}),
 		);
 	});
 
 	it("includes orderNumber in where clause", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-999" },
-			{ admin: true, userId: "user-1" }
-		);
+		await fetchOrder({ orderNumber: "ORD-999" }, { admin: true, userId: "user-1" });
 
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ orderNumber: "ORD-999" }),
-			})
+			}),
 		);
 	});
 
 	it("returns null on DB error", async () => {
 		mockPrisma.order.findFirst.mockRejectedValue(new Error("DB connection failed"));
 
-		const result = await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: true, userId: "user-1" }
-		);
+		const result = await fetchOrder({ orderNumber: "ORD-001" }, { admin: true, userId: "user-1" });
 
 		expect(result).toBeNull();
 	});
 
 	it("calls cacheLife with dashboard profile", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: true, userId: "user-1" }
-		);
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: true, userId: "user-1" });
 
 		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
 	});
 
 	it("uses GET_ORDER_SELECT for the DB query", async () => {
-		await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: false, userId: "user-1" }
-		);
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: false, userId: "user-1" });
 
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, orderNumber: true },
-			})
+			}),
 		);
 	});
 
@@ -293,10 +257,7 @@ describe("fetchOrder", () => {
 		const order = makeOrder({ orderNumber: "ORD-001" });
 		mockPrisma.order.findFirst.mockResolvedValue(order);
 
-		const result = await fetchOrder(
-			{ orderNumber: "ORD-001" },
-			{ admin: false, userId: "user-1" }
-		);
+		const result = await fetchOrder({ orderNumber: "ORD-001" }, { admin: false, userId: "user-1" });
 
 		expect(result).toEqual(order);
 	});
@@ -306,7 +267,7 @@ describe("fetchOrder", () => {
 
 		const result = await fetchOrder(
 			{ orderNumber: "ORD-MISSING" },
-			{ admin: false, userId: "user-1" }
+			{ admin: false, userId: "user-1" },
 		);
 
 		expect(result).toBeNull();

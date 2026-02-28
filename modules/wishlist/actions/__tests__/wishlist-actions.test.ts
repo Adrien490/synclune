@@ -149,10 +149,7 @@ describe("addToWishlist", () => {
 		mockGetSession.mockResolvedValue(null);
 		mockGetOrCreateWishlistSessionId.mockResolvedValue(null);
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
@@ -160,10 +157,7 @@ describe("addToWishlist", () => {
 	it("should return validation error with invalid productId", async () => {
 		setupAuthenticatedUser();
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: "invalid" })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: "invalid" }));
 
 		expect([ActionStatus.ERROR, ActionStatus.VALIDATION_ERROR]).toContain(result.status);
 	});
@@ -172,10 +166,7 @@ describe("addToWishlist", () => {
 		setupAuthenticatedUser();
 		mockPrisma.product.findUnique.mockResolvedValue(null);
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("disponible");
@@ -188,10 +179,7 @@ describe("addToWishlist", () => {
 			status: "DRAFT",
 		});
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
@@ -202,14 +190,13 @@ describe("addToWishlist", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(500);
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("pleine");
@@ -221,16 +208,15 @@ describe("addToWishlist", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(10);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue(null);
 		mockPrisma.wishlistItem.create.mockResolvedValue({ id: "item-1" });
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Ajoute");
@@ -242,17 +228,16 @@ describe("addToWishlist", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(10);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue({
 			id: "existing-item",
 		});
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Deja");
@@ -264,16 +249,15 @@ describe("addToWishlist", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(0);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue(null);
 		mockPrisma.wishlistItem.create.mockResolvedValue({ id: "item-1" });
 
-		await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(mockUpdateTag).toHaveBeenCalledTimes(3);
 	});
@@ -284,16 +268,15 @@ describe("addToWishlist", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "guest-wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(0);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue(null);
 		mockPrisma.wishlistItem.create.mockResolvedValue({ id: "item-1" });
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Ajoute");
@@ -305,14 +288,10 @@ describe("addToWishlist", () => {
 			error: {
 				status: ActionStatus.ERROR,
 				message: "Trop de requetes",
-				data: { retryAfter: 60 },
 			},
 		});
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Trop de requetes");
@@ -328,13 +307,10 @@ describe("addToWishlist", () => {
 			new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
 				code: "P2002",
 				clientVersion: "6.0.0",
-			})
+			}),
 		);
 
-		const result = await addToWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Deja");
@@ -357,7 +333,7 @@ describe("removeFromWishlist", () => {
 
 		const result = await removeFromWishlist(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -366,10 +342,7 @@ describe("removeFromWishlist", () => {
 	it("should return validation error with invalid productId", async () => {
 		setupAuthenticatedUser();
 
-		const result = await removeFromWishlist(
-			undefined,
-			createFormData({ productId: "invalid" })
-		);
+		const result = await removeFromWishlist(undefined, createFormData({ productId: "invalid" }));
 
 		expect([ActionStatus.ERROR, ActionStatus.VALIDATION_ERROR]).toContain(result.status);
 	});
@@ -380,7 +353,7 @@ describe("removeFromWishlist", () => {
 
 		const result = await removeFromWishlist(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -390,13 +363,15 @@ describe("removeFromWishlist", () => {
 	it("should successfully remove an item", async () => {
 		setupAuthenticatedUser();
 		mockPrisma.wishlist.findFirst.mockResolvedValue({ id: "wishlist-1" });
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.deleteMany.mockResolvedValue({ count: 1 });
 		mockPrisma.wishlist.update.mockResolvedValue({});
 
 		const result = await removeFromWishlist(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -406,13 +381,15 @@ describe("removeFromWishlist", () => {
 	it("should return item not found message when deleteMany count is 0", async () => {
 		setupAuthenticatedUser();
 		mockPrisma.wishlist.findFirst.mockResolvedValue({ id: "wishlist-1" });
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.deleteMany.mockResolvedValue({ count: 0 });
 		mockPrisma.wishlist.update.mockResolvedValue({});
 
 		const result = await removeFromWishlist(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -422,13 +399,15 @@ describe("removeFromWishlist", () => {
 	it("should not require product to be PUBLIC (allows removing archived products)", async () => {
 		setupAuthenticatedUser();
 		mockPrisma.wishlist.findFirst.mockResolvedValue({ id: "wishlist-1" });
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.deleteMany.mockResolvedValue({ count: 1 });
 		mockPrisma.wishlist.update.mockResolvedValue({});
 
 		const result = await removeFromWishlist(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		// Should NOT call product.findUnique (pre-check was removed)
@@ -439,14 +418,13 @@ describe("removeFromWishlist", () => {
 	it("should invalidate cache tags after success", async () => {
 		setupAuthenticatedUser();
 		mockPrisma.wishlist.findFirst.mockResolvedValue({ id: "wishlist-1" });
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.deleteMany.mockResolvedValue({ count: 1 });
 		mockPrisma.wishlist.update.mockResolvedValue({});
 
-		await removeFromWishlist(
-			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
-		);
+		await removeFromWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
 		expect(mockUpdateTag).toHaveBeenCalledTimes(3);
 	});
@@ -454,13 +432,15 @@ describe("removeFromWishlist", () => {
 	it("should successfully remove an item as guest", async () => {
 		setupGuestUser();
 		mockPrisma.wishlist.findFirst.mockResolvedValue({ id: "guest-wishlist-1" });
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.deleteMany.mockResolvedValue({ count: 1 });
 		mockPrisma.wishlist.update.mockResolvedValue({});
 
 		const result = await removeFromWishlist(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -473,13 +453,12 @@ describe("removeFromWishlist", () => {
 			error: {
 				status: ActionStatus.ERROR,
 				message: "Trop de requetes",
-				data: { retryAfter: 60 },
 			},
 		});
 
 		const result = await removeFromWishlist(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -503,7 +482,7 @@ describe("toggleWishlistItem", () => {
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -514,7 +493,7 @@ describe("toggleWishlistItem", () => {
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: "not-a-cuid2" })
+			createFormData({ productId: "not-a-cuid2" }),
 		);
 
 		expect([ActionStatus.ERROR, ActionStatus.VALIDATION_ERROR]).toContain(result.status);
@@ -529,7 +508,7 @@ describe("toggleWishlistItem", () => {
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -541,7 +520,9 @@ describe("toggleWishlistItem", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(5);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue(null);
@@ -550,14 +531,12 @@ describe("toggleWishlistItem", () => {
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Ajoute");
-		expect(result.data).toEqual(
-			expect.objectContaining({ action: "added" })
-		);
+		expect(result.data).toEqual(expect.objectContaining({ action: "added" }));
 	});
 
 	it("should remove item when already in wishlist", async () => {
@@ -566,7 +545,9 @@ describe("toggleWishlistItem", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(5);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue({
@@ -578,14 +559,12 @@ describe("toggleWishlistItem", () => {
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Retire");
-		expect(result.data).toEqual(
-			expect.objectContaining({ action: "removed" })
-		);
+		expect(result.data).toEqual(expect.objectContaining({ action: "removed" }));
 	});
 
 	it("should return error when wishlist is full and trying to add", async () => {
@@ -594,14 +573,16 @@ describe("toggleWishlistItem", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(500);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue(null);
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -614,7 +595,9 @@ describe("toggleWishlistItem", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "guest-wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(0);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue(null);
@@ -623,14 +606,12 @@ describe("toggleWishlistItem", () => {
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Ajoute");
-		expect(result.data).toEqual(
-			expect.objectContaining({ action: "added" })
-		);
+		expect(result.data).toEqual(expect.objectContaining({ action: "added" }));
 	});
 
 	it("should successfully toggle (remove) as guest", async () => {
@@ -639,7 +620,9 @@ describe("toggleWishlistItem", () => {
 			id: VALID_PRODUCT_ID,
 			status: "PUBLIC",
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "guest-wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(5);
 		mockPrisma.wishlistItem.findFirst.mockResolvedValue({
@@ -651,14 +634,12 @@ describe("toggleWishlistItem", () => {
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Retire");
-		expect(result.data).toEqual(
-			expect.objectContaining({ action: "removed" })
-		);
+		expect(result.data).toEqual(expect.objectContaining({ action: "removed" }));
 	});
 
 	it("should return error when rate limited", async () => {
@@ -667,13 +648,12 @@ describe("toggleWishlistItem", () => {
 			error: {
 				status: ActionStatus.ERROR,
 				message: "Trop de requetes",
-				data: { retryAfter: 60 },
 			},
 		});
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -690,12 +670,12 @@ describe("toggleWishlistItem", () => {
 			new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
 				code: "P2002",
 				clientVersion: "6.0.0",
-			})
+			}),
 		);
 
 		const result = await toggleWishlistItem(
 			undefined,
-			createFormData({ productId: VALID_PRODUCT_ID })
+			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -755,9 +735,7 @@ describe("mergeWishlists", () => {
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual(
-			expect.objectContaining({ addedItems: 0, skippedItems: 0 })
-		);
+		expect(result.data).toEqual(expect.objectContaining({ addedItems: 0, skippedItems: 0 }));
 	});
 
 	it("should return success with 0 items when guest wishlist is empty", async () => {
@@ -814,16 +792,16 @@ describe("mergeWishlists", () => {
 			items: [{ productId: "prod-existing" }],
 		});
 
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 2 });
 		mockPrisma.wishlist.delete.mockResolvedValue({});
 
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual(
-			expect.objectContaining({ addedItems: 2 })
-		);
+		expect(result.data).toEqual(expect.objectContaining({ addedItems: 2 }));
 		// Should only add prod-1 and prod-2 (prod-3 is ARCHIVED, prod-existing is duplicate, null is invalid)
 		expect(mockPrisma.wishlistItem.createMany).toHaveBeenCalledWith({
 			data: [
@@ -853,7 +831,9 @@ describe("mergeWishlists", () => {
 			id: "new-user-wl",
 			items: [],
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 1 });
 		mockPrisma.wishlist.delete.mockResolvedValue({});
 
@@ -863,7 +843,7 @@ describe("mergeWishlists", () => {
 		expect(mockPrisma.wishlist.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ userId: VALID_USER_ID }),
-			})
+			}),
 		);
 	});
 
@@ -894,19 +874,19 @@ describe("mergeWishlists", () => {
 			items: userItems,
 		});
 
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 50 });
 		mockPrisma.wishlist.delete.mockResolvedValue({});
 
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual(
-			expect.objectContaining({ addedItems: 50 })
-		);
+		expect(result.data).toEqual(expect.objectContaining({ addedItems: 50 }));
 
 		// Verify createMany was called with exactly 50 items
-		const createManyCall = mockPrisma.wishlistItem.createMany.mock.calls[0][0];
+		const createManyCall = mockPrisma.wishlistItem.createMany.mock.calls[0]![0];
 		expect(createManyCall.data).toHaveLength(50);
 	});
 
@@ -936,15 +916,15 @@ describe("mergeWishlists", () => {
 			items: userItems,
 		});
 
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlist.delete.mockResolvedValue({});
 
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual(
-			expect.objectContaining({ addedItems: 0 })
-		);
+		expect(result.data).toEqual(expect.objectContaining({ addedItems: 0 }));
 		// createMany should NOT be called since 0 items to add
 		expect(mockPrisma.wishlistItem.createMany).not.toHaveBeenCalled();
 	});
@@ -968,7 +948,9 @@ describe("mergeWishlists", () => {
 			id: "user-wl",
 			items: [],
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 1 });
 		mockPrisma.wishlist.delete.mockResolvedValue({});
 
@@ -998,20 +980,16 @@ describe("mergeWishlists", () => {
 			id: "user-wl",
 			items: [],
 		});
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 1 });
 		mockPrisma.wishlist.delete.mockResolvedValue({});
 
 		await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		// Should call getWishlistInvalidationTags for both guest and user
-		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith(
-			undefined,
-			VALID_SESSION_ID
-		);
-		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith(
-			VALID_USER_ID,
-			undefined
-		);
+		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith(undefined, VALID_SESSION_ID);
+		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith(VALID_USER_ID, undefined);
 	});
 });

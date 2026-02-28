@@ -74,13 +74,10 @@ function SectionHeader({
 	onReset?: () => void;
 }) {
 	return (
-		<div className="flex items-center gap-2 flex-1">
+		<div className="flex flex-1 items-center gap-2">
 			<span>{label}</span>
 			{count !== undefined && count > 0 && (
-				<Badge
-					variant="secondary"
-					className="h-5 px-1.5 text-xs font-semibold"
-				>
+				<Badge variant="secondary" className="h-5 px-1.5 text-xs font-semibold">
 					{badgeContent ?? count}
 				</Badge>
 			)}
@@ -91,32 +88,26 @@ function SectionHeader({
 						e.stopPropagation();
 						onReset();
 					}}
-					className="ml-auto p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto rounded-sm p-1 transition-colors"
 					aria-label={`Effacer le filtre ${label}`}
 				>
-					<X className="w-3 h-3" />
+					<X className="h-3 w-3" />
 				</button>
 			)}
 		</div>
 	);
 }
 
-function SectionSearch({
-	value,
-	onChange,
-}: {
-	value: string;
-	onChange: (value: string) => void;
-}) {
+function SectionSearch({ value, onChange }: { value: string; onChange: (value: string) => void }) {
 	return (
 		<div className="relative mb-2">
-			<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+			<Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
 			<Input
 				type="text"
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				placeholder="Rechercher..."
-				className="h-8 text-xs pl-8 pr-3"
+				className="h-8 pr-3 pl-8 text-xs"
 			/>
 		</div>
 	);
@@ -208,26 +199,20 @@ export function ProductFilterSheet({
 	const { hasActiveFilters, activeFiltersCount } = countActiveFilters(searchParams);
 
 	// Sort colors and materials by count (descending)
-	const sortedColors = [...colors].sort(
-		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0)
-	);
+	const sortedColors = [...colors].sort((a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0));
 	const sortedMaterials = [...materials].sort(
-		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0)
+		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0),
 	);
 	const sortedProductTypes = [...productTypes].sort(
-		(a, b) => (b._count?.products ?? 0) - (a._count?.products ?? 0)
+		(a, b) => (b._count?.products ?? 0) - (a._count?.products ?? 0),
 	);
 
 	// Filter lists by search term
 	const filteredColors = colorSearch
-		? sortedColors.filter((c) =>
-				c.name.toLowerCase().includes(colorSearch.toLowerCase())
-			)
+		? sortedColors.filter((c) => c.name.toLowerCase().includes(colorSearch.toLowerCase()))
 		: sortedColors;
 	const filteredMaterials = materialSearch
-		? sortedMaterials.filter((m) =>
-				m.name.toLowerCase().includes(materialSearch.toLowerCase())
-			)
+		? sortedMaterials.filter((m) => m.name.toLowerCase().includes(materialSearch.toLowerCase()))
 		: sortedMaterials;
 
 	// Default open sections: types + price + any section with active filters
@@ -261,7 +246,7 @@ export function ProductFilterSheet({
 			hideTrigger
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
-			onApply={() => form.handleSubmit()}
+			onApply={() => void form.handleSubmit()}
 			onClearAll={clearAllFilters}
 			isPending={isPending}
 			title="Filtres"
@@ -271,7 +256,7 @@ export function ProductFilterSheet({
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 			>
 				<Accordion
@@ -295,9 +280,7 @@ export function ProductFilterSheet({
 									<AccordionContent>
 										<div className="space-y-1">
 											{sortedProductTypes.map((type) => {
-												const isSelected = field.state.value.includes(
-													type.slug
-												);
+												const isSelected = field.state.value.includes(type.slug);
 												return (
 													<CheckboxFilterItem
 														key={type.slug}
@@ -307,9 +290,7 @@ export function ProductFilterSheet({
 															if (checked && !isSelected) {
 																field.pushValue(type.slug);
 															} else if (!checked && isSelected) {
-																const index = field.state.value.indexOf(
-																	type.slug
-																);
+																const index = field.state.value.indexOf(type.slug);
 																field.removeValue(index);
 															}
 														}}
@@ -330,8 +311,7 @@ export function ProductFilterSheet({
 					<form.Field name="priceRange">
 						{(field) => {
 							const hasCustomPrice =
-								field.state.value[0] !== 0 ||
-								field.state.value[1] !== maxPriceInEuros;
+								field.state.value[0] !== 0 || field.state.value[1] !== maxPriceInEuros;
 							return (
 								<AccordionItem value="price">
 									<AccordionTrigger className="hover:no-underline">
@@ -343,9 +323,7 @@ export function ProductFilterSheet({
 													? `${field.state.value[0]}€ - ${field.state.value[1]}€`
 													: undefined
 											}
-											onReset={() =>
-												field.handleChange(DEFAULT_PRICE_RANGE)
-											}
+											onReset={() => field.handleChange(DEFAULT_PRICE_RANGE)}
 										/>
 									</AccordionTrigger>
 									<AccordionContent>
@@ -374,21 +352,16 @@ export function ProductFilterSheet({
 									</AccordionTrigger>
 									<AccordionContent>
 										{sortedColors.length > SEARCH_THRESHOLD && (
-											<SectionSearch
-												value={colorSearch}
-												onChange={setColorSearch}
-											/>
+											<SectionSearch value={colorSearch} onChange={setColorSearch} />
 										)}
 										<div className="space-y-1">
 											{filteredColors.length === 0 ? (
-												<p className="text-xs text-muted-foreground py-2 text-center">
+												<p className="text-muted-foreground py-2 text-center text-xs">
 													Aucun résultat
 												</p>
 											) : (
 												filteredColors.map((color) => {
-													const isSelected = field.state.value.includes(
-														color.slug
-													);
+													const isSelected = field.state.value.includes(color.slug);
 													const light = isLightColor(color.hex, 0.85);
 													return (
 														<CheckboxFilterItem
@@ -399,23 +372,18 @@ export function ProductFilterSheet({
 																if (checked && !isSelected) {
 																	field.pushValue(color.slug);
 																} else if (!checked && isSelected) {
-																	const index =
-																		field.state.value.indexOf(
-																			color.slug
-																		);
+																	const index = field.state.value.indexOf(color.slug);
 																	field.removeValue(index);
 																}
 															}}
 															indicator={
 																<span
-																	className={`relative w-6 h-6 rounded-full shadow-sm ${
-																		light
-																			? "border border-border"
-																			: "border border-border/50"
+																	className={`relative h-6 w-6 rounded-full shadow-sm ${
+																		light ? "border-border border" : "border-border/50 border"
 																	} ${
 																		isSelected
-																			? "ring-2 ring-primary ring-offset-1"
-																			: "ring-1 ring-inset ring-black/5"
+																			? "ring-primary ring-2 ring-offset-1"
+																			: "ring-1 ring-black/5 ring-inset"
 																	}`}
 																	style={{
 																		backgroundColor: color.hex,
@@ -423,11 +391,9 @@ export function ProductFilterSheet({
 																>
 																	{isSelected && (
 																		<Check
-																			className="absolute inset-0 m-auto w-3 h-3"
+																			className="absolute inset-0 m-auto h-3 w-3"
 																			style={{
-																				color: getContrastTextColor(
-																					color.hex
-																				),
+																				color: getContrastTextColor(color.hex),
 																			}}
 																			strokeWidth={3}
 																		/>
@@ -462,22 +428,16 @@ export function ProductFilterSheet({
 									</AccordionTrigger>
 									<AccordionContent>
 										{sortedMaterials.length > SEARCH_THRESHOLD && (
-											<SectionSearch
-												value={materialSearch}
-												onChange={setMaterialSearch}
-											/>
+											<SectionSearch value={materialSearch} onChange={setMaterialSearch} />
 										)}
 										<div className="space-y-1">
 											{filteredMaterials.length === 0 ? (
-												<p className="text-xs text-muted-foreground py-2 text-center">
+												<p className="text-muted-foreground py-2 text-center text-xs">
 													Aucun résultat
 												</p>
 											) : (
 												filteredMaterials.map((material) => {
-													const isSelected =
-														field.state.value.includes(
-															material.slug
-														);
+													const isSelected = field.state.value.includes(material.slug);
 													return (
 														<CheckboxFilterItem
 															key={material.slug}
@@ -486,14 +446,8 @@ export function ProductFilterSheet({
 															onCheckedChange={(checked) => {
 																if (checked && !isSelected) {
 																	field.pushValue(material.slug);
-																} else if (
-																	!checked &&
-																	isSelected
-																) {
-																	const index =
-																		field.state.value.indexOf(
-																			material.slug
-																		);
+																} else if (!checked && isSelected) {
+																	const index = field.state.value.indexOf(material.slug);
 																	field.removeValue(index);
 																}
 															}}
@@ -520,9 +474,7 @@ export function ProductFilterSheet({
 										label="Notes clients"
 										count={field.state.value !== null ? 1 : 0}
 										badgeContent={
-											field.state.value !== null
-												? `${field.state.value}+ ★`
-												: undefined
+											field.state.value !== null ? `${field.state.value}+ ★` : undefined
 										}
 										onReset={() => field.handleChange(null)}
 									/>
@@ -541,9 +493,7 @@ export function ProductFilterSheet({
 													}}
 													indicator={<RatingStars rating={stars} size="sm" />}
 												>
-													{stars === 1
-														? "1 étoile et plus"
-														: `${stars} étoiles et plus`}
+													{stars === 1 ? "1 étoile et plus" : `${stars} étoiles et plus`}
 												</CheckboxFilterItem>
 											);
 										})}
@@ -558,10 +508,7 @@ export function ProductFilterSheet({
 						<AccordionTrigger className="hover:no-underline">
 							<SectionHeader
 								label="Disponibilité"
-								count={
-									(form.state.values.inStockOnly ? 1 : 0) +
-									(form.state.values.onSale ? 1 : 0)
-								}
+								count={(form.state.values.inStockOnly ? 1 : 0) + (form.state.values.onSale ? 1 : 0)}
 								onReset={() => {
 									form.setFieldValue("inStockOnly", false);
 									form.setFieldValue("onSale", false);

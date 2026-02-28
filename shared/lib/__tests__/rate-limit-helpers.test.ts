@@ -58,11 +58,10 @@ describe("enforceRateLimit", () => {
 
 		expect(result).toHaveProperty("error");
 
-		const actionState = (result as { error: { status: ActionStatus; message: string; data?: unknown } }).error;
+		const actionState = (result as { error: { status: ActionStatus; message: string } }).error;
 
 		expect(actionState.status).toBe(ActionStatus.ERROR);
 		expect(actionState.message).toBe("Trop de requêtes. Veuillez réessayer dans 45 secondes.");
-		expect(actionState.data).toEqual({ retryAfter: 45, reset });
 	});
 
 	it("uses the fallback message when checkRateLimit returns no error string", async () => {
@@ -104,7 +103,7 @@ describe("enforceRateLimit", () => {
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"user:test-id",
 			{ limit: 5, windowMs: 30000 },
-			undefined
+			undefined,
 		);
 	});
 
@@ -138,7 +137,7 @@ describe("enforceRateLimit", () => {
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"user:u1",
 			{ limit: 10, windowMs: 60000 },
-			"5.5.5.5"
+			"5.5.5.5",
 		);
 	});
 
@@ -156,7 +155,7 @@ describe("enforceRateLimit", () => {
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"user:u2",
 			{ limit: 10, windowMs: 60000 },
-			null
+			null,
 		);
 	});
 });

@@ -36,11 +36,12 @@ export function useRadioGroupKeyboard<T>({
 			do {
 				nextIndex = (nextIndex + direction + optionsCount) % optionsCount;
 				attempts++;
-			} while (isOptionDisabled(options[nextIndex]) && attempts < optionsCount);
+			} while (isOptionDisabled(options[nextIndex]!) && attempts < optionsCount);
 
 			if (attempts >= optionsCount) return;
 
 			const nextOption = options[nextIndex];
+			if (nextOption === undefined) return;
 			onSelect(nextOption);
 			focusOption(nextOption);
 			return;
@@ -56,7 +57,7 @@ export function useRadioGroupKeyboard<T>({
 			let attempts = 0;
 
 			// Trouver la première/dernière option non-disabled
-			while (isOptionDisabled(options[nextIndex]) && attempts < optionsCount) {
+			while (isOptionDisabled(options[nextIndex]!) && attempts < optionsCount) {
 				nextIndex = (nextIndex + direction + optionsCount) % optionsCount;
 				attempts++;
 			}
@@ -64,6 +65,7 @@ export function useRadioGroupKeyboard<T>({
 			if (attempts >= optionsCount) return;
 
 			const nextOption = options[nextIndex];
+			if (nextOption === undefined) return;
 			onSelect(nextOption);
 			focusOption(nextOption);
 		}
@@ -71,11 +73,11 @@ export function useRadioGroupKeyboard<T>({
 
 	const focusOption = (option: T) => {
 		const buttons = containerRef.current?.querySelectorAll<HTMLButtonElement>(
-			'button[role="radio"]:not([disabled])'
+			'button[role="radio"]:not([disabled])',
 		);
 		if (buttons) {
 			const targetButton = Array.from(buttons).find(
-				(btn) => btn.getAttribute("data-option-id") === getOptionId(option)
+				(btn) => btn.getAttribute("data-option-id") === getOptionId(option),
 			);
 			targetButton?.focus();
 		}

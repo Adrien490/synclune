@@ -220,7 +220,7 @@ export function MediaUploadGrid({
 	const handleOpenDeleteDialog = (index: number) => {
 		deleteDialog.open({
 			index,
-			url: media[index].url,
+			url: media[index]!.url,
 			skipUtapiDelete,
 			onRemove: () => {
 				const newMedia = media.filter((_, i) => i !== index);

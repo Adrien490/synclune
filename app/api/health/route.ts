@@ -1,5 +1,6 @@
 import { prisma } from "@/shared/lib/prisma";
 import { stripeCircuitBreaker, resendCircuitBreaker } from "@/shared/lib/circuit-breaker";
+import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
 
 interface ServiceCheck {
 	status: "ok" | "error" | "degraded";
@@ -65,6 +66,16 @@ async function checkResend(): Promise<ServiceCheck> {
 }
 
 export async function GET() {
+	// Check if the requester is an admin for detailed response
+	const adminCheck = await requireAdminApiRoute();
+	const isAdmin = "user" in adminCheck;
+
+	// Unauthenticated/non-admin: return minimal status only
+	if (!isAdmin) {
+		return Response.json({ status: "ok" });
+	}
+
+	// Admin: return full service details
 	const start = Date.now();
 
 	const [database, stripe, resend] = await Promise.all([

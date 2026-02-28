@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { getStrengthLevel, getStrengthLabel, getStrengthColor, PASSWORD_RULES } from "../password-strength";
+import {
+	getStrengthLevel,
+	getStrengthLabel,
+	getStrengthColor,
+	PASSWORD_RULES,
+} from "../password-strength";
 
 describe("PASSWORD_RULES", () => {
 	it("requires at least 6 characters", () => {
-		expect(PASSWORD_RULES[0].test("12345")).toBe(false);
-		expect(PASSWORD_RULES[0].test("123456")).toBe(true);
+		expect(PASSWORD_RULES[0]!.test("12345")).toBe(false);
+		expect(PASSWORD_RULES[0]!.test("123456")).toBe(true);
 	});
 });
 

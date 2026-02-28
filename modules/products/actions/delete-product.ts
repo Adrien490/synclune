@@ -2,7 +2,8 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
@@ -20,12 +21,13 @@ import { ADMIN_PRODUCT_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
  */
 export async function deleteProduct(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
+		const admin = await requireAdminWithUser();
 		if ("error" in admin) return admin.error;
+		const { user: adminUser } = admin;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_DELETE_LIMIT);
@@ -76,7 +78,7 @@ export async function deleteProduct(
 		if (orderItemsCount > 0) {
 			return error(
 				`Ce produit ne peut pas etre supprime car il est associe a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
-				"Pour conserver l'historique des commandes, veuillez archiver le produit a la place."
+					"Pour conserver l'historique des commandes, veuillez archiver le produit a la place.",
 			);
 		}
 
@@ -114,26 +116,34 @@ export async function deleteProduct(
 
 		// 8. Invalidate cart caches for affected users
 		for (const { cart } of affectedCarts) {
-			const cartTags = getCartInvalidationTags(cart.userId ?? undefined, cart.sessionId ?? undefined);
-			cartTags.forEach(tag => updateTag(tag));
+			const cartTags = getCartInvalidationTags(
+				cart.userId ?? undefined,
+				cart.sessionId ?? undefined,
+			);
+			cartTags.forEach((tag) => updateTag(tag));
 		}
 
 		// 9. Invalidate cache tags (invalidation ciblee au lieu de revalidatePath global)
-		const productTags = getProductInvalidationTags(
-			existingProduct.slug,
-			existingProduct.id
-		);
-		productTags.forEach(tag => updateTag(tag));
+		const productTags = getProductInvalidationTags(existingProduct.slug, existingProduct.id);
+		productTags.forEach((tag) => updateTag(tag));
 
 		// Si le produit appartenait a des collections, invalider aussi leurs caches
 		for (const pc of existingProduct.collections) {
-			const collectionTags = getCollectionInvalidationTags(
-				pc.collection.slug
-			);
-			collectionTags.forEach(tag => updateTag(tag));
+			const collectionTags = getCollectionInvalidationTags(pc.collection.slug);
+			collectionTags.forEach((tag) => updateTag(tag));
 		}
 
-		// 10. Success
+		// 10. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "product.delete",
+			targetType: "product",
+			targetId: productId,
+			metadata: { title: existingProduct.title, slug: existingProduct.slug },
+		});
+
+		// 11. Success
 		return success(`Produit "${existingProduct.title}" supprimé avec succès.`, {
 			productId,
 			title: existingProduct.title,

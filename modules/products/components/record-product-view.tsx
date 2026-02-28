@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
-import { addRecentProduct } from "../actions/add-recent-product"
+import { useEffect, useRef } from "react";
+import { addRecentProduct } from "../actions/add-recent-product";
 
 interface RecordProductViewProps {
 	/** Slug du produit a enregistrer */
-	slug: string
+	slug: string;
 }
 
 /**
@@ -20,18 +20,18 @@ interface RecordProductViewProps {
  * ```
  */
 export function RecordProductView({ slug }: RecordProductViewProps) {
-	const hasRecorded = useRef(false)
+	const hasRecorded = useRef(false);
 
 	useEffect(() => {
 		// Eviter les doubles enregistrements (StrictMode, re-renders)
-		if (hasRecorded.current) return
-		hasRecorded.current = true
+		if (hasRecorded.current) return;
+		hasRecorded.current = true;
 
 		// Enregistrer la vue via server action
-		const formData = new FormData()
-		formData.set("slug", slug)
-		addRecentProduct(undefined, formData)
-	}, [slug])
+		const formData = new FormData();
+		formData.set("slug", slug);
+		void addRecentProduct(undefined, formData);
+	}, [slug]);
 
-	return null
+	return null;
 }

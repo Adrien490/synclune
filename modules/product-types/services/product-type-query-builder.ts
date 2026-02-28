@@ -1,15 +1,12 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import type {
-	GetProductTypesParams,
-	ProductTypeFilters,
-} from "../types/product-type.types";
+import type { GetProductTypesParams, ProductTypeFilters } from "../types/product-type.types";
 
 // ============================================================================
 // PRODUCT TYPE QUERY BUILDER UTILS
 // ============================================================================
 
 export function buildProductTypeSearchConditions(
-	search: string
+	search: string,
 ): Prisma.ProductTypeWhereInput | null {
 	if (!search || search.trim().length === 0) return null;
 	const searchTerm = search.trim();
@@ -29,7 +26,7 @@ export function buildProductTypeSearchConditions(
 }
 
 export function buildProductTypeFilterConditions(
-	filters: ProductTypeFilters
+	filters: ProductTypeFilters,
 ): Prisma.ProductTypeWhereInput {
 	const conditions: Prisma.ProductTypeWhereInput = {};
 
@@ -53,7 +50,7 @@ export function buildProductTypeFilterConditions(
 }
 
 export function buildProductTypeWhereClause(
-	params: GetProductTypesParams
+	params: GetProductTypesParams,
 ): Prisma.ProductTypeWhereInput {
 	const conditions: Prisma.ProductTypeWhereInput[] = [];
 
@@ -72,7 +69,7 @@ export function buildProductTypeWhereClause(
 	}
 
 	if (conditions.length === 0) return {};
-	if (conditions.length === 1) return conditions[0];
+	if (conditions.length === 1) return conditions[0]!;
 
 	return { AND: conditions };
 }

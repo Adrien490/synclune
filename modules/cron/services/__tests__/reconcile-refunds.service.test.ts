@@ -78,19 +78,17 @@ describe("reconcilePendingRefunds", () => {
 		await reconcilePendingRefunds();
 
 		// Phase 1: APPROVED refunds with stripeRefundId
-		const call = mockPrisma.refund.findMany.mock.calls[0][0];
+		const call = mockPrisma.refund.findMany.mock.calls[0]![0];
 		expect(call.where.status).toBe("APPROVED");
 		expect(call.where.stripeRefundId).toEqual({ not: null });
 		expect(call.where.deletedAt).toBeNull();
 
-		const minAge = new Date(
-			Date.now() - THRESHOLDS.REFUND_RECONCILE_MIN_AGE_MS
-		);
+		const minAge = new Date(Date.now() - THRESHOLDS.REFUND_RECONCILE_MIN_AGE_MS);
 		expect(call.where.processedAt.lt.getTime()).toBe(minAge.getTime());
 		expect(call.take).toBe(25);
 
 		// Phase 2: stale PENDING/APPROVED refunds without stripeRefundId
-		const call2 = mockPrisma.refund.findMany.mock.calls[1][0];
+		const call2 = mockPrisma.refund.findMany.mock.calls[1]![0];
 		expect(call2.where.status).toEqual({ in: ["PENDING", "APPROVED"] });
 		expect(call2.where.stripeRefundId).toBeNull();
 	});
@@ -102,9 +100,7 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-001" },
 		};
-		mockPrisma.refund.findMany
-			.mockResolvedValueOnce([refund])
-			.mockResolvedValueOnce([]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([refund]).mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "succeeded",
 			failure_reason: null,
@@ -113,11 +109,7 @@ describe("reconcilePendingRefunds", () => {
 
 		const result = await reconcilePendingRefunds();
 
-		expect(mockUpdateRefundStatus).toHaveBeenCalledWith(
-			"refund-1",
-			"COMPLETED",
-			"succeeded"
-		);
+		expect(mockUpdateRefundStatus).toHaveBeenCalledWith("refund-1", "COMPLETED", "succeeded");
 		expect(result!.updated).toBe(1);
 	});
 
@@ -128,9 +120,7 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-002" },
 		};
-		mockPrisma.refund.findMany
-			.mockResolvedValueOnce([refund])
-			.mockResolvedValueOnce([]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([refund]).mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "failed",
 			failure_reason: "charge_for_pending_refund_disputed",
@@ -141,7 +131,7 @@ describe("reconcilePendingRefunds", () => {
 
 		expect(mockMarkRefundAsFailed).toHaveBeenCalledWith(
 			"refund-2",
-			"charge_for_pending_refund_disputed"
+			"charge_for_pending_refund_disputed",
 		);
 		expect(result!.updated).toBe(1);
 	});
@@ -153,9 +143,7 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-003" },
 		};
-		mockPrisma.refund.findMany
-			.mockResolvedValueOnce([refund])
-			.mockResolvedValueOnce([]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([refund]).mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "failed",
 			failure_reason: null,
@@ -164,10 +152,7 @@ describe("reconcilePendingRefunds", () => {
 
 		await reconcilePendingRefunds();
 
-		expect(mockMarkRefundAsFailed).toHaveBeenCalledWith(
-			"refund-3",
-			"Unknown failure"
-		);
+		expect(mockMarkRefundAsFailed).toHaveBeenCalledWith("refund-3", "Unknown failure");
 	});
 
 	it("should not update when status has not changed", async () => {
@@ -177,9 +162,7 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-004" },
 		};
-		mockPrisma.refund.findMany
-			.mockResolvedValueOnce([refund])
-			.mockResolvedValueOnce([]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([refund]).mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "pending",
 		});
@@ -199,12 +182,8 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-005" },
 		};
-		mockPrisma.refund.findMany
-			.mockResolvedValueOnce([refund])
-			.mockResolvedValueOnce([]);
-		mockStripe.refunds.retrieve.mockRejectedValue(
-			new Error("Stripe API error")
-		);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([refund]).mockResolvedValueOnce([]);
+		mockStripe.refunds.retrieve.mockRejectedValue(new Error("Stripe API error"));
 
 		const result = await reconcilePendingRefunds();
 
@@ -219,9 +198,7 @@ describe("reconcilePendingRefunds", () => {
 			status: "APPROVED",
 			order: { orderNumber: "SYN-006" },
 		};
-		mockPrisma.refund.findMany
-			.mockResolvedValueOnce([refund])
-			.mockResolvedValueOnce([]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([refund]).mockResolvedValueOnce([]);
 
 		const result = await reconcilePendingRefunds();
 
@@ -251,16 +228,12 @@ describe("reconcilePendingRefunds", () => {
 				order: { orderNumber: "SYN-C" },
 			},
 		];
-		mockPrisma.refund.findMany
-			.mockResolvedValueOnce(refunds)
-			.mockResolvedValueOnce([]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce(refunds).mockResolvedValueOnce([]);
 		mockStripe.refunds.retrieve
 			.mockResolvedValueOnce({ status: "succeeded" })
 			.mockResolvedValueOnce({ status: "failed", failure_reason: "disputed" })
 			.mockRejectedValueOnce(new Error("Network error"));
-		mockMapStripeRefundStatus
-			.mockReturnValueOnce("COMPLETED")
-			.mockReturnValueOnce("FAILED");
+		mockMapStripeRefundStatus.mockReturnValueOnce("COMPLETED").mockReturnValueOnce("FAILED");
 
 		const result = await reconcilePendingRefunds();
 
@@ -332,7 +305,7 @@ describe("reconcilePendingRefunds", () => {
 					content: expect.stringContaining("[REMBOURSEMENT ORPHELIN] Le remboursement stale-1"),
 					authorId: "system",
 				}),
-			})
+			}),
 		);
 		expect(result!.staleAlerted).toBe(1);
 	});

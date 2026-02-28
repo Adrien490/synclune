@@ -19,6 +19,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level=high
+      - name: Audit all dependencies (non-blocking)
+        run: pnpm audit --audit-level=critical
+        continue-on-error: true
+      - name: Check licenses
+        run: npx license-checker-rsync-3 --production --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0;SSPL-1.0;BSL-1.1;EUPL-1.1;EUPL-1.2'
       - run: pnpm lint
       - run: pnpm test:coverage -- --run
       - uses: codecov/codecov-action@v5

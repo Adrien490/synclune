@@ -256,28 +256,28 @@ describe("exportUserDataAdmin", () => {
 					name: "Marie Dupont",
 					email: "marie@example.com",
 				}),
-			})
+			}),
 		);
 	});
 
 	it("should include addresses in export", async () => {
 		await exportUserDataAdmin("user-456");
 
-		const exportData = mockSuccess.mock.calls[0][1];
+		const exportData = mockSuccess.mock.calls[0]![1];
 		expect(exportData.addresses).toHaveLength(1);
 		expect(exportData.addresses[0]).toEqual(
 			expect.objectContaining({
 				firstName: "Marie",
 				lastName: "Dupont",
 				city: "Paris",
-			})
+			}),
 		);
 	});
 
 	it("should convert order totals from cents to euros", async () => {
 		await exportUserDataAdmin("user-456");
 
-		const exportData = mockSuccess.mock.calls[0][1];
+		const exportData = mockSuccess.mock.calls[0]![1];
 		expect(exportData.orders[0].total).toBe(45);
 		expect(exportData.orders[0].items[0].price).toBe(45);
 	});
@@ -285,29 +285,25 @@ describe("exportUserDataAdmin", () => {
 	it("should convert discount amounts from cents to euros", async () => {
 		await exportUserDataAdmin("user-456");
 
-		const exportData = mockSuccess.mock.calls[0][1];
+		const exportData = mockSuccess.mock.calls[0]![1];
 		expect(exportData.discountUsages[0].amountApplied).toBe(4.5);
 	});
 
 	it("should handle user with no wishlist", async () => {
-		mockPrisma.user.findUnique.mockResolvedValue(
-			makeFullUser({ wishlist: null })
-		);
+		mockPrisma.user.findUnique.mockResolvedValue(makeFullUser({ wishlist: null }));
 
 		await exportUserDataAdmin("user-456");
 
-		const exportData = mockSuccess.mock.calls[0][1];
+		const exportData = mockSuccess.mock.calls[0]![1];
 		expect(exportData.wishlist).toEqual([]);
 	});
 
 	it("should handle user with no newsletter subscription", async () => {
-		mockPrisma.user.findUnique.mockResolvedValue(
-			makeFullUser({ newsletterSubscription: null })
-		);
+		mockPrisma.user.findUnique.mockResolvedValue(makeFullUser({ newsletterSubscription: null }));
 
 		await exportUserDataAdmin("user-456");
 
-		const exportData = mockSuccess.mock.calls[0][1];
+		const exportData = mockSuccess.mock.calls[0]![1];
 		expect(exportData.newsletter).toBeNull();
 	});
 
@@ -322,13 +318,13 @@ describe("exportUserDataAdmin", () => {
 				sessions: [],
 				customizationRequests: [],
 				newsletterSubscription: null,
-			})
+			}),
 		);
 
 		const result = await exportUserDataAdmin("user-456");
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		const exportData = mockSuccess.mock.calls[0][1];
+		const exportData = mockSuccess.mock.calls[0]![1];
 		expect(exportData.addresses).toHaveLength(0);
 		expect(exportData.orders).toHaveLength(0);
 		expect(exportData.wishlist).toHaveLength(0);
@@ -343,12 +339,12 @@ describe("exportUserDataAdmin", () => {
 						{ product: null, createdAt: new Date() },
 					],
 				},
-			})
+			}),
 		);
 
 		await exportUserDataAdmin("user-456");
 
-		const exportData = mockSuccess.mock.calls[0][1];
+		const exportData = mockSuccess.mock.calls[0]![1];
 		expect(exportData.wishlist).toHaveLength(1);
 		expect(exportData.wishlist[0].productTitle).toBe("Valid");
 	});
@@ -364,7 +360,7 @@ describe("exportUserDataAdmin", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de l'export des données"
+			"Erreur lors de l'export des données",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

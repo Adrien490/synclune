@@ -178,9 +178,7 @@ describe("bulkUpdateCustomizationStatus", () => {
 		mockCanTransitionTo.mockReturnValue(true);
 
 		// Default: transaction runs the operations in series
-		mockPrisma.$transaction.mockImplementation(
-			async (ops: Promise<unknown>[]) => Promise.all(ops)
-		);
+		mockPrisma.$transaction.mockImplementation(async (ops: Promise<unknown>[]) => Promise.all(ops));
 
 		// Default: updateMany succeeds
 		mockPrisma.customizationRequest.updateMany.mockResolvedValue({ count: 2 });
@@ -289,9 +287,7 @@ describe("bulkUpdateCustomizationStatus", () => {
 
 	it("should only update requests with valid transitions (partial batch)", async () => {
 		// Only the first request has a valid transition
-		mockCanTransitionTo
-			.mockReturnValueOnce(true)
-			.mockReturnValueOnce(false);
+		mockCanTransitionTo.mockReturnValueOnce(true).mockReturnValueOnce(false);
 
 		await bulkUpdateCustomizationStatus(undefined, createFormData());
 
@@ -319,7 +315,7 @@ describe("bulkUpdateCustomizationStatus", () => {
 					status: "IN_PROGRESS",
 					respondedAt: expect.any(Date),
 				}),
-			})
+			}),
 		);
 	});
 
@@ -341,9 +337,9 @@ describe("bulkUpdateCustomizationStatus", () => {
 		expect(mockPrisma.customizationRequest.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ status: "COMPLETED" }),
-			})
+			}),
 		);
-		const updateCall = mockPrisma.customizationRequest.updateMany.mock.calls[0][0];
+		const updateCall = mockPrisma.customizationRequest.updateMany.mock.calls[0]![0];
 		expect(updateCall.data).not.toHaveProperty("respondedAt");
 	});
 
@@ -387,10 +383,10 @@ describe("bulkUpdateCustomizationStatus", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("customization-requests-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("customization-requests-stats");
 		expect(mockUpdateTag).toHaveBeenCalledWith(
-			`customization-request-${MOCK_PENDING_REQUEST_1.id}`
+			`customization-request-${MOCK_PENDING_REQUEST_1.id}`,
 		);
 		expect(mockUpdateTag).toHaveBeenCalledWith(
-			`customization-request-${MOCK_PENDING_REQUEST_2.id}`
+			`customization-request-${MOCK_PENDING_REQUEST_2.id}`,
 		);
 	});
 
@@ -398,10 +394,10 @@ describe("bulkUpdateCustomizationStatus", () => {
 		await bulkUpdateCustomizationStatus(undefined, createFormData());
 
 		expect(mockUpdateTag).toHaveBeenCalledWith(
-			`customization-requests-user-${MOCK_PENDING_REQUEST_1.userId}`
+			`customization-requests-user-${MOCK_PENDING_REQUEST_1.userId}`,
 		);
 		expect(mockUpdateTag).toHaveBeenCalledWith(
-			`customization-requests-user-${MOCK_PENDING_REQUEST_2.userId}`
+			`customization-requests-user-${MOCK_PENDING_REQUEST_2.userId}`,
 		);
 	});
 
@@ -415,7 +411,10 @@ describe("bulkUpdateCustomizationStatus", () => {
 		await bulkUpdateCustomizationStatus(undefined, createFormData());
 
 		const userTagCalls = mockUpdateTag.mock.calls
-			.map((args: unknown[]) => { const [tag] = args as [string]; return tag; })
+			.map((args: unknown[]) => {
+				const [tag] = args as [string];
+				return tag;
+			})
 			.filter((tag: string) => tag.startsWith("customization-requests-user-"));
 		expect(userTagCalls).toHaveLength(1);
 		expect(userTagCalls[0]).toBe("customization-requests-user-user_shared");
@@ -445,14 +444,12 @@ describe("bulkUpdateCustomizationStatus", () => {
 		await bulkUpdateCustomizationStatus(undefined, createFormData({ status: "COMPLETED" }));
 
 		expect(mockSendCustomizationStatusEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ status: "COMPLETED" })
+			expect.objectContaining({ status: "COMPLETED" }),
 		);
 	});
 
 	it("should send status emails for CANCELLED status", async () => {
-		mockPrisma.customizationRequest.findMany.mockResolvedValue([
-			{ ...MOCK_PENDING_REQUEST_1 },
-		]);
+		mockPrisma.customizationRequest.findMany.mockResolvedValue([{ ...MOCK_PENDING_REQUEST_1 }]);
 		mockValidateInput.mockReturnValue({
 			data: {
 				requestIds: [MOCK_PENDING_REQUEST_1.id],
@@ -463,7 +460,7 @@ describe("bulkUpdateCustomizationStatus", () => {
 		await bulkUpdateCustomizationStatus(undefined, createFormData({ status: "CANCELLED" }));
 
 		expect(mockSendCustomizationStatusEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ status: "CANCELLED" })
+			expect.objectContaining({ status: "CANCELLED" }),
 		);
 	});
 
@@ -493,16 +490,11 @@ describe("bulkUpdateCustomizationStatus", () => {
 		const result = await bulkUpdateCustomizationStatus(undefined, createFormData());
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("2"),
-			{ count: 2 }
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("2"), { count: 2 });
 	});
 
 	it("should return singular form when only 1 request is updated", async () => {
-		mockPrisma.customizationRequest.findMany.mockResolvedValue([
-			{ ...MOCK_PENDING_REQUEST_1 },
-		]);
+		mockPrisma.customizationRequest.findMany.mockResolvedValue([{ ...MOCK_PENDING_REQUEST_1 }]);
 		mockValidateInput.mockReturnValue({
 			data: {
 				requestIds: [MOCK_PENDING_REQUEST_1.id],
@@ -513,10 +505,7 @@ describe("bulkUpdateCustomizationStatus", () => {
 		const result = await bulkUpdateCustomizationStatus(undefined, createFormData());
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("1"),
-			{ count: 1 }
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("1"), { count: 1 });
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -528,10 +517,7 @@ describe("bulkUpdateCustomizationStatus", () => {
 
 		const result = await bulkUpdateCustomizationStatus(undefined, createFormData());
 
-		expect(mockHandleActionError).toHaveBeenCalledWith(
-			expect.any(Error),
-			expect.any(String)
-		);
+		expect(mockHandleActionError).toHaveBeenCalledWith(expect.any(Error), expect.any(String));
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 });

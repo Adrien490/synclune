@@ -10,6 +10,7 @@ import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { AlertCircle, CreditCard, Info, Loader2, Lock, Mail, MapPin } from "lucide-react";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import { StripeWordmark } from "./stripe-wordmark";
@@ -22,7 +23,11 @@ import Link from "next/link";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { ActionStatus } from "@/shared/types/server-action";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
-import { EmbeddedCheckoutWrapper } from "./embedded-checkout";
+import dynamic from "next/dynamic";
+
+const EmbeddedCheckoutWrapper = dynamic(() =>
+	import("./embedded-checkout").then((mod) => mod.EmbeddedCheckoutWrapper),
+);
 import { AddressSummary, type SubmittedAddress } from "./address-summary";
 import { CheckoutSummary } from "./checkout-summary";
 import { CheckoutStepIndicator } from "./checkout-step-indicator";
@@ -187,7 +192,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 				initial: { opacity: 0, y: 10 },
 				animate: { opacity: 1, y: 0 },
 				exit: { opacity: 0, y: -10 },
-				transition: { duration: 0.25 },
+				transition: { duration: MOTION_CONFIG.duration.normal },
 			};
 
 	return (

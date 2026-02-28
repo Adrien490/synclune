@@ -131,7 +131,7 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 				...allowedNewSkuIds,
 			]);
 			for (let i = itemsToValidate.length - 1; i >= 0; i--) {
-				if (!allowedSkuIds.has(itemsToValidate[i].skuId)) {
+				if (!allowedSkuIds.has(itemsToValidate[i]!.skuId)) {
 					itemsToValidate.splice(i, 1);
 				}
 			}

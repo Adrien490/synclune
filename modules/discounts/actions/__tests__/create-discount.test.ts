@@ -144,10 +144,7 @@ describe("createDiscount", () => {
 		});
 
 		// Default: invalidation tags
-		mockGetDiscountInvalidationTags.mockReturnValue([
-			"discounts-list",
-			"discount-PROMO20",
-		]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-PROMO20"]);
 
 		// Default: success/error helpers return shaped ActionState
 		mockSuccess.mockImplementation((message: string, data?: Record<string, unknown>) => ({
@@ -159,12 +156,10 @@ describe("createDiscount", () => {
 			status: ActionStatus.ERROR,
 			message,
 		}));
-		mockHandleActionError.mockImplementation(
-			(_e: unknown, fallback: string) => ({
-				status: ActionStatus.ERROR,
-				message: fallback,
-			})
-		);
+		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+			status: ActionStatus.ERROR,
+			message: fallback,
+		}));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -253,9 +248,7 @@ describe("createDiscount", () => {
 		const result = await createDiscount(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toBe(
-			"Un code promo avec ce code existe déjà"
-		);
+		expect(result.message).toBe("Un code promo avec ce code existe déjà");
 		expect(mockPrisma.discount.create).not.toHaveBeenCalled();
 	});
 
@@ -283,7 +276,7 @@ describe("createDiscount", () => {
 		expect(mockPrisma.discount.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ isActive: true }),
-			})
+			}),
 		);
 	});
 
@@ -291,7 +284,7 @@ describe("createDiscount", () => {
 		const beforeCreate = new Date();
 		await createDiscount(undefined, validFormData);
 
-		const createCall = mockPrisma.discount.create.mock.calls[0][0];
+		const createCall = mockPrisma.discount.create.mock.calls[0]![0];
 		const startsAt = createCall.data.startsAt;
 
 		// startsAt should be a Date close to now (validatedData.startsAt is null → falls back to new Date())
@@ -303,10 +296,9 @@ describe("createDiscount", () => {
 		const result = await createDiscount(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSuccess).toHaveBeenCalledWith(
-			'Code promo "PROMO20" créé avec succès',
-			{ id: "disc-new" }
-		);
+		expect(mockSuccess).toHaveBeenCalledWith('Code promo "PROMO20" créé avec succès', {
+			id: "disc-new",
+		});
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -314,10 +306,7 @@ describe("createDiscount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should invalidate cache tags after creation", async () => {
-		mockGetDiscountInvalidationTags.mockReturnValue([
-			"discounts-list",
-			"discount-PROMO20",
-		]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-PROMO20"]);
 
 		await createDiscount(undefined, validFormData);
 
@@ -331,30 +320,26 @@ describe("createDiscount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should return ALREADY_EXISTS on Prisma P2002 error", async () => {
-		const prismaError = new Prisma.PrismaClientKnownRequestError(
-			"Unique constraint failed",
-			{ code: "P2002", clientVersion: "6.0.0" }
-		);
+		const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+			code: "P2002",
+			clientVersion: "6.0.0",
+		});
 		mockPrisma.discount.create.mockRejectedValue(prismaError);
 
 		const result = await createDiscount(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toBe(
-			"Un code promo avec ce code existe déjà"
-		);
+		expect(result.message).toBe("Un code promo avec ce code existe déjà");
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.discount.create.mockRejectedValue(
-			new Error("DB connection failed")
-		);
+		mockPrisma.discount.create.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await createDiscount(undefined, validFormData);
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la création du code promo"
+			"Erreur lors de la création du code promo",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

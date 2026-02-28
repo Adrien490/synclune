@@ -2,17 +2,8 @@
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { Badge } from "@/shared/components/ui/badge";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronRight, Info } from "lucide-react";
 import Link from "next/link";
@@ -23,7 +14,7 @@ import { KpiValue } from "./kpi-value";
  * CVA variants for the visual hierarchy of KPIs
  */
 const kpiCardVariants = cva(
-	"relative overflow-hidden border-l-4 bg-linear-to-br via-background to-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col",
+	"relative overflow-hidden border-l-4 bg-linear-to-br via-background to-transparent can-hover:hover:shadow-xl can-hover:hover:-translate-y-1 transition-[transform,box-shadow] duration-300 group flex flex-col",
 	{
 		variants: {
 			size: {
@@ -89,7 +80,7 @@ export function KpiCard({
 	comparisonLabel,
 }: KpiCardProps) {
 	const iconClassName = cn(
-		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300",
+		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary can-hover:group-hover:bg-primary/20 can-hover:group-hover:scale-110 transition-[transform,background-color] duration-300",
 		size === "featured" && "w-10 h-10",
 		size === "default" && "w-8 h-8",
 		size === "compact" && "w-6 h-6",
@@ -98,35 +89,30 @@ export function KpiCard({
 	const cardContent = (
 		<>
 			<div
-				className="absolute top-2 right-2 w-1 h-1 bg-secondary rounded-full opacity-40 group-hover:opacity-60 transition-opacity"
+				className="bg-secondary absolute top-2 right-2 h-1 w-1 rounded-full opacity-40 transition-opacity group-hover:opacity-60"
 				aria-hidden="true"
 			/>
 
 			{href && (
 				<ChevronRight
-					className="absolute bottom-3 right-3 w-4 h-4 text-muted-foreground/70 group-hover:text-primary group-hover:translate-x-0.5 transition-all"
+					className="text-muted-foreground/70 group-hover:text-primary absolute right-3 bottom-3 h-4 w-4 transition-[transform,color] group-hover:translate-x-0.5"
 					aria-hidden="true"
 				/>
 			)}
 
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 				<div className="flex items-center gap-1.5">
-					<CardTitle className="text-sm font-medium text-muted-foreground">
-						{title}
-					</CardTitle>
+					<CardTitle className="text-muted-foreground text-sm font-medium">{title}</CardTitle>
 					{tooltip && (
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<span
 									role="img"
 									tabIndex={href ? -1 : 0}
-									className="inline-flex items-center justify-center w-4 h-4 text-muted-foreground/60 hover:text-muted-foreground cursor-help"
+									className="text-muted-foreground/60 hover:text-muted-foreground inline-flex h-4 w-4 cursor-help items-center justify-center"
 									aria-label={`Info: ${title}`}
 								>
-									<Info
-										className="w-3.5 h-3.5"
-										aria-hidden="true"
-									/>
+									<Info className="h-3.5 w-3.5" aria-hidden="true" />
 								</span>
 							</TooltipTrigger>
 							<TooltipContent side="top" className="max-w-xs">
@@ -148,25 +134,17 @@ export function KpiCard({
 					size={size ?? "default"}
 				/>
 
-				<div className="flex flex-wrap items-center gap-1.5 mt-2">
+				<div className="mt-2 flex flex-wrap items-center gap-1.5">
 					{evolution !== undefined && (
-						<KpiEvolution
-							evolution={evolution}
-							comparisonLabel={comparisonLabel}
-						/>
+						<KpiEvolution evolution={evolution} comparisonLabel={comparisonLabel} />
 					)}
 					{badge && (
-						<Badge
-							variant={badge.variant || "default"}
-							className="text-xs font-normal"
-						>
+						<Badge variant={badge.variant || "default"} className="text-xs font-normal">
 							{badge.label}
 						</Badge>
 					)}
 					{subtitle && (
-						<p className="text-xs text-muted-foreground font-medium line-clamp-1">
-							{subtitle}
-						</p>
+						<p className="text-muted-foreground line-clamp-1 text-xs font-medium">{subtitle}</p>
 					)}
 				</div>
 			</CardContent>
@@ -179,8 +157,7 @@ export function KpiCard({
 			"cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 	);
 
-	const displayValue =
-		numericValue !== undefined ? `${numericValue}${suffix || ""}` : value;
+	const displayValue = numericValue !== undefined ? `${numericValue}${suffix || ""}` : value;
 	const evolutionText =
 		evolution !== undefined
 			? `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`

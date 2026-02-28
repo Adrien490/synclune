@@ -221,13 +221,13 @@ describe("useFilter", () => {
 		it("builds a unique id from key and value", () => {
 			setupParams([["filter_status", "ACTIVE"]]);
 			const { result } = renderHook(() => useFilter());
-			expect(result.current.activeFilters[0].id).toBe("filter_status-ACTIVE");
+			expect(result.current.activeFilters[0]!.id).toBe("filter_status-ACTIVE");
 		});
 
 		it("exposes the raw key (with prefix) and label (without prefix)", () => {
 			setupParams([["filter_status", "ACTIVE"]]);
 			const { result } = renderHook(() => useFilter());
-			const filter = result.current.activeFilters[0];
+			const filter = result.current.activeFilters[0]!;
 			expect(filter.key).toBe("filter_status");
 			expect(filter.label).toBe("status");
 		});
@@ -262,7 +262,7 @@ describe("useFilter", () => {
 			});
 
 			expect(mockReplace).toHaveBeenCalledTimes(1);
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("filter_status=ACTIVE");
 		});
 
@@ -274,7 +274,7 @@ describe("useFilter", () => {
 				result.current.setFilter("type", "ring");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("filter_type=ring");
 		});
 
@@ -286,7 +286,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("page=1");
 			expect(url).not.toContain("page=5");
 		});
@@ -299,7 +299,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("page=5");
 		});
 
@@ -311,7 +311,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", undefined);
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 		});
 
@@ -323,7 +323,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", ["ACTIVE", "PENDING"]);
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("filter_status=ACTIVE");
 			expect(url).toContain("filter_status=PENDING");
 		});
@@ -336,7 +336,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("cursor=abc123");
 		});
 
@@ -348,7 +348,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "NEW_VALUE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("filter_status=NEW_VALUE");
 			expect(url).not.toContain("filter_status=OLD_VALUE");
 		});
@@ -367,7 +367,7 @@ describe("useFilter", () => {
 				result.current.removeFilter("filter_status");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 		});
 
@@ -382,7 +382,7 @@ describe("useFilter", () => {
 				result.current.removeFilter("filter_status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status=ACTIVE");
 			expect(url).toContain("filter_status=PENDING");
 		});
@@ -395,7 +395,7 @@ describe("useFilter", () => {
 				result.current.removeFilter("filter_status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 		});
 
@@ -410,7 +410,7 @@ describe("useFilter", () => {
 				result.current.removeFilter("filter_status");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("page=1");
 		});
 
@@ -425,7 +425,7 @@ describe("useFilter", () => {
 				result.current.removeFilter("filter_status");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("cursor=xyz");
 		});
 	});
@@ -447,7 +447,7 @@ describe("useFilter", () => {
 				result.current.clearAllFilters();
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 			expect(url).not.toContain("filter_type");
 			expect(url).not.toContain("filter_color");
@@ -465,7 +465,7 @@ describe("useFilter", () => {
 				result.current.clearAllFilters();
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("cursor=abc");
 			expect(url).toContain("search=lune");
 		});
@@ -481,7 +481,7 @@ describe("useFilter", () => {
 				result.current.clearAllFilters();
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("page=1");
 		});
 
@@ -496,7 +496,7 @@ describe("useFilter", () => {
 
 			// page=1 is always appended by preserveNonFilterParams so the URL
 			// will have at least ?page=1, not a bare pathname.
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 		});
 	});
@@ -515,7 +515,7 @@ describe("useFilter", () => {
 			});
 
 			expect(mockReplace).toHaveBeenCalledTimes(1);
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("filter_status=ACTIVE");
 			expect(url).toContain("filter_type=ring");
 		});
@@ -533,7 +533,7 @@ describe("useFilter", () => {
 			});
 
 			expect(mockReplace).toHaveBeenCalledTimes(1);
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 			expect(url).not.toContain("filter_type");
 			expect(url).not.toContain("filter_color");
@@ -548,7 +548,7 @@ describe("useFilter", () => {
 				result.current.setFilters({ createdAt: date });
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("filter_createdAt=" + encodeURIComponent(date.toISOString()));
 		});
 	});
@@ -570,7 +570,7 @@ describe("useFilter", () => {
 				result.current.removeFilters(["filter_status", "filter_type"]);
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 			expect(url).not.toContain("filter_type");
 			expect(url).toContain("cursor=abc");
@@ -590,7 +590,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("cursor=token_123");
 		});
 
@@ -602,7 +602,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("search=bague");
 		});
 
@@ -618,7 +618,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("cursor=abc");
 			expect(url).toContain("search=bague");
 			expect(url).toContain("perPage=20");
@@ -638,7 +638,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "ACTIVE");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("f_status=ACTIVE");
 			expect(url).not.toContain("filter_status");
 		});
@@ -647,7 +647,7 @@ describe("useFilter", () => {
 			setupParams([["f_status", "ACTIVE"]]);
 			const { result } = renderHook(() => useFilter({ filterPrefix: "f_" }));
 			expect(result.current.activeFilters).toHaveLength(1);
-			expect(result.current.activeFilters[0].label).toBe("status");
+			expect(result.current.activeFilters[0]!.label).toBe("status");
 		});
 
 		it("clearAllFilters respects the custom prefix", () => {
@@ -658,7 +658,7 @@ describe("useFilter", () => {
 				result.current.clearAllFilters();
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("f_status");
 		});
 	});
@@ -677,7 +677,7 @@ describe("useFilter", () => {
 				result.current.setFilter("status", "PENDING");
 			});
 
-			const url: string = mockReplace.mock.calls[0][0];
+			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("/admin/commandes");
 		});
 	});

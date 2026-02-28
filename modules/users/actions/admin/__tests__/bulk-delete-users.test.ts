@@ -208,7 +208,7 @@ describe("bulkDeleteUsers", () => {
 					id: { in: validIds },
 					deletedAt: null,
 				}),
-			})
+			}),
 		);
 	});
 
@@ -217,24 +217,20 @@ describe("bulkDeleteUsers", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should block deletion when it would remove all admins", async () => {
-		mockPrisma.user.findMany.mockResolvedValue([
-			{ id: "user-1", role: "ADMIN" },
-		]);
+		mockPrisma.user.findMany.mockResolvedValue([{ id: "user-1", role: "ADMIN" }]);
 		mockPrisma.user.count.mockResolvedValue(1);
 
 		const result = await bulkDeleteUsers(undefined, validFormData);
 
 		expect(mockError).toHaveBeenCalledWith(
-			expect.stringContaining("Au moins un admin doit rester")
+			expect.stringContaining("Au moins un admin doit rester"),
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("should allow deletion when other admins remain", async () => {
-		mockPrisma.user.findMany.mockResolvedValue([
-			{ id: "user-1", role: "ADMIN" },
-		]);
+		mockPrisma.user.findMany.mockResolvedValue([{ id: "user-1", role: "ADMIN" }]);
 		mockPrisma.user.count.mockResolvedValue(3);
 
 		const result = await bulkDeleteUsers(undefined, validFormData);
@@ -244,9 +240,7 @@ describe("bulkDeleteUsers", () => {
 	});
 
 	it("should not check admin count when no admins in selection", async () => {
-		mockPrisma.user.findMany.mockResolvedValue([
-			{ id: "user-1", role: "USER" },
-		]);
+		mockPrisma.user.findMany.mockResolvedValue([{ id: "user-1", role: "USER" }]);
 
 		await bulkDeleteUsers(undefined, validFormData);
 
@@ -261,7 +255,7 @@ describe("bulkDeleteUsers", () => {
 		await bulkDeleteUsers(undefined, validFormData);
 
 		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Array));
-		const transactionArray = mockPrisma.$transaction.mock.calls[0][0];
+		const transactionArray = mockPrisma.$transaction.mock.calls[0]![0];
 		expect(transactionArray).toHaveLength(2);
 	});
 
@@ -270,9 +264,7 @@ describe("bulkDeleteUsers", () => {
 
 		const result = await bulkDeleteUsers(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("2")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("2"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -310,7 +302,7 @@ describe("bulkDeleteUsers", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la suppression des utilisateurs"
+			"Erreur lors de la suppression des utilisateurs",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

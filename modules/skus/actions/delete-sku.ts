@@ -21,7 +21,7 @@ import { getSkuInvalidationTags } from "../utils/cache.utils";
  */
 export async function deleteProductSku(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
@@ -44,7 +44,7 @@ export async function deleteProductSku(
 			const firstError = result.error.issues[0];
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
+				message: firstError?.message ?? "Données invalides.",
 			};
 		}
 
@@ -199,9 +199,9 @@ export async function deleteProductSku(
 			existingSku.sku,
 			existingSku.productId,
 			existingSku.product.slug,
-			validatedSkuId // Invalide aussi le cache stock temps réel
+			validatedSkuId, // Invalide aussi le cache stock temps réel
 		);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		// 13. Success
 		const successMessage = promotedSkuSku

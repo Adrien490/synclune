@@ -22,6 +22,7 @@ export function RootProviders({ children }: RootProvidersProps) {
 	return (
 		<LazyMotion features={domAnimation}>
 			<MotionConfig
+				reducedMotion="user"
 				transition={{
 					duration: MOTION_CONFIG.duration.normal,
 					ease: MOTION_CONFIG.easing.easeOut,
@@ -32,9 +33,7 @@ export function RootProviders({ children }: RootProvidersProps) {
 						<NavigationGuardProvider>
 							<DialogStoreProvider>
 								<SheetStoreProvider>
-									<AlertDialogStoreProvider>
-										{children}
-									</AlertDialogStoreProvider>
+									<AlertDialogStoreProvider>{children}</AlertDialogStoreProvider>
 								</SheetStoreProvider>
 							</DialogStoreProvider>
 						</NavigationGuardProvider>

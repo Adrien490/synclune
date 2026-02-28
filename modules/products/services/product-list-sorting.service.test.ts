@@ -8,11 +8,7 @@ vi.mock("@/shared/utils/sort-direction", () => ({
 	},
 }));
 
-import {
-	sortProducts,
-	orderByIds,
-	sortByCreatedAtDesc,
-} from "./product-list-sorting.service";
+import { sortProducts, orderByIds, sortByCreatedAtDesc } from "./product-list-sorting.service";
 import type { Product } from "../types/product.types";
 
 // Minimal product factory for tests
@@ -62,20 +58,12 @@ describe("sortProducts", () => {
 
 	it("should sort by title ascending", () => {
 		const sorted = sortProducts(products, "title-ascending");
-		expect(sorted.map((p) => p.title)).toEqual([
-			"Anneau Etoile",
-			"Bague Soleil",
-			"Collier Lune",
-		]);
+		expect(sorted.map((p) => p.title)).toEqual(["Anneau Etoile", "Bague Soleil", "Collier Lune"]);
 	});
 
 	it("should sort by title descending", () => {
 		const sorted = sortProducts(products, "title-descending");
-		expect(sorted.map((p) => p.title)).toEqual([
-			"Collier Lune",
-			"Bague Soleil",
-			"Anneau Etoile",
-		]);
+		expect(sorted.map((p) => p.title)).toEqual(["Collier Lune", "Bague Soleil", "Anneau Etoile"]);
 	});
 
 	it("should sort by price ascending", () => {
@@ -112,17 +100,21 @@ describe("sortProducts", () => {
 
 	it("should sort by title (admin, ascending)", () => {
 		const sorted = sortProducts(products, "title");
-		expect(sorted.map((p) => p.title)).toEqual([
-			"Anneau Etoile",
-			"Bague Soleil",
-			"Collier Lune",
-		]);
+		expect(sorted.map((p) => p.title)).toEqual(["Anneau Etoile", "Bague Soleil", "Collier Lune"]);
 	});
 
 	it("should sort by type (admin)", () => {
 		const withTypes = [
-			makeProduct({ id: "p1", title: "A", type: { id: "t1", slug: "bague", label: "Bague", isActive: true } }),
-			makeProduct({ id: "p2", title: "B", type: { id: "t2", slug: "collier", label: "Collier", isActive: true } }),
+			makeProduct({
+				id: "p1",
+				title: "A",
+				type: { id: "t1", slug: "bague", label: "Bague", isActive: true },
+			}),
+			makeProduct({
+				id: "p2",
+				title: "B",
+				type: { id: "t2", slug: "collier", label: "Collier", isActive: true },
+			}),
 			makeProduct({ id: "p3", title: "C", type: null }),
 		];
 		const sorted = sortProducts(withTypes, "type");
@@ -156,16 +148,16 @@ describe("orderByIds", () => {
 
 	it("should place items not in the ordered list after ordered items", () => {
 		const sorted = orderByIds(items, ["b"]);
-		expect(sorted[0].id).toBe("b");
+		expect(sorted[0]!.id).toBe("b");
 		// a and c come after, stable order preserved
 	});
 
 	it("should use fallback sort for items not in ordered list", () => {
 		const sorted = orderByIds(items, ["b"], (a, b) => b.name.localeCompare(a.name));
-		expect(sorted[0].id).toBe("b");
+		expect(sorted[0]!.id).toBe("b");
 		// Remaining: c, a (reversed alphabetical)
-		expect(sorted[1].id).toBe("c");
-		expect(sorted[2].id).toBe("a");
+		expect(sorted[1]!.id).toBe("c");
+		expect(sorted[2]!.id).toBe("a");
 	});
 
 	it("should handle empty ordered IDs", () => {
@@ -189,17 +181,14 @@ describe("sortByCreatedAtDesc", () => {
 			{ createdAt: new Date("2025-02-01") },
 		];
 		const sorted = [...items].sort(sortByCreatedAtDesc);
-		expect(sorted[0].createdAt).toEqual(new Date("2025-03-01"));
-		expect(sorted[1].createdAt).toEqual(new Date("2025-02-01"));
-		expect(sorted[2].createdAt).toEqual(new Date("2025-01-01"));
+		expect(sorted[0]!.createdAt).toEqual(new Date("2025-03-01"));
+		expect(sorted[1]!.createdAt).toEqual(new Date("2025-02-01"));
+		expect(sorted[2]!.createdAt).toEqual(new Date("2025-01-01"));
 	});
 
 	it("should handle string dates", () => {
-		const items = [
-			{ createdAt: "2025-06-01" },
-			{ createdAt: "2025-01-01" },
-		];
+		const items = [{ createdAt: "2025-06-01" }, { createdAt: "2025-01-01" }];
 		const sorted = [...items].sort(sortByCreatedAtDesc);
-		expect(sorted[0].createdAt).toBe("2025-06-01");
+		expect(sorted[0]!.createdAt).toBe("2025-06-01");
 	});
 });

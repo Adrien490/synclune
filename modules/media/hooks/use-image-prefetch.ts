@@ -31,13 +31,16 @@ const requestIdleCallbackPolyfill =
 		: (callback: IdleRequestCallback, options?: IdleRequestOptions): number => {
 				const timeout = options?.timeout ?? 50;
 				const start = Date.now();
-				return window.setTimeout(() => {
-					const elapsed = Date.now() - start;
-					callback({
-						didTimeout: elapsed >= timeout,
-						timeRemaining: () => Math.max(0, 50 - elapsed),
-					});
-				}, Math.min(1, timeout));
+				return window.setTimeout(
+					() => {
+						const elapsed = Date.now() - start;
+						callback({
+							didTimeout: elapsed >= timeout,
+							timeRemaining: () => Math.max(0, 50 - elapsed),
+						});
+					},
+					Math.min(1, timeout),
+				);
 			};
 
 const cancelIdleCallbackPolyfill =
@@ -90,9 +93,7 @@ export function usePrefetchImages({
 			// Next images
 			indicesToPrefetch.push((currentIndex + i) % imageUrls.length);
 			// Previous images
-			indicesToPrefetch.push(
-				(currentIndex - i + imageUrls.length) % imageUrls.length
-			);
+			indicesToPrefetch.push((currentIndex - i + imageUrls.length) % imageUrls.length);
 		}
 
 		// Use requestIdleCallback with polyfill for Safari
@@ -106,8 +107,8 @@ export function usePrefetchImages({
 					// Retrieve all links and filter in JS rather than via querySelector with interpolation
 					const allGalleryLinks = Array.from(
 						document.querySelectorAll<HTMLLinkElement>(
-							'link[rel="prefetch"][data-prefetched-by="gallery"]'
-						)
+							'link[rel="prefetch"][data-prefetched-by="gallery"]',
+						),
 					);
 
 					// Compare with optimized Next.js URL (size adapted to viewport)
@@ -130,8 +131,8 @@ export function usePrefetchImages({
 				// Cleanup: remove old prefetch links that are no longer adjacent
 				const allPrefetchLinks = Array.from(
 					document.querySelectorAll<HTMLLinkElement>(
-						'link[rel="prefetch"][data-prefetched-by="gallery"]'
-					)
+						'link[rel="prefetch"][data-prefetched-by="gallery"]',
+					),
 				);
 
 				// Use optimized URLs for cleanup (same size as prefetch)
@@ -139,8 +140,8 @@ export function usePrefetchImages({
 				const currentUrls = new Set(
 					indicesToPrefetch
 						.map((i) => imageUrls[i])
-						.filter(Boolean)
-						.map((url) => nextImageUrl(url, cleanupPrefetchSize, MAIN_IMAGE_QUALITY))
+						.filter((url): url is string => Boolean(url))
+						.map((url) => nextImageUrl(url, cleanupPrefetchSize, MAIN_IMAGE_QUALITY)),
 				);
 
 				for (const link of allPrefetchLinks) {
@@ -149,14 +150,14 @@ export function usePrefetchImages({
 					}
 				}
 			},
-			{ timeout: 500 }
+			{ timeout: 500 },
 		);
 
 		return () => {
 			cancelIdleCallbackPolyfill(prefetchId);
 			// Cleanup all prefetch links on unmount
 			const allLinks = document.querySelectorAll<HTMLLinkElement>(
-				'link[rel="prefetch"][data-prefetched-by="gallery"]'
+				'link[rel="prefetch"][data-prefetched-by="gallery"]',
 			);
 			allLinks.forEach((link) => link.remove());
 		};

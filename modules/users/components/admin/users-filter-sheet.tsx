@@ -160,7 +160,7 @@ export function UsersFilterSheet() {
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 			>
 				<div className="space-y-6">
@@ -168,7 +168,7 @@ export function UsersFilterSheet() {
 					<form.Field name="role">
 						{(field) => (
 							<fieldset className="space-y-1">
-								<legend className="text-sm font-medium mb-2">Rôle</legend>
+								<legend className="mb-2 text-sm font-medium">Rôle</legend>
 								<CheckboxFilterItem
 									id="role-user"
 									checked={field.state.value.includes(Role.USER)}
@@ -176,9 +176,7 @@ export function UsersFilterSheet() {
 										if (checked) {
 											field.handleChange([...field.state.value, Role.USER]);
 										} else {
-											field.handleChange(
-												field.state.value.filter((r) => r !== Role.USER)
-											);
+											field.handleChange(field.state.value.filter((r) => r !== Role.USER));
 										}
 									}}
 								>
@@ -191,9 +189,7 @@ export function UsersFilterSheet() {
 										if (checked) {
 											field.handleChange([...field.state.value, Role.ADMIN]);
 										} else {
-											field.handleChange(
-												field.state.value.filter((r) => r !== Role.ADMIN)
-											);
+											field.handleChange(field.state.value.filter((r) => r !== Role.ADMIN));
 										}
 									}}
 								>
@@ -209,7 +205,7 @@ export function UsersFilterSheet() {
 					<form.Field name="emailVerified">
 						{(field) => (
 							<fieldset className="space-y-1">
-								<legend className="text-sm font-medium mb-2">Email vérifié</legend>
+								<legend className="mb-2 text-sm font-medium">Email vérifié</legend>
 								{[
 									{ value: undefined, label: "Tous" },
 									{ value: true, label: "Oui" },
@@ -240,7 +236,7 @@ export function UsersFilterSheet() {
 					<form.Field name="marketingOptIn">
 						{(field) => (
 							<fieldset className="space-y-1">
-								<legend className="text-sm font-medium mb-2">Marketing opt-in</legend>
+								<legend className="mb-2 text-sm font-medium">Marketing opt-in</legend>
 								{[
 									{ value: undefined, label: "Tous" },
 									{ value: true, label: "Oui" },
@@ -271,7 +267,7 @@ export function UsersFilterSheet() {
 					<form.Field name="hasOrders">
 						{(field) => (
 							<fieldset className="space-y-1">
-								<legend className="text-sm font-medium mb-2">A des commandes</legend>
+								<legend className="mb-2 text-sm font-medium">A des commandes</legend>
 								{[
 									{ value: undefined, label: "Tous" },
 									{ value: true, label: "Oui" },
@@ -301,11 +297,8 @@ export function UsersFilterSheet() {
 					{/* Inclure supprimés - Switch toggle */}
 					<form.Field name="includeDeleted">
 						{(field) => (
-							<div className="flex items-center justify-between min-h-11">
-								<Label
-									htmlFor="includeDeleted"
-									className="text-sm font-medium"
-								>
+							<div className="flex min-h-11 items-center justify-between">
+								<Label htmlFor="includeDeleted" className="text-sm font-medium">
 									Inclure les clients supprimés
 								</Label>
 								<Switch

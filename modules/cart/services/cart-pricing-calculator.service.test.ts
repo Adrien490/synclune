@@ -9,13 +9,15 @@ import {
 } from "./cart-pricing-calculator.service";
 import type { CartItemForPriceCheck } from "../types/cart.types";
 
-function createPriceItem(overrides?: Partial<{
-	id: string;
-	priceAtAdd: number;
-	currentPrice: number;
-	quantity: number;
-	title: string;
-}>): CartItemForPriceCheck {
+function createPriceItem(
+	overrides?: Partial<{
+		id: string;
+		priceAtAdd: number;
+		currentPrice: number;
+		quantity: number;
+		title: string;
+	}>,
+): CartItemForPriceCheck {
 	return {
 		id: overrides?.id ?? "item-1",
 		priceAtAdd: overrides?.priceAtAdd ?? 2500,
@@ -67,11 +69,15 @@ describe("isPriceDecrease", () => {
 
 describe("getPriceDifference", () => {
 	it("should return positive value for price increase", () => {
-		expect(getPriceDifference(createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 1 }))).toBe(500);
+		expect(
+			getPriceDifference(createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 1 })),
+		).toBe(500);
 	});
 
 	it("should return negative value for price decrease", () => {
-		expect(getPriceDifference(createPriceItem({ priceAtAdd: 3000, currentPrice: 2500, quantity: 1 }))).toBe(-500);
+		expect(
+			getPriceDifference(createPriceItem({ priceAtAdd: 3000, currentPrice: 2500, quantity: 1 })),
+		).toBe(-500);
 	});
 
 	it("should return 0 when prices are equal", () => {
@@ -79,7 +85,9 @@ describe("getPriceDifference", () => {
 	});
 
 	it("should multiply by quantity", () => {
-		expect(getPriceDifference(createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 3 }))).toBe(1500);
+		expect(
+			getPriceDifference(createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 3 })),
+		).toBe(1500);
 	});
 });
 
@@ -143,40 +151,34 @@ describe("calculateTotalSavings", () => {
 describe("detectPriceChanges", () => {
 	it("should categorize items with price changes", () => {
 		const items = [
-			createPriceItem({ id: "i1", priceAtAdd: 2500, currentPrice: 2500 }),  // no change
-			createPriceItem({ id: "i2", priceAtAdd: 2000, currentPrice: 2500 }),  // increase
-			createPriceItem({ id: "i3", priceAtAdd: 3000, currentPrice: 2500 }),  // decrease
+			createPriceItem({ id: "i1", priceAtAdd: 2500, currentPrice: 2500 }), // no change
+			createPriceItem({ id: "i2", priceAtAdd: 2000, currentPrice: 2500 }), // increase
+			createPriceItem({ id: "i3", priceAtAdd: 3000, currentPrice: 2500 }), // decrease
 		];
 
 		const result = detectPriceChanges(items);
 
 		expect(result.itemsWithPriceChange).toHaveLength(2);
 		expect(result.itemsWithPriceIncrease).toHaveLength(1);
-		expect(result.itemsWithPriceIncrease[0].id).toBe("i2");
+		expect(result.itemsWithPriceIncrease[0]!.id).toBe("i2");
 		expect(result.itemsWithPriceDecrease).toHaveLength(1);
-		expect(result.itemsWithPriceDecrease[0].id).toBe("i3");
+		expect(result.itemsWithPriceDecrease[0]!.id).toBe("i3");
 	});
 
 	it("should calculate totalSavings correctly", () => {
-		const items = [
-			createPriceItem({ priceAtAdd: 3000, currentPrice: 2500, quantity: 2 }),
-		];
+		const items = [createPriceItem({ priceAtAdd: 3000, currentPrice: 2500, quantity: 2 })];
 		const result = detectPriceChanges(items);
 		expect(result.totalSavings).toBe(1000);
 	});
 
 	it("should calculate totalIncrease correctly", () => {
-		const items = [
-			createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 3 }),
-		];
+		const items = [createPriceItem({ priceAtAdd: 2000, currentPrice: 2500, quantity: 3 })];
 		const result = detectPriceChanges(items);
 		expect(result.totalIncrease).toBe(1500);
 	});
 
 	it("should return empty results when no price changes", () => {
-		const items = [
-			createPriceItem({ priceAtAdd: 2500, currentPrice: 2500 }),
-		];
+		const items = [createPriceItem({ priceAtAdd: 2500, currentPrice: 2500 })];
 		const result = detectPriceChanges(items);
 
 		expect(result.itemsWithPriceChange).toHaveLength(0);
@@ -211,6 +213,6 @@ describe("detectPriceChanges", () => {
 			{ ...createPriceItem({ priceAtAdd: 1000, currentPrice: 2000 }), customField: "test" },
 		];
 		const result = detectPriceChanges(items);
-		expect(result.itemsWithPriceIncrease[0].customField).toBe("test");
+		expect(result.itemsWithPriceIncrease[0]!.customField).toBe("test");
 	});
 });

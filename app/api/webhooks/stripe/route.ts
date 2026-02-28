@@ -47,13 +47,8 @@ export async function POST(req: Request) {
 		let event: Stripe.Event;
 		try {
 			event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-		} catch (err) {
-			return NextResponse.json(
-				{
-					error: `Webhook Error: ${err instanceof Error ? err.message : "Unknown error"}`,
-				},
-				{ status: 400 },
-			);
+		} catch {
+			return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
 		}
 
 		// 3. 🔴 ANTI-REPLAY CHECK (Best Practice Stripe 2025)

@@ -48,7 +48,10 @@ export interface HandDrawnAccentProps {
  * Paths SVG pour chaque variante d'accent dessiné à la main
  * Tendance 2026: Hand-drawn aesthetic + artisanal authenticity
  */
-const svgPaths: Record<string, { path: string; viewBox: string; defaultWidth: number; defaultHeight: number }> = {
+const svgPaths: Record<
+	string,
+	{ path: string; viewBox: string; defaultWidth: number; defaultHeight: number }
+> = {
 	underline: {
 		path: "M2 15 Q30 8, 60 12 Q90 16, 118 10",
 		viewBox: "0 0 120 20",
@@ -115,7 +118,7 @@ export function HandDrawnAccent({
 	const isInView = useInView(ref, { once: true, amount: 0.5 });
 	const shouldReduceMotion = useReducedMotion();
 
-	const config = svgPaths[variant];
+	const config = svgPaths[variant]!;
 	const finalWidth = width ?? config.defaultWidth;
 	const finalHeight = height ?? config.defaultHeight;
 

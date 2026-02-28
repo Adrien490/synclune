@@ -42,12 +42,12 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 	// Calculer la réduction si promotion
 	const hasDiscount = hasActiveDiscount(
 		selectedSku?.compareAtPrice,
-		selectedSku?.priceInclTax ?? 0
+		selectedSku?.priceInclTax ?? 0,
 	);
 
 	const discountPercent = calculateDiscountPercent(
 		selectedSku?.compareAtPrice,
-		selectedSku?.priceInclTax ?? 0
+		selectedSku?.priceInclTax ?? 0,
 	);
 
 	// Calculer le stock status (en stock, stock limité, ou rupture)
@@ -60,12 +60,16 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 
 	if (!selectedSku) {
 		return (
-			<div role="region" aria-labelledby="product-price-title" className="space-y-4 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60">
-				<div className="flex items-baseline gap-3 flex-wrap">
+			<div
+				role="region"
+				aria-labelledby="product-price-title"
+				className="space-y-4 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
+			>
+				<div className="flex flex-wrap items-baseline gap-3">
 					{showFromPrefix && (
 						<Badge
 							variant="secondary"
-							className="text-xs font-medium px-2 py-0.5"
+							className="px-2 py-0.5 text-xs font-medium"
 							aria-label="Prix minimum"
 						>
 							À partir de
@@ -73,14 +77,18 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					)}
 					<p
 						id="product-price-title"
-						className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground"
-						aria-label={priceInfo.minPrice > 0 ? `Prix à partir de ${formatEuro(priceInfo.minPrice)}` : "Prix non disponible"}
+						className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl"
+						aria-label={
+							priceInfo.minPrice > 0
+								? `Prix à partir de ${formatEuro(priceInfo.minPrice)}`
+								: "Prix non disponible"
+						}
 					>
 						{priceInfo.minPrice > 0 ? formatEuro(priceInfo.minPrice) : "—"}
 					</p>
 				</div>
 				{priceInfo.hasMultiplePrices && (
-					<p className="text-xs text-muted-foreground" role="status">
+					<p className="text-muted-foreground text-xs" role="status">
 						Sélectionnez vos options pour voir le prix exact
 					</p>
 				)}
@@ -94,20 +102,19 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 			aria-labelledby="product-price-selected"
 			className="space-y-3 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 		>
-
-			<div className="flex items-baseline gap-3 flex-wrap">
+			<div className="flex flex-wrap items-baseline gap-3">
 				{/* Prix principal */}
 				<p
 					id="product-price-selected"
-					className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground"
-					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
+					className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl"
+					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ""}`}
 				>
 					{formatEuro(selectedSku.priceInclTax)}
 				</p>
 
 				{/* Prix barré si promotion */}
 				{hasDiscount && (
-					<span className="text-lg text-muted-foreground line-through">
+					<span className="text-muted-foreground text-lg line-through">
 						<span className="sr-only">Prix initial : </span>
 						{formatEuro(selectedSku.compareAtPrice!)}
 					</span>
@@ -115,13 +122,14 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 
 				{/* Badge de réduction */}
 				{hasDiscount && (
-					<span
-						className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-accent text-accent-foreground border border-accent/30"
+					<Badge
+						variant="secondary"
+						className="rounded-full px-2.5 py-1 text-xs font-semibold"
 						role="status"
 						aria-label={`Réduction de ${discountPercent} pourcent`}
 					>
 						-{discountPercent}%
-					</span>
+					</Badge>
 				)}
 			</div>
 
@@ -130,7 +138,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				{stockStatus === "in_stock" && (
 					<Badge
 						variant="secondary"
-						className="text-xs/5 tracking-normal antialiased gap-1.5"
+						className="gap-1.5 text-xs/5 tracking-normal antialiased"
 						role="status"
 						aria-label="Produit en stock"
 					>
@@ -145,7 +153,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					>
 						<Badge
 							variant="outline"
-							className="text-xs/5 tracking-normal antialiased border-orange-600 text-orange-800 bg-orange-100 dark:bg-orange-950/80 dark:text-orange-200 dark:border-orange-500 shadow-sm"
+							className="border-orange-600 bg-orange-100 text-xs/5 tracking-normal text-orange-800 antialiased shadow-sm dark:border-orange-500 dark:bg-orange-950/80 dark:text-orange-200"
 							role="status"
 							aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
 						>
@@ -156,7 +164,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				{stockStatus === "out_of_stock" && (
 					<Badge
 						variant="destructive"
-						className="text-xs/5 tracking-normal antialiased gap-1.5"
+						className="gap-1.5 text-xs/5 tracking-normal antialiased"
 						role="status"
 						aria-label="Produit en rupture de stock"
 					>
@@ -170,7 +178,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 			{cartsCount !== undefined && cartsCount > 0 && stockStatus !== "out_of_stock" && (
 				<Badge
 					variant="outline"
-					className="text-xs/5 tracking-normal antialiased border-pink-500/50 text-pink-700 bg-pink-50 dark:bg-pink-950/60 dark:text-pink-200 dark:border-pink-500/40"
+					className="border-pink-500/50 bg-pink-50 text-xs/5 tracking-normal text-pink-700 antialiased dark:border-pink-500/40 dark:bg-pink-950/60 dark:text-pink-200"
 					role="status"
 					aria-label={`Actuellement dans ${cartsCount} ${cartsCount === 1 ? "panier" : "paniers"}`}
 				>
@@ -181,10 +189,10 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 
 			{/* Date de livraison estimée */}
 			{stockStatus !== "out_of_stock" && (
-				<div className="text-sm text-muted-foreground pt-1">
+				<div className="text-muted-foreground pt-1 text-sm">
 					<span>
 						Recevez d'ici le{" "}
-						<span className="font-medium text-foreground">
+						<span className="text-foreground font-medium">
 							{format(minDelivery, "d", { locale: fr })}-
 							{format(maxDelivery, "d MMM", { locale: fr })}
 						</span>
@@ -194,7 +202,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 
 			{/* Message d'économie */}
 			{hasDiscount && (
-				<p className="text-sm text-accent-foreground font-medium" role="status">
+				<p className="text-accent-foreground text-sm font-medium" role="status">
 					Économisez {formatEuro(selectedSku.compareAtPrice! - selectedSku.priceInclTax)}
 				</p>
 			)}
@@ -203,7 +211,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 			{stockStatus === "out_of_stock" && (
 				<div className="space-y-3">
 					<div
-						className="text-xs/5 tracking-normal antialiased text-destructive p-2 bg-destructive/10 rounded border border-destructive/20 flex items-start gap-2"
+						className="text-destructive bg-destructive/10 border-destructive/20 flex items-start gap-2 rounded border p-2 text-xs/5 tracking-normal antialiased"
 						role="alert"
 					>
 						<p>Cette petite merveille sera bientôt disponible !</p>

@@ -93,7 +93,7 @@ export function DateTimeField({
 
 		// Préserve l'heure existante ou utilise 00:00
 		const [hours, minutes] = currentTime.split(":").map(Number);
-		date.setHours(hours, minutes, 0, 0);
+		date.setHours(hours ?? 0, minutes ?? 0, 0, 0);
 		field.handleChange(formatValue(date));
 	};
 
@@ -103,7 +103,7 @@ export function DateTimeField({
 
 		const [hours, minutes] = time.split(":").map(Number);
 		const newDate = new Date(selectedDate);
-		newDate.setHours(hours, minutes, 0, 0);
+		newDate.setHours(hours ?? 0, minutes ?? 0, 0, 0);
 		field.handleChange(formatValue(newDate));
 	};
 
@@ -132,10 +132,10 @@ export function DateTimeField({
 							type="button"
 							variant="outline"
 							disabled={disabled}
+							aria-invalid={field.state.meta.errors.length > 0}
 							className={cn(
 								"min-h-11 w-full justify-start text-left font-normal",
 								!selectedDate && "text-muted-foreground",
-								field.state.meta.errors.length > 0 && "border-destructive ring-destructive/20",
 							)}
 						>
 							<CalendarIcon className="mr-2 size-4" />

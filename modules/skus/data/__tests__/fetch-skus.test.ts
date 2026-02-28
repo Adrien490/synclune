@@ -132,7 +132,7 @@ describe("fetchProductSkus – sort order logic", () => {
 	it("always places isDefault desc as first orderBy entry", async () => {
 		await fetchProductSkus(makeParams({ sortBy: "price-ascending" }));
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy[0]).toEqual({ isDefault: "desc" });
 	});
 
@@ -140,7 +140,7 @@ describe("fetchProductSkus – sort order logic", () => {
 		mockGetSortDirection.mockReturnValue("asc");
 		await fetchProductSkus(makeParams({ sortBy: "sku-ascending" }));
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ sku: "asc" })]),
 		);
@@ -150,7 +150,7 @@ describe("fetchProductSkus – sort order logic", () => {
 		mockGetSortDirection.mockReturnValue("asc");
 		await fetchProductSkus(makeParams({ sortBy: "price-ascending" }));
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ priceInclTax: "asc" })]),
 		);
@@ -160,7 +160,7 @@ describe("fetchProductSkus – sort order logic", () => {
 		mockGetSortDirection.mockReturnValue("asc");
 		await fetchProductSkus(makeParams({ sortBy: "stock-ascending" }));
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ inventory: "asc" })]),
 		);
@@ -170,7 +170,7 @@ describe("fetchProductSkus – sort order logic", () => {
 		mockGetSortDirection.mockReturnValue("desc");
 		await fetchProductSkus(makeParams({ sortBy: "created-descending" }));
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ createdAt: "desc" })]),
 		);
@@ -181,7 +181,7 @@ describe("fetchProductSkus – sort order logic", () => {
 			makeParams({ sortBy: "unknown-sort" as unknown as GetProductSkusParams["sortBy"] }),
 		);
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ createdAt: "desc" })]),
 		);
@@ -190,7 +190,7 @@ describe("fetchProductSkus – sort order logic", () => {
 	it("always includes secondary id asc sort as tiebreaker", async () => {
 		await fetchProductSkus(makeParams());
 
-		const callArg = mockPrisma.productSku.findMany.mock.calls[0][0];
+		const callArg = mockPrisma.productSku.findMany.mock.calls[0]![0];
 		expect(callArg.orderBy).toEqual(
 			expect.arrayContaining([expect.objectContaining({ id: "asc" })]),
 		);

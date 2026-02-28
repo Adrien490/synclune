@@ -201,7 +201,7 @@ export function buildFilterURL(params: BuildFilterURLParams): {
 	// Couleurs
 	if (formData.colors.length > 0) {
 		if (formData.colors.length === 1) {
-			urlParams.set("color", formData.colors[0]);
+			urlParams.set("color", formData.colors[0]!);
 		} else {
 			for (const color of formData.colors) {
 				urlParams.append("color", color);
@@ -212,7 +212,7 @@ export function buildFilterURL(params: BuildFilterURLParams): {
 	// Matériaux
 	if (formData.materials.length > 0) {
 		if (formData.materials.length === 1) {
-			urlParams.set("material", formData.materials[0]);
+			urlParams.set("material", formData.materials[0]!);
 		} else {
 			for (const material of formData.materials) {
 				urlParams.append("material", material);

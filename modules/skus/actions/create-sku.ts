@@ -60,10 +60,10 @@ export async function createProductSku(
 		const result = createProductSkuSchema.safeParse(rawData);
 		if (!result.success) {
 			const firstError = result.error.issues[0];
-			const errorPath = firstError.path.join(".");
+			const errorPath = firstError?.path.join(".");
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: `${errorPath}: ${firstError.message}`,
+				message: firstError ? `${errorPath}: ${firstError.message}` : "Données invalides.",
 			};
 		}
 
@@ -195,7 +195,7 @@ export async function createProductSku(
 
 			// Generate SKU with cryptographically secure random ID
 			const skuValue =
-				validatedData.sku?.trim() || `SKU-${randomUUID().split("-")[0].toUpperCase()}`;
+				validatedData.sku?.trim() || `SKU-${(randomUUID().split("-")[0] ?? "").toUpperCase()}`;
 
 			// Create SKU
 			const createdSku = await tx.productSku.create({

@@ -14,7 +14,7 @@ describe("generateSkuCode", () => {
 		const code = generateSkuCode();
 		const after = Date.now();
 
-		const timestamp = parseInt(code.split("-")[1], 10);
+		const timestamp = parseInt(code.split("-")[1]!, 10);
 		expect(timestamp).toBeGreaterThanOrEqual(before);
 		expect(timestamp).toBeLessThanOrEqual(after);
 	});

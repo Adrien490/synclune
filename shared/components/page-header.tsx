@@ -69,21 +69,18 @@ export function PageHeader({
 	// Mode compact (dashboard) : pas de pt-16, pas de border-bottom, pas de breadcrumbs
 	if (isCompact) {
 		return (
-			<header
-				className={cn("space-y-6 mb-4 md:mb-6", className)}
-				aria-labelledby="page-title"
-			>
-				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
+			<header className={cn("mb-4 space-y-6 md:mb-6", className)} aria-labelledby="page-title">
+				<div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="text-2xl sm:text-3xl lg:text-4xl font-display font-medium tracking-normal text-foreground wrap-break-words"
+							className="font-display text-foreground wrap-break-words text-2xl font-medium tracking-normal sm:text-3xl lg:text-4xl"
 							title={title}
 						>
 							{title}
 						</h1>
 						{description && (
-							<p className="text-base lg:text-lg font-sans text-muted-foreground leading-relaxed max-w-prose wrap-break-words">
+							<p className="text-muted-foreground wrap-break-words max-w-prose font-sans text-base leading-relaxed lg:text-lg">
 								{description}
 							</p>
 						)}
@@ -92,7 +89,7 @@ export function PageHeader({
 						<div
 							role="group"
 							aria-label="Actions de la page"
-							className="shrink-0 w-full md:w-auto flex flex-wrap items-center justify-start md:justify-end gap-3"
+							className="flex w-full shrink-0 flex-wrap items-center justify-start gap-3 md:w-auto md:justify-end"
 						>
 							{actions}
 						</div>
@@ -105,22 +102,17 @@ export function PageHeader({
 	// Mode default (pages publiques) : background passe sous la navbar, contenu visible en dessous
 	return (
 		<header
-			className={cn(
-				"relative overflow-hidden bg-background border-b border-border",
-				className
-			)}
+			className={cn("bg-background border-border relative overflow-hidden border-b", className)}
 			aria-labelledby="page-title"
 		>
 			<div
 				className={cn(
-					"relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-					description
-						? "pt-20 sm:pt-32 pb-2 sm:pb-4"
-						: "pt-20 sm:pt-32 pb-0 sm:pb-4"
+					"relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8",
+					description ? "pt-20 pb-2 sm:pt-32 sm:pb-4" : "pt-20 pb-0 sm:pt-32 sm:pb-4",
 				)}
 			>
 				{/* Breadcrumb et titre principal */}
-				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
 					<div className="min-w-0 flex-1">
 						{/* Mobile avec breadcrumbs : Bouton retour + Titre + Actions inline */}
 						{breadcrumbs.length > 0 && (
@@ -128,25 +120,26 @@ export function PageHeader({
 								<Link
 									href={
 										breadcrumbs.length > 1
-											? breadcrumbs[breadcrumbs.length - 2].href
+											? (breadcrumbs[breadcrumbs.length - 2]?.href ?? "/")
 											: "/"
 									}
-									className="shrink-0 inline-flex items-center justify-center size-11 -ml-3 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+									className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -ml-3 inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 									aria-label={`Retour vers ${
 										breadcrumbs.length > 1
-											? breadcrumbs[breadcrumbs.length - 2].label
+											? (breadcrumbs[breadcrumbs.length - 2]?.label ?? "Accueil")
 											: "Accueil"
 									}`}
 								>
 									<ChevronLeft className="size-5" />
 								</Link>
-								<span aria-hidden="true" className="text-2xl font-display font-medium text-foreground tracking-normal flex-1 min-w-0 wrap-break-words">
+								<span
+									aria-hidden="true"
+									className="font-display text-foreground wrap-break-words min-w-0 flex-1 text-2xl font-medium tracking-normal"
+								>
 									{title}
 								</span>
 								{/* Actions mobile - alignées à droite */}
-								{actions && (
-									<div className="shrink-0 ml-auto">{actions}</div>
-								)}
+								{actions && <div className="ml-auto shrink-0">{actions}</div>}
 							</div>
 						)}
 
@@ -154,35 +147,29 @@ export function PageHeader({
 						{breadcrumbs.length > 0 && (
 							<nav
 								aria-label="Fil d'Ariane"
-								className="hidden sm:block text-sm leading-normal text-muted-foreground mb-2"
+								className="text-muted-foreground mb-2 hidden text-sm leading-normal sm:block"
 							>
-								<ol className="flex items-center gap-2 list-none p-0 m-0">
+								<ol className="m-0 flex list-none items-center gap-2 p-0">
 									<li>
 										<Link
 											href="/"
-											className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+											className="hover:text-foreground focus-visible:ring-ring rounded-md transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 										>
 											Accueil
 										</Link>
 									</li>
 
 									{breadcrumbs.map((item, index) => (
-										<li
-											key={item.href}
-											className="flex items-center gap-2"
-										>
+										<li key={item.href} className="flex items-center gap-2">
 											<span aria-hidden="true">/</span>
 											{index === breadcrumbs.length - 1 ? (
-												<span
-													className="text-foreground font-medium"
-													aria-current="page"
-												>
+												<span className="text-foreground font-medium" aria-current="page">
 													{item.label}
 												</span>
 											) : (
 												<Link
 													href={item.href}
-													className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+													className="hover:text-foreground focus-visible:ring-ring rounded-md transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 												>
 													{item.label}
 												</Link>
@@ -197,8 +184,8 @@ export function PageHeader({
 						<h1
 							id="page-title"
 							className={cn(
-								"text-2xl sm:text-3xl lg:text-4xl font-display font-medium text-foreground tracking-normal wrap-break-words",
-								breadcrumbs.length > 0 && "sr-only sm:not-sr-only"
+								"font-display text-foreground wrap-break-words text-2xl font-medium tracking-normal sm:text-3xl lg:text-4xl",
+								breadcrumbs.length > 0 && "sr-only sm:not-sr-only",
 							)}
 						>
 							{title}
@@ -206,7 +193,7 @@ export function PageHeader({
 
 						{/* Description optionnelle */}
 						{description && (
-							<p className="mt-1 sm:mt-2 text-base text-muted-foreground max-w-2xl wrap-break-words">
+							<p className="text-muted-foreground wrap-break-words mt-1 max-w-2xl text-base sm:mt-2">
 								{description}
 							</p>
 						)}
@@ -218,8 +205,8 @@ export function PageHeader({
 							role="group"
 							aria-label="Actions de la page"
 							className={cn(
-								"shrink-0 w-full sm:w-auto flex flex-wrap items-center justify-end gap-3",
-								breadcrumbs.length > 0 && "hidden sm:flex"
+								"flex w-full shrink-0 flex-wrap items-center justify-end gap-3 sm:w-auto",
+								breadcrumbs.length > 0 && "hidden sm:flex",
 							)}
 						>
 							{actions}

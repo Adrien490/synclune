@@ -159,7 +159,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 			}
 		}
 		if (batch.length < DB_QUERY_BATCH_SIZE) break;
-		skuCursor = batch[batch.length - 1].id;
+		skuCursor = batch[batch.length - 1]!.id;
 	}
 
 	// 2. ReviewMedia - paginated
@@ -183,7 +183,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 			if (key) keys.add(key);
 		}
 		if (batch.length < DB_QUERY_BATCH_SIZE) break;
-		reviewCursor = batch[batch.length - 1].id;
+		reviewCursor = batch[batch.length - 1]!.id;
 	}
 
 	// 3. User avatars (only those with non-null image) - paginated
@@ -210,7 +210,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 			}
 		}
 		if (batch.length < DB_QUERY_BATCH_SIZE) break;
-		userCursor = batch[batch.length - 1].id;
+		userCursor = batch[batch.length - 1]!.id;
 	}
 
 	return keys;

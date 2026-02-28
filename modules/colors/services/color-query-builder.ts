@@ -5,9 +5,7 @@ import type { ColorFilters, GetColorsParams } from "../types/color.types";
 // COLOR QUERY BUILDER UTILS
 // ============================================================================
 
-export function buildColorSearchConditions(
-	search: string
-): Prisma.ColorWhereInput | null {
+export function buildColorSearchConditions(search: string): Prisma.ColorWhereInput | null {
 	if (!search || search.trim().length === 0) return null;
 	const searchTerm = search.trim();
 
@@ -20,9 +18,7 @@ export function buildColorSearchConditions(
 	};
 }
 
-export function buildColorFilterConditions(
-	filters: ColorFilters
-): Prisma.ColorWhereInput {
+export function buildColorFilterConditions(filters: ColorFilters): Prisma.ColorWhereInput {
 	const conditions: Prisma.ColorWhereInput = {};
 
 	if (filters.isActive !== undefined) {
@@ -32,9 +28,7 @@ export function buildColorFilterConditions(
 	return conditions;
 }
 
-export function buildColorWhereClause(
-	params: GetColorsParams
-): Prisma.ColorWhereInput {
+export function buildColorWhereClause(params: GetColorsParams): Prisma.ColorWhereInput {
 	const andConditions: Prisma.ColorWhereInput[] = [];
 
 	if (params.search) {
@@ -52,7 +46,7 @@ export function buildColorWhereClause(
 	}
 
 	if (andConditions.length === 0) return {};
-	if (andConditions.length === 1) return andConditions[0];
+	if (andConditions.length === 1) return andConditions[0]!;
 
 	return { AND: andConditions };
 }

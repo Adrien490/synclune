@@ -75,7 +75,9 @@ describe("matchColor", () => {
 		const sku = makeSku();
 
 		// slug matches, hex and id don't - should still match via slug
-		expect(matchColor(sku, { colorSlug: "or-rose", colorHex: "#000", colorId: "wrong" })).toBe(true);
+		expect(matchColor(sku, { colorSlug: "or-rose", colorHex: "#000", colorId: "wrong" })).toBe(
+			true,
+		);
 	});
 
 	it("should return false when SKU has no color and a selector is provided", () => {
@@ -183,44 +185,44 @@ describe("matchSkuVariants", () => {
 describe("filterCompatibleSkus", () => {
 	it("should exclude inactive SKUs", () => {
 		const product = {
-			skus: [
-				makeSku({ id: "sku-1", isActive: false }),
-				makeSku({ id: "sku-2", isActive: true }),
-			],
+			skus: [makeSku({ id: "sku-1", isActive: false }), makeSku({ id: "sku-2", isActive: true })],
 		};
 
 		const result = filterCompatibleSkus(product, {});
 
 		expect(result).toHaveLength(1);
-		expect(result[0].id).toBe("sku-2");
+		expect(result[0]!.id).toBe("sku-2");
 	});
 
 	it("should exclude out-of-stock SKUs", () => {
 		const product = {
-			skus: [
-				makeSku({ id: "sku-1", inventory: 0 }),
-				makeSku({ id: "sku-2", inventory: 3 }),
-			],
+			skus: [makeSku({ id: "sku-1", inventory: 0 }), makeSku({ id: "sku-2", inventory: 3 })],
 		};
 
 		const result = filterCompatibleSkus(product, {});
 
 		expect(result).toHaveLength(1);
-		expect(result[0].id).toBe("sku-2");
+		expect(result[0]!.id).toBe("sku-2");
 	});
 
 	it("should filter by variant selectors", () => {
 		const product = {
 			skus: [
-				makeSku({ id: "sku-1", color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" } }),
-				makeSku({ id: "sku-2", color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" } }),
+				makeSku({
+					id: "sku-1",
+					color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				}),
+				makeSku({
+					id: "sku-2",
+					color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				}),
 			],
 		};
 
 		const result = filterCompatibleSkus(product, { colorSlug: "argent" });
 
 		expect(result).toHaveLength(1);
-		expect(result[0].id).toBe("sku-2");
+		expect(result[0]!.id).toBe("sku-2");
 	});
 
 	it("should return empty array when product has no SKUs", () => {

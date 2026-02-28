@@ -57,7 +57,7 @@ export async function getRateLimitId(): Promise<{ identifier: string; ipAddress:
  * ```
  */
 export async function enforceRateLimitForCurrentUser(
-	limit: RateLimitConfig
+	limit: RateLimitConfig,
 ): Promise<{ success: true } | { error: ActionState }> {
 	const { identifier, ipAddress } = await getRateLimitId();
 	const check = await checkRateLimit(identifier, limit, ipAddress);
@@ -67,10 +67,6 @@ export async function enforceRateLimitForCurrentUser(
 			error: {
 				status: ActionStatus.ERROR,
 				message: check.error || "Trop de requêtes. Veuillez réessayer plus tard.",
-				data: {
-					retryAfter: check.retryAfter,
-					reset: check.reset,
-				},
 			},
 		};
 	}

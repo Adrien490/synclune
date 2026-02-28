@@ -34,7 +34,6 @@ export function SignUpEmailForm() {
 	const form = useAppForm({
 		defaultValues: {
 			email: "",
-			confirmEmail: "",
 			password: "",
 			name: "",
 			termsAccepted: false,
@@ -128,36 +127,6 @@ export function SignUpEmailForm() {
 								Utilisé uniquement pour la confirmation de compte et les notifications de commande
 							</p>
 						</div>
-					)}
-				</form.AppField>
-
-				<form.AppField
-					name="confirmEmail"
-					validators={{
-						onChangeListenTo: ["email"],
-						onChange: ({ value, fieldApi }) => {
-							if (!value) return "La confirmation de l'email est requise";
-							if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-								return "Format d'email invalide";
-							}
-							const email = fieldApi.form.getFieldValue("email");
-							if (value !== email) {
-								return "Les emails ne correspondent pas";
-							}
-							return undefined;
-						},
-					}}
-				>
-					{(field) => (
-						<field.InputField
-							label="Confirmer l'email"
-							type="email"
-							inputMode="email"
-							autoComplete="email"
-							spellCheck={false}
-							disabled={isPending}
-							required
-						/>
 					)}
 				</form.AppField>
 

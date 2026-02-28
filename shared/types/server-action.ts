@@ -12,8 +12,18 @@ export enum ActionStatus {
 	INITIAL = "initial",
 }
 
-export type ActionState = {
-	status: ActionStatus;
-	message: string;
-	data?: unknown;
-};
+export type ActionState =
+	| { status: ActionStatus.SUCCESS; message: string; data?: unknown }
+	| { status: ActionStatus.WARNING; message: string; data?: unknown }
+	| {
+			status:
+				| ActionStatus.ERROR
+				| ActionStatus.UNAUTHORIZED
+				| ActionStatus.VALIDATION_ERROR
+				| ActionStatus.NOT_FOUND
+				| ActionStatus.CONFLICT
+				| ActionStatus.FORBIDDEN;
+			message: string;
+			data?: undefined;
+	  }
+	| { status: ActionStatus.INITIAL; message: string; data?: undefined };

@@ -36,7 +36,7 @@ export function useIsScrolled(threshold: number = 10): boolean {
 		const observer = new IntersectionObserver(
 			([entry]) => {
 				// isIntersecting = false signifie qu'on a scrollé au-delà du threshold
-				setIsScrolled(!entry.isIntersecting);
+				if (entry) setIsScrolled(!entry.isIntersecting);
 			},
 			{
 				threshold: 0,

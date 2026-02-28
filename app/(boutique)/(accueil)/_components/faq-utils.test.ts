@@ -35,10 +35,7 @@ describe("parseAnswerSegments", () => {
 			{ text: "FAQ", href: "/faq" },
 			{ text: "contact", href: "/contact" },
 		];
-		const result = parseAnswerSegments(
-			"See our {{link0}} or {{link1}}.",
-			links,
-		);
+		const result = parseAnswerSegments("See our {{link0}} or {{link1}}.", links);
 		expect(result).toEqual([
 			{ type: "text", value: "See our " },
 			{ type: "link", text: "FAQ", href: "/faq" },
@@ -68,10 +65,7 @@ describe("parseAnswerSegments", () => {
 
 	it("skips missing link placeholders silently", () => {
 		const links: FaqLink[] = [{ text: "existing", href: "/exists" }];
-		const result = parseAnswerSegments(
-			"See {{link0}} and {{link1}}.",
-			links,
-		);
+		const result = parseAnswerSegments("See {{link0}} and {{link1}}.", links);
 		expect(result).toEqual([
 			{ type: "text", value: "See " },
 			{ type: "link", text: "existing", href: "/exists" },
@@ -83,9 +77,7 @@ describe("parseAnswerSegments", () => {
 	it("handles answer with no placeholders but with links provided", () => {
 		const links: FaqLink[] = [{ text: "unused", href: "/unused" }];
 		const result = parseAnswerSegments("No placeholders here.", links);
-		expect(result).toEqual([
-			{ type: "text", value: "No placeholders here." },
-		]);
+		expect(result).toEqual([{ type: "text", value: "No placeholders here." }]);
 	});
 });
 
@@ -102,9 +94,7 @@ describe("getPlainTextAnswer", () => {
 
 	it("replaces placeholder with link text", () => {
 		const links: FaqLink[] = [{ text: "conditions de vente", href: "/cgv" }];
-		expect(getPlainTextAnswer("Voir nos {{link0}}.", links)).toBe(
-			"Voir nos conditions de vente.",
-		);
+		expect(getPlainTextAnswer("Voir nos {{link0}}.", links)).toBe("Voir nos conditions de vente.");
 	});
 
 	it("replaces multiple placeholders", () => {
@@ -112,16 +102,12 @@ describe("getPlainTextAnswer", () => {
 			{ text: "FAQ", href: "/faq" },
 			{ text: "contact", href: "/contact" },
 		];
-		expect(
-			getPlainTextAnswer("Voir {{link0}} ou {{link1}}.", links),
-		).toBe("Voir FAQ ou contact.");
+		expect(getPlainTextAnswer("Voir {{link0}} ou {{link1}}.", links)).toBe("Voir FAQ ou contact.");
 	});
 
 	it("replaces missing placeholder with empty string", () => {
 		const links: FaqLink[] = [{ text: "existing", href: "/exists" }];
-		expect(
-			getPlainTextAnswer("See {{link0}} and {{link1}}.", links),
-		).toBe("See existing and .");
+		expect(getPlainTextAnswer("See {{link0}} and {{link1}}.", links)).toBe("See existing and .");
 	});
 });
 
@@ -162,7 +148,7 @@ describe("generateFaqSchema", () => {
 
 	it("passes through answers without placeholders unchanged", () => {
 		const schema = generateFaqSchema(items);
-		expect(schema.mainEntity[1].acceptedAnswer.text).toBe("Plain answer.");
+		expect(schema.mainEntity[1]!.acceptedAnswer.text).toBe("Plain answer.");
 	});
 
 	it("handles empty items array", () => {

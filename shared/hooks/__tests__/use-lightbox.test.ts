@@ -29,7 +29,7 @@ import { useLightbox } from "../use-lightbox";
 function getCapturedOnClose(): (() => void) | undefined {
 	const calls = mockUseBackButtonClose.mock.calls;
 	if (calls.length === 0) return undefined;
-	return calls[calls.length - 1][0]?.onClose;
+	return calls[calls.length - 1]![0]?.onClose;
 }
 
 // ---------------------------------------------------------------------------

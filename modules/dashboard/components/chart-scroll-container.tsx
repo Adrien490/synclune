@@ -9,15 +9,12 @@ interface ChartScrollContainerProps {
 /**
  * Container for charts - forces responsive on mobile
  */
-export function ChartScrollContainer({
-	children,
-	className,
-}: ChartScrollContainerProps) {
+export function ChartScrollContainer({ children, className }: ChartScrollContainerProps) {
 	return (
 		<div
 			className={cn(
 				"relative",
-				"overflow-hidden",
+				"overflow-x-hidden overflow-y-visible",
 				"md:overflow-visible",
 				className,
 			)}

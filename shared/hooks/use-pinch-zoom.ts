@@ -253,7 +253,7 @@ export function usePinchZoom({
 			startTouchCenter.current = center;
 			initialPosition.current = { ...position };
 		} else if (e.touches.length === 1) {
-			const touchPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+			const touchPoint = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY };
 			startTouchCenter.current = touchPoint;
 			if (isZoomed) {
 				// Début du pan
@@ -315,7 +315,7 @@ export function usePinchZoom({
 			// Déplacement
 			e.preventDefault();
 
-			const touch = e.touches[0];
+			const touch = e.touches[0]!;
 			// Calculer la distance totale depuis le début du geste
 			const totalDistance = Math.hypot(
 				touch.clientX - startTouchCenter.current.x,
@@ -342,7 +342,7 @@ export function usePinchZoom({
 			setPosition(newPosition);
 		} else if (e.touches.length === 1 && !isZoomed) {
 			// Tracking du mouvement pour single tap (non zoomé)
-			const touch = e.touches[0];
+			const touch = e.touches[0]!;
 			const totalDistance = Math.hypot(
 				touch.clientX - startTouchCenter.current.x,
 				touch.clientY - startTouchCenter.current.y,

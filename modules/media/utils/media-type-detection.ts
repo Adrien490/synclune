@@ -32,5 +32,5 @@ export function detectMediaType(url: string): "IMAGE" | "VIDEO" {
  */
 export function getFileExtension(url: string): string | null {
 	const match = url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
-	return match ? `.${match[1].toLowerCase()}` : null;
+	return match ? `.${match[1]!.toLowerCase()}` : null;
 }

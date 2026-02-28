@@ -60,7 +60,7 @@ export type CheckCartRateLimitOptions = {
  */
 export async function checkCartRateLimit(
 	limitConfig: RateLimitConfig,
-	options: CheckCartRateLimitOptions = {}
+	options: CheckCartRateLimitOptions = {},
 ): Promise<CartRateLimitResult> {
 	const { createSessionIfMissing = false } = options;
 
@@ -90,10 +90,6 @@ export async function checkCartRateLimit(
 			errorState: {
 				status: ActionStatus.ERROR,
 				message: rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
 			},
 		};
 	}
@@ -120,7 +116,7 @@ export async function checkCartRateLimit(
 export async function checkMergeCartsRateLimit(
 	userId: string,
 	sessionId: string,
-	limitConfig: RateLimitConfig
+	limitConfig: RateLimitConfig,
 ): Promise<CartRateLimitResult> {
 	const headersList = await headers();
 	const ipAddress = await getClientIp(headersList);
@@ -134,10 +130,6 @@ export async function checkMergeCartsRateLimit(
 			errorState: {
 				status: ActionStatus.ERROR,
 				message: rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
 			},
 		};
 	}

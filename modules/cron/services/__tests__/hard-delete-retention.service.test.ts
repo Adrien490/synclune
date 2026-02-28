@@ -80,7 +80,7 @@ describe("hardDeleteExpiredRecords", () => {
 
 		await hardDeleteExpiredRecords();
 
-		const call = mockPrisma.productReview.findMany.mock.calls[0][0];
+		const call = mockPrisma.productReview.findMany.mock.calls[0]![0];
 		const retentionDate = call.where.deletedAt.lt;
 		expect(retentionDate.getFullYear()).toBe(2026);
 	});

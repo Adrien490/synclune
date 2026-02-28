@@ -1,12 +1,4 @@
-import {
-	Button,
-	Column,
-	Hr,
-	Img,
-	Row,
-	Section,
-	Text,
-} from "@react-email/components";
+import { Button, Column, Hr, Img, Row, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
@@ -32,24 +24,18 @@ export const ReviewRequestEmail = ({
 }: ReviewRequestEmailProps) => {
 	const singleProduct = products.length === 1;
 	const previewText = singleProduct
-		? `Que pensez-vous de ${products[0].title} ?`
+		? `Que pensez-vous de ${products[0]!.title} ?`
 		: `Donnez votre avis sur votre commande ${orderNumber}`;
 
 	return (
 		<EmailLayout
 			preview={previewText}
-			footer={
-				<Text style={EMAIL_STYLES.text.tiny}>
-					Merci pour votre confiance !
-				</Text>
-			}
+			footer={<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>}
 		>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>
-					{singleProduct
-						? "Votre avis compte !"
-						: "Vos avis comptent !"}
+					{singleProduct ? "Votre avis compte !" : "Vos avis comptent !"}
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
 					Bonjour {customerName},
@@ -60,9 +46,8 @@ export const ReviewRequestEmail = ({
 						: "Votre commande a bien été livrée. Nous espérons que vos créations vous plaisent !"}
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
-					Prenez quelques instants pour partager votre expérience. Votre avis
-					aide d&apos;autres clientes à faire leur choix et nous permet
-					d&apos;améliorer nos créations.
+					Prenez quelques instants pour partager votre expérience. Votre avis aide d&apos;autres
+					clientes à faire leur choix et nous permet d&apos;améliorer nos créations.
 				</Text>
 			</Section>
 
@@ -79,9 +64,7 @@ export const ReviewRequestEmail = ({
 							marginBottom: index < products.length - 1 ? "16px" : "0",
 							paddingBottom: index < products.length - 1 ? "16px" : "0",
 							borderBottom:
-								index < products.length - 1
-									? `1px solid ${EMAIL_COLORS.border}`
-									: "none",
+								index < products.length - 1 ? `1px solid ${EMAIL_COLORS.border}` : "none",
 						}}
 					>
 						{product.imageUrl && (
@@ -154,8 +137,7 @@ export const ReviewRequestEmail = ({
 					}}
 				>
 					Chaque avis est lu avec attention et contribue
-					<br />
-					à faire grandir notre petite marque artisanale.
+					<br />à faire grandir notre petite marque artisanale.
 				</Text>
 			</Section>
 

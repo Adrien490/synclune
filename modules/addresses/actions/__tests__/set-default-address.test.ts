@@ -5,34 +5,42 @@ import { ActionStatus } from "@/shared/types/server-action";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrisma, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockValidateInput, mockHandleActionError, mockSuccess, MockBusinessError } =
-	vi.hoisted(() => {
-		// Minimal BusinessError mock that mirrors the real class
-		class MockBusinessError extends Error {
-			constructor(message: string) {
-				super(message);
-				this.name = "BusinessError";
-			}
+const {
+	mockPrisma,
+	mockRequireAuth,
+	mockEnforceRateLimit,
+	mockUpdateTag,
+	mockValidateInput,
+	mockHandleActionError,
+	mockSuccess,
+	MockBusinessError,
+} = vi.hoisted(() => {
+	// Minimal BusinessError mock that mirrors the real class
+	class MockBusinessError extends Error {
+		constructor(message: string) {
+			super(message);
+			this.name = "BusinessError";
 		}
+	}
 
-		return {
-			mockPrisma: {
-				address: {
-					findFirst: vi.fn(),
-					updateMany: vi.fn(),
-					update: vi.fn(),
-				},
-				$transaction: vi.fn(),
+	return {
+		mockPrisma: {
+			address: {
+				findFirst: vi.fn(),
+				updateMany: vi.fn(),
+				update: vi.fn(),
 			},
-			mockRequireAuth: vi.fn(),
-			mockEnforceRateLimit: vi.fn(),
-			mockUpdateTag: vi.fn(),
-			mockValidateInput: vi.fn(),
-			mockHandleActionError: vi.fn(),
-			mockSuccess: vi.fn(),
-			MockBusinessError,
-		};
-	});
+			$transaction: vi.fn(),
+		},
+		mockRequireAuth: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockValidateInput: vi.fn(),
+		mockHandleActionError: vi.fn(),
+		mockSuccess: vi.fn(),
+		MockBusinessError,
+	};
+});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -104,15 +112,17 @@ describe("setDefaultAddress", () => {
 		mockPrisma.address.update.mockResolvedValue({ id: "addr-abc123", isDefault: true });
 
 		// Default: interactive $transaction executes the callback with a tx client
-		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockPrisma) => Promise<unknown>) => {
-			return cb({
-				address: {
-					findFirst: mockPrisma.address.findFirst,
-					updateMany: mockPrisma.address.updateMany,
-					update: mockPrisma.address.update,
-				},
-			} as unknown as typeof mockPrisma);
-		});
+		mockPrisma.$transaction.mockImplementation(
+			async (cb: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				return cb({
+					address: {
+						findFirst: mockPrisma.address.findFirst,
+						updateMany: mockPrisma.address.updateMany,
+						update: mockPrisma.address.update,
+					},
+				} as unknown as typeof mockPrisma);
+			},
+		);
 
 		// Default: success helper
 		mockSuccess.mockImplementation((message: string) => ({
@@ -166,7 +176,7 @@ describe("setDefaultAddress", () => {
 		// BusinessError bubbles out of the transaction and is caught by the outer try/catch
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.objectContaining({ message: "Adresse non trouvee" }),
-			expect.any(String)
+			expect.any(String),
 		);
 		expect(result.message).toBe("Adresse non trouvee");
 	});
@@ -179,7 +189,7 @@ describe("setDefaultAddress", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.objectContaining({ message: "Adresse non trouvee" }),
-			expect.any(String)
+			expect.any(String),
 		);
 		expect(result.message).toBe("Adresse non trouvee");
 	});
@@ -216,7 +226,7 @@ describe("setDefaultAddress", () => {
 
 		// $transaction was called once with a callback (interactive transaction pattern)
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-		const txArg = mockPrisma.$transaction.mock.calls[0][0];
+		const txArg = mockPrisma.$transaction.mock.calls[0]![0];
 		expect(typeof txArg).toBe("function");
 	});
 

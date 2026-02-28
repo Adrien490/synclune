@@ -1,21 +1,16 @@
-"use server"
+"use server";
 
-import { updateTag } from "next/cache"
-import { prisma, notDeleted } from "@/shared/lib/prisma"
-import { requireAdmin } from "@/modules/auth/lib/require-auth"
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
-import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config"
-import {
-	success,
-	notFound,
-	validationError,
-	handleActionError,
-} from "@/shared/lib/actions"
-import type { ActionState } from "@/shared/types/server-action"
+import { updateTag } from "next/cache";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config";
+import { success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
 
-import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
-import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
-import { deleteReviewResponseSchema } from "../schemas/review.schemas"
+import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache";
+import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants";
+import { deleteReviewResponseSchema } from "../schemas/review.schemas";
 
 /**
  * Supprime (soft delete) une reponse admin a un avis
@@ -23,31 +18,33 @@ import { deleteReviewResponseSchema } from "../schemas/review.schemas"
  */
 export async function deleteReviewResponse(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification admin
-		const adminCheck = await requireAdmin()
-		if ("error" in adminCheck) return adminCheck.error
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.RESPONSE)
-		if ("error" in rateLimit) return rateLimit.error
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.RESPONSE);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraire et valider les donnees
 		const rawData = {
 			id: formData.get("id"),
-		}
+		};
 
-		const validation = deleteReviewResponseSchema.safeParse(rawData)
+		const validation = deleteReviewResponseSchema.safeParse(rawData);
 		if (!validation.success) {
-			const firstError = validation.error.issues?.[0]
-			const errorPath = firstError?.path.join(".")
+			const firstError = validation.error.issues?.[0];
+			const errorPath = firstError?.path.join(".");
 			return validationError(
-				errorPath ? `${errorPath}: ${firstError.message}` : firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA
-			)
+				errorPath
+					? `${errorPath}: ${firstError?.message}`
+					: firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA,
+			);
 		}
 
-		const { id } = validation.data
+		const { id } = validation.data;
 
 		// 3. Récupérer la réponse et l'avis associé
 		const response = await prisma.reviewResponse.findFirst({
@@ -64,25 +61,25 @@ export async function deleteReviewResponse(
 					},
 				},
 			},
-		})
+		});
 
 		if (!response) {
-			return notFound("Réponse")
+			return notFound("Réponse");
 		}
 
 		// 4. Soft delete la reponse
 		await prisma.reviewResponse.update({
 			where: { id },
 			data: { deletedAt: new Date() },
-		})
+		});
 
 		// 5. Invalider le cache
-		const tags = getReviewModerationTags(response.review.productId, response.review.id)
-		tags.forEach((tag) => updateTag(tag))
-		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST)
+		const tags = getReviewModerationTags(response.review.productId, response.review.id);
+		tags.forEach((tag) => updateTag(tag));
+		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST);
 
-		return success("Réponse supprimée avec succès")
+		return success("Réponse supprimée avec succès");
 	} catch (e) {
-		return handleActionError(e, REVIEW_ERROR_MESSAGES.RESPONSE_DELETE_FAILED)
+		return handleActionError(e, REVIEW_ERROR_MESSAGES.RESPONSE_DELETE_FAILED);
 	}
 }

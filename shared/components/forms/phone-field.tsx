@@ -5,11 +5,21 @@ import { FieldLabel } from "@/shared/components/forms/field-label";
 import { inputBaseStyles } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
-import PhoneInput from "react-phone-number-input";
 import type { Country } from "react-phone-number-input";
-import flags from "react-phone-number-input/flags";
-import "react-phone-number-input/style.css";
 import { forwardRef } from "react";
+import dynamic from "next/dynamic";
+
+const PhoneInputWithFlags = dynamic(() => import("./phone-input-lazy"), {
+	ssr: false,
+	loading: () => (
+		<div className="PhoneInput--synclune flex">
+			<div className="bg-input border-input flex min-h-11 items-center rounded-l-md border px-3">
+				<div className="bg-muted-foreground/20 h-4 w-6 rounded-sm" />
+			</div>
+			<div className="bg-background border-input h-11 flex-1 rounded-r-md border border-l-0" />
+		</div>
+	),
+});
 
 interface PhoneFieldProps {
 	disabled?: boolean;
@@ -37,7 +47,7 @@ const CustomInput = forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
 				{...props}
 			/>
 		);
-	}
+	},
 );
 CustomInput.displayName = "CustomInput";
 
@@ -85,7 +95,7 @@ export const PhoneField = ({
 					{label}
 				</FieldLabel>
 			)}
-			<PhoneInput
+			<PhoneInputWithFlags
 				id={field.name}
 				name={field.name}
 				international
@@ -97,7 +107,6 @@ export const PhoneField = ({
 				onBlur={field.handleBlur}
 				disabled={disabled}
 				inputComponent={CustomInput}
-				flags={flags}
 				aria-invalid={hasError}
 				aria-describedby={hasError ? `${field.name}-error` : undefined}
 				aria-required={required}
@@ -105,9 +114,7 @@ export const PhoneField = ({
 				numberInputProps={{ enterKeyHint }}
 			/>
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
-			{description && (
-				<p className="text-xs text-muted-foreground mt-1.5">{description}</p>
-			)}
+			{description && <p className="text-muted-foreground mt-1.5 text-xs">{description}</p>}
 		</Field>
 	);
 };

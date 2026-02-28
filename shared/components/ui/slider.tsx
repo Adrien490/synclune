@@ -35,7 +35,7 @@ function Slider({
 
 	// aria-valuetext pour contexte lecteur d'ecran (WCAG 4.1.2)
 	const getThumbAriaValueText = (index: number) => {
-		const currentValue = _values[index];
+		const currentValue = _values[index] ?? min;
 		if (formatValue) {
 			return formatValue(currentValue);
 		}
@@ -53,7 +53,7 @@ function Slider({
 			max={max}
 			className={cn(
 				"relative flex w-full touch-pan-y items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col",
-				className
+				className,
 			)}
 			{...props}
 		>
@@ -62,14 +62,14 @@ function Slider({
 				className={cn(
 					"bg-muted relative grow overflow-hidden rounded-full",
 					"data-[orientation=horizontal]:h-2 data-[orientation=horizontal]:w-full",
-					"data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2"
+					"data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2",
 				)}
 			>
 				<SliderPrimitive.Range
 					data-slot="slider-range"
 					className={cn(
 						"bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
-						"transition-all duration-150"
+						"transition-all duration-150",
 					)}
 				/>
 			</SliderPrimitive.Track>
@@ -81,13 +81,13 @@ function Slider({
 					aria-valuetext={getThumbAriaValueText(index)}
 					className={cn(
 						"block size-5 shrink-0 rounded-full",
-						"border-2 border-primary bg-background",
+						"border-primary bg-background border-2",
 						"shadow-md hover:shadow-lg",
 						"ring-ring/50 transition-all duration-150",
-						"hover:ring-4 hover:scale-110",
+						"hover:scale-110 hover:ring-4",
 						"focus-visible:ring-4 focus-visible:outline-none",
 						"active:scale-95",
-						"disabled:pointer-events-none disabled:opacity-50"
+						"disabled:pointer-events-none disabled:opacity-50",
 					)}
 				/>
 			))}

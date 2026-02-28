@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import { cartReducer } from "./cart-reducer.service";
 import type { GetCartReturn } from "../types/cart.types";
 
-function createCart(itemOverrides?: Partial<{ id: string; quantity: number }>[]): NonNullable<GetCartReturn> {
+function createCart(
+	itemOverrides?: Partial<{ id: string; quantity: number }>[],
+): NonNullable<GetCartReturn> {
 	const items = (itemOverrides ?? [{ id: "item-1", quantity: 2 }]).map((override) => ({
 		id: override.id ?? "item-1",
 		quantity: override.quantity ?? 1,
@@ -39,7 +41,9 @@ describe("cartReducer", () => {
 	describe("null state", () => {
 		it("should return null for any action", () => {
 			expect(cartReducer(null, { type: "remove", itemId: "item-1" })).toBeNull();
-			expect(cartReducer(null, { type: "updateQuantity", itemId: "item-1", quantity: 3 })).toBeNull();
+			expect(
+				cartReducer(null, { type: "updateQuantity", itemId: "item-1", quantity: 3 }),
+			).toBeNull();
 		});
 	});
 
@@ -48,7 +52,7 @@ describe("cartReducer", () => {
 			const cart = createCart([{ id: "item-1" }, { id: "item-2" }]);
 			const result = cartReducer(cart, { type: "remove", itemId: "item-1" });
 			expect(result!.items).toHaveLength(1);
-			expect(result!.items[0].id).toBe("item-2");
+			expect(result!.items[0]!.id).toBe("item-2");
 		});
 
 		it("should return empty items when removing the last item", () => {
@@ -75,25 +79,32 @@ describe("cartReducer", () => {
 		it("should update quantity of matching item", () => {
 			const cart = createCart([{ id: "item-1", quantity: 1 }]);
 			const result = cartReducer(cart, { type: "updateQuantity", itemId: "item-1", quantity: 5 });
-			expect(result!.items[0].quantity).toBe(5);
+			expect(result!.items[0]!.quantity).toBe(5);
 		});
 
 		it("should not change other items", () => {
-			const cart = createCart([{ id: "item-1", quantity: 1 }, { id: "item-2", quantity: 3 }]);
+			const cart = createCart([
+				{ id: "item-1", quantity: 1 },
+				{ id: "item-2", quantity: 3 },
+			]);
 			const result = cartReducer(cart, { type: "updateQuantity", itemId: "item-1", quantity: 5 });
-			expect(result!.items[1].quantity).toBe(3);
+			expect(result!.items[1]!.quantity).toBe(3);
 		});
 
 		it("should not modify items when id does not match", () => {
 			const cart = createCart([{ id: "item-1", quantity: 2 }]);
-			const result = cartReducer(cart, { type: "updateQuantity", itemId: "nonexistent", quantity: 5 });
-			expect(result!.items[0].quantity).toBe(2);
+			const result = cartReducer(cart, {
+				type: "updateQuantity",
+				itemId: "nonexistent",
+				quantity: 5,
+			});
+			expect(result!.items[0]!.quantity).toBe(2);
 		});
 
 		it("should not mutate the original state", () => {
 			const cart = createCart([{ id: "item-1", quantity: 1 }]);
 			cartReducer(cart, { type: "updateQuantity", itemId: "item-1", quantity: 5 });
-			expect(cart.items[0].quantity).toBe(1);
+			expect(cart.items[0]!.quantity).toBe(1);
 		});
 	});
 });

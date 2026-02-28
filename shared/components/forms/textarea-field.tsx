@@ -63,9 +63,7 @@ export const TextareaField = ({
 				onBlur={field.handleBlur}
 				rows={rows}
 				aria-invalid={hasErrors}
-				aria-describedby={
-					hasErrors ? `${field.name}-error` : undefined
-				}
+				aria-describedby={hasErrors ? `${field.name}-error` : undefined}
 				aria-required={required}
 				// Props mobile PWA
 				enterKeyHint={enterKeyHint}
@@ -74,11 +72,11 @@ export const TextareaField = ({
 				autoCapitalize={autoCapitalize}
 				autoCorrect={autoCorrect}
 				maxLength={maxLength}
-				className={cn("border-input focus:ring-1 focus:ring-primary", className)}
+				className={cn("border-input", className)}
 				{...rest}
 			/>
 			{showFooter ? (
-				<div className="flex justify-between text-xs text-muted-foreground">
+				<div className="text-muted-foreground flex justify-between text-xs">
 					<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 					{showCounter && maxLength && (
 						<span aria-live="polite">

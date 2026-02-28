@@ -18,6 +18,7 @@ import {
 } from "@/modules/orders/constants/status-display";
 import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { Button } from "@/shared/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { OrderRowActions } from "./order-row-actions";
@@ -39,6 +40,11 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 				icon={ShoppingBag}
 				title="Aucune commande trouvee"
 				description="Aucune commande ne correspond aux criteres de recherche."
+				actionElement={
+					<Button variant="outline" asChild>
+						<Link href="/admin/ventes/commandes">Reinitialiser les filtres</Link>
+					</Button>
+				}
 			/>
 		);
 	}
@@ -54,20 +60,12 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 								<TableHead className="w-[5%]">
 									<TableSelectionCell type="header" itemIds={orderIds} />
 								</TableHead>
-								<TableHead className="w-[25%] sm:w-[20%]">
-									Commande
-								</TableHead>
-								<TableHead className="hidden sm:table-cell w-[20%]">
-									Client
-								</TableHead>
-								<TableHead className="w-[20%] sm:w-[15%]">
-									Statut
-								</TableHead>
-								<TableHead className="hidden sm:table-cell w-[10%] text-right">
-									Montant
-								</TableHead>
+								<TableHead className="w-[25%] sm:w-[20%]">Commande</TableHead>
+								<TableHead className="hidden w-[20%] sm:table-cell">Client</TableHead>
+								<TableHead className="w-[20%] sm:w-[15%]">Statut</TableHead>
+								<TableHead className="hidden w-[10%] text-right sm:table-cell">Montant</TableHead>
 								<TableHead
-									className="w-[15%] sm:w-[10%] text-right"
+									className="w-[15%] text-right sm:w-[10%]"
 									aria-label="Actions disponibles pour chaque commande"
 								>
 									Actions
@@ -76,8 +74,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 						</TableHeader>
 						<TableBody>
 							{orders.map((order) => {
-								const userName =
-									order.user?.name || order.user?.email || "Invité";
+								const userName = order.user?.name || order.user?.email || "Invité";
 
 								return (
 									<TableRow key={order.id}>
@@ -87,26 +84,22 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 										<TableCell>
 											<Link
 												href={`/admin/ventes/commandes/${order.id}`}
-												className="tabular-nums text-sm font-medium text-foreground underline"
+												className="text-foreground text-sm font-medium tabular-nums underline"
 												aria-label={`Voir commande ${order.orderNumber}`}
 											>
 												{order.orderNumber}
 											</Link>
 										</TableCell>
 										<TableCell className="hidden sm:table-cell">
-											<span className="text-sm font-medium truncate block">
-												{userName}
-											</span>
+											<span className="block truncate text-sm font-medium">{userName}</span>
 										</TableCell>
 										<TableCell>
 											<Badge variant={ORDER_STATUS_VARIANTS[order.status as OrderStatus]}>
 												{ORDER_STATUS_LABELS[order.status as OrderStatus]}
 											</Badge>
 										</TableCell>
-										<TableCell className="hidden sm:table-cell text-right">
-											<span className="text-sm font-bold">
-												{formatEuro(order.total)}
-											</span>
+										<TableCell className="hidden text-right sm:table-cell">
+											<span className="text-sm font-bold">{formatEuro(order.total)}</span>
 										</TableCell>
 										<TableCell className="text-right">
 											<OrderRowActions

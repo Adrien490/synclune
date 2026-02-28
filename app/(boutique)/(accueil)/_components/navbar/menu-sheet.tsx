@@ -124,6 +124,7 @@ function useEdgeSwipe(onOpen: () => void, isOpen: boolean) {
 		function onTouchStart(e: TouchEvent) {
 			if (isOpen) return;
 			const touch = e.touches[0];
+			if (!touch) return;
 			// Only track touches starting within 20px of the left edge
 			if (touch.clientX <= 20) {
 				startX = touch.clientX;
@@ -135,6 +136,7 @@ function useEdgeSwipe(onOpen: () => void, isOpen: boolean) {
 		function onTouchMove(e: TouchEvent) {
 			if (!tracking) return;
 			const touch = e.touches[0];
+			if (!touch) return;
 			const dx = touch.clientX - startX;
 			const dy = Math.abs(touch.clientY - startY);
 

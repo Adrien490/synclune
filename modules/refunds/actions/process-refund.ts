@@ -7,6 +7,7 @@ import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
@@ -64,7 +65,7 @@ export async function processRefund(
 	try {
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: _adminUser } = auth;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.PROCESS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -103,6 +104,10 @@ export async function processRefund(
 			}
 
 			const refund = refundRows[0];
+
+			if (!refund) {
+				throw new Error("NOT_FOUND");
+			}
 
 			// Vérifier le statut atomiquement
 			if (refund.status === "COMPLETED") {
@@ -293,6 +298,22 @@ export async function processRefund(
 				updateTag(PRODUCTS_CACHE_TAGS.DETAIL(slug));
 			}
 		}
+		// Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "refund.process",
+			targetType: "refund",
+			targetId: id,
+			metadata: {
+				orderId: refundData.refund.order_id,
+				orderNumber: refundData.refund.order_number,
+				amount: refundData.refund.amount,
+				stripeRefundId: stripeResult.refundId,
+				restockedItems: restockedCount,
+			},
+		});
+
 		const restockMessage =
 			restockedCount > 0 ? ` Stock restauré pour ${restockedCount} article(s).` : "";
 

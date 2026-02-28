@@ -124,7 +124,7 @@ const generateBubbles = (count: number): Bubble[] => {
 			duration: randomBetween(DEFAULT_CONFIG.DURATION_MIN, DEFAULT_CONFIG.DURATION_MAX, seed + 4),
 			opacity: randomBetween(DEFAULT_CONFIG.OPACITY_MIN, DEFAULT_CONFIG.OPACITY_MAX, seed + 5),
 			waveAmplitude: randomBetween(DEFAULT_CONFIG.WAVE_MIN, DEFAULT_CONFIG.WAVE_MAX, seed + 6),
-			color: BUBBLE_COLORS[i % BUBBLE_COLORS.length],
+			color: BUBBLE_COLORS[i % BUBBLE_COLORS.length]!,
 		};
 	});
 };
@@ -193,12 +193,7 @@ const BubbleSet = ({ bubbles, speed, isInView, reducedMotion }: BubbleSetProps) 
 // MAIN COMPONENT
 // ============================================================================
 
-const BubbleDreamBase = ({
-	className,
-	count,
-	speed = 1,
-	intensity = 0.15,
-}: BubbleDreamProps) => {
+const BubbleDreamBase = ({ className, count, speed = 1, intensity = 0.15 }: BubbleDreamProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
 	const isInView = useInView(containerRef, {
@@ -217,10 +212,7 @@ const BubbleDreamBase = ({
 	return (
 		<div
 			ref={containerRef}
-			className={cn(
-				"absolute inset-0 overflow-hidden pointer-events-none",
-				className
-			)}
+			className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}
 			aria-hidden="true"
 			data-testid="bubble-dream"
 			style={

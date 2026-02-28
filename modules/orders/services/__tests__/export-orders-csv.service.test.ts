@@ -16,21 +16,23 @@ function input(overrides: Partial<ExportInvoicesInput> = {}): ExportInvoicesInpu
 	} as ExportInvoicesInput;
 }
 
-function makeOrder(overrides: Partial<{
-	orderNumber: string;
-	invoiceNumber: string | null;
-	createdAt: Date;
-	paidAt: Date | null;
-	customerName: string;
-	customerEmail: string;
-	subtotal: number;
-	discountAmount: number;
-	shippingCost: number;
-	total: number;
-	paymentMethod: string;
-	paymentStatus: string;
-	status: string;
-}> = {}) {
+function makeOrder(
+	overrides: Partial<{
+		orderNumber: string;
+		invoiceNumber: string | null;
+		createdAt: Date;
+		paidAt: Date | null;
+		customerName: string;
+		customerEmail: string;
+		subtotal: number;
+		discountAmount: number;
+		shippingCost: number;
+		total: number;
+		paymentMethod: string;
+		paymentStatus: string;
+		status: string;
+	}> = {},
+) {
 	return {
 		orderNumber: "SYN-001",
 		invoiceNumber: "FAC-2024-001",
@@ -115,14 +117,14 @@ describe("generateOrdersCsv", () => {
 
 	it("should use semicolons as separator", () => {
 		const csv = generateOrdersCsv([makeOrder()]);
-		const headerRow = csv.replace("\uFEFF", "").split("\n")[0];
+		const headerRow = csv.replace("\uFEFF", "").split("\n")[0]!;
 		expect(headerRow).toContain(";");
 		expect(headerRow.split(";").length).toBeGreaterThan(1);
 	});
 
 	it("should have correct header row with 12 columns", () => {
 		const csv = generateOrdersCsv([makeOrder()]);
-		const headerRow = csv.replace("\uFEFF", "").split("\n")[0];
+		const headerRow = csv.replace("\uFEFF", "").split("\n")[0]!;
 		const columns = headerRow.split(";");
 		expect(columns).toHaveLength(12);
 		expect(columns[0]).toBe("N° Facture");
@@ -169,13 +171,13 @@ describe("generateOrdersCsv", () => {
 		const csv = generateOrdersCsv([]);
 		const lines = csv.replace("\uFEFF", "").split("\n");
 		expect(lines).toHaveLength(1);
-		expect(lines[0].split(";")).toHaveLength(12);
+		expect(lines[0]!.split(";")).toHaveLength(12);
 	});
 
 	it("should handle null invoice numbers", () => {
 		const order = makeOrder({ invoiceNumber: null });
 		const csv = generateOrdersCsv([order]);
-		const dataRow = csv.replace("\uFEFF", "").split("\n")[1];
+		const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
 		// First column (invoice number) should be empty
 		expect(dataRow.startsWith(";")).toBe(true);
 	});

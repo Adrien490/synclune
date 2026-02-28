@@ -13,23 +13,20 @@
  */
 export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
 	return (
-		<aside
-			className="space-y-6"
-			aria-label="Chargement des produits similaires"
-		>
+		<aside className="space-y-6" aria-label="Chargement des produits similaires">
 			{/* En-tête de section - Correspond exactement à RelatedProducts */}
 			<div className="space-y-2">
 				{/* h2 avec text-2xl font-semibold tracking-tight */}
-				<div className="h-8 w-64 bg-muted animate-pulse rounded" />
+				<div className="bg-muted h-8 w-64 animate-pulse rounded" />
 			</div>
 
 			{/* Carousel skeleton - Correspond à la structure du carousel */}
 			<div className="w-full overflow-hidden">
-				<div className="-ml-4 sm:-ml-6 flex py-4">
+				<div className="-ml-4 flex py-4 sm:-ml-6">
 					{[...Array(limit)].map((_, index) => (
 						<div
 							key={index}
-							className="pl-4 sm:pl-6 flex-shrink-0 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
+							className="flex-shrink-0 basis-[clamp(200px,72vw,280px)] pl-4 sm:pl-6 md:basis-1/3 lg:basis-1/4"
 						>
 							<ProductCardSkeleton />
 						</div>
@@ -37,19 +34,16 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
 				</div>
 
 				{/* Dots skeleton - Mobile uniquement */}
-				<div className="md:hidden flex justify-center gap-2 mt-4">
+				<div className="mt-4 flex justify-center gap-2 md:hidden">
 					{[...Array(Math.min(5, limit))].map((_, i) => (
-						<div
-							key={i}
-							className="h-2 w-2 rounded-full bg-muted animate-pulse"
-						/>
+						<div key={i} className="bg-muted h-2 w-2 animate-pulse rounded-full" />
 					))}
 				</div>
 			</div>
 
 			{/* CTA - Correspond exactement à RelatedProducts */}
 			<div className="flex justify-center pt-4">
-				<div className="h-5 w-64 bg-muted animate-pulse rounded" />
+				<div className="bg-muted h-5 w-64 animate-pulse rounded" />
 			</div>
 		</aside>
 	);
@@ -70,17 +64,17 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
  */
 function ProductCardSkeleton() {
 	return (
-		<div className="product-card-skeleton bg-card rounded-lg shadow-sm overflow-hidden grid gap-4">
+		<div className="product-card-skeleton bg-card grid gap-4 overflow-hidden rounded-lg shadow-sm">
 			{/* Image - aspect-square sur mobile, aspect-4/5 sur desktop (comme ProductCard) */}
-			<div className="aspect-square sm:aspect-4/5 bg-muted animate-pulse rounded-lg" />
+			<div className="bg-muted aspect-3/4 animate-pulse rounded-lg sm:aspect-4/5" />
 
 			{/* Contenu - gap et padding identiques à ProductCard */}
-			<div className="flex flex-col gap-2.5 sm:gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
+			<div className="flex flex-col gap-2.5 px-3 pb-3 sm:gap-3 sm:px-4 sm:pb-4">
 				{/* Titre - text-base sm:text-lg (hauteur correspondante) */}
-				<div className="h-5 sm:h-6 bg-muted animate-pulse rounded w-full" />
+				<div className="bg-muted h-5 w-full animate-pulse rounded sm:h-6" />
 
 				{/* Prix - ProductPrice */}
-				<div className="h-5 w-20 bg-muted animate-pulse rounded" />
+				<div className="bg-muted h-5 w-20 animate-pulse rounded" />
 			</div>
 		</div>
 	);

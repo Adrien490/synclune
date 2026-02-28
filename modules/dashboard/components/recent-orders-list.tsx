@@ -29,16 +29,10 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 	const { orders } = listData;
 
 	return (
-		<Card
-			className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}
-		>
+		<Card className={`${CHART_STYLES.card} can-hover:hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className={CHART_STYLES.title}>
-					Dernières commandes
-				</CardTitle>
-				<CardDescription className="text-sm">
-					Les 5 commandes les plus récentes
-				</CardDescription>
+				<CardTitle className={CHART_STYLES.title}>Dernières commandes</CardTitle>
+				<CardDescription className="text-sm">Les 5 commandes les plus récentes</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<div className="space-y-4">
@@ -46,58 +40,37 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 						<Link
 							key={order.id}
 							href={`/admin/ventes/commandes/${order.id}`}
-							className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors"
+							className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
 						>
-							<div className="space-y-1 flex-1">
+							<div className="flex-1 space-y-1">
 								<div className="flex items-center gap-2">
-									<p className="font-medium text-sm">
-										#{order.orderNumber}
-									</p>
-									<Badge
-										variant={
-											ORDER_STATUS_VARIANTS[order.status]
-										}
-									>
+									<p className="text-sm font-medium">#{order.orderNumber}</p>
+									<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
 										{ORDER_STATUS_LABELS[order.status]}
 									</Badge>
 									<Badge
-										variant={
-											order.paymentStatus === "PAID"
-												? "default"
-												: "outline"
-										}
+										variant={order.paymentStatus === "PAID" ? "default" : "outline"}
 										className="text-xs"
 									>
-										{
-											PAYMENT_STATUS_LABELS[
-												order.paymentStatus
-											]
-										}
+										{PAYMENT_STATUS_LABELS[order.paymentStatus]}
 									</Badge>
 								</div>
-								<p className="text-sm text-muted-foreground">
-									{order.customerName} •{" "}
-									{order.customerEmail}
+								<p className="text-muted-foreground text-sm">
+									{order.customerName} • {order.customerEmail}
 								</p>
-								<p className="text-xs text-muted-foreground">
-									{format(
-										new Date(order.createdAt),
-										"dd/MM/yyyy à HH:mm",
-										{
-											locale: fr,
-										},
-									)}
+								<p className="text-muted-foreground text-xs">
+									{format(new Date(order.createdAt), "dd/MM/yyyy à HH:mm", {
+										locale: fr,
+									})}
 								</p>
 							</div>
 							<div className="text-right">
-								<p className="font-bold">
-									{order.total.toFixed(2)} €
-								</p>
+								<p className="font-bold">{order.total.toFixed(2)} €</p>
 							</div>
 						</Link>
 					))}
 					{orders.length === 0 && (
-						<p className="text-sm text-muted-foreground text-center py-4">
+						<p className="text-muted-foreground py-4 text-center text-sm">
 							Aucune commande récente
 						</p>
 					)}

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/shared/utils/cn";
 import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
@@ -20,7 +21,9 @@ export interface ErrorShakeProps {
 /**
  * Wrapper pour ajouter un effet de shake horizontal sur erreur
  * Idéal pour les formulaires avec erreurs de validation
- * Respecte prefers-reduced-motion
+ *
+ * Accessibilité: en mode reduced motion, remplace le shake par un flash
+ * visuel (outline rouge) car le feedback d'erreur est fonctionnel, pas décoratif.
  */
 export function ErrorShake({
 	children,
@@ -32,16 +35,23 @@ export function ErrorShake({
 }: ErrorShakeProps) {
 	const shouldReduceMotion = useReducedMotion();
 
-	const shakeAnimation = shake && !shouldReduceMotion
-		? { x: [0, -intensity, intensity, -intensity, intensity, 0] }
-		: { x: 0 };
+	// In reduced motion: show outline flash instead of shake
+	const showFlash = shake && shouldReduceMotion;
+
+	const shakeAnimation =
+		shake && !shouldReduceMotion
+			? { x: [0, -intensity, intensity, -intensity, intensity, 0] }
+			: { x: 0 };
 
 	return (
 		<motion.div
-			className={className}
+			className={cn(
+				className,
+				showFlash && "outline-destructive rounded outline-2 outline-offset-2",
+			)}
 			animate={shakeAnimation}
 			transition={{
-				duration,
+				duration: shouldReduceMotion ? 0 : duration,
 				ease: MOTION_CONFIG.easing.easeOut,
 			}}
 			onAnimationComplete={() => {

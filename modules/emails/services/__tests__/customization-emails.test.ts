@@ -1,24 +1,27 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockRenderAndSend } = vi.hoisted(() => ({
 	mockRenderAndSend: vi.fn(),
-}))
+}));
 
 vi.mock("../send-email", () => ({
 	renderAndSend: mockRenderAndSend,
-}))
+}));
 
 vi.mock("@/emails/customization-request-email", () => ({
 	CustomizationRequestEmail: vi.fn((props) => ({ type: "CustomizationRequestEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/customization-confirmation-email", () => ({
-	CustomizationConfirmationEmail: vi.fn((props) => ({ type: "CustomizationConfirmationEmail", props })),
-}))
+	CustomizationConfirmationEmail: vi.fn((props) => ({
+		type: "CustomizationConfirmationEmail",
+		props,
+	})),
+}));
 
 vi.mock("@/emails/customization-status-email", () => ({
 	CustomizationStatusEmail: vi.fn((props) => ({ type: "CustomizationStatusEmail", props })),
-}))
+}));
 
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_SUBJECTS: {
@@ -30,7 +33,7 @@ vi.mock("../../constants/email.constants", () => ({
 	},
 	EMAIL_ADMIN: "admin@test.com",
 	EMAIL_CONTACT: "contact@test.com",
-}))
+}));
 
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: vi.fn((route: string) => `https://test.com${route}`),
@@ -39,21 +42,21 @@ vi.mock("@/shared/constants/urls", () => ({
 			PRODUCTS: "/boutique",
 		},
 	},
-}))
+}));
 
 import {
 	sendCustomizationRequestEmail,
 	sendCustomizationConfirmationEmail,
 	sendCustomizationStatusEmail,
-} from "../customization-emails"
+} from "../customization-emails";
 
-const mockInspirationProducts = [{ title: "Bague solitaire" }, { title: "Alliance double" }]
+const mockInspirationProducts = [{ title: "Bague solitaire" }, { title: "Alliance double" }];
 
 describe("sendCustomizationRequestEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } });
+	});
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
 		await sendCustomizationRequestEmail({
@@ -63,7 +66,7 @@ describe("sendCustomizationRequestEmail", () => {
 			productTypeLabel: "Bague",
 			details: "Je souhaite une bague en or avec un diamant.",
 			inspirationProducts: mockInspirationProducts,
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -82,9 +85,9 @@ describe("sendCustomizationRequestEmail", () => {
 				subject: "✨ Nouvelle demande de personnalisation - Synclune - Marie",
 				replyTo: "marie@test.com",
 				tags: [{ name: "category", value: "customization" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should use customer email as replyTo", async () => {
 		await sendCustomizationRequestEmail({
@@ -92,15 +95,15 @@ describe("sendCustomizationRequestEmail", () => {
 			email: "jean@test.com",
 			productTypeLabel: "Collier",
 			details: "Un collier personnalisé.",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.anything(),
 			expect.objectContaining({
 				replyTo: "jean@test.com",
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should include firstName in subject", async () => {
 		await sendCustomizationRequestEmail({
@@ -108,11 +111,11 @@ describe("sendCustomizationRequestEmail", () => {
 			email: "sophie@test.com",
 			productTypeLabel: "Bracelet",
 			details: "Un bracelet doré.",
-		})
+		});
 
-		const callArgs = mockRenderAndSend.mock.calls[0][1]
-		expect(callArgs.subject).toContain("Sophie")
-	})
+		const callArgs = mockRenderAndSend.mock.calls[0]![1];
+		expect(callArgs.subject).toContain("Sophie");
+	});
 
 	it("should accept undefined optional fields", async () => {
 		await sendCustomizationRequestEmail({
@@ -120,7 +123,7 @@ describe("sendCustomizationRequestEmail", () => {
 			email: "marie@test.com",
 			productTypeLabel: "Bague",
 			details: "Détails.",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -129,9 +132,9 @@ describe("sendCustomizationRequestEmail", () => {
 					inspirationProducts: undefined,
 				}),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendCustomizationRequestEmail({
@@ -139,17 +142,17 @@ describe("sendCustomizationRequestEmail", () => {
 			email: "marie@test.com",
 			productTypeLabel: "Bague",
 			details: "Détails.",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-1" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-1" } });
+	});
+});
 
 describe("sendCustomizationConfirmationEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } });
+	});
 
 	it("should call renderAndSend with customer email as recipient", async () => {
 		await sendCustomizationConfirmationEmail({
@@ -158,7 +161,7 @@ describe("sendCustomizationConfirmationEmail", () => {
 			productTypeLabel: "Bague",
 			details: "Je souhaite une bague en or avec un diamant.",
 			inspirationProducts: mockInspirationProducts,
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -174,9 +177,9 @@ describe("sendCustomizationConfirmationEmail", () => {
 				to: "marie@test.com",
 				subject: "Votre demande de personnalisation a été reçue - Synclune",
 				tags: [{ name: "category", value: "customization" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should not include replyTo", async () => {
 		await sendCustomizationConfirmationEmail({
@@ -184,11 +187,11 @@ describe("sendCustomizationConfirmationEmail", () => {
 			email: "marie@test.com",
 			productTypeLabel: "Bague",
 			details: "Détails.",
-		})
+		});
 
-		const callArgs = mockRenderAndSend.mock.calls[0][1]
-		expect(callArgs).not.toHaveProperty("replyTo")
-	})
+		const callArgs = mockRenderAndSend.mock.calls[0]![1];
+		expect(callArgs).not.toHaveProperty("replyTo");
+	});
 
 	it("should not pass email field to the component", async () => {
 		await sendCustomizationConfirmationEmail({
@@ -196,11 +199,11 @@ describe("sendCustomizationConfirmationEmail", () => {
 			email: "marie@test.com",
 			productTypeLabel: "Bague",
 			details: "Détails.",
-		})
+		});
 
-		const componentProps = mockRenderAndSend.mock.calls[0][0].props
-		expect(componentProps).not.toHaveProperty("email")
-	})
+		const componentProps = mockRenderAndSend.mock.calls[0]![0].props;
+		expect(componentProps).not.toHaveProperty("email");
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendCustomizationConfirmationEmail({
@@ -208,17 +211,17 @@ describe("sendCustomizationConfirmationEmail", () => {
 			email: "marie@test.com",
 			productTypeLabel: "Bague",
 			details: "Détails.",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-2" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-2" } });
+	});
+});
 
 describe("sendCustomizationStatusEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } });
+	});
 
 	it("should call renderAndSend with IN_PROGRESS status and correct subject", async () => {
 		await sendCustomizationStatusEmail({
@@ -227,7 +230,7 @@ describe("sendCustomizationStatusEmail", () => {
 			productTypeLabel: "Bague",
 			status: "IN_PROGRESS",
 			details: "En cours de fabrication.",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -245,9 +248,9 @@ describe("sendCustomizationStatusEmail", () => {
 				subject: "Votre personnalisation est en cours - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "customization" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should use COMPLETED subject for COMPLETED status", async () => {
 		await sendCustomizationStatusEmail({
@@ -256,11 +259,11 @@ describe("sendCustomizationStatusEmail", () => {
 			productTypeLabel: "Bague",
 			status: "COMPLETED",
 			details: "Votre bague est prête.",
-		})
+		});
 
-		const callArgs = mockRenderAndSend.mock.calls[0][1]
-		expect(callArgs.subject).toBe("Votre personnalisation est terminée ! - Synclune")
-	})
+		const callArgs = mockRenderAndSend.mock.calls[0]![1];
+		expect(callArgs.subject).toBe("Votre personnalisation est terminée ! - Synclune");
+	});
 
 	it("should use CANCELLED subject for CANCELLED status", async () => {
 		await sendCustomizationStatusEmail({
@@ -269,11 +272,11 @@ describe("sendCustomizationStatusEmail", () => {
 			productTypeLabel: "Bague",
 			status: "CANCELLED",
 			details: "Demande annulée.",
-		})
+		});
 
-		const callArgs = mockRenderAndSend.mock.calls[0][1]
-		expect(callArgs.subject).toBe("Votre demande de personnalisation a été annulée - Synclune")
-	})
+		const callArgs = mockRenderAndSend.mock.calls[0]![1];
+		expect(callArgs.subject).toBe("Votre demande de personnalisation a été annulée - Synclune");
+	});
 
 	it("should pass adminNotes to the component", async () => {
 		await sendCustomizationStatusEmail({
@@ -283,7 +286,7 @@ describe("sendCustomizationStatusEmail", () => {
 			status: "IN_PROGRESS",
 			adminNotes: "Nous attendons la livraison de l'or.",
 			details: "En cours.",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -291,9 +294,9 @@ describe("sendCustomizationStatusEmail", () => {
 					adminNotes: "Nous attendons la livraison de l'or.",
 				}),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should accept null adminNotes", async () => {
 		await sendCustomizationStatusEmail({
@@ -303,18 +306,18 @@ describe("sendCustomizationStatusEmail", () => {
 			status: "IN_PROGRESS",
 			adminNotes: null,
 			details: "En cours.",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
 				props: expect.objectContaining({ adminNotes: null }),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should build shopUrl from ROUTES.SHOP.PRODUCTS", async () => {
-		const { buildUrl } = await import("@/shared/constants/urls")
+		const { buildUrl } = await import("@/shared/constants/urls");
 
 		await sendCustomizationStatusEmail({
 			email: "marie@test.com",
@@ -322,10 +325,10 @@ describe("sendCustomizationStatusEmail", () => {
 			productTypeLabel: "Bague",
 			status: "COMPLETED",
 			details: "Prêt.",
-		})
+		});
 
-		expect(buildUrl).toHaveBeenCalledWith("/boutique")
-	})
+		expect(buildUrl).toHaveBeenCalledWith("/boutique");
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendCustomizationStatusEmail({
@@ -334,8 +337,8 @@ describe("sendCustomizationStatusEmail", () => {
 			productTypeLabel: "Bague",
 			status: "IN_PROGRESS",
 			details: "En cours.",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-3" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-3" } });
+	});
+});

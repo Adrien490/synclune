@@ -44,6 +44,7 @@ const {
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
@@ -229,8 +230,8 @@ describe("processRefund", () => {
 	});
 
 	it("should return NOT_FOUND when refund does not exist", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw.mockResolvedValueOnce([]); // No refund rows
 
@@ -243,8 +244,8 @@ describe("processRefund", () => {
 	});
 
 	it("should return ALREADY_PROCESSED when refund is COMPLETED", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw.mockResolvedValueOnce([makeRefundRow({ status: "COMPLETED" })]);
 
@@ -257,8 +258,8 @@ describe("processRefund", () => {
 	});
 
 	it("should return NOT_APPROVED when refund is not in APPROVED status", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw.mockResolvedValueOnce([makeRefundRow({ status: "PENDING" })]);
 
@@ -271,12 +272,10 @@ describe("processRefund", () => {
 	});
 
 	it("should return NO_CHARGE_ID when no stripePaymentIntentId", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
-		mockTx.$queryRaw.mockResolvedValueOnce([
-			makeRefundRow({ stripe_payment_intent_id: null }),
-		]);
+		mockTx.$queryRaw.mockResolvedValueOnce([makeRefundRow({ stripe_payment_intent_id: null })]);
 
 		const result = await processRefund(undefined, makeFormData());
 
@@ -288,13 +287,13 @@ describe("processRefund", () => {
 
 	it("should mark FAILED when Stripe returns neither success nor pending", async () => {
 		// First transaction: lock + validate
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
-			.mockResolvedValueOnce([makeRefundRow()])   // refund lock
-			.mockResolvedValueOnce([])                   // refund items
-			.mockResolvedValueOnce([]);                  // completed refunds
+			.mockResolvedValueOnce([makeRefundRow()]) // refund lock
+			.mockResolvedValueOnce([]) // refund items
+			.mockResolvedValueOnce([]); // completed refunds
 
 		mockCreateStripeRefund.mockResolvedValue({
 			success: false,
@@ -314,8 +313,8 @@ describe("processRefund", () => {
 	});
 
 	it("should return pending message when Stripe returns pending", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow()])
@@ -344,8 +343,8 @@ describe("processRefund", () => {
 
 	it("should complete refund and update status to COMPLETED on success", async () => {
 		// First transaction: lock
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow()])
@@ -358,8 +357,8 @@ describe("processRefund", () => {
 		});
 
 		// Second transaction: finalize
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 
@@ -381,8 +380,8 @@ describe("processRefund", () => {
 	});
 
 	it("should restock inventory for items with restock: true", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow()])
@@ -394,8 +393,8 @@ describe("processRefund", () => {
 
 		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
 
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockPrisma.productSku.findMany.mockResolvedValue([
 			{ productId: "prod-1", product: { slug: "bracelet-lune" } },
@@ -411,21 +410,19 @@ describe("processRefund", () => {
 	});
 
 	it("should skip restock gracefully if SKU is deleted", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow()])
-			.mockResolvedValueOnce([
-				{ id: "ri-1", quantity: 1, restock: true, sku_id: "sku-deleted" },
-			])
+			.mockResolvedValueOnce([{ id: "ri-1", quantity: 1, restock: true, sku_id: "sku-deleted" }])
 			.mockResolvedValueOnce([]);
 
 		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
 
 		// Second transaction: productSku.update throws (SKU deleted)
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.productSku.update.mockRejectedValueOnce(new Error("Record not found"));
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
@@ -437,8 +434,8 @@ describe("processRefund", () => {
 	});
 
 	it("should set REFUNDED when total refunded >= order total", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow({ amount: 10000, order_total: 10000 })])
@@ -447,8 +444,8 @@ describe("processRefund", () => {
 
 		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
 
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 
@@ -462,8 +459,8 @@ describe("processRefund", () => {
 	});
 
 	it("should set PARTIALLY_REFUNDED when partial", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow({ amount: 3000, order_total: 10000 })])
@@ -472,8 +469,8 @@ describe("processRefund", () => {
 
 		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
 
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 
@@ -487,20 +484,18 @@ describe("processRefund", () => {
 	});
 
 	it("should invalidate cache tags including user-specific and inventory when restocked", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow()])
-			.mockResolvedValueOnce([
-				{ id: "ri-1", quantity: 1, restock: true, sku_id: "sku-1" },
-			])
+			.mockResolvedValueOnce([{ id: "ri-1", quantity: 1, restock: true, sku_id: "sku-1" }])
 			.mockResolvedValueOnce([]);
 
 		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
 
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockPrisma.productSku.findMany.mockResolvedValue([
 			{ productId: "prod-1", product: { slug: "bracelet-lune" } },
@@ -523,8 +518,8 @@ describe("processRefund", () => {
 	});
 
 	it("should include formatted amount in success message", async () => {
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow({ amount: 12345 })])
@@ -533,8 +528,8 @@ describe("processRefund", () => {
 
 		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
 
-		mockPrisma.$transaction.mockImplementationOnce(
-			async (fn: (tx: typeof mockTx) => unknown) => fn(mockTx),
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
 		);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 

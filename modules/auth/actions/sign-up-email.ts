@@ -7,6 +7,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { signUpEmailSchema } from "../schemas/auth.schemas";
 import { checkArcjetProtection } from "../utils/arcjet-protection";
+import { checkPasswordBreached } from "../services/hibp.service";
 
 export const signUpEmail = async (
 	_: ActionState | undefined,
@@ -28,7 +29,6 @@ export const signUpEmail = async (
 		// Validation des données
 		const rawData = {
 			email: formData.get("email") as string,
-			confirmEmail: formData.get("confirmEmail") as string,
 			password: formData.get("password") as string,
 			name: formData.get("name") as string,
 			termsAccepted: formData.get("termsAccepted") === "true",
@@ -38,6 +38,14 @@ export const signUpEmail = async (
 		if ("error" in validation) return validation.error;
 
 		const { email, password, name } = validation.data;
+
+		// Check password against known breaches (HIBP k-anonymity)
+		const breachCount = await checkPasswordBreached(password);
+		if (breachCount > 0) {
+			return error(
+				"Ce mot de passe a été compromis dans une fuite de données. Veuillez en choisir un autre.",
+			);
+		}
 
 		try {
 			const response = await auth.api.signUpEmail({

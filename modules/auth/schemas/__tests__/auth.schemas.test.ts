@@ -200,7 +200,6 @@ describe("signInEmailSchema", () => {
 describe("signUpEmailSchema", () => {
 	const validInput = {
 		email: "newuser@example.com",
-		confirmEmail: "newuser@example.com",
 		password: "SecurePass1XYZ",
 		name: "Alice",
 		termsAccepted: true as const,
@@ -225,18 +224,6 @@ describe("signUpEmailSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("rejects when emails do not match", () => {
-		const result = signUpEmailSchema.safeParse({
-			...validInput,
-			confirmEmail: "different@example.com",
-		});
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			const paths = result.error.issues.map((i) => i.path.join("."));
-			expect(paths).toContain("confirmEmail");
-		}
-	});
-
 	it("rejects when name is too short (less than 2 chars)", () => {
 		const result = signUpEmailSchema.safeParse({
 			...validInput,
@@ -245,16 +232,14 @@ describe("signUpEmailSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("lowercases email and confirmEmail on parse", () => {
+	it("lowercases email on parse", () => {
 		const result = signUpEmailSchema.safeParse({
 			...validInput,
 			email: "NewUser@Example.COM",
-			confirmEmail: "NewUser@Example.COM",
 		});
 		expect(result.success).toBe(true);
 		if (result.success) {
 			expect(result.data.email).toBe("newuser@example.com");
-			expect(result.data.confirmEmail).toBe("newuser@example.com");
 		}
 	});
 
@@ -262,7 +247,6 @@ describe("signUpEmailSchema", () => {
 		const result = signUpEmailSchema.safeParse({
 			...validInput,
 			email: "bad-email",
-			confirmEmail: "bad-email",
 		});
 		expect(result.success).toBe(false);
 	});

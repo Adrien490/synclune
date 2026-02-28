@@ -14,6 +14,7 @@ import { getFirstParam } from "@/shared/utils/params";
 import { Mail, Users } from "lucide-react";
 import { Suspense } from "react";
 import { SubscribersDataTable } from "@/modules/newsletter/components/admin/subscribers-data-table";
+import { SubscribersDataTableSkeleton } from "@/modules/newsletter/components/admin/subscribers-data-table-skeleton";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -129,7 +130,7 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 				<RefreshNewsletterButton />
 			</Toolbar>
 
-			<Suspense fallback={<div>Chargement...</div>}>
+			<Suspense fallback={<SubscribersDataTableSkeleton />}>
 				<SubscribersDataTable subscribersPromise={subscribersPromise} perPage={perPage} />
 			</Suspense>
 		</>

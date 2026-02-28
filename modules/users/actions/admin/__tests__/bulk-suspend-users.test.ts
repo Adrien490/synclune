@@ -205,7 +205,7 @@ describe("bulkSuspendUsers", () => {
 					deletedAt: null,
 					suspendedAt: null,
 				}),
-			})
+			}),
 		);
 	});
 
@@ -217,16 +217,14 @@ describe("bulkSuspendUsers", () => {
 		await bulkSuspendUsers(undefined, validFormData);
 
 		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Array));
-		const transactionArray = mockPrisma.$transaction.mock.calls[0][0];
+		const transactionArray = mockPrisma.$transaction.mock.calls[0]![0];
 		expect(transactionArray).toHaveLength(2);
 	});
 
 	it("should return success with correct count", async () => {
 		const result = await bulkSuspendUsers(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("2")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("2"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -262,7 +260,7 @@ describe("bulkSuspendUsers", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la suspension des utilisateurs"
+			"Erreur lors de la suspension des utilisateurs",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

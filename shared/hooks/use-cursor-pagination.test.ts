@@ -110,7 +110,7 @@ describe("useCursorPagination", () => {
 			});
 
 			expect(mockPush).toHaveBeenCalledTimes(1);
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("cursor")).toBe("next-abc");
@@ -125,7 +125,7 @@ describe("useCursorPagination", () => {
 				result.current.handleNext();
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("filter_status")).toBe("active");
@@ -168,7 +168,7 @@ describe("useCursorPagination", () => {
 			});
 
 			expect(mockPush).toHaveBeenCalledTimes(1);
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("cursor")).toBe("prev-xyz");
@@ -201,7 +201,7 @@ describe("useCursorPagination", () => {
 				result.current.handleReset();
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.has("cursor")).toBe(false);
@@ -223,7 +223,7 @@ describe("useCursorPagination", () => {
 				result.current.handlePerPageChange(100);
 			});
 
-			const pushedUrl = mockPush.mock.calls[0][0] as string;
+			const pushedUrl = mockPush.mock.calls[0]![0] as string;
 			const params = new URLSearchParams(pushedUrl.replace("?", ""));
 
 			expect(params.get("perPage")).toBe("100");
@@ -252,9 +252,9 @@ describe("useCursorPagination", () => {
 			// Prefetch is in a useEffect, should have been called
 			expect(mockPrefetch).toHaveBeenCalledTimes(2);
 
-			const calls = mockPrefetch.mock.calls.map((c) => c[0] as string);
-			const nextParams = new URLSearchParams(calls[0].replace("?", ""));
-			const prevParams = new URLSearchParams(calls[1].replace("?", ""));
+			const calls = mockPrefetch.mock.calls.map((c) => c[0]! as string);
+			const nextParams = new URLSearchParams(calls[0]!.replace("?", ""));
+			const prevParams = new URLSearchParams(calls[1]!.replace("?", ""));
 
 			expect(nextParams.get("cursor")).toBe("next-abc");
 			expect(nextParams.get("direction")).toBe("forward");
@@ -263,20 +263,16 @@ describe("useCursorPagination", () => {
 		});
 
 		it("skips prefetch when cursor is null", () => {
-			renderHook(() =>
-				useCursorPagination({ nextCursor: null, prevCursor: null }),
-			);
+			renderHook(() => useCursorPagination({ nextCursor: null, prevCursor: null }));
 
 			expect(mockPrefetch).not.toHaveBeenCalled();
 		});
 
 		it("prefetches only next when prevCursor is null", () => {
-			renderHook(() =>
-				useCursorPagination({ nextCursor: "next-abc", prevCursor: null }),
-			);
+			renderHook(() => useCursorPagination({ nextCursor: "next-abc", prevCursor: null }));
 
 			expect(mockPrefetch).toHaveBeenCalledTimes(1);
-			const url = mockPrefetch.mock.calls[0][0] as string;
+			const url = mockPrefetch.mock.calls[0]![0] as string;
 			expect(url).toContain("cursor=next-abc");
 		});
 	});
@@ -295,7 +291,7 @@ describe("useCursorPagination", () => {
 			window.dispatchEvent(event);
 
 			expect(mockPush).toHaveBeenCalledTimes(1);
-			const url = mockPush.mock.calls[0][0] as string;
+			const url = mockPush.mock.calls[0]![0] as string;
 			expect(url).toContain("cursor=next-abc");
 			expect(url).toContain("direction=forward");
 		});
@@ -311,15 +307,13 @@ describe("useCursorPagination", () => {
 			window.dispatchEvent(event);
 
 			expect(mockPush).toHaveBeenCalledTimes(1);
-			const url = mockPush.mock.calls[0][0] as string;
+			const url = mockPush.mock.calls[0]![0] as string;
 			expect(url).toContain("cursor=prev-xyz");
 			expect(url).toContain("direction=backward");
 		});
 
 		it("does not navigate on Alt+ArrowRight when nextCursor is null", () => {
-			renderHook(() =>
-				useCursorPagination({ nextCursor: null, prevCursor: "prev-xyz" }),
-			);
+			renderHook(() => useCursorPagination({ nextCursor: null, prevCursor: "prev-xyz" }));
 
 			window.dispatchEvent(
 				new KeyboardEvent("keydown", {
@@ -427,18 +421,13 @@ describe("useCursorPagination", () => {
 			const addSpy = vi.spyOn(window, "addEventListener");
 			const removeSpy = vi.spyOn(window, "removeEventListener");
 
-			const { unmount } = renderHook(() =>
-				useCursorPagination(defaultProps),
-			);
+			const { unmount } = renderHook(() => useCursorPagination(defaultProps));
 
 			expect(addSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
 
 			unmount();
 
-			expect(removeSpy).toHaveBeenCalledWith(
-				"keydown",
-				expect.any(Function),
-			);
+			expect(removeSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
 		});
 	});
 

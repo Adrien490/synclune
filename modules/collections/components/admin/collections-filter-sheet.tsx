@@ -14,9 +14,7 @@ interface FilterFormData {
 	hasProducts: string;
 }
 
-export function CollectionsFilterSheet({
-	className,
-}: CollectionsFilterSheetProps) {
+export function CollectionsFilterSheet({ className }: CollectionsFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -52,10 +50,7 @@ export function CollectionsFilterSheet({
 
 		// Add hasProducts filter
 		if (formData.hasProducts !== "all") {
-			params.set(
-				"filter_hasProducts",
-				formData.hasProducts === "with" ? "true" : "false"
-			);
+			params.set("filter_hasProducts", formData.hasProducts === "with" ? "true" : "false");
 		}
 
 		startTransition(() => {
@@ -93,7 +88,7 @@ export function CollectionsFilterSheet({
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}
-			onApply={() => form.handleSubmit()}
+			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
 			triggerClassName={className}
 		>
@@ -101,7 +96,7 @@ export function CollectionsFilterSheet({
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 				className="space-y-6"
 			>
@@ -109,9 +104,7 @@ export function CollectionsFilterSheet({
 				<form.Field name="hasProducts">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">
-								Bijoux
-							</legend>
+							<legend className="text-foreground mb-2 text-sm font-medium">Bijoux</legend>
 							{[
 								{ value: "all", label: "Tous" },
 								{ value: "with", label: "Avec bijoux" },

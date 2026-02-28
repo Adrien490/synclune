@@ -2,9 +2,9 @@
  * Utilitaires géométriques pour les gestes touch
  */
 
-import type { Point } from "@/shared/types/utility.types"
+import type { Point } from "@/shared/types/utility.types";
 
-export type { Point } from "@/shared/types/utility.types"
+export type { Point } from "@/shared/types/utility.types";
 
 /**
  * Calcule la distance euclidienne entre 2 points touch
@@ -12,8 +12,8 @@ export type { Point } from "@/shared/types/utility.types"
 export function getDistance(touches: TouchList): number {
 	if (touches.length < 2) return 0;
 
-	const t1 = touches[0];
-	const t2 = touches[1];
+	const t1 = touches[0]!;
+	const t2 = touches[1]!;
 
 	return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
 }
@@ -23,11 +23,11 @@ export function getDistance(touches: TouchList): number {
  */
 export function getCenter(touches: TouchList): Point {
 	if (touches.length < 2) {
-		return { x: touches[0].clientX, y: touches[0].clientY };
+		return { x: touches[0]!.clientX, y: touches[0]!.clientY };
 	}
 
-	const t1 = touches[0];
-	const t2 = touches[1];
+	const t1 = touches[0]!;
+	const t2 = touches[1]!;
 
 	return {
 		x: (t1.clientX + t2.clientX) / 2,
@@ -41,7 +41,7 @@ export function getCenter(touches: TouchList): Point {
 export function clampPosition(
 	position: Point,
 	scale: number,
-	containerRect: DOMRect | null
+	containerRect: DOMRect | null,
 ): Point {
 	if (!containerRect || scale <= 1) {
 		return { x: 0, y: 0 };
@@ -62,7 +62,7 @@ export function clampPosition(
 export function getZoomToPointPosition(
 	tapPoint: Point,
 	containerRect: DOMRect,
-	targetScale: number
+	targetScale: number,
 ): Point {
 	const tapX = tapPoint.x - containerRect.left - containerRect.width / 2;
 	const tapY = tapPoint.y - containerRect.top - containerRect.height / 2;
@@ -73,6 +73,6 @@ export function getZoomToPointPosition(
 			y: -tapY * (targetScale - 1),
 		},
 		targetScale,
-		containerRect
+		containerRect,
 	);
 }

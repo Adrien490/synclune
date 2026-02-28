@@ -14,17 +14,19 @@ export function useKeyboardNavigation() {
 		const focusables = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
 
 		for (let i = 0; i < focusables.length; i++) {
-			focusables[i].dataset.qsNavId = String(i);
+			const el = focusables[i];
+			if (!el) continue;
+			el.dataset.qsNavId = String(i);
 			// Only assign id if none exists to avoid overwriting semantic IDs
-			if (!focusables[i].id) {
-				focusables[i].id = `qs-nav-${i}`;
+			if (!el.id) {
+				el.id = `qs-nav-${i}`;
 			}
 			if (i === activeIndex) {
-				focusables[i].setAttribute("data-active", "true");
-				focusables[i].setAttribute("aria-current", "true");
+				el.setAttribute("data-active", "true");
+				el.setAttribute("aria-current", "true");
 			} else {
-				focusables[i].removeAttribute("data-active");
-				focusables[i].removeAttribute("aria-current");
+				el.removeAttribute("data-active");
+				el.removeAttribute("aria-current");
 			}
 		}
 	}, [activeIndex]);

@@ -13,17 +13,11 @@ import { AmountRangeInputs } from "./amount-range-inputs";
 const Calendar = dynamic(
 	() => import("@/shared/components/ui/calendar").then((mod) => mod.Calendar),
 	{
-		loading: () => (
-			<div className="h-70 w-full animate-pulse bg-muted rounded-md" />
-		),
+		loading: () => <div className="bg-muted h-70 w-full animate-pulse rounded-md" />,
 		ssr: false,
-	}
+	},
 );
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/shared/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { Separator } from "@/shared/components/ui/separator";
 import {
 	ORDER_STATUS_LABELS,
@@ -63,8 +57,8 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 	const initialValues = ((): FilterFormData => {
 		const statuses: string[] = [];
 		const paymentStatuses: string[] = [];
-		let priceMin = DEFAULT_PRICE_RANGE[0];
-		let priceMax = DEFAULT_PRICE_RANGE[1];
+		let priceMin = DEFAULT_PRICE_RANGE[0]!;
+		let priceMax = DEFAULT_PRICE_RANGE[1]!;
 		let dateFrom = "";
 		let dateTo = "";
 		let showDeleted: "all" | "active" | "deleted" | undefined = "active";
@@ -75,9 +69,9 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 			} else if (key === "filter_paymentStatus") {
 				paymentStatuses.push(value);
 			} else if (key === "filter_totalMin") {
-				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0];
+				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0]!;
 			} else if (key === "filter_totalMax") {
-				priceMax = Number(value) || DEFAULT_PRICE_RANGE[1];
+				priceMax = Number(value) || DEFAULT_PRICE_RANGE[1]!;
 			} else if (key === "filter_createdAfter") {
 				dateFrom = value;
 			} else if (key === "filter_createdBefore") {
@@ -125,16 +119,12 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 
 		// Add statuses
 		if (formData.statuses.length > 0) {
-			formData.statuses.forEach((status) =>
-				params.append("filter_status", status)
-			);
+			formData.statuses.forEach((status) => params.append("filter_status", status));
 		}
 
 		// Add payment statuses
 		if (formData.paymentStatuses.length > 0) {
-			formData.paymentStatuses.forEach((status) =>
-				params.append("filter_paymentStatus", status)
-			);
+			formData.paymentStatuses.forEach((status) => params.append("filter_paymentStatus", status));
 		}
 
 		// Add price range (convert euros to cents)
@@ -168,7 +158,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 		const defaultValues: FilterFormData = {
 			statuses: [],
 			paymentStatuses: [],
-			priceRange: [DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]],
+			priceRange: [DEFAULT_PRICE_RANGE[0]!, DEFAULT_PRICE_RANGE[1]!],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",
 		};
@@ -208,10 +198,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				count += 1;
 			} else if (key === "filter_totalMin" || key === "filter_totalMax") {
 				if (key === "filter_totalMin") count += 1;
-			} else if (
-				key === "filter_createdAfter" ||
-				key === "filter_createdBefore"
-			) {
+			} else if (key === "filter_createdAfter" || key === "filter_createdBefore") {
 				if (key === "filter_createdAfter") count += 1;
 			}
 		});
@@ -227,7 +214,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}
-			onApply={() => form.handleSubmit()}
+			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
 			triggerClassName={className}
 		>
@@ -235,7 +222,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				onSubmit={(e) => {
 					e.preventDefault();
 					e.stopPropagation();
-					form.handleSubmit();
+					void form.handleSubmit();
 				}}
 				className="space-y-6"
 			>
@@ -243,7 +230,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				<form.Field name="statuses" mode="array">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">
+							<legend className="text-foreground mb-2 text-sm font-medium">
 								Statut de commande
 							</legend>
 							{Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => {
@@ -276,7 +263,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				<form.Field name="paymentStatuses" mode="array">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">
+							<legend className="text-foreground mb-2 text-sm font-medium">
 								Statut de paiement
 							</legend>
 							{Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => {
@@ -320,9 +307,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 
 				{/* Date Range avec Calendar */}
 				<fieldset className="space-y-3">
-					<legend className="font-medium text-sm text-foreground">
-						Période de commande
-					</legend>
+					<legend className="text-foreground text-sm font-medium">Période de commande</legend>
 					<div className="space-y-3">
 						<form.Field name="dateRange.from">
 							{(field) => (
@@ -334,7 +319,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 												variant="outline"
 												className={cn(
 													"w-full justify-start text-left font-normal",
-													!field.state.value && "text-muted-foreground"
+													!field.state.value && "text-muted-foreground",
 												)}
 											>
 												<CalendarIcon className="mr-2 h-4 w-4" />
@@ -350,17 +335,11 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 										<PopoverContent className="w-auto p-0" align="start">
 											<Calendar
 												mode="single"
-												selected={
-													field.state.value
-														? new Date(field.state.value)
-														: undefined
-												}
+												selected={field.state.value ? new Date(field.state.value) : undefined}
 												onSelect={(date) => {
 													field.handleChange(date ? date.toISOString() : "");
 												}}
-												disabled={(date) =>
-													date > new Date() || date < new Date("2020-01-01")
-												}
+												disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
 												initialFocus
 											/>
 										</PopoverContent>
@@ -378,7 +357,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 												variant="outline"
 												className={cn(
 													"w-full justify-start text-left font-normal",
-													!field.state.value && "text-muted-foreground"
+													!field.state.value && "text-muted-foreground",
 												)}
 											>
 												<CalendarIcon className="mr-2 h-4 w-4" />
@@ -394,17 +373,11 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 										<PopoverContent className="w-auto p-0" align="start">
 											<Calendar
 												mode="single"
-												selected={
-													field.state.value
-														? new Date(field.state.value)
-														: undefined
-												}
+												selected={field.state.value ? new Date(field.state.value) : undefined}
 												onSelect={(date) => {
 													field.handleChange(date ? date.toISOString() : "");
 												}}
-												disabled={(date) =>
-													date > new Date() || date < new Date("2020-01-01")
-												}
+												disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
 												initialFocus
 											/>
 										</PopoverContent>
@@ -421,12 +394,14 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				<form.Field name="showDeleted">
 					{(field) => (
 						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">Affichage</legend>
-							{([
-								{ value: "all" as const, label: "Toutes" },
-								{ value: "active" as const, label: "Non supprimées uniquement" },
-								{ value: "deleted" as const, label: "Supprimées uniquement" },
-							] as const).map(({ value, label }) => (
+							<legend className="text-foreground mb-2 text-sm font-medium">Affichage</legend>
+							{(
+								[
+									{ value: "all" as const, label: "Toutes" },
+									{ value: "active" as const, label: "Non supprimées uniquement" },
+									{ value: "deleted" as const, label: "Supprimées uniquement" },
+								] as const
+							).map(({ value, label }) => (
 								<RadioFilterItem
 									key={value}
 									id={`showDeleted-${value}`}

@@ -60,13 +60,7 @@ describe("cleanupExpiredWishlists", () => {
 		expect(mockPrisma.wishlist.deleteMany).toHaveBeenCalledWith({
 			where: {
 				id: {
-					in: [
-						"wishlist-a",
-						"wishlist-b",
-						"wishlist-c",
-						"wishlist-d",
-						"wishlist-e",
-					],
+					in: ["wishlist-a", "wishlist-b", "wishlist-c", "wishlist-d", "wishlist-e"],
 				},
 			},
 		});
@@ -79,7 +73,7 @@ describe("cleanupExpiredWishlists", () => {
 
 		expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
 		// Check that the SQL query uses the expected pattern
-		const sqlQuery = mockPrisma.$executeRaw.mock.calls[0][0];
+		const sqlQuery = mockPrisma.$executeRaw.mock.calls[0]![0];
 		expect(sqlQuery.join("")).toContain('DELETE FROM "WishlistItem"');
 		expect(sqlQuery.join("")).toContain("NOT EXISTS");
 		expect(sqlQuery.join("")).toContain('SELECT 1 FROM "Wishlist"');
@@ -138,10 +132,7 @@ describe("cleanupExpiredWishlists", () => {
 	});
 
 	it("should convert orphanedItemsCount from BigInt to Number", async () => {
-		mockPrisma.wishlist.findMany.mockResolvedValue([
-			{ id: "wishlist-1" },
-			{ id: "wishlist-2" },
-		]);
+		mockPrisma.wishlist.findMany.mockResolvedValue([{ id: "wishlist-1" }, { id: "wishlist-2" }]);
 		mockPrisma.wishlist.deleteMany.mockResolvedValue({ count: 2 });
 		// $executeRaw can return a BigInt in real scenarios
 		mockPrisma.$executeRaw.mockResolvedValue(BigInt(15));
@@ -155,7 +146,7 @@ describe("cleanupExpiredWishlists", () => {
 	it("should only target guest wishlists (userId: null)", async () => {
 		await cleanupExpiredWishlists();
 
-		const whereClause = mockPrisma.wishlist.findMany.mock.calls[0][0].where;
+		const whereClause = mockPrisma.wishlist.findMany.mock.calls[0]![0].where;
 		expect(whereClause.userId).toBeNull();
 	});
 
@@ -165,7 +156,7 @@ describe("cleanupExpiredWishlists", () => {
 
 		await cleanupExpiredWishlists();
 
-		const whereClause = mockPrisma.wishlist.findMany.mock.calls[0][0].where;
+		const whereClause = mockPrisma.wishlist.findMany.mock.calls[0]![0].where;
 		expect(whereClause.expiresAt.lt).toEqual(mockDate);
 	});
 
@@ -181,17 +172,15 @@ describe("cleanupExpiredWishlists", () => {
 		await cleanupExpiredWishlists();
 
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Starting expired wishlists cleanup..."
+			"[CRON:cleanup-wishlists] Starting expired wishlists cleanup...",
 		);
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Deleted 8 expired wishlists"
+			"[CRON:cleanup-wishlists] Deleted 8 expired wishlists",
 		);
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Cleaned up 4 orphaned wishlist items"
+			"[CRON:cleanup-wishlists] Cleaned up 4 orphaned wishlist items",
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Cleanup completed"
-		);
+		expect(consoleLogSpy).toHaveBeenCalledWith("[CRON:cleanup-wishlists] Cleanup completed");
 	});
 
 	it("should not log orphaned items message when count is zero", async () => {
@@ -201,9 +190,7 @@ describe("cleanupExpiredWishlists", () => {
 		await cleanupExpiredWishlists();
 
 		const logCalls = consoleLogSpy.mock.calls.map((call) => call[0]);
-		expect(logCalls).not.toContain(
-			expect.stringContaining("Cleaned up 0 orphaned wishlist items")
-		);
+		expect(logCalls).not.toContain(expect.stringContaining("Cleaned up 0 orphaned wishlist items"));
 	});
 
 	it("should log warning when delete limit is reached", async () => {
@@ -218,7 +205,7 @@ describe("cleanupExpiredWishlists", () => {
 		await cleanupExpiredWishlists();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Delete limit reached, remaining wishlists will be cleaned on next run"
+			"[CRON:cleanup-wishlists] Delete limit reached, remaining wishlists will be cleaned on next run",
 		);
 	});
 

@@ -1,10 +1,6 @@
 "use server";
 
-import {
-	OrderStatus,
-	FulfillmentStatus,
-	HistorySource,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
@@ -13,7 +9,11 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
-import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
+import {
+	getCarrierLabel,
+	getTrackingUrl,
+	type Carrier,
+} from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -38,7 +38,7 @@ import { canMarkAsShipped } from "../services/order-status-validation.service";
  */
 export async function markAsShipped(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -72,8 +72,7 @@ export async function markAsShipped(
 		// Générer l'URL de suivi si non fournie
 		const carrierValue = (result.data.carrier || "autre") as Carrier;
 		const finalTrackingUrl =
-			result.data.trackingUrl ||
-			getTrackingUrl(carrierValue, result.data.trackingNumber);
+			result.data.trackingUrl || getTrackingUrl(carrierValue, result.data.trackingNumber);
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
@@ -154,19 +153,22 @@ export async function markAsShipped(
 			};
 			return {
 				status: ActionStatus.ERROR,
-				message: errorMessages[order._error],
+				message: errorMessages[order._error] ?? ORDER_ERROR_MESSAGES.MARK_AS_SHIPPED_FAILED,
 			};
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
 		// Envoyer l'email de confirmation d'expédition au client
 		let emailSent = false;
 		if (result.data.sendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
-			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
+			const customerFirstName = extractCustomerFirstName(
+				order.customerName,
+				order.shippingFirstName,
+			);
 
 			try {
 				await sendShippingConfirmationEmail({

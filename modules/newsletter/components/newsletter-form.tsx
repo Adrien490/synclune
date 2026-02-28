@@ -43,7 +43,7 @@ export function NewsletterForm() {
 
 	// Handler combiné pour optimistic UI + form submit
 	const handleSubmit = () => {
-		form.handleSubmit();
+		void form.handleSubmit();
 		// Déclencher l'état optimiste immédiatement
 		startTransition(() => {
 			setOptimisticSubmitted(true);

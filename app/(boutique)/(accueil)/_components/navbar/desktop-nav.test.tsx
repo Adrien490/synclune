@@ -69,7 +69,7 @@ vi.mock("@/shared/components/ui/navigation-menu", () => ({
 		</button>
 	),
 	NavigationMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	navigationMenuTriggerStyle: () => "",
+	navigationMenuTriggerStyle: "",
 }));
 
 // Mock mega menu sub-components

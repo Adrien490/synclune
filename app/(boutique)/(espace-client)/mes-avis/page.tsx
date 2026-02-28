@@ -1,7 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Star } from "lucide-react";
+import Link from "next/link";
 
 import { PageHeader } from "@/shared/components/page-header";
+import { Button } from "@/shared/components/ui/button";
+import {
+	Empty,
+	EmptyActions,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/shared/components/ui/empty";
 import { getUserReviews } from "@/modules/reviews/data/get-user-reviews";
 import { getReviewableProducts } from "@/modules/reviews/data/get-reviewable-products";
 import { ReviewableProductsSection } from "@/modules/reviews/components/reviewable-products-section";
@@ -18,17 +29,24 @@ export const metadata: Metadata = {
 };
 
 export default function ReviewsPage() {
+	const reviewsPromise = getUserReviews();
+	const productsPromise = getReviewableProducts();
+
 	return (
 		<>
 			<PageHeader title="Mes avis" variant="compact" />
 
 			<div className="space-y-8">
 				<Suspense fallback={<ReviewableProductsSkeleton />}>
-					<ReviewableProductsWrapper />
+					<ReviewableProductsWrapper productsPromise={productsPromise} />
 				</Suspense>
 
 				<Suspense fallback={<UserReviewsSkeleton />}>
-					<UserReviewsWrapper />
+					<UserReviewsWrapper reviewsPromise={reviewsPromise} />
+				</Suspense>
+
+				<Suspense>
+					<ReviewsEmptyState reviewsPromise={reviewsPromise} productsPromise={productsPromise} />
 				</Suspense>
 			</div>
 
@@ -38,14 +56,52 @@ export default function ReviewsPage() {
 	);
 }
 
-async function ReviewableProductsWrapper() {
-	const products = await getReviewableProducts();
+async function ReviewableProductsWrapper({
+	productsPromise,
+}: {
+	productsPromise: ReturnType<typeof getReviewableProducts>;
+}) {
+	const products = await productsPromise;
 	if (products.length === 0) return null;
 	return <ReviewableProductsSection products={products} />;
 }
 
-async function UserReviewsWrapper() {
-	const reviews = await getUserReviews();
+async function UserReviewsWrapper({
+	reviewsPromise,
+}: {
+	reviewsPromise: ReturnType<typeof getUserReviews>;
+}) {
+	const reviews = await reviewsPromise;
 	if (reviews.length === 0) return null;
 	return <UserReviewsSection reviews={reviews} />;
+}
+
+async function ReviewsEmptyState({
+	reviewsPromise,
+	productsPromise,
+}: {
+	reviewsPromise: ReturnType<typeof getUserReviews>;
+	productsPromise: ReturnType<typeof getReviewableProducts>;
+}) {
+	const [reviews, products] = await Promise.all([reviewsPromise, productsPromise]);
+	if (reviews.length > 0 || products.length > 0) return null;
+
+	return (
+		<Empty>
+			<EmptyHeader>
+				<EmptyMedia variant="icon">
+					<Star className="size-6" aria-hidden="true" />
+				</EmptyMedia>
+				<EmptyTitle>Aucun avis</EmptyTitle>
+				<EmptyDescription>
+					Vous n'avez pas encore de produits a evaluer. Commandez pour pouvoir laisser votre avis !
+				</EmptyDescription>
+			</EmptyHeader>
+			<EmptyActions>
+				<Button asChild>
+					<Link href="/creations">Decouvrir nos creations</Link>
+				</Button>
+			</EmptyActions>
+		</Empty>
+	);
 }

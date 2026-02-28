@@ -47,7 +47,7 @@ describe("cleanupUnconfirmedNewsletterSubscriptions", () => {
 	it("should verify correct query filters (PENDING status, confirmationSentAt < expiry, confirmedAt null)", async () => {
 		await cleanupUnconfirmedNewsletterSubscriptions();
 
-		const call = mockPrisma.newsletterSubscriber.findMany.mock.calls[0][0];
+		const call = mockPrisma.newsletterSubscriber.findMany.mock.calls[0]![0];
 		expect(call.where.status).toBe(NewsletterStatus.PENDING);
 		expect(call.where.confirmationSentAt).toHaveProperty("lt");
 		expect(call.where.confirmedAt).toBe(null);
@@ -58,13 +58,13 @@ describe("cleanupUnconfirmedNewsletterSubscriptions", () => {
 	it("should verify the expiry date is 7 days ago", async () => {
 		await cleanupUnconfirmedNewsletterSubscriptions();
 
-		const call = mockPrisma.newsletterSubscriber.findMany.mock.calls[0][0];
+		const call = mockPrisma.newsletterSubscriber.findMany.mock.calls[0]![0];
 		const expiryDate = call.where.confirmationSentAt.lt;
 
 		// Current time: 2026-02-16T10:00:00Z
 		// 7 days ago: 2026-02-09T10:00:00Z
 		const expectedExpiry = new Date(
-			Date.now() - RETENTION.NEWSLETTER_CONFIRMATION_DAYS * 24 * 60 * 60 * 1000
+			Date.now() - RETENTION.NEWSLETTER_CONFIRMATION_DAYS * 24 * 60 * 60 * 1000,
 		);
 
 		expect(expiryDate.getTime()).toBe(expectedExpiry.getTime());
@@ -98,7 +98,7 @@ describe("cleanupUnconfirmedNewsletterSubscriptions", () => {
 		await cleanupUnconfirmedNewsletterSubscriptions();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-newsletter] Delete limit reached, remaining will be cleaned on next run"
+			"[CRON:cleanup-newsletter] Delete limit reached, remaining will be cleaned on next run",
 		);
 	});
 

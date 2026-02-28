@@ -9,10 +9,11 @@ import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { changePasswordSchema } from "../schemas/auth.schemas";
 import { checkArcjetProtection } from "../utils/arcjet-protection";
+import { checkPasswordBreached } from "../services/hibp.service";
 
 export const changePassword = async (
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
@@ -41,16 +42,20 @@ export const changePassword = async (
 
 		if (!userWithAccounts.emailVerified) {
 			return error(
-				"Votre email n'a pas été vérifié. Veuillez vérifier votre boîte mail avant de pouvoir changer votre mot de passe."
+				"Votre email n'a pas été vérifié. Veuillez vérifier votre boîte mail avant de pouvoir changer votre mot de passe.",
 			);
 		}
 
-		const hasCredentialAccount = userWithAccounts.accounts.some((account) => account.providerId === "credential");
+		const hasCredentialAccount = userWithAccounts.accounts.some(
+			(account) => account.providerId === "credential",
+		);
 		if (!hasCredentialAccount) {
-			const oauthProvider = userWithAccounts.accounts.find((account) => account.providerId !== "credential")?.providerId;
+			const oauthProvider = userWithAccounts.accounts.find(
+				(account) => account.providerId !== "credential",
+			)?.providerId;
 			const providerName = oauthProvider === "google" ? "Google" : oauthProvider;
 			return error(
-				`Votre compte utilise l'authentification ${providerName}. Vous ne pouvez pas définir de mot de passe pour ce type de compte.`
+				`Votre compte utilise l'authentification ${providerName}. Vous ne pouvez pas définir de mot de passe pour ce type de compte.`,
 			);
 		}
 
@@ -66,6 +71,14 @@ export const changePassword = async (
 
 		const { currentPassword, newPassword } = validation.data;
 		const revokeOtherSessions = formData.get("revokeOtherSessions") === "true";
+
+		// Check new password against known breaches (HIBP k-anonymity)
+		const breachCount = await checkPasswordBreached(newPassword);
+		if (breachCount > 0) {
+			return error(
+				"Ce mot de passe a été compromis dans une fuite de données. Veuillez en choisir un autre.",
+			);
+		}
 
 		try {
 			await auth.api.changePassword({
@@ -92,7 +105,7 @@ export const changePassword = async (
 			return success(
 				revokeOtherSessions
 					? "Mot de passe changé avec succès. Toutes les autres sessions ont été déconnectées."
-					: "Mot de passe changé avec succès"
+					: "Mot de passe changé avec succès",
 			);
 		} catch (err: unknown) {
 			if (err instanceof Error) {

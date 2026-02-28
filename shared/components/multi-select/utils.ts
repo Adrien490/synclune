@@ -27,9 +27,9 @@ export function arraysEqual(a: string[], b: string[]): boolean {
  * Type guard pour verifier si les options sont groupees
  */
 export function isGroupedOptions(
-	opts: MultiSelectOption[] | MultiSelectGroup[]
+	opts: MultiSelectOption[] | MultiSelectGroup[],
 ): opts is MultiSelectGroup[] {
-	return opts.length > 0 && "heading" in opts[0];
+	return opts.length > 0 && opts[0] !== undefined && "heading" in opts[0];
 }
 
 /**
@@ -54,7 +54,7 @@ export function getPopoverAnimationClass(config?: AnimationConfig): string {
 export function getResponsiveSettings(
 	responsive: boolean | ResponsiveConfig | undefined,
 	screenSize: ScreenSize,
-	maxCount: number
+	maxCount: number,
 ): ResponsiveSettings {
 	if (!responsive) {
 		return {
@@ -85,7 +85,7 @@ export function getResponsiveSettings(
  */
 export function flattenOptions(
 	options: MultiSelectOption[] | MultiSelectGroup[],
-	deduplicateOptions: boolean
+	deduplicateOptions: boolean,
 ): MultiSelectOption[] {
 	if (options.length === 0) return [];
 
@@ -112,7 +112,7 @@ export function flattenOptions(
 export function filterOptions(
 	options: MultiSelectOption[] | MultiSelectGroup[],
 	searchValue: string,
-	searchable: boolean
+	searchable: boolean,
 ): MultiSelectOption[] | MultiSelectGroup[] {
 	if (!searchable || !searchValue) return options;
 	if (options.length === 0) return [];
@@ -126,7 +126,7 @@ export function filterOptions(
 				options: group.options.filter(
 					(option) =>
 						option.label.toLowerCase().includes(lowerSearch) ||
-						option.value.toLowerCase().includes(lowerSearch)
+						option.value.toLowerCase().includes(lowerSearch),
 				),
 			}))
 			.filter((group) => group.options.length > 0);
@@ -135,7 +135,7 @@ export function filterOptions(
 	return options.filter(
 		(option) =>
 			option.label.toLowerCase().includes(lowerSearch) ||
-			option.value.toLowerCase().includes(lowerSearch)
+			option.value.toLowerCase().includes(lowerSearch),
 	);
 }
 
@@ -146,7 +146,7 @@ export function getWidthConstraints(
 	screenSize: ScreenSize,
 	minWidth?: string,
 	maxWidth?: string,
-	autoSize?: boolean
+	autoSize?: boolean,
 ): { minWidth: string; maxWidth: string; width: string } {
 	const defaultMinWidth = screenSize === "mobile" ? "0px" : "200px";
 	const effectiveMinWidth = minWidth || defaultMinWidth;

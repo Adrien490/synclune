@@ -60,9 +60,7 @@ export function StickyCartCTA({
 	const hasOnlyOneSku = product.skus && product.skus.length === 1;
 
 	// Verifier si le SKU est disponible
-	const isAvailable = currentSku
-		? currentSku.inventory > 0 && currentSku.isActive
-		: false;
+	const isAvailable = currentSku ? currentSku.inventory > 0 && currentSku.isActive : false;
 
 	const canAddToCart = currentSku && isAvailable;
 
@@ -74,12 +72,12 @@ export function StickyCartCTA({
 		observerRef.current = new IntersectionObserver(
 			([entry]) => {
 				// Afficher quand le bouton n'est plus visible
-				setIsVisible(!entry.isIntersecting);
+				if (entry) setIsVisible(!entry.isIntersecting);
 			},
 			{
 				threshold: 0,
 				rootMargin: "-64px 0px 0px 0px", // Compenser la navbar
-			}
+			},
 		);
 
 		observerRef.current.observe(target);
@@ -91,15 +89,9 @@ export function StickyCartCTA({
 
 	// Animation variants
 	const slideVariants = {
-		hidden: prefersReducedMotion
-			? { opacity: 0 }
-			: { opacity: 0, y: 100 },
-		visible: prefersReducedMotion
-			? { opacity: 1 }
-			: { opacity: 1, y: 0 },
-		exit: prefersReducedMotion
-			? { opacity: 0 }
-			: { opacity: 0, y: 100 },
+		hidden: prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 100 },
+		visible: prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 },
+		exit: prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 100 },
 	};
 
 	return (
@@ -115,13 +107,13 @@ export function StickyCartCTA({
 						// Mobile only
 						"sm:hidden",
 						// Position fixe en bas
-						"fixed bottom-0 left-0 right-0 z-50",
+						"fixed right-0 bottom-0 left-0 z-50",
 						// Safe area pour iPhone X+
 						"pb-[env(safe-area-inset-bottom)]",
 						// Style
 						"bg-background/95 backdrop-blur-md",
-						"border-t border-border",
-						"shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
+						"border-border border-t",
+						"shadow-[0_-4px_20px_rgba(0,0,0,0.1)]",
 					)}
 				>
 					<form
@@ -142,7 +134,7 @@ export function StickyCartCTA({
 						{/* Miniature du produit (decorative) */}
 						{currentSku?.images?.[0]?.url && (
 							<div
-								className="shrink-0 relative w-10 h-10 rounded-lg overflow-hidden border border-border bg-muted"
+								className="border-border bg-muted relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border"
 								aria-hidden="true"
 							>
 								<Image
@@ -156,29 +148,27 @@ export function StickyCartCTA({
 						)}
 
 						{/* Prix et nom */}
-						<div className="flex-1 min-w-0">
+						<div className="min-w-0 flex-1">
 							{currentSku ? (
 								<>
 									<div className="flex items-baseline gap-1.5">
-										<span className="text-base font-bold text-foreground">
+										<span className="text-foreground text-base font-bold">
 											{formatEuro(currentSku.priceInclTax)}
 										</span>
 										{currentSku.compareAtPrice &&
 											currentSku.compareAtPrice > currentSku.priceInclTax && (
-												<span className="text-xs text-muted-foreground line-through">
+												<span className="text-muted-foreground text-xs line-through">
 													{formatEuro(currentSku.compareAtPrice)}
 												</span>
 											)}
 									</div>
 									{/* Nom du SKU tronqué */}
-									<p className="text-xs text-muted-foreground truncate">
+									<p className="text-muted-foreground truncate text-xs">
 										{currentSku.color?.name || product.title}
 									</p>
 								</>
 							) : (
-								<span className="text-sm text-muted-foreground">
-									Sélectionnez vos options
-								</span>
+								<span className="text-muted-foreground text-sm">Sélectionnez vos options</span>
 							)}
 						</div>
 
@@ -189,25 +179,21 @@ export function StickyCartCTA({
 							disabled={!canAddToCart || isPending}
 							aria-busy={isPending}
 							className={cn(
-								"shrink-0 min-w-40",
+								"min-w-40 shrink-0",
 								"shadow-md",
 								"active:scale-[0.98]",
-								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+								"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2",
 							)}
 						>
-							{isPending ? (
-								"Ajout..."
-							) : !isAvailable ? (
-								"Indisponible"
-							) : !currentSku ? (
-								hasOnlyOneSku ? (
-									"Non disponible"
-								) : (
-									validationErrors[0] || "Choisir"
-								)
-							) : (
-								"Ajouter au panier"
-							)}
+							{isPending
+								? "Ajout..."
+								: !isAvailable
+									? "Indisponible"
+									: !currentSku
+										? hasOnlyOneSku
+											? "Non disponible"
+											: validationErrors[0] || "Choisir"
+										: "Ajouter au panier"}
 						</Button>
 					</form>
 				</motion.div>

@@ -21,10 +21,7 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 	// If CRON_SECRET is not set, reject all requests in production
 	if (!cronSecret) {
 		console.error("[CRON] CRON_SECRET environment variable is not set");
-		return NextResponse.json(
-			{ error: "Cron secret not configured" },
-			{ status: 500 }
-		);
+		return NextResponse.json({ error: "Cron secret not configured" }, { status: 500 });
 	}
 
 	const headersList = await headers();
@@ -32,11 +29,12 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 
 	const expected = Buffer.from(`Bearer ${cronSecret}`);
 	const received = Buffer.from(authorization || "");
-	if (
-		expected.length !== received.length ||
-		!timingSafeEqual(expected, received)
-	) {
-		console.warn("[CRON] Unauthorized cron request attempt");
+	if (expected.length !== received.length || !timingSafeEqual(expected, received)) {
+		const ip =
+			headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+			headersList.get("x-real-ip") ??
+			"unknown";
+		console.warn("[CRON] Unauthorized cron request attempt", { ip });
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
@@ -54,10 +52,7 @@ export function cronTimer(): number {
 /**
  * Standard success response for cron jobs
  */
-export function cronSuccess(
-	data: Record<string, unknown>,
-	startTime?: number
-): NextResponse {
+export function cronSuccess(data: Record<string, unknown>, startTime?: number): NextResponse {
 	return NextResponse.json({
 		success: true,
 		timestamp: new Date().toISOString(),
@@ -77,6 +72,6 @@ export function cronError(message: string, status = 500): NextResponse {
 			error: message,
 			timestamp: new Date().toISOString(),
 		},
-		{ status }
+		{ status },
 	);
 }

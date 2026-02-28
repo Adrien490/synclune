@@ -187,7 +187,8 @@ function getImageForColor(
 			(sku) => sku.color?.slug === selectedColor && sku.images?.length > 0,
 		);
 		if (skuWithColor?.images?.length) {
-			const img = skuWithColor.images.find((i) => i.isPrimary) || skuWithColor.images[0];
+			const img = skuWithColor.images.find((i) => i.isPrimary) ?? skuWithColor.images[0];
+			if (!img) return { url: "", alt: "", blurDataUrl: null };
 			return {
 				url: img.url,
 				alt: img.altText || `${product.title} - ${selectedColor}`,
@@ -711,12 +712,12 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 			const initialColor =
 				validPreselectedColor ||
 				defaultSku?.color?.slug ||
-				(colors.length === 1 ? colors[0].slug : "") ||
+				(colors.length === 1 ? colors[0]!.slug : "") ||
 				"";
 
 			const initialMaterial =
 				(defaultSku?.material?.name ? slugify(defaultSku.material.name) : "") ||
-				(materials.length === 1 ? materials[0].slug : "") ||
+				(materials.length === 1 ? materials[0]!.slug : "") ||
 				"";
 
 			const initialSize = defaultSku?.size || (sizes.length === 1 ? sizes[0] : "") || "";

@@ -17,7 +17,7 @@ const toggleVariants = cva(
 			},
 			size: {
 				default: "h-11 px-2 min-w-11",
-				sm: "h-11 px-1.5 min-w-11",
+				sm: "h-9 px-1.5 min-w-9",
 				lg: "h-12 px-2.5 min-w-12",
 			},
 		},
@@ -25,7 +25,7 @@ const toggleVariants = cva(
 			variant: "default",
 			size: "default",
 		},
-	}
+	},
 );
 
 function Toggle({
@@ -33,8 +33,7 @@ function Toggle({
 	variant,
 	size,
 	...props
-}: React.ComponentProps<typeof TogglePrimitive.Root> &
-	VariantProps<typeof toggleVariants>) {
+}: React.ComponentProps<typeof TogglePrimitive.Root> & VariantProps<typeof toggleVariants>) {
 	return (
 		<TogglePrimitive.Root
 			data-slot="toggle"

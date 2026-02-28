@@ -125,9 +125,9 @@ function isFrameValid(ctx: ContextType, width: number, height: number): boolean 
 	const totalSamples = Math.floor(pixels.length / FRAME_VALIDATION.SAMPLE_FACTOR);
 
 	for (let i = 0; i < pixels.length; i += FRAME_VALIDATION.SAMPLE_FACTOR) {
-		const r = pixels[i];
-		const g = pixels[i + 1];
-		const b = pixels[i + 2];
+		const r = pixels[i]!;
+		const g = pixels[i + 1]!;
+		const b = pixels[i + 2]!;
 
 		if (
 			r < FRAME_VALIDATION.BLACK_THRESHOLD &&

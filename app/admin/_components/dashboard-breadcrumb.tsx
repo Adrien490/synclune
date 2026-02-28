@@ -57,11 +57,12 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 	let currentPath = "/admin";
 
 	for (let i = 0; i < parts.length; i++) {
-		currentPath += `/${parts[i]}`;
+		const part = parts[i] ?? "";
+		currentPath += `/${part}`;
 		const isLast = i === parts.length - 1;
 
 		// Chercher le label dans la configuration de navigation
-		let label = parts[i];
+		let label = part;
 		let found = false;
 
 		// Chercher dans tous les groupes de navigation
@@ -79,15 +80,15 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 		// Si pas trouvé dans la config, formatter le segment
 		if (!found) {
 			// Gérer les cas spéciaux
-			if (parts[i] === "nouveau") {
+			if (part === "nouveau") {
 				label = "Nouveau";
-			} else if (parts[i] === "modifier") {
+			} else if (part === "modifier") {
 				label = "Modifier";
-			} else if (parts[i] === "variantes") {
+			} else if (part === "variantes") {
 				label = "Variantes";
 			} else {
 				// Formater : "types-de-bijoux" → "Types de bijoux"
-				label = parts[i]
+				label = part
 					.split("-")
 					.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 					.join(" ");
@@ -130,7 +131,7 @@ export function DashboardBreadcrumb() {
 	if (shouldCollapse) {
 		// Garder le premier segment et les 2 derniers
 		visibleSegments = [
-			breadcrumbs[0], // Tableau de bord
+			breadcrumbs[0]!, // Tableau de bord
 			...breadcrumbs.slice(-2), // 2 derniers
 		];
 		// Segments cachés (tous sauf le premier et les 2 derniers)
@@ -144,13 +145,13 @@ export function DashboardBreadcrumb() {
 			<BreadcrumbList className="flex-nowrap">
 				{/* Premier segment (Tableau de bord) */}
 				<BreadcrumbItem className="shrink-0">
-					{visibleSegments[0].isCurrentPage ? (
-						<BreadcrumbPage title={visibleSegments[0].label}>
-							{visibleSegments[0].label}
+					{visibleSegments[0]!.isCurrentPage ? (
+						<BreadcrumbPage title={visibleSegments[0]!.label}>
+							{visibleSegments[0]!.label}
 						</BreadcrumbPage>
 					) : (
-						<BreadcrumbLink href={visibleSegments[0].href} title={visibleSegments[0].label}>
-							{visibleSegments[0].label}
+						<BreadcrumbLink href={visibleSegments[0]!.href} title={visibleSegments[0]!.label}>
+							{visibleSegments[0]!.label}
 						</BreadcrumbLink>
 					)}
 				</BreadcrumbItem>

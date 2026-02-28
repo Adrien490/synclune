@@ -57,7 +57,7 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 								<NavigationMenuLink asChild>
 									<Link
 										href={item.href}
-										className={cn(navigationMenuTriggerStyle(), linkClasses)}
+										className={cn(navigationMenuTriggerStyle, linkClasses)}
 										data-active={itemIsActive}
 										aria-current={itemIsActive ? "page" : undefined}
 									>
@@ -90,17 +90,20 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 						   absolute positioning and render a full-width mega menu anchored
 						   below the navbar. Without these, the dropdown renders relative to
 						   its trigger with default padding/border/rounding. */}
-						<NavigationMenuContent
+							<NavigationMenuContent
 								className={cn(
-									"fixed! left-0! right-0! w-screen!",
+									"fixed! right-0! left-0! w-screen!",
 									"top-[var(--navbar-height)]!",
-									"mt-0! p-0! rounded-none! border-0!",
-									"bg-background border-b border-border shadow-md",
+									"mt-0! rounded-none! border-0! p-0!",
+									"bg-background border-border border-b shadow-md",
 								)}
 							>
 								<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 									{item.dropdownType === "creations" && (
-										<MegaMenuCreations productTypes={item.children} featuredProducts={featuredProducts} />
+										<MegaMenuCreations
+											productTypes={item.children}
+											featuredProducts={featuredProducts}
+										/>
 									)}
 									{item.dropdownType === "collections" && (
 										<MegaMenuCollections collections={item.children} />

@@ -1,6 +1,9 @@
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { extractCollectionImages, extractPriceRange } from "@/modules/collections/utils/collection-images.utils";
+import {
+	extractCollectionImages,
+	extractPriceRange,
+} from "@/modules/collections/utils/collection-images.utils";
 import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -35,46 +38,55 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 	return (
 		<section
 			id="collections"
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-labelledby="collections-title"
 			aria-describedby="collections-subtitle"
 		>
 			{/* Skip link for keyboard navigation - skip carousel */}
 			<a
 				href="#collections-cta"
-				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-ring focus:text-foreground"
+				className="focus:bg-background focus:ring-ring focus:text-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:ring-2"
 			>
 				Passer au bouton Explorer
 			</a>
 			<div className={`relative ${CONTAINER_CLASS}`}>
 				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
-						<SectionTitle id="collections-title">
-							Les dernières collections
-						</SectionTitle>
+						<SectionTitle id="collections-title">Les dernières collections</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
-					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
+					<Fade
+						y={MOTION_CONFIG.section.subtitle.y}
+						delay={MOTION_CONFIG.section.subtitle.delay}
+						duration={MOTION_CONFIG.section.subtitle.duration}
+					>
 						<p
 							id="collections-subtitle"
-							className="mt-5 text-lg/8 tracking-normal text-muted-foreground max-w-2xl mx-auto"
+							className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
 						>
-							Je rajoute une petite touche personnelle à chaque création <Heart className="inline size-4 text-primary fill-primary" aria-hidden="true" /><span className="sr-only"> avec amour</span>
+							Je rajoute une petite touche personnelle à chaque création{" "}
+							<Heart className="text-primary fill-primary inline size-4" aria-hidden="true" />
+							<span className="sr-only"> avec amour</span>
 						</p>
 					</Fade>
 				</header>
 
 				<div className="mb-8 lg:mb-12">
-					<Reveal y={MOTION_CONFIG.section.carousel.y} delay={MOTION_CONFIG.section.carousel.delay} duration={MOTION_CONFIG.section.carousel.duration} once>
+					<Reveal
+						y={MOTION_CONFIG.section.carousel.y}
+						delay={MOTION_CONFIG.section.carousel.delay}
+						duration={MOTION_CONFIG.section.carousel.duration}
+						once
+					>
 						<Carousel
 							opts={{
 								align: "center",
 								containScroll: "trimSnaps",
 							}}
-							className="w-full group/carousel"
+							className="group/carousel w-full"
 							aria-label="Carrousel de collections"
 						>
-							<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
+							<CarouselContent className="-ml-4 py-4 sm:-ml-6" showFade>
 								{collections.map((collection, index) => {
 									const images = extractCollectionImages(collection.products);
 
@@ -82,7 +94,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 										<CarouselItem
 											key={collection.id}
 											index={index}
-											className="pl-4 sm:pl-6 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
+											className="basis-[clamp(200px,72vw,280px)] pl-4 sm:pl-6 md:basis-1/3 lg:basis-1/4"
 										>
 											<CollectionCard
 												slug={collection.slug}
@@ -102,11 +114,11 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 							{showArrows && (
 								<>
 									<CarouselPrevious
-										className="hidden md:flex left-4 top-[40%] opacity-80 group-hover/carousel:opacity-100 transition-opacity duration-300"
+										className="top-[40%] left-4 hidden opacity-80 transition-opacity duration-300 group-hover/carousel:opacity-100 md:flex"
 										aria-label="Voir les collections précédentes"
 									/>
 									<CarouselNext
-										className="hidden md:flex right-4 top-[40%] opacity-80 group-hover/carousel:opacity-100 transition-opacity duration-300"
+										className="top-[40%] right-4 hidden opacity-80 transition-opacity duration-300 group-hover/carousel:opacity-100 md:flex"
 										aria-label="Voir les collections suivantes"
 									/>
 								</>
@@ -119,17 +131,22 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 				</div>
 
 				<div id="collections-cta">
-					<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration} inView once className="text-center">
-					<Button
-						asChild
-						size="lg"
-						variant="outline"
-						className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+					<Fade
+						y={MOTION_CONFIG.section.cta.y}
+						delay={MOTION_CONFIG.section.cta.delay}
+						duration={MOTION_CONFIG.section.cta.duration}
+						inView
+						once
+						className="text-center"
 					>
-						<Link href="/collections">
-							Explorer les collections
-						</Link>
-					</Button>
+						<Button
+							asChild
+							size="lg"
+							variant="outline"
+							className="transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+						>
+							<Link href="/collections">Explorer les collections</Link>
+						</Button>
 					</Fade>
 				</div>
 			</div>

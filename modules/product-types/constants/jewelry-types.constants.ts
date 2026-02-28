@@ -93,13 +93,13 @@ export const SYNCLUNE_JEWELRY_TYPES: JewelryTypeConfig[] = [
 
 // Mapping de compatibilité avec les anciens types (maintenant des strings)
 export const JEWELRY_TYPES: Record<string, JewelryTypeConfig> = {
-	NECKLACES: SYNCLUNE_JEWELRY_TYPES[0], // Colliers
-	BRACELETS: SYNCLUNE_JEWELRY_TYPES[1], // Bracelets
-	RINGS: SYNCLUNE_JEWELRY_TYPES[2], // Bagues
-	BODY_CHAINS: SYNCLUNE_JEWELRY_TYPES[3], // Chaînes des corps
-	PAPILLOUX: SYNCLUNE_JEWELRY_TYPES[4], // Papilloux
-	HAIR_CHAINS: SYNCLUNE_JEWELRY_TYPES[5], // Chaînes des cheveux
-	KEYCHAINS: SYNCLUNE_JEWELRY_TYPES[6], // Porte-clés
+	NECKLACES: SYNCLUNE_JEWELRY_TYPES[0]!, // Colliers
+	BRACELETS: SYNCLUNE_JEWELRY_TYPES[1]!, // Bracelets
+	RINGS: SYNCLUNE_JEWELRY_TYPES[2]!, // Bagues
+	BODY_CHAINS: SYNCLUNE_JEWELRY_TYPES[3]!, // Chaînes des corps
+	PAPILLOUX: SYNCLUNE_JEWELRY_TYPES[4]!, // Papilloux
+	HAIR_CHAINS: SYNCLUNE_JEWELRY_TYPES[5]!, // Chaînes des cheveux
+	KEYCHAINS: SYNCLUNE_JEWELRY_TYPES[6]!, // Porte-clés
 	EARRINGS: {
 		key: "EARRINGS",
 		label: "Boucles d'oreilles",

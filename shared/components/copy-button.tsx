@@ -12,9 +12,13 @@ interface CopyButtonProps {
 }
 
 export function CopyButton({ text, label, className, size = "sm" }: CopyButtonProps) {
-	const handleCopy = () => {
-		navigator.clipboard.writeText(text);
-		toast.success(`${label} copié`);
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(text);
+			toast.success(`${label} copié`);
+		} catch {
+			toast.error("Impossible de copier dans le presse-papiers");
+		}
 	};
 
 	return (

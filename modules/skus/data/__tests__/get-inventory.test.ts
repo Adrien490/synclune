@@ -4,19 +4,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockIsAdmin,
-	mockRedirect,
-	mockFetchProductSkus,
-	mockGetProductSkusSchema,
-} = vi.hoisted(() => ({
-	mockIsAdmin: vi.fn(),
-	mockRedirect: vi.fn(),
-	mockFetchProductSkus: vi.fn(),
-	mockGetProductSkusSchema: {
-		safeParse: vi.fn(),
-	},
-}));
+const { mockIsAdmin, mockRedirect, mockFetchProductSkus, mockGetProductSkusSchema } = vi.hoisted(
+	() => ({
+		mockIsAdmin: vi.fn(),
+		mockRedirect: vi.fn(),
+		mockFetchProductSkus: vi.fn(),
+		mockGetProductSkusSchema: {
+			safeParse: vi.fn(),
+		},
+	}),
+);
 
 vi.mock("@/modules/auth/utils/guards", () => ({
 	isAdmin: mockIsAdmin,
@@ -129,28 +126,28 @@ describe("getInventory – default params", () => {
 	it("uses default perPage of 20 when not specified", async () => {
 		await getInventory();
 
-		const parsed = mockGetProductSkusSchema.safeParse.mock.calls[0][0];
+		const parsed = mockGetProductSkusSchema.safeParse.mock.calls[0]![0];
 		expect(parsed.perPage).toBe(20);
 	});
 
 	it("uses default direction 'forward' when not specified", async () => {
 		await getInventory();
 
-		const parsed = mockGetProductSkusSchema.safeParse.mock.calls[0][0];
+		const parsed = mockGetProductSkusSchema.safeParse.mock.calls[0]![0];
 		expect(parsed.direction).toBe("forward");
 	});
 
 	it("uses default sortBy when not specified", async () => {
 		await getInventory();
 
-		const parsed = mockGetProductSkusSchema.safeParse.mock.calls[0][0];
+		const parsed = mockGetProductSkusSchema.safeParse.mock.calls[0]![0];
 		expect(parsed.sortBy).toBe("created-descending");
 	});
 
 	it("passes explicit params through", async () => {
 		await getInventory({ perPage: 50, search: "gold", direction: "backward" });
 
-		const parsed = mockGetProductSkusSchema.safeParse.mock.calls[0][0];
+		const parsed = mockGetProductSkusSchema.safeParse.mock.calls[0]![0];
 		expect(parsed.perPage).toBe(50);
 		expect(parsed.search).toBe("gold");
 		expect(parsed.direction).toBe("backward");
@@ -192,25 +189,25 @@ describe("getInventory – admin sort fallback", () => {
 
 	it("applies admin fallback sort when sortBy equals default and no sortBy param given", async () => {
 		mockGetProductSkusSchema.safeParse.mockReturnValue(
-			makeValidationResult({ sortBy: "created-descending" })
+			makeValidationResult({ sortBy: "created-descending" }),
 		);
 
 		await getInventory({});
 
 		expect(mockFetchProductSkus).toHaveBeenCalledWith(
-			expect.objectContaining({ sortBy: "created-descending" })
+			expect.objectContaining({ sortBy: "created-descending" }),
 		);
 	});
 
 	it("preserves explicit sortBy when caller provides it", async () => {
 		mockGetProductSkusSchema.safeParse.mockReturnValue(
-			makeValidationResult({ sortBy: "price-ascending" })
+			makeValidationResult({ sortBy: "price-ascending" }),
 		);
 
 		await getInventory({ sortBy: "price-ascending" });
 
 		expect(mockFetchProductSkus).toHaveBeenCalledWith(
-			expect.objectContaining({ sortBy: "price-ascending" })
+			expect.objectContaining({ sortBy: "price-ascending" }),
 		);
 	});
 });

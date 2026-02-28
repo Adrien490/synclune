@@ -48,7 +48,7 @@ export function isRetryableError(error: unknown): boolean {
 	// HTTP errors: extract status code
 	const httpMatch = message.match(/http\s*(\d{3})/i);
 	if (httpMatch) {
-		const statusCode = parseInt(httpMatch[1], 10);
+		const statusCode = parseInt(httpMatch[1]!, 10);
 		// 4xx = permanent client error (except 408 Request Timeout, 429 Too Many Requests)
 		if (statusCode >= 400 && statusCode < 500 && statusCode !== 408 && statusCode !== 429) {
 			return false;

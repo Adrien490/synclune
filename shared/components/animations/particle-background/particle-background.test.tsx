@@ -121,18 +121,18 @@ describe("ParticleBackground", () => {
 		const children = Array.from(root.children);
 		expect(children).toHaveLength(2);
 		// Desktop: hidden md:contents
-		expect(children[0].className).toContain("hidden");
-		expect(children[0].className).toContain("md:contents");
+		expect(children[0]!.className).toContain("hidden");
+		expect(children[0]!.className).toContain("md:contents");
 		// Mobile: contents md:hidden
-		expect(children[1].className).toContain("contents");
-		expect(children[1].className).toContain("md:hidden");
+		expect(children[1]!.className).toContain("contents");
+		expect(children[1]!.className).toContain("md:hidden");
 	});
 
 	it("renders particles as spans", () => {
 		const { container } = render(<ParticleBackground count={4} />);
 		// Desktop wrapper has 4 particles, mobile has 2 (ceil(4/2))
-		const desktopWrapper = container.firstElementChild!.children[0];
-		const mobileWrapper = container.firstElementChild!.children[1];
+		const desktopWrapper = container.firstElementChild!.children[0]!;
+		const mobileWrapper = container.firstElementChild!.children[1]!;
 		// Each particle is a span with absolute positioning
 		const desktopSpans = desktopWrapper.querySelectorAll("span.absolute");
 		const mobileSpans = mobileWrapper.querySelectorAll("span.absolute");
@@ -144,7 +144,7 @@ describe("ParticleBackground", () => {
 		vi.mocked(useReducedMotion).mockReturnValue(true);
 		const { container } = render(<ParticleBackground count={3} />);
 		// Static particles use plain <span> instead of <motion.span>
-		const desktopWrapper = container.firstElementChild!.children[0];
+		const desktopWrapper = container.firstElementChild!.children[0]!;
 		const spans = desktopWrapper.querySelectorAll("span");
 		expect(spans.length).toBeGreaterThan(0);
 		vi.mocked(useReducedMotion).mockReturnValue(false);
@@ -173,8 +173,8 @@ describe("ParticleBackground", () => {
 		vi.mocked(useInView).mockReturnValue(false);
 		const { container } = render(<ParticleBackground count={4} />);
 		// Desktop and mobile wrappers exist but should be empty (ParticleSet returns null)
-		const desktopWrapper = container.firstElementChild!.children[0];
-		const mobileWrapper = container.firstElementChild!.children[1];
+		const desktopWrapper = container.firstElementChild!.children[0]!;
+		const mobileWrapper = container.firstElementChild!.children[1]!;
 		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(0);
 		expect(mobileWrapper.querySelectorAll("span.absolute").length).toBe(0);
 		vi.mocked(useInView).mockReturnValue(true);
@@ -185,8 +185,8 @@ describe("ParticleBackground", () => {
 		const { container: fast } = render(<ParticleBackground count={3} speed={2} />);
 		const { container: slow } = render(<ParticleBackground count={3} speed={0.5} />);
 		// Both should render the same number of particles
-		const fastSpans = fast.firstElementChild!.children[0].querySelectorAll("span.absolute");
-		const slowSpans = slow.firstElementChild!.children[0].querySelectorAll("span.absolute");
+		const fastSpans = fast.firstElementChild!.children[0]!.querySelectorAll("span.absolute");
+		const slowSpans = slow.firstElementChild!.children[0]!.querySelectorAll("span.absolute");
 		expect(fastSpans.length).toBe(3);
 		expect(slowSpans.length).toBe(3);
 	});
@@ -199,7 +199,7 @@ describe("ParticleBackground", () => {
 
 	it("renders mixed shapes when shape is an array", () => {
 		const { container } = render(<ParticleBackground count={4} shape={["circle", "crescent"]} />);
-		const desktopWrapper = container.firstElementChild!.children[0];
+		const desktopWrapper = container.firstElementChild!.children[0]!;
 		// crescent is SVG, so we should find SVG elements
 		const svgs = desktopWrapper.querySelectorAll("svg");
 		expect(svgs.length).toBeGreaterThan(0);
@@ -210,7 +210,7 @@ describe("ParticleBackground", () => {
 
 	it("clamps count to MAX_PARTICLES (30)", () => {
 		const { container } = render(<ParticleBackground count={100} />);
-		const desktopWrapper = container.firstElementChild!.children[0];
+		const desktopWrapper = container.firstElementChild!.children[0]!;
 		const desktopSpans = desktopWrapper.querySelectorAll("span.absolute");
 		// Should be clamped to 30, not 100
 		expect(desktopSpans.length).toBe(30);
@@ -232,7 +232,7 @@ describe("ParticleBackground", () => {
 		const { container } = render(<ParticleBackground count={3} />);
 
 		// Particles should be rendered initially
-		const desktopWrapper = container.firstElementChild!.children[0];
+		const desktopWrapper = container.firstElementChild!.children[0]!;
 		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
 
 		// Simulate tab going hidden
@@ -280,7 +280,7 @@ describe("ParticleBackground", () => {
 		// Should still render particles, but with adjusted opacity/blur
 		const root = container.firstElementChild;
 		expect(root).toBeTruthy();
-		const desktopWrapper = root!.children[0];
+		const desktopWrapper = root!.children[0]!;
 		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
 	});
 
@@ -291,7 +291,7 @@ describe("ParticleBackground", () => {
 
 	it("renders sparkle animation style", () => {
 		const { container } = render(<ParticleBackground count={3} animationStyle="sparkle" />);
-		const desktopWrapper = container.firstElementChild!.children[0];
+		const desktopWrapper = container.firstElementChild!.children[0]!;
 		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
 	});
 });
@@ -343,8 +343,8 @@ describe("ParticleBackground parallax", () => {
 		const root = container.firstElementChild as HTMLElement;
 
 		// mouseX = motionValues[0], mouseY = motionValues[1] (first two useMotionValue calls)
-		const mouseXMv = motionValues[0];
-		const mouseYMv = motionValues[1];
+		const mouseXMv = motionValues[0]!;
+		const mouseYMv = motionValues[1]!;
 
 		// Mock getBoundingClientRect on the container (cached at effect setup)
 		vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
@@ -391,8 +391,8 @@ describe("ParticleBackground parallax", () => {
 		const { container } = render(<ParticleBackground count={2} />);
 		const root = container.firstElementChild as HTMLElement;
 
-		const mouseXMv = motionValues[0];
-		const mouseYMv = motionValues[1];
+		const mouseXMv = motionValues[0]!;
+		const mouseYMv = motionValues[1]!;
 
 		// Set initial parallax values
 		mouseXMv.value = 10;
@@ -424,8 +424,8 @@ describe("ParticleBackground parallax", () => {
 		const { container } = render(<ParticleBackground count={2} />);
 		const root = container.firstElementChild as HTMLElement;
 
-		const mouseXMv = motionValues[0];
-		const mouseYMv = motionValues[1];
+		const mouseXMv = motionValues[0]!;
+		const mouseYMv = motionValues[1]!;
 
 		// Set non-zero parallax values
 		mouseXMv.value = 10;
@@ -437,7 +437,7 @@ describe("ParticleBackground parallax", () => {
 
 		// Run the first RAF step at t=300ms (halfway through 600ms LERP_RESET_DURATION)
 		vi.spyOn(performance, "now").mockReturnValue(300);
-		const leaveCallback = rafCallbacks[rafCallbacks.length - 1];
+		const leaveCallback = rafCallbacks[rafCallbacks.length - 1]!;
 		act(() => {
 			leaveCallback(300);
 		});
@@ -450,7 +450,7 @@ describe("ParticleBackground parallax", () => {
 
 		// Run the final RAF step at t=600ms (end of lerp)
 		vi.spyOn(performance, "now").mockReturnValue(600);
-		const nextCallback = rafCallbacks[rafCallbacks.length - 1];
+		const nextCallback = rafCallbacks[rafCallbacks.length - 1]!;
 		act(() => {
 			nextCallback(600);
 		});
@@ -471,8 +471,8 @@ describe("ParticleBackground parallax", () => {
 		const { container } = render(<ParticleBackground count={2} />);
 		const root = container.firstElementChild as HTMLElement;
 
-		motionValues[0].value = 10;
-		motionValues[1].value = 5;
+		motionValues[0]!.value = 10;
+		motionValues[1]!.value = 5;
 
 		// Start a lerp
 		act(() => {
@@ -504,8 +504,8 @@ describe("ParticleBackground parallax", () => {
 		expect(container.firstElementChild).toBeNull();
 
 		// mouseX and mouseY should never have been set (parallax effect bails out early)
-		const mouseXMv = motionValues[0];
-		const mouseYMv = motionValues[1];
+		const mouseXMv = motionValues[0]!;
+		const mouseYMv = motionValues[1]!;
 		if (mouseXMv) expect(mouseXMv.setFn).not.toHaveBeenCalled();
 		if (mouseYMv) expect(mouseYMv.setFn).not.toHaveBeenCalled();
 
@@ -516,7 +516,7 @@ describe("ParticleBackground parallax", () => {
 		const { container } = render(<ParticleBackground count={2} />);
 		const root = container.firstElementChild as HTMLElement;
 
-		const mouseXMv = motionValues[0];
+		const mouseXMv = motionValues[0]!;
 
 		// Initial rect (from effect setup with default jsdom values)
 		const rectSpy = vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
