@@ -10,5 +10,6 @@ export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } =
 			{ url: "/icons/offline-placeholder.svg", revision },
 		],
 		swSrc: "app/sw.ts",
+		useNativeEsbuild: false,
 	},
 );

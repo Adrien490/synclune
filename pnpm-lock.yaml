@@ -112,6 +112,9 @@ importers:
       '@react-email/components':
         specifier: ^1.0.8
         version: 1.0.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@serwist/turbopack':
+        specifier: ^9.5.6
+        version: 9.5.6(patch_hash=b3c1a50adcc2a7a6b4a561e5e4f2f8cd292f268ff249829d285575af2f976d49)(@swc/helpers@0.5.19)(esbuild-wasm@0.27.3)(esbuild@0.27.3)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       '@stripe/react-stripe-js':
         specifier: ^5.6.0
         version: 5.6.0(@stripe/stripe-js@8.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -157,6 +160,9 @@ importers:
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.4)
+      esbuild-wasm:
+        specifier: ^0.27.3
+        version: 0.27.3
       jspdf:
         specifier: ^4.2.0
         version: 4.2.0
@@ -202,6 +208,9 @@ importers:
       resend:
         specifier: ^6.9.2
         version: 6.9.2(@react-email/render@2.0.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+      serwist:
+        specifier: ^9.5.6
+        version: 9.5.6(browserslist@4.28.1)(typescript@5.9.3)
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
@@ -263,9 +272,6 @@ importers:
       '@react-email/render':
         specifier: ^2.0.4
         version: 2.0.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@serwist/turbopack':
-        specifier: ^9.5.6
-        version: 9.5.6(patch_hash=b3c1a50adcc2a7a6b4a561e5e4f2f8cd292f268ff249829d285575af2f976d49)(@swc/helpers@0.5.19)(esbuild-wasm@0.27.3)(esbuild@0.27.3)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       '@size-limit/file':
         specifier: ^12.0.0
         version: 12.0.0(size-limit@12.0.0(jiti@2.6.1))
@@ -308,9 +314,6 @@ importers:
       embla-carousel:
         specifier: ^8.6.0
         version: 8.6.0
-      esbuild-wasm:
-        specifier: ^0.27.3
-        version: 0.27.3
       eslint:
         specifier: ^9.39.3
         version: 9.39.3(jiti@2.6.1)
@@ -338,9 +341,6 @@ importers:
       prisma:
         specifier: ^7.4.1
         version: 7.4.1(@types/react@19.2.14)(better-sqlite3@12.6.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
-      serwist:
-        specifier: ^9.5.6
-        version: 9.5.6(browserslist@4.28.1)(typescript@5.9.3)
       size-limit:
         specifier: ^12.0.0
         version: 12.0.0(jiti@2.6.1)

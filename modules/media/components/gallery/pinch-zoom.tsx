@@ -67,8 +67,7 @@ export function GalleryPinchZoom({
 			role="application"
 			aria-label={ariaLabel}
 			aria-roledescription="Image zoomable"
-			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- false positive: role="application" is interactive per WAI-ARIA spec
-			tabIndex={0}
+			tabIndex={-1}
 			onKeyDown={handleKeyDown}
 			className={cn(
 				"relative h-full w-full overflow-hidden",

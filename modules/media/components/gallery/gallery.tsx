@@ -291,8 +291,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 		<>
 			<div
 				ref={galleryRef}
-				// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- gallery carousel needs keyboard navigation
-				tabIndex={0}
+				tabIndex={-1}
 				className={cn(
 					"outline-none",
 					"product-gallery w-full",
