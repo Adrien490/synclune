@@ -29,3 +29,8 @@
 - [ ] Soft delete used (no hard delete)
 - [ ] UI text in French, code/comments in English
 - [ ] Prisma migration created if schema changed
+- [ ] Accessibility verified (keyboard navigation, screen reader)
+- [ ] Responsive verified (mobile + desktop)
+- [ ] No `any` or `@ts-ignore` added
+- [ ] Bundle size not degraded (`pnpm size`)
+- [ ] No `console.log` left in production code

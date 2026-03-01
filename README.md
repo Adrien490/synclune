@@ -39,8 +39,8 @@
 
 ```bash
 # Cloner le repository
-git clone https://github.com/[votre-username]/synclune-bijoux.git
-cd synclune-bijoux
+git clone https://github.com/Adrien490/synclune.git
+cd synclune
 
 # Installer les dependances
 pnpm install
@@ -182,7 +182,7 @@ Voir [`.env.example`](./.env.example) pour la liste complete des variables.
 
 Deploye sur [Vercel](https://vercel.com). Push sur `main` declenche le deploiement automatique.
 
-14 cron jobs definis dans `vercel.json`.
+15 cron jobs definis dans `vercel.json`.
 
 ---
 

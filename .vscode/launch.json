@@ -1,0 +1,34 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Next.js: debug server",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "pnpm",
+			"runtimeArgs": ["dev:debug"],
+			"skipFiles": ["<node_internals>/**"],
+			"console": "integratedTerminal",
+			"serverReadyAction": {
+				"pattern": "- Local:.+(https?://.+)",
+				"uriFormat": "%s",
+				"action": "debugWithChrome"
+			}
+		},
+		{
+			"name": "Next.js: debug client",
+			"type": "chrome",
+			"request": "launch",
+			"url": "http://localhost:3000"
+		},
+		{
+			"name": "Vitest: debug current file",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "pnpm",
+			"runtimeArgs": ["test", "run", "${relativeFile}"],
+			"skipFiles": ["<node_internals>/**"],
+			"console": "integratedTerminal"
+		}
+	]
+}

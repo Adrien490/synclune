@@ -18,6 +18,11 @@ pnpm build                  # Build (prisma generate + next build --turbopack)
 pnpm start                  # Production server
 pnpm test                   # Vitest
 pnpm lint                   # ESLint
+pnpm typecheck              # TypeScript type checking (tsc --noEmit)
+pnpm format                 # Prettier (format)
+pnpm format:check           # Prettier (check only)
+pnpm size                   # Bundle size check (size-limit)
+pnpm size:check             # Bundle size check (JSON output)
 pnpm seed                   # Seed database
 pnpm db:studio              # Prisma Studio GUI
 pnpm email:dev              # Preview emails (port 3001)
@@ -83,6 +88,7 @@ shared/                      # Cross-cutting concerns
 - **State**: Zustand (5 stores: dialogs, alert dialogs, sheets, cookie consent, badge counts)
 - **UI**: shadcn/ui + Tailwind + Motion (v12, `motion/react`)
 - **Uploads**: UploadThing
+- **Monitoring**: Sentry (error tracking, tunnel via `/monitoring`)
 - **Analytics**: Vercel Analytics + Speed Insights
 
 ### React 19 - NO MEMOIZATION
@@ -274,7 +280,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-14 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
+15 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
 
 | Job                           | Schedule           |
 | ----------------------------- | ------------------ |
@@ -284,6 +290,8 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 | `process-account-deletions`   | Daily 5:00         |
 | `cleanup-newsletter`          | Weekly Sunday 6:00 |
 | `review-request-emails`       | Daily 10:00        |
+| `abandoned-cart-emails`       | Every 2h           |
+| `cross-sell-emails`           | Daily 11:00        |
 | `sync-async-payments`         | Every 4h           |
 | `reconcile-refunds`           | Every 6h           |
 | `process-scheduled-discounts` | Every 4h           |

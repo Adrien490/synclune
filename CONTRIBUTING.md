@@ -2,7 +2,7 @@
 
 ## Setup
 
-See [README.md](./README.md#getting-started) for initial setup.
+See [README.md](./README.md#demarrage-rapide) for initial setup.
 
 ## Architecture
 
@@ -115,6 +115,10 @@ fix: cart total calculation with discounts
 refactor: extract checkout service
 docs: update caching strategy
 ```
+
+### Merge strategy
+
+Use **squash merge** for all PRs to keep a clean linear history on `main`. Each PR becomes a single commit.
 
 ### Pre-commit hooks
 

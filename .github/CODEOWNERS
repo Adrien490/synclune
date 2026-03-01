@@ -1,0 +1,8 @@
+# Default owner for everything
+* @Adrien490
+
+# Critical paths
+modules/payments/ @Adrien490
+modules/webhooks/ @Adrien490
+modules/auth/ @Adrien490
+shared/lib/stripe.ts @Adrien490

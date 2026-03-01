@@ -26,7 +26,13 @@
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"typecheck": "tsc --noEmit",
-		"prepare": "husky"
+		"prepare": "husky",
+		"clean": "rm -rf .next node_modules/.cache coverage test-results playwright-report",
+		"db:reset": "prisma migrate reset && pnpm seed",
+		"db:migrate": "prisma migrate dev",
+		"db:push": "prisma db push",
+		"dev:debug": "NODE_OPTIONS='--inspect' next dev --turbopack",
+		"validate": "pnpm lint && pnpm typecheck && pnpm format:check && pnpm test run"
 	},
 	"lint-staged": {
 		"*.{ts,tsx,js,jsx,mjs}": [
