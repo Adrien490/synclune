@@ -4,24 +4,26 @@ import {
 	getOrganizationSchema,
 	getWebSiteSchema,
 	SITE_URL,
-	type GlobalReviewStats,
 } from "@/shared/constants/seo-config";
-import { use } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 
-import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
+import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
+import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 
 interface StructuredDataProps {
-	reviewStatsPromise: Promise<GlobalReviewStats | undefined>;
-	reviewsPromise?: Promise<ReviewHomepage[]>;
+	includeHomepageSchemas?: boolean;
 }
 
 /**
  * Consolidates all JSON-LD schemas into a single @graph script.
- * Accepts Promises for review data to enable streaming with Suspense.
+ * Uses "use cache" to avoid Suspense boundaries around <script> tags.
  */
-export function StructuredData({ reviewStatsPromise, reviewsPromise }: StructuredDataProps) {
-	const reviewStats = use(reviewStatsPromise);
-	const reviews = reviewsPromise ? use(reviewsPromise) : [];
+export async function StructuredData({ includeHomepageSchemas }: StructuredDataProps = {}) {
+	"use cache";
+	cacheLife("products");
+	cacheTag("homepage-structured-data");
+
+	const reviewStats = await getGlobalReviewStats();
 
 	const schemas = [
 		getOrganizationSchema(),
@@ -33,8 +35,9 @@ export function StructuredData({ reviewStatsPromise, reviewsPromise }: Structure
 	// Remove @context from each schema for @graph format
 	const graphSchemas: Record<string, unknown>[] = schemas.map(({ "@context": _, ...rest }) => rest);
 
-	// Homepage-specific schemas (only when reviewsPromise is provided)
-	if (reviewsPromise) {
+	if (includeHomepageSchemas) {
+		const reviews = await getFeaturedReviews();
+
 		// BreadcrumbList for homepage
 		graphSchemas.push({
 			"@type": "BreadcrumbList",
@@ -65,34 +68,34 @@ export function StructuredData({ reviewStatsPromise, reviewsPromise }: Structure
 				description: "Bijoux artisanaux faits main à Nantes",
 			},
 		});
-	}
 
-	// Individual Review schemas for rich snippets
-	for (const review of reviews) {
-		graphSchemas.push({
-			"@type": "Review",
-			author: {
-				"@type": "Person",
-				name: review.user.name ?? "Anonyme",
-			},
-			datePublished: new Date(review.createdAt).toISOString(),
-			reviewBody: review.content,
-			...(review.title && { name: review.title }),
-			reviewRating: {
-				"@type": "Rating",
-				ratingValue: review.rating,
-				bestRating: 5,
-				worstRating: 1,
-			},
-			itemReviewed: {
-				"@type": "Product",
-				name: review.product.title,
-				url: `${SITE_URL}/creations/${review.product.slug}`,
-			},
-			publisher: {
-				"@id": `${SITE_URL}/#organization`,
-			},
-		});
+		// Individual Review schemas for rich snippets
+		for (const review of reviews) {
+			graphSchemas.push({
+				"@type": "Review",
+				author: {
+					"@type": "Person",
+					name: review.user.name ?? "Anonyme",
+				},
+				datePublished: new Date(review.createdAt).toISOString(),
+				reviewBody: review.content,
+				...(review.title && { name: review.title }),
+				reviewRating: {
+					"@type": "Rating",
+					ratingValue: review.rating,
+					bestRating: 5,
+					worstRating: 1,
+				},
+				itemReviewed: {
+					"@type": "Product",
+					name: review.product.title,
+					url: `${SITE_URL}/creations/${review.product.slug}`,
+				},
+				publisher: {
+					"@id": `${SITE_URL}/#organization`,
+				},
+			});
+		}
 	}
 
 	const jsonLd = {

@@ -120,6 +120,7 @@ export function getReviewInvalidationTags(
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
 		REVIEWS_CACHE_TAGS.GLOBAL_STATS,
+		"homepage-structured-data",
 	];
 
 	// Ajouter les tags produit seulement si le produit existe encore
@@ -148,6 +149,7 @@ export function getReviewModerationTags(productId: string | null, reviewId: stri
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
 		REVIEWS_CACHE_TAGS.GLOBAL_STATS,
+		"homepage-structured-data",
 	];
 
 	// Ajouter les tags produit seulement si le produit existe encore

@@ -5,7 +5,6 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
-import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
 import { Suspense, use } from "react";
 import { LatestCreationsGridSkeleton } from "./latest-creations-skeleton";
@@ -62,49 +61,8 @@ function LatestCreationsGrid({ productsPromise }: LatestCreationsProps) {
 		return null;
 	}
 
-	// ItemList JSON-LD for latest creations (SEO rich snippets)
-	const itemListSchema = {
-		"@context": "https://schema.org",
-		"@type": "ItemList",
-		name: "Nouvelles créations Synclune",
-		description: "Les dernières créations de bijoux artisanaux faits main",
-		numberOfItems: products.length,
-		itemListElement: products.map((product, index) => {
-			const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0];
-			const primaryImage = defaultSku?.images.find((img) => img.isPrimary) ?? defaultSku?.images[0];
-			return {
-				"@type": "ListItem",
-				position: index + 1,
-				item: {
-					"@type": "Product",
-					name: product.title,
-					url: `${SITE_URL}/creations/${product.slug}`,
-					...(primaryImage && { image: primaryImage.url }),
-					...(defaultSku && {
-						offers: {
-							"@type": "Offer",
-							price: (defaultSku.priceInclTax / 100).toFixed(2),
-							priceCurrency: "EUR",
-							availability:
-								defaultSku.inventory > 0
-									? "https://schema.org/InStock"
-									: "https://schema.org/OutOfStock",
-						},
-					}),
-				},
-			};
-		}),
-	};
-
 	return (
 		<>
-			{/* ItemList JSON-LD for SEO */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(itemListSchema).replace(/</g, "\\u003c"),
-				}}
-			/>
 			<Stagger
 				className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8"
 				stagger={MOTION_CONFIG.section.grid.stagger}
