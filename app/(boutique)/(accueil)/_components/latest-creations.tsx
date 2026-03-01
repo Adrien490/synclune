@@ -99,12 +99,14 @@ function LatestCreationsGrid({ productsPromise }: LatestCreationsProps) {
 	return (
 		<>
 			{/* ItemList JSON-LD for SEO */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(itemListSchema).replace(/</g, "\\u003c"),
-				}}
-			/>
+			<div hidden>
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(itemListSchema).replace(/</g, "\\u003c"),
+					}}
+				/>
+			</div>
 			<Stagger
 				className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8"
 				stagger={MOTION_CONFIG.section.grid.stagger}

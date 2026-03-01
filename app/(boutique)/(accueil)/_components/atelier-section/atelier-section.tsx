@@ -66,13 +66,15 @@ export async function AtelierSection() {
 			data-content-type="about-creator"
 		>
 			{/* HowTo JSON-LD Schema for SEO */}
-			<script
-				id="howto-schema"
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(howToSchema).replace(/</g, "\\u003c"),
-				}}
-			/>
+			<div hidden>
+				<script
+					id="howto-schema"
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(howToSchema).replace(/</g, "\\u003c"),
+					}}
+				/>
+			</div>
 
 			{/* Skip link for accessibility */}
 			<a

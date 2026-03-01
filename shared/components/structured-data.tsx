@@ -101,11 +101,13 @@ export function StructuredData({ reviewStatsPromise, reviewsPromise }: Structure
 	};
 
 	return (
-		<script
-			type="application/ld+json"
-			dangerouslySetInnerHTML={{
-				__html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-			}}
-		/>
+		<div hidden>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+				}}
+			/>
+		</div>
 	);
 }

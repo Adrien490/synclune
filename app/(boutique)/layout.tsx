@@ -5,7 +5,7 @@ import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton
 import { getCart } from "@/modules/cart/data/get-cart";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { ScrollToTop } from "@/shared/components/scroll-to-top";
-import { StructuredDataAsync } from "@/shared/components/structured-data-async";
+
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 
@@ -42,13 +42,6 @@ export default async function ShopLayout({ children }: ShopLayoutProps) {
 			>
 				<Suspense fallback={<CartSheetSkeleton />}>
 					<CartAndSkuLoader />
-				</Suspense>
-			</ErrorBoundary>
-
-			{/* JSON-LD structured data - SEO only, not needed on admin */}
-			<ErrorBoundary fallback={null}>
-				<Suspense fallback={null}>
-					<StructuredDataAsync />
 				</Suspense>
 			</ErrorBoundary>
 		</>

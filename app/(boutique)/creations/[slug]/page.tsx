@@ -160,12 +160,14 @@ export default async function ProductPage({
 			<RecordProductView slug={product.slug} />
 
 			{/* Structured Data JSON-LD pour SEO */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
-				}}
-			/>
+			<div hidden>
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+					}}
+				/>
+			</div>
 
 			{/* Particules précieuses pour pages produits */}
 			<ParticleBackground count={8} size={[12, 80]} className="fixed inset-0 z-0" />
