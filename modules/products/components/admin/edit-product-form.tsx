@@ -103,7 +103,7 @@ export function EditProductForm({
 
 				<form.Subscribe selector={(state) => [state.values.defaultSku.media]}>
 					{([media]) => {
-						const currentUrls: string[] = media.map((m) => m.url);
+						const currentUrls: string[] = (media ?? []).map((m) => m.url);
 
 						const deletedUrls = originalImageUrls.filter((url) => !currentUrls.includes(url));
 
