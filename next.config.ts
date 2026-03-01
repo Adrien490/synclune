@@ -47,7 +47,7 @@ const nextConfig: NextConfig = {
 							"frame-ancestors 'none'",
 							"base-uri 'self'",
 							"form-action 'self'",
-							"report-uri /api/csp-report",
+							...(process.env.NODE_ENV === "production" ? ["report-uri /api/csp-report"] : []),
 						].join("; "),
 					},
 				],
