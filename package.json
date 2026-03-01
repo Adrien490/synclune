@@ -127,8 +127,6 @@
 	"devDependencies": {
 		"@axe-core/playwright": "^4.11.1",
 		"@better-auth/cli": "^1.4.19",
-		"@commitlint/cli": "^20.4.2",
-		"@commitlint/config-conventional": "^20.4.2",
 		"@faker-js/faker": "^10.3.0",
 		"@playwright/test": "^1.58.2",
 		"@prisma/adapter-neon": "^7.4.1",
