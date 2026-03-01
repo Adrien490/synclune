@@ -1,13 +1,16 @@
-import { Fade, HandDrawnUnderline, Stagger } from "@/shared/components/animations";
+import { CreativeProcessTimeline } from "@/app/(boutique)/(accueil)/_components/atelier-section/creative-process-timeline";
+import { Fade, HandDrawnUnderline, Reveal, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionTitle } from "@/shared/components/section-title";
 import { SparklesDivider } from "@/shared/components/section-divider";
 import { Button } from "@/shared/components/ui/button";
+import { IMAGES } from "@/shared/constants/images";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { ROUTES } from "@/shared/constants/urls";
 import { petitFormalScript } from "@/shared/styles/fonts";
 import { cacheLife, cacheTag } from "next/cache";
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Gem, Heart, Paintbrush, Sparkles } from "lucide-react";
@@ -68,7 +71,14 @@ export default async function AboutPage() {
 
 	return (
 		<div className="relative min-h-screen">
-			{/* Header standard avec breadcrumbs */}
+			{/* Skip link to CTA */}
+			<a
+				href="#about-cta"
+				className="bg-background focus:ring-ring sr-only fixed top-4 left-4 z-50 rounded-md px-4 py-2 text-sm font-medium shadow-lg focus:not-sr-only focus:ring-2 focus:outline-none"
+			>
+				Aller au contenu principal
+			</a>
+
 			<PageHeader
 				title="À propos"
 				description="L'histoire de Synclune et de son atelier nantais"
@@ -85,50 +95,79 @@ export default async function AboutPage() {
 						</header>
 					</Fade>
 
-					<Fade
-						y={MOTION_CONFIG.section.subtitle.y}
-						delay={MOTION_CONFIG.section.subtitle.delay}
-						duration={MOTION_CONFIG.section.subtitle.duration}
-						inView
-						once
-					>
-						<div className="mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
-							<p className="text-foreground text-2xl font-light tracking-tight sm:text-3xl md:text-4xl">
-								Je vais vous faire une confidence.
-							</p>
+					{/* Desktop: two-column layout / Mobile: stacked */}
+					<div className="mx-auto max-w-4xl items-center gap-12 lg:flex lg:gap-16">
+						{/* Image — mobile: centered above text */}
+						<Reveal
+							y={MOTION_CONFIG.section.content.y}
+							duration={MOTION_CONFIG.section.content.duration}
+							className="mb-8 flex justify-center lg:mb-0 lg:shrink-0"
+						>
+							<Image
+								src={IMAGES.ATELIER}
+								alt="Atelier de création de bijoux artisanaux Synclune à Nantes"
+								width={320}
+								height={400}
+								className="rounded-2xl object-cover shadow-md"
+								placeholder="blur"
+								blurDataURL={IMAGES.ATELIER_BLUR}
+								sizes="(max-width: 1024px) 280px, 320px"
+							/>
+						</Reveal>
+
+						{/* Text — differentiated from homepage teaser */}
+						<div className="flex-1">
+							<Fade
+								y={MOTION_CONFIG.section.subtitle.y}
+								delay={MOTION_CONFIG.section.subtitle.delay}
+								duration={MOTION_CONFIG.section.subtitle.duration}
+								inView
+								once
+							>
+								<p className="text-foreground mb-4 text-center text-2xl font-light tracking-tight sm:text-3xl md:text-4xl lg:text-left">
+									Tout a commencé par un hasard.
+								</p>
+							</Fade>
 
 							<Stagger
 								stagger={MOTION_CONFIG.section.grid.stagger}
 								y={MOTION_CONFIG.section.grid.y}
 								inView
 								once
-								className="text-muted-foreground space-y-4 text-base leading-relaxed sm:space-y-6 sm:text-lg"
+								className="text-muted-foreground space-y-4 text-center text-base leading-relaxed sm:space-y-6 sm:text-lg lg:text-left"
 							>
-								<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
 								<p>
-									Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans
-									mon petit atelier à Nantes ! C'était pas prévu à la base.
+									Un après-midi pluvieux à Nantes, un morceau de plastique fou oublié dans un
+									tiroir, et l'envie de créer quelque chose de mes mains. Rien de plus. Ce jour-là,
+									j'ai peint mon premier bijou — pour le plaisir, sans penser à demain.
 								</p>
 								<p>
-									Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs,
-									assemblé chaque perle. Il n'existe qu'en quelques exemplaires — parfois moins de
-									dix.
+									Depuis, mon atelier est devenu mon refuge. C'est ici que je passe mes matinées à
+									mélanger des couleurs, à tester des formes, à chercher la nuance exacte qui fera
+									vivre une pièce. Chaque bijou porte un peu de cette patience, de ces essais, de
+									cette obsession du détail.
 								</p>
 								<p>
-									Ce que j'aime par-dessus tout, c'est que vous portiez quelque chose qui vous
-									ressemble vraiment. Pas un bijou de masse, sorti d'une usine et identique à des
-									milliers d'autres. Quelque chose de vivant, de fait avec les mains, avec du soin.
+									Ce qui me touche le plus, c'est de savoir que quelqu'un choisit de porter mes
+									créations au quotidien. Qu'un bracelet peint dans mon atelier accompagne quelqu'un
+									dans sa journée — c'est ce qui donne tout son sens à mon travail.
 								</p>
 							</Stagger>
 
-							<p
-								className={`${petitFormalScript.className} text-foreground text-shadow-glow pt-4 text-center text-base italic md:text-lg`}
-							>
-								— Léane
-							</p>
-							<HandDrawnUnderline color="var(--secondary)" delay={0.2} className="mx-auto mt-2" />
+							<div className="mt-4 text-center lg:text-left">
+								<p
+									className={`${petitFormalScript.className} text-foreground text-shadow-glow pt-4 text-base italic md:text-lg`}
+								>
+									— Léane
+								</p>
+								<HandDrawnUnderline
+									color="var(--secondary)"
+									delay={0.2}
+									className="mx-auto mt-2 lg:mx-0"
+								/>
+							</div>
 						</div>
-					</Fade>
+					</div>
 				</div>
 			</section>
 
@@ -147,53 +186,7 @@ export default async function AboutPage() {
 						</header>
 					</Fade>
 
-					<Fade
-						y={MOTION_CONFIG.section.content.y}
-						delay={MOTION_CONFIG.section.content.delay}
-						duration={MOTION_CONFIG.section.content.duration}
-						inView
-						once
-					>
-						<div className="mx-auto max-w-3xl space-y-8 sm:space-y-10">
-							<div className="space-y-3">
-								<h3 className="text-foreground text-xl font-medium">1. D'abord, une idée</h3>
-								<p className="text-muted-foreground leading-relaxed">
-									L'idée naît souvent de mon quotidien : une couleur aperçue dans la rue, un motif
-									sur un tissu, ou même un rêve ! J'essaye de ne pas me forcer, mais plutôt de
-									laisser l'inspiration venir d'elle-même.
-								</p>
-							</div>
-
-							<div className="space-y-3">
-								<h3 className="text-foreground text-xl font-medium">2. Le dessin et la peinture</h3>
-								<p className="text-muted-foreground leading-relaxed">
-									Je dessine mes motifs sur du plastique fou, puis je passe à la peinture acrylique.
-									C'est l'étape la plus minutieuse : chaque trait compte, chaque couleur est choisie
-									avec soin. Certains bijoux me demandent plusieurs heures de peinture.
-								</p>
-							</div>
-
-							<div className="space-y-3">
-								<h3 className="text-foreground text-xl font-medium">
-									3. La cuisson et l'assemblage
-								</h3>
-								<p className="text-muted-foreground leading-relaxed">
-									Cuisson au four — le plastique rétrécit de sept fois ! Vernissage pour protéger
-									les couleurs, puis montage sur les supports. Parfois le résultat surprend, mais ça
-									fait partie du charme artisanal.
-								</p>
-							</div>
-
-							<div className="space-y-3">
-								<h3 className="text-foreground text-xl font-medium">4. La touche finale</h3>
-								<p className="text-muted-foreground leading-relaxed">
-									Je polis, je vérifie chaque détail, j'assemble les perles… Bon, je suis un peu
-									perfectionniste ! Puis emballage avec amour dans sa jolie pochette, prête à partir
-									chez vous.
-								</p>
-							</div>
-						</div>
-					</Fade>
+					<CreativeProcessTimeline />
 				</div>
 			</section>
 
@@ -224,14 +217,20 @@ export default async function AboutPage() {
 							return (
 								<div
 									key={value.title}
-									className="border-border bg-card flex gap-4 rounded-2xl border p-6 shadow-sm"
+									className="border-border bg-card group can-hover:hover:border-secondary/30 can-hover:hover:shadow-md relative flex gap-4 overflow-hidden rounded-2xl border p-6 shadow-sm motion-safe:transition-[shadow,border-color] motion-safe:duration-300"
 								>
-									<div className="mt-0.5 shrink-0">
-										<div className="bg-secondary/10 flex size-10 items-center justify-center rounded-xl">
+									{/* Subtle hover background overlay */}
+									<div
+										className="bg-secondary/5 can-hover:group-hover:opacity-100 pointer-events-none absolute inset-0 opacity-0 motion-safe:transition-opacity motion-safe:duration-300"
+										aria-hidden="true"
+									/>
+
+									<div className="relative mt-0.5 shrink-0">
+										<div className="bg-secondary/10 can-hover:group-hover:bg-secondary/20 flex size-10 items-center justify-center rounded-xl motion-safe:transition-[background-color] motion-safe:duration-300">
 											<Icon className="text-secondary size-5" aria-hidden="true" />
 										</div>
 									</div>
-									<div className="space-y-2">
+									<div className="relative space-y-2">
 										<h3 className="text-foreground font-medium">{value.title}</h3>
 										<p className="text-muted-foreground text-sm leading-relaxed">
 											{value.description}
@@ -244,8 +243,11 @@ export default async function AboutPage() {
 				</div>
 			</section>
 
+			<SparklesDivider className="hidden py-0 sm:flex" />
+
 			{/* ── Section 4 : CTA Personnalisation ── */}
 			<section
+				id="about-cta"
 				className={`bg-muted/20 mask-t-from-90% mask-t-to-100% ${SECTION_SPACING.compact}`}
 				aria-labelledby="cta-title"
 			>
@@ -268,7 +270,6 @@ export default async function AboutPage() {
 						<Button
 							asChild
 							size="lg"
-							variant="outline"
 							className="shadow-md hover:shadow-xl active:scale-[0.98] motion-safe:transition-[transform,box-shadow] motion-safe:duration-300 motion-safe:hover:scale-[1.02]"
 						>
 							<Link href={ROUTES.SHOP.CUSTOMIZATION}>Créer votre bijou sur-mesure</Link>

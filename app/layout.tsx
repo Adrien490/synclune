@@ -41,16 +41,6 @@ export default async function RootLayout({
 			<body
 				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}
 			>
-				<noscript>
-					<div
-						style={{ padding: "2rem", textAlign: "center", fontFamily: "system-ui, sans-serif" }}
-					>
-						<p>
-							<strong>JavaScript est requis</strong> pour utiliser Synclune. Veuillez activer
-							JavaScript dans les paramètres de votre navigateur.
-						</p>
-					</div>
-				</noscript>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />
 					<IconSprite />
