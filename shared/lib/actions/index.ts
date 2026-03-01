@@ -20,7 +20,7 @@
 // Import directly: import { requireAuth, requireAdmin, requireAdminWithUser } from "@/modules/auth/lib/require-auth"
 
 // Validation helpers
-export { validateInput, validateFormData } from "./validation";
+export { validateInput, validateFormData, safeFormGet, safeFormGetJSON } from "./validation";
 
 // Rate limiting helpers
 // NOTE: enforceRateLimit est la seule fonction native de shared/

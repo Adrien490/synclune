@@ -92,7 +92,7 @@ export function OrderProgressStepper({ status, paymentStatus }: OrderProgressSte
 										)}
 									>
 										<Icon className="h-5 w-5" aria-hidden="true" />
-										{isCurrent && !isCancelled && (
+										{isCurrent && (
 											<span
 												className="bg-primary/30 absolute inset-0 rounded-full motion-safe:animate-ping"
 												aria-hidden="true"

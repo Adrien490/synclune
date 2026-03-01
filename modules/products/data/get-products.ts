@@ -68,7 +68,7 @@ export async function getProducts(
 		const admin = options?.isAdmin ?? (await isAdmin());
 
 		// Admin: use admin default sort if no explicit sort provided
-		if (admin && !hasSortByInput(validatedParams?.sortBy)) {
+		if (admin && !hasSortByInput(validatedParams.sortBy)) {
 			validatedParams = { ...validatedParams, sortBy: GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY };
 		}
 

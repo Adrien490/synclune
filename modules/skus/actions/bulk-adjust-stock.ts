@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { BusinessError, handleActionError } from "@/shared/lib/actions";
+import { BusinessError, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { bulkAdjustStockSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
@@ -27,9 +27,9 @@ export async function bulkAdjustStock(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
-			ids: formData.get("ids") as string,
-			mode: formData.get("mode") as string,
-			value: formData.get("value") as string,
+			ids: safeFormGet(formData, "ids"),
+			mode: safeFormGet(formData, "mode"),
+			value: safeFormGet(formData, "value"),
 		};
 
 		const { ids, mode, value } = bulkAdjustStockSchema.parse(rawData);
@@ -62,12 +62,6 @@ export async function bulkAdjustStock(
 				message: "Le stock ne peut pas etre negatif",
 			};
 		}
-
-		// Snapshot SKUs with zero stock before update (for back-in-stock notifications)
-		const zeroStockSkus = await prisma.productSku.findMany({
-			where: { id: { in: ids }, inventory: { lte: 0 } },
-			select: { id: true, productId: true },
-		});
 
 		// Appliquer les modifications avec atomic conditional update
 		if (mode === "absolute") {
@@ -137,18 +131,10 @@ export async function bulkAdjustStock(
 		const uniqueTags = collectBulkInvalidationTags(skusData);
 		invalidateTags(uniqueTags);
 
-		// Notify wishlist users for products that went from 0 to positive stock
-		if (zeroStockSkus.length > 0 && (mode === "absolute" ? value > 0 : value > 0)) {
-			const productIds = [...new Set(zeroStockSkus.map((s) => s.productId))];
-			import("@/modules/wishlist/services/notify-back-in-stock")
-				.then(({ notifyBackInStock }) => Promise.all(productIds.map((id) => notifyBackInStock(id))))
-				.catch((err) => console.error("[BULK-STOCK] Back-in-stock notification failed:", err));
-		}
-
 		// Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.bulkAdjustStock",
 			targetType: "sku",
 			targetId: ids.join(","),

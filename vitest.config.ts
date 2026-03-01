@@ -9,6 +9,7 @@ export default defineConfig({
 		},
 	},
 	test: {
+		pool: "threads",
 		include: ["**/*.test.{ts,tsx}"],
 		exclude: ["node_modules", ".next"],
 		environment: "jsdom",
@@ -53,10 +54,12 @@ export default defineConfig({
 				"modules/webhooks/": {
 					statements: 90,
 					branches: 80,
+					functions: 85,
 				},
 				"modules/cron/services/": {
 					statements: 90,
 					branches: 80,
+					functions: 85,
 				},
 				"modules/orders/services/": {
 					statements: 85,
@@ -65,6 +68,7 @@ export default defineConfig({
 				"modules/discounts/services/": {
 					statements: 90,
 					branches: 80,
+					functions: 85,
 				},
 				"modules/refunds/services/": {
 					statements: 85,

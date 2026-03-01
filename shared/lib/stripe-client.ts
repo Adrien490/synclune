@@ -7,8 +7,6 @@ let stripePromise: ReturnType<typeof loadStripe> | null = null;
  * Évite de charger le script plusieurs fois
  */
 export function getStripe() {
-	if (!stripePromise) {
-		stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-	}
+	stripePromise ??= loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 	return stripePromise;
 }

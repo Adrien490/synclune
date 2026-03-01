@@ -20,6 +20,7 @@ import {
 	success,
 	error,
 	enforceRateLimit,
+	safeFormGet,
 } from "@/shared/lib/actions";
 
 /**
@@ -35,7 +36,7 @@ export async function removeFromWishlist(
 	try {
 		// 1. Recuperer l'authentification (user ou session invite)
 		const session = await getSession();
-		const userId = session?.user?.id;
+		const userId = session?.user.id;
 		const sessionId = !userId ? await getWishlistSessionId() : null;
 
 		if (!userId && !sessionId) {
@@ -44,7 +45,7 @@ export async function removeFromWishlist(
 
 		// 2. Validation avec Zod
 		const validated = validateInput(removeFromWishlistSchema, {
-			productId: formData.get("productId") as string,
+			productId: safeFormGet(formData, "productId"),
 		});
 		if ("error" in validated) return validated.error;
 
@@ -88,7 +89,7 @@ export async function removeFromWishlist(
 		});
 
 		// 6. Invalidation cache immediate (read-your-own-writes)
-		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
+		const tags = getWishlistInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(

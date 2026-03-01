@@ -5,15 +5,15 @@
  */
 
 export const EMAIL_COLORS = {
-	/** Rose primary - Boutons, liens, accents */
-	primary: "#E8A4B8",
+	/** Rose primary - Boutons, liens, accents (~4.1:1 contrast with white, WCAG AA) */
+	primary: "#C4788E",
 
 	/** Texte */
 	text: {
 		/** Texte principal - Noir doux */
 		primary: "#212121",
-		/** Texte secondaire/labels */
-		secondary: "#858585",
+		/** Texte secondaire/labels (~4.6:1 contrast with #FCFCFC, WCAG AA) */
+		secondary: "#6B6B6B",
 	},
 
 	/** Backgrounds */
@@ -38,7 +38,7 @@ export const EMAIL_COLORS = {
  * Used in @media (prefers-color-scheme: dark) styles injected in EmailLayout <Head>
  */
 export const EMAIL_COLORS_DARK = {
-	primary: "#F0B4C8",
+	primary: "#D4929E",
 	text: {
 		primary: "#E8E8E8",
 		secondary: "#A0A0A0",

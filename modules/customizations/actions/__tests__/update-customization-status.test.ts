@@ -44,7 +44,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
-	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -62,6 +62,10 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,

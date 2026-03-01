@@ -31,7 +31,13 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
 }));
-vi.mock("@/shared/lib/actions", () => ({ validateInput: mockValidateInput }));
+vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	validateInput: mockValidateInput,
+}));
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
 	cacheLife: vi.fn(),

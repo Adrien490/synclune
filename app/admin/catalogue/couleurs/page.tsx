@@ -23,7 +23,7 @@ const DeleteColorAlertDialog = dynamic(() =>
 	),
 );
 import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Couleurs - Administration",
@@ -38,9 +38,9 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) || "name-ascending") as
+	const sortBy = (getFirstParam(params.sortBy) ?? "name-ascending") as
 		| "name-ascending"
 		| "name-descending"
 		| "skuCount-ascending"

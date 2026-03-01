@@ -41,9 +41,10 @@ export async function removeRecentSearch(
 		let searches: string[] = [];
 		if (existingCookie?.value) {
 			try {
-				const parsed = JSON.parse(decodeURIComponent(existingCookie.value));
+				const parsed: unknown = JSON.parse(decodeURIComponent(existingCookie.value));
 				if (Array.isArray(parsed)) {
-					searches = parsed;
+					const items = parsed as unknown as unknown[];
+					searches = items.filter((s): s is string => typeof s === "string");
 				}
 			} catch {
 				// Ignore les erreurs

@@ -32,7 +32,7 @@ export async function getUserSessions(): Promise<GetUserSessionsReturn> {
 		headers: headersList,
 	});
 
-	return fetchUserSessions(user.id, currentSession?.session?.id);
+	return fetchUserSessions(user.id, currentSession?.session.id);
 }
 
 /**

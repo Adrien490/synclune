@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockSendReviewRequestEmailInternal } = vi.hoisted(() => ({
-	mockPrisma: {
-		order: { findMany: vi.fn() },
-	},
-	mockSendReviewRequestEmailInternal: vi.fn(),
-}));
+const { mockPrisma, mockSendReviewRequestEmailInternal, mockSendReviewReminderEmail } = vi.hoisted(
+	() => ({
+		mockPrisma: {
+			order: { findMany: vi.fn(), update: vi.fn() },
+		},
+		mockSendReviewRequestEmailInternal: vi.fn(),
+		mockSendReviewReminderEmail: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -16,27 +19,51 @@ vi.mock("@/modules/reviews/services/send-review-request-email.service", () => ({
 	sendReviewRequestEmailInternal: mockSendReviewRequestEmailInternal,
 }));
 
+vi.mock("@/modules/emails/services/review-emails", () => ({
+	sendReviewReminderEmail: mockSendReviewReminderEmail,
+}));
+
+vi.mock("@/shared/constants/urls", () => ({
+	buildUrl: vi.fn().mockReturnValue("https://example.com/unsubscribe"),
+	ROUTES: { NOTIFICATIONS: { UNSUBSCRIBE: "/notifications/unsubscribe" } },
+}));
+
+vi.mock("@/shared/constants/seo-config", () => ({
+	SITE_URL: "https://example.com",
+}));
+
 import { sendDelayedReviewRequestEmails } from "../review-request-emails.service";
 import { ActionStatus } from "@/shared/types/server-action";
+
+// The service now returns { found, sent, errors, hasMore, remindersFound, remindersSent, reminderErrors }
+// Use objectContaining to only assert on the fields relevant to each test.
 
 describe("sendDelayedReviewRequestEmails", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(new Date("2026-02-09T10:00:00Z"));
+
+		// Default: both findMany calls return empty arrays (no orders to process)
+		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockSendReviewReminderEmail.mockResolvedValue({ success: true });
 	});
 
 	it("should return zero counts when no orders need review requests", async () => {
-		mockPrisma.order.findMany.mockResolvedValue([]);
-
 		const result = await sendDelayedReviewRequestEmails();
 
-		expect(result).toEqual({ found: 0, sent: 0, errors: 0, hasMore: false });
+		expect(result).toEqual({
+			found: 0,
+			sent: 0,
+			errors: 0,
+			hasMore: false,
+			remindersFound: 0,
+			remindersSent: 0,
+			reminderErrors: 0,
+		});
 	});
 
 	it("should query delivered orders with correct filters", async () => {
-		mockPrisma.order.findMany.mockResolvedValue([]);
-
 		await sendDelayedReviewRequestEmails();
 
 		const call = mockPrisma.order.findMany.mock.calls[0]![0];
@@ -49,8 +76,6 @@ describe("sendDelayedReviewRequestEmails", () => {
 	});
 
 	it("should use correct time window (2-14 days after delivery)", async () => {
-		mockPrisma.order.findMany.mockResolvedValue([]);
-
 		await sendDelayedReviewRequestEmails();
 
 		const call = mockPrisma.order.findMany.mock.calls[0]![0];
@@ -70,7 +95,8 @@ describe("sendDelayedReviewRequestEmails", () => {
 			{ id: "order-1", orderNumber: "SYN-001", customerEmail: "a@test.com" },
 			{ id: "order-2", orderNumber: "SYN-002", customerEmail: "b@test.com" },
 		];
-		mockPrisma.order.findMany.mockResolvedValue(orders);
+		// First call: initial review request orders; second call: reminder orders (empty)
+		mockPrisma.order.findMany.mockResolvedValueOnce(orders).mockResolvedValueOnce([]);
 		mockSendReviewRequestEmailInternal.mockResolvedValue({
 			status: ActionStatus.SUCCESS,
 			message: "OK",
@@ -81,12 +107,14 @@ describe("sendDelayedReviewRequestEmails", () => {
 		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledTimes(2);
 		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledWith("order-1");
 		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledWith("order-2");
-		expect(result).toEqual({ found: 2, sent: 2, errors: 0, hasMore: false });
+		expect(result).toEqual(
+			expect.objectContaining({ found: 2, sent: 2, errors: 0, hasMore: false }),
+		);
 	});
 
 	it("should count errors when sendReviewRequestEmailInternal returns non-success", async () => {
 		const orders = [{ id: "order-1", orderNumber: "SYN-001", customerEmail: "a@test.com" }];
-		mockPrisma.order.findMany.mockResolvedValue(orders);
+		mockPrisma.order.findMany.mockResolvedValueOnce(orders).mockResolvedValueOnce([]);
 		mockSendReviewRequestEmailInternal.mockResolvedValue({
 			status: ActionStatus.ERROR,
 			message: "Email failed",
@@ -94,17 +122,21 @@ describe("sendDelayedReviewRequestEmails", () => {
 
 		const result = await sendDelayedReviewRequestEmails();
 
-		expect(result).toEqual({ found: 1, sent: 0, errors: 1, hasMore: false });
+		expect(result).toEqual(
+			expect.objectContaining({ found: 1, sent: 0, errors: 1, hasMore: false }),
+		);
 	});
 
 	it("should count errors when sendReviewRequestEmailInternal throws", async () => {
 		const orders = [{ id: "order-1", orderNumber: "SYN-001", customerEmail: "a@test.com" }];
-		mockPrisma.order.findMany.mockResolvedValue(orders);
+		mockPrisma.order.findMany.mockResolvedValueOnce(orders).mockResolvedValueOnce([]);
 		mockSendReviewRequestEmailInternal.mockRejectedValue(new Error("Network error"));
 
 		const result = await sendDelayedReviewRequestEmails();
 
-		expect(result).toEqual({ found: 1, sent: 0, errors: 1, hasMore: false });
+		expect(result).toEqual(
+			expect.objectContaining({ found: 1, sent: 0, errors: 1, hasMore: false }),
+		);
 	});
 
 	it("should handle mixed results and continue on error", async () => {
@@ -113,7 +145,7 @@ describe("sendDelayedReviewRequestEmails", () => {
 			{ id: "order-2", orderNumber: "SYN-002", customerEmail: "b@test.com" },
 			{ id: "order-3", orderNumber: "SYN-003", customerEmail: "c@test.com" },
 		];
-		mockPrisma.order.findMany.mockResolvedValue(orders);
+		mockPrisma.order.findMany.mockResolvedValueOnce(orders).mockResolvedValueOnce([]);
 		mockSendReviewRequestEmailInternal
 			.mockResolvedValueOnce({ status: ActionStatus.SUCCESS, message: "OK" })
 			.mockRejectedValueOnce(new Error("Timeout"))
@@ -121,7 +153,9 @@ describe("sendDelayedReviewRequestEmails", () => {
 
 		const result = await sendDelayedReviewRequestEmails();
 
-		expect(result).toEqual({ found: 3, sent: 2, errors: 1, hasMore: false });
+		expect(result).toEqual(
+			expect.objectContaining({ found: 3, sent: 2, errors: 1, hasMore: false }),
+		);
 		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledTimes(3);
 	});
 });

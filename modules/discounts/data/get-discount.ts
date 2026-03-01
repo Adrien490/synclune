@@ -18,7 +18,7 @@ export type { GetDiscountParams, GetDiscountReturn } from "../types/discount.typ
 export async function getDiscountById(
 	params: Partial<GetDiscountParams>,
 ): Promise<GetDiscountReturn> {
-	const validation = getDiscountSchema.safeParse(params ?? {});
+	const validation = getDiscountSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

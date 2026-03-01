@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 interface TableScrollContainerProps {
 	children: ReactNode;

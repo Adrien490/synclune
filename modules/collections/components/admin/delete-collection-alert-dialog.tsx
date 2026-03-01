@@ -38,7 +38,7 @@ export function DeleteCollectionAlertDialog() {
 		}
 	};
 
-	const productsCount = deleteDialog.data?.productsCount || 0;
+	const productsCount = deleteDialog.data?.productsCount ?? 0;
 
 	return (
 		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
@@ -56,7 +56,7 @@ export function DeleteCollectionAlertDialog() {
 								</p>
 								{productsCount > 0 ? (
 									<>
-										<p className="font-medium text-amber-600 dark:text-amber-500">
+										<p className="font-medium text-amber-600">
 											Cette collection contient {productsCount} produit
 											{productsCount > 1 ? "s" : ""}.
 										</p>

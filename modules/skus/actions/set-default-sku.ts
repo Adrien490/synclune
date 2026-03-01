@@ -7,7 +7,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { BusinessError, validateInput, handleActionError } from "@/shared/lib/actions";
+import { BusinessError, validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -38,7 +38,7 @@ export async function setDefaultSku(
 
 		// 3. Validate SKU ID with Zod (CUID2)
 		const validation = validateInput(deleteProductSkuSchema, {
-			skuId: formData.get("skuId") as string,
+			skuId: safeFormGet(formData, "skuId"),
 		});
 		if ("error" in validation) return validation.error;
 
@@ -95,7 +95,7 @@ export async function setDefaultSku(
 		// 6. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.setDefault",
 			targetType: "sku",
 			targetId: skuId,

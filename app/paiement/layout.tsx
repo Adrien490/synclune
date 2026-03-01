@@ -31,7 +31,7 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 			</header>
 
 			{/* Contenu */}
-			<main id="main-content" className="flex-1">
+			<main id="main-content" tabIndex={-1} className="flex-1">
 				{children}
 			</main>
 		</div>

@@ -85,7 +85,7 @@ export async function bulkSuspendUsers(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "user.bulkSuspend",
 			targetType: "user",
 			targetId: eligibleIds.join(","),

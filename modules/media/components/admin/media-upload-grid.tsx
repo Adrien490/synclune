@@ -143,12 +143,12 @@ export function MediaUploadGrid({
 			return {
 				type: "video" as const,
 				sources: [{ src: m.url, type: getVideoMimeType(m.url) }],
-				poster: m.thumbnailUrl || undefined,
+				poster: m.thumbnailUrl ?? undefined,
 			};
 		}
 		return {
 			src: m.url,
-			alt: m.altText || "Image du produit",
+			alt: m.altText ?? "Image du produit",
 		};
 	});
 

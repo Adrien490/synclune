@@ -23,7 +23,7 @@ export async function getCurrentUser(): Promise<GetCurrentUserReturn> {
 		headers: await headers(),
 	});
 
-	if (!session || !session.user) {
+	if (!session?.user?.id) {
 		return null;
 	}
 

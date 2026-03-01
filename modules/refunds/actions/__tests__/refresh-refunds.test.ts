@@ -26,6 +26,10 @@ vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 vi.mock("@/shared/lib/rate-limit-config", () => ({ REFUND_LIMITS: { REFRESH: "refund-refresh" } }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 }));

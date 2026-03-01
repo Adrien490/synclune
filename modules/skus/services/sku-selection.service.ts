@@ -88,7 +88,7 @@ export function getStockInfoForList<
 	TSku extends BaseSkuForList,
 	TProduct extends { skus?: TSku[] | null },
 >(product: TProduct): ProductStockInfo {
-	const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
+	const activeSkus = product.skus?.filter((sku) => sku.isActive) ?? [];
 	const totalInventory = activeSkus.reduce((sum, sku) => sum + sku.inventory, 0);
 	const availableSkus = activeSkus.filter((sku) => sku.inventory > 0).length;
 

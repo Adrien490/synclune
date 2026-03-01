@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";

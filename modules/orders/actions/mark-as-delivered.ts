@@ -7,7 +7,7 @@ import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-e
 import { scheduleReviewRequestEmail } from "@/modules/webhooks/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -46,20 +46,21 @@ export async function markAsDelivered(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
-		const sendEmail = formData.get("sendEmail") as string | null;
+		const rawId = safeFormGet(formData, "id");
+		const sendEmail = safeFormGet(formData, "sendEmail");
 
 		const result = markAsDeliveredSchema.safeParse({
-			id,
-			sendEmail: sendEmail || "true",
+			id: rawId,
+			sendEmail: sendEmail ?? "true",
 		});
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "ID invalide",
+				message: result.error.issues[0]?.message ?? "ID invalide",
 			};
 		}
 
+		const { id } = result.data;
 		const deliveryDate = new Date();
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
@@ -102,7 +103,7 @@ export async function markAsDelivered(
 				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.DELIVERED,
 				authorId: adminUser.id,
-				authorName: adminUser.name || "Admin",
+				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
 					deliveryDate: deliveryDate.toISOString(),
@@ -180,7 +181,7 @@ export async function markAsDelivered(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.markDelivered",
 			targetType: "order",
 			targetId: order.id,

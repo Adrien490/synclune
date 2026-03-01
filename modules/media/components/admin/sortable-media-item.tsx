@@ -109,7 +109,7 @@ export function SortableMediaItem({
 						{media.thumbnailUrl ? (
 							<Image
 								src={media.thumbnailUrl}
-								alt={media.altText || `Miniature vidéo ${index + 1}`}
+								alt={media.altText ?? `Miniature vidéo ${index + 1}`}
 								fill
 								className={cn(
 									"object-cover",
@@ -151,7 +151,7 @@ export function SortableMediaItem({
 									e.currentTarget.pause();
 									e.currentTarget.currentTime = 0;
 								}}
-								aria-label={media.altText || `Aperçu vidéo ${index + 1}`}
+								aria-label={media.altText ?? `Aperçu vidéo ${index + 1}`}
 							>
 								<track kind="captions" srcLang="fr" label="Français" default />
 								Votre navigateur ne supporte pas la lecture de vidéos.
@@ -180,7 +180,7 @@ export function SortableMediaItem({
 				) : (
 					<Image
 						src={media.url}
-						alt={media.altText || `Image ${index + 1}`}
+						alt={media.altText ?? `Image ${index + 1}`}
 						fill
 						className={cn(
 							"object-cover",
@@ -321,7 +321,7 @@ export function SortableMediaItem({
 							Agrandir
 						</DropdownMenuItem>
 						{/* WCAG 2.5.7: Drag alternatives */}
-						{(canMoveUp || canMoveDown) && <DropdownMenuSeparator />}
+						{(canMoveUp ?? canMoveDown) && <DropdownMenuSeparator />}
 						{canMoveUp && (
 							<DropdownMenuItem onClick={onMoveUp} className="gap-2 py-2.5">
 								<ArrowUp className="h-4 w-4" />

@@ -234,7 +234,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 				<div className="absolute inset-0">
 					<Image
 						src={primaryImage.url}
-						alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+						alt={primaryImage.alt ?? PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 						fill
 						className={cn(
 							"rounded-lg object-cover sm:rounded-xl",
@@ -249,7 +249,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 					{secondaryImage && (
 						<Image
 							src={secondaryImage.url}
-							alt={secondaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+							alt={secondaryImage.alt ?? PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 							fill
 							className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-lg object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500 sm:rounded-xl"
 							loading="lazy"

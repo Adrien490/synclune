@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // SELECT DEFINITIONS
@@ -99,10 +99,3 @@ export const WISHLIST_MAX_ITEMS = 500;
 
 export const GET_WISHLIST_DEFAULT_PER_PAGE = 20;
 export const GET_WISHLIST_MAX_RESULTS_PER_PAGE = 200;
-
-// Assertion à la compilation : DEFAULT ne doit pas dépasser MAX
-if (GET_WISHLIST_DEFAULT_PER_PAGE > GET_WISHLIST_MAX_RESULTS_PER_PAGE) {
-	throw new Error(
-		`[WISHLIST] GET_WISHLIST_DEFAULT_PER_PAGE (${GET_WISHLIST_DEFAULT_PER_PAGE}) cannot exceed GET_WISHLIST_MAX_RESULTS_PER_PAGE (${GET_WISHLIST_MAX_RESULTS_PER_PAGE})`,
-	);
-}

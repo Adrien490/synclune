@@ -20,7 +20,7 @@ interface HomepageReviewCardProps {
  */
 export function HomepageReviewCard({ review, className }: HomepageReviewCardProps) {
 	const productImage = review.product.skus[0]?.images[0] ?? null;
-	const userName = review.user.name || "Anonyme";
+	const userName = review.user.name ?? "Anonyme";
 
 	return (
 		<article
@@ -78,7 +78,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 						{productImage && (
 							<Image
 								src={productImage.url}
-								alt={productImage.altText || review.product.title}
+								alt={productImage.altText ?? review.product.title}
 								width={48}
 								height={48}
 								sizes="(min-width: 640px) 48px, 40px"

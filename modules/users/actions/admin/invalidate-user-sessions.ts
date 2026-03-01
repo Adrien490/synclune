@@ -53,14 +53,14 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "user.invalidateSessions",
 			targetType: "user",
 			targetId: userId,
 			metadata: { sessionCount: result.count },
 		});
 
-		const displayName = user.name || user.email;
+		const displayName = user.name ?? user.email;
 		return success(`${result.count} session(s) de ${displayName} invalidée(s)`, {
 			deletedCount: result.count,
 		});

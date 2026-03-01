@@ -159,22 +159,23 @@ export const updateProductSkuStatusSchema = z.object({
  * Helper pour parser et valider un tableau d'IDs depuis JSON
  * Rejette explicitement les erreurs au lieu de retourner un tableau vide
  */
-const parseJsonIdsArray = z.string().transform((str, ctx) => {
+const parseJsonIdsArray = z.string().transform((str, ctx): string[] | typeof z.NEVER => {
 	try {
-		const parsed = JSON.parse(str);
+		const parsed: unknown = JSON.parse(str);
 		if (!Array.isArray(parsed)) {
 			ctx.addIssue({ code: "custom", message: "Format invalide: tableau attendu" });
 			return z.NEVER;
 		}
 		// Valider que chaque element est un CUID2 valide
+		const items = parsed as unknown as unknown[];
 		const cuid2Regex = /^[a-z0-9]{24,}$/;
-		for (const id of parsed) {
+		for (const id of items) {
 			if (typeof id !== "string" || !cuid2Regex.test(id)) {
 				ctx.addIssue({ code: "custom", message: "ID invalide dans le tableau" });
 				return z.NEVER;
 			}
 		}
-		return parsed as string[];
+		return items as string[];
 	} catch {
 		ctx.addIssue({ code: "custom", message: "JSON invalide" });
 		return z.NEVER;

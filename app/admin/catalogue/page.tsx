@@ -1,6 +1,6 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
 import { Layers, Package, Palette, Tag } from "lucide-react";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Catalogue - Administration",

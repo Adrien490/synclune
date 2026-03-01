@@ -25,7 +25,7 @@ export type {
 export async function getOrderForRefund(
 	params: Partial<GetOrderForRefundParams>,
 ): Promise<OrderForRefund | null> {
-	const validation = getOrderForRefundSchema.safeParse(params ?? {});
+	const validation = getOrderForRefundSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

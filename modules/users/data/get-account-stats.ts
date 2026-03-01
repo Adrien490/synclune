@@ -29,7 +29,7 @@ export type { AccountStats, GetAccountStatsReturn } from "../types/account-stats
 export async function getAccountStats(): Promise<GetAccountStatsReturn> {
 	const session = await getSession();
 
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		return null;
 	}
 

@@ -39,12 +39,12 @@ export async function updateReviewResponse(
 
 		const validation = updateReviewResponseSchema.safeParse(rawData);
 		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
+			const firstError = validation.error.issues[0];
 			const errorPath = firstError?.path.join(".");
 			return validationError(
 				errorPath
 					? `${errorPath}: ${firstError?.message}`
-					: firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA,
+					: (firstError?.message ?? REVIEW_ERROR_MESSAGES.INVALID_DATA),
 			);
 		}
 
@@ -82,7 +82,7 @@ export async function updateReviewResponse(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "review.updateResponse",
 			targetType: "reviewResponse",
 			targetId: id,

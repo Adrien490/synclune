@@ -25,7 +25,6 @@ export function parseAnswerSegments(answer: string, links?: FaqLink[]): AnswerSe
 
 	for (const match of answer.matchAll(LINK_PLACEHOLDER_REGEX)) {
 		const matchIndex = match.index;
-		if (matchIndex === undefined) continue;
 
 		if (matchIndex > lastIndex) {
 			segments.push({ type: "text", value: answer.slice(lastIndex, matchIndex) });

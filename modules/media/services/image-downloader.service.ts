@@ -85,6 +85,39 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
 }
 
 // ============================================================================
+// SSRF PROTECTION
+// ============================================================================
+
+/**
+ * Blocks requests to private/internal IP ranges (RFC 1918, loopback, link-local, etc.)
+ * Prevents SSRF attacks that could target internal services.
+ */
+function isPrivateHostname(hostname: string): boolean {
+	// Loopback
+	if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+		return true;
+	}
+
+	// IPv4 private ranges
+	const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+	if (ipv4Match) {
+		const [, a, b] = ipv4Match.map(Number) as [number, number, number, number, number];
+		// 10.0.0.0/8
+		if (a === 10) return true;
+		// 172.16.0.0/12
+		if (a === 172 && b! >= 16 && b! <= 31) return true;
+		// 192.168.0.0/16
+		if (a === 192 && b === 168) return true;
+		// 169.254.0.0/16 (link-local / cloud metadata)
+		if (a === 169 && b === 254) return true;
+		// 0.0.0.0
+		if (a === 0) return true;
+	}
+
+	return false;
+}
+
+// ============================================================================
 // MAIN SERVICE
 // ============================================================================
 
@@ -93,12 +126,18 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
  *
  * @param url - URL of the image to download
  * @param options - Download options
- * @throws {Error} If download fails or times out
+ * @throws {Error} If download fails, times out, or targets a private IP
  */
 export async function downloadImage(
 	url: string,
 	options: DownloadImageOptions = {},
 ): Promise<Buffer> {
+	// SSRF protection: block private/internal IP ranges
+	const parsedUrl = new URL(url);
+	if (isPrivateHostname(parsedUrl.hostname)) {
+		throw new Error(`SSRF blocked: private/internal hostname "${parsedUrl.hostname}"`);
+	}
+
 	const timeout = options.downloadTimeout ?? IMAGE_DOWNLOADER_CONFIG.DOWNLOAD_TIMEOUT_MS;
 	const maxSize = options.maxImageSize ?? IMAGE_DOWNLOADER_CONFIG.MAX_IMAGE_SIZE;
 	const userAgent = options.userAgent ?? IMAGE_DOWNLOADER_CONFIG.USER_AGENT;
@@ -121,7 +160,7 @@ export async function downloadImage(
 		// Verify Content-Type (security: avoid downloading HTML/JSON)
 		const contentType = response.headers.get("content-type");
 		if (!contentType?.startsWith("image/")) {
-			throw new Error(`Content-Type invalide: ${contentType || "absent"} (image/* attendu)`);
+			throw new Error(`Content-Type invalide: ${contentType ?? "absent"} (image/* attendu)`);
 		}
 
 		// Verify size before full download

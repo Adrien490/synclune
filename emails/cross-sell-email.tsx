@@ -14,11 +14,26 @@ interface CrossSellEmailProps {
 	customerName: string;
 	products: SuggestedProduct[];
 	shopUrl: string;
+	unsubscribeUrl: string;
 }
 
-export const CrossSellEmail = ({ customerName, products, shopUrl }: CrossSellEmailProps) => {
+export const CrossSellEmail = ({
+	customerName,
+	products,
+	shopUrl,
+	unsubscribeUrl,
+}: CrossSellEmailProps) => {
 	return (
-		<EmailLayout preview="Des créations qui pourraient vous plaire">
+		<EmailLayout
+			preview="Des créations qui pourraient vous plaire"
+			footer={
+				<Text style={EMAIL_STYLES.text.tiny}>
+					<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+						Se désinscrire des emails commerciaux
+					</a>
+				</Text>
+			}
+		>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Complétez votre collection</Text>
@@ -111,6 +126,7 @@ CrossSellEmail.PreviewProps = {
 		},
 	],
 	shopUrl: "https://synclune.fr/produits",
+	unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 } as CrossSellEmailProps;
 
 export default CrossSellEmail;

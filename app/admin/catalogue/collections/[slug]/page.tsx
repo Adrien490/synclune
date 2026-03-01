@@ -87,7 +87,7 @@ export default async function CollectionDetailPage({ params }: CollectionDetailP
 			<PageHeader
 				variant="compact"
 				title={collection.name}
-				description={collection.description || undefined}
+				description={collection.description ?? undefined}
 				actions={
 					<div className="flex items-center gap-2">
 						<Button variant="outline" asChild>

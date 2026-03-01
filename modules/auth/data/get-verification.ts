@@ -37,7 +37,7 @@ function maskVerificationValue(value: string | null | undefined) {
 export async function getVerification(
 	params: Partial<GetVerificationParams>,
 ): Promise<GetVerificationReturn | null> {
-	const validation = getVerificationSchema.safeParse(params ?? {});
+	const validation = getVerificationSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

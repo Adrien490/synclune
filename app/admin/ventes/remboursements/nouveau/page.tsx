@@ -1,6 +1,6 @@
 import { getOrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import { notFound, redirect } from "next/navigation";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import { CreateRefundForm } from "@/modules/refunds/components/admin/create-refund-form";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 

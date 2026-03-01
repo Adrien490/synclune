@@ -7,7 +7,13 @@ import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
@@ -31,8 +37,8 @@ export async function updateCustomizationNotes(
 
 	// 2. Validate input
 	const rawData = {
-		requestId: formData.get("requestId") as string,
-		notes: formData.get("notes") as string,
+		requestId: safeFormGet(formData, "requestId"),
+		notes: safeFormGet(formData, "notes"),
 	};
 
 	const validation = validateInput(updateNotesSchema, rawData);
@@ -64,7 +70,7 @@ export async function updateCustomizationNotes(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "customization.updateNotes",
 			targetType: "customization",
 			targetId: requestId,

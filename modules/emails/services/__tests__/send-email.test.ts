@@ -123,7 +123,7 @@ describe("sendEmail", () => {
 
 	it("should log success message on successful send", async () => {
 		mockResendEmailsSend.mockResolvedValue({ data: { id: "msg_abc" }, error: null });
-		const consoleSpy = vi.spyOn(console, "log");
+		const consoleSpy = vi.spyOn(console, "warn");
 
 		await sendEmail({
 			to: "user@example.com",

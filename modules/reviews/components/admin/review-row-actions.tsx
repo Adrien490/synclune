@@ -122,13 +122,13 @@ export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 							{isPublished ? (
 								<>
 									L&apos;avis de{" "}
-									<span className="font-semibold">{review.user.name || "Anonyme"}</span> sur &quot;
+									<span className="font-semibold">{review.user.name ?? "Anonyme"}</span> sur &quot;
 									{review.product.title}&quot; ne sera plus visible sur le site.
 								</>
 							) : (
 								<>
 									L&apos;avis de{" "}
-									<span className="font-semibold">{review.user.name || "Anonyme"}</span> sur &quot;
+									<span className="font-semibold">{review.user.name ?? "Anonyme"}</span> sur &quot;
 									{review.product.title}&quot; sera visible sur le site.
 								</>
 							)}

@@ -8,7 +8,14 @@ import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
-import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	notFound,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -32,9 +39,9 @@ export async function updateDiscount(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
-			id: formData.get("id") as string,
-			code: formData.get("code") as string,
-			type: formData.get("type") as string,
+			id: safeFormGet(formData, "id"),
+			code: safeFormGet(formData, "code"),
+			type: safeFormGet(formData, "type"),
 			value: Number(formData.get("value")),
 			minOrderAmount: formData.get("minOrderAmount")
 				? Number(formData.get("minOrderAmount"))
@@ -43,8 +50,10 @@ export async function updateDiscount(
 			maxUsagePerUser: formData.get("maxUsagePerUser")
 				? Number(formData.get("maxUsagePerUser"))
 				: null,
-			startsAt: formData.get("startsAt") ? new Date(formData.get("startsAt") as string) : null,
-			endsAt: formData.get("endsAt") ? new Date(formData.get("endsAt") as string) : null,
+			startsAt: safeFormGet(formData, "startsAt")
+				? new Date(safeFormGet(formData, "startsAt")!)
+				: null,
+			endsAt: safeFormGet(formData, "endsAt") ? new Date(safeFormGet(formData, "endsAt")!) : null,
 		};
 
 		const validated = validateInput(updateDiscountSchema, rawData);
@@ -101,7 +110,7 @@ export async function updateDiscount(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "discount.update",
 			targetType: "discount",
 			targetId: id,

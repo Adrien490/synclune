@@ -6,7 +6,13 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -39,11 +45,13 @@ export async function rejectRefund(
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
+		const rawId = safeFormGet(formData, "id");
 		const reason = formData.get("reason") as string | null;
 
-		const validated = validateInput(rejectRefundSchema, { id, reason });
+		const validated = validateInput(rejectRefundSchema, { id: rawId, reason });
 		if ("error" in validated) return validated.error;
+
+		const { id } = validated.data;
 
 		// Récupérer le remboursement
 		const refund = await prisma.refund.findUnique({
@@ -118,9 +126,9 @@ export async function rejectRefund(
 				await sendRefundRejectedEmail({
 					to: refund.order.user.email,
 					orderNumber: refund.order.orderNumber,
-					customerName: refund.order.user.name || "Client",
+					customerName: refund.order.user.name ?? "Client",
 					refundAmount: refund.amount,
-					reason: sanitizedReason || undefined,
+					reason: sanitizedReason ?? undefined,
 					orderDetailsUrl,
 				});
 			} catch (emailError) {
@@ -130,7 +138,7 @@ export async function rejectRefund(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "refund.reject",
 			targetType: "refund",
 			targetId: refund.id,

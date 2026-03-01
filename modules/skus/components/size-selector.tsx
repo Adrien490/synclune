@@ -63,8 +63,8 @@ export function SizeSelector({
 	// Calculer la disponibilité d'une taille
 	const isSizeAvailable = (size: string): boolean => {
 		const compatibleSkus = filterCompatibleSkus(product, {
-			colorSlug: currentColor || undefined,
-			materialSlug: currentMaterial || undefined,
+			colorSlug: currentColor ?? undefined,
+			materialSlug: currentMaterial ?? undefined,
 			size: size,
 		});
 		return compatibleSkus.length > 0;

@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import { CreateCollectionForm } from "@/modules/collections/components/admin/create-collection-form";
 
 export const metadata: Metadata = {

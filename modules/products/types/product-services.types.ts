@@ -1,4 +1,4 @@
-import { Prisma, MediaType } from "@/app/generated/prisma/client";
+import { type Prisma, type MediaType } from "@/app/generated/prisma/client";
 import type {
 	StockStatus as SharedStockStatus,
 	ProductStockInfo as SharedProductStockInfo,

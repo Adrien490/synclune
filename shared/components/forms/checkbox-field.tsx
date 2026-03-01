@@ -2,7 +2,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 interface CheckboxFieldProps extends React.ComponentProps<typeof Checkbox> {
 	label?: ReactNode;
@@ -27,7 +27,7 @@ export const CheckboxField = ({
 				<Checkbox
 					disabled={disabled}
 					id={field.name}
-					checked={checked ?? field.state.value ?? false}
+					checked={checked ?? field.state.value}
 					onCheckedChange={(checked) => {
 						field.handleChange(Boolean(checked));
 						onCheckedChange?.(Boolean(checked));

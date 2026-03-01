@@ -8,6 +8,7 @@ import { GET_PRODUCTS_DEFAULT_PER_PAGE } from "@/modules/products/constants/prod
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
 
+import { SITE_URL } from "@/shared/constants/seo-config";
 import { parseFilters } from "./params";
 import type { ProductSearchParams } from "./types";
 
@@ -50,11 +51,11 @@ export async function getCatalogData() {
  */
 export function parsePaginationParams(searchParamsData: ProductSearchParams) {
 	const cursor = getFirstParam(searchParamsData.cursor);
-	const direction = (getFirstParam(searchParamsData.direction) || "forward") as
+	const direction = (getFirstParam(searchParamsData.direction) ?? "forward") as
 		| "forward"
 		| "backward";
 	const perPage = Number(getFirstParam(searchParamsData.perPage)) || GET_PRODUCTS_DEFAULT_PER_PAGE;
-	const sortBy = getFirstParam(searchParamsData.sortBy) || "created-descending";
+	const sortBy = getFirstParam(searchParamsData.sortBy) ?? "created-descending";
 	const searchTerm =
 		typeof searchParamsData.search === "string" ? searchParamsData.search : undefined;
 
@@ -180,7 +181,7 @@ export function buildCatalogJsonLd({ name, description, url, breadcrumbs }: Json
 		publisher: {
 			"@type": "Organization",
 			name: "Synclune",
-			url: "https://synclune.fr",
+			url: SITE_URL,
 		},
 	};
 }

@@ -1,5 +1,5 @@
 import { CrossSellEmail } from "@/emails/cross-sell-email";
-import { EMAIL_SUBJECTS } from "../constants/email.constants";
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
 import { renderAndSend } from "./send-email";
 import type { EmailResult } from "../types/email.types";
 
@@ -26,9 +26,10 @@ export async function sendCrossSellEmail({
 	shopUrl: string;
 	unsubscribeUrl: string;
 }): Promise<EmailResult> {
-	return renderAndSend(CrossSellEmail({ customerName, products, shopUrl }), {
+	return renderAndSend(CrossSellEmail({ customerName, products, shopUrl, unsubscribeUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.CROSS_SELL,
+		replyTo: EMAIL_CONTACT,
 		headers: {
 			"List-Unsubscribe": `<${unsubscribeUrl}>`,
 			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

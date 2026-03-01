@@ -6,6 +6,22 @@ import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-a
 import type { Session } from "@/modules/auth/lib/auth";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 
+interface CheckoutDraft {
+	timestamp?: number;
+	email?: string;
+	shipping?: {
+		fullName?: string;
+		firstName?: string;
+		lastName?: string;
+		addressLine1?: string;
+		addressLine2?: string;
+		city?: string;
+		postalCode?: string;
+		country?: string;
+		phoneNumber?: string;
+	};
+}
+
 /**
  * Génère les options du formulaire de checkout avec pré-remplissage dynamique
  *
@@ -18,15 +34,16 @@ export function getCheckoutFormOptions(
 	addresses: GetUserAddressesReturn | null,
 ) {
 	// Restaurer les données sauvegardées depuis localStorage (si disponible)
-	let savedDraft = null;
+	let savedDraft: CheckoutDraft | null = null;
 	if (typeof window !== "undefined") {
 		try {
 			const draft = localStorage.getItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
 			if (draft) {
-				savedDraft = JSON.parse(draft);
+				const parsed: unknown = JSON.parse(draft);
+				savedDraft = parsed as CheckoutDraft;
 				// Vérifier que le draft n'est pas trop vieux (1h max)
 				const ONE_HOUR = 60 * 60 * 1000;
-				if (Date.now() - (savedDraft.timestamp || 0) > ONE_HOUR) {
+				if (Date.now() - (savedDraft.timestamp ?? 0) > ONE_HOUR) {
 					localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
 					savedDraft = null;
 				}
@@ -41,7 +58,7 @@ export function getCheckoutFormOptions(
 	// Trouver l'adresse par défaut ou la première adresse
 	const defaultAddress =
 		addresses && addresses.length > 0
-			? addresses.find((addr) => addr.isDefault) || addresses[0]
+			? (addresses.find((addr) => addr.isDefault) ?? addresses[0])
 			: null;
 
 	// Déterminer si l'utilisateur est connecté
@@ -61,7 +78,7 @@ export function getCheckoutFormOptions(
 		}
 		// Priorité 2: Draft sauvegardé (ancien format firstName/lastName)
 		if (savedDraft?.shipping?.firstName || savedDraft?.shipping?.lastName) {
-			return `${savedDraft.shipping.firstName || ""} ${savedDraft.shipping.lastName || ""}`.trim();
+			return `${savedDraft.shipping.firstName ?? ""} ${savedDraft.shipping.lastName ?? ""}`.trim();
 		}
 		// Priorité 3: Adresse par défaut
 		if (defaultAddress?.firstName || defaultAddress?.lastName) {
@@ -73,17 +90,17 @@ export function getCheckoutFormOptions(
 	return {
 		defaultValues: {
 			// Email pré-rempli pour les invités (vide), caché pour les connectés
-			email: savedDraft?.email || (isGuest ? "" : session?.user?.email || ""),
+			email: savedDraft?.email ?? (isGuest ? "" : session.user.email || ""),
 
 			// Adresse de livraison (Baymard: fullName au lieu de firstName/lastName)
 			shipping: {
 				fullName: buildFullName(),
-				addressLine1: savedDraft?.shipping?.addressLine1 || defaultAddress?.address1 || "",
-				addressLine2: savedDraft?.shipping?.addressLine2 || defaultAddress?.address2 || "",
-				city: savedDraft?.shipping?.city || defaultAddress?.city || "",
-				postalCode: savedDraft?.shipping?.postalCode || defaultAddress?.postalCode || "",
-				country: savedDraft?.shipping?.country || defaultAddress?.country || "FR",
-				phoneNumber: savedDraft?.shipping?.phoneNumber || defaultAddress?.phone || "",
+				addressLine1: savedDraft?.shipping?.addressLine1 ?? defaultAddress?.address1 ?? "",
+				addressLine2: savedDraft?.shipping?.addressLine2 ?? defaultAddress?.address2 ?? "",
+				city: savedDraft?.shipping?.city ?? defaultAddress?.city ?? "",
+				postalCode: savedDraft?.shipping?.postalCode ?? defaultAddress?.postalCode ?? "",
+				country: savedDraft?.shipping?.country ?? defaultAddress?.country ?? "FR",
+				phoneNumber: savedDraft?.shipping?.phoneNumber ?? defaultAddress?.phone ?? "",
 			},
 
 			// Consentements

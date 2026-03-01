@@ -3,6 +3,13 @@
 import { ChevronRight, Lightbulb, Search } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
+import {
+	Empty,
+	EmptyContent,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/shared/components/ui/empty";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { matchesWordStart } from "@/modules/products/utils/match-word-start";
 
@@ -48,7 +55,8 @@ export function QuickSearchContent({
 
 	const hasSearchResults = products.length > 0;
 	const hasMatchedNav = matchedCollections.length > 0 || matchedTypes.length > 0;
-	const showEmptyState = !hasSearchResults && !hasMatchedNav && !suggestion;
+	const isRateLimited = results.rateLimited === true;
+	const showEmptyState = !hasSearchResults && !hasMatchedNav && !suggestion && !isRateLimited;
 
 	return (
 		<div className="flex h-full flex-col">
@@ -108,6 +116,13 @@ export function QuickSearchContent({
 						</section>
 					)}
 
+					{/* Rate limited */}
+					{isRateLimited && (
+						<p className="text-muted-foreground py-4 text-center text-sm">
+							Trop de requetes, veuillez patienter quelques instants.
+						</p>
+					)}
+
 					{/* Product results */}
 					{hasSearchResults && (
 						<section aria-label="Produits">
@@ -129,22 +144,23 @@ export function QuickSearchContent({
 
 					{/* Empty state */}
 					{showEmptyState && (
-						<div className="space-y-4 py-8 text-center">
-							<Search
-								className="text-muted-foreground/20 mx-auto mb-2 size-10"
-								aria-hidden="true"
-							/>
-							<p className="text-muted-foreground text-sm">
-								Aucun resultat pour &ldquo;{query}&rdquo;
-							</p>
-							<div className="space-y-3 pt-2">
+						<Empty variant="borderless" size="sm">
+							<EmptyHeader>
+								<EmptyMedia variant="icon">
+									<Search className="size-5" aria-hidden="true" />
+								</EmptyMedia>
+								<EmptyTitle className="text-base">
+									Aucun resultat pour &ldquo;{query}&rdquo;
+								</EmptyTitle>
+							</EmptyHeader>
+							<EmptyContent>
 								<p className="text-muted-foreground/70 flex items-center justify-center gap-1.5 text-xs">
 									<Lightbulb className="size-3.5" aria-hidden="true" />
 									Essayez avec moins de mots ou parcourez nos categories
 								</p>
 								<QuickTagPills productTypes={productTypes} onSelect={onSearch} size="xs" centered />
-							</div>
-						</div>
+							</EmptyContent>
+						</Empty>
 					)}
 				</div>
 			</ScrollFade>

@@ -11,7 +11,7 @@ export function useSortSelect() {
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	const currentValue = searchParams.get("sortBy") || "";
+	const currentValue = searchParams.get("sortBy") ?? "";
 
 	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
 

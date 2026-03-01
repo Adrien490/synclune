@@ -41,24 +41,16 @@ function requireEnv(name: string): string {
 
 export const STRIPE_SHIPPING_RATE_IDS = {
 	/**
-	 * Livraison France Métropolitaine
-	 * Prix : 6,00€ | Délai : 2-3 jours ouvrés
+	 * Livraison France Métropolitaine (hors Corse)
+	 * Prix : 4,99€ | Délai : 2-3 jours ouvrés
 	 * Pays autorisés dans Stripe : FR
 	 */
 	get FRANCE() {
 		return requireEnv("STRIPE_SHIPPING_RATE_FRANCE");
 	},
 	/**
-	 * Livraison Corse
-	 * Prix : 10,00€ | Délai : 4-7 jours ouvrés
-	 * Pays autorisés dans Stripe : FR (filtrage par code postal côté backend)
-	 */
-	get CORSE() {
-		return requireEnv("STRIPE_SHIPPING_RATE_CORSE");
-	},
-	/**
 	 * Livraison Union Européenne
-	 * Prix : 15,00€ | Délai : 4-7 jours ouvrés
+	 * Prix : 9,50€ | Délai : 4-7 jours ouvrés
 	 * Pays autorisés dans Stripe : BE, DE, NL, LU, IT, ES, PT, AT, IE, FI, SE, DK, GR,
 	 *                              BG, HR, CY, CZ, EE, HU, LV, LT, MT, PL, RO, SK, SI, MC
 	 */
@@ -70,20 +62,6 @@ export const STRIPE_SHIPPING_RATE_IDS = {
 // ==============================================================================
 // HELPERS POUR LA CONSTRUCTION DES SHIPPING OPTIONS
 // ==============================================================================
-
-/**
- * Génère les shipping_options pour la session Stripe Checkout
- *
- * @deprecated Utiliser getShippingOptionsForAddress() pour un filtrage précis par code postal
- * @returns Liste de tous les shipping_options
- */
-export function getStripeShippingOptions(): Array<{ shipping_rate: string }> {
-	return [
-		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.FRANCE },
-		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.CORSE },
-		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.EUROPE },
-	];
-}
 
 /**
  * Détermine le shipping_option approprié selon l'adresse de livraison
@@ -102,7 +80,7 @@ export function getShippingOptionsForAddress(
 	if (country === "FR") {
 		const { zone } = getShippingZoneFromPostalCode(postalCode);
 		if (zone === "CORSE") {
-			return [{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.CORSE }];
+			throw new Error("La livraison en Corse n'est pas disponible");
 		}
 		return [{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.FRANCE }];
 	}
@@ -122,10 +100,9 @@ export function getShippingOptionsForAddress(
 export function getShippingRateName(shippingRateId: string): string {
 	const names: Record<string, string> = {
 		[STRIPE_SHIPPING_RATE_IDS.FRANCE]: "Livraison France",
-		[STRIPE_SHIPPING_RATE_IDS.CORSE]: "Livraison Corse",
 		[STRIPE_SHIPPING_RATE_IDS.EUROPE]: "Livraison Europe",
 	};
-	return names[shippingRateId] || "Livraison standard";
+	return names[shippingRateId] ?? "Livraison standard";
 }
 
 /**
@@ -145,5 +122,5 @@ export function getShippingMethodFromRate(_shippingRateId: string): string {
  * @returns Le transporteur (lowercase string matching Carrier type)
  */
 export function getShippingCarrierFromRate(_shippingRateId: string): string {
-	return "autre";
+	return "colissimo";
 }

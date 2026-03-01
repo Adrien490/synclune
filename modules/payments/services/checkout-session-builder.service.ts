@@ -39,8 +39,8 @@ export async function createStripeCheckoutSession(
 					discounts: [{ coupon: params.stripeCouponId }],
 				}),
 
-				customer: params.stripeCustomerId || undefined,
-				customer_email: !params.stripeCustomerId ? params.finalEmail || undefined : undefined,
+				customer: params.stripeCustomerId ?? undefined,
+				customer_email: !params.stripeCustomerId ? (params.finalEmail ?? undefined) : undefined,
 
 				shipping_options: getShippingOptionsForAddress(
 					params.shippingCountry,
@@ -55,7 +55,7 @@ export async function createStripeCheckoutSession(
 				metadata: {
 					orderId: params.orderId,
 					orderNumber: params.orderNumber,
-					userId: params.userId || "guest",
+					userId: params.userId ?? "guest",
 					...(params.sessionId && { guestSessionId: params.sessionId }),
 				},
 

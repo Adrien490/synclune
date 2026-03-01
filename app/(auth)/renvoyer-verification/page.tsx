@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
 	title: "Renvoyer l'email de vérification | Synclune",
 	description: "Renvoyez l'email de vérification pour activer votre compte Synclune.",
-	robots: "noindex, nofollow",
+	robots: { index: false, follow: false },
 	openGraph: {
 		title: "Renvoyer l'email de vérification | Synclune",
 		description: "Renvoyez l'email de vérification",

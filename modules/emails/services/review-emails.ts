@@ -28,16 +28,19 @@ export async function sendReviewRequestEmail({
 	reviewUrl: string;
 	unsubscribeUrl: string;
 }): Promise<EmailResult> {
-	return renderAndSend(ReviewRequestEmail({ customerName, orderNumber, products, reviewUrl }), {
-		to,
-		subject: EMAIL_SUBJECTS.REVIEW_REQUEST,
-		replyTo: EMAIL_CONTACT,
-		headers: {
-			"List-Unsubscribe": `<${unsubscribeUrl}>`,
-			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+	return renderAndSend(
+		ReviewRequestEmail({ customerName, orderNumber, products, reviewUrl, unsubscribeUrl }),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.REVIEW_REQUEST,
+			replyTo: EMAIL_CONTACT,
+			headers: {
+				"List-Unsubscribe": `<${unsubscribeUrl}>`,
+				"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+			},
+			tags: [{ name: "category", value: "order" }],
 		},
-		tags: [{ name: "category", value: "order" }],
-	});
+	);
 }
 
 /**
@@ -56,16 +59,19 @@ export async function sendReviewReminderEmail({
 	reviewUrl: string;
 	unsubscribeUrl: string;
 }): Promise<EmailResult> {
-	return renderAndSend(ReviewReminderEmail({ customerName, orderNumber, reviewUrl }), {
-		to,
-		subject: EMAIL_SUBJECTS.REVIEW_REMINDER,
-		replyTo: EMAIL_CONTACT,
-		headers: {
-			"List-Unsubscribe": `<${unsubscribeUrl}>`,
-			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+	return renderAndSend(
+		ReviewReminderEmail({ customerName, orderNumber, reviewUrl, unsubscribeUrl }),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.REVIEW_REMINDER,
+			replyTo: EMAIL_CONTACT,
+			headers: {
+				"List-Unsubscribe": `<${unsubscribeUrl}>`,
+				"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+			},
+			tags: [{ name: "category", value: "order" }],
 		},
-		tags: [{ name: "category", value: "order" }],
-	});
+	);
 }
 
 /**

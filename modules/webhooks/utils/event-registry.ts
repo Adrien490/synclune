@@ -100,11 +100,6 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 export async function dispatchEvent(event: Stripe.Event): Promise<WebhookHandlerResult | null> {
 	const handler = eventHandlers[event.type as SupportedStripeEvent];
 
-	if (!handler) {
-		console.warn(`⚠️ [WEBHOOK] Unsupported event type: ${event.type} - ignoring`);
-		return { success: true, skipped: true, reason: `Unsupported event: ${event.type}` };
-	}
-
 	return handler(event);
 }
 

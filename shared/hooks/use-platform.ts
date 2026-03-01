@@ -27,8 +27,8 @@ function detectPlatform(): Platform {
 	}
 
 	// Fallback: navigator.platform (deprecated but widely supported)
-	const platform = navigator.platform?.toLowerCase() ?? "";
-	const userAgent = navigator.userAgent?.toLowerCase() ?? "";
+	const platform = navigator.platform.toLowerCase();
+	const userAgent = navigator.userAgent.toLowerCase();
 
 	if (platform.includes("mac") || userAgent.includes("mac")) return "mac";
 	if (platform.includes("win") || userAgent.includes("win")) return "windows";
@@ -41,9 +41,7 @@ function detectPlatform(): Platform {
 let cachedPlatform: Platform | null = null;
 
 function getPlatform(): Platform {
-	if (cachedPlatform === null) {
-		cachedPlatform = detectPlatform();
-	}
+	cachedPlatform ??= detectPlatform();
 	return cachedPlatform;
 }
 

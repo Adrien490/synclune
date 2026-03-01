@@ -89,10 +89,10 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 		updateTrackingDialog.open({
 			orderId: order.id,
 			orderNumber: order.orderNumber,
-			trackingNumber: order.trackingNumber || undefined,
-			trackingUrl: order.trackingUrl || undefined,
-			carrier: (order.shippingCarrier as Carrier) || undefined,
-			estimatedDelivery: order.estimatedDelivery || undefined,
+			trackingNumber: order.trackingNumber ?? undefined,
+			trackingUrl: order.trackingUrl ?? undefined,
+			carrier: order.shippingCarrier as Carrier,
+			estimatedDelivery: order.estimatedDelivery ?? undefined,
 		});
 	};
 

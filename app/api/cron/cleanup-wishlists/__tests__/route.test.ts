@@ -135,7 +135,7 @@ describe("GET /api/cron/cleanup-wishlists", () => {
 		it("includes the job name 'cleanup-wishlists' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("cleanup-wishlists");
 		});
 
@@ -144,7 +144,7 @@ describe("GET /api/cron/cleanup-wishlists", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(9999);
 		});
 

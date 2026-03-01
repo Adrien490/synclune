@@ -70,10 +70,10 @@ describe("useIsScrolled", () => {
 			expect(result.current).toBe(false);
 		});
 
-		it("returns true initially when scrollY is already above threshold", () => {
+		it("returns false initially even when scrollY is already above threshold (state initialized via IntersectionObserver, not scrollY)", () => {
 			vi.stubGlobal("scrollY", 50);
 			const { result } = renderHook(() => useIsScrolled(10));
-			expect(result.current).toBe(true);
+			expect(result.current).toBe(false);
 		});
 	});
 
@@ -110,7 +110,6 @@ describe("useIsScrolled", () => {
 		});
 
 		it("returns false when the sentinel is intersecting (not scrolled past threshold)", () => {
-			vi.stubGlobal("scrollY", 50);
 			const { result } = renderHook(() => useIsScrolled(10));
 
 			triggerIntersection(true);

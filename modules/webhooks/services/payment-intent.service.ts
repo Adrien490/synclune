@@ -1,5 +1,5 @@
-import Stripe from "stripe";
-import { Prisma } from "@/app/generated/prisma/client";
+import type Stripe from "stripe";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
@@ -102,7 +102,7 @@ export async function restoreStockForOrder(
 			// Group quantities by skuId in case multiple items share the same SKU
 			const stockUpdates = new Map<string, number>();
 			for (const item of order.items) {
-				const current = stockUpdates.get(item.skuId) || 0;
+				const current = stockUpdates.get(item.skuId) ?? 0;
 				stockUpdates.set(item.skuId, current + item.quantity);
 			}
 
@@ -288,7 +288,7 @@ export async function sendRefundFailureAlert(
 
 		await sendAdminRefundFailedAlert({
 			orderNumber: order.orderNumber,
-			customerEmail: order.user?.email || "Email non disponible",
+			customerEmail: order.user?.email ?? "Email non disponible",
 			amount: order.total,
 			reason,
 			errorMessage,

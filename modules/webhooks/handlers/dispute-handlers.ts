@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { DisputeReason, DisputeStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
@@ -108,7 +108,7 @@ export async function handleDisputeCreated(
 	const deadlineStr = dispute.evidence_details?.due_by
 		? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
 		: "N/A";
-	const noteContent = `[LITIGE OUVERT] Litige Stripe ${dispute.id}. Raison: ${DISPUTE_REASON_LABELS[dispute.reason] || dispute.reason}. Montant contesté: ${dispute.amount} centimes. Deadline de réponse: ${deadlineStr}.`;
+	const noteContent = `[LITIGE OUVERT] Litige Stripe ${dispute.id}. Raison: ${DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason}. Montant contesté: ${dispute.amount} centimes. Deadline de réponse: ${deadlineStr}.`;
 
 	const dueBy = dispute.evidence_details?.due_by
 		? new Date(dispute.evidence_details.due_by * 1000)
@@ -121,7 +121,7 @@ export async function handleDisputeCreated(
 				orderId: order.id,
 				amount: dispute.amount,
 				fee: dispute.balance_transactions?.[0]?.fee ?? 0,
-				reason: STRIPE_REASON_MAP[dispute.reason] || DisputeReason.GENERAL,
+				reason: STRIPE_REASON_MAP[dispute.reason] ?? DisputeReason.GENERAL,
 				status: mapStripeDisputeStatus(dispute.status),
 				dueBy,
 			},
@@ -152,7 +152,7 @@ export async function handleDisputeCreated(
 					orderNumber: order.orderNumber,
 					customerEmail: order.customerEmail || "Email non disponible",
 					amount: dispute.amount,
-					reason: DISPUTE_REASON_LABELS[dispute.reason] || dispute.reason,
+					reason: DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason,
 					disputeId: dispute.id,
 					deadline: dispute.evidence_details?.due_by
 						? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")

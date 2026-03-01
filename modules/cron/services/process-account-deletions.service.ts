@@ -13,6 +13,7 @@ import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { sendAccountDeletionEmail } from "@/modules/emails/services/auth-emails";
 import { anonymizeUserInTransaction } from "@/modules/users/services/anonymize-user.service";
+import { getStripeClient } from "@/shared/lib/stripe";
 
 /**
  * Processes GDPR account deletion requests.
@@ -46,6 +47,7 @@ export async function processAccountDeletions(): Promise<{
 			email: true,
 			name: true,
 			image: true,
+			stripeCustomerId: true,
 		},
 		take: BATCH_SIZE_MEDIUM,
 	});
@@ -68,8 +70,9 @@ export async function processAccountDeletions(): Promise<{
 		try {
 			// Save data needed after transaction (will be wiped during anonymization)
 			const avatarUrl = user.image;
+			const stripeCustomerId = user.stripeCustomerId;
 			const emailBeforeAnonymization = user.email;
-			const nameBeforeAnonymization = user.name || "Client";
+			const nameBeforeAnonymization = user.name ?? "Client";
 
 			// Collect review media URLs for UploadThing cleanup after transaction
 			const reviewMedias = await prisma.reviewMedia.findMany({
@@ -113,11 +116,27 @@ export async function processAccountDeletions(): Promise<{
 			updateTag(REVIEWS_CACHE_TAGS.USER(user.id));
 			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(user.id));
 
+			// Delete Stripe customer AFTER successful transaction (RGPD Art. 17)
+			if (stripeCustomerId) {
+				try {
+					const stripe = getStripeClient();
+					if (stripe) {
+						await stripe.customers.del(stripeCustomerId);
+					}
+				} catch {
+					// Non-blocking: Stripe customer becomes orphan
+					logger.warn("Failed to delete Stripe customer", {
+						cronJob: "process-account-deletions",
+						userId: user.id,
+					});
+				}
+			}
+
 			// Delete avatar from UploadThing AFTER successful transaction
 			if (avatarUrl) {
 				try {
 					await deleteUploadThingFileFromUrl(avatarUrl);
-				} catch (avatarError) {
+				} catch (_avatarError) {
 					// Non-blocking: avatar becomes orphan, cleaned up by cleanup-orphan-media
 					logger.warn("Failed to delete avatar", {
 						cronJob: "process-account-deletions",
@@ -130,7 +149,7 @@ export async function processAccountDeletions(): Promise<{
 			if (reviewMediaUrls.length > 0) {
 				try {
 					await deleteUploadThingFilesFromUrls(reviewMediaUrls);
-				} catch (mediaError) {
+				} catch (_mediaError) {
 					logger.warn("Failed to delete review media", {
 						cronJob: "process-account-deletions",
 						userId: user.id,

@@ -4,7 +4,14 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	notFound,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -39,7 +46,7 @@ export async function duplicateColor(
 
 		// 3. Validation des donnees
 		const rawData = {
-			colorId: formData.get("colorId") as string,
+			colorId: safeFormGet(formData, "colorId"),
 		};
 
 		const validated = validateInput(duplicateColorSchema, rawData);
@@ -82,7 +89,7 @@ export async function duplicateColor(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "color.duplicate",
 			targetType: "color",
 			targetId: duplicate.id,

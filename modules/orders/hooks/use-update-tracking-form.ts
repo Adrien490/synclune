@@ -47,9 +47,9 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 	const form = useAppForm({
 		defaultValues: {
 			id: options.orderId,
-			trackingNumber: options.initialTrackingNumber || "",
-			trackingUrl: options.initialTrackingUrl || "",
-			carrier: options.initialCarrier || ("colissimo" as Carrier),
+			trackingNumber: options.initialTrackingNumber ?? "",
+			trackingUrl: options.initialTrackingUrl ?? "",
+			carrier: options.initialCarrier ?? ("colissimo" as Carrier),
 			estimatedDelivery: options.initialEstimatedDelivery
 				? options.initialEstimatedDelivery.toISOString().split("T")[0]
 				: "",

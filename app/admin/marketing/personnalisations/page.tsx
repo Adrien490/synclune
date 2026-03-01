@@ -34,7 +34,7 @@ export default async function CustomizationsPage({ searchParams }: Customization
 	const stats = await getCustomizationStats();
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const sortByParam = getFirstParam(params.sortBy);
 	const sortBy =
 		sortByParam &&
@@ -52,7 +52,7 @@ export default async function CustomizationsPage({ searchParams }: Customization
 			? (statusParam as CustomizationRequestStatus)
 			: undefined;
 
-	const perPage = parseInt(getFirstParam(params.perPage) || "20", 10);
+	const perPage = parseInt(getFirstParam(params.perPage) ?? "20", 10);
 
 	const requestsPromise = getCustomizationRequests({
 		cursor,

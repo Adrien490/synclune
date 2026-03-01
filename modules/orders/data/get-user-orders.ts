@@ -15,7 +15,7 @@ export async function getUserOrders(params?: GetUserOrdersInput): Promise<GetUse
 	// Récupérer la session utilisateur
 	const session = await getSession();
 
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		// Retourner un résultat vide si non authentifié
 		return {
 			orders: [],
@@ -29,7 +29,7 @@ export async function getUserOrders(params?: GetUserOrdersInput): Promise<GetUse
 	}
 
 	// Validation des paramètres (avec valeurs par défaut)
-	const validation = getUserOrdersSchema.safeParse(params || {});
+	const validation = getUserOrdersSchema.safeParse(params ?? {});
 
 	if (!validation.success) {
 		// Retourner un résultat vide en cas d'erreur de validation

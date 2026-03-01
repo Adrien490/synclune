@@ -17,6 +17,13 @@ export default function robots(): MetadataRoute.Robots {
 					"/compte/",
 					"/commandes/",
 					"/favoris/",
+					"/connexion",
+					"/inscription",
+					"/mot-de-passe-oublie",
+					"/verifier-email",
+					"/reinitialiser-mot-de-passe",
+					"/renvoyer-verification",
+					"/paiement/",
 					// SEO: Bloquer les URLs avec filtres pour éviter duplicate content
 					"/produits/*?*priceMin*",
 					"/produits/*?*priceMax*",

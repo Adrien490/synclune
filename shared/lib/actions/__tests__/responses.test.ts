@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { success, error, notFound, unauthorized, forbidden, validationError } from "../responses";
+import {
+	success,
+	error,
+	notFound,
+	unauthorized,
+	forbidden,
+	conflict,
+	validationError,
+} from "../responses";
 import { ActionStatus } from "@/shared/types/server-action";
 
 describe("responses", () => {
@@ -33,9 +41,9 @@ describe("responses", () => {
 			});
 		});
 
-		it("accepts custom status", () => {
-			const result = error("Conflict", ActionStatus.CONFLICT);
-			expect(result.status).toBe(ActionStatus.CONFLICT);
+		it("returns narrowed ERROR status type", () => {
+			const result = error("Something failed");
+			expect(result.status).toBe(ActionStatus.ERROR);
 		});
 	});
 
@@ -86,6 +94,16 @@ describe("responses", () => {
 		it("accepts custom message", () => {
 			const result = forbidden("Réservé aux admins");
 			expect(result.message).toBe("Réservé aux admins");
+		});
+	});
+
+	describe("conflict", () => {
+		it("returns CONFLICT status", () => {
+			const result = conflict("Cet email est déjà inscrit");
+			expect(result).toEqual({
+				status: ActionStatus.CONFLICT,
+				message: "Cet email est déjà inscrit",
+			});
 		});
 	});
 

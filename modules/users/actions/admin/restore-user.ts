@@ -7,7 +7,14 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
-import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	error,
+	notFound,
+	handleActionError,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { restoreUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -24,7 +31,7 @@ export async function restoreUser(_prevState: unknown, formData: FormData): Prom
 		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider l'ID
-		const rawData = { id: formData.get("id") as string };
+		const rawData = { id: safeFormGet(formData, "id") };
 		const validation = validateInput(restoreUserSchema, rawData);
 		if ("error" in validation) return validation.error;
 
@@ -60,7 +67,7 @@ export async function restoreUser(_prevState: unknown, formData: FormData): Prom
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "user.restore",
 			targetType: "user",
 			targetId: userId,
@@ -72,7 +79,7 @@ export async function restoreUser(_prevState: unknown, formData: FormData): Prom
 			},
 		});
 
-		return success(`L'utilisateur ${user.name || user.email} a ete restaure.`);
+		return success(`L'utilisateur ${user.name ?? user.email} a ete restaure.`);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la restauration de l'utilisateur");
 	}

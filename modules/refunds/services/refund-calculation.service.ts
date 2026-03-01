@@ -93,7 +93,7 @@ export function calculateRefundAmount(
 ): number {
 	return selectedItems.reduce((sum, item) => {
 		const orderItem = orderItems.find((oi) => oi.id === item.orderItemId);
-		return sum + (orderItem?.price || 0) * item.quantity;
+		return sum + (orderItem?.price ?? 0) * item.quantity;
 	}, 0);
 }
 

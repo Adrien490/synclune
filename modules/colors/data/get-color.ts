@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -23,7 +23,7 @@ export type { GetColorParams, GetColorReturn } from "../types/color.types";
 export async function getColorBySlug(
 	params: Partial<GetColorParams>,
 ): Promise<GetColorReturn | null> {
-	const validation = getColorSchema.safeParse(params ?? {});
+	const validation = getColorSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

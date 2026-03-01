@@ -8,7 +8,7 @@ export function extractVariantInfo<
 	TSku extends BaseProductSku,
 	TProduct extends { skus?: TSku[] | null },
 >(product: TProduct): ProductVariantInfo {
-	const activeSkus = product.skus?.filter((sku: TSku) => sku.isActive) || [];
+	const activeSkus = product.skus?.filter((sku: TSku) => sku.isActive) ?? [];
 
 	// Couleurs disponibles
 	const colorMap = new Map<string, { hex?: string; slug?: string; name: string; count: number }>();
@@ -26,20 +26,16 @@ export function extractVariantInfo<
 
 	for (const sku of activeSkus) {
 		// Couleurs avec fallback sur le matériau pour différencier les variantes
-		const materialName = sku.material?.name || undefined;
+		const materialName = sku.material?.name ?? undefined;
 
 		if (sku.color || materialName) {
 			// Utiliser le slug comme clé principale (URL-friendly)
-			const colorKey = sku.color?.slug
-				? sku.color.slug
-				: materialName
-					? slugify(materialName)
-					: "default";
-			const colorName = sku.color?.name || materialName || "Standard";
-			const existing = colorMap.get(colorKey) || { name: colorName, count: 0 };
+			const colorKey = sku.color?.slug ?? (materialName ? slugify(materialName) : "default");
+			const colorName = sku.color?.name ?? materialName ?? "Standard";
+			const existing = colorMap.get(colorKey) ?? { name: colorName, count: 0 };
 			colorMap.set(colorKey, {
-				hex: sku.color?.hex || existing.hex,
-				slug: sku.color?.slug || colorKey, // Toujours un slug
+				hex: sku.color?.hex ?? existing.hex,
+				slug: sku.color?.slug ?? colorKey, // Toujours un slug
 				name: colorName,
 				count: existing.count + 1,
 			});
@@ -48,7 +44,7 @@ export function extractVariantInfo<
 		// Matériaux
 		if (materialName) {
 			const mapKey = materialName.toLowerCase();
-			const existingMaterial = materialMap.get(mapKey) || {
+			const existingMaterial = materialMap.get(mapKey) ?? {
 				name: materialName,
 				count: 0,
 			};
@@ -60,7 +56,7 @@ export function extractVariantInfo<
 
 		// Tailles (si applicable)
 		if (sku.size) {
-			sizeMap.set(sku.size, (sizeMap.get(sku.size) || 0) + 1);
+			sizeMap.set(sku.size, (sizeMap.get(sku.size) ?? 0) + 1);
 		}
 
 		// Prix

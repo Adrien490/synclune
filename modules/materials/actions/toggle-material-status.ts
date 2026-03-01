@@ -56,7 +56,7 @@ export async function toggleMaterialStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "material.toggleStatus",
 			targetType: "material",
 			targetId: validatedData.id,

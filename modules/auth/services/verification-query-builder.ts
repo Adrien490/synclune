@@ -31,10 +31,6 @@ export function buildVerificationFilterConditions(
 ): Prisma.VerificationWhereInput[] {
 	const conditions: Prisma.VerificationWhereInput[] = [];
 
-	if (!filters) {
-		return conditions;
-	}
-
 	if (filters.identifier !== undefined) {
 		const identifiers = Array.isArray(filters.identifier)
 			? filters.identifier

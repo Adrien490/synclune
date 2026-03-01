@@ -91,7 +91,7 @@ export async function setFeaturedProduct(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "collection.setFeaturedProduct",
 			targetType: "collection",
 			targetId: collectionId,
@@ -176,7 +176,7 @@ export async function removeFeaturedProduct(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "collection.removeFeaturedProduct",
 			targetType: "collection",
 			targetId: collectionId,

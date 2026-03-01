@@ -42,12 +42,12 @@ export function useApplyDiscountCode(options?: UseApplyDiscountCodeOptions) {
 				showSuccessToast: true,
 				showErrorToast: true,
 				onSuccess: (result) => {
-					if (result?.data) {
+					if (result.data) {
 						options?.onSuccess?.(result.data as AppliedDiscount);
 					}
 				},
 				onError: (result) => {
-					options?.onError?.(result?.message || "Code invalide");
+					options?.onError?.(result.message || "Code invalide");
 				},
 			}),
 		),

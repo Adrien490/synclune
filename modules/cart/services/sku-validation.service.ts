@@ -76,8 +76,8 @@ export async function validateSkuAndStock(input: {
 					compareAtPrice: sku.compareAtPrice,
 					inventory: sku.inventory,
 					isActive: sku.isActive,
-					material: sku.material?.name || undefined,
-					colorId: sku.colorId || undefined,
+					material: sku.material?.name ?? undefined,
+					colorId: sku.colorId ?? undefined,
 					color: sku.color
 						? {
 								id: sku.color.id,
@@ -85,16 +85,16 @@ export async function validateSkuAndStock(input: {
 								hex: sku.color.hex,
 							}
 						: undefined,
-					size: sku.size || undefined,
+					size: sku.size ?? undefined,
 					product: {
 						id: sku.product.id,
 						title: sku.product.title,
 						slug: sku.product.slug,
-						description: sku.product.description || null,
+						description: sku.product.description ?? null,
 					},
 					images: sku.images.map((img) => ({
 						url: img.url,
-						altText: img.altText || undefined,
+						altText: img.altText ?? undefined,
 						isPrimary: img.isPrimary,
 					})),
 				},
@@ -104,7 +104,7 @@ export async function validateSkuAndStock(input: {
 		if (error instanceof z.ZodError) {
 			return {
 				success: false,
-				error: error.issues[0]?.message || CART_ERROR_MESSAGES.INVALID_DATA,
+				error: error.issues[0]?.message ?? CART_ERROR_MESSAGES.INVALID_DATA,
 			};
 		}
 
@@ -140,8 +140,8 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 					compareAtPrice: sku.compareAtPrice,
 					inventory: sku.inventory,
 					isActive: sku.isActive,
-					material: sku.material?.name || undefined,
-					colorId: sku.colorId || undefined,
+					material: sku.material?.name ?? undefined,
+					colorId: sku.colorId ?? undefined,
 					color: sku.color
 						? {
 								id: sku.color.id,
@@ -149,16 +149,16 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 								hex: sku.color.hex,
 							}
 						: undefined,
-					size: sku.size || undefined,
+					size: sku.size ?? undefined,
 					product: {
 						id: sku.product.id,
 						title: sku.product.title,
 						slug: sku.product.slug,
-						description: sku.product.description || null,
+						description: sku.product.description ?? null,
 					},
 					images: sku.images.map((img) => ({
 						url: img.url,
-						altText: img.altText || undefined,
+						altText: img.altText ?? undefined,
 						isPrimary: img.isPrimary,
 					})),
 				},
@@ -168,7 +168,7 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 		if (error instanceof z.ZodError) {
 			return {
 				success: false,
-				error: error.issues[0]?.message || CART_ERROR_MESSAGES.INVALID_DATA,
+				error: error.issues[0]?.message ?? CART_ERROR_MESSAGES.INVALID_DATA,
 			};
 		}
 
@@ -285,7 +285,7 @@ export async function batchValidateSkusForMerge(
 	const results = new Map<string, BatchSkuValidationResult>();
 
 	for (const sku of skus) {
-		const requestedQty = quantityMap.get(sku.id) || 0;
+		const requestedQty = quantityMap.get(sku.id) ?? 0;
 		// Verifier aussi les soft-deletes pour eviter d'ajouter des produits supprimes
 		const isValid =
 			!sku.deletedAt &&

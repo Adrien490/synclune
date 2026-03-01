@@ -50,7 +50,7 @@ export function AddToCartCardButton({
 
 	// Détermine si le produit a plusieurs variantes actives (SKUs)
 	// Note: On filtre par isActive car le dialog ne montre que les SKUs actifs
-	const activeSkusCount = product.skus?.filter((s) => s.isActive).length ?? 0;
+	const activeSkusCount = product.skus.filter((s) => s.isActive).length;
 	const hasMultipleVariants = activeSkusCount > 1;
 
 	// Handler de clic : ouvre le dialog si plusieurs variantes, sinon soumet le formulaire

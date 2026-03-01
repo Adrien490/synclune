@@ -31,7 +31,7 @@ export async function fetchAddresses(
 		throw new Error(`Erreur API BAN: ${response.status} ${response.statusText}`);
 	}
 
-	const data: CompletionApiResponse = await response.json();
+	const data = (await response.json()) as CompletionApiResponse;
 
 	// Transformer les résultats en format simplifié
 	const addresses = data.results.map(transformCompletionResult);

@@ -52,8 +52,8 @@ export const auth = betterAuth({
 	},
 	socialProviders: {
 		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID || "",
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+			clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
 		},
 	},
 	emailAndPassword: {
@@ -80,7 +80,7 @@ export const auth = betterAuth({
 
 				await sendPasswordChangedEmail({
 					to: user.email,
-					userName: user.name ?? user.email,
+					userName: user.name,
 					changeDate,
 				});
 			} catch {
@@ -152,7 +152,7 @@ export const auth = betterAuth({
 		}),
 		stripe({
 			stripeClient,
-			stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
+			stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
 			createCustomerOnSignUp: true,
 
 			// 🔴 CORRECTION : Hook appelé après création du Customer Stripe
@@ -262,7 +262,7 @@ export const auth = betterAuth({
 				try {
 					await sendWelcomeEmail({
 						to: newSession.user.email,
-						userName: newSession.user.name ?? newSession.user.email,
+						userName: newSession.user.name,
 					});
 				} catch {
 					// Don't block verification if welcome email fails

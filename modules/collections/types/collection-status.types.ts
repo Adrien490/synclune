@@ -1,4 +1,4 @@
-import { COLLECTION_STATUS_LABELS } from "../constants/collection-status.constants";
+import { type COLLECTION_STATUS_LABELS } from "../constants/collection-status.constants";
 
 /**
  * Cle de statut de collection

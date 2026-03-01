@@ -1,6 +1,6 @@
 "use client";
 
-import { RefundReason } from "@/app/generated/prisma/browser";
+import { type RefundReason } from "@/app/generated/prisma/browser";
 import type { OrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import { Button } from "@/shared/components/ui/button";
 import {

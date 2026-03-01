@@ -40,8 +40,8 @@ export function BulkDeleteCollectionsAlertDialog() {
 		}
 	};
 
-	const count = dialog.data?.collectionIds?.length || 0;
-	const totalProductsCount = dialog.data?.totalProductsCount || 0;
+	const count = dialog.data?.collectionIds.length ?? 0;
+	const totalProductsCount = dialog.data?.totalProductsCount ?? 0;
 
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
@@ -66,7 +66,7 @@ export function BulkDeleteCollectionsAlertDialog() {
 								</p>
 								{totalProductsCount > 0 && (
 									<>
-										<p className="font-medium text-amber-600 dark:text-amber-500">
+										<p className="font-medium text-amber-600">
 											Ces collections contiennent au total {totalProductsCount} produit
 											{totalProductsCount > 1 ? "s" : ""}.
 										</p>

@@ -16,7 +16,7 @@ import { DiscountsFilterSheet } from "@/modules/discounts/components/admin/disco
 import { CreateDiscountButton } from "@/modules/discounts/components/admin/create-discount-button";
 import dynamic from "next/dynamic";
 import type { DiscountType } from "@/app/generated/prisma/client";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const DiscountFormDialog = dynamic(() =>
@@ -58,9 +58,9 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || GET_DISCOUNTS_DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) || "created-descending") as
+	const sortBy = (getFirstParam(params.sortBy) ?? "created-descending") as
 		| "created-descending"
 		| "created-ascending"
 		| "code-ascending"

@@ -24,7 +24,7 @@ import {
 } from "@/shared/components/ui/table";
 
 // Module imports
-import { GetProductsReturn } from "@/modules/products/data/get-products";
+import { type GetProductsReturn } from "@/modules/products/data/get-products";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 // Local components
@@ -65,14 +65,12 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 
 	// Helper pour obtenir le SKU par défaut selon la logique demandée
 	const getDefaultSku = (product: (typeof products)[0]) => {
-		if (!product.skus || product.skus.length === 0) return null;
 		// Déjà trié par orderBy dans le SELECT: isDefault DESC, priceInclTax ASC
 		return product.skus[0];
 	};
 
 	// Helper pour calculer le stock total
 	const getTotalStock = (product: (typeof products)[0]) => {
-		if (!product.skus || product.skus.length === 0) return 0;
 		return product.skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
 	};
 
@@ -80,12 +78,11 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 	const getDefaultImage = (product: (typeof products)[0]) => {
 		const defaultSku = getDefaultSku(product);
 		if (!defaultSku?.images || defaultSku.images.length === 0) return null;
-		return defaultSku.images.find((img) => img.isPrimary) || defaultSku.images[0];
+		return defaultSku.images.find((img) => img.isPrimary) ?? defaultSku.images[0];
 	};
 
 	// Helper pour obtenir la plage de prix (min-max)
 	const getPriceRange = (product: (typeof products)[0]) => {
-		if (!product.skus || product.skus.length === 0) return null;
 		const prices = product.skus.map((sku) => sku.priceInclTax);
 		const minPrice = Math.min(...prices);
 		const maxPrice = Math.max(...prices);
@@ -132,7 +129,12 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 			<CardContent>
 				<ProductsSelectionToolbar products={products} />
 				<TableScrollContainer>
-					<Table aria-label="Liste des bijoux" striped className="min-w-full table-fixed">
+					<Table
+						aria-label="Liste des bijoux"
+						caption="Liste des produits"
+						striped
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-10 sm:w-[5%] lg:w-[4%]" aria-label="Sélection de produits">
@@ -158,7 +160,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 							{products.map((product) => {
 								const defaultImage = getDefaultImage(product);
 								const totalStock = getTotalStock(product);
-								const skusCount = product._count?.skus || 0;
+								const skusCount = product._count.skus || 0;
 								const priceRange = getPriceRange(product);
 
 								return (
@@ -175,7 +177,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 												{defaultImage ? (
 													<Image
 														src={defaultImage.url}
-														alt={defaultImage.altText || product.title}
+														alt={defaultImage.altText ?? product.title}
 														fill
 														sizes="80px"
 														quality={80}

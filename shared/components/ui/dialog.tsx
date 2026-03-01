@@ -89,7 +89,7 @@ function DialogContent({
 					<DialogPrimitive.Close
 						data-slot="dialog-close"
 						aria-label="Fermer la boîte de dialogue"
-						className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-[max(1rem,env(safe-area-inset-top))] right-4 -mr-2 flex min-h-11 min-w-11 items-center justify-center rounded-sm opacity-80 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0"
+						className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-[max(1rem,env(safe-area-inset-top))] right-4 -mr-2 flex min-h-11 min-w-11 items-center justify-center rounded-sm opacity-80 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0"
 					>
 						<XIcon className="size-5" aria-hidden="true" />
 						<span className="sr-only">Fermer</span>

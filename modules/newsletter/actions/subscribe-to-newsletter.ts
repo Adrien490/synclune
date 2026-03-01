@@ -6,7 +6,7 @@ import { validateInput, handleActionError, success, error, conflict } from "@/sh
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { subscribeToNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
-import { subscribeToNewsletterInternal } from "./subscribe-to-newsletter-internal";
+import { subscribeToNewsletterInternal } from "../services/subscribe-to-newsletter-internal";
 
 export async function subscribeToNewsletter(
 	_previousState: ActionState | undefined,
@@ -15,8 +15,8 @@ export async function subscribeToNewsletter(
 	try {
 		// Récupérer les informations de traçabilité RGPD
 		const headersList = await headers();
-		const ipAddress = (await getClientIp(headersList)) || "unknown";
-		const userAgent = headersList.get("user-agent") || "unknown";
+		const ipAddress = (await getClientIp(headersList)) ?? "unknown";
+		const userAgent = headersList.get("user-agent") ?? "unknown";
 
 		// Protection Arcjet : Shield + Bot Detection + Rate Limiting
 		const request = new Request("http://localhost/newsletter/subscribe", {

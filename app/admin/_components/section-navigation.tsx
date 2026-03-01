@@ -1,7 +1,7 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
-import { LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 interface NavigationLink {

@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { success, error, validationError, handleActionError } from "@/shared/lib/actions";
+import {
+	success,
+	error,
+	validationError,
+	handleActionError,
+	safeFormGetJSON,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -33,15 +39,8 @@ export async function bulkHideReviews(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraire et valider les données
-		let parsedIds: unknown = [];
-		try {
-			parsedIds = JSON.parse((formData.get("ids") as string) || "[]");
-		} catch {
-			parsedIds = [];
-		}
-
 		const rawData = {
-			ids: parsedIds,
+			ids: safeFormGetJSON<unknown>(formData, "ids") ?? [],
 		};
 
 		const validation = bulkHideReviewsSchema.safeParse(rawData);
@@ -51,7 +50,7 @@ export async function bulkHideReviews(
 			return validationError(
 				errorPath
 					? `${errorPath}: ${firstError?.message}`
-					: firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA,
+					: (firstError?.message ?? REVIEW_ERROR_MESSAGES.INVALID_DATA),
 			);
 		}
 
@@ -95,7 +94,7 @@ export async function bulkHideReviews(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "review.bulkHide",
 			targetType: "review",
 			targetId: ids.join(","),

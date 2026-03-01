@@ -15,7 +15,7 @@ import { useSignInEmail } from "@/modules/auth/hooks/use-sign-in-email";
 
 export function SignInEmailForm() {
 	const searchParams = useSearchParams();
-	const callbackURL = searchParams.get("callbackURL") || "/";
+	const callbackURL = searchParams.get("callbackURL") ?? "/";
 
 	const { action, isPending, state } = useSignInEmail();
 	const errorRef = useRef<HTMLDivElement>(null);
@@ -137,7 +137,7 @@ export function SignInEmailForm() {
 					>
 						{isPending ? (
 							<>
-								<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+								<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
 								<span>Connexion...</span>
 							</>
 						) : (

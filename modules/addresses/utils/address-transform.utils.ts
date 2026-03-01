@@ -5,7 +5,9 @@ import type { CompletionResult, SearchAddressResult } from "../types/search-addr
  */
 export function transformCompletionResult(result: CompletionResult): SearchAddressResult {
 	const zipcode =
-		result.zipcode || (result.country === "PositionOfInterest" && result.zipcodes?.[0]) || "";
+		result.zipcode ??
+		(result.country === "PositionOfInterest" ? result.zipcodes[0] : undefined) ??
+		"";
 
 	return {
 		fulltext: result.fulltext,

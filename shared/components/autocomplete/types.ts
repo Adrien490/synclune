@@ -55,4 +55,10 @@ export interface AutocompleteProps<T> {
 	debounceMs?: number;
 	/** Afficher le nombre de resultats (defaut: false) */
 	showResultsCount?: boolean;
+	/** ARIA: marks the input as invalid */
+	"aria-invalid"?: boolean;
+	/** ARIA: associates the input with an error message element */
+	"aria-describedby"?: string;
+	/** ARIA: marks the input as required */
+	"aria-required"?: boolean | "true" | "false";
 }

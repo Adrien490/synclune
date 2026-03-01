@@ -5,7 +5,13 @@ import { updateTag } from "next/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	notFound,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -33,8 +39,8 @@ export async function updateCollectionStatus(
 
 		// 2. Extract data from FormData
 		const rawData = {
-			id: formData.get("id") as string,
-			status: formData.get("status") as string,
+			id: safeFormGet(formData, "id"),
+			status: safeFormGet(formData, "status"),
 		};
 
 		// 3. Validation avec Zod
@@ -76,7 +82,7 @@ export async function updateCollectionStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "collection.updateStatus",
 			targetType: "collection",
 			targetId: id,

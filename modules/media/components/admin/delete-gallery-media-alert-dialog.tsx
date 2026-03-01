@@ -83,7 +83,7 @@ export function DeleteGalleryMediaAlertDialog() {
 						aria-busy={isPending}
 						className="w-full sm:w-auto"
 					>
-						{isPending && <Loader2 className="animate-spin" />}
+						{isPending && <Loader2 className="motion-safe:animate-spin" />}
 						{isPending ? "Suppression..." : "Supprimer"}
 					</AlertDialogAction>
 				</AlertDialogFooter>

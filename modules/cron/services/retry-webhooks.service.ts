@@ -210,7 +210,7 @@ export async function retryFailedWebhooks(): Promise<{
 			const needsIncrement = current?.status !== WebhookEventStatus.PROCESSING;
 			const newAttempts = needsIncrement
 				? (current?.attempts ?? webhookEvent.attempts) + 1
-				: (current?.attempts ?? webhookEvent.attempts + 1);
+				: current.attempts;
 			const isPermanentlyFailed = newAttempts >= MAX_WEBHOOK_RETRY_ATTEMPTS;
 
 			await prisma.webhookEvent.update({

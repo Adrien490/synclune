@@ -4,7 +4,7 @@
  * @module modules/colors/types
  */
 
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import type { z } from "zod";
 import type { colorFiltersSchema, getColorsSchema, getColorSchema } from "../schemas/color.schemas";
 import type { GET_COLORS_SELECT, GET_COLOR_SELECT } from "../constants/color.constants";

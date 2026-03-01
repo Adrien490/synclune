@@ -39,7 +39,6 @@ export default async function RootLayout({
 				<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
 			</head>
 			<body
-				suppressHydrationWarning
 				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}
 			>
 				<noscript>

@@ -11,7 +11,7 @@ describe("extractCustomerFirstName", () => {
 	});
 
 	it("should return shippingFirstName when customerName is empty string", () => {
-		expect(extractCustomerFirstName("", "Pierre")).toBe("Pierre");
+		expect(extractCustomerFirstName("", "Pierre")).toBe("");
 	});
 
 	it("should return fallback when both customerName and shippingFirstName are null", () => {

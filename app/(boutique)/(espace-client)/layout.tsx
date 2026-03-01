@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 		template: "%s | Mon compte | Synclune",
 		default: "Mon compte | Synclune",
 	},
-	robots: { index: false },
+	robots: { index: false, follow: false },
 };
 
 export default async function EspaceClientLayout({ children }: { children: React.ReactNode }) {
@@ -32,7 +32,7 @@ export default async function EspaceClientLayout({ children }: { children: React
 			{isPendingDeletion && (
 				<div
 					role="status"
-					className="mb-6 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
+					className="mb-6 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
 				>
 					<TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
 					<p>

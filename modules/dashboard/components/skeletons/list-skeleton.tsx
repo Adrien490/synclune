@@ -25,7 +25,7 @@ export function ListSkeleton({
 				</CardHeader>
 				<CardContent>
 					<div className="space-y-3">
-						{[...Array(itemCount)].map((_, i) => (
+						{Array.from({ length: itemCount }).map((_, i) => (
 							<div key={i} className="flex items-center justify-between rounded-lg border p-3">
 								<div className="flex flex-1 items-center gap-3">
 									<Skeleton className="h-5 w-5 rounded" /> {/* Icone */}

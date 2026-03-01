@@ -41,7 +41,7 @@ vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
 }));
 
-vi.mock("../../services/inventory-query-builder.service", () => ({
+vi.mock("../../services/inventory-query-builder", () => ({
 	buildInventoryWhereClause: mockBuildInventoryWhereClause,
 }));
 

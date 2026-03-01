@@ -83,7 +83,7 @@ export async function generateProductMetadata({
 
 	// Construire la description avec limite SEO (155 caractères)
 	const rawDescription =
-		product.description ||
+		product.description ??
 		`Découvrez ${product.title}, un bijou artisanal fait main avec amour. ${product.type ? `Type: ${product.type.label}.` : ""} Bijoux colorés et originaux, créations uniques Synclune.`;
 	const description = truncateDescription(rawDescription);
 
@@ -92,8 +92,8 @@ export async function generateProductMetadata({
 	const fullUrl = `${PRODUCTION_URL}/creations/${slug}`;
 
 	// Image du produit pour OpenGraph (première image du SKU principal)
-	const mainImage = primarySku?.images?.[0];
-	const imageUrl = mainImage?.url || `${PRODUCTION_URL}/opengraph-image`;
+	const mainImage = primarySku?.images[0];
+	const imageUrl = mainImage?.url ?? `${PRODUCTION_URL}/opengraph-image`;
 
 	return {
 		title,

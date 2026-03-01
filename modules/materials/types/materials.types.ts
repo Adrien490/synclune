@@ -1,26 +1,28 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
-import { GET_MATERIALS_SELECT, GET_MATERIAL_SELECT } from "../constants/materials.constants";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	getMaterialsSchema,
-	getMaterialSchema,
-	createMaterialSchema,
-	updateMaterialSchema,
-	deleteMaterialSchema,
-	bulkDeleteMaterialsSchema,
-	toggleMaterialStatusSchema,
-	bulkToggleMaterialStatusSchema,
-	duplicateMaterialSchema,
+	type GET_MATERIALS_SELECT,
+	type GET_MATERIAL_SELECT,
+} from "../constants/materials.constants";
+import {
+	type getMaterialsSchema,
+	type getMaterialSchema,
+	type createMaterialSchema,
+	type updateMaterialSchema,
+	type deleteMaterialSchema,
+	type bulkDeleteMaterialsSchema,
+	type toggleMaterialStatusSchema,
+	type bulkToggleMaterialStatusSchema,
+	type duplicateMaterialSchema,
+	type materialFiltersSchema,
 } from "../schemas/materials.schemas";
 
 // ============================================================================
 // INFERRED TYPES FROM SCHEMAS
 // ============================================================================
 
-export type MaterialFilters = z.infer<
-	typeof import("../schemas/materials.schemas").materialFiltersSchema
->;
+export type MaterialFilters = z.infer<typeof materialFiltersSchema>;
 
 // ============================================================================
 // FUNCTION TYPES - LIST

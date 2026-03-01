@@ -53,7 +53,7 @@ export function BulkUpdatePriceDialog() {
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!data?.skuIds?.length) return;
+		if (!data?.skuIds.length) return;
 		if (mode === "percentage" && value === 0) return;
 		if (mode === "absolute" && value < 0) return;
 
@@ -62,7 +62,7 @@ export function BulkUpdatePriceDialog() {
 		updatePrice(data.skuIds, mode, finalValue, updateCompareAtPrice);
 	};
 
-	const count = data?.skuIds?.length ?? 0;
+	const count = data?.skuIds.length ?? 0;
 	const isValid =
 		count > 0 && ((mode === "percentage" && value !== 0) || (mode === "absolute" && value > 0));
 

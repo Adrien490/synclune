@@ -3,7 +3,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function OrdersListSkeleton() {
 	return (
 		<div className="space-y-4">
-			{[...Array(3)].map((_, index) => (
+			{Array.from({ length: 3 }).map((_, index) => (
 				<div
 					key={index}
 					className="bg-card-soft border-border-soft rounded-lg border p-6 shadow-sm"

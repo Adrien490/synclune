@@ -16,7 +16,7 @@ export const getJewelryTypeConfig = (typeSlug: string): JewelryTypeConfig | unde
  * Get the French label for a jewelry type by slug
  */
 export const getJewelryTypeLabel = (typeSlug: string): string => {
-	return JEWELRY_TYPES[typeSlug]?.label || "Type inconnu";
+	return JEWELRY_TYPES[typeSlug]?.label ?? "Type inconnu";
 };
 
 /**
@@ -38,5 +38,5 @@ export const getJewelryTypeByKey = (key: string): JewelryTypeConfig | undefined 
  */
 export const getJewelrySubTypes = (typeKey: string): JewelrySubType[] => {
 	const type = getJewelryTypeByKey(typeKey);
-	return type?.subTypes || [];
+	return type?.subTypes ?? [];
 };

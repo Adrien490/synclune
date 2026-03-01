@@ -136,7 +136,7 @@ export async function resendOrderEmail(
 					return error("Aucun numero de suivi disponible");
 				}
 
-				const carrierLabel = getCarrierLabel((order.shippingCarrier || "autre") as Carrier);
+				const carrierLabel = getCarrierLabel((order.shippingCarrier ?? "autre") as Carrier);
 
 				const result = await sendShippingConfirmationEmail({
 					to: order.customerEmail,

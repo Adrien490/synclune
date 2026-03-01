@@ -21,7 +21,7 @@ interface ReviewCardProps {
  */
 export function ReviewCard({ review, className }: ReviewCardProps) {
 	const hasMedia = review.medias.length > 0;
-	const userName = review.user.name || "Anonyme";
+	const userName = review.user.name ?? "Anonyme";
 	const reviewIso = new Date(review.createdAt).toISOString();
 	const isNew = isRecent(review.createdAt, 7);
 

@@ -1,12 +1,15 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	GET_SUBSCRIBER_SELECT,
-	GET_SUBSCRIBERS_SELECT,
-	GET_SUBSCRIBERS_SORT_FIELDS,
+	type GET_SUBSCRIBER_SELECT,
+	type GET_SUBSCRIBERS_SELECT,
+	type GET_SUBSCRIBERS_SORT_FIELDS,
 } from "../constants/subscriber.constants";
-import { getSubscribersSchema, subscriberFiltersSchema } from "../schemas/subscriber.schemas";
+import {
+	type getSubscribersSchema,
+	type subscriberFiltersSchema,
+} from "../schemas/subscriber.schemas";
 
 // ============================================================================
 // TYPES - NEWSLETTER STATS

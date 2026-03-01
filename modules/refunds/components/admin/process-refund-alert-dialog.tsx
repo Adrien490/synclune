@@ -73,7 +73,7 @@ export function ProcessRefundAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <Loader2 className="motion-safe:animate-spin" />}
 							{isPending ? "Traitement..." : "Traiter le remboursement"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

@@ -7,7 +7,14 @@ import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
-import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	error,
+	notFound,
+	handleActionError,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { changeUserRoleSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -29,7 +36,7 @@ export async function changeUserRole(
 
 		// 3. Extraire et valider les donnees
 		const rawData = {
-			id: formData.get("id") as string,
+			id: safeFormGet(formData, "id"),
 			role: formData.get("role") as Role,
 		};
 
@@ -90,7 +97,7 @@ export async function changeUserRole(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "user.changeRole",
 			targetType: "user",
 			targetId: userId,
@@ -98,7 +105,7 @@ export async function changeUserRole(
 		});
 
 		const roleLabel = newRole === Role.ADMIN ? "administrateur" : "utilisateur";
-		return success(`${user.name || user.email} est maintenant ${roleLabel}.`);
+		return success(`${user.name ?? user.email} est maintenant ${roleLabel}.`);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors du changement de role");
 	}

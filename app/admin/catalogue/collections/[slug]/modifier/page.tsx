@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { EditCollectionForm } from "@/modules/collections/components/admin/edit-collection-form";

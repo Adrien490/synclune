@@ -45,7 +45,13 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ORDER_LIMITS: { SINGLE_OPERATIONS: "admin-order-single" },
 }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
-vi.mock("@/shared/lib/actions", () => ({ handleActionError: mockHandleActionError }));
+vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	handleActionError: mockHandleActionError,
+}));
 vi.mock("@/shared/lib/sanitize", () => ({ sanitizeText: (text: string) => text }));
 vi.mock("@/modules/emails/services/status-emails", () => ({
 	sendRevertShippingNotificationEmail: mockSendRevertShippingNotificationEmail,

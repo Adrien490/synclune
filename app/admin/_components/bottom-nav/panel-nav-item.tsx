@@ -29,7 +29,7 @@ export function PanelNavItem({ item, isActive, onClick }: PanelNavItemProps) {
 			{isActive && <ActiveIndicator />}
 			<Icon className="size-6 shrink-0" aria-hidden="true" />
 			<span className="line-clamp-2 text-center text-xs leading-tight tracking-tight">
-				{item.shortTitle || item.title}
+				{item.shortTitle ?? item.title}
 			</span>
 		</Link>
 	);

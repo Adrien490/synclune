@@ -39,7 +39,7 @@ export function CollectionImageItem({
 	staggerIndex = 0,
 }: CollectionImageItemProps) {
 	// Alt text: utiliser celui fourni, sinon generer un descriptif contextuel
-	const altText = image.alt || `Bijou artisanal ${index + 1} de la collection ${collectionName}`;
+	const altText = image.alt ?? `Bijou artisanal ${index + 1} de la collection ${collectionName}`;
 
 	const delayClass = STAGGER_DELAYS[staggerIndex % STAGGER_DELAYS.length];
 

@@ -42,7 +42,7 @@ export function BulkArchiveCollectionsAlertDialog() {
 	};
 
 	const isArchiving = dialog.data?.targetStatus === CollectionStatus.ARCHIVED;
-	const count = dialog.data?.collectionIds?.length || 0;
+	const count = dialog.data?.collectionIds.length ?? 0;
 
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>

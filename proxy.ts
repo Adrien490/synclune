@@ -4,6 +4,11 @@
  * Vérifie l'existence du cookie de session (pas de validation DB).
  * Les pages/actions protégées DOIVENT toujours revalider la session côté serveur
  * avec requireAuth() / requireAdmin() pour garantir la sécurité.
+ *
+ * NOTE: CSP is set as a response header in next.config.ts headers(), NOT here.
+ * Next.js reads CSP from REQUEST headers to extract nonces (app-render.js line 150).
+ * Setting CSP in middleware would put it on the request, causing Next.js to inject nonces
+ * that React's streaming runtime scripts ($RC, $RV, $RB) don't receive, breaking server actions.
  */
 
 import { getSessionCookie } from "better-auth/cookies";
@@ -20,6 +25,19 @@ const publicRoutes = [
 	"/personnalisation",
 	"/mentions-legales",
 	"/newsletter",
+	// Pages légales
+	"/cgv",
+	"/confidentialite",
+	"/accessibilite",
+	"/cookies",
+	"/informations-legales",
+	"/retractation",
+	// Autres pages publiques
+	"/a-propos",
+	"/favoris",
+	"/~offline",
+	"/monitoring",
+	"/serwist",
 ];
 
 // Routes d'authentification (redirection si déjà connecté)
@@ -30,6 +48,7 @@ const authRoutes = [
 	"/reinitialiser-mot-de-passe",
 	"/verifier-email",
 	"/renvoyer-verification",
+	"/error",
 ];
 
 // Routes protégées par authentification (utilisateur connecté requis)
@@ -41,18 +60,27 @@ const protectedRoutes = [
 	"/mes-avis",
 	"/mes-demandes",
 	"/parametres",
+	"/paiement",
 ] as const;
 
 // Routes protégées par admin (admin requis)
 const adminRoutes = ["/admin"] as const;
 
-// Routes API publiques (ne nécessitent pas d'authentification)
-const publicApiRoutes = [
+// Routes API (toutes gèrent leur propre authentification côté serveur)
+// SÉCURITÉ: Ajouter ici toute nouvelle route API. Les routes non listées sont bloquées (default-deny).
+const apiRoutes = [
 	"/api/auth",
 	"/api/uploadthing",
 	"/api/webhooks",
-	"/api/products", // APIs publiques de produits
-	"/api/collections", // APIs publiques de collections
+	"/api/products",
+	"/api/collections",
+	"/api/cron",
+	"/api/health",
+	"/api/csp-report",
+	"/api/newsletter",
+	"/api/orders",
+	"/api/admin",
+	"/api/search",
 ];
 
 // Helper function pour vérifier les routes (exactes ou sous-routes)
@@ -74,8 +102,9 @@ export async function proxy(request: NextRequest) {
 	const sessionCookie = getSessionCookie(request);
 	const isLoggedIn = !!sessionCookie;
 
-	// ===== 1. ROUTES API PUBLIQUES =====
-	if (matchesAnyRoute(pathname, publicApiRoutes)) {
+	// ===== 1. ROUTES API =====
+	// Toutes les routes API gèrent leur propre authentification côté serveur
+	if (matchesAnyRoute(pathname, apiRoutes)) {
 		return NextResponse.next();
 	}
 
@@ -125,10 +154,11 @@ export async function proxy(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// ===== 6. ROUTES NON DÉFINIES =====
-	// Par défaut, autoriser l'accès (comportement permissif)
-	// Vous pouvez changer cela pour être plus restrictif si nécessaire
-	return NextResponse.next();
+	// ===== 6. DEFAULT-DENY =====
+	// SÉCURITÉ: Les routes non définies sont bloquées. Si une nouvelle route est ajoutée,
+	// elle DOIT être enregistrée dans les listes ci-dessus.
+	console.warn(`[PROXY] Default-deny: blocked unregistered route "${pathname}"`);
+	return NextResponse.redirect(new URL("/", nextUrl.origin));
 }
 
 export const config = {

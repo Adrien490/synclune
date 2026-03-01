@@ -16,24 +16,24 @@ function getFeaturedProductImage(
 
 	// Sinon prendre le premier produit PUBLIC
 	const productToUse =
-		featuredProduct || products.find((pc) => pc.product.status === ProductStatus.PUBLIC);
+		featuredProduct ?? products.find((pc) => pc.product.status === ProductStatus.PUBLIC);
 
 	if (!productToUse) return null;
 
 	// Trouver le SKU par defaut ou le premier SKU actif
 	const defaultSku =
-		productToUse.product.skus.find((s) => s.isDefault) || productToUse.product.skus[0];
+		productToUse.product.skus.find((s) => s.isDefault) ?? productToUse.product.skus[0];
 
 	if (!defaultSku) return null;
 
 	// Trouver l'image primaire ou la premiere image
-	const primaryImage = defaultSku.images.find((i) => i.isPrimary) || defaultSku.images[0];
+	const primaryImage = defaultSku.images.find((i) => i.isPrimary) ?? defaultSku.images[0];
 
 	if (!primaryImage) return null;
 
 	return {
 		url: primaryImage.url,
-		alt: primaryImage.altText || productToUse.product.title,
+		alt: primaryImage.altText ?? productToUse.product.title,
 	};
 }
 
@@ -55,7 +55,7 @@ export async function generateCollectionMetadata({
 
 	const title = `${collection.name} - Collections Synclune | Bijoux artisanaux faits main`;
 	const description =
-		collection.description ||
+		collection.description ??
 		`Découvrez la collection ${collection.name} de Synclune - Des bijoux colorés et originaux faits main avec amour.`;
 	const canonicalUrl = `/collections/${slug}`;
 	const fullUrl = `${PRODUCTION_URL}/collections/${slug}`;

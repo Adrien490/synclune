@@ -38,7 +38,7 @@ export function DeleteDiscountAlertDialog() {
 		}
 	};
 
-	const usageCount = deleteDialog.data?.usageCount || 0;
+	const usageCount = deleteDialog.data?.usageCount ?? 0;
 
 	return (
 		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
@@ -56,7 +56,7 @@ export function DeleteDiscountAlertDialog() {
 								</p>
 								{usageCount > 0 ? (
 									<>
-										<p className="font-medium text-amber-600 dark:text-amber-500">
+										<p className="font-medium text-amber-600">
 											Ce code a été utilisé {usageCount} fois et ne peut pas être supprimé.
 										</p>
 										<p>Vous pouvez le désactiver à la place pour empêcher son utilisation.</p>

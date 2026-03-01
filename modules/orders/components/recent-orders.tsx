@@ -17,7 +17,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
-import { getUserOrders } from "@/modules/orders/data/get-user-orders";
+import { type getUserOrders } from "@/modules/orders/data/get-user-orders";
 import type { UserOrder } from "@/modules/orders/types/user-orders.types";
 import {
 	ORDER_STATUS_LABELS,

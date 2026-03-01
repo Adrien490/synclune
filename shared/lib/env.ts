@@ -31,7 +31,7 @@ function validateEnv(): Env {
 		const errors = parsed.error.flatten().fieldErrors;
 		for (const [key, messages] of Object.entries(errors)) {
 			console.error(`  ${key}:`);
-			messages?.forEach((msg) => console.error(`    - ${msg}`));
+			messages.forEach((msg) => console.error(`    - ${msg}`));
 		}
 
 		console.error("");

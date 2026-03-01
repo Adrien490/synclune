@@ -1,6 +1,6 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard, ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -10,7 +10,6 @@ import {
 	GET_ORDER_ITEMS_DEFAULT_SELECT,
 	GET_ORDER_ITEMS_DEFAULT_PER_PAGE,
 	GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE,
-	GET_ORDER_ITEMS_DEFAULT_SORT_ORDER,
 } from "../constants/order-items.constants";
 import { getOrderItemsSchema } from "../schemas/order-items.schemas";
 import type { GetOrderItemsReturn, GetOrderItemsParams } from "../types/order-items.types";
@@ -43,7 +42,7 @@ export async function getOrderItems(params: GetOrderItemsParams): Promise<GetOrd
 	try {
 		const [admin, session] = await Promise.all([isAdmin(), getSession()]);
 
-		if (!admin && !session?.user?.id) {
+		if (!admin && !session?.user.id) {
 			throw new Error("Authentication required");
 		}
 
@@ -54,7 +53,7 @@ export async function getOrderItems(params: GetOrderItemsParams): Promise<GetOrd
 		}
 
 		// Pass userId for non-admin users to scope results
-		const userId = admin ? undefined : session?.user?.id;
+		const userId = admin ? undefined : session?.user.id;
 		return await fetchOrderItems(validation.data, userId);
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -76,7 +75,7 @@ async function fetchOrderItems(
 	"use cache: private";
 	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
 
-	const sortOrder = (params.sortOrder || GET_ORDER_ITEMS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = params.sortOrder as Prisma.SortOrder;
 
 	try {
 		const where = buildOrderItemsWhereClause(params);

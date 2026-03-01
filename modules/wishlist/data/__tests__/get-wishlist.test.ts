@@ -207,11 +207,11 @@ describe("fetchWishlist", () => {
 		expect(mockProcessCursorResults).toHaveBeenCalledWith(items, 10, "forward", "cursor_abc");
 	});
 
-	// perPage of 0 is falsy: falls back to default (20) via the || operator, then Math.max(1, 20) = 20
+	// perPage of 0 is not nullish: `0 ?? DEFAULT` evaluates to 0, then Math.max(1, 0) = 1
 	it("should fall back to default perPage when perPage is 0 (falsy)", async () => {
 		await fetchWishlist(VALID_USER_ID, undefined, { perPage: 0 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
 	});
 
 	// perPage clamped to 1 minimum when given a negative number

@@ -98,7 +98,7 @@ describe("cleanupUnconfirmedNewsletterSubscriptions", () => {
 		await cleanupUnconfirmedNewsletterSubscriptions();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-newsletter] Delete limit reached, remaining will be cleaned on next run",
+			expect.stringContaining("Delete limit reached, remaining will be cleaned on next run"),
 		);
 	});
 

@@ -30,7 +30,7 @@ vi.mock("next/cache", () => ({
 vi.mock("../../constants/cache", () => ({
 	cacheProductTypes: () => {
 		mockCacheLife("reference");
-		mockCacheTag("product-types");
+		mockCacheTag("product-types-list");
 	},
 }));
 
@@ -203,7 +203,7 @@ describe("getProductTypeBySlug", () => {
 
 		await getProductTypeBySlug({ slug: "bague" });
 
-		expect(mockCacheTag).toHaveBeenCalledWith("product-types");
+		expect(mockCacheTag).toHaveBeenCalledWith("product-types-list");
 	});
 
 	it("returns null on database error", async () => {

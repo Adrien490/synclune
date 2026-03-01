@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 
-import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
+import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";

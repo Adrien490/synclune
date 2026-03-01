@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type * as ReactModule from "react";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — values shared across vi.mock factories
@@ -19,7 +20,7 @@ const { useReducedMotionMock, useIsTouchDeviceMock, useSyncExternalStoreMock } =
 
 // Mock react — intercept useSyncExternalStore while keeping everything else real
 vi.mock("react", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("react")>();
+	const actual = await importOriginal<typeof ReactModule>();
 	return {
 		...actual,
 		useSyncExternalStore: useSyncExternalStoreMock,

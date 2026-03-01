@@ -181,7 +181,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 					{ maxAttempts: 3, baseDelay: 500, signal },
 				);
 
-				if (thumbUploadResult?.[0]?.serverData?.url) {
+				if (thumbUploadResult?.[0]?.serverData.url) {
 					thumbnailUrl = thumbUploadResult[0].serverData.url;
 				}
 			} catch (error) {
@@ -251,10 +251,10 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		const uploadResults: MediaUploadResult[] = [];
 
-		for (let i = 0; i < (results || []).length; i++) {
+		for (let i = 0; i < (results ?? []).length; i++) {
 			const result = results![i]!;
 			const serverData = result.serverData;
-			if (serverData?.url) {
+			if (serverData.url) {
 				uploadResults.push({
 					url: serverData.url,
 					mediaType: "IMAGE",
@@ -377,7 +377,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 	const uploadSingle = async (file: File): Promise<MediaUploadResult | null> => {
 		const results = await upload([file]);
-		return results[0] || null;
+		return results[0] ?? null;
 	};
 
 	const cancel = () => {

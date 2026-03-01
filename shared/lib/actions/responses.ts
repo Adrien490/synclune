@@ -41,9 +41,9 @@ export function success(
  * return error("Une erreur est survenue");
  * ```
  */
-export function error(message: string, status: ActionStatus = ActionStatus.ERROR): ActionState {
+export function error(message: string): ActionState & { status: ActionStatus.ERROR } {
 	return {
-		status,
+		status: ActionStatus.ERROR,
 		message,
 	};
 }
@@ -60,7 +60,7 @@ export function error(message: string, status: ActionStatus = ActionStatus.ERROR
  * // => "Produit non trouvé"
  * ```
  */
-export function notFound(resource: string): ActionState {
+export function notFound(resource: string): ActionState & { status: ActionStatus.NOT_FOUND } {
 	return {
 		status: ActionStatus.NOT_FOUND,
 		message: `${resource} non trouvé${resource.endsWith("e") ? "e" : ""}`,
@@ -81,7 +81,7 @@ export function notFound(resource: string): ActionState {
  */
 export function unauthorized(
 	message = "Vous devez être connecté pour effectuer cette action",
-): ActionState {
+): ActionState & { status: ActionStatus.UNAUTHORIZED } {
 	return {
 		status: ActionStatus.UNAUTHORIZED,
 		message,
@@ -100,7 +100,9 @@ export function unauthorized(
  * // => "Accès non autorisé"
  * ```
  */
-export function forbidden(message = "Accès non autorisé"): ActionState {
+export function forbidden(
+	message = "Accès non autorisé",
+): ActionState & { status: ActionStatus.FORBIDDEN } {
 	return {
 		status: ActionStatus.FORBIDDEN,
 		message,
@@ -118,7 +120,7 @@ export function forbidden(message = "Accès non autorisé"): ActionState {
  * return conflict("Cet email est déjà inscrit à la newsletter");
  * ```
  */
-export function conflict(message: string): ActionState {
+export function conflict(message: string): ActionState & { status: ActionStatus.CONFLICT } {
 	return {
 		status: ActionStatus.CONFLICT,
 		message,
@@ -136,7 +138,9 @@ export function conflict(message: string): ActionState {
  * return validationError("L'email est invalide");
  * ```
  */
-export function validationError(message: string): ActionState {
+export function validationError(
+	message: string,
+): ActionState & { status: ActionStatus.VALIDATION_ERROR } {
 	return {
 		status: ActionStatus.VALIDATION_ERROR,
 		message,

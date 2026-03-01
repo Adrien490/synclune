@@ -15,7 +15,7 @@ import { OrdersFilterBadges } from "@/modules/orders/components/admin/orders-fil
 import { OrdersFilterSheet } from "@/modules/orders/components/admin/orders-filter-sheet";
 import { RefreshOrdersButton } from "@/modules/orders/components/admin/refresh-orders-button";
 import { parseFilters } from "./_utils/params";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const CancelOrderAlertDialog = dynamic(() =>

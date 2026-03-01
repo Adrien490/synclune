@@ -1,7 +1,6 @@
 "use client";
 
 import { Toaster as SonnerToaster } from "sonner";
-import { useTheme } from "next-themes";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 
 /**
@@ -134,12 +133,11 @@ const icons = {
  * de la position ET de l'offset.
  */
 export function AppToaster() {
-	const { resolvedTheme } = useTheme();
 	const isMobile = useIsMobile();
 
 	return (
 		<SonnerToaster
-			theme={resolvedTheme as "light" | "dark" | "system"}
+			theme="light"
 			position={isMobile ? "bottom-center" : "top-center"}
 			duration={2500}
 			visibleToasts={1}

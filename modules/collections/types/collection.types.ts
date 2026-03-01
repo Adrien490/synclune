@@ -1,20 +1,20 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	GET_COLLECTION_SELECT,
-	GET_COLLECTION_STOREFRONT_SELECT,
-	GET_COLLECTIONS_SELECT,
+	type GET_COLLECTION_SELECT,
+	type GET_COLLECTION_STOREFRONT_SELECT,
+	type GET_COLLECTIONS_SELECT,
 } from "../constants/collection.constants";
 import {
-	collectionFiltersSchema,
-	getCollectionSchema,
-	getCollectionsSchema,
-	createCollectionSchema,
-	updateCollectionSchema,
-	deleteCollectionSchema,
-	bulkDeleteCollectionsSchema,
-	updateCollectionStatusSchema,
+	type collectionFiltersSchema,
+	type getCollectionSchema,
+	type getCollectionsSchema,
+	type createCollectionSchema,
+	type updateCollectionSchema,
+	type deleteCollectionSchema,
+	type bulkDeleteCollectionsSchema,
+	type updateCollectionStatusSchema,
 } from "../schemas/collection.schemas";
 
 // ============================================================================

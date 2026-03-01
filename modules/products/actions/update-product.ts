@@ -47,7 +47,8 @@ export async function updateProduct(
 		const parseJSON = <T>(value: FormDataEntryValue | null, fallback: T): T => {
 			if (value && typeof value === "string") {
 				try {
-					return JSON.parse(value);
+					const parsed: unknown = JSON.parse(value);
+					return parsed as T;
 				} catch {
 					return fallback;
 				}
@@ -56,17 +57,13 @@ export async function updateProduct(
 		};
 
 		// Extraire les donnees (approche simple comme collection)
-		// Parse media from form: primaryImage + galleryMedia → media array
-		const primaryImage = parseJSON(formData.get("defaultSku.primaryImage"), null);
-		const galleryMedia = parseJSON<unknown[]>(formData.get("defaultSku.galleryMedia"), []);
-		// Combine: primary first, then gallery
-		const media = primaryImage ? [primaryImage, ...galleryMedia] : galleryMedia;
+		const media = parseJSON<unknown[]>(formData.get("defaultSku.galleryMedia"), []);
 
 		const rawData = {
 			productId: formData.get("productId"),
 			title: formData.get("title"),
 			description: formData.get("description"),
-			typeId: formData.get("typeId") || "",
+			typeId: formData.get("typeId") ?? "",
 			collectionIds: parseJSON<string[]>(formData.get("collectionIds"), []),
 			status: formData.get("status"),
 			defaultSku: {
@@ -75,9 +72,9 @@ export async function updateProduct(
 				compareAtPriceEuros: formData.get("defaultSku.compareAtPriceEuros"),
 				inventory: formData.get("defaultSku.inventory"),
 				isActive: formData.get("defaultSku.isActive"), // Zod fera la coercion
-				colorId: formData.get("defaultSku.colorId") || "",
-				materialId: formData.get("defaultSku.materialId") || "",
-				size: formData.get("defaultSku.size") || "",
+				colorId: formData.get("defaultSku.colorId") ?? "",
+				materialId: formData.get("defaultSku.materialId") ?? "",
+				size: formData.get("defaultSku.size") ?? "",
 				media,
 			},
 		};
@@ -145,11 +142,11 @@ export async function updateProduct(
 		}
 
 		// 6. Normalize empty strings to null for optional foreign keys
-		const normalizedTypeId = validatedData.typeId?.trim() || null;
-		const normalizedCollectionIds = validatedData.collectionIds?.filter((id) => id.trim()) || [];
-		const normalizedColorId = validatedData.defaultSku.colorId?.trim() || null;
-		const normalizedMaterialId = validatedData.defaultSku.materialId?.trim() || null;
-		const normalizedSize = validatedData.defaultSku.size?.trim() || null;
+		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
+		const normalizedCollectionIds = validatedData.collectionIds;
+		const normalizedColorId = validatedData.defaultSku.colorId?.trim() ?? null;
+		const normalizedMaterialId = validatedData.defaultSku.materialId?.trim() ?? null;
+		const normalizedSize = validatedData.defaultSku.size?.trim() ?? null;
 		// Sanitisation XSS de la description
 		const normalizedDescription = validatedData.description?.trim()
 			? sanitizeText(validatedData.description)
@@ -278,10 +275,10 @@ export async function updateProduct(
 						data: {
 							skuId: validatedData.defaultSku.skuId,
 							url: image.url,
-							thumbnailUrl: image.thumbnailUrl || null,
-							blurDataUrl: image.blurDataUrl || null,
-							altText: image.altText || null,
-							mediaType: image.mediaType || detectMediaType(image.url),
+							thumbnailUrl: image.thumbnailUrl ?? null,
+							blurDataUrl: image.blurDataUrl ?? null,
+							altText: image.altText ?? null,
+							mediaType: image.mediaType ?? detectMediaType(image.url),
 							isPrimary: image.isPrimary,
 							position: image.position,
 						},
@@ -337,7 +334,7 @@ export async function updateProduct(
 		// 12. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "product.update",
 			targetType: "product",
 			targetId: updatedProduct.id,

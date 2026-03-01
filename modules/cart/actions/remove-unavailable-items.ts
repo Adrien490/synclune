@@ -103,7 +103,7 @@ export async function removeUnavailableItems(
 		]);
 
 		// 5. Invalider le cache
-		const tags = getCartInvalidationTags(userId, sessionId || undefined);
+		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
 		// 5b. Invalider le cache des compteurs de paniers pour les produits supprimes

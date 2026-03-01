@@ -353,8 +353,8 @@ export function SpeedDialFab({
 							>
 								<m.div animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.2 }}>
 									{isOpen
-										? openIcon || <X className="size-6" aria-hidden="true" />
-										: mainIcon || <Plus className="size-6" aria-hidden="true" />}
+										? (openIcon ?? <X className="size-6" aria-hidden="true" />)
+										: (mainIcon ?? <Plus className="size-6" aria-hidden="true" />)}
 								</m.div>
 							</Button>
 						</TooltipTrigger>

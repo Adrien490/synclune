@@ -1,7 +1,13 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -29,7 +35,7 @@ export async function removeFromCart(
 
 		// 2. Extraction des données du FormData
 		const rawData = {
-			cartItemId: formData.get("cartItemId") as string,
+			cartItemId: safeFormGet(formData, "cartItemId"),
 		};
 
 		// 3. Validation avec Zod
@@ -78,7 +84,7 @@ export async function removeFromCart(
 		});
 
 		// 7. Invalider le cache
-		const tags = getCartInvalidationTags(userId, sessionId || undefined);
+		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
 		// 8. Invalider le cache du compteur de paniers pour ce produit (FOMO "dans X paniers")

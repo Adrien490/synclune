@@ -37,7 +37,7 @@ vi.mock("next/cache", () => ({
 vi.mock("../../constants/cache", () => ({
 	cacheProductTypes: () => {
 		mockCacheLife("reference");
-		mockCacheTag("product-types");
+		mockCacheTag("product-types-list");
 	},
 }));
 
@@ -169,7 +169,7 @@ describe("getProductTypes", () => {
 	it("calls cacheTag with the product-types list tag", async () => {
 		await getProductTypes({ sortBy: "label-ascending", direction: "forward" });
 
-		expect(mockCacheTag).toHaveBeenCalledWith("product-types");
+		expect(mockCacheTag).toHaveBeenCalledWith("product-types-list");
 	});
 
 	// --- Sort order ---

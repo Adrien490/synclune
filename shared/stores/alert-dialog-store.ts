@@ -5,6 +5,13 @@ import type {
 	AlertDialogState,
 	AlertDialogStore,
 } from "@/shared/types/store.types";
+import {
+	openEntry,
+	closeEntry,
+	clearEntry,
+	isEntryOpen,
+	getEntryData,
+} from "./overlay-state-helpers";
 
 export type {
 	AlertDialogData,
@@ -21,33 +28,14 @@ export const createAlertDialogStore = (initState: AlertDialogState = defaultInit
 	return createStore<AlertDialogStore>()((set, get) => ({
 		...initState,
 		openAlertDialog: (dialogId: string, data?: AlertDialogData) =>
-			set((state) => ({
-				alertDialogs: {
-					...state.alertDialogs,
-					[dialogId]: { isOpen: true, data },
-				},
-			})),
+			set((state) => ({ alertDialogs: openEntry(state.alertDialogs, dialogId, data) })),
 		closeAlertDialog: (dialogId: string) =>
-			set((state) => ({
-				alertDialogs: {
-					...state.alertDialogs,
-					[dialogId]: { ...state.alertDialogs[dialogId], isOpen: false },
-				},
-			})),
-		isAlertDialogOpen: (dialogId: string) => {
-			return get().alertDialogs[dialogId]?.isOpen ?? false;
-		},
+			set((state) => ({ alertDialogs: closeEntry(state.alertDialogs, dialogId) })),
+		isAlertDialogOpen: (dialogId: string) => isEntryOpen(get().alertDialogs, dialogId),
 		getAlertDialogData: <T extends AlertDialogData = AlertDialogData>(
 			dialogId: string,
-		): T | undefined => {
-			return get().alertDialogs[dialogId]?.data as T | undefined;
-		},
+		): T | undefined => getEntryData<AlertDialogData, T>(get().alertDialogs, dialogId),
 		clearAlertDialogData: (dialogId: string) =>
-			set((state) => ({
-				alertDialogs: {
-					...state.alertDialogs,
-					[dialogId]: { isOpen: false, data: undefined },
-				},
-			})),
+			set((state) => ({ alertDialogs: clearEntry(state.alertDialogs, dialogId) })),
 	}));
 };

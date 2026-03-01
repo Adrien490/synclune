@@ -1,20 +1,20 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	GET_PRODUCT_TYPES_SELECT,
-	GET_PRODUCT_TYPE_SELECT,
+	type GET_PRODUCT_TYPES_SELECT,
+	type GET_PRODUCT_TYPE_SELECT,
 } from "../constants/product-type.constants";
 import {
-	getProductTypesSchema,
-	getProductTypeSchema,
-	productTypeFiltersSchema,
-	createProductTypeSchema,
-	updateProductTypeSchema,
-	deleteProductTypeSchema,
-	toggleProductTypeStatusSchema,
-	bulkActivateProductTypesSchema,
-	bulkDeactivateProductTypesSchema,
+	type getProductTypesSchema,
+	type getProductTypeSchema,
+	type productTypeFiltersSchema,
+	type createProductTypeSchema,
+	type updateProductTypeSchema,
+	type deleteProductTypeSchema,
+	type toggleProductTypeStatusSchema,
+	type bulkActivateProductTypesSchema,
+	type bulkDeactivateProductTypesSchema,
 } from "../schemas/product-type.schemas";
 
 // ============================================================================

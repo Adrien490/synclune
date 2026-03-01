@@ -13,6 +13,7 @@ import {
 	notFound,
 	validationError,
 	handleActionError,
+	safeFormGet,
 } from "@/shared/lib/actions";
 import { bulkChangeProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
@@ -38,13 +39,14 @@ export async function bulkChangeProductStatus(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
-		const productIdsRaw = formData.get("productIds") as string;
-		const targetStatus = formData.get("targetStatus") as string;
+		const productIdsRaw = safeFormGet(formData, "productIds");
+		const targetStatus = safeFormGet(formData, "targetStatus");
 
 		// Parse le JSON des IDs
 		let productIds: string[];
 		try {
-			productIds = JSON.parse(productIdsRaw);
+			const parsed: unknown = JSON.parse(productIdsRaw ?? "");
+			productIds = parsed as string[];
 		} catch {
 			return validationError("Format des IDs de produits invalide.");
 		}
@@ -151,7 +153,7 @@ export async function bulkChangeProductStatus(
 		// 9. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "product.bulkChangeStatus",
 			targetType: "product",
 			targetId: validatedData.productIds.join(","),

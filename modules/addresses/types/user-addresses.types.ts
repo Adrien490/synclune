@@ -1,5 +1,5 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { GET_USER_ADDRESSES_DEFAULT_SELECT } from "../constants/user-addresses.constants";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type GET_USER_ADDRESSES_DEFAULT_SELECT } from "../constants/user-addresses.constants";
 
 // ============================================================================
 // TYPES - USER ADDRESSES

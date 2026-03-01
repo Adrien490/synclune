@@ -24,7 +24,7 @@ export type { GetUserAddressesReturn, UserAddress } from "../types/user-addresse
 export async function getUserAddresses(): Promise<GetUserAddressesReturn | null> {
 	const session = await getSession();
 
-	if (!session || !session.user) {
+	if (!session?.user?.id) {
 		return null;
 	}
 

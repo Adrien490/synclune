@@ -50,10 +50,10 @@ describe("quickSearch", () => {
 		mockQuickSearchProducts.mockResolvedValue(mockSearchResult);
 	});
 
-	it("should return EMPTY_RESULT when rate limited", async () => {
+	it("should return EMPTY_RESULT with rateLimited flag when rate limited", async () => {
 		mockEnforceRateLimit.mockResolvedValue({ error: { status: "error", message: "Rate limit" } });
 		const result = await quickSearch("bracelet");
-		expect(result).toEqual(EMPTY_RESULT);
+		expect(result).toEqual({ ...EMPTY_RESULT, rateLimited: true });
 	});
 
 	it("should return EMPTY_RESULT when query exceeds 100 characters", async () => {
@@ -75,7 +75,7 @@ describe("quickSearch", () => {
 	});
 
 	it("should log zero results with console.log", async () => {
-		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+		const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 		mockQuickSearchProducts.mockResolvedValue({ products: [], suggestion: "bague", totalCount: 0 });
 
 		await quickSearch("bracelt");

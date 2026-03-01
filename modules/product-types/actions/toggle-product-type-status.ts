@@ -4,7 +4,14 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	notFound,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -28,7 +35,7 @@ export async function toggleProductTypeStatus(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
-			productTypeId: formData.get("productTypeId") as string,
+			productTypeId: safeFormGet(formData, "productTypeId"),
 			isActive: formData.get("isActive") === "true",
 		};
 
@@ -61,7 +68,7 @@ export async function toggleProductTypeStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "productType.toggleStatus",
 			targetType: "productType",
 			targetId: productTypeId,

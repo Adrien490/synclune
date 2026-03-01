@@ -21,7 +21,7 @@ export function buildLightboxSlides(
 						type: getVideoMimeType(media.url),
 					},
 				],
-				poster: media.thumbnailUrl || undefined,
+				poster: media.thumbnailUrl ?? undefined,
 				autoPlay: !prefersReducedMotion,
 				muted: true,
 				loop: !prefersReducedMotion,

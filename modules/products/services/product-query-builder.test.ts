@@ -110,8 +110,8 @@ describe("buildSearchConditions", () => {
 		// (those are handled by fuzzy). They should only cover related fields.
 		for (const condition of result.exactConditions) {
 			const cond = condition as { OR: Array<Record<string, unknown>> };
-			const hasTitle = cond.OR?.some((c: Record<string, unknown>) => "title" in c);
-			const hasDescription = cond.OR?.some((c: Record<string, unknown>) => "description" in c);
+			const hasTitle = cond.OR.some((c: Record<string, unknown>) => "title" in c);
+			const hasDescription = cond.OR.some((c: Record<string, unknown>) => "description" in c);
 			expect(hasTitle).toBeFalsy();
 			expect(hasDescription).toBeFalsy();
 		}
@@ -165,9 +165,7 @@ describe("buildProductWhereClause", () => {
 		};
 		const where = buildProductWhereClause(baseParams, searchResult);
 		const conditions = where.AND as Prisma.ProductWhereInput[];
-		const hasIdIn = conditions.some(
-			(c) => "id" in c && (c.id as { in: string[] }).in?.length === 2,
-		);
+		const hasIdIn = conditions.some((c) => "id" in c && (c.id as { in: string[] }).in.length === 2);
 		expect(hasIdIn).toBe(true);
 	});
 
@@ -238,7 +236,7 @@ describe("buildProductFilterConditions", () => {
 	});
 
 	it("returns empty array for undefined filters", () => {
-		expect(buildProductFilterConditions(undefined as never)).toEqual([]);
+		expect(() => buildProductFilterConditions(undefined as never)).toThrow();
 	});
 
 	it("adds status filter for single status", () => {

@@ -8,5 +8,5 @@ export function extractCustomerFirstName(
 	shippingFirstName: string | null | undefined,
 	fallback = "Client",
 ): string {
-	return customerName?.split(" ")[0] || shippingFirstName || fallback;
+	return customerName?.split(" ")[0] ?? shippingFirstName ?? fallback;
 }

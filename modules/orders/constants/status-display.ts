@@ -1,8 +1,8 @@
 import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-	InvoiceStatus,
+	type OrderStatus,
+	type PaymentStatus,
+	type FulfillmentStatus,
+	type InvoiceStatus,
 } from "@/app/generated/prisma/client";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 

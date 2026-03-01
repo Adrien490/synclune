@@ -8,7 +8,13 @@ import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
@@ -34,8 +40,8 @@ export async function updateCustomizationStatus(
 
 	// 2. Validate input
 	const rawData = {
-		requestId: formData.get("requestId") as string,
-		status: formData.get("status") as string,
+		requestId: safeFormGet(formData, "requestId"),
+		status: safeFormGet(formData, "status"),
 	};
 
 	const validation = validateInput(updateStatusSchema, rawData);
@@ -85,7 +91,7 @@ export async function updateCustomizationStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "customization.updateStatus",
 			targetType: "customization",
 			targetId: requestId,
@@ -114,7 +120,7 @@ export async function updateCustomizationStatus(
 				status,
 				adminNotes: existing.adminNotes ? sanitizeForEmail(existing.adminNotes) : null,
 				details: sanitizeForEmail(existing.details),
-			}).catch((emailError) => {
+			}).catch((emailError: unknown) => {
 				console.error("[EMAIL] Status email failed", {
 					requestId,
 					error: emailError,

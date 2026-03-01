@@ -127,7 +127,7 @@ export function CreateProductForm({
 			</form.Subscribe>
 			<form.Subscribe selector={(state) => [state.values.collectionIds]}>
 				{([collectionIds]) => (
-					<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds || [])} />
+					<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
 				)}
 			</form.Subscribe>
 
@@ -414,7 +414,7 @@ export function CreateProductForm({
 											value: c.id,
 											label: c.name,
 										}))}
-										defaultValue={field.state.value || []}
+										defaultValue={field.state.value}
 										onValueChange={(values) => field.handleChange(values)}
 										placeholder="Sélectionner des collections"
 										maxCount={2}

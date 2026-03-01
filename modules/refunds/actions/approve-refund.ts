@@ -6,7 +6,13 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
@@ -35,10 +41,12 @@ export async function approveRefund(
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
+		const rawId = safeFormGet(formData, "id");
 
-		const validated = validateInput(approveRefundSchema, { id });
+		const validated = validateInput(approveRefundSchema, { id: rawId });
 		if ("error" in validated) return validated.error;
+
+		const { id } = validated.data;
 
 		// Récupérer le remboursement avec les infos pour l'email
 		const refund = await prisma.refund.findUnique({
@@ -106,7 +114,7 @@ export async function approveRefund(
 				await sendRefundApprovedEmail({
 					to: refund.order.user.email,
 					orderNumber: refund.order.orderNumber,
-					customerName: refund.order.user.name || "Client",
+					customerName: refund.order.user.name ?? "Client",
 					refundAmount: refund.amount,
 					originalOrderTotal: refund.order.total,
 					reason: refund.reason,
@@ -120,7 +128,7 @@ export async function approveRefund(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "refund.approve",
 			targetType: "refund",
 			targetId: refund.id,

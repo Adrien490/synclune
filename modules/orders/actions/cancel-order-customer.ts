@@ -117,7 +117,7 @@ export async function cancelOrderCustomer(
 				previousPaymentStatus: found.paymentStatus,
 				newPaymentStatus: newPaymentStatus,
 				authorId: user.id,
-				authorName: user.name || "Client",
+				authorName: user.name ?? "Client",
 				source: HistorySource.CUSTOMER,
 				metadata: {
 					stockRestored: true,

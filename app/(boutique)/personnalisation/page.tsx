@@ -7,6 +7,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { CustomizationForm } from "@/modules/customizations/components/customization-form";
 import { CustomizationSidebar } from "@/modules/customizations/components/customization-sidebar";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
 	title: "Créons votre bijou ensemble - Synclune | Bijoux personnalisés à Nantes",
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 		title: "Créons votre bijou ensemble - Synclune",
 		description:
 			"Vous avez une idée de bijou personnalisé ? N'hésitez pas à me raconter votre projet, même si c'est pas encore clair. On affinera ensemble !",
-		url: "https://synclune.fr/personnalisation",
+		url: `${SITE_URL}/personnalisation`,
 		type: "website",
 	},
 };
@@ -36,7 +37,7 @@ export default async function CustomizationPage() {
 
 	const userInfo = session?.user
 		? {
-				firstName: session.user.name?.split(" ")[0] ?? "",
+				firstName: session.user.name.split(" ")[0] ?? "",
 				email: session.user.email,
 			}
 		: undefined;

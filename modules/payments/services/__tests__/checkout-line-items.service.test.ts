@@ -34,7 +34,7 @@ function makeSkuResult(overrides: Record<string, unknown> = {}) {
 			id: "prod_1",
 			title: "Bracelet Lune",
 		},
-		...((overrides.sku as Record<string, unknown>) ?? {}),
+		...((overrides.sku as Record<string, unknown> | undefined) ?? {}),
 	};
 
 	return {

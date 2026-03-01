@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { prisma } from "@/shared/lib/prisma";
+import { AUTH_CACHE_TAGS } from "../constants/cache";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -25,7 +26,7 @@ export async function getUserProviders(): Promise<string[]> {
 async function fetchUserProviders(userId: string): Promise<string[]> {
 	"use cache: private";
 	cacheLife("session");
-	cacheTag(`user-providers-${userId}`);
+	cacheTag(AUTH_CACHE_TAGS.USER_PROVIDERS(userId));
 
 	const accounts = await prisma.account.findMany({
 		where: { userId },

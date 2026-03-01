@@ -23,7 +23,7 @@ import type { AllowedShippingCountry } from "../types/order.types";
  * @example
  * ```ts
  * const rate = getShippingRate("FR")
- * console.log(rate.amount) // 600 (6.00€)
+ * console.log(rate.amount) // 499 (4.99€)
  * ```
  */
 export function getShippingRate(country: string): ShippingRate {
@@ -75,11 +75,10 @@ export function formatShippingPrice(amountInCents: number): string {
  *
  * @example
  * ```typescript
- * calculateShipping();              // 600 (France metro par defaut)
- * calculateShipping("FR");          // 600 (France metro)
- * calculateShipping("FR", "20000"); // 1000 (Corse - 2A)
- * calculateShipping("FR", "20200"); // 1000 (Corse - 2B)
- * calculateShipping("BE");          // 1500 (UE)
+ * calculateShipping();              // 499 (France metro par defaut)
+ * calculateShipping("FR");          // 499 (France metro)
+ * calculateShipping("FR", "20000"); // 0 (Corse - non disponible)
+ * calculateShipping("BE");          // 950 (UE)
  * ```
  */
 export function calculateShipping(
@@ -87,11 +86,11 @@ export function calculateShipping(
 	postalCode?: string,
 ): number {
 	try {
-		// Détection Corse pour les commandes FR avec code postal
+		// Détection Corse — livraison non disponible
 		if (countryCode === "FR" && postalCode) {
 			const { zone } = getShippingZoneFromPostalCode(postalCode);
 			if (zone === "CORSE") {
-				return SHIPPING_RATES.CORSE.amount;
+				return 0;
 			}
 		}
 
@@ -113,23 +112,22 @@ export function calculateShipping(
  * @example
  * ```typescript
  * const info = getShippingInfo("FR");
- * console.log(info.amount); // 600
+ * console.log(info.amount); // 499
  * console.log(info.displayName); // "Livraison France (2-3 jours)"
  *
  * const corsica = getShippingInfo("FR", "20000");
- * console.log(corsica.amount); // 1000
- * console.log(corsica.displayName); // "Livraison Corse (4-7 jours)"
+ * // Returns null — shipping not available for Corsica
  * ```
  */
 export function getShippingInfo(
 	countryCode: ShippingCountry = "FR",
 	postalCode?: string,
-): ShippingRate {
-	// Détection Corse pour les commandes FR avec code postal
+): ShippingRate | null {
+	// Détection Corse — livraison non disponible
 	if (countryCode === "FR" && postalCode) {
 		const { zone } = getShippingZoneFromPostalCode(postalCode);
 		if (zone === "CORSE") {
-			return SHIPPING_RATES.CORSE;
+			return null;
 		}
 	}
 

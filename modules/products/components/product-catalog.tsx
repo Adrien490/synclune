@@ -92,9 +92,9 @@ export function ProductCatalog({
 			? activeProductType.label
 			: "Les créations";
 
-	const pageDescription = activeProductType?.description
-		? activeProductType.description
-		: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
+	const pageDescription =
+		activeProductType?.description ??
+		"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
 
 	// Sort options for mobile drawer
 	const sortOptions = Object.values(PRODUCTS_SORT_OPTIONS).map((option) => ({
@@ -117,6 +117,7 @@ export function ProductCatalog({
 			<PageHeader
 				title={pageTitle}
 				description={searchTerm ? undefined : pageDescription}
+				descriptionClassName="hidden sm:block"
 				breadcrumbs={breadcrumbs}
 				actions={
 					<div className="flex items-center gap-2 md:hidden">

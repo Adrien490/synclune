@@ -38,9 +38,10 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
 interface CartSheetProps {
 	cart: GetCartReturn;
+	recommendations?: React.ReactNode;
 }
 
-export function CartSheet({ cart }: CartSheetProps) {
+export function CartSheet({ cart, recommendations }: CartSheetProps) {
 	const { isOpen, close } = useSheet("cart");
 	const shouldReduceMotion = useReducedMotion();
 	const [isPending, startTransition] = useTransition();
@@ -160,17 +161,15 @@ export function CartSheet({ cart }: CartSheetProps) {
 								</div>
 							)}
 
-							{optimisticCart && (
-								<div className="shrink-0">
-									<CartPriceChangeAlert items={optimisticCart.items} />
-								</div>
-							)}
+							<div className="shrink-0">
+								<CartPriceChangeAlert items={optimisticCart.items} />
+							</div>
 
 							<div className="min-h-0 flex-1">
 								<ScrollFade axis="vertical" className="h-full" hideScrollbar={false}>
 									<div className="space-y-3 px-6 py-4">
 										<AnimatePresence mode="popLayout" initial={false}>
-											{optimisticCart?.items.map((item) => (
+											{optimisticCart.items.map((item) => (
 												<m.div
 													key={item.id}
 													layout
@@ -189,6 +188,8 @@ export function CartSheet({ cart }: CartSheetProps) {
 									</div>
 								</ScrollFade>
 							</div>
+
+							{recommendations}
 
 							<CartSheetFooter
 								totalItems={totalItems}

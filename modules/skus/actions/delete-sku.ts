@@ -7,7 +7,14 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { handleActionError, success, error, notFound, validationError } from "@/shared/lib/actions";
+import {
+	handleActionError,
+	success,
+	error,
+	notFound,
+	validationError,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -35,7 +42,7 @@ export async function deleteProductSku(
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {
-			skuId: formData.get("skuId") as string,
+			skuId: safeFormGet(formData, "skuId"),
 		};
 
 		// 3. Validation avec Zod
@@ -135,9 +142,10 @@ export async function deleteProductSku(
 
 		// 9. Promote fallback SKU + delete in a single transaction for atomicity
 		const imageUrls = existingSku.images.map((img) => img.url);
-		let promotedSkuSku: string | null = null;
 
-		await prisma.$transaction(async (tx) => {
+		const promotedSkuSku = await prisma.$transaction(async (tx) => {
+			let promoted: string | null = null;
+
 			if (existingSku.isDefault && existingSku.product._count.skus > 1) {
 				// Find another active SKU to promote
 				const candidateSku = await tx.productSku.findFirst({
@@ -152,7 +160,7 @@ export async function deleteProductSku(
 
 				// If no active SKU found, take any SKU
 				const fallbackSku =
-					candidateSku ||
+					candidateSku ??
 					(await tx.productSku.findFirst({
 						where: {
 							productId: existingSku.productId,
@@ -167,7 +175,7 @@ export async function deleteProductSku(
 						where: { id: fallbackSku.id },
 						data: { isDefault: true },
 					});
-					promotedSkuSku = fallbackSku.sku;
+					promoted = fallbackSku.sku;
 				}
 			}
 
@@ -175,6 +183,8 @@ export async function deleteProductSku(
 			await tx.productSku.delete({
 				where: { id: validatedSkuId },
 			});
+
+			return promoted;
 		});
 
 		// 11. Supprimer les fichiers UploadThing apres la suppression DB reussie
@@ -192,7 +202,7 @@ export async function deleteProductSku(
 		// 13. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.delete",
 			targetType: "sku",
 			targetId: validatedSkuId,

@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
 	title: "Réinitialiser le mot de passe | Synclune",
 	description: "Créez un nouveau mot de passe pour votre compte Synclune.",
-	robots: "noindex, nofollow",
+	robots: { index: false, follow: false },
 	openGraph: {
 		title: "Réinitialiser le mot de passe | Synclune",
 		description: "Créez un nouveau mot de passe",
@@ -112,7 +112,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
 
 						{/* Actions */}
 						<div className="space-y-2 border-t pt-4 text-center">
-							{(error || !token) && (
+							{(error ?? !token) && (
 								<Link
 									href="/mot-de-passe-oublie"
 									className="inline-block text-sm font-medium underline"

@@ -38,6 +38,15 @@ vi.mock("next/link", () => ({
 vi.mock("motion/react", () => ({
 	useReducedMotion: vi.fn(() => false),
 	motion: { div: "div", nav: "nav" },
+	m: new Proxy(
+		{},
+		{
+			get: (_target, prop) => {
+				if (typeof prop === "symbol") return undefined;
+				return prop;
+			},
+		},
+	),
 }));
 
 // Mock useBottomBarHeight

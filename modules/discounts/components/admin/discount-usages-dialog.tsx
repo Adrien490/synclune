@@ -124,7 +124,7 @@ export function DiscountUsagesDialog() {
 											<TableCell>
 												{usage.user ? (
 													<div className="text-sm">
-														<div className="font-medium">{usage.user.name || "Sans nom"}</div>
+														<div className="font-medium">{usage.user.name ?? "Sans nom"}</div>
 														<div className="text-muted-foreground text-xs">{usage.user.email}</div>
 													</div>
 												) : (

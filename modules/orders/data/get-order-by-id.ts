@@ -2,7 +2,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard } from "../constants/cache";
-import { z } from "zod";
+import { type z } from "zod";
 import { GET_ORDER_SELECT } from "../constants/order.constants";
 import type { GetOrderReturn } from "../types/order.types";
 import { getOrderByIdSchema } from "../schemas/order.schemas";
@@ -23,7 +23,7 @@ export type GetOrderByIdParams = z.infer<typeof getOrderByIdSchema>;
 export async function getOrderById(
 	params: Partial<GetOrderByIdParams>,
 ): Promise<GetOrderReturn | null> {
-	const validation = getOrderByIdSchema.safeParse(params ?? {});
+	const validation = getOrderByIdSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

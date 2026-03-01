@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -23,7 +23,7 @@ export type { GetMaterialParams, GetMaterialReturn } from "../types/materials.ty
 export async function getMaterialBySlug(
 	params: Partial<GetMaterialParams>,
 ): Promise<GetMaterialReturn | null> {
-	const validation = getMaterialSchema.safeParse(params ?? {});
+	const validation = getMaterialSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

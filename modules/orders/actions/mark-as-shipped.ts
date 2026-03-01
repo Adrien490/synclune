@@ -6,7 +6,14 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, success, error, notFound, validationError } from "@/shared/lib/actions";
+import {
+	handleActionError,
+	success,
+	error,
+	notFound,
+	validationError,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import {
@@ -49,28 +56,30 @@ export async function markAsShipped(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
-		const trackingNumber = formData.get("trackingNumber") as string;
-		const trackingUrl = formData.get("trackingUrl") as string | null;
-		const carrier = formData.get("carrier") as string | null;
-		const sendEmail = formData.get("sendEmail") as string | null;
+		const rawId = safeFormGet(formData, "id");
+		const trackingNumber = safeFormGet(formData, "trackingNumber");
+		const trackingUrl = safeFormGet(formData, "trackingUrl");
+		const carrier = safeFormGet(formData, "carrier");
+		const sendEmail = safeFormGet(formData, "sendEmail");
 
 		const result = markAsShippedSchema.safeParse({
-			id,
+			id: rawId,
 			trackingNumber,
-			trackingUrl: trackingUrl || undefined,
-			carrier: carrier || undefined,
-			sendEmail: sendEmail || "true",
+			trackingUrl: trackingUrl ?? undefined,
+			carrier: carrier ?? undefined,
+			sendEmail: sendEmail ?? "true",
 		});
 
 		if (!result.success) {
-			return validationError(result.error.issues[0]?.message || "Données invalides");
+			return validationError(result.error.issues[0]?.message ?? "Données invalides");
 		}
 
+		const { id } = result.data;
+
 		// Générer l'URL de suivi si non fournie
-		const carrierValue = (result.data.carrier || "autre") as Carrier;
+		const carrierValue = (result.data.carrier ?? "autre") as Carrier;
 		const finalTrackingUrl =
-			result.data.trackingUrl || getTrackingUrl(carrierValue, result.data.trackingNumber);
+			result.data.trackingUrl ?? getTrackingUrl(carrierValue, result.data.trackingNumber);
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
@@ -110,7 +119,7 @@ export async function markAsShipped(
 					fulfillmentStatus: FulfillmentStatus.SHIPPED,
 					trackingNumber: result.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
-					shippingCarrier: result.data.carrier || null,
+					shippingCarrier: result.data.carrier ?? null,
 					shippedAt: new Date(),
 				},
 			});
@@ -123,7 +132,7 @@ export async function markAsShipped(
 				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.SHIPPED,
 				authorId: adminUser.id,
-				authorName: adminUser.name || "Admin",
+				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
 					trackingNumber: result.data.trackingNumber,
@@ -154,7 +163,7 @@ export async function markAsShipped(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.markShipped",
 			targetType: "order",
 			targetId: order.id,

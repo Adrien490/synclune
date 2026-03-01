@@ -4,6 +4,8 @@
  * Fonctions: voir utils/cache.utils.ts
  */
 
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+
 // ============================================
 // CACHE PROFILES (definis dans next.config.ts)
 // ============================================
@@ -19,8 +21,8 @@
 // ============================================
 
 export const PRODUCTS_CACHE_TAGS = {
-	/** Liste complète des produits */
-	LIST: "products-list",
+	/** Liste complète des produits (source of truth: SHARED_CACHE_TAGS.PRODUCTS_LIST) */
+	LIST: SHARED_CACHE_TAGS.PRODUCTS_LIST,
 
 	/** Détail d'un produit spécifique */
 	DETAIL: (slug: string) => `product-${slug}`,

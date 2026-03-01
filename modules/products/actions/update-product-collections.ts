@@ -4,7 +4,14 @@ import { prisma } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, success, notFound, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	notFound,
+	handleActionError,
+	safeFormGet,
+	safeFormGetJSON,
+} from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { updateProductCollectionsSchema } from "../schemas/product.schemas";
@@ -32,15 +39,8 @@ export async function updateProductCollections(
 	if ("error" in rateLimit) return rateLimit.error;
 
 	// 2. Parser les données du formulaire
-	const productId = formData.get("productId") as string;
-	const collectionIdsRaw = formData.get("collectionIds") as string;
-
-	let collectionIds: string[] = [];
-	try {
-		collectionIds = collectionIdsRaw ? JSON.parse(collectionIdsRaw) : [];
-	} catch {
-		collectionIds = [];
-	}
+	const productId = safeFormGet(formData, "productId");
+	const collectionIds: string[] = safeFormGetJSON<string[]>(formData, "collectionIds") ?? [];
 
 	// 3. Validation avec Zod
 	const validation = validateInput(updateProductCollectionsSchema, {
@@ -128,7 +128,7 @@ export async function updateProductCollections(
 		// 11. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "product.updateCollections",
 			targetType: "product",
 			targetId: product.id,

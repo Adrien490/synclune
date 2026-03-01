@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
 	title: "Accessibilité - Synclune | Engagement pour un site accessible à tous",
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: "Accessibilité - Synclune",
 		description: "Engagement de Synclune pour un site web accessible à tous les utilisateurs.",
-		url: "https://synclune.fr/accessibilite",
+		url: `${SITE_URL}/accessibilite`,
 		type: "website",
 	},
 	twitter: {
@@ -40,7 +41,7 @@ export default async function AccessibilityPage() {
 	cacheLife("reference"); // 24h stale, 30j expire - contenu change rarement
 	cacheTag("accessibility-page");
 
-	const contactEmail = process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr";
+	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 
 	return (
 		<div className="relative min-h-screen">
@@ -65,7 +66,7 @@ export default async function AccessibilityPage() {
 
 			<section className={`bg-background ${SECTION_SPACING.default} relative z-10`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
+					<div className="prose prose-slate max-w-prose space-y-6">
 						<section className="space-y-4">
 							<h2 className="text-xl font-semibold sm:text-2xl">État de conformité</h2>
 							<p>

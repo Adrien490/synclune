@@ -1,8 +1,9 @@
 "use client";
 
 import { FilterBadges } from "@/shared/components/filter-badges";
-import { FilterDefinition } from "@/shared/hooks/use-filter";
-import { DiscountType } from "@/app/generated/prisma/browser";
+import { type FilterDefinition } from "@/shared/hooks/use-filter";
+import { formatStatusFilter } from "@/shared/utils/format-status-filter";
+import { type DiscountType } from "@/app/generated/prisma/browser";
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
 
 function formatDiscountFilter(filter: FilterDefinition) {
@@ -12,15 +13,12 @@ function formatDiscountFilter(filter: FilterDefinition) {
 	if (filterKey === "type") {
 		return {
 			label: "Type",
-			displayValue: DISCOUNT_TYPE_LABELS[value as DiscountType] || value,
+			displayValue: DISCOUNT_TYPE_LABELS[value as DiscountType],
 		};
 	}
 
 	if (filterKey === "isActive") {
-		return {
-			label: "Statut",
-			displayValue: value === "true" ? "Actifs" : "Inactifs",
-		};
+		return formatStatusFilter(value);
 	}
 
 	if (filterKey === "hasUsages") {

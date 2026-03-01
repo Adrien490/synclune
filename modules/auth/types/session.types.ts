@@ -1,15 +1,15 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	GET_SESSION_SELECT,
-	GET_SESSIONS_SELECT,
-	GET_SESSIONS_SORT_FIELDS,
+	type GET_SESSION_SELECT,
+	type GET_SESSIONS_SELECT,
+	type GET_SESSIONS_SORT_FIELDS,
 } from "../constants/session.constants";
 import {
-	getSessionSchema,
-	getSessionsSchema,
-	sessionFiltersSchema,
+	type getSessionSchema,
+	type getSessionsSchema,
+	type sessionFiltersSchema,
 } from "../schemas/session.schemas";
 
 // ============================================================================

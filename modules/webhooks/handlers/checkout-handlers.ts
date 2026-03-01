@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import type { WebhookHandlerResult } from "../types/webhook.types";
 import {
 	extractShippingInfo,
@@ -31,7 +31,7 @@ export async function handleCheckoutSessionCompleted(
 	// Récupérer l'ID de commande depuis les metadata
 	// Priorité: metadata.orderId (standard) puis client_reference_id (fallback legacy)
 	// Les deux sont définis lors de la création de la session checkout pour compatibilité
-	const orderId = session.metadata?.orderId || session.client_reference_id;
+	const orderId = session.metadata?.orderId ?? session.client_reference_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order ID found in checkout session");
@@ -52,7 +52,7 @@ export async function handleCheckoutSessionCompleted(
 		const tasks = buildPostCheckoutTasks(order, session);
 
 		// 4. Anti-fraud: detect email mismatch between Stripe and order
-		const stripeEmail = session.customer_email || session.customer_details?.email;
+		const stripeEmail = session.customer_email ?? session.customer_details?.email;
 		if (stripeEmail) {
 			const dbOrder = await prisma.order.findUnique({
 				where: { id: orderId },
@@ -98,7 +98,7 @@ export async function handleCheckoutSessionCompleted(
 export async function handleCheckoutSessionExpired(
 	session: Stripe.Checkout.Session,
 ): Promise<WebhookHandlerResult> {
-	const orderId = session.metadata?.orderId || session.client_reference_id;
+	const orderId = session.metadata?.orderId ?? session.client_reference_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order ID found in expired checkout session");

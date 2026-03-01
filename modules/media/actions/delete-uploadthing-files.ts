@@ -29,12 +29,8 @@ export async function deleteUploadThingFiles(
 		// 3. Extract data from FormData with secure JSON parsing
 		const fileUrlsRaw = formData.get("fileUrls");
 
-		if (fileUrlsRaw === null || fileUrlsRaw === undefined) {
+		if (fileUrlsRaw === null || typeof fileUrlsRaw !== "string") {
 			return error("Les URLs de fichiers sont requises");
-		}
-
-		if (typeof fileUrlsRaw !== "string") {
-			return error("Les URLs de fichiers doivent etre un JSON string");
 		}
 
 		let parsedFileUrls: unknown;

@@ -172,15 +172,15 @@ describe("cleanupExpiredWishlists", () => {
 		await cleanupExpiredWishlists();
 
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Starting expired wishlists cleanup...",
+			expect.stringContaining("Starting expired wishlists cleanup"),
 		);
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Deleted 8 expired wishlists",
+			expect.stringContaining("Deleted expired wishlists"),
 		);
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Cleaned up 4 orphaned wishlist items",
+			expect.stringContaining("Cleaned up orphaned wishlist items"),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith("[CRON:cleanup-wishlists] Cleanup completed");
+		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cleanup completed"));
 	});
 
 	it("should not log orphaned items message when count is zero", async () => {
@@ -205,7 +205,9 @@ describe("cleanupExpiredWishlists", () => {
 		await cleanupExpiredWishlists();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-wishlists] Delete limit reached, remaining wishlists will be cleaned on next run",
+			expect.stringContaining(
+				"Delete limit reached, remaining wishlists will be cleaned on next run",
+			),
 		);
 	});
 

@@ -493,8 +493,9 @@ describe("mapStripeRefundStatus", () => {
 		expect(mapStripeRefundStatus(undefined)).toBe("APPROVED");
 	});
 
-	it("should default to APPROVED for empty string input", () => {
-		expect(mapStripeRefundStatus("")).toBe("APPROVED");
+	it("should default to PENDING for empty string input", () => {
+		// Empty string is not nullish, so statusMap[""] is undefined → fallback is RefundStatus.PENDING
+		expect(mapStripeRefundStatus("")).toBe("PENDING");
 	});
 });
 

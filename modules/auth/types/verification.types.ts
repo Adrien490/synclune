@@ -1,11 +1,14 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	GET_VERIFICATION_SELECT,
-	GET_VERIFICATIONS_DEFAULT_SELECT,
+	type GET_VERIFICATION_SELECT,
+	type GET_VERIFICATIONS_DEFAULT_SELECT,
 } from "../constants/verification.constants";
-import { getVerificationSchema, getVerificationsSchema } from "../schemas/verification.schemas";
+import {
+	type getVerificationSchema,
+	type getVerificationsSchema,
+} from "../schemas/verification.schemas";
 
 // ============================================================================
 // TYPES - VERIFICATION (single)

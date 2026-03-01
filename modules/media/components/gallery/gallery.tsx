@@ -135,9 +135,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 		material: materialSlug,
 		size,
 	} = parseGalleryParams({
-		color: searchParams.get("color") || undefined,
-		material: searchParams.get("material") || undefined,
-		size: searchParams.get("size") || undefined,
+		color: searchParams.get("color") ?? undefined,
+		material: searchParams.get("material") ?? undefined,
+		size: searchParams.get("size") ?? undefined,
 	});
 
 	// Construire la liste d'images selon les variants
@@ -272,7 +272,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 					/>
 					<div className="relative z-10 space-y-3 text-center">
 						<span
-							className={cn("text-4xl", !prefersReduced && "animate-bounce")}
+							className={cn("text-4xl", !prefersReduced && "motion-safe:animate-bounce")}
 							aria-hidden="true"
 						>
 							✨

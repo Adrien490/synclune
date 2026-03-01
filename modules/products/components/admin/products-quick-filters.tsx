@@ -126,7 +126,7 @@ export function ProductsQuickFilters({ className }: ProductsQuickFiltersProps) {
 
 	const activeFilter = getActiveFilter();
 	const activeFilterLabel =
-		quickFilters.find((f) => f.value === activeFilter)?.label || "Tous les bijoux";
+		quickFilters.find((f) => f.value === activeFilter)?.label ?? "Tous les bijoux";
 
 	return (
 		<DropdownMenu>

@@ -6,7 +6,13 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, success, notFound, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	notFound,
+	handleActionError,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { duplicateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
@@ -36,7 +42,7 @@ export async function duplicateProduct(
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {
-			productId: formData.get("productId") as string,
+			productId: safeFormGet(formData, "productId"),
 		};
 
 		// 3. Validation avec Zod
@@ -142,7 +148,7 @@ export async function duplicateProduct(
 		// 8. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "product.duplicate",
 			targetType: "product",
 			targetId: duplicatedProduct.id,

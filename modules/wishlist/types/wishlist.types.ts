@@ -1,7 +1,10 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import type { ActionState } from "@/shared/types/server-action";
-import { GET_WISHLIST_SELECT, GET_WISHLIST_ITEM_SELECT } from "../constants/wishlist.constants";
+import {
+	type GET_WISHLIST_SELECT,
+	type GET_WISHLIST_ITEM_SELECT,
+} from "../constants/wishlist.constants";
 
 // ============================================================================
 // TYPES - WISHLIST

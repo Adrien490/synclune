@@ -99,7 +99,7 @@ describe("sendReviewRequestEmail", () => {
 		);
 	});
 
-	it("should not pass unsubscribeUrl to the component (not in component props)", async () => {
+	it("should pass unsubscribeUrl to the component props", async () => {
 		await sendReviewRequestEmail({
 			to: "customer@test.com",
 			customerName: "Marie Dupont",
@@ -110,7 +110,10 @@ describe("sendReviewRequestEmail", () => {
 		});
 
 		const componentProps = mockRenderAndSend.mock.calls[0]![0].props;
-		expect(componentProps).not.toHaveProperty("unsubscribeUrl");
+		expect(componentProps).toHaveProperty(
+			"unsubscribeUrl",
+			"https://test.com/newsletter/desabonnement?token=abc",
+		);
 	});
 
 	it("should return the result from renderAndSend", async () => {

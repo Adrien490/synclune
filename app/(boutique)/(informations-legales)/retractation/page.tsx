@@ -6,6 +6,7 @@ import { Info, Mail } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 import { PrintButton } from "./_components/print-button";
 
 export const metadata: Metadata = {
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 		title: "Formulaire de rétractation - Synclune",
 		description:
 			"Formulaire type de rétractation conforme au Code de la consommation - Droit de rétractation de 14 jours",
-		url: "https://synclune.fr/retractation",
+		url: `${SITE_URL}/retractation`,
 		type: "website",
 	},
 	twitter: {
@@ -43,7 +44,7 @@ export default async function RetractationPage() {
 	cacheTag("legal-retractation");
 
 	// Récupérer l'email de contact depuis les variables d'environnement
-	const contactEmail = process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr";
+	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 
 	return (
 		<>
@@ -58,7 +59,7 @@ export default async function RetractationPage() {
 
 			<section className={`bg-background ${SECTION_SPACING.default}`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="prose prose-slate dark:prose-invert max-w-prose space-y-8">
+					<div className="prose prose-slate max-w-prose space-y-8">
 						{/* Composant formulaire de rétractation */}
 						<section className="space-y-8">
 							{/* Information préliminaire */}
@@ -259,7 +260,7 @@ export default async function RetractationPage() {
 							<div className="space-y-4">
 								<h2 className="text-xl font-semibold sm:text-2xl">Informations complémentaires</h2>
 
-								<div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950">
+								<div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-6">
 									<p className="text-sm">
 										<strong>Adresse de retour :</strong>
 									</p>

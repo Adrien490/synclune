@@ -1,7 +1,13 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
@@ -32,7 +38,7 @@ export async function moveToWishlist(
 		const { userId, sessionId } = rateLimitResult.context;
 
 		// 2. Validate cart item ID
-		const rawData = { cartItemId: formData.get("cartItemId") as string };
+		const rawData = { cartItemId: safeFormGet(formData, "cartItemId") };
 		const validated = validateInput(removeFromCartSchema, rawData);
 		if ("error" in validated) return validated.error;
 
@@ -62,7 +68,7 @@ export async function moveToWishlist(
 
 		// 5. Get session and wishlist context
 		const session = await getSession();
-		const wishlistUserId = session?.user?.id ?? null;
+		const wishlistUserId = session?.user.id ?? null;
 		const wishlistSessionId = wishlistUserId ? null : await getOrCreateWishlistSessionId();
 
 		// 6. Transaction: remove from cart + add to wishlist
@@ -101,7 +107,7 @@ export async function moveToWishlist(
 		});
 
 		// 7. Invalidate caches
-		const cartTags = getCartInvalidationTags(userId, sessionId || undefined);
+		const cartTags = getCartInvalidationTags(userId, sessionId ?? undefined);
 		cartTags.forEach((tag) => updateTag(tag));
 		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(productId));
 

@@ -34,7 +34,8 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -43,6 +44,10 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
@@ -80,10 +85,10 @@ describe("deleteColor", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { id: "color-1" } });
-		mockGetColorInvalidationTags.mockReturnValue(["colors", "color-or-rose"]);
+		mockGetColorInvalidationTags.mockReturnValue(["colors-list", "color-or-rose"]);
 		mockPrisma.color.findUnique.mockResolvedValue(makeColor());
 		mockPrisma.color.delete.mockResolvedValue({ id: "color-1" });
 

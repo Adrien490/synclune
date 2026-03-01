@@ -83,7 +83,12 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 			<CardContent>
 				<DiscountsSelectionToolbar discountIds={discountIds} discounts={discountsData} />
 				<TableScrollContainer>
-					<Table aria-label="Liste des codes promo" striped className="min-w-full table-fixed">
+					<Table
+						aria-label="Liste des codes promo"
+						caption="Liste des remises"
+						striped
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">

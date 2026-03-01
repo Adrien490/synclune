@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
@@ -28,7 +28,7 @@ export async function bulkDeleteSkus(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
-			ids: formData.get("ids") as string,
+			ids: safeFormGet(formData, "ids"),
 		};
 
 		const { ids } = bulkDeleteSkusSchema.parse(rawData);
@@ -113,7 +113,7 @@ export async function bulkDeleteSkus(
 		// Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.bulkDelete",
 			targetType: "sku",
 			targetId: ids.join(","),

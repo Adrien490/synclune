@@ -113,7 +113,7 @@ export async function confirmNewsletterSubscription(
 		}
 
 		// Get confirmation IP for GDPR traceability
-		const confirmationIpAddress = (await getClientIp(headersList)) || "unknown";
+		const confirmationIpAddress = (await getClientIp(headersList)) ?? "unknown";
 
 		// Activate subscriber
 		await prisma.newsletterSubscriber.update({

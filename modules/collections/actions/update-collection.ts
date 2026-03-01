@@ -32,7 +32,7 @@ export async function updateCollection(
 		const validated = validateInput(updateCollectionSchema, {
 			id: formData.get("id"),
 			name: formData.get("name"),
-			description: formData.get("description") || null,
+			description: formData.get("description") ?? null,
 			status: formData.get("status"),
 		});
 		if ("error" in validated) return validated.error;
@@ -93,7 +93,7 @@ export async function updateCollection(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "collection.update",
 			targetType: "collection",
 			targetId: validatedData.id,

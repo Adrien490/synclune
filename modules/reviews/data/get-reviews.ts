@@ -70,7 +70,7 @@ export async function getReviews(
 	const admin = options?.isAdmin ?? (await isAdmin());
 
 	// Admin: utiliser le tri par défaut admin si aucun tri explicite fourni
-	if (admin && !hasSortByInput(params?.sortBy)) {
+	if (admin && !hasSortByInput(params.sortBy)) {
 		params = { ...params, sortBy: GET_REVIEWS_ADMIN_FALLBACK_SORT_BY as ReviewSortField };
 	}
 
@@ -100,11 +100,11 @@ async function fetchReviews(
 	try {
 		const where = buildReviewWhereClause(params, context.isAdminContext);
 		const select = context.isAdminContext ? REVIEW_ADMIN_SELECT : REVIEW_PUBLIC_SELECT;
-		const orderBy = buildReviewOrderBy(params.sortBy || GET_REVIEWS_DEFAULT_SORT_BY);
+		const orderBy = buildReviewOrderBy(params.sortBy ?? GET_REVIEWS_DEFAULT_SORT_BY);
 
 		// Limiter le nombre par page
 		const perPage = Math.min(
-			Math.max(1, params.perPage || GET_REVIEWS_DEFAULT_PER_PAGE),
+			Math.max(1, params.perPage ?? GET_REVIEWS_DEFAULT_PER_PAGE),
 			GET_REVIEWS_MAX_PER_PAGE,
 		);
 
@@ -198,8 +198,8 @@ export async function getReviewCountsByStatus(): Promise<{
 		_count: { status: true },
 	});
 
-	const published = counts.find((c) => c.status === "PUBLISHED")?._count.status || 0;
-	const hidden = counts.find((c) => c.status === "HIDDEN")?._count.status || 0;
+	const published = counts.find((c) => c.status === "PUBLISHED")?._count.status ?? 0;
+	const hidden = counts.find((c) => c.status === "HIDDEN")?._count.status ?? 0;
 
 	return {
 		published,

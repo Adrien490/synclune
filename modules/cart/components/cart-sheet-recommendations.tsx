@@ -20,7 +20,7 @@ export async function CartSheetRecommendations() {
 	return (
 		<div className="shrink-0 border-t px-4 py-3">
 			<p className="mb-2 text-xs font-semibold tracking-wide uppercase">Vous pourriez aimer</p>
-			<div className="scrollbar-none flex gap-3 overflow-x-auto pb-1">
+			<div className="scrollbar-none flex gap-3 overflow-x-auto pb-1" data-vaul-no-drag>
 				{recommendations.map((product) => {
 					const primarySku = product.skus[0];
 					const image = primarySku?.images[0];

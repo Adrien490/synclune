@@ -1,6 +1,9 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { orderItemFiltersSchema, getOrderItemsSchema } from "../schemas/order-items.schemas";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import {
+	type orderItemFiltersSchema,
+	type getOrderItemsSchema,
+} from "../schemas/order-items.schemas";
 
 // ============================================================================
 // ORDER ITEMS QUERY BUILDER UTILS
@@ -10,8 +13,6 @@ export function buildOrderItemsFilterConditions(
 	filters: z.infer<typeof orderItemFiltersSchema>,
 ): Prisma.OrderItemWhereInput[] {
 	const conditions: Prisma.OrderItemWhereInput[] = [];
-
-	if (!filters) return conditions;
 
 	if (filters.orderId !== undefined) {
 		const orderIds = Array.isArray(filters.orderId) ? filters.orderId : [filters.orderId];
@@ -54,7 +55,7 @@ export function buildOrderItemsWhereClause(
 	params: z.infer<typeof getOrderItemsSchema>,
 ): Prisma.OrderItemWhereInput {
 	const whereClause: Prisma.OrderItemWhereInput = {};
-	const filterConditions = buildOrderItemsFilterConditions(params.filters ?? {});
+	const filterConditions = buildOrderItemsFilterConditions(params.filters ?? ({} as never));
 
 	if (filterConditions.length > 0) {
 		whereClause.AND = filterConditions;

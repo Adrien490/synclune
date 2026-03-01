@@ -57,6 +57,15 @@ vi.mock("motion/react", () => {
 				},
 			},
 		),
+		m: new Proxy(
+			{},
+			{
+				get: (_target, prop) => {
+					if (typeof prop === "symbol") return undefined;
+					return prop;
+				},
+			},
+		),
 	};
 });
 
@@ -506,8 +515,8 @@ describe("ParticleBackground parallax", () => {
 		// mouseX and mouseY should never have been set (parallax effect bails out early)
 		const mouseXMv = motionValues[0]!;
 		const mouseYMv = motionValues[1]!;
-		if (mouseXMv) expect(mouseXMv.setFn).not.toHaveBeenCalled();
-		if (mouseYMv) expect(mouseYMv.setFn).not.toHaveBeenCalled();
+		expect(mouseXMv.setFn).not.toHaveBeenCalled();
+		expect(mouseYMv.setFn).not.toHaveBeenCalled();
 
 		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(false);
 	});

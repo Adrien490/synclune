@@ -35,7 +35,7 @@ export function validateInput<T>(
 		return {
 			error: {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || "Données invalides",
+				message: firstError?.message ?? "Données invalides",
 			},
 		};
 	}
@@ -71,4 +71,31 @@ export function validateFormData<T>(
 ): { data: T } | { error: ActionState } {
 	const rawData = extractor(formData);
 	return validateInput(schema, rawData);
+}
+
+/**
+ * Extract a string value from FormData with explicit null handling
+ *
+ * Replaces the unsafe `formData.get("key") as string` pattern.
+ * Returns null if the field is missing or not a string (e.g. File).
+ */
+export function safeFormGet(formData: FormData, key: string): string | null {
+	const value = formData.get(key);
+	return typeof value === "string" ? value : null;
+}
+
+/**
+ * Extract and parse a JSON value from FormData
+ *
+ * Used for fields that contain serialized JSON (e.g. arrays, objects).
+ * Returns null if the field is missing, not a string, or invalid JSON.
+ */
+export function safeFormGetJSON<T>(formData: FormData, key: string): T | null {
+	const raw = safeFormGet(formData, key);
+	if (!raw) return null;
+	try {
+		return JSON.parse(raw) as T;
+	} catch {
+		return null;
+	}
 }

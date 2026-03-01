@@ -46,7 +46,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 			<RequiredFieldsNote />
 
 			{/* Message de succès */}
-			{state?.status === ActionStatus.SUCCESS && state?.message && (
+			{state?.status === ActionStatus.SUCCESS && state.message && (
 				<Alert role="status" aria-live="polite">
 					<CheckCircle2 aria-hidden="true" />
 					<AlertDescription>

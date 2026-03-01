@@ -3,7 +3,7 @@
 import { cn } from "@/shared/utils/cn";
 import { m } from "motion/react";
 import { bgColorClass, loaderAnimations, sizeClasses } from "./constants";
-import { MiniDotsLoaderProps } from "./types";
+import { type MiniDotsLoaderProps } from "./types";
 
 export function MiniDotsLoader({ size = "sm", color = "primary", className }: MiniDotsLoaderProps) {
 	return (

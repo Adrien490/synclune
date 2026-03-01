@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -36,7 +37,7 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 		// 0a. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
 		// Empêche un attaquant de fusionner le panier d'un autre utilisateur
 		const currentSession = await getSession();
-		if (!currentSession?.user?.id || currentSession.user.id !== userId) {
+		if (!currentSession?.user.id || currentSession.user.id !== userId) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Non autorisé",
@@ -85,17 +86,15 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 
 		// 3. Créer le panier utilisateur s'il n'existe pas
 		let targetCart = userCart;
-		if (!targetCart) {
-			targetCart = await prisma.cart.create({
-				data: {
-					userId,
-					expiresAt: null, // Pas d'expiration pour utilisateur
-				},
-				include: {
-					items: true,
-				},
-			});
-		}
+		targetCart ??= await prisma.cart.create({
+			data: {
+				userId,
+				expiresAt: null, // Pas d'expiration pour utilisateur
+			},
+			include: {
+				items: true,
+			},
+		});
 
 		// 4. Préparer et valider tous les SKUs en batch (UNE SEULE requête DB)
 		// Calculer les quantités finales selon la stratégie MAX
@@ -216,7 +215,10 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 			},
 		};
 	} catch (error) {
-		console.error("[MERGE_CARTS]", { userId, sessionId, error });
+		logger.error("[MERGE_CARTS] Cart merge failed", error, {
+			action: "mergeCarts",
+			userId,
+		});
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue lors de la fusion des paniers",

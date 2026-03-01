@@ -32,7 +32,7 @@ export function EditReviewDialog() {
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Modifier mon avis</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Modifiez votre avis pour {editDialog.data?.review?.product?.title ?? "ce produit"}
+						Modifiez votre avis pour {editDialog.data?.review.product.title ?? "ce produit"}
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 				{editDialog.data?.review && (

@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
-import { error, unauthorized, validateInput } from "@/shared/lib/actions";
+import { error, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { headers } from "next/headers";
@@ -23,15 +23,15 @@ export const signInEmail = async (
 
 		// Vérifier si l'utilisateur est déjà connecté
 		const session = await auth.api.getSession({ headers: headersList });
-		if (session?.user?.id) {
+		if (session?.user.id) {
 			return unauthorized("Vous êtes déjà connecté");
 		}
 
 		// Validation des données
 		const rawData = {
-			email: formData.get("email") as string,
-			password: formData.get("password") as string,
-			callbackURL: formData.get("callbackURL") as string,
+			email: safeFormGet(formData, "email"),
+			password: safeFormGet(formData, "password"),
+			callbackURL: safeFormGet(formData, "callbackURL"),
 		};
 
 		const validation = validateInput(signInEmailSchema, rawData);
@@ -40,14 +40,10 @@ export const signInEmail = async (
 		const { email, password, callbackURL } = validation.data;
 
 		// Better Auth lance une exception APIError en cas d'erreur d'authentification
-		const response = await auth.api.signInEmail({
+		const _response = await auth.api.signInEmail({
 			body: { email, password, callbackURL },
 			headers: headersList,
 		});
-
-		if (!response) {
-			return error("Aucune réponse du service d'authentification");
-		}
 
 		// Redirection après connexion réussie
 		redirect(callbackURL);

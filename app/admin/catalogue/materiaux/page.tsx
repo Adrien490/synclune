@@ -25,7 +25,7 @@ const DeleteMaterialAlertDialog = dynamic(() =>
 	),
 );
 import { RefreshMaterialsButton } from "@/modules/materials/components/admin/refresh-materials-button";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Matériaux - Administration",
@@ -40,9 +40,9 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) || "name-ascending") as
+	const sortBy = (getFirstParam(params.sortBy) ?? "name-ascending") as
 		| "name-ascending"
 		| "name-descending"
 		| "skuCount-ascending"

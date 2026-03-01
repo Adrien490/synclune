@@ -41,7 +41,7 @@ export async function ProductReviewsSection({
 		reviewStats ? Promise.resolve(reviewStats) : getProductReviewStats(productId),
 		getSession(),
 	]);
-	const reviews = (reviewsData?.reviews ?? []) as ReviewPublic[];
+	const reviews = reviewsData.reviews as ReviewPublic[];
 
 	// Nombre d'avis filtrés vs total
 	const isFiltered = ratingFilter !== undefined;

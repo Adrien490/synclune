@@ -17,9 +17,9 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 		.filter((img) => !img.isPrimary)
 		.map((img) => ({
 			url: img.url,
-			thumbnailUrl: img.thumbnailUrl || undefined,
-			blurDataUrl: img.blurDataUrl || undefined,
-			altText: img.altText || undefined,
+			thumbnailUrl: img.thumbnailUrl ?? undefined,
+			blurDataUrl: img.blurDataUrl ?? undefined,
+			altText: img.altText ?? undefined,
 			mediaType: img.mediaType,
 		}));
 
@@ -31,15 +31,15 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 			inventory: sku.inventory,
 			isDefault: sku.isDefault,
 			isActive: sku.isActive,
-			colorId: sku.color?.id || "",
-			materialId: sku.materialId || "",
-			size: sku.size || "",
+			colorId: sku.color?.id ?? "",
+			materialId: sku.materialId ?? "",
+			size: sku.size ?? "",
 			primaryImage: primaryImage
 				? {
 						url: primaryImage.url,
-						thumbnailUrl: primaryImage.thumbnailUrl || undefined,
-						blurDataUrl: primaryImage.blurDataUrl || undefined,
-						altText: primaryImage.altText || undefined,
+						thumbnailUrl: primaryImage.thumbnailUrl ?? undefined,
+						blurDataUrl: primaryImage.blurDataUrl ?? undefined,
+						altText: primaryImage.altText ?? undefined,
 						mediaType: primaryImage.mediaType,
 					}
 				: undefined,

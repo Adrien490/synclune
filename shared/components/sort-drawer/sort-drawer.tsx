@@ -77,7 +77,7 @@ export function SortDrawer({
 	const paramKey = filterKey;
 
 	// Get current value from URL
-	const currentValue = searchParams.get(paramKey) || "";
+	const currentValue = searchParams.get(paramKey) ?? "";
 
 	// Optimistic state for immediate UI feedback
 	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
@@ -235,7 +235,7 @@ export function SortDrawer({
 
 					{/* Live region for screen readers */}
 					<span role="status" aria-live="polite" className="sr-only">
-						{isPending ? `Tri en cours : ${selectedLabel || "par défaut"}...` : ""}
+						{isPending ? `Tri en cours : ${selectedLabel ?? "par défaut"}...` : ""}
 					</span>
 				</DrawerBody>
 			</DrawerContent>

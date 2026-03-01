@@ -13,6 +13,7 @@ import {
 	notFound,
 	validationError,
 	handleActionError,
+	safeFormGet,
 } from "@/shared/lib/actions";
 import { bulkDeleteProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
@@ -41,11 +42,12 @@ export async function bulkDeleteProducts(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
-		const productIdsRaw = formData.get("productIds") as string;
+		const productIdsRaw = safeFormGet(formData, "productIds");
 		let productIds: string[] = [];
 
 		try {
-			productIds = JSON.parse(productIdsRaw);
+			const parsed: unknown = JSON.parse(productIdsRaw ?? "");
+			productIds = parsed as string[];
 		} catch {
 			return validationError("Format de donnees invalide.");
 		}
@@ -164,7 +166,7 @@ export async function bulkDeleteProducts(
 		// 10. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "product.bulkDelete",
 			targetType: "product",
 			targetId: validatedProductIds.join(","),

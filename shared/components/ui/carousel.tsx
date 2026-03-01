@@ -127,8 +127,8 @@ function Carousel({
 		api.on("select", () => onSelect(api));
 
 		return () => {
-			api?.off("select", () => onSelect(api));
-			api?.off("reInit", () => onReInit(api));
+			api.off("select", () => onSelect(api));
+			api.off("reInit", () => onReInit(api));
 		};
 	}, [api]);
 
@@ -138,7 +138,7 @@ function Carousel({
 				carouselRef,
 				api: api,
 				opts,
-				orientation: orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
+				orientation: orientation,
 				scrollPrev,
 				scrollNext,
 				canScrollPrev,

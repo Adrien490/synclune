@@ -4,7 +4,14 @@ import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/p
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { handleActionError, success, error, notFound, validationError } from "@/shared/lib/actions";
+import {
+	handleActionError,
+	success,
+	error,
+	notFound,
+	validationError,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -39,13 +46,15 @@ export async function markAsProcessing(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
+		const rawId = safeFormGet(formData, "id");
 
-		const result = markAsProcessingSchema.safeParse({ id });
+		const result = markAsProcessingSchema.safeParse({ id: rawId });
 
 		if (!result.success) {
-			return validationError(result.error.issues[0]?.message || "Données invalides");
+			return validationError(result.error.issues[0]?.message ?? "Données invalides");
 		}
+
+		const { id } = result.data;
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
@@ -84,7 +93,7 @@ export async function markAsProcessing(
 				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 				authorId: adminUser.id,
-				authorName: adminUser.name || "Admin",
+				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 			});
 
@@ -110,7 +119,7 @@ export async function markAsProcessing(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.markProcessing",
 			targetType: "order",
 			targetId: order.id,

@@ -56,7 +56,7 @@ export async function bulkToggleColorStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "color.bulkToggleStatus",
 			targetType: "color",
 			targetId: validatedData.ids.join(","),

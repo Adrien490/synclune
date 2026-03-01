@@ -141,7 +141,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 		it("includes the job name 'hard-delete-retention' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("hard-delete-retention");
 		});
 
@@ -150,7 +150,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(3333);
 		});
 

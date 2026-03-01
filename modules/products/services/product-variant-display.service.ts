@@ -26,7 +26,7 @@ export function getPrimaryColorForList(product: ProductFromList): {
 	const primarySku = getPrimarySkuForList(product);
 	if (!primarySku) return {};
 
-	const fallbackName = primarySku.material?.name || undefined;
+	const fallbackName = primarySku.material?.name ?? undefined;
 
 	if (primarySku.color?.hex) {
 		return {
@@ -55,16 +55,16 @@ export function getPrimaryColorForList(product: ProductFromList): {
  * Rejeté car cela masquerait des couleurs partiellement disponibles.
  */
 export function getAvailableColorsForList(product: ProductFromList): ColorSwatch[] {
-	const activeSkus = product.skus?.filter((sku) => sku.isActive && sku.color) || [];
+	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.color);
 	const colorMap = new Map<string, ColorSwatch>();
 
 	for (const sku of activeSkus) {
-		if (!sku.color?.slug || !sku.color?.hex) continue;
+		if (!sku.color?.slug || !sku.color.hex) continue;
 
 		const existing = colorMap.get(sku.color.slug);
 		// Logique permissive : inStock = true si au moins une variante de cette couleur a du stock
 		// Voir JSDoc ci-dessus pour la justification de ce comportement
-		const inStock = existing?.inStock || sku.inventory > 0;
+		const inStock = existing?.inStock ?? sku.inventory > 0;
 
 		colorMap.set(sku.color.slug, {
 			slug: sku.color.slug,
@@ -92,7 +92,7 @@ export function getVariantCountForList(product: ProductFromList): {
 	let totalSkus = 0;
 
 	// Ajouter les SKUs actifs en stock
-	const activeSkus = product.skus?.filter((sku) => sku.isActive && sku.inventory > 0) || [];
+	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.inventory > 0);
 
 	for (const sku of activeSkus) {
 		if (sku.color?.hex) uniqueColors.add(sku.color.hex);
@@ -114,7 +114,7 @@ export function getVariantCountForList(product: ProductFromList): {
  * Retourne true si le produit a plus d'une couleur, matière OU taille
  */
 export function hasMultipleVariants(product: ProductFromList): boolean {
-	const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
+	const activeSkus = product.skus.filter((sku) => sku.isActive);
 	if (activeSkus.length <= 1) return false;
 
 	const uniqueColors = new Set(activeSkus.map((s) => s.color?.slug).filter(Boolean));
@@ -135,7 +135,7 @@ export function getPriceRangeForList(product: ProductFromList): {
 	const prices: number[] = [];
 
 	// Ajouter les prix des SKUs actifs en stock
-	const activeSkus = product.skus?.filter((sku) => sku.isActive && sku.inventory > 0) || [];
+	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.inventory > 0);
 
 	for (const sku of activeSkus) {
 		prices.push(sku.priceInclTax);

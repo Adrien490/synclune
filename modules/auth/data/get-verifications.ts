@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
@@ -7,7 +7,6 @@ import {
 	GET_VERIFICATIONS_DEFAULT_SELECT,
 	GET_VERIFICATIONS_DEFAULT_PER_PAGE,
 	GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE,
-	GET_VERIFICATIONS_DEFAULT_SORT_ORDER,
 } from "../constants/verification.constants";
 import { getVerificationsSchema } from "../schemas/verification.schemas";
 import type { GetVerificationsParams, GetVerificationsReturn } from "../types/verification.types";
@@ -67,7 +66,7 @@ async function fetchVerifications(params: GetVerificationsParams): Promise<GetVe
 	"use cache";
 	cacheAuthVerifications();
 
-	const sortOrder = (params.sortOrder || GET_VERIFICATIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = params.sortOrder as Prisma.SortOrder;
 
 	try {
 		const where = buildVerificationWhereClause(params);

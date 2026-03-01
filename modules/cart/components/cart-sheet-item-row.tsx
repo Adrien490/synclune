@@ -66,7 +66,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							playsInline
 							preload="none"
 							poster={primaryImage.thumbnailUrl ?? undefined}
-							aria-label={primaryImage.altText || `Video du produit ${item.sku.product.title}`}
+							aria-label={primaryImage.altText ?? `Video du produit ${item.sku.product.title}`}
 							aria-describedby={`video-desc-${item.id}`}
 						>
 							<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
@@ -80,7 +80,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					) : (
 						<Image
 							src={primaryImage.url}
-							alt={primaryImage.altText || item.sku.product.title}
+							alt={primaryImage.altText ?? item.sku.product.title}
 							fill
 							className="object-cover"
 							sizes="(min-width: 640px) 96px, 80px"
@@ -135,7 +135,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					)}
 					{item.sku.size && (
 						<div className="inline-flex items-center">
-							{(item.sku.color || item.sku.material) && (
+							{(item.sku.color ?? item.sku.material) && (
 								<span aria-hidden="true" className="mr-1">
 									/
 								</span>
@@ -198,9 +198,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 						)}
 					</div>
 				) : item.sku.inventory <= LOW_STOCK_THRESHOLD ? (
-					<p className="text-xs text-orange-800 dark:text-orange-400">
-						Plus que {item.sku.inventory} en stock
-					</p>
+					<p className="text-xs text-orange-800">Plus que {item.sku.inventory} en stock</p>
 				) : null}
 			</div>
 
@@ -208,9 +206,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 			<div className="flex items-center justify-between gap-2">
 				{/* Quantité - à gauche (rendu uniquement si inventory > 1) */}
 				{item.sku.inventory === 1 && !hasIssue ? (
-					<span className="text-xs font-medium text-orange-800 dark:text-orange-400">
-						Dernière pièce !
-					</span>
+					<span className="text-xs font-medium text-orange-800">Dernière pièce !</span>
 				) : (
 					<CartItemQuantitySelector
 						cartItemId={item.id}

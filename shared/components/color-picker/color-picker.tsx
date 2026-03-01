@@ -63,9 +63,9 @@ export const ColorPicker = ({
 			const color = Color(value);
 			const hslValues = color.hsl().array();
 
-			setHue(hslValues[0] || 0);
-			setSaturation(hslValues[1] || 100);
-			setLightness(hslValues[2] || 50);
+			setHue(hslValues[0] ?? 0);
+			setSaturation(hslValues[1] ?? 100);
+			setLightness(hslValues[2] ?? 50);
 			const normalizedAlpha = isNaN(color.alpha()) ? 1 : color.alpha();
 			setAlpha(normalizedAlpha * 100 || 100);
 		}

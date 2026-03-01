@@ -7,7 +7,7 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -38,21 +38,21 @@ export async function updateOrderShippingAddress(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
-			id: formData.get("id") as string,
-			shippingFirstName: formData.get("shippingFirstName") as string,
-			shippingLastName: formData.get("shippingLastName") as string,
-			shippingAddress1: formData.get("shippingAddress1") as string,
-			shippingAddress2: (formData.get("shippingAddress2") as string) || undefined,
-			shippingPostalCode: formData.get("shippingPostalCode") as string,
-			shippingCity: formData.get("shippingCity") as string,
-			shippingCountry: (formData.get("shippingCountry") as string) || "FR",
+			id: safeFormGet(formData, "id"),
+			shippingFirstName: safeFormGet(formData, "shippingFirstName"),
+			shippingLastName: safeFormGet(formData, "shippingLastName"),
+			shippingAddress1: safeFormGet(formData, "shippingAddress1"),
+			shippingAddress2: safeFormGet(formData, "shippingAddress2") ?? undefined,
+			shippingPostalCode: safeFormGet(formData, "shippingPostalCode"),
+			shippingCity: safeFormGet(formData, "shippingCity"),
+			shippingCountry: safeFormGet(formData, "shippingCountry") ?? "FR",
 		};
 
 		const result = updateOrderShippingAddressSchema.safeParse(rawData);
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
+				message: result.error.issues[0]?.message ?? "Données invalides",
 			};
 		}
 
@@ -110,7 +110,7 @@ export async function updateOrderShippingAddress(
 				orderId: id,
 				action: "ADDRESS_UPDATED",
 				authorId: auth.user.id,
-				authorName: auth.user.name || "Admin",
+				authorName: auth.user.name ?? "Admin",
 				note: "Adresse de livraison modifiee",
 				metadata: {
 					previousAddress: {
@@ -150,7 +150,7 @@ export async function updateOrderShippingAddress(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.updateShippingAddress",
 			targetType: "order",
 			targetId: order.id,

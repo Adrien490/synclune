@@ -39,7 +39,7 @@ export function RequestPasswordResetForm() {
 			<RequiredFieldsNote />
 
 			{/* Message de succès */}
-			{state?.status === ActionStatus.SUCCESS && state?.message && (
+			{state?.status === ActionStatus.SUCCESS && state.message && (
 				<Alert role="status" aria-live="polite">
 					<CheckCircle2 aria-hidden="true" />
 					<AlertDescription>{state.message}</AlertDescription>
@@ -103,7 +103,7 @@ export function RequestPasswordResetForm() {
 							"Email envoyé"
 						) : isPending ? (
 							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+								<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
 								Envoi en cours...
 							</>
 						) : (

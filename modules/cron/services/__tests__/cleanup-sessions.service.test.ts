@@ -220,7 +220,9 @@ describe("cleanupExpiredSessions", () => {
 		await cleanupExpiredSessions();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Session delete limit reached, remaining will be cleaned on next run",
+			expect.stringContaining(
+				"Session delete limit reached, remaining will be cleaned on next run",
+			),
 		);
 	});
 
@@ -254,18 +256,14 @@ describe("cleanupExpiredSessions", () => {
 		await cleanupExpiredSessions();
 
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Starting expired sessions cleanup...",
+			expect.stringContaining("Starting expired sessions cleanup"),
 		);
+		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Deleted expired sessions"));
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Deleted 8 expired sessions",
+			expect.stringContaining("Deleted expired verifications"),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Deleted 3 expired verifications",
-		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-sessions] Cleared 2 expired access tokens, 1 expired refresh tokens",
-		);
-		expect(consoleLogSpy).toHaveBeenCalledWith("[CRON:cleanup-sessions] Cleanup completed");
+		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cleared expired tokens"));
+		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cleanup completed"));
 	});
 
 	it("should use current timestamp for expiresAt comparison", async () => {

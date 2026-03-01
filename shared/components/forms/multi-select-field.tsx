@@ -68,13 +68,16 @@ export const MultiSelectField = ({
 
 			<MultiSelect
 				options={options}
-				defaultValue={field.state.value || []}
+				defaultValue={field.state.value}
 				onValueChange={(values) => field.handleChange(values)}
 				placeholder={placeholder}
 				disabled={disabled}
 				maxCount={maxCount}
 				hideSelectAll={hideSelectAll}
 				searchable={searchable}
+				aria-invalid={hasError}
+				aria-describedby={hasError ? `${field.name}-error` : undefined}
+				aria-required={required}
 			/>
 
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />

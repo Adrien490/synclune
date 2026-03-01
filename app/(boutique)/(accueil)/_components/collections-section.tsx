@@ -1,5 +1,5 @@
 import { CollectionCard } from "@/modules/collections/components/collection-card";
-import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
+import { type GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import {
 	extractCollectionImages,
 	extractPriceRange,

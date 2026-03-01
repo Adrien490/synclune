@@ -32,11 +32,11 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 			.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
 			.map((img) => ({
 				url: img.url,
-				thumbnailUrl: img.thumbnailUrl || undefined,
-				blurDataUrl: img.blurDataUrl || undefined,
-				altText: img.altText || undefined,
+				thumbnailUrl: img.thumbnailUrl ?? undefined,
+				blurDataUrl: img.blurDataUrl ?? undefined,
+				altText: img.altText ?? undefined,
 				mediaType: img.mediaType,
-			})) || [];
+			})) ?? [];
 
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -50,7 +50,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 						"message" in result &&
 						typeof result.message === "string"
 					) {
-						options?.onSuccess?.(result.message);
+						options.onSuccess?.(result.message);
 					}
 				},
 			}),
@@ -63,21 +63,21 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 		defaultValues: {
 			productId: product.id,
 			title: product.title,
-			description: product.description || "",
-			typeId: product.type?.id || "",
-			collectionIds: product.collections?.map((pc) => pc.collection.id) || [],
+			description: product.description ?? "",
+			typeId: product.type?.id ?? "",
+			collectionIds: product.collections.map((pc) => pc.collection.id),
 			status: product.status,
 			defaultSku: {
-				skuId: defaultSku?.id || "",
+				skuId: defaultSku?.id ?? "",
 				priceInclTaxEuros: defaultSku ? defaultSku.priceInclTax / 100 : 0,
 				compareAtPriceEuros: defaultSku?.compareAtPrice
 					? defaultSku.compareAtPrice / 100
 					: undefined,
-				inventory: defaultSku?.inventory || 0,
+				inventory: defaultSku?.inventory ?? 0,
 				isActive: String(defaultSku?.isActive ?? true),
-				colorId: defaultSku?.color?.id || "",
-				materialId: defaultSku?.material?.id || "",
-				size: defaultSku?.size || "",
+				colorId: defaultSku?.color?.id ?? "",
+				materialId: defaultSku?.material?.id ?? "",
+				size: defaultSku?.size ?? "",
 				media: allMedia,
 			},
 		},

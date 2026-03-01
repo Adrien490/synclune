@@ -26,7 +26,7 @@ vi.mock("../address-card", () => ({
 // Mock CreateAddressButton
 vi.mock("../create-address-button", () => ({
 	CreateAddressButton: ({ children }: { children?: React.ReactNode }) => (
-		<button>{children || "Ajouter une adresse"}</button>
+		<button>{children ?? "Ajouter une adresse"}</button>
 	),
 }));
 

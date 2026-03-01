@@ -39,9 +39,6 @@ export const envSchema = z
 		STRIPE_SHIPPING_RATE_FRANCE: z
 			.string()
 			.startsWith("shr_", "STRIPE_SHIPPING_RATE_FRANCE doit être un ID Stripe valide (shr_xxx)"),
-		STRIPE_SHIPPING_RATE_CORSE: z
-			.string()
-			.startsWith("shr_", "STRIPE_SHIPPING_RATE_CORSE doit être un ID Stripe valide (shr_xxx)"),
 		STRIPE_SHIPPING_RATE_EUROPE: z
 			.string()
 			.startsWith("shr_", "STRIPE_SHIPPING_RATE_EUROPE doit être un ID Stripe valide (shr_xxx)"),

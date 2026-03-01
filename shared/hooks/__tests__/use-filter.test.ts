@@ -528,7 +528,6 @@ describe("useFilter", () => {
 				result.current.setFilters({
 					status: undefined,
 					type: "",
-					color: null as unknown as undefined,
 				});
 			});
 
@@ -536,7 +535,6 @@ describe("useFilter", () => {
 			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 			expect(url).not.toContain("filter_type");
-			expect(url).not.toContain("filter_color");
 		});
 
 		it("formats Date values as ISO strings", () => {

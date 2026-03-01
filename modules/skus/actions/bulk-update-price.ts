@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { bulkUpdatePriceSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
@@ -27,10 +27,10 @@ export async function bulkUpdatePrice(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
-			ids: formData.get("ids") as string,
-			mode: formData.get("mode") as string,
-			value: formData.get("value") as string,
-			updateCompareAtPrice: formData.get("updateCompareAtPrice") as string,
+			ids: safeFormGet(formData, "ids"),
+			mode: safeFormGet(formData, "mode"),
+			value: safeFormGet(formData, "value"),
+			updateCompareAtPrice: safeFormGet(formData, "updateCompareAtPrice"),
 		};
 
 		const { ids, mode, value, updateCompareAtPrice } = bulkUpdatePriceSchema.parse(rawData);
@@ -148,7 +148,7 @@ export async function bulkUpdatePrice(
 		// Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.bulkUpdatePrice",
 			targetType: "sku",
 			targetId: ids.join(","),

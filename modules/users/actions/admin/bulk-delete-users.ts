@@ -97,7 +97,7 @@ export async function bulkDeleteUsers(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "user.bulkDelete",
 			targetType: "user",
 			targetId: eligibleIds.join(","),

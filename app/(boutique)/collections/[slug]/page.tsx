@@ -58,11 +58,11 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 
 	// Fetch products with filters
 	const cursor = getFirstParam(searchParamsData.cursor);
-	const direction = (getFirstParam(searchParamsData.direction) || "forward") as
+	const direction = (getFirstParam(searchParamsData.direction) ?? "forward") as
 		| "forward"
 		| "backward";
 	const perPage = Number(getFirstParam(searchParamsData.perPage)) || GET_PRODUCTS_DEFAULT_PER_PAGE;
-	const sortBy = getFirstParam(searchParamsData.sortBy) || "created-descending";
+	const sortBy = getFirstParam(searchParamsData.sortBy) ?? "created-descending";
 
 	// Créer les Promises pour les produits et la wishlist en parallèle
 	const wishlistProductIdsPromise = getWishlistProductIds();
@@ -81,7 +81,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 
 	// Récupérer l'image du produit vedette pour le SEO
 	const featuredProduct = collection.products.find((pc) => pc.isFeatured);
-	const featuredImageUrl = featuredProduct?.product?.skus?.[0]?.images?.[0]?.url || null;
+	const featuredImageUrl = featuredProduct?.product.skus[0]?.images[0]?.url ?? null;
 
 	// Générer les données structurées pour le SEO
 	const structuredData = generateCollectionStructuredData({

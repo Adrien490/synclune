@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type * as DiscountConstantsModule from "../../constants/discount.constants";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -66,7 +67,7 @@ vi.mock("../../data/get-discount-usage-counts", () => ({
 }));
 
 vi.mock("../../constants/discount.constants", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("../../constants/discount.constants")>();
+	const actual = await importOriginal<typeof DiscountConstantsModule>();
 	return {
 		...actual,
 		GET_DISCOUNT_VALIDATION_SELECT: { id: true },

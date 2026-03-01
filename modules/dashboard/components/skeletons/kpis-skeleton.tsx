@@ -56,7 +56,7 @@ export function KpisSkeleton({
 			aria-label={ariaLabel}
 			className={cn("grid", CHART_STYLES.spacing.kpiGap, "md:grid-cols-2", gridCols)}
 		>
-			{[...Array(count)].map((_, i) => (
+			{Array.from({ length: count }).map((_, i) => (
 				<KpiCardSkeleton key={i} />
 			))}
 		</div>

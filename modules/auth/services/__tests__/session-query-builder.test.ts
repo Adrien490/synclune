@@ -162,7 +162,9 @@ describe("buildSessionFilterConditions", () => {
 
 describe("buildSessionWhereClause", () => {
 	it("should return empty object with no filters", () => {
-		const result = buildSessionWhereClause({} as never);
+		// params.filters must be present (even if empty) — passing {} causes
+		// params.filters to be undefined, which crashes buildSessionFilterConditions.
+		const result = buildSessionWhereClause({ filters: {} } as never);
 
 		expect(result).toEqual({});
 	});

@@ -1,6 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Suspense } from "react";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import { connection } from "next/server";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";

@@ -61,7 +61,7 @@ export async function AtelierSection() {
 	return (
 		<section
 			id="atelier-section"
-			className={`bg-muted/20 relative overflow-hidden mask-t-from-90% mask-t-to-100% mask-b-from-85% mask-b-to-100% ${SECTION_SPACING.spacious}`}
+			className={`bg-muted/20 relative overflow-hidden mask-t-from-95% mask-t-to-100% mask-b-from-90% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-85% ${SECTION_SPACING.spacious}`}
 			aria-labelledby="atelier-section-title"
 			data-content-type="about-creator"
 		>

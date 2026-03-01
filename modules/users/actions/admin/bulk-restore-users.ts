@@ -78,7 +78,7 @@ export async function bulkRestoreUsers(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "user.bulkRestore",
 			targetType: "user",
 			targetId: eligibleIds.join(","),

@@ -4,7 +4,14 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	notFound,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -33,7 +40,7 @@ export async function deleteProductType(
 
 		// 3. Extraction et validation
 		const rawData = {
-			productTypeId: formData.get("productTypeId") as string,
+			productTypeId: safeFormGet(formData, "productTypeId"),
 		};
 
 		const validated = validateInput(deleteProductTypeSchema, rawData);
@@ -86,7 +93,7 @@ export async function deleteProductType(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "productType.delete",
 			targetType: "productType",
 			targetId: productTypeId,

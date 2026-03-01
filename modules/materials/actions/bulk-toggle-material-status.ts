@@ -31,7 +31,7 @@ export async function bulkToggleMaterialStatus(
 		const idsString = formData.get("ids");
 		let ids: unknown[];
 		try {
-			ids = idsString ? JSON.parse(idsString as string) : [];
+			ids = idsString ? (JSON.parse(idsString as string) as unknown[]) : [];
 		} catch {
 			return error("Format des IDs invalide");
 		}
@@ -63,7 +63,7 @@ export async function bulkToggleMaterialStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "material.bulkToggleStatus",
 			targetType: "material",
 			targetId: validatedData.ids.join(","),

@@ -6,6 +6,7 @@
  */
 
 import type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types";
+import type { ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 
 export type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types";
 
@@ -32,8 +33,8 @@ const MAX_STORE_SIZE = 10000;
 const GLOBAL_IP_LIMIT = 100;
 const GLOBAL_IP_WINDOW = 60 * 1000; // 1 minute
 
-const WHITELIST_IPS = process.env.RATE_LIMIT_WHITELIST?.split(",").map((ip) => ip.trim()) || [];
-const BLACKLIST_IPS = process.env.RATE_LIMIT_BLACKLIST?.split(",").map((ip) => ip.trim()) || [];
+const WHITELIST_IPS = process.env.RATE_LIMIT_WHITELIST?.split(",").map((ip) => ip.trim()) ?? [];
+const BLACKLIST_IPS = process.env.RATE_LIMIT_BLACKLIST?.split(",").map((ip) => ip.trim()) ?? [];
 
 // ============================================================================
 // HELPERS
@@ -129,7 +130,7 @@ export async function checkRateLimit(
 
 	// Resolve effective IP: extract from identifier prefix OR use explicit param
 	const extractedIp = identifier.startsWith("ip:") ? identifier.substring(3) : null;
-	const effectiveIp = extractedIp || ipAddress || null;
+	const effectiveIp = extractedIp ?? ipAddress ?? null;
 
 	// Whitelist
 	if (effectiveIp && WHITELIST_IPS.length > 0 && WHITELIST_IPS.includes(effectiveIp)) {
@@ -260,9 +261,7 @@ export function getRateLimitIdentifier(
 /**
  * Extracts the real client IP from Next.js headers
  */
-export async function getClientIp(
-	headers: Awaited<ReturnType<typeof import("next/headers").headers>>,
-): Promise<string | null> {
+export async function getClientIp(headers: ReadonlyHeaders): Promise<string | null> {
 	const forwardedFor = headers.get("x-forwarded-for");
 	if (forwardedFor) return forwardedFor.split(",")[0]!.trim();
 

@@ -42,6 +42,10 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	handleActionError: vi.fn(),
 	success: vi.fn(),
 	error: vi.fn(),
@@ -90,7 +94,7 @@ function makeGuestItem(skuId: string, quantity: number, overrides: Record<string
 		sku: {
 			isActive: true,
 			product: { id: `prod-${skuId}`, status: "PUBLIC" },
-			...((overrides.sku as Record<string, unknown>) ?? {}),
+			...((overrides.sku as Record<string, unknown> | undefined) ?? {}),
 		},
 	};
 }

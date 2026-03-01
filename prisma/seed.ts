@@ -11,7 +11,7 @@ import {
 	OrderAction,
 	OrderStatus,
 	PaymentStatus,
-	Prisma,
+	type Prisma,
 	PrismaClient,
 	ProductStatus,
 	RefundReason,
@@ -26,10 +26,10 @@ import {
 // ============================================
 const CONFIG = {
 	cleanup: process.env.SEED_CLEANUP !== "false",
-	orderCount: parseInt(process.env.SEED_ORDER_COUNT || "50", 10),
-	userCount: parseInt(process.env.SEED_USER_COUNT || "29", 10),
-	adminEmail: process.env.SEED_ADMIN_EMAIL || "admin@synclune.fr",
-	orderPrefix: process.env.SEED_ORDER_PREFIX || "DEV",
+	orderCount: parseInt(process.env.SEED_ORDER_COUNT ?? "50", 10),
+	userCount: parseInt(process.env.SEED_USER_COUNT ?? "29", 10),
+	adminEmail: process.env.SEED_ADMIN_EMAIL ?? "admin@synclune.fr",
+	orderPrefix: process.env.SEED_ORDER_PREFIX ?? "DEV",
 };
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
@@ -1408,11 +1408,11 @@ async function main(): Promise<void> {
 							sku: skuCode,
 							colorId: colorMap.get(skuData.colorSlug)!,
 							materialId: materialMap.get(skuData.materialSlug)!,
-							size: skuData.size || null,
+							size: skuData.size ?? null,
 							priceInclTax: skuData.price,
 							inventory: skuData.inventory,
 							isActive: true,
-							isDefault: skuData.isDefault || false,
+							isDefault: skuData.isDefault ?? false,
 							images: {
 								create: [
 									{
@@ -1559,8 +1559,6 @@ async function main(): Promise<void> {
 			const product = faker.helpers.arrayElement(existingProducts);
 			const sku = faker.helpers.arrayElement(product.skus);
 
-			if (!sku) continue;
-
 			const quantity = faker.number.int({ min: 1, max: 2 });
 			const lineAmount = sku.priceInclTax * quantity;
 			subtotal += lineAmount;
@@ -1569,10 +1567,10 @@ async function main(): Promise<void> {
 				productId: product.id,
 				skuId: sku.id,
 				productTitle: product.title,
-				skuColor: sku.color?.name || null,
-				skuMaterial: sku.material?.name || null,
-				skuSize: sku.size || null,
-				skuImageUrl: sku.images?.[0]?.url || null,
+				skuColor: sku.color?.name ?? null,
+				skuMaterial: sku.material?.name ?? null,
+				skuSize: sku.size ?? null,
+				skuImageUrl: sku.images[0]?.url ?? null,
 				price: sku.priceInclTax,
 				quantity,
 			});
@@ -1674,7 +1672,7 @@ async function main(): Promise<void> {
 		// Track inventory decrements for paid orders
 		if (status !== OrderStatus.PENDING && status !== OrderStatus.CANCELLED) {
 			for (const item of itemsData) {
-				const current = skuInventoryDecrements.get(item.skuId) || 0;
+				const current = skuInventoryDecrements.get(item.skuId) ?? 0;
 				skuInventoryDecrements.set(item.skuId, current + item.quantity);
 			}
 		}
@@ -1987,8 +1985,8 @@ async function main(): Promise<void> {
 	const addressesData: Prisma.AddressCreateManyInput[] = [];
 
 	for (const user of usersWithOrders) {
-		const firstName = user.name?.split(" ")[0] || faker.person.firstName();
-		const lastName = user.name?.split(" ").slice(1).join(" ") || faker.person.lastName();
+		const firstName = user.name?.split(" ")[0] ?? faker.person.firstName();
+		const lastName = user.name?.split(" ").slice(1).join(" ") ?? faker.person.lastName();
 
 		// Default address
 		addressesData.push({
@@ -2140,7 +2138,7 @@ async function main(): Promise<void> {
 			amountApplied: Math.min(amountApplied, order.subtotal),
 		});
 
-		discountUsageCounts.set(discount.id, (discountUsageCounts.get(discount.id) || 0) + 1);
+		discountUsageCounts.set(discount.id, (discountUsageCounts.get(discount.id) ?? 0) + 1);
 	}
 
 	await prisma.discountUsage.createMany({ data: discountUsagesData });

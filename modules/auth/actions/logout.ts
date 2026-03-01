@@ -22,7 +22,7 @@ export async function logout(): Promise<ActionState> {
 		const session = await auth.api.getSession({ headers: headersList });
 
 		// Invalider le cache si on a un userId (même si l'utilisateur n'existe plus)
-		if (session?.user?.id) {
+		if (session?.user.id) {
 			try {
 				getSessionInvalidationTags(session.user.id).forEach((tag) => updateTag(tag));
 			} catch {

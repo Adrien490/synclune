@@ -51,7 +51,7 @@ export function SetFeaturedProductAlertDialog() {
 		}
 	};
 
-	const isFeatured = dialog.data?.isFeatured || false;
+	const isFeatured = dialog.data?.isFeatured ?? false;
 
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>

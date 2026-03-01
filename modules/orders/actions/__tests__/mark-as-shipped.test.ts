@@ -12,6 +12,10 @@ const {
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
+	mockSuccess,
+	mockError,
+	mockNotFound,
+	mockValidationError,
 	mockSendShippingEmail,
 	mockCanMarkAsShipped,
 	mockCreateOrderAuditTx,
@@ -28,6 +32,10 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
+	mockSuccess: vi.fn(),
+	mockError: vi.fn(),
+	mockNotFound: vi.fn(),
+	mockValidationError: vi.fn(),
 	mockSendShippingEmail: vi.fn(),
 	mockCanMarkAsShipped: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
@@ -47,7 +55,17 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ORDER_LIMITS: { SINGLE_OPERATIONS: "admin-order-single" },
 }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
-vi.mock("@/shared/lib/actions", () => ({ handleActionError: mockHandleActionError }));
+vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	handleActionError: mockHandleActionError,
+	success: mockSuccess,
+	error: mockError,
+	notFound: mockNotFound,
+	validationError: mockValidationError,
+}));
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendShippingConfirmationEmail: mockSendShippingEmail,
 }));
@@ -140,6 +158,19 @@ describe("markAsShipped", () => {
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
 			message: fallback,
+		}));
+		mockSuccess.mockImplementation((msg: string) => ({
+			status: ActionStatus.SUCCESS,
+			message: msg,
+		}));
+		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
+		mockNotFound.mockImplementation((resource: string) => ({
+			status: ActionStatus.NOT_FOUND,
+			message: `${resource} non trouvé`,
+		}));
+		mockValidationError.mockImplementation((msg: string) => ({
+			status: ActionStatus.VALIDATION_ERROR,
+			message: msg,
 		}));
 	});
 

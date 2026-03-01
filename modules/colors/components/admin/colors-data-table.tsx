@@ -44,7 +44,12 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 			<CardContent>
 				<ColorsSelectionToolbar />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des couleurs" className="min-w-full table-fixed">
+					<Table
+						role="table"
+						aria-label="Liste des couleurs"
+						caption="Liste des couleurs"
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
@@ -95,7 +100,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 						</TableHeader>
 						<TableBody>
 							{colors.map((color) => {
-								const skuCount = color._count?.skus || 0;
+								const skuCount = color._count.skus || 0;
 
 								return (
 									<TableRow key={color.id}>

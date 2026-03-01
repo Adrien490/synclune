@@ -107,7 +107,7 @@ export const ourFileRouter = {
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter.",
+					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
 				);
 			}
 
@@ -155,7 +155,7 @@ export const ourFileRouter = {
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter.",
+					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
 				);
 			}
 
@@ -222,7 +222,7 @@ export const ourFileRouter = {
 			// 2. Rate limiting STRICT pour endpoint public
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(session?.user?.id || null, null, clientIp);
+			const rateLimitId = getRateLimitIdentifier(session?.user.id ?? null, null, clientIp);
 			const rateLimit = await checkRateLimit(
 				rateLimitId,
 				UPLOAD_LIMITS.CONTACT_ATTACHMENT,
@@ -231,7 +231,7 @@ export const ourFileRouter = {
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error || "Trop de tentatives d'upload. Veuillez réessayer plus tard.",
+					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez réessayer plus tard.",
 				);
 			}
 
@@ -253,8 +253,8 @@ export const ourFileRouter = {
 			}
 
 			return {
-				userId: session?.user?.id || null,
-				userName: session?.user?.name || "Anonymous",
+				userId: session?.user.id ?? null,
+				userName: session?.user.name ?? "Anonymous",
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
@@ -280,12 +280,12 @@ export const ourFileRouter = {
 			// 2. Rate limiting STRICT pour endpoint public
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(session?.user?.id || null, null, clientIp);
+			const rateLimitId = getRateLimitIdentifier(session?.user.id ?? null, null, clientIp);
 			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CUSTOMIZATION, clientIp);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error || "Trop de tentatives d'upload. Veuillez réessayer plus tard.",
+					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez réessayer plus tard.",
 				);
 			}
 
@@ -296,8 +296,8 @@ export const ourFileRouter = {
 			}
 
 			return {
-				userId: session?.user?.id || null,
-				userName: session?.user?.name || "Anonymous",
+				userId: session?.user.id ?? null,
+				userName: session?.user.name ?? "Anonymous",
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
@@ -327,7 +327,7 @@ export const ourFileRouter = {
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
-					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter.",
+					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
 				);
 			}
 

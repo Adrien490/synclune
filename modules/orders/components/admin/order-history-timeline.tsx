@@ -113,7 +113,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 function getStatusLabel(status: string | null | undefined): string {
 	if (!status) return "";
-	return STATUS_LABELS[status] || status;
+	return STATUS_LABELS[status] ?? status;
 }
 
 export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {

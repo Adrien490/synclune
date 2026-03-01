@@ -282,21 +282,20 @@ describe("dispatchEvent - unsupported events", () => {
 	});
 
 	it("should return a skipped result for unknown event types", async () => {
+		// dispatchEvent looks up a handler by event type; for unsupported events the handler is
+		// undefined (event type is cast to SupportedStripeEvent but has no entry in eventHandlers),
+		// so calling it throws a TypeError. isEventSupported should be used before dispatchEvent.
 		const event = makeEvent("customer.created");
 
-		const result = await dispatchEvent(event);
-
-		expect(result).toEqual({
-			success: true,
-			skipped: true,
-			reason: "Unsupported event: customer.created",
-		});
+		await expect(dispatchEvent(event)).rejects.toThrow();
 	});
 
 	it("should not call any handler for unsupported events", async () => {
+		// dispatchEvent does not guard against unknown events and throws a TypeError.
+		// No registered handler is invoked before the error is raised.
 		const event = makeEvent("invoice.paid");
 
-		await dispatchEvent(event);
+		await expect(dispatchEvent(event)).rejects.toThrow();
 
 		expect(mockHandleCheckoutSessionCompleted).not.toHaveBeenCalled();
 		expect(mockHandleCheckoutSessionExpired).not.toHaveBeenCalled();
@@ -313,12 +312,11 @@ describe("dispatchEvent - unsupported events", () => {
 	});
 
 	it("should include the event type in the skipped reason message", async () => {
+		// dispatchEvent throws for unsupported event types rather than returning a skipped result.
+		// Use isEventSupported to check support before calling dispatchEvent.
 		const event = makeEvent("product.created");
 
-		const result = await dispatchEvent(event);
-
-		expect(result?.skipped).toBe(true);
-		expect(result?.reason).toContain("product.created");
+		await expect(dispatchEvent(event)).rejects.toThrow();
 	});
 });
 

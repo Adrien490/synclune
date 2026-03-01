@@ -1,11 +1,12 @@
 import { test, expect } from "./fixtures";
+import type { Page } from "@playwright/test";
 
 /**
  * Measures LCP using PerformanceObserver with buffered entries.
  * Uses requestAnimationFrame to ensure paint entries are flushed
  * before reading, instead of unreliable setTimeout.
  */
-async function measureLCP(page: import("@playwright/test").Page): Promise<number> {
+async function measureLCP(page: Page): Promise<number> {
 	return page.evaluate(() => {
 		return new Promise<number>((resolve) => {
 			let lcpValue = 0;
@@ -42,7 +43,7 @@ async function measureLCP(page: import("@playwright/test").Page): Promise<number
  * Measures CLS using PerformanceObserver with buffered entries.
  * Waits for document load + double-rAF to capture layout shifts.
  */
-async function measureCLS(page: import("@playwright/test").Page): Promise<number> {
+async function measureCLS(page: Page): Promise<number> {
 	return page.evaluate(() => {
 		return new Promise<number>((resolve) => {
 			let clsValue = 0;

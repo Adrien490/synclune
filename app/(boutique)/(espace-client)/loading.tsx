@@ -7,7 +7,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function EspaceClientLoading() {
 	return (
 		<div
-			className="animate-pulse space-y-6"
+			className="space-y-6 motion-safe:animate-pulse"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de la page"

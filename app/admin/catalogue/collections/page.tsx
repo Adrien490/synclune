@@ -5,7 +5,7 @@ import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getCollections, SORT_LABELS } from "@/modules/collections/data/get-collections";
 import { getFirstParam } from "@/shared/utils/params";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { CollectionsDataTable } from "@/modules/collections/components/admin/collections-data-table";
@@ -79,9 +79,9 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) || "name-ascending") as
+	const sortBy = (getFirstParam(params.sortBy) ?? "name-ascending") as
 		| "name-ascending"
 		| "name-descending"
 		| "created-ascending"

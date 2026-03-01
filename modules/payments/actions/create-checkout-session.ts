@@ -15,7 +15,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { createCheckoutSessionSchema } from "@/modules/payments/schemas/create-checkout-session-schema";
 import { parseFullName } from "@/modules/payments/utils/parse-full-name";
-import type { CreateCheckoutSessionData } from "@/modules/payments/types/checkout.types";
+
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
@@ -34,6 +34,8 @@ import {
 	success,
 	error,
 	BusinessError,
+	safeFormGet,
+	safeFormGetJSON,
 } from "@/shared/lib/actions";
 import { sendAdminCheckoutFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
@@ -49,8 +51,8 @@ export const createCheckoutSession = async (
 		try {
 			// 1. Retrieve authenticated user (optional for guest checkout)
 			const session = await getSession();
-			const userId = session?.user?.id || null;
-			const userEmail = session?.user?.email || null;
+			const userId = session?.user.id ?? null;
+			const userEmail = session?.user.email ?? null;
 
 			let stripeCustomerId: string | null = null;
 			if (userId) {
@@ -58,7 +60,7 @@ export const createCheckoutSession = async (
 					where: { id: userId },
 					select: { stripeCustomerId: true },
 				});
-				stripeCustomerId = user?.stripeCustomerId || null;
+				stripeCustomerId = user?.stripeCustomerId ?? null;
 			}
 
 			// 2. Rate limiting
@@ -66,30 +68,26 @@ export const createCheckoutSession = async (
 			const headersList = await headers();
 			const ipAddress = await getClientIp(headersList);
 
-			const rateLimitId = getRateLimitIdentifier(userId, sessionId || null, ipAddress);
+			const rateLimitId = getRateLimitIdentifier(userId, sessionId ?? null, ipAddress);
 			const rateLimit = await checkRateLimit(rateLimitId, PAYMENT_LIMITS.CREATE_SESSION, ipAddress);
 
 			if (!rateLimit.success) {
 				return error(
-					rateLimit.error || "Trop de tentatives de paiement. Veuillez réessayer plus tard.",
+					rateLimit.error ?? "Trop de tentatives de paiement. Veuillez réessayer plus tard.",
 				);
 			}
 
 			// 3. Parse and validate form data
-			const cartItemsRaw = formData.get("cartItems") as string;
-			const shippingAddressRaw = formData.get("shippingAddress") as string;
-			const email = (formData.get("email") as string) || undefined;
-			const discountCode = (formData.get("discountCode") as string) || undefined;
+			const cartItems = safeFormGetJSON<unknown>(formData, "cartItems");
+			const shippingAddress = safeFormGetJSON<unknown>(formData, "shippingAddress");
+			const email = safeFormGet(formData, "email") ?? undefined;
+			const discountCode = safeFormGet(formData, "discountCode") ?? undefined;
 
-			let cartItems, shippingAddress;
-			try {
-				cartItems = JSON.parse(cartItemsRaw);
-				shippingAddress = JSON.parse(shippingAddressRaw);
-			} catch {
+			if (!cartItems || !shippingAddress) {
 				return error("Format JSON invalide pour les donnees du panier.");
 			}
 
-			const rawData: CreateCheckoutSessionData = {
+			const rawData = {
 				cartItems,
 				shippingAddress,
 				email,
@@ -100,7 +98,7 @@ export const createCheckoutSession = async (
 			const validatedData = validated.data;
 
 			// 4. Resolve email (user or guest)
-			const finalEmail = validatedData.email || userEmail;
+			const finalEmail = validatedData.email ?? userEmail;
 			if (!userId && !finalEmail) {
 				return error("L'email est requis pour une commande invite.");
 			}
@@ -239,8 +237,8 @@ export const createCheckoutSession = async (
 					const usageCounts = discount.maxUsagePerUser
 						? await getDiscountUsageCounts({
 								discountId: discount.id,
-								userId: userId || undefined,
-								customerEmail: finalEmail || undefined,
+								userId: userId ?? undefined,
+								customerEmail: finalEmail ?? undefined,
 							})
 						: undefined;
 
@@ -260,14 +258,14 @@ export const createCheckoutSession = async (
 						},
 						{
 							subtotal,
-							userId: userId || undefined,
-							customerEmail: finalEmail || undefined,
+							userId: userId ?? undefined,
+							customerEmail: finalEmail ?? undefined,
 						},
 						usageCounts,
 					);
 
 					if (!eligibility.eligible) {
-						throw new BusinessError(eligibility.error || "Code promo invalide");
+						throw new BusinessError(eligibility.error ?? "Code promo invalide");
 					}
 
 					const cartItemsForDiscount: CartItemForDiscount[] = [];
@@ -322,15 +320,15 @@ export const createCheckoutSession = async (
 						taxAmount,
 						total,
 						currency: DEFAULT_CURRENCY,
-						customerEmail: finalEmail || "",
+						customerEmail: finalEmail ?? "",
 						customerName: `${firstName} ${lastName}`.trim(),
 						shippingFirstName: firstName,
 						shippingLastName: lastName,
 						shippingAddress1: validatedData.shippingAddress.addressLine1,
-						shippingAddress2: validatedData.shippingAddress.addressLine2 || null,
+						shippingAddress2: validatedData.shippingAddress.addressLine2 ?? null,
 						shippingPostalCode: validatedData.shippingAddress.postalCode,
 						shippingCity: validatedData.shippingAddress.city,
-						shippingCountry: validatedData.shippingAddress.country || "FR",
+						shippingCountry: validatedData.shippingAddress.country as ShippingCountry,
 						shippingPhone: validatedData.shippingAddress.phoneNumber || "",
 						shippingMethod: "STANDARD",
 						status: "PENDING",
@@ -348,9 +346,9 @@ export const createCheckoutSession = async (
 
 					const sku = skuResult.data.sku;
 					const product = sku.product;
-					const primaryImage = sku.images?.find((img) => img.isPrimary);
-					const rawImageUrl = primaryImage?.url || sku.images?.[0]?.url || null;
-					const imageUrl = getValidImageUrl(rawImageUrl) || null;
+					const primaryImage = sku.images.find((img) => img.isPrimary);
+					const rawImageUrl = primaryImage?.url ?? sku.images[0]?.url ?? null;
+					const imageUrl = getValidImageUrl(rawImageUrl) ?? null;
 
 					await tx.orderItem.create({
 						data: {
@@ -358,11 +356,11 @@ export const createCheckoutSession = async (
 							productId: product.id,
 							skuId: sku.id,
 							productTitle: product.title,
-							productDescription: product.description || null,
+							productDescription: product.description ?? null,
 							productImageUrl: imageUrl,
-							skuColor: sku.color?.name || null,
-							skuMaterial: sku.material || null,
-							skuSize: sku.size || null,
+							skuColor: sku.color?.name ?? null,
+							skuMaterial: sku.material ?? null,
+							skuSize: sku.size ?? null,
 							skuImageUrl: imageUrl,
 							price: sku.priceInclTax,
 							quantity: cartItem.quantity,
@@ -376,7 +374,7 @@ export const createCheckoutSession = async (
 						data: {
 							discountId: appliedDiscountId,
 							orderId: newOrder.id,
-							userId: userId || null,
+							userId: userId ?? null,
 							discountCode: appliedDiscountCode!,
 							amountApplied: discountAmount,
 						},
@@ -436,7 +434,7 @@ export const createCheckoutSession = async (
 
 				sendAdminCheckoutFailedAlert({
 					orderNumber: order.orderNumber,
-					customerEmail: finalEmail || "unknown",
+					customerEmail: finalEmail ?? "unknown",
 					total: order.total,
 					errorMessage: stripeError instanceof Error ? stripeError.message : String(stripeError),
 				}).catch(() => {});
@@ -449,7 +447,7 @@ export const createCheckoutSession = async (
 			}
 
 			// Invalidate cart cache
-			const cartTags = getCartInvalidationTags(userId || undefined, sessionId || undefined);
+			const cartTags = getCartInvalidationTags(userId ?? undefined, sessionId ?? undefined);
 			cartTags.forEach((tag) => updateTag(tag));
 
 			return success("Session de paiement creee avec succes.", {

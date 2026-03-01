@@ -14,7 +14,7 @@ import {
 	buildInventorySearchConditions,
 	buildInventoryFilterConditions,
 	buildInventoryWhereClause,
-} from "../inventory-query-builder.service";
+} from "../inventory-query-builder";
 import type { InventoryFilters } from "../../types/inventory.types";
 import type { GetSkuStocksParams } from "../../types/inventory.types";
 

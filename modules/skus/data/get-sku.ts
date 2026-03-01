@@ -20,7 +20,7 @@ export type { GetProductSkuParams, GetProductSkuReturn, SkuWithImages } from "..
 export async function getSkuByCode(
 	params: Partial<GetProductSkuParams>,
 ): Promise<GetProductSkuReturn | null> {
-	const validation = getProductSkuSchema.safeParse(params ?? {});
+	const validation = getProductSkuSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

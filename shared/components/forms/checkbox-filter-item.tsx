@@ -2,7 +2,7 @@
 
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { cn } from "@/shared/utils/cn";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 interface CheckboxFilterItemProps {
 	id: string;

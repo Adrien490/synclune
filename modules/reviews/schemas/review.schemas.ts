@@ -50,7 +50,7 @@ export const createReviewSchema = z.object({
 		)
 		.trim()
 		.optional()
-		.transform((val) => val || null),
+		.transform((val) => (val === "" || val === undefined ? null : val)),
 
 	content: z
 		.string()
@@ -96,7 +96,7 @@ export const updateReviewSchema = z.object({
 		)
 		.trim()
 		.optional()
-		.transform((val) => val || null),
+		.transform((val) => (val === "" || val === undefined ? null : val)),
 
 	content: z
 		.string()

@@ -12,7 +12,7 @@ import { getClientIp } from "@/shared/lib/rate-limit";
 import { z } from "zod";
 import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
 import { getNewsletterInvalidationTags } from "../utils/cache.utils";
-import { subscribeToNewsletterInternal } from "./subscribe-to-newsletter-internal";
+import { subscribeToNewsletterInternal } from "../services/subscribe-to-newsletter-internal";
 
 const TOGGLE_NEWSLETTER_LIMIT = {
 	limit: 10,
@@ -51,14 +51,14 @@ export async function toggleNewsletter(
 	try {
 		if (action === "subscribe") {
 			const headersList = await headers();
-			const ipAddress = (await getClientIp(headersList)) || "unknown";
-			const userAgent = headersList.get("user-agent") || "unknown";
+			const ipAddress = (await getClientIp(headersList)) ?? "unknown";
+			const userAgent = headersList.get("user-agent") ?? "unknown";
 
 			const result = await subscribeToNewsletterInternal({
 				email: user.email,
 				ipAddress,
 				userAgent,
-				consentSource: "newsletter_form",
+				consentSource: "account_settings",
 			});
 
 			if (!result.success) return error(result.message);
@@ -70,7 +70,8 @@ export async function toggleNewsletter(
 			return success(result.message);
 		}
 
-		if (action === "unsubscribe") {
+		// action === "unsubscribe" (only remaining case after "subscribe" branch)
+		{
 			const subscriber = await prisma.newsletterSubscriber.findFirst({
 				where: { email: user.email, ...notDeleted },
 			});
@@ -92,8 +93,6 @@ export async function toggleNewsletter(
 
 			return success("Vous avez été désinscrit(e) de la newsletter.");
 		}
-
-		return error("Action invalide");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise à jour");
 	}

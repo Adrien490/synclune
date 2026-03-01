@@ -160,7 +160,7 @@ export function GallerySlide({
 			>
 				{videoState === "loading" && <VideoLoadingSpinner />}
 				{videoState === "error" && (
-					<VideoErrorFallback onRetry={handleRetry} poster={media.thumbnailUrl || undefined} />
+					<VideoErrorFallback onRetry={handleRetry} poster={media.thumbnailUrl ?? undefined} />
 				)}
 				<video
 					ref={videoRef}
@@ -174,7 +174,7 @@ export function GallerySlide({
 					loop={!prefersReduced}
 					playsInline
 					autoPlay={isActive && !prefersReduced}
-					poster={media.thumbnailUrl || undefined}
+					poster={media.thumbnailUrl ?? undefined}
 					onCanPlay={() => {
 						if (videoRef.current && videoRef.current.readyState >= 3) {
 							setVideoState("ready");

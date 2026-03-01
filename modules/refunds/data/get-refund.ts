@@ -18,7 +18,7 @@ export type { GetRefundParams, GetRefundReturn } from "../types/refund.types";
  * Récupère un remboursement par son ID
  */
 export async function getRefundById(params: Partial<GetRefundParams>): Promise<GetRefundReturn> {
-	const validation = getRefundSchema.safeParse(params ?? {});
+	const validation = getRefundSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

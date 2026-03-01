@@ -18,7 +18,7 @@ const providers = [
 
 export function SignInSocialForm() {
 	const searchParams = useSearchParams();
-	const callbackURL = searchParams.get("callbackURL") || "/";
+	const callbackURL = searchParams.get("callbackURL") ?? "/";
 	const { action, isPending, state } = useSignInSocial();
 
 	return (
@@ -42,7 +42,7 @@ export function SignInSocialForm() {
 							className="bg-background/50 hover:bg-background/70 border-border hover:border-primary/30 disabled:hover:border-border group w-full border-2 transition-all duration-300"
 						>
 							{isPending ? (
-								<Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+								<Loader2 className="h-5 w-5 motion-safe:animate-spin" aria-hidden="true" />
 							) : (
 								<div className="flex w-full items-center justify-center gap-3">
 									<span className="transition-transform duration-300 group-hover:scale-110">

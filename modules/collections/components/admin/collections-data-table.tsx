@@ -72,7 +72,12 @@ export async function CollectionsDataTable({
 			<CardContent>
 				<CollectionsSelectionToolbar collections={collectionsData} />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des collections" className="min-w-full table-fixed">
+					<Table
+						role="table"
+						aria-label="Liste des collections"
+						caption="Liste des collections"
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
@@ -123,7 +128,7 @@ export async function CollectionsDataTable({
 						</TableHeader>
 						<TableBody>
 							{collections.map((collection) => {
-								const productsCount = collection._count?.products || 0;
+								const productsCount = collection._count.products || 0;
 								const truncatedDescription = truncateDescription(collection.description);
 								// Verifier si un produit featured est defini
 								const hasFeaturedProduct = collection.products[0]?.isFeatured === true;
@@ -178,7 +183,7 @@ export async function CollectionsDataTable({
 											<div className="overflow-hidden">
 												<span
 													className="text-muted-foreground block truncate text-sm"
-													title={collection.description || "—"}
+													title={collection.description ?? "—"}
 												>
 													{truncatedDescription}
 												</span>

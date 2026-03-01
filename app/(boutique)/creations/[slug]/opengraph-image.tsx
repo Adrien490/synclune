@@ -45,7 +45,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
 	// Get the main product image URL
 	const mainImage =
-		primarySku?.images?.find((img) => img.isPrimary)?.url || primarySku?.images?.[0]?.url;
+		primarySku?.images.find((img) => img.isPrimary)?.url ?? primarySku?.images[0]?.url;
 
 	return new ImageResponse(
 		<div

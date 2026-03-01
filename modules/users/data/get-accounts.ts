@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
@@ -10,7 +10,6 @@ import {
 	GET_ACCOUNTS_DEFAULT_SELECT,
 	GET_ACCOUNTS_DEFAULT_PER_PAGE,
 	GET_ACCOUNTS_MAX_RESULTS_PER_PAGE,
-	GET_ACCOUNTS_DEFAULT_SORT_ORDER,
 } from "../constants/accounts.constants";
 import { getAccountsSchema } from "../schemas/accounts.schemas";
 import type { GetAccountsReturn, GetAccountsParams } from "../types/accounts.types";
@@ -71,7 +70,7 @@ async function fetchAccounts(params: GetAccountsParams): Promise<GetAccountsRetu
 	cacheLife("dashboard");
 	cacheTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 
-	const sortOrder = (params.sortOrder || GET_ACCOUNTS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = params.sortOrder as Prisma.SortOrder;
 
 	const take = Math.min(
 		Math.max(1, params.perPage || GET_ACCOUNTS_DEFAULT_PER_PAGE),

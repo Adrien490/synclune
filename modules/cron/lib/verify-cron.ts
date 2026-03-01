@@ -29,7 +29,7 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 	const authorization = headersList.get("authorization");
 
 	const expected = Buffer.from(`Bearer ${cronSecret}`);
-	const received = Buffer.from(authorization || "");
+	const received = Buffer.from(authorization ?? "");
 	if (expected.length !== received.length || !timingSafeEqual(expected, received)) {
 		const ip =
 			headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??

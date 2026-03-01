@@ -1,8 +1,8 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
-import { GET_ACCOUNTS_DEFAULT_SELECT } from "../constants/accounts.constants";
-import { getAccountsSchema } from "../schemas/accounts.schemas";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
+import { type GET_ACCOUNTS_DEFAULT_SELECT } from "../constants/accounts.constants";
+import { type getAccountsSchema } from "../schemas/accounts.schemas";
 
 // ============================================================================
 // TYPES - ACCOUNTS LIST

@@ -4,7 +4,7 @@ import {
 	OrderStatus,
 	PaymentStatus,
 	FulfillmentStatus,
-	Prisma,
+	type Prisma,
 	HistorySource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
@@ -20,7 +20,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 
@@ -48,16 +48,18 @@ export async function markAsPaid(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.MARK_AS_PAID);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
-		const note = formData.get("note") as string | null;
+		const rawId = safeFormGet(formData, "id");
+		const note = safeFormGet(formData, "note");
 
-		const result = markAsPaidSchema.safeParse({ id, note });
+		const result = markAsPaidSchema.safeParse({ id: rawId, note });
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "ID invalide",
+				message: result.error.issues[0]?.message ?? "ID invalide",
 			};
 		}
+
+		const { id } = result.data;
 
 		// Transaction: fetch + validate + stock check + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -153,7 +155,7 @@ export async function markAsPaid(
 				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 				authorId: adminUser.id,
-				authorName: adminUser.name || "Admin",
+				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
 					stockAdjusted: !stockAlreadyReserved,
@@ -225,7 +227,7 @@ export async function markAsPaid(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.markPaid",
 			targetType: "order",
 			targetId: order.id,

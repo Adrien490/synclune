@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { GetProductSkusParams, GetProductSkusReturn } from "../../types/skus.types";
+import type * as SkuConstantsModule from "../../constants/sku.constants";
 
 // ============================================================================
 // Hoisted mocks
@@ -54,11 +55,15 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 	},
 }));
 
-vi.mock("../../constants/sku.constants", () => ({
-	GET_PRODUCT_SKUS_DEFAULT_PER_PAGE: 20,
-	GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE: 200,
-	GET_PRODUCT_SKUS_DEFAULT_SELECT: { id: true, sku: true, inventory: true, images: true },
-}));
+vi.mock("../../constants/sku.constants", async (importOriginal) => {
+	const actual = await importOriginal<typeof SkuConstantsModule>();
+	return {
+		...actual,
+		GET_PRODUCT_SKUS_DEFAULT_PER_PAGE: 20,
+		GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE: 200,
+		GET_PRODUCT_SKUS_DEFAULT_SELECT: { id: true, sku: true, inventory: true, images: true },
+	};
+});
 
 import { fetchProductSkus } from "../fetch-skus";
 

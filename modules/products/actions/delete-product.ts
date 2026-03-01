@@ -6,7 +6,14 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	error,
+	notFound,
+	handleActionError,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { deleteProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
@@ -35,7 +42,7 @@ export async function deleteProduct(
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {
-			productId: formData.get("productId") as string,
+			productId: safeFormGet(formData, "productId"),
 		};
 
 		// 3. Validation avec Zod
@@ -136,7 +143,7 @@ export async function deleteProduct(
 		// 10. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "product.delete",
 			targetType: "product",
 			targetId: productId,

@@ -1,8 +1,8 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { PaginationInfo } from "@/shared/lib/pagination";
-import { z } from "zod";
-import { GET_PRODUCT_SKUS_DEFAULT_SELECT } from "../constants/sku.constants";
-import { getProductSkusSchema } from "../schemas/get-skus.schemas";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type PaginationInfo } from "@/shared/lib/pagination";
+import { type z } from "zod";
+import { type GET_PRODUCT_SKUS_DEFAULT_SELECT } from "../constants/sku.constants";
+import { type getProductSkusSchema } from "../schemas/get-skus.schemas";
 
 export type GetProductSkusReturn = {
 	productSkus: Array<

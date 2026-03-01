@@ -35,7 +35,7 @@ export function useCursorPagination({
 	const previousCursorRef = useRef<string | symbol | undefined>(UNINITIALIZED);
 
 	const perPage = Number(searchParams.get("perPage")) || DEFAULT_PER_PAGE;
-	const cursor = searchParams.get("cursor") || undefined;
+	const cursor = searchParams.get("cursor") ?? undefined;
 
 	// Effect Event pour appeler onNavigate et gérer le focus sans re-runs inutiles
 	const onCursorChange = useEffectEvent(() => {

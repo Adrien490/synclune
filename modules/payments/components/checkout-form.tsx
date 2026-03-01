@@ -116,7 +116,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 			setSubmittedAddress({
 				fullName: shipping.fullName,
 				addressLine1: shipping.addressLine1,
-				addressLine2: shipping.addressLine2 || undefined,
+				addressLine2: shipping.addressLine2 ?? undefined,
 				city: shipping.city,
 				postalCode: shipping.postalCode,
 				country: (shipping.country || "FR") as ShippingCountry,
@@ -145,12 +145,12 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		setSelectedAddressId(address.id);
 		const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ");
 		form.setFieldValue("shipping.fullName", fullName);
-		form.setFieldValue("shipping.addressLine1", address.address1 ?? "");
-		form.setFieldValue("shipping.addressLine2", address.address2 ?? "");
-		form.setFieldValue("shipping.city", address.city ?? "");
-		form.setFieldValue("shipping.postalCode", address.postalCode ?? "");
-		form.setFieldValue("shipping.country", address.country ?? "FR");
-		form.setFieldValue("shipping.phoneNumber", address.phone ?? "");
+		form.setFieldValue("shipping.addressLine1", address.address1);
+		form.setFieldValue("shipping.addressLine2", address.address2);
+		form.setFieldValue("shipping.city", address.city);
+		form.setFieldValue("shipping.postalCode", address.postalCode);
+		form.setFieldValue("shipping.country", address.country);
+		form.setFieldValue("shipping.phoneNumber", address.phone);
 		// Show progressive disclosure fields if needed
 		if (address.country && address.country !== "FR") setShowCountrySelect(true);
 		if (address.address2) setShowAddressLine2(true);
@@ -164,16 +164,15 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	});
 
 	// Lecture directe depuis TanStack Form - plus besoin de callbacks
-	const country = (form.state.values.shipping?.country ?? "FR") as ShippingCountry;
-	const postalCode = form.state.values.shipping?.postalCode ?? "";
+	const shippingValues = form.state.values.shipping as unknown as Record<string, string>;
+	const country = (shippingValues.country ?? "FR") as ShippingCountry;
+	const postalCode = shippingValues.postalCode ?? "";
 
 	// Progressive disclosure states
-	const initialCountry = form.state.values.shipping?.country;
-	const [showCountrySelect, setShowCountrySelect] = useState(
-		initialCountry !== undefined && initialCountry !== "FR",
-	);
+	const initialCountry = shippingValues.country ?? "";
+	const [showCountrySelect, setShowCountrySelect] = useState(initialCountry !== "FR");
 	const [showAddressLine2, setShowAddressLine2] = useState(
-		!!form.state.values.shipping?.addressLine2,
+		!!form.state.values.shipping.addressLine2,
 	);
 
 	// Calculer le total
@@ -267,8 +266,8 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 										onSubmit={() => {
 											// Capturer les valeurs avant soumission pour le résumé
 											formValuesRef.current = {
-												email: form.state.values.email as string | undefined,
-												shipping: form.state.values.shipping as {
+												email: form.state.values.email as unknown as string | undefined,
+												shipping: form.state.values.shipping as unknown as {
 													fullName: string;
 													addressLine1: string;
 													addressLine2?: string;
@@ -297,28 +296,24 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 										<form.Subscribe selector={(state) => [state.values]}>
 											{([values]) => {
 												const v = values as Record<string, unknown>;
-												const shippingValues = v?.shipping as Record<string, string> | undefined;
+												const shippingValues = v.shipping as Record<string, string> | undefined;
 												return (
 													<>
 														<input
 															type="hidden"
 															name="shippingAddress"
 															value={JSON.stringify({
-																fullName: shippingValues?.fullName || "",
-																addressLine1: shippingValues?.addressLine1 || "",
-																addressLine2: shippingValues?.addressLine2 || "",
-																city: shippingValues?.city || "",
-																postalCode: shippingValues?.postalCode || "",
-																country: shippingValues?.country || "FR",
-																phoneNumber: shippingValues?.phoneNumber || "",
+																fullName: shippingValues?.fullName ?? "",
+																addressLine1: shippingValues?.addressLine1 ?? "",
+																addressLine2: shippingValues?.addressLine2 ?? "",
+																city: shippingValues?.city ?? "",
+																postalCode: shippingValues?.postalCode ?? "",
+																country: shippingValues?.country ?? "FR",
+																phoneNumber: shippingValues?.phoneNumber ?? "",
 															})}
 														/>
 														{isGuest && (
-															<input
-																type="hidden"
-																name="email"
-																value={(v?.email as string) || ""}
-															/>
+															<input type="hidden" name="email" value={(v.email as string) || ""} />
 														)}
 														<input
 															type="hidden"
@@ -449,21 +444,23 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 																			className="text-foreground font-medium underline hover:no-underline"
 																			onClick={() => {
 																				if (typeof window !== "undefined") {
-																					const shipping = form.state.values.shipping as
+																					const shipping = form.state.values.shipping as unknown as
 																						| Record<string, string>
 																						| undefined;
 																					localStorage.setItem(
 																						STORAGE_KEYS.CHECKOUT_FORM_DRAFT,
 																						JSON.stringify({
-																							email: form.state.values.email || "",
+																							email:
+																								(form.state.values.email as unknown as string) ||
+																								"",
 																							shipping: {
-																								fullName: shipping?.fullName || "",
-																								addressLine1: shipping?.addressLine1 || "",
-																								addressLine2: shipping?.addressLine2 || "",
-																								city: shipping?.city || "",
-																								postalCode: shipping?.postalCode || "",
-																								country: shipping?.country || "FR",
-																								phoneNumber: shipping?.phoneNumber || "",
+																								fullName: shipping?.fullName ?? "",
+																								addressLine1: shipping?.addressLine1 ?? "",
+																								addressLine2: shipping?.addressLine2 ?? "",
+																								city: shipping?.city ?? "",
+																								postalCode: shipping?.postalCode ?? "",
+																								country: shipping?.country ?? "FR",
+																								phoneNumber: shipping?.phoneNumber ?? "",
 																							},
 																							timestamp: Date.now(),
 																						}),
@@ -483,7 +480,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 											)}
 
 											{/* Email affiché pour utilisateurs connectés */}
-											{!isGuest && session?.user?.email && (
+											{!isGuest && session.user.email && (
 												<div className="bg-muted/50 flex items-center gap-2 rounded-lg p-3 text-sm">
 													<Mail className="text-muted-foreground h-4 w-4" />
 													<span className="text-muted-foreground">Email :</span>

@@ -12,6 +12,7 @@ import Link from "next/link";
 
 import type { ReviewPublic, ProductReviewStatistics, ReviewSortField } from "../types/review.types";
 import { ReviewCard } from "./review-card";
+import { ReviewFilterResetButton } from "./review-filter-reset-button";
 import { ReviewPhotosGallery } from "./review-photos-gallery";
 import { ReviewSummary } from "./review-summary";
 import { ReviewSortSelect } from "./review-sort-select";
@@ -100,6 +101,9 @@ export function ReviewsList({
 							Essayez de sélectionner une autre note dans la distribution ci-dessus.
 						</p>
 					</EmptyContent>
+					<EmptyActions>
+						<ReviewFilterResetButton />
+					</EmptyActions>
 				</Empty>
 			</div>
 		);

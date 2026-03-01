@@ -65,20 +65,6 @@ export function isCartItemUnavailable(item: CartItemForValidation): boolean {
  * Utilisé pour la validation complète du panier avec messages d'erreur
  */
 export function checkCartItemAvailability(item: CartItemForValidation): AvailabilityCheckResult {
-	// Vérifier le SKU existe (ne devrait jamais arriver avec les contraintes DB)
-	if (!item.sku) {
-		return {
-			isAvailable: false,
-			issue: {
-				cartItemId: item.id,
-				skuId: item.skuId,
-				productTitle: "Produit supprimé",
-				issueType: "DELETED",
-				message: CART_ERROR_MESSAGES.PRODUCT_DELETED,
-			},
-		};
-	}
-
 	// Vérifier les soft deletes
 	if (isCartItemDeleted(item)) {
 		return {

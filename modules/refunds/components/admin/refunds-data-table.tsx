@@ -1,4 +1,4 @@
-import { RefundStatus, RefundReason } from "@/app/generated/prisma/client";
+import { type RefundStatus, type RefundReason } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
@@ -20,6 +20,7 @@ import {
 import type { GetRefundsReturn } from "@/modules/refunds/types/refund.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
+import { Button } from "@/shared/components/ui/button";
 import { ReceiptText } from "lucide-react";
 import Link from "next/link";
 import { RefundRowActions } from "./refund-row-actions";
@@ -41,6 +42,11 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 				icon={ReceiptText}
 				title="Aucun remboursement trouve"
 				description="Aucun remboursement ne correspond aux criteres de recherche."
+				actionElement={
+					<Button variant="outline" asChild>
+						<Link href="/admin/ventes/remboursements">Reinitialiser les filtres</Link>
+					</Button>
+				}
 			/>
 		);
 	}
@@ -50,7 +56,12 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 			<CardContent>
 				<RefundsSelectionToolbar />
 				<TableScrollContainer>
-					<Table aria-label="Liste des remboursements" striped className="min-w-full table-fixed">
+					<Table
+						aria-label="Liste des remboursements"
+						caption="Liste des remboursements"
+						striped
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">

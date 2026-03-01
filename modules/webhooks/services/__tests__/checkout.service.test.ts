@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type Stripe from "stripe";
 
 // ============================================================================
 // Hoisted mocks - must be declared before any imports
@@ -112,9 +113,7 @@ import type { OrderWithItems } from "../../types/checkout.types";
 // Fixtures
 // ============================================================================
 
-function makeStripeSession(
-	overrides: Record<string, unknown> = {},
-): import("stripe").default.Checkout.Session {
+function makeStripeSession(overrides: Record<string, unknown> = {}): Stripe.Checkout.Session {
 	return {
 		id: "cs_test_abc123",
 		object: "checkout.session",
@@ -126,7 +125,7 @@ function makeStripeSession(
 		total_details: { amount_shipping: 600 },
 		shipping_cost: null,
 		...overrides,
-	} as unknown as import("stripe").default.Checkout.Session;
+	} as unknown as Stripe.Checkout.Session;
 }
 
 function makeOrderRow(overrides: Record<string, unknown> = {}) {

@@ -12,7 +12,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import { Button } from "@/shared/components/ui/button";
-import { GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers";
+import { type GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers";
 import { formatDateShort } from "@/shared/utils/dates";
 import { CheckCircle2, Clock, Mail, XCircle } from "lucide-react";
 import Link from "next/link";
@@ -49,6 +49,7 @@ export async function SubscribersDataTable({
 				<TableScrollContainer>
 					<Table
 						aria-label="Liste des abonnés newsletter"
+						caption="Liste des abonnés"
 						striped
 						className="min-w-full table-fixed"
 					>
@@ -73,7 +74,7 @@ export async function SubscribersDataTable({
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.CONFIRMED]}
 											</span>
 										) : subscriber.status === NewsletterStatus.PENDING ? (
-											<span className="inline-flex items-center gap-1.5 text-sm text-yellow-700 dark:text-yellow-500">
+											<span className="inline-flex items-center gap-1.5 text-sm text-yellow-700">
 												<Clock className="h-4 w-4" aria-hidden="true" />
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.PENDING]}
 											</span>

@@ -31,6 +31,7 @@ export type QuickSearchResult = {
 	products: QuickSearchProduct[];
 	suggestion: string | null;
 	totalCount: number;
+	rateLimited?: boolean;
 };
 
 // ============================================================================

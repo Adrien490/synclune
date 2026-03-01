@@ -49,7 +49,7 @@ export async function bulkToggleDiscountStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "discount.bulkToggleStatus",
 			targetType: "discount",
 			targetId: ids.join(","),

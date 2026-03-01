@@ -102,7 +102,7 @@ export async function updateCartPrices(
 		);
 
 		// 5. Invalider le cache
-		const tags = getCartInvalidationTags(userId, sessionId || undefined);
+		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
 		return {

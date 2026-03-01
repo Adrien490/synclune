@@ -144,7 +144,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 	// 1. SkuMedia (url and thumbnailUrl) - paginated
 	let skuCursor: string | undefined;
 
-	while (true) {
+	for (;;) {
 		if (Date.now() > deadline) {
 			logger.warn("Deadline reached during DB key scan, aborting safely", {
 				cronJob: "cleanup-orphan-media",
@@ -172,7 +172,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 	// 2. ReviewMedia - paginated
 	let reviewCursor: string | undefined;
 
-	while (true) {
+	for (;;) {
 		if (Date.now() > deadline) {
 			logger.warn("Deadline reached during DB key scan, aborting safely", {
 				cronJob: "cleanup-orphan-media",
@@ -196,7 +196,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 	// 3. User avatars (only those with non-null image) - paginated
 	let userCursor: string | undefined;
 
-	while (true) {
+	for (;;) {
 		if (Date.now() > deadline) {
 			logger.warn("Deadline reached during DB key scan, aborting safely", {
 				cronJob: "cleanup-orphan-media",

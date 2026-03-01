@@ -7,7 +7,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_DUPLICATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { validateInput, handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -39,7 +39,7 @@ export async function duplicateSku(
 
 		// 2. Validation du skuId avec Zod (CUID2)
 		const validation = validateInput(deleteProductSkuSchema, {
-			skuId: formData.get("skuId") as string,
+			skuId: safeFormGet(formData, "skuId"),
 		});
 		if ("error" in validation) return validation.error;
 
@@ -109,11 +109,11 @@ export async function duplicateSku(
 				isDefault: false, // Jamais par défaut
 				// Dupliquer les images
 				images: {
-					create: original.images.map((img, index) => ({
+					create: original.images.map((img, _index) => ({
 						url: img.url,
 						altText: img.altText,
 						isPrimary: img.isPrimary,
-						position: img.position ?? index,
+						position: img.position,
 						mediaType: img.mediaType,
 						thumbnailUrl: img.thumbnailUrl,
 					})),
@@ -125,7 +125,7 @@ export async function duplicateSku(
 		const tags = getSkuInvalidationTags(
 			duplicate.sku,
 			original.productId,
-			original.product?.slug,
+			original.product.slug,
 			duplicate.id,
 		);
 		tags.forEach((tag) => updateTag(tag));
@@ -133,7 +133,7 @@ export async function duplicateSku(
 		// 7. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.duplicate",
 			targetType: "sku",
 			targetId: duplicate.id,

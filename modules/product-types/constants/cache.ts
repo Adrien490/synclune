@@ -10,7 +10,7 @@
 
 export const PRODUCT_TYPES_CACHE_TAGS = {
 	/** Liste des types de produits */
-	LIST: "product-types",
+	LIST: "product-types-list",
 } as const;
 
 // Re-exports pour retrocompatibilite

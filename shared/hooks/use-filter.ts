@@ -105,7 +105,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 
 			// Ajouter les nouveaux filtres
 			Object.entries(filters).forEach(([key, value]) => {
-				if (value === undefined || value === null || value === "") {
+				if (value === undefined || value === "") {
 					return;
 				}
 

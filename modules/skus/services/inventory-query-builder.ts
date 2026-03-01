@@ -60,14 +60,7 @@ export function buildInventoryFilterConditions(
 }
 
 export function buildInventoryWhereClause(params: GetSkuStocksParams): Prisma.ProductSkuWhereInput {
-	const filterConditions = buildInventoryFilterConditions(
-		params.filters || {
-			productTypeId: undefined,
-			colorId: undefined,
-			material: undefined,
-			stockLevel: undefined,
-		},
-	);
+	const filterConditions = buildInventoryFilterConditions(params.filters);
 	const searchConditions = buildInventorySearchConditions(params.search);
 
 	const baseConditions: Prisma.ProductSkuWhereInput = {
@@ -75,7 +68,7 @@ export function buildInventoryWhereClause(params: GetSkuStocksParams): Prisma.Pr
 		...searchConditions,
 	};
 
-	if (params.filters?.stockLevel) {
+	if (params.filters.stockLevel) {
 		const level = params.filters.stockLevel;
 		const andConditions: Prisma.ProductSkuWhereInput[] = [];
 
@@ -87,7 +80,7 @@ export function buildInventoryWhereClause(params: GetSkuStocksParams): Prisma.Pr
 			andConditions.push({
 				inventory: { gte: STOCK_THRESHOLDS.LOW, lte: STOCK_THRESHOLDS.NORMAL_MAX },
 			});
-		} else if (level === "high") {
+		} else {
 			andConditions.push({ inventory: { gt: STOCK_THRESHOLDS.NORMAL_MAX } });
 		}
 

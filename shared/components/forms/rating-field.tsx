@@ -59,6 +59,9 @@ export const RatingField = ({
 					size={size}
 					interactive
 					onChange={field.handleChange}
+					required={required}
+					aria-invalid={field.state.meta.errors.length > 0}
+					aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
 				/>
 				{showRatingText && (
 					<span className="text-muted-foreground text-sm">

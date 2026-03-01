@@ -1,7 +1,7 @@
 "use client";
 
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
-import { FilterDefinition } from "@/shared/hooks/use-filter";
+import { type FilterDefinition } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
@@ -44,8 +44,8 @@ export function FilterBadge({ filter, formatFilter, onRemove }: FilterBadgeProps
 		return null;
 	}
 
-	const displayLabel = formatted?.label || filter.label;
-	const displayValue = formatted?.displayValue || filter.displayValue;
+	const displayLabel = formatted?.label ?? filter.label;
+	const displayValue = formatted?.displayValue ?? filter.displayValue;
 	const filterDescription = `${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
 	const ariaLabelRemove = `Supprimer le filtre ${filterDescription}`;
 

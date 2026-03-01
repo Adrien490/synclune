@@ -303,7 +303,7 @@ describe("buildProductWhereClause", () => {
 			includeDeleted: true,
 		});
 
-		const hasDeletedCondition = (result.AND as Array<Record<string, unknown>>)?.some(
+		const hasDeletedCondition = (result.AND as Array<Record<string, unknown>>).some(
 			(c) => "deletedAt" in c,
 		);
 		expect(hasDeletedCondition).toBeFalsy();
@@ -324,7 +324,7 @@ describe("buildProductWhereClause", () => {
 			status: undefined,
 		});
 
-		const hasStatusCondition = (result.AND as Array<Record<string, unknown>>)?.some(
+		const hasStatusCondition = (result.AND as Array<Record<string, unknown>>).some(
 			(c) => "status" in c,
 		);
 		expect(hasStatusCondition).toBeFalsy();

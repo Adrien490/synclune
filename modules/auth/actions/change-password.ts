@@ -2,7 +2,7 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
-import { error, success, validateInput } from "@/shared/lib/actions";
+import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { sendPasswordChangedEmail } from "@/modules/emails/services/auth-emails";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -61,9 +61,9 @@ export const changePassword = async (
 
 		// Validate input
 		const rawData = {
-			currentPassword: formData.get("currentPassword") as string,
-			newPassword: formData.get("newPassword") as string,
-			confirmPassword: formData.get("confirmPassword") as string,
+			currentPassword: safeFormGet(formData, "currentPassword"),
+			newPassword: safeFormGet(formData, "newPassword"),
+			confirmPassword: safeFormGet(formData, "confirmPassword"),
 		};
 
 		const validation = validateInput(changePasswordSchema, rawData);

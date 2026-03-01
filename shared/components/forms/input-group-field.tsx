@@ -3,6 +3,7 @@
 import { Field, FieldError } from "@/shared/components/ui/field";
 import { InputGroup, InputGroupInput } from "@/shared/components/ui/input-group";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { FieldLabel } from "./field-label";
 
 interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	/**
@@ -12,6 +13,10 @@ interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElemen
 	 * <InputGroupAddon align="inline-end">€</InputGroupAddon>
 	 */
 	children?: React.ReactNode;
+	/** Label affiché au-dessus du champ */
+	label?: string;
+	/** Marque le champ comme optionnel avec "(Optionnel)" */
+	optional?: boolean;
 	/**
 	 * Marque le champ comme requis (aria-required).
 	 * La validation reste gérée par le schema Zod.
@@ -22,9 +27,8 @@ interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElemen
 /**
  * Champ input avec addon (prefix/suffix) pour formulaires TanStack Form.
  *
- * **Note:** Ce composant n'inclut pas de label intégré, contrairement à InputField.
- * Cela permet une flexibilité de layout (ex: label au-dessus avec espacement custom).
- * Utilisez `<FieldLabel htmlFor={field.name}>` si nécessaire.
+ * Supporte un `label` intégré optionnel (comme InputField).
+ * Si omis, utilisez `<FieldLabel htmlFor={field.name}>` manuellement.
  *
  * Pour les champs numériques :
  * - Les valeurs vides retournent `null`
@@ -46,6 +50,8 @@ interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElemen
  */
 export const InputGroupField = ({
 	disabled,
+	label,
+	optional,
 	placeholder,
 	required,
 	type,
@@ -76,14 +82,18 @@ export const InputGroupField = ({
 	const displayValue: string | number =
 		type === "number"
 			? field.state.value === null ||
-				field.state.value === undefined ||
 				(typeof field.state.value === "number" && isNaN(field.state.value))
 				? ""
 				: (field.state.value as number)
-			: ((field.state.value as string) ?? "");
+			: (field.state.value ?? "");
 
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
+			{label && (
+				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
+					{label}
+				</FieldLabel>
+			)}
 			<InputGroup>
 				<InputGroupInput
 					id={field.name}

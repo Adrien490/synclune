@@ -16,6 +16,7 @@
 		"incremental": true,
 		"forceConsistentCasingInFileNames": true,
 		"noUncheckedIndexedAccess": true,
+		"verbatimModuleSyntax": true,
 		"plugins": [
 			{
 				"name": "next"

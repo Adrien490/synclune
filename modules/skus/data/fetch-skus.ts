@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { cacheLife, cacheTag } from "next/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -8,7 +8,7 @@ import {
 	GET_PRODUCT_SKUS_DEFAULT_SELECT,
 	GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE,
 } from "../constants/sku.constants";
-import { GetProductSkusParams, GetProductSkusReturn } from "../types/skus.types";
+import { type GetProductSkusParams, type GetProductSkusReturn } from "../types/skus.types";
 import { buildWhereClause } from "@/modules/skus/services/build-where-clause";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 

@@ -43,8 +43,12 @@ export function CollectionFormDialog() {
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				{isUpdateMode && collection ? (
-					<EditCollectionForm collection={collection} onSuccess={close} redirectOnSuccess={false} />
+				{isUpdateMode ? (
+					<EditCollectionForm
+						collection={collection!}
+						onSuccess={close}
+						redirectOnSuccess={false}
+					/>
 				) : (
 					<CreateCollectionForm onSuccess={close} redirectOnSuccess={false} />
 				)}

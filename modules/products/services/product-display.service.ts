@@ -63,7 +63,7 @@ type ExtractedImage = {
  * @returns Image extraite ou null si aucune image trouvée
  */
 function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedImage | null {
-	if (!sku.images || sku.images.length === 0) {
+	if (sku.images.length === 0) {
 		return null;
 	}
 
@@ -75,8 +75,8 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 			url: primaryImage.url,
 			mediaType: "IMAGE",
 			alt: truncateAltText(
-				primaryImage.altText ||
-					`${productTitle} - ${sku.material?.name || sku.color?.name || "Image principale"}`,
+				primaryImage.altText ??
+					`${productTitle} - ${sku.material?.name ?? sku.color?.name ?? "Image principale"}`,
 			),
 			blurDataUrl: primaryImage.blurDataUrl ?? undefined,
 		};
@@ -90,8 +90,8 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 			url: firstImage.url,
 			mediaType: "IMAGE",
 			alt: truncateAltText(
-				firstImage.altText ||
-					`${productTitle} - ${sku.material?.name || sku.color?.name || "Variante"}`,
+				firstImage.altText ??
+					`${productTitle} - ${sku.material?.name ?? sku.color?.name ?? "Variante"}`,
 			),
 			blurDataUrl: firstImage.blurDataUrl ?? undefined,
 		};
@@ -145,7 +145,7 @@ export function getPrimaryPriceForList(product: ProductFromList): {
  */
 export function getPrimaryImageForList(product: ProductFromList): ExtractedImage {
 	const primarySku = getPrimarySkuForList<SkuFromList, ProductFromList>(product);
-	const activeSkus = product.skus?.filter((s) => s.isActive) ?? [];
+	const activeSkus = product.skus.filter((s) => s.isActive);
 	return getPrimaryImageFromSku(primarySku, product, activeSkus);
 }
 
@@ -191,7 +191,7 @@ export function getProductCardData(
 	product: ProductFromList,
 	activeColorSlug?: string,
 ): ProductCardData {
-	const skus = product.skus ?? [];
+	const skus = product.skus;
 
 	// === 1. Trouver le SKU principal via la fonction unifiée ===
 	// Utilise getPrimarySkuForList avec le paramètre couleur préférée (Baymard pattern)
@@ -213,9 +213,9 @@ export function getProductCardData(
 		if (sku.inventory > 0) availableSkus++;
 
 		// Couleurs (hex validated at display time to prevent style injection)
-		if (sku.color?.slug && sku.color?.hex && HEX_PATTERN.test(sku.color.hex)) {
+		if (sku.color?.slug && sku.color.hex && HEX_PATTERN.test(sku.color.hex)) {
 			const existing = colorMap.get(sku.color.slug);
-			const inStock = existing?.inStock || sku.inventory > 0;
+			const inStock = existing?.inStock ?? sku.inventory > 0;
 			colorMap.set(sku.color.slug, {
 				slug: sku.color.slug,
 				hex: sku.color.hex,
@@ -298,7 +298,7 @@ function getSecondaryImage(
 				url: secondaryFromDefaultSku.url,
 				mediaType: "IMAGE",
 				alt: truncateAltText(
-					secondaryFromDefaultSku.altText || `${productTitle} - Vue alternative`,
+					secondaryFromDefaultSku.altText ?? `${productTitle} - Vue alternative`,
 				),
 				blurDataUrl: secondaryFromDefaultSku.blurDataUrl ?? undefined,
 			};

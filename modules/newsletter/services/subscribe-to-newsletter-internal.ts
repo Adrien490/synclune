@@ -10,7 +10,7 @@ interface SubscribeToNewsletterInternalParams {
 	email: string;
 	ipAddress: string;
 	userAgent: string;
-	consentSource: "newsletter_form" | "contact_form";
+	consentSource: "newsletter_form" | "contact_form" | "account_settings";
 }
 
 interface SubscribeToNewsletterInternalResult {
@@ -61,7 +61,7 @@ export async function subscribeToNewsletterInternal({
 				});
 
 				// Invalider le cache
-				getNewsletterInvalidationTags(existingSubscriber?.userId ?? undefined).forEach((tag) =>
+				getNewsletterInvalidationTags(existingSubscriber.userId ?? undefined).forEach((tag) =>
 					updateTag(tag),
 				);
 
@@ -93,7 +93,7 @@ export async function subscribeToNewsletterInternal({
 			});
 
 			// Invalider le cache
-			getNewsletterInvalidationTags(existingSubscriber?.userId ?? undefined).forEach((tag) =>
+			getNewsletterInvalidationTags(existingSubscriber.userId ?? undefined).forEach((tag) =>
 				updateTag(tag),
 			);
 

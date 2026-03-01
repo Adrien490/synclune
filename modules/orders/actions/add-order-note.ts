@@ -46,7 +46,7 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 				orderId,
 				content: sanitizedContent,
 				authorId: auth.user.id,
-				authorName: auth.user.name || auth.user.email,
+				authorName: auth.user.name ?? auth.user.email,
 			},
 		});
 
@@ -55,7 +55,7 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.addNote",
 			targetType: "order",
 			targetId: orderId,

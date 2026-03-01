@@ -31,9 +31,7 @@ function syncCssVar() {
 export function useBottomBarHeight(height: number, enabled = true) {
 	const keyRef = useRef<symbol | null>(null);
 
-	if (keyRef.current === null) {
-		keyRef.current = Symbol("bottom-bar");
-	}
+	keyRef.current ??= Symbol("bottom-bar");
 
 	useEffect(() => {
 		const key = keyRef.current!;

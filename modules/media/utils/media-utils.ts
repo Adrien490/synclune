@@ -44,5 +44,5 @@ export function getVideoMimeType(url: string): string {
 		return "video/mp4";
 	}
 
-	return VIDEO_MIME_TYPES[extension] || "video/mp4";
+	return VIDEO_MIME_TYPES[extension] ?? "video/mp4";
 }

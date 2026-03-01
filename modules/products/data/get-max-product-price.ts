@@ -35,7 +35,7 @@ export async function getMaxProductPrice(): Promise<number> {
 			},
 		});
 
-		const maxPrice = maxSkuPrice._max.priceInclTax || 0;
+		const maxPrice = maxSkuPrice._max.priceInclTax ?? 0;
 
 		// Retourner un minimum de 200€ si aucun prix n'est trouvé
 		// et arrondir à la dizaine supérieure pour une meilleure UX

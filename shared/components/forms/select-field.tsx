@@ -12,8 +12,6 @@ import {
 } from "@/shared/components/ui/select";
 import { NativeSelect, NativeSelectOption } from "@/shared/components/ui/native-select";
 import { useFieldContext } from "@/shared/lib/form-context";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 
@@ -76,9 +74,6 @@ export const SelectField = <T extends string>({
 	autoComplete,
 }: SelectFieldProps<T>) => {
 	const field = useFieldContext<T | undefined>();
-	const isMobileDetected = useIsMobile();
-	const mounted = useMounted();
-	const isMobile = mounted && isMobileDetected;
 	const triggerRef = useRef<HTMLButtonElement>(null);
 
 	const hasError = field.state.meta.errors.length > 0;
@@ -92,7 +87,8 @@ export const SelectField = <T extends string>({
 				</FieldLabel>
 			)}
 
-			{isMobile ? (
+			{/* Mobile: NativeSelect */}
+			<div className="md:hidden">
 				<NativeSelect
 					id={field.name}
 					name={field.name}
@@ -124,7 +120,10 @@ export const SelectField = <T extends string>({
 						</NativeSelectOption>
 					))}
 				</NativeSelect>
-			) : (
+			</div>
+
+			{/* Desktop: Radix Select */}
+			<div className="hidden md:block">
 				<Select
 					name={field.name}
 					disabled={disabled}
@@ -137,7 +136,7 @@ export const SelectField = <T extends string>({
 				>
 					<SelectTrigger
 						ref={triggerRef}
-						id={field.name}
+						id={`${field.name}-desktop`}
 						className="w-full"
 						onBlur={field.handleBlur}
 						aria-invalid={hasError}
@@ -196,7 +195,7 @@ export const SelectField = <T extends string>({
 						))}
 					</SelectContent>
 				</Select>
-			)}
+			</div>
 
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>

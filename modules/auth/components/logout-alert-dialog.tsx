@@ -56,7 +56,7 @@ export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
 							disabled={isPending || isLoggedOut}
 							aria-busy={isPending || isLoggedOut}
 						>
-							{(isPending || isLoggedOut) && <Loader2 className="animate-spin" />}
+							{(isPending || isLoggedOut) && <Loader2 className="motion-safe:animate-spin" />}
 							{isLoggedOut ? "Déconnecté !" : isPending ? "Déconnexion..." : "Se déconnecter"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

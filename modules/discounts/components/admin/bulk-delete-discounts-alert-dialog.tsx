@@ -40,8 +40,8 @@ export function BulkDeleteDiscountsAlertDialog() {
 		}
 	};
 
-	const count = dialog.data?.discountIds?.length || 0;
-	const totalUsageCount = dialog.data?.totalUsageCount || 0;
+	const count = dialog.data?.discountIds.length ?? 0;
+	const totalUsageCount = dialog.data?.totalUsageCount ?? 0;
 
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
@@ -63,7 +63,7 @@ export function BulkDeleteDiscountsAlertDialog() {
 									?
 								</p>
 								{totalUsageCount > 0 && (
-									<p className="font-medium text-amber-600 dark:text-amber-500">
+									<p className="font-medium text-amber-600">
 										{totalUsageCount} utilisation{totalUsageCount > 1 ? "s" : ""} au total. Les
 										codes déjà utilisés seront ignorés.
 									</p>

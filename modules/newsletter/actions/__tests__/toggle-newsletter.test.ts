@@ -51,12 +51,16 @@ vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/shared/lib/rate-limit", () => ({ getClientIp: mockGetClientIp }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
 }));
-vi.mock("../subscribe-to-newsletter-internal", () => ({
+vi.mock("../../services/subscribe-to-newsletter-internal", () => ({
 	subscribeToNewsletterInternal: mockSubscribeToNewsletterInternal,
 }));
 vi.mock("../../constants/cache", () => ({
@@ -189,7 +193,7 @@ describe("toggleNewsletter", () => {
 		expect(mockSubscribeToNewsletterInternal).toHaveBeenCalledWith(
 			expect.objectContaining({
 				email: "user@example.com",
-				consentSource: "newsletter_form",
+				consentSource: "account_settings",
 			}),
 		);
 	});

@@ -37,7 +37,7 @@ const {
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
-	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -55,10 +55,19 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: (message: string) => ({ status: ActionStatus.SUCCESS, message }),
 	error: (message: string) => ({ status: ActionStatus.ERROR, message }),
+}));
+
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+	logAuditTx: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/sanitize", () => ({
@@ -113,7 +122,7 @@ describe("updateMaterial", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ session: { user: { id: "admin-1" } } });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSanitizeText.mockImplementation((text: string) => text);
 		mockGetMaterialInvalidationTags.mockReturnValue(["materials-list", "material-argent-925"]);

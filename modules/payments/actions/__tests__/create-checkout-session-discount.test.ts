@@ -93,6 +93,19 @@ vi.mock("@/modules/payments/utils/parse-full-name", () => ({
 	parseFullName: vi.fn().mockReturnValue({ firstName: "Marie", lastName: "Dupont" }),
 }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	safeFormGetJSON: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		if (typeof v !== "string" || !v) return null;
+		try {
+			return JSON.parse(v);
+		} catch {
+			return null;
+		}
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
@@ -230,7 +243,7 @@ function setupDefaults() {
 	mockGetShippingZoneFromPostalCode.mockReturnValue({ zone: "METRO", department: "75" });
 	mockGetShippingOptionsForAddress.mockReturnValue([]);
 	mockGenerateOrderNumber.mockReturnValue("SYN-20260220-A1B2");
-	mockGetValidImageUrl.mockImplementation((url: string | null | undefined) => url || null);
+	mockGetValidImageUrl.mockImplementation((url: string | null | undefined) => url ?? null);
 
 	mockPrisma.$transaction.mockImplementation(
 		async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {

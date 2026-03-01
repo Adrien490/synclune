@@ -30,7 +30,7 @@ export async function refreshSkus(_prevState: unknown, formData: FormData): Prom
 		updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
 
 		// Si un productId valide est fourni, invalider aussi les SKUs de ce produit
-		const productId = optionalCuid2Schema.safeParse(rawProductId || undefined);
+		const productId = optionalCuid2Schema.safeParse(rawProductId ?? undefined);
 		if (productId.success && productId.data) {
 			updateTag(PRODUCTS_CACHE_TAGS.SKUS(productId.data));
 		}

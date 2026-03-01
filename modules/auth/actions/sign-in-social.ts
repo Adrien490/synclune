@@ -2,7 +2,7 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { checkArcjetProtection } from "@/modules/auth/utils/arcjet-protection";
-import { error, unauthorized, validateInput } from "@/shared/lib/actions";
+import { error, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { headers } from "next/headers";
@@ -19,14 +19,14 @@ export const signInSocial = async (_: unknown, formData: FormData): Promise<Acti
 
 		// Vérifier si l'utilisateur est déjà connecté
 		const session = await auth.api.getSession({ headers: headersList });
-		if (session?.user?.id) {
+		if (session?.user.id) {
 			return unauthorized("Vous êtes déjà connecté");
 		}
 
 		// Validation des données
 		const rawData = {
-			provider: formData.get("provider") as string,
-			callbackURL: (formData.get("callbackURL") as string) || "/",
+			provider: safeFormGet(formData, "provider"),
+			callbackURL: safeFormGet(formData, "callbackURL") ?? "/",
 		};
 
 		const validation = validateInput(signInSocialSchema, rawData);
@@ -38,7 +38,7 @@ export const signInSocial = async (_: unknown, formData: FormData): Promise<Acti
 			body: { provider, callbackURL },
 		});
 
-		if (!response?.url) {
+		if (!response.url) {
 			return error("URL de redirection manquante");
 		}
 

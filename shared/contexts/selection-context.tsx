@@ -1,7 +1,7 @@
 "use client";
 
 import { useSelection } from "@/shared/hooks/use-selection";
-import { ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, useContext } from "react";
 
 export interface SelectionContextType {
 	isSelected: (id: string) => boolean;

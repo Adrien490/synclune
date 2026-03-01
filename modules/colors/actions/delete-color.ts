@@ -65,7 +65,7 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "color.delete",
 			targetType: "color",
 			targetId: validatedData.id,

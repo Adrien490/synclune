@@ -4,7 +4,7 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useTransition } from "react";
 import { changeUserRole } from "@/modules/users/actions/admin/change-user-role";
-import { Role } from "@/app/generated/prisma/enums";
+import { type Role } from "@/app/generated/prisma/enums";
 
 interface UseChangeUserRoleOptions {
 	onSuccess?: (message: string) => void;

@@ -1,10 +1,7 @@
 import { getOrder } from "@/modules/orders/data/get-order";
 import { generateInvoicePdf } from "@/modules/orders/services/generate-invoice-pdf";
-import { generateInvoiceNumber } from "@/modules/orders/services/invoice-number.service";
+import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { prisma } from "@/shared/lib/prisma";
-import { updateTag } from "next/cache";
-import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { checkRateLimit, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 
@@ -15,7 +12,7 @@ export async function GET(
 	const { orderNumber } = await params;
 
 	const session = await getSession();
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		return new Response("Non autorisé", { status: 401 });
 	}
 
@@ -51,36 +48,14 @@ export async function GET(
 	// Generate and persist invoice number on first download (Article 286 CGI)
 	let invoiceOrder = order;
 	if (!order.invoiceNumber) {
-		try {
-			const invoiceNumber = await generateInvoiceNumber();
-			const now = new Date();
-
-			const updated = await prisma.order.update({
-				where: { id: order.id },
-				data: {
-					invoiceNumber,
-					invoiceStatus: "GENERATED",
-					invoiceGeneratedAt: now,
-				},
-				select: { invoiceNumber: true, invoiceGeneratedAt: true },
-			});
-
-			// Merge the new invoice fields into the order for PDF generation
+		const result = await persistInvoiceNumber(order.id, order.userId);
+		if (result) {
 			invoiceOrder = {
 				...order,
-				invoiceNumber: updated.invoiceNumber,
+				invoiceNumber: result.invoiceNumber,
 				invoiceStatus: "GENERATED" as const,
-				invoiceGeneratedAt: updated.invoiceGeneratedAt,
+				invoiceGeneratedAt: result.invoiceGeneratedAt,
 			};
-
-			// Invalidate cache so the invoice number shows in admin
-			getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
-				updateTag(tag),
-			);
-		} catch (e) {
-			// If invoice number generation fails (e.g. unique constraint race),
-			// still serve the PDF with orderNumber as reference
-			console.error("[INVOICE] Failed to persist invoice number:", e);
 		}
 	}
 

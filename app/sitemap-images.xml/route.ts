@@ -1,4 +1,4 @@
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { getSitemapProducts } from "@/modules/products/data/get-sitemap-products";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { NextResponse } from "next/server";
 
@@ -8,43 +8,7 @@ import { NextResponse } from "next/server";
  * @see https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps
  */
 export async function GET() {
-	// Récupérer tous les produits publics avec leurs SKUs et images
-	const products = await prisma.product.findMany({
-		where: {
-			status: "PUBLIC",
-			...notDeleted,
-		},
-		select: {
-			slug: true,
-			title: true,
-			type: {
-				select: {
-					label: true,
-				},
-			},
-			skus: {
-				where: {
-					isActive: true,
-					deletedAt: null,
-				},
-				select: {
-					images: {
-						where: {
-							mediaType: "IMAGE",
-						},
-						select: {
-							url: true,
-							altText: true,
-							isPrimary: true,
-						},
-						orderBy: {
-							position: "asc",
-						},
-					},
-				},
-			},
-		},
-	});
+	const products = await getSitemapProducts();
 
 	// Construire le XML
 	const urlEntries = products
@@ -60,8 +24,8 @@ export async function GET() {
 						images.push({
 							url: image.url,
 							alt:
-								image.altText ||
-								`${product.title} - ${product.type?.label || "Bijou artisanal"} fait main Synclune`,
+								image.altText ??
+								`${product.title} - ${product.type?.label ?? "Bijou artisanal"} fait main Synclune`,
 						});
 					}
 				}

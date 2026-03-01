@@ -34,6 +34,10 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 	getSessionInvalidationTags: mockGetSessionInvalidationTags,
 }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	success: mockSuccess,
 	error: mockError,
 }));

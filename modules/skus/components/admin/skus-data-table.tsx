@@ -37,8 +37,8 @@ export async function ProductVariantsDataTable({
 
 	// Helper pour obtenir l'image primaire
 	const getPrimaryImage = (sku: (typeof productSkus)[0]) => {
-		if (!sku.images || sku.images.length === 0) return null;
-		return sku.images.find((img) => img.isPrimary) || sku.images[0];
+		if (sku.images.length === 0) return null;
+		return sku.images.find((img) => img.isPrimary) ?? sku.images[0];
 	};
 
 	// Helper pour calculer le stock disponible
@@ -72,6 +72,7 @@ export async function ProductVariantsDataTable({
 					<Table
 						role="table"
 						aria-label="Liste des variantes du produit"
+						caption="Liste des variantes"
 						className="min-w-full table-fixed"
 					>
 						<TableHeader>
@@ -162,7 +163,7 @@ export async function ProductVariantsDataTable({
 															loop
 															playsInline
 															preload="none"
-															aria-label={primaryImage.altText || `Vidéo variante ${sku.sku}`}
+															aria-label={primaryImage.altText ?? `Vidéo variante ${sku.sku}`}
 														>
 															<source
 																src={primaryImage.url}
@@ -174,7 +175,7 @@ export async function ProductVariantsDataTable({
 													) : (
 														<Image
 															src={primaryImage.url}
-															alt={primaryImage.altText || sku.sku}
+															alt={primaryImage.altText ?? sku.sku}
 															fill
 															sizes="80px"
 															quality={80}

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type Stripe from "stripe";
 
 // ============================================================================
 // Hoisted mocks
@@ -77,7 +78,7 @@ function makeStripeSession(overrides: Record<string, unknown> = {}) {
 		total_details: { amount_shipping: 600 },
 		shipping_cost: null,
 		...overrides,
-	} as unknown as import("stripe").default.Checkout.Session;
+	} as unknown as Stripe.Checkout.Session;
 }
 
 function makeMultiItemOrder(stockOverrides?: { sku1Stock?: number; sku2Stock?: number }) {

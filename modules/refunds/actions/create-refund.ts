@@ -6,7 +6,14 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+	safeFormGetJSON,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
@@ -15,7 +22,6 @@ import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createRefundSchema } from "../schemas/refund.schemas";
-import { shouldRestockByDefault } from "../services/refund-restock.service";
 
 /** Active refund statuses that count toward refunded amounts/quantities */
 const ACTIVE_REFUND_STATUSES = [
@@ -48,26 +54,22 @@ export async function createRefund(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// Parser les données du formulaire
-		const orderId = formData.get("orderId") as string;
-		const reason = formData.get("reason") as string;
+		const rawOrderId = safeFormGet(formData, "orderId");
+		const rawReason = safeFormGet(formData, "reason");
 		const note = formData.get("note") as string | null;
-		const itemsRaw = formData.get("items") as string;
-
-		let items;
-		try {
-			items = JSON.parse(itemsRaw);
-		} catch {
-			return error("Format des articles invalide");
-		}
+		const items = safeFormGetJSON<unknown>(formData, "items");
+		if (!items) return error("Format des articles invalide");
 
 		const validated = validateInput(createRefundSchema, {
-			orderId,
-			reason,
+			orderId: rawOrderId,
+			reason: rawReason,
 			note,
 			items,
 		});
 
 		if ("error" in validated) return validated.error;
+
+		const { orderId } = validated.data;
 
 		// Sanitiser le texte libre
 		const sanitizedNote = validated.data.note ? sanitizeText(validated.data.note) : null;
@@ -173,11 +175,10 @@ export async function createRefund(
 
 				// Cap the amount to the maximum possible for this item
 				const maxItemAmount = orderItem.price * item.quantity;
-				const itemAmount =
-					item.amount != null ? Math.min(item.amount, maxItemAmount) : maxItemAmount;
+				const itemAmount = Math.min(item.amount, maxItemAmount);
 
 				// Utiliser le restock fourni, sinon déterminer automatiquement selon le motif
-				const shouldRestock = item.restock ?? shouldRestockByDefault(validated.data.reason);
+				const shouldRestock = item.restock;
 
 				validatedItems.push({
 					orderItemId: item.orderItemId,
@@ -227,7 +228,7 @@ export async function createRefund(
 		// Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "refund.create",
 			targetType: "refund",
 			targetId: result.refund.id,

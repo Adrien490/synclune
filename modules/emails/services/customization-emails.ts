@@ -111,7 +111,7 @@ export async function sendCustomizationStatusEmail({
 		}),
 		{
 			to: email,
-			subject: CUSTOMIZATION_STATUS_SUBJECTS[status] || EMAIL_SUBJECTS.CUSTOMIZATION_IN_PROGRESS,
+			subject: CUSTOMIZATION_STATUS_SUBJECTS[status] ?? EMAIL_SUBJECTS.CUSTOMIZATION_IN_PROGRESS,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "customization" }],
 		},

@@ -29,7 +29,7 @@ export default function CGVLoading() {
 			{/* Content skeleton */}
 			<section className={`bg-background ${SECTION_SPACING.default}`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
+					<div className="prose prose-slate max-w-prose space-y-6">
 						{/* Date de mise à jour */}
 						<Skeleton className="bg-muted/30 h-4 w-64" />
 

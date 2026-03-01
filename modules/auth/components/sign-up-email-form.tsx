@@ -209,7 +209,7 @@ export function SignUpEmailForm() {
 					<Button disabled={!canSubmit || isPending} className="w-full" type="submit">
 						{isPending ? (
 							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+								<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
 								Inscription en cours...
 							</>
 						) : (

@@ -36,8 +36,8 @@ async function fetchMonthlyRevenue() {
 		}),
 	]);
 
-	const currentAmount = currentMonthOrders._sum.total || 0;
-	const lastAmount = lastMonthOrders._sum.total || 0;
+	const currentAmount = currentMonthOrders._sum.total ?? 0;
+	const lastAmount = lastMonthOrders._sum.total ?? 0;
 	const evolution = lastAmount > 0 ? ((currentAmount - lastAmount) / lastAmount) * 100 : 0;
 
 	return { amount: currentAmount, evolution };
@@ -100,8 +100,8 @@ async function fetchAverageOrderValue() {
 	]);
 
 	const currentAmount =
-		currentMonth._count > 0 ? (currentMonth._sum.total || 0) / currentMonth._count : 0;
-	const lastAmount = lastMonth._count > 0 ? (lastMonth._sum.total || 0) / lastMonth._count : 0;
+		currentMonth._count > 0 ? (currentMonth._sum.total ?? 0) / currentMonth._count : 0;
+	const lastAmount = lastMonth._count > 0 ? (lastMonth._sum.total ?? 0) / lastMonth._count : 0;
 	const evolution = lastAmount > 0 ? ((currentAmount - lastAmount) / lastAmount) * 100 : 0;
 
 	return { amount: currentAmount, evolution };

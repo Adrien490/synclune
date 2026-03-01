@@ -7,9 +7,21 @@ import {
 } from "../password-strength";
 
 describe("PASSWORD_RULES", () => {
-	it("requires at least 6 characters", () => {
-		expect(PASSWORD_RULES[0]!.test("12345")).toBe(false);
-		expect(PASSWORD_RULES[0]!.test("123456")).toBe(true);
+	it("requires at least 12 characters", () => {
+		expect(PASSWORD_RULES[0]!.test("short")).toBe(false);
+		expect(PASSWORD_RULES[0]!.test("exactlytwelve")).toBe(true);
+	});
+
+	it("requires uppercase and lowercase", () => {
+		expect(PASSWORD_RULES[1]!.test("alllowercase")).toBe(false);
+		expect(PASSWORD_RULES[1]!.test("ALLUPPERCASE")).toBe(false);
+		expect(PASSWORD_RULES[1]!.test("MixedCase")).toBe(true);
+	});
+
+	it("requires a digit or special character", () => {
+		expect(PASSWORD_RULES[2]!.test("onlyletters")).toBe(false);
+		expect(PASSWORD_RULES[2]!.test("withdigit1")).toBe(true);
+		expect(PASSWORD_RULES[2]!.test("with@special")).toBe(true);
 	});
 });
 
@@ -18,20 +30,28 @@ describe("getStrengthLevel", () => {
 		expect(getStrengthLevel("")).toBe(0);
 	});
 
-	it("returns 0 for short password", () => {
+	it("returns 0 for short password satisfying no rules", () => {
 		expect(getStrengthLevel("abc")).toBe(0);
 	});
 
-	it("returns 0 for password with less than 6 chars", () => {
-		expect(getStrengthLevel("12345")).toBe(0);
+	it("returns 2 for short password satisfying mixed case and digit rules but not length", () => {
+		// Satisfies rule 2 (mixed case) and rule 3 (digit), but not rule 1 (length)
+		expect(getStrengthLevel("Short1A")).toBe(2);
 	});
 
-	it("returns 1 for password with 6+ chars", () => {
-		expect(getStrengthLevel("123456")).toBe(1);
+	it("returns 1 for password with 12+ chars only", () => {
+		// Satisfies only rule 1: length >= 12, all lowercase, no digit/special
+		expect(getStrengthLevel("alllowercase")).toBe(1);
 	});
 
-	it("returns 1 for long password", () => {
-		expect(getStrengthLevel("a-very-long-password")).toBe(1);
+	it("returns 2 for password satisfying length and mixed case", () => {
+		// Satisfies rule 1 (12+ chars) and rule 2 (mixed case), no digit/special
+		expect(getStrengthLevel("TwelveLetters")).toBe(2);
+	});
+
+	it("returns 3 for password satisfying all rules", () => {
+		// Satisfies all 3 rules: 12+ chars, mixed case, digit
+		expect(getStrengthLevel("StrongPass12!")).toBe(3);
 	});
 });
 
@@ -40,8 +60,16 @@ describe("getStrengthLabel", () => {
 		expect(getStrengthLabel(0)).toBe("Trop court");
 	});
 
-	it("returns 'Valide' for level 1", () => {
-		expect(getStrengthLabel(1)).toBe("Valide");
+	it("returns 'Faible' for level 1", () => {
+		expect(getStrengthLabel(1)).toBe("Faible");
+	});
+
+	it("returns 'Moyen' for level 2", () => {
+		expect(getStrengthLabel(2)).toBe("Moyen");
+	});
+
+	it("returns 'Fort' for level 3", () => {
+		expect(getStrengthLabel(3)).toBe("Fort");
 	});
 
 	it("returns empty string for unknown level", () => {
@@ -54,8 +82,16 @@ describe("getStrengthColor", () => {
 		expect(getStrengthColor(0)).toBe("bg-destructive");
 	});
 
-	it("returns green for level 1", () => {
-		expect(getStrengthColor(1)).toBe("bg-green-600");
+	it("returns destructive/70 for level 1", () => {
+		expect(getStrengthColor(1)).toBe("bg-destructive/70");
+	});
+
+	it("returns warning for level 2", () => {
+		expect(getStrengthColor(2)).toBe("bg-warning");
+	});
+
+	it("returns success for level 3", () => {
+		expect(getStrengthColor(3)).toBe("bg-success");
 	});
 
 	it("returns muted for unknown level", () => {

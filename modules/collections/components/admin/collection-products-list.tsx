@@ -86,9 +86,9 @@ export function CollectionProductsList({
 					<TableBody>
 						{products.map((pc) => {
 							const product = pc.product;
-							const defaultSku = product.skus.find((s) => s.isDefault) || product.skus[0];
+							const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0];
 							const primaryImage =
-								defaultSku?.images.find((i) => i.isPrimary) || defaultSku?.images[0];
+								defaultSku?.images.find((i) => i.isPrimary) ?? defaultSku?.images[0];
 							const price = defaultSku?.priceInclTax;
 
 							return (
@@ -132,7 +132,7 @@ export function CollectionProductsList({
 											<div className="bg-muted relative h-12 w-12 overflow-hidden rounded-md">
 												<Image
 													src={primaryImage.url}
-													alt={primaryImage.altText || product.title}
+													alt={primaryImage.altText ?? product.title}
 													fill
 													className="object-cover"
 													sizes="48px"

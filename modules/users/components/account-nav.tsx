@@ -64,7 +64,7 @@ const navItems = [
 	},
 ] as const;
 
-const mobileItems = navItems.filter((item) => !("desktopOnly" in item && item.desktopOnly));
+const mobileItems = navItems.filter((item) => !("desktopOnly" in item));
 
 interface AccountNavProps {
 	/** Variant pour afficher seulement mobile ou desktop */
@@ -78,7 +78,7 @@ interface AccountNavProps {
  *
  * @param variant - "full" (defaut) affiche les deux, "mobile-only" ou "desktop-only"
  */
-const desktopOnlyItems = navItems.filter((item) => "desktopOnly" in item && item.desktopOnly);
+const desktopOnlyItems = navItems.filter((item) => "desktopOnly" in item);
 
 export function AccountNav({ variant = "full" }: AccountNavProps) {
 	const pathname = usePathname();

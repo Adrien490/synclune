@@ -10,6 +10,7 @@ import {
 	success,
 	error,
 	BusinessError,
+	safeFormGet,
 } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { getCartExpirationDate } from "@/modules/cart/lib/cart-session";
@@ -38,7 +39,7 @@ export async function updateCartItem(
 
 		// 2. Extraction des données du FormData
 		const rawData = {
-			cartItemId: formData.get("cartItemId") as string,
+			cartItemId: safeFormGet(formData, "cartItemId"),
 			quantity: Number(formData.get("quantity")) || 1,
 		};
 
@@ -130,7 +131,7 @@ export async function updateCartItem(
 		});
 
 		// 8. Invalider le cache
-		const tags = getCartInvalidationTags(userId, sessionId || undefined);
+		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
 		// 9. Success - Return ActionState format

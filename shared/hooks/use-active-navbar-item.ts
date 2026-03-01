@@ -30,18 +30,15 @@ export function useActiveNavbarItem() {
 		}
 
 		// Match avec query params (ex: /produits?sortBy=best-selling)
-		if (itemQuery && itemPath) {
+		if (itemQuery) {
 			// Vérifier que le path match
 			const pathMatches = pathname === itemPath || pathname.startsWith(itemPath + "/");
 			if (pathMatches) {
 				// Vérifier les query params
 				const itemParams = new URLSearchParams(itemQuery);
-				let allParamsMatch = true;
-				itemParams.forEach((value, key) => {
-					if (searchParams.get(key) !== value) {
-						allParamsMatch = false;
-					}
-				});
+				const allParamsMatch = Array.from(itemParams.entries()).every(
+					([key, value]) => searchParams.get(key) === value,
+				);
 				if (allParamsMatch) {
 					return true;
 				}

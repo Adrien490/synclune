@@ -53,7 +53,7 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 						)}
 						<Image
 							src={media.url}
-							alt={media.altText || `Photo ${index + 1}`}
+							alt={media.altText ?? `Photo ${index + 1}`}
 							fill
 							onLoad={() => setLoadedImages((prev) => new Set(prev).add(media.id))}
 							className={cn(
@@ -71,7 +71,7 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 			<MediaLightbox
 				open={isOpen}
 				close={close}
-				slides={medias.map((m) => ({ src: m.url, alt: m.altText || `Photo de l'avis` }))}
+				slides={medias.map((m) => ({ src: m.url, alt: m.altText ?? `Photo de l'avis` }))}
 				index={lightboxIndex}
 			/>
 		</>

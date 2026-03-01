@@ -79,24 +79,24 @@ export function getStripeClient(): Stripe | null {
  */
 export function getVendorLegalInfo() {
 	return {
-		company_legal_name: process.env.VENDOR_LEGAL_NAME || "TADDEI LEANE - Entrepreneur Individuel",
-		company_trade_name: process.env.VENDOR_TRADE_NAME || "Synclune",
-		company_siret: process.env.VENDOR_SIRET || "839 183 027 00037",
-		company_siren: process.env.VENDOR_SIREN || "839 183 027",
-		company_vat: process.env.VENDOR_VAT_NUMBER || "FR35839183027",
-		company_ape: process.env.VENDOR_APE_CODE || "47.91B",
+		company_legal_name: process.env.VENDOR_LEGAL_NAME ?? "TADDEI LEANE - Entrepreneur Individuel",
+		company_trade_name: process.env.VENDOR_TRADE_NAME ?? "Synclune",
+		company_siret: process.env.VENDOR_SIRET ?? "839 183 027 00037",
+		company_siren: process.env.VENDOR_SIREN ?? "839 183 027",
+		company_vat: process.env.VENDOR_VAT_NUMBER ?? "FR35839183027",
+		company_ape: process.env.VENDOR_APE_CODE ?? "47.91B",
 		company_address:
-			process.env.VENDOR_FULL_ADDRESS || "77 Boulevard du Tertre, 44100 Nantes, France",
-		company_email: process.env.VENDOR_EMAIL || "contact@synclune.fr",
-		insurance_company: process.env.VENDOR_INSURANCE_COMPANY || "En cours de souscription",
-		insurance_contact: process.env.VENDOR_INSURANCE_CONTACT || "contact@synclune.fr",
-		insurance_coverage: process.env.VENDOR_INSURANCE_COVERAGE || "France",
-		vat_exemption: process.env.VENDOR_VAT_EXEMPTION_TEXT || "TVA non applicable, art. 293 B du CGI",
-		late_payment_penalty_rate: process.env.VENDOR_LATE_PAYMENT_PENALTY_RATE || "12,40%",
-		recovery_fee: process.env.VENDOR_RECOVERY_FEE || "40 €",
-		operation_nature: process.env.VENDOR_OPERATION_NATURE || "Livraison de biens",
+			process.env.VENDOR_FULL_ADDRESS ?? "77 Boulevard du Tertre, 44100 Nantes, France",
+		company_email: process.env.VENDOR_EMAIL ?? "contact@synclune.fr",
+		insurance_company: process.env.VENDOR_INSURANCE_COMPANY ?? "En cours de souscription",
+		insurance_contact: process.env.VENDOR_INSURANCE_CONTACT ?? "contact@synclune.fr",
+		insurance_coverage: process.env.VENDOR_INSURANCE_COVERAGE ?? "France",
+		vat_exemption: process.env.VENDOR_VAT_EXEMPTION_TEXT ?? "TVA non applicable, art. 293 B du CGI",
+		late_payment_penalty_rate: process.env.VENDOR_LATE_PAYMENT_PENALTY_RATE ?? "12,40%",
+		recovery_fee: process.env.VENDOR_RECOVERY_FEE ?? "40 €",
+		operation_nature: process.env.VENDOR_OPERATION_NATURE ?? "Livraison de biens",
 		registry:
-			process.env.VENDOR_REGISTRY || "Inscrite au Répertoire National des Entreprises (RNE)",
+			process.env.VENDOR_REGISTRY ?? "Inscrite au Répertoire National des Entreprises (RNE)",
 	} as const;
 }
 

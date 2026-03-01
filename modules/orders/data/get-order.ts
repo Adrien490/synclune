@@ -4,7 +4,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 
 import { GET_ORDER_SELECT } from "../constants/order.constants";
 import { getOrderSchema } from "../schemas/order.schemas";
@@ -25,7 +25,7 @@ export type {
 // ============================================================================
 
 export async function getOrder(params: Partial<GetOrderParams>): Promise<GetOrderReturn | null> {
-	const validation = getOrderSchema.safeParse(params ?? {});
+	const validation = getOrderSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;
@@ -34,11 +34,11 @@ export async function getOrder(params: Partial<GetOrderParams>): Promise<GetOrde
 	const admin = await isAdmin();
 	const session = await getSession();
 
-	if (!admin && !session?.user?.id) {
+	if (!admin && !session?.user.id) {
 		return null;
 	}
 
-	return fetchOrder(validation.data, { admin, userId: session?.user?.id });
+	return fetchOrder(validation.data, { admin, userId: session?.user.id });
 }
 
 export async function fetchOrder(

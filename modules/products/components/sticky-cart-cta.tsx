@@ -47,7 +47,7 @@ export function StickyCartCTA({
 	const { action, isPending } = useAddToCart();
 	const searchParams = useSearchParams();
 
-	const { validationErrors } = useVariantValidation({
+	const { validationErrors: _validationErrors } = useVariantValidation({
 		product,
 		selection: {
 			color: searchParams.get("color"),
@@ -56,21 +56,10 @@ export function StickyCartCTA({
 		},
 	});
 
-	// Verifier si le produit a un seul SKU
-	const hasOnlyOneSku = product.skus && product.skus.length === 1;
-
 	// Verifier si le SKU est disponible
-	const isAvailable = currentSku ? currentSku.inventory > 0 && currentSku.isActive : false;
+	const isAvailable = currentSku.inventory > 0 && currentSku.isActive;
 
-	const canAddToCart = currentSku && isAvailable;
-
-	// Whether variant selection is incomplete (scroll to selector on click)
-	const needsVariantSelection = !currentSku && !hasOnlyOneSku && validationErrors.length > 0;
-
-	const scrollToSelector = () => {
-		const selector = document.getElementById("sku-selector");
-		selector?.scrollIntoView({ behavior: "smooth", block: "center" });
-	};
+	const canAddToCart = isAvailable;
 
 	// Observer le bouton principal pour declencher l'affichage
 	useEffect(() => {
@@ -132,21 +121,17 @@ export function StickyCartCTA({
 						data-pending={isPending ? "" : undefined}
 					>
 						{/* Champs caches */}
-						{currentSku && (
-							<>
-								<input type="hidden" name="skuId" value={currentSku.id} />
-								<input type="hidden" name="quantity" value="1" />
-							</>
-						)}
+						<input type="hidden" name="skuId" value={currentSku.id} />
+						<input type="hidden" name="quantity" value="1" />
 
 						{/* Miniature du produit (decorative) */}
-						{currentSku?.images?.[0]?.url && (
+						{currentSku.images[0]?.url && (
 							<div
 								className="border-border bg-muted relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border"
 								aria-hidden="true"
 							>
 								<Image
-									src={currentSku.images[0].thumbnailUrl || currentSku.images[0].url}
+									src={currentSku.images[0].thumbnailUrl ?? currentSku.images[0].url}
 									alt=""
 									fill
 									className="object-cover"
@@ -157,36 +142,29 @@ export function StickyCartCTA({
 
 						{/* Prix et nom */}
 						<div className="min-w-0 flex-1">
-							{currentSku ? (
-								<>
-									<div className="flex items-baseline gap-1.5">
-										<span className="text-foreground text-base font-bold">
-											{formatEuro(currentSku.priceInclTax)}
+							<div className="flex items-baseline gap-1.5">
+								<span className="text-foreground text-base font-bold">
+									{formatEuro(currentSku.priceInclTax)}
+								</span>
+								{currentSku.compareAtPrice &&
+									currentSku.compareAtPrice > currentSku.priceInclTax && (
+										<span className="text-muted-foreground text-xs line-through">
+											{formatEuro(currentSku.compareAtPrice)}
 										</span>
-										{currentSku.compareAtPrice &&
-											currentSku.compareAtPrice > currentSku.priceInclTax && (
-												<span className="text-muted-foreground text-xs line-through">
-													{formatEuro(currentSku.compareAtPrice)}
-												</span>
-											)}
-									</div>
-									{/* Nom du SKU tronqué */}
-									<p className="text-muted-foreground truncate text-xs">
-										{currentSku.color?.name || product.title}
-									</p>
-								</>
-							) : (
-								<span className="text-muted-foreground text-sm">Sélectionnez vos options</span>
-							)}
+									)}
+							</div>
+							{/* Nom du SKU tronqué */}
+							<p className="text-muted-foreground truncate text-xs">
+								{currentSku.color?.name ?? product.title}
+							</p>
 						</div>
 
 						{/* Bouton */}
 						<Button
-							type={needsVariantSelection ? "button" : "submit"}
+							type="submit"
 							size="lg"
-							disabled={(!canAddToCart && !needsVariantSelection) || isPending}
+							disabled={!canAddToCart || isPending}
 							aria-busy={isPending}
-							onClick={needsVariantSelection ? scrollToSelector : undefined}
 							className={cn(
 								"min-w-40 shrink-0",
 								"shadow-md",
@@ -194,15 +172,7 @@ export function StickyCartCTA({
 								"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2",
 							)}
 						>
-							{isPending
-								? "Ajout..."
-								: !isAvailable
-									? "Indisponible"
-									: !currentSku
-										? hasOnlyOneSku
-											? "Non disponible"
-											: validationErrors[0] || "Choisir"
-										: "Ajouter au panier"}
+							{isPending ? "Ajout..." : !isAvailable ? "Indisponible" : "Ajouter au panier"}
 						</Button>
 					</form>
 				</m.div>

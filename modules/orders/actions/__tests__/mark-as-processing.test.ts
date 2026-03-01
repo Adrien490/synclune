@@ -12,6 +12,10 @@ const {
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
+	mockSuccess,
+	mockError,
+	mockNotFound,
+	mockValidationError,
 	mockCreateOrderAuditTx,
 	mockGetOrderInvalidationTags,
 	mockCanMarkAsProcessing,
@@ -25,6 +29,10 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
+	mockSuccess: vi.fn(),
+	mockError: vi.fn(),
+	mockNotFound: vi.fn(),
+	mockValidationError: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockGetOrderInvalidationTags: vi.fn(),
 	mockCanMarkAsProcessing: vi.fn(),
@@ -41,7 +49,17 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ORDER_LIMITS: { SINGLE_OPERATIONS: "admin-order-single" },
 }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
-vi.mock("@/shared/lib/actions", () => ({ handleActionError: mockHandleActionError }));
+vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	handleActionError: mockHandleActionError,
+	success: mockSuccess,
+	error: mockError,
+	notFound: mockNotFound,
+	validationError: mockValidationError,
+}));
 vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
@@ -112,6 +130,19 @@ describe("markAsProcessing", () => {
 			status: ActionStatus.ERROR,
 			message: fallback,
 		}));
+		mockSuccess.mockImplementation((msg: string) => ({
+			status: ActionStatus.SUCCESS,
+			message: msg,
+		}));
+		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
+		mockNotFound.mockImplementation((resource: string) => ({
+			status: ActionStatus.NOT_FOUND,
+			message: `${resource} non trouvé`,
+		}));
+		mockValidationError.mockImplementation((msg: string) => ({
+			status: ActionStatus.VALIDATION_ERROR,
+			message: msg,
+		}));
 	});
 
 	it("should return auth error when not admin", async () => {
@@ -144,7 +175,8 @@ describe("markAsProcessing", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 		const result = await markAsProcessing(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
-		expect(result.message).toBe("La commande n'existe pas.");
+		// The action calls notFound("Commande") which generates the message
+		expect(result.message).toContain("Commande");
 	});
 
 	it("should return error already_processing when order is already in PROCESSING", async () => {

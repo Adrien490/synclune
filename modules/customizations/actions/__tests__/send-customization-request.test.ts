@@ -71,6 +71,19 @@ vi.mock("next/headers", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	safeFormGetJSON: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		if (typeof v !== "string" || !v) return null;
+		try {
+			return JSON.parse(v);
+		} catch {
+			return null;
+		}
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,

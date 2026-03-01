@@ -39,7 +39,8 @@ export async function createStripeRefund(
 		// Construire les paramètres du remboursement
 		const refundParams: Stripe.RefundCreateParams = {
 			amount: params.amount,
-			reason: (params.reason && STRIPE_REASON_MAP[params.reason]) || "requested_by_customer",
+			reason:
+				(params.reason ? STRIPE_REASON_MAP[params.reason] : undefined) ?? "requested_by_customer",
 			metadata: params.metadata,
 		};
 

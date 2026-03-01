@@ -36,7 +36,7 @@ export function OrderItemsCard({
 								<div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-md border">
 									{item.skuImageUrl || item.productImageUrl ? (
 										<Image
-											src={item.skuImageUrl || item.productImageUrl || ""}
+											src={item.skuImageUrl ?? item.productImageUrl ?? ""}
 											alt={imageAlt}
 											fill
 											sizes="80px"

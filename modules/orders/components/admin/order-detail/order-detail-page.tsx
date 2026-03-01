@@ -59,7 +59,7 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 						total={order.total}
 					/>
 
-					{(order.trackingNumber || order.shippedAt) && (
+					{(order.trackingNumber ?? order.shippedAt) && (
 						<OrderShippingCard order={order} canUpdateTracking={canUpdateTracking} />
 					)}
 				</div>
@@ -74,7 +74,7 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 
 					<OrderPaymentCard order={order} />
 
-					<OrderHistoryTimeline history={order.history || []} />
+					<OrderHistoryTimeline history={order.history} />
 				</div>
 			</div>
 		</div>

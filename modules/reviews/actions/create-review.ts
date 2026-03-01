@@ -11,6 +11,7 @@ import {
 	forbidden,
 	validationError,
 	handleActionError,
+	safeFormGetJSON,
 } from "@/shared/lib/actions";
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -46,32 +47,25 @@ export async function createReview(
 		if ("error" in rateLimitCheck) return rateLimitCheck.error;
 
 		// 3. Extraire les données du FormData
-		let parsedMedia: unknown = [];
-		try {
-			parsedMedia = JSON.parse((formData.get("media") as string) || "[]");
-		} catch {
-			parsedMedia = [];
-		}
-
 		const rawData = {
 			productId: formData.get("productId"),
 			orderItemId: formData.get("orderItemId"),
 			rating: formData.get("rating"),
-			title: formData.get("title") || undefined,
+			title: formData.get("title") ?? undefined,
 			content: formData.get("content"),
-			media: parsedMedia,
+			media: safeFormGetJSON<unknown>(formData, "media") ?? [],
 		};
 
 		// 4. Valider les données
 		const validation = createReviewSchema.safeParse(rawData);
 
 		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
+			const firstError = validation.error.issues[0];
 			const errorPath = firstError?.path.join(".");
 			return validationError(
 				errorPath
 					? `${errorPath}: ${firstError?.message}`
-					: firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA,
+					: (firstError?.message ?? REVIEW_ERROR_MESSAGES.INVALID_DATA),
 			);
 		}
 
@@ -130,7 +124,7 @@ export async function createReview(
 					data: media.map((m, index) => ({
 						reviewId: newReview.id,
 						url: m.url,
-						blurDataUrl: m.blurDataUrl || null,
+						blurDataUrl: m.blurDataUrl ?? null,
 						altText: m.altText ? sanitizeText(m.altText) : null,
 						position: index,
 					})),

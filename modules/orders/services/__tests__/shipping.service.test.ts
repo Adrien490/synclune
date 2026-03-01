@@ -9,23 +9,15 @@ vi.mock("@/shared/constants/countries", () => ({
 vi.mock("@/modules/orders/constants/shipping-rates", () => ({
 	SHIPPING_RATES: {
 		FR: {
-			amount: 600,
+			amount: 499,
 			displayName: "Livraison France (2-3 jours)",
 			carrier: "standard",
 			minDays: 2,
 			maxDays: 3,
 			countries: ["FR"],
 		},
-		CORSE: {
-			amount: 1000,
-			displayName: "Livraison Corse (4-7 jours)",
-			carrier: "standard",
-			minDays: 4,
-			maxDays: 7,
-			countries: ["FR"],
-		},
 		EU: {
-			amount: 1500,
+			amount: 950,
 			displayName: "Livraison Europe (4-7 jours)",
 			carrier: "standard",
 			minDays: 4,
@@ -60,22 +52,22 @@ import {
 describe("getShippingRate", () => {
 	it("should return FR rate for France", () => {
 		const rate = getShippingRate("FR");
-		expect(rate.amount).toBe(600);
+		expect(rate.amount).toBe(499);
 	});
 
 	it("should return EU rate for Germany", () => {
 		const rate = getShippingRate("DE");
-		expect(rate.amount).toBe(1500);
+		expect(rate.amount).toBe(950);
 	});
 
 	it("should return EU rate for Monaco", () => {
 		const rate = getShippingRate("MC");
-		expect(rate.amount).toBe(1500);
+		expect(rate.amount).toBe(950);
 	});
 
 	it("should return EU rate for any non-FR country", () => {
 		const rate = getShippingRate("BE");
-		expect(rate.amount).toBe(1500);
+		expect(rate.amount).toBe(950);
 	});
 });
 
@@ -106,16 +98,15 @@ describe("isShippingAvailable", () => {
 // ============================================================================
 
 describe("formatShippingPrice", () => {
-	it("should format 600 cents as currency", () => {
-		const formatted = formatShippingPrice(600);
-		// Intl format may vary, just check it contains 6
-		expect(formatted).toContain("6");
+	it("should format 499 cents as currency", () => {
+		const formatted = formatShippingPrice(499);
+		expect(formatted).toContain("4,99");
 		expect(formatted).toContain("€");
 	});
 
-	it("should format 1500 cents as currency", () => {
-		const formatted = formatShippingPrice(1500);
-		expect(formatted).toContain("15");
+	it("should format 950 cents as currency", () => {
+		const formatted = formatShippingPrice(950);
+		expect(formatted).toContain("9,50");
 		expect(formatted).toContain("€");
 	});
 
@@ -132,31 +123,31 @@ describe("formatShippingPrice", () => {
 
 describe("calculateShipping", () => {
 	it("should return FR rate by default", () => {
-		expect(calculateShipping()).toBe(600);
+		expect(calculateShipping()).toBe(499);
 	});
 
 	it("should return FR rate for mainland France", () => {
-		expect(calculateShipping("FR")).toBe(600);
+		expect(calculateShipping("FR")).toBe(499);
 	});
 
-	it("should return Corse rate for Corsican postal code", () => {
-		expect(calculateShipping("FR", "20000")).toBe(1000);
+	it("should return 0 for Corsican postal code (not available)", () => {
+		expect(calculateShipping("FR", "20000")).toBe(0);
 	});
 
-	it("should return Corse rate for 20200 postal code", () => {
-		expect(calculateShipping("FR", "20200")).toBe(1000);
+	it("should return 0 for 20200 postal code (Corse not available)", () => {
+		expect(calculateShipping("FR", "20200")).toBe(0);
 	});
 
 	it("should return FR rate for non-Corsican postal code", () => {
-		expect(calculateShipping("FR", "75001")).toBe(600);
+		expect(calculateShipping("FR", "75001")).toBe(499);
 	});
 
 	it("should return EU rate for Belgium", () => {
-		expect(calculateShipping("BE")).toBe(1500);
+		expect(calculateShipping("BE")).toBe(950);
 	});
 
 	it("should return EU rate for Italy", () => {
-		expect(calculateShipping("IT")).toBe(1500);
+		expect(calculateShipping("IT")).toBe(950);
 	});
 });
 
@@ -167,20 +158,21 @@ describe("calculateShipping", () => {
 describe("getShippingInfo", () => {
 	it("should return FR rate info by default", () => {
 		const info = getShippingInfo();
-		expect(info.amount).toBe(600);
-		expect(info.displayName).toContain("France");
+		expect(info).not.toBeNull();
+		expect(info!.amount).toBe(499);
+		expect(info!.displayName).toContain("France");
 	});
 
-	it("should return Corse rate info for Corsican postal code", () => {
+	it("should return null for Corsican postal code (not available)", () => {
 		const info = getShippingInfo("FR", "20000");
-		expect(info.amount).toBe(1000);
-		expect(info.displayName).toContain("Corse");
+		expect(info).toBeNull();
 	});
 
 	it("should return EU rate info for Belgium", () => {
 		const info = getShippingInfo("BE");
-		expect(info.amount).toBe(1500);
-		expect(info.displayName).toContain("Europe");
+		expect(info).not.toBeNull();
+		expect(info!.amount).toBe(950);
+		expect(info!.displayName).toContain("Europe");
 	});
 });
 

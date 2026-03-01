@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -13,7 +13,7 @@ import {
 } from "../constants/inventory.constants";
 import { getSkuStocksSchema } from "../schemas/inventory.schemas";
 import type { GetSkuStocksParams, GetSkuStocksReturn } from "../types/inventory.types";
-import { buildInventoryWhereClause } from "../services/inventory-query-builder.service";
+import { buildInventoryWhereClause } from "../services/inventory-query-builder";
 
 // Re-export pour compatibilité
 export {

@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { type ProductStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // FUNCTION TYPES

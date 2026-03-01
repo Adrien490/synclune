@@ -128,7 +128,7 @@ export function CustomizationSelectionToolbar() {
 							<Button type="submit" disabled={isPending} aria-busy={isPending}>
 								{isPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
 										Mise à jour...
 									</>
 								) : (

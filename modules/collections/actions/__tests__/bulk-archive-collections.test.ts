@@ -32,7 +32,7 @@ const {
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
-	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -50,6 +50,10 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: (message: string, data?: unknown) => ({ status: ActionStatus.SUCCESS, message, data }),
@@ -58,6 +62,11 @@ vi.mock("@/shared/lib/actions", () => ({
 		status: ActionStatus.NOT_FOUND,
 		message: `${entity} introuvable`,
 	}),
+}));
+
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+	logAuditTx: vi.fn(),
 }));
 
 vi.mock("@/shared/constants/cache-tags", () => ({
@@ -105,7 +114,7 @@ describe("bulkArchiveCollections", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ session: { user: { id: "admin-1" } } });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list", "admin-badges"]);
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
@@ -286,7 +295,7 @@ describe("bulkArchiveCollections", () => {
 		const result = await bulkArchiveCollections(undefined, makeFormData([VALID_CUID]));
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect((result as { data: { count: number } }).data?.count).toBe(1);
+		expect((result as { data: { count: number } }).data.count).toBe(1);
 	});
 
 	// --------------------------------------------------------------------------

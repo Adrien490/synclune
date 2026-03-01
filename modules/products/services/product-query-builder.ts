@@ -1,4 +1,4 @@
-import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
+import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
 import { notDeleted } from "@/shared/lib/prisma";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
 import type { SearchResult } from "../types/product-services.types";
@@ -210,7 +210,6 @@ function buildRelatedFieldsSearchConditions(words: string[]): Prisma.ProductWher
 
 export function buildProductFilterConditions(filters: ProductFilters): Prisma.ProductWhereInput[] {
 	const conditions: Prisma.ProductWhereInput[] = [];
-	if (!filters) return conditions;
 
 	if (filters.status !== undefined) {
 		const statuses = (Array.isArray(filters.status) ? filters.status : [filters.status]).filter(
@@ -368,7 +367,7 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 					},
 				},
 			});
-		} else if (filters.stockStatus === "in_stock") {
+		} else {
 			// In stock: at least one active SKU with inventory > 0
 			conditions.push({
 				skus: {
@@ -407,7 +406,7 @@ export function buildProductWhereClause(
 ): Prisma.ProductWhereInput {
 	const whereClause: Prisma.ProductWhereInput = {};
 	const andConditions: Prisma.ProductWhereInput[] = [];
-	const filters = params.filters ?? {};
+	const filters = params.filters;
 
 	// Exclude soft-deleted products by default
 	// For admin, use includeDeleted: true in params

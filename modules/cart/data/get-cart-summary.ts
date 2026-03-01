@@ -21,7 +21,7 @@ export type { CartSummary, GetCartSummaryReturn } from "../types/cart.types";
 export async function getCartSummary(): Promise<GetCartSummaryReturn> {
 	const session = await getSession();
 
-	const userId = session?.user?.id;
+	const userId = session?.user.id;
 	const sessionId = !userId ? ((await getCartSessionId()) ?? undefined) : undefined;
 
 	return fetchCartSummary(userId, sessionId);

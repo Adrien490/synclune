@@ -92,7 +92,7 @@ describe("verifyCronRequest", () => {
 				await verifyCronRequest();
 
 				expect(console.error).toHaveBeenCalledWith(
-					"[CRON] CRON_SECRET environment variable is not set",
+					expect.stringContaining("CRON_SECRET environment variable is not set"),
 				);
 			});
 
@@ -187,8 +187,7 @@ describe("verifyCronRequest", () => {
 				await verifyCronRequest();
 
 				expect(console.warn).toHaveBeenCalledWith(
-					"[CRON] Unauthorized cron request attempt",
-					expect.objectContaining({ ip: expect.any(String) }),
+					expect.stringContaining("Unauthorized cron request attempt"),
 				);
 			});
 
@@ -370,7 +369,7 @@ describe("cronError", () => {
 	it("logs the error message to console", () => {
 		cronError("Database unreachable");
 
-		expect(console.error).toHaveBeenCalledWith("[CRON] Error: Database unreachable");
+		expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Database unreachable"));
 	});
 
 	it("response body does not include a success field set to true", async () => {

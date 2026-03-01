@@ -57,6 +57,10 @@ const DEFAULT_SERVICE_RESULT = {
 	found: 4,
 	sent: 4,
 	errors: 0,
+	hasMore: false,
+	remindersFound: 0,
+	remindersSent: 0,
+	reminderErrors: 0,
 };
 
 // ============================================================================
@@ -153,7 +157,7 @@ describe("GET /api/cron/review-request-emails", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(2222);
 		});
 
@@ -172,9 +176,11 @@ describe("GET /api/cron/review-request-emails", () => {
 	describe("admin alert on errors", () => {
 		it("sends admin alert when result.errors > 0", async () => {
 			mockSendDelayedReviewRequestEmails.mockResolvedValue({
+				...DEFAULT_SERVICE_RESULT,
 				found: 4,
 				sent: 2,
 				errors: 2,
+				reminderErrors: 0,
 			});
 
 			await GET();
@@ -189,9 +195,11 @@ describe("GET /api/cron/review-request-emails", () => {
 
 		it("includes found and sent in the alert details", async () => {
 			mockSendDelayedReviewRequestEmails.mockResolvedValue({
+				...DEFAULT_SERVICE_RESULT,
 				found: 4,
 				sent: 3,
 				errors: 1,
+				reminderErrors: 0,
 			});
 
 			await GET();
@@ -205,9 +213,11 @@ describe("GET /api/cron/review-request-emails", () => {
 
 		it("still returns cronSuccess even when admin alert is sent", async () => {
 			mockSendDelayedReviewRequestEmails.mockResolvedValue({
+				...DEFAULT_SERVICE_RESULT,
 				found: 4,
 				sent: 3,
 				errors: 1,
+				reminderErrors: 0,
 			});
 
 			await GET();

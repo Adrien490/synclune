@@ -5,7 +5,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { validateInput, success, handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateProfileSchema } from "../schemas/user.schemas";
@@ -38,7 +38,7 @@ export async function updateProfile(
 
 		// 3. Extraction et validation des données
 		const rawData = {
-			name: formData.get("name") as string,
+			name: safeFormGet(formData, "name"),
 		};
 
 		const validation = validateInput(updateProfileSchema, rawData);

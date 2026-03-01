@@ -34,7 +34,7 @@ export function useAddRecentSearch(options?: UseAddRecentSearchOptions) {
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(addRecentSearch, {
 			onSuccess: (result) => {
-				if (result?.data && typeof result.data === "object" && "searches" in result.data) {
+				if (result.data && typeof result.data === "object" && "searches" in result.data) {
 					onSuccess?.(result.data.searches as string[]);
 				}
 			},

@@ -65,7 +65,7 @@ export async function deleteCollection(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "collection.delete",
 			targetType: "collection",
 			targetId: validatedData.id,

@@ -2,6 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 		title: "Politique de Confidentialité - Synclune",
 		description:
 			"Politique de confidentialité et protection des données personnelles conformément au RGPD",
-		url: "https://synclune.fr/confidentialite",
+		url: `${SITE_URL}/confidentialite`,
 		type: "website",
 	},
 	twitter: {
@@ -51,7 +52,7 @@ export default async function PrivacyPolicyPage() {
 
 			<section className={`bg-background ${SECTION_SPACING.default}`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
+					<div className="prose prose-slate max-w-prose space-y-6">
 						<section className="space-y-4">
 							<h2 className="text-xl font-semibold sm:text-2xl">1. Introduction</h2>
 							<p>
@@ -70,10 +71,10 @@ export default async function PrivacyPolicyPage() {
 								<br />
 								Email :{" "}
 								<a
-									href={`mailto:${process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}`}
+									href={`mailto:${process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}`}
 									className="underline"
 								>
-									{process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}
+									{process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}
 								</a>
 							</p>
 							<p className="mt-3">
@@ -261,78 +262,52 @@ export default async function PrivacyPolicyPage() {
 						<section className="space-y-4">
 							<h2 className="text-xl font-semibold sm:text-2xl">7. Durée de conservation</h2>
 							<div className="overflow-x-auto">
-								<table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
+								<table className="w-full border-collapse border border-gray-300">
 									<caption className="sr-only">
 										Durée de conservation des différents types de données personnelles
 									</caption>
 									<thead>
-										<tr className="bg-gray-100 dark:bg-gray-800">
-											<th
-												scope="col"
-												className="border border-gray-300 p-3 text-left dark:border-gray-700"
-											>
+										<tr className="bg-gray-100">
+											<th scope="col" className="border border-gray-300 p-3 text-left">
 												Type de données
 											</th>
-											<th
-												scope="col"
-												className="border border-gray-300 p-3 text-left dark:border-gray-700"
-											>
+											<th scope="col" className="border border-gray-300 p-3 text-left">
 												Durée de conservation
 											</th>
 										</tr>
 									</thead>
 									<tbody>
 										<tr>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												Compte client
-											</td>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												Jusqu'à suppression du compte
-											</td>
+											<td className="border border-gray-300 p-3">Compte client</td>
+											<td className="border border-gray-300 p-3">Jusqu'à suppression du compte</td>
 										</tr>
 										<tr>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">Commandes</td>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												10 ans (obligation comptable)
-											</td>
+											<td className="border border-gray-300 p-3">Commandes</td>
+											<td className="border border-gray-300 p-3">10 ans (obligation comptable)</td>
 										</tr>
 										<tr>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												Panier visiteur
-											</td>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												7 jours après création
-											</td>
+											<td className="border border-gray-300 p-3">Panier visiteur</td>
+											<td className="border border-gray-300 p-3">7 jours après création</td>
 										</tr>
 										<tr>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												Wishlist visiteur
-											</td>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												30 jours après création
-											</td>
+											<td className="border border-gray-300 p-3">Wishlist visiteur</td>
+											<td className="border border-gray-300 p-3">30 jours après création</td>
 										</tr>
 										<tr>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												Cookies techniques
-											</td>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
+											<td className="border border-gray-300 p-3">Cookies techniques</td>
+											<td className="border border-gray-300 p-3">
 												7 jours (cart_session), 30 jours (wishlist_session)
 											</td>
 										</tr>
 										<tr>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												Newsletter (non confirmée)
-											</td>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
+											<td className="border border-gray-300 p-3">Newsletter (non confirmée)</td>
+											<td className="border border-gray-300 p-3">
 												30 jours après inscription (suppression automatique si email non validé)
 											</td>
 										</tr>
 										<tr>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
-												Newsletter (confirmée)
-											</td>
-											<td className="border border-gray-300 p-3 dark:border-gray-700">
+											<td className="border border-gray-300 p-3">Newsletter (confirmée)</td>
+											<td className="border border-gray-300 p-3">
 												Jusqu'à désinscription ou 3 ans d'inactivité (aucun email ouvert)
 											</td>
 										</tr>
@@ -349,7 +324,14 @@ export default async function PrivacyPolicyPage() {
 									<strong>Droit d'accès :</strong> obtenir une copie de vos données
 								</li>
 								<li>
-									<strong>Droit de rectification :</strong> corriger des données inexactes
+									<strong>Droit de rectification :</strong> corriger des données inexactes. Pour
+									modifier votre adresse email, contactez-nous à{" "}
+									<a
+										href={`mailto:${process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}`}
+										className="underline"
+									>
+										{process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}
+									</a>
 								</li>
 								<li>
 									<strong>Droit à l'effacement :</strong> supprimer vos données (sauf obligations
@@ -376,10 +358,10 @@ export default async function PrivacyPolicyPage() {
 							<p>
 								Pour exercer vos droits, contactez-nous à{" "}
 								<a
-									href={`mailto:${process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}`}
+									href={`mailto:${process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}`}
 									className="underline"
 								>
-									{process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}
+									{process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}
 								</a>{" "}
 								avec une pièce d'identité.
 							</p>
@@ -522,16 +504,16 @@ export default async function PrivacyPolicyPage() {
 								Pour toute question relative à la protection de vos données personnelles :
 								<br />
 								<a
-									href={`mailto:${process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}`}
+									href={`mailto:${process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}`}
 									className="underline"
 								>
-									{process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}
+									{process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}
 								</a>
 							</p>
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 27 février 2026
+							Dernière mise à jour : 1 mars 2026
 						</p>
 					</div>
 				</div>

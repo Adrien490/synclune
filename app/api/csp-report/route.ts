@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 		// Rate limit: 20 reports per minute per IP
 		const headersList = await headers();
 		const ip = await getClientIp(headersList);
-		const rateLimit = await checkRateLimit(`ip:${ip || "unknown"}`, {
+		const rateLimit = await checkRateLimit(`ip:${ip ?? "unknown"}`, {
 			limit: 20,
 			windowMs: 60_000,
 		});
@@ -23,18 +23,21 @@ export async function POST(request: Request) {
 			return NextResponse.json({ status: "rate_limited" }, { status: 429 });
 		}
 
-		const body = await request.json();
+		const body = (await request.json()) as Record<string, unknown>;
 
 		if (process.env.NODE_ENV === "development") {
 			console.warn("[CSP Violation]", JSON.stringify(body, null, 2));
 		} else {
-			const report = body?.["csp-report"] ?? body;
+			const report = (body["csp-report"] ?? body) as Record<string, unknown>;
+			const blockedUri = report["blocked-uri"] as string | undefined;
+			const violatedDirective = report["violated-directive"] as string | undefined;
+			const documentUri = report["document-uri"] as string | undefined;
 			console.warn(
 				"[CSP Violation]",
 				JSON.stringify({
-					blockedUri: report?.["blocked-uri"],
-					violatedDirective: report?.["violated-directive"],
-					documentUri: report?.["document-uri"],
+					blockedUri,
+					violatedDirective,
+					documentUri,
 				}),
 			);
 		}

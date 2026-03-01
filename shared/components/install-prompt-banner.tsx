@@ -7,6 +7,7 @@ import {
 } from "@/shared/providers/cookie-consent-store-provider";
 import { Button } from "./ui/button";
 import { Logo } from "./logo";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { useEffect, useRef, useState } from "react";
@@ -131,8 +132,8 @@ export function InstallPromptBanner() {
 					animate={{ opacity: 1, y: 0 }}
 					exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					transition={{
-						duration: shouldReduceMotion ? 0 : 0.3,
-						ease: "easeOut",
+						duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.slow,
+						ease: MOTION_CONFIG.easing.easeOut,
 					}}
 					className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-6 md:left-6 md:max-w-md"
 					role="alertdialog"

@@ -12,7 +12,14 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
-import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	error,
+	handleActionError,
+	safeFormGet,
+	safeFormGetJSON,
+} from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { customizationSchema } from "../schemas/customization.schema";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
@@ -37,20 +44,19 @@ export async function sendCustomizationRequest(
 		const rateLimit = await checkRateLimit(rateLimitId, CUSTOMIZATION_LIMITS.QUOTE_REQUEST);
 
 		if (!rateLimit.success) {
-			return error(rateLimit.error || "Trop de demandes envoyées. Veuillez réessayer plus tard.");
+			return error(rateLimit.error ?? "Trop de demandes envoyées. Veuillez réessayer plus tard.");
 		}
 
 		// 2. Extraction des données du FormData
-		const inspirationImageUrlsRaw = formData.get("inspirationImageUrls") as string;
 		const rawData = {
-			firstName: formData.get("firstName") as string,
-			email: formData.get("email") as string,
-			phone: (formData.get("phone") as string) || "",
-			productTypeLabel: (formData.get("productTypeLabel") as string) || "",
-			details: (formData.get("details") as string) || "",
-			inspirationImageUrls: inspirationImageUrlsRaw ? JSON.parse(inspirationImageUrlsRaw) : [],
+			firstName: safeFormGet(formData, "firstName"),
+			email: safeFormGet(formData, "email"),
+			phone: safeFormGet(formData, "phone") ?? "",
+			productTypeLabel: safeFormGet(formData, "productTypeLabel") ?? "",
+			details: safeFormGet(formData, "details") ?? "",
+			inspirationImageUrls: safeFormGetJSON<string[]>(formData, "inspirationImageUrls") ?? [],
 			rgpdConsent: formData.get("rgpdConsent") === "true",
-			website: (formData.get("website") as string) || "",
+			website: safeFormGet(formData, "website") ?? "",
 		};
 
 		// 3. Validation avec Zod
@@ -87,7 +93,7 @@ export async function sendCustomizationRequest(
 
 		// 6. Retrieve optional session for userId linkage
 		const session = await getSession();
-		const userId = session?.user?.id ?? null;
+		const userId = session?.user.id ?? null;
 
 		// 7. Trouver le productTypeId correspondant au label (optionnel)
 		const productType = await prisma.productType.findFirst({
@@ -103,11 +109,11 @@ export async function sendCustomizationRequest(
 			data: {
 				firstName: validatedData.firstName,
 				email: validatedData.email,
-				phone: validatedData.phone || null,
+				phone: validatedData.phone ?? null,
 				productTypeLabel: validatedData.productTypeLabel,
-				productTypeId: productType?.id || null,
+				productTypeId: productType?.id ?? null,
 				details: validatedData.details,
-				inspirationImageUrls: validatedData.inspirationImageUrls ?? [],
+				inspirationImageUrls: validatedData.inspirationImageUrls,
 				userId,
 			},
 		});

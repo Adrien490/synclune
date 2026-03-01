@@ -1,15 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockDeleteUploadThingFileFromUrl, mockDeleteUploadThingFilesFromUrls } =
-	vi.hoisted(() => ({
-		mockPrisma: {
-			user: { findMany: vi.fn() },
-			reviewMedia: { findMany: vi.fn() },
-			$transaction: vi.fn(),
-		},
-		mockDeleteUploadThingFileFromUrl: vi.fn(),
-		mockDeleteUploadThingFilesFromUrls: vi.fn(),
-	}));
+const {
+	mockPrisma,
+	mockDeleteUploadThingFileFromUrl,
+	mockDeleteUploadThingFilesFromUrls,
+	mockStripeCustomersDel,
+} = vi.hoisted(() => ({
+	mockPrisma: {
+		user: { findMany: vi.fn() },
+		reviewMedia: { findMany: vi.fn() },
+		$transaction: vi.fn(),
+	},
+	mockDeleteUploadThingFileFromUrl: vi.fn(),
+	mockDeleteUploadThingFilesFromUrls: vi.fn(),
+	mockStripeCustomersDel: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -26,6 +31,10 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/modules/emails/services/auth-emails", () => ({
 	sendAccountDeletionEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/shared/lib/stripe", () => ({
+	getStripeClient: () => ({ customers: { del: mockStripeCustomersDel } }),
 }));
 
 vi.mock("@/modules/reviews/constants/cache", () => ({
@@ -65,7 +74,7 @@ describe("processAccountDeletions", () => {
 				deletionRequestedAt: { lt: expect.any(Date) },
 				anonymizedAt: null,
 			},
-			select: { id: true, email: true, name: true, image: true },
+			select: { id: true, email: true, name: true, image: true, stripeCustomerId: true },
 			take: 25,
 		});
 
@@ -201,6 +210,59 @@ describe("processAccountDeletions", () => {
 				stripeCustomerId: null,
 			},
 		});
+	});
+
+	it("should delete Stripe customer after successful transaction", async () => {
+		const mockUser = {
+			id: "user-stripe",
+			email: "stripe@test.com",
+			name: "Stripe User",
+			image: null,
+			stripeCustomerId: "cus_test123",
+		};
+		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.$transaction.mockResolvedValue(undefined);
+		mockStripeCustomersDel.mockResolvedValue({ id: "cus_test123", deleted: true });
+
+		await processAccountDeletions();
+
+		expect(mockStripeCustomersDel).toHaveBeenCalledWith("cus_test123");
+	});
+
+	it("should not fail if Stripe customer deletion fails (non-blocking)", async () => {
+		const mockUser = {
+			id: "user-stripe-fail",
+			email: "stripe-fail@test.com",
+			name: "Stripe Fail",
+			image: null,
+			stripeCustomerId: "cus_failing",
+		};
+		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.$transaction.mockResolvedValue(undefined);
+		mockStripeCustomersDel.mockRejectedValue(new Error("Stripe API error"));
+
+		const result = await processAccountDeletions();
+
+		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
+	});
+
+	it("should skip Stripe deletion when no stripeCustomerId", async () => {
+		const mockUser = {
+			id: "user-no-stripe",
+			email: "no-stripe@test.com",
+			name: "No Stripe",
+			image: null,
+			stripeCustomerId: null,
+		};
+		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.$transaction.mockResolvedValue(undefined);
+
+		await processAccountDeletions();
+
+		expect(mockStripeCustomersDel).not.toHaveBeenCalled();
 	});
 
 	it("should delete avatar from UploadThing after successful transaction", async () => {

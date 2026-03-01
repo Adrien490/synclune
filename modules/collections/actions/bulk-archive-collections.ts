@@ -4,7 +4,14 @@ import { updateTag } from "next/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	notFound,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -30,13 +37,14 @@ export async function bulkArchiveCollections(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extract data from FormData
-		const collectionIdsRaw = formData.get("collectionIds") as string;
-		const targetStatus = (formData.get("targetStatus") as string) || "ARCHIVED";
+		const collectionIdsRaw = safeFormGet(formData, "collectionIds");
+		const targetStatus = safeFormGet(formData, "targetStatus") ?? "ARCHIVED";
 
 		// Parse le JSON des IDs
 		let collectionIds: string[];
 		try {
-			collectionIds = JSON.parse(collectionIdsRaw);
+			const parsed: unknown = JSON.parse(collectionIdsRaw ?? "");
+			collectionIds = parsed as string[];
 		} catch {
 			return error("Format des IDs de collections invalide.");
 		}
@@ -90,7 +98,7 @@ export async function bulkArchiveCollections(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "collection.bulkArchive",
 			targetType: "collection",
 			targetId: validatedData.collectionIds.join(","),

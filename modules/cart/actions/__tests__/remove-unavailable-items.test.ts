@@ -40,6 +40,10 @@ vi.mock("@/modules/cart/services/item-availability.service", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	handleActionError: mockHandleActionError,
 }));
 

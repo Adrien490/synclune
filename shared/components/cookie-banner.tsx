@@ -6,6 +6,7 @@ import {
 } from "@/shared/providers/cookie-consent-store-provider";
 import { Button } from "./ui/button";
 import Link from "next/link";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { useEffect, useRef } from "react";
@@ -35,17 +36,17 @@ export function CookieBanner() {
 	const _hasHydrated = useCookieConsentStore((state) => state._hasHydrated);
 	const hasConsented = useHasConsented();
 	const shouldReduceMotion = useReducedMotion();
-	const acceptButtonRef = useRef<HTMLButtonElement>(null);
+	const bannerRef = useRef<HTMLDivElement>(null);
 
 	// Condition d'affichage : hydraté + pas de consentement + banner visible
 	const shouldShow = _hasHydrated && !hasConsented && bannerVisible;
 
-	// Focus sur le bouton Accepter après animation (immédiat si reduced motion)
+	// Focus on the banner container (neutral element) — CNIL compliant: no bias toward Accept
 	useEffect(() => {
-		if (shouldShow && acceptButtonRef.current) {
+		if (shouldShow && bannerRef.current) {
 			const timer = setTimeout(
 				() => {
-					acceptButtonRef.current?.focus();
+					bannerRef.current?.focus();
 				},
 				shouldReduceMotion ? 0 : 300,
 			);
@@ -80,7 +81,10 @@ export function CookieBanner() {
 					initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
-					transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeOut" }}
+					transition={{
+						duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.slow,
+						ease: MOTION_CONFIG.easing.easeOut,
+					}}
 					className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-6 md:left-6 md:max-w-md"
 					role="alertdialog"
 					aria-modal="true"
@@ -88,7 +92,11 @@ export function CookieBanner() {
 					aria-describedby="cookie-description"
 				>
 					<FocusScope trapped loop>
-						<div className="bg-background/95 border-primary/15 space-y-3 rounded-xl border p-4 shadow-lg backdrop-blur-md md:space-y-4 md:p-6">
+						<div
+							ref={bannerRef}
+							tabIndex={-1}
+							className="bg-background/95 border-primary/15 space-y-3 rounded-xl border p-4 shadow-lg backdrop-blur-md focus:outline-none md:space-y-4 md:p-6"
+						>
 							<p className="text-foreground text-base font-semibold">Cookies</p>
 
 							{/* Message */}
@@ -121,7 +129,6 @@ export function CookieBanner() {
 							{/* Boutons d'action - différenciés mais CNIL-compliant */}
 							<div className="flex gap-2">
 								<Button
-									ref={acceptButtonRef}
 									onClick={acceptCookies}
 									variant="default"
 									size="sm"

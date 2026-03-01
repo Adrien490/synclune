@@ -68,7 +68,7 @@ export function NoResultsFilters({ resetUrl = "/produits" }: NoResultsFiltersPro
 		}
 
 		return {
-			label: FILTER_LABELS[key] || key,
+			label: FILTER_LABELS[key] ?? key,
 			displayValue: String(value ?? ""),
 		};
 	};

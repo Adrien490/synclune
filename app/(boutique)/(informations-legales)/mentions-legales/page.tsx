@@ -3,6 +3,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 		title: "Mentions Légales - Synclune",
 		description:
 			"Mentions légales du site Synclune - Informations légales et identification de l'éditeur",
-		url: "https://synclune.fr/mentions-legales",
+		url: `${SITE_URL}/mentions-legales`,
 		type: "website",
 	},
 	twitter: {
@@ -33,8 +34,8 @@ export default async function MentionsLegalesPage() {
 	cacheTag("legal-notice");
 
 	// Récupérer l'URL du site et l'email depuis les variables d'environnement
-	const siteUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
-	const contactEmail = process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr";
+	const siteUrl = process.env.BETTER_AUTH_URL ?? SITE_URL;
+	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 
 	return (
 		<div className="relative min-h-screen">
@@ -59,7 +60,7 @@ export default async function MentionsLegalesPage() {
 
 			<section className={`bg-background ${SECTION_SPACING.default} relative z-10`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
+					<div className="prose prose-slate max-w-prose space-y-6">
 						<section className="space-y-4">
 							<h2 className="text-xl font-semibold sm:text-2xl">1. Éditeur du site</h2>
 							<p>

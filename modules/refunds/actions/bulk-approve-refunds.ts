@@ -6,7 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError, error, safeFormGetJSON } from "@/shared/lib/actions";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
@@ -39,14 +39,8 @@ export async function bulkApproveRefunds(
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const idsRaw = formData.get("ids") as string;
-		let ids: string[];
-
-		try {
-			ids = JSON.parse(idsRaw);
-		} catch {
-			return error("Format des IDs invalide");
-		}
+		const ids = safeFormGetJSON<string[]>(formData, "ids");
+		if (!ids) return error("Format des IDs invalide");
 
 		const validated = validateInput(bulkApproveRefundsSchema, { ids });
 		if ("error" in validated) return validated.error;
@@ -121,7 +115,7 @@ export async function bulkApproveRefunds(
 				sendRefundApprovedEmail({
 					to: refund.order.user.email,
 					orderNumber: refund.order.orderNumber,
-					customerName: refund.order.user.name || "Client",
+					customerName: refund.order.user.name ?? "Client",
 					refundAmount: refund.amount,
 					originalOrderTotal: refund.order.total,
 					reason: refund.reason,
@@ -146,7 +140,7 @@ export async function bulkApproveRefunds(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "refund.bulkApprove",
 			targetType: "refund",
 			targetId: refunds.map((r) => r.id).join(","),

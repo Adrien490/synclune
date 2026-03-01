@@ -4,7 +4,13 @@ import { PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, softDelete, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -43,10 +49,12 @@ export async function deleteOrder(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
+		const rawId = safeFormGet(formData, "id");
 
-		const validated = validateInput(deleteOrderSchema, { id });
+		const validated = validateInput(deleteOrderSchema, { id: rawId });
 		if ("error" in validated) return validated.error;
+
+		const { id } = validated.data;
 
 		// Récupérer la commande avec les infos nécessaires
 		const order = await prisma.order.findUnique({
@@ -87,7 +95,7 @@ export async function deleteOrder(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.delete",
 			targetType: "order",
 			targetId: order.id,

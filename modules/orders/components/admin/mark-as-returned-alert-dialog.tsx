@@ -52,7 +52,7 @@ export function MarkAsReturnedAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									La commande <strong>{dialog.data?.orderNumber}</strong> a été marquée comme
+									La commande <strong>{dialog.data.orderNumber}</strong> a été marquée comme
 									retournée.
 								</p>
 								<p className="mt-2">Souhaitez-vous créer un remboursement pour cette commande ?</p>
@@ -65,7 +65,7 @@ export function MarkAsReturnedAlertDialog() {
 						</AlertDialogCancel>
 						<Button asChild>
 							<Link
-								href={`/admin/ventes/remboursements/nouveau?orderId=${dialog.data?.orderId}`}
+								href={`/admin/ventes/remboursements/nouveau?orderId=${dialog.data.orderId}`}
 								onClick={() => dialog.close()}
 							>
 								Créer un remboursement

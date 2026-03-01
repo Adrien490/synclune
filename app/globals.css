@@ -2,7 +2,6 @@
 @plugin "@tailwindcss/typography";
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:is(.dark *));
 @custom-variant can-hover (@media (hover: hover) and (pointer: fine));
 
 html {
@@ -550,11 +549,6 @@ textarea {
 		animation: shimmer 1.5s ease-in-out infinite;
 	}
 
-	/* Dark mode: highlight plus subtil */
-	.dark .animate-shimmer {
-		--shimmer-highlight: oklch(0.22 0.015 270);
-	}
-
 	/* Animation draw-line pour SVG dessinés à la main (Tendance 2026: Hand-drawn aesthetic) */
 	@keyframes draw-line {
 		to {
@@ -791,10 +785,6 @@ textarea {
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 	}
 
-	.dark .polaroid-paper::before {
-		mix-blend-mode: screen;
-	}
-
 	/* Realistic lift hover — desktop only, motion-safe */
 	.polaroid-hover {
 		--polaroid-rotate: 0deg;
@@ -910,67 +900,6 @@ textarea {
 	}
 }
 
-.dark {
-	--background: oklch(0.09 0.015 270);
-	--foreground: oklch(0.92 0.005 270);
-	--card: oklch(0.12 0.015 270);
-	--card-foreground: oklch(0.92 0.005 270);
-	--popover: oklch(0.12 0.015 270);
-	--popover-foreground: oklch(0.92 0.005 270);
-	--primary: oklch(0.8593 0.097 340.78);
-	--primary-foreground: oklch(0.1 0 0);
-	--secondary: oklch(0.9221 0.0871 86.29);
-	--secondary-foreground: oklch(0.1 0 0);
-	--muted: oklch(0.15 0.015 270);
-	--muted-foreground: oklch(0.75 0.005 270); /* Augmenté de 0.68 à 0.75 pour dark mode WCAG AAA */
-	--accent: oklch(0.15 0.015 270);
-	--accent-foreground: oklch(0.92 0.005 270);
-	--destructive: oklch(0.59 0.17 25);
-	--destructive-foreground: oklch(0.95 0.005 270);
-	--border: oklch(0.18 0.015 270);
-	--input: oklch(0.15 0.015 270);
-	--primary-text: oklch(0.75 0.12 340.78); /* Rose clair pour texte sur fond dark - WCAG AA */
-	--success: oklch(0.62 0.14 145); /* Vert plus clair pour dark mode */
-	--success-foreground: oklch(1 0 0);
-	--warning: oklch(0.78 0.15 85); /* Ambre plus clair pour dark mode */
-	--warning-foreground: oklch(0.1 0 0);
-	--info: oklch(0.65 0.15 250); /* Bleu plus clair pour dark mode */
-	--info-foreground: oklch(1 0 0);
-	--ring: oklch(0.8593 0.097 340.78);
-	--chart-1: oklch(0.8593 0.097 340.78);
-	--chart-2: oklch(0.9221 0.0871 86.29);
-	--chart-3: oklch(0.5 0.1 200);
-	--chart-4: oklch(0.75 0.15 25); /* Corail lumineux - bijoux colorés */
-	--chart-5: oklch(0.7 0.1 300);
-	/* Polaroid caption colors (on zinc-800, WCAG AA 4.5:1+) */
-	--polaroid-caption-mauve: oklch(0.78 0.1 340);
-	--polaroid-caption-violet: oklch(0.76 0.1 290);
-	--polaroid-caption-green: oklch(0.74 0.1 155);
-	--polaroid-caption-brown: oklch(0.78 0.07 70);
-
-	--radius: 0.5rem;
-	--sidebar: oklch(0.12 0.015 340); /* Dark mode avec touche rose */
-	--sidebar-foreground: oklch(0.92 0.005 270);
-	--sidebar-muted-foreground: oklch(0.65 0.005 270); /* Contraste WCAG AA dark mode */
-	--sidebar-primary: oklch(0.8593 0.097 340.78); /* Rose primaire */
-	--sidebar-primary-foreground: oklch(0.1 0 0);
-	--sidebar-accent: oklch(0.8593 0.097 340.78 / 0.12); /* Rose primaire subtil dark */
-	--sidebar-accent-foreground: oklch(0.92 0.005 270);
-	--sidebar-border: oklch(0.8593 0.097 340.78 / 0.2); /* Bordure rose dark */
-	--sidebar-ring: oklch(0.8593 0.097 340.78);
-	--shadow-color: 0 0% 0%;
-	--letter-spacing: 0em;
-	--spacing: 0.25rem;
-	--shadow-2xs: 0 1px 2px 0 oklch(0 0 0 / 0.25);
-	--shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.25);
-	--shadow-sm: 0 1px 3px 0 oklch(0 0 0 / 0.4), 0 1px 2px -1px oklch(0 0 0 / 0.4);
-	--shadow: 0 1px 3px 0 oklch(0 0 0 / 0.4), 0 1px 2px -1px oklch(0 0 0 / 0.4);
-	--shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.4), 0 2px 4px -2px oklch(0 0 0 / 0.4);
-	--shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.4), 0 4px 6px -4px oklch(0 0 0 / 0.4);
-	--shadow-xl: 0 20px 25px -5px oklch(0 0 0 / 0.4), 0 8px 10px -6px oklch(0 0 0 / 0.4);
-	--shadow-2xl: 0 25px 50px -12px oklch(0 0 0 / 0.6);
-}
-
 /* ============================================
    Lightbox Premium Styles (yet-another-react-lightbox)
    ============================================ */
@@ -1049,19 +978,6 @@ textarea {
 		background: oklch(1 0 0 / 0.95) !important;
 		-webkit-backdrop-filter: blur(4px);
 		backdrop-filter: blur(4px);
-	}
-}
-
-.dark [data-sonner-toast] {
-	border-color: oklch(0.18 0.015 270 / 0.4) !important;
-	box-shadow:
-		0 4px 12px -2px oklch(0.8593 0.097 340.78 / 0.18),
-		0 2px 6px -2px oklch(0.8593 0.097 340.78 / 0.12) !important;
-}
-
-@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-	.dark [data-sonner-toast] {
-		background: oklch(0.12 0.015 270 / 0.95) !important;
 	}
 }
 
@@ -1284,13 +1200,4 @@ textarea {
 	opacity: 0.5;
 	pointer-events: none;
 	cursor: not-allowed;
-}
-
-/* Dark mode */
-.dark .PhoneInput--synclune .PhoneInputCountry {
-	background: oklch(0.15 0.015 270 / 0.3);
-}
-
-.dark .PhoneInput--synclune .PhoneInputCountryIcon {
-	box-shadow: 0 0 0 1px oklch(0.18 0.015 270 / 0.5);
 }

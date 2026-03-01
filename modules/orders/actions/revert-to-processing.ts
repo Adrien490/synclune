@@ -6,7 +6,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendRevertShippingNotificationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -44,21 +44,23 @@ export async function revertToProcessing(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
-		const rawReason = formData.get("reason") as string;
-		const reason = sanitizeText(rawReason);
+		const rawId = safeFormGet(formData, "id");
+		const rawReason = safeFormGet(formData, "reason");
+		const reason = sanitizeText(rawReason ?? "");
 
 		const result = revertToProcessingSchema.safeParse({
-			id,
+			id: rawId,
 			reason,
 		});
 
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
+				message: result.error.issues[0]?.message ?? "Données invalides",
 			};
 		}
+
+		const { id } = result.data;
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
@@ -106,7 +108,7 @@ export async function revertToProcessing(
 				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 				note: result.data.reason,
 				authorId: adminUser.id,
-				authorName: adminUser.name || "Admin",
+				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
 					previousTrackingNumber: found.trackingNumber,
@@ -160,7 +162,7 @@ export async function revertToProcessing(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.revertToProcessing",
 			targetType: "order",
 			targetId: order.id,

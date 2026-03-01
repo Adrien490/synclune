@@ -6,7 +6,13 @@ import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_ADJUST_STOCK_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
@@ -21,11 +27,11 @@ export async function adjustSkuStock(
 ): Promise<ActionState> {
 	try {
 		// Extraire les données du FormData
-		const skuId = formData.get("skuId") as string;
-		const adjustmentRaw = formData.get("adjustment") as string;
+		const rawSkuId = safeFormGet(formData, "skuId");
+		const adjustmentRaw = safeFormGet(formData, "adjustment");
 		const reason = formData.get("reason") as string | null;
 
-		const adjustment = parseInt(adjustmentRaw, 10);
+		const adjustment = parseInt(adjustmentRaw ?? "", 10);
 
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const auth = await requireAdminWithUser();
@@ -38,11 +44,13 @@ export async function adjustSkuStock(
 
 		// 3. Validation
 		const validation = validateInput(adjustSkuStockSchema, {
-			skuId,
+			skuId: rawSkuId,
 			adjustment,
-			reason: reason || undefined,
+			reason: reason ?? undefined,
 		});
 		if ("error" in validation) return validation.error;
+
+		const { skuId } = validation.data;
 
 		// 4. Atomic conditional update to prevent TOCTOU race condition
 		// A single UPDATE with a WHERE clause ensures stock never goes negative,
@@ -95,18 +103,12 @@ export async function adjustSkuStock(
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
 		tags.forEach((tag) => updateTag(tag));
 
-		// 7. Notify wishlist users if stock went from 0 to positive
 		const previousInventory = sku.inventory - adjustment;
-		if (previousInventory <= 0 && sku.inventory > 0) {
-			import("@/modules/wishlist/services/notify-back-in-stock")
-				.then(({ notifyBackInStock }) => notifyBackInStock(sku.productId))
-				.catch((err) => console.error("[ADJUST-STOCK] Back-in-stock notification failed:", err));
-		}
 
-		// 8. Audit log
+		// 7. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.adjustStock",
 			targetType: "sku",
 			targetId: skuId,

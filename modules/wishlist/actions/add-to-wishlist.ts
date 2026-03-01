@@ -25,6 +25,7 @@ import {
 	success,
 	error,
 	enforceRateLimit,
+	safeFormGet,
 } from "@/shared/lib/actions";
 
 /**
@@ -47,7 +48,7 @@ export async function addToWishlist(
 	try {
 		// 1. Récupérer l'authentification (user ou session invité)
 		const session = await getSession();
-		const userId = session?.user?.id;
+		const userId = session?.user.id;
 		const sessionId = !userId ? await getOrCreateWishlistSessionId() : null;
 
 		// Vérifier qu'on a soit un userId soit un sessionId
@@ -57,7 +58,7 @@ export async function addToWishlist(
 
 		// 2. Extraction des données du FormData
 		const rawData = {
-			productId: formData.get("productId") as string,
+			productId: safeFormGet(formData, "productId"),
 		};
 
 		// 3. Validation avec Zod
@@ -94,8 +95,8 @@ export async function addToWishlist(
 			const wishlist = await tx.wishlist.upsert({
 				where: userId ? { userId } : { sessionId: sessionId! },
 				create: {
-					userId: userId || null,
-					sessionId: sessionId || null,
+					userId: userId ?? null,
+					sessionId: sessionId ?? null,
 					expiresAt: userId ? null : getWishlistExpirationDate(),
 				},
 				update: {
@@ -150,7 +151,7 @@ export async function addToWishlist(
 		});
 
 		// 7. Invalidation cache immédiate (read-your-own-writes)
-		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
+		const tags = getWishlistInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(

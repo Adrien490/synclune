@@ -28,7 +28,7 @@ export async function WishlistList({ wishlistPromise, perPage }: WishlistListPro
 	const { items, pagination, totalCount } = await wishlistPromise;
 
 	// Empty state si aucun item
-	if (!items || items.length === 0) {
+	if (items.length === 0) {
 		return (
 			<Empty className="mt-4 mb-12 sm:my-12">
 				<EmptyHeader>

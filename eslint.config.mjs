@@ -71,12 +71,18 @@ const eslintConfig = [
 					caughtErrorsIgnorePattern: "^_",
 				},
 			],
-			"@typescript-eslint/no-explicit-any": "warn",
+			"@typescript-eslint/no-explicit-any": "error",
 			"@typescript-eslint/no-empty-object-type": "off",
 			"@typescript-eslint/no-require-imports": "off",
 			"@typescript-eslint/no-floating-promises": "error",
 			"@typescript-eslint/no-unnecessary-condition": "warn",
 			"@typescript-eslint/prefer-nullish-coalescing": "warn",
+			"@typescript-eslint/consistent-type-imports": [
+				"error",
+				{ prefer: "type-imports", fixStyle: "inline-type-imports" },
+			],
+			"@typescript-eslint/no-unsafe-assignment": "warn",
+			"@typescript-eslint/no-unsafe-return": "warn",
 		},
 	},
 	{
@@ -104,6 +110,8 @@ const eslintConfig = [
 		files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
 		rules: {
 			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
 		},
 	},
 ];

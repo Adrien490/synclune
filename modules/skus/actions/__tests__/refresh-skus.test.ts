@@ -31,6 +31,10 @@ vi.mock("next/cache", () => ({
 	cacheTag: vi.fn(),
 }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	BusinessError: class BusinessError extends Error {
 		constructor(message: string) {
 			super(message);

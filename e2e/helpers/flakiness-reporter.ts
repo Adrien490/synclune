@@ -43,8 +43,7 @@ export default class FlakinessReporter implements Reporter {
 			console.error(
 				`\n[flakiness] BUDGET EXCEEDED: ${this.flakyTests.length} flaky tests > budget of ${this.budget}`,
 			);
-			// Note: Playwright doesn't support failing via reporter exit code directly.
-			// The CI pipeline should check for this message in the output.
+			process.exitCode = 1;
 		}
 	}
 

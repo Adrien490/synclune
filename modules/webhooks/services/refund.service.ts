@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
@@ -15,7 +15,7 @@ const VALID_CURRENCY_CODES = new Set(["EUR"]);
  * Validates and returns a currency code string, defaulting to EUR if invalid
  */
 function validateCurrencyCode(currency: string | undefined | null): string {
-	const normalized = currency?.toUpperCase() || "EUR";
+	const normalized = currency?.toUpperCase() ?? "EUR";
 	if (VALID_CURRENCY_CODES.has(normalized)) {
 		return normalized;
 	}
@@ -37,7 +37,7 @@ export async function syncStripeRefunds(
 	}>,
 	orderId: string,
 ): Promise<void> {
-	const stripeRefunds = charge.refunds?.data || [];
+	const stripeRefunds = charge.refunds?.data ?? [];
 
 	// ⚠️ AUDIT FIX: Batch toutes les opérations pour éviter N+1 queries
 	// Collecter les opérations à effectuer
@@ -252,7 +252,7 @@ export function mapStripeRefundStatus(stripeStatus: string | undefined | null): 
 		canceled: RefundStatus.CANCELLED,
 	};
 
-	return statusMap[stripeStatus || "pending"] || RefundStatus.PENDING;
+	return statusMap[stripeStatus ?? "pending"] ?? RefundStatus.PENDING;
 }
 
 /** Valid state transitions for refund status */
@@ -340,11 +340,11 @@ export async function sendRefundFailedAlert(
 
 		await sendAdminRefundFailedAlert({
 			orderNumber: refund.order.orderNumber,
-			customerEmail: refund.order.customerEmail || "Email non disponible",
+			customerEmail: refund.order.customerEmail ?? "Email non disponible",
 			amount: refund.amount,
 			reason: "other",
 			errorMessage: `Échec remboursement Stripe: ${failureReason}`,
-			stripePaymentIntentId: refund.order.stripePaymentIntentId || "",
+			stripePaymentIntentId: refund.order.stripePaymentIntentId ?? "",
 			dashboardUrl,
 		});
 

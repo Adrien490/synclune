@@ -49,6 +49,10 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	CART_LIMITS: { ADD: "add" },
 }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,

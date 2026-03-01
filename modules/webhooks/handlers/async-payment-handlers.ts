@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { handleCheckoutSessionCompleted } from "./checkout-handlers";
@@ -19,7 +19,7 @@ export async function handleAsyncPaymentSucceeded(
 	console.log(`🏦 [WEBHOOK] Async payment succeeded: ${session.id}`);
 
 	try {
-		const orderId = session.metadata?.orderId || session.client_reference_id;
+		const orderId = session.metadata?.orderId ?? session.client_reference_id;
 
 		if (!orderId) {
 			console.error("❌ [WEBHOOK] No order ID found in async payment session");
@@ -48,7 +48,7 @@ export async function handleAsyncPaymentFailed(
 	console.log(`🚫 [WEBHOOK] Async payment failed: ${session.id}`);
 
 	try {
-		const orderId = session.metadata?.orderId || session.client_reference_id;
+		const orderId = session.metadata?.orderId ?? session.client_reference_id;
 
 		if (!orderId) {
 			console.error("❌ [WEBHOOK] No order ID found in failed async payment session");

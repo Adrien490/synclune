@@ -7,11 +7,8 @@ import type { GetUsersParams, UserFilters } from "../types/user.types";
 // ============================================================================
 
 export function buildUserFilterConditions(filters: UserFilters): Prisma.UserWhereInput[] {
+	if (!filters) return [];
 	const conditions: Prisma.UserWhereInput[] = [];
-
-	if (!filters) {
-		return conditions;
-	}
 
 	if (filters.name !== undefined) {
 		const names = Array.isArray(filters.name) ? filters.name : [filters.name];
@@ -123,10 +120,10 @@ export function buildUserWhereClause(
 ): Prisma.UserWhereInput {
 	const whereClause: Prisma.UserWhereInput = {
 		// Soft delete: exclude deleted users unless includeDeleted is set
-		...(params.filters?.includeDeleted ? {} : notDeleted),
+		...(params.filters.includeDeleted ? {} : notDeleted),
 	};
 	const andConditions: Prisma.UserWhereInput[] = [];
-	const filters = params.filters ?? {};
+	const filters = params.filters;
 
 	if (typeof params.search === "string" && params.search.trim()) {
 		const searchTerm = params.search.trim();

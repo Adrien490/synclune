@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -29,7 +35,7 @@ export async function bulkDeleteCollections(
 		// 2. Extract and parse IDs from FormData
 		let ids: unknown;
 		try {
-			const idsString = formData.get("ids") as string;
+			const idsString = safeFormGet(formData, "ids");
 			ids = idsString ? JSON.parse(idsString) : [];
 		} catch {
 			return error("Format JSON invalide pour les IDs");
@@ -78,7 +84,7 @@ export async function bulkDeleteCollections(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "collection.bulkDelete",
 			targetType: "collection",
 			targetId: validatedData.ids.join(","),

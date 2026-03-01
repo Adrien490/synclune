@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import type { ReadonlyValues } from "@/shared/types/sort.types";
 
 // ============================================================================

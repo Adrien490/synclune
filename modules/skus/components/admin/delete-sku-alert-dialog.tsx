@@ -37,7 +37,7 @@ export function DeleteProductSkuAlertDialog() {
 							</strong>
 						</p>
 						<p>
-							Êtes-vous sûr de vouloir supprimer la variante <strong>{data?.skuName}</strong> ?
+							Êtes-vous sûr de vouloir supprimer la variante <strong>{data.skuName}</strong> ?
 						</p>
 						<p>Vous devrez définir une nouvelle variante principale après cette suppression.</p>
 					</div>

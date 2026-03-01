@@ -79,7 +79,7 @@ export function DeletePrimaryImageAlertDialog() {
 						disabled={isPending}
 						aria-busy={isPending}
 					>
-						{isPending && <Loader2 className="animate-spin" />}
+						{isPending && <Loader2 className="motion-safe:animate-spin" />}
 						{isPending ? "Suppression..." : "Supprimer"}
 					</AlertDialogAction>
 				</AlertDialogFooter>

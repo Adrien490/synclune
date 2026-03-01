@@ -18,7 +18,7 @@ function Table({ className, stickyHeader, striped, caption, children, ...props }
 		<div
 			data-slot="table-container"
 			role="region"
-			aria-label={caption || "Tableau de données"}
+			aria-label={caption ?? "Tableau de données"}
 			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable container needs keyboard access
 			tabIndex={0}
 			className={cn(
@@ -29,7 +29,7 @@ function Table({ className, stickyHeader, striped, caption, children, ...props }
 		>
 			<table
 				data-slot="table"
-				data-striped={striped || undefined}
+				data-striped={striped ?? undefined}
 				className={cn(
 					"w-full caption-bottom text-sm",
 					striped && "[&_tbody_tr:nth-child(even)]:bg-muted/30",
@@ -72,7 +72,7 @@ function TableBody({ className, isLoading, ...props }: TableBodyProps) {
 	return (
 		<tbody
 			data-slot="table-body"
-			aria-busy={isLoading || undefined}
+			aria-busy={isLoading ?? undefined}
 			aria-live={isLoading ? "polite" : undefined}
 			className={cn(
 				"[&_tr:last-child]:border-0",

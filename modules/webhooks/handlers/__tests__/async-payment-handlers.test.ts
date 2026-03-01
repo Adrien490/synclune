@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type Stripe from "stripe";
 
 // ============================================================================
 // Hoisted mocks - must be declared before any imports
@@ -96,7 +97,7 @@ function makeSession(overrides: Record<string, unknown> = {}) {
 		metadata: { orderId: "order-1" },
 		client_reference_id: null,
 		...overrides,
-	} as unknown as import("stripe").default.Checkout.Session;
+	} as unknown as Stripe.Checkout.Session;
 }
 
 function makeOrder(overrides: Record<string, unknown> = {}) {

@@ -5,34 +5,50 @@ import { FOCUSABLE_SELECTOR } from "./constants";
 export function useKeyboardNavigation() {
 	const [activeIndex, setActiveIndex] = useState(-1);
 	const contentRef = useRef<HTMLDivElement>(null);
+	const focusablesRef = useRef<HTMLElement[]>([]);
 
-	// Sync data-active attribute on focusable elements
+	// Cache focusable elements and refresh when DOM content changes
 	useEffect(() => {
 		const container = contentRef.current;
 		if (!container) return;
 
-		const focusables = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+		const refresh = () => {
+			const elements = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+			focusablesRef.current = elements;
+			for (let i = 0; i < elements.length; i++) {
+				const el = elements[i];
+				if (!el) continue;
+				el.dataset.qsNavId = String(i);
+				if (!el.id) {
+					el.id = `qs-nav-${i}`;
+				}
+			}
+		};
 
-		for (let i = 0; i < focusables.length; i++) {
-			const el = focusables[i];
-			if (!el) continue;
-			el.dataset.qsNavId = String(i);
-			// Only assign id if none exists to avoid overwriting semantic IDs
-			if (!el.id) {
-				el.id = `qs-nav-${i}`;
-			}
-			if (i === activeIndex) {
-				el.setAttribute("data-active", "true");
-				el.setAttribute("aria-current", "true");
-			} else {
-				el.removeAttribute("data-active");
-				el.removeAttribute("aria-current");
-			}
+		refresh();
+		const observer = new MutationObserver(refresh);
+		observer.observe(container, { childList: true, subtree: true });
+		return () => observer.disconnect();
+	}, []);
+
+	// Sync data-active attribute using cached list (O(1) swap instead of O(n) loop)
+	useEffect(() => {
+		const container = contentRef.current;
+		if (!container) return;
+
+		const prev = container.querySelector('[data-active="true"]');
+		if (prev) {
+			prev.removeAttribute("data-active");
+			prev.removeAttribute("aria-current");
+		}
+		const el = focusablesRef.current[activeIndex];
+		if (el) {
+			el.setAttribute("data-active", "true");
+			el.setAttribute("aria-current", "true");
 		}
 	}, [activeIndex]);
 
-	// Delegated mouseenter handler — works for all focusable elements
-	// including those rendered in the parallel route slot (X4 fix)
+	// Delegated mouseover handler using cached data-qsNavId (no querySelectorAll)
 	useEffect(() => {
 		const container = contentRef.current;
 		if (!container) return;
@@ -41,10 +57,9 @@ export function useKeyboardNavigation() {
 			const target = (e.target as HTMLElement).closest<HTMLElement>(FOCUSABLE_SELECTOR);
 			if (!target || !container.contains(target)) return;
 
-			const focusables = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-			const index = focusables.indexOf(target);
-			if (index !== -1) {
-				setActiveIndex(index);
+			const id = target.dataset.qsNavId;
+			if (id != null) {
+				setActiveIndex(Number(id));
 			}
 		};
 
@@ -52,20 +67,13 @@ export function useKeyboardNavigation() {
 		return () => container.removeEventListener("mouseover", handleMouseOver);
 	}, []);
 
-	const getFocusableElements = () => {
-		const container = contentRef.current;
-		if (!container) return [];
-		return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-	};
-
 	const focusFirst = () => {
 		setActiveIndex(0);
-		const firstFocusable = contentRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-		firstFocusable?.scrollIntoView({ block: "nearest" });
+		focusablesRef.current[0]?.scrollIntoView({ block: "nearest" });
 	};
 
 	const handleArrowNavigation = (e: React.KeyboardEvent<HTMLDivElement>) => {
-		const focusables = getFocusableElements();
+		const focusables = focusablesRef.current;
 		if (focusables.length === 0) return;
 
 		let nextIndex: number | null = null;

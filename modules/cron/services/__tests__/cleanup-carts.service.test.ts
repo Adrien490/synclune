@@ -162,13 +162,13 @@ describe("cleanupExpiredCarts", () => {
 		await cleanupExpiredCarts();
 
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-carts] Starting expired carts cleanup...",
+			expect.stringContaining("Starting expired carts cleanup"),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith("[CRON:cleanup-carts] Deleted 8 expired carts");
+		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Deleted expired carts"));
 		expect(consoleLogSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-carts] Cleaned up 4 orphaned cart items",
+			expect.stringContaining("Cleaned up orphaned cart items"),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith("[CRON:cleanup-carts] Cleanup completed");
+		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cleanup completed"));
 	});
 
 	it("should not log orphaned items message when count is zero", async () => {
@@ -191,7 +191,7 @@ describe("cleanupExpiredCarts", () => {
 		await cleanupExpiredCarts();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-carts] Delete limit reached, remaining carts will be cleaned on next run",
+			expect.stringContaining("Delete limit reached, remaining carts will be cleaned on next run"),
 		);
 	});
 

@@ -123,7 +123,7 @@ export function BulkDeleteDialog({
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <Loader2 className="motion-safe:animate-spin" />}
 							{isPending ? pendingLabel : submitLabel}
 						</AlertDialogAction>
 					</AlertDialogFooter>

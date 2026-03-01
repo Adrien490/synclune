@@ -13,7 +13,7 @@ import {
 import { useRemoveFromWishlist } from "@/modules/wishlist/hooks/use-remove-from-wishlist";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { AlertDialogData } from "@/shared/stores/alert-dialog-store";
+import { type AlertDialogData } from "@/shared/stores/alert-dialog-store";
 import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";

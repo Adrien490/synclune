@@ -183,7 +183,7 @@ export function AnnouncementBar({
 					<button
 						type="button"
 						onClick={dismiss}
-						className="hover:bg-primary-foreground/15 absolute top-1/2 right-2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full transition-colors sm:right-3"
+						className="hover:bg-primary-foreground/15 focus-visible:ring-primary-foreground absolute top-1/2 right-2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-hidden sm:right-3"
 						aria-label="Fermer la barre d'annonce"
 					>
 						<X size={16} aria-hidden="true" />

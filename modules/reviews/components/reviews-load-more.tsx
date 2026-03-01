@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/shared/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { loadMoreReviews } from "../actions/load-more-reviews";
@@ -39,16 +40,25 @@ export function ReviewsLoadMore({
 		if (!cursor) return;
 
 		startTransition(async () => {
-			const result = await loadMoreReviews({
-				productId,
-				cursor,
-				filterRating: ratingFilter,
-				sortBy,
-			});
+			try {
+				const result = await loadMoreReviews({
+					productId,
+					cursor,
+					filterRating: ratingFilter,
+					sortBy,
+				});
 
-			setAdditionalReviews((prev) => [...prev, ...result.reviews]);
-			setCursor(result.nextCursor);
-			setHasMore(result.hasMore);
+				if (result.error) {
+					toast.error(result.error);
+					return;
+				}
+
+				setAdditionalReviews((prev) => [...prev, ...result.reviews]);
+				setCursor(result.nextCursor);
+				setHasMore(result.hasMore);
+			} catch {
+				toast.error("Impossible de charger plus d'avis");
+			}
 		});
 	};
 

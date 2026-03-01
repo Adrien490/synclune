@@ -4,7 +4,7 @@ import { getProductTypeOptions } from "@/modules/product-types/data/get-product-
 import { getCollectionOptions } from "@/modules/collections/data/get-collection-options";
 import { getColorOptions } from "@/modules/colors/data/get-color-options";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import dynamic from "next/dynamic";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture

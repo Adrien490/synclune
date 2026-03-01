@@ -161,7 +161,8 @@ describe("ProductCard", () => {
 	it("links title to the correct product page URL", () => {
 		mockGetProductCardData.mockReturnValue(createCardData());
 		render(<ProductCard product={createProduct()} />);
-		const link = screen.getByTitle("Bague Lune Argent");
+		// The title link wraps the h3 heading; find the anchor by its href
+		const link = screen.getByRole("link", { name: "Bague Lune Argent" });
 		expect(link.getAttribute("href")).toBe("/creations/bague-lune-argent");
 	});
 

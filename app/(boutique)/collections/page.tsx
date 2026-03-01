@@ -8,6 +8,7 @@ import { GET_COLLECTIONS_DEFAULT_PER_PAGE } from "@/modules/collections/data/get
 import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
 	title: "Les Collections - Synclune | Collections de bijoux artisanaux",
@@ -22,8 +23,9 @@ export const metadata: Metadata = {
 		title: "Les Collections - Synclune | Bijoux artisanaux faits main",
 		description:
 			"Explorez toutes les collections de bijoux colorés faits main. Chaque collection a son univers unique !",
-		url: "https://synclune.fr/collections",
+		url: `${SITE_URL}/collections`,
 		type: "website",
+		images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
 	},
 	twitter: {
 		card: "summary_large_image",
@@ -50,13 +52,13 @@ const breadcrumbJsonLd = {
 			"@type": "ListItem",
 			position: 1,
 			name: "Accueil",
-			item: "https://synclune.fr",
+			item: SITE_URL,
 		},
 		{
 			"@type": "ListItem",
 			position: 2,
 			name: "Collections",
-			item: "https://synclune.fr/collections",
+			item: `${SITE_URL}/collections`,
 		},
 	],
 };
@@ -69,7 +71,7 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 
 	// Récupérer les collections avec filtres
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(params.perPage) || GET_COLLECTIONS_DEFAULT_PER_PAGE;
 
 	// Récupérer les collections (uniquement celles publiées avec des produits)

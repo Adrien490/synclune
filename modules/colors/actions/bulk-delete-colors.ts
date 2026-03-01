@@ -77,7 +77,7 @@ export async function bulkDeleteColors(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "color.bulkDelete",
 			targetType: "color",
 			targetId: validatedData.ids.join(","),

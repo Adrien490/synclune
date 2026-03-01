@@ -37,7 +37,7 @@ vi.mock("next/cache", () => ({
 vi.mock("../../constants/cache", () => ({
 	cacheColors: () => {
 		mockCacheLife("reference");
-		mockCacheTag("colors");
+		mockCacheTag("colors-list");
 	},
 }));
 
@@ -162,7 +162,7 @@ describe("getColors", () => {
 
 		await getColors({ sortBy: "name-ascending", direction: "forward" });
 
-		expect(mockCacheTag).toHaveBeenCalledWith("colors");
+		expect(mockCacheTag).toHaveBeenCalledWith("colors-list");
 	});
 
 	// --- Sort order ---

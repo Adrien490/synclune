@@ -40,8 +40,8 @@ function Doodle({ variant, color, width, height, delay, className }: DoodleProps
 				strokeWidth={2}
 				strokeLinecap="round"
 				strokeLinejoin="round"
-				fill={config.fill ? color : "none"}
-				fillOpacity={config.fill ? 0.15 : 0}
+				fill={color}
+				fillOpacity={0.15}
 				className="doodle-draw"
 				style={
 					{

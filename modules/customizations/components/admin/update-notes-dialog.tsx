@@ -35,7 +35,7 @@ export function UpdateNotesDialog() {
 	// Reset notes when dialog opens with new data
 	useEffect(() => {
 		if (isOpen && data) {
-			queueMicrotask(() => setNotes(data.currentNotes || ""));
+			queueMicrotask(() => setNotes(data.currentNotes ?? ""));
 		}
 	}, [isOpen, data]);
 
@@ -48,7 +48,7 @@ export function UpdateNotesDialog() {
 		action(formData);
 	};
 
-	const hasChanges = notes !== (data?.currentNotes || "");
+	const hasChanges = notes !== (data?.currentNotes ?? "");
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>

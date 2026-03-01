@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 	title: "Connexion | Synclune",
 	description:
 		"Connectez-vous à votre espace personnel Synclune pour accéder à vos commandes, favoris et informations.",
-	robots: "noindex, nofollow",
+	robots: { index: false, follow: false },
 	openGraph: {
 		title: "Connexion | Synclune",
 		description: "Accédez à votre espace personnel",

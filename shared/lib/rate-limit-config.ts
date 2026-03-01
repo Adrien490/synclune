@@ -23,12 +23,6 @@ const minutes = (n: number) => n * 60 * 1000;
  */
 const hours = (n: number) => n * 60 * 60 * 1000;
 
-/**
- * Convertit des secondes en millisecondes
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const seconds = (n: number) => n * 1000;
-
 // ========================================
 // 🛒 PANIER (CART)
 // ========================================
@@ -304,6 +298,17 @@ export const PRODUCT_SEARCH_LIMIT: RateLimitConfig = {
 export const PRODUCT_REVIEW_LIMIT: RateLimitConfig = {
 	limit: 5, // 5 avis maximum
 	windowMs: hours(24), // par jour
+};
+
+/**
+ * Limite pour le chargement paginé d'avis (load more)
+ *
+ * Protège contre scraping rapide de tous les avis d'un produit
+ * Permissif car action de lecture fréquente et légitime
+ */
+export const REVIEW_LOAD_MORE_LIMIT: RateLimitConfig = {
+	limit: 30, // 30 chargements maximum
+	windowMs: minutes(1), // par minute
 };
 
 // ========================================

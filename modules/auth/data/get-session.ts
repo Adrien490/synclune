@@ -27,7 +27,7 @@ export type {
 export async function getSession(
 	params: Partial<GetSessionParams>,
 ): Promise<GetSessionReturn | null> {
-	const validation = getSessionSchema.safeParse(params ?? {});
+	const validation = getSessionSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;
@@ -36,11 +36,11 @@ export async function getSession(
 	const admin = await isAdmin();
 	const session = await getCurrentSession();
 
-	if (!admin && !session?.user?.id) {
+	if (!admin && !session?.user.id) {
 		return null;
 	}
 
-	return fetchSession(validation.data, { admin, userId: session?.user?.id });
+	return fetchSession(validation.data, { admin, userId: session?.user.id });
 }
 
 export async function fetchSession(

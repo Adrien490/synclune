@@ -9,7 +9,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
-import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
+import { type GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import {
 	extractCollectionImages,
 	extractPriceRange,
@@ -28,7 +28,7 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 	const { collections, pagination } = use(collectionsPromise);
 
 	// Afficher le composant Empty si aucune collection
-	if (!collections || collections.length === 0) {
+	if (collections.length === 0) {
 		return (
 			<Empty role="status" aria-live="polite" className="mt-4 mb-12 sm:my-12">
 				<EmptyHeader>
@@ -36,7 +36,7 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 						<Gem className="size-6" />
 					</EmptyMedia>
 					<EmptyTitle>Aucune collection disponible</EmptyTitle>
-					<EmptyDescription>Les collections arrivent bientôt !</EmptyDescription>
+					<EmptyDescription>Aucune collection disponible pour le moment.</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
 					<Button asChild variant="primary" size="lg">

@@ -69,7 +69,7 @@ export async function bulkDeleteDiscounts(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "discount.bulkDelete",
 			targetType: "discount",
 			targetId: deletableIds.join(","),

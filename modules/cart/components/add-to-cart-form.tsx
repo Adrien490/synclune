@@ -53,7 +53,7 @@ export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
 	};
 
 	// Vérifier si le produit a un seul SKU
-	const hasOnlyOneSku = product.skus && product.skus.length === 1;
+	const hasOnlyOneSku = product.skus.length === 1;
 
 	// Vérifier si le SKU est disponible
 	const isAvailable = selectedSku ? selectedSku.inventory > 0 && selectedSku.isActive : false;

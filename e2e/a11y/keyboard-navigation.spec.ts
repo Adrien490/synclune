@@ -97,7 +97,7 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 			if ((await results.count()) > 0) {
 				// Tab navigates to results
 				await page.keyboard.press("ArrowDown");
-				const focusedResult = page.locator('[role="option"]:focus, [data-search-results] a:focus');
+				const _focusedResult = page.locator('[role="option"]:focus, [data-search-results] a:focus');
 				// At least verify results are visible
 				expect(await results.count()).toBeGreaterThan(0);
 			}
@@ -115,6 +115,115 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 				await page.keyboard.press("Escape");
 			}
 		}
+	});
+
+	test("recherche autocomplete - ArrowDown/Enter/Escape navigation complète", async ({ page }) => {
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Find the search input or search button
+		const searchInput = page.getByRole("searchbox").first();
+		const searchButton = page.getByRole("button", { name: /Rechercher/i }).first();
+
+		let input = searchInput;
+
+		if ((await searchInput.count()) === 0 && (await searchButton.count()) > 0) {
+			// Click search button to open search dialog
+			await searchButton.click();
+			await page.waitForTimeout(300);
+			input = page.getByRole("searchbox").first();
+			if ((await input.count()) === 0) {
+				input = page.locator("input[type='search'], input[type='text']").last();
+			}
+		}
+
+		if ((await input.count()) === 0) {
+			test.skip(true, "Pas de champ de recherche trouvé");
+			return;
+		}
+
+		await input.focus();
+		await expect(input).toBeFocused();
+		await input.fill("bijou");
+		await page.waitForTimeout(500);
+
+		// Check for listbox/options
+		const options = page.locator('[role="option"]');
+		if ((await options.count()) === 0) {
+			// No results, skip deep navigation
+			return;
+		}
+
+		// ArrowDown navigates into results
+		await page.keyboard.press("ArrowDown");
+
+		// Check aria-activedescendant is set (if combobox pattern)
+		const activeDescendant = await input.getAttribute("aria-activedescendant");
+		if (activeDescendant) {
+			const activeElement = page.locator(`#${CSS.escape(activeDescendant)}`);
+			await expect(activeElement).toBeAttached();
+		}
+
+		// ArrowDown again
+		if ((await options.count()) > 1) {
+			await page.keyboard.press("ArrowDown");
+		}
+
+		// ArrowUp goes back
+		await page.keyboard.press("ArrowUp");
+
+		// Escape closes results
+		await page.keyboard.press("Escape");
+		const listbox = page.locator('[role="listbox"]');
+		if ((await listbox.count()) > 0) {
+			await expect(listbox).not.toBeVisible();
+		}
+
+		// Input should retain focus
+		await expect(input).toBeFocused();
+	});
+
+	test("formulaire Tab order - champs séquentiels sans saut", async ({ page }) => {
+		await page.goto("/inscription");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Collect all form inputs in order
+		const formFields = page.locator(
+			'form input:not([type="hidden"]), form select, form textarea, form button[type="submit"]',
+		);
+		const fieldCount = await formFields.count();
+
+		if (fieldCount < 2) {
+			test.skip(true, "Formulaire insuffisant pour tester le tab order");
+			return;
+		}
+
+		// Focus the first field
+		await formFields.first().focus();
+		await expect(formFields.first()).toBeFocused();
+
+		// Tab through all fields and verify sequential order
+		const visitedFields: string[] = [];
+		for (let i = 0; i < Math.min(fieldCount, 8); i++) {
+			const tagName = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
+			const inputType = await page.evaluate(() =>
+				(document.activeElement as HTMLInputElement).type.toLowerCase(),
+			);
+			const name = await page.evaluate(
+				() => (document.activeElement as HTMLInputElement).name || "",
+			);
+
+			visitedFields.push(`${tagName}[${inputType || ""}]${name ? `(${name})` : ""}`);
+
+			await page.keyboard.press("Tab");
+		}
+
+		// Verify we visited multiple distinct fields (no stuck focus)
+		const uniqueFields = new Set(visitedFields);
+		expect(
+			uniqueFields.size,
+			"Le focus Tab devrait traverser des champs distincts",
+		).toBeGreaterThan(1);
 	});
 
 	test("les cartes produit sont navigables par Tab", async ({ page }) => {
@@ -231,7 +340,7 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		for (let i = 0; i < 10; i++) {
 			await page.keyboard.press("Tab");
 
-			const tagName = await page.evaluate(() => document.activeElement?.tagName?.toLowerCase());
+			const tagName = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
 			const role = await page.evaluate(() => document.activeElement?.getAttribute("role"));
 			const tabIndex = await page.evaluate(() => document.activeElement?.getAttribute("tabindex"));
 
@@ -310,6 +419,6 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		// Verify the pagination element is keyboard accessible
 		const href = await pageLinks.getAttribute("href");
 		const role = await pageLinks.evaluate((el) => el.tagName.toLowerCase());
-		expect(href || role === "button").toBeTruthy();
+		expect(href ?? role === "button").toBeTruthy();
 	});
 });

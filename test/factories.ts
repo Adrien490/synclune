@@ -435,6 +435,144 @@ export function createMockRefundItem(overrides: Record<string, unknown> = {}) {
 }
 
 // ============================================================================
+// WISHLIST
+// ============================================================================
+
+export function createMockWishlist(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "wl_cm1234567890abcde",
+		userId: VALID_USER_ID,
+		sessionId: null,
+		expiresAt: null,
+		items: [],
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		...overrides,
+	};
+}
+
+export function createMockWishlistItem(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "wi_cm1234567890abcde",
+		wishlistId: "wl_cm1234567890abcde",
+		productId: VALID_PRODUCT_ID,
+		backInStockNotifiedAt: null,
+		createdAt: new Date("2026-01-15"),
+		updatedAt: new Date("2026-01-15"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// ORDER NOTES
+// ============================================================================
+
+export function createMockOrderNote(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "on_cm1234567890abcde",
+		orderId: VALID_ORDER_ID,
+		content: "Client contacte par telephone",
+		authorId: "admin_cm1234567890abcde",
+		authorName: "Admin Test",
+		createdAt: new Date("2026-01-15"),
+		updatedAt: new Date("2026-01-15"),
+		deletedAt: null,
+		...overrides,
+	};
+}
+
+// ============================================================================
+// PRODUCT TYPES
+// ============================================================================
+
+export function createMockProductType(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "pt_cm1234567890abcde",
+		slug: "bague",
+		label: "Bague",
+		description: null,
+		isActive: true,
+		isSystem: false,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// COLORS
+// ============================================================================
+
+export function createMockColor(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "color_cm1234567890abcd",
+		slug: "or-rose",
+		name: "Or Rose",
+		hex: "#B76E79",
+		isActive: true,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// MATERIALS
+// ============================================================================
+
+export function createMockMaterial(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "mat_cm1234567890abcde",
+		slug: "argent-925",
+		name: "Argent 925",
+		description: null,
+		isActive: true,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// REVIEW RESPONSES
+// ============================================================================
+
+export function createMockReviewResponse(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "rr_cm1234567890abcde",
+		reviewId: "rev_cm1234567890abcde",
+		content: "Merci pour votre avis ! Nous sommes ravis que ce bijou vous plaise.",
+		authorId: "admin_cm1234567890abcde",
+		authorName: "Admin Test",
+		createdAt: new Date("2026-02-05"),
+		updatedAt: new Date("2026-02-05"),
+		deletedAt: null,
+		...overrides,
+	};
+}
+
+// ============================================================================
+// PRODUCT REVIEW STATS
+// ============================================================================
+
+export function createMockProductReviewStats(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "prs_cm1234567890abcd",
+		productId: VALID_PRODUCT_ID,
+		totalCount: 12,
+		averageRating: 4.5,
+		rating1Count: 0,
+		rating2Count: 1,
+		rating3Count: 1,
+		rating4Count: 4,
+		rating5Count: 6,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-02-01"),
+		...overrides,
+	};
+}
+
+// ============================================================================
 // MOCK HELPERS
 // ============================================================================
 

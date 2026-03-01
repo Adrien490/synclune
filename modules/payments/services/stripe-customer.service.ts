@@ -42,12 +42,12 @@ export async function getOrCreateStripeCustomer(
 				name: `${params.firstName} ${params.lastName}`.trim(),
 				address: {
 					line1: params.address.addressLine1,
-					line2: params.address.addressLine2 || undefined,
+					line2: params.address.addressLine2 ?? undefined,
 					postal_code: params.address.postalCode,
 					city: params.address.city,
-					country: params.address.country || "FR",
+					country: params.address.country ?? "FR",
 				},
-				phone: params.phoneNumber || undefined,
+				phone: params.phoneNumber ?? undefined,
 				metadata: {
 					source: "checkout_b2c",
 					createdFrom: "synclune-bijoux",

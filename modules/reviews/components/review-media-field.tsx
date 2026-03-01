@@ -48,11 +48,11 @@ export const ReviewMediaField = ({ label, disabled, className }: ReviewMediaFiel
 				</FieldLabel>
 			)}
 			<ReviewMediaUpload
-				media={field.state.value ?? []}
+				media={field.state.value}
 				onChange={field.handleChange}
 				disabled={disabled}
 			/>
-			<input type="hidden" name={field.name} value={JSON.stringify(field.state.value ?? [])} />
+			<input type="hidden" name={field.name} value={JSON.stringify(field.state.value)} />
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>
 	);

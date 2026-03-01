@@ -25,6 +25,10 @@ interface RatingStarsProps {
 	required?: boolean;
 	/** Désactiver les interactions (mode interactif) */
 	disabled?: boolean;
+	/** ARIA: marks the rating as invalid */
+	"aria-invalid"?: boolean;
+	/** ARIA: associates the rating with an error message element */
+	"aria-describedby"?: string;
 }
 
 /**
@@ -51,6 +55,8 @@ export function RatingStars({
 	ariaLabel,
 	required = false,
 	disabled = false,
+	"aria-invalid": ariaInvalid,
+	"aria-describedby": ariaDescribedBy,
 }: RatingStarsProps) {
 	const [hoverRating, setHoverRating] = useState<number | null>(null);
 	const baseId = useId();
@@ -108,6 +114,8 @@ export function RatingStars({
 			aria-valuemin={!interactive ? 0 : undefined}
 			aria-valuemax={!interactive ? maxRating : undefined}
 			aria-required={interactive && required ? true : undefined}
+			aria-invalid={ariaInvalid}
+			aria-describedby={ariaDescribedBy}
 			style={
 				{
 					"--star-filled": "var(--secondary)",

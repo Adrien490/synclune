@@ -32,7 +32,7 @@ export async function createProductType(
 		// 3. Extraire les donnees du FormData
 		const rawData = {
 			label: formData.get("label"),
-			description: formData.get("description") || undefined,
+			description: formData.get("description") ?? undefined,
 		};
 
 		// 3. Valider les donnees
@@ -68,7 +68,7 @@ export async function createProductType(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "productType.create",
 			targetType: "productType",
 			targetId: created.id,

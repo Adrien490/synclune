@@ -6,7 +6,13 @@ import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -34,14 +40,14 @@ export async function createAddress(
 
 		// 2. Extraction des données du FormData
 		const rawData = {
-			firstName: formData.get("firstName") as string,
-			lastName: formData.get("lastName") as string,
-			address1: formData.get("address1") as string,
-			address2: (formData.get("address2") as string) || null,
-			postalCode: formData.get("postalCode") as string,
-			city: formData.get("city") as string,
-			country: (formData.get("country") as string) || "FR",
-			phone: formData.get("phone") as string,
+			firstName: safeFormGet(formData, "firstName"),
+			lastName: safeFormGet(formData, "lastName"),
+			address1: safeFormGet(formData, "address1"),
+			address2: safeFormGet(formData, "address2") ?? null,
+			postalCode: safeFormGet(formData, "postalCode"),
+			city: safeFormGet(formData, "city"),
+			country: safeFormGet(formData, "country") ?? "FR",
+			phone: safeFormGet(formData, "phone"),
 		};
 
 		// 3. Validation avec Zod

@@ -1,9 +1,9 @@
 import type { Collection, CollectionImage } from "../types/collection.types";
 
 export function extractCollectionImages(products: Collection["products"]): CollectionImage[] {
-	if (!products?.length) return [];
+	if (!products.length) return [];
 	return products
-		.map((p) => p.product?.skus?.[0]?.images?.[0])
+		.map((p) => p.product.skus[0]?.images[0])
 		.filter((img): img is NonNullable<typeof img> => Boolean(img))
 		.map((img) => ({
 			url: img.url,
@@ -16,9 +16,9 @@ export function extractCollectionImages(products: Collection["products"]): Colle
 export function extractPriceRange(
 	products: Collection["products"],
 ): { min: number; max: number } | undefined {
-	if (!products?.length) return undefined;
+	if (!products.length) return undefined;
 	const prices = products
-		.map((p) => p.product?.skus?.[0]?.priceInclTax)
+		.map((p) => p.product.skus[0]?.priceInclTax)
 		.filter((price): price is number => typeof price === "number");
 
 	if (prices.length === 0) return undefined;

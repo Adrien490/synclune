@@ -1,6 +1,6 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -8,9 +8,6 @@ import {
 	GET_SESSIONS_SELECT,
 	GET_SESSIONS_DEFAULT_PER_PAGE,
 	GET_SESSIONS_MAX_RESULTS_PER_PAGE,
-	GET_SESSIONS_DEFAULT_SORT_BY,
-	GET_SESSIONS_DEFAULT_SORT_ORDER,
-	GET_SESSIONS_ADMIN_FALLBACK_SORT_BY,
 } from "../constants/session.constants";
 import { cacheAuthSessions } from "../utils/cache.utils";
 import { getSessionsSchema } from "../schemas/session.schemas";
@@ -56,7 +53,7 @@ function maskToken(token: string): string | undefined {
 export async function getSessions(params: GetSessionsParams): Promise<GetSessionsReturn> {
 	const [admin, session] = await Promise.all([isAdmin(), getSession()]);
 
-	if (!admin && !session?.user?.id) {
+	if (!admin && !session?.user.id) {
 		throw new Error("Authentication required");
 	}
 
@@ -66,14 +63,7 @@ export async function getSessions(params: GetSessionsParams): Promise<GetSession
 		throw new Error("Invalid parameters");
 	}
 
-	let validatedParams = validation.data;
-
-	if (admin && validatedParams.sortBy === GET_SESSIONS_DEFAULT_SORT_BY && !params?.sortBy) {
-		validatedParams = {
-			...validatedParams,
-			sortBy: GET_SESSIONS_ADMIN_FALLBACK_SORT_BY,
-		};
-	}
+	const validatedParams = validation.data;
 
 	// Non-admin users can only see their own sessions
 	const userId = admin ? undefined : session!.user.id;
@@ -92,7 +82,7 @@ async function fetchSessions(
 	"use cache: private";
 	cacheAuthSessions(userId);
 
-	const sortOrder = (params.sortOrder || GET_SESSIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = params.sortOrder as Prisma.SortOrder;
 
 	try {
 		const where = buildSessionWhereClause(params);

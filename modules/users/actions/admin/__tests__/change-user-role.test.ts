@@ -8,7 +8,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 const {
 	mockPrisma,
 	mockRequireAdmin,
-	mockRequireAuth,
 	mockEnforceRateLimit,
 	mockValidateInput,
 	mockSuccess,
@@ -22,7 +21,6 @@ const {
 		user: { findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
 	},
 	mockRequireAdmin: vi.fn(),
-	mockRequireAuth: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
@@ -39,8 +37,12 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
-	requireAdmin: mockRequireAdmin,
-	requireAuth: mockRequireAuth,
+	requireAdminWithUser: mockRequireAdmin,
+}));
+
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+	logAuditTx: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -52,6 +54,10 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	success: mockSuccess,
 	error: mockError,
@@ -121,8 +127,7 @@ describe("changeUserRole", () => {
 		vi.resetAllMocks();
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-123" } });
-		mockRequireAuth.mockResolvedValue({ user: { id: "admin-123", name: "Admin" } });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-123", name: "Admin" } });
 		mockValidateInput.mockReturnValue({ data: { id: "user-456", role: "ADMIN" } });
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "USER" }));
 		mockPrisma.user.update.mockResolvedValue({});
@@ -175,16 +180,6 @@ describe("changeUserRole", () => {
 		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
-	it("should return auth error when requireAuth fails", async () => {
-		const authError = { status: ActionStatus.UNAUTHORIZED, message: "Session expirée" };
-		mockRequireAuth.mockResolvedValue({ error: authError });
-
-		const result = await changeUserRole(undefined, promoteFormData);
-
-		expect(result).toEqual(authError);
-		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
-	});
-
 	// ──────────────────────────────────────────────────────────────
 	// Validation
 	// ──────────────────────────────────────────────────────────────
@@ -204,7 +199,7 @@ describe("changeUserRole", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should block self-role-change", async () => {
-		mockRequireAuth.mockResolvedValue({ user: { id: "user-456", name: "Admin" } });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "user-456", name: "Admin" } });
 		mockValidateInput.mockReturnValue({ data: { id: "user-456", role: "USER" } });
 
 		const result = await changeUserRole(undefined, promoteFormData);

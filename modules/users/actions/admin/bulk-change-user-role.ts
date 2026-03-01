@@ -102,7 +102,7 @@ export async function bulkChangeUserRole(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "user.bulkChangeRole",
 			targetType: "user",
 			targetId: eligibleIds.join(","),

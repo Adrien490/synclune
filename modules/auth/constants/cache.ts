@@ -12,9 +12,15 @@ export const AUTH_CACHE_TAGS = {
 	// Sessions
 	SESSIONS_LIST: "auth-sessions-list",
 	SESSION: (id: string) => `auth-session-${id}` as const,
+	/** Per-user sessions tag (non-admin users) */
+	SESSIONS_USER: (userId: string) => `auth-sessions-${userId}` as const,
 
 	// Verifications
 	VERIFICATIONS_LIST: "auth-verifications-list",
+
+	// Providers
+	/** OAuth/credential providers of a specific user */
+	USER_PROVIDERS: (userId: string) => `user-providers-${userId}` as const,
 } as const;
 
 // Re-exports pour retrocompatibilite
@@ -24,4 +30,5 @@ export {
 	cacheAuthVerifications,
 	getAuthSessionInvalidationTags,
 	getAuthVerificationInvalidationTags,
+	getUserProvidersInvalidationTags,
 } from "../utils/cache.utils";

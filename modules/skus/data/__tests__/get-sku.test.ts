@@ -42,7 +42,7 @@ vi.mock("../../schemas/sku.schemas", () => ({
 	getProductSkuSchema: {
 		safeParse: (data: unknown) => {
 			const input = data as Record<string, unknown>;
-			if (typeof input?.sku === "string" && input.sku.trim().length > 0) {
+			if (typeof input.sku === "string" && input.sku.trim().length > 0) {
 				return { success: true, data: { sku: input.sku } };
 			}
 			return { success: false, error: { errors: [{ message: "sku required" }] } };

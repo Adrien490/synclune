@@ -1,4 +1,4 @@
-import { Prisma, PaymentStatus } from "@/app/generated/prisma/client";
+import { type Prisma, PaymentStatus } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";

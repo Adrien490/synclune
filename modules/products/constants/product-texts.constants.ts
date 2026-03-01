@@ -201,24 +201,3 @@ export const VALIDATION_MESSAGES = {
 	INVALID_SELECTION: "Sélection invalide",
 	CUSTOMIZATION_REQUIRED: "Veuillez compléter la personnalisation",
 } as const;
-
-/**
- * Configuration des délais de livraison
- * @deprecated Utiliser les tarifs Stripe configurés dans le Dashboard
- * @see shared/lib/shipping/stripe-shipping-rates.ts
- *
- * Les frais de livraison sont gérés dynamiquement via Stripe Shipping Rates
- * et calculés au moment du paiement selon la destination du client.
- */
-export const DELIVERY_CONFIG = {
-	FRANCE: {
-		name: "France métropolitaine",
-		delay: "2-3 jours ouvrés",
-		description: "Préparation artisanale puis envoi suivi",
-	},
-	EU: {
-		name: "Union Européenne",
-		delay: "4-7 jours ouvrés",
-		description: "Envoi suivi vers l'Union Européenne",
-	},
-} as const;

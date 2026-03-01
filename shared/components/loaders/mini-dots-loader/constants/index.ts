@@ -15,8 +15,8 @@ export const bgColorClass = {
 	foreground: "bg-foreground",
 	muted: "bg-muted",
 	accent: "bg-accent",
-	success: "bg-emerald-600 dark:bg-emerald-500",
-	warning: "bg-amber-600 dark:bg-amber-500",
+	success: "bg-emerald-600",
+	warning: "bg-amber-600",
 	destructive: "bg-destructive",
 	white: "bg-white",
 };

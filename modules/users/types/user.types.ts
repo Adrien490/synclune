@@ -1,12 +1,16 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	GET_USER_SELECT,
-	GET_USERS_SELECT,
-	GET_USERS_SORT_FIELDS,
+	type GET_USER_SELECT,
+	type GET_USERS_SELECT,
+	type GET_USERS_SORT_FIELDS,
 } from "../constants/user.constants";
-import { getUserSchema, getUsersSchema, userFiltersSchema } from "../schemas/user.schemas";
+import {
+	type getUserSchema,
+	type getUsersSchema,
+	type userFiltersSchema,
+} from "../schemas/user.schemas";
 
 // ============================================================================
 // TYPES - SINGLE USER

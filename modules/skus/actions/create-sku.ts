@@ -16,7 +16,7 @@ import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
 } from "../utils/parse-media-from-form";
-import { BusinessError, handleActionError } from "@/shared/lib/actions";
+import { BusinessError, handleActionError, safeFormGet } from "@/shared/lib/actions";
 
 /**
  * Server Action pour creer une variante de produit (Product SKU)
@@ -42,8 +42,8 @@ export async function createProductSku(
 		const galleryMedia = parseGalleryMediaFromForm(formData);
 
 		const rawData = {
-			productId: formData.get("productId") as string,
-			sku: (formData.get("sku") as string) || "",
+			productId: safeFormGet(formData, "productId"),
+			sku: safeFormGet(formData, "sku") ?? "",
 			priceInclTaxEuros: Number(formData.get("priceInclTaxEuros")) || 0,
 			compareAtPriceEuros: formData.get("compareAtPriceEuros")
 				? Number(formData.get("compareAtPriceEuros"))
@@ -51,9 +51,9 @@ export async function createProductSku(
 			inventory: Number(formData.get("inventory")) || 0,
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
-			colorId: (formData.get("colorId") as string) || "",
-			materialId: (formData.get("materialId") as string) || "",
-			size: (formData.get("size") as string) || "",
+			colorId: safeFormGet(formData, "colorId") ?? "",
+			materialId: safeFormGet(formData, "materialId") ?? "",
+			size: safeFormGet(formData, "size") ?? "",
 			primaryImage: primaryImage,
 			galleryMedia: galleryMedia,
 		};
@@ -72,9 +72,9 @@ export async function createProductSku(
 		const validatedData = result.data;
 
 		// 4. Normalize empty strings to null for optional foreign keys
-		const normalizedColorId = validatedData.colorId?.trim() || null;
-		const normalizedMaterialId = validatedData.materialId?.trim() || null;
-		const normalizedSize = validatedData.size?.trim() || null;
+		const normalizedColorId = validatedData.colorId?.trim() ?? null;
+		const normalizedMaterialId = validatedData.materialId?.trim() ?? null;
+		const normalizedSize = validatedData.size?.trim() ?? null;
 
 		// 5. Convert priceInclTaxEuros to cents for database
 		const priceInclTaxCents = Math.round(validatedData.priceInclTaxEuros * 100);
@@ -95,7 +95,7 @@ export async function createProductSku(
 		if (validatedData.primaryImage) {
 			// VALIDATION: Le media principal DOIT etre une IMAGE (jamais une VIDEO)
 			const primaryMediaType =
-				validatedData.primaryImage.mediaType || detectMediaType(validatedData.primaryImage.url);
+				validatedData.primaryImage.mediaType ?? detectMediaType(validatedData.primaryImage.url);
 			if (primaryMediaType === "VIDEO") {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,
@@ -110,15 +110,13 @@ export async function createProductSku(
 				position: 0,
 			});
 		}
-		if (validatedData.galleryMedia) {
-			allMedia.push(
-				...validatedData.galleryMedia.map((media, index) => ({
-					...media,
-					isPrimary: false,
-					position: index + 1,
-				})),
-			);
-		}
+		allMedia.push(
+			...validatedData.galleryMedia.map((media, index) => ({
+				...media,
+				isPrimary: false,
+				position: index + 1,
+			})),
+		);
 
 		// 7. Create product SKU in transaction
 		const productSku = await prisma.$transaction(async (tx) => {
@@ -197,7 +195,7 @@ export async function createProductSku(
 
 			// Generate SKU with cryptographically secure random ID
 			const skuValue =
-				validatedData.sku?.trim() || `SKU-${(randomUUID().split("-")[0] ?? "").toUpperCase()}`;
+				validatedData.sku?.trim() ?? `SKU-${(randomUUID().split("-")[0] ?? "").toUpperCase()}`;
 
 			// Create SKU
 			const createdSku = await tx.productSku.create({
@@ -240,10 +238,10 @@ export async function createProductSku(
 						data: {
 							skuId: createdSku.id,
 							url: media.url,
-							thumbnailUrl: media.thumbnailUrl || null,
-							blurDataUrl: media.blurDataUrl || null,
-							altText: media.altText || null,
-							mediaType: media.mediaType || detectMediaType(media.url),
+							thumbnailUrl: media.thumbnailUrl ?? null,
+							blurDataUrl: media.blurDataUrl ?? null,
+							altText: media.altText ?? null,
+							mediaType: media.mediaType ?? detectMediaType(media.url),
 							isPrimary: media.isPrimary,
 							position: media.position,
 						},
@@ -275,7 +273,7 @@ export async function createProductSku(
 		// 10. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.create",
 			targetType: "sku",
 			targetId: productSku.id,

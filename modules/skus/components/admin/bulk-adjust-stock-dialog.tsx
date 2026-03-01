@@ -50,13 +50,13 @@ export function BulkAdjustStockDialog() {
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!data?.skuIds?.length) return;
+		if (!data?.skuIds.length) return;
 		if (mode === "relative" && value === 0) return;
 		if (mode === "absolute" && value < 0) return;
 		adjustStock(data.skuIds, mode, value);
 	};
 
-	const count = data?.skuIds?.length ?? 0;
+	const count = data?.skuIds.length ?? 0;
 	const isValid =
 		count > 0 && ((mode === "relative" && value !== 0) || (mode === "absolute" && value >= 0));
 

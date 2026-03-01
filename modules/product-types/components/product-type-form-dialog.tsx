@@ -75,7 +75,7 @@ export function ProductTypeFormDialog() {
 		if (productType) {
 			form.reset({
 				label: productType.label,
-				description: productType.description || "",
+				description: productType.description ?? "",
 			});
 		} else {
 			form.reset({
@@ -107,7 +107,7 @@ export function ProductTypeFormDialog() {
 				</ResponsiveDialogHeader>
 
 				<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
-					{isUpdateMode && productType && <input type="hidden" name="id" value={productType.id} />}
+					{isUpdateMode && <input type="hidden" name="id" value={productType!.id} />}
 
 					<RequiredFieldsNote />
 

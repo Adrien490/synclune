@@ -91,8 +91,8 @@ function DropdownMenuItem({
 				"data-[variant=destructive]:focus:bg-destructive/10",
 				"data-[variant=destructive]:focus:text-destructive",
 				"data-[variant=destructive]:*:[svg]:!text-destructive",
-				"dark:data-[variant=destructive]:text-destructive",
-				"dark:data-[variant=destructive]:focus:bg-destructive/20",
+				"=destructive]:text-destructive",
+				"=destructive]:focus:bg-destructive/20",
 				// SVG styling
 				"[&_svg:not([class*='text-'])]:text-muted-foreground",
 				"[&_svg]:pointer-events-none [&_svg]:shrink-0",

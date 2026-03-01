@@ -20,8 +20,10 @@ import {
 	CUSTOMIZATION_STATUS_LABELS,
 	CUSTOMIZATION_STATUS_COLORS,
 } from "@/modules/customizations/constants/status.constants";
+import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { Sparkles, StickyNote } from "lucide-react";
+import Link from "next/link";
 
 import { CustomizationRowActions } from "./customization-row-actions";
 import { CustomizationSelectionToolbar } from "./customization-selection-toolbar";
@@ -45,6 +47,11 @@ export function CustomizationsDataTable({
 				icon={Sparkles}
 				title="Aucune demande trouvee"
 				description="Aucune demande de personnalisation ne correspond aux criteres de recherche."
+				actionElement={
+					<Button variant="outline" asChild>
+						<Link href="/admin/marketing/personnalisations">Reinitialiser les filtres</Link>
+					</Button>
+				}
 			/>
 		);
 	}
@@ -56,6 +63,7 @@ export function CustomizationsDataTable({
 				<TableScrollContainer>
 					<Table
 						aria-label="Liste des demandes de personnalisation"
+						caption="Liste des personnalisations"
 						striped
 						className="min-w-full table-fixed"
 					>

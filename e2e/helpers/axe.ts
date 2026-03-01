@@ -3,7 +3,7 @@ import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
 const GLOBAL_EXCLUDES = [".particle-background"];
-const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
+const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 export async function expectNoA11yViolations(
 	page: Page,

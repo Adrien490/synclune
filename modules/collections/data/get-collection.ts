@@ -30,7 +30,7 @@ export type {
 export async function getCollectionBySlug(
 	params: Partial<GetCollectionParams>,
 ): Promise<GetCollectionReturn | null> {
-	const validation = getCollectionSchema.safeParse(params ?? {});
+	const validation = getCollectionSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;
@@ -71,7 +71,7 @@ async function fetchCollection(params: GetCollectionParams): Promise<GetCollecti
 export async function getStorefrontCollectionBySlug(
 	params: Partial<GetCollectionParams>,
 ): Promise<GetCollectionStorefrontReturn | null> {
-	const validation = getCollectionSchema.safeParse(params ?? {});
+	const validation = getCollectionSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

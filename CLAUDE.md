@@ -272,6 +272,20 @@ Les requetes de lecture dans `actions/` sont acceptees pour:
 
 Ces reads sont atomiques avec la mutation et ne beneficieraient pas du cache (donnees potentiellement stales entre lecture et ecriture).
 
+### Exception: Services transactionnels partages
+
+Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce sont des services transactionnels appeles depuis plusieurs contextes (cron, webhooks, server components) ou la logique doit rester atomique:
+
+| Fichier                                                   | Raison                                           |
+| --------------------------------------------------------- | ------------------------------------------------ |
+| `reviews/services/send-review-request-email.service.ts`   | Partage entre cron + webhooks + actions          |
+| `payments/services/stripe-customer.service.ts`            | Paire atomique Stripe + DB pour checkout         |
+| `wishlist/services/notify-back-in-stock.ts`               | Notification atomique apres restock              |
+| `newsletter/services/subscribe-to-newsletter-internal.ts` | Partage entre subscribe + toggle actions         |
+| `newsletter/services/confirm-newsletter-subscription.ts`  | Appele depuis server component (sans formulaire) |
+| `newsletter/services/unsubscribe-newsletter.ts`           | Appele depuis server component (sans formulaire) |
+| `newsletter/services/create-newsletter-promo-code.ts`     | Appele depuis confirm-newsletter-subscription    |
+
 ## API Routes
 
 ### Webhooks (`api/webhooks/`)
@@ -308,7 +322,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ## Emails
 
-24 transactional email templates in `emails/` using React Email + Resend.
+33 transactional email templates in `emails/` using React Email + Resend.
 
 Templates: order confirmation, shipping, delivery, cancellation, return, payment failed, refund (approved/confirmed), review request/response, newsletter (confirmation/welcome), password (reset/changed), verification, customization (request/confirmation), tracking update, admin notifications (new order, invoice failed, refund failed, webhook failed).
 

@@ -151,7 +151,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										<span>{formatEuro(order.subtotal)}</span>
 									</div>
 									{order.discountAmount > 0 && (
-										<div className="flex justify-between text-green-600 dark:text-green-400">
+										<div className="flex justify-between text-green-600">
 											<span>Réduction</span>
 											<span>-{formatEuro(order.discountAmount)}</span>
 										</div>

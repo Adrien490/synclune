@@ -6,8 +6,8 @@ import type { AccountFilters, GetAccountsInput } from "../schemas/accounts.schem
 // ============================================================================
 
 export function buildAccountsFilterConditions(filters: AccountFilters): Prisma.AccountWhereInput[] {
+	if (!filters) return [];
 	const conditions: Prisma.AccountWhereInput[] = [];
-	if (!filters) return conditions;
 
 	if (filters.userId !== undefined) {
 		const userIds = Array.isArray(filters.userId) ? filters.userId : [filters.userId];
@@ -97,7 +97,7 @@ export function buildAccountsFilterConditions(filters: AccountFilters): Prisma.A
 
 export function buildAccountsWhereClause(params: GetAccountsInput): Prisma.AccountWhereInput {
 	const whereClause: Prisma.AccountWhereInput = {};
-	const filterConditions = buildAccountsFilterConditions(params.filters ?? {});
+	const filterConditions = buildAccountsFilterConditions(params.filters);
 
 	if (filterConditions.length > 0) {
 		whereClause.AND = filterConditions;

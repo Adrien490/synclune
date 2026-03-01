@@ -1,13 +1,33 @@
-import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { ChevronDownIcon } from "lucide-react";
+import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 
+const nativeSelectVariants = cva(
+	cn(
+		"border-input placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground w-full min-w-0 appearance-none rounded-md border bg-transparent px-3 py-2 pr-9 text-sm shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed",
+		"focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+		"aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
+	),
+	{
+		variants: {
+			size: {
+				default: "min-h-11",
+				sm: "min-h-9 py-1",
+			},
+		},
+		defaultVariants: {
+			size: "default",
+		},
+	},
+);
+
 function NativeSelect({
 	className,
-	size = "default",
+	size,
 	...props
-}: Omit<React.ComponentProps<"select">, "size"> & { size?: "sm" | "default" }) {
+}: Omit<React.ComponentProps<"select">, "size"> & VariantProps<typeof nativeSelectVariants>) {
 	const isFullWidth = className?.includes("w-full");
 	return (
 		<div
@@ -19,13 +39,7 @@ function NativeSelect({
 		>
 			<select
 				data-slot="native-select"
-				data-size={size}
-				className={cn(
-					"border-input placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 dark:hover:bg-input/50 min-h-11 w-full min-w-0 appearance-none rounded-md border bg-transparent px-3 py-2 pr-9 text-sm shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed data-[size=sm]:min-h-9 data-[size=sm]:py-1",
-					"focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-					"aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-					className,
-				)}
+				className={cn(nativeSelectVariants({ size }), className)}
 				{...props}
 			/>
 			<ChevronDownIcon
@@ -45,4 +59,4 @@ function NativeSelectOptGroup({ className, ...props }: React.ComponentProps<"opt
 	return <optgroup data-slot="native-select-optgroup" className={cn(className)} {...props} />;
 }
 
-export { NativeSelect, NativeSelectOptGroup, NativeSelectOption };
+export { NativeSelect, nativeSelectVariants, NativeSelectOptGroup, NativeSelectOption };

@@ -124,7 +124,7 @@ export function TabNavigation({
 							aria-expanded={isDrawerOpen}
 							aria-haspopup="dialog"
 						>
-							<span className="truncate">{activeOverflowItem?.label || "Plus"}</span>
+							<span className="truncate">{activeOverflowItem?.label ?? "Plus"}</span>
 							<ChevronDownIcon
 								className={cn(
 									"size-4 shrink-0 transition-transform duration-200",
@@ -138,7 +138,7 @@ export function TabNavigation({
 							<DrawerContent>
 								<DrawerHandle />
 								<DrawerHeader>
-									<DrawerTitle>{panelTitle || "Parcourir par type"}</DrawerTitle>
+									<DrawerTitle>{panelTitle ?? "Parcourir par type"}</DrawerTitle>
 								</DrawerHeader>
 								<DrawerBody>
 									{/* Grid de catégories - TOUS les items */}

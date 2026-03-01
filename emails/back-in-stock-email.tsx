@@ -6,15 +6,26 @@ interface BackInStockEmailProps {
 	customerName: string;
 	productTitle: string;
 	productUrl: string;
+	unsubscribeUrl: string;
 }
 
 export const BackInStockEmail = ({
 	customerName,
 	productTitle,
 	productUrl,
+	unsubscribeUrl,
 }: BackInStockEmailProps) => {
 	return (
-		<EmailLayout preview={`${productTitle} est de retour en stock !`}>
+		<EmailLayout
+			preview={`${productTitle} est de retour en stock !`}
+			footer={
+				<Text style={EMAIL_STYLES.text.tiny}>
+					<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+						Se désinscrire des emails commerciaux
+					</a>
+				</Text>
+			}
+		>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>De retour en stock !</Text>
@@ -46,6 +57,7 @@ BackInStockEmail.PreviewProps = {
 	customerName: "Marie",
 	productTitle: "Bague Éternité",
 	productUrl: "https://synclune.fr/produits/bague-eternite",
+	unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 } as BackInStockEmailProps;
 
 export default BackInStockEmail;

@@ -50,6 +50,19 @@ vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 vi.mock("@/shared/lib/rate-limit-config", () => ({ PRODUCT_LIMITS: { REVIEW: "product-review" } }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	safeFormGetJSON: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		if (typeof v !== "string" || !v) return null;
+		try {
+			return JSON.parse(v);
+		} catch {
+			return null;
+		}
+	},
 	success: mockSuccess,
 	error: mockError,
 	forbidden: mockForbidden,

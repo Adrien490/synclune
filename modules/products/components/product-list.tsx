@@ -2,7 +2,7 @@ import { Suspense, use } from "react";
 import { AlertTriangle } from "lucide-react";
 
 import { ProductCard } from "@/modules/products/components/product-card";
-import { GetProductsReturn } from "@/modules/products/data/get-products";
+import { type GetProductsReturn } from "@/modules/products/data/get-products";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
@@ -51,7 +51,7 @@ export function ProductList({
 	}
 
 	// Afficher les suggestions de repli si aucun produit (Baymard UX)
-	if (!products || products.length === 0) {
+	if (products.length === 0) {
 		return (
 			<Suspense fallback={<SearchFallbackSuggestionsSkeleton />}>
 				<SearchFallbackSuggestions searchTerm={searchTerm} suggestion={suggestion} />

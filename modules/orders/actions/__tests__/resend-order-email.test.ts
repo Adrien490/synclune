@@ -50,6 +50,10 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	handleActionError: mockHandleActionError,
 	success: (msg: string, data?: unknown) => ({ status: ActionStatus.SUCCESS, message: msg, data }),
 	error: (msg: string) => ({ status: ActionStatus.ERROR, message: msg }),

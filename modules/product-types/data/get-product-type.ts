@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -21,7 +21,7 @@ export type { GetProductTypeParams, GetProductTypeReturn } from "../types/produc
 export async function getProductTypeBySlug(
 	params: Partial<GetProductTypeParams>,
 ): Promise<GetProductTypeReturn | null> {
-	const validation = getProductTypeSchema.safeParse(params ?? {});
+	const validation = getProductTypeSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

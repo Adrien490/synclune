@@ -2,7 +2,7 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { checkArcjetProtection } from "@/modules/auth/utils/arcjet-protection";
-import { error, success, validateInput } from "@/shared/lib/actions";
+import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
@@ -20,7 +20,7 @@ export const resendVerificationEmail = async (
 
 		// Validation des données
 		const rawData = {
-			email: formData.get("email") as string,
+			email: safeFormGet(formData, "email"),
 		};
 
 		const validation = validateInput(resendVerificationEmailSchema, rawData);

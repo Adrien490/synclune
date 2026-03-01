@@ -97,20 +97,13 @@ export function EditProductForm({
 
 				<form.Subscribe selector={(state) => [state.values.collectionIds]}>
 					{([collectionIds]) => (
-						<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds || [])} />
+						<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
 					)}
 				</form.Subscribe>
 
 				<form.Subscribe selector={(state) => [state.values.defaultSku.media]}>
 					{([media]) => {
-						const currentUrls: string[] = [];
-						if (media && Array.isArray(media)) {
-							media.forEach((m: { url?: string }) => {
-								if (m && m.url) {
-									currentUrls.push(m.url);
-								}
-							});
-						}
+						const currentUrls: string[] = media.map((m) => m.url);
 
 						const deletedUrls = originalImageUrls.filter((url) => !currentUrls.includes(url));
 
@@ -197,7 +190,7 @@ export function EditProductForm({
 											value: col.id,
 											label: col.name,
 										}))}
-										defaultValue={field.state.value || []}
+										defaultValue={field.state.value}
 										onValueChange={(values) => field.handleChange(values)}
 										placeholder="Sélectionner des collections"
 										maxCount={2}

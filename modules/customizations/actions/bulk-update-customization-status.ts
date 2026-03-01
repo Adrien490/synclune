@@ -8,7 +8,13 @@ import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
@@ -35,7 +41,7 @@ export async function bulkUpdateCustomizationStatus(
 	// 2. Validate input
 	const rawData = {
 		requestIds: formData.getAll("requestIds") as string[],
-		status: formData.get("status") as string,
+		status: safeFormGet(formData, "status"),
 	};
 
 	const validation = validateInput(bulkUpdateStatusSchema, rawData);
@@ -87,7 +93,7 @@ export async function bulkUpdateCustomizationStatus(
 		// 6. Update all requests atomically
 		const validIds = validRequests.map((r) => r.id);
 		const otherIds = validIds.filter((id) => !needsRespondedAt.includes(id));
-		const txOperations = [];
+		const txOperations: ReturnType<typeof prisma.customizationRequest.updateMany>[] = [];
 
 		if (needsRespondedAt.length > 0) {
 			txOperations.push(
@@ -111,7 +117,7 @@ export async function bulkUpdateCustomizationStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "customization.bulkUpdateStatus",
 			targetType: "customization",
 			targetId: validIds.join(","),
@@ -146,7 +152,7 @@ export async function bulkUpdateCustomizationStatus(
 						status,
 						adminNotes: request.adminNotes ? sanitizeForEmail(request.adminNotes) : null,
 						details: sanitizeForEmail(request.details),
-					}).catch((emailError) => {
+					}).catch((emailError: unknown) => {
 						console.error("[EMAIL] Bulk status email failed", {
 							requestId: request.id,
 							error: emailError,

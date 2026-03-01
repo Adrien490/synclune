@@ -60,7 +60,7 @@ async function fetchUserForAuth(userId: string): Promise<RequireAuthUser | null>
 export async function requireAuth(): Promise<{ user: RequireAuthUser } | { error: ActionState }> {
 	const session = await getSession();
 
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		return {
 			error: {
 				status: ActionStatus.UNAUTHORIZED,
@@ -99,10 +99,10 @@ export async function requireAuth(): Promise<{ user: RequireAuthUser } | { error
 export async function requireAdmin(): Promise<{ admin: true } | { error: ActionState }> {
 	const session = await getSession();
 
-	if (session?.user?.role !== "ADMIN" || !session?.user?.id) {
+	if (session?.user.role !== "ADMIN" || !session.user.id) {
 		console.warn("[SECURITY] Unauthorized admin access attempt", {
-			userId: session?.user?.id ?? "unauthenticated",
-			role: session?.user?.role ?? "none",
+			userId: session?.user.id ?? "unauthenticated",
+			role: session?.user.role ?? "none",
 			timestamp: new Date().toISOString(),
 		});
 		return {
@@ -165,7 +165,7 @@ export async function requireAdminApiRoute(): Promise<
 > {
 	const session = await getSession();
 
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		return {
 			response: new Response("Accès non autorisé", { status: 401 }),
 		};
@@ -199,7 +199,7 @@ export async function requireAdminWithUser(): Promise<
 > {
 	const session = await getSession();
 
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		return {
 			error: {
 				status: ActionStatus.UNAUTHORIZED,

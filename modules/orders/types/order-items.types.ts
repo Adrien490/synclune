@@ -1,8 +1,8 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
-import { GET_ORDER_ITEMS_DEFAULT_SELECT } from "../constants/order-items.constants";
-import { getOrderItemsSchema } from "../schemas/order-items.schemas";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
+import { type GET_ORDER_ITEMS_DEFAULT_SELECT } from "../constants/order-items.constants";
+import { type getOrderItemsSchema } from "../schemas/order-items.schemas";
 
 // ============================================================================
 // TYPES - ORDER ITEMS LIST

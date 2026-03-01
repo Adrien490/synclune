@@ -66,7 +66,7 @@ export async function checkCartRateLimit(
 
 	// 1. Récupérer la session utilisateur
 	const session = await getSession();
-	const userId = session?.user?.id;
+	const userId = session?.user.id;
 
 	// 2. Gérer le sessionId selon le contexte
 	let sessionId: string | null = null;
@@ -89,7 +89,7 @@ export async function checkCartRateLimit(
 			success: false,
 			errorState: {
 				status: ActionStatus.ERROR,
-				message: rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
+				message: rateLimit.error ?? "Trop de requêtes. Veuillez réessayer plus tard.",
 			},
 		};
 	}
@@ -129,7 +129,7 @@ export async function checkMergeCartsRateLimit(
 			success: false,
 			errorState: {
 				status: ActionStatus.ERROR,
-				message: rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
+				message: rateLimit.error ?? "Trop de requêtes. Veuillez réessayer plus tard.",
 			},
 		};
 	}

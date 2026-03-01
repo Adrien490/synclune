@@ -30,7 +30,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 			<div className="border-border/60 border-t pt-4">
 				<div className="divide-y">
 					{items.map((item) => {
-						const imageUrl = item.skuImageUrl || item.productImageUrl;
+						const imageUrl = item.skuImageUrl ?? item.productImageUrl;
 						const variants = [item.skuColor, item.skuMaterial, item.skuSize]
 							.filter(Boolean)
 							.join(" • ");

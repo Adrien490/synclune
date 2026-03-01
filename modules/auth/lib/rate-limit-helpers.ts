@@ -32,7 +32,7 @@ export async function getRateLimitId(): Promise<{ identifier: string; ipAddress:
 
 	try {
 		const session = await getSession();
-		const userId = session?.user?.id;
+		const userId = session?.user.id;
 
 		if (userId) {
 			return { identifier: getRateLimitIdentifier(userId, null, null), ipAddress };
@@ -66,7 +66,7 @@ export async function enforceRateLimitForCurrentUser(
 		return {
 			error: {
 				status: ActionStatus.ERROR,
-				message: check.error || "Trop de requêtes. Veuillez réessayer plus tard.",
+				message: check.error ?? "Trop de requêtes. Veuillez réessayer plus tard.",
 			},
 		};
 	}

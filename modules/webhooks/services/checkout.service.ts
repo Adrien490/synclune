@@ -1,5 +1,5 @@
-import Stripe from "stripe";
-import { Prisma } from "@/app/generated/prisma/client";
+import type Stripe from "stripe";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
@@ -87,7 +87,7 @@ export async function extractShippingInfo(
 			expand: ["shipping_cost.shipping_rate"],
 		});
 
-		const shippingCost = fullSession.total_details?.amount_shipping || 0;
+		const shippingCost = fullSession.total_details?.amount_shipping ?? 0;
 		const shippingRateId =
 			typeof fullSession.shipping_cost?.shipping_rate === "string"
 				? fullSession.shipping_cost.shipping_rate
@@ -104,7 +104,7 @@ export async function extractShippingInfo(
 			error,
 		);
 		// Fallback to session-level data if Stripe API fails
-		const shippingCost = session.total_details?.amount_shipping || 0;
+		const shippingCost = session.total_details?.amount_shipping ?? 0;
 		return { shippingCost, shippingMethod: "Livraison standard", shippingRateId: undefined };
 	}
 }
@@ -219,8 +219,8 @@ export async function processOrderTransaction(
 					stripeCheckoutSessionId: session.id,
 					stripeCustomerId: (session.customer as string) || null,
 					shippingCost,
-					shippingMethod: getShippingMethodFromRate(shippingRateId || ""),
-					shippingCarrier: getShippingCarrierFromRate(shippingRateId || ""),
+					shippingMethod: getShippingMethodFromRate(shippingRateId ?? ""),
+					shippingCarrier: getShippingCarrierFromRate(shippingRateId ?? ""),
 				},
 			});
 
@@ -298,7 +298,7 @@ export function buildPostCheckoutTasks(
 	}
 
 	// 2. Email de confirmation au client
-	const customerEmail = session.customer_email || session.customer_details?.email;
+	const customerEmail = session.customer_email ?? session.customer_details?.email;
 	if (customerEmail) {
 		const trackingUrl = `${baseUrl}/orders`;
 
@@ -308,9 +308,9 @@ export function buildPostCheckoutTasks(
 				to: customerEmail,
 				orderNumber: order.orderNumber,
 				customerName:
-					`${order.shippingFirstName || ""} ${order.shippingLastName || ""}`.trim() || "Client",
+					`${order.shippingFirstName ?? ""} ${order.shippingLastName ?? ""}`.trim() || "Client",
 				items: order.items.map((item) => ({
-					productTitle: item.productTitle || "Produit",
+					productTitle: item.productTitle ?? "Produit",
 					skuColor: item.skuColor,
 					skuMaterial: item.skuMaterial,
 					skuSize: item.skuSize,
@@ -322,13 +322,13 @@ export function buildPostCheckoutTasks(
 				shipping: order.shippingCost,
 				total: order.total,
 				shippingAddress: {
-					firstName: order.shippingFirstName || "",
-					lastName: order.shippingLastName || "",
-					address1: order.shippingAddress1 || "",
+					firstName: order.shippingFirstName ?? "",
+					lastName: order.shippingLastName ?? "",
+					address1: order.shippingAddress1 ?? "",
 					address2: order.shippingAddress2,
-					postalCode: order.shippingPostalCode || "",
-					city: order.shippingCity || "",
-					country: order.shippingCountry || "",
+					postalCode: order.shippingPostalCode ?? "",
+					city: order.shippingCity ?? "",
+					country: order.shippingCountry ?? "",
 				},
 				trackingUrl,
 			},
@@ -343,10 +343,10 @@ export function buildPostCheckoutTasks(
 		data: {
 			orderNumber: order.orderNumber,
 			customerName:
-				`${order.shippingFirstName || ""} ${order.shippingLastName || ""}`.trim() || "Client",
-			customerEmail: customerEmail || "Email non disponible",
+				`${order.shippingFirstName ?? ""} ${order.shippingLastName ?? ""}`.trim() || "Client",
+			customerEmail: customerEmail ?? "Email non disponible",
 			items: order.items.map((item) => ({
-				productTitle: item.productTitle || "Produit",
+				productTitle: item.productTitle ?? "Produit",
 				skuColor: item.skuColor,
 				skuMaterial: item.skuMaterial,
 				skuSize: item.skuSize,
@@ -358,14 +358,14 @@ export function buildPostCheckoutTasks(
 			shipping: order.shippingCost,
 			total: order.total,
 			shippingAddress: {
-				firstName: order.shippingFirstName || "",
-				lastName: order.shippingLastName || "",
-				address1: order.shippingAddress1 || "",
+				firstName: order.shippingFirstName ?? "",
+				lastName: order.shippingLastName ?? "",
+				address1: order.shippingAddress1 ?? "",
 				address2: order.shippingAddress2,
-				postalCode: order.shippingPostalCode || "",
-				city: order.shippingCity || "",
-				country: order.shippingCountry || "",
-				phone: order.shippingPhone || "",
+				postalCode: order.shippingPostalCode ?? "",
+				city: order.shippingCity ?? "",
+				country: order.shippingCountry ?? "",
+				phone: order.shippingPhone ?? "",
 			},
 			dashboardUrl,
 		},

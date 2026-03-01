@@ -49,6 +49,7 @@ export async function ProductTypesDataTable({
 					<Table
 						role="table"
 						aria-label="Liste des types de produits"
+						caption="Liste des types de produits"
 						className="min-w-full table-fixed"
 					>
 						<TableHeader>
@@ -101,7 +102,7 @@ export async function ProductTypesDataTable({
 						</TableHeader>
 						<TableBody>
 							{productTypes.map((productType) => {
-								const productsCount = productType._count?.products || 0;
+								const productsCount = productType._count.products || 0;
 
 								return (
 									<TableRow key={productType.id}>
@@ -120,7 +121,7 @@ export async function ProductTypesDataTable({
 										</TableCell>
 										<TableCell role="gridcell" className="hidden lg:table-cell">
 											<div className="text-muted-foreground line-clamp-2 text-sm">
-												{productType.description || "-"}
+												{productType.description ?? "-"}
 											</div>
 										</TableCell>
 										<TableCell role="gridcell" className="hidden text-center sm:table-cell">

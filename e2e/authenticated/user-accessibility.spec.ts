@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { test, expect } from "../fixtures";
+import { test } from "../fixtures";
 import { expectNoA11yViolations } from "../helpers/axe";
 
 test.describe("Accessibilité - Pages authentifiées", { tag: ["@slow"] }, () => {

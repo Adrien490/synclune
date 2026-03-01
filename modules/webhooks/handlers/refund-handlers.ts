@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	syncStripeRefunds,
@@ -95,7 +95,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		if (order.customerEmail) {
 			const stripeRefunds = charge.refunds?.data ?? [];
 			const latestRefund = stripeRefunds.length > 0 ? stripeRefunds[0] : undefined;
-			const reason = latestRefund?.reason || "OTHER";
+			const reason = latestRefund?.reason ?? "OTHER";
 			const baseUrl = getBaseUrl();
 			const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}`;
 
@@ -146,11 +146,11 @@ export async function handleRefundUpdated(
 		const newStatus = mapStripeRefundStatus(stripeRefund.status ?? undefined);
 
 		// 3. Mettre à jour si le statut a changé
-		if (newStatus && refund.status !== newStatus) {
+		if (refund.status !== newStatus) {
 			await updateRefundStatus(
 				refund.id,
 				newStatus,
-				stripeRefund.status || "unknown",
+				stripeRefund.status ?? "unknown",
 				refund.status,
 			);
 
@@ -194,7 +194,7 @@ export async function handleRefundFailed(
 		}
 
 		// 2. Marquer comme FAILED
-		const failureReason = stripeRefund.failure_reason || "unknown";
+		const failureReason = stripeRefund.failure_reason ?? "unknown";
 		await markRefundAsFailed(refund.id, failureReason);
 
 		// 3. Build post-tasks (admin alert + cache invalidation)
@@ -211,11 +211,11 @@ export async function handleRefundFailed(
 			type: "ADMIN_REFUND_FAILED_ALERT",
 			data: {
 				orderNumber: refund.order.orderNumber,
-				customerEmail: refund.order.customerEmail || "Email non disponible",
+				customerEmail: refund.order.customerEmail ?? "Email non disponible",
 				amount: refund.amount,
 				reason: "other",
 				errorMessage: `Échec remboursement Stripe: ${failureReason}`,
-				stripePaymentIntentId: refund.order.stripePaymentIntentId || "",
+				stripePaymentIntentId: refund.order.stripePaymentIntentId ?? "",
 				dashboardUrl,
 			},
 		});

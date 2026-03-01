@@ -22,9 +22,12 @@ export async function getRecentProductSlugs(): Promise<string[]> {
 	}
 
 	try {
-		const parsed = JSON.parse(decodeURIComponent(cookie.value));
+		const parsed: unknown = JSON.parse(decodeURIComponent(cookie.value));
 		if (Array.isArray(parsed)) {
-			return parsed.slice(0, RECENT_PRODUCTS_MAX_ITEMS);
+			const items = parsed as unknown as unknown[];
+			return items
+				.filter((s): s is string => typeof s === "string")
+				.slice(0, RECENT_PRODUCTS_MAX_ITEMS);
 		}
 	} catch (e) {
 		// Log en dev, silencieux en prod (cookie corrompu = ignore)

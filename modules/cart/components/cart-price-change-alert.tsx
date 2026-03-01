@@ -41,7 +41,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 
 	return (
 		<div
-			className="border-b border-blue-200 bg-blue-50 px-6 py-2.5 text-xs text-blue-700 sm:text-sm dark:border-blue-800 dark:bg-blue-950/20 dark:text-blue-300"
+			className="border-b border-blue-200 bg-blue-50 px-6 py-2.5 text-xs text-blue-700 sm:text-sm"
 			role="alert"
 			aria-live="polite"
 		>
@@ -51,7 +51,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 				</span>
 				<span className="sr-only">Information :</span> Prix mis à jour
 			</p>
-			<ul className="list-inside list-disc space-y-0.5 text-blue-600/90 dark:text-blue-400/90">
+			<ul className="list-inside list-disc space-y-0.5 text-blue-600/90">
 				{itemsWithPriceChange.map((item) => {
 					const priceIncreased = isPriceIncrease(item);
 					return (
@@ -80,7 +80,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					);
 				})}
 			</ul>
-			<p className="mt-2 text-xs text-blue-600/80 dark:text-blue-400/80">
+			<p className="mt-2 text-xs text-blue-600/80">
 				Les prix ont changé depuis votre ajout au panier. Votre panier conserve les prix au moment
 				de l'ajout pour éviter toute surprise.
 			</p>
@@ -92,7 +92,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					disabled={isPending}
 					size="sm"
 					variant="outline"
-					className="w-full border-blue-300 text-blue-700 hover:bg-blue-100 sm:w-auto dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/30"
+					className="w-full border-blue-300 text-blue-700 hover:bg-blue-100 sm:w-auto"
 				>
 					{isPending ? (
 						<>
@@ -107,7 +107,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					)}
 				</Button>
 				{totalSavings > 0 && (
-					<p className="text-center text-xs font-medium text-green-600 sm:text-left dark:text-green-400">
+					<p className="text-center text-xs font-medium text-green-600 sm:text-left">
 						<span role="img" aria-hidden="true">
 							💚
 						</span>{" "}

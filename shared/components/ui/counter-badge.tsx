@@ -1,6 +1,29 @@
+import { cva, type VariantProps } from "class-variance-authority";
+import type { LucideIcon } from "lucide-react";
+
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
-import type { LucideIcon } from "lucide-react";
+
+const counterBadgeVariants = cva("gap-1.5 border-2 px-3 py-1.5 text-sm font-semibold", {
+	variants: {
+		status: {
+			low: "bg-success/20 text-success border-success/40",
+			medium: "bg-warning/20 text-warning border-warning/40",
+			high: "bg-warning/30 text-warning-foreground border-warning/50",
+			critical: "bg-destructive/20 text-destructive border-destructive/40",
+		},
+	},
+	defaultVariants: {
+		status: "low",
+	},
+});
+
+function getStatus(percentage: number): VariantProps<typeof counterBadgeVariants>["status"] {
+	if (percentage < 33) return "low";
+	if (percentage < 66) return "medium";
+	if (percentage < 90) return "high";
+	return "critical";
+}
 
 interface CounterBadgeProps {
 	count: number;
@@ -10,24 +33,12 @@ interface CounterBadgeProps {
 	className?: string;
 }
 
-function getColorClasses(percentage: number): string {
-	if (percentage < 33) return "bg-success/20 text-success border-success/40 dark:bg-success/30";
-	if (percentage < 66) return "bg-warning/20 text-warning border-warning/40 dark:bg-warning/30";
-	if (percentage < 90)
-		return "bg-warning/30 text-warning-foreground border-warning/50 dark:bg-warning/40";
-	return "bg-destructive/20 text-destructive border-destructive/40 dark:bg-destructive/30";
-}
-
 export function CounterBadge({ count, max, label, icon: Icon, className }: CounterBadgeProps) {
 	const percentage = (count / max) * 100;
 
 	return (
 		<Badge
-			className={cn(
-				"gap-1.5 border-2 px-3 py-1.5 text-sm font-semibold",
-				getColorClasses(percentage),
-				className,
-			)}
+			className={cn(counterBadgeVariants({ status: getStatus(percentage) }), className)}
 			role="status"
 			aria-live="polite"
 			aria-atomic="true"
@@ -39,3 +50,5 @@ export function CounterBadge({ count, max, label, icon: Icon, className }: Count
 		</Badge>
 	);
 }
+
+export { counterBadgeVariants };

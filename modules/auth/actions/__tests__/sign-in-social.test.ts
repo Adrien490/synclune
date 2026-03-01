@@ -39,6 +39,10 @@ vi.mock("next/dist/client/components/redirect-error", () => ({
 }));
 vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockCheckArcjet }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	error: mockError,
 	unauthorized: mockUnauthorized,
@@ -147,13 +151,17 @@ describe("signInSocial", () => {
 		expect(mockError).toHaveBeenCalledWith("URL de redirection manquante");
 	});
 
-	it("should return error when signInSocial returns undefined", async () => {
+	it("should return generic error when signInSocial returns null (null.url throws)", async () => {
+		// When the resolved value is null, accessing null.url throws a TypeError.
+		// The catch block treats it as an unexpected error and returns the generic message.
 		mockAuth.api.signInSocial.mockResolvedValue(null);
 
 		const result = await signInSocial(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith("URL de redirection manquante");
+		expect(mockError).toHaveBeenCalledWith(
+			"Une erreur est survenue lors de la connexion. Veuillez réessayer.",
+		);
 	});
 
 	it("should rethrow redirect errors from Next.js", async () => {

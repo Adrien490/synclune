@@ -17,7 +17,7 @@ import { stripDeletedResponses } from "../utils/strip-deleted-response";
  */
 export async function getUserReviews(): Promise<ReviewUser[]> {
 	const session = await getSession();
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		return [];
 	}
 

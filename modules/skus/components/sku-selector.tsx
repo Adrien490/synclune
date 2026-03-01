@@ -80,7 +80,7 @@ export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 	};
 
 	// Vérifier si on doit afficher le sélecteur (plusieurs SKUs)
-	const shouldShowSelector = product.skus && product.skus.length > 1;
+	const shouldShowSelector = product.skus.length > 1;
 
 	// Ne rien afficher si produit avec un seul SKU
 	if (!shouldShowSelector) return null;
@@ -136,7 +136,7 @@ export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 							sizes={variantInfo.availableSizes}
 							product={product}
 							productTypeSlug={product.type?.slug}
-							shouldShow={requiresSize && variantInfo.availableSizes.length > 0}
+							shouldShow
 							defaultSku={defaultSku}
 						/>
 					</>

@@ -62,7 +62,7 @@ export function ProductDetails({
 			{/* 1. Prix (Baymard: visible en premier) */}
 			<AnimatePresence mode="wait">
 				<m.div
-					key={`price-${currentSku?.id || "no-sku"}`}
+					key={`price-${currentSku.id || "no-sku"}`}
 					variants={fadeVariants}
 					initial="initial"
 					animate="animate"
@@ -105,7 +105,7 @@ export function ProductDetails({
 			{/* 5. Caractéristiques principales */}
 			<AnimatePresence mode="wait">
 				<m.div
-					key={`chars-${currentSku?.id || "no-sku"}`}
+					key={`chars-${currentSku.id || "no-sku"}`}
 					variants={fadeVariants}
 					initial="initial"
 					animate="animate"
@@ -135,7 +135,7 @@ export function ProductDetails({
 			)}
 
 			{/* 8. Entretien et livraison (reste en bas) */}
-			<ProductCareInfo primaryMaterial={currentSku?.material?.name} />
+			<ProductCareInfo primaryMaterial={currentSku.material?.name} />
 		</div>
 	);
 }

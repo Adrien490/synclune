@@ -1,6 +1,6 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import { cacheUserAccounts } from "../constants/cache";
 import { cacheDefault } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
@@ -40,7 +40,7 @@ export async function getAccount(params: GetAccountParams): Promise<GetAccountRe
 		return null;
 	}
 
-	return fetchAccount(validation.data, { admin, userId: session?.user?.id });
+	return fetchAccount(validation.data, { admin, userId: session?.user.id });
 }
 
 export async function fetchAccount(

@@ -1,11 +1,7 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { z } from "zod";
-import {
-	GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY,
-	GET_PRODUCT_SKUS_DEFAULT_SORT_BY,
-} from "../constants/sku.constants";
 import { getProductSkusSchema } from "../schemas/get-skus.schemas";
-import { GetProductSkusParams, GetProductSkusReturn } from "../types/skus.types";
+import { type GetProductSkusParams, type GetProductSkusReturn } from "../types/skus.types";
 import { fetchProductSkus } from "./fetch-skus";
 
 /**
@@ -26,15 +22,7 @@ export async function getProductSkus(params: GetProductSkusParams): Promise<GetP
 			throw new Error("Invalid parameters");
 		}
 
-		let validatedParams = validation.data;
-
-		// Ajustement automatique du tri pour les admins
-		if (validatedParams.sortBy === GET_PRODUCT_SKUS_DEFAULT_SORT_BY && !params?.sortBy) {
-			validatedParams = {
-				...validatedParams,
-				sortBy: GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY,
-			};
-		}
+		const validatedParams = validation.data;
 
 		return await fetchProductSkus(validatedParams);
 	} catch (error) {

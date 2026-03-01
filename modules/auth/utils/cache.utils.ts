@@ -18,7 +18,7 @@ import { AUTH_CACHE_TAGS } from "../constants/cache";
 export function cacheAuthSessions(userId?: string) {
 	cacheLife("dashboard");
 	if (userId) {
-		cacheTag(`auth-sessions-${userId}`);
+		cacheTag(AUTH_CACHE_TAGS.SESSIONS_USER(userId));
 	} else {
 		cacheTag(AUTH_CACHE_TAGS.SESSIONS_LIST);
 	}
@@ -53,7 +53,7 @@ export function getAuthSessionInvalidationTags(sessionId?: string, userId?: stri
 		tags.push(AUTH_CACHE_TAGS.SESSION(sessionId));
 	}
 	if (userId) {
-		tags.push(`auth-sessions-${userId}`);
+		tags.push(AUTH_CACHE_TAGS.SESSIONS_USER(userId));
 	}
 	return tags;
 }
@@ -63,4 +63,11 @@ export function getAuthSessionInvalidationTags(sessionId?: string, userId?: stri
  */
 export function getAuthVerificationInvalidationTags(): string[] {
 	return [AUTH_CACHE_TAGS.VERIFICATIONS_LIST];
+}
+
+/**
+ * Retourne les tags à invalider pour les providers OAuth d'un utilisateur
+ */
+export function getUserProvidersInvalidationTags(userId: string): string[] {
+	return [AUTH_CACHE_TAGS.USER_PROVIDERS(userId)];
 }

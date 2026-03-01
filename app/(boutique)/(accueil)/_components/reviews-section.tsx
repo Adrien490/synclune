@@ -12,7 +12,6 @@ import {
 } from "@/shared/components/ui/carousel";
 import { SectionTitle } from "@/shared/components/section-title";
 import { RatingStars } from "@/shared/components/rating-stars";
-import { ResponsiveLayout } from "@/shared/components/responsive-layout";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { formatRating } from "@/shared/utils/rating-utils";
 import { HomepageReviewCard } from "@/modules/reviews/components/homepage-review-card";
@@ -93,54 +92,50 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 					)}
 				</header>
 
-				{/* Responsive: only one layout stays in the DOM after mount */}
-				<ResponsiveLayout
-					mobile={
-						<div className="mb-6 sm:mb-8">
-							<Reveal
-								y={MOTION_CONFIG.section.carousel.y}
-								delay={MOTION_CONFIG.section.carousel.delay}
-								duration={MOTION_CONFIG.section.carousel.duration}
-								once
-							>
-								<Carousel
-									opts={{
-										align: "center",
-										containScroll: "trimSnaps",
-									}}
-									className="w-full"
-									aria-label={`Carrousel de ${reviews.length} avis clients`}
-								>
-									<CarouselContent className="-ml-4 py-4" showFade>
-										{reviews.map((review, index) => (
-											<CarouselItem
-												key={review.id}
-												index={index}
-												className="basis-[clamp(260px,80vw,340px)] pl-4"
-											>
-												<HomepageReviewCard review={review} />
-											</CarouselItem>
-										))}
-									</CarouselContent>
-									<CarouselDots />
-								</Carousel>
-							</Reveal>
-						</div>
-					}
-					desktop={
-						<Stagger
-							className="mb-6 grid grid-cols-3 gap-6 sm:mb-8 lg:mb-12"
-							stagger={MOTION_CONFIG.section.grid.stagger}
-							y={MOTION_CONFIG.section.grid.y}
-							inView
-							once
+				{/* Mobile: carousel */}
+				<div className="mb-6 sm:mb-8 lg:hidden">
+					<Reveal
+						y={MOTION_CONFIG.section.carousel.y}
+						delay={MOTION_CONFIG.section.carousel.delay}
+						duration={MOTION_CONFIG.section.carousel.duration}
+						once
+					>
+						<Carousel
+							opts={{
+								align: "center",
+								containScroll: "trimSnaps",
+							}}
+							className="w-full"
+							aria-label={`Carrousel de ${reviews.length} avis clients`}
 						>
-							{reviews.map((review) => (
-								<HomepageReviewCard key={review.id} review={review} />
-							))}
-						</Stagger>
-					}
-				/>
+							<CarouselContent className="-ml-4 py-4" showFade>
+								{reviews.map((review, index) => (
+									<CarouselItem
+										key={review.id}
+										index={index}
+										className="basis-[clamp(260px,80vw,340px)] pl-4"
+									>
+										<HomepageReviewCard review={review} />
+									</CarouselItem>
+								))}
+							</CarouselContent>
+							<CarouselDots />
+						</Carousel>
+					</Reveal>
+				</div>
+
+				{/* Desktop: grid */}
+				<Stagger
+					className="mb-6 hidden grid-cols-3 gap-6 sm:mb-8 lg:mb-12 lg:grid"
+					stagger={MOTION_CONFIG.section.grid.stagger}
+					y={MOTION_CONFIG.section.grid.y}
+					inView
+					once
+				>
+					{reviews.map((review) => (
+						<HomepageReviewCard key={review.id} review={review} />
+					))}
+				</Stagger>
 
 				{/* CTA */}
 				<div id="reviews-cta">

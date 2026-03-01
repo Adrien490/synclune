@@ -23,13 +23,9 @@ export function buildApiUrl(params: ValidatedSearchAddressParams): string {
 		url.searchParams.set("lonlat", params.lonlat);
 	}
 
-	if (params.type !== undefined) {
-		url.searchParams.set("type", params.type);
-	}
+	url.searchParams.set("type", params.type);
 
-	if (params.maximumResponses !== undefined) {
-		url.searchParams.set("maximumResponses", params.maximumResponses.toString());
-	}
+	url.searchParams.set("maximumResponses", params.maximumResponses.toString());
 
 	if (params.bbox !== undefined) {
 		url.searchParams.set("bbox", params.bbox);

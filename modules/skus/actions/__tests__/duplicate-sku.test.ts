@@ -33,13 +33,18 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({ ADMIN_SKU_DUPLICATE_LIMIT: "sku-duplicate" }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	BusinessError: class extends Error {},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
@@ -94,7 +99,7 @@ describe("duplicateSku", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockGetSkuInvalidationTags.mockReturnValue(["skus-list"]);
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID } });

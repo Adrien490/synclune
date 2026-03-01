@@ -7,7 +7,13 @@ import { scheduleReviewRequestEmailsBulk } from "@/modules/webhooks/services/rev
 import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -41,15 +47,15 @@ export async function bulkMarkAsDelivered(
 		const idsString = formData.get("ids");
 		let ids: unknown = [];
 		try {
-			ids = idsString ? JSON.parse(idsString as string) : [];
+			ids = idsString ? JSON.parse(String(idsString)) : [];
 		} catch {
 			return error("Format d'IDs invalide");
 		}
-		const sendEmail = formData.get("sendEmail") as string | null;
+		const sendEmail = safeFormGet(formData, "sendEmail");
 
 		const validated = validateInput(bulkMarkAsDeliveredSchema, {
 			ids,
-			sendEmail: sendEmail || "false",
+			sendEmail: sendEmail ?? "false",
 		});
 		if ("error" in validated) return validated.error;
 
@@ -100,7 +106,7 @@ export async function bulkMarkAsDelivered(
 						previousFulfillmentStatus: FulfillmentStatus.SHIPPED,
 						newFulfillmentStatus: FulfillmentStatus.DELIVERED,
 						authorId: adminUser.id,
-						authorName: adminUser.name || "Admin",
+						authorName: adminUser.name ?? "Admin",
 						source: HistorySource.ADMIN,
 						metadata: {
 							bulk: true,
@@ -156,7 +162,7 @@ export async function bulkMarkAsDelivered(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.bulkMarkDelivered",
 			targetType: "order",
 			targetId: eligibleIds.join(","),

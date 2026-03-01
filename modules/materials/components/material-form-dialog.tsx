@@ -77,7 +77,7 @@ export function MaterialFormDialog() {
 		if (material) {
 			form.reset({
 				name: material.name,
-				description: material.description || "",
+				description: material.description ?? "",
 				isActive: material.isActive,
 			});
 		} else {
@@ -111,11 +111,11 @@ export function MaterialFormDialog() {
 				</ResponsiveDialogHeader>
 
 				<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
-					{isUpdateMode && material && (
+					{isUpdateMode && (
 						<>
-							<input type="hidden" name="id" value={material.id} />
-							<input type="hidden" name="slug" value={material.slug} />
-							<input type="hidden" name="isActive" value={String(material.isActive)} />
+							<input type="hidden" name="id" value={material!.id} />
+							<input type="hidden" name="slug" value={material!.slug} />
+							<input type="hidden" name="isActive" value={String(material!.isActive)} />
 						</>
 					)}
 

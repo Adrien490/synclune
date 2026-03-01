@@ -1,5 +1,5 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { GET_LAST_ORDER_DEFAULT_SELECT } from "../constants/last-order.constants";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type GET_LAST_ORDER_DEFAULT_SELECT } from "../constants/last-order.constants";
 
 // ============================================================================
 // TYPES - LAST ORDER

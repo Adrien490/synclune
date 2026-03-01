@@ -59,7 +59,7 @@ export function ReviewMediaUpload({
 						>
 							<Image
 								src={m.url}
-								alt={m.altText || `Photo ${index + 1}`}
+								alt={m.altText ?? `Photo ${index + 1}`}
 								fill
 								className="object-cover"
 								sizes="80px"
@@ -90,10 +90,10 @@ export function ReviewMediaUpload({
 					onUploadBegin={() => setIsUploading(true)}
 					onClientUploadComplete={(res) => {
 						setIsUploading(false);
-						if (res && res.length > 0) {
+						if (res.length > 0) {
 							const newMedia: ReviewMediaItem[] = res.map((file) => ({
 								url: file.ufsUrl,
-								blurDataUrl: file.serverData?.blurDataUrl || undefined,
+								blurDataUrl: file.serverData.blurDataUrl ?? undefined,
 								altText: undefined,
 							}));
 							// Ne garder que les 3 premiers

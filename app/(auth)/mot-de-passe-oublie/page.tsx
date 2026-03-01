@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
 	title: "Mot de passe oublié | Synclune",
 	description: "Réinitialisez votre mot de passe Synclune en toute sécurité.",
-	robots: "noindex, nofollow",
+	robots: { index: false, follow: false },
 	openGraph: {
 		title: "Mot de passe oublié | Synclune",
 		description: "Réinitialisez votre mot de passe",

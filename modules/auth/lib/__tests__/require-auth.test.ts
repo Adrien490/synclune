@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type * as ServerActionModule from "@/shared/types/server-action";
 
 // ============================================================================
 // Hoisted mocks
@@ -23,7 +24,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/shared/types/server-action", async (importOriginal) => {
-	const original = await importOriginal<typeof import("@/shared/types/server-action")>();
+	const original = await importOriginal<typeof ServerActionModule>();
 	return original;
 });
 

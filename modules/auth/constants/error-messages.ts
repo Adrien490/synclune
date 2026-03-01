@@ -41,5 +41,5 @@ export const AUTH_ERROR_MESSAGES: Record<string, { title: string; description: s
  * Retourne le message "default" si le code n'est pas reconnu
  */
 export function getAuthErrorMessage(errorType?: string): { title: string; description: string } {
-	return AUTH_ERROR_MESSAGES[errorType || "default"] ?? AUTH_ERROR_MESSAGES["default"]!;
+	return AUTH_ERROR_MESSAGES[errorType ?? "default"] ?? AUTH_ERROR_MESSAGES["default"]!;
 }

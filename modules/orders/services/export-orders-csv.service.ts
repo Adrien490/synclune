@@ -44,7 +44,7 @@ export function buildExportWhereClause(input: ExportInvoicesInput): Prisma.Order
 		};
 	}
 
-	if (input.invoiceStatus && input.invoiceStatus !== "all") {
+	if (input.invoiceStatus !== "all") {
 		where.invoiceStatus =
 			input.invoiceStatus === "sent" ? InvoiceStatus.GENERATED : InvoiceStatus.VOIDED;
 	}

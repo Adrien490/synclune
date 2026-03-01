@@ -8,7 +8,13 @@ import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -35,8 +41,8 @@ export async function createDiscount(
 
 		// 2. Extraction des données
 		const rawData = {
-			code: formData.get("code") as string,
-			type: formData.get("type") as string,
+			code: safeFormGet(formData, "code"),
+			type: safeFormGet(formData, "type"),
 			value: Number(formData.get("value")),
 			minOrderAmount: formData.get("minOrderAmount")
 				? Number(formData.get("minOrderAmount"))
@@ -45,8 +51,10 @@ export async function createDiscount(
 			maxUsagePerUser: formData.get("maxUsagePerUser")
 				? Number(formData.get("maxUsagePerUser"))
 				: null,
-			startsAt: formData.get("startsAt") ? new Date(formData.get("startsAt") as string) : null,
-			endsAt: formData.get("endsAt") ? new Date(formData.get("endsAt") as string) : null,
+			startsAt: safeFormGet(formData, "startsAt")
+				? new Date(safeFormGet(formData, "startsAt")!)
+				: null,
+			endsAt: safeFormGet(formData, "endsAt") ? new Date(safeFormGet(formData, "endsAt")!) : null,
 		};
 
 		// 3. Validation
@@ -89,7 +97,7 @@ export async function createDiscount(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "discount.create",
 			targetType: "discount",
 			targetId: discount.id,

@@ -113,7 +113,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		const parts = [
 			hasActiveSearch && `Recherche "${currentSearch}" active`,
 			hasActiveSort &&
-				`Tri : ${sortByValue ? (PRODUCTS_SORT_LABELS[sortByValue as keyof typeof PRODUCTS_SORT_LABELS] ?? "actif") : "actif"}`,
+				`Tri : ${sortByValue ? PRODUCTS_SORT_LABELS[sortByValue as keyof typeof PRODUCTS_SORT_LABELS] : "actif"}`,
 			hasActiveFilters &&
 				`${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}`,
 		]

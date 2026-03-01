@@ -23,6 +23,7 @@ function params(overrides: Partial<GetUsersParams> = {}): GetUsersParams {
 		direction: "forward",
 		perPage: 20,
 		sortBy: "created-descending",
+		filters: {} as UserFilters,
 		...overrides,
 	} as GetUsersParams;
 }

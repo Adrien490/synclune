@@ -24,10 +24,10 @@ export type GetCartItemCountReturn = number;
  */
 export async function getCartItemCount(): Promise<GetCartItemCountReturn> {
 	const session = await getSession();
-	const userId = session?.user?.id;
+	const userId = session?.user.id;
 	const sessionId = !userId ? await getCartSessionId() : null;
 
-	return await fetchCartItemCount(userId, sessionId || undefined);
+	return await fetchCartItemCount(userId, sessionId ?? undefined);
 }
 
 /**
@@ -69,5 +69,5 @@ export async function fetchCartItemCount(
 		},
 	});
 
-	return result._sum.quantity || 0;
+	return result._sum.quantity ?? 0;
 }

@@ -25,7 +25,7 @@ vi.mock("next/cache", () => ({
 vi.mock("../../constants/cache", () => ({
 	cacheProductTypes: () => {
 		mockCacheLife("reference");
-		mockCacheTag("product-types");
+		mockCacheTag("product-types-list");
 	},
 }));
 
@@ -114,7 +114,7 @@ describe("getProductTypeOptions", () => {
 
 		await getProductTypeOptions();
 
-		expect(mockCacheTag).toHaveBeenCalledWith("product-types");
+		expect(mockCacheTag).toHaveBeenCalledWith("product-types-list");
 	});
 
 	it("returns empty array when no active product types exist", async () => {

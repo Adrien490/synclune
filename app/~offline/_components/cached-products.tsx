@@ -74,10 +74,10 @@ export function CachedProducts() {
 	if (loading) {
 		return (
 			<div className="mt-12 space-y-4">
-				<div className="bg-muted mx-auto h-6 w-64 animate-pulse rounded" />
+				<div className="bg-muted mx-auto h-6 w-64 rounded motion-safe:animate-pulse" />
 				<div className="mx-auto grid max-w-md grid-cols-2 gap-3">
 					{Array.from({ length: 2 }).map((_, i) => (
-						<div key={i} className="bg-muted aspect-square animate-pulse rounded-lg" />
+						<div key={i} className="bg-muted aspect-square rounded-lg motion-safe:animate-pulse" />
 					))}
 				</div>
 			</div>

@@ -109,7 +109,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 			</Sidebar>
 			<SidebarInset>
 				<DashboardHeader user={user} />
-				<main id="main-content" className="space-y-6 p-6 pb-20 md:pb-6">
+				<main id="main-content" tabIndex={-1} className="space-y-6 p-6 pb-20 md:pb-6">
 					<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
 				</main>
 			</SidebarInset>

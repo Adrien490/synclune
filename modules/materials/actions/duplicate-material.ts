@@ -4,7 +4,14 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { handleActionError, success, error, notFound, validateInput } from "@/shared/lib/actions";
+import {
+	handleActionError,
+	success,
+	error,
+	notFound,
+	validateInput,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -38,7 +45,7 @@ export async function duplicateMaterial(
 
 		// 3. Validation des donnees
 		const rawData = {
-			materialId: formData.get("materialId") as string,
+			materialId: safeFormGet(formData, "materialId"),
 		};
 
 		const validated = validateInput(duplicateMaterialSchema, rawData);
@@ -59,7 +66,7 @@ export async function duplicateMaterial(
 		let suffix = 1;
 
 		// Verifier si le nom existe deja et incrementer le suffixe si necessaire
-		while (true) {
+		for (;;) {
 			const existing = await prisma.material.findFirst({
 				where: { name: newName },
 			});
@@ -90,7 +97,7 @@ export async function duplicateMaterial(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "material.duplicate",
 			targetType: "material",
 			targetId: duplicate.id,

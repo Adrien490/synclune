@@ -17,14 +17,13 @@ export function generateStructuredData({
 	reviews,
 }: StructuredDataOptions) {
 	// Calculer le prix minimum et maximum pour les offres agrégées
-	const activePrices =
-		product.skus?.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax) || [];
+	const activePrices = product.skus.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax);
 
 	const minPrice =
-		activePrices.length > 0 ? Math.min(...activePrices) : selectedSku?.priceInclTax || 0;
+		activePrices.length > 0 ? Math.min(...activePrices) : (selectedSku?.priceInclTax ?? 0);
 
 	const maxPrice =
-		activePrices.length > 0 ? Math.max(...activePrices) : selectedSku?.priceInclTax || 0;
+		activePrices.length > 0 ? Math.max(...activePrices) : (selectedSku?.priceInclTax ?? 0);
 
 	const hasMultiplePrices = minPrice !== maxPrice;
 
@@ -41,10 +40,10 @@ export function generateStructuredData({
 	const PRODUCT_IMAGE_SIZE = 1200;
 
 	// Images du SKU sélectionné ou du premier SKU
-	const skuImages = selectedSku?.images || product.skus?.[0]?.images || [];
+	const skuImages = selectedSku?.images ?? product.skus[0]?.images ?? [];
 
 	// Image principale
-	const mainImage = skuImages.find((img) => img.isPrimary)?.url || skuImages[0]?.url;
+	const mainImage = skuImages.find((img) => img.isPrimary)?.url ?? skuImages[0]?.url;
 
 	// Toutes les images en format ImageObject avec dimensions
 	const allImages = skuImages.map((img) => ({
@@ -100,10 +99,10 @@ export function generateStructuredData({
 	};
 
 	// MPN (Manufacturer Part Number) - utilise le code SKU comme référence fabricant
-	const skuCode = selectedSku?.sku || product.skus?.[0]?.sku;
+	const skuCode = selectedSku?.sku ?? product.skus[0]?.sku;
 
 	// Nombre de SKUs actifs pour AggregateOffer
-	const activeSkuCount = product.skus?.filter((sku) => sku.isActive).length || 1;
+	const activeSkuCount = product.skus.filter((sku) => sku.isActive).length || 1;
 
 	// Return policy and shipping details shared by all offer types
 	const returnPolicy = {
@@ -133,6 +132,11 @@ export function generateStructuredData({
 		},
 	};
 
+	// Price valid for 1 year — required by Google for rich results eligibility
+	const priceValidUntil = new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+		.toISOString()
+		.split("T")[0];
+
 	// Utiliser AggregateOffer pour les produits multi-variantes
 	const offers =
 		hasMultiplePrices && activeSkuCount > 1
@@ -143,6 +147,7 @@ export function generateStructuredData({
 					priceCurrency: "EUR",
 					offerCount: activeSkuCount,
 					availability,
+					priceValidUntil,
 					itemCondition: "https://schema.org/NewCondition",
 					url: `${SITE_URL}/creations/${product.slug}`,
 					seller: {
@@ -157,6 +162,7 @@ export function generateStructuredData({
 					price,
 					priceCurrency: "EUR",
 					availability,
+					priceValidUntil,
 					itemCondition: "https://schema.org/NewCondition",
 					url: `${SITE_URL}/creations/${product.slug}`,
 					seller: {
@@ -182,7 +188,7 @@ export function generateStructuredData({
 		"@type": "Product",
 		"@id": `${SITE_URL}/creations/${product.slug}#product`,
 		name: product.title,
-		description: product.description || `${product.title} - Bijou artisanal fait main`,
+		description: product.description ?? `${product.title} - Bijou artisanal fait main`,
 		image: allImages.length > 0 ? allImages : mainImageObject ? [mainImageObject] : [],
 		sku: skuCode,
 		// MPN = Manufacturer Part Number (code produit du fabricant)
@@ -215,7 +221,7 @@ export function generateStructuredData({
 					},
 					author: {
 						"@type": "Person",
-						name: r.user?.name || "Client vérifié",
+						name: r.user.name ?? "Client vérifié",
 					},
 					...(r.title && { name: r.title }),
 					reviewBody: r.content,
@@ -232,14 +238,13 @@ export function generateStructuredData({
 		...(selectedSku?.color && {
 			color: selectedSku.color.name,
 		}),
-		...(product.collections &&
-			product.collections.length > 0 && {
-				isRelatedTo: product.collections.map((pc) => ({
-					"@type": "CollectionPage",
-					name: pc.collection.name,
-					url: `${SITE_URL}/collections/${pc.collection.slug}`,
-				})),
-			}),
+		...(product.collections.length > 0 && {
+			isRelatedTo: product.collections.map((pc) => ({
+				"@type": "CollectionPage",
+				name: pc.collection.name,
+				url: `${SITE_URL}/collections/${pc.collection.slug}`,
+			})),
+		}),
 		additionalProperty: [
 			{
 				"@type": "PropertyValue",

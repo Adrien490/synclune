@@ -53,7 +53,7 @@ export function DeleteAddressAlertDialog() {
 									<strong>&quot;{deleteDialog.data?.addressLabel}&quot;</strong> ?
 								</p>
 								{deleteDialog.data?.isDefault && (
-									<p className="font-medium text-orange-600 dark:text-orange-400">
+									<p className="font-medium text-orange-600">
 										C'est votre adresse par défaut. Si vous en avez d'autres, une nouvelle sera
 										automatiquement sélectionnée par défaut.
 									</p>

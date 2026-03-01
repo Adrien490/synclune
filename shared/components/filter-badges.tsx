@@ -2,7 +2,7 @@
 
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
-import { FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
+import { type FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";

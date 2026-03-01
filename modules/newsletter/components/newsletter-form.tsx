@@ -74,7 +74,7 @@ export function NewsletterForm() {
 			)}
 
 			{/* Error message (email already subscribed, etc.) - Skip validation errors */}
-			{hasServerError && state?.message && (
+			{hasServerError && state.message && (
 				<Alert variant="destructive">
 					<AlertDescription id={serverErrorId} role="alert">
 						{state.message}

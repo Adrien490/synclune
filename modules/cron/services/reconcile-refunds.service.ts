@@ -106,7 +106,7 @@ export async function reconcilePendingRefunds(): Promise<{
 					await updateRefundStatus(
 						refund.id,
 						RefundStatus.COMPLETED,
-						stripeRefund.status || "unknown",
+						stripeRefund.status ?? "unknown",
 					);
 					logger.info("Refund marked as COMPLETED", {
 						cronJob: "reconcile-refunds",
@@ -115,7 +115,7 @@ export async function reconcilePendingRefunds(): Promise<{
 					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
 					updated++;
 				} else if (newStatus === RefundStatus.FAILED) {
-					const failureReason = stripeRefund.failure_reason || "Unknown failure";
+					const failureReason = stripeRefund.failure_reason ?? "Unknown failure";
 					await markRefundAsFailed(refund.id, failureReason);
 					sendRefundFailedAlert(refund, failureReason).catch((e) =>
 						logger.error("Failed to send refund alert", e, { cronJob: "reconcile-refunds" }),

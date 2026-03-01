@@ -59,14 +59,6 @@ export default defineConfig({
 			testIgnore: /authenticated\//,
 		},
 
-		// Dark mode accessibility tests - Chromium only
-		{
-			name: "chromium-dark",
-			use: { ...devices["Desktop Chrome"] },
-			testMatch: /a11y\/axe-dark-mode\.spec\.ts/,
-			testIgnore: /authenticated\//,
-		},
-
 		// Authenticated tests (admin) - Chrome
 		{
 			name: "authenticated-admin",

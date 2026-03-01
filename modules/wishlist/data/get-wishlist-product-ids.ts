@@ -20,10 +20,10 @@ import { WISHLIST_CACHE_TAGS } from "@/modules/wishlist/constants/cache";
  */
 export async function getWishlistProductIds(): Promise<Set<string>> {
 	const session = await getSession();
-	const userId = session?.user?.id;
+	const userId = session?.user.id;
 	const sessionId = !userId ? await getWishlistSessionId() : null;
 
-	return fetchWishlistProductIds(userId, sessionId || undefined);
+	return fetchWishlistProductIds(userId, sessionId ?? undefined);
 }
 
 /**

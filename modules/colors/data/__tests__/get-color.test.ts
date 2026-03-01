@@ -30,7 +30,7 @@ vi.mock("next/cache", () => ({
 vi.mock("../../constants/cache", () => ({
 	cacheColorDetail: (slug: string) => {
 		mockCacheLife("reference");
-		mockCacheTag(`color-${slug}`, "colors");
+		mockCacheTag(`color-${slug}`, "colors-list");
 	},
 }));
 
@@ -199,7 +199,7 @@ describe("getColorBySlug", () => {
 
 		await getColorBySlug({ slug: "rouge" });
 
-		expect(mockCacheTag).toHaveBeenCalledWith("color-rouge", "colors");
+		expect(mockCacheTag).toHaveBeenCalledWith("color-rouge", "colors-list");
 	});
 
 	it("returns null on database error", async () => {

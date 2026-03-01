@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type * as UseBottomBarHeightModule from "@/shared/hooks/use-bottom-bar-height";
 
 // Hoisted mocks (vi.mock factories are hoisted above variable declarations)
 const { useReducedMotionMock, useBottomBarHeightMock } = vi.hoisted(() => ({
@@ -19,6 +20,15 @@ vi.mock("motion/react", () => ({
 		div: "div",
 		nav: "nav",
 	},
+	m: new Proxy(
+		{},
+		{
+			get: (_target, prop) => {
+				if (typeof prop === "symbol") return undefined;
+				return prop;
+			},
+		},
+	),
 }));
 
 // Mock useBottomBarHeight to track calls
@@ -263,9 +273,9 @@ describe("useBottomBarHeight", () => {
 	});
 
 	it("sets CSS variable when enabled", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<
-			typeof import("@/shared/hooks/use-bottom-bar-height")
-		>("@/shared/hooks/use-bottom-bar-height");
+		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
+			"@/shared/hooks/use-bottom-bar-height",
+		);
 
 		function TestComponent({ height, enabled }: { height: number; enabled: boolean }) {
 			realHook(height, enabled);
@@ -278,9 +288,9 @@ describe("useBottomBarHeight", () => {
 	});
 
 	it("removes CSS variable when disabled", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<
-			typeof import("@/shared/hooks/use-bottom-bar-height")
-		>("@/shared/hooks/use-bottom-bar-height");
+		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
+			"@/shared/hooks/use-bottom-bar-height",
+		);
 
 		function TestComponent({ enabled }: { enabled: boolean }) {
 			realHook(56, enabled);
@@ -295,9 +305,9 @@ describe("useBottomBarHeight", () => {
 	});
 
 	it("cleans up CSS variable on unmount", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<
-			typeof import("@/shared/hooks/use-bottom-bar-height")
-		>("@/shared/hooks/use-bottom-bar-height");
+		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
+			"@/shared/hooks/use-bottom-bar-height",
+		);
 
 		function TestComponent() {
 			realHook(56, true);
@@ -312,9 +322,9 @@ describe("useBottomBarHeight", () => {
 	});
 
 	it("uses max height when multiple bars registered", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<
-			typeof import("@/shared/hooks/use-bottom-bar-height")
-		>("@/shared/hooks/use-bottom-bar-height");
+		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
+			"@/shared/hooks/use-bottom-bar-height",
+		);
 
 		function Bar({ height }: { height: number }) {
 			realHook(height, true);
@@ -333,7 +343,7 @@ describe("useBottomBarHeight", () => {
 
 	it("preserves CSS variable when one of two bars unmounts", async () => {
 		const { useBottomBarHeight: realHook, _registry } = await vi.importActual<
-			typeof import("@/shared/hooks/use-bottom-bar-height")
+			typeof UseBottomBarHeightModule
 		>("@/shared/hooks/use-bottom-bar-height");
 
 		function Bar({ height }: { height: number }) {
@@ -353,9 +363,9 @@ describe("useBottomBarHeight", () => {
 	});
 
 	it("updates CSS variable when height changes", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<
-			typeof import("@/shared/hooks/use-bottom-bar-height")
-		>("@/shared/hooks/use-bottom-bar-height");
+		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
+			"@/shared/hooks/use-bottom-bar-height",
+		);
 
 		function TestComponent({ height }: { height: number }) {
 			realHook(height, true);

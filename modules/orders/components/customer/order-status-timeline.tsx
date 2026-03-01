@@ -1,4 +1,8 @@
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import {
+	type OrderStatus,
+	type PaymentStatus,
+	type FulfillmentStatus,
+} from "@/app/generated/prisma/client";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	ORDER_STATUS_LABELS,

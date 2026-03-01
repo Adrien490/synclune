@@ -33,7 +33,7 @@ export async function updateProductType(
 		const rawData = {
 			id: formData.get("id"),
 			label: formData.get("label"),
-			description: formData.get("description") || undefined,
+			description: formData.get("description") ?? undefined,
 		};
 
 		// 3. Valider les donnees
@@ -87,7 +87,7 @@ export async function updateProductType(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "productType.update",
 			targetType: "productType",
 			targetId: validatedData.id,

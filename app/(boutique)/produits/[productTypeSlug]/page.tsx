@@ -6,6 +6,7 @@ import { getProductTypeBySlug } from "@/modules/product-types/data/get-product-t
 import { ProductCatalog } from "@/modules/products/components/product-catalog";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
+import { SITE_URL } from "@/shared/constants/seo-config";
 import type { ProductSearchParams } from "../_utils/types";
 import { parseFilters } from "../_utils/params";
 import {
@@ -76,7 +77,7 @@ export async function generateMetadata({
 
 	const title = `${productType.label} artisanaux faits main | Synclune - Nantes`;
 	const description =
-		productType.description ||
+		productType.description ??
 		`Découvrez mes ${productType.label.toLowerCase()} colorés créés à la main dans mon atelier nantais. Pièces uniques et originales !`;
 
 	return {
@@ -91,8 +92,9 @@ export async function generateMetadata({
 		openGraph: {
 			title: `${productType.label} | Synclune`,
 			description,
-			url: `https://synclune.fr/produits/${productTypeSlug}`,
+			url: `${SITE_URL}/produits/${productTypeSlug}`,
 			type: "website",
+			images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
 		},
 		twitter: {
 			card: "summary_large_image",
@@ -148,12 +150,12 @@ export default async function ProductTypeCategoryPage({
 	const jsonLd = buildCatalogJsonLd({
 		name: `${productType.label} artisanaux faits main`,
 		description:
-			productType.description ||
+			productType.description ??
 			`Découvrez mes ${productType.label.toLowerCase()} colorés créés à la main.`,
-		url: `https://synclune.fr/produits/${productTypeSlug}`,
+		url: `${SITE_URL}/produits/${productTypeSlug}`,
 		breadcrumbs: [
-			{ name: "Accueil", url: "https://synclune.fr" },
-			{ name: "Créations", url: "https://synclune.fr/produits" },
+			{ name: "Accueil", url: SITE_URL },
+			{ name: "Créations", url: `${SITE_URL}/produits` },
 			{ name: productType.label },
 		],
 	});

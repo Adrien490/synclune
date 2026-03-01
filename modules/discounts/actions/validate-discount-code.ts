@@ -102,18 +102,18 @@ export async function validateDiscountCode(
 	try {
 		// Rate limiting based on IP
 		const headersList = await headers();
-		const ip = (await getClientIp(headersList)) || "unknown";
+		const ip = (await getClientIp(headersList)) ?? "unknown";
 		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
 		if ("error" in rateCheck)
 			return { valid: false, error: "Trop de tentatives. Veuillez réessayer plus tard." };
 
 		// Read userId from session server-side (never trust client-provided value)
 		const session = await getSession();
-		const userId = session?.user?.id;
-		const sessionEmail = session?.user?.email || undefined;
+		const userId = session?.user.id;
+		const sessionEmail = session?.user.email ?? undefined;
 
 		// Use session email if available, fallback to provided guest email
-		const effectiveEmail = sessionEmail || customerEmail;
+		const effectiveEmail = sessionEmail ?? customerEmail;
 
 		// 1. Valider les paramètres avec messages d'erreur spécifiques
 		const validation = validateDiscountCodeSchema.safeParse({

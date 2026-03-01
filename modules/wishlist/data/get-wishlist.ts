@@ -34,10 +34,10 @@ export type {
  */
 export async function getWishlist(params: GetWishlistParams = {}): Promise<GetWishlistReturn> {
 	const session = await getSession();
-	const userId = session?.user?.id;
+	const userId = session?.user.id;
 	const sessionId = !userId ? await getWishlistSessionId() : null;
 
-	return await fetchWishlist(userId, sessionId || undefined, params);
+	return await fetchWishlist(userId, sessionId ?? undefined, params);
 }
 
 /**
@@ -73,7 +73,7 @@ export async function fetchWishlist(
 		}
 
 		const take = Math.min(
-			Math.max(1, params.perPage || GET_WISHLIST_DEFAULT_PER_PAGE),
+			Math.max(1, params.perPage ?? GET_WISHLIST_DEFAULT_PER_PAGE),
 			GET_WISHLIST_MAX_RESULTS_PER_PAGE,
 		);
 

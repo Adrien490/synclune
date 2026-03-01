@@ -12,8 +12,6 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useMounted } from "@/shared/hooks/use-mounted";
 import { ChevronDown, Pencil, Shield, ShoppingBag, Tag, TruckIcon } from "lucide-react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
@@ -45,9 +43,6 @@ export function CheckoutSummary({
 	appliedDiscount,
 }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
-	const isMobileDetected = useIsMobile();
-	const mounted = useMounted();
-	const isMobile = mounted && isMobileDetected;
 
 	// Calculer le nombre total d'articles
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -61,12 +56,7 @@ export function CheckoutSummary({
 	const shipping = calculateShipping(selectedCountry, postalCode);
 
 	// Delivery date estimation based on selected country/zone
-	const isCorse = selectedCountry === "FR" && postalCode?.startsWith("20");
-	const shippingRate = isCorse
-		? SHIPPING_RATES.CORSE
-		: selectedCountry === "FR"
-			? SHIPPING_RATES.FR
-			: SHIPPING_RATES.EU;
+	const shippingRate = selectedCountry === "FR" ? SHIPPING_RATES.FR : SHIPPING_RATES.EU;
 	const minDelivery = addBusinessDays(new Date(), shippingRate.minDays);
 	const maxDelivery = addBusinessDays(new Date(), shippingRate.maxDays);
 	const deliveryEstimate = `${format(minDelivery, "d", { locale: fr })}-${format(maxDelivery, "d MMM", { locale: fr })}`;
@@ -88,7 +78,7 @@ export function CheckoutSummary({
 							{item.sku.images[0] ? (
 								<Image
 									src={item.sku.images[0].url}
-									alt={item.sku.images[0].altText || item.sku.product.title}
+									alt={item.sku.images[0].altText ?? item.sku.product.title}
 									fill
 									sizes="64px"
 									quality={70}
@@ -160,11 +150,11 @@ export function CheckoutSummary({
 				{/* Discount line */}
 				{appliedDiscount && discountAmount > 0 && (
 					<div className="flex items-center justify-between">
-						<span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+						<span className="flex items-center gap-1.5 text-green-600">
 							<Tag className="h-4 w-4" />
 							Réduction ({appliedDiscount.code})
 						</span>
-						<span className="text-base/6 font-medium text-green-600 tabular-nums dark:text-green-400">
+						<span className="text-base/6 font-medium text-green-600 tabular-nums">
 							-{formatEuro(discountAmount)}
 						</span>
 					</div>
@@ -227,10 +217,10 @@ export function CheckoutSummary({
 		</>
 	);
 
-	if (isMobile) {
-		return (
-			<Collapsible>
-				{/* Accessible heading */}
+	return (
+		<>
+			{/* Mobile: collapsible summary */}
+			<Collapsible className="md:hidden">
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 				<Card className="rounded-xl border shadow-sm">
@@ -253,22 +243,20 @@ export function CheckoutSummary({
 					</CollapsibleContent>
 				</Card>
 			</Collapsible>
-		);
-	}
 
-	return (
-		<Card className="sticky top-20 rounded-xl border shadow-sm">
-			{/* Heading h2 pour lecteurs d'écran */}
-			<h2 className="sr-only">Récapitulatif de votre commande</h2>
+			{/* Desktop: sticky sidebar */}
+			<Card className="hidden rounded-xl border shadow-sm md:sticky md:top-20 md:block">
+				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
-			<CardHeader className="pb-4">
-				<CardTitle className="flex items-center gap-2 text-lg/7 tracking-tight antialiased">
-					<ShoppingBag className="h-5 w-5" />
-					Votre commande
-				</CardTitle>
-			</CardHeader>
+				<CardHeader className="pb-4">
+					<CardTitle className="flex items-center gap-2 text-lg/7 tracking-tight antialiased">
+						<ShoppingBag className="h-5 w-5" />
+						Votre commande
+					</CardTitle>
+				</CardHeader>
 
-			<CardContent className="space-y-4 pb-6">{summaryContent}</CardContent>
-		</Card>
+				<CardContent className="space-y-4 pb-6">{summaryContent}</CardContent>
+			</Card>
+		</>
 	);
 }

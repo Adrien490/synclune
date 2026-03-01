@@ -1,7 +1,7 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { GET_ACCOUNT_DEFAULT_SELECT } from "../constants/account.constants";
-import { getAccountSchema } from "../schemas/accounts.schemas";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type GET_ACCOUNT_DEFAULT_SELECT } from "../constants/account.constants";
+import { type getAccountSchema } from "../schemas/accounts.schemas";
 
 // ============================================================================
 // TYPES - ACCOUNT

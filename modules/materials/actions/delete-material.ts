@@ -68,7 +68,7 @@ export async function deleteMaterial(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "material.delete",
 			targetType: "material",
 			targetId: validatedData.id,

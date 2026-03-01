@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ZodError, z } from "zod";
+import { type ZodError, z } from "zod";
 import { ActionStatus } from "@/shared/types/server-action";
 
 const { mockIsRedirectError } = vi.hoisted(() => ({
@@ -8,6 +8,12 @@ const { mockIsRedirectError } = vi.hoisted(() => ({
 
 vi.mock("next/dist/client/components/redirect-error", () => ({
 	isRedirectError: mockIsRedirectError,
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+	captureException: vi.fn(),
+	captureMessage: vi.fn(),
+	addBreadcrumb: vi.fn(),
 }));
 
 import { BusinessError, handleActionError } from "../errors";
@@ -78,6 +84,7 @@ describe("handleActionError", () => {
 		handleActionError(new TypeError("Cannot read property"));
 		expect(consoleSpy).toHaveBeenCalledWith(
 			expect.stringContaining("TypeError: Cannot read property"),
+			"Cannot read property",
 		);
 		consoleSpy.mockRestore();
 	});

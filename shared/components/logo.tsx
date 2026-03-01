@@ -80,7 +80,7 @@ export function Logo({
 					alt={showText ? "" : BRAND.logo.alt}
 					fill
 					className="object-cover"
-					sizes={sizes || `${size}px`}
+					sizes={sizes ?? `${size}px`}
 					preload={preload}
 					quality={quality}
 					placeholder="blur"

@@ -11,10 +11,6 @@ export const buildFilterConditions = (
 ): Prisma.ProductSkuWhereInput[] => {
 	const conditions: Prisma.ProductSkuWhereInput[] = [];
 
-	if (!filters) {
-		return conditions;
-	}
-
 	// ProductId - logique intégrée (fortement recommandé)
 	if (filters.productId !== undefined) {
 		const productIds = Array.isArray(filters.productId) ? filters.productId : [filters.productId];
@@ -184,7 +180,7 @@ export const buildFilterConditions = (
 					},
 				],
 			});
-		} else if (filters.stockStatus === "out_of_stock") {
+		} else {
 			conditions.push({
 				inventory: {
 					lte: 0,

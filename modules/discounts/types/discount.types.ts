@@ -1,22 +1,22 @@
-import { Prisma, DiscountType } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma, type DiscountType } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	GET_DISCOUNT_SELECT,
-	GET_DISCOUNTS_SELECT,
-	GET_DISCOUNT_VALIDATION_SELECT,
+	type GET_DISCOUNT_SELECT,
+	type GET_DISCOUNTS_SELECT,
+	type GET_DISCOUNT_VALIDATION_SELECT,
 } from "../constants/discount.constants";
 import {
-	discountFiltersSchema,
-	getDiscountSchema,
-	getDiscountByCodeSchema,
-	getDiscountsSchema,
-	validateDiscountCodeSchema,
-	createDiscountSchema,
-	updateDiscountSchema,
-	deleteDiscountSchema,
-	bulkDeleteDiscountsSchema,
-	toggleDiscountStatusSchema,
+	type discountFiltersSchema,
+	type getDiscountSchema,
+	type getDiscountByCodeSchema,
+	type getDiscountsSchema,
+	type validateDiscountCodeSchema,
+	type createDiscountSchema,
+	type updateDiscountSchema,
+	type deleteDiscountSchema,
+	type bulkDeleteDiscountsSchema,
+	type toggleDiscountStatusSchema,
 } from "../schemas/discount.schemas";
 
 // ============================================================================

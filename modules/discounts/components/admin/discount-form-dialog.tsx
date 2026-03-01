@@ -14,7 +14,7 @@ import { createDiscount } from "@/modules/discounts/actions/create-discount";
 import { updateDiscount } from "@/modules/discounts/actions/update-discount";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect } from "react";
-import { DiscountType } from "@/app/generated/prisma/browser";
+import { type DiscountType } from "@/app/generated/prisma/browser";
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
 import { useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -141,7 +141,7 @@ export function DiscountFormDialog() {
 					{/* Contenu scrollable */}
 					<div className="flex-1 space-y-6 overflow-y-auto pr-2">
 						{/* Hidden field for ID in update mode */}
-						{isUpdateMode && discount && <input type="hidden" name="id" value={discount.id} />}
+						{isUpdateMode && <input type="hidden" name="id" value={discount!.id} />}
 
 						<RequiredFieldsNote />
 
@@ -152,7 +152,7 @@ export function DiscountFormDialog() {
 								validators={{
 									onChange: ({ value }) => {
 										// Transforme en majuscules pour cohérence avec le serveur
-										const upperValue = value?.toUpperCase() ?? "";
+										const upperValue = value.toUpperCase();
 										if (!upperValue || upperValue.length < 3) {
 											return "Le code doit contenir au moins 3 caractères";
 										}

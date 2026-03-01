@@ -64,6 +64,7 @@ export async function generateSlug(
 	let finalSlug = truncatedSlug;
 	let counter = 1;
 
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- loop exit is via return
 	while (true) {
 		let existing;
 

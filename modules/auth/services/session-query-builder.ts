@@ -8,10 +8,6 @@ import type { GetSessionsParams, SessionFilters } from "../types/session.types";
 export function buildSessionFilterConditions(filters: SessionFilters): Prisma.SessionWhereInput[] {
 	const conditions: Prisma.SessionWhereInput[] = [];
 
-	if (!filters) {
-		return conditions;
-	}
-
 	if (filters.userId !== undefined) {
 		const userIds = Array.isArray(filters.userId) ? filters.userId : [filters.userId];
 		if (userIds.length === 1) {
@@ -96,7 +92,7 @@ export function buildSessionFilterConditions(filters: SessionFilters): Prisma.Se
 export function buildSessionWhereClause(params: GetSessionsParams): Prisma.SessionWhereInput {
 	const whereClause: Prisma.SessionWhereInput = {};
 	const andConditions: Prisma.SessionWhereInput[] = [];
-	const filters = params.filters ?? {};
+	const filters = params.filters;
 
 	const filterConditions = buildSessionFilterConditions(filters);
 	if (filterConditions.length > 0) {

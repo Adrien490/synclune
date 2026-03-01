@@ -116,7 +116,7 @@ export function ColorFormDialog() {
 				</ResponsiveDialogHeader>
 
 				<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
-					{isUpdateMode && color && <input type="hidden" name="id" value={color.id} />}
+					{isUpdateMode && <input type="hidden" name="id" value={color!.id} />}
 
 					<RequiredFieldsNote />
 

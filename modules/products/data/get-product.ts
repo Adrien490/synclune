@@ -16,7 +16,7 @@ export type {
 export async function getProductBySlug(
 	params: Partial<GetProductParams>,
 ): Promise<GetProductReturn | null> {
-	const validation = getProductSchema.safeParse(params ?? {});
+	const validation = getProductSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;

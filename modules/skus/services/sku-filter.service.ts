@@ -71,7 +71,7 @@ export function matchMaterial(
 	// Pas de matériau sur le SKU = pas de match
 	if (!sku.material) return false;
 
-	const targetMaterial = materialSlug || material;
+	const targetMaterial = materialSlug ?? material;
 	if (!targetMaterial) return true;
 
 	// Comparaison normalisée via slugify

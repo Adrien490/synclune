@@ -27,7 +27,7 @@ function Slider({
 			: [min, max];
 
 	const getThumbLabel = (index: number) => {
-		if (_values.length === 1) return ariaLabel || "Curseur";
+		if (_values.length === 1) return ariaLabel ?? "Curseur";
 		if (index === 0) return "Valeur minimum";
 		if (index === _values.length - 1) return "Valeur maximum";
 		return `Curseur ${index + 1}`;

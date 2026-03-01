@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import {
 	Carousel,
-	CarouselApi,
+	type CarouselApi,
 	CarouselContent,
 	CarouselItem,
 	CarouselNext,

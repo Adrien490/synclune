@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
-import { success, handleActionError, validateInput } from "@/shared/lib/actions";
+import { success, handleActionError, validateInput, safeFormGet } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	RECENT_PRODUCTS_COOKIE_NAME,
@@ -26,7 +26,7 @@ export async function addRecentProduct(
 		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION);
 		if ("error" in rateCheck) return rateCheck.error;
 
-		const rawSlug = (formData.get("slug") as string)?.trim();
+		const rawSlug = safeFormGet(formData, "slug")?.trim();
 
 		// Validation avec Zod
 		const validated = validateInput(recentProductSlugSchema, rawSlug);
@@ -40,9 +40,10 @@ export async function addRecentProduct(
 		let products: string[] = [];
 		if (existingCookie?.value) {
 			try {
-				const parsed = JSON.parse(decodeURIComponent(existingCookie.value));
+				const parsed: unknown = JSON.parse(decodeURIComponent(existingCookie.value));
 				if (Array.isArray(parsed)) {
-					products = parsed;
+					const items = parsed as unknown as unknown[];
+					products = items.filter((s): s is string => typeof s === "string");
 				}
 			} catch {
 				// Cookie corrompu - reset silencieux

@@ -13,7 +13,7 @@ export function CreateAddressButton({ children, ...props }: CreateAddressButtonP
 
 	return (
 		<Button onClick={() => dialog.open()} {...props}>
-			{children || (
+			{children ?? (
 				<>
 					<Plus className="mr-2 h-4 w-4" />
 					Ajouter une adresse

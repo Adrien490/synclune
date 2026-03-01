@@ -14,6 +14,7 @@ interface ReviewRequestEmailProps {
 	orderNumber: string;
 	products: ReviewableProduct[];
 	reviewUrl: string;
+	unsubscribeUrl: string;
 }
 
 export const ReviewRequestEmail = ({
@@ -21,6 +22,7 @@ export const ReviewRequestEmail = ({
 	orderNumber,
 	products,
 	reviewUrl,
+	unsubscribeUrl,
 }: ReviewRequestEmailProps) => {
 	const singleProduct = products.length === 1;
 	const previewText = singleProduct
@@ -30,7 +32,16 @@ export const ReviewRequestEmail = ({
 	return (
 		<EmailLayout
 			preview={previewText}
-			footer={<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>}
+			footer={
+				<>
+					<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>
+					<Text style={EMAIL_STYLES.text.tiny}>
+						<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+							Se désinscrire des emails commerciaux
+						</a>
+					</Text>
+				</>
+			}
 		>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
@@ -177,6 +188,7 @@ ReviewRequestEmail.PreviewProps = {
 		},
 	],
 	reviewUrl: "https://synclune.fr/mes-avis",
+	unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 } as ReviewRequestEmailProps;
 
 export default ReviewRequestEmail;

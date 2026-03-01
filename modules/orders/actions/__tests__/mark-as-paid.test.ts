@@ -44,7 +44,13 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ORDER_LIMITS: { MARK_AS_PAID: "admin-mark-paid" },
 }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
-vi.mock("@/shared/lib/actions", () => ({ handleActionError: mockHandleActionError }));
+vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	handleActionError: mockHandleActionError,
+}));
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendOrderConfirmationEmail: mockSendOrderConfirmationEmail,
 }));

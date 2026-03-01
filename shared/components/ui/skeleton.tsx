@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 const skeletonVariants = cva("", {
 	variants: {
 		variant: {
-			default: "bg-accent animate-pulse",
+			default: "bg-accent motion-safe:animate-pulse",
 			shimmer: "animate-shimmer",
 		},
 		shape: {

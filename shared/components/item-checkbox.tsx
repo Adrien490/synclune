@@ -19,7 +19,7 @@ export function ItemCheckbox({ itemId, ariaLabel }: ItemCheckboxProps) {
 			onCheckedChange={(checked) => {
 				handleItemSelectionChange(itemId, checked === true);
 			}}
-			aria-label={ariaLabel || `Sélectionner l'élément ${itemId}`}
+			aria-label={ariaLabel ?? `Sélectionner l'élément ${itemId}`}
 		/>
 	);
 }

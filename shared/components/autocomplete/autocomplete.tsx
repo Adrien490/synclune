@@ -47,6 +47,9 @@ export function Autocomplete<T>({
 	showClearButton = AUTOCOMPLETE_DEFAULTS.showClearButton,
 	debounceMs = AUTOCOMPLETE_DEFAULTS.debounceMs,
 	showResultsCount = AUTOCOMPLETE_DEFAULTS.showResultsCount,
+	"aria-invalid": ariaInvalid,
+	"aria-describedby": ariaDescribedBy,
+	"aria-required": ariaRequired,
 }: AutocompleteProps<T>) {
 	const isMobileDetected = useIsMobile();
 	const mounted = useMounted();
@@ -298,7 +301,7 @@ export function Autocomplete<T>({
 	// Composant de rendu du skeleton de chargement
 	const renderLoadingSkeletons = () => (
 		<>
-			{[...Array(loadingSkeletonCount)].map((_, i) => (
+			{[...Array<unknown>(loadingSkeletonCount)].map((_, i) => (
 				<li key={i} className="px-3 py-3 md:py-2" aria-hidden="true">
 					<div className="flex items-center gap-3">
 						{getItemImage && (
@@ -434,6 +437,9 @@ export function Autocomplete<T>({
 						className={cn("cursor-pointer", inputClassName)}
 						aria-haspopup="listbox"
 						aria-expanded={isOpen}
+						aria-invalid={ariaInvalid}
+						aria-describedby={ariaDescribedBy}
+						aria-required={ariaRequired}
 					/>
 				</div>
 
@@ -541,7 +547,12 @@ export function Autocomplete<T>({
 						aria-activedescendant={
 							showResults && activeIndex >= 0 ? getItemId(activeIndex) : undefined
 						}
-						aria-describedby={showMinQueryHint ? hintId : undefined}
+						aria-describedby={
+							[showMinQueryHint ? hintId : null, ariaDescribedBy].filter(Boolean).join(" ") ||
+							undefined
+						}
+						aria-invalid={ariaInvalid}
+						aria-required={ariaRequired}
 						autoComplete="off"
 					/>
 				</div>

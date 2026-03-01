@@ -139,7 +139,7 @@ export function KpiCard({
 						<KpiEvolution evolution={evolution} comparisonLabel={comparisonLabel} />
 					)}
 					{badge && (
-						<Badge variant={badge.variant || "default"} className="text-xs font-normal">
+						<Badge variant={badge.variant ?? "default"} className="text-xs font-normal">
 							{badge.label}
 						</Badge>
 					)}
@@ -157,7 +157,7 @@ export function KpiCard({
 			"cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 	);
 
-	const displayValue = numericValue !== undefined ? `${numericValue}${suffix || ""}` : value;
+	const displayValue = numericValue !== undefined ? `${numericValue}${suffix ?? ""}` : value;
 	const evolutionText =
 		evolution !== undefined
 			? `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`

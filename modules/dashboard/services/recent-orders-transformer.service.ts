@@ -21,8 +21,8 @@ export function transformRecentOrder(order: OrderForTransform): RecentOrderItem 
 		status: order.status,
 		paymentStatus: order.paymentStatus,
 		total: order.total,
-		customerName: order.user?.name || "Invité",
-		customerEmail: order.user?.email || "",
+		customerName: order.user?.name ?? "Invité",
+		customerEmail: order.user?.email ?? "",
 	};
 }
 

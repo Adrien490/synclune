@@ -25,7 +25,14 @@ vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/shared/lib/rate-limit", () => ({ getClientIp: mockGetClientIp }));
 vi.mock("@/shared/lib/actions/rate-limit", () => ({ enforceRateLimit: mockEnforceRateLimit }));
 vi.mock("../validate-discount-code", () => ({ validateDiscountCode: mockValidateDiscountCode }));
-vi.mock("@/shared/lib/actions", () => ({ success: mockSuccess, error: mockError }));
+vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	success: mockSuccess,
+	error: mockError,
+}));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	PAYMENT_LIMITS: { VALIDATE_DISCOUNT: "validate-discount" },
 }));
@@ -149,7 +156,7 @@ describe("applyDiscountCode", () => {
 		const formData = createFormData({ code: "SUMMER20", subtotal: "12345" });
 		await applyDiscountCode(undefined, formData);
 
-		const [, subtotalArg] = mockValidateDiscountCode.mock.calls[0];
+		const [, subtotalArg] = mockValidateDiscountCode.mock.calls[0]!;
 		expect(typeof subtotalArg).toBe("number");
 		expect(subtotalArg).toBe(12345);
 	});

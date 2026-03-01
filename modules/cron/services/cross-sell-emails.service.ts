@@ -105,8 +105,8 @@ export async function sendCrossSellEmails(): Promise<{
 				.map((item) => item.sku.product.typeId)
 				.filter((id): id is string => id !== null);
 
-			const collectionIds = order.items.flatMap(
-				(item) => item.sku.product.collections?.map((c) => c.collectionId) || [],
+			const collectionIds = order.items.flatMap((item) =>
+				item.sku.product.collections.map((c) => c.collectionId),
 			);
 
 			if (typeIds.length === 0 && collectionIds.length === 0) {
@@ -180,7 +180,7 @@ export async function sendCrossSellEmails(): Promise<{
 
 			const result = await sendCrossSellEmail({
 				to: order.user.email,
-				customerName: order.user.name || "Cliente",
+				customerName: order.user.name ?? "Cliente",
 				products,
 				shopUrl,
 				unsubscribeUrl,

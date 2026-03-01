@@ -43,7 +43,7 @@ export async function moderateReview(
 			return validationError(
 				errorPath
 					? `${errorPath}: ${firstError?.message}`
-					: firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA,
+					: (firstError?.message ?? REVIEW_ERROR_MESSAGES.INVALID_DATA),
 			);
 		}
 
@@ -85,7 +85,7 @@ export async function moderateReview(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "review.moderate",
 			targetType: "review",
 			targetId: id,

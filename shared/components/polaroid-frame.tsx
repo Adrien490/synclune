@@ -99,7 +99,7 @@ export function PolaroidFrame({
 		<figure
 			className={cn(
 				"polaroid-paper polaroid-hover group/polaroid",
-				"dark:bg-card relative rounded-sm bg-white p-2.5 pb-8 sm:p-3.5 sm:pb-11",
+				"relative rounded-sm bg-white p-2.5 pb-8 sm:p-3.5 sm:pb-11",
 				!hasCustomDegree && tiltClasses[tilt],
 				className,
 			)}
@@ -162,7 +162,7 @@ export function PolaroidFrame({
 				<figcaption
 					className={cn(
 						"absolute right-0 bottom-2 left-0 text-center text-xs italic sm:bottom-3 sm:text-sm",
-						captionColor ? undefined : "text-gray-600 dark:text-gray-400",
+						captionColor ? undefined : "text-gray-600",
 						petitFormalScript.className,
 					)}
 					style={{

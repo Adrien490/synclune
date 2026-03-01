@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
-import { error, success, validateInput } from "@/shared/lib/actions";
+import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { resetPasswordSchema } from "../schemas/auth.schemas";
@@ -21,9 +21,9 @@ export const resetPassword = async (
 
 		// Validation des données
 		const rawData = {
-			password: formData.get("password") as string,
-			confirmPassword: formData.get("confirmPassword") as string,
-			token: formData.get("token") as string,
+			password: safeFormGet(formData, "password"),
+			confirmPassword: safeFormGet(formData, "confirmPassword"),
+			token: safeFormGet(formData, "token"),
 		};
 
 		const validation = validateInput(resetPasswordSchema, rawData);

@@ -25,6 +25,7 @@ import {
 	success,
 	error,
 	enforceRateLimit,
+	safeFormGet,
 } from "@/shared/lib/actions";
 
 /**
@@ -47,7 +48,7 @@ export async function toggleWishlistItem(
 	try {
 		// 1. Recuperer l'authentification (user ou session invite)
 		const session = await getSession();
-		const userId = session?.user?.id;
+		const userId = session?.user.id;
 		const sessionId = !userId ? await getOrCreateWishlistSessionId() : null;
 
 		if (!userId && !sessionId) {
@@ -56,7 +57,7 @@ export async function toggleWishlistItem(
 
 		// 2. Validation avec Zod
 		const validated = validateInput(toggleWishlistItemSchema, {
-			productId: formData.get("productId") as string,
+			productId: safeFormGet(formData, "productId"),
 		});
 		if ("error" in validated) return validated.error;
 
@@ -85,8 +86,8 @@ export async function toggleWishlistItem(
 			const wishlist = await tx.wishlist.upsert({
 				where: userId ? { userId } : { sessionId: sessionId! },
 				create: {
-					userId: userId || null,
-					sessionId: sessionId || null,
+					userId: userId ?? null,
+					sessionId: sessionId ?? null,
 					expiresAt: userId ? null : getWishlistExpirationDate(),
 				},
 				update: {
@@ -150,7 +151,7 @@ export async function toggleWishlistItem(
 		});
 
 		// 6. Invalidation cache immediate (read-your-own-writes)
-		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
+		const tags = getWishlistInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(

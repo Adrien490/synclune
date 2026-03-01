@@ -40,7 +40,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
-	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
@@ -54,10 +54,18 @@ vi.mock("next/cache", () => ({
 	cacheTag: vi.fn(),
 }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	success: mockSuccess,
 	notFound: mockNotFound,
 	validationError: mockValidationError,
 	handleActionError: mockHandleActionError,
+}));
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+	logAuditTx: vi.fn(),
 }));
 vi.mock("../../constants/cache", () => ({
 	getReviewModerationTags: mockGetReviewModerationTags,
@@ -103,7 +111,7 @@ describe("moderateReview", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ session: { user: { role: "ADMIN" } } });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSafeParse.mockReturnValue({ success: true, data: { id: VALID_REVIEW_ID } });
 		mockPrisma.productReview.findFirst.mockResolvedValue(makeReview());

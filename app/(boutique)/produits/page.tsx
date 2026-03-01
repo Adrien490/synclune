@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ProductCatalog } from "@/modules/products/components/product-catalog";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 
+import { SITE_URL } from "@/shared/constants/seo-config";
 import type { ProductSearchParams } from "./_utils/types";
 import { parseFilters } from "./_utils/params";
 import {
@@ -63,8 +64,9 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 			title: "Tous mes bijoux colorés | Synclune",
 			description:
 				"Bijoux artisanaux faits main à Nantes. Inspirations Pokémon, Van Gogh, Twilight... Pièces uniques créées avec passion !",
-			url: "https://synclune.fr/produits",
+			url: `${SITE_URL}/produits`,
 			type: "website",
+			images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
 		},
 		twitter: {
 			card: "summary_large_image",
@@ -123,8 +125,8 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const jsonLd = buildCatalogJsonLd({
 		name: "Bijoux artisanaux faits main",
 		description: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes.",
-		url: "https://synclune.fr/produits",
-		breadcrumbs: [{ name: "Accueil", url: "https://synclune.fr" }, { name: "Bijoux" }],
+		url: `${SITE_URL}/produits`,
+		breadcrumbs: [{ name: "Accueil", url: SITE_URL }, { name: "Bijoux" }],
 	});
 
 	return (

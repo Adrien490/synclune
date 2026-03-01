@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { updateTag } from "next/cache";
-import { getNewsletterInvalidationTags } from "@/modules/newsletter/constants/cache";
 import { unsubscribeTokenSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
+import { unsubscribeByToken } from "@/modules/newsletter/services/unsubscribe-by-token";
 
 /**
  * RFC 8058 One-Click Unsubscribe handler.
@@ -34,24 +31,7 @@ export async function POST(request: Request) {
 			return new NextResponse(null, { status: 200 });
 		}
 
-		const subscriber = await prisma.newsletterSubscriber.findFirst({
-			where: {
-				unsubscribeToken: parsed.data.token,
-				...notDeleted,
-			},
-		});
-
-		if (subscriber && subscriber.status !== NewsletterStatus.UNSUBSCRIBED) {
-			await prisma.newsletterSubscriber.update({
-				where: { id: subscriber.id },
-				data: {
-					status: NewsletterStatus.UNSUBSCRIBED,
-					unsubscribedAt: new Date(),
-				},
-			});
-
-			getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
-		}
+		await unsubscribeByToken(parsed.data.token);
 
 		return new NextResponse(null, { status: 200 });
 	} catch (e) {

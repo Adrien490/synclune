@@ -73,7 +73,7 @@ export function StructuredData({ reviewStatsPromise, reviewsPromise }: Structure
 			"@type": "Review",
 			author: {
 				"@type": "Person",
-				name: review.user.name || "Anonyme",
+				name: review.user.name ?? "Anonyme",
 			},
 			datePublished: new Date(review.createdAt).toISOString(),
 			reviewBody: review.content,

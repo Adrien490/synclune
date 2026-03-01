@@ -6,7 +6,13 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
@@ -36,10 +42,12 @@ export async function cancelRefund(
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
+		const rawId = safeFormGet(formData, "id");
 
-		const validated = validateInput(cancelRefundSchema, { id });
+		const validated = validateInput(cancelRefundSchema, { id: rawId });
 		if ("error" in validated) return validated.error;
+
+		const { id } = validated.data;
 
 		// Récupérer le remboursement
 		const refund = await prisma.refund.findUnique({
@@ -94,7 +102,7 @@ export async function cancelRefund(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "refund.cancel",
 			targetType: "refund",
 			targetId: refund.id,

@@ -4,7 +4,13 @@ import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prism
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -37,15 +43,15 @@ export async function bulkCancelOrders(
 		const idsString = formData.get("ids");
 		let ids: unknown = [];
 		try {
-			ids = idsString ? JSON.parse(idsString as string) : [];
+			ids = idsString ? JSON.parse(String(idsString)) : [];
 		} catch {
 			return error("Format d'IDs invalide");
 		}
-		const reason = formData.get("reason") as string | null;
+		const reason = safeFormGet(formData, "reason");
 
 		const validated = validateInput(bulkCancelOrdersSchema, {
 			ids,
-			reason: reason || undefined,
+			reason: reason ?? undefined,
 		});
 		if ("error" in validated) return validated.error;
 
@@ -107,7 +113,7 @@ export async function bulkCancelOrders(
 
 					if (shouldRestoreStock && order.items.length > 0) {
 						for (const item of order.items) {
-							const current = stockUpdates.get(item.skuId) || 0;
+							const current = stockUpdates.get(item.skuId) ?? 0;
 							stockUpdates.set(item.skuId, current + item.quantity);
 						}
 						stockRestoredCount++;
@@ -154,7 +160,7 @@ export async function bulkCancelOrders(
 							newPaymentStatus: update.newPaymentStatus,
 							note: validatedData.reason,
 							authorId: adminUser.id,
-							authorName: adminUser.name || "Admin",
+							authorName: adminUser.name ?? "Admin",
 							source: HistorySource.ADMIN,
 							metadata: {
 								bulk: true,
@@ -190,7 +196,7 @@ export async function bulkCancelOrders(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.bulkCancel",
 			targetType: "order",
 			targetId: eligibleOrders.map((o) => o.id).join(","),

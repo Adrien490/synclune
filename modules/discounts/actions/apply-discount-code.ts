@@ -1,7 +1,8 @@
 "use server";
 
 import type { ActionState } from "@/shared/types/server-action";
-import { success, error } from "@/shared/lib/actions";
+import { success, error, safeFormGet } from "@/shared/lib/actions";
+import { handleActionError } from "@/shared/lib/actions/errors";
 import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -21,21 +22,29 @@ export async function applyDiscountCode(
 	_prevState: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
-	// Rate limiting based on IP (fallback to "unknown" to prevent bypass)
-	const headersList = await headers();
-	const ip = (await getClientIp(headersList)) || "unknown";
-	const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
-	if ("error" in rateCheck) return rateCheck.error;
+	try {
+		// Rate limiting based on IP (fallback to "unknown" to prevent bypass)
+		const headersList = await headers();
+		const ip = (await getClientIp(headersList)) ?? "unknown";
+		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
+		if ("error" in rateCheck) return rateCheck.error;
 
-	const code = formData.get("code") as string;
-	const subtotal = Number(formData.get("subtotal"));
+		const code = safeFormGet(formData, "code");
+		const subtotal = Number(formData.get("subtotal"));
 
-	// validateDiscountCode reads userId from session internally
-	const result = await validateDiscountCode(code, subtotal);
+		if (!code) {
+			return error("Code promo requis");
+		}
 
-	if (result.valid && result.discount) {
-		return success(`Code "${result.discount.code}" appliqué`, result.discount);
+		// validateDiscountCode reads userId from session internally
+		const result = await validateDiscountCode(code, subtotal);
+
+		if (result.valid && result.discount) {
+			return success(`Code "${result.discount.code}" appliqué`, result.discount);
+		}
+
+		return error(result.error ?? "Code invalide");
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de l'application du code promo");
 	}
-
-	return error(result.error || "Code invalide");
 }

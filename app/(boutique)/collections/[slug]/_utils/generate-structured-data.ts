@@ -45,7 +45,7 @@ export function generateCollectionStructuredData(collection: Collection) {
 		url: `${SITE_URL}/collections/${collection.slug}`,
 		name: `Collection ${collection.name} - Synclune`,
 		description:
-			collection.description ||
+			collection.description ??
 			`Découvrez la collection ${collection.name} de bijoux artisanaux faits main par Synclune à Nantes`,
 		inLanguage: "fr-FR",
 		isPartOf: {
@@ -55,7 +55,7 @@ export function generateCollectionStructuredData(collection: Collection) {
 		about: {
 			"@type": "Thing",
 			name: collection.name,
-			description: collection.description || undefined,
+			description: collection.description ?? undefined,
 		},
 		...(collection.featuredImageUrl && {
 			image: {

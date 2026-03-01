@@ -16,6 +16,7 @@ interface AbandonedCartEmailProps {
 	items: CartItemData[];
 	total: number;
 	cartUrl: string;
+	unsubscribeUrl: string;
 }
 
 export const AbandonedCartEmail = ({
@@ -23,9 +24,19 @@ export const AbandonedCartEmail = ({
 	items,
 	total,
 	cartUrl,
+	unsubscribeUrl,
 }: AbandonedCartEmailProps) => {
 	return (
-		<EmailLayout preview="Vous avez oublié quelque chose...">
+		<EmailLayout
+			preview="Vous avez oublié quelque chose..."
+			footer={
+				<Text style={EMAIL_STYLES.text.tiny}>
+					<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+						Se désinscrire des emails commerciaux
+					</a>
+				</Text>
+			}
+		>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Votre panier vous attend</Text>
@@ -43,7 +54,7 @@ export const AbandonedCartEmail = ({
 						<Text style={{ ...EMAIL_STYLES.text.body, fontWeight: "600", marginBottom: "4px" }}>
 							{item.productTitle}
 						</Text>
-						{(item.skuColor || item.skuMaterial) && (
+						{(item.skuColor ?? item.skuMaterial) && (
 							<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>
 								{[item.skuColor, item.skuMaterial].filter(Boolean).join(" — ")}
 							</Text>
@@ -98,6 +109,7 @@ AbandonedCartEmail.PreviewProps = {
 	],
 	total: 21800,
 	cartUrl: "https://synclune.fr/panier",
+	unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 } as AbandonedCartEmailProps;
 
 export default AbandonedCartEmail;

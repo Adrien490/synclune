@@ -46,7 +46,7 @@ export async function mergeWishlists(
 		// 0a. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
 		// Empêche un attaquant de fusionner la wishlist d'un autre utilisateur
 		const currentSession = await getSession();
-		if (!currentSession?.user?.id || currentSession.user.id !== userId) {
+		if (!currentSession?.user.id || currentSession.user.id !== userId) {
 			return error("Non autorise");
 		}
 
@@ -83,22 +83,20 @@ export async function mergeWishlists(
 
 		// 3. Créer la wishlist utilisateur si elle n'existe pas
 		let targetWishlist = userWishlist;
-		if (!targetWishlist) {
-			targetWishlist = await prisma.wishlist.create({
-				data: {
-					userId,
-					expiresAt: null,
-				},
-				select: {
-					id: true,
-					items: {
-						select: {
-							productId: true,
-						},
+		targetWishlist ??= await prisma.wishlist.create({
+			data: {
+				userId,
+				expiresAt: null,
+			},
+			select: {
+				id: true,
+				items: {
+					select: {
+						productId: true,
 					},
 				},
-			});
-		}
+			},
+		});
 
 		// 4. Preparer les items a fusionner (strategie UNION)
 		const userProductIds = new Set(targetWishlist.items.map((item) => item.productId));

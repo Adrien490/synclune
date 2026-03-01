@@ -2,7 +2,7 @@ import { SITE_URL } from "@/shared/constants/seo-config";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProducts } from "@/modules/products/data/get-products";
-import { MetadataRoute } from "next";
+import { type MetadataRoute } from "next";
 
 /**
  * Génération dynamique du sitemap pour le référencement
@@ -31,6 +31,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			lastModified: staticLastModified,
 			changeFrequency: "weekly",
 			priority: 0.8,
+		},
+		{
+			url: `${SITE_URL}/a-propos`,
+			lastModified: staticLastModified,
+			changeFrequency: "monthly",
+			priority: 0.5,
 		},
 		{
 			url: `${SITE_URL}/personnalisation`,
@@ -116,6 +122,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			perPage: 200,
 			cursor: collectionCursor,
 			sortBy: "name-ascending",
+			filters: { status: "PUBLIC", hasProducts: true },
 		});
 		allCollections.push(...collections);
 		collectionCursor = pagination.nextCursor ?? undefined;

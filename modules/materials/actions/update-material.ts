@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import {
+	handleActionError,
+	success,
+	error,
+	validateInput,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -32,10 +38,10 @@ export async function updateMaterial(
 		// 3. Extraire les donnees du FormData
 		const rawData = {
 			id: formData.get("id"),
-			name: sanitizeText((formData.get("name") as string) ?? ""),
+			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
 			slug: formData.get("slug"),
-			description: formData.get("description")
-				? sanitizeText(formData.get("description") as string)
+			description: safeFormGet(formData, "description")
+				? sanitizeText(safeFormGet(formData, "description")!)
 				: null,
 			isActive: formData.get("isActive") === "true",
 		};
@@ -84,7 +90,7 @@ export async function updateMaterial(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "material.update",
 			targetType: "material",
 			targetId: validatedData.id,

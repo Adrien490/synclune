@@ -11,9 +11,6 @@ import {
 	GET_USERS_SELECT,
 	GET_USERS_DEFAULT_PER_PAGE,
 	GET_USERS_MAX_RESULTS_PER_PAGE,
-	GET_USERS_DEFAULT_SORT_BY,
-	GET_USERS_DEFAULT_SORT_ORDER,
-	GET_USERS_ADMIN_FALLBACK_SORT_BY,
 } from "../constants/user.constants";
 import { getUsersSchema } from "../schemas/user.schemas";
 import type { GetUsersParams, GetUsersReturn } from "../types/user.types";
@@ -40,14 +37,7 @@ export async function getUsers(params: GetUsersParams): Promise<GetUsersReturn> 
 			throw new Error("Invalid parameters");
 		}
 
-		let validatedParams = validation.data;
-
-		if (validatedParams.sortBy === GET_USERS_DEFAULT_SORT_BY && !params?.sortBy) {
-			validatedParams = {
-				...validatedParams,
-				sortBy: GET_USERS_ADMIN_FALLBACK_SORT_BY,
-			};
-		}
+		const validatedParams = validation.data;
 
 		// Fuzzy search on name/email for typo tolerance
 		let fuzzyIds: string[] | null = null;
@@ -83,7 +73,7 @@ async function fetchUsers(
 	cacheLife("dashboard");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 
-	const sortOrder = (params.sortOrder || GET_USERS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = params.sortOrder as Prisma.SortOrder;
 
 	try {
 		const where = buildUserWhereClause(params, fuzzyIds);

@@ -23,7 +23,7 @@ export type { GetLastOrderReturn } from "../types/last-order.types";
 export async function getLastOrder(): Promise<GetLastOrderReturn> {
 	const session = await getSession();
 
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		return null;
 	}
 

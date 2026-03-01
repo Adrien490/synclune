@@ -143,7 +143,7 @@ export function maybeReduceMotion(
 		};
 	}
 
-	return transition || {};
+	return transition ?? {};
 }
 
 /**

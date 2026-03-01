@@ -13,7 +13,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 				speed={0.7}
 				depthParallax
 			/>
-			<main id="main-content">{children}</main>
+			<main id="main-content" tabIndex={-1}>
+				{children}
+			</main>
 		</div>
 	);
 }

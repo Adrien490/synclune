@@ -37,6 +37,7 @@ function formatEntry(level: string, message: string, context?: LogContext) {
 
 export const logger = {
 	info(message: string, context?: LogContext) {
+		// eslint-disable-next-line no-console -- logger utility: structured info output
 		console.log(formatEntry("info", message, context));
 	},
 
@@ -80,6 +81,7 @@ export const logger = {
 
 	debug(message: string, context?: LogContext) {
 		if (process.env.NODE_ENV !== "development") return;
+		// eslint-disable-next-line no-console -- logger utility: structured debug output
 		console.debug(formatEntry("debug", message, context));
 	},
 };

@@ -25,7 +25,7 @@ vi.mock("next/cache", () => ({
 vi.mock("../../constants/cache", () => ({
 	cacheColors: () => {
 		mockCacheLife("reference");
-		mockCacheTag("colors");
+		mockCacheTag("colors-list");
 	},
 }));
 
@@ -115,7 +115,7 @@ describe("getColorOptions", () => {
 
 		await getColorOptions();
 
-		expect(mockCacheTag).toHaveBeenCalledWith("colors");
+		expect(mockCacheTag).toHaveBeenCalledWith("colors-list");
 	});
 
 	it("returns empty array when no active colors exist", async () => {

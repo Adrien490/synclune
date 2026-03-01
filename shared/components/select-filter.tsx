@@ -102,8 +102,8 @@ export function SelectFilter({
 						type="button"
 						variant="ghost"
 						size="icon"
-						aria-label={`Effacer le filtre ${selectedOption?.label || label}`}
-						title={`Effacer le filtre ${selectedOption?.label || label}`}
+						aria-label={`Effacer le filtre ${selectedOption?.label ?? label}`}
+						title={`Effacer le filtre ${selectedOption?.label ?? label}`}
 						className="h-8 w-8 shrink-0 rounded-full"
 						onClick={handleClear}
 						disabled={isPending}

@@ -1,5 +1,5 @@
 import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { getOrdersForExport } from "@/modules/orders/data/get-orders-for-export";
 import { exportInvoicesSchema } from "@/modules/orders/schemas/order.schemas";
 import {
 	buildExportWhereClause,
@@ -32,26 +32,7 @@ export async function GET(request: Request) {
 	const where = buildExportWhereClause(result.data);
 
 	try {
-		const orders = await prisma.order.findMany({
-			where,
-			orderBy: { paidAt: "asc" },
-			select: {
-				orderNumber: true,
-				invoiceNumber: true,
-				createdAt: true,
-				paidAt: true,
-				customerName: true,
-				customerEmail: true,
-				subtotal: true,
-				discountAmount: true,
-				shippingCost: true,
-				total: true,
-				paymentMethod: true,
-				paymentStatus: true,
-				status: true,
-			},
-		});
-
+		const orders = await getOrdersForExport(where);
 		const csv = generateOrdersCsv(orders);
 
 		const now = new Date();

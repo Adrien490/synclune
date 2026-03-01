@@ -49,12 +49,14 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 
 			try {
 				const productUrl = buildUrl(`${ROUTES.SHOP.PRODUCTS}/${item.product.slug}`);
+				const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
 
 				const result = await sendBackInStockEmail({
 					to: item.wishlist.user.email,
 					customerName: item.wishlist.user.name ?? item.wishlist.user.email,
 					productTitle: item.product.title,
 					productUrl,
+					unsubscribeUrl,
 				});
 
 				if (result.success) {

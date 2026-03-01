@@ -2,7 +2,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard, ORDERS_CACHE_TAGS } from "../constants/cache";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 
 import { GET_ORDER_ITEM_DEFAULT_SELECT } from "../constants/order-item.constants";
 import { getOrderItemSchema } from "../schemas/order-item.schemas";
@@ -33,7 +33,7 @@ export type {
 export async function getOrderItem(
 	params: Partial<GetOrderItemParams>,
 ): Promise<GetOrderItemReturn | null> {
-	const validation = getOrderItemSchema.safeParse(params ?? {});
+	const validation = getOrderItemSchema.safeParse(params);
 
 	if (!validation.success) {
 		return null;
@@ -42,11 +42,11 @@ export async function getOrderItem(
 	const admin = await isAdmin();
 	const session = await getSession();
 
-	if (!admin && !session?.user?.id) {
+	if (!admin && !session?.user.id) {
 		return null;
 	}
 
-	return fetchOrderItem(validation.data, { admin, userId: session?.user?.id });
+	return fetchOrderItem(validation.data, { admin, userId: session?.user.id });
 }
 
 /**

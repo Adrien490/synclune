@@ -57,7 +57,7 @@ export async function toggleColorStatus(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "color.toggleStatus",
 			targetType: "color",
 			targetId: validatedData.id,

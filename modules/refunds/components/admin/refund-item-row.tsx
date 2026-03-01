@@ -31,7 +31,7 @@ export function RefundItemRow({
 	const isSelected = itemState?.selected ?? false;
 	const quantity = itemState?.quantity ?? 0;
 	const restock = itemState?.restock ?? true;
-	const imageUrl = orderItem.skuImageUrl || orderItem.productImageUrl;
+	const imageUrl = orderItem.skuImageUrl ?? orderItem.productImageUrl;
 
 	const variantParts = [orderItem.skuColor, orderItem.skuMaterial, orderItem.skuSize].filter(
 		Boolean,

@@ -47,7 +47,7 @@ export const subscribeToNewsletterSchema = z.object({
 			const [localPart, domain] = email.split("@");
 			if (!domain) return email; // Email invalide, sera rejeté par z.email()
 
-			const correctedDomain = COMMON_TYPO_CORRECTIONS[domain.toLowerCase()] || domain;
+			const correctedDomain = COMMON_TYPO_CORRECTIONS[domain.toLowerCase()] ?? domain;
 			return `${localPart}@${correctedDomain}`;
 		})
 		.refine(
@@ -55,7 +55,7 @@ export const subscribeToNewsletterSchema = z.object({
 				// Vérifier que le domaine n'est pas jetable
 				// Note : Arcjet valide également les emails jetables au niveau du server action
 				const domain = email.split("@")[1]?.toLowerCase();
-				return !DISPOSABLE_EMAIL_DOMAINS.includes(domain || "");
+				return !DISPOSABLE_EMAIL_DOMAINS.includes(domain ?? "");
 			},
 			{
 				message:

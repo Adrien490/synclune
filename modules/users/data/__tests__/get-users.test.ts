@@ -229,15 +229,14 @@ describe("getUsers", () => {
 		);
 	});
 
-	it("uses updatedAt as sortBy fallback when default createdAt is implicit", async () => {
-		// When sortBy is the default "createdAt" and no sortBy was explicitly provided
-		// in the original params, the function switches to ADMIN_FALLBACK_SORT_BY "updatedAt"
+	it("uses validated sortBy from schema when no explicit sortBy is provided", async () => {
+		// When no sortBy is provided, the schema defaults to "createdAt"
+		// and the source uses it directly without any fallback
 		mockGetUsersSchema.safeParse.mockReturnValue({
 			success: true,
 			data: makeValidParams({ sortBy: "createdAt" }),
 		});
 
-		// Pass params WITHOUT an explicit sortBy so !params?.sortBy is true
 		const paramsWithoutSortBy = {
 			direction: "forward" as const,
 			sortOrder: "desc" as const,
@@ -247,10 +246,10 @@ describe("getUsers", () => {
 
 		await getUsers(paramsWithoutSortBy as Parameters<typeof getUsers>[0]);
 
-		// The final query should sort by updatedAt (fallback)
+		// The query uses whatever sortBy the schema validation returns
 		expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				orderBy: expect.arrayContaining([expect.objectContaining({ updatedAt: "desc" })]),
+				orderBy: expect.arrayContaining([expect.objectContaining({ createdAt: "desc" })]),
 			}),
 		);
 	});

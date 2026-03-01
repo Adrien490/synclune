@@ -44,14 +44,14 @@ export function CreateCollectionForm({
 				showSuccessToast: false,
 				onSuccess: (result) => {
 					form.reset();
-					const data = (result as { data?: { collectionStatus?: CollectionStatus } })?.data;
+					const data = (result as { data?: { collectionStatus?: CollectionStatus } }).data;
 					const statusActionLabels: Record<CollectionStatus, string> = {
 						[CollectionStatus.DRAFT]: "Voir les brouillons",
 						[CollectionStatus.PUBLIC]: "Voir les publiées",
 						[CollectionStatus.ARCHIVED]: "Voir les archivées",
 					};
 					toast.success(
-						(result as { message?: string })?.message || "Collection créée avec succès",
+						(result as { message?: string }).message ?? "Collection créée avec succès",
 						{
 							action: data?.collectionStatus
 								? {

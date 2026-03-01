@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 	title: "Inscription | Synclune",
 	description:
 		"Créez votre compte Synclune pour découvrir nos créations uniques et accéder à votre espace personnel.",
-	robots: "noindex, nofollow",
+	robots: { index: false, follow: false },
 	openGraph: {
 		title: "Inscription | Synclune",
 		description: "Rejoignez Synclune et découvrez nos créations",

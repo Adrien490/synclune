@@ -46,7 +46,8 @@ export async function createProduct(
 		const parseJSON = <T>(value: FormDataEntryValue | null, fallback: T): T => {
 			if (value && typeof value === "string") {
 				try {
-					return JSON.parse(value);
+					const parsed: unknown = JSON.parse(value);
+					return parsed as T;
 				} catch {
 					return fallback;
 				}
@@ -61,9 +62,9 @@ export async function createProduct(
 		const rawData = {
 			title: formData.get("title"),
 			description: formData.get("description"),
-			typeId: formData.get("typeId") || "",
+			typeId: formData.get("typeId") ?? "",
 			collectionIds: parseJSON<string[]>(formData.get("collectionIds"), []),
-			status: formData.get("status") || "PUBLIC",
+			status: formData.get("status") ?? "PUBLIC",
 			initialSku: {
 				sku: formData.get("initialSku.sku"),
 				priceInclTaxEuros: formData.get("initialSku.priceInclTaxEuros"),
@@ -73,9 +74,9 @@ export async function createProduct(
 				// Car z.coerce.boolean(null) = false, ce qui n'est pas le comportement voulu
 				isActive: formData.get("initialSku.isActive") ?? true,
 				isDefault: formData.get("initialSku.isDefault") ?? true,
-				colorId: formData.get("initialSku.colorId") || "",
-				materialId: formData.get("initialSku.materialId") || "",
-				size: formData.get("initialSku.size") || "",
+				colorId: formData.get("initialSku.colorId") ?? "",
+				materialId: formData.get("initialSku.materialId") ?? "",
+				size: formData.get("initialSku.size") ?? "",
 				media,
 			},
 		};
@@ -95,11 +96,11 @@ export async function createProduct(
 		}
 
 		// 4. Normalize empty strings to null for optional foreign keys
-		const normalizedTypeId = validatedData.typeId?.trim() || null;
-		const normalizedCollectionIds = validatedData.collectionIds?.filter((id) => id.trim()) || [];
-		const normalizedColorId = validatedData.initialSku.colorId?.trim() || null;
-		const normalizedMaterialId = validatedData.initialSku.materialId?.trim() || null;
-		const normalizedSize = validatedData.initialSku.size?.trim() || null;
+		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
+		const normalizedCollectionIds = validatedData.collectionIds;
+		const normalizedColorId = validatedData.initialSku.colorId?.trim() ?? null;
+		const normalizedMaterialId = validatedData.initialSku.materialId?.trim() ?? null;
+		const normalizedSize = validatedData.initialSku.size?.trim() ?? null;
 		// Sanitisation XSS de la description
 		const normalizedDescription = validatedData.description?.trim()
 			? sanitizeText(validatedData.description)
@@ -233,10 +234,10 @@ export async function createProduct(
 					const imageData = {
 						skuId: createdSku.id,
 						url: image.url,
-						thumbnailUrl: image.thumbnailUrl || null,
-						blurDataUrl: image.blurDataUrl || null,
-						altText: image.altText || null,
-						mediaType: image.mediaType || detectMediaType(image.url),
+						thumbnailUrl: image.thumbnailUrl ?? null,
+						blurDataUrl: image.blurDataUrl ?? null,
+						altText: image.altText ?? null,
+						mediaType: image.mediaType ?? detectMediaType(image.url),
 						isPrimary: image.isPrimary,
 						position: image.position,
 					};
@@ -270,7 +271,7 @@ export async function createProduct(
 		// 9. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "product.create",
 			targetType: "product",
 			targetId: product.id,

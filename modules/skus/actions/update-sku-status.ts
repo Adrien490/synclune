@@ -7,7 +7,13 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { updateProductSkuStatusSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
@@ -31,7 +37,7 @@ export async function updateProductSkuStatus(
 
 		// 3. Extraction des donnees du FormData
 		const rawData = {
-			skuId: formData.get("skuId") as string,
+			skuId: safeFormGet(formData, "skuId"),
 			isActive: formData.get("isActive") === "true",
 		};
 
@@ -84,7 +90,7 @@ export async function updateProductSkuStatus(
 		const tags = getSkuInvalidationTags(
 			updatedSku.sku,
 			existingSku.productId,
-			existingSku.product?.slug,
+			existingSku.product.slug,
 			updatedSku.id,
 		);
 		tags.forEach((tag) => updateTag(tag));
@@ -92,7 +98,7 @@ export async function updateProductSkuStatus(
 		// 9. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.updateStatus",
 			targetType: "sku",
 			targetId: updatedSku.id,

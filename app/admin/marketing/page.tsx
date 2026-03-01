@@ -1,6 +1,6 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
 import { Mail, MessageSquare, Sparkles, Ticket } from "lucide-react";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Marketing - Administration",

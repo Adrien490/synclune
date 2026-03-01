@@ -10,6 +10,7 @@ import {
 	success,
 	error,
 	BusinessError,
+	safeFormGet,
 } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
@@ -31,7 +32,7 @@ export async function addToCart(
 	try {
 		// 1. Extraction des données du FormData
 		const rawData = {
-			skuId: formData.get("skuId") as string,
+			skuId: safeFormGet(formData, "skuId"),
 			quantity: Number(formData.get("quantity")) || 1,
 		};
 
@@ -135,8 +136,8 @@ export async function addToCart(
 			const cart = await tx.cart.upsert({
 				where: userId ? { userId } : { sessionId: sessionId! },
 				create: {
-					userId: userId || null,
-					sessionId: sessionId || null,
+					userId: userId ?? null,
+					sessionId: sessionId ?? null,
 					expiresAt: userId ? null : getCartExpirationDate(),
 				},
 				update: {
@@ -209,7 +210,7 @@ export async function addToCart(
 
 		// 7. Invalider immédiatement le cache du panier (read-your-own-writes)
 		// Note: updateTag suffit car les cache tags couvrent toutes les données panier
-		const tags = getCartInvalidationTags(userId, sessionId || undefined);
+		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
 		// 8. Invalider le cache du compteur de paniers pour ce produit (FOMO "dans X paniers")

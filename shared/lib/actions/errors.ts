@@ -67,7 +67,7 @@ export function handleActionError(
 		const firstError = error.issues[0];
 		return {
 			status: ActionStatus.VALIDATION_ERROR,
-			message: firstError?.message || "Données invalides",
+			message: firstError?.message ?? "Données invalides",
 		};
 	}
 
@@ -87,6 +87,6 @@ export function handleActionError(
 
 	return {
 		status: ActionStatus.ERROR,
-		message: defaultMessage || "Une erreur est survenue",
+		message: defaultMessage ?? "Une erreur est survenue",
 	};
 }

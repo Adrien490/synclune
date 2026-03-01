@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
 
 import { cn } from "@/shared/utils/cn";
@@ -18,6 +18,8 @@ interface PageHeaderProps {
 	breadcrumbs?: BreadcrumbItem[];
 	/** Action(s) optionnelle(s) à afficher à droite du header (bouton, etc.) */
 	actions?: ReactNode;
+	/** Classes CSS additionnelles pour la description */
+	descriptionClassName?: string;
 	/** Classes CSS additionnelles pour le conteneur */
 	className?: string;
 	/** Variant du header - default avec breadcrumbs, compact pour dashboard */
@@ -61,6 +63,7 @@ export function PageHeader({
 	description,
 	breadcrumbs = [],
 	actions,
+	descriptionClassName,
 	className,
 	variant = "default",
 }: PageHeaderProps) {
@@ -193,7 +196,12 @@ export function PageHeader({
 
 						{/* Description optionnelle */}
 						{description && (
-							<p className="text-muted-foreground wrap-break-words mt-1 max-w-2xl text-base sm:mt-2">
+							<p
+								className={cn(
+									"text-muted-foreground wrap-break-words mt-1 max-w-2xl text-base sm:mt-2",
+									descriptionClassName,
+								)}
+							>
 								{description}
 							</p>
 						)}

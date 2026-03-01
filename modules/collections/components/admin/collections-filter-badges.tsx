@@ -1,7 +1,7 @@
 "use client";
 
 import { FilterBadges } from "@/shared/components/filter-badges";
-import { FilterDefinition } from "@/shared/hooks/use-filter";
+import { type FilterDefinition } from "@/shared/hooks/use-filter";
 
 function formatCollectionFilter(filter: FilterDefinition) {
 	const filterKey = filter.key.replace("filter_", "");

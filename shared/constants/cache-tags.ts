@@ -59,13 +59,6 @@ export const SHARED_CACHE_TAGS = {
 	PRODUCTS_LIST: "products-list",
 
 	/**
-	 * Liste des SKUs (cross-module)
-	 *
-	 * Utilisé par : skus, dashboard
-	 */
-	SKUS_LIST: "skus-list",
-
-	/**
 	 * Menu de navigation (navbar)
 	 *
 	 * Utilisé par : collections, product-types

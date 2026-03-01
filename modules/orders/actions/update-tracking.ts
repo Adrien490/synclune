@@ -6,7 +6,13 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import {
@@ -44,27 +50,29 @@ export async function updateTracking(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
-		const trackingNumber = formData.get("trackingNumber") as string;
-		const trackingUrl = formData.get("trackingUrl") as string | null;
-		const carrier = formData.get("carrier") as string | null;
-		const estimatedDelivery = formData.get("estimatedDelivery") as string | null;
-		const sendEmail = formData.get("sendEmail") as string | null;
+		const rawId = safeFormGet(formData, "id");
+		const trackingNumber = safeFormGet(formData, "trackingNumber");
+		const trackingUrl = safeFormGet(formData, "trackingUrl");
+		const carrier = safeFormGet(formData, "carrier");
+		const estimatedDelivery = safeFormGet(formData, "estimatedDelivery");
+		const sendEmail = safeFormGet(formData, "sendEmail");
 
 		const validated = validateInput(updateTrackingSchema, {
-			id,
+			id: rawId,
 			trackingNumber,
-			trackingUrl: trackingUrl || undefined,
-			carrier: carrier || undefined,
-			estimatedDelivery: estimatedDelivery || undefined,
-			sendEmail: sendEmail || "true",
+			trackingUrl: trackingUrl ?? undefined,
+			carrier: carrier ?? undefined,
+			estimatedDelivery: estimatedDelivery ?? undefined,
+			sendEmail: sendEmail ?? "true",
 		});
 		if ("error" in validated) return validated.error;
 
+		const { id } = validated.data;
+
 		// Générer l'URL de suivi si non fournie
-		const carrierValue = (validated.data.carrier || "autre") as Carrier;
+		const carrierValue = (validated.data.carrier ?? "autre") as Carrier;
 		const finalTrackingUrl =
-			validated.data.trackingUrl || getTrackingUrl(carrierValue, validated.data.trackingNumber);
+			validated.data.trackingUrl ?? getTrackingUrl(carrierValue, validated.data.trackingNumber);
 
 		// Transaction: fetch + validate status + update + audit atomically (prevents race condition)
 		const order = await prisma.$transaction(async (tx) => {
@@ -100,7 +108,7 @@ export async function updateTracking(
 				data: {
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
-					shippingCarrier: validated.data.carrier || null,
+					shippingCarrier: validated.data.carrier ?? null,
 					estimatedDelivery: validated.data.estimatedDelivery,
 				},
 			});
@@ -111,12 +119,12 @@ export async function updateTracking(
 				action: "TRACKING_UPDATED",
 				note: `Suivi mis a jour : ${validated.data.trackingNumber}`,
 				authorId: adminUser.id,
-				authorName: adminUser.name || "Admin",
+				authorName: adminUser.name ?? "Admin",
 				metadata: {
 					previousTrackingNumber: found.trackingNumber,
 					newTrackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
-					carrier: validated.data.carrier || null,
+					carrier: validated.data.carrier ?? null,
 				},
 			});
 
@@ -182,7 +190,7 @@ export async function updateTracking(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.updateTracking",
 			targetType: "order",
 			targetId: order.id,

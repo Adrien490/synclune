@@ -25,11 +25,13 @@ export const SHIPPING_CARRIERS = {
 
 /**
  * Tarifs de livraison France/Monaco et Union Européenne
+ *
+ * Note : La Corse n'est pas livrée (détection via shipping-zone.service.ts)
  */
 export const SHIPPING_RATES = {
-	/** France Métropolitaine - Livraison en 2-3 jours ouvrés */
+	/** France Métropolitaine (hors Corse) - Livraison en 2-3 jours ouvrés */
 	FR: {
-		amount: 600, // 6.00€
+		amount: 499, // 4.99€
 		displayName: "Livraison France (2-3 jours)",
 		carrier: SHIPPING_CARRIERS.STANDARD,
 		minDays: 2,
@@ -37,19 +39,9 @@ export const SHIPPING_RATES = {
 		countries: ["FR"] as const,
 	},
 
-	/** Corse - Livraison en 4-7 jours ouvrés */
-	CORSE: {
-		amount: 1000, // 10.00€
-		displayName: "Livraison Corse (4-7 jours)",
-		carrier: SHIPPING_CARRIERS.STANDARD,
-		minDays: 4,
-		maxDays: 7,
-		countries: ["FR"] as const, // Techniquement FR (codes postaux 2A/2B)
-	},
-
 	/** Union Européenne (dont Monaco) - Livraison en 4-7 jours ouvrés */
 	EU: {
-		amount: 1500, // 15.00€
+		amount: 950, // 9.50€
 		displayName: "Livraison Europe (4-7 jours)",
 		carrier: SHIPPING_CARRIERS.STANDARD,
 		minDays: 4,

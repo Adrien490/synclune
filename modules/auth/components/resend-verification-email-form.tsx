@@ -32,14 +32,14 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 	// TanStack Form setup
 	const form = useAppForm({
 		defaultValues: {
-			email: defaultEmail || "",
+			email: defaultEmail ?? "",
 		},
 	});
 
 	return (
 		<form action={action} className="space-y-4" onSubmit={() => form.handleSubmit()}>
 			{/* Message de succès */}
-			{state?.status === ActionStatus.SUCCESS && state?.message && (
+			{state?.status === ActionStatus.SUCCESS && state.message && (
 				<Alert role="status" aria-live="polite">
 					<CheckCircle2 aria-hidden="true" />
 					<AlertDescription>{state.message}</AlertDescription>
@@ -100,7 +100,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 						type="submit"
 					>
 						{isPending ? (
-							<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+							<Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
 						) : (
 							<Mail className="h-4 w-4" aria-hidden="true" />
 						)}

@@ -82,8 +82,8 @@ export function SortSelect({
 								"text-muted-foreground hover:text-foreground",
 								"hover:bg-accent/50 active:bg-accent/70",
 							)}
-							aria-label={`Effacer le tri ${selectedOption?.label || "actuel"}`}
-							title={`Effacer le tri ${selectedOption?.label || "actuel"}`}
+							aria-label={`Effacer le tri ${selectedOption?.label ?? "actuel"}`}
+							title={`Effacer le tri ${selectedOption?.label ?? "actuel"}`}
 						>
 							<X className="h-4 w-4" />
 						</Button>

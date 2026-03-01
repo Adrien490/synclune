@@ -28,7 +28,7 @@ export const RefundApprovedEmail = ({
 	isPartialRefund,
 	orderDetailsUrl,
 }: RefundApprovedEmailProps) => {
-	const reasonLabel = REFUND_REASON_LABELS[reason] || reason;
+	const reasonLabel = REFUND_REASON_LABELS[reason] ?? reason;
 
 	return (
 		<EmailLayout preview={`Remboursement ${formatEuro(refundAmount)} accepté`}>

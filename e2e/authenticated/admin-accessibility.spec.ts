@@ -39,7 +39,7 @@ test.describe("Accessibilité - Pages admin", { tag: ["@slow"] }, () => {
 			const nav = navElements.nth(i);
 			const label = await nav.getAttribute("aria-label");
 			const labelledby = await nav.getAttribute("aria-labelledby");
-			expect(label || labelledby, `Navigation ${i} dans l'admin sans nom accessible`).toBeTruthy();
+			expect(label ?? labelledby, `Navigation ${i} dans l'admin sans nom accessible`).toBeTruthy();
 		}
 	});
 
@@ -150,6 +150,20 @@ test.describe("Accessibilité - Pages admin", { tag: ["@slow"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 
 		await expectNoA11yViolations(page, { context: "Nouveau remboursement" });
+	});
+});
+
+test.describe("Accessibilité admin - États interactifs axe-core", { tag: ["@slow"] }, () => {
+	test("Admin avec dropdown menu ouvert passe l'audit axe-core", async ({ page }) => {
+		await page.goto("/admin/catalogue/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		const menuTrigger = page.locator("[data-radix-dropdown-menu-trigger]").first();
+		if ((await menuTrigger.count()) > 0) {
+			await menuTrigger.click();
+			await page.waitForTimeout(200);
+			await expectNoA11yViolations(page, { context: "Admin (dropdown ouvert)" });
+		}
 	});
 });
 

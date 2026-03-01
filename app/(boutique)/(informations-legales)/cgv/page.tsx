@@ -2,6 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: "Conditions Générales de Vente - Synclune",
 		description: "Conditions générales de vente de Synclune - Bijouterie artisanale en ligne",
-		url: "https://synclune.fr/cgv",
+		url: `${SITE_URL}/cgv`,
 		type: "website",
 	},
 	twitter: {
@@ -38,8 +39,8 @@ export default async function CGVPage() {
 	cacheTag("legal-terms");
 
 	// Récupérer l'URL du site depuis les variables d'environnement
-	const siteUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
-	const contactEmail = process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr";
+	const siteUrl = process.env.BETTER_AUTH_URL ?? SITE_URL;
+	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 
 	return (
 		<>
@@ -54,7 +55,7 @@ export default async function CGVPage() {
 
 			<section className={`bg-background ${SECTION_SPACING.default}`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
+					<div className="prose prose-slate max-w-prose space-y-6">
 						<section className="space-y-4">
 							<h2 className="text-xl font-semibold sm:text-2xl">1. Objet et champ d'application</h2>
 							<p>
@@ -406,7 +407,7 @@ export default async function CGVPage() {
 								<strong>gratuitement</strong> à un médiateur de la consommation en vue de la
 								résolution amiable du litige.
 							</p>
-							<div className="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950">
+							<div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
 								<p className="mb-3 font-medium">Coordonnées de notre médiateur :</p>
 								<div className="space-y-1 text-sm">
 									<p>

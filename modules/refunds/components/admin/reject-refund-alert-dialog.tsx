@@ -69,7 +69,7 @@ export function RejectRefundAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <Loader2 className="motion-safe:animate-spin" />}
 							{isPending ? "Refus..." : "Refuser"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

@@ -11,6 +11,7 @@ import {
 	notFound,
 	validationError,
 	handleActionError,
+	safeFormGet,
 } from "@/shared/lib/actions";
 import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
@@ -40,9 +41,9 @@ export async function toggleProductStatus(
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {
-			productId: formData.get("productId") as string,
-			currentStatus: formData.get("currentStatus") as string,
-			targetStatus: formData.get("targetStatus") as string | null,
+			productId: safeFormGet(formData, "productId"),
+			currentStatus: safeFormGet(formData, "currentStatus"),
+			targetStatus: safeFormGet(formData, "targetStatus"),
 		};
 
 		// 3. Validation avec Zod
@@ -156,7 +157,7 @@ export async function toggleProductStatus(
 		// 9. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "product.toggleStatus",
 			targetType: "product",
 			targetId: productId,

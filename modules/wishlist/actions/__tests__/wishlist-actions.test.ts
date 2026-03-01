@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Prisma } from "@/app/generated/prisma/client";
 import { ActionStatus } from "@/shared/types/server-action";
+import type * as ActionsModule from "@/shared/lib/actions";
 
 // Valid cuid2 for tests
 const VALID_PRODUCT_ID = "cm1234567890abcdefghijk12";
@@ -90,7 +91,7 @@ vi.mock("../../data/get-wishlist-for-merge", () => ({
 
 // Mock enforceRateLimit while keeping real validateInput, success, error, handleActionError
 vi.mock("@/shared/lib/actions", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@/shared/lib/actions")>();
+	const actual = await importOriginal<typeof ActionsModule>();
 	return {
 		...actual,
 		enforceRateLimit: mockEnforceRateLimit,

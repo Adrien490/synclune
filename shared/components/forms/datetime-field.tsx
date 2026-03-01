@@ -133,6 +133,10 @@ export function DateTimeField({
 							variant="outline"
 							disabled={disabled}
 							aria-invalid={field.state.meta.errors.length > 0}
+							aria-describedby={
+								field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
+							}
+							aria-required={required}
 							className={cn(
 								"min-h-11 w-full justify-start text-left font-normal",
 								!selectedDate && "text-muted-foreground",
@@ -182,7 +186,7 @@ export function DateTimeField({
 			</div>
 
 			{/* Hidden input for form submission */}
-			<input type="hidden" name={field.name} value={field.state.value ?? ""} />
+			<input type="hidden" name={field.name} value={field.state.value} />
 
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>

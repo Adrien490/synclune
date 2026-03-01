@@ -11,6 +11,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Gem, Heart, Paintbrush, Sparkles } from "lucide-react";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
 	title: "À propos - Synclune | L'atelier de Léane à Nantes",
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 		title: "À propos - Synclune | L'atelier de Léane à Nantes",
 		description:
 			"Depuis son atelier à Nantes, Léane crée des bijoux artisanaux uniques en plastique fou peints à la main. Chaque pièce est une invitation à porter quelque chose qui vous ressemble vraiment.",
-		url: "https://synclune.fr/a-propos",
+		url: `${SITE_URL}/a-propos`,
 		type: "profile",
 	},
 };

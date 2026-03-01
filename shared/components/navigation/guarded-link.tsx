@@ -53,7 +53,7 @@ export const GuardedLink = forwardRef<HTMLAnchorElement, GuardedLinkProps>(funct
 		onClick?.(e);
 
 		// Demander la navigation via le contexte
-		const destination = typeof href === "string" ? href : href.pathname || "";
+		const destination = typeof href === "string" ? href : (href.pathname ?? "");
 		const canProceed = navigationGuard.requestNavigation(destination, () => {
 			router.push(destination);
 		});

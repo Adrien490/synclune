@@ -1,4 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
+import type { ReviewSortField } from "@/modules/reviews/types/review.types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -102,7 +103,7 @@ export default async function ProductPage({
 	};
 
 	// Vérifier que le produit a au moins un SKU actif
-	if (!product.skus || product.skus.length === 0) {
+	if (product.skus.length === 0) {
 		notFound();
 	}
 
@@ -151,7 +152,7 @@ export default async function ProductPage({
 	const validSortFields = new Set(["createdAt-desc", "createdAt-asc", "rating-desc", "rating-asc"]);
 	const sortBy =
 		urlParams.sortBy && validSortFields.has(urlParams.sortBy)
-			? (urlParams.sortBy as import("@/modules/reviews/types/review.types").ReviewSortField)
+			? (urlParams.sortBy as ReviewSortField)
 			: undefined;
 
 	return (

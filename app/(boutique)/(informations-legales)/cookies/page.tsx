@@ -4,6 +4,7 @@ import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 import { CookiePreferences } from "./_components/cookie-preferences";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
 	title: "Gestion des cookies | Synclune",
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 		title: "Gestion des cookies - Synclune",
 		description:
 			"Gérez vos préférences de cookies et consultez les informations sur les traceurs utilisés",
-		url: "https://synclune.fr/cookies",
+		url: `${SITE_URL}/cookies`,
 		type: "website",
 	},
 	twitter: {
@@ -54,7 +55,7 @@ export default async function CookiesPage() {
 
 			<section className={`bg-background ${SECTION_SPACING.default}`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="prose prose-slate dark:prose-invert max-w-prose space-y-8">
+					<div className="prose prose-slate max-w-prose space-y-8">
 						{/* Introduction */}
 						<section className="space-y-4">
 							<p className="text-muted-foreground">
@@ -97,7 +98,7 @@ export default async function CookiesPage() {
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>
 									<strong>cart_session</strong> : Identifiant de panier visiteur - Créé{" "}
-									<span className="font-medium text-green-600 dark:text-green-400">
+									<span className="font-medium text-green-600">
 										uniquement lors de l'ajout d'un produit au panier
 									</span>
 									. Durée : 7 jours (httpOnly, secure). Stocke uniquement un identifiant pour
@@ -106,7 +107,7 @@ export default async function CookiesPage() {
 								</li>
 								<li>
 									<strong>wishlist_session</strong> : Identifiant de wishlist visiteur - Créé{" "}
-									<span className="font-medium text-green-600 dark:text-green-400">
+									<span className="font-medium text-green-600">
 										uniquement lors de l'ajout d'un produit à votre wishlist
 									</span>
 									. Durée : 30 jours (httpOnly, secure, conforme RGPD). Stocke uniquement un
@@ -115,7 +116,7 @@ export default async function CookiesPage() {
 								</li>
 								<li>
 									<strong>better-auth.session_token</strong> : Jeton de session utilisateur - Créé{" "}
-									<span className="font-medium text-green-600 dark:text-green-400">
+									<span className="font-medium text-green-600">
 										uniquement lors de votre connexion ou inscription
 									</span>
 									. Durée : 7 jours (httpOnly, secure). Maintient votre connexion active et
@@ -123,7 +124,7 @@ export default async function CookiesPage() {
 								</li>
 								<li>
 									<strong>better-auth.session_data</strong> : Cache de session - Créé{" "}
-									<span className="font-medium text-green-600 dark:text-green-400">
+									<span className="font-medium text-green-600">
 										uniquement si vous êtes connecté
 									</span>
 									. Durée : 5 minutes (httpOnly, secure). Améliore les performances en évitant de
@@ -236,10 +237,10 @@ export default async function CookiesPage() {
 							<p>
 								Pour toute question, contactez-nous à{" "}
 								<a
-									href={`mailto:${process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}`}
+									href={`mailto:${process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}`}
 									className="underline"
 								>
-									{process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}
+									{process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}
 								</a>
 								.
 							</p>

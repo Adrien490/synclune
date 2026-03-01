@@ -14,6 +14,7 @@ const {
 	mockHandleActionError,
 	mockSuccess,
 	mockError,
+	mockConflict,
 	mockSubscribeToNewsletterInternal,
 } = vi.hoisted(() => ({
 	mockAjNewsletter: { protect: vi.fn() },
@@ -23,6 +24,7 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
+	mockConflict: vi.fn(),
 	mockSubscribeToNewsletterInternal: vi.fn(),
 }));
 
@@ -30,15 +32,20 @@ vi.mock("@/shared/lib/arcjet", () => ({ ajNewsletter: mockAjNewsletter }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/shared/lib/rate-limit", () => ({ getClientIp: mockGetClientIp }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+	conflict: mockConflict,
 }));
 vi.mock("@/modules/newsletter/schemas/newsletter.schemas", () => ({
 	subscribeToNewsletterSchema: {},
 }));
-vi.mock("../subscribe-to-newsletter-internal", () => ({
+vi.mock("../../services/subscribe-to-newsletter-internal", () => ({
 	subscribeToNewsletterInternal: mockSubscribeToNewsletterInternal,
 }));
 
@@ -96,6 +103,10 @@ describe("subscribeToNewsletter", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
+		mockConflict.mockImplementation((msg: string) => ({
+			status: ActionStatus.CONFLICT,
+			message: msg,
+		}));
 		mockHandleActionError.mockImplementation((_e: unknown, msg: string) => ({
 			status: ActionStatus.ERROR,
 			message: msg,

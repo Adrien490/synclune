@@ -4,6 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
 	cacheComponents: true,
+	reactCompiler: true,
 	experimental: {
 		optimizePackageImports: [
 			"motion/react",
@@ -44,6 +45,7 @@ const nextConfig: NextConfig = {
 							"connect-src 'self' https://*.stripe.com https://api.uploadthing.com https://*.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
 							"frame-src https://*.stripe.com",
 							"worker-src 'self'",
+							"object-src 'none'",
 							"frame-ancestors 'none'",
 							"base-uri 'self'",
 							"form-action 'self'",
@@ -55,7 +57,7 @@ const nextConfig: NextConfig = {
 		];
 	},
 
-	serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild-wasm"],
+	serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild"],
 
 	images: {
 		qualities: [65, 70, 75, 80, 85, 90],

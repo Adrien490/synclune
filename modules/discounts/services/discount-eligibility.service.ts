@@ -44,7 +44,7 @@ export function checkDiscountEligibility(
 
 	// 2. Vérifier la période de validité (startsAt / endsAt)
 	const now = new Date();
-	if (discount.startsAt && now < discount.startsAt) {
+	if (now < discount.startsAt) {
 		return { eligible: false, error: DISCOUNT_ERROR_MESSAGES.NOT_YET_ACTIVE };
 	}
 	if (discount.endsAt && now > discount.endsAt) {

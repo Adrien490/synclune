@@ -48,9 +48,9 @@ export function MaterialSelector({ materials, product, defaultSku }: MaterialSel
 	// Calculer la disponibilité d'un matériau
 	const isMaterialAvailable = (materialSlug: string): boolean => {
 		const compatibleSkus = filterCompatibleSkus(product, {
-			colorSlug: currentColor || undefined,
+			colorSlug: currentColor ?? undefined,
 			materialSlug: materialSlug,
-			size: currentSize || undefined,
+			size: currentSize ?? undefined,
 		});
 		return compatibleSkus.length > 0;
 	};

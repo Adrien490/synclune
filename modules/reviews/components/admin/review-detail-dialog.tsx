@@ -66,7 +66,7 @@ export function ReviewDetailDialog({
 					<div className="space-y-1">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="font-medium">{review.user.name || "Anonyme"}</p>
+								<p className="font-medium">{review.user.name ?? "Anonyme"}</p>
 								<p className="text-muted-foreground text-sm">{review.user.email}</p>
 							</div>
 							<Badge
@@ -114,7 +114,7 @@ export function ReviewDetailDialog({
 										>
 											<Image
 												src={media.url}
-												alt={media.altText || "Photo de l'avis"}
+												alt={media.altText ?? "Photo de l'avis"}
 												fill
 												className="object-cover"
 												sizes="80px"

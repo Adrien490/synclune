@@ -26,7 +26,7 @@ export function fillMissingDates(
 		const dateKey = date.toISOString().split("T")[0]!;
 		data.push({
 			date: dateKey,
-			revenue: revenueMap.get(dateKey) || 0,
+			revenue: revenueMap.get(dateKey) ?? 0,
 		});
 	}
 

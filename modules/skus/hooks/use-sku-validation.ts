@@ -23,18 +23,15 @@ export function useVariantValidation({
 	const variantInfo = extractVariantInfo(product);
 
 	// Déterminer quelles variantes sont requises
-	const requiresColor =
-		product.skus && product.skus.length > 1 && variantInfo.availableColors.length > 1;
+	const requiresColor = product.skus.length > 1 && variantInfo.availableColors.length > 1;
 
-	const requiresMaterial =
-		product.skus && product.skus.length > 1 && variantInfo.availableMaterials.length > 1;
+	const requiresMaterial = product.skus.length > 1 && variantInfo.availableMaterials.length > 1;
 
 	const hasAdjustableSizes = variantInfo.availableSizes.some((s) =>
 		s.size.toLowerCase().includes("ajustable"),
 	);
 
 	const requiresSize =
-		product.skus &&
 		product.skus.length > 1 &&
 		!hasAdjustableSizes &&
 		variantInfo.availableSizes.length > 0 &&

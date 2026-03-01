@@ -1,4 +1,8 @@
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import {
+	type OrderStatus,
+	type PaymentStatus,
+	type FulfillmentStatus,
+} from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
@@ -74,7 +78,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 						</TableHeader>
 						<TableBody>
 							{orders.map((order) => {
-								const userName = order.user?.name || order.user?.email || "Invité";
+								const userName = order.user?.name ?? order.user?.email ?? "Invité";
 
 								return (
 									<TableRow key={order.id}>

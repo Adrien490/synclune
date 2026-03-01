@@ -48,7 +48,7 @@ export async function requestReturn(
 		const validated = validateInput(requestReturnSchema, {
 			orderId: formData.get("orderId"),
 			reason: formData.get("reason"),
-			message: formData.get("message") || undefined,
+			message: formData.get("message") ?? undefined,
 		});
 		if ("error" in validated) return validated.error;
 

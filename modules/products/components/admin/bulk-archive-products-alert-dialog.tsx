@@ -41,7 +41,7 @@ export function BulkArchiveProductsAlertDialog() {
 	};
 
 	const isArchiving = dialog.data?.targetStatus === "ARCHIVED";
-	const count = dialog.data?.productIds?.length || 0;
+	const count = dialog.data?.productIds.length ?? 0;
 
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>

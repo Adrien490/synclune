@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
-import { error, success, unauthorized, validateInput } from "@/shared/lib/actions";
+import { error, success, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
@@ -22,15 +22,15 @@ export const signUpEmail = async (
 
 		// Vérifier si l'utilisateur est déjà connecté
 		const session = await auth.api.getSession({ headers: headersList });
-		if (session?.user?.id) {
+		if (session?.user.id) {
 			return unauthorized("Vous êtes déjà connecté");
 		}
 
 		// Validation des données
 		const rawData = {
-			email: formData.get("email") as string,
-			password: formData.get("password") as string,
-			name: formData.get("name") as string,
+			email: safeFormGet(formData, "email"),
+			password: safeFormGet(formData, "password"),
+			name: safeFormGet(formData, "name"),
 			termsAccepted: formData.get("termsAccepted") === "true",
 		};
 
@@ -52,12 +52,8 @@ export const signUpEmail = async (
 				body: { email, password, name },
 			});
 
-			if (!response) {
-				return error("Une erreur est survenue lors de l'inscription");
-			}
-
 			// Persist terms acceptance timestamp (RGPD proof of consent)
-			if (response.user?.id) {
+			if (response.user.id) {
 				await prisma.user.update({
 					where: { id: response.user.id },
 					data: { termsAcceptedAt: new Date() },

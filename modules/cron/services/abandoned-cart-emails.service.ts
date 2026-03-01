@@ -69,6 +69,7 @@ export async function sendAbandonedCartEmails(): Promise<{
 	let sent = 0;
 	let errors = 0;
 	const cartUrl = buildUrl(ROUTES.SHOP.CART);
+	const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
 
 	for (const cart of abandonedCarts) {
 		if (Date.now() - startTime > BATCH_DEADLINE_MS) {
@@ -110,6 +111,7 @@ export async function sendAbandonedCartEmails(): Promise<{
 				items,
 				total,
 				cartUrl,
+				unsubscribeUrl,
 			});
 
 			if (result.success) {

@@ -334,7 +334,9 @@ describe("cleanupOldWebhookEvents", () => {
 		await cleanupOldWebhookEvents();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-webhook-events] Completed events delete limit reached, remaining will be cleaned on next run",
+			expect.stringContaining(
+				"Completed events delete limit reached, remaining will be cleaned on next run",
+			),
 		);
 	});
 
@@ -376,7 +378,7 @@ describe("cleanupOldWebhookEvents", () => {
 		await cleanupOldWebhookEvents();
 
 		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			"[CRON:cleanup-webhook-events] Deleted 5 stale PROCESSING/PENDING events",
+			expect.stringContaining("Deleted stale PROCESSING/PENDING events"),
 		);
 	});
 

@@ -66,9 +66,9 @@ export function getResponsiveSettings(
 	if (responsive === true) {
 		const currentSettings = DEFAULT_RESPONSIVE_CONFIG[screenSize];
 		return {
-			maxCount: currentSettings?.maxCount ?? maxCount,
-			hideIcons: currentSettings?.hideIcons ?? false,
-			compactMode: currentSettings?.compactMode ?? false,
+			maxCount: currentSettings.maxCount ?? maxCount,
+			hideIcons: currentSettings.hideIcons ?? false,
+			compactMode: currentSettings.compactMode ?? false,
 		};
 	}
 
@@ -149,8 +149,8 @@ export function getWidthConstraints(
 	autoSize?: boolean,
 ): { minWidth: string; maxWidth: string; width: string } {
 	const defaultMinWidth = screenSize === "mobile" ? "0px" : "200px";
-	const effectiveMinWidth = minWidth || defaultMinWidth;
-	const effectiveMaxWidth = maxWidth || "100%";
+	const effectiveMinWidth = minWidth ?? defaultMinWidth;
+	const effectiveMaxWidth = maxWidth ?? "100%";
 
 	return {
 		minWidth: effectiveMinWidth,

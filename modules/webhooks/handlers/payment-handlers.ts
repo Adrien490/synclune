@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import {
 	markOrderAsPaid,
 	extractPaymentFailureDetails,
@@ -21,7 +21,7 @@ import type { WebhookHandlerResult } from "../types/webhook.types";
  * NOTE: Ce handler ne gère pas les emails car checkout.session.completed le fait déjà
  */
 export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-	const orderId = paymentIntent.metadata?.order_id;
+	const orderId = paymentIntent.metadata.order_id;
 
 	if (!orderId) {
 		// Log pour debugging - pas d'erreur car certains PaymentIntent n'ont pas d'order_id (ex: paiements hors checkout)
@@ -41,7 +41,7 @@ export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent):
 export async function handlePaymentFailure(
 	paymentIntent: Stripe.PaymentIntent,
 ): Promise<WebhookHandlerResult> {
-	const orderId = paymentIntent.metadata?.order_id;
+	const orderId = paymentIntent.metadata.order_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order_id in payment intent metadata");
@@ -119,7 +119,7 @@ export async function handlePaymentFailure(
 export async function handlePaymentCanceled(
 	paymentIntent: Stripe.PaymentIntent,
 ): Promise<WebhookHandlerResult> {
-	const orderId = paymentIntent.metadata?.order_id;
+	const orderId = paymentIntent.metadata.order_id;
 
 	if (!orderId) {
 		console.error("❌ [WEBHOOK] No order_id in payment intent metadata");
@@ -206,13 +206,13 @@ export async function handleInvoicePaymentFailed(
 			})
 		: null;
 
-	const orderNumber = order?.orderNumber || invoice.number || "N/A";
-	const customerEmail = order?.customerEmail || invoice.customer_email || "N/A";
+	const orderNumber = order?.orderNumber ?? invoice.number ?? "N/A";
+	const customerEmail = order?.customerEmail ?? invoice.customer_email ?? "N/A";
 	const amount = invoice.amount_due || 0;
 
 	// Extract error message from the invoice
 	const errorMessage =
-		invoice.last_finalization_error?.message ||
+		invoice.last_finalization_error?.message ??
 		`Invoice payment failed (status: ${invoice.status})`;
 
 	const dashboardUrl = order
@@ -231,7 +231,7 @@ export async function handleInvoicePaymentFailed(
 					customerEmail,
 					amount,
 					errorMessage,
-					stripePaymentIntentId: order?.stripePaymentIntentId || undefined,
+					stripePaymentIntentId: order?.stripePaymentIntentId ?? undefined,
 					dashboardUrl,
 				},
 			},

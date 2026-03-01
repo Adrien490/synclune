@@ -18,7 +18,7 @@ export function AddressListSkeleton() {
 
 			{/* Address cards grid skeleton */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{[...Array(3)].map((_, i) => (
+				{Array.from({ length: 3 }).map((_, i) => (
 					<div key={i} className="bg-card flex h-full flex-col gap-3 rounded-lg border p-4">
 						{/* Header : Nom et Actions */}
 						<div className="flex items-start justify-between gap-2">

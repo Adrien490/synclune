@@ -53,7 +53,12 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 			<CardContent>
 				<UsersSelectionToolbar userIds={userIds} />
 				<TableScrollContainer>
-					<Table aria-label="Liste des clients" striped className="min-w-full table-fixed">
+					<Table
+						aria-label="Liste des clients"
+						caption="Liste des utilisateurs"
+						striped
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
@@ -73,8 +78,8 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 						</TableHeader>
 						<TableBody>
 							{users.map((user) => {
-								const orderCount = user._count?.orders ?? 0;
-								const displayName = user.name || "Utilisateur";
+								const orderCount = user._count.orders;
+								const displayName = user.name ?? "Utilisateur";
 
 								return (
 									<TableRow key={user.id} className={user.deletedAt ? "opacity-50" : undefined}>

@@ -6,7 +6,13 @@ import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_UPDATE_PRICE_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { updateSkuPriceSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -35,16 +41,18 @@ export async function updateSkuPrice(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Extraire et valider les données
-		const skuId = formData.get("skuId") as string;
-		const priceInclTaxEuros = formData.get("priceInclTaxEuros") as string;
+		const rawSkuId = safeFormGet(formData, "skuId");
+		const priceInclTaxEuros = safeFormGet(formData, "priceInclTaxEuros");
 		const compareAtPriceEuros = formData.get("compareAtPriceEuros") as string | null;
 
 		const validation = validateInput(updateSkuPriceSchema, {
-			skuId,
+			skuId: rawSkuId,
 			priceInclTaxEuros,
-			compareAtPriceEuros: compareAtPriceEuros || "",
+			compareAtPriceEuros: compareAtPriceEuros ?? "",
 		});
 		if ("error" in validation) return validation.error;
+
+		const { skuId } = validation.data;
 
 		// 4. Vérifier que le SKU existe
 		const sku = await prisma.productSku.findUnique({
@@ -84,7 +92,7 @@ export async function updateSkuPrice(
 		// 8. Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.updatePrice",
 			targetType: "sku",
 			targetId: sku.id,

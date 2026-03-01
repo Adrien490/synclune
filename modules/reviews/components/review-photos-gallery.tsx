@@ -67,7 +67,7 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 
 	const slides = allPhotos.map((photo) => ({
 		src: photo.url,
-		alt: photo.altText || "Photo client",
+		alt: photo.altText ?? "Photo client",
 	}));
 
 	return (
@@ -82,12 +82,12 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 						key={photo.id}
 						type="button"
 						onClick={() => openAtIndex(index)}
-						aria-label={`Photo ${index + 1} de l'avis de ${photo.userName || "Anonyme"}`}
+						aria-label={`Photo ${index + 1} de l'avis de ${photo.userName ?? "Anonyme"}`}
 						className="group focus-visible:ring-ring relative size-20 flex-shrink-0 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
 					>
 						<Image
 							src={photo.url}
-							alt={photo.altText || `Photo ${index + 1}`}
+							alt={photo.altText ?? `Photo ${index + 1}`}
 							fill
 							placeholder={photo.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={photo.blurDataUrl ?? undefined}

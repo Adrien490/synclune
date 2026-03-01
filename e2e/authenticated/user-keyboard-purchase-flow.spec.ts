@@ -76,7 +76,7 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 
 				// Tab to next field
 				await page.keyboard.press("Tab");
-				const activeTag = await page.evaluate(() => document.activeElement?.tagName?.toLowerCase());
+				const activeTag = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
 				expect(["input", "select", "textarea"]).toContain(activeTag);
 			}
 
@@ -113,7 +113,7 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		// After failed validation, focus should move to first error field
 		await page.waitForTimeout(500);
 
-		const focusedTag = await page.evaluate(() => document.activeElement?.tagName?.toLowerCase());
+		const focusedTag = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
 		const hasErrorMessage = await page.locator('[role="alert"], [aria-invalid="true"]').count();
 
 		// Either focus moved to an input or error messages appeared
@@ -160,7 +160,7 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 
 		// Tab to next thumbnail
 		await page.keyboard.press("Tab");
-		const focusedTag = await page.evaluate(() => document.activeElement?.tagName?.toLowerCase());
+		const focusedTag = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
 		expect(["button", "a", "img"]).toContain(focusedTag);
 	});
 
@@ -204,7 +204,7 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 				// It's OK if focus goes to a button or link within the form context
 				const isStillInForm = await page.evaluate(() => {
 					const el = document.activeElement;
-					return el?.closest("form") !== null || el?.closest("main") !== null;
+					return el?.closest("form") !== null || el.closest("main") !== null;
 				});
 				expect(isStillInForm, `Tab ${i + 1}: focus has left the form area`).toBe(true);
 			}

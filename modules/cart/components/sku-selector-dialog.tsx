@@ -92,7 +92,7 @@ function extractVariantOptions(activeSkus: ActiveSku[]) {
 	const uniqueSizes = new Set<string>();
 
 	for (const sku of activeSkus) {
-		if (sku.color?.slug && sku.color?.hex) {
+		if (sku.color?.slug && sku.color.hex) {
 			if (!uniqueColors.has(sku.color.slug)) {
 				uniqueColors.set(sku.color.slug, {
 					slug: sku.color.slug,
@@ -184,14 +184,14 @@ function getImageForColor(
 ): ImageSelection {
 	if (selectedColor) {
 		const skuWithColor = activeSkus.find(
-			(sku) => sku.color?.slug === selectedColor && sku.images?.length > 0,
+			(sku) => sku.color?.slug === selectedColor && sku.images.length > 0,
 		);
-		if (skuWithColor?.images?.length) {
+		if (skuWithColor?.images.length) {
 			const img = skuWithColor.images.find((i) => i.isPrimary) ?? skuWithColor.images[0];
 			if (!img) return { url: "", alt: "", blurDataUrl: null };
 			return {
 				url: img.url,
-				alt: img.altText || `${product.title} - ${selectedColor}`,
+				alt: img.altText ?? `${product.title} - ${selectedColor}`,
 				blurDataUrl: img.blurDataUrl ?? null,
 			};
 		}
@@ -199,7 +199,7 @@ function getImageForColor(
 	const primaryImage = getPrimaryImageForList(product);
 	return {
 		url: primaryImage.url,
-		alt: primaryImage.alt || product.title,
+		alt: primaryImage.alt ?? product.title,
 		blurDataUrl: primaryImage.blurDataUrl ?? null,
 	};
 }
@@ -670,7 +670,7 @@ interface SkuSelectorDialogProps {
  */
 export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 	const cartItems =
-		cart?.items?.map((item) => ({
+		cart?.items.map((item) => ({
 			skuId: item.sku.id,
 			quantity: item.quantity,
 		})) ?? [];
@@ -698,7 +698,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 	// Pre-selects default SKU variants for better UX
 	useEffect(() => {
 		if (isOpen && product) {
-			const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
+			const activeSkus = product.skus.filter((sku) => sku.isActive);
 			const defaultSku = activeSkus.find((sku) => sku.isDefault) ?? activeSkus[0];
 			const { colors, materials, sizes } = extractVariantOptions(activeSkus);
 
@@ -710,17 +710,16 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 
 			// Priority: validPreselectedColor > default SKU > auto-select if unique
 			const initialColor =
-				validPreselectedColor ||
-				defaultSku?.color?.slug ||
-				(colors.length === 1 ? colors[0]!.slug : "") ||
-				"";
+				validPreselectedColor ??
+				defaultSku?.color?.slug ??
+				(colors.length === 1 ? colors[0]!.slug : "");
 
 			const initialMaterial =
 				(defaultSku?.material?.name ? slugify(defaultSku.material.name) : "") ||
 				(materials.length === 1 ? materials[0]!.slug : "") ||
 				"";
 
-			const initialSize = defaultSku?.size || (sizes.length === 1 ? sizes[0] : "") || "";
+			const initialSize = defaultSku?.size ?? (sizes.length === 1 ? sizes[0] : "") ?? "";
 
 			form.reset({
 				color: initialColor,
@@ -793,7 +792,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 		);
 	}
 
-	const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
+	const activeSkus = product.skus.filter((sku) => sku.isActive);
 	const { colors, materials, sizes } = extractVariantOptions(activeSkus);
 
 	// Check for product unavailability
@@ -973,7 +972,7 @@ function SkuSelectorFormContent({
 	const availableToAdd = selectedSku ? Math.max(0, selectedSku.inventory - quantityInCart) : 0;
 
 	const canAddToCart = selectedSku && validationErrors.length === 0 && availableToAdd > 0;
-	const displayPrice = selectedSku ? selectedSku.priceInclTax : activeSkus[0]?.priceInclTax || 0;
+	const displayPrice = selectedSku ? selectedSku.priceInclTax : (activeSkus[0]?.priceInclTax ?? 0);
 
 	// Discount info
 	const compareAtPrice = selectedSku?.compareAtPrice ?? activeSkus[0]?.compareAtPrice;

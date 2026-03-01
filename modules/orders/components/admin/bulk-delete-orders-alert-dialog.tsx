@@ -45,7 +45,7 @@ export function BulkDeleteOrdersAlertDialog() {
 		}
 	};
 
-	const count = bulkDeleteDialog.data?.orderIds?.length ?? 0;
+	const count = bulkDeleteDialog.data?.orderIds.length ?? 0;
 
 	return (
 		<AlertDialog open={bulkDeleteDialog.isOpen} onOpenChange={handleOpenChange}>

@@ -95,10 +95,14 @@ export const toggleProductTypeStatusSchema = z.object({
 
 const bulkIdsSchema = z
 	.string()
-	.transform((str) => {
+	.transform((str): string[] => {
 		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
+			const parsed: unknown = JSON.parse(str);
+			if (Array.isArray(parsed)) {
+				const items = parsed as unknown as unknown[];
+				return items.filter((id): id is string => typeof id === "string");
+			}
+			return [];
 		} catch {
 			return [];
 		}

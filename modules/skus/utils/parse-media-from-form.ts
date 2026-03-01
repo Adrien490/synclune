@@ -25,9 +25,14 @@ export function parsePrimaryImageFromForm(
 	}
 
 	try {
-		const parsed = JSON.parse(raw);
+		const parsed: unknown = JSON.parse(raw);
 		// Validation basique de la structure
-		if (parsed && typeof parsed === "object" && typeof parsed.url === "string") {
+		if (
+			parsed &&
+			typeof parsed === "object" &&
+			"url" in parsed &&
+			typeof (parsed as Record<string, unknown>).url === "string"
+		) {
 			return parsed as ParsedMedia;
 		}
 		console.warn(`[parse-media] primaryImage invalide: structure incorrecte`);
@@ -57,16 +62,20 @@ export function parseGalleryMediaFromForm(
 	}
 
 	try {
-		const parsed = JSON.parse(raw);
+		const parsed: unknown = JSON.parse(raw);
 		// Validation basique: doit etre un tableau
 		if (!Array.isArray(parsed)) {
 			console.warn(`[parse-media] galleryMedia invalide: n'est pas un tableau`);
 			return [];
 		}
 		// Filtrer les elements invalides
-		return parsed.filter(
+		return (parsed as unknown[]).filter(
 			(item): item is ParsedMedia =>
-				item && typeof item === "object" && typeof item.url === "string",
+				item !== null &&
+				item !== undefined &&
+				typeof item === "object" &&
+				"url" in item &&
+				typeof (item as Record<string, unknown>).url === "string",
 		);
 	} catch (error) {
 		console.error(`[parse-media] Erreur parsing galleryMedia:`, error);

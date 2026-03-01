@@ -49,7 +49,7 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.deleteNote",
 			targetType: "orderNote",
 			targetId: note.id,

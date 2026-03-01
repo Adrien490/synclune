@@ -70,7 +70,7 @@ export async function sendPasswordResetAdmin(userId: string): Promise<ActionStat
 			},
 		});
 
-		const displayName = user.name || user.email;
+		const displayName = user.name ?? user.email;
 		return success(`Email de réinitialisation envoyé à ${displayName}`);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de l'envoi de l'email");

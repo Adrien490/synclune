@@ -12,6 +12,7 @@ import { Cookie, Eye, FileText, RotateCcw, Scale, Shield } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
 	title: "Informations légales - Synclune | Bijoux artisanaux Nantes",
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 		title: "Informations légales - Synclune",
 		description:
 			"Informations légales du site Synclune - Mentions légales et conditions d'utilisation.",
-		url: "https://synclune.fr/informations-legales",
+		url: `${SITE_URL}/informations-legales`,
 		type: "website",
 	},
 	twitter: {
@@ -85,7 +86,7 @@ export default async function LegalPage() {
 		},
 	];
 
-	const contactEmail = process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr";
+	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 
 	return (
 		<div className="min-h-screen">
@@ -194,7 +195,7 @@ export default async function LegalPage() {
 					</div>
 
 					{/* Contact et boutons d'action */}
-					<div className="to-gold-50/50 rounded-xl bg-linear-to-r from-rose-50/50 p-6 text-center dark:from-rose-950/30 dark:to-amber-950/30">
+					<div className="to-gold-50/50 rounded-xl bg-linear-to-r from-rose-50/50 p-6 text-center">
 						<h3 className="text-foreground mb-3 text-lg font-semibold">
 							Une question sur vos droits ?
 						</h3>

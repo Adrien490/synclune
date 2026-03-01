@@ -38,7 +38,7 @@ export async function getRelatedProducts(options?: {
 		headers: await headers(),
 	});
 
-	const userId = session?.user?.id;
+	const userId = session?.user.id;
 
 	if (userId) {
 		return fetchPersonalizedRelatedProducts(userId, limit);
@@ -112,9 +112,9 @@ async function fetchPersonalizedRelatedProducts(userId: string, limit: number): 
 		const typeIds = orderHistory
 			.map((item) => item.product?.typeId)
 			.filter((id): id is string => id !== null);
-		const collectionIds = orderHistory
-			.flatMap((item) => item.product?.collections?.map((c) => c.collectionId) || [])
-			.filter((id): id is string => id !== null);
+		const collectionIds = orderHistory.flatMap(
+			(item) => item.product?.collections.map((c) => c.collectionId) ?? [],
+		);
 
 		if (typeIds.length > 0 || collectionIds.length > 0) {
 			const relatedProducts = await prisma.product.findMany({

@@ -23,7 +23,7 @@ export function buildMaterialWhereClause(params: GetMaterialsParams): Prisma.Mat
 	const andConditions: Prisma.MaterialWhereInput[] = [];
 
 	// Filtre par statut actif
-	if (params.filters?.isActive !== undefined) {
+	if (params.filters.isActive !== undefined) {
 		andConditions.push({ isActive: params.filters.isActive });
 	}
 

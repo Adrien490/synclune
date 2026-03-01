@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { bulkActivateSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
@@ -27,7 +27,7 @@ export async function bulkActivateSkus(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
-			ids: formData.get("ids") as string,
+			ids: safeFormGet(formData, "ids"),
 		};
 
 		const { ids } = bulkActivateSkusSchema.parse(rawData);
@@ -70,7 +70,7 @@ export async function bulkActivateSkus(
 		// Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.bulkActivate",
 			targetType: "sku",
 			targetId: ids.join(","),

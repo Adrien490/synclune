@@ -3,9 +3,10 @@
 import { motion, useScroll, useTransform, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import type { RefObject } from "react";
-import { useRef, useSyncExternalStore } from "react";
+import { useRef } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useIsTouchDevice } from "@/shared/hooks";
+import { useMounted } from "@/shared/hooks/use-mounted";
 
 interface ParallaxImageProps {
 	src: string;
@@ -33,11 +34,6 @@ interface ParallaxInnerProps {
 	safeIntensity: number;
 	imageElement: React.ReactNode;
 }
-
-// Hydration safety pattern (avoids server/client mismatch)
-const subscribeNoop = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
 
 /**
  * Inner component handling the parallax animation.
@@ -116,7 +112,7 @@ export function ParallaxImage({
 	const isTouchDevice = useIsTouchDevice();
 
 	// Hydration safety: avoids useReducedMotion server/client mismatches
-	const isMounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
+	const isMounted = useMounted();
 
 	// Cap intensity to prevent overflow (max 15%)
 	const safeIntensity = Math.min(intensity, 15);

@@ -34,6 +34,10 @@ vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockChe
 vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAuth: mockRequireAuth }));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	success: mockSuccess,
 	error: mockError,

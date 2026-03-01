@@ -44,7 +44,12 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 			<CardContent>
 				<MaterialsSelectionToolbar />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des matériaux" className="min-w-full table-fixed">
+					<Table
+						role="table"
+						aria-label="Liste des matériaux"
+						caption="Liste des matériaux"
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
@@ -95,7 +100,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 						</TableHeader>
 						<TableBody>
 							{materials.map((material) => {
-								const skuCount = material._count?.skus || 0;
+								const skuCount = material._count.skus || 0;
 
 								return (
 									<TableRow key={material.id}>
@@ -114,7 +119,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 										</TableCell>
 										<TableCell role="gridcell" className="hidden md:table-cell">
 											<span className="text-muted-foreground line-clamp-2 text-sm">
-												{material.description || "-"}
+												{material.description ?? "-"}
 											</span>
 										</TableCell>
 										<TableCell role="gridcell" className="hidden text-center sm:table-cell">

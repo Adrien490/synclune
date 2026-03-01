@@ -195,7 +195,7 @@ function waitForVideoEvent<K extends keyof HTMLVideoElementEventMap>(
 
 		const errorHandler = () => {
 			cleanup();
-			const errorMessage = video.error?.message || video.error?.code?.toString() || "inconnue";
+			const errorMessage = video.error?.message ?? video.error?.code.toString() ?? "inconnue";
 			reject(new Error(`Erreur video: ${errorMessage}`));
 		};
 
@@ -366,7 +366,7 @@ export async function generateVideoThumbnail(
 
 		// If no valid frame found, use the first position anyway
 		if (!capturedFrame) {
-			const firstPosition = capturePositions[0] || 0.1;
+			const firstPosition = capturePositions[0] ?? 0.1;
 			const captureTime = Math.min(maxCaptureTime, Math.max(0.1, video.duration * firstPosition));
 			video.currentTime = captureTime;
 			await waitForVideoEvent(video, "seeked", VIDEO_EVENT_TIMEOUTS.SEEKED_MS, signal);

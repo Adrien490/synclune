@@ -29,7 +29,7 @@ export async function searchAddress(params: SearchAddressParams): Promise<Search
 	// Rate limiting (user or IP-based)
 	const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.SEARCH);
 	if ("error" in rateCheck) {
-		return { addresses: [], query: params.text ?? "", limit: 5 };
+		return { addresses: [], query: params.text, limit: 5 };
 	}
 
 	// Valider et appliquer les valeurs par défaut

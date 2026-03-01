@@ -75,7 +75,7 @@ export async function sendEmail(params: {
 			console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error);
 			return { success: false, error };
 		}
-		console.log(`[EMAIL] Sent "${params.subject}" to ${recipient}`);
+		console.warn(`[EMAIL] Sent "${params.subject}" to ${recipient}`);
 		return { success: true, data: data! };
 	} catch (error) {
 		if (error instanceof CircuitBreakerError) {

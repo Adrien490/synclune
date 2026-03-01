@@ -40,7 +40,7 @@ export function useRemoveRecentSearch(options: UseRemoveRecentSearchOptions) {
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(removeRecentSearch, {
 			onSuccess: (result) => {
-				if (result?.data && typeof result.data === "object" && "searches" in result.data) {
+				if (result.data && typeof result.data === "object" && "searches" in result.data) {
 					onSuccess?.(result.data.searches as string[]);
 				}
 			},

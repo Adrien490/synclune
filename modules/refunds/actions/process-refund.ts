@@ -6,7 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
@@ -70,10 +70,12 @@ export async function processRefund(
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.PROCESS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const id = formData.get("id") as string;
+		const rawId = safeFormGet(formData, "id");
 
-		const validated = validateInput(processRefundSchema, { id });
+		const validated = validateInput(processRefundSchema, { id: rawId });
 		if ("error" in validated) return validated.error;
+
+		const { id } = validated.data;
 
 		// ========================================================================
 		// ÉTAPE 1: Verrouillage atomique et validation (FOR UPDATE)
@@ -155,7 +157,7 @@ export async function processRefund(
 		// La clé d'idempotence garantit qu'un retry ne crée pas de doublon
 		// ========================================================================
 		const stripeResult = await createStripeRefund({
-			paymentIntentId: refundData.refund.stripe_payment_intent_id || undefined,
+			paymentIntentId: refundData.refund.stripe_payment_intent_id ?? undefined,
 			amount: refundData.refund.amount,
 			reason: refundData.refund.reason,
 			metadata: {
@@ -169,7 +171,7 @@ export async function processRefund(
 		// P0.1: Gérer les différents états de retour Stripe
 		if (!stripeResult.success && !stripeResult.pending) {
 			// Marquer le remboursement comme échoué avec la raison
-			const failureMessage = stripeResult.error || REFUND_ERROR_MESSAGES.STRIPE_ERROR;
+			const failureMessage = stripeResult.error ?? REFUND_ERROR_MESSAGES.STRIPE_ERROR;
 			await prisma.refund.update({
 				where: { id },
 				data: {
@@ -301,7 +303,7 @@ export async function processRefund(
 		// Audit log
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "refund.process",
 			targetType: "refund",
 			targetId: id,

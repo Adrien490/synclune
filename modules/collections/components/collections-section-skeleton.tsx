@@ -34,9 +34,9 @@ export function CollectionsSectionSkeleton({
 				{/* Header skeleton - structure alignée avec Collections réel */}
 				<header className="mb-8 text-center lg:mb-12">
 					{/* Titre skeleton - "Dernières collections" */}
-					<div className="bg-muted mx-auto h-10 w-64 animate-pulse rounded" />
+					<div className="bg-muted mx-auto h-10 w-64 rounded motion-safe:animate-pulse" />
 					{/* Sous-titre skeleton */}
-					<div className="bg-muted/50 mx-auto mt-4 h-7 w-full max-w-2xl animate-pulse rounded" />
+					<div className="bg-muted/50 mx-auto mt-4 h-7 w-full max-w-2xl rounded motion-safe:animate-pulse" />
 				</header>
 
 				{/* Carousel skeleton - structure alignée avec Collections réel */}
@@ -47,12 +47,12 @@ export function CollectionsSectionSkeleton({
 								{/* Card skeleton */}
 								<div className="bg-card overflow-hidden rounded-xl border shadow-sm">
 									{/* Image skeleton - aspect-square pour correspondre au CollectionCard */}
-									<div className="bg-muted aspect-square animate-pulse" />
+									<div className="bg-muted aspect-square motion-safe:animate-pulse" />
 
 									{/* Contenu avec padding */}
 									<div className="space-y-2 p-4">
 										{/* Titre skeleton */}
-										<div className="bg-muted h-6 animate-pulse rounded" />
+										<div className="bg-muted h-6 rounded motion-safe:animate-pulse" />
 									</div>
 								</div>
 							</div>
@@ -62,7 +62,7 @@ export function CollectionsSectionSkeleton({
 
 				{/* CTA skeleton */}
 				<div className="text-center">
-					<div className="bg-muted mx-auto h-12 w-56 animate-pulse rounded-md shadow-lg" />
+					<div className="bg-muted mx-auto h-12 w-56 rounded-md shadow-lg motion-safe:animate-pulse" />
 				</div>
 			</div>
 		</section>

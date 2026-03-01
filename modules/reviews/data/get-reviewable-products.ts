@@ -15,7 +15,7 @@ import type { ReviewableProduct } from "../types/review.types";
  */
 export async function getReviewableProducts(): Promise<ReviewableProduct[]> {
 	const session = await getSession();
-	if (!session?.user?.id) {
+	if (!session?.user.id) {
 		return [];
 	}
 
@@ -106,8 +106,13 @@ async function fetchReviewableProducts(userId: string): Promise<ReviewableProduc
 	const reviewableProducts: ReviewableProduct[] = [];
 
 	for (const item of orderItems) {
+		// Skip items with no sku or product
+		if (!item.sku?.product) {
+			continue;
+		}
+
 		// Verifier que le produit n'est pas soft-deleted
-		if (!item.sku?.product || item.sku.product.deletedAt) {
+		if (item.sku.product.deletedAt) {
 			continue;
 		}
 

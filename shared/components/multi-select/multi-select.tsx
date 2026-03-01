@@ -61,6 +61,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			resetOnDefaultValueChange = true,
 			closeOnSelect = true,
 			isLoading = false,
+			"aria-describedby": externalAriaDescribedBy,
 			...props
 		},
 		ref,
@@ -348,7 +349,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						</div>
 					) : (
 						<CommandEmpty>
-							{emptyIndicator ||
+							{emptyIndicator ??
 								(searchValue ? `Aucun résultat pour "${searchValue}"` : "Aucune option disponible")}
 						</CommandEmpty>
 					)}
@@ -531,8 +532,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 										)}
 										style={{
 											...badgeStyle,
-											animationDuration: `${animationConfig?.duration || animation}s`,
-											animationDelay: `${animationConfig?.delay || 0}s`,
+											animationDuration: `${animationConfig?.duration ?? animation}s`,
+											animationDelay: `${animationConfig?.delay ?? 0}s`,
 										}}
 									>
 										{IconComponent && !responsiveSettings.hideIcons && (
@@ -564,7 +565,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											}}
 											aria-label={`Retirer ${option.label} de la sélection`}
 											className={cn(
-												"-mr-1 ml-1 flex cursor-pointer items-center justify-center rounded-sm hover:bg-white/20 focus:ring-1 focus:ring-white/50 focus:outline-hidden",
+												"hover:bg-foreground/20 focus-visible:ring-foreground/50 -mr-1 ml-1 flex cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden",
 												isMobile ? "h-10 w-10" : "h-6 w-6",
 											)}
 										>
@@ -589,8 +590,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											"[&>svg]:pointer-events-auto",
 										)}
 										style={{
-											animationDuration: `${animationConfig?.duration || animation}s`,
-											animationDelay: `${animationConfig?.delay || 0}s`,
+											animationDuration: `${animationConfig?.duration ?? animation}s`,
+											animationDelay: `${animationConfig?.delay ?? 0}s`,
 										}}
 									>
 										{`+ ${selectedValues.length - responsiveSettings.maxCount} de plus`}
@@ -610,7 +611,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											}}
 											aria-label={`Retirer les ${selectedValues.length - responsiveSettings.maxCount} options supplémentaires`}
 											className={cn(
-												"flex cursor-pointer items-center justify-center rounded-sm hover:bg-white/20 focus:ring-1 focus:ring-white/50 focus:outline-hidden",
+												"hover:bg-foreground/20 focus-visible:ring-foreground/50 flex cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden",
 												isMobile ? "ml-2 h-10 w-10" : "ml-2 h-6 w-6",
 											)}
 										>
@@ -711,7 +712,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						aria-expanded={isPopoverOpen}
 						aria-haspopup="listbox"
 						aria-controls={isPopoverOpen ? listboxId : undefined}
-						aria-describedby={`${triggerDescriptionId} ${selectedCountId}`}
+						aria-describedby={[triggerDescriptionId, selectedCountId, externalAriaDescribedBy]
+							.filter(Boolean)
+							.join(" ")}
 						aria-label={`Sélection multiple : ${selectedValues.length} sur ${allOptions.length} options sélectionnées. ${placeholder}`}
 						className={cn(
 							"flex h-auto min-h-11 items-center justify-between rounded-md border bg-inherit p-1 hover:bg-inherit [&_svg]:pointer-events-auto",
@@ -829,7 +832,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 							aria-expanded={isPopoverOpen}
 							aria-haspopup="listbox"
 							aria-controls={isPopoverOpen ? listboxId : undefined}
-							aria-describedby={`${triggerDescriptionId} ${selectedCountId}`}
+							aria-describedby={[triggerDescriptionId, selectedCountId, externalAriaDescribedBy]
+								.filter(Boolean)
+								.join(" ")}
 							aria-label={`Sélection multiple : ${selectedValues.length} sur ${allOptions.length} options sélectionnées. ${placeholder}`}
 							className={cn(
 								"flex h-auto min-h-11 items-center justify-between rounded-md border bg-inherit p-1 hover:bg-inherit [&_svg]:pointer-events-auto",
@@ -891,8 +896,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 														)}
 														style={{
 															...badgeStyle,
-															animationDuration: `${animationConfig?.duration || animation}s`,
-															animationDelay: `${animationConfig?.delay || 0}s`,
+															animationDuration: `${animationConfig?.duration ?? animation}s`,
+															animationDelay: `${animationConfig?.delay ?? 0}s`,
 														}}
 													>
 														{IconComponent && !responsiveSettings.hideIcons && (
@@ -923,7 +928,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																}
 															}}
 															aria-label={`Retirer ${option.label} de la sélection`}
-															className="-mr-1 ml-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm hover:bg-white/20 focus:ring-1 focus:ring-white/50 focus:outline-hidden"
+															className="hover:bg-foreground/20 focus-visible:ring-foreground/50 -mr-1 ml-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden"
 														>
 															<XCircle
 																className={cn(
@@ -957,8 +962,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																	"[&>svg]:pointer-events-auto",
 																)}
 																style={{
-																	animationDuration: `${animationConfig?.duration || animation}s`,
-																	animationDelay: `${animationConfig?.delay || 0}s`,
+																	animationDuration: `${animationConfig?.duration ?? animation}s`,
+																	animationDelay: `${animationConfig?.delay ?? 0}s`,
 																}}
 															>
 																{`+ ${overflowCount} de plus`}
@@ -977,7 +982,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																		}
 																	}}
 																	aria-label={`Retirer les ${overflowCount} options supplémentaires`}
-																	className="ml-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm hover:bg-white/20 focus:ring-1 focus:ring-white/50 focus:outline-hidden"
+																	className="hover:bg-foreground/20 focus-visible:ring-foreground/50 ml-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden"
 																>
 																	<XCircle
 																		className={cn(
@@ -1049,8 +1054,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						aria-label="Options disponibles"
 						className={cn("w-auto min-w-75 p-0", popoverAnimationClass, popoverClassName)}
 						style={{
-							animationDuration: `${animationConfig?.duration || animation}s`,
-							animationDelay: `${animationConfig?.delay || 0}s`,
+							animationDuration: `${animationConfig?.duration ?? animation}s`,
+							animationDelay: `${animationConfig?.delay ?? 0}s`,
 							maxWidth: `min(${widthConstraints.maxWidth}, 85vw)`,
 							maxHeight: "60vh",
 						}}
@@ -1088,7 +1093,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 									</div>
 								) : (
 									<CommandEmpty>
-										{emptyIndicator ||
+										{emptyIndicator ??
 											(searchValue
 												? `Aucun résultat pour "${searchValue}"`
 												: "Aucune option disponible")}

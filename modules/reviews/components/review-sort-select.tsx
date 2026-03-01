@@ -30,7 +30,7 @@ export function ReviewSortSelect() {
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	const currentSort = (searchParams.get("sortBy") as ReviewSortField) || DEFAULT_SORT;
+	const currentSort = (searchParams.get("sortBy") as ReviewSortField | null) ?? DEFAULT_SORT;
 
 	const handleSortChange = (value: string) => {
 		startTransition(() => {

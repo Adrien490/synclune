@@ -24,10 +24,10 @@ const adapter = new PrismaNeon({ connectionString: databaseUrl! });
  * - Utiliser le soft delete : update({ data: { deletedAt: new Date() } })
  * - Conservation obligatoire : 10 ans
  */
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined };
 
 const prisma =
-	globalForPrisma.prisma ||
+	globalForPrisma.prisma ??
 	new PrismaClient({
 		adapter,
 		log: process.env.NODE_ENV === "development" ? ["query", "warn", "error"] : ["error"],

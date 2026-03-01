@@ -80,7 +80,7 @@ export const TextareaField = ({
 					<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 					{showCounter && maxLength && (
 						<span aria-live="polite">
-							{field.state.value?.length ?? 0}/{maxLength}
+							{field.state.value.length}/{maxLength}
 						</span>
 					)}
 				</div>

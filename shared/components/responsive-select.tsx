@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useMounted } from "@/shared/hooks/use-mounted";
 import {
 	Select,
 	SelectContent,
@@ -78,13 +75,9 @@ function ResponsiveSelect({
 	"aria-invalid": ariaInvalid,
 	"aria-describedby": ariaDescribedby,
 }: ResponsiveSelectProps) {
-	const isMobileDetected = useIsMobile();
-	const mounted = useMounted();
-	const isMobile = mounted && isMobileDetected;
-
-	// Mobile: NativeSelect
-	if (isMobile) {
-		return (
+	return (
+		<>
+			{/* Mobile: NativeSelect */}
 			<NativeSelect
 				id={id}
 				value={value}
@@ -94,7 +87,7 @@ function ResponsiveSelect({
 				name={name}
 				required={required}
 				size={size}
-				className={cn("w-full", className, triggerClassName)}
+				className={cn("w-full md:hidden", className, triggerClassName)}
 				aria-invalid={ariaInvalid}
 				aria-describedby={ariaDescribedby}
 			>
@@ -127,47 +120,51 @@ function ResponsiveSelect({
 							</NativeSelectOption>
 						))}
 			</NativeSelect>
-		);
-	}
 
-	// Desktop: Radix Select
-	return (
-		<Select
-			value={value}
-			defaultValue={defaultValue}
-			onValueChange={onValueChange}
-			disabled={disabled}
-			name={name}
-			required={required}
-		>
-			<SelectTrigger
-				id={id}
-				size={size}
-				className={cn(className, triggerClassName)}
-				aria-invalid={ariaInvalid}
-				aria-describedby={ariaDescribedby}
-			>
-				<SelectValue placeholder={placeholder} />
-			</SelectTrigger>
-			<SelectContent>
-				{isGroupedOptions(options)
-					? options.map((group) => (
-							<SelectGroup key={group.label}>
-								<SelectLabel>{group.label}</SelectLabel>
-								{group.options.map((option) => (
+			{/* Desktop: Radix Select */}
+			<div className="hidden md:block">
+				<Select
+					value={value}
+					defaultValue={defaultValue}
+					onValueChange={onValueChange}
+					disabled={disabled}
+					name={name}
+					required={required}
+				>
+					<SelectTrigger
+						id={id ? `${id}-desktop` : undefined}
+						size={size}
+						className={cn(className, triggerClassName)}
+						aria-invalid={ariaInvalid}
+						aria-describedby={ariaDescribedby}
+					>
+						<SelectValue placeholder={placeholder} />
+					</SelectTrigger>
+					<SelectContent>
+						{isGroupedOptions(options)
+							? options.map((group) => (
+									<SelectGroup key={group.label}>
+										<SelectLabel>{group.label}</SelectLabel>
+										{group.options.map((option) => (
+											<SelectItem
+												key={option.value}
+												value={option.value}
+												disabled={option.disabled}
+											>
+												{option.label}
+											</SelectItem>
+										))}
+									</SelectGroup>
+								))
+							: options.map((option) => (
 									<SelectItem key={option.value} value={option.value} disabled={option.disabled}>
 										{option.label}
 									</SelectItem>
 								))}
-							</SelectGroup>
-						))
-					: options.map((option) => (
-							<SelectItem key={option.value} value={option.value} disabled={option.disabled}>
-								{option.label}
-							</SelectItem>
-						))}
-			</SelectContent>
-		</Select>
+					</SelectContent>
+				</Select>
+			</div>
+		</>
 	);
 }
 

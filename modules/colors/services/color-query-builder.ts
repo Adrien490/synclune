@@ -38,11 +38,9 @@ export function buildColorWhereClause(params: GetColorsParams): Prisma.ColorWher
 		}
 	}
 
-	if (params.filters) {
-		const filterConditions = buildColorFilterConditions(params.filters);
-		if (Object.keys(filterConditions).length > 0) {
-			andConditions.push(filterConditions);
-		}
+	const filterConditions = buildColorFilterConditions(params.filters);
+	if (Object.keys(filterConditions).length > 0) {
+		andConditions.push(filterConditions);
 	}
 
 	if (andConditions.length === 0) return {};

@@ -49,15 +49,14 @@ export async function Navbar() {
 	const { collectionsData, productTypesData } = menuData;
 
 	// Dériver isAdmin depuis la session (évite un appel DB redondant)
-	const userIsAdmin = session?.user?.role === "ADMIN";
+	const userIsAdmin = session?.user.role === "ADMIN";
 
-	// Protection si les fonctions retournent undefined/null
-	const safeCartCount = cartCount ?? 0;
-	const safeWishlistCount = wishlistCount ?? 0;
+	const safeCartCount = cartCount;
+	const safeWishlistCount = wishlistCount;
 
 	// Collections et types de produits pour le quick search dialog
 	const collections = collectionsData.collections.map((c) => {
-		const firstImage = c.products[0]?.product?.skus[0]?.images[0];
+		const firstImage = c.products[0]?.product.skus[0]?.images[0];
 		return {
 			slug: c.slug,
 			name: c.name,
@@ -74,7 +73,7 @@ export async function Navbar() {
 	// Extract primary image from a product's default SKU
 	function extractProductImage(p: (typeof recentProducts)[number]) {
 		const sku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
-		const image = sku?.images?.find((img) => img.isPrimary) ?? sku?.images?.[0];
+		const image = sku?.images.find((img) => img.isPrimary) ?? sku?.images[0];
 		return { sku, image };
 	}
 

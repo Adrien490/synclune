@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma } from "@/app/generated/prisma/client";
 import type { ReadonlyValues } from "@/shared/types/sort.types";
 
 // ============================================================================
@@ -43,12 +43,6 @@ export const GET_ORDERS_SELECT = {
 		},
 	},
 } as const satisfies Prisma.OrderSelect;
-
-/**
- * Alias pour compatibilité (même select que GET_ORDERS_SELECT)
- * @deprecated Utiliser GET_ORDERS_SELECT à la place
- */
-export const GET_ORDERS_DEFAULT_SELECT = GET_ORDERS_SELECT;
 
 // ============================================================================
 // SELECT DEFINITIONS - ORDER DETAIL

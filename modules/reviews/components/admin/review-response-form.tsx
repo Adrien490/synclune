@@ -41,7 +41,7 @@ export function ReviewResponseForm({
 	onSuccess,
 	className,
 }: ReviewResponseFormProps) {
-	const [content, setContent] = useState(existingResponse?.content || "");
+	const [content, setContent] = useState(existingResponse?.content ?? "");
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
 	const { createResponse, editResponse, removeResponse, isPending } = useReviewResponseForm({

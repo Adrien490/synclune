@@ -88,7 +88,7 @@ export type ProductsSearchParams = {
 	sortBy?: string;
 	search?: string;
 } & ProductFiltersSearchParams;
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Produits - Administration",
@@ -176,7 +176,7 @@ export default async function ProductsAdminPage({ searchParams }: ProductsAdminP
 						label="Trier par"
 						options={GET_PRODUCTS_SORT_FIELDS.map((field) => ({
 							value: field,
-							label: ADMIN_PRODUCTS_SORT_LABELS[field] || field,
+							label: ADMIN_PRODUCTS_SORT_LABELS[field] ?? field,
 						}))}
 						placeholder="Plus récents"
 						className="w-full sm:min-w-45"

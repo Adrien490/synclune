@@ -21,7 +21,7 @@ export function useSelectFilter(filterKey: string, options?: UseSelectFilterOpti
 	const paramKey = options?.noPrefix ? filterKey : `filter_${filterKey}`;
 
 	// Récupérer la valeur actuelle du filtre (première valeur uniquement)
-	const currentValue = searchParams.get(paramKey) || "";
+	const currentValue = searchParams.get(paramKey) ?? "";
 
 	// État optimiste pour une meilleure UX
 	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);

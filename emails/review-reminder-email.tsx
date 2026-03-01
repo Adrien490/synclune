@@ -6,17 +6,28 @@ interface ReviewReminderEmailProps {
 	customerName: string;
 	orderNumber: string;
 	reviewUrl: string;
+	unsubscribeUrl: string;
 }
 
 export const ReviewReminderEmail = ({
 	customerName,
 	orderNumber,
 	reviewUrl,
+	unsubscribeUrl,
 }: ReviewReminderEmailProps) => {
 	return (
 		<EmailLayout
 			preview={`Petit rappel : votre avis sur la commande ${orderNumber}`}
-			footer={<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>}
+			footer={
+				<>
+					<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>
+					<Text style={EMAIL_STYLES.text.tiny}>
+						<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+							Se désinscrire des emails commerciaux
+						</a>
+					</Text>
+				</>
+			}
 		>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
@@ -51,6 +62,7 @@ ReviewReminderEmail.PreviewProps = {
 	customerName: "Marie",
 	orderNumber: "CMD-1730000000-ABCD",
 	reviewUrl: "https://synclune.fr/mes-avis",
+	unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 } as ReviewReminderEmailProps;
 
 export default ReviewReminderEmail;

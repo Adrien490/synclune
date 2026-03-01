@@ -1,15 +1,15 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 import {
-	getProductSkuSchema,
-	createProductSkuSchema,
-	updateProductSkuSchema,
-	deleteProductSkuSchema,
-	updateProductSkuStatusSchema,
-	bulkActivateSkusSchema,
-	bulkDeactivateSkusSchema,
-	bulkDeleteSkusSchema,
+	type getProductSkuSchema,
+	type createProductSkuSchema,
+	type updateProductSkuSchema,
+	type deleteProductSkuSchema,
+	type updateProductSkuStatusSchema,
+	type bulkActivateSkusSchema,
+	type bulkDeactivateSkusSchema,
+	type bulkDeleteSkusSchema,
 } from "../schemas/sku.schemas";
 
 // ============================================================================

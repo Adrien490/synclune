@@ -134,7 +134,7 @@ export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnBut
 							<Button type="submit" disabled={!reason || isPending}>
 								{isPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
 										Envoi...
 									</>
 								) : (

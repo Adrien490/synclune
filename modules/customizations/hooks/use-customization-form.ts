@@ -7,7 +7,7 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState, useEffect, useRef } from "react";
 import {
-	CUSTOMIZATION_DEFAULT_VALUES,
+	type CUSTOMIZATION_DEFAULT_VALUES,
 	CUSTOMIZATION_FORM_OPTIONS,
 } from "../constants/customization-form-options";
 import { sendCustomizationRequest } from "../actions/send-customization-request";
@@ -23,7 +23,8 @@ function loadDraft(): Partial<typeof CUSTOMIZATION_DEFAULT_VALUES> | null {
 	try {
 		const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
 		if (!saved) return null;
-		return JSON.parse(saved);
+		const parsed: unknown = JSON.parse(saved);
+		return parsed as Partial<typeof CUSTOMIZATION_DEFAULT_VALUES>;
 	} catch {
 		return null;
 	}
@@ -96,10 +97,10 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 
 		// Draft takes priority, then session user info as fallback
 		if (draft?.firstName || options?.userInfo?.firstName) {
-			form.setFieldValue("firstName", draft?.firstName || options?.userInfo?.firstName || "");
+			form.setFieldValue("firstName", draft?.firstName ?? options?.userInfo?.firstName ?? "");
 		}
 		if (draft?.email || options?.userInfo?.email) {
-			form.setFieldValue("email", draft?.email || options?.userInfo?.email || "");
+			form.setFieldValue("email", draft?.email ?? options?.userInfo?.email ?? "");
 		}
 		if (draft?.phone) form.setFieldValue("phone", draft.phone);
 		if (draft?.details) form.setFieldValue("details", draft.details);

@@ -1,7 +1,8 @@
 "use client";
 
 import { FilterBadges } from "@/shared/components/filter-badges";
-import { FilterDefinition } from "@/shared/hooks/use-filter";
+import { type FilterDefinition } from "@/shared/hooks/use-filter";
+import { formatStatusFilter } from "@/shared/utils/format-status-filter";
 import type { ColorOption } from "@/modules/colors/data/get-color-options";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 
@@ -9,11 +10,6 @@ const STOCK_STATUS_LABELS: Record<string, string> = {
 	in_stock: "En stock",
 	low_stock: "Stock faible",
 	out_of_stock: "Rupture",
-};
-
-const ACTIVE_STATUS_LABELS: Record<string, string> = {
-	true: "Actives",
-	false: "Inactives",
 };
 
 interface SkusFilterBadgesProps {
@@ -40,8 +36,7 @@ function formatSkuFilter(
 
 	// Gestion du statut actif/inactif
 	if (filterKey === "isActive") {
-		const label = ACTIVE_STATUS_LABELS[value];
-		return label ? { label: "Statut", displayValue: label } : null;
+		return formatStatusFilter(value, "Actives", "Inactives");
 	}
 
 	// Gestion des couleurs
@@ -49,7 +44,7 @@ function formatSkuFilter(
 		const colorName = colors.get(value);
 		return {
 			label: "Couleur",
-			displayValue: colorName || value,
+			displayValue: colorName ?? value,
 		};
 	}
 
@@ -58,7 +53,7 @@ function formatSkuFilter(
 		const materialName = materials.get(value);
 		return {
 			label: "Materiau",
-			displayValue: materialName || value,
+			displayValue: materialName ?? value,
 		};
 	}
 

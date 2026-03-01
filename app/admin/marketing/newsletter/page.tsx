@@ -15,7 +15,7 @@ import { Mail, Users } from "lucide-react";
 import { Suspense } from "react";
 import { SubscribersDataTable } from "@/modules/newsletter/components/admin/subscribers-data-table";
 import { SubscribersDataTableSkeleton } from "@/modules/newsletter/components/admin/subscribers-data-table-skeleton";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Newsletter | Dashboard",
@@ -31,7 +31,7 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 	const statsPromise = getNewsletterStats();
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const sortByParam = getFirstParam(params.sortBy);
 	const sortBy =
 		sortByParam &&
@@ -42,7 +42,7 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 			: SORT_OPTIONS.SUBSCRIBED_DESC;
 	const search = getFirstParam(params.search);
 
-	const perPage = parseInt(getFirstParam(params.perPage) || "20", 10);
+	const perPage = parseInt(getFirstParam(params.perPage) ?? "20", 10);
 
 	const subscribersPromise = getSubscribers({
 		cursor,

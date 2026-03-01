@@ -57,7 +57,7 @@ export function ExportOrdersButton() {
 			const response = await fetch(`/api/admin/orders/export?${params}`);
 
 			if (!response.ok) {
-				const data = await response.json().catch(() => null);
+				const data = (await response.json().catch(() => null)) as { error?: string } | null;
 				throw new Error(data?.error ?? "Erreur lors de l'export");
 			}
 

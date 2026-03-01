@@ -124,7 +124,7 @@ export function SearchInput({
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const initialValue = mode === "live" ? searchParams.get(paramName) || "" : "";
+	const initialValue = mode === "live" ? (searchParams.get(paramName) ?? "") : "";
 	const isPending = externalPending || internalPending;
 
 	const form = useAppForm({
@@ -141,7 +141,7 @@ export function SearchInput({
 	// Sync URL → form (live mode only)
 	// Uses a ref guard to avoid resetting the input during typing (before debounce fires)
 	const lastSyncedUrl = useRef(initialValue);
-	const urlValue = mode === "live" ? searchParams.get(paramName) || "" : "";
+	const urlValue = mode === "live" ? (searchParams.get(paramName) ?? "") : "";
 
 	// Effect Event: reads form and onValueChange without re-triggering the sync effect
 	const onUrlSync = useEffectEvent((newUrlValue: string) => {
@@ -181,7 +181,7 @@ export function SearchInput({
 			return;
 		} else {
 			// Live mode: update URL param in place
-			const currentQs = searchParams.get(paramName) || "";
+			const currentQs = searchParams.get(paramName) ?? "";
 			if (trimmed === currentQs.trim()) return;
 
 			const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -349,7 +349,7 @@ export function SearchInput({
 									styles.input,
 								)}
 								placeholder={placeholder}
-								aria-label={ariaLabel || placeholder}
+								aria-label={ariaLabel ?? placeholder}
 								aria-busy={isPending}
 								aria-describedby={statusId}
 							/>
@@ -390,7 +390,7 @@ export function SearchInput({
 					{(search) => (
 						<Button
 							type="submit"
-							disabled={!search?.trim() || isPending}
+							disabled={!search.trim() || isPending}
 							className={cn("shrink-0", styles.submitButton)}
 							aria-label="Rechercher"
 						>

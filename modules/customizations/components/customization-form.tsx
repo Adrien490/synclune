@@ -11,6 +11,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { Upload, X } from "lucide-react";
+import Image from "next/image";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
@@ -84,7 +85,7 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 						})),
 						{ value: "Autre", label: "Autre" },
 					];
-					const hasError = field.state.meta.errors && field.state.meta.errors.length > 0;
+					const hasError = field.state.meta.errors.length > 0;
 
 					return (
 						<div className="space-y-2">
@@ -155,9 +156,11 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 							<div className="flex flex-wrap gap-2">
 								{urls.map((url, index) => (
 									<div key={url} className="group relative">
-										<img
+										<Image
 											src={url}
 											alt={`Inspiration ${index + 1}`}
+											width={80}
+											height={80}
 											className="h-20 w-20 rounded-md border object-cover"
 										/>
 										<button

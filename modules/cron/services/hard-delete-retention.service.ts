@@ -171,7 +171,7 @@ export async function hardDeleteExpiredRecords(): Promise<{
 				cronJob: "hard-delete-retention",
 				count: result.deleted,
 			});
-		} catch (error) {
+		} catch (_error) {
 			logger.warn("Failed to delete review media from UploadThing", {
 				cronJob: "hard-delete-retention",
 			});
@@ -188,7 +188,7 @@ export async function hardDeleteExpiredRecords(): Promise<{
 				cronJob: "hard-delete-retention",
 				count: result.deleted,
 			});
-		} catch (error) {
+		} catch (_error) {
 			logger.warn("Failed to delete product media from UploadThing", {
 				cronJob: "hard-delete-retention",
 			});

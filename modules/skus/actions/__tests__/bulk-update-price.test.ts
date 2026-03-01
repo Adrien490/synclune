@@ -28,13 +28,18 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({ ADMIN_SKU_BULK_OPERATIONS_LIMIT: "sku-bulk" }));
 vi.mock("next/cache", () => ({ updateTag: vi.fn(), cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	BusinessError: class BusinessError extends Error {
 		constructor(message: string) {
 			super(message);
@@ -100,7 +105,7 @@ describe("bulkUpdatePrice", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockCollectBulkInvalidationTags.mockReturnValue(new Set(["skus-list"]));
 		mockInvalidateTags.mockReturnValue(undefined);

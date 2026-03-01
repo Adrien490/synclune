@@ -15,7 +15,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 export const metadata: Metadata = {
 	title: "Vérification de l'email | Synclune",
 	description: "Vérifiez votre adresse email pour activer votre compte Synclune.",
-	robots: "noindex, nofollow",
+	robots: { index: false, follow: false },
 	openGraph: {
 		title: "Vérification de l'email | Synclune",
 		description: "Vérifiez votre adresse email",
@@ -146,10 +146,8 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 								>
 									<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
 									<div className="space-y-2 text-center">
-										<p className="text-lg font-medium text-green-700 dark:text-green-400">
-											Email vérifié
-										</p>
-										<p className="text-sm text-green-600/90 dark:text-green-400/90">
+										<p className="text-lg font-medium text-green-700">Email vérifié</p>
+										<p className="text-sm text-green-600/90">
 											{isConnected
 												? "Votre compte a été activé et vous êtes connecté."
 												: "Votre compte a été activé. Vous pouvez maintenant vous connecter."}

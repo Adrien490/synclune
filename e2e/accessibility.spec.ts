@@ -102,8 +102,8 @@ test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 
 			// Un lien doit avoir soit du texte visible, soit un aria-label, soit un title
 			const hasAccessibleName =
-				(ariaLabel && ariaLabel.trim().length > 0) ||
-				(textContent && textContent.trim().length > 0) ||
+				(ariaLabel && ariaLabel.trim().length > 0) ??
+				(textContent && textContent.trim().length > 0) ??
 				(title && title.trim().length > 0);
 
 			expect(hasAccessibleName, `Le lien ${i} dans la navbar n'a pas de nom accessible`).toBe(true);
@@ -260,7 +260,7 @@ test.describe("Accessibilité - Fiche produit", { tag: ["@slow"] }, () => {
 			const group = radioGroups.nth(i);
 			const label = await group.getAttribute("aria-label");
 			const labelledby = await group.getAttribute("aria-labelledby");
-			expect(label || labelledby, `Radiogroup ${i} sans nom accessible`).toBeTruthy();
+			expect(label ?? labelledby, `Radiogroup ${i} sans nom accessible`).toBeTruthy();
 		}
 	});
 
@@ -413,6 +413,28 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		await page.waitForLoadState("domcontentloaded");
 
 		await expectNoA11yViolations(page, { context: "Catégorie produits" });
+	});
+});
+
+test.describe("Accessibilité - États interactifs axe-core", { tag: ["@slow"] }, () => {
+	test("Homepage avec cart sheet ouvert passe l'audit axe-core", async ({ page, cartPage }) => {
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+		await cartPage.open();
+		await expectNoA11yViolations(page, { context: "Homepage (cart sheet ouvert)" });
+	});
+
+	test("Catalogue avec filtres mobiles ouverts passe l'audit axe-core", async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		const filterButton = page.getByRole("button", { name: /Filtrer|Filtres/i });
+		if ((await filterButton.count()) > 0) {
+			await filterButton.click();
+			await page.waitForTimeout(300);
+			await expectNoA11yViolations(page, { context: "Catalogue (filtres mobiles ouverts)" });
+		}
 	});
 });
 

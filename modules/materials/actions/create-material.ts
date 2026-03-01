@@ -2,7 +2,13 @@
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import {
+	handleActionError,
+	success,
+	error,
+	validateInput,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -30,9 +36,9 @@ export async function createMaterial(
 
 		// 3. Extraire les donnees du FormData
 		const rawData = {
-			name: sanitizeText((formData.get("name") as string) ?? ""),
-			description: formData.get("description")
-				? sanitizeText(formData.get("description") as string)
+			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
+			description: safeFormGet(formData, "description")
+				? sanitizeText(safeFormGet(formData, "description")!)
 				: null,
 		};
 
@@ -64,7 +70,7 @@ export async function createMaterial(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "material.create",
 			targetType: "material",
 			targetId: created.id,

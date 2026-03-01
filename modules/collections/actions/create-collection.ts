@@ -31,8 +31,8 @@ export async function createCollection(
 		// 2. Extract and validate data
 		const validated = validateInput(createCollectionSchema, {
 			name: formData.get("name"),
-			description: formData.get("description") || null,
-			status: formData.get("status") || undefined,
+			description: formData.get("description") ?? null,
+			status: formData.get("status") ?? undefined,
 		});
 		if ("error" in validated) return validated.error;
 
@@ -77,7 +77,7 @@ export async function createCollection(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "collection.create",
 			targetType: "collection",
 			targetId: slug,

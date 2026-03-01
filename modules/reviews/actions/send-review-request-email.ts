@@ -39,12 +39,12 @@ export async function sendReviewRequestEmailAction(
 
 		const validation = sendReviewRequestEmailSchema.safeParse(rawData);
 		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
+			const firstError = validation.error.issues[0];
 			const errorPath = firstError?.path.join(".");
 			return validationError(
 				errorPath
 					? `${errorPath}: ${firstError?.message}`
-					: firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA,
+					: (firstError?.message ?? REVIEW_ERROR_MESSAGES.INVALID_DATA),
 			);
 		}
 

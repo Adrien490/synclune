@@ -48,7 +48,7 @@ export type ProductTypesSearchParams = {
 export type ParsedProductTypeFilters = {
 	isActive?: boolean;
 };
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Types de bijoux - Administration",
@@ -64,9 +64,9 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 
 	// Extract params
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) || "label-ascending") as
+	const sortBy = (getFirstParam(params.sortBy) ?? "label-ascending") as
 		| "label-ascending"
 		| "label-descending"
 		| "products-ascending"

@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { type CollectionStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // FUNCTION TYPES

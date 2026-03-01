@@ -1,4 +1,4 @@
-import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
+import { type Prisma, ProductStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // SELECT DEFINITIONS

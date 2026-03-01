@@ -48,7 +48,11 @@ function RevokeSessionButton({ sessionId }: { sessionId: string }) {
 				disabled={isPending}
 				title="Révoquer cette session"
 			>
-				{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+				{isPending ? (
+					<Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+				) : (
+					<X className="h-4 w-4" />
+				)}
 			</Button>
 		</form>
 	);

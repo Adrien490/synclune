@@ -39,6 +39,10 @@ vi.mock("next/dist/client/components/redirect-error", () => ({
 }));
 vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockCheckArcjet }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	error: mockError,
 	unauthorized: mockUnauthorized,
@@ -131,10 +135,19 @@ describe("signInEmail", () => {
 		expect(result.message).toBe("EMAIL_NOT_VERIFIED");
 	});
 
-	it("should return error when signInEmail returns null", async () => {
+	it("should redirect when signInEmail returns null (no null-guard in source)", async () => {
+		// The source does not guard against a null response — it calls redirect()
+		// unconditionally after auth.api.signInEmail resolves. A null response
+		// therefore triggers a redirect, not an error state.
+		const redirectError = new Error("REDIRECT");
+		mockRedirect.mockImplementation(() => {
+			throw redirectError;
+		});
+		mockIsRedirectError.mockReturnValue(true);
 		mockAuth.api.signInEmail.mockResolvedValue(null);
-		const result = await signInEmail(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.ERROR);
+
+		await expect(signInEmail(undefined, validFormData)).rejects.toThrow("REDIRECT");
+		expect(mockRedirect).toHaveBeenCalledWith("/boutique");
 	});
 
 	it("should return generic error on unexpected failure", async () => {

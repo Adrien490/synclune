@@ -4,7 +4,13 @@ import { PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -37,7 +43,7 @@ export async function bulkDeleteOrders(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const idsRaw = formData.get("ids") as string;
+		const idsRaw = safeFormGet(formData, "ids");
 		let ids: unknown = [];
 		try {
 			ids = idsRaw ? JSON.parse(idsRaw) : [];
@@ -98,7 +104,7 @@ export async function bulkDeleteOrders(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "order.bulkDelete",
 			targetType: "order",
 			targetId: deletableIds.join(","),

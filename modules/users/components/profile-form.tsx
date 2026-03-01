@@ -23,7 +23,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
 	const form = useAppForm({
 		defaultValues: {
-			name: user?.name || "",
+			name: user?.name ?? "",
 		},
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
@@ -66,7 +66,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 				<Input
 					id="email"
 					type="email"
-					value={user?.email || ""}
+					value={user?.email ?? ""}
 					disabled
 					className="bg-muted cursor-not-allowed"
 				/>

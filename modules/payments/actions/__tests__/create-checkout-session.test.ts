@@ -110,6 +110,19 @@ vi.mock("next/headers", () => ({
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
+	safeFormGetJSON: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		if (typeof v !== "string" || !v) return null;
+		try {
+			return JSON.parse(v);
+		} catch {
+			return null;
+		}
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
@@ -299,7 +312,7 @@ function setupDefaults() {
 	mockGenerateOrderNumber.mockReturnValue("SYN-20260220-A1B2");
 
 	// Image validation
-	mockGetValidImageUrl.mockImplementation((url: string | null | undefined) => url || null);
+	mockGetValidImageUrl.mockImplementation((url: string | null | undefined) => url ?? null);
 
 	// Transaction: execute callback with tx mock
 	mockPrisma.$transaction.mockImplementation(

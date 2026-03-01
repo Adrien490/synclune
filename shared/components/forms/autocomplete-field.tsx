@@ -59,10 +59,13 @@ export function AutocompleteField<T>({
 			)}
 			<Autocomplete<T>
 				name={field.name}
-				value={field.state.value ?? ""}
+				value={field.state.value}
 				onChange={(value) => field.handleChange(value)}
 				onSelect={onSelect}
 				disabled={disabled}
+				aria-invalid={field.state.meta.errors.length > 0}
+				aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
+				aria-required={required}
 				{...props}
 			/>
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />

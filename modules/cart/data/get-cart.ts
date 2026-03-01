@@ -29,10 +29,10 @@ export async function getCart(): Promise<GetCartReturn> {
 	await connection();
 	try {
 		const session = await getSession();
-		const userId = session?.user?.id;
+		const userId = session?.user.id;
 		const sessionId = !userId ? await getCartSessionId() : null;
 
-		return await fetchCart(userId, sessionId || undefined);
+		return await fetchCart(userId, sessionId ?? undefined);
 	} catch (error) {
 		console.error("[getCart] Failed to fetch cart:", error);
 		return null;

@@ -13,7 +13,7 @@ const quickSearchSchema = z.string().trim().max(100);
 export async function quickSearch(query: string): Promise<QuickSearchResult> {
 	try {
 		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_SEARCH_LIMIT);
-		if ("error" in rateCheck) return EMPTY_RESULT;
+		if ("error" in rateCheck) return { ...EMPTY_RESULT, rateLimited: true };
 
 		const parsed = quickSearchSchema.safeParse(query);
 		if (!parsed.success) return EMPTY_RESULT;
@@ -24,7 +24,7 @@ export async function quickSearch(query: string): Promise<QuickSearchResult> {
 
 		// Structured logging for search analytics (picked up by log aggregator)
 		if (result.totalCount === 0) {
-			console.log(
+			console.warn(
 				`[SEARCH] zero-result | term="${sanitizedQuery}" | suggestion="${result.suggestion ?? "none"}"`,
 			);
 		}

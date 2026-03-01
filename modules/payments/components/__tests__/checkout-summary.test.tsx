@@ -3,10 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Hoisted mocks ──────────────────────────────────────────────────────────
 
-const { mockCalculateShipping, mockFormatEuro, mockUseIsMobile, mockOpenCart } = vi.hoisted(() => ({
+const { mockCalculateShipping, mockFormatEuro, mockOpenCart } = vi.hoisted(() => ({
 	mockCalculateShipping: vi.fn(),
 	mockFormatEuro: vi.fn((n: number) => `${(n / 100).toFixed(2)} €`),
-	mockUseIsMobile: vi.fn(),
 	mockOpenCart: vi.fn(),
 }));
 
@@ -18,10 +17,6 @@ vi.mock("@/modules/orders/services/shipping.service", () => ({
 
 vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: mockFormatEuro,
-}));
-
-vi.mock("@/shared/hooks/use-mobile", () => ({
-	useIsMobile: mockUseIsMobile,
 }));
 
 vi.mock("@/shared/providers/sheet-store-provider", () => ({
@@ -161,7 +156,6 @@ function createDiscount(overrides: Partial<AppliedDiscount> = {}): AppliedDiscou
 describe("CheckoutSummary", () => {
 	beforeEach(() => {
 		mockCalculateShipping.mockReturnValue(600);
-		mockUseIsMobile.mockReturnValue(false);
 	});
 
 	describe("item rendering", () => {
@@ -192,8 +186,8 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("Bague Lune")).toBeInTheDocument();
-			expect(screen.getByText("Collier Etoile")).toBeInTheDocument();
+			expect(screen.getAllByText("Bague Lune").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByText("Collier Etoile").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("renders item with image when sku has images", () => {
@@ -211,7 +205,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			const img = screen.getByRole("img");
+			const img = screen.getAllByRole("img")[0]!;
 			expect(img.getAttribute("src")).toBe("/img/ring.jpg");
 			expect(img.getAttribute("alt")).toBe("Bague");
 		});
@@ -221,7 +215,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("N/A")).toBeInTheDocument();
+			expect(screen.getAllByText("N/A").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows quantity for each item", () => {
@@ -229,7 +223,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("Qté: 3")).toBeInTheDocument();
+			expect(screen.getAllByText("Qté: 3").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows size variant when sku has a size", () => {
@@ -247,7 +241,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("Taille: M")).toBeInTheDocument();
+			expect(screen.getAllByText("Taille: M").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows color variant when sku has a color", () => {
@@ -265,7 +259,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("Couleur: Or")).toBeInTheDocument();
+			expect(screen.getAllByText("Couleur: Or").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows material variant when sku has a material", () => {
@@ -283,7 +277,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("Matière: Argent 925")).toBeInTheDocument();
+			expect(screen.getAllByText("Matière: Argent 925").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("does not render size line when size is null", () => {
@@ -291,7 +285,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.queryByText(/Taille:/)).toBeNull();
+			expect(screen.queryAllByText(/Taille:/)).toHaveLength(0);
 		});
 
 		it("does not render color line when color is null", () => {
@@ -299,7 +293,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.queryByText(/Couleur:/)).toBeNull();
+			expect(screen.queryAllByText(/Couleur:/)).toHaveLength(0);
 		});
 
 		it("does not render material line when material is null", () => {
@@ -307,7 +301,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.queryByText(/Matière:/)).toBeNull();
+			expect(screen.queryAllByText(/Matière:/)).toHaveLength(0);
 		});
 	});
 
@@ -329,7 +323,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText(/Sous-total \(1 article\)/)).toBeInTheDocument();
+			expect(screen.getAllByText(/Sous-total \(1 article\)/).length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows total items count in plural for multiple items", () => {
@@ -341,7 +335,7 @@ describe("CheckoutSummary", () => {
 			render(<CheckoutSummary cart={cart} />);
 
 			// totalItems = 2 + 3 = 5
-			expect(screen.getByText(/Sous-total \(5 articles\)/)).toBeInTheDocument();
+			expect(screen.getAllByText(/Sous-total \(5 articles\)/).length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("calls calculateShipping with selectedCountry and postalCode", () => {
@@ -398,7 +392,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
 
-			expect(screen.getByText(/Réduction \(SAVE10\)/)).toBeInTheDocument();
+			expect(screen.getAllByText(/Réduction \(SAVE10\)/).length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows formatted discount amount with negative sign", () => {
@@ -408,7 +402,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
 
-			expect(screen.getByText(/-5\.00 €/)).toBeInTheDocument();
+			expect(screen.getAllByText(/-5\.00 €/).length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("hides discount line when appliedDiscount is null", () => {
@@ -416,7 +410,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} appliedDiscount={null} />);
 
-			expect(screen.queryByText(/Réduction/)).toBeNull();
+			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
 		});
 
 		it("hides discount line when appliedDiscount is undefined", () => {
@@ -424,7 +418,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.queryByText(/Réduction/)).toBeNull();
+			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
 		});
 
 		it("hides discount line when discountAmount is 0", () => {
@@ -433,7 +427,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
 
-			expect(screen.queryByText(/Réduction/)).toBeNull();
+			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
 		});
 
 		it("shows discount code in the reduction label", () => {
@@ -442,13 +436,12 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
 
-			expect(screen.getByText(/SUMMER20/)).toBeInTheDocument();
+			expect(screen.getAllByText(/SUMMER20/).length).toBeGreaterThanOrEqual(1);
 		});
 	});
 
-	describe("desktop layout (non-mobile)", () => {
+	describe("desktop layout", () => {
 		it("renders a sticky card on desktop", () => {
-			mockUseIsMobile.mockReturnValue(false);
 			const cart = createCart([createCartItem()]);
 
 			const { container } = render(<CheckoutSummary cart={cart} />);
@@ -458,27 +451,16 @@ describe("CheckoutSummary", () => {
 		});
 
 		it("renders the 'Votre commande' heading on desktop", () => {
-			mockUseIsMobile.mockReturnValue(false);
 			const cart = createCart([createCartItem()]);
 
 			render(<CheckoutSummary cart={cart} />);
 
 			expect(screen.getByText("Votre commande")).toBeInTheDocument();
 		});
-
-		it("does not render a collapsible on desktop", () => {
-			mockUseIsMobile.mockReturnValue(false);
-			const cart = createCart([createCartItem()]);
-
-			render(<CheckoutSummary cart={cart} />);
-
-			expect(screen.queryByTestId("collapsible")).toBeNull();
-		});
 	});
 
 	describe("mobile layout", () => {
-		it("renders a collapsible on mobile", () => {
-			mockUseIsMobile.mockReturnValue(true);
+		it("renders a collapsible for mobile", () => {
 			const cart = createCart([createCartItem()]);
 
 			render(<CheckoutSummary cart={cart} />);
@@ -486,8 +468,7 @@ describe("CheckoutSummary", () => {
 			expect(screen.getByTestId("collapsible")).toBeInTheDocument();
 		});
 
-		it("shows total item count in the collapsible trigger on mobile", () => {
-			mockUseIsMobile.mockReturnValue(true);
+		it("shows total item count in the collapsible trigger", () => {
 			const cart = createCart([
 				createCartItem({ id: "item-1", quantity: 2 }),
 				createCartItem({ id: "item-2", quantity: 1 }),
@@ -505,9 +486,9 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByTestId("visa-icon")).toBeInTheDocument();
-			expect(screen.getByTestId("mastercard-icon")).toBeInTheDocument();
-			expect(screen.getByTestId("cb-icon")).toBeInTheDocument();
+			expect(screen.getAllByTestId("visa-icon").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByTestId("mastercard-icon").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByTestId("cb-icon").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("renders secure payment message", () => {
@@ -515,7 +496,7 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("Paiement 100% sécurisé")).toBeInTheDocument();
+			expect(screen.getAllByText("Paiement 100% sécurisé").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("renders return policy and CGV links", () => {
@@ -523,8 +504,8 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("Politique de retour")).toBeInTheDocument();
-			expect(screen.getByText("CGV")).toBeInTheDocument();
+			expect(screen.getAllByText("Politique de retour").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByText("CGV").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("renders the TVA notice", () => {
@@ -532,7 +513,9 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByText("TVA non applicable, art. 293 B du CGI")).toBeInTheDocument();
+			expect(
+				screen.getAllByText("TVA non applicable, art. 293 B du CGI").length,
+			).toBeGreaterThanOrEqual(1);
 		});
 	});
 
@@ -542,7 +525,9 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} />);
 
-			expect(screen.getByRole("button", { name: "Modifier mon panier" })).toBeInTheDocument();
+			expect(
+				screen.getAllByRole("button", { name: "Modifier mon panier" }).length,
+			).toBeGreaterThanOrEqual(1);
 		});
 	});
 });

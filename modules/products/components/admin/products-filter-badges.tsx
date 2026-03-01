@@ -1,8 +1,8 @@
 "use client";
 
-import { ProductStatus } from "@/app/generated/prisma/browser";
+import { type ProductStatus } from "@/app/generated/prisma/browser";
 import { FilterBadges } from "@/shared/components/filter-badges";
-import { FilterDefinition } from "@/shared/hooks/use-filter";
+import { type FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSearchParams } from "next/navigation";
 
@@ -70,7 +70,7 @@ function formatProductFilter(
 		const typeName = productTypes.get(value);
 		return {
 			label: "Type",
-			displayValue: typeName || value,
+			displayValue: typeName ?? value,
 		};
 	}
 
@@ -79,7 +79,7 @@ function formatProductFilter(
 		const collectionName = collections.get(value);
 		return {
 			label: "Collection",
-			displayValue: collectionName || value,
+			displayValue: collectionName ?? value,
 		};
 	}
 

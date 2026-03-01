@@ -1,18 +1,18 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/lib/pagination";
+import { type Prisma } from "@/app/generated/prisma/client";
+import { type z } from "zod";
+import { type PaginationInfo } from "@/shared/lib/pagination";
 import {
-	GET_ORDER_SELECT,
-	GET_ORDERS_SELECT,
-	GET_ORDERS_SORT_FIELDS,
+	type GET_ORDER_SELECT,
+	type GET_ORDERS_SELECT,
+	type GET_ORDERS_SORT_FIELDS,
 } from "../constants/order.constants";
 import {
-	getOrderSchema,
-	getOrdersSchema,
-	orderFiltersSchema,
-	deleteOrderSchema,
-	bulkDeleteOrdersSchema,
-	cancelOrderSchema,
+	type getOrderSchema,
+	type getOrdersSchema,
+	type orderFiltersSchema,
+	type deleteOrderSchema,
+	type bulkDeleteOrdersSchema,
+	type cancelOrderSchema,
 } from "../schemas/order.schemas";
 
 // ============================================================================
@@ -91,7 +91,11 @@ export type AllowedShippingCountry = ShippingCountry;
 // TYPES - ORDER STATUS VALIDATION (from services/)
 // ============================================================================
 
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import {
+	type OrderStatus,
+	type PaymentStatus,
+	type FulfillmentStatus,
+} from "@/app/generated/prisma/client";
 
 export interface OrderForShipValidation {
 	status: OrderStatus;

@@ -16,7 +16,7 @@ export function UserHeader({
 	wishlistCount: number;
 	cartCount: number;
 }) {
-	const firstName = session.user.name?.split(" ")[0] || "vous";
+	const firstName = session.user.name?.split(" ")[0] ?? "vous";
 
 	return (
 		<div className="bg-primary/5 mb-4 rounded-xl px-4 py-4">

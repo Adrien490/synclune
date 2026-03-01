@@ -56,7 +56,7 @@ export async function executeReviewRequestEmail(orderId: string): Promise<Action
 			productsMap.set(product.id, {
 				title: product.title,
 				slug: product.slug,
-				imageUrl: item.sku.images[0]?.url || null,
+				imageUrl: item.sku.images[0]?.url ?? null,
 				skuVariants: variants || null,
 			});
 		}
@@ -77,7 +77,7 @@ export async function executeReviewRequestEmail(orderId: string): Promise<Action
 	const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
 	const result = await sendReviewRequestEmail({
 		to: order.user.email,
-		customerName: order.user.name || "Cliente",
+		customerName: order.user.name ?? "Cliente",
 		orderNumber: order.orderNumber,
 		products,
 		reviewUrl,

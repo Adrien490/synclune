@@ -12,12 +12,6 @@ export const USERS_CACHE_TAGS = {
 	/** Données de l'utilisateur courant */
 	CURRENT_USER: (userId: string) => `user-${userId}`,
 
-	/** Session de l'utilisateur courant */
-	SESSION: (userId: string) => `session-${userId}`,
-
-	/** Sessions actives d'un utilisateur */
-	SESSIONS: (userId: string) => `sessions-user-${userId}`,
-
 	/** Comptes OAuth liés d'un utilisateur */
 	ACCOUNTS: (userId: string) => `accounts-user-${userId}`,
 
@@ -28,10 +22,8 @@ export const USERS_CACHE_TAGS = {
 // Re-exports pour retrocompatibilite
 export {
 	cacheCurrentUser,
-	cacheUserSessions,
 	cacheUserAccounts,
 	getCurrentUserInvalidationTags,
-	getSessionInvalidationTags,
 	getUserSessionsInvalidationTags,
 	getUserAccountsInvalidationTags,
 	getAdminAccountsListInvalidationTags,

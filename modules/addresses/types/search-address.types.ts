@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { searchAddressSchema } from "../schemas/search-address.schema";
+import { type z } from "zod";
+import { type searchAddressSchema } from "../schemas/search-address.schema";
 
 // ============================================================================
 // TYPES - BAN API (Base Adresse Nationale)

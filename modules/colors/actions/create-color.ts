@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -28,7 +34,7 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 
 		// 3. Extraire les donnees du FormData
 		const rawData = {
-			name: sanitizeText(formData.get("name") as string),
+			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
 			hex: formData.get("hex"),
 		};
 
@@ -60,7 +66,7 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "color.create",
 			targetType: "color",
 			targetId: created.id,

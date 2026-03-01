@@ -1,4 +1,4 @@
-import { ReviewStatus } from "@/app/generated/prisma/client";
+import { type ReviewStatus } from "@/app/generated/prisma/client";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
@@ -34,15 +34,15 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 	]);
 
 	// Parsing des paramètres
-	const perPage = parseInt(getFirstParam(params.perPage) || "20", 10);
+	const perPage = parseInt(getFirstParam(params.perPage) ?? "20", 10);
 	const cursor = getFirstParam(params.cursor);
 	const search = getFirstParam(params.search);
 	const statusFilter = getFirstParam(params.status) as ReviewStatus | undefined;
 	const ratingFilter = getFirstParam(params.rating)
-		? parseInt(getFirstParam(params.rating) || "", 10)
+		? parseInt(getFirstParam(params.rating) ?? "", 10)
 		: undefined;
 	const sortByParam = getFirstParam(params.sortBy);
-	const sortBy = (sortByParam || "createdAt-desc") as ReviewSortField;
+	const sortBy = (sortByParam ?? "createdAt-desc") as ReviewSortField;
 
 	const reviewsPromise = getReviews(
 		{

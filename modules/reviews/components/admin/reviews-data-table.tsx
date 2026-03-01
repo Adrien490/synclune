@@ -46,7 +46,12 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 		<Card>
 			<CardContent>
 				<TableScrollContainer>
-					<Table aria-label="Liste des avis produits" striped className="min-w-full table-fixed">
+					<Table
+						aria-label="Liste des avis produits"
+						caption="Liste des avis"
+						striped
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[25%]">Produit</TableHead>
@@ -78,7 +83,7 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 									<TableCell>
 										<div className="min-w-0">
 											<p className="truncate text-sm font-medium">
-												{review.user.name || "Anonyme"}
+												{review.user.name ?? "Anonyme"}
 											</p>
 											<p className="text-muted-foreground truncate text-sm">{review.user.email}</p>
 										</div>

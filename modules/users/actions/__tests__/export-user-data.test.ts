@@ -31,6 +31,10 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	USER_LIMITS: { EXPORT_DATA: "user-export-data" },
 }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	notFound: mockNotFound,

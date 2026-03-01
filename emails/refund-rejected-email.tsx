@@ -18,7 +18,7 @@ export const RefundRejectedEmail = ({
 	reason,
 	orderDetailsUrl,
 }: RefundRejectedEmailProps) => {
-	const reasonLabel = reason ? REFUND_REASON_LABELS[reason] || reason : null;
+	const reasonLabel = reason ? (REFUND_REASON_LABELS[reason] ?? reason) : null;
 
 	return (
 		<EmailLayout preview={`Demande de remboursement de ${formatEuro(refundAmount)} refusée`}>

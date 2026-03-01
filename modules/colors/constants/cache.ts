@@ -10,7 +10,7 @@
 
 export const COLORS_CACHE_TAGS = {
 	/** Liste des couleurs */
-	LIST: "colors",
+	LIST: "colors-list",
 	/** Detail d'une couleur par slug */
 	DETAIL: (slug: string) => `color-${slug}` as const,
 } as const;

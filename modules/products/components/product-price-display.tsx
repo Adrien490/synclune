@@ -42,7 +42,7 @@ export function ProductPriceDisplay({
 	const shouldReduceMotion = useReducedMotion();
 
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
-	const priceInfo = calculatePriceInfo(product?.skus);
+	const priceInfo = calculatePriceInfo(product.skus);
 
 	// Déterminer si on affiche "À partir de"
 	const showFromPrefix = priceInfo.hasMultiplePrices && !selectedSku;
@@ -161,7 +161,7 @@ export function ProductPriceDisplay({
 					>
 						<Badge
 							variant="outline"
-							className="border-orange-600 bg-orange-100 text-xs/5 tracking-normal text-orange-800 antialiased shadow-sm dark:border-orange-500 dark:bg-orange-950/80 dark:text-orange-200"
+							className="border-orange-600 bg-orange-100 text-xs/5 tracking-normal text-orange-800 antialiased shadow-sm"
 							role="status"
 							aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
 						>
@@ -186,7 +186,7 @@ export function ProductPriceDisplay({
 			{cartsCount !== undefined && cartsCount > 0 && stockStatus !== "out_of_stock" && (
 				<Badge
 					variant="outline"
-					className="border-pink-500/50 bg-pink-50 text-xs/5 tracking-normal text-pink-700 antialiased dark:border-pink-500/40 dark:bg-pink-950/60 dark:text-pink-200"
+					className="border-pink-500/50 bg-pink-50 text-xs/5 tracking-normal text-pink-700 antialiased"
 					role="status"
 					aria-label={`Actuellement dans ${cartsCount} ${cartsCount === 1 ? "panier" : "paniers"}`}
 				>

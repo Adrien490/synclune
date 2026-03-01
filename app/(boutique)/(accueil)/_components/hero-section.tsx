@@ -45,7 +45,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 		<section
 			id="hero-section"
 			aria-labelledby="hero-title"
-			className="relative flex min-h-[calc(60dvh-4rem)] items-center mask-b-from-85% mask-b-to-100% pt-16 pb-10 sm:min-h-[calc(90dvh-5rem)] sm:pt-20 sm:pb-16 md:pt-28 md:pb-24 lg:min-h-screen"
+			className="relative flex min-h-[calc(60dvh-4rem)] items-center mask-b-from-90% mask-b-to-100% pt-16 pb-10 sm:min-h-[calc(90dvh-5rem)] sm:mask-b-from-85% sm:pt-20 sm:pb-16 md:pt-28 md:pb-24 lg:min-h-screen"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-x-0 top-0 bottom-0 -z-10" aria-hidden="true">

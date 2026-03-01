@@ -54,8 +54,8 @@ export function ColorSelector({
 	const isColorAvailable = (colorId: string): boolean => {
 		const compatibleSkus = filterCompatibleSkus(product, {
 			colorSlug: colorId,
-			materialSlug: currentMaterial || undefined,
-			size: currentSize || undefined,
+			materialSlug: currentMaterial ?? undefined,
+			size: currentSize ?? undefined,
 		});
 		return compatibleSkus.length > 0;
 	};
@@ -64,11 +64,11 @@ export function ColorSelector({
 	const prefetchColorImage = (colorId: string) => {
 		const compatibleSkus = filterCompatibleSkus(product, {
 			colorSlug: colorId,
-			materialSlug: currentMaterial || undefined,
-			size: currentSize || undefined,
+			materialSlug: currentMaterial ?? undefined,
+			size: currentSize ?? undefined,
 		});
 		const sku = compatibleSkus[0];
-		const primaryImage = sku?.images?.[0];
+		const primaryImage = sku?.images[0];
 		if (primaryImage?.url) {
 			const link = document.createElement("link");
 			link.rel = "prefetch";
@@ -98,9 +98,9 @@ export function ColorSelector({
 	// Navigation clavier pour le radio group
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: colors,
-		getOptionId: (color) => color.slug || color.id,
-		isOptionDisabled: (color) => !isColorAvailable(color.slug || color.id),
-		onSelect: (color) => updateColor(color.slug || color.id),
+		getOptionId: (color) => color.slug ?? color.id,
+		isOptionDisabled: (color) => !isColorAvailable(color.slug ?? color.id),
+		onSelect: (color) => updateColor(color.slug ?? color.id),
 	});
 
 	if (colors.length === 0) return null;
@@ -116,7 +116,7 @@ export function ColorSelector({
 					{showMaterialLabel ? "Couleur / Matériau" : "Couleur"}
 					{optimisticColor && (
 						<span className="text-muted-foreground ml-1 font-normal">
-							: {colors.find((c) => (c.slug || c.id) === optimisticColor)?.name}
+							: {colors.find((c) => (c.slug ?? c.id) === optimisticColor)?.name}
 						</span>
 					)}
 				</legend>
@@ -135,7 +135,7 @@ export function ColorSelector({
 			<div ref={containerRef} className="flex flex-wrap gap-3">
 				{colors.map((color, index) => {
 					// Utiliser le slug pour l'URL (cohérence avec material/size selectors)
-					const colorIdentifier = color.slug || color.id;
+					const colorIdentifier = color.slug ?? color.id;
 					const isSelected = colorIdentifier === optimisticColor;
 					const isAvailable = isColorAvailable(colorIdentifier);
 
@@ -164,7 +164,7 @@ export function ColorSelector({
 						>
 							{color.hex && (
 								<div
-									className="h-8 w-8 shrink-0 rounded-full border-2 border-white shadow-sm sm:h-7 sm:w-7"
+									className="border-background h-8 w-8 shrink-0 rounded-full border-2 shadow-sm sm:h-7 sm:w-7"
 									style={{ backgroundColor: color.hex }}
 								/>
 							)}

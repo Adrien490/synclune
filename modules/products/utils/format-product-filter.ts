@@ -2,7 +2,7 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ReadonlyURLSearchParams } from "next/navigation";
+import { type ReadonlyURLSearchParams } from "next/navigation";
 
 interface ProductTypeOption {
 	slug: string;
@@ -107,18 +107,12 @@ export function createProductFilterFormatter(
 
 		// Gestion des autres filtres
 		const filterConfig = FILTER_CONFIG[key as keyof typeof FILTER_CONFIG];
-		if (!filterConfig) {
-			return {
-				label: key,
-				displayValue: value,
-			};
-		}
 
 		let displayValue = value;
 		const label = filterConfig.name;
 
 		// Pour les filtres avec des valeurs prédéfinies
-		if ("values" in filterConfig && filterConfig.values) {
+		if ("values" in filterConfig) {
 			const mappedValue = filterConfig.values[value as keyof typeof filterConfig.values];
 			if (mappedValue) {
 				displayValue = mappedValue;

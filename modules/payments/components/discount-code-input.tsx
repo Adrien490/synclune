@@ -63,13 +63,13 @@ export function DiscountCodeInput({
 	// Discount already applied - show badge
 	if (appliedDiscount) {
 		return (
-			<div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50/50 px-3 py-2.5 dark:border-green-900 dark:bg-green-950/20">
+			<div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50/50 px-3 py-2.5">
 				<div className="flex min-w-0 items-center gap-2">
-					<Tag className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
-					<span className="truncate text-sm font-medium text-green-700 dark:text-green-300">
+					<Tag className="h-4 w-4 shrink-0 text-green-600" />
+					<span className="truncate text-sm font-medium text-green-700">
 						{appliedDiscount.code}
 					</span>
-					<span className="text-sm text-green-600 dark:text-green-400">
+					<span className="text-sm text-green-600">
 						-{formatEuro(appliedDiscount.discountAmount)}
 					</span>
 				</div>
@@ -119,7 +119,7 @@ export function DiscountCodeInput({
 							onClick={handleApply}
 							disabled={isPending || !code.trim()}
 						>
-							{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Appliquer"}
+							{isPending ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> : "Appliquer"}
 						</Button>
 					</div>
 					{error && (

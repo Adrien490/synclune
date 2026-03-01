@@ -26,7 +26,7 @@ function buildAltText(
 	imageIndex?: number,
 	totalImages?: number,
 ): string {
-	const { productType, materialName, colorName, size } = variantInfo || {};
+	const { productType, materialName, colorName, size } = variantInfo ?? {};
 
 	// Build prefix with jewelry type
 	const prefix = productType ? `${productType} ${productTitle}` : productTitle;
@@ -73,10 +73,7 @@ interface BuildGalleryOptions {
  * @returns Array of ProductMedia objects ordered by priority
  */
 export function buildGallery({ product, selectedVariants }: BuildGalleryOptions): ProductMedia[] {
-	// Safety check: return empty array if no product
-	if (!product) {
-		return [];
-	}
+	if (!product) return [];
 
 	const { colorSlug, materialSlug, size } = selectedVariants;
 
@@ -84,9 +81,9 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	const selectedSku =
 		colorSlug || materialSlug || size
 			? findSkuByVariants(product, {
-					colorSlug: colorSlug || undefined,
-					materialSlug: materialSlug || undefined,
-					size: size || undefined,
+					colorSlug: colorSlug ?? undefined,
+					materialSlug: materialSlug ?? undefined,
+					size: size ?? undefined,
 				})
 			: null;
 
@@ -134,8 +131,8 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 			id: skuImage.id,
 			url: skuImage.url,
 			thumbnailUrl: skuImage.thumbnailUrl,
-			blurDataUrl: skuImage.blurDataUrl || undefined,
-			alt: skuImage.altText || generatedAlt,
+			blurDataUrl: skuImage.blurDataUrl ?? undefined,
+			alt: skuImage.altText ?? generatedAlt,
 			mediaType: skuImage.mediaType,
 			source,
 			skuId,
@@ -158,7 +155,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 
 	// Priority 2: Default SKU images (product.skus[0])
 	const defaultSku = product.skus[0];
-	if (defaultSku && defaultSku.id !== selectedSku?.id && defaultSku.images) {
+	if (defaultSku && defaultSku.id !== selectedSku?.id) {
 		const variantInfo = {
 			materialName: defaultSku.material?.name,
 			colorName: defaultSku.color?.name,
@@ -171,21 +168,19 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	}
 
 	// Priority 3: Other active SKU images
-	if (gallery.length < MIN_GALLERY_IMAGES && product.skus) {
+	if (gallery.length < MIN_GALLERY_IMAGES) {
 		for (const sku of product.skus.filter((s) => s.isActive)) {
 			if (sku.id === selectedSku?.id || sku.id === defaultSku?.id) continue;
 			if (gallery.length >= MAX_GALLERY_IMAGES) break;
 
-			if (sku.images) {
-				const variantInfo = {
-					materialName: sku.material?.name,
-					colorName: sku.color?.name,
-					size: sku.size,
-				};
-				for (const skuImage of sku.images) {
-					if (gallery.length >= MAX_GALLERY_IMAGES) break;
-					addUniqueImage(skuImage, variantInfo, "sku", sku.id);
-				}
+			const variantInfo = {
+				materialName: sku.material?.name,
+				colorName: sku.color?.name,
+				size: sku.size,
+			};
+			for (const skuImage of sku.images) {
+				if (gallery.length >= MAX_GALLERY_IMAGES) break;
+				addUniqueImage(skuImage, variantInfo, "sku", sku.id);
 			}
 		}
 	}

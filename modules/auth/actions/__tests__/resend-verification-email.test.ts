@@ -32,6 +32,10 @@ vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockCheckArcjet }));
 vi.mock("@/shared/lib/actions", () => ({
+	safeFormGet: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		return typeof v === "string" ? v : null;
+	},
 	validateInput: mockValidateInput,
 	success: mockSuccess,
 	error: mockError,

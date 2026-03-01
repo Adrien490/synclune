@@ -5,7 +5,14 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	notFound,
+	error,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -37,7 +44,7 @@ export async function duplicateDiscount(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const validated = validateInput(duplicateDiscountSchema, {
-			discountId: formData.get("discountId") as string,
+			discountId: safeFormGet(formData, "discountId"),
 		});
 		if ("error" in validated) return validated.error;
 
@@ -107,7 +114,7 @@ export async function duplicateDiscount(
 
 		void logAudit({
 			adminId: adminUser.id,
-			adminName: adminUser.name || adminUser.email,
+			adminName: adminUser.name ?? adminUser.email,
 			action: "discount.duplicate",
 			targetType: "discount",
 			targetId: duplicate.id,

@@ -1,5 +1,6 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type * as ReactModule from "react";
 
 // ─── Mocks ──────────────────────────────────────────────────────────
 const mockPush = vi.fn();
@@ -19,11 +20,10 @@ vi.mock("next/navigation", () => ({
 // useEffectEvent is stable in React 19, but jsdom may need a polyfill.
 // If the hook import fails, we mock it as a passthrough.
 vi.mock("react", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("react")>();
+	const actual = await importOriginal<typeof ReactModule>();
 	return {
 		...actual,
-		// useEffectEvent: identity wrapper for test environment
-		useEffectEvent: actual.useEffectEvent ?? ((fn: Function) => fn),
+		useEffectEvent: actual.useEffectEvent,
 	};
 });
 
