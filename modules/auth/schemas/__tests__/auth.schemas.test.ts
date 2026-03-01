@@ -68,7 +68,7 @@ describe("newPasswordSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("rejects a password shorter than 12 characters", () => {
+	it("rejects a password shorter than 8 characters", () => {
 		const result = newPasswordSchema.safeParse("short1!");
 		expect(result.success).toBe(false);
 	});
@@ -78,8 +78,8 @@ describe("newPasswordSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("accepts a password of exactly 12 characters", () => {
-		const result = newPasswordSchema.safeParse("123456789012");
+	it("accepts a password of exactly 8 characters", () => {
+		const result = newPasswordSchema.safeParse("12345678");
 		expect(result.success).toBe(true);
 	});
 

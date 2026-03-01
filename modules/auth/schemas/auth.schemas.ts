@@ -18,11 +18,11 @@ export const callbackURLSchema = z
 
 /**
  * Schéma de validation pour les nouveaux mots de passe
- * Aligned with AUTH_PASSWORD_CONFIG.minLength (12 chars, OWASP recommendation)
+ * Aligned with AUTH_PASSWORD_CONFIG.minLength (8 chars)
  */
 export const newPasswordSchema = z
 	.string()
-	.min(12, "Le mot de passe doit contenir au moins 12 caractères")
+	.min(8, "Le mot de passe doit contenir au moins 8 caractères")
 	.max(128, "Le mot de passe ne doit pas dépasser 128 caractères");
 
 // ============================================================================
@@ -34,11 +34,11 @@ export const changePasswordSchema = z
 		currentPassword: z.string().min(1, "Le mot de passe actuel est requis"),
 		newPassword: z
 			.string()
-			.min(12, "Le nouveau mot de passe doit contenir au moins 12 caractères")
+			.min(8, "Le nouveau mot de passe doit contenir au moins 8 caractères")
 			.max(128, "Le nouveau mot de passe ne doit pas dépasser 128 caractères"),
 		confirmPassword: z
 			.string()
-			.min(12, "Le mot de passe doit contenir au moins 12 caractères")
+			.min(8, "Le mot de passe doit contenir au moins 8 caractères")
 			.max(128, "Le mot de passe ne doit pas dépasser 128 caractères"),
 	})
 	.refine((data) => data.newPassword === data.confirmPassword, {

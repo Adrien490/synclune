@@ -7,13 +7,12 @@ export type { PasswordRule } from "@/shared/types/utility.types";
 // ============================================================================
 
 /**
- * Password rules aligned with OWASP recommendations (12 chars minimum).
- * Progressive feedback helps users create strong passwords.
+ * Password rules for progressive strength feedback.
  */
 export const PASSWORD_RULES: PasswordRule[] = [
 	{
-		label: "Au moins 12 caractères",
-		test: (password) => password.length >= 12,
+		label: "Au moins 8 caractères",
+		test: (password) => password.length >= 8,
 	},
 	{
 		label: "Contient une majuscule et une minuscule",

@@ -146,7 +146,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ");
 		form.setFieldValue("shipping.fullName", fullName);
 		form.setFieldValue("shipping.addressLine1", address.address1);
-		form.setFieldValue("shipping.addressLine2", address.address2);
+		form.setFieldValue("shipping.addressLine2", address.address2 ?? "");
 		form.setFieldValue("shipping.city", address.city);
 		form.setFieldValue("shipping.postalCode", address.postalCode);
 		form.setFieldValue("shipping.country", address.country);

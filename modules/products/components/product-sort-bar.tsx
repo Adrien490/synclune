@@ -62,9 +62,11 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		isOpen: isFilterOpen,
 	} = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const { isOpen: isSkuSelectorOpen } = useDialog(SKU_SELECTOR_DIALOG_ID);
+	const { isOpen: isMenuOpen } = useDialog("menu-sheet");
 	const isAnySheetOpen = useSheetStore((state) => state.openSheet !== null);
 
-	const isHidden = isSearchOpen || isFilterOpen || sortOpen || isSkuSelectorOpen || isAnySheetOpen;
+	const isHidden =
+		isSearchOpen || isFilterOpen || sortOpen || isSkuSelectorOpen || isAnySheetOpen || isMenuOpen;
 
 	const searchParams = useSearchParams();
 

@@ -12,8 +12,8 @@
 export const AUTH_PASSWORD_CONFIG = {
 	/** Duree de validite du token de reinitialisation (en secondes) - 1 heure */
 	resetTokenExpiresIn: 3600,
-	/** Longueur minimale du mot de passe (OWASP recommends 12+) */
-	minLength: 12,
+	/** Longueur minimale du mot de passe */
+	minLength: 8,
 	/** Longueur maximale du mot de passe */
 	maxLength: 128,
 } as const;
