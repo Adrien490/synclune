@@ -121,15 +121,13 @@ export async function FaqSection() {
 			</a>
 
 			{/* JSON-LD Schema for SEO */}
-			<div hidden>
-				<script
-					id="faq-schema"
-					type="application/ld+json"
-					dangerouslySetInnerHTML={{
-						__html: JSON.stringify(faqSchema).replace(/</g, "\\u003c"),
-					}}
-				/>
-			</div>
+			<script
+				id="faq-schema"
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(faqSchema).replace(/</g, "\\u003c"),
+				}}
+			/>
 
 			<div className={CONTAINER_CLASS}>
 				<header className="mb-10 text-center lg:mb-12">
