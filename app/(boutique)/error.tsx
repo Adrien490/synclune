@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { ParticleBackground } from "@/shared/components/animations"
-import { Button } from "@/shared/components/ui/button"
-import type { ErrorPageProps } from "@/shared/types/error.types"
-import Link from "next/link"
+import { ParticleBackground } from "@/shared/components/animations";
+import { Button } from "@/shared/components/ui/button";
+import type { ErrorPageProps } from "@/shared/types/error.types";
+import Link from "next/link";
 
 export default function BoutiqueError({ error, reset }: ErrorPageProps) {
 	return (
 		<main
-			className="relative min-h-screen bg-linear-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center px-4"
+			className="from-background via-primary/5 to-secondary/10 relative flex min-h-screen items-center justify-center bg-linear-to-br px-4"
 			role="alert"
 			aria-live="assertive"
 		>
@@ -19,21 +19,21 @@ export default function BoutiqueError({ error, reset }: ErrorPageProps) {
 				opacity={[0.15, 0.35]}
 				blur={[8, 24]}
 			/>
-			<div className="relative z-10 text-center space-y-8 max-w-2xl mx-auto">
+			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<div className="space-y-4">
-					<p className="text-8xl mb-4" aria-hidden="true">
+					<p className="mb-4 text-8xl" aria-hidden="true">
 						🌙
 					</p>
-					<h1 className="text-3xl md:text-4xl font-display font-semibold text-foreground">
+					<h1 className="font-display text-foreground text-3xl font-semibold md:text-4xl">
 						Oups, un petit souci technique
 					</h1>
-					<p className="text-lg md:text-xl text-muted-foreground">
-						Ne vous inquiétez pas, ce n'est pas de votre faute ! Réessayez dans
-						quelques instants ou retournez à l'accueil.
+					<p className="text-muted-foreground text-lg md:text-xl">
+						Ne vous inquiétez pas, ce n'est pas de votre faute ! Réessayez dans quelques instants ou
+						retournez à l'accueil.
 					</p>
 				</div>
 
-				<div className="flex flex-col sm:flex-row gap-4 justify-center">
+				<div className="flex flex-col justify-center gap-4 sm:flex-row">
 					<Button onClick={reset} size="lg">
 						Réessayer
 					</Button>
@@ -42,12 +42,8 @@ export default function BoutiqueError({ error, reset }: ErrorPageProps) {
 					</Button>
 				</div>
 
-				{error.digest && (
-					<p className="text-xs text-muted-foreground/60">
-						Code : {error.digest}
-					</p>
-				)}
+				{error.digest && <p className="text-muted-foreground/60 text-xs">Code : {error.digest}</p>}
 			</div>
 		</main>
-	)
+	);
 }

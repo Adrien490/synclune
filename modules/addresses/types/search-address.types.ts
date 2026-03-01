@@ -44,9 +44,7 @@ export type CompletionPositionOfInterest = {
 /**
  * Type union des résultats possibles
  */
-export type CompletionResult =
-	| CompletionStreetAddress
-	| CompletionPositionOfInterest;
+export type CompletionResult = CompletionStreetAddress | CompletionPositionOfInterest;
 
 /**
  * Type représentant la réponse complète de l'API d'autocomplétion

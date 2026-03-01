@@ -13,13 +13,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { cn } from "@/shared/utils/cn";
 import { AlertTriangle, Package, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -47,15 +44,9 @@ export function CollectionProductsList({
 	collectionSlug,
 	products,
 }: CollectionProductsListProps) {
-	const { open: openSetFeaturedDialog } = useAlertDialog(
-		SET_FEATURED_PRODUCT_DIALOG_ID
-	);
+	const { open: openSetFeaturedDialog } = useAlertDialog(SET_FEATURED_PRODUCT_DIALOG_ID);
 
-	const handleSetFeatured = (
-		productId: string,
-		productTitle: string,
-		isFeatured: boolean
-	) => {
+	const handleSetFeatured = (productId: string, productTitle: string, isFeatured: boolean) => {
 		openSetFeaturedDialog({
 			collectionId,
 			collectionSlug,
@@ -89,17 +80,15 @@ export function CollectionProductsList({
 							<TableHead className="w-20">Image</TableHead>
 							<TableHead>Produit</TableHead>
 							<TableHead className="hidden sm:table-cell">Statut</TableHead>
-							<TableHead className="hidden md:table-cell text-right">
-								Prix
-							</TableHead>
+							<TableHead className="hidden text-right md:table-cell">Prix</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{products.map((pc) => {
 							const product = pc.product;
 							const defaultSku = product.skus.find((s) => s.isDefault) || product.skus[0];
-							const primaryImage = defaultSku?.images.find((i) => i.isPrimary) ||
-								defaultSku?.images[0];
+							const primaryImage =
+								defaultSku?.images.find((i) => i.isPrimary) || defaultSku?.images[0];
 							const price = defaultSku?.priceInclTax;
 
 							return (
@@ -113,24 +102,19 @@ export function CollectionProductsList({
 													size="icon"
 													className="h-8 w-8"
 													onClick={() =>
-														handleSetFeatured(
-															product.id,
-															product.title,
-															pc.isFeatured
-														)
+														handleSetFeatured(product.id, product.title, pc.isFeatured)
 													}
 													aria-label={
-														pc.isFeatured
-															? "Retirer le statut vedette"
-															: "Definir comme vedette"
+														pc.isFeatured ? "Retirer le statut vedette" : "Definir comme vedette"
 													}
 												>
 													<Star
-														className={`h-5 w-5 transition-colors ${
+														className={cn(
+															"h-5 w-5 transition-colors",
 															pc.isFeatured
 																? "fill-yellow-400 text-yellow-400"
-																: "text-muted-foreground hover:text-yellow-400"
-														}`}
+																: "text-muted-foreground hover:text-yellow-400",
+														)}
 													/>
 												</Button>
 											</TooltipTrigger>
@@ -145,7 +129,7 @@ export function CollectionProductsList({
 									{/* Image */}
 									<TableCell>
 										{primaryImage ? (
-											<div className="relative h-12 w-12 overflow-hidden rounded-md bg-muted">
+											<div className="bg-muted relative h-12 w-12 overflow-hidden rounded-md">
 												<Image
 													src={primaryImage.url}
 													alt={primaryImage.altText || product.title}
@@ -155,8 +139,8 @@ export function CollectionProductsList({
 												/>
 											</div>
 										) : (
-											<div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center">
-												<Package className="h-5 w-5 text-muted-foreground" />
+											<div className="bg-muted flex h-12 w-12 items-center justify-center rounded-md">
+												<Package className="text-muted-foreground h-5 w-5" />
 											</div>
 										)}
 									</TableCell>
@@ -171,9 +155,7 @@ export function CollectionProductsList({
 												{product.title}
 											</Link>
 											{product.type && (
-												<span className="text-xs text-muted-foreground">
-													{product.type.label}
-												</span>
+												<span className="text-muted-foreground text-xs">{product.type.label}</span>
 											)}
 										</div>
 									</TableCell>
@@ -201,11 +183,9 @@ export function CollectionProductsList({
 									</TableCell>
 
 									{/* Prix */}
-									<TableCell className="hidden md:table-cell text-right">
+									<TableCell className="hidden text-right md:table-cell">
 										{price ? (
-											<span className="font-medium">
-												{formatEuro(price)}
-											</span>
+											<span className="font-medium">{formatEuro(price)}</span>
 										) : (
 											<span className="text-muted-foreground">-</span>
 										)}

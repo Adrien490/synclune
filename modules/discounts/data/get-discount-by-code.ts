@@ -17,7 +17,7 @@ export type { GetDiscountByCodeParams, GetDiscountByCodeReturn } from "../types/
  * Utilise un select minimal pour les performances
  */
 export async function getDiscountByCode(
-	params: Partial<GetDiscountByCodeParams>
+	params: Partial<GetDiscountByCodeParams>,
 ): Promise<GetDiscountByCodeReturn> {
 	const validation = getDiscountByCodeSchema.safeParse(params ?? {});
 
@@ -32,7 +32,7 @@ export async function getDiscountByCode(
  * Récupère le discount depuis la DB avec cache
  */
 async function fetchDiscountByCode(
-	params: GetDiscountByCodeParams
+	params: GetDiscountByCodeParams,
 ): Promise<GetDiscountByCodeReturn> {
 	"use cache";
 	cacheDiscountDetail(params.code);

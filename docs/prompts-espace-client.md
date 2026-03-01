@@ -9,18 +9,22 @@
 **Contexte :** La page `/compte` existe mais n'affiche qu'un profil basique (nom, email, date membre). Elle doit devenir un vrai tableau de bord avec stats et commandes recentes.
 
 **Fichier a modifier :**
+
 - `app/(boutique)/(espace-client)/compte/page.tsx`
 
 **Composants existants a integrer :**
+
 - `AccountStatsCards` (`modules/users/components/account-stats-cards.tsx`) — accepte `{ statsPromise: Promise<AccountStats>, memberSince: Date }`, utilise `use()` pour resoudre la promise. Affiche 2 cartes : "Membre depuis" et "Commandes passees". Doit etre enveloppe dans `<Suspense>` avec `AccountStatsCardsSkeleton` comme fallback.
 - `RecentOrders` (`modules/orders/components/recent-orders.tsx`) — accepte `{ ordersPromise: ReturnType<typeof getUserOrders>, limit?: number, showViewAll?: boolean }`, utilise `use()`. Affiche un tableau des commandes recentes ou un empty state. Doit etre enveloppe dans `<Suspense>`.
 
 **Data fetchers disponibles :**
+
 - `getAccountStats()` depuis `modules/users/data/get-account-stats.ts` → retourne `Promise<AccountStats | null>`
 - `getCurrentUser()` depuis `modules/users/data/get-current-user.ts` → retourne l'utilisateur avec `createdAt`
 - `getUserOrders()` depuis `modules/orders/data/get-user-orders.ts` → retourne `Promise<GetUserOrdersReturn>`
 
 **Implementation attendue :**
+
 1. Conserver le `PageHeader` compact existant avec "Tableau de bord" et "Bonjour {prenom}"
 2. Ajouter `AccountStatsCards` dans un `<Suspense>` avec `AccountStatsCardsSkeleton` comme fallback, en passant `statsPromise={getAccountStats()}` et `memberSince={user.createdAt}`
 3. Ajouter `RecentOrders` dans un `<Suspense>` en dessous, avec `ordersPromise={getUserOrders({ perPage: 5 })}`, `limit={5}`, `showViewAll={true}`
@@ -37,22 +41,27 @@
 **Contexte :** La page liste des commandes n'existe pas. Tous les composants et le backend sont prets.
 
 **Fichier a creer :**
+
 - `app/(boutique)/(espace-client)/commandes/page.tsx`
 
 **Composants existants :**
+
 - `CustomerOrdersTable` (`modules/orders/components/customer/customer-orders-table.tsx`) — server component async qui accepte la promise des commandes. Inclut deja `CursorPagination` integre. Affiche un tableau avec colonnes : numero, date, statut, livraison, articles, total. Gere le empty state avec composant `Empty`.
 - `CustomerOrdersTableSkeleton` (`modules/orders/components/customer/customer-orders-table-skeleton.tsx`) — skeleton de chargement
 - `SortSelect` (`shared/components/sort-select.tsx`) — select de tri utilisant `useSortSelect()` qui lit/ecrit le search param `sort` dans l'URL
 
 **Data fetcher :**
+
 - `getUserOrders(params?)` depuis `modules/orders/data/get-user-orders.ts` → retourne `{ orders, pagination }`
 - Params : `{ cursor?, direction?, perPage?, sortBy?, search? }` — le schema est dans `modules/orders/schemas/user-orders.schemas.ts`
 
 **Constants :**
+
 - `USER_ORDERS_SORT_OPTIONS` dans `modules/orders/constants/user-orders.constants.ts` — 4 options de tri
 - `USER_ORDERS_DEFAULT_PER_PAGE` — 10 par defaut
 
 **Implementation attendue :**
+
 1. Server component async avec `searchParams` (Next.js 16 : `searchParams` est une Promise)
 2. Parser les search params avec le schema Zod `getUserOrdersSchema`
 3. `PageHeader` compact avec titre "Mes commandes"
@@ -63,20 +72,21 @@
 **Metadata :** `export const metadata: Metadata = { title: "Mes commandes" }`
 
 **Pattern search params (Next.js 16) :**
+
 ```typescript
 export default async function OrdersPage({
 	searchParams,
 }: {
-	searchParams: Promise<Record<string, string | string[] | undefined>>
+	searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-	const params = await searchParams
+	const params = await searchParams;
 	const parsed = getUserOrdersSchema.parse({
 		cursor: params.cursor,
 		direction: params.direction,
 		perPage: params.perPage ? Number(params.perPage) : undefined,
 		sortBy: params.sort,
 		search: params.search,
-	})
+	});
 	// ...
 }
 ```
@@ -88,27 +98,33 @@ export default async function OrdersPage({
 **Contexte :** La page detail commande n'existe pas. Tous les composants d'affichage existent. La page assemble les composants dans une grille 2/3 + 1/3.
 
 **Fichier a creer :**
+
 - `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx`
 
 **Data fetcher :**
+
 - `getOrder({ orderNumber })` depuis `modules/orders/data/get-order.ts` — gere l'auth et le scope userId automatiquement. Retourne `Order | null`. Si null, appeler `notFound()`.
 
 **Composants existants (colonne principale 2/3) :**
+
 - `OrderItemsList` (`modules/orders/components/customer/order-items-list.tsx`) — liste des articles
 - `OrderStatusTimeline` (`modules/orders/components/customer/order-status-timeline.tsx`) — timeline de statut
 - `OrderTracking` (`modules/orders/components/customer/order-tracking.tsx`) — suivi colis, visible seulement si `order.trackingNumber`
 
 **Composants existants (colonne sidebar 1/3) :**
+
 - `OrderSummaryCard` (`modules/orders/components/customer/order-summary-card.tsx`) — recapitulatif montants
 - `OrderAddressesCard` (`modules/orders/components/customer/order-addresses-card.tsx`) — adresse de livraison
 - `DownloadInvoiceButton` (`modules/orders/components/customer/download-invoice-button.tsx`) — visible seulement si `order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED"`
 
 **Composants a creer dans des prompts separes :**
+
 - `OrderRefundsCard` (Feature D) — colonne principale, apres OrderItemsList
 - `RequestReturnButton` (Feature H) — sidebar, apres DownloadInvoiceButton
 - `CancelOrderButton` (Feature K) — sidebar, en dernier
 
 **Implementation attendue :**
+
 1. Server component async avec `params: Promise<{ orderNumber: string }>`
 2. Fetch la commande avec `getOrder({ orderNumber })`, `notFound()` si null
 3. Grille responsive : `grid grid-cols-1 lg:grid-cols-3 gap-6`
@@ -117,10 +133,11 @@ export default async function OrdersPage({
 6. `PageHeader` compact avec titre "Commande {orderNumber}" et bouton retour vers `/commandes`
 
 **Metadata dynamique :**
+
 ```typescript
 export async function generateMetadata({ params }: { params: Promise<{ orderNumber: string }> }) {
-	const { orderNumber } = await params
-	return { title: `Commande ${orderNumber}` }
+	const { orderNumber } = await params;
+	return { title: `Commande ${orderNumber}` };
 }
 ```
 
@@ -133,13 +150,16 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 **Contexte :** La page des avis n'existe pas. Les composants individuels existent tous. Il faut creer la page qui les assemble.
 
 **Fichier a creer :**
+
 - `app/(boutique)/(espace-client)/mes-avis/page.tsx`
 
 **Data fetchers :**
+
 - `getUserReviews()` depuis `modules/reviews/data/get-user-reviews.ts` → retourne `Promise<ReviewUser[]>`
 - `getReviewableProducts()` depuis `modules/reviews/data/get-reviewable-products.ts` → retourne `Promise<ReviewableProduct[]>`
 
 **Composants existants :**
+
 - `UserReviewCard` (`modules/reviews/components/user-review-card.tsx`) — carte d'avis avec image, etoiles, statut, contenu, reponse marque. Props : `{ review: ReviewUser, className? }`
 - `UserReviewCardActions` (inclus dans UserReviewCard) — actions modifier/supprimer
 - `ReviewableProductCard` (`modules/reviews/components/reviewable-product-card.tsx`) — carte produit evaluable avec bouton "Laisser un avis" ouvrant un dialog. Props : `{ product: ReviewableProduct, className? }`. Client component.
@@ -147,6 +167,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 - `DeleteReviewAlertDialog` (`modules/reviews/components/delete-review-alert-dialog.tsx`) — dialog suppression, utilise l'alert dialog store Zustand
 
 **Implementation attendue :**
+
 1. Server component async
 2. `PageHeader` compact avec titre "Mes avis"
 3. Fetch les deux promises en parallele (ne pas await, passer comme promises)
@@ -165,18 +186,22 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 **Contexte :** La page adresses n'existe pas. Tous les composants existent, y compris le composant liste avec empty state.
 
 **Fichier a creer :**
+
 - `app/(boutique)/(espace-client)/adresses/page.tsx`
 
 **Data fetcher :**
+
 - `getUserAddresses()` depuis `modules/addresses/data/get-user-addresses.ts` → retourne `Promise<UserAddress[] | null>`
 
 **Composants existants :**
+
 - `AddressList` (`modules/addresses/components/address-list.tsx`) — grille + empty state integre. Accepte une promise via `use()`. Inclut le bouton "Ajouter" et les `AddressCard` avec actions (modifier, supprimer, definir par defaut).
 - `AddressListSkeleton` (`modules/addresses/components/address-list-skeleton.tsx`) — skeleton
 - `AddressFormDialog` (`modules/addresses/components/address-form-dialog.tsx`) — dialog creation/edition
 - `DeleteAddressAlertDialog` (`modules/addresses/components/delete-address-alert-dialog.tsx`) — dialog suppression
 
 **Implementation attendue :**
+
 1. Server component async, tres simple
 2. `PageHeader` compact avec titre "Mes adresses"
 3. `AddressList` dans un `<Suspense>` avec `AddressListSkeleton`, en passant `addressesPromise={getUserAddresses()}`
@@ -193,16 +218,20 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 **Contexte :** La page des demandes de personnalisation n'existe pas. Les composants liste et carte existent.
 
 **Fichier a creer :**
+
 - `app/(boutique)/(espace-client)/mes-demandes/page.tsx`
 
 **Data fetcher :**
+
 - `getUserCustomizationRequests()` depuis `modules/customizations/data/get-user-customization-requests.ts` → retourne une promise de demandes
 
 **Composants existants :**
+
 - `CustomizationRequestList` (`modules/customizations/components/customer/customization-request-list.tsx`) — liste avec empty state, accepte une promise via `use()`. Affiche grille de `CustomizationRequestCard`. Empty state : lien vers `/personnalisation`.
 - `CustomizationRequestCard` (`modules/customizations/components/customer/customization-request-card.tsx`) — carte individuelle avec statut, details, images d'inspiration
 
 **Implementation attendue :**
+
 1. Server component async, tres simple
 2. `PageHeader` compact avec titre "Mes demandes"
 3. `CustomizationRequestList` dans un `<Suspense>` en passant la promise
@@ -216,20 +245,24 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 **Contexte :** La page parametres n'existe pas. Elle rassemble profil, securite, RGPD, newsletter et sessions actives dans une grille 2/3 + 1/3. Le composant `SecuritySection` n'existe pas et doit etre cree.
 
 **Fichier a creer :**
+
 - `app/(boutique)/(espace-client)/parametres/page.tsx`
 
 **Composant a creer :**
+
 - `modules/users/components/security-section.tsx` — wrapper qui affiche :
   1. Un bouton "Modifier mon mot de passe" ouvrant `ChangePasswordDialog` (uniquement si le compte utilise le provider "email" — les comptes OAuth n'ont pas de mot de passe)
   2. Un statut de verification email avec `ResendVerificationButton` si `emailVerified === false`
   3. Les providers OAuth connectes (Google, GitHub) affiches en lecture seule ("Connecte via Google", etc.)
 
 **Data fetchers :**
+
 - `getCurrentUser()` depuis `modules/users/data/get-current-user.ts` — retourne l'utilisateur
 - `getSubscriptionStatus()` depuis `modules/newsletter/data/get-subscription-status.ts` — retourne `{ isSubscribed, email, isConfirmed }`
 - Pour les providers OAuth : requete Prisma sur le modele `Account` filtre par `userId` (select `providerId` uniquement)
 
 **Composants existants :**
+
 - `ProfileForm` (`modules/users/components/profile-form.tsx`) — formulaire nom + email disabled. Props : `{ user: { name, email } }`
 - `ChangePasswordDialog` (`modules/users/components/change-password-dialog.tsx`) — dialog modal. Props : `{ open, onOpenChange }`
 - `ResendVerificationButton` (`modules/users/components/resend-verification-button.tsx`) — bouton avec cooldown 60s
@@ -240,6 +273,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 **Implementation attendue :**
 
 **Page (`parametres/page.tsx`) :**
+
 1. Server component async
 2. `PageHeader` compact avec titre "Parametres"
 3. Grille responsive : `grid grid-cols-1 lg:grid-cols-3 gap-6`
@@ -248,6 +282,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 6. Passer les donnees utilisateur a `ProfileForm` et `SecuritySection`
 
 **SecuritySection (`security-section.tsx`) :**
+
 1. Client component (`"use client"`)
 2. Props : `{ emailVerified: boolean, providers: string[] }` (providers = liste des `providerId` du modele `Account`)
 3. `Card` avec titre "Securite" et icone `Shield`
@@ -264,11 +299,13 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 **Contexte :** `OrderSummaryCard` affiche deja `discountAmount` en vert mais pas le code promo utilise. `GET_ORDER_SELECT` inclut deja `discountUsages` avec `discountCode` et `amountApplied`. Il suffit de modifier le composant d'affichage.
 
 **Fichier a modifier :**
+
 - `modules/orders/components/customer/order-summary-card.tsx`
 
 **Donnees disponibles :** `order.discountUsages` est un tableau de `{ discountCode: string, amountApplied: number }` deja present dans le select.
 
 **Modification attendue :**
+
 1. Ajouter `discountUsages` au type des props du composant (dans l'interface `order`)
 2. Dans le bloc qui affiche la reduction (`order.discountAmount > 0`), modifier la ligne :
    - **Avant :** `<span>Reduction</span>`
@@ -276,6 +313,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 3. Si plusieurs codes (rare), les joindre par virgule : `(PROMO20, BIENVENUE)`
 
 **Resultat visuel :**
+
 - Avant : `Reduction -12,50 EUR`
 - Apres : `Reduction (PROMO20) -12,50 EUR`
 
@@ -286,9 +324,11 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 **Contexte :** `GET_ORDER_SELECT` inclut deja `refunds` avec les items, statuts et montants. Il faut creer un composant client pour les afficher dans la page detail commande.
 
 **Fichier a creer :**
+
 - `modules/orders/components/customer/order-refunds-card.tsx`
 
 **Donnees disponibles (via `GET_ORDER_SELECT`) :**
+
 ```typescript
 order.refunds: Array<{
 	id: string
@@ -309,11 +349,13 @@ order.refunds: Array<{
 ```
 
 **Constants existantes a reutiliser (NE PAS creer de doublons) :**
+
 - `REFUND_STATUS_LABELS` dans `modules/refunds/constants/refund.constants.ts` : "En attente", "Approuve", "Rembourse", etc.
 - `REFUND_STATUS_COLORS` dans le meme fichier : hex strings (`#f59e0b`, `#3b82f6`, etc.) — utiliser `style={{ color }}` ou `style={{ backgroundColor }}`
 - `REFUND_REASON_LABELS` : "Retractation client", "Produit defectueux", etc.
 
 **Implementation attendue :**
+
 1. Server component
 2. Props : `{ refunds: Order["refunds"] }` (type infere du select)
 3. Ne PAS rendre le composant si `refunds.length === 0` (gere dans la page parente)
@@ -335,21 +377,26 @@ order.refunds: Array<{
 **Contexte :** L'action `requestReturn` existe et est complete dans `modules/refunds/actions/request-return.ts`. Elle gere auth, rate limit, IDOR, verification 14 jours, creation Refund PENDING. Il faut creer le composant bouton + dialog.
 
 **Fichier a creer :**
+
 - `modules/refunds/components/customer/request-return-button.tsx`
 
 **Action existante :**
+
 - `requestReturn` dans `modules/refunds/actions/request-return.ts` — attend `FormData` avec `orderId`, `reason`, `message`
 
 **Schema existant :**
+
 - `requestReturnSchema` dans `modules/refunds/schemas/refund.schemas.ts` — `orderId: cuid2`, `reason: enum(CUSTOMER_REQUEST, DEFECTIVE, WRONG_ITEM)`, `message: string.max(500).optional()`
 
 **Conditions d'affichage (gerees dans la page parente) :**
+
 - `order.paymentStatus` in [`PAID`, `PARTIALLY_REFUNDED`]
 - `order.fulfillmentStatus === "DELIVERED"`
 - `order.actualDelivery + 14j > now()`
 - Aucun refund avec statut `PENDING` ou `APPROVED`
 
 **Implementation attendue :**
+
 1. Client component (`"use client"`)
 2. Props : `{ orderId: string, daysRemaining: number }` — `daysRemaining` calcule dans la page parente
 3. Bouton "Demander un retour" qui ouvre un dialog (utiliser `ResponsiveDialog` du projet pour mobile/desktop)
@@ -370,19 +417,24 @@ order.refunds: Array<{
 **Contexte :** L'action `cancelOrderCustomer` existe dans `modules/orders/actions/cancel-order-customer.ts`. Elle gere auth, IDOR, guard PENDING only, restauration stock, audit trail, email d'annulation. Il faut creer le composant bouton.
 
 **Fichier a creer :**
+
 - `modules/orders/components/customer/cancel-order-button.tsx`
 
 **Action existante :**
+
 - `cancelOrderCustomer` dans `modules/orders/actions/cancel-order-customer.ts` — attend `FormData` avec `orderNumber`
 
 **Fonction utilitaire :**
+
 - `canCancelOrder(order)` dans `modules/orders/services/order-status-validation.service.ts` — retourne `true` si pas SHIPPED/DELIVERED/CANCELLED
 
 **Conditions d'affichage (gerees dans la page parente) :**
+
 - `canCancelOrder(order)` retourne `true` (exclut SHIPPED, DELIVERED, CANCELLED)
 - Guard supplementaire client : `order.status === "PENDING"` (l'action accepte aussi PROCESSING pour les admins, mais le bouton client ne doit apparaitre que pour PENDING)
 
 **Implementation attendue :**
+
 1. Client component (`"use client"`)
 2. Props : `{ orderNumber: string }`
 3. Bouton "Annuler la commande" avec variante `destructive` ou `outline` avec texte rouge
@@ -400,14 +452,17 @@ order.refunds: Array<{
 **Contexte :** Le backend gere deja le param `search` — le schema `getUserOrdersSchema` inclut `search: z.string().max(50).optional()` et `fetch-user-orders.ts` filtre par `orderNumber contains insensitive`. Il faut creer le composant UI de recherche.
 
 **Fichier a creer :**
+
 - `modules/orders/components/customer/customer-orders-filters.tsx`
 
 **Fichier a modifier :**
+
 - `app/(boutique)/(espace-client)/commandes/page.tsx` — integrer le composant de recherche
 
 **Implementation attendue :**
 
 **CustomerOrdersFilters (`customer-orders-filters.tsx`) :**
+
 1. Client component (`"use client"`)
 2. Input de recherche par numero de commande avec icone `Search`
 3. Utiliser les search params URL (pattern existant dans le projet avec `useRouter`, `useSearchParams`, `usePathname`)
@@ -417,6 +472,7 @@ order.refunds: Array<{
 7. Afficher le filtre au-dessus du tableau, a cote du `SortSelect`
 
 **Integration dans la page commandes :**
+
 1. Layout flex entre `CustomerOrdersFilters` et `SortSelect` : `flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between`
 2. Le search param `search` est deja parse et passe a `getUserOrders()`
 
@@ -431,14 +487,17 @@ order.refunds: Array<{
 **Prerequis bloquant :** Verifier si Better Auth v2 supporte `changeEmail` nativement ou via plugin. Configurer le plugin dans `modules/auth/lib/auth.ts`.
 
 **Fichiers a creer :**
+
 - `modules/users/actions/change-email.ts` — server action
 - `modules/users/components/change-email-dialog.tsx` — dialog avec formulaire
 
 **Fichier a modifier :**
+
 - `modules/users/components/profile-form.tsx` — remplacer l'input email disabled par email affiche + bouton "Modifier" ouvrant le dialog
 - `modules/auth/lib/auth.ts` — ajouter le plugin `changeEmail` a la config Better Auth (si applicable)
 
 **Flow attendu :**
+
 1. L'utilisateur clique "Modifier mon email" dans `ProfileForm`
 2. Un dialog demande la nouvelle adresse email
 3. L'action serveur `changeEmail` :
@@ -450,6 +509,7 @@ order.refunds: Array<{
 4. Apres confirmation par l'utilisateur (clic dans l'email), l'email est mis a jour
 
 **Impacts a gerer :**
+
 - **Stripe** : mettre a jour l'email du customer Stripe si `stripeCustomerId` existe
 - **Newsletter** : mettre a jour `NewsletterSubscriber.email` si l'utilisateur est inscrit
 - Si les mises a jour Stripe/newsletter echouent, logger l'erreur mais retourner succes (le changement principal est reussi)
@@ -465,20 +525,24 @@ order.refunds: Array<{
 **Decision requise :** Cette feature depend de la Decision 3 (suppression immediate vs differee). Si differee est retenue :
 
 **Fichiers a modifier :**
+
 - `modules/users/actions/delete-account.ts` — changer pour passer a `PENDING_DELETION` au lieu d'anonymiser immediatement
 - `modules/users/components/gdpr-section.tsx` — ajouter bandeau + bouton annulation si `PENDING_DELETION`
 - `modules/users/constants/current-user.constants.ts` — ajouter `accountStatus` et `deletionRequestedAt` au `GET_CURRENT_USER_DEFAULT_SELECT`
 
 **Fichier a creer :**
+
 - `modules/users/actions/cancel-account-deletion.ts`
 
 **Prerequis : harmoniser l'anonymisation.** Les deux chemins de suppression (`delete-account.ts` et `process-account-deletions.service.ts`) utilisent des valeurs differentes pour l'anonymisation :
+
 - `delete-account.ts` : nom → "Compte supprime", noms livraison → "Anonyme"
 - `process-account-deletions.service.ts` : nom → "Utilisateur supprime", noms livraison → "X"
 
 Factoriser dans un service partage : `modules/users/services/anonymize-user.service.ts`
 
 **Modification de `delete-account.ts` :**
+
 ```typescript
 // AVANT : anonymisation immediate (tout le code de la transaction)
 // APRES :
@@ -488,37 +552,39 @@ await prisma.user.update({
 		accountStatus: "PENDING_DELETION",
 		deletionRequestedAt: new Date(),
 	},
-})
+});
 // Deconnexion + invalidation cache
 // Le cron process-account-deletions gerera l'anonymisation apres 30 jours
 ```
 
 **Action `cancelAccountDeletion` :**
+
 ```typescript
-"use server"
+"use server";
 export async function cancelAccountDeletion(): Promise<ActionState> {
-	const user = await requireAuth()
-	if ("error" in user) return user.error
+	const user = await requireAuth();
+	if ("error" in user) return user.error;
 
 	const dbUser = await prisma.user.findUnique({
 		where: { id: user.id },
 		select: { accountStatus: true },
-	})
+	});
 
 	if (dbUser?.accountStatus !== "PENDING_DELETION") {
-		return error("Aucune demande de suppression en cours")
+		return error("Aucune demande de suppression en cours");
 	}
 
 	await prisma.user.update({
 		where: { id: user.id },
 		data: { accountStatus: "ACTIVE", deletionRequestedAt: null },
-	})
+	});
 
-	return success("Demande de suppression annulee")
+	return success("Demande de suppression annulee");
 }
 ```
 
 **Modification de `GdprSection` :**
+
 - Props : ajouter `{ accountStatus?: string, deletionRequestedAt?: Date | null }`
 - Si `accountStatus === "PENDING_DELETION"` :
   - Masquer le bouton "Supprimer mon compte"
@@ -535,13 +601,17 @@ Ajouter `accountStatus: true` et `deletionRequestedAt: true` au select dans `cur
 **Contexte :** Apres avoir cree les composants des Features D, H et K, mettre a jour la page detail commande pour les integrer.
 
 **Fichier a modifier :**
+
 - `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx`
 
 **Ajouts a la colonne principale (2/3) :**
+
 - `OrderRefundsCard` apres `OrderItemsList`, conditionnel : `{order.refunds.length > 0 && <OrderRefundsCard refunds={order.refunds} />}`
 
 **Ajouts a la sidebar (1/3) :**
+
 - `RequestReturnButton` apres `DownloadInvoiceButton`, conditionnel :
+
 ```typescript
 {order.paymentStatus in ["PAID", "PARTIALLY_REFUNDED"]
 	&& order.fulfillmentStatus === "DELIVERED"
@@ -551,6 +621,7 @@ Ajouter `accountStatus: true` et `deletionRequestedAt: true` au select dans `cur
 	&& <RequestReturnButton orderId={order.id} daysRemaining={14 - Math.floor((Date.now() - order.actualDelivery.getTime()) / (24*60*60*1000))} />
 }
 ```
+
 - `CancelOrderButton` en dernier, conditionnel : `{order.status === "PENDING" && <CancelOrderButton orderNumber={order.orderNumber} />}`
 
 ---

@@ -50,7 +50,7 @@ export function useFabVisibility(options: UseFabVisibilityOptions) {
 				toast.error("Erreur lors de la modification");
 			},
 		}),
-		undefined
+		undefined,
 	);
 
 	/**

@@ -21,10 +21,7 @@ export function isDiscountCurrentlyValid(discount: DiscountValidation): boolean 
 	if (discount.startsAt && now < discount.startsAt) return false;
 	if (discount.endsAt && now > discount.endsAt) return false;
 
-	if (
-		discount.maxUsageCount &&
-		discount.usageCount >= discount.maxUsageCount
-	) {
+	if (discount.maxUsageCount && discount.usageCount >= discount.maxUsageCount) {
 		return false;
 	}
 
@@ -44,10 +41,7 @@ export function getDiscountStatus(discount: DiscountValidation): DiscountStatus 
 	if (discount.startsAt && now < discount.startsAt) return "scheduled";
 	if (discount.endsAt && now > discount.endsAt) return "expired";
 
-	if (
-		discount.maxUsageCount &&
-		discount.usageCount >= discount.maxUsageCount
-	) {
+	if (discount.maxUsageCount && discount.usageCount >= discount.maxUsageCount) {
 		return "exhausted";
 	}
 
@@ -61,10 +55,7 @@ export function getDiscountStatus(discount: DiscountValidation): DiscountStatus 
  * @param minOrderAmount - Montant minimum requis en centimes
  * @returns true si le minimum est atteint ou s'il n'y a pas de minimum
  */
-export function isMinOrderAmountMet(
-	subtotal: number,
-	minOrderAmount: number | null
-): boolean {
+export function isMinOrderAmountMet(subtotal: number, minOrderAmount: number | null): boolean {
 	if (!minOrderAmount) return true;
 	return subtotal >= minOrderAmount;
 }
@@ -76,10 +67,7 @@ export function isMinOrderAmountMet(
  * @param maxUsageCount - Limite d'utilisation
  * @returns true si la limite est atteinte
  */
-export function isMaxUsageReached(
-	usageCount: number,
-	maxUsageCount: number | null
-): boolean {
+export function isMaxUsageReached(usageCount: number, maxUsageCount: number | null): boolean {
 	if (!maxUsageCount) return false;
 	return usageCount >= maxUsageCount;
 }

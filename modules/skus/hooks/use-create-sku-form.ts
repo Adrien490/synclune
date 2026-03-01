@@ -16,9 +16,7 @@ interface UseCreateProductSkuFormOptions {
  * Hook pour le formulaire de création de variante de produit (Product SKU)
  * Utilise TanStack Form avec Next.js App Router
  */
-export const useCreateProductSkuForm = (
-	options?: UseCreateProductSkuFormOptions
-) => {
+export const useCreateProductSkuForm = (options?: UseCreateProductSkuFormOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			createProductSku,
@@ -35,18 +33,15 @@ export const useCreateProductSkuForm = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const form = useAppForm({
 		...createProductSkuFormOpts,
 		// Merge server state with form state for validation errors
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
 	// Subscribe to form errors for display

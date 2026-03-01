@@ -8,12 +8,7 @@ import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import {
-	success,
-	error,
-	validateInput,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { success, error, validateInput, handleActionError } from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteAccountSchema } from "../schemas/user.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -28,7 +23,7 @@ import { USERS_CACHE_TAGS } from "../constants/cache";
  */
 export async function deleteAccount(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
@@ -55,9 +50,7 @@ export async function deleteAccount(
 		});
 
 		if (currentUser?.accountStatus === AccountStatus.PENDING_DELETION) {
-			return error(
-				"Une demande de suppression est déjà en cours pour votre compte."
-			);
+			return error("Une demande de suppression est déjà en cours pour votre compte.");
 		}
 
 		// 5. Check no pending orders
@@ -72,7 +65,7 @@ export async function deleteAccount(
 
 		if (pendingOrders > 0) {
 			return error(
-				`Vous avez ${pendingOrders} commande(s) en cours. Veuillez attendre leur livraison avant de supprimer votre compte.`
+				`Vous avez ${pendingOrders} commande(s) en cours. Veuillez attendre leur livraison avant de supprimer votre compte.`,
 			);
 		}
 
@@ -97,7 +90,7 @@ export async function deleteAccount(
 		updateTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
 
 		return success(
-			"Votre demande de suppression a été enregistrée. Votre compte sera définitivement supprimé dans 30 jours. Vous pouvez annuler cette demande en vous reconnectant."
+			"Votre demande de suppression a été enregistrée. Votre compte sera définitivement supprimé dans 30 jours. Vous pouvez annuler cette demande en vous reconnectant.",
 		);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la demande de suppression du compte");

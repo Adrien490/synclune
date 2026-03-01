@@ -7,18 +7,8 @@ interface MediaCounterBadgeProps {
 	className?: string;
 }
 
-export function MediaCounterBadge({
-	count,
-	max,
-	className,
-}: MediaCounterBadgeProps) {
+export function MediaCounterBadge({ count, max, className }: MediaCounterBadgeProps) {
 	return (
-		<CounterBadge
-			count={count}
-			max={max}
-			label="images"
-			icon={Images}
-			className={className}
-		/>
+		<CounterBadge count={count} max={max} label="images" icon={Images} className={className} />
 	);
 }

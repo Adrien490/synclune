@@ -1,10 +1,5 @@
 import { Phone, User } from "lucide-react";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import type { OrderCustomerCardProps } from "./types";
 
 export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
@@ -19,14 +14,10 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 			<CardContent className="space-y-3">
 				<div>
 					<p className="font-medium">{order.customerName}</p>
-					{!order.userId && (
-						<p className="text-xs text-muted-foreground">Client non enregistré</p>
-					)}
-					<p className="text-sm text-muted-foreground">
-						{order.customerEmail}
-					</p>
+					{!order.userId && <p className="text-muted-foreground text-xs">Client non enregistré</p>}
+					<p className="text-muted-foreground text-sm">{order.customerEmail}</p>
 					{order.customerPhone && (
-						<p className="text-sm text-muted-foreground flex items-center gap-1">
+						<p className="text-muted-foreground flex items-center gap-1 text-sm">
 							<Phone className="h-3 w-3" aria-hidden="true" />
 							{order.customerPhone}
 						</p>

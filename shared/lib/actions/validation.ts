@@ -26,7 +26,7 @@ import type { z } from "zod";
  */
 export function validateInput<T>(
 	schema: z.ZodSchema<T>,
-	data: unknown
+	data: unknown,
 ): { data: T } | { error: ActionState } {
 	const result = schema.safeParse(data);
 
@@ -67,7 +67,7 @@ export function validateInput<T>(
 export function validateFormData<T>(
 	formData: FormData,
 	extractor: (formData: FormData) => unknown,
-	schema: z.ZodSchema<T>
+	schema: z.ZodSchema<T>,
 ): { data: T } | { error: ActionState } {
 	const rawData = extractor(formData);
 	return validateInput(schema, rawData);

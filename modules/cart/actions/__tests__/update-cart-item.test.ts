@@ -195,7 +195,7 @@ describe("updateCartItem", () => {
 
 	it("returns error when userId does not match", async () => {
 		mockPrisma.cartItem.findUnique.mockResolvedValue(
-			makeCartItem({ cart: { userId: "other-user", sessionId: null } })
+			makeCartItem({ cart: { userId: "other-user", sessionId: null } }),
 		);
 
 		await updateCartItem(undefined, makeFormData());
@@ -208,7 +208,7 @@ describe("updateCartItem", () => {
 			context: { userId: undefined, sessionId: "sess-1" },
 		});
 		mockPrisma.cartItem.findUnique.mockResolvedValue(
-			makeCartItem({ cart: { userId: null, sessionId: "other-sess" } })
+			makeCartItem({ cart: { userId: null, sessionId: "other-sess" } }),
 		);
 
 		await updateCartItem(undefined, makeFormData());
@@ -275,7 +275,7 @@ describe("updateCartItem", () => {
 			context: { userId: undefined, sessionId: "sess-1" },
 		});
 		mockPrisma.cartItem.findUnique.mockResolvedValue(
-			makeCartItem({ cart: { userId: null, sessionId: "sess-1" } })
+			makeCartItem({ cart: { userId: null, sessionId: "sess-1" } }),
 		);
 		const expDate = new Date("2030-01-01");
 		mockGetCartExpirationDate.mockReturnValue(expDate);
@@ -287,7 +287,7 @@ describe("updateCartItem", () => {
 		expect(mockCartUpdate).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ expiresAt: expDate }),
-			})
+			}),
 		);
 	});
 
@@ -304,7 +304,7 @@ describe("updateCartItem", () => {
 		await updateCartItem(undefined, makeFormData());
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			err,
-			"Une erreur est survenue lors de la mise à jour"
+			"Une erreur est survenue lors de la mise à jour",
 		);
 	});
 });

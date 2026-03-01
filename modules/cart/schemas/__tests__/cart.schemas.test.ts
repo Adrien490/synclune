@@ -19,11 +19,7 @@ vi.mock("../constants/error-messages", () => ({
 	},
 }));
 
-import {
-	addToCartSchema,
-	updateCartItemSchema,
-	removeFromCartSchema,
-} from "../cart.schemas";
+import { addToCartSchema, updateCartItemSchema, removeFromCartSchema } from "../cart.schemas";
 
 // A valid cuid2 string (26 lowercase alphanumeric chars, starts with a letter).
 const VALID_CUID = "clh1234567890abcdefghijklm";

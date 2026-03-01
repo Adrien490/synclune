@@ -14,9 +14,7 @@ export function FlexRow({ left, right, style }: FlexRowProps) {
 	return (
 		<Row style={style}>
 			<Column style={{ verticalAlign: "top" }}>{left}</Column>
-			<Column style={{ textAlign: "right", verticalAlign: "top" }}>
-				{right}
-			</Column>
+			<Column style={{ textAlign: "right", verticalAlign: "top" }}>{right}</Column>
 		</Row>
 	);
 }

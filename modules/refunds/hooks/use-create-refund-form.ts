@@ -66,9 +66,9 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 						onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const form = useAppForm({
@@ -78,10 +78,7 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 			note: "",
 			items: initializeRefundItems(orderItems, RefundReason.CUSTOMER_REQUEST),
 		} as CreateRefundFormValues,
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
 	const formErrors = useStore(form.store, (formState) => formState.errors);

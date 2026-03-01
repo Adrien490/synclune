@@ -7,13 +7,38 @@ interface TextareaProps extends React.ComponentProps<"textarea"> {
 	autoGrow?: boolean;
 }
 
-function Textarea({ className, autoGrow = false, ...props }: TextareaProps) {
+const supportsFieldSizing = typeof CSS !== "undefined" && CSS.supports("field-sizing", "content");
+
+function Textarea({ className, autoGrow = false, ref, ...props }: TextareaProps) {
+	const internalRef = React.useRef<HTMLTextAreaElement | null>(null);
+
+	// JS fallback for Safari/Firefox which don't support field-sizing: content
+	React.useEffect(() => {
+		if (!autoGrow || supportsFieldSizing) return;
+		const textarea = internalRef.current;
+		if (!textarea) return;
+
+		const resize = () => {
+			textarea.style.height = "auto";
+			textarea.style.height = `${textarea.scrollHeight}px`;
+		};
+
+		resize();
+		textarea.addEventListener("input", resize);
+		return () => textarea.removeEventListener("input", resize);
+	}, [autoGrow]);
+
 	return (
 		<textarea
+			ref={(node) => {
+				internalRef.current = node;
+				if (typeof ref === "function") ref(node);
+				else if (ref) ref.current = node;
+			}}
 			data-slot="textarea"
 			className={cn(
 				"border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex min-h-30 w-full rounded-md border bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-25 md:text-sm",
-				// field-sizing: content pour redimensionnement automatique (Tailwind 4)
+				// field-sizing: content for auto-grow (Chrome 123+, not supported in Safari/Firefox — JS fallback above)
 				autoGrow && "[field-sizing:content]",
 				className,
 			)}

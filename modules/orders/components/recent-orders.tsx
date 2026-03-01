@@ -38,11 +38,7 @@ interface RecentOrdersProps {
 	showViewAll?: boolean;
 }
 
-export function RecentOrders({
-	ordersPromise,
-	limit = 5,
-	showViewAll = false,
-}: RecentOrdersProps) {
+export function RecentOrders({ ordersPromise, limit = 5, showViewAll = false }: RecentOrdersProps) {
 	const { orders, pagination } = use(ordersPromise);
 	const displayedOrders = orders.slice(0, limit);
 	// Il y a plus de commandes si on a reçu plus que le limit ou s'il y a une page suivante
@@ -51,9 +47,7 @@ export function RecentOrders({
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h2 className="text-lg/7 tracking-tight antialiased font-semibold">
-					Commandes récentes
-				</h2>
+				<h2 className="text-lg/7 font-semibold tracking-tight antialiased">Commandes récentes</h2>
 			</div>
 
 			{orders.length === 0 ? (
@@ -63,9 +57,7 @@ export function RecentOrders({
 							<Package className="size-6" />
 						</EmptyMedia>
 						<EmptyTitle>Aucune commande</EmptyTitle>
-						<EmptyDescription>
-							Vous n'avez pas encore passé de commande
-						</EmptyDescription>
+						<EmptyDescription>Vous n'avez pas encore passé de commande</EmptyDescription>
 					</EmptyHeader>
 					<EmptyContent>
 						<Button asChild>
@@ -75,7 +67,7 @@ export function RecentOrders({
 				</Empty>
 			) : (
 				<>
-					<TableScrollContainer className="border rounded-lg">
+					<TableScrollContainer className="rounded-lg border">
 						<Table>
 							<TableHeader>
 								<TableRow>
@@ -90,7 +82,7 @@ export function RecentOrders({
 							<TableBody>
 								{displayedOrders.map((order: UserOrder) => (
 									<TableRow key={order.id}>
-										<TableCell className="text-sm/6 tracking-normal antialiased font-medium">
+										<TableCell className="text-sm/6 font-medium tracking-normal antialiased">
 											#{order.orderNumber}
 										</TableCell>
 										<TableCell>
@@ -101,13 +93,13 @@ export function RecentOrders({
 												{ORDER_STATUS_LABELS[order.status]}
 											</Badge>
 										</TableCell>
-										<TableCell className="hidden sm:table-cell text-sm/6 tracking-normal antialiased text-muted-foreground">
+										<TableCell className="text-muted-foreground hidden text-sm/6 tracking-normal antialiased sm:table-cell">
 											{format(order.createdAt, "d MMM yyyy", { locale: fr })}
 										</TableCell>
-										<TableCell className="hidden md:table-cell text-sm/6 tracking-normal antialiased text-muted-foreground">
+										<TableCell className="text-muted-foreground hidden text-sm/6 tracking-normal antialiased md:table-cell">
 											{order._count.items} article{order._count.items > 1 ? "s" : ""}
 										</TableCell>
-										<TableCell className="text-right text-sm/6 tracking-normal antialiased font-semibold">
+										<TableCell className="text-right text-sm/6 font-semibold tracking-normal antialiased">
 											{formatEuro(order.total)}
 										</TableCell>
 										<TableCell>

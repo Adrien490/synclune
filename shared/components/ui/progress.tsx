@@ -15,10 +15,7 @@ function Progress({
 		<ProgressPrimitive.Root
 			data-slot="progress"
 			aria-label={ariaLabel}
-			className={cn(
-				"bg-primary/20 relative h-2 w-full overflow-hidden rounded-full",
-				className
-			)}
+			className={cn("bg-primary/20 relative h-2 w-full overflow-hidden rounded-full", className)}
 			{...props}
 		>
 			<ProgressPrimitive.Indicator

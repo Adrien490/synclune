@@ -11,20 +11,22 @@ Audit complet de la coherence entre les 25 modules du projet Synclune pour ident
 ## 1. Structure des modules
 
 ### Constat positif
+
 - Nommage des fichiers en kebab-case : 100% conforme
 - Aucun fichier "loose" a la racine des modules
 - Structure en couches (data/services/actions) globalement respectee
 
 ### Problemes identifies
 
-| Probleme | Detail |
-|----------|--------|
-| **`hooks/` non documente** | Present dans 21/25 modules mais absent de CLAUDE.md. Pattern tres repandu (wrapping des actions dans des hooks React). |
-| **`lib/` non documente** | Present dans 7 modules (auth, cart, cron, media, refunds, wishlist). Contient des integrations specifiques (rate-limit, UploadThing, Stripe). |
-| **Module `cms` vide** | 7 repertoires crees mais 0 fichier. Placeholder inutile. |
-| **`discounts/components/` vide** | Repertoire existe mais contient 0 fichier. |
+| Probleme                         | Detail                                                                                                                                        |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`hooks/` non documente**       | Present dans 21/25 modules mais absent de CLAUDE.md. Pattern tres repandu (wrapping des actions dans des hooks React).                        |
+| **`lib/` non documente**         | Present dans 7 modules (auth, cart, cron, media, refunds, wishlist). Contient des integrations specifiques (rate-limit, UploadThing, Stripe). |
+| **Module `cms` vide**            | 7 repertoires crees mais 0 fichier. Placeholder inutile.                                                                                      |
+| **`discounts/components/` vide** | Repertoire existe mais contient 0 fichier.                                                                                                    |
 
 ### Actions recommandees
+
 1. Ajouter `hooks/` et `lib/` au schema officiel dans CLAUDE.md
 2. Supprimer le module `cms` (ou le peupler si prevu)
 3. Supprimer `discounts/components/` si inutile
@@ -41,17 +43,19 @@ C'est l'axe le plus critique. Trois generations de code coexistent.
 - **~137 fichiers** (82%) utilisent `schema.safeParse()` manuellement
 
 **Pattern ancien** (collections, colors, materials, discounts, products, orders) :
+
 ```typescript
 const validation = schema.safeParse(rawData);
 if (!validation.success) {
-  return {
-    status: ActionStatus.VALIDATION_ERROR,
-    message: validation.error.issues[0]?.message || "Donnees invalides",
-  };
+	return {
+		status: ActionStatus.VALIDATION_ERROR,
+		message: validation.error.issues[0]?.message || "Donnees invalides",
+	};
 }
 ```
 
 **Pattern cible** (auth, users, addresses, customizations, reviews) :
+
 ```typescript
 const validated = validateInput(schema, rawData);
 if ("error" in validated) return validated.error;
@@ -76,15 +80,16 @@ if ("error" in validated) return validated.error;
 
 **Trois patterns coexistent :**
 
-| Pattern | Fichiers | Risque |
-|---------|----------|--------|
-| `handleActionError(e, "msg")` | 79 | Securise : masque les erreurs techniques, expose uniquement les `BusinessError` |
-| `console.error("[TAG]", error)` + retour manuel | ~50 | Moyen : ne log pas via le helper centralise, mais ne leak pas d'info |
-| `error.message` expose directement | ~10 | **Securite** : peut exposer des erreurs Prisma/Stripe a l'utilisateur |
+| Pattern                                         | Fichiers | Risque                                                                          |
+| ----------------------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `handleActionError(e, "msg")`                   | 79       | Securise : masque les erreurs techniques, expose uniquement les `BusinessError` |
+| `console.error("[TAG]", error)` + retour manuel | ~50      | Moyen : ne log pas via le helper centralise, mais ne leak pas d'info            |
+| `error.message` expose directement              | ~10      | **Securite** : peut exposer des erreurs Prisma/Stripe a l'utilisateur           |
 
 **Modules problematiques (console.error sans handleActionError) :**
+
 - `discounts/` : 7 fichiers (create, delete, toggle, bulk-toggle, bulk-delete, update, duplicate)
-- `orders/` : ~12 fichiers (cancel, mark-as-*, bulk-*, delete-*, revert, update-tracking)
+- `orders/` : ~12 fichiers (cancel, mark-as-_, bulk-_, delete-\*, revert, update-tracking)
 - `newsletter/` : ~8 fichiers
 - `stock-notifications/` : ~5 fichiers
 
@@ -99,6 +104,7 @@ if ("error" in validated) return validated.error;
 ## 3. Cache invalidation
 
 ### Constat positif
+
 - Tags de cache bien structures et centralises par module (`constants/cache.ts`)
 - Correspondance entre `updateTag()` dans les actions et `cacheTag()` dans les data : conforme
 - 9 modules sur les plus importants ont un fichier `constants/cache.ts` avec des helpers d'invalidation
@@ -130,6 +136,7 @@ if ("error" in validated) return validated.error;
 ## 5. Synthese des priorites
 
 ### Priorite 1 - Securite (handleActionError)
+
 **~89 fichiers** n'utilisent pas `handleActionError()`. Parmi eux, ~10 exposent potentiellement des erreurs techniques a l'utilisateur.
 
 **Fichiers cibles** : tous les catch blocks avec `error.message` dans la response, surtout dans discounts/, orders/, newsletter/.
@@ -137,9 +144,11 @@ if ("error" in validated) return validated.error;
 **Action** : Remplacer les catch blocks manuels par `handleActionError(e, "Message par defaut")` dans tous les fichiers d'actions.
 
 ### Priorite 2 - Consistance des helpers (validateInput + success/error)
+
 **~137 fichiers** n'utilisent pas `validateInput()`, **~157** n'utilisent pas `success()`.
 
 **Action** : Migrer module par module vers les helpers. Ordre suggere :
+
 1. discounts (7 fichiers, le plus heterogene)
 2. collections (8 fichiers)
 3. colors (7 fichiers)
@@ -153,14 +162,17 @@ if ("error" in validated) return validated.error;
 11. payments, media, cart (quelques fichiers chacun)
 
 ### Priorite 3 - Suppression de revalidatePath
+
 **48 fichiers** utilisent `revalidatePath` de maniere redondante.
 
 **Action** : Supprimer les appels `revalidatePath` dans les actions qui utilisent deja `updateTag` correctement.
 
 ### Priorite 4 - sanitizeText manquant
+
 **Action** : Ajouter `sanitizeText()` dans les actions qui acceptent du texte utilisateur (name, description, etc.) et qui ne l'utilisent pas encore.
 
 ### Priorite 5 - Documentation et nettoyage
+
 - Documenter `hooks/` et `lib/` dans CLAUDE.md
 - Supprimer le module `cms` vide
 - Supprimer `discounts/components/` vide
@@ -172,6 +184,7 @@ if ("error" in validated) return validated.error;
 L'implementation se fait **module par module** pour limiter la surface de changement par commit.
 
 Pour chaque module, appliquer dans l'ordre :
+
 1. Remplacer les catch blocks par `handleActionError(e, "...")`
 2. Remplacer `safeParse()` par `validateInput()`
 3. Remplacer les `{ status: ActionStatus.SUCCESS/ERROR }` par `success()`/`error()`
@@ -180,6 +193,7 @@ Pour chaque module, appliquer dans l'ordre :
 6. Mettre a jour les imports (retirer `ActionStatus` si plus utilise)
 
 ### Fichiers cles (references)
+
 - Pattern cible (modele a suivre) : `modules/reviews/actions/create-review.ts`
 - Helpers validation : `shared/lib/actions/validation.ts`
 - Helpers responses : `shared/lib/actions/responses.ts`
@@ -187,6 +201,7 @@ Pour chaque module, appliquer dans l'ordre :
 - Index exports : `shared/lib/actions/index.ts`
 
 ### Verification
+
 - `pnpm build` apres chaque module migre (type-checking + compilation)
 - `pnpm test` pour les modules avec tests
 - Verifier manuellement un flow complet (ex: creer une collection, un produit, un discount) pour s'assurer que l'invalidation de cache fonctionne sans `revalidatePath`

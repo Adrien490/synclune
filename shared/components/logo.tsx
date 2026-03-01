@@ -44,11 +44,15 @@ export function Logo({
 }: LogoProps) {
 	// Taille du texte proportionnelle à la taille du logo
 	const textSizeClass =
-		size >= 64 ? "text-3xl" :
-		size >= 56 ? "text-2xl" :
-		size >= 48 ? "text-xl" :
-		size >= 40 ? "text-lg" :
-		"text-base";
+		size >= 64
+			? "text-3xl"
+			: size >= 56
+				? "text-2xl"
+				: size >= 48
+					? "text-xl"
+					: size >= 40
+						? "text-lg"
+						: "text-base";
 
 	// Classes communes pour les liens (évite la duplication)
 	const linkClassName = cn(
@@ -57,7 +61,7 @@ export function Logo({
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 		"rounded-full transition-transform duration-200",
 		"hover:scale-[1.02] active:scale-95",
-		"motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
+		"motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
 	);
 
 	const logoContent = (
@@ -66,7 +70,7 @@ export function Logo({
 				className={cn(
 					"relative overflow-hidden",
 					ROUNDED_CLASSES[rounded],
-					shadow && "shadow-md hover:shadow-lg transition-shadow duration-300 ease-out",
+					shadow && "shadow-md transition-shadow duration-300 ease-out hover:shadow-lg",
 					imageClassName,
 				)}
 				style={{ width: size, height: size }}
@@ -89,8 +93,8 @@ export function Logo({
 					className={cn(
 						cormorantGaramond.className,
 						textSizeClass,
-						"font-semibold text-foreground tracking-wide",
-						textClassName
+						"text-foreground font-semibold tracking-wide",
+						textClassName,
 					)}
 				>
 					{BRAND.name}
@@ -102,11 +106,7 @@ export function Logo({
 	// Homepage logo
 	if (href === "/") {
 		return (
-			<Link
-				href={href}
-				className={linkClassName}
-				aria-label={`${BRAND.name} - Accueil`}
-			>
+			<Link href={href} className={linkClassName} aria-label={`${BRAND.name} - Accueil`}>
 				{logoContent}
 			</Link>
 		);
@@ -115,16 +115,11 @@ export function Logo({
 	// Autres liens (sans Schema.org)
 	if (href) {
 		// Génère un label accessible basé sur la destination
-		const linkLabel = href === "/admin"
-			? `${BRAND.name} - Administration`
-			: `${BRAND.name} - Accueil`;
+		const linkLabel =
+			href === "/admin" ? `${BRAND.name} - Administration` : `${BRAND.name} - Accueil`;
 
 		return (
-			<Link
-				href={href}
-				className={linkClassName}
-				aria-label={linkLabel}
-			>
+			<Link href={href} className={linkClassName} aria-label={linkLabel}>
 				{logoContent}
 			</Link>
 		);

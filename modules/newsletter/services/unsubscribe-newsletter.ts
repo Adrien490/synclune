@@ -17,9 +17,7 @@ interface UnsubscribeResult {
  * Called directly from async server component (no action/form needed).
  * Follows the webhook exception pattern: transactional service with complete logic.
  */
-export async function unsubscribeNewsletter(
-	token: string | undefined
-): Promise<UnsubscribeResult> {
+export async function unsubscribeNewsletter(token: string | undefined): Promise<UnsubscribeResult> {
 	try {
 		// Arcjet protection: Shield + Rate Limiting against brute-force
 		const headersList = await headers();
@@ -42,20 +40,16 @@ export async function unsubscribeNewsletter(
 			}
 
 			if (decision.reason.isShield()) {
-				console.warn(
-					"[UNSUBSCRIBE_NEWSLETTER] Shield blocked suspicious request"
-				);
+				console.warn("[UNSUBSCRIBE_NEWSLETTER] Shield blocked suspicious request");
 				return {
 					success: false,
-					message:
-						"Votre requête a été bloquée pour des raisons de sécurité.",
+					message: "Votre requête a été bloquée pour des raisons de sécurité.",
 				};
 			}
 
 			return {
 				success: false,
-				message:
-					"Votre requête n'a pas pu être traitée. Veuillez réessayer.",
+				message: "Votre requête n'a pas pu être traitée. Veuillez réessayer.",
 			};
 		}
 
@@ -91,8 +85,7 @@ export async function unsubscribeNewsletter(
 		if (subscriber.status === NewsletterStatus.UNSUBSCRIBED) {
 			return {
 				success: true,
-				message:
-					"Vous êtes déjà désinscrit(e) de la newsletter. Aucune action nécessaire.",
+				message: "Vous êtes déjà désinscrit(e) de la newsletter. Aucune action nécessaire.",
 			};
 		}
 

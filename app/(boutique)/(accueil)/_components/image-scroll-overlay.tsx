@@ -32,7 +32,7 @@ export function ImageScrollOverlay() {
 	return (
 		<motion.div
 			ref={ref}
-			className="absolute inset-0 z-[1] pointer-events-none hidden lg:block"
+			className="pointer-events-none absolute inset-0 z-[1] hidden lg:block"
 			style={{
 				opacity,
 				background: `linear-gradient(135deg, oklch(0.72 0.19 12 / 0.1), oklch(0.82 0.12 70 / 0.1))`,

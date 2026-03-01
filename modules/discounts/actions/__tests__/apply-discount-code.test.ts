@@ -121,21 +121,17 @@ describe("applyDiscountCode", () => {
 		expect(mockEnforceRateLimit).toHaveBeenCalledWith(
 			"ip:192.168.1.1",
 			"validate-discount",
-			"192.168.1.1"
+			"192.168.1.1",
 		);
 	});
 
-	it("should use \"unknown\" IP when getClientIp returns null", async () => {
+	it('should use "unknown" IP when getClientIp returns null', async () => {
 		mockGetClientIp.mockResolvedValue(null);
 
 		const formData = createFormData({ code: "SUMMER20", subtotal: "5000" });
 		await applyDiscountCode(undefined, formData);
 
-		expect(mockEnforceRateLimit).toHaveBeenCalledWith(
-			"ip:unknown",
-			"validate-discount",
-			"unknown"
-		);
+		expect(mockEnforceRateLimit).toHaveBeenCalledWith("ip:unknown", "validate-discount", "unknown");
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -167,10 +163,7 @@ describe("applyDiscountCode", () => {
 		const result = await applyDiscountCode(undefined, formData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSuccess).toHaveBeenCalledWith(
-			'Code "SUMMER20" appliqué',
-			validDiscount
-		);
+		expect(mockSuccess).toHaveBeenCalledWith('Code "SUMMER20" appliqué', validDiscount);
 		expect(result.data).toEqual(validDiscount);
 	});
 
@@ -191,7 +184,7 @@ describe("applyDiscountCode", () => {
 		expect(mockError).toHaveBeenCalledWith("Code expiré");
 	});
 
-	it("should return generic \"Code invalide\" when no error message is provided", async () => {
+	it('should return generic "Code invalide" when no error message is provided', async () => {
 		mockValidateDiscountCode.mockResolvedValue({
 			valid: false,
 			error: undefined,

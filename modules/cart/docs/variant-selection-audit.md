@@ -72,14 +72,14 @@ addToCart({ skuId, quantity: 1 })
 
 ### Fichiers impliqués
 
-| Fichier | Rôle |
-|---------|------|
-| `modules/products/components/product-card.tsx` | Composant ProductCard |
-| `modules/cart/components/add-to-cart-card-button.tsx` | Bouton simplifié (skuId uniquement) |
-| `modules/cart/components/add-to-cart-button.tsx` | Bouton complet (page produit) |
-| `modules/products/services/product-list-helpers.ts` | Sélection du SKU primaire |
-| `modules/skus/services/filter-compatible-skus.ts` | Filtrage des variantes |
-| `modules/skus/services/extract-sku-info.ts` | Extraction des variantes disponibles |
+| Fichier                                               | Rôle                                 |
+| ----------------------------------------------------- | ------------------------------------ |
+| `modules/products/components/product-card.tsx`        | Composant ProductCard                |
+| `modules/cart/components/add-to-cart-card-button.tsx` | Bouton simplifié (skuId uniquement)  |
+| `modules/cart/components/add-to-cart-button.tsx`      | Bouton complet (page produit)        |
+| `modules/products/services/product-list-helpers.ts`   | Sélection du SKU primaire            |
+| `modules/skus/services/filter-compatible-skus.ts`     | Filtrage des variantes               |
+| `modules/skus/services/extract-sku-info.ts`           | Extraction des variantes disponibles |
 
 ### Code source du problème
 
@@ -98,22 +98,20 @@ addToCart({ skuId, quantity: 1 })
 ```typescript
 // product-list-helpers.ts - getPrimarySkuForList()
 export function getPrimarySkuForList(product: ProductWithSkus): ProductSku | null {
-  const activeSkus = product.skus.filter(sku => sku.isActive);
+	const activeSkus = product.skus.filter((sku) => sku.isActive);
 
-  // Priorité 1: SKU marqué comme défaut
-  const defaultSku = activeSkus.find(sku => sku.isDefault);
-  if (defaultSku) return defaultSku;
+	// Priorité 1: SKU marqué comme défaut
+	const defaultSku = activeSkus.find((sku) => sku.isDefault);
+	if (defaultSku) return defaultSku;
 
-  // Priorité 2: SKU en stock avec prix le plus bas
-  const inStockSkus = activeSkus.filter(sku => sku.inventory > 0);
-  if (inStockSkus.length > 0) {
-    return inStockSkus.reduce((min, sku) =>
-      sku.priceInclTax < min.priceInclTax ? sku : min
-    );
-  }
+	// Priorité 2: SKU en stock avec prix le plus bas
+	const inStockSkus = activeSkus.filter((sku) => sku.inventory > 0);
+	if (inStockSkus.length > 0) {
+		return inStockSkus.reduce((min, sku) => (sku.priceInclTax < min.priceInclTax ? sku : min));
+	}
 
-  // Priorité 3: Premier SKU actif
-  return activeSkus[0] || null;
+	// Priorité 3: Premier SKU actif
+	return activeSkus[0] || null;
 }
 ```
 
@@ -123,13 +121,13 @@ export function getPrimarySkuForList(product: ProductWithSkus): ProductSku | nul
 
 ### Impact UX / Conversion
 
-| Impact | Sévérité | Description |
-|--------|----------|-------------|
-| **Perte de conversion** | Haute | L'utilisateur veut le rose, voit l'or, abandonne ou navigue ailleurs |
-| **Friction utilisateur** | Haute | 2 étapes pour ajouter la bonne variante (page produit puis retour) |
-| **Image trompeuse** | Moyenne | Montre une couleur mais d'autres existent (découverte tardive) |
-| **Panier incorrect** | Moyenne | L'utilisateur ajoute un SKU qu'il n'a pas choisi consciemment |
-| **Wishlist** | Faible | Le bouton wishlist a le même problème (ajoute SKU primaire) |
+| Impact                   | Sévérité | Description                                                          |
+| ------------------------ | -------- | -------------------------------------------------------------------- |
+| **Perte de conversion**  | Haute    | L'utilisateur veut le rose, voit l'or, abandonne ou navigue ailleurs |
+| **Friction utilisateur** | Haute    | 2 étapes pour ajouter la bonne variante (page produit puis retour)   |
+| **Image trompeuse**      | Moyenne  | Montre une couleur mais d'autres existent (découverte tardive)       |
+| **Panier incorrect**     | Moyenne  | L'utilisateur ajoute un SKU qu'il n'a pas choisi consciemment        |
+| **Wishlist**             | Faible   | Le bouton wishlist a le même problème (ajoute SKU primaire)          |
 
 ### Métriques à surveiller
 
@@ -145,6 +143,7 @@ export function getPrimarySkuForList(product: ProductWithSkus): ProductSku | nul
 ### Option A : Modale/Drawer de sélection rapide
 
 **Flow** :
+
 1. Click sur "Ajouter" → ouvre un Drawer (Sheet mobile-friendly)
 2. Affiche image + sélecteurs couleur/matière/taille
 3. L'utilisateur choisit → "Ajouter au panier"
@@ -152,20 +151,22 @@ export function getPrimarySkuForList(product: ProductWithSkus): ProductSku | nul
 
 **Pour produits mono-SKU** : Ajout direct sans drawer.
 
-| Critère | Score |
-|---------|-------|
-| Conversion | ⭐⭐⭐⭐⭐ |
-| UX mobile | ⭐⭐⭐⭐⭐ |
-| Complexité dev | ⭐⭐⭐ |
-| Maintenabilité | ⭐⭐⭐⭐ |
+| Critère        | Score      |
+| -------------- | ---------- |
+| Conversion     | ⭐⭐⭐⭐⭐ |
+| UX mobile      | ⭐⭐⭐⭐⭐ |
+| Complexité dev | ⭐⭐⭐     |
+| Maintenabilité | ⭐⭐⭐⭐   |
 
 **Avantages** :
+
 - Reste sur le listing (pas de perte de contexte)
 - UX complète avec stock/prix par variante
 - Pattern e-commerce prouvé (Zalando, ASOS, Nike)
 - Mobile-friendly avec Sheet natif
 
 **Inconvénients** :
+
 - Développement moyen (~3-5 fichiers)
 - Fetch des données SKU supplémentaires
 
@@ -174,23 +175,26 @@ export function getPrimarySkuForList(product: ProductWithSkus): ProductSku | nul
 ### Option B : Redirection vers page produit
 
 **Flow** :
+
 1. Si multi-SKU : bouton devient "Voir les options"
 2. Click → redirection `/creations/[slug]`
 3. Sélection sur page produit existante
 
-| Critère | Score |
-|---------|-------|
-| Conversion | ⭐⭐⭐ |
-| UX mobile | ⭐⭐⭐⭐ |
+| Critère        | Score      |
+| -------------- | ---------- |
+| Conversion     | ⭐⭐⭐     |
+| UX mobile      | ⭐⭐⭐⭐   |
 | Complexité dev | ⭐⭐⭐⭐⭐ |
 | Maintenabilité | ⭐⭐⭐⭐⭐ |
 
 **Avantages** :
+
 - Très simple à implémenter
 - Utilise l'existant à 100%
 - Plus de pageviews produit (SEO indirect)
 
 **Inconvénients** :
+
 - UX interrompue, perte de scroll/contexte
 - Conversion potentiellement plus basse
 - L'utilisateur doit naviguer back
@@ -200,22 +204,25 @@ export function getPrimarySkuForList(product: ProductWithSkus): ProductSku | nul
 ### Option C : Sélection inline au hover
 
 **Flow** :
+
 1. Hover sur card → pastilles couleur apparaissent
 2. Click sur pastille → change l'image + le SKU sélectionné
 3. Click "Ajouter" → ajoute le SKU affiché
 
-| Critère | Score |
-|---------|-------|
-| Conversion | ⭐⭐⭐⭐ |
-| UX mobile | ⭐⭐ |
-| Complexité dev | ⭐⭐ |
-| Maintenabilité | ⭐⭐⭐ |
+| Critère        | Score    |
+| -------------- | -------- |
+| Conversion     | ⭐⭐⭐⭐ |
+| UX mobile      | ⭐⭐     |
+| Complexité dev | ⭐⭐     |
+| Maintenabilité | ⭐⭐⭐   |
 
 **Avantages** :
+
 - Très rapide, zéro navigation
 - Visuellement attractif (pattern Nike, Zara)
 
 **Inconvénients** :
+
 - Pas de hover sur mobile → besoin d'un fallback
 - Limité pour combinaisons (couleur + taille + matière)
 - Espace contraint sur card
@@ -226,21 +233,24 @@ export function getPrimarySkuForList(product: ProductWithSkus): ProductSku | nul
 ### Option D : Modification dans le panier
 
 **Flow** :
+
 1. Ajout du SKU primaire (comportement actuel)
 2. Dans le panier, dropdown pour changer la variante
 
-| Critère | Score |
-|---------|-------|
-| Conversion | ⭐⭐ |
-| UX mobile | ⭐⭐⭐ |
+| Critère        | Score      |
+| -------------- | ---------- |
+| Conversion     | ⭐⭐       |
+| UX mobile      | ⭐⭐⭐     |
 | Complexité dev | ⭐⭐⭐⭐⭐ |
-| Maintenabilité | ⭐⭐⭐⭐ |
+| Maintenabilité | ⭐⭐⭐⭐   |
 
 **Avantages** :
+
 - Effort minimal
 - Le panier devient "workspace" de personnalisation
 
 **Inconvénients** :
+
 - Ne résout pas le problème à la source
 - UX frustrante (2 étapes obligatoires)
 - L'utilisateur ne sait pas qu'il peut changer
@@ -252,18 +262,19 @@ export function getPrimarySkuForList(product: ProductWithSkus): ProductSku | nul
 ### Solution recommandée : Drawer de sélection rapide + Pastilles couleur
 
 Cette approche combine :
+
 1. **Pastilles couleur sur la card** → indique visuellement les variantes disponibles
 2. **Drawer au click** → sélection complète sans quitter la page
 3. **Ajout direct pour mono-SKU** → pas de friction inutile
 
 ### Justification
 
-| Critère | Drawer | Alternatives |
-|---------|--------|--------------|
-| **Conversion** | Élevée - utilisateur reste sur listing | Moyenne à faible |
-| **Mobile** | Natif avec Sheet bottom | Hover impossible |
-| **Complexité** | Moyenne - réutilise composants existants | Variable |
-| **Scalabilité** | Gère couleur + taille + matière | Limité |
+| Critère         | Drawer                                   | Alternatives     |
+| --------------- | ---------------------------------------- | ---------------- |
+| **Conversion**  | Élevée - utilisateur reste sur listing   | Moyenne à faible |
+| **Mobile**      | Natif avec Sheet bottom                  | Hover impossible |
+| **Complexité**  | Moyenne - réutilise composants existants | Variable         |
+| **Scalabilité** | Gère couleur + taille + matière          | Limité           |
 
 ### Références marché
 
@@ -315,18 +326,18 @@ ProductCard
 
 ### Composants à créer
 
-| Composant | Emplacement | Description |
-|-----------|-------------|-------------|
-| `AddToCartDrawer` | `modules/cart/components/` | Sheet avec sélection variantes |
-| `ColorSwatches` | `modules/products/components/` | Pastilles couleur sur card |
-| `useAddToCartDrawer` | `modules/cart/hooks/` | Hook état drawer + SKU |
+| Composant            | Emplacement                    | Description                    |
+| -------------------- | ------------------------------ | ------------------------------ |
+| `AddToCartDrawer`    | `modules/cart/components/`     | Sheet avec sélection variantes |
+| `ColorSwatches`      | `modules/products/components/` | Pastilles couleur sur card     |
+| `useAddToCartDrawer` | `modules/cart/hooks/`          | Hook état drawer + SKU         |
 
 ### Composants à modifier
 
-| Composant | Modification |
-|-----------|--------------|
-| `ProductCard` | Intégrer ColorSwatches + logique drawer |
-| `AddToCartCardButton` | Conditionnel mono/multi-SKU |
+| Composant                 | Modification                                        |
+| ------------------------- | --------------------------------------------------- |
+| `ProductCard`             | Intégrer ColorSwatches + logique drawer             |
+| `AddToCartCardButton`     | Conditionnel mono/multi-SKU                         |
 | `product-list-helpers.ts` | Ajouter `hasMultipleSkus()`, `getAvailableColors()` |
 
 ---
@@ -337,30 +348,30 @@ ProductCard
 
 ```typescript
 interface ProductCardProps {
-  // ... props existantes
+	// ... props existantes
 
-  /** Variantes disponibles pour le drawer */
-  variants?: {
-    colors: Array<{
-      slug: string;
-      hex: string;
-      name: string;
-      skuId: string;
-      inStock: boolean;
-    }>;
-    materials: Array<{
-      slug: string;
-      name: string;
-      skuId: string;
-      inStock: boolean;
-    }>;
-    sizes: Array<{
-      value: string;
-      skuId: string;
-      inStock: boolean;
-    }>;
-    hasMultipleVariants: boolean;
-  };
+	/** Variantes disponibles pour le drawer */
+	variants?: {
+		colors: Array<{
+			slug: string;
+			hex: string;
+			name: string;
+			skuId: string;
+			inStock: boolean;
+		}>;
+		materials: Array<{
+			slug: string;
+			name: string;
+			skuId: string;
+			inStock: boolean;
+		}>;
+		sizes: Array<{
+			value: string;
+			skuId: string;
+			inStock: boolean;
+		}>;
+		hasMultipleVariants: boolean;
+	};
 }
 ```
 
@@ -368,14 +379,14 @@ interface ProductCardProps {
 
 ```typescript
 interface UseAddToCartDrawerReturn {
-  isOpen: boolean;
-  product: ProductForDrawer | null;
-  selectedSkuId: string | null;
+	isOpen: boolean;
+	product: ProductForDrawer | null;
+	selectedSkuId: string | null;
 
-  openDrawer: (product: ProductForDrawer) => void;
-  closeDrawer: () => void;
-  selectSku: (skuId: string) => void;
-  addToCart: () => Promise<ActionState>;
+	openDrawer: (product: ProductForDrawer) => void;
+	closeDrawer: () => void;
+	selectSku: (skuId: string) => void;
+	addToCart: () => Promise<ActionState>;
 }
 ```
 
@@ -383,24 +394,24 @@ interface UseAddToCartDrawerReturn {
 
 ```typescript
 interface AddToCartDrawerProps {
-  product: {
-    id: string;
-    slug: string;
-    title: string;
-    skus: Array<{
-      id: string;
-      priceInclTax: number;
-      inventory: number;
-      isActive: boolean;
-      color?: { slug: string; hex: string; name: string };
-      material?: { slug: string; name: string };
-      size?: string;
-      images: Array<{ url: string; alt: string | null }>;
-    }>;
-  };
-  isOpen: boolean;
-  onClose: () => void;
-  onAddToCart: (skuId: string) => void;
+	product: {
+		id: string;
+		slug: string;
+		title: string;
+		skus: Array<{
+			id: string;
+			priceInclTax: number;
+			inventory: number;
+			isActive: boolean;
+			color?: { slug: string; hex: string; name: string };
+			material?: { slug: string; name: string };
+			size?: string;
+			images: Array<{ url: string; alt: string | null }>;
+		}>;
+	};
+	isOpen: boolean;
+	onClose: () => void;
+	onAddToCart: (skuId: string) => void;
 }
 ```
 
@@ -408,15 +419,15 @@ interface AddToCartDrawerProps {
 
 ```typescript
 interface ColorSwatchesProps {
-  colors: Array<{
-    slug: string;
-    hex: string;
-    name: string;
-    inStock: boolean;
-  }>;
-  maxVisible?: number; // Défaut: 4
-  size?: "sm" | "md";  // Défaut: "sm"
-  className?: string;
+	colors: Array<{
+		slug: string;
+		hex: string;
+		name: string;
+		inStock: boolean;
+	}>;
+	maxVisible?: number; // Défaut: 4
+	size?: "sm" | "md"; // Défaut: "sm"
+	className?: string;
 }
 ```
 
@@ -425,31 +436,31 @@ interface ColorSwatchesProps {
 ```typescript
 // Nouveau helper dans product-list-helpers.ts
 export function hasMultipleVariants(product: ProductWithSkus): boolean {
-  const activeSkus = product.skus.filter(sku => sku.isActive);
-  if (activeSkus.length <= 1) return false;
+	const activeSkus = product.skus.filter((sku) => sku.isActive);
+	if (activeSkus.length <= 1) return false;
 
-  const uniqueColors = new Set(activeSkus.map(s => s.colorId).filter(Boolean));
-  const uniqueMaterials = new Set(activeSkus.map(s => s.materialId).filter(Boolean));
-  const uniqueSizes = new Set(activeSkus.map(s => s.size).filter(Boolean));
+	const uniqueColors = new Set(activeSkus.map((s) => s.colorId).filter(Boolean));
+	const uniqueMaterials = new Set(activeSkus.map((s) => s.materialId).filter(Boolean));
+	const uniqueSizes = new Set(activeSkus.map((s) => s.size).filter(Boolean));
 
-  return uniqueColors.size > 1 || uniqueMaterials.size > 1 || uniqueSizes.size > 1;
+	return uniqueColors.size > 1 || uniqueMaterials.size > 1 || uniqueSizes.size > 1;
 }
 
 export function getAvailableColors(product: ProductWithSkus): ColorSwatch[] {
-  const activeSkus = product.skus.filter(sku => sku.isActive && sku.color);
-  const colorMap = new Map<string, ColorSwatch>();
+	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.color);
+	const colorMap = new Map<string, ColorSwatch>();
 
-  for (const sku of activeSkus) {
-    if (!sku.color || colorMap.has(sku.color.slug)) continue;
-    colorMap.set(sku.color.slug, {
-      slug: sku.color.slug,
-      hex: sku.color.hex,
-      name: sku.color.name,
-      inStock: sku.inventory > 0,
-    });
-  }
+	for (const sku of activeSkus) {
+		if (!sku.color || colorMap.has(sku.color.slug)) continue;
+		colorMap.set(sku.color.slug, {
+			slug: sku.color.slug,
+			hex: sku.color.hex,
+			name: sku.color.name,
+			inStock: sku.inventory > 0,
+		});
+	}
 
-  return Array.from(colorMap.values());
+	return Array.from(colorMap.values());
 }
 ```
 
@@ -488,15 +499,15 @@ export function getAvailableColors(product: ProductWithSkus): ColorSwatch[] {
 
 ### Benchmarks analysés
 
-| Site | Pattern | Notes |
-|------|---------|-------|
-| Zalando | Drawer obligatoire | Taille requise avant ajout |
-| ASOS | Quick view modal | Image + tous attributs |
-| Nike | Drawer couleur + taille | Animation fluide |
-| Zara | Inline hover | Pastilles + change image |
-| Etsy | Drawer | Personnalisation bijoux |
-| Mejuri | Drawer | Taille bague, gravure |
-| Catbird | Drawer | Métal + taille |
+| Site    | Pattern                 | Notes                      |
+| ------- | ----------------------- | -------------------------- |
+| Zalando | Drawer obligatoire      | Taille requise avant ajout |
+| ASOS    | Quick view modal        | Image + tous attributs     |
+| Nike    | Drawer couleur + taille | Animation fluide           |
+| Zara    | Inline hover            | Pastilles + change image   |
+| Etsy    | Drawer                  | Personnalisation bijoux    |
+| Mejuri  | Drawer                  | Taille bague, gravure      |
+| Catbird | Drawer                  | Métal + taille             |
 
 ### Patterns validés
 
@@ -510,16 +521,16 @@ export function getAvailableColors(product: ProductWithSkus): ColorSwatch[] {
 
 ## Estimation effort
 
-| Tâche | Complexité | Temps estimé |
-|-------|------------|--------------|
-| ColorSwatches component | Faible | 2h |
-| AddToCartDrawer component | Moyenne | 4h |
-| useAddToCartDrawer hook | Faible | 1h |
-| Modifier ProductCard | Faible | 2h |
-| Modifier product-list-helpers | Faible | 1h |
-| Tests unitaires | Moyenne | 2h |
-| Tests E2E | Moyenne | 2h |
-| **Total** | | **~14h (2 jours)** |
+| Tâche                         | Complexité | Temps estimé       |
+| ----------------------------- | ---------- | ------------------ |
+| ColorSwatches component       | Faible     | 2h                 |
+| AddToCartDrawer component     | Moyenne    | 4h                 |
+| useAddToCartDrawer hook       | Faible     | 1h                 |
+| Modifier ProductCard          | Faible     | 2h                 |
+| Modifier product-list-helpers | Faible     | 1h                 |
+| Tests unitaires               | Moyenne    | 2h                 |
+| Tests E2E                     | Moyenne    | 2h                 |
+| **Total**                     |            | **~14h (2 jours)** |
 
 ---
 

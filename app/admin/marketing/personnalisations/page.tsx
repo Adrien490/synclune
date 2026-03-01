@@ -9,7 +9,11 @@ import { SelectFilter } from "@/shared/components/select-filter";
 import { getCustomizationRequests } from "@/modules/customizations/data/get-customization-requests";
 import { getCustomizationStats } from "@/modules/customizations/data/get-customization-stats";
 import { CustomizationsDataTable } from "@/modules/customizations/components/admin/customizations-data-table";
-import { SORT_OPTIONS, SORT_LABELS, STATUS_FILTER_OPTIONS } from "@/modules/customizations/constants/sort.constants";
+import {
+	SORT_OPTIONS,
+	SORT_LABELS,
+	STATUS_FILTER_OPTIONS,
+} from "@/modules/customizations/constants/sort.constants";
 import { getFirstParam } from "@/shared/utils/params";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Sparkles, Clock, CheckCircle2, FileText } from "lucide-react";
@@ -23,9 +27,7 @@ interface CustomizationsPageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function CustomizationsPage({
-	searchParams,
-}: CustomizationsPageProps) {
+export default async function CustomizationsPage({ searchParams }: CustomizationsPageProps) {
 	await connection();
 
 	const params = await searchParams;
@@ -35,13 +37,18 @@ export default async function CustomizationsPage({
 	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
 	const sortByParam = getFirstParam(params.sortBy);
 	const sortBy =
-		sortByParam && Object.values(SORT_OPTIONS).includes(sortByParam as typeof SORT_OPTIONS[keyof typeof SORT_OPTIONS])
-			? (sortByParam as typeof SORT_OPTIONS[keyof typeof SORT_OPTIONS])
+		sortByParam &&
+		Object.values(SORT_OPTIONS).includes(
+			sortByParam as (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS],
+		)
+			? (sortByParam as (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS])
 			: SORT_OPTIONS.CREATED_DESC;
 	const search = getFirstParam(params.search);
 	const statusParam = getFirstParam(params.filter_status);
 	const status =
-		statusParam && statusParam !== "ALL" && Object.values(CustomizationRequestStatus).includes(statusParam as CustomizationRequestStatus)
+		statusParam &&
+		statusParam !== "ALL" &&
+		Object.values(CustomizationRequestStatus).includes(statusParam as CustomizationRequestStatus)
 			? (statusParam as CustomizationRequestStatus)
 			: undefined;
 
@@ -65,7 +72,7 @@ export default async function CustomizationsPage({
 			<PageHeader variant="compact" title="Personnalisations" />
 
 			{/* Statistiques */}
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+			<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
 				<StatCard
 					title="En attente"
 					value={stats.pending}
@@ -93,7 +100,9 @@ export default async function CustomizationsPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des personnalisations"
 					search={
-						<SearchInput mode="live" size="sm"
+						<SearchInput
+							mode="live"
+							size="sm"
 							paramName="search"
 							placeholder="Rechercher par nom, email..."
 							ariaLabel="Rechercher une demande"
@@ -122,10 +131,7 @@ export default async function CustomizationsPage({
 				</Toolbar>
 
 				<Suspense fallback={<TableSkeleton />}>
-					<CustomizationsDataTable
-						requestsPromise={requestsPromise}
-						perPage={perPage}
-					/>
+					<CustomizationsDataTable requestsPromise={requestsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 		</>
@@ -144,11 +150,15 @@ function StatCard({
 	highlight?: boolean;
 }) {
 	return (
-		<div className={`rounded-lg border bg-card p-4 ${highlight && value > 0 ? "border-amber-200 bg-amber-50/50" : ""}`}>
+		<div
+			className={`bg-card rounded-lg border p-4 ${highlight && value > 0 ? "border-amber-200 bg-amber-50/50" : ""}`}
+		>
 			<div className="flex items-center justify-between">
 				<div>
-					<p className="text-sm font-medium text-muted-foreground">{title}</p>
-					<p className={`text-2xl font-bold mt-1 ${highlight && value > 0 ? "text-amber-600" : ""}`}>
+					<p className="text-muted-foreground text-sm font-medium">{title}</p>
+					<p
+						className={`mt-1 text-2xl font-bold ${highlight && value > 0 ? "text-amber-600" : ""}`}
+					>
 						{value}
 					</p>
 				</div>
@@ -162,8 +172,8 @@ function StatCard({
 
 function TableSkeleton() {
 	return (
-		<div className="rounded-lg border bg-card">
-			<div className="p-4 space-y-4">
+		<div className="bg-card rounded-lg border">
+			<div className="space-y-4 p-4">
 				{Array.from({ length: 5 }).map((_, i) => (
 					<div key={i} className="flex items-center gap-4">
 						<Skeleton className="h-10 flex-1" />

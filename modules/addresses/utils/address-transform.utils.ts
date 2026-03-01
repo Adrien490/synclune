@@ -3,13 +3,9 @@ import type { CompletionResult, SearchAddressResult } from "../types/search-addr
 /**
  * Transforme un résultat de l'API Completion en résultat simplifié
  */
-export function transformCompletionResult(
-	result: CompletionResult
-): SearchAddressResult {
+export function transformCompletionResult(result: CompletionResult): SearchAddressResult {
 	const zipcode =
-		result.zipcode ||
-		(result.country === "PositionOfInterest" && result.zipcodes?.[0]) ||
-		"";
+		result.zipcode || (result.country === "PositionOfInterest" && result.zipcodes?.[0]) || "";
 
 	return {
 		fulltext: result.fulltext,

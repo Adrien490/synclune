@@ -1,4 +1,5 @@
 # Rapport d'Audit UX/UI - Synclune
+
 ## Basé sur les meilleures pratiques Baymard Institute & Arounda Agency 2025
 
 **Date :** 24 décembre 2024
@@ -9,14 +10,14 @@
 
 ## SYNTHÈSE EXÉCUTIVE
 
-| Domaine | Score | Statut |
-|---------|-------|--------|
-| Navigation | 85% | Bon |
-| Recherche & Filtres | 80% | Bon |
-| Pages Produits | 70% | À améliorer |
-| Checkout | 90% | Excellent |
-| Mobile UX | 85% | Bon |
-| Accessibilité | 75% | À améliorer |
+| Domaine             | Score | Statut      |
+| ------------------- | ----- | ----------- |
+| Navigation          | 85%   | Bon         |
+| Recherche & Filtres | 80%   | Bon         |
+| Pages Produits      | 70%   | À améliorer |
+| Checkout            | 90%   | Excellent   |
+| Mobile UX           | 85%   | Bon         |
+| Accessibilité       | 75%   | À améliorer |
 
 **Score global : 81%** - Supérieur à la moyenne des sites e-commerce (67% échouent selon Baymard)
 
@@ -26,28 +27,28 @@
 
 ### Points conformes
 
-| Critère | Statut | Fichier |
-|---------|--------|---------|
-| Guest checkout supporté | OK | `checkout-form.tsx` |
-| Nombre de champs optimal (8-10 vs 11-12 recommandés) | OK | `checkout-schema.ts` |
-| Validation inline avec Zod | OK | `checkout-form.tsx:validation` |
-| Messages d'erreur spécifiques | OK | Ex: "min 2 caractères" |
-| Autocomplete HTML5 | OK | `given-name`, `address-line1`, etc. |
-| Labels au-dessus des champs | OK | `FieldLabel` composant |
-| Progressive disclosure | OK | Adresse ligne 2 + pays masqués |
-| 2 étapes claires (Adresse → Paiement) | OK | `checkout-container.tsx` |
-| Bouton CTA sticky mobile | OK | Footer fixe |
-| Explication téléphone | OK | "Pour les problèmes de livraison" |
-| Badge sécurité Stripe | OK | Shield + "Paiement sécurisé" |
-| SSL mentionné | OK | "Informations protégées par SSL" |
+| Critère                                              | Statut | Fichier                             |
+| ---------------------------------------------------- | ------ | ----------------------------------- |
+| Guest checkout supporté                              | OK     | `checkout-form.tsx`                 |
+| Nombre de champs optimal (8-10 vs 11-12 recommandés) | OK     | `checkout-schema.ts`                |
+| Validation inline avec Zod                           | OK     | `checkout-form.tsx:validation`      |
+| Messages d'erreur spécifiques                        | OK     | Ex: "min 2 caractères"              |
+| Autocomplete HTML5                                   | OK     | `given-name`, `address-line1`, etc. |
+| Labels au-dessus des champs                          | OK     | `FieldLabel` composant              |
+| Progressive disclosure                               | OK     | Adresse ligne 2 + pays masqués      |
+| 2 étapes claires (Adresse → Paiement)                | OK     | `checkout-container.tsx`            |
+| Bouton CTA sticky mobile                             | OK     | Footer fixe                         |
+| Explication téléphone                                | OK     | "Pour les problèmes de livraison"   |
+| Badge sécurité Stripe                                | OK     | Shield + "Paiement sécurisé"        |
+| SSL mentionné                                        | OK     | "Informations protégées par SSL"    |
 
 ### Points à améliorer
 
-| Problème | Impact | Recommandation | Fichier |
-|----------|--------|----------------|---------|
-| **Input mask téléphone absent** | 64% des sites échouent | Formater avec espaces/tirets selon pays | `phone-field.tsx` |
-| **Pas d'auto-détection type carte visible** | Stripe le gère en interne mais non visible | Afficher logo carte détectée avant Stripe | `checkout-summary.tsx` |
-| **Méthodes de paiement non listées avant checkout** | 11% abandons si méthode absente | Icônes Visa/MC/Apple Pay sur page panier | `cart-sheet.tsx` |
+| Problème                                            | Impact                                     | Recommandation                            | Fichier                |
+| --------------------------------------------------- | ------------------------------------------ | ----------------------------------------- | ---------------------- |
+| **Input mask téléphone absent**                     | 64% des sites échouent                     | Formater avec espaces/tirets selon pays   | `phone-field.tsx`      |
+| **Pas d'auto-détection type carte visible**         | Stripe le gère en interne mais non visible | Afficher logo carte détectée avant Stripe | `checkout-summary.tsx` |
+| **Méthodes de paiement non listées avant checkout** | 11% abandons si méthode absente            | Icônes Visa/MC/Apple Pay sur page panier  | `cart-sheet.tsx`       |
 
 ### Recommandations prioritaires
 
@@ -67,33 +68,33 @@
 
 ### Points conformes
 
-| Critère | Statut | Fichier |
-|---------|--------|---------|
-| Sections collapsibles (pas d'onglets) | OK | `product-care-info.tsx` (Accordéon) |
-| Galerie avec vignettes verticales | OK | `gallery.tsx` |
-| Zoom/Lightbox | OK | `media-lightbox.tsx` |
-| Compteur images visible | OK | "4/12" |
-| Swipe mobile + dots | OK | Embla Carousel |
-| Variantes synchronisées URL | OK | `?color=rouge&size=55` |
-| Stock warnings | OK | "Plus que X en stock" |
-| Prix animé au changement | OK | Framer Motion |
-| Sélecteurs visuels (swatches) | OK | Pas de dropdowns |
+| Critère                               | Statut | Fichier                             |
+| ------------------------------------- | ------ | ----------------------------------- |
+| Sections collapsibles (pas d'onglets) | OK     | `product-care-info.tsx` (Accordéon) |
+| Galerie avec vignettes verticales     | OK     | `gallery.tsx`                       |
+| Zoom/Lightbox                         | OK     | `media-lightbox.tsx`                |
+| Compteur images visible               | OK     | "4/12"                              |
+| Swipe mobile + dots                   | OK     | Embla Carousel                      |
+| Variantes synchronisées URL           | OK     | `?color=rouge&size=55`              |
+| Stock warnings                        | OK     | "Plus que X en stock"               |
+| Prix animé au changement              | OK     | Framer Motion                       |
+| Sélecteurs visuels (swatches)         | OK     | Pas de dropdowns                    |
 
 ### Points manquants critiques
 
-| Problème | Impact | Stat Baymard | Fichier concerné |
-|----------|--------|--------------|------------------|
-| **Image lifestyle absente** | Contexte d'utilisation manquant | Recommandé pour bijoux | Contenu à ajouter |
-| **Highlights description** | Scanabilité réduite | 78% ne le font pas | `product-info.tsx` |
-| **3+ vignettes sur liste produits** | Exploration limitée | 80% échouent | `product-card.tsx` |
+| Problème                            | Impact                          | Stat Baymard           | Fichier concerné   |
+| ----------------------------------- | ------------------------------- | ---------------------- | ------------------ |
+| **Image lifestyle absente**         | Contexte d'utilisation manquant | Recommandé pour bijoux | Contenu à ajouter  |
+| **Highlights description**          | Scanabilité réduite             | 78% ne le font pas     | `product-info.tsx` |
+| **3+ vignettes sur liste produits** | Exploration limitée             | 80% échouent           | `product-card.tsx` |
 
 ### Points à améliorer
 
-| Problème | Recommandation | Fichier |
-|----------|----------------|---------|
-| Descriptions non structurées | Ajouter bullet points "highlights" au-dessus | `product-info.tsx` |
-| Pas de table de tailles | Ajouter modal/tooltip avec guide tailles | `size-selector.tsx` |
-| Vignettes carousel masquent contenu | Montrer 3 images minimum sur ProductCard | `product-card.tsx` |
+| Problème                            | Recommandation                               | Fichier             |
+| ----------------------------------- | -------------------------------------------- | ------------------- |
+| Descriptions non structurées        | Ajouter bullet points "highlights" au-dessus | `product-info.tsx`  |
+| Pas de table de tailles             | Ajouter modal/tooltip avec guide tailles     | `size-selector.tsx` |
+| Vignettes carousel masquent contenu | Montrer 3 images minimum sur ProductCard     | `product-card.tsx`  |
 
 ### Recommandations prioritaires
 
@@ -120,23 +121,23 @@
 
 ### Points conformes
 
-| Critère | Statut | Fichier |
-|---------|--------|---------|
-| Touch targets 44x44px | OK | `size-11` partout |
-| Safe areas iOS | OK | `env(safe-area-inset-*)` |
-| Menu mobile scrollable | OK | `menu-sheet.tsx` |
-| Drawer patterns | OK | Panier, Filtres, Menu |
-| Navigation clavier recherche | OK | Arrow Up/Down, Escape |
-| Labels au-dessus des champs | OK | Standard forms |
-| Blur placeholders images | OK | `blurDataUrl` |
+| Critère                      | Statut | Fichier                  |
+| ---------------------------- | ------ | ------------------------ |
+| Touch targets 44x44px        | OK     | `size-11` partout        |
+| Safe areas iOS               | OK     | `env(safe-area-inset-*)` |
+| Menu mobile scrollable       | OK     | `menu-sheet.tsx`         |
+| Drawer patterns              | OK     | Panier, Filtres, Menu    |
+| Navigation clavier recherche | OK     | Arrow Up/Down, Escape    |
+| Labels au-dessus des champs  | OK     | Standard forms           |
+| Blur placeholders images     | OK     | `blurDataUrl`            |
 
 ### Points à améliorer
 
-| Problème | Impact | Fichier | Solution |
-|----------|--------|---------|----------|
-| **Keyboard numeric manquant** | Mauvais clavier affiché | `checkout-form.tsx` | `inputMode="numeric"` sur code postal |
-| **Autocorrect non désactivé** | 87% échouent | `input-field.tsx` | `autoCorrect="off"` sur noms/adresses |
-| **Scope contexte liens mobile** | Vision tunnel | `menu-sheet.tsx` | Préfixer liens avec catégorie parent |
+| Problème                        | Impact                  | Fichier             | Solution                              |
+| ------------------------------- | ----------------------- | ------------------- | ------------------------------------- |
+| **Keyboard numeric manquant**   | Mauvais clavier affiché | `checkout-form.tsx` | `inputMode="numeric"` sur code postal |
+| **Autocorrect non désactivé**   | 87% échouent            | `input-field.tsx`   | `autoCorrect="off"` sur noms/adresses |
+| **Scope contexte liens mobile** | Vision tunnel           | `menu-sheet.tsx`    | Préfixer liens avec catégorie parent  |
 
 ### Recommandations prioritaires
 
@@ -161,34 +162,34 @@
 
 ### Points conformes
 
-| Critère | Statut | Fichier |
-|---------|--------|---------|
-| ARIA roles sur autocomplete | OK | `combobox`, `listbox`, `option` |
-| Live regions | OK | `aria-live="polite"` |
-| fieldset/legend radio groups | OK | Variantes produit |
-| aria-describedby erreurs | OK | `${field.name}-error` |
-| Focus visible styles | OK | Ring outlines |
-| Breadcrumbs Schema.org | OK | JSON-LD SEO |
-| Skip links | OK | Carousel collections |
-| Reduced motion support | OK | `useReducedMotion()` |
+| Critère                      | Statut | Fichier                         |
+| ---------------------------- | ------ | ------------------------------- |
+| ARIA roles sur autocomplete  | OK     | `combobox`, `listbox`, `option` |
+| Live regions                 | OK     | `aria-live="polite"`            |
+| fieldset/legend radio groups | OK     | Variantes produit               |
+| aria-describedby erreurs     | OK     | `${field.name}-error`           |
+| Focus visible styles         | OK     | Ring outlines                   |
+| Breadcrumbs Schema.org       | OK     | JSON-LD SEO                     |
+| Skip links                   | OK     | Carousel collections            |
+| Reduced motion support       | OK     | `useReducedMotion()`            |
 
 ### Points à auditer/améliorer
 
-| Problème | Impact WCAG | Fichier | Solution |
-|----------|-------------|---------|----------|
-| **ALT text images** | 55% manquent d'ALT | `gallery.tsx` | Auditer chaque image, ALT descriptif |
-| **Ordre de focus** | 30% échouent | Global | Tester navigation Tab |
-| **Contraste couleurs** | Non vérifié | Tailwind config | Audit avec axe-core |
-| **Texte 80 chars/ligne** | Lisibilité | `prose` classes | Vérifier `max-w-prose` |
-| **Hauteur ligne 1.5em** | Lisibilité | Tailwind | `leading-relaxed` partout |
+| Problème                 | Impact WCAG        | Fichier         | Solution                             |
+| ------------------------ | ------------------ | --------------- | ------------------------------------ |
+| **ALT text images**      | 55% manquent d'ALT | `gallery.tsx`   | Auditer chaque image, ALT descriptif |
+| **Ordre de focus**       | 30% échouent       | Global          | Tester navigation Tab                |
+| **Contraste couleurs**   | Non vérifié        | Tailwind config | Audit avec axe-core                  |
+| **Texte 80 chars/ligne** | Lisibilité         | `prose` classes | Vérifier `max-w-prose`               |
+| **Hauteur ligne 1.5em**  | Lisibilité         | Tailwind        | `leading-relaxed` partout            |
 
 ### Points critiques European Accessibility Act 2025
 
-| Exigence | Statut | Action requise |
-|----------|--------|----------------|
-| Navigation clavier complète | À tester | Audit Tab navigation toutes pages |
-| Compatibilité lecteurs d'écran | À tester | Test avec VoiceOver/NVDA |
-| Text-to-speech | À valider | Vérifier order lecture logique |
+| Exigence                       | Statut    | Action requise                    |
+| ------------------------------ | --------- | --------------------------------- |
+| Navigation clavier complète    | À tester  | Audit Tab navigation toutes pages |
+| Compatibilité lecteurs d'écran | À tester  | Test avec VoiceOver/NVDA          |
+| Text-to-speech                 | À valider | Vérifier order lecture logique    |
 
 ### Recommandations prioritaires
 
@@ -216,22 +217,22 @@
 
 ### Points conformes
 
-| Critère | Statut |
-|---------|--------|
-| 4/5 filtres essentiels (Prix, Couleur, Matériau, Type) | OK |
-| Autocomplétion avec debounce 300ms | OK |
-| Filtres appliqués visibles (badges) | OK |
-| Suppression individuelle filtres | OK |
-| Sidebar verticale (accordéon) | OK |
-| URL state synchronisé | OK |
-| Recherche fuzzy (pg_trgm) | OK |
+| Critère                                                | Statut |
+| ------------------------------------------------------ | ------ |
+| 4/5 filtres essentiels (Prix, Couleur, Matériau, Type) | OK     |
+| Autocomplétion avec debounce 300ms                     | OK     |
+| Filtres appliqués visibles (badges)                    | OK     |
+| Suppression individuelle filtres                       | OK     |
+| Sidebar verticale (accordéon)                          | OK     |
+| URL state synchronisé                                  | OK     |
+| Recherche fuzzy (pg_trgm)                              | OK     |
 
 ### Points à améliorer
 
-| Problème | Fichier | Solution |
-|----------|---------|----------|
-| **Pas de filtres thématiques** | `product-filter-sheet.tsx` | Ajouter "Occasions", "Style" |
-| **Scope catégorie dans autocomplete** | `autocomplete.tsx` | Afficher type produit |
+| Problème                              | Fichier                    | Solution                     |
+| ------------------------------------- | -------------------------- | ---------------------------- |
+| **Pas de filtres thématiques**        | `product-filter-sheet.tsx` | Ajouter "Occasions", "Style" |
+| **Scope catégorie dans autocomplete** | `autocomplete.tsx`         | Afficher type produit        |
 
 ---
 
@@ -239,17 +240,17 @@
 
 ### Points conformes
 
-| Critère | Statut |
-|---------|--------|
-| Touch targets 44px | OK |
-| Breadcrumbs SEO | OK |
-| Safe areas iOS | OK |
-| Menu mobile scrollable | OK |
+| Critère                | Statut |
+| ---------------------- | ------ |
+| Touch targets 44px     | OK     |
+| Breadcrumbs SEO        | OK     |
+| Safe areas iOS         | OK     |
+| Menu mobile scrollable | OK     |
 
 ### Point à améliorer
 
-| Problème | Fichier | Solution |
-|----------|---------|----------|
+| Problème                           | Fichier              | Solution           |
+| ---------------------------------- | -------------------- | ------------------ |
 | **Hover delay trop court (200ms)** | `desktop-nav.tsx:57` | Passer à 300-400ms |
 
 ---
@@ -258,35 +259,36 @@
 
 ### Impact élevé / Effort faible (Quick Wins)
 
-| Action | Fichier | Temps estimé |
-|--------|---------|--------------|
-| Ajouter icônes paiement sur panier | `cart-sheet.tsx` | 15 min |
-| Hover delay 200→300ms | `desktop-nav.tsx:57` | 2 min |
-| inputMode="numeric" code postal | `checkout-form.tsx` | 5 min |
-| autoCorrect="off" sur noms | `input-field.tsx` | 10 min |
+| Action                             | Fichier              | Temps estimé |
+| ---------------------------------- | -------------------- | ------------ |
+| Ajouter icônes paiement sur panier | `cart-sheet.tsx`     | 15 min       |
+| Hover delay 200→300ms              | `desktop-nav.tsx:57` | 2 min        |
+| inputMode="numeric" code postal    | `checkout-form.tsx`  | 5 min        |
+| autoCorrect="off" sur noms         | `input-field.tsx`    | 10 min       |
 
 ### Impact élevé / Effort moyen
 
-| Action | Fichier | Temps estimé |
-|--------|---------|--------------|
-| Highlights produit (bullet points) | `product-info.tsx` | 1h |
-| Guide des tailles modal | `size-selector.tsx` | 2h |
-| Input mask téléphone | `phone-field.tsx` | 1h |
-| Audit ALT text images | `gallery.tsx`, `product-card.tsx` | 2h |
+| Action                             | Fichier                           | Temps estimé |
+| ---------------------------------- | --------------------------------- | ------------ |
+| Highlights produit (bullet points) | `product-info.tsx`                | 1h           |
+| Guide des tailles modal            | `size-selector.tsx`               | 2h           |
+| Input mask téléphone               | `phone-field.tsx`                 | 1h           |
+| Audit ALT text images              | `gallery.tsx`, `product-card.tsx` | 2h           |
 
 ### Impact élevé / Effort élevé
 
-| Action | Fichier | Temps estimé |
-|--------|---------|--------------|
-| Images "In Scale" | CMS + `gallery.tsx` | 4h+ (contenu) |
-| Audit accessibilité complet | Global | 1 jour |
-| Filtres thématiques | `product-filter-sheet.tsx` + DB | 4h |
+| Action                      | Fichier                         | Temps estimé  |
+| --------------------------- | ------------------------------- | ------------- |
+| Images "In Scale"           | CMS + `gallery.tsx`             | 4h+ (contenu) |
+| Audit accessibilité complet | Global                          | 1 jour        |
+| Filtres thématiques         | `product-filter-sheet.tsx` + DB | 4h            |
 
 ---
 
 ## FICHIERS CLÉS PAR DOMAINE
 
 ### Checkout
+
 - `modules/payments/components/checkout-form.tsx`
 - `modules/payments/components/checkout-container.tsx`
 - `modules/payments/components/checkout-summary.tsx`
@@ -295,6 +297,7 @@
 - `shared/components/forms/phone-field.tsx`
 
 ### Pages Produits
+
 - `app/(boutique)/creations/[slug]/page.tsx`
 - `modules/media/components/gallery.tsx`
 - `modules/products/components/product-info.tsx`
@@ -304,17 +307,20 @@
 - `modules/skus/components/sku-selector-dialog.tsx`
 
 ### Mobile UX
+
 - `app/(boutique)/(accueil)/_components/navbar/menu-sheet.tsx`
 - `shared/components/forms/input-field.tsx`
 - `shared/components/autocomplete/autocomplete.tsx`
 
 ### Accessibilité
+
 - `shared/components/forms/input-field.tsx`
 - `modules/media/components/gallery.tsx`
 - `tailwind.config.ts`
 - Tous les composants interactifs
 
 ### Navigation
+
 - `app/(boutique)/(accueil)/_components/navbar/desktop-nav.tsx`
 - `shared/components/page-header.tsx`
 
@@ -323,11 +329,13 @@
 ## CONCLUSION
 
 Synclune obtient un score de **81%**, supérieur à la moyenne du secteur. Les points forts sont :
+
 - Checkout optimisé (90%) avec validation et UX soignée
 - Mobile-first bien exécuté (85%)
 - Recherche et filtres fonctionnels (80%)
 
 Les axes d'amélioration prioritaires :
+
 1. **Images produits** - Ajouter images "In Scale" et lifestyle
 2. **Accessibilité** - Audit ALT text et navigation clavier
 3. **Quick wins** - Icônes paiement, hover delay, inputMode
@@ -336,5 +344,5 @@ Le système d'avis clients, bien que critique (95% des utilisateurs s'y fient), 
 
 ---
 
-*Audit réalisé le 24 décembre 2024*
-*Basé sur les meilleures pratiques UX/UI e-commerce 2025 (Baymard Institute, Arounda Agency)*
+_Audit réalisé le 24 décembre 2024_
+_Basé sur les meilleures pratiques UX/UI e-commerce 2025 (Baymard Institute, Arounda Agency)_

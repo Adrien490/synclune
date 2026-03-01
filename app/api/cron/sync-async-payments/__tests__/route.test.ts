@@ -82,7 +82,7 @@ describe("GET /api/cron/sync-async-payments", () => {
 		mockSyncAsyncPayments.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -155,7 +155,7 @@ describe("GET /api/cron/sync-async-payments", () => {
 					updated: DEFAULT_SERVICE_RESULT.updated,
 					errors: DEFAULT_SERVICE_RESULT.errors,
 				}),
-				1000
+				1000,
 			);
 		});
 
@@ -198,7 +198,7 @@ describe("GET /api/cron/sync-async-payments", () => {
 				expect.objectContaining({
 					job: "sync-async-payments",
 					errors: 2,
-				})
+				}),
 			);
 		});
 
@@ -214,7 +214,7 @@ describe("GET /api/cron/sync-async-payments", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ checked: 10, updated: 3 }),
-				})
+				}),
 			);
 		});
 

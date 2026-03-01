@@ -6,7 +6,7 @@ import { getFirstParam } from "@/shared/utils/params";
 
 export const parseFilters = (
 	params: CollectionSearchParams,
-	collectionSlug: string
+	collectionSlug: string,
 ): ProductFilters => {
 	// Pages publiques : toujours filtrer sur les produits PUBLIC uniquement
 	const filters: ProductFilters = {
@@ -33,21 +33,13 @@ export const parseFilters = (
 			if (key === "priceMin") {
 				const priceValue = Number(filterValue);
 				// Validate: must be finite, not NaN, and positive
-				if (
-					!isNaN(priceValue) &&
-					isFinite(priceValue) &&
-					priceValue > 0
-				) {
+				if (!isNaN(priceValue) && isFinite(priceValue) && priceValue > 0) {
 					filters.priceMin = Math.floor(priceValue * 100);
 				}
 			} else if (key === "priceMax") {
 				const priceValue = Number(filterValue);
 				// Validate: must be finite, not NaN, and positive
-				if (
-					!isNaN(priceValue) &&
-					isFinite(priceValue) &&
-					priceValue > 0
-				) {
+				if (!isNaN(priceValue) && isFinite(priceValue) && priceValue > 0) {
 					filters.priceMax = Math.floor(priceValue * 100);
 				}
 			}

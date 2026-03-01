@@ -51,7 +51,7 @@ export const PRODUCTS_CACHE_TAGS = {
 
 	/** Produits similaires contextuels par produit */
 	RELATED_CONTEXTUAL: (productSlug: string) => `related-products-contextual-${productSlug}`,
-} as const
+} as const;
 
 /**
  * Cache tags pour les produits recemment vus
@@ -59,13 +59,13 @@ export const PRODUCTS_CACHE_TAGS = {
 export const RECENT_PRODUCTS_CACHE_TAGS = {
 	/** Tag principal pour les produits recemment vus */
 	LIST: "recent-products-list",
-} as const
+} as const;
 
 /**
  * Retourne les tags a invalider pour les produits recemment vus
  */
 export function getRecentProductsInvalidationTags(): string[] {
-	return [RECENT_PRODUCTS_CACHE_TAGS.LIST]
+	return [RECENT_PRODUCTS_CACHE_TAGS.LIST];
 }
 
 /**
@@ -74,12 +74,11 @@ export function getRecentProductsInvalidationTags(): string[] {
 export const RECENT_SEARCHES_CACHE_TAGS = {
 	/** Tag principal pour les recherches recentes */
 	LIST: "recent-searches-list",
-} as const
+} as const;
 
 /**
  * Retourne les tags a invalider pour les recherches recentes
  */
 export function getRecentSearchesInvalidationTags(): string[] {
-	return [RECENT_SEARCHES_CACHE_TAGS.LIST]
+	return [RECENT_SEARCHES_CACHE_TAGS.LIST];
 }
-

@@ -10,34 +10,28 @@ interface GdprSectionProps {
 	deletionRequestedAt: Date | null;
 }
 
-export function GdprSection({
-	accountStatus,
-	deletionRequestedAt,
-}: GdprSectionProps) {
+export function GdprSection({ accountStatus, deletionRequestedAt }: GdprSectionProps) {
 	const isPendingDeletion = accountStatus === "PENDING_DELETION";
 
 	return (
 		<section className="space-y-4">
 			<div>
-				<h2 className="text-base font-semibold flex items-center gap-2">
-					<Shield className="size-4 text-muted-foreground" />
+				<h2 className="flex items-center gap-2 text-base font-semibold">
+					<Shield className="text-muted-foreground size-4" />
 					Données personnelles
 				</h2>
-				<p className="text-sm text-muted-foreground mt-0.5">
-					Gérez vos données conformément au RGPD (Règlement Général sur la
-					Protection des Données)
+				<p className="text-muted-foreground mt-0.5 text-sm">
+					Gérez vos données conformément au RGPD (Règlement Général sur la Protection des Données)
 				</p>
 			</div>
-			<div className="border-t border-border/60 pt-4 space-y-6">
+			<div className="border-border/60 space-y-6 border-t pt-4">
 				{isPendingDeletion && deletionRequestedAt && (
-					<CancelDeletionBanner
-						deletionRequestedAt={deletionRequestedAt}
-					/>
+					<CancelDeletionBanner deletionRequestedAt={deletionRequestedAt} />
 				)}
 
 				{/* Export */}
 				<div>
-					<h4 className="font-medium mb-2">Droit à la portabilité</h4>
+					<h4 className="mb-2 font-medium">Droit à la portabilité</h4>
 					<ExportDataButton />
 				</div>
 
@@ -47,11 +41,10 @@ export function GdprSection({
 
 						{/* Suppression */}
 						<div>
-							<h4 className="font-medium mb-2">Droit à l&apos;oubli</h4>
-							<p className="text-sm text-muted-foreground mb-4">
-								Demandez la suppression de votre compte. Un délai de 30
-								jours vous permet d&apos;annuler votre demande avant la
-								suppression définitive.
+							<h4 className="mb-2 font-medium">Droit à l&apos;oubli</h4>
+							<p className="text-muted-foreground mb-4 text-sm">
+								Demandez la suppression de votre compte. Un délai de 30 jours vous permet
+								d&apos;annuler votre demande avant la suppression définitive.
 							</p>
 							<DeleteAccountDialog />
 						</div>

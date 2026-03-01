@@ -1,9 +1,6 @@
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -12,10 +9,7 @@ import {
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 	GET_PRODUCTS_SORT_FIELDS,
 } from "../constants/product.constants";
-import {
-	isAllowedMediaDomain,
-	ALLOWED_MEDIA_DOMAINS,
-} from "@/shared/lib/media-validation";
+import { isAllowedMediaDomain, ALLOWED_MEDIA_DOMAINS } from "@/shared/lib/media-validation";
 import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants";
 import {
 	TEXT_LIMITS,
@@ -46,9 +40,7 @@ export const productFiltersSchema = z
 		type: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		color: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		material: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
-		status: z
-			.union([z.enum(ProductStatus), z.array(z.enum(ProductStatus))])
-			.optional(),
+		status: z.union([z.enum(ProductStatus), z.array(z.enum(ProductStatus))]).optional(),
 		stockStatus: z.enum(["in_stock", "out_of_stock"]).optional(),
 		onSale: z.boolean().optional(),
 		ratingMin: z.number().int().min(1).max(5).optional(),
@@ -58,17 +50,9 @@ export const productFiltersSchema = z
 		slugs: z.array(z.string().min(1)).max(20).optional(),
 		priceMin: z.number().int().nonnegative().max(PRICE_LIMITS.FILTER_MAX_CENTS).optional(),
 		priceMax: z.number().int().nonnegative().max(PRICE_LIMITS.FILTER_MAX_CENTS).optional(),
-		createdAfter: z.coerce
-			.date()
-			.min(DATE_LIMITS.FILTERS_MIN)
-			.max(new Date())
-			.optional(),
+		createdAfter: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).max(new Date()).optional(),
 		createdBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).optional(),
-		updatedAfter: z.coerce
-			.date()
-			.min(DATE_LIMITS.FILTERS_MIN)
-			.max(new Date())
-			.optional(),
+		updatedAfter: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).max(new Date()).optional(),
 		updatedBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).optional(),
 	})
 	.refine((data) => {
@@ -127,20 +111,16 @@ export const getProductsSchema = z.object({
  * Helper pour validation des URLs de medias
  * Utilise la fonction centralisee avec tous les domaines autorises
  */
-const validateMediaUrl = (url: string): boolean =>
-	isAllowedMediaDomain(url, ALLOWED_MEDIA_DOMAINS);
+const validateMediaUrl = (url: string): boolean => isAllowedMediaDomain(url, ALLOWED_MEDIA_DOMAINS);
 
 /**
  * Schema pour un media (image ou video)
  * Securise: n'accepte que les URLs provenant de domaines autorises
  */
 const imageSchema = z.object({
-	url: z
-		.string()
-		.url({ message: "L'URL du media doit être valide" })
-		.refine(validateMediaUrl, {
-			message: "L'URL du média doit provenir d'un domaine autorisé",
-		}),
+	url: z.string().url({ message: "L'URL du media doit être valide" }).refine(validateMediaUrl, {
+		message: "L'URL du média doit provenir d'un domaine autorisé",
+	}),
 	thumbnailUrl: z
 		.string()
 		.url()
@@ -166,10 +146,12 @@ const baseSkuFields = {
 	compareAtPriceEuros: z.coerce
 		.number()
 		.positive({ error: "Le prix comparé doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` })
+		.max(PRICE_LIMITS.MAX_EUR, {
+			error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €`,
+		})
 		.optional()
 		.or(z.literal(""))
-		.transform(val => val === "" ? undefined : val),
+		.transform((val) => (val === "" ? undefined : val)),
 
 	// Inventory: normalized in server action before validation
 	inventory: z.coerce
@@ -190,38 +172,41 @@ const baseSkuFields = {
 	media: z
 		.array(imageSchema)
 		.max(ARRAY_LIMITS.SKU_MEDIA, { message: `Maximum ${ARRAY_LIMITS.SKU_MEDIA} médias` })
-		.refine(
-			(media) => new Set(media.map((m) => m.url)).size === media.length,
-			{ message: "Les URLs de médias doivent être uniques" }
-		)
+		.refine((media) => new Set(media.map((m) => m.url)).size === media.length, {
+			message: "Les URLs de médias doivent être uniques",
+		})
 		.default([]),
 };
 
 // Refinement pour validation compareAtPrice >= priceInclTax
 const skuPriceRefinement = <T extends { compareAtPriceEuros?: number; priceInclTaxEuros: number }>(
-	data: T
+	data: T,
 ) => {
 	if (!data.compareAtPriceEuros) return true;
 	return data.compareAtPriceEuros >= data.priceInclTaxEuros;
 };
 
 // Schema pour SKU initial (creation de produit)
-const initialSkuSchema = z.object({
-	...baseSkuFields,
-	isDefault: z.coerce.boolean().default(true),
-}).refine(skuPriceRefinement, {
-	message: "Le prix comparé doit être supérieur ou égal au prix de vente",
-	path: ["compareAtPriceEuros"],
-});
+const initialSkuSchema = z
+	.object({
+		...baseSkuFields,
+		isDefault: z.coerce.boolean().default(true),
+	})
+	.refine(skuPriceRefinement, {
+		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
+		path: ["compareAtPriceEuros"],
+	});
 
 // Schema pour SKU par defaut (update de produit)
-const defaultSkuSchema = z.object({
-	skuId: z.cuid2({ message: "ID SKU invalide" }),
-	...baseSkuFields,
-}).refine(skuPriceRefinement, {
-	message: "Le prix comparé doit être supérieur ou égal au prix de vente",
-	path: ["compareAtPriceEuros"],
-});
+const defaultSkuSchema = z
+	.object({
+		skuId: z.cuid2({ message: "ID SKU invalide" }),
+		...baseSkuFields,
+	})
+	.refine(skuPriceRefinement, {
+		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
+		path: ["compareAtPriceEuros"],
+	});
 
 // ============================================================================
 // MUTATION SCHEMAS
@@ -232,8 +217,12 @@ export const createProductSchema = z
 		// Product fields
 		title: z
 			.string({ error: "Le titre du produit est requis" })
-			.min(TEXT_LIMITS.PRODUCT_TITLE.min, { error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caracteres` })
-			.max(TEXT_LIMITS.PRODUCT_TITLE.max, { error: `Le titre ne peut pas depasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caracteres` })
+			.min(TEXT_LIMITS.PRODUCT_TITLE.min, {
+				error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caracteres`,
+			})
+			.max(TEXT_LIMITS.PRODUCT_TITLE.max, {
+				error: `Le titre ne peut pas depasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caracteres`,
+			})
 			.trim(),
 
 		description: z
@@ -255,7 +244,9 @@ export const createProductSchema = z
 		// Collections (many-to-many)
 		collectionIds: z
 			.array(z.cuid2({ message: "ID collection invalide" }))
-			.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, { error: `Un produit ne peut appartenir qu'a ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum` })
+			.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, {
+				error: `Un produit ne peut appartenir qu'a ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum`,
+			})
 			.optional()
 			.default([]),
 
@@ -278,15 +269,14 @@ export const createProductSchema = z
 			if (!mediaType) {
 				// Si pas de mediaType specifie, verifier l'extension de l'URL
 				const url = firstMedia.url.toLowerCase();
-				return !VIDEO_EXTENSIONS.some(ext => url.endsWith(ext));
+				return !VIDEO_EXTENSIONS.some((ext) => url.endsWith(ext));
 			}
 			return mediaType === "IMAGE";
 		},
 		{
-			message:
-				"Le premier média doit être une image, pas une vidéo.",
+			message: "Le premier média doit être une image, pas une vidéo.",
 			path: ["initialSku", "media"],
-		}
+		},
 	);
 
 export const updateProductSchema = z
@@ -297,8 +287,12 @@ export const updateProductSchema = z
 		// Product fields (modifiables)
 		title: z
 			.string({ error: "Le titre du produit est requis" })
-			.min(TEXT_LIMITS.PRODUCT_TITLE.min, { error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caracteres` })
-			.max(TEXT_LIMITS.PRODUCT_TITLE.max, { error: `Le titre ne peut pas depasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caracteres` })
+			.min(TEXT_LIMITS.PRODUCT_TITLE.min, {
+				error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caracteres`,
+			})
+			.max(TEXT_LIMITS.PRODUCT_TITLE.max, {
+				error: `Le titre ne peut pas depasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caracteres`,
+			})
 			.trim(),
 
 		description: z
@@ -320,7 +314,9 @@ export const updateProductSchema = z
 		// Collections (many-to-many)
 		collectionIds: z
 			.array(z.cuid2({ message: "ID collection invalide" }))
-			.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, { error: `Un produit ne peut appartenir qu'a ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum` })
+			.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, {
+				error: `Un produit ne peut appartenir qu'a ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum`,
+			})
 			.optional()
 			.default([]),
 
@@ -343,15 +339,14 @@ export const updateProductSchema = z
 			if (!mediaType) {
 				// Si pas de mediaType specifie, verifier l'extension de l'URL
 				const url = firstMedia.url.toLowerCase();
-				return !VIDEO_EXTENSIONS.some(ext => url.endsWith(ext));
+				return !VIDEO_EXTENSIONS.some((ext) => url.endsWith(ext));
 			}
 			return mediaType === "IMAGE";
 		},
 		{
-			message:
-				"Le premier média doit être une image, pas une vidéo.",
+			message: "Le premier média doit être une image, pas une vidéo.",
 			path: ["defaultSku", "media"],
-		}
+		},
 	);
 
 export const deleteProductSchema = z.object({

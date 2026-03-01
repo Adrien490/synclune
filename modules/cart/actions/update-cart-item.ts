@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
-import { validateInput, handleActionError, success, error, BusinessError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	BusinessError,
+} from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { getCartExpirationDate } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
@@ -20,7 +26,7 @@ import { MAX_QUANTITY_PER_ORDER } from "../constants/cart";
  */
 export async function updateCartItem(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting + récupération contexte
@@ -71,13 +77,15 @@ export async function updateCartItem(
 		// 7. Transaction: Mettre à jour l'item et le panier
 		await prisma.$transaction(async (tx) => {
 			// 7a. Verrouiller le SKU avec FOR UPDATE pour éviter les race conditions sur le stock
-			const skuRows = await tx.$queryRaw<Array<{
-				inventory: number;
-				isActive: boolean;
-				deletedAt: Date | null;
-				productStatus: string;
-				productDeletedAt: Date | null;
-			}>>`
+			const skuRows = await tx.$queryRaw<
+				Array<{
+					inventory: number;
+					isActive: boolean;
+					deletedAt: Date | null;
+					productStatus: string;
+					productDeletedAt: Date | null;
+				}>
+			>`
 				SELECT s.inventory, s."isActive", s."deletedAt",
 					p.status AS "productStatus", p."deletedAt" AS "productDeletedAt"
 				FROM "ProductSku" s
@@ -102,9 +110,7 @@ export async function updateCartItem(
 
 			// 7c. Si augmentation de quantité, vérifier le stock disponible
 			if (validatedData.quantity > sku.inventory) {
-				throw new BusinessError(
-					CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory)
-				);
+				throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
 			}
 
 			// 7d. Mettre à jour le CartItem
@@ -125,7 +131,7 @@ export async function updateCartItem(
 
 		// 8. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		// 9. Success - Return ActionState format
 		return success(`Quantité mise à jour (${validatedData.quantity})`);

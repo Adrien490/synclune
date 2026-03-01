@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { ExternalLink, Star } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useState } from "react"
+import { ExternalLink, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 import {
 	ResponsiveDialog,
@@ -12,16 +12,16 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 	ResponsiveDialogTrigger,
-} from "@/shared/components/responsive-dialog"
-import { Button } from "@/shared/components/ui/button"
-import { cn } from "@/shared/utils/cn"
+} from "@/shared/components/responsive-dialog";
+import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/shared/utils/cn";
 
-import type { ReviewableProduct } from "../types/review.types"
-import { CreateReviewForm } from "./create-review-form"
+import type { ReviewableProduct } from "../types/review.types";
+import { CreateReviewForm } from "./create-review-form";
 
 interface ReviewableProductCardProps {
-	product: ReviewableProduct
-	className?: string
+	product: ReviewableProduct;
+	className?: string;
 }
 
 /**
@@ -29,28 +29,28 @@ interface ReviewableProductCardProps {
  * Affiche le produit avec un CTA pour laisser un avis
  */
 export function ReviewableProductCard({ product, className }: ReviewableProductCardProps) {
-	const [isDialogOpen, setIsDialogOpen] = useState(false)
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	const formatDate = (date: Date | null) => {
-		if (!date) return "Non disponible"
+		if (!date) return "Non disponible";
 		return new Intl.DateTimeFormat("fr-FR", {
 			day: "numeric",
 			month: "long",
 			year: "numeric",
-		}).format(new Date(date))
-	}
+		}).format(new Date(date));
+	};
 
 	// Génération ID unique pour aria-labelledby
-	const titleId = `reviewable-product-${product.productId}`
+	const titleId = `reviewable-product-${product.productId}`;
 
 	return (
 		<article
 			aria-labelledby={titleId}
-			className={cn("overflow-hidden rounded-lg border border-border/60", className)}
+			className={cn("border-border/60 overflow-hidden rounded-lg border", className)}
 		>
 			<div className="flex flex-col sm:flex-row">
 				{/* Image produit */}
-				<div className="relative w-full sm:w-32 aspect-[3/2] sm:aspect-auto sm:h-auto shrink-0">
+				<div className="relative aspect-[3/2] w-full shrink-0 sm:aspect-auto sm:h-auto sm:w-32">
 					{product.productImage ? (
 						<Image
 							src={product.productImage.url}
@@ -62,25 +62,25 @@ export function ReviewableProductCard({ product, className }: ReviewableProductC
 							blurDataURL={product.productImage.blurDataUrl ?? undefined}
 						/>
 					) : (
-						<div className="w-full h-full bg-muted flex items-center justify-center">
-							<Star className="size-8 text-muted-foreground" aria-hidden="true" />
+						<div className="bg-muted flex h-full w-full items-center justify-center">
+							<Star className="text-muted-foreground size-8" aria-hidden="true" />
 						</div>
 					)}
 				</div>
 
 				{/* Contenu */}
-				<div className="flex-1 p-4 space-y-3">
+				<div className="flex-1 space-y-3 p-4">
 					{/* Titre produit */}
 					<div>
 						<Link
 							id={titleId}
 							href={`/creations/${product.productSlug}`}
-							className="font-medium hover:text-primary transition-colors line-clamp-1 flex items-center gap-1"
+							className="hover:text-primary line-clamp-1 flex items-center gap-1 font-medium transition-colors"
 						>
 							{product.productTitle}
 							<ExternalLink className="size-3 shrink-0" aria-hidden="true" />
 						</Link>
-						<p className="text-xs text-muted-foreground mt-1">
+						<p className="text-muted-foreground mt-1 text-xs">
 							Livré le {formatDate(product.deliveredAt)}
 						</p>
 					</div>
@@ -88,8 +88,8 @@ export function ReviewableProductCard({ product, className }: ReviewableProductC
 					{/* CTA */}
 					<ResponsiveDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 						<ResponsiveDialogTrigger asChild>
-							<Button size="sm" className="w-full sm:w-auto min-h-11">
-								<Star className="size-4 mr-1" aria-hidden="true" />
+							<Button size="sm" className="min-h-11 w-full sm:w-auto">
+								<Star className="mr-1 size-4" aria-hidden="true" />
 								Laisser un avis
 							</Button>
 						</ResponsiveDialogTrigger>
@@ -111,5 +111,5 @@ export function ReviewableProductCard({ product, className }: ReviewableProductC
 				</div>
 			</div>
 		</article>
-	)
+	);
 }

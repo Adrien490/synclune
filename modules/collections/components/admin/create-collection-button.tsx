@@ -19,9 +19,5 @@ export function CreateCollectionButton() {
 		}
 	};
 
-	return (
-		<Button onClick={handleClick}>
-			Créer une collection
-		</Button>
-	);
+	return <Button onClick={handleClick}>Créer une collection</Button>;
 }

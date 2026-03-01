@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-	OrderStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/browser";
+import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -114,20 +111,13 @@ export function ResendEmailDialog() {
 							const Icon = option.icon;
 							return (
 								<div key={option.value} className="flex items-start space-x-3">
-									<RadioGroupItem
-										value={option.value}
-										id={option.value}
-										className="mt-1"
-									/>
-									<Label
-										htmlFor={option.value}
-										className="flex flex-col cursor-pointer"
-									>
+									<RadioGroupItem value={option.value} id={option.value} className="mt-1" />
+									<Label htmlFor={option.value} className="flex cursor-pointer flex-col">
 										<span className="flex items-center gap-2 font-medium">
 											<Icon className="h-4 w-4" aria-hidden="true" />
 											{option.label}
 										</span>
-										<span className="text-sm text-muted-foreground font-normal">
+										<span className="text-muted-foreground text-sm font-normal">
 											{option.description}
 										</span>
 									</Label>
@@ -137,19 +127,15 @@ export function ResendEmailDialog() {
 					</RadioGroup>
 
 					{availableOptions.length < 3 && (
-						<p className="mt-4 text-xs text-muted-foreground">
-							Certains emails ne sont pas disponibles car la commande n'a pas
-							encore atteint le statut requis.
+						<p className="text-muted-foreground mt-4 text-xs">
+							Certains emails ne sont pas disponibles car la commande n'a pas encore atteint le
+							statut requis.
 						</p>
 					)}
 				</div>
 
 				<ResponsiveDialogFooter>
-					<Button
-						variant="outline"
-						onClick={() => handleOpenChange(false)}
-						disabled={isPending}
-					>
+					<Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
 						Annuler
 					</Button>
 					<Button onClick={handleSubmit} disabled={isPending}>

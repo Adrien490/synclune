@@ -25,9 +25,7 @@ interface ToggleDiscountStatusData {
 }
 
 export function ToggleDiscountStatusAlertDialog() {
-	const dialog = useAlertDialog<ToggleDiscountStatusData>(
-		TOGGLE_DISCOUNT_STATUS_DIALOG_ID
-	);
+	const dialog = useAlertDialog<ToggleDiscountStatusData>(TOGGLE_DISCOUNT_STATUS_DIALOG_ID);
 
 	const { action, isPending } = useToggleDiscountStatus({
 		onSuccess: () => {
@@ -48,16 +46,10 @@ export function ToggleDiscountStatusAlertDialog() {
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="id"
-						value={dialog.data?.discountId ?? ""}
-					/>
+					<input type="hidden" name="id" value={dialog.data?.discountId ?? ""} />
 
 					<AlertDialogHeader>
-						<AlertDialogTitle>
-							{isActive ? "Désactiver" : "Activer"} le code promo
-						</AlertDialogTitle>
+						<AlertDialogTitle>{isActive ? "Désactiver" : "Activer"} le code promo</AlertDialogTitle>
 						<AlertDialogDescription asChild>
 							<div className="space-y-4">
 								<div>
@@ -85,9 +77,7 @@ export function ToggleDiscountStatusAlertDialog() {
 							aria-busy={isPending}
 							className={cn(
 								"text-white",
-								isActive
-									? "bg-orange-600 hover:bg-orange-700"
-									: "bg-green-600 hover:bg-green-700"
+								isActive ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700",
 							)}
 						>
 							{isPending && <Loader2 className="animate-spin" />}

@@ -5,9 +5,7 @@ import type { GetOrdersParams, OrderFilters } from "../types/order.types";
 // ORDER QUERY BUILDER UTILS
 // ============================================================================
 
-export function buildOrderSearchConditions(
-	search: string
-): Prisma.OrderWhereInput | null {
+export function buildOrderSearchConditions(search: string): Prisma.OrderWhereInput | null {
 	if (!search || search.trim().length === 0) {
 		return null;
 	}
@@ -48,15 +46,11 @@ export function buildOrderSearchConditions(
 	};
 }
 
-export function buildOrderFilterConditions(
-	filters: OrderFilters
-): Prisma.OrderWhereInput {
+export function buildOrderFilterConditions(filters: OrderFilters): Prisma.OrderWhereInput {
 	const conditions: Prisma.OrderWhereInput = {};
 
 	if (filters.status !== undefined) {
-		const statuses = Array.isArray(filters.status)
-			? filters.status
-			: [filters.status];
+		const statuses = Array.isArray(filters.status) ? filters.status : [filters.status];
 		conditions.status = statuses.length === 1 ? statuses[0] : { in: statuses };
 	} else {
 		// Par défaut, exclure les commandes PENDING (abandons de panier)
@@ -69,9 +63,7 @@ export function buildOrderFilterConditions(
 			? filters.paymentStatus
 			: [filters.paymentStatus];
 		conditions.paymentStatus =
-			paymentStatuses.length === 1
-				? paymentStatuses[0]
-				: { in: paymentStatuses };
+			paymentStatuses.length === 1 ? paymentStatuses[0] : { in: paymentStatuses };
 	}
 
 	if (filters.fulfillmentStatus !== undefined) {
@@ -79,15 +71,10 @@ export function buildOrderFilterConditions(
 			? filters.fulfillmentStatus
 			: [filters.fulfillmentStatus];
 		conditions.fulfillmentStatus =
-			fulfillmentStatuses.length === 1
-				? fulfillmentStatuses[0]
-				: { in: fulfillmentStatuses };
+			fulfillmentStatuses.length === 1 ? fulfillmentStatuses[0] : { in: fulfillmentStatuses };
 	}
 
-	if (
-		typeof filters.totalMin === "number" &&
-		typeof filters.totalMax === "number"
-	) {
+	if (typeof filters.totalMin === "number" && typeof filters.totalMax === "number") {
 		conditions.total = {
 			gte: filters.totalMin,
 			lte: filters.totalMax,
@@ -98,10 +85,7 @@ export function buildOrderFilterConditions(
 		conditions.total = { lte: filters.totalMax };
 	}
 
-	if (
-		filters.createdAfter instanceof Date &&
-		filters.createdBefore instanceof Date
-	) {
+	if (filters.createdAfter instanceof Date && filters.createdBefore instanceof Date) {
 		conditions.createdAt = {
 			gte: filters.createdAfter,
 			lte: filters.createdBefore,
@@ -122,7 +106,7 @@ export function buildOrderFilterConditions(
  */
 export function buildOrderWhereClause(
 	params: GetOrdersParams,
-	fuzzyIds?: string[] | null
+	fuzzyIds?: string[] | null,
 ): Prisma.OrderWhereInput {
 	const whereClause: Prisma.OrderWhereInput = {
 		// Soft delete: exclure les commandes supprimées par défaut
@@ -131,9 +115,7 @@ export function buildOrderWhereClause(
 	const andConditions: Prisma.OrderWhereInput[] = [];
 
 	// Toujours appliquer les filtres (inclut l'exclusion par défaut des PENDING)
-	const filterConditions = buildOrderFilterConditions(
-		params.filters ?? { showDeleted: undefined }
-	);
+	const filterConditions = buildOrderFilterConditions(params.filters ?? { showDeleted: undefined });
 	andConditions.push(filterConditions);
 
 	if (params.search) {
@@ -142,10 +124,7 @@ export function buildOrderWhereClause(
 		if (fuzzyIds && fuzzyIds.length > 0 && exactConditions) {
 			// Combine fuzzy IDs with exact search (OR)
 			andConditions.push({
-				OR: [
-					{ id: { in: fuzzyIds } },
-					exactConditions,
-				],
+				OR: [{ id: { in: fuzzyIds } }, exactConditions],
 			});
 		} else if (fuzzyIds && fuzzyIds.length > 0) {
 			andConditions.push({ id: { in: fuzzyIds } });

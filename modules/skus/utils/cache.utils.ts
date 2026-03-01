@@ -49,7 +49,12 @@ export function cacheSkuDetail(sku: string) {
  * - L'inventaire dashboard
  * - Les badges de la sidebar (affecte le count d'inventaire critique)
  */
-export function getSkuInvalidationTags(sku: string, productId?: string, productSlug?: string, skuId?: string): string[] {
+export function getSkuInvalidationTags(
+	sku: string,
+	productId?: string,
+	productSlug?: string,
+	skuId?: string,
+): string[] {
 	const tags = [
 		PRODUCTS_CACHE_TAGS.SKUS_LIST,
 		PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku),
@@ -80,7 +85,11 @@ export function getSkuInvalidationTags(sku: string, productId?: string, productS
  * Invalide uniquement les données affectées, pas toutes les listes.
  * Utile pour les mises à jour fréquentes de stock.
  */
-export function getInventoryInvalidationTags(productSlug: string, productId: string, skuIds?: string[]): string[] {
+export function getInventoryInvalidationTags(
+	productSlug: string,
+	productId: string,
+	skuIds?: string[],
+): string[] {
 	const tags = [
 		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
 		PRODUCTS_CACHE_TAGS.SKUS(productId),
@@ -115,7 +124,7 @@ export function collectBulkInvalidationTags(skusData: SkuDataForInvalidation[]):
 			skuData.sku,
 			skuData.productId,
 			skuData.product.slug,
-			skuData.id
+			skuData.id,
 		);
 		tags.forEach((tag) => uniqueTags.add(tag));
 	}

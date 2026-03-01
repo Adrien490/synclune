@@ -66,9 +66,8 @@ export function ProductTypesSelectionToolbar() {
 
 	return (
 		<SelectionToolbar>
-			<span className="text-sm text-muted-foreground">
-				{selectedItems.length} type{selectedItems.length > 1 ? "s" : ""}{" "}
-				sélectionné
+			<span className="text-muted-foreground text-sm">
+				{selectedItems.length} type{selectedItems.length > 1 ? "s" : ""} sélectionné
 				{selectedItems.length > 1 ? "s" : ""}
 			</span>
 			<DropdownMenu>

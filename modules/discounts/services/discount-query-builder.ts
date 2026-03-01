@@ -8,9 +8,7 @@ import type { GetDiscountsParams } from "../types/discount.types";
 /**
  * Construit la clause WHERE pour la recherche de codes promo
  */
-export function buildDiscountWhereClause(
-	params: GetDiscountsParams
-): Prisma.DiscountWhereInput {
+export function buildDiscountWhereClause(params: GetDiscountsParams): Prisma.DiscountWhereInput {
 	const where: Prisma.DiscountWhereInput = { deletedAt: null };
 	const AND: Prisma.DiscountWhereInput[] = [];
 

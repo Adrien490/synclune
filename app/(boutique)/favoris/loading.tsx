@@ -4,7 +4,7 @@ import { WishlistGridSkeleton } from "@/modules/wishlist/components/wishlist-gri
 export default function WishlistLoading() {
 	return (
 		<div
-			className="min-h-screen relative"
+			className="relative min-h-screen"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement des favoris"
@@ -13,8 +13,8 @@ export default function WishlistLoading() {
 
 			<PageHeaderSkeleton hasDescription={false} />
 
-			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+			<section className="bg-background relative z-10 pt-4 pb-12 lg:pt-6 lg:pb-16">
+				<div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
 					<WishlistGridSkeleton />
 				</div>
 			</section>

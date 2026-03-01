@@ -167,9 +167,9 @@ describe("handlePaymentFailure", () => {
 	});
 
 	it("should throw when no order_id in metadata", async () => {
-		await expect(
-			handlePaymentFailure(makePaymentIntent({ metadata: {} })),
-		).rejects.toThrow("No order_id in payment intent metadata");
+		await expect(handlePaymentFailure(makePaymentIntent({ metadata: {} }))).rejects.toThrow(
+			"No order_id in payment intent metadata",
+		);
 	});
 
 	it("should call restoreStockForOrder and markOrderAsFailed in order", async () => {
@@ -243,9 +243,9 @@ describe("handlePaymentCanceled", () => {
 	});
 
 	it("should throw when no order_id in metadata", async () => {
-		await expect(
-			handlePaymentCanceled(makePaymentIntent({ metadata: {} })),
-		).rejects.toThrow("No order_id in payment intent metadata");
+		await expect(handlePaymentCanceled(makePaymentIntent({ metadata: {} }))).rejects.toThrow(
+			"No order_id in payment intent metadata",
+		);
 	});
 
 	it("should call restoreStockForOrder and markOrderAsCancelled", async () => {
@@ -258,9 +258,7 @@ describe("handlePaymentCanceled", () => {
 	it("should initiate auto refund when status is canceled and amount_received > 0", async () => {
 		mockInitiateAutomaticRefund.mockResolvedValue({ success: true });
 
-		await handlePaymentCanceled(
-			makePaymentIntent({ status: "canceled", amount_received: 5000 }),
-		);
+		await handlePaymentCanceled(makePaymentIntent({ status: "canceled", amount_received: 5000 }));
 
 		expect(mockInitiateAutomaticRefund).toHaveBeenCalledWith(
 			"pi_123",
@@ -276,9 +274,7 @@ describe("handlePaymentCanceled", () => {
 		});
 		mockSendRefundFailureAlert.mockResolvedValue(undefined);
 
-		await handlePaymentCanceled(
-			makePaymentIntent({ status: "canceled", amount_received: 5000 }),
-		);
+		await handlePaymentCanceled(makePaymentIntent({ status: "canceled", amount_received: 5000 }));
 
 		expect(mockSendRefundFailureAlert).toHaveBeenCalledWith(
 			"order-1",
@@ -289,9 +285,7 @@ describe("handlePaymentCanceled", () => {
 	});
 
 	it("should not refund when amount_received is 0 even if status is canceled", async () => {
-		await handlePaymentCanceled(
-			makePaymentIntent({ status: "canceled", amount_received: 0 }),
-		);
+		await handlePaymentCanceled(makePaymentIntent({ status: "canceled", amount_received: 0 }));
 
 		expect(mockInitiateAutomaticRefund).not.toHaveBeenCalled();
 	});
@@ -361,9 +355,7 @@ describe("handleInvoicePaymentFailed", () => {
 	});
 
 	it("should work without orderId in metadata", async () => {
-		const result = await handleInvoicePaymentFailed(
-			makeInvoice({ metadata: {} }),
-		);
+		const result = await handleInvoicePaymentFailed(makeInvoice({ metadata: {} }));
 
 		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 		expect(result.success).toBe(true);

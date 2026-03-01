@@ -82,7 +82,12 @@ export const PRODUCT_TEXTS = {
 		/**
 		 * ALT pour les miniatures de la galerie
 		 */
-		GALLERY_THUMBNAIL_ALT: (title: string, index: number, isVideo = false, productType?: string) => {
+		GALLERY_THUMBNAIL_ALT: (
+			title: string,
+			index: number,
+			isVideo = false,
+			productType?: string,
+		) => {
 			const prefix = productType ? `${productType} ${title}` : title;
 			const mediaType = isVideo ? "Vidéo" : "Miniature";
 			return `${prefix} - ${mediaType} ${index}`;
@@ -173,9 +178,7 @@ export const PRODUCT_TYPES_REQUIRING_SIZE = ["ring", "bracelet"] as const;
 /**
  * Type helper pour les types de produits nécessitant une taille
  */
-export type ProductTypeRequiringSize =
-	(typeof PRODUCT_TYPES_REQUIRING_SIZE)[number];
-
+export type ProductTypeRequiringSize = (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number];
 
 /**
  * Configuration des tailles d'images optimisées pour performance

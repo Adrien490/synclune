@@ -1,9 +1,4 @@
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/shared/components/ui/card";
 import type { ProductSku } from "@/modules/products/types/product.types";
 
 interface ProductCharacteristicsProps {
@@ -16,9 +11,7 @@ interface ProductCharacteristicsProps {
  * Place AVANT le bouton d'ajout au panier pour aider le client.
  * Les autres caracteristiques (materiau, fabrication) sont dans ProductHighlights.
  */
-export function ProductCharacteristics({
-	selectedSku,
-}: ProductCharacteristicsProps) {
+export function ProductCharacteristics({ selectedSku }: ProductCharacteristicsProps) {
 	const sizeInfo = selectedSku?.size
 		? {
 				size: selectedSku.size,
@@ -39,7 +32,7 @@ export function ProductCharacteristics({
 			<CardHeader>
 				<h2
 					id="product-characteristics-title"
-					className="text-xs/5 font-semibold uppercase tracking-widest antialiased text-muted-foreground"
+					className="text-muted-foreground text-xs/5 font-semibold tracking-widest uppercase antialiased"
 				>
 					Taille sélectionnée
 				</h2>
@@ -48,18 +41,14 @@ export function ProductCharacteristics({
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3">
-				<div className="p-2 bg-muted/50 rounded-lg">
-					<span className="text-sm/6 tracking-normal antialiased">
-						{sizeInfo.size}
-					</span>
+				<div className="bg-muted/50 rounded-lg p-2">
+					<span className="text-sm/6 tracking-normal antialiased">{sizeInfo.size}</span>
 				</div>
 
 				{sizeInfo.isAdjustable && (
-					<div className="p-3 bg-accent rounded-lg border border-primary/20">
-						<p className="text-sm/6 tracking-normal antialiased font-medium text-accent-foreground">
-							<span className="hidden sm:inline">
-								Taille ajustable -{" "}
-							</span>
+					<div className="bg-accent border-primary/20 rounded-lg border p-3">
+						<p className="text-accent-foreground text-sm/6 font-medium tracking-normal antialiased">
+							<span className="hidden sm:inline">Taille ajustable - </span>
 							Convient à la plupart des morphologies
 						</p>
 					</div>

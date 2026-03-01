@@ -334,7 +334,7 @@ describe("validateMediaFiles", () => {
 
 		it("should set skipped to the number of files beyond maxFiles", () => {
 			const files = Array.from({ length: 10 }, (_, i) =>
-				makeFile(`file${i}.jpg`, "image/jpeg", 1024)
+				makeFile(`file${i}.jpg`, "image/jpeg", 1024),
 			);
 			const { skipped } = validateMediaFiles(files, { maxFiles: 4 });
 
@@ -388,10 +388,7 @@ describe("validateMediaFiles", () => {
 		});
 
 		it("should accept all images when rejectVideos is true", () => {
-			const files = [
-				makeFile("a.jpg", "image/jpeg", 1024),
-				makeFile("b.png", "image/png", 2048),
-			];
+			const files = [makeFile("a.jpg", "image/jpeg", 1024), makeFile("b.png", "image/png", 2048)];
 			const { validFiles, errors } = validateMediaFiles(files, { rejectVideos: true });
 
 			expect(validFiles).toHaveLength(2);

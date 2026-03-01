@@ -58,9 +58,7 @@ export function ProductRowActions({
 		});
 	};
 
-	const handleChangeStatus = (
-		targetStatus: "DRAFT" | "PUBLIC" | "ARCHIVED"
-	) => {
+	const handleChangeStatus = (targetStatus: "DRAFT" | "PUBLIC" | "ARCHIVED") => {
 		changeStatusDialog.open({
 			productId,
 			productTitle,
@@ -99,7 +97,7 @@ export function ProductRowActions({
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-11 w-11 p-0 active:scale-95 transition-transform"
+					className="h-11 w-11 p-0 transition-transform active:scale-95"
 					aria-label="Actions pour ce bijou"
 				>
 					<span className="sr-only">Ouvrir le menu d'actions</span>
@@ -119,9 +117,7 @@ export function ProductRowActions({
 
 				{/* Modifier - Édition complète */}
 				<DropdownMenuItem asChild>
-					<Link
-						href={`/admin/catalogue/produits/${productSlug}/modifier`}
-					>
+					<Link href={`/admin/catalogue/produits/${productSlug}/modifier`}>
 						<Pencil className="h-4 w-4" />
 						Modifier
 					</Link>
@@ -135,9 +131,7 @@ export function ProductRowActions({
 
 				{/* Gérer variantes - Ouvre la liste des SKUs associés */}
 				<DropdownMenuItem asChild>
-					<Link
-						href={`/admin/catalogue/produits/${productSlug}/variantes`}
-					>
+					<Link href={`/admin/catalogue/produits/${productSlug}/variantes`}>
 						<LayoutList className="h-4 w-4" />
 						Gérer variantes
 					</Link>

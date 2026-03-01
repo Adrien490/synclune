@@ -31,8 +31,7 @@ export function CartItemQuantitySelector({
 	isInactive,
 }: CartItemQuantitySelectorProps) {
 	const [isPending, startTransition] = useTransition();
-	const [optimisticQuantity, setOptimisticQuantity] =
-		useOptimistic(currentQuantity);
+	const [optimisticQuantity, setOptimisticQuantity] = useOptimistic(currentQuantity);
 	const cartOptimistic = useCartOptimisticSafe();
 
 	const { action, isPending: isActionPending } = useUpdateCartItem();
@@ -90,9 +89,7 @@ export function CartItemQuantitySelector({
 					onClick={() => handleQuantityChange(optimisticQuantity - 1)}
 					disabled={isInactive || isLoading || optimisticQuantity <= 1}
 					aria-label={
-						optimisticQuantity <= 1
-							? "Quantité minimale atteinte"
-							: "Diminuer la quantité"
+						optimisticQuantity <= 1 ? "Quantité minimale atteinte" : "Diminuer la quantité"
 					}
 				>
 					<Minus className="size-4" aria-hidden="true" />
@@ -109,7 +106,7 @@ export function CartItemQuantitySelector({
 					onChange={(e) => handleQuantityChange(parseInt(e.target.value, 10))}
 					onBlur={handleBlur}
 					disabled={isInactive || isLoading}
-					className="min-h-0 h-11 w-14 text-center text-base px-0 py-0"
+					className="h-11 min-h-0 w-14 px-0 py-0 text-center text-base"
 					aria-label={`Quantité, entre 1 et ${maxQuantity}`}
 					aria-valuemin={1}
 					aria-valuemax={maxQuantity}

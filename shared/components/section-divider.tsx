@@ -55,9 +55,9 @@ export function SectionDivider({
 	return (
 		<div
 			className={cn(
-				"w-full overflow-hidden leading-none pointer-events-none",
+				"pointer-events-none w-full overflow-hidden leading-none",
 				flip && "rotate-180",
-				className
+				className,
 			)}
 			aria-hidden="true"
 			role="presentation"
@@ -65,14 +65,10 @@ export function SectionDivider({
 			<svg
 				viewBox="0 0 1200 120"
 				preserveAspectRatio="none"
-				className="w-full block"
+				className="block w-full"
 				style={{ height }}
 			>
-				<path
-					d={paths[variant]}
-					fill={fillColor}
-					className="transition-colors duration-300"
-				/>
+				<path d={paths[variant]} fill={fillColor} className="transition-colors duration-300" />
 			</svg>
 		</div>
 	);
@@ -80,13 +76,7 @@ export function SectionDivider({
 
 function SparkleIcon({ size, className }: { size: number; className?: string }) {
 	return (
-		<svg
-			width={size}
-			height={size}
-			viewBox="0 0 24 24"
-			fill="none"
-			className={className}
-		>
+		<svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
 			<path d={SPARKLE_PATH} fill="currentColor" />
 		</svg>
 	);
@@ -99,20 +89,17 @@ function SparkleIcon({ size, className }: { size: number; className?: string }) 
 export function SparklesDivider({ className }: { className?: string }) {
 	return (
 		<div
-			className={cn(
-				"flex justify-center items-center gap-2 py-8",
-				className
-			)}
+			className={cn("flex items-center justify-center gap-2 py-8", className)}
 			aria-hidden="true"
 			role="presentation"
 		>
-			<div className="h-px w-16 bg-linear-to-r from-transparent to-primary/30" />
+			<div className="to-primary/30 h-px w-16 bg-linear-to-r from-transparent" />
 			<SparkleIcon size={20} className="text-primary/60" />
-			<div className="h-px w-24 bg-linear-to-r from-primary/30 via-secondary/40 to-primary/30" />
+			<div className="from-primary/30 via-secondary/40 to-primary/30 h-px w-24 bg-linear-to-r" />
 			<SparkleIcon size={24} className="text-secondary" />
-			<div className="h-px w-24 bg-linear-to-r from-primary/30 via-secondary/40 to-primary/30" />
+			<div className="from-primary/30 via-secondary/40 to-primary/30 h-px w-24 bg-linear-to-r" />
 			<SparkleIcon size={20} className="text-primary/60" />
-			<div className="h-px w-16 bg-linear-to-l from-transparent to-primary/30" />
+			<div className="to-primary/30 h-px w-16 bg-linear-to-l from-transparent" />
 		</div>
 	);
 }

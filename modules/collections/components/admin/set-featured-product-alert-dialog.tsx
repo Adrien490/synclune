@@ -11,6 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { cn } from "@/shared/utils/cn";
 import { Loader2, Star } from "lucide-react";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
@@ -26,9 +27,7 @@ interface SetFeaturedProductData {
 }
 
 export function SetFeaturedProductAlertDialog() {
-	const dialog = useAlertDialog<SetFeaturedProductData>(
-		SET_FEATURED_PRODUCT_DIALOG_ID
-	);
+	const dialog = useAlertDialog<SetFeaturedProductData>(SET_FEATURED_PRODUCT_DIALOG_ID);
 
 	const { setFeatured, removeFeatured, isPending } = useSetFeaturedProduct({
 		onSuccess: () => {
@@ -60,11 +59,10 @@ export function SetFeaturedProductAlertDialog() {
 				<AlertDialogHeader>
 					<AlertDialogTitle className="flex items-center gap-2">
 						<Star
-							className={`h-5 w-5 ${
-								isFeatured
-									? "fill-yellow-400 text-yellow-400"
-									: "text-muted-foreground"
-							}`}
+							className={cn(
+								"h-5 w-5",
+								isFeatured ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground",
+							)}
 						/>
 						{isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}
 					</AlertDialogTitle>
@@ -77,20 +75,19 @@ export function SetFeaturedProductAlertDialog() {
 										<strong>&quot;{dialog.data?.productTitle}&quot;</strong> ?
 									</p>
 									<p>
-										La collection n'aura plus de produit vedette et affichera le
-										produit le plus recent comme image representative.
+										La collection n'aura plus de produit vedette et affichera le produit le plus
+										recent comme image representative.
 									</p>
 								</>
 							) : (
 								<>
 									<p>
-										Voulez-vous definir{" "}
-										<strong>&quot;{dialog.data?.productTitle}&quot;</strong> comme
-										produit vedette de cette collection ?
+										Voulez-vous definir <strong>&quot;{dialog.data?.productTitle}&quot;</strong>{" "}
+										comme produit vedette de cette collection ?
 									</p>
 									<p>
-										Ce produit sera utilise comme image representative de la
-										collection sur la page d'accueil et dans les listes.
+										Ce produit sera utilise comme image representative de la collection sur la page
+										d'accueil et dans les listes.
 									</p>
 								</>
 							)}
@@ -108,7 +105,13 @@ export function SetFeaturedProductAlertDialog() {
 						aria-busy={isPending}
 					>
 						{isPending && <Loader2 className="animate-spin" />}
-						{isPending ? (isFeatured ? "Retrait..." : "Definition...") : isFeatured ? "Retirer" : "Definir comme vedette"}
+						{isPending
+							? isFeatured
+								? "Retrait..."
+								: "Definition..."
+							: isFeatured
+								? "Retirer"
+								: "Definir comme vedette"}
 					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>

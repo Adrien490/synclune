@@ -12,7 +12,7 @@
 export function downloadCSV(
 	csvBase64: string,
 	filename: string,
-	onError?: (error: unknown) => void
+	onError?: (error: unknown) => void,
 ) {
 	try {
 		const binaryString = atob(csvBase64);
@@ -33,11 +33,7 @@ export function downloadCSV(
 /**
  * Downloads JSON data as a file
  */
-export function downloadJSON(
-	data: unknown,
-	filename: string,
-	onError?: (error: unknown) => void
-) {
+export function downloadJSON(data: unknown, filename: string, onError?: (error: unknown) => void) {
 	try {
 		const blob = new Blob([JSON.stringify(data, null, 2)], {
 			type: "application/json",

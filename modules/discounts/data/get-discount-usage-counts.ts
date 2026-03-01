@@ -20,7 +20,7 @@ type DiscountUsageCountsResult = {
  * - emailCount: nombre d'utilisations par email (guest checkout)
  */
 export async function getDiscountUsageCounts(
-	params: DiscountUsageCountsParams
+	params: DiscountUsageCountsParams,
 ): Promise<DiscountUsageCountsResult> {
 	"use cache: private";
 

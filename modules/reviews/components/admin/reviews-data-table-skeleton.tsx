@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/shared/components/ui/card"
-import { Skeleton } from "@/shared/components/ui/skeleton"
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
 	Table,
 	TableBody,
@@ -7,7 +7,7 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "@/shared/components/ui/table"
+} from "@/shared/components/ui/table";
 
 /**
  * Skeleton de chargement pour la liste des avis admin
@@ -23,7 +23,7 @@ export function ReviewsDataTableSkeleton() {
 							<TableHead className="w-[20%]">Client</TableHead>
 							<TableHead className="w-[10%]">Note</TableHead>
 							<TableHead className="w-[15%]">Statut</TableHead>
-							<TableHead className="hidden md:table-cell w-[15%]">Date</TableHead>
+							<TableHead className="hidden w-[15%] md:table-cell">Date</TableHead>
 							<TableHead className="w-[10%]">Réponse</TableHead>
 							<TableHead className="w-[5%]">Actions</TableHead>
 						</TableRow>
@@ -56,7 +56,7 @@ export function ReviewsDataTableSkeleton() {
 									<Skeleton className="h-5 w-14" />
 								</TableCell>
 								<TableCell>
-									<Skeleton className="h-8 w-8 ml-auto" />
+									<Skeleton className="ml-auto h-8 w-8" />
 								</TableCell>
 							</TableRow>
 						))}
@@ -64,5 +64,5 @@ export function ReviewsDataTableSkeleton() {
 				</Table>
 			</CardContent>
 		</Card>
-	)
+	);
 }

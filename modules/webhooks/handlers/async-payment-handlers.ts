@@ -14,7 +14,7 @@ import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.typ
  * Ces paiements sont confirmés après le checkout, parfois plusieurs jours plus tard
  */
 export async function handleAsyncPaymentSucceeded(
-	session: Stripe.Checkout.Session
+	session: Stripe.Checkout.Session,
 ): Promise<WebhookHandlerResult | null> {
 	console.log(`🏦 [WEBHOOK] Async payment succeeded: ${session.id}`);
 
@@ -43,7 +43,7 @@ export async function handleAsyncPaymentSucceeded(
  * Annule la commande et notifie le client
  */
 export async function handleAsyncPaymentFailed(
-	session: Stripe.Checkout.Session
+	session: Stripe.Checkout.Session,
 ): Promise<WebhookHandlerResult> {
 	console.log(`🚫 [WEBHOOK] Async payment failed: ${session.id}`);
 
@@ -65,9 +65,20 @@ export async function handleAsyncPaymentFailed(
 			throw new Error(`Order not found: ${orderId}`);
 		}
 
-		if (existingOrder.paymentStatus === "PAID" || existingOrder.paymentStatus === "REFUNDED" || existingOrder.paymentStatus === "PARTIALLY_REFUNDED" || existingOrder.paymentStatus === "EXPIRED") {
-			console.log(`⏭️ [WEBHOOK] Order ${orderId} already ${existingOrder.paymentStatus}, skipping async payment failure`);
-			return { success: true, skipped: true, reason: `Order already ${existingOrder.paymentStatus}` };
+		if (
+			existingOrder.paymentStatus === "PAID" ||
+			existingOrder.paymentStatus === "REFUNDED" ||
+			existingOrder.paymentStatus === "PARTIALLY_REFUNDED" ||
+			existingOrder.paymentStatus === "EXPIRED"
+		) {
+			console.log(
+				`⏭️ [WEBHOOK] Order ${orderId} already ${existingOrder.paymentStatus}, skipping async payment failure`,
+			);
+			return {
+				success: true,
+				skipped: true,
+				reason: `Order already ${existingOrder.paymentStatus}`,
+			};
 		}
 
 		// Cancel order + release discount usages in a single transaction
@@ -87,7 +98,9 @@ export async function handleAsyncPaymentFailed(
 
 			if (discountUsages.length > 0) {
 				await tx.discountUsage.deleteMany({ where: { orderId } });
-				console.log(`[WEBHOOK] Released ${discountUsages.length} discount usage(s) for failed async order ${orderId}`);
+				console.log(
+					`[WEBHOOK] Released ${discountUsages.length} discount usage(s) for failed async order ${orderId}`,
+				);
 			}
 
 			const updatedOrder = await tx.order.update({
@@ -110,7 +123,9 @@ export async function handleAsyncPaymentFailed(
 			};
 		});
 
-		console.log(`⚠️ [WEBHOOK] Order ${order.orderNumber} marked as FAILED due to async payment failure`);
+		console.log(
+			`⚠️ [WEBHOOK] Order ${order.orderNumber} marked as FAILED due to async payment failure`,
+		);
 
 		// Build post-tasks (email + cache invalidation)
 		const tasks: PostWebhookTask[] = [];

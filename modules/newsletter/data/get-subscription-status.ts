@@ -48,7 +48,7 @@ export async function getSubscriptionStatus(): Promise<GetSubscriptionStatusRetu
  */
 export async function fetchSubscriptionStatus(
 	email: string,
-	userId: string
+	userId: string,
 ): Promise<{ status: string } | null> {
 	"use cache: private";
 	cacheLife("cart");

@@ -64,6 +64,14 @@ export function StickyCartCTA({
 
 	const canAddToCart = currentSku && isAvailable;
 
+	// Whether variant selection is incomplete (scroll to selector on click)
+	const needsVariantSelection = !currentSku && !hasOnlyOneSku && validationErrors.length > 0;
+
+	const scrollToSelector = () => {
+		const selector = document.getElementById("sku-selector");
+		selector?.scrollIntoView({ behavior: "smooth", block: "center" });
+	};
+
 	// Observer le bouton principal pour declencher l'affichage
 	useEffect(() => {
 		const target = document.getElementById(targetId);
@@ -174,10 +182,11 @@ export function StickyCartCTA({
 
 						{/* Bouton */}
 						<Button
-							type="submit"
+							type={needsVariantSelection ? "button" : "submit"}
 							size="lg"
-							disabled={!canAddToCart || isPending}
+							disabled={(!canAddToCart && !needsVariantSelection) || isPending}
 							aria-busy={isPending}
+							onClick={needsVariantSelection ? scrollToSelector : undefined}
 							className={cn(
 								"min-w-40 shrink-0",
 								"shadow-md",

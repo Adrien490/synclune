@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	FAB_KEYS,
-	FAB_COOKIE_PREFIX,
-	FAB_COOKIE_MAX_AGE,
-	getFabCookieName,
-} from "./fab";
+import { FAB_KEYS, FAB_COOKIE_PREFIX, FAB_COOKIE_MAX_AGE, getFabCookieName } from "./fab";
 
 describe("FAB constants", () => {
 	it("defines expected FAB keys", () => {
@@ -28,8 +23,6 @@ describe("getFabCookieName", () => {
 	});
 
 	it("generates cookie name for admin key", () => {
-		expect(getFabCookieName("admin-speed-dial")).toBe(
-			"fab-hidden-admin-speed-dial"
-		);
+		expect(getFabCookieName("admin-speed-dial")).toBe("fab-hidden-admin-speed-dial");
 	});
 });

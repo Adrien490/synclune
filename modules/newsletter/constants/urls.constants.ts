@@ -10,9 +10,7 @@
 function getNewsletterBaseUrl(): string {
 	if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
 	if (process.env.NODE_ENV === "development") return "http://localhost:3000";
-	throw new Error(
-		"BETTER_AUTH_URL environment variable is required in production"
-	);
+	throw new Error("BETTER_AUTH_URL environment variable is required in production");
 }
 
 export const NEWSLETTER_BASE_URL = getNewsletterBaseUrl();

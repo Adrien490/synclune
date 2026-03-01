@@ -32,24 +32,20 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
 					setOpen(false);
 					router.refresh();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return (
 		<section className="space-y-4">
-			<h2 className="text-base font-semibold flex items-center gap-2">
-				<XCircle className="size-4 text-muted-foreground" />
+			<h2 className="flex items-center gap-2 text-base font-semibold">
+				<XCircle className="text-muted-foreground size-4" />
 				Annulation
 			</h2>
-			<div className="border-t border-border/60 pt-4">
-				<Button
-					variant="outline"
-					className="w-full"
-					onClick={() => setOpen(true)}
-				>
-					<XCircle className="h-4 w-4 mr-2" />
+			<div className="border-border/60 border-t pt-4">
+				<Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
+					<XCircle className="mr-2 h-4 w-4" />
 					Annuler la commande
 				</Button>
 			</div>
@@ -64,13 +60,10 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
 			>
 				<ResponsiveDialogContent className="max-w-lg">
 					<ResponsiveDialogHeader>
-						<ResponsiveDialogTitle>
-							Annuler la commande
-						</ResponsiveDialogTitle>
+						<ResponsiveDialogTitle>Annuler la commande</ResponsiveDialogTitle>
 						<ResponsiveDialogDescription>
-							Êtes-vous sûr de vouloir annuler cette commande ?
-							Cette action est irréversible. Si le paiement a déjà
-							été effectué, un remboursement sera initié.
+							Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible. Si le
+							paiement a déjà été effectué, un remboursement sera initié.
 						</ResponsiveDialogDescription>
 					</ResponsiveDialogHeader>
 
@@ -86,14 +79,10 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
 							>
 								Ne pas annuler
 							</Button>
-							<Button
-								type="submit"
-								variant="destructive"
-								disabled={isPending}
-							>
+							<Button type="submit" variant="destructive" disabled={isPending}>
 								{isPending ? (
 									<>
-										<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 										Annulation...
 									</>
 								) : (

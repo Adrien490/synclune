@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { extractCollectionImages } from "./get-navbar-menu-data";
 
 // Minimal mock matching Collection["products"] shape from GET_COLLECTIONS_SELECT
-function makeProduct(imageData?: { url: string; altText: string | null; blurDataUrl: string | null }) {
+function makeProduct(imageData?: {
+	url: string;
+	altText: string | null;
+	blurDataUrl: string | null;
+}) {
 	return {
 		isFeatured: false,
 		product: imageData
@@ -58,7 +62,7 @@ describe("extractCollectionImages", () => {
 
 	it("limits to 4 images maximum", () => {
 		const products = Array.from({ length: 6 }, (_, i) =>
-			makeProduct({ url: `https://img.com/${i}.jpg`, altText: `Image ${i}`, blurDataUrl: null })
+			makeProduct({ url: `https://img.com/${i}.jpg`, altText: `Image ${i}`, blurDataUrl: null }),
 		);
 
 		const result = extractCollectionImages(products as never);

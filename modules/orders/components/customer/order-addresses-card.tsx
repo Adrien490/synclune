@@ -24,21 +24,17 @@ function formatAddress(address: {
 	phone?: string;
 }) {
 	return (
-		<div className="text-sm space-y-0.5">
+		<div className="space-y-0.5 text-sm">
 			<p className="font-medium">
 				{address.firstName} {address.lastName}
 			</p>
 			<p className="text-muted-foreground">{address.address1}</p>
-			{address.address2 && (
-				<p className="text-muted-foreground">{address.address2}</p>
-			)}
+			{address.address2 && <p className="text-muted-foreground">{address.address2}</p>}
 			<p className="text-muted-foreground">
 				{address.postalCode} {address.city}
 			</p>
 			<p className="text-muted-foreground">{address.country}</p>
-			{address.phone && (
-				<p className="text-muted-foreground mt-1">{address.phone}</p>
-			)}
+			{address.phone && <p className="text-muted-foreground mt-1">{address.phone}</p>}
 		</div>
 	);
 }
@@ -57,13 +53,11 @@ export function OrderAddressesCard({ order }: OrderAddressesCardProps) {
 
 	return (
 		<section className="space-y-4">
-			<h2 className="text-base font-semibold flex items-center gap-2">
-				<MapPin className="size-4 text-muted-foreground" />
+			<h2 className="flex items-center gap-2 text-base font-semibold">
+				<MapPin className="text-muted-foreground size-4" />
 				Adresse de livraison
 			</h2>
-			<div className="border-t border-border/60 pt-4">
-				{formatAddress(shippingAddress)}
-			</div>
+			<div className="border-border/60 border-t pt-4">{formatAddress(shippingAddress)}</div>
 		</section>
 	);
 }

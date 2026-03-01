@@ -8,10 +8,7 @@
  * - Calculer la plage de prix
  */
 
-import type {
-	ProductFromList,
-	ColorSwatch,
-} from "@/modules/products/types/product-list.types";
+import type { ProductFromList, ColorSwatch } from "@/modules/products/types/product-list.types";
 import { getPrimarySkuForList } from "@/modules/skus/services/sku-selection.service";
 
 // ============================================================================
@@ -57,11 +54,8 @@ export function getPrimaryColorForList(product: ProductFromList): {
  * **Alternative non retenue :** Marquer la couleur en rupture si TOUTES les variantes sont épuisées.
  * Rejeté car cela masquerait des couleurs partiellement disponibles.
  */
-export function getAvailableColorsForList(
-	product: ProductFromList
-): ColorSwatch[] {
-	const activeSkus =
-		product.skus?.filter((sku) => sku.isActive && sku.color) || [];
+export function getAvailableColorsForList(product: ProductFromList): ColorSwatch[] {
+	const activeSkus = product.skus?.filter((sku) => sku.isActive && sku.color) || [];
 	const colorMap = new Map<string, ColorSwatch>();
 
 	for (const sku of activeSkus) {
@@ -98,8 +92,7 @@ export function getVariantCountForList(product: ProductFromList): {
 	let totalSkus = 0;
 
 	// Ajouter les SKUs actifs en stock
-	const activeSkus =
-		product.skus?.filter((sku) => sku.isActive && sku.inventory > 0) || [];
+	const activeSkus = product.skus?.filter((sku) => sku.isActive && sku.inventory > 0) || [];
 
 	for (const sku of activeSkus) {
 		if (sku.color?.hex) uniqueColors.add(sku.color.hex);
@@ -124,17 +117,11 @@ export function hasMultipleVariants(product: ProductFromList): boolean {
 	const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
 	if (activeSkus.length <= 1) return false;
 
-	const uniqueColors = new Set(
-		activeSkus.map((s) => s.color?.slug).filter(Boolean)
-	);
-	const uniqueMaterials = new Set(
-		activeSkus.map((s) => s.material?.name).filter(Boolean)
-	);
+	const uniqueColors = new Set(activeSkus.map((s) => s.color?.slug).filter(Boolean));
+	const uniqueMaterials = new Set(activeSkus.map((s) => s.material?.name).filter(Boolean));
 	const uniqueSizes = new Set(activeSkus.map((s) => s.size).filter(Boolean));
 
-	return (
-		uniqueColors.size > 1 || uniqueMaterials.size > 1 || uniqueSizes.size > 1
-	);
+	return uniqueColors.size > 1 || uniqueMaterials.size > 1 || uniqueSizes.size > 1;
 }
 
 /**
@@ -148,8 +135,7 @@ export function getPriceRangeForList(product: ProductFromList): {
 	const prices: number[] = [];
 
 	// Ajouter les prix des SKUs actifs en stock
-	const activeSkus =
-		product.skus?.filter((sku) => sku.isActive && sku.inventory > 0) || [];
+	const activeSkus = product.skus?.filter((sku) => sku.isActive && sku.inventory > 0) || [];
 
 	for (const sku of activeSkus) {
 		prices.push(sku.priceInclTax);

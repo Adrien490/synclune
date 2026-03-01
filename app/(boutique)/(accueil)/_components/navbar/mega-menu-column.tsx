@@ -48,7 +48,10 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 
 	return (
 		<div role="region" aria-labelledby={headingId}>
-			<h3 id={headingId} className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+			<h3
+				id={headingId}
+				className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase"
+			>
 				{title}
 			</h3>
 
@@ -59,28 +62,30 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 						href={primaryItem.href}
 						aria-current={pathname === primaryItem.href ? "page" : undefined}
 						className={cn(
-							"relative flex-row! flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-semibold min-h-11",
+							"relative flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-semibold",
 							"bg-accent/40 hover:bg-accent",
 							"text-foreground",
-							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-							"transition-colors duration-200 mb-2",
+							"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+							"mb-2 transition-colors duration-200",
 							"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
-							pathname === primaryItem.href && "bg-accent font-semibold"
+							pathname === primaryItem.href && "bg-accent font-semibold",
 						)}
 					>
 						{primaryItem.label}
-						<ArrowRight className="size-3.5! text-muted-foreground" aria-hidden="true" />
+						<ArrowRight className="text-muted-foreground size-3.5!" aria-hidden="true" />
 						<LoadingIndicator />
 					</Link>
 				</NavigationMenuLink>
 			)}
 
 			{/* Rest of items - optional multi-column grid */}
-			<ul className={cn(
-				"space-y-0.5",
-				columns === 2 && "grid grid-cols-2 gap-x-4 gap-y-0.5 space-y-0",
-				columns === 3 && "grid grid-cols-3 gap-x-4 gap-y-0.5 space-y-0"
-			)}>
+			<ul
+				className={cn(
+					"space-y-0.5",
+					columns === 2 && "grid grid-cols-2 space-y-0 gap-x-4 gap-y-0.5",
+					columns === 3 && "grid grid-cols-3 space-y-0 gap-x-4 gap-y-0.5",
+				)}
+			>
 				{restItems.map((item, index) => {
 					const isActive = pathname === item.href;
 					return (
@@ -94,11 +99,11 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 									href={item.href}
 									aria-current={isActive ? "page" : undefined}
 									className={cn(
-										"relative block rounded-sm px-3 py-2.5 text-sm min-h-11",
+										"relative block min-h-11 rounded-sm px-3 py-2.5 text-sm",
 										"hover:bg-accent hover:text-accent-foreground",
-										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 										"transition-colors duration-200",
-										isActive && "bg-accent/50 font-medium"
+										isActive && "bg-accent/50 font-medium",
 									)}
 								>
 									{item.label}
@@ -111,21 +116,21 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 			</ul>
 
 			{viewAllLink && (
-				<div className="mt-4 border-t border-border pt-3">
+				<div className="border-border mt-4 border-t pt-3">
 					<NavigationMenuLink asChild>
 						<Link
 							href={viewAllLink.href}
 							aria-current={pathname === viewAllLink.href ? "page" : undefined}
 							className={cn(
-								"relative flex-row! inline-flex items-center gap-2 min-h-11 px-3 py-2.5 rounded-sm text-sm font-medium",
+								"relative inline-flex min-h-11 flex-row! items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium",
 								"text-foreground hover:text-foreground",
 								"hover:bg-accent/50",
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"transition-colors"
+								"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+								"transition-colors",
 							)}
 						>
 							{viewAllLink.label}
-							<ArrowRight className="size-3.5! text-muted-foreground" aria-hidden="true" />
+							<ArrowRight className="text-muted-foreground size-3.5!" aria-hidden="true" />
 							<LoadingIndicator />
 						</Link>
 					</NavigationMenuLink>

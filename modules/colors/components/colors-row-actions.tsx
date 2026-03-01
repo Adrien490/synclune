@@ -54,7 +54,12 @@ export function ColorsRowActions({
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" className="h-11 w-11 p-0 motion-safe:active:scale-95 motion-safe:transition-transform" aria-label={`Actions pour ${colorName}`}>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+					aria-label={`Actions pour ${colorName}`}
+				>
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
@@ -63,10 +68,7 @@ export function ColorsRowActions({
 					<Edit className="h-4 w-4" />
 					Éditer
 				</DropdownMenuItem>
-				<DropdownMenuItem
-					onClick={() => duplicate(colorId)}
-					disabled={isDuplicating}
-				>
+				<DropdownMenuItem onClick={() => duplicate(colorId)} disabled={isDuplicating}>
 					<Copy className="h-4 w-4" />
 					Dupliquer
 				</DropdownMenuItem>

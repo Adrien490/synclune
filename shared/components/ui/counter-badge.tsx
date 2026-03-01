@@ -11,30 +11,22 @@ interface CounterBadgeProps {
 }
 
 function getColorClasses(percentage: number): string {
-	if (percentage < 33)
-		return "bg-green-500/20 text-green-800 border-green-400 dark:bg-green-500/30 dark:text-green-300 dark:border-green-600";
-	if (percentage < 66)
-		return "bg-yellow-500/20 text-yellow-800 border-yellow-400 dark:bg-yellow-500/30 dark:text-yellow-300 dark:border-yellow-600";
+	if (percentage < 33) return "bg-success/20 text-success border-success/40 dark:bg-success/30";
+	if (percentage < 66) return "bg-warning/20 text-warning border-warning/40 dark:bg-warning/30";
 	if (percentage < 90)
-		return "bg-orange-500/20 text-orange-800 border-orange-400 dark:bg-orange-500/30 dark:text-orange-300 dark:border-orange-600";
-	return "bg-red-500/20 text-red-800 border-red-400 dark:bg-red-500/30 dark:text-red-300 dark:border-red-600";
+		return "bg-warning/30 text-warning-foreground border-warning/50 dark:bg-warning/40";
+	return "bg-destructive/20 text-destructive border-destructive/40 dark:bg-destructive/30";
 }
 
-export function CounterBadge({
-	count,
-	max,
-	label,
-	icon: Icon,
-	className,
-}: CounterBadgeProps) {
+export function CounterBadge({ count, max, label, icon: Icon, className }: CounterBadgeProps) {
 	const percentage = (count / max) * 100;
 
 	return (
 		<Badge
 			className={cn(
-				"gap-1.5 text-sm font-semibold px-3 py-1.5 border-2",
+				"gap-1.5 border-2 px-3 py-1.5 text-sm font-semibold",
 				getColorClasses(percentage),
-				className
+				className,
 			)}
 			role="status"
 			aria-live="polite"

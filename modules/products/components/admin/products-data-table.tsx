@@ -42,8 +42,7 @@ const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
 	currency: "EUR",
 });
 
-const formatPrice = (priceInCents: number) =>
-	PRICE_FORMATTER.format(priceInCents / 100);
+const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCents / 100);
 
 // Labels et styles pour les badges de statut
 const STATUS_CONFIG: Record<
@@ -60,10 +59,7 @@ interface ProductsDataTableProps {
 	perPage: number;
 }
 
-export async function ProductsDataTable({
-	productsPromise,
-	perPage,
-}: ProductsDataTableProps) {
+export async function ProductsDataTable({ productsPromise, perPage }: ProductsDataTableProps) {
 	const { products, pagination } = await productsPromise;
 	const productIds = products.map((product) => product.id);
 
@@ -84,9 +80,7 @@ export async function ProductsDataTable({
 	const getDefaultImage = (product: (typeof products)[0]) => {
 		const defaultSku = getDefaultSku(product);
 		if (!defaultSku?.images || defaultSku.images.length === 0) return null;
-		return (
-			defaultSku.images.find((img) => img.isPrimary) || defaultSku.images[0]
-		);
+		return defaultSku.images.find((img) => img.isPrimary) || defaultSku.images[0];
 	};
 
 	// Helper pour obtenir la plage de prix (min-max)
@@ -138,40 +132,20 @@ export async function ProductsDataTable({
 			<CardContent>
 				<ProductsSelectionToolbar products={products} />
 				<TableScrollContainer>
-					<Table
-						aria-label="Liste des bijoux"
-						striped
-						className="min-w-full table-fixed"
-					>
+					<Table aria-label="Liste des bijoux" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead
-									className="w-10 sm:w-[5%] lg:w-[4%]"
-									aria-label="Sélection de produits"
-								>
-									<TableSelectionCell
-										type="header"
-										itemIds={productIds}
-									/>
+								<TableHead className="w-10 sm:w-[5%] lg:w-[4%]" aria-label="Sélection de produits">
+									<TableSelectionCell type="header" itemIds={productIds} />
 								</TableHead>
-								<TableHead className="hidden sm:table-cell w-[12%] lg:w-[8%]">
-									Image
-								</TableHead>
-								<TableHead className="w-auto sm:w-[30%] lg:w-[20%]">
-									Titre
-								</TableHead>
-								<TableHead className="hidden sm:table-cell w-[12%] lg:w-[10%]">
-									Statut
-								</TableHead>
-								<TableHead className="hidden sm:table-cell text-center w-[10%] lg:w-[8%]">
+								<TableHead className="hidden w-[12%] sm:table-cell lg:w-[8%]">Image</TableHead>
+								<TableHead className="w-auto sm:w-[30%] lg:w-[20%]">Titre</TableHead>
+								<TableHead className="hidden w-[12%] sm:table-cell lg:w-[10%]">Statut</TableHead>
+								<TableHead className="hidden w-[10%] text-center sm:table-cell lg:w-[8%]">
 									Variantes
 								</TableHead>
-								<TableHead className="hidden lg:table-cell w-[12%] text-right">
-									Prix
-								</TableHead>
-								<TableHead className="hidden lg:table-cell text-center w-[8%]">
-									Stock
-								</TableHead>
+								<TableHead className="hidden w-[12%] text-right lg:table-cell">Prix</TableHead>
+								<TableHead className="hidden w-[8%] text-center lg:table-cell">Stock</TableHead>
 								<TableHead
 									className="w-12 sm:w-[10%] lg:w-[8%]"
 									aria-label="Actions disponibles pour chaque produit"
@@ -196,8 +170,8 @@ export async function ProductsDataTable({
 												ariaLabel={`Selectionner ${product.title}`}
 											/>
 										</TableCell>
-										<TableCell className="hidden sm:table-cell py-3">
-											<div className="w-20 h-20 relative shrink-0 bg-muted rounded-md">
+										<TableCell className="hidden py-3 sm:table-cell">
+											<div className="bg-muted relative h-20 w-20 shrink-0 rounded-md">
 												{defaultImage ? (
 													<Image
 														src={defaultImage.url}
@@ -211,10 +185,10 @@ export async function ProductsDataTable({
 													/>
 												) : (
 													<div
-														className="flex w-full h-full items-center justify-center rounded-md bg-muted"
+														className="bg-muted flex h-full w-full items-center justify-center rounded-md"
 														aria-label="Aucune image disponible"
 													>
-														<Package className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+														<Package className="text-muted-foreground h-8 w-8" aria-hidden="true" />
 													</div>
 												)}
 											</div>
@@ -223,7 +197,7 @@ export async function ProductsDataTable({
 											<div className="overflow-hidden">
 												<Link
 													href={`/admin/catalogue/produits/${product.slug}/modifier`}
-													className="font-semibold text-foreground hover:underline hover:text-foreground truncate block"
+													className="text-foreground hover:text-foreground block truncate font-semibold hover:underline"
 													title={`Modifier ${product.title}`}
 													aria-label={`Modifier ${product.title}`}
 												>
@@ -236,10 +210,7 @@ export async function ProductsDataTable({
 												{STATUS_CONFIG[product.status].label}
 											</Badge>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell text-center"
-										>
+										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
 											{skusCount > 0 ? (
 												<Link
 													href={`/admin/catalogue/produits/${product.slug}/variantes`}
@@ -250,12 +221,15 @@ export async function ProductsDataTable({
 													{skusCount}
 												</Link>
 											) : (
-												<span className="text-sm text-muted-foreground" aria-label="Aucune variante">
+												<span
+													className="text-muted-foreground text-sm"
+													aria-label="Aucune variante"
+												>
 													—
 												</span>
 											)}
 										</TableCell>
-										<TableCell role="gridcell" className="hidden lg:table-cell text-right">
+										<TableCell role="gridcell" className="hidden text-right lg:table-cell">
 											<span
 												className="text-sm font-medium"
 												title={formatPriceDisplay(priceRange)}
@@ -264,10 +238,7 @@ export async function ProductsDataTable({
 												{formatPriceDisplay(priceRange)}
 											</span>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden lg:table-cell text-center"
-										>
+										<TableCell role="gridcell" className="hidden text-center lg:table-cell">
 											<Badge
 												variant={
 													totalStock === 0

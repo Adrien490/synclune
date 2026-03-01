@@ -6,15 +6,8 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import type { z } from "zod";
-import type {
-	colorFiltersSchema,
-	getColorsSchema,
-	getColorSchema,
-} from "../schemas/color.schemas";
-import type {
-	GET_COLORS_SELECT,
-	GET_COLOR_SELECT,
-} from "../constants/color.constants";
+import type { colorFiltersSchema, getColorsSchema, getColorSchema } from "../schemas/color.schemas";
+import type { GET_COLORS_SELECT, GET_COLOR_SELECT } from "../constants/color.constants";
 import type { PaginationInfo } from "@/shared/lib/pagination";
 
 // ============================================================================

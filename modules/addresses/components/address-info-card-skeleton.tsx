@@ -6,13 +6,13 @@ export function AddressInfoCardSkeleton() {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg font-semibold flex items-center gap-2">
+				<CardTitle className="flex items-center gap-2 text-lg font-semibold">
 					<MapPin className="h-4 w-4" />
 					Adresse de livraison
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-3">
-				<div className="rounded-lg border p-3 space-y-2">
+				<div className="space-y-2 rounded-lg border p-3">
 					<Skeleton className="h-4 w-32" />
 					<Skeleton className="h-3 w-40" />
 					<Skeleton className="h-3 w-36" />

@@ -12,15 +12,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDuplicateMaterial } from "@/modules/materials/hooks/use-duplicate-material";
 import { useToggleMaterialStatus } from "@/modules/materials/hooks/use-toggle-material-status";
-import {
-	Copy,
-	Edit,
-	ExternalLink,
-	MoreVertical,
-	Power,
-	PowerOff,
-	Trash2,
-} from "lucide-react";
+import { Copy, Edit, ExternalLink, MoreVertical, Power, PowerOff, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { MATERIAL_DIALOG_ID } from "./material-form-dialog";
 import { DELETE_MATERIAL_DIALOG_ID } from "@/modules/materials/components/admin/delete-material-alert-dialog";
@@ -71,7 +63,12 @@ export function MaterialsRowActions({
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" className="h-11 w-11 p-0 motion-safe:active:scale-95 motion-safe:transition-transform" aria-label={`Actions pour ${materialName}`}>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+					aria-label={`Actions pour ${materialName}`}
+				>
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
@@ -80,10 +77,7 @@ export function MaterialsRowActions({
 					<Edit className="h-4 w-4" />
 					Éditer
 				</DropdownMenuItem>
-				<DropdownMenuItem
-					onClick={() => duplicate(materialId)}
-					disabled={isDuplicating}
-				>
+				<DropdownMenuItem onClick={() => duplicate(materialId)} disabled={isDuplicating}>
 					<Copy className="h-4 w-4" />
 					Dupliquer
 				</DropdownMenuItem>

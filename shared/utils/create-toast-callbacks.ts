@@ -1,9 +1,9 @@
-import { toast } from "sonner"
+import { toast } from "sonner";
 
-import type { ActionState } from "@/shared/types/server-action"
-import type { CreateToastCallbacksOptions } from "@/shared/types/callback.types"
+import type { ActionState } from "@/shared/types/server-action";
+import type { CreateToastCallbacksOptions } from "@/shared/types/callback.types";
 
-export type { CreateToastCallbacksOptions } from "@/shared/types/callback.types"
+export type { CreateToastCallbacksOptions } from "@/shared/types/callback.types";
 
 /**
  * Type guard pour vérifier si une valeur contient un message
@@ -11,7 +11,7 @@ export type { CreateToastCallbacksOptions } from "@/shared/types/callback.types"
  * @returns true si la valeur contient une propriété message de type string non vide
  */
 export const hasMessage = (
-	value: unknown
+	value: unknown,
 ): value is { message: string; [key: string]: unknown } => {
 	return (
 		value !== null &&
@@ -40,10 +40,8 @@ export const hasMessage = (
  * });
  * ```
  */
-export const createToastCallbacks = <
-	T extends ActionState | unknown = ActionState,
->(
-	options: CreateToastCallbacksOptions<T> = {}
+export const createToastCallbacks = <T extends ActionState | unknown = ActionState>(
+	options: CreateToastCallbacksOptions<T> = {},
 ) => {
 	const {
 		loadingMessage,

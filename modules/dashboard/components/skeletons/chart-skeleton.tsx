@@ -21,23 +21,23 @@ export function ChartSkeleton({
 		<div role="status" aria-busy="true" aria-label={ariaLabel}>
 			<Card className={CHART_STYLES.card}>
 				<CardHeader>
-					<Skeleton className="h-6 w-48 mb-1" /> {/* Titre */}
+					<Skeleton className="mb-1 h-6 w-48" /> {/* Titre */}
 					<Skeleton className="h-4 w-64" /> {/* Description */}
 				</CardHeader>
 				<CardContent>
 					{/* Simulation des axes du chart */}
 					<div className="relative" style={{ height: `${height}px` }}>
 						{/* Axe Y (gauche) */}
-						<div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col justify-between py-4">
+						<div className="absolute top-0 bottom-0 left-0 flex w-12 flex-col justify-between py-4">
 							<Skeleton className="h-3 w-8" />
 							<Skeleton className="h-3 w-10" />
 							<Skeleton className="h-3 w-8" />
 							<Skeleton className="h-3 w-10" />
 						</div>
 						{/* Zone du graphique */}
-						<Skeleton className="absolute left-14 right-0 top-0 bottom-8 rounded" />
+						<Skeleton className="absolute top-0 right-0 bottom-8 left-14 rounded" />
 						{/* Axe X (bas) */}
-						<div className="absolute bottom-0 left-14 right-0 flex justify-between">
+						<div className="absolute right-0 bottom-0 left-14 flex justify-between">
 							<Skeleton className="h-3 w-8" />
 							<Skeleton className="h-3 w-8" />
 							<Skeleton className="h-3 w-8" />

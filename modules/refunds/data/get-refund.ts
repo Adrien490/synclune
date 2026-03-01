@@ -17,9 +17,7 @@ export type { GetRefundParams, GetRefundReturn } from "../types/refund.types";
 /**
  * Récupère un remboursement par son ID
  */
-export async function getRefundById(
-	params: Partial<GetRefundParams>
-): Promise<GetRefundReturn> {
+export async function getRefundById(params: Partial<GetRefundParams>): Promise<GetRefundReturn> {
 	const validation = getRefundSchema.safeParse(params ?? {});
 
 	if (!validation.success) {
@@ -35,9 +33,7 @@ export async function getRefundById(
 /**
  * Récupère le refund depuis la DB
  */
-async function fetchRefund(
-	params: GetRefundParams
-): Promise<GetRefundReturn> {
+async function fetchRefund(params: GetRefundParams): Promise<GetRefundReturn> {
 	"use cache";
 	cacheLife("dashboard");
 	cacheTag(ORDERS_CACHE_TAGS.LIST, ORDERS_CACHE_TAGS.REFUNDS(params.id));

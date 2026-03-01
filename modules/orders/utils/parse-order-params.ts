@@ -5,9 +5,7 @@ import { GET_ORDERS_SORT_FIELDS } from "../constants/order.constants";
  * Parse and validate order search parameters from URL
  * Returns safe, validated parameters with defaults for invalid values
  */
-export function parseOrderParams(searchParams: {
-	[key: string]: string | string[] | undefined;
-}) {
+export function parseOrderParams(searchParams: { [key: string]: string | string[] | undefined }) {
 	return {
 		cursor: searchParamParsers.cursor(searchParams.cursor),
 		direction: searchParamParsers.direction(searchParams.direction),
@@ -15,7 +13,7 @@ export function parseOrderParams(searchParams: {
 		sortBy: searchParamParsers.sortBy(
 			searchParams.sortBy,
 			GET_ORDERS_SORT_FIELDS,
-			"created-descending" as const
+			"created-descending" as const,
 		) as (typeof GET_ORDERS_SORT_FIELDS)[number],
 		search: searchParamParsers.search(searchParams.search),
 	};

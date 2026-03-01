@@ -31,9 +31,9 @@ export function useDuplicateColor(options?: UseDuplicateColorOptions) {
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const duplicate = (colorId: string) => {

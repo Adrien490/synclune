@@ -12,8 +12,6 @@ export const ParticleBackground = dynamic(
 
 export const ScrollIndicator = dynamic(
 	() =>
-		import("@/shared/components/animations/scroll-indicator").then(
-			(mod) => mod.ScrollIndicator,
-		),
+		import("@/shared/components/animations/scroll-indicator").then((mod) => mod.ScrollIndicator),
 	{ ssr: false },
 );

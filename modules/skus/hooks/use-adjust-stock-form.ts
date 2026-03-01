@@ -25,9 +25,9 @@ export function useAdjustStockForm(options: UseAdjustStockFormOptions) {
 				onSuccess: () => {
 					options.onSuccess?.();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const form = useAppForm({
@@ -36,10 +36,7 @@ export function useAdjustStockForm(options: UseAdjustStockFormOptions) {
 			adjustment: 0,
 			reason: "",
 		},
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
 	// Watch des valeurs pour le calcul du nouveau stock

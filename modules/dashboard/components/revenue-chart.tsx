@@ -20,6 +20,7 @@ import type {
 	RevenueDataPoint,
 } from "@/modules/dashboard/data/get-revenue-chart";
 
+import { cn } from "@/shared/utils/cn";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import { ChartEmpty } from "./chart-empty";
 import { ChartScrollContainer } from "./chart-scroll-container";
@@ -56,7 +57,9 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 	const hasRevenue = formattedData.some((item) => item.revenue > 0);
 
 	return (
-		<Card className={`${CHART_STYLES.card} can-hover:hover:shadow-lg transition-all duration-300`}>
+		<Card
+			className={cn(CHART_STYLES.card, "can-hover:hover:shadow-lg transition-all duration-300")}
+		>
 			<CardHeader>
 				<CardTitle className={CHART_STYLES.title}>Revenus des 30 derniers jours</CardTitle>
 				<CardDescription className={CHART_STYLES.description}>
@@ -75,7 +78,7 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 						<ChartScrollContainer>
 							<ChartContainer
 								config={chartConfig}
-								className={`${CHART_STYLES.height.responsive} w-full`}
+								className={cn(CHART_STYLES.height.responsive, "w-full")}
 							>
 								<LineChart
 									accessibilityLayer

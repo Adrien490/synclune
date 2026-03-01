@@ -38,9 +38,11 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
 interface CartSheetProps {
 	cart: GetCartReturn;
+	/** Cross-sell recommendations slot (RSC passed as children) */
+	recommendations?: React.ReactNode;
 }
 
-export function CartSheet({ cart }: CartSheetProps) {
+export function CartSheet({ cart, recommendations }: CartSheetProps) {
 	const { isOpen, close } = useSheet("cart");
 	const shouldReduceMotion = useReducedMotion();
 	const [isPending, startTransition] = useTransition();
@@ -189,6 +191,9 @@ export function CartSheet({ cart }: CartSheetProps) {
 									</div>
 								</ScrollFade>
 							</div>
+
+							{/* Cross-sell recommendations */}
+							{recommendations}
 
 							<CartSheetFooter
 								totalItems={totalItems}

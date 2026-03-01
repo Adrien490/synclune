@@ -1,11 +1,7 @@
-import { z } from "zod"
-import { isAllowedMediaDomain } from "@/shared/lib/media-validation"
-import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants"
-import {
-	TEXT_LIMITS,
-	ARRAY_LIMITS,
-	PRICE_LIMITS,
-} from "@/shared/constants/validation-limits"
+import { z } from "zod";
+import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
+import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants";
+import { TEXT_LIMITS, ARRAY_LIMITS, PRICE_LIMITS } from "@/shared/constants/validation-limits";
 
 // ============================================================================
 // MAIN SCHEMA
@@ -13,7 +9,7 @@ import {
 
 export const getProductSkuSchema = z.object({
 	sku: z.string().trim().min(1),
-})
+});
 
 // ============================================================================
 // SHARED SCHEMAS
@@ -95,7 +91,9 @@ const baseSkuFieldsSchema = z.object({
 	primaryImage: imageSchema.optional(),
 	galleryMedia: z
 		.array(imageSchema)
-		.max(ARRAY_LIMITS.SKU_GALLERY_MEDIA, { error: `Maximum ${ARRAY_LIMITS.SKU_GALLERY_MEDIA} médias dans la galerie` })
+		.max(ARRAY_LIMITS.SKU_GALLERY_MEDIA, {
+			error: `Maximum ${ARRAY_LIMITS.SKU_GALLERY_MEDIA} médias dans la galerie`,
+		})
 		.default([])
 		.transform((arr) => arr.filter((item): item is NonNullable<typeof item> => item !== null)),
 });
@@ -104,7 +102,9 @@ const baseSkuFieldsSchema = z.object({
  * Refinement: verifier que le media principal n'est PAS une video
  * Gere les cas: undefined, null, ou objet image
  */
-function refinePrimaryImageNotVideo(data: { primaryImage?: { url: string; mediaType?: "IMAGE" | "VIDEO" } | null }) {
+function refinePrimaryImageNotVideo(data: {
+	primaryImage?: { url: string; mediaType?: "IMAGE" | "VIDEO" } | null;
+}) {
 	if (!data.primaryImage) return true; // undefined ou null = OK
 	const mediaType = data.primaryImage.mediaType;
 	if (!mediaType) {
@@ -122,8 +122,7 @@ function refineCompareAtPrice(data: { compareAtPriceEuros?: number; priceInclTax
 }
 
 const PRIMARY_IMAGE_ERROR = {
-	message:
-		"Le media principal ne peut pas être une video. Veuillez sélectionner une image.",
+	message: "Le media principal ne peut pas être une video. Veuillez sélectionner une image.",
 	path: ["primaryImage"],
 };
 
@@ -237,7 +236,9 @@ export const updateSkuPriceSchema = z.object({
 	compareAtPriceEuros: z.coerce
 		.number()
 		.positive({ error: "Le prix comparé doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` })
+		.max(PRICE_LIMITS.MAX_EUR, {
+			error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €`,
+		})
 		.optional()
 		.or(z.literal(""))
 		.transform((val) => (val === "" ? undefined : val)),

@@ -28,7 +28,7 @@ export type SkuForPublicCheck = {
  * Centralise les regles metier pour la publication
  */
 export function validateProductForPublication(
-	product: ProductForPublicationCheck
+	product: ProductForPublicationCheck,
 ): ProductPublicationValidation {
 	// Regle 1: Titre requis
 	if (!product.title || product.title.trim().length === 0) {
@@ -78,7 +78,9 @@ export function validateProductForPublication(
  * Verifie si un produit PUBLIC peut etre cree avec le SKU initial fourni
  * Version simplifiee pour la creation (pas encore de SKU en DB)
  */
-export function validatePublicProductCreation(sku: SkuForPublicCheck): ProductPublicationValidation {
+export function validatePublicProductCreation(
+	sku: SkuForPublicCheck,
+): ProductPublicationValidation {
 	if (!sku.isActive) {
 		return {
 			isValid: false,

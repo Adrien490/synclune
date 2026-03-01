@@ -9,9 +9,7 @@ interface UseBulkActivateProductTypesOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useBulkActivateProductTypes = (
-	options?: UseBulkActivateProductTypesOptions
-) => {
+export const useBulkActivateProductTypes = (options?: UseBulkActivateProductTypesOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -27,9 +25,9 @@ export const useBulkActivateProductTypes = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const activateProductTypes = (productTypeIds: string[]) => {

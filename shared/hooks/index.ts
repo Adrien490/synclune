@@ -5,6 +5,7 @@ export { useActionWithToast, useRefreshAction } from "./use-action-with-toast";
 export { useIsMobile } from "./use-mobile";
 export { useIsTouchDevice } from "./use-touch-device";
 export { useMediaQuery } from "./use-media-query";
+export { useMounted } from "./use-mounted";
 
 // Navigation & Pagination hooks
 export { useSelection } from "./use-selection";

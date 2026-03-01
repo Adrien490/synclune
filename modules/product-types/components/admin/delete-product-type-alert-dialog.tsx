@@ -14,9 +14,7 @@ interface DeleteProductTypeData {
 }
 
 export function DeleteProductTypeAlertDialog() {
-	const deleteDialog = useAlertDialog<DeleteProductTypeData>(
-		DELETE_PRODUCT_TYPE_DIALOG_ID
-	);
+	const deleteDialog = useAlertDialog<DeleteProductTypeData>(DELETE_PRODUCT_TYPE_DIALOG_ID);
 
 	const { action, isPending } = useDeleteProductType({
 		onSuccess: () => {
@@ -34,18 +32,15 @@ export function DeleteProductTypeAlertDialog() {
 			description={(data) => (
 				<div className="space-y-3">
 					<p>
-						Voulez-vous vraiment supprimer le type{" "}
-						<strong>&quot;{data?.label}&quot;</strong> ?
+						Voulez-vous vraiment supprimer le type <strong>&quot;{data?.label}&quot;</strong> ?
 					</p>
 					{data?.productsCount && data.productsCount > 0 && (
-						<p className="text-orange-600 dark:text-orange-400 font-medium">
-							Attention : {data.productsCount} bijou(x) utilise(nt) ce
-							type. Ils seront dissociés de ce type.
+						<p className="font-medium text-orange-600 dark:text-orange-400">
+							Attention : {data.productsCount} bijou(x) utilise(nt) ce type. Ils seront dissociés de
+							ce type.
 						</p>
 					)}
-					<p className="text-muted-foreground text-sm">
-						Cette action est irréversible.
-					</p>
+					<p className="text-muted-foreground text-sm">Cette action est irréversible.</p>
 				</div>
 			)}
 		/>

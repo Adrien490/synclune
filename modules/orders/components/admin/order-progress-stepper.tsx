@@ -101,7 +101,7 @@ export function OrderProgressStepper({ status, paymentStatus }: OrderProgressSte
 									</div>
 									<span
 										className={cn(
-											"text-xs font-medium transition-colors",
+											"hidden text-xs font-medium transition-colors min-[400px]:block",
 											isCompleted && "text-primary",
 											isCurrent && "text-foreground",
 											isPending && "text-muted-foreground",

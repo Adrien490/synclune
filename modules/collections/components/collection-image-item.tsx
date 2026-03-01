@@ -4,12 +4,7 @@ import Image from "next/image";
 import type { CollectionImage } from "../types/collection.types";
 
 /** Delais progressifs pour effet de vague au hover (40/60/100ms) */
-const STAGGER_DELAYS = [
-	"delay-0",
-	"delay-[40ms]",
-	"delay-[60ms]",
-	"delay-[100ms]",
-] as const;
+const STAGGER_DELAYS = ["delay-0", "delay-[40ms]", "delay-[60ms]", "delay-[100ms]"] as const;
 
 /** Quality reduite pour images secondaires */
 const SECONDARY_IMAGE_QUALITY = 75;
@@ -44,9 +39,7 @@ export function CollectionImageItem({
 	staggerIndex = 0,
 }: CollectionImageItemProps) {
 	// Alt text: utiliser celui fourni, sinon generer un descriptif contextuel
-	const altText =
-		image.alt ||
-		`Bijou artisanal ${index + 1} de la collection ${collectionName}`;
+	const altText = image.alt || `Bijou artisanal ${index + 1} de la collection ${collectionName}`;
 
 	const delayClass = STAGGER_DELAYS[staggerIndex % STAGGER_DELAYS.length];
 

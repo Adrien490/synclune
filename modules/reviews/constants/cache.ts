@@ -2,7 +2,7 @@
  * Cache configuration for Reviews module
  */
 
-import { cacheLife, cacheTag } from "next/cache"
+import { cacheLife, cacheTag } from "next/cache";
 
 // ============================================
 // CACHE TAGS
@@ -35,7 +35,7 @@ export const REVIEWS_CACHE_TAGS = {
 
 	/** Avis mis en avant sur la homepage */
 	HOMEPAGE: "homepage-reviews",
-} as const
+} as const;
 
 // ============================================
 // CACHE CONFIGURATION HELPERS
@@ -47,8 +47,8 @@ export const REVIEWS_CACHE_TAGS = {
  * - Durée : Cache moyen (products)
  */
 export function cacheProductReviews(productId: string) {
-	cacheLife("products")
-	cacheTag(REVIEWS_CACHE_TAGS.PRODUCT(productId))
+	cacheLife("products");
+	cacheTag(REVIEWS_CACHE_TAGS.PRODUCT(productId));
 }
 
 /**
@@ -57,8 +57,8 @@ export function cacheProductReviews(productId: string) {
  * - Durée : Cache moyen (products)
  */
 export function cacheProductReviewStats(productId: string) {
-	cacheLife("products")
-	cacheTag(REVIEWS_CACHE_TAGS.STATS(productId))
+	cacheLife("products");
+	cacheTag(REVIEWS_CACHE_TAGS.STATS(productId));
 }
 
 /**
@@ -67,8 +67,8 @@ export function cacheProductReviewStats(productId: string) {
  * - Durée : Cache privé court
  */
 export function cacheUserReviews(userId: string) {
-	cacheLife("userOrders")
-	cacheTag(REVIEWS_CACHE_TAGS.USER(userId))
+	cacheLife("userOrders");
+	cacheTag(REVIEWS_CACHE_TAGS.USER(userId));
 }
 
 /**
@@ -77,8 +77,8 @@ export function cacheUserReviews(userId: string) {
  * - Durée : Cache privé court
  */
 export function cacheReviewableProducts(userId: string) {
-	cacheLife("userOrders")
-	cacheTag(REVIEWS_CACHE_TAGS.REVIEWABLE(userId))
+	cacheLife("userOrders");
+	cacheTag(REVIEWS_CACHE_TAGS.REVIEWABLE(userId));
 }
 
 /**
@@ -87,8 +87,8 @@ export function cacheReviewableProducts(userId: string) {
  * - Durée : Cache court (dashboard)
  */
 export function cacheReviewsAdmin() {
-	cacheLife("dashboard")
-	cacheTag(REVIEWS_CACHE_TAGS.ADMIN_LIST)
+	cacheLife("dashboard");
+	cacheTag(REVIEWS_CACHE_TAGS.ADMIN_LIST);
 }
 
 /**
@@ -97,8 +97,8 @@ export function cacheReviewsAdmin() {
  * - Durée : Cache moyen (products)
  */
 export function cacheHomepageReviews() {
-	cacheLife("products")
-	cacheTag(REVIEWS_CACHE_TAGS.HOMEPAGE)
+	cacheLife("products");
+	cacheTag(REVIEWS_CACHE_TAGS.HOMEPAGE);
 }
 
 // ============================================
@@ -112,7 +112,7 @@ export function cacheHomepageReviews() {
 export function getReviewInvalidationTags(
 	productId: string | null,
 	userId: string,
-	reviewId?: string
+	reviewId?: string,
 ): string[] {
 	const tags: string[] = [
 		REVIEWS_CACHE_TAGS.USER(userId),
@@ -120,20 +120,20 @@ export function getReviewInvalidationTags(
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
 		REVIEWS_CACHE_TAGS.GLOBAL_STATS,
-	]
+	];
 
 	// Ajouter les tags produit seulement si le produit existe encore
 	if (productId) {
-		tags.push(REVIEWS_CACHE_TAGS.PRODUCT(productId))
-		tags.push(REVIEWS_CACHE_TAGS.STATS(productId))
+		tags.push(REVIEWS_CACHE_TAGS.PRODUCT(productId));
+		tags.push(REVIEWS_CACHE_TAGS.STATS(productId));
 	}
 
 	if (reviewId) {
-		tags.push(REVIEWS_CACHE_TAGS.DETAIL(reviewId))
-		tags.push(REVIEWS_CACHE_TAGS.ADMIN_DETAIL(reviewId))
+		tags.push(REVIEWS_CACHE_TAGS.DETAIL(reviewId));
+		tags.push(REVIEWS_CACHE_TAGS.ADMIN_DETAIL(reviewId));
 	}
 
-	return tags
+	return tags;
 }
 
 /**
@@ -141,23 +141,20 @@ export function getReviewInvalidationTags(
  * Ne touche pas le cache utilisateur
  * Note: productId peut être null si le produit a été archivé
  */
-export function getReviewModerationTags(
-	productId: string | null,
-	reviewId: string
-): string[] {
+export function getReviewModerationTags(productId: string | null, reviewId: string): string[] {
 	const tags = [
 		REVIEWS_CACHE_TAGS.DETAIL(reviewId),
 		REVIEWS_CACHE_TAGS.ADMIN_DETAIL(reviewId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
 		REVIEWS_CACHE_TAGS.GLOBAL_STATS,
-	]
+	];
 
 	// Ajouter les tags produit seulement si le produit existe encore
 	if (productId) {
-		tags.push(REVIEWS_CACHE_TAGS.PRODUCT(productId))
-		tags.push(REVIEWS_CACHE_TAGS.STATS(productId))
+		tags.push(REVIEWS_CACHE_TAGS.PRODUCT(productId));
+		tags.push(REVIEWS_CACHE_TAGS.STATS(productId));
 	}
 
-	return tags
+	return tags;
 }

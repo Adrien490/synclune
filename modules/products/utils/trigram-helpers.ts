@@ -27,17 +27,12 @@ type PrismaTransaction = Omit<
  * @param tx - Prisma transaction
  * @param timeoutMs - Timeout in milliseconds
  */
-export async function setStatementTimeout(
-	tx: PrismaTransaction,
-	timeoutMs: number
-): Promise<void> {
+export async function setStatementTimeout(tx: PrismaTransaction, timeoutMs: number): Promise<void> {
 	const safeTimeout = Math.max(0, Math.round(Number(timeoutMs)));
 	if (!Number.isFinite(safeTimeout)) {
 		throw new Error("Invalid statement timeout value");
 	}
-	await tx.$executeRawUnsafe(
-		`SET LOCAL statement_timeout = '${safeTimeout}ms'`
-	);
+	await tx.$executeRawUnsafe(`SET LOCAL statement_timeout = '${safeTimeout}ms'`);
 }
 
 // ============================================================================
@@ -66,18 +61,11 @@ export async function setStatementTimeout(
  * @param threshold - Similarity threshold (0.0 - 1.0)
  * @throws Error if threshold is not a valid number
  */
-export async function setTrigramThreshold(
-	tx: PrismaTransaction,
-	threshold: number
-): Promise<void> {
+export async function setTrigramThreshold(tx: PrismaTransaction, threshold: number): Promise<void> {
 	const safeThreshold = Math.max(0, Math.min(1, Number(threshold)));
 	if (!Number.isFinite(safeThreshold)) {
 		throw new Error("Invalid trigram threshold value");
 	}
-	await tx.$executeRawUnsafe(
-		`SET LOCAL pg_trgm.similarity_threshold = ${safeThreshold}`
-	);
-	await tx.$executeRawUnsafe(
-		`SET LOCAL pg_trgm.word_similarity_threshold = ${safeThreshold}`
-	);
+	await tx.$executeRawUnsafe(`SET LOCAL pg_trgm.similarity_threshold = ${safeThreshold}`);
+	await tx.$executeRawUnsafe(`SET LOCAL pg_trgm.word_similarity_threshold = ${safeThreshold}`);
 }

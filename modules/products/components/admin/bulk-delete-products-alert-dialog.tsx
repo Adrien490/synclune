@@ -35,15 +35,12 @@ export function BulkDeleteProductsAlertDialog() {
 						?
 					</p>
 					<p>
-						<span className="text-destructive font-medium">
-							Cette action est irréversible
-						</span>{" "}
-						et supprimera également toutes les variantes et images
-						associées.
+						<span className="text-destructive font-medium">Cette action est irréversible</span> et
+						supprimera également toutes les variantes et images associées.
 					</p>
 					<p className="text-muted-foreground text-xs">
-						Note: Les commandes existantes conserveront les informations
-						des produits via des snapshots.
+						Note: Les commandes existantes conserveront les informations des produits via des
+						snapshots.
 					</p>
 				</div>
 			)}

@@ -14,7 +14,7 @@ export default function CollectionDetailLoading() {
 			<PageHeaderSkeleton hasDescription />
 
 			<section className="bg-background pt-6 pb-12 lg:pt-8 lg:pb-16">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					<ProductListSkeleton />
 				</div>
 			</section>

@@ -9,7 +9,7 @@ import { getVideoMimeType } from "../utils/media-utils";
  */
 export function buildLightboxSlides(
 	medias: ProductMedia[],
-	prefersReducedMotion: boolean | null
+	prefersReducedMotion: boolean | null,
 ): Slide[] {
 	return medias.map((media) => {
 		if (media.mediaType === "VIDEO") {

@@ -1,17 +1,12 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import type {
-	GetSkuStocksParams,
-	InventoryFilters,
-} from "../types/inventory.types";
+import type { GetSkuStocksParams, InventoryFilters } from "../types/inventory.types";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 // ============================================================================
 // INVENTORY QUERY BUILDER UTILS
 // ============================================================================
 
-export function buildInventorySearchConditions(
-	search?: string
-): Prisma.ProductSkuWhereInput {
+export function buildInventorySearchConditions(search?: string): Prisma.ProductSkuWhereInput {
 	if (!search || search.trim().length === 0) return {};
 	const searchTerm = search.trim();
 
@@ -28,7 +23,7 @@ export function buildInventorySearchConditions(
 }
 
 export function buildInventoryFilterConditions(
-	filters: InventoryFilters
+	filters: InventoryFilters,
 ): Prisma.ProductSkuWhereInput {
 	const conditions: Prisma.ProductSkuWhereInput = {};
 
@@ -44,9 +39,7 @@ export function buildInventoryFilterConditions(
 	}
 
 	if (filters.colorId) {
-		const ids = Array.isArray(filters.colorId)
-			? filters.colorId
-			: [filters.colorId];
+		const ids = Array.isArray(filters.colorId) ? filters.colorId : [filters.colorId];
 		if (ids.length === 1) {
 			conditions.colorId = ids[0];
 		} else if (ids.length > 1) {
@@ -55,9 +48,7 @@ export function buildInventoryFilterConditions(
 	}
 
 	if (filters.material) {
-		const materials = Array.isArray(filters.material)
-			? filters.material
-			: [filters.material];
+		const materials = Array.isArray(filters.material) ? filters.material : [filters.material];
 		if (materials.length === 1) {
 			conditions.material = { name: materials[0] };
 		} else if (materials.length > 1) {
@@ -68,16 +59,14 @@ export function buildInventoryFilterConditions(
 	return conditions;
 }
 
-export function buildInventoryWhereClause(
-	params: GetSkuStocksParams
-): Prisma.ProductSkuWhereInput {
+export function buildInventoryWhereClause(params: GetSkuStocksParams): Prisma.ProductSkuWhereInput {
 	const filterConditions = buildInventoryFilterConditions(
 		params.filters || {
 			productTypeId: undefined,
 			colorId: undefined,
 			material: undefined,
 			stockLevel: undefined,
-		}
+		},
 	);
 	const searchConditions = buildInventorySearchConditions(params.search);
 

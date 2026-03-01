@@ -42,7 +42,10 @@ export function VisaIcon({ className = "", "aria-label": ariaLabel = "Visa" }: P
 	);
 }
 
-export function MastercardIcon({ className = "", "aria-label": ariaLabel = "Mastercard" }: PaymentIconProps) {
+export function MastercardIcon({
+	className = "",
+	"aria-label": ariaLabel = "Mastercard",
+}: PaymentIconProps) {
 	return (
 		<svg
 			width="32"
@@ -76,7 +79,10 @@ export function MastercardIcon({ className = "", "aria-label": ariaLabel = "Mast
 	);
 }
 
-export function CBIcon({ className = "", "aria-label": ariaLabel = "Carte Bancaire" }: PaymentIconProps) {
+export function CBIcon({
+	className = "",
+	"aria-label": ariaLabel = "Carte Bancaire",
+}: PaymentIconProps) {
 	return (
 		<svg
 			width="32"
@@ -117,7 +123,10 @@ export function CBIcon({ className = "", "aria-label": ariaLabel = "Carte Bancai
 	);
 }
 
-export function PayPalIcon({ className = "", "aria-label": ariaLabel = "PayPal" }: PaymentIconProps) {
+export function PayPalIcon({
+	className = "",
+	"aria-label": ariaLabel = "PayPal",
+}: PaymentIconProps) {
 	return (
 		<svg
 			width="32"
@@ -154,7 +163,10 @@ export function PayPalIcon({ className = "", "aria-label": ariaLabel = "PayPal" 
 	);
 }
 
-export function ApplePayIcon({ className = "", "aria-label": ariaLabel = "Apple Pay" }: PaymentIconProps) {
+export function ApplePayIcon({
+	className = "",
+	"aria-label": ariaLabel = "Apple Pay",
+}: PaymentIconProps) {
 	return (
 		<svg
 			width="32"

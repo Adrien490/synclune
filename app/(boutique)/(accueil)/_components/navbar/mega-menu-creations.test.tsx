@@ -3,8 +3,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock next/link
 vi.mock("next/link", () => ({
-	default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-		<a href={href} {...props}>{children}</a>
+	default: ({
+		href,
+		children,
+		...props
+	}: {
+		href: string;
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => (
+		<a href={href} {...props}>
+			{children}
+		</a>
 	),
 }));
 
@@ -23,7 +33,13 @@ vi.mock("@/shared/components/ui/navigation-menu", () => ({
 
 // Mock MegaMenuColumn
 vi.mock("./mega-menu-column", () => ({
-	MegaMenuColumn: ({ title, items }: { title: string; items: Array<{ href: string; label: string }> }) => (
+	MegaMenuColumn: ({
+		title,
+		items,
+	}: {
+		title: string;
+		items: Array<{ href: string; label: string }>;
+	}) => (
 		<div data-testid="mega-menu-column">
 			<h3>{title}</h3>
 			<ul>
@@ -90,12 +106,7 @@ describe("MegaMenuCreations", () => {
 	});
 
 	it("renders featured products with correct ROUTES.SHOP.PRODUCT links", () => {
-		render(
-			<MegaMenuCreations
-				productTypes={productTypes}
-				featuredProducts={featuredProducts}
-			/>
-		);
+		render(<MegaMenuCreations productTypes={productTypes} featuredProducts={featuredProducts} />);
 
 		const bagueLink = screen.getByRole("link", { name: /Bague Céleste/ });
 		expect(bagueLink.getAttribute("href")).toBe("/creations/bague-celeste");
@@ -105,24 +116,14 @@ describe("MegaMenuCreations", () => {
 	});
 
 	it("renders featured product prices", () => {
-		render(
-			<MegaMenuCreations
-				productTypes={productTypes}
-				featuredProducts={featuredProducts}
-			/>
-		);
+		render(<MegaMenuCreations productTypes={productTypes} featuredProducts={featuredProducts} />);
 
 		expect(screen.getByText("99 €")).toBeInTheDocument();
 		expect(screen.getByText("150 €")).toBeInTheDocument();
 	});
 
 	it("renders the Nouveautés section header", () => {
-		render(
-			<MegaMenuCreations
-				productTypes={productTypes}
-				featuredProducts={featuredProducts}
-			/>
-		);
+		render(<MegaMenuCreations productTypes={productTypes} featuredProducts={featuredProducts} />);
 
 		expect(screen.getByText("Nouveautés")).toBeInTheDocument();
 	});

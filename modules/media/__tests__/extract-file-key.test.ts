@@ -9,7 +9,7 @@ describe("extractFileKeyFromUrl", () => {
 
 	it("should extract key from S3 format", () => {
 		const result = extractFileKeyFromUrl(
-			"https://uploadthing-prod.s3.us-west-2.amazonaws.com/filekey123"
+			"https://uploadthing-prod.s3.us-west-2.amazonaws.com/filekey123",
 		);
 		expect(result).toBe("filekey123");
 	});
@@ -40,9 +40,7 @@ describe("extractFileKeyFromUrl", () => {
 	});
 
 	it("should extract key from a URL with query parameters", () => {
-		const result = extractFileKeyFromUrl(
-			"https://utfs.io/f/abc123.png?token=xyz&expires=9999"
-		);
+		const result = extractFileKeyFromUrl("https://utfs.io/f/abc123.png?token=xyz&expires=9999");
 		expect(result).toBe("abc123.png");
 	});
 

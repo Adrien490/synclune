@@ -9,9 +9,7 @@ interface UseBulkChangeProductStatusOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useBulkChangeProductStatus = (
-	options?: UseBulkChangeProductStatusOptions
-) => {
+export const useBulkChangeProductStatus = (options?: UseBulkChangeProductStatusOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -27,15 +25,12 @@ export const useBulkChangeProductStatus = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
-	const changeProductStatus = (
-		productIds: string[],
-		targetStatus: "DRAFT" | "PUBLIC"
-	) => {
+	const changeProductStatus = (productIds: string[], targetStatus: "DRAFT" | "PUBLIC") => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("productIds", JSON.stringify(productIds));

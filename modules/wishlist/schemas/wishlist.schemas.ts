@@ -5,7 +5,7 @@ import { z } from "zod";
 // ============================================================================
 
 export const wishlistProductSchema = z.object({
-	productId: z.cuid2({ message: 'Produit invalide' }),
+	productId: z.cuid2({ message: "Produit invalide" }),
 });
 
 export type WishlistProductInput = z.infer<typeof wishlistProductSchema>;

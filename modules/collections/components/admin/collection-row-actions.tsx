@@ -86,7 +86,7 @@ export function CollectionRowActions({
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-11 w-11 p-0 active:scale-95 transition-transform"
+					className="h-11 w-11 p-0 transition-transform active:scale-95"
 					aria-label="Actions pour cette collection"
 				>
 					<span className="sr-only">Ouvrir le menu d'actions</span>

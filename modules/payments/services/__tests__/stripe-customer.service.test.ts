@@ -85,7 +85,7 @@ describe("getOrCreateStripeCustomer", () => {
 
 		await getOrCreateStripeCustomer(null, makeParams({ email: "test@synclune.fr" }));
 
-		const options = mockStripe.customers.create.mock.calls[0][1];
+		const options = mockStripe.customers.create.mock.calls[0]![1];
 		expect(options.idempotencyKey).toBe("customer-create-test@synclune.fr");
 	});
 
@@ -94,7 +94,7 @@ describe("getOrCreateStripeCustomer", () => {
 
 		await getOrCreateStripeCustomer(null, makeParams());
 
-		const params = mockStripe.customers.create.mock.calls[0][0];
+		const params = mockStripe.customers.create.mock.calls[0]![0];
 		expect(params.address).toEqual({
 			line1: "12 Rue de la Paix",
 			line2: undefined,
@@ -109,7 +109,7 @@ describe("getOrCreateStripeCustomer", () => {
 
 		await getOrCreateStripeCustomer(null, makeParams());
 
-		const params = mockStripe.customers.create.mock.calls[0][0];
+		const params = mockStripe.customers.create.mock.calls[0]![0];
 		expect(params.name).toBe("Marie Dupont");
 	});
 
@@ -118,7 +118,7 @@ describe("getOrCreateStripeCustomer", () => {
 
 		await getOrCreateStripeCustomer(null, makeParams());
 
-		const params = mockStripe.customers.create.mock.calls[0][0];
+		const params = mockStripe.customers.create.mock.calls[0]![0];
 		expect(params.metadata).toEqual({
 			source: "checkout_b2c",
 			createdFrom: "synclune-bijoux",
@@ -147,7 +147,9 @@ describe("getOrCreateStripeCustomer", () => {
 
 	it("should return error message for invalid email (StripeInvalidRequestError)", async () => {
 		mockStripe.customers.create.mockRejectedValue(
-			new Stripe.errors.StripeInvalidRequestError("Invalid email"),
+			new Stripe.errors.StripeInvalidRequestError(
+				"Invalid email" as unknown as Stripe.StripeRawError,
+			),
 		);
 
 		const result = await getOrCreateStripeCustomer(null, makeParams());
@@ -181,7 +183,7 @@ describe("getOrCreateStripeCustomer", () => {
 			}),
 		);
 
-		const params = mockStripe.customers.create.mock.calls[0][0];
+		const params = mockStripe.customers.create.mock.calls[0]![0];
 		expect(params.address.country).toBe("FR");
 	});
 });

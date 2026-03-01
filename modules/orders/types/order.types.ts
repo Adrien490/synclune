@@ -43,9 +43,7 @@ export type OrderSortField = (typeof GET_ORDERS_SORT_FIELDS)[number];
 export type GetOrdersParams = z.infer<typeof getOrdersSchema>;
 
 export type GetOrdersReturn = {
-	orders: Array<
-		Prisma.OrderGetPayload<{ select: typeof GET_ORDERS_SELECT }>
-	>;
+	orders: Array<Prisma.OrderGetPayload<{ select: typeof GET_ORDERS_SELECT }>>;
 	pagination: PaginationInfo;
 };
 
@@ -87,63 +85,58 @@ export interface ShippingRate {
 }
 
 /** Pays où la livraison est possible */
-export type AllowedShippingCountry = ShippingCountry
+export type AllowedShippingCountry = ShippingCountry;
 
 // ============================================================================
 // TYPES - ORDER STATUS VALIDATION (from services/)
 // ============================================================================
 
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client"
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 
 export interface OrderForShipValidation {
-	status: OrderStatus
-	paymentStatus: PaymentStatus
+	status: OrderStatus;
+	paymentStatus: PaymentStatus;
 }
 
-export type ShipValidationResult =
-	| { canShip: true }
-	| { canShip: false; reason: ShipBlockReason }
+export type ShipValidationResult = { canShip: true } | { canShip: false; reason: ShipBlockReason };
 
-export type ShipBlockReason =
-	| "already_shipped"
-	| "cancelled"
-	| "unpaid"
+export type ShipBlockReason = "already_shipped" | "cancelled" | "unpaid";
 
 export interface OrderStateInput {
-	status: OrderStatus
-	paymentStatus: PaymentStatus
-	fulfillmentStatus?: FulfillmentStatus | null
-	trackingNumber?: string | null
+	status: OrderStatus;
+	paymentStatus: PaymentStatus;
+	fulfillmentStatus?: FulfillmentStatus | null;
+	trackingNumber?: string | null;
 }
 
 export interface OrderPermissions {
-	canRefund: boolean
-	canUpdateTracking: boolean
-	canMarkAsShipped: boolean
-	canMarkAsDelivered: boolean
-	canMarkAsProcessing: boolean
-	canMarkAsPaid: boolean
-	canCancel: boolean
-	canRevertToProcessing: boolean
+	canRefund: boolean;
+	canUpdateTracking: boolean;
+	canMarkAsShipped: boolean;
+	canMarkAsDelivered: boolean;
+	canMarkAsProcessing: boolean;
+	canMarkAsPaid: boolean;
+	canCancel: boolean;
+	canRevertToProcessing: boolean;
 }
 
 // Validation result types for status transition functions
-export type DeliveryBlockReason = "already_delivered" | "not_shipped"
+export type DeliveryBlockReason = "already_delivered" | "not_shipped";
 export type DeliveryValidationResult =
 	| { canDeliver: true }
-	| { canDeliver: false; reason: DeliveryBlockReason }
+	| { canDeliver: false; reason: DeliveryBlockReason };
 
-export type ReturnBlockReason = "already_returned" | "not_delivered"
+export type ReturnBlockReason = "already_returned" | "not_delivered";
 export type ReturnValidationResult =
 	| { canReturn: true }
-	| { canReturn: false; reason: ReturnBlockReason }
+	| { canReturn: false; reason: ReturnBlockReason };
 
-export type ProcessingBlockReason = "already_processing" | "not_pending" | "cancelled" | "unpaid"
+export type ProcessingBlockReason = "already_processing" | "not_pending" | "cancelled" | "unpaid";
 export type ProcessingValidationResult =
 	| { canProcess: true }
-	| { canProcess: false; reason: ProcessingBlockReason }
+	| { canProcess: false; reason: ProcessingBlockReason };
 
-export type RevertBlockReason = "not_shipped"
+export type RevertBlockReason = "not_shipped";
 export type RevertValidationResult =
 	| { canRevert: true }
-	| { canRevert: false; reason: RevertBlockReason }
+	| { canRevert: false; reason: RevertBlockReason };

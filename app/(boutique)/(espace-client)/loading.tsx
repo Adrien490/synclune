@@ -7,7 +7,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function EspaceClientLoading() {
 	return (
 		<div
-			className="space-y-6 animate-pulse"
+			className="animate-pulse space-y-6"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de la page"
@@ -21,7 +21,7 @@ export default function EspaceClientLoading() {
 			</div>
 
 			{/* Card skeleton */}
-			<div className="rounded-xl border border-border bg-card p-6 space-y-4">
+			<div className="border-border bg-card space-y-4 rounded-xl border p-6">
 				<Skeleton className="h-6 w-32" />
 				<div className="space-y-3">
 					<Skeleton className="h-4 w-full max-w-sm" />

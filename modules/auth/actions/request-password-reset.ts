@@ -9,7 +9,7 @@ import { checkArcjetProtection } from "../utils/arcjet-protection";
 
 export const requestPasswordReset = async (
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
@@ -36,12 +36,12 @@ export const requestPasswordReset = async (
 			});
 
 			return success(
-				"Si cet email existe dans notre base, vous recevrez un lien de réinitialisation."
+				"Si cet email existe dans notre base, vous recevrez un lien de réinitialisation.",
 			);
 		} catch {
 			// Succès même en cas d'erreur pour ne pas révéler d'information
 			return success(
-				"Si cet email existe dans notre base, vous recevrez un lien de réinitialisation."
+				"Si cet email existe dans notre base, vous recevrez un lien de réinitialisation.",
 			);
 		}
 	} catch {

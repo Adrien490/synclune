@@ -1,9 +1,25 @@
+import { cva, type VariantProps } from "class-variance-authority";
 import { Video } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
-interface MediaTypeBadgeProps {
+const mediaTypeBadgeVariants = cva(
+	"bg-secondary text-secondary-foreground font-bold rounded-md shadow-lg flex items-center gap-1 pointer-events-none",
+	{
+		variants: {
+			size: {
+				sm: "text-xs px-2 py-1 [&>svg]:size-3",
+				md: "text-xs px-2 py-1 [&>svg]:size-4",
+				lg: "text-sm px-2.5 py-1.5 [&>svg]:size-4",
+			},
+		},
+		defaultVariants: {
+			size: "md",
+		},
+	},
+);
+
+interface MediaTypeBadgeProps extends VariantProps<typeof mediaTypeBadgeVariants> {
 	type: "IMAGE" | "VIDEO";
-	size?: "sm" | "md" | "lg";
 	className?: string;
 }
 
@@ -12,37 +28,15 @@ interface MediaTypeBadgeProps {
  * Les images n'affichent pas de badge
  * Style cohérent avec l'identité visuelle rose/doré
  */
-export function MediaTypeBadge({
-	type,
-	size = "md",
-	className,
-}: MediaTypeBadgeProps) {
-	// Ne rien afficher pour les images
+export function MediaTypeBadge({ type, size, className }: MediaTypeBadgeProps) {
 	if (type === "IMAGE") return null;
-
-	const sizeClasses = {
-		sm: "text-xs px-2 py-1",
-		md: "text-xs px-2 py-1",
-		lg: "text-sm px-2.5 py-1.5",
-	};
-
-	const iconSizes = {
-		sm: "w-3 h-3",
-		md: "w-4 h-4",
-		lg: "w-4 h-4",
-	};
 
 	return (
 		<div
-			className={cn(
-				"bg-secondary text-secondary-foreground font-bold rounded-md shadow-lg",
-				"flex items-center gap-1 pointer-events-none",
-				sizeClasses[size],
-				className
-			)}
+			className={cn(mediaTypeBadgeVariants({ size }), className)}
 			aria-label="Type de média : vidéo"
 		>
-			<Video className={iconSizes[size]} aria-hidden="true" />
+			<Video aria-hidden="true" />
 			<span>VIDÉO</span>
 		</div>
 	);

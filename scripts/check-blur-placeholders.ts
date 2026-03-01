@@ -59,7 +59,9 @@ interface TableReport {
 /**
  * Detecte le format d'un blurDataUrl
  */
-function detectBlurFormat(blurDataUrl: string): "thumbhash" | "plaiceholder" | "color-svg" | "unknown" {
+function detectBlurFormat(
+	blurDataUrl: string,
+): "thumbhash" | "plaiceholder" | "color-svg" | "unknown" {
 	if (!blurDataUrl) return "unknown";
 
 	// ThumbHash génère du PNG
@@ -68,7 +70,10 @@ function detectBlurFormat(blurDataUrl: string): "thumbhash" | "plaiceholder" | "
 	}
 
 	// Plaiceholder génère du JPEG ou WebP
-	if (blurDataUrl.startsWith("data:image/jpeg;base64,") || blurDataUrl.startsWith("data:image/webp;base64,")) {
+	if (
+		blurDataUrl.startsWith("data:image/jpeg;base64,") ||
+		blurDataUrl.startsWith("data:image/webp;base64,")
+	) {
 		return "plaiceholder";
 	}
 
@@ -83,9 +88,7 @@ function detectBlurFormat(blurDataUrl: string): "thumbhash" | "plaiceholder" | "
 /**
  * Analyse une table de médias
  */
-async function analyzeTable(
-	tableName: "SkuMedia" | "ReviewMedia"
-): Promise<TableReport> {
+async function analyzeTable(tableName: "SkuMedia" | "ReviewMedia"): Promise<TableReport> {
 	const stats: BlurStats = {
 		total: 0,
 		withBlur: 0,
@@ -153,15 +156,17 @@ async function analyzeTable(
  */
 function printReport(reports: TableReport[]): void {
 	if (JSON_LOGS) {
-		console.log(JSON.stringify({
-			timestamp: new Date().toISOString(),
-			event: "blur-placeholder-audit",
-			reports: reports.map(r => ({
-				table: r.tableName,
-				...r.stats,
-				samplesWithoutBlur: r.samplesWithoutBlur,
-			})),
-		}));
+		console.log(
+			JSON.stringify({
+				timestamp: new Date().toISOString(),
+				event: "blur-placeholder-audit",
+				reports: reports.map((r) => ({
+					table: r.tableName,
+					...r.stats,
+					samplesWithoutBlur: r.samplesWithoutBlur,
+				})),
+			}),
+		);
 		return;
 	}
 

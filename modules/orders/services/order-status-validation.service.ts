@@ -8,11 +8,7 @@
  * - Calculer les permissions disponibles selon l'état
  */
 
-import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/browser"
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 
 import type {
 	OrderForShipValidation,
@@ -23,7 +19,7 @@ import type {
 	ReturnValidationResult,
 	ProcessingValidationResult,
 	RevertValidationResult,
-} from "../types/order.types"
+} from "../types/order.types";
 
 export type {
 	OrderForShipValidation,
@@ -39,7 +35,7 @@ export type {
 	ProcessingBlockReason,
 	RevertValidationResult,
 	RevertBlockReason,
-} from "../types/order.types"
+} from "../types/order.types";
 
 // ============================================================================
 // ORDER STATUS VALIDATION SERVICE
@@ -57,14 +53,9 @@ export type {
  * @param order - Commande à valider
  * @returns Résultat de validation
  */
-export function canMarkAsShipped(
-	order: OrderForShipValidation
-): ShipValidationResult {
+export function canMarkAsShipped(order: OrderForShipValidation): ShipValidationResult {
 	// Vérifier si déjà expédiée/livrée
-	if (
-		order.status === OrderStatus.SHIPPED ||
-		order.status === OrderStatus.DELIVERED
-	) {
+	if (order.status === OrderStatus.SHIPPED || order.status === OrderStatus.DELIVERED) {
 		return { canShip: false, reason: "already_shipped" };
 	}
 
@@ -88,10 +79,7 @@ export function canMarkAsShipped(
  * @returns true si la commande est dans un état final
  */
 export function isOrderInFinalState(status: OrderStatus): boolean {
-	return (
-		status === OrderStatus.DELIVERED ||
-		status === OrderStatus.CANCELLED
-	);
+	return status === OrderStatus.DELIVERED || status === OrderStatus.CANCELLED;
 }
 
 /**
@@ -140,9 +128,7 @@ export function canRefundOrder(order: OrderForShipValidation): boolean {
 /**
  * Vérifie si une commande peut être marquée comme livrée
  */
-export function canMarkAsDelivered(
-	order: { status: OrderStatus }
-): DeliveryValidationResult {
+export function canMarkAsDelivered(order: { status: OrderStatus }): DeliveryValidationResult {
 	if (order.status === OrderStatus.DELIVERED) {
 		return { canDeliver: false, reason: "already_delivered" };
 	}
@@ -155,9 +141,10 @@ export function canMarkAsDelivered(
 /**
  * Vérifie si une commande peut être marquée comme retournée
  */
-export function canMarkAsReturned(
-	order: { status: OrderStatus; fulfillmentStatus: FulfillmentStatus }
-): ReturnValidationResult {
+export function canMarkAsReturned(order: {
+	status: OrderStatus;
+	fulfillmentStatus: FulfillmentStatus;
+}): ReturnValidationResult {
 	if (order.fulfillmentStatus === FulfillmentStatus.RETURNED) {
 		return { canReturn: false, reason: "already_returned" };
 	}
@@ -170,9 +157,7 @@ export function canMarkAsReturned(
 /**
  * Vérifie si une commande peut passer en cours de préparation
  */
-export function canMarkAsProcessing(
-	order: OrderForShipValidation
-): ProcessingValidationResult {
+export function canMarkAsProcessing(order: OrderForShipValidation): ProcessingValidationResult {
 	if (order.status === OrderStatus.PROCESSING) {
 		return { canProcess: false, reason: "already_processing" };
 	}
@@ -191,9 +176,7 @@ export function canMarkAsProcessing(
 /**
  * Vérifie si une commande peut être remise en préparation
  */
-export function canRevertToProcessing(
-	order: { status: OrderStatus }
-): RevertValidationResult {
+export function canRevertToProcessing(order: { status: OrderStatus }): RevertValidationResult {
 	if (order.status !== OrderStatus.SHIPPED) {
 		return { canRevert: false, reason: "not_shipped" };
 	}

@@ -3,8 +3,8 @@ import { CreditCard, RefreshCcw, ShoppingCart } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Ventes - Administration",
-  description: "Gérer les ventes, commandes et paiements",
+	title: "Ventes - Administration",
+	description: "Gérer les ventes, commandes et paiements",
 };
 
 export default function VentesPage() {

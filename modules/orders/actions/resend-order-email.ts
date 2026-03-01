@@ -28,7 +28,7 @@ export type { ResendEmailType } from "../types/email.types";
  */
 export async function resendOrderEmail(
 	orderId: string,
-	emailType: ResendEmailType
+	emailType: ResendEmailType,
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
@@ -45,7 +45,9 @@ export async function resendOrderEmail(
 			return error("ID de commande invalide");
 		}
 
-		const emailTypeResult = z.enum(["confirmation", "shipping", "delivery", "review-request"]).safeParse(emailType);
+		const emailTypeResult = z
+			.enum(["confirmation", "shipping", "delivery", "review-request"])
+			.safeParse(emailType);
 		if (!emailTypeResult.success) {
 			return error("Type d'email invalide");
 		}
@@ -164,7 +166,10 @@ export async function resendOrderEmail(
 
 			case "delivery": {
 				// Vérifier que la commande a été livrée
-				if (order.status !== OrderStatus.DELIVERED && order.fulfillmentStatus !== FulfillmentStatus.DELIVERED) {
+				if (
+					order.status !== OrderStatus.DELIVERED &&
+					order.fulfillmentStatus !== FulfillmentStatus.DELIVERED
+				) {
 					return error("La commande n'a pas encore ete livree");
 				}
 
@@ -197,14 +202,19 @@ export async function resendOrderEmail(
 
 			case "review-request": {
 				// Verifier que la commande a ete livree
-				if (order.status !== OrderStatus.DELIVERED && order.fulfillmentStatus !== FulfillmentStatus.DELIVERED) {
+				if (
+					order.status !== OrderStatus.DELIVERED &&
+					order.fulfillmentStatus !== FulfillmentStatus.DELIVERED
+				) {
 					return error("La commande n'a pas encore ete livree");
 				}
 
 				const reviewResult = await sendReviewRequestEmailInternal(orderId);
 
 				if (reviewResult.status !== ActionStatus.SUCCESS) {
-					return error(reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis");
+					return error(
+						reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis",
+					);
 				}
 
 				return success("Email de demande d'avis renvoye");

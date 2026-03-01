@@ -14,5 +14,3 @@ export const { GET, POST } = createRouteHandler({
 		logLevel: process.env.NODE_ENV === "development" ? "Debug" : "Error",
 	},
 });
-
-

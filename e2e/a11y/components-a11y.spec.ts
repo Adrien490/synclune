@@ -126,73 +126,6 @@ test.describe("Accessibilité composants - Accordion", { tag: ["@slow"] }, () =>
 	});
 });
 
-test.describe("Accessibilité composants - DropdownMenu admin", { tag: ["@slow"] }, () => {
-	test("DropdownMenu - flèches, Enter, Escape et retour du focus", async ({ page }) => {
-		await page.goto("/admin/catalogue/produits");
-		await page.waitForLoadState("domcontentloaded");
-
-		if (page.url().includes("connexion")) {
-			test.skip(true, "Authentification requise");
-			return;
-		}
-
-		const trigger = page.getByRole("button", { name: /Actions/i }).first();
-		if ((await trigger.count()) === 0) {
-			test.skip(true, "Pas de bouton Actions sur cette page");
-			return;
-		}
-
-		await trigger.focus();
-		await page.keyboard.press("Enter");
-
-		const menu = page.getByRole("menu");
-		await expect(menu).toBeVisible();
-
-		// Arrow down navigates menu items
-		await page.keyboard.press("ArrowDown");
-
-		// Escape closes and returns focus
-		await page.keyboard.press("Escape");
-		await expect(menu).not.toBeVisible();
-		await expect(trigger).toBeFocused();
-	});
-});
-
-test.describe("Accessibilité composants - AlertDialog", { tag: ["@slow"] }, () => {
-	test("AlertDialog de suppression - focus trap, Escape annule", async ({ page }) => {
-		await page.goto("/admin/catalogue/couleurs");
-		await page.waitForLoadState("domcontentloaded");
-
-		if (page.url().includes("connexion")) {
-			test.skip(true, "Authentification requise");
-			return;
-		}
-
-		// Find a delete button that triggers an AlertDialog
-		const deleteButton = page.getByRole("button", { name: /Supprimer/i }).first();
-		if ((await deleteButton.count()) === 0) {
-			test.skip(true, "Pas de bouton Supprimer sur cette page");
-			return;
-		}
-
-		await deleteButton.click();
-
-		const alertDialog = page.getByRole("alertdialog");
-		await expect(alertDialog).toBeVisible();
-
-		// Focus is inside the alert dialog
-		const isInside = await page.evaluate(() => {
-			const d = document.querySelector('[role="alertdialog"]');
-			return d?.contains(document.activeElement);
-		});
-		expect(isInside).toBe(true);
-
-		// Escape closes without action
-		await page.keyboard.press("Escape");
-		await expect(alertDialog).not.toBeVisible();
-	});
-});
-
 test.describe("Accessibilité composants - Carousel", { tag: ["@slow"] }, () => {
 	test("Carousel - ArrowLeft/Right navigue les slides", async ({ page }) => {
 		await page.goto("/");
@@ -216,41 +149,6 @@ test.describe("Accessibilité composants - Carousel", { tag: ["@slow"] }, () => 
 			await prevButton.focus();
 			await expect(prevButton).toBeFocused();
 		}
-	});
-});
-
-test.describe("Accessibilité composants - Tabs", { tag: ["@slow"] }, () => {
-	test("Tabs - ArrowRight/ArrowLeft change l'onglet actif", async ({ page }) => {
-		// Look for tabs in admin or product pages
-		await page.goto("/admin");
-		await page.waitForLoadState("domcontentloaded");
-
-		if (page.url().includes("connexion")) {
-			test.skip(true, "Authentification requise");
-			return;
-		}
-
-		const tabList = page.getByRole("tablist").first();
-		if ((await tabList.count()) === 0) {
-			test.skip(true, "Pas de tabs sur cette page");
-			return;
-		}
-
-		const tabs = tabList.getByRole("tab");
-		const tabCount = await tabs.count();
-		if (tabCount < 2) return;
-
-		// Focus the first tab
-		await tabs.first().focus();
-		await expect(tabs.first()).toBeFocused();
-
-		// ArrowRight moves to next tab
-		await page.keyboard.press("ArrowRight");
-		await expect(tabs.nth(1)).toBeFocused();
-
-		// ArrowLeft moves back
-		await page.keyboard.press("ArrowLeft");
-		await expect(tabs.first()).toBeFocused();
 	});
 });
 
@@ -294,5 +192,71 @@ test.describe("Accessibilité composants - Tooltip", { tag: ["@slow"] }, () => {
 		if ((await tooltip.count()) > 0) {
 			await expect(tooltip).not.toBeVisible();
 		}
+	});
+});
+
+test.describe("Accessibilité composants - Popover", { tag: ["@slow"] }, () => {
+	test("Popover couleurs - focus trap, Escape ferme et retourne le focus", async ({ page }) => {
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Color swatches popover trigger ("+N" button on product cards)
+		const popoverTrigger = page.locator("[data-radix-popover-trigger]").first();
+		if ((await popoverTrigger.count()) === 0) {
+			test.skip(true, "Pas de popover de couleurs sur la page");
+			return;
+		}
+
+		await popoverTrigger.click();
+
+		const popoverContent = page.locator("[data-radix-popover-content]");
+		await expect(popoverContent).toBeVisible();
+
+		// Focus should be inside the popover
+		const isInside = await page.evaluate(() => {
+			const p = document.querySelector("[data-radix-popover-content]");
+			return p?.contains(document.activeElement);
+		});
+		expect(isInside).toBe(true);
+
+		// Escape closes the popover
+		await page.keyboard.press("Escape");
+		await expect(popoverContent).not.toBeVisible();
+
+		// Focus returns to trigger
+		await expect(popoverTrigger).toBeFocused();
+	});
+});
+
+test.describe("Accessibilité composants - Switch", { tag: ["@slow"] }, () => {
+	test("Switch - Space toggle et aria-checked", async ({ page }) => {
+		// Switch components are on admin pages — need auth
+		await page.goto("/admin/catalogue/couleurs");
+		await page.waitForLoadState("domcontentloaded");
+
+		if (page.url().includes("connexion")) {
+			test.skip(true, "Authentification requise — test déplacé dans admin-accessibility");
+			return;
+		}
+
+		const switchEl = page.getByRole("switch").first();
+		if ((await switchEl.count()) === 0) {
+			test.skip(true, "Pas de switch sur cette page");
+			return;
+		}
+
+		const initialChecked = await switchEl.getAttribute("aria-checked");
+		await switchEl.focus();
+		await expect(switchEl).toBeFocused();
+
+		// Space toggles the switch
+		await page.keyboard.press("Space");
+		const newChecked = await switchEl.getAttribute("aria-checked");
+		expect(newChecked).not.toBe(initialChecked);
+
+		// Toggle back
+		await page.keyboard.press("Space");
+		const restoredChecked = await switchEl.getAttribute("aria-checked");
+		expect(restoredChecked).toBe(initialChecked);
 	});
 });

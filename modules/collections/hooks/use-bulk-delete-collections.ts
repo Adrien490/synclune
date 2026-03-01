@@ -14,9 +14,7 @@ interface UseBulkDeleteCollectionsOptions {
  * Utilise useActionState avec withCallbacks pour la gestion du toast
  * et useTransition pour la méthode handle
  */
-export const useBulkDeleteCollections = (
-	options?: UseBulkDeleteCollectionsOptions
-) => {
+export const useBulkDeleteCollections = (options?: UseBulkDeleteCollectionsOptions) => {
 	const [state, formAction, isFormPending] = useActionState(
 		withCallbacks(
 			bulkDeleteCollections,
@@ -31,9 +29,9 @@ export const useBulkDeleteCollections = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

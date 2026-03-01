@@ -24,24 +24,18 @@ export const ReviewResponseEmail = ({
 	return (
 		<EmailLayout
 			preview={previewText}
-			footer={
-				<Text style={EMAIL_STYLES.text.tiny}>
-					Merci pour votre confiance !
-				</Text>
-			}
+			footer={<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>}
 		>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>
-					Nous avons répondu à votre avis !
-				</Text>
+				<Text style={EMAIL_STYLES.heading.h2}>Nous avons répondu à votre avis !</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
 					Bonjour {customerName},
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
 					Merci d&apos;avoir pris le temps de partager votre avis sur{" "}
-					<strong>{productTitle}</strong>. Nous avons lu votre retour avec
-					attention et nous tenions à vous répondre.
+					<strong>{productTitle}</strong>. Nous avons lu votre retour avec attention et nous tenions
+					à vous répondre.
 				</Text>
 			</Section>
 
@@ -49,9 +43,7 @@ export const ReviewResponseEmail = ({
 
 			{/* Rappel de l'avis original */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-					Votre avis
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Votre avis</Text>
 				<div
 					style={{
 						...EMAIL_STYLES.section.card,
@@ -73,9 +65,7 @@ export const ReviewResponseEmail = ({
 
 			{/* Réponse de l'équipe */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-					Notre réponse
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Notre réponse</Text>
 				<div
 					style={{
 						...EMAIL_STYLES.section.card,

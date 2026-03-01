@@ -8,10 +8,7 @@ interface RefreshOrdersButtonProps {
 	variant?: "outline" | "ghost" | "secondary";
 }
 
-export function RefreshOrdersButton({
-	className,
-	variant = "outline",
-}: RefreshOrdersButtonProps) {
+export function RefreshOrdersButton({ className, variant = "outline" }: RefreshOrdersButtonProps) {
 	const { refresh, isPending } = useRefreshOrders();
 
 	return (

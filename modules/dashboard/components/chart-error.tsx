@@ -39,23 +39,14 @@ export function ChartError({
 					role="alert"
 					aria-live="polite"
 				>
-					<div className="flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 mb-4">
-						<AlertCircle className="w-6 h-6 text-destructive" aria-hidden="true" />
+					<div className="bg-destructive/10 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+						<AlertCircle className="text-destructive h-6 w-6" aria-hidden="true" />
 					</div>
-					<h3 className="text-base font-semibold text-foreground mb-1">
-						{title}
-					</h3>
-					<p className="text-sm text-muted-foreground mb-4 max-w-70">
-						{description}
-					</p>
+					<h3 className="text-foreground mb-1 text-base font-semibold">{title}</h3>
+					<p className="text-muted-foreground mb-4 max-w-70 text-sm">{description}</p>
 					{onRetry && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={onRetry}
-							className="gap-2 h-10 min-w-30"
-						>
-							<RotateCcw className="w-4 h-4" aria-hidden="true" />
+						<Button variant="outline" size="sm" onClick={onRetry} className="h-10 min-w-30 gap-2">
+							<RotateCcw className="h-4 w-4" aria-hidden="true" />
 							Reessayer
 						</Button>
 					)}

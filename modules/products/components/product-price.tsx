@@ -1,3 +1,4 @@
+import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 
 interface ProductPriceProps {
@@ -10,28 +11,19 @@ interface ProductPriceProps {
  * Affichage compact du prix pour les cartes produits
  * Note: Schema.org géré par le parent (ProductCard)
  */
-export function ProductPrice({
-	price,
-	compareAtPrice,
-	className = "",
-}: ProductPriceProps) {
+export function ProductPrice({ price, compareAtPrice, className = "" }: ProductPriceProps) {
 	const hasDiscount = compareAtPrice && compareAtPrice > price;
 
 	return (
-		<div className={`flex items-center gap-2 ${className}`}>
-			<span className="tabular-nums font-semibold text-foreground text-base sm:text-lg tracking-tight">
+		<div className={cn("flex items-center gap-2", className)}>
+			<span className="text-foreground text-base font-semibold tracking-tight tabular-nums sm:text-lg">
 				{formatEuro(price)}
 			</span>
 			{hasDiscount && (
 				<>
 					{/* Texte pour lecteurs d'écran expliquant le prix barré */}
-					<span className="sr-only">
-						Prix original : {formatEuro(compareAtPrice)}
-					</span>
-					<span
-						className="tabular-nums text-foreground/70 line-through text-sm"
-						aria-hidden="true"
-					>
+					<span className="sr-only">Prix original : {formatEuro(compareAtPrice)}</span>
+					<span className="text-foreground/70 text-sm tabular-nums line-through" aria-hidden="true">
 						{formatEuro(compareAtPrice)}
 					</span>
 				</>

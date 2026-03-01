@@ -10,10 +10,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-import {
-	buildReviewOrderBy,
-	buildReviewWhereClause,
-} from "../review-query-builder";
+import { buildReviewOrderBy, buildReviewWhereClause } from "../review-query-builder";
 import type { GetReviewsParams } from "../../types/review.types";
 
 function params(overrides: Partial<GetReviewsParams> = {}): GetReviewsParams {
@@ -82,7 +79,7 @@ describe("buildReviewWhereClause (storefront)", () => {
 	it("should not include admin-only filters (dateFrom/dateTo)", () => {
 		const result = buildReviewWhereClause(
 			params({ dateFrom: new Date("2024-01-01"), dateTo: new Date("2024-12-31") }),
-			false
+			false,
 		);
 
 		expect(result.createdAt).toBeUndefined();
@@ -234,7 +231,7 @@ describe("buildReviewWhereClause (admin)", () => {
 				dateFrom: from,
 				search: "bijou",
 			}),
-			true
+			true,
 		);
 
 		expect(result.deletedAt).toBeNull();

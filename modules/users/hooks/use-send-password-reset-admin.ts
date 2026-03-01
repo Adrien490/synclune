@@ -14,9 +14,7 @@ interface UseSendPasswordResetAdminOptions {
 /**
  * Hook admin pour envoyer un email de réinitialisation de mot de passe
  */
-export function useSendPasswordResetAdmin(
-	options?: UseSendPasswordResetAdminOptions
-) {
+export function useSendPasswordResetAdmin(options?: UseSendPasswordResetAdminOptions) {
 	const [isPending, startTransition] = useTransition();
 
 	const [, formAction, isActionPending] = useActionState(
@@ -33,9 +31,9 @@ export function useSendPasswordResetAdmin(
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const sendReset = (userId: string, _userName: string) => {

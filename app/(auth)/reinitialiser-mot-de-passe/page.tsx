@@ -25,9 +25,7 @@ interface ResetPasswordPageProps {
 	}>;
 }
 
-export default async function ResetPasswordPage({
-	searchParams,
-}: ResetPasswordPageProps) {
+export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
 	const params = await searchParams;
 	const token = params.token;
 	const error = params.error;
@@ -35,10 +33,10 @@ export default async function ResetPasswordPage({
 	return (
 		<div className="relative">
 			{/* Lien retour */}
-			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+			<div className="absolute top-4 left-4 z-20 sm:top-6 sm:left-6">
 				<Link
 					href="/connexion"
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group min-h-11 min-w-11 -ml-2 pl-2"
+					className="text-muted-foreground hover:text-foreground group -ml-2 inline-flex min-h-11 min-w-11 items-center gap-2 pl-2 text-sm transition-colors duration-200"
 				>
 					<ArrowLeft
 						size={16}
@@ -50,27 +48,25 @@ export default async function ResetPasswordPage({
 			</div>
 
 			{/* Logo en haut à droite */}
-			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+			<div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
 				<LogoAnimated size={44} preload href="/" />
 			</div>
 
 			{/* Contenu principal */}
-			<div className="relative z-10 min-h-screen flex justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
-				<div className="w-full max-w-md space-y-8 my-auto">
+			<div className="relative z-10 flex min-h-screen justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
+				<div className="my-auto w-full max-w-md space-y-8">
 					{/* Header */}
-					<div className="text-center space-y-7">
+					<div className="space-y-7 text-center">
 						<div className="space-y-3">
 							<h1
 								className={cn(
-									"text-2xl sm:text-3xl lg:text-4xl font-semibold text-foreground",
-									cormorantGaramond.className
+									"text-foreground text-2xl font-semibold sm:text-3xl lg:text-4xl",
+									cormorantGaramond.className,
 								)}
 							>
 								Réinitialiser le mot de passe
 							</h1>
-							<p className="text-muted-foreground">
-								Entrez votre nouveau mot de passe ci-dessous.
-							</p>
+							<p className="text-muted-foreground">Entrez votre nouveau mot de passe ci-dessous.</p>
 						</div>
 					</div>
 
@@ -79,16 +75,14 @@ export default async function ResetPasswordPage({
 						{error === "INVALID_TOKEN" && (
 							<div
 								role="alert"
-								className="rounded-md bg-destructive/15 border border-destructive/30 p-4 flex items-start gap-3"
+								className="bg-destructive/15 border-destructive/30 flex items-start gap-3 rounded-md border p-4"
 							>
-								<AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+								<AlertCircle className="text-destructive mt-0.5 h-5 w-5 shrink-0" />
 								<div className="space-y-1">
-									<p className="text-sm font-medium text-destructive">
-										Lien invalide ou expiré
-									</p>
-									<p className="text-sm text-destructive/90">
-										Ce lien de réinitialisation est invalide ou a expiré.
-										Faites une nouvelle demande de réinitialisation.
+									<p className="text-destructive text-sm font-medium">Lien invalide ou expiré</p>
+									<p className="text-destructive/90 text-sm">
+										Ce lien de réinitialisation est invalide ou a expiré. Faites une nouvelle
+										demande de réinitialisation.
 									</p>
 								</div>
 							</div>
@@ -97,16 +91,14 @@ export default async function ResetPasswordPage({
 						{!token && !error && (
 							<div
 								role="alert"
-								className="rounded-md bg-accent/30 border border-accent-foreground/30 p-4 flex items-start gap-3"
+								className="bg-accent/30 border-accent-foreground/30 flex items-start gap-3 rounded-md border p-4"
 							>
-								<AlertCircle className="h-5 w-5 text-accent-foreground mt-0.5 shrink-0" />
+								<AlertCircle className="text-accent-foreground mt-0.5 h-5 w-5 shrink-0" />
 								<div className="space-y-1">
-									<p className="text-sm font-medium text-accent-foreground">
-										Token manquant
-									</p>
-									<p className="text-sm text-accent-foreground/90">
-										Le lien de réinitialisation semble incomplet. Utilisez
-										le lien complet reçu par email.
+									<p className="text-accent-foreground text-sm font-medium">Token manquant</p>
+									<p className="text-accent-foreground/90 text-sm">
+										Le lien de réinitialisation semble incomplet. Utilisez le lien complet reçu par
+										email.
 									</p>
 								</div>
 							</div>
@@ -119,7 +111,7 @@ export default async function ResetPasswordPage({
 						)}
 
 						{/* Actions */}
-						<div className="text-center pt-4 border-t space-y-2">
+						<div className="space-y-2 border-t pt-4 text-center">
 							{(error || !token) && (
 								<Link
 									href="/mot-de-passe-oublie"
@@ -128,11 +120,8 @@ export default async function ResetPasswordPage({
 									Demander un nouveau lien
 								</Link>
 							)}
-							<div className="text-sm text-muted-foreground">
-								<Link
-									href="/connexion"
-									className="font-medium underline"
-								>
+							<div className="text-muted-foreground text-sm">
+								<Link href="/connexion" className="font-medium underline">
 									Retour à la connexion
 								</Link>
 							</div>

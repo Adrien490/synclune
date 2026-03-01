@@ -5,11 +5,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import {
-	validateInput,
-	success,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { validateInput, success, handleActionError } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateProfileSchema } from "../schemas/user.schemas";
@@ -27,7 +23,7 @@ import { getCurrentUserInvalidationTags } from "../constants/cache";
  */
 export async function updateProfile(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification de l'authentification

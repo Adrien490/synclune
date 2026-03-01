@@ -60,7 +60,7 @@ describe("createStripeCheckoutSession", () => {
 	it("should create a checkout session with correct mode and ui_mode", async () => {
 		await createStripeCheckoutSession(makeParams());
 
-		const createCall = mockStripe.checkout.sessions.create.mock.calls[0];
+		const createCall = mockStripe.checkout.sessions.create.mock.calls[0]!;
 		expect(createCall[0].mode).toBe("payment");
 		expect(createCall[0].ui_mode).toBe("embedded");
 	});
@@ -68,14 +68,14 @@ describe("createStripeCheckoutSession", () => {
 	it("should use orderId as idempotency key", async () => {
 		await createStripeCheckoutSession(makeParams({ orderId: "order_xyz" }));
 
-		const options = mockStripe.checkout.sessions.create.mock.calls[0][1];
+		const options = mockStripe.checkout.sessions.create.mock.calls[0]![1];
 		expect(options.idempotencyKey).toBe("checkout-order_xyz");
 	});
 
 	it("should set client_reference_id to orderId", async () => {
 		await createStripeCheckoutSession(makeParams({ orderId: "order_abc" }));
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.client_reference_id).toBe("order_abc");
 	});
 
@@ -84,7 +84,7 @@ describe("createStripeCheckoutSession", () => {
 			makeParams({ stripeCustomerId: null, finalEmail: "guest@example.com" }),
 		);
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.customer).toBeUndefined();
 		expect(params.customer_email).toBe("guest@example.com");
 	});
@@ -92,7 +92,7 @@ describe("createStripeCheckoutSession", () => {
 	it("should use existing Stripe customer when available", async () => {
 		await createStripeCheckoutSession(makeParams({ stripeCustomerId: "cus_abc123" }));
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.customer).toBe("cus_abc123");
 		expect(params.customer_email).toBeUndefined();
 	});
@@ -102,7 +102,7 @@ describe("createStripeCheckoutSession", () => {
 			makeParams({ orderId: "order_1", orderNumber: "SYN-001", userId: "user_1" }),
 		);
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.metadata).toEqual(
 			expect.objectContaining({
 				orderId: "order_1",
@@ -115,42 +115,42 @@ describe("createStripeCheckoutSession", () => {
 	it("should set userId to 'guest' when no userId", async () => {
 		await createStripeCheckoutSession(makeParams({ userId: null }));
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.metadata.userId).toBe("guest");
 	});
 
 	it("should include guestSessionId in metadata when sessionId provided", async () => {
 		await createStripeCheckoutSession(makeParams({ sessionId: "session_xyz" }));
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.metadata.guestSessionId).toBe("session_xyz");
 	});
 
 	it("should not include guestSessionId when sessionId is null", async () => {
 		await createStripeCheckoutSession(makeParams({ sessionId: null }));
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.metadata.guestSessionId).toBeUndefined();
 	});
 
 	it("should apply discount coupon when provided", async () => {
 		await createStripeCheckoutSession(makeParams({ stripeCouponId: "coupon_abc" }));
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.discounts).toEqual([{ coupon: "coupon_abc" }]);
 	});
 
 	it("should not include discounts when no coupon", async () => {
 		await createStripeCheckoutSession(makeParams());
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.discounts).toBeUndefined();
 	});
 
 	it("should set return URL with session_id and order_id", async () => {
 		await createStripeCheckoutSession(makeParams({ orderId: "order_abc" }));
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.return_url).toBe(
 			"https://synclune.fr/paiement/retour?session_id={CHECKOUT_SESSION_ID}&order_id=order_abc",
 		);
@@ -159,7 +159,7 @@ describe("createStripeCheckoutSession", () => {
 	it("should set locale to French", async () => {
 		await createStripeCheckoutSession(makeParams());
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.locale).toBe("fr");
 	});
 
@@ -174,7 +174,7 @@ describe("createStripeCheckoutSession", () => {
 	it("should enable invoice creation with order metadata", async () => {
 		await createStripeCheckoutSession(makeParams({ orderId: "order_1", orderNumber: "SYN-001" }));
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		expect(params.invoice_creation.enabled).toBe(true);
 		expect(params.invoice_creation.invoice_data.metadata).toEqual({
 			orderNumber: "SYN-001",
@@ -189,7 +189,7 @@ describe("createStripeCheckoutSession", () => {
 
 		await createStripeCheckoutSession(makeParams());
 
-		const params = mockStripe.checkout.sessions.create.mock.calls[0][0];
+		const params = mockStripe.checkout.sessions.create.mock.calls[0]![0];
 		const expectedExpiration =
 			Math.floor(new Date("2026-03-01T12:00:00Z").getTime() / 1000) + 30 * 60;
 		expect(params.expires_at).toBe(expectedExpiration);

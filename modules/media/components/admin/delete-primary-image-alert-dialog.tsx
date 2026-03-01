@@ -25,9 +25,7 @@ interface DeletePrimaryImageData {
 }
 
 export function DeletePrimaryImageAlertDialog() {
-	const deleteDialog = useAlertDialog<DeletePrimaryImageData>(
-		DELETE_PRIMARY_IMAGE_DIALOG_ID
-	);
+	const deleteDialog = useAlertDialog<DeletePrimaryImageData>(DELETE_PRIMARY_IMAGE_DIALOG_ID);
 
 	const { isPending, deleteFiles } = useDeleteUploadThingFiles({
 		onSuccess: () => {

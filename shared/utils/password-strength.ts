@@ -54,11 +54,11 @@ export function getStrengthColor(level: number): string {
 		case 0:
 			return "bg-destructive";
 		case 1:
-			return "bg-orange-500";
+			return "bg-destructive/70";
 		case 2:
-			return "bg-yellow-500";
+			return "bg-warning";
 		case 3:
-			return "bg-green-600";
+			return "bg-success";
 		default:
 			return "bg-muted";
 	}

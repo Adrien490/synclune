@@ -51,9 +51,9 @@ export function MaterialFormDialog() {
 					close();
 					form.reset();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	// Update action
@@ -64,9 +64,9 @@ export function MaterialFormDialog() {
 				onSuccess: () => {
 					close();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const isPending = isCreatePending || isUpdatePending;
@@ -110,11 +110,7 @@ export function MaterialFormDialog() {
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				<form
-					action={action}
-					className="space-y-6"
-					onSubmit={() => form.handleSubmit()}
-				>
+				<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
 					{isUpdateMode && material && (
 						<>
 							<input type="hidden" name="id" value={material.id} />
@@ -178,11 +174,7 @@ export function MaterialFormDialog() {
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">
-									{isPending
-										? "Enregistrement..."
-										: isUpdateMode
-											? "Enregistrer"
-											: "Créer"}
+									{isPending ? "Enregistrement..." : isUpdateMode ? "Enregistrer" : "Créer"}
 								</Button>
 							)}
 						</form.Subscribe>

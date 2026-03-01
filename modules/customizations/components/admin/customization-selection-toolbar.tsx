@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	CheckCircle,
-	Clock,
-	Loader2,
-	MoreVertical,
-	XCircle,
-} from "lucide-react";
+import { CheckCircle, Clock, Loader2, MoreVertical, XCircle } from "lucide-react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import type { CustomizationRequestStatus } from "../../types/customization.types";
@@ -35,7 +29,9 @@ import { CUSTOMIZATION_STATUS_LABELS } from "../../constants/status.constants";
 
 export function CustomizationSelectionToolbar() {
 	const { selectedItems, clearSelection } = useSelectionContext();
-	const statusDialog = useDialog<{ targetStatus: CustomizationRequestStatus }>("bulk-customization-status");
+	const statusDialog = useDialog<{ targetStatus: CustomizationRequestStatus }>(
+		"bulk-customization-status",
+	);
 
 	const { action, isPending } = useBulkUpdateCustomizationStatus({
 		onSuccess: () => {
@@ -67,9 +63,9 @@ export function CustomizationSelectionToolbar() {
 	return (
 		<>
 			<SelectionToolbar>
-				<span className="text-sm text-muted-foreground">
-					{selectedItems.length} demande{selectedItems.length > 1 ? "s" : ""}{" "}
-					sélectionnée{selectedItems.length > 1 ? "s" : ""}
+				<span className="text-muted-foreground text-sm">
+					{selectedItems.length} demande{selectedItems.length > 1 ? "s" : ""} sélectionnée
+					{selectedItems.length > 1 ? "s" : ""}
 				</span>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -104,7 +100,10 @@ export function CustomizationSelectionToolbar() {
 			</SelectionToolbar>
 
 			{/* Confirmation Dialog */}
-			<AlertDialog open={statusDialog.isOpen} onOpenChange={(open) => open ? statusDialog.open() : statusDialog.close()}>
+			<AlertDialog
+				open={statusDialog.isOpen}
+				onOpenChange={(open) => (open ? statusDialog.open() : statusDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={handleSubmit}>
 						<AlertDialogHeader>
@@ -117,9 +116,7 @@ export function CustomizationSelectionToolbar() {
 								</span>{" "}
 								en{" "}
 								<span className="font-semibold">
-									{targetStatus
-										? CUSTOMIZATION_STATUS_LABELS[targetStatus]
-										: ""}
+									{targetStatus ? CUSTOMIZATION_STATUS_LABELS[targetStatus] : ""}
 								</span>{" "}
 								?
 							</AlertDialogDescription>

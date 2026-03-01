@@ -47,69 +47,69 @@ export function CreateReviewForm({
 				aria-busy={isPending}
 				className={cn(
 					"space-y-6 transition-all duration-200",
-					"group-has-[[data-pending]]/form:blur-[1px] group-has-[[data-pending]]/form:scale-[0.99] group-has-[[data-pending]]/form:pointer-events-none",
-					className
+					"group-has-[[data-pending]]/form:pointer-events-none group-has-[[data-pending]]/form:scale-[0.99] group-has-[[data-pending]]/form:blur-[1px]",
+					className,
 				)}
 			>
-			{/* Champs cachés pour les IDs */}
-			<input type="hidden" name="productId" value={productId} />
-			<input type="hidden" name="orderItemId" value={orderItemId} />
+				{/* Champs cachés pour les IDs */}
+				<input type="hidden" name="productId" value={productId} />
+				<input type="hidden" name="orderItemId" value={orderItemId} />
 
-			{/* Titre du formulaire */}
-			{productTitle && (
-				<div className="text-center">
-					<h3 className="font-medium text-lg">Donnez votre avis sur</h3>
-					<p className="text-muted-foreground">{productTitle}</p>
-				</div>
-			)}
-
-			{/* Sélection de la note */}
-			<form.AppField name="rating">
-				{(field) => <field.RatingField label="Votre note" size="lg" />}
-			</form.AppField>
-
-			{/* Titre (optionnel) */}
-			<form.AppField name="title">
-				{(field) => (
-					<field.InputField
-						label="Titre de votre avis"
-						optional
-						placeholder="Résumez votre expérience en quelques mots"
-						maxLength={REVIEW_CONFIG.MAX_TITLE_LENGTH}
-					/>
+				{/* Titre du formulaire */}
+				{productTitle && (
+					<div className="text-center">
+						<h3 className="text-lg font-medium">Donnez votre avis sur</h3>
+						<p className="text-muted-foreground">{productTitle}</p>
+					</div>
 				)}
-			</form.AppField>
 
-			{/* Contenu */}
-			<form.AppField name="content">
-				{(field) => (
-					<field.TextareaField
-						label="Votre avis"
-						required
-						placeholder="Partagez votre expérience avec ce produit..."
-						rows={4}
-						maxLength={REVIEW_CONFIG.MAX_CONTENT_LENGTH}
-						showCounter
-					/>
-				)}
-			</form.AppField>
+				{/* Sélection de la note */}
+				<form.AppField name="rating">
+					{(field) => <field.RatingField label="Votre note" size="lg" />}
+				</form.AppField>
 
-			{/* Photos */}
-			<form.Field name="media">
-				{() => <ReviewMediaField label="Photos" disabled={isPending} />}
-			</form.Field>
+				{/* Titre (optionnel) */}
+				<form.AppField name="title">
+					{(field) => (
+						<field.InputField
+							label="Titre de votre avis"
+							optional
+							placeholder="Résumez votre expérience en quelques mots"
+							maxLength={REVIEW_CONFIG.MAX_TITLE_LENGTH}
+						/>
+					)}
+				</form.AppField>
 
-			{/* Bouton de soumission */}
-			<Button type="submit" disabled={isPending} className="w-full">
-				{isPending ? (
-					"Envoi en cours..."
-				) : (
-					<>
-						<Send className="size-4 mr-2" aria-hidden="true" />
-						Publier mon avis
-					</>
-				)}
-			</Button>
+				{/* Contenu */}
+				<form.AppField name="content">
+					{(field) => (
+						<field.TextareaField
+							label="Votre avis"
+							required
+							placeholder="Partagez votre expérience avec ce produit..."
+							rows={4}
+							maxLength={REVIEW_CONFIG.MAX_CONTENT_LENGTH}
+							showCounter
+						/>
+					)}
+				</form.AppField>
+
+				{/* Photos */}
+				<form.Field name="media">
+					{() => <ReviewMediaField label="Photos" disabled={isPending} />}
+				</form.Field>
+
+				{/* Bouton de soumission */}
+				<Button type="submit" disabled={isPending} className="w-full">
+					{isPending ? (
+						"Envoi en cours..."
+					) : (
+						<>
+							<Send className="mr-2 size-4" aria-hidden="true" />
+							Publier mon avis
+						</>
+					)}
+				</Button>
 			</form>
 		</div>
 	);

@@ -25,9 +25,9 @@ export function useBulkCancelOrders(options?: UseBulkCancelOrdersOptions) {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const cancelOrders = (orderIds: string[], reason?: string) => {

@@ -14,7 +14,7 @@ export function LoadingIndicator() {
 	return pending ? (
 		<span
 			aria-hidden="true"
-			className="absolute inset-x-1 bottom-0 h-0.5 rounded-full bg-primary/60 animate-pulse [animation-delay:100ms] [animation-fill-mode:backwards]"
+			className="bg-primary/60 absolute inset-x-1 bottom-0 h-0.5 animate-pulse rounded-full [animation-delay:100ms] [animation-fill-mode:backwards]"
 		/>
 	) : null;
 }

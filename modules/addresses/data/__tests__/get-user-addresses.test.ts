@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockGetSession,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockGetSession, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		address: { findMany: vi.fn() },
 	},
@@ -130,7 +125,7 @@ describe("getUserAddresses", () => {
 		await getUserAddresses();
 
 		expect(mockPrisma.address.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-42" } })
+			expect.objectContaining({ where: { userId: "user-42" } }),
 		);
 	});
 
@@ -175,7 +170,7 @@ describe("fetchUserAddresses", () => {
 		await fetchUserAddresses("user-99");
 
 		expect(mockPrisma.address.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-99" } })
+			expect.objectContaining({ where: { userId: "user-99" } }),
 		);
 	});
 
@@ -185,7 +180,7 @@ describe("fetchUserAddresses", () => {
 		expect(mockPrisma.address.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
-			})
+			}),
 		);
 	});
 
@@ -200,7 +195,7 @@ describe("fetchUserAddresses", () => {
 					firstName: true,
 					isDefault: true,
 				}),
-			})
+			}),
 		);
 	});
 

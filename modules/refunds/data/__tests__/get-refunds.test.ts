@@ -118,7 +118,13 @@ function makeRefund(overrides: Record<string, unknown> = {}) {
 		reason: "CUSTOMER_REQUEST",
 		status: "PENDING",
 		createdAt: new Date("2024-01-15"),
-		order: { id: "order-cuid-001", orderNumber: "ORD-001", customerEmail: "a@b.com", customerName: "Jane", total: 9900 },
+		order: {
+			id: "order-cuid-001",
+			orderNumber: "ORD-001",
+			customerEmail: "a@b.com",
+			customerName: "Jane",
+			total: 9900,
+		},
 		_count: { items: 1 },
 		...overrides,
 	};
@@ -224,7 +230,7 @@ describe("getRefunds", () => {
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, amount: true, status: true, order: true },
-			})
+			}),
 		);
 	});
 
@@ -236,7 +242,7 @@ describe("getRefunds", () => {
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { status: "PENDING" },
-			})
+			}),
 		);
 	});
 
@@ -252,7 +258,7 @@ describe("getRefunds", () => {
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -268,7 +274,7 @@ describe("getRefunds", () => {
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ amount: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -284,7 +290,7 @@ describe("getRefunds", () => {
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ status: "asc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -298,7 +304,7 @@ describe("getRefunds", () => {
 				take: 11,
 				skip: 1,
 				cursor: { id: "refund-prev" },
-			})
+			}),
 		);
 	});
 
@@ -312,12 +318,7 @@ describe("getRefunds", () => {
 
 		await getRefunds(makeValidParams() as never);
 
-		expect(mockProcessCursorResults).toHaveBeenCalledWith(
-			refunds,
-			10,
-			"forward",
-			"some-cursor"
-		);
+		expect(mockProcessCursorResults).toHaveBeenCalledWith(refunds, 10, "forward", "some-cursor");
 	});
 
 	it("returns empty result on DB error", async () => {
@@ -337,9 +338,7 @@ describe("getRefunds", () => {
 
 		await getRefunds(makeValidParams() as never);
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 100 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }));
 	});
 
 	it("uses default perPage when perPage is 0", async () => {
@@ -350,8 +349,6 @@ describe("getRefunds", () => {
 
 		await getRefunds(makeValidParams() as never);
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 10 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }));
 	});
 });

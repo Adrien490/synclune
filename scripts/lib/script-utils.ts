@@ -73,7 +73,7 @@ export interface WithRetryOptions {
  */
 export async function withRetry<T>(
 	fn: () => Promise<T>,
-	options: WithRetryOptions = {}
+	options: WithRetryOptions = {},
 ): Promise<T> {
 	const { maxRetries = 3, baseDelay = 1000, onRetry } = options;
 	let lastError: Error | null = null;
@@ -244,9 +244,7 @@ export interface BatchProcessingOptions<T, R> {
  * @param options - Options de traitement
  * @returns Résultats de tous les traitements
  */
-export async function processInBatches<T, R>(
-	options: BatchProcessingOptions<T, R>
-): Promise<R[]> {
+export async function processInBatches<T, R>(options: BatchProcessingOptions<T, R>): Promise<R[]> {
 	const { items, batchSize, processItem, batchDelay = 1000, onBatchStart } = options;
 	const results: R[] = [];
 	const totalBatches = Math.ceil(items.length / batchSize);
@@ -258,9 +256,7 @@ export async function processInBatches<T, R>(
 		onBatchStart?.(batchNumber, totalBatches, batch.length);
 
 		const batchResults = await Promise.all(
-			batch.map((item, batchIndex) =>
-				processItem(item, i + batchIndex, items.length)
-			)
+			batch.map((item, batchIndex) => processItem(item, i + batchIndex, items.length)),
 		);
 
 		results.push(...batchResults);

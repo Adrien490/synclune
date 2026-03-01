@@ -1,20 +1,23 @@
-import { createStore } from "zustand/vanilla"
+import { createStore } from "zustand/vanilla";
 
 import type {
 	AlertDialogData,
 	AlertDialogState,
 	AlertDialogStore,
-} from "@/shared/types/store.types"
+} from "@/shared/types/store.types";
 
-export type { AlertDialogData, AlertDialogState, AlertDialogActions, AlertDialogStore } from "@/shared/types/store.types"
+export type {
+	AlertDialogData,
+	AlertDialogState,
+	AlertDialogActions,
+	AlertDialogStore,
+} from "@/shared/types/store.types";
 
 export const defaultInitState: AlertDialogState = {
 	alertDialogs: {},
 };
 
-export const createAlertDialogStore = (
-	initState: AlertDialogState = defaultInitState,
-) => {
+export const createAlertDialogStore = (initState: AlertDialogState = defaultInitState) => {
 	return createStore<AlertDialogStore>()((set, get) => ({
 		...initState,
 		openAlertDialog: (dialogId: string, data?: AlertDialogData) =>

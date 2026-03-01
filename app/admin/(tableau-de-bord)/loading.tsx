@@ -20,14 +20,8 @@ export default function DashboardLoading() {
 
 				{/* Graphique + Commandes */}
 				<div className="grid gap-6 lg:grid-cols-2">
-					<ChartSkeleton
-						height={300}
-						ariaLabel="Chargement du graphique des revenus"
-					/>
-					<ListSkeleton
-						itemCount={5}
-						ariaLabel="Chargement des commandes récentes"
-					/>
+					<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />
+					<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes récentes" />
 				</div>
 			</div>
 		</>

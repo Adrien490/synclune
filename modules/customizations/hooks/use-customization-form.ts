@@ -15,6 +15,7 @@ import { sendCustomizationRequest } from "../actions/send-customization-request"
 const DRAFT_STORAGE_KEY = "synclune-customization-draft";
 
 interface UseCustomizationFormOptions {
+	userInfo?: { firstName: string; email: string };
 	onSuccess?: (message: string) => void;
 }
 
@@ -86,20 +87,24 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 		),
 	});
 
-	// Restore draft from localStorage on mount
+	// Restore draft from localStorage on mount, with session user info as fallback
 	useEffect(() => {
 		if (draftRestored.current) return;
 		draftRestored.current = true;
 
 		const draft = loadDraft();
-		if (!draft) return;
 
-		if (draft.firstName) form.setFieldValue("firstName", draft.firstName);
-		if (draft.email) form.setFieldValue("email", draft.email);
-		if (draft.phone) form.setFieldValue("phone", draft.phone);
-		if (draft.details) form.setFieldValue("details", draft.details);
-		if (draft.productTypeLabel) form.setFieldValue("productTypeLabel", draft.productTypeLabel);
-	}, [form]);
+		// Draft takes priority, then session user info as fallback
+		if (draft?.firstName || options?.userInfo?.firstName) {
+			form.setFieldValue("firstName", draft?.firstName || options?.userInfo?.firstName || "");
+		}
+		if (draft?.email || options?.userInfo?.email) {
+			form.setFieldValue("email", draft?.email || options?.userInfo?.email || "");
+		}
+		if (draft?.phone) form.setFieldValue("phone", draft.phone);
+		if (draft?.details) form.setFieldValue("details", draft.details);
+		if (draft?.productTypeLabel) form.setFieldValue("productTypeLabel", draft.productTypeLabel);
+	}, [form, options?.userInfo]);
 
 	// Save draft to localStorage on form value changes
 	useEffect(() => {

@@ -203,6 +203,7 @@ export default async function ProductPage({
 										defaultSku={selectedSku}
 										cartsCount={cartsCount}
 										reviewStats={reviewStats}
+										isInWishlist={isInWishlist}
 									/>
 								</section>
 							</div>

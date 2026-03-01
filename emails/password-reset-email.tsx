@@ -26,8 +26,8 @@ export const PasswordResetEmail = ({ resetUrl }: PasswordResetEmailProps) => (
 		{/* Info */}
 		<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "32px" }}>
 			<Text style={EMAIL_STYLES.text.small}>
-				Ce lien expire dans 1 heure. Si vous n'avez pas demandé cette
-				réinitialisation, ignorez cet email.
+				Ce lien expire dans 1 heure. Si vous n'avez pas demandé cette réinitialisation, ignorez cet
+				email.
 			</Text>
 		</Section>
 	</EmailLayout>

@@ -13,7 +13,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import {
-	REFUND_STATUS_COLORS,
+	REFUND_STATUS_VARIANTS,
 	REFUND_STATUS_LABELS,
 	REFUND_REASON_LABELS,
 } from "@/modules/refunds/constants/refund.constants";
@@ -31,10 +31,7 @@ export interface RefundsDataTableProps {
 	perPage: number;
 }
 
-export async function RefundsDataTable({
-	refundsPromise,
-	perPage,
-}: RefundsDataTableProps) {
+export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataTableProps) {
 	const { refunds, pagination } = await refundsPromise;
 	const refundIds = refunds.map((refund) => refund.id);
 
@@ -59,24 +56,12 @@ export async function RefundsDataTable({
 								<TableHead className="w-[5%]">
 									<TableSelectionCell type="header" itemIds={refundIds} />
 								</TableHead>
-								<TableHead className="w-[15%]">
-									Commande
-								</TableHead>
-								<TableHead className="hidden sm:table-cell w-[12%]">
-									Date
-								</TableHead>
-								<TableHead className="w-[20%]">
-									Client
-								</TableHead>
-								<TableHead className="hidden md:table-cell w-[15%]">
-									Raison
-								</TableHead>
-								<TableHead className="w-[12%]">
-									Statut
-								</TableHead>
-								<TableHead className="w-[10%] text-right">
-									Montant
-								</TableHead>
+								<TableHead className="w-[15%]">Commande</TableHead>
+								<TableHead className="hidden w-[12%] sm:table-cell">Date</TableHead>
+								<TableHead className="w-[20%]">Client</TableHead>
+								<TableHead className="hidden w-[15%] md:table-cell">Raison</TableHead>
+								<TableHead className="w-[12%]">Statut</TableHead>
+								<TableHead className="w-[10%] text-right">Montant</TableHead>
 								<TableHead
 									className="w-[10%] text-right"
 									aria-label="Actions disponibles pour chaque remboursement"
@@ -86,19 +71,19 @@ export async function RefundsDataTable({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{refunds.map((refund) => (
+							{refunds.map((refund) => (
 								<TableRow key={refund.id}>
 									<TableCell>
 										<TableSelectionCell type="row" itemId={refund.id} />
 									</TableCell>
 									<TableCell>
-									<Link
-										href={`/admin/ventes/commandes/${refund.order.id}`}
-										className="tabular-nums text-sm font-medium text-foreground underline"
-									>
-										{refund.order.orderNumber}
-									</Link>
-								</TableCell>
+										<Link
+											href={`/admin/ventes/commandes/${refund.order.id}`}
+											className="text-foreground text-sm font-medium tabular-nums underline"
+										>
+											{refund.order.orderNumber}
+										</Link>
+									</TableCell>
 									<TableCell role="gridcell" className="hidden sm:table-cell">
 										<span className="text-sm whitespace-nowrap">
 											{formatDateShort(refund.createdAt)}
@@ -106,11 +91,11 @@ export async function RefundsDataTable({
 									</TableCell>
 									<TableCell>
 										<div className="overflow-hidden">
-											<span className="text-sm font-medium truncate block">
+											<span className="block truncate text-sm font-medium">
 												{refund.order.customerName || refund.order.customerEmail}
 											</span>
 											{refund.order.customerName && (
-												<span className="text-sm text-muted-foreground truncate block">
+												<span className="text-muted-foreground block truncate text-sm">
 													{refund.order.customerEmail}
 												</span>
 											)}
@@ -122,26 +107,12 @@ export async function RefundsDataTable({
 										</span>
 									</TableCell>
 									<TableCell>
-										<Badge
-											variant="outline"
-											style={{
-												backgroundColor: `${
-													REFUND_STATUS_COLORS[refund.status as RefundStatus]
-												}20`,
-												color:
-													REFUND_STATUS_COLORS[refund.status as RefundStatus],
-												borderColor: `${
-													REFUND_STATUS_COLORS[refund.status as RefundStatus]
-												}40`,
-											}}
-										>
+										<Badge variant={REFUND_STATUS_VARIANTS[refund.status as RefundStatus]}>
 											{REFUND_STATUS_LABELS[refund.status as RefundStatus]}
 										</Badge>
 									</TableCell>
 									<TableCell role="gridcell" className="text-right">
-										<span className="text-sm font-bold">
-											{formatEuro(refund.amount)}
-										</span>
+										<span className="text-sm font-bold">{formatEuro(refund.amount)}</span>
 									</TableCell>
 									<TableCell role="gridcell" className="text-right">
 										<RefundRowActions
@@ -155,7 +126,7 @@ export async function RefundsDataTable({
 										/>
 									</TableCell>
 								</TableRow>
-								))}
+							))}
 						</TableBody>
 					</Table>
 				</TableScrollContainer>

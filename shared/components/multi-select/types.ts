@@ -5,23 +5,12 @@ import type { multiSelectVariants } from "./constants";
 /**
  * Types d'animation pour les badges
  */
-export type BadgeAnimationType =
-	| "bounce"
-	| "pulse"
-	| "wiggle"
-	| "fade"
-	| "slide"
-	| "none";
+export type BadgeAnimationType = "bounce" | "pulse" | "wiggle" | "fade" | "slide" | "none";
 
 /**
  * Types d'animation pour le popover
  */
-export type PopoverAnimationType =
-	| "scale"
-	| "slide"
-	| "fade"
-	| "flip"
-	| "none";
+export type PopoverAnimationType = "scale" | "slide" | "fade" | "flip" | "none";
 
 /**
  * Configuration des animations pour le composant MultiSelect
@@ -112,10 +101,8 @@ export interface ResponsiveSettings {
  * Props pour le composant MultiSelect
  */
 export interface MultiSelectProps
-	extends Omit<
-			React.ButtonHTMLAttributes<HTMLButtonElement>,
-			"animationConfig"
-		>,
+	extends
+		Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "animationConfig">,
 		VariantProps<typeof multiSelectVariants> {
 	/** Options a afficher (tableau plat ou groupe) */
 	options: MultiSelectOption[] | MultiSelectGroup[];

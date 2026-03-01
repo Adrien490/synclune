@@ -45,9 +45,9 @@ export const useCreateAddress = (options?: UseCreateAddressOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

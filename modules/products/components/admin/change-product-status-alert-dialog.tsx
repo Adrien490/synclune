@@ -49,9 +49,7 @@ const STATUS_CONFIG = {
 } as const;
 
 export function ChangeProductStatusAlertDialog() {
-	const dialog = useAlertDialog<ChangeProductStatusData>(
-		CHANGE_PRODUCT_STATUS_DIALOG_ID
-	);
+	const dialog = useAlertDialog<ChangeProductStatusData>(CHANGE_PRODUCT_STATUS_DIALOG_ID);
 
 	const { action, isPending } = useToggleProductStatus({
 		onSuccess: () => {
@@ -78,27 +76,18 @@ export function ChangeProductStatusAlertDialog() {
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="productId"
-						value={dialog.data?.productId ?? ""}
-					/>
+					<input type="hidden" name="productId" value={dialog.data?.productId ?? ""} />
 					<input type="hidden" name="currentStatus" value={currentStatus} />
 					<input type="hidden" name="targetStatus" value={targetStatus} />
 
 					<AlertDialogHeader>
-						<AlertDialogTitle>
-							Changer le statut en &quot;{config.label}&quot;
-						</AlertDialogTitle>
+						<AlertDialogTitle>Changer le statut en &quot;{config.label}&quot;</AlertDialogTitle>
 						<AlertDialogDescription asChild>
 							<div className="space-y-4">
 								<div>
 									Vous êtes sur le point de changer le statut de{" "}
 									<strong>&quot;{dialog.data?.productTitle}&quot;</strong> de{" "}
-									<span className="font-semibold">
-										{STATUS_CONFIG[currentStatus].label}
-									</span>{" "}
-									vers{" "}
+									<span className="font-semibold">{STATUS_CONFIG[currentStatus].label}</span> vers{" "}
 									<span className="font-semibold">{config.label}</span>.
 								</div>
 

@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks"
-import { withCallbacks } from "@/shared/utils/with-callbacks"
-import { useActionState, useTransition } from 'react'
-import { useRouter, usePathname } from "next/navigation"
-import { removeFromWishlist } from "@/modules/wishlist/actions/remove-from-wishlist"
-import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store"
-import { ActionStatus } from "@/shared/types/server-action"
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { useActionState, useTransition } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { removeFromWishlist } from "@/modules/wishlist/actions/remove-from-wishlist";
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import { ActionStatus } from "@/shared/types/server-action";
 
 interface UseRemoveFromWishlistOptions {
-	onSuccess?: (message: string) => void
-	onOptimisticRemove?: (productId: string) => void
+	onSuccess?: (message: string) => void;
+	onOptimisticRemove?: (productId: string) => void;
 }
 
 /**
@@ -37,14 +37,14 @@ interface UseRemoveFromWishlistOptions {
  * ```
  */
 export const useRemoveFromWishlist = (options?: UseRemoveFromWishlistOptions) => {
-	const router = useRouter()
-	const pathname = usePathname()
+	const router = useRouter();
+	const pathname = usePathname();
 
 	// Store pour optimistic UI du badge navbar
-	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist)
-	const decrementWishlist = useBadgeCountsStore((state) => state.decrementWishlist)
+	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist);
+	const decrementWishlist = useBadgeCountsStore((state) => state.decrementWishlist);
 
-	const [isTransitionPending, startTransition] = useTransition()
+	const [isTransitionPending, startTransition] = useTransition();
 
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(
@@ -54,51 +54,51 @@ export const useRemoveFromWishlist = (options?: UseRemoveFromWishlistOptions) =>
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
-						typeof result === 'object' &&
-						'message' in result &&
-						typeof result.message === 'string'
+						typeof result === "object" &&
+						"message" in result &&
+						typeof result.message === "string"
 					) {
-						options?.onSuccess?.(result.message)
+						options?.onSuccess?.(result.message);
 					}
 				},
 				onError: (result: unknown) => {
 					// Rollback du badge navbar (re-increment car on avait décrémenté)
-					incrementWishlist()
+					incrementWishlist();
 
 					// Redirect to login if unauthorized
 					if (
 						result &&
-						typeof result === 'object' &&
-						'status' in result &&
+						typeof result === "object" &&
+						"status" in result &&
 						result.status === ActionStatus.UNAUTHORIZED
 					) {
-						const callbackUrl = encodeURIComponent(pathname)
-						router.push(`/connexion?callbackUrl=${callbackUrl}`)
+						const callbackUrl = encodeURIComponent(pathname);
+						router.push(`/connexion?callbackUrl=${callbackUrl}`);
 					}
 				},
-			})
+			}),
 		),
-		undefined
-	)
+		undefined,
+	);
 
 	const action = (formData: FormData) => {
 		startTransition(() => {
 			// Mise à jour optimistic du badge navbar
-			decrementWishlist()
+			decrementWishlist();
 
 			// Notify optimistic list context if provided
-			const productId = formData.get("productId")
+			const productId = formData.get("productId");
 			if (productId && typeof productId === "string") {
-				options?.onOptimisticRemove?.(productId)
+				options?.onOptimisticRemove?.(productId);
 			}
 
-			formAction(formData)
-		})
-	}
+			formAction(formData);
+		});
+	};
 
 	return {
 		state,
 		action,
 		isPending: isTransitionPending || isActionPending,
-	}
-}
+	};
+};

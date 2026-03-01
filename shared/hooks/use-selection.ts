@@ -8,13 +8,9 @@ export function useSelection(selectionKey: string = "selected") {
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 	const selectedItems = searchParams.getAll(selectionKey);
-	const [optimisticSelection, setOptimisticSelection] =
-		useOptimistic<string[]>(selectedItems);
+	const [optimisticSelection, setOptimisticSelection] = useOptimistic<string[]>(selectedItems);
 
-	const updateUrlWithParams = (
-		params: URLSearchParams,
-		newSelection: string[]
-	) => {
+	const updateUrlWithParams = (params: URLSearchParams, newSelection: string[]) => {
 		startTransition(() => {
 			setOptimisticSelection(newSelection);
 			router.push(`?${params.toString()}`, { scroll: false });
@@ -43,9 +39,7 @@ export function useSelection(selectionKey: string = "selected") {
 			updateUrlWithParams(params, newSelection);
 		} else {
 			// Si on désélectionne, on retire uniquement les éléments de la page courante
-			const newSelection = optimisticSelection.filter(
-				(id) => !selection.includes(id)
-			);
+			const newSelection = optimisticSelection.filter((id) => !selection.includes(id));
 			newSelection.forEach((id) => params.append(selectionKey, id));
 			updateUrlWithParams(params, newSelection);
 		}
@@ -110,8 +104,7 @@ export function useSelection(selectionKey: string = "selected") {
 	 * @returns true si tous les éléments sont sélectionnés, false sinon
 	 */
 	const areAllSelected = (items: string[]) =>
-		items.length > 0 &&
-		items.every((item) => optimisticSelection.includes(item));
+		items.length > 0 && items.every((item) => optimisticSelection.includes(item));
 
 	/**
 	 * Vérifie si certains (mais pas tous) éléments d'une liste sont sélectionnés
@@ -120,9 +113,7 @@ export function useSelection(selectionKey: string = "selected") {
 	 */
 	const areSomeSelected = (items: string[]) => {
 		if (items.length === 0) return false;
-		const selectedCount = items.filter((item) =>
-			optimisticSelection.includes(item)
-		).length;
+		const selectedCount = items.filter((item) => optimisticSelection.includes(item)).length;
 		return selectedCount > 0 && selectedCount < items.length;
 	};
 

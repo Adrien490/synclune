@@ -26,9 +26,7 @@ interface DeleteGalleryMediaData {
 }
 
 export function DeleteGalleryMediaAlertDialog() {
-	const deleteDialog = useAlertDialog<DeleteGalleryMediaData>(
-		DELETE_GALLERY_MEDIA_DIALOG_ID
-	);
+	const deleteDialog = useAlertDialog<DeleteGalleryMediaData>(DELETE_GALLERY_MEDIA_DIALOG_ID);
 
 	const { isPending, action } = useDeleteUploadThingFile({
 		onSuccess: () => {
@@ -75,11 +73,7 @@ export function DeleteGalleryMediaAlertDialog() {
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel
-						type="button"
-						disabled={isPending}
-						className="w-full sm:w-auto"
-					>
+					<AlertDialogCancel type="button" disabled={isPending} className="w-full sm:w-auto">
 						Annuler
 					</AlertDialogCancel>
 					<AlertDialogAction

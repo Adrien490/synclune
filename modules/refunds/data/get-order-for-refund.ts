@@ -4,14 +4,15 @@ import { cacheLife, cacheTag } from "next/cache";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { GET_ORDER_FOR_REFUND_SELECT } from "../constants/refund.constants";
 import { getOrderForRefundSchema } from "../schemas/refund.schemas";
-import type {
-	GetOrderForRefundParams,
-	OrderForRefund,
-} from "../types/refund.types";
+import type { GetOrderForRefundParams, OrderForRefund } from "../types/refund.types";
 
 // Re-export for backward compatibility
 export { getOrderForRefundSchema };
-export type { GetOrderForRefundParams, OrderForRefund, OrderItemForRefund } from "../types/refund.types";
+export type {
+	GetOrderForRefundParams,
+	OrderForRefund,
+	OrderItemForRefund,
+} from "../types/refund.types";
 
 // ============================================================================
 // MAIN FUNCTION
@@ -22,7 +23,7 @@ export type { GetOrderForRefundParams, OrderForRefund, OrderItemForRefund } from
  * Inclut les quantités déjà remboursées par article
  */
 export async function getOrderForRefund(
-	params: Partial<GetOrderForRefundParams>
+	params: Partial<GetOrderForRefundParams>,
 ): Promise<OrderForRefund | null> {
 	const validation = getOrderForRefundSchema.safeParse(params ?? {});
 
@@ -42,9 +43,7 @@ export async function getOrderForRefund(
 /**
  * Récupère la commande depuis la DB (avec cache)
  */
-async function fetchOrderForRefund(
-	orderId: string
-): Promise<OrderForRefund | null> {
+async function fetchOrderForRefund(orderId: string): Promise<OrderForRefund | null> {
 	"use cache";
 	cacheLife("dashboard");
 	cacheTag(ORDERS_CACHE_TAGS.LIST);

@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_COLORS_DEFAULT_PER_PAGE,
@@ -24,9 +21,7 @@ export const colorFiltersSchema = z.object({
 // SORT SCHEMA
 // ============================================================================
 
-export const colorSortBySchema = z
-	.enum(GET_COLORS_SORT_FIELDS)
-	.default(GET_COLORS_DEFAULT_SORT_BY);
+export const colorSortBySchema = z.enum(GET_COLORS_SORT_FIELDS).default(GET_COLORS_DEFAULT_SORT_BY);
 
 // ============================================================================
 // MAIN SCHEMAS
@@ -70,10 +65,7 @@ export const colorSlugSchema = z
 	.trim()
 	.min(1, "Le slug est requis")
 	.max(50, "Le slug ne peut pas depasser 50 caracteres")
-	.regex(
-		/^[a-z0-9-]+$/,
-		"Le slug ne peut contenir que des lettres minuscules, chiffres et tirets"
-	);
+	.regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets");
 
 export const colorNameSchema = z
 	.string()
@@ -97,7 +89,10 @@ export const deleteColorSchema = z.object({
 });
 
 export const bulkDeleteColorsSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur sélectionnée").max(200, "Maximum 200 couleurs par opération"),
+	ids: z
+		.array(z.cuid2("ID invalide"))
+		.min(1, "Aucune couleur sélectionnée")
+		.max(200, "Maximum 200 couleurs par opération"),
 });
 
 export const toggleColorStatusSchema = z.object({
@@ -106,7 +101,10 @@ export const toggleColorStatusSchema = z.object({
 });
 
 export const bulkToggleColorStatusSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur selectionnee").max(200, "Maximum 200 couleurs par opération"),
+	ids: z
+		.array(z.cuid2("ID invalide"))
+		.min(1, "Aucune couleur selectionnee")
+		.max(200, "Maximum 200 couleurs par opération"),
 	isActive: z.boolean(),
 });
 

@@ -50,21 +50,15 @@ function Sheet({
 	);
 }
 
-function SheetTrigger({
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
+function SheetTrigger({ ...props }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
 	return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
-function SheetClose({
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Close>) {
+function SheetClose({ ...props }: React.ComponentProps<typeof SheetPrimitive.Close>) {
 	return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
-function SheetPortal({
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
+function SheetPortal({ ...props }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
 	return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
@@ -76,10 +70,10 @@ function SheetOverlay({
 		<SheetPrimitive.Overlay
 			data-slot="sheet-overlay"
 			className={cn(
-				"fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm backdrop-saturate-150",
+				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
 				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
-				className
+				className,
 			)}
 			{...props}
 		/>
@@ -109,26 +103,20 @@ function SheetContent({
 				data-slot="sheet-content"
 				className={cn(
 					// Base + group pour permettre group-has-[[data-pending]]/sheet sur les descendants
-					"group/sheet bg-background fixed z-[70] flex flex-col gap-4 shadow-lg transition ease-in-out",
+					"group/sheet bg-background fixed z-(--z-overlay) flex flex-col gap-4 shadow-lg transition ease-in-out",
 					// Right sheet avec safe-area latérale (mode paysage)
 					direction === "right" &&
-						"inset-y-0 right-0 h-full w-full border-l sm:max-w-sm pr-[max(0px,env(safe-area-inset-right))]",
+						"inset-y-0 right-0 h-full w-full border-l pr-[max(0px,env(safe-area-inset-right))] sm:max-w-sm",
 					// Left sheet avec safe-area latérale (mode paysage)
 					direction === "left" &&
-						"inset-y-0 left-0 h-full w-full border-r sm:max-w-sm pl-[max(0px,env(safe-area-inset-left))]",
-					direction === "top" &&
-						"inset-x-0 top-0 h-auto border-b",
-					direction === "bottom" &&
-						"inset-x-0 bottom-0 h-auto border-t",
-					className
+						"inset-y-0 left-0 h-full w-full border-r pl-[max(0px,env(safe-area-inset-left))] sm:max-w-sm",
+					direction === "top" && "inset-x-0 top-0 h-auto border-b",
+					direction === "bottom" && "inset-x-0 bottom-0 h-auto border-t",
+					className,
 				)}
 				{...props}
 			>
-				{title && (
-					<SheetPrimitive.Title className="sr-only">
-						{title}
-					</SheetPrimitive.Title>
-				)}
+				{title && <SheetPrimitive.Title className="sr-only">{title}</SheetPrimitive.Title>}
 				{children}
 				{showCloseButton && (
 					<SheetPrimitive.Close
@@ -164,14 +152,11 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function SheetTitle({
-	className,
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Title>) {
+function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Title>) {
 	return (
 		<SheetPrimitive.Title
 			data-slot="sheet-title"
-			className={cn("text-foreground font-semibold text-lg", className)}
+			className={cn("text-foreground text-lg font-semibold", className)}
 			{...props}
 		/>
 	);

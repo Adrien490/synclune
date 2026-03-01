@@ -27,9 +27,7 @@ interface RevertToProcessingData {
 }
 
 export function RevertToProcessingDialog() {
-	const dialog = useAlertDialog<RevertToProcessingData>(
-		REVERT_TO_PROCESSING_DIALOG_ID
-	);
+	const dialog = useAlertDialog<RevertToProcessingData>(REVERT_TO_PROCESSING_DIALOG_ID);
 	const { action } = useRevertToProcessing();
 	const [isPending, startTransition] = useTransition();
 	const [reason, setReason] = useState("");
@@ -67,8 +65,7 @@ export function RevertToProcessingDialog() {
 							</p>
 							{dialog.data?.trackingNumber && (
 								<p className="mt-2 text-amber-600">
-									Le numéro de suivi ({dialog.data.trackingNumber}) sera
-									supprimé.
+									Le numéro de suivi ({dialog.data.trackingNumber}) sera supprimé.
 								</p>
 							)}
 						</div>

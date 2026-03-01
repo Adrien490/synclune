@@ -31,10 +31,8 @@ export function ProductHighlights({ product }: ProductHighlightsProps) {
 							•
 						</span>
 						<div className="min-w-0">
-							<p className="text-sm/6 font-medium tracking-normal antialiased">
-								{highlight.label}
-							</p>
-							<p className="text-xs/5 tracking-normal antialiased text-muted-foreground">
+							<p className="text-sm/6 font-medium tracking-normal antialiased">{highlight.label}</p>
+							<p className="text-muted-foreground text-xs/5 tracking-normal antialiased">
 								{highlight.description}
 							</p>
 						</div>

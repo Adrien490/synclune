@@ -31,21 +31,21 @@ export function StructuredData({ reviewStatsPromise, reviewsPromise }: Structure
 	];
 
 	// Remove @context from each schema for @graph format
-	const graphSchemas: Record<string, unknown>[] = schemas.map(
-		({ "@context": _, ...rest }) => rest,
-	);
+	const graphSchemas: Record<string, unknown>[] = schemas.map(({ "@context": _, ...rest }) => rest);
 
 	// Homepage-specific schemas (only when reviewsPromise is provided)
 	if (reviewsPromise) {
 		// BreadcrumbList for homepage
 		graphSchemas.push({
 			"@type": "BreadcrumbList",
-			itemListElement: [{
-				"@type": "ListItem",
-				position: 1,
-				name: "Accueil",
-				item: SITE_URL,
-			}],
+			itemListElement: [
+				{
+					"@type": "ListItem",
+					position: 1,
+					name: "Accueil",
+					item: SITE_URL,
+				},
+			],
 		});
 
 		// Article schema for the atelier story section

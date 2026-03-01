@@ -11,6 +11,7 @@ import {
 } from "@/modules/products/services/product-pricing.service";
 import { m, useReducedMotion } from "motion/react";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { NotifyBackInStockButton } from "@/modules/wishlist/components/notify-back-in-stock-button";
 import { addBusinessDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -19,6 +20,8 @@ interface ProductPriceProps {
 	product: GetProductReturn;
 	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
 	cartsCount?: number;
+	/** Whether this product is in the user's wishlist (for back-in-stock CTA) */
+	isInWishlist?: boolean;
 }
 
 /**
@@ -30,7 +33,12 @@ interface ProductPriceProps {
  * - Afficher le badge de réduction
  * - Afficher le badge de disponibilité (En stock / Stock limité / Rupture)
  */
-export function ProductPriceDisplay({ selectedSku, product, cartsCount }: ProductPriceProps) {
+export function ProductPriceDisplay({
+	selectedSku,
+	product,
+	cartsCount,
+	isInWishlist,
+}: ProductPriceProps) {
 	const shouldReduceMotion = useReducedMotion();
 
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
@@ -216,9 +224,11 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					>
 						<p>Cette petite merveille sera bientôt disponible !</p>
 					</div>
-					<p className="text-muted-foreground text-xs">
-						Ajoutez ce produit à vos favoris pour être notifié(e) de son retour en stock.
-					</p>
+					<NotifyBackInStockButton
+						productId={product.id}
+						productTitle={product.title}
+						isInWishlist={isInWishlist ?? false}
+					/>
 				</div>
 			)}
 		</div>

@@ -15,7 +15,7 @@ export function ProductTypesDataTableSkeleton() {
 					align: "center",
 					cell: {
 						type: "custom",
-						render: () => <Skeleton className="h-6 w-11 mx-auto rounded-full" />,
+						render: () => <Skeleton className="mx-auto h-6 w-11 rounded-full" />,
 					},
 				},
 				{ width: "10%", align: "right", cell: { type: "actions" } },

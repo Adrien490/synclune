@@ -66,10 +66,7 @@ import { deleteUploadThingFiles } from "../delete-uploadthing-files";
 // HELPERS
 // ============================================================================
 
-const VALID_URLS = [
-	"https://utfs.io/f/key-one.jpg",
-	"https://utfs.io/f/key-two.png",
-];
+const VALID_URLS = ["https://utfs.io/f/key-one.jpg", "https://utfs.io/f/key-two.png"];
 const VALID_KEYS = ["key-one.jpg", "key-two.png"];
 
 function createFormData(data: Record<string, string>): FormData {
@@ -106,23 +103,19 @@ describe("deleteUploadThingFiles", () => {
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 2 });
 
 		// Default: response helpers return shaped ActionState
-		mockSuccess.mockImplementation(
-			(message: string, data?: Record<string, unknown>) => ({
-				status: ActionStatus.SUCCESS,
-				message,
-				data,
-			})
-		);
+		mockSuccess.mockImplementation((message: string, data?: Record<string, unknown>) => ({
+			status: ActionStatus.SUCCESS,
+			message,
+			data,
+		}));
 		mockError.mockImplementation((message: string) => ({
 			status: ActionStatus.ERROR,
 			message,
 		}));
-		mockHandleActionError.mockImplementation(
-			(_e: unknown, fallback: string) => ({
-				status: ActionStatus.ERROR,
-				message: fallback,
-			})
-		);
+		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+			status: ActionStatus.ERROR,
+			message: fallback,
+		}));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -208,7 +201,7 @@ describe("deleteUploadThingFiles", () => {
 		const result = await deleteUploadThingFiles(undefined, validFormData);
 
 		expect(mockError).toHaveBeenCalledWith(
-			"Impossible d'extraire les cles des fichiers depuis les URLs"
+			"Impossible d'extraire les cles des fichiers depuis les URLs",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockDeleteFiles).not.toHaveBeenCalled();
@@ -227,7 +220,7 @@ describe("deleteUploadThingFiles", () => {
 
 		expect(warnSpy).toHaveBeenCalledWith(
 			expect.stringContaining("1 URL(s)"),
-			expect.arrayContaining(["https://utfs.io/f/"])
+			expect.arrayContaining(["https://utfs.io/f/"]),
 		);
 		expect(mockDeleteFiles).toHaveBeenCalled();
 
@@ -249,9 +242,7 @@ describe("deleteUploadThingFiles", () => {
 
 		const result = await deleteUploadThingFiles(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith(
-			"La suppression des fichiers a echoue cote UploadThing"
-		);
+		expect(mockError).toHaveBeenCalledWith("La suppression des fichiers a echoue cote UploadThing");
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
@@ -287,7 +278,7 @@ describe("deleteUploadThingFiles", () => {
 		// totalFailed = failedUrls(1) + utFailures(0) = 1
 		expect(mockSuccess).toHaveBeenCalledWith(
 			"1 fichier(s) supprime(s). 1 fichier(s) n'ont pas pu etre traite(s).",
-			{ deletedCount: 1, failedCount: 1 }
+			{ deletedCount: 1, failedCount: 1 },
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
@@ -305,7 +296,7 @@ describe("deleteUploadThingFiles", () => {
 		// totalFailed = failedUrls(0) + utFailures(2-1=1) = 1
 		expect(mockSuccess).toHaveBeenCalledWith(
 			"1 fichier(s) supprime(s). 1 fichier(s) n'ont pas pu etre traite(s).",
-			{ deletedCount: 1, failedCount: 1 }
+			{ deletedCount: 1, failedCount: 1 },
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
@@ -321,7 +312,7 @@ describe("deleteUploadThingFiles", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Une erreur est survenue lors de la suppression des fichiers"
+			"Une erreur est survenue lors de la suppression des fichiers",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

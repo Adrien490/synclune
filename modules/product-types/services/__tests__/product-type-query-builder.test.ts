@@ -146,9 +146,7 @@ describe("buildProductTypeWhereClause", () => {
 
 	describe("filters only", () => {
 		it("should return the filter condition directly when only one filter is set", () => {
-			const result = buildProductTypeWhereClause(
-				params({ filters: { isActive: true } })
-			);
+			const result = buildProductTypeWhereClause(params({ filters: { isActive: true } }));
 
 			expect(result).toEqual({ isActive: true });
 		});
@@ -161,7 +159,7 @@ describe("buildProductTypeWhereClause", () => {
 	describe("search combined with filters", () => {
 		it("should wrap both conditions in AND", () => {
 			const result = buildProductTypeWhereClause(
-				params({ search: "collier", filters: { isActive: true } })
+				params({ search: "collier", filters: { isActive: true } }),
 			);
 
 			expect(result.AND).toHaveLength(2);
@@ -177,7 +175,7 @@ describe("buildProductTypeWhereClause", () => {
 
 		it("should add only the filter condition when search is empty", () => {
 			const result = buildProductTypeWhereClause(
-				params({ search: "", filters: { isActive: false } })
+				params({ search: "", filters: { isActive: false } }),
 			);
 
 			expect(result).toEqual({ isActive: false });

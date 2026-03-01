@@ -21,17 +21,17 @@ interface UpdateStatusFormProps {
 	currentStatus: CustomizationRequestStatus;
 }
 
-export function UpdateStatusForm({
-	requestId,
-	currentStatus,
-}: UpdateStatusFormProps) {
+export function UpdateStatusForm({ requestId, currentStatus }: UpdateStatusFormProps) {
 	const [selectedStatus, setSelectedStatus] = useState<CustomizationRequestStatus>(currentStatus);
 
 	const [, action, isPending] = useActionState(
-		withCallbacks(updateCustomizationStatus, createToastCallbacks({
-			loadingMessage: "Mise à jour du statut...",
-		})),
-		undefined
+		withCallbacks(
+			updateCustomizationStatus,
+			createToastCallbacks({
+				loadingMessage: "Mise à jour du statut...",
+			}),
+		),
+		undefined,
 	);
 
 	const handleSubmit = () => {
@@ -43,12 +43,10 @@ export function UpdateStatusForm({
 		action(formData);
 	};
 
-	const statusOptions = Object.entries(CUSTOMIZATION_STATUS_LABELS).map(
-		([value, label]) => ({
-			value: value as CustomizationRequestStatus,
-			label,
-		})
-	);
+	const statusOptions = Object.entries(CUSTOMIZATION_STATUS_LABELS).map(([value, label]) => ({
+		value: value as CustomizationRequestStatus,
+		label,
+	}));
 
 	return (
 		<form

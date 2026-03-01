@@ -18,9 +18,7 @@ const MAX_COLLECTION_NAME_LENGTH = 20;
  *
  * @returns Maximum 5 highlights tries par priorite
  */
-export function generateHighlights(
-	product: GetProductReturn
-): ProductHighlight[] {
+export function generateHighlights(product: GetProductReturn): ProductHighlight[] {
 	const highlights: ProductHighlight[] = [];
 
 	// 1. Materiau principal (priorite haute - critere d'achat cle)
@@ -52,7 +50,7 @@ export function generateHighlights(
 
 	// 4. Taille ajustable (si applicable)
 	const hasAdjustableSize = product.skus.some((sku) =>
-		sku.size?.toLowerCase().includes("ajustable")
+		sku.size?.toLowerCase().includes("ajustable"),
 	);
 	if (hasAdjustableSize) {
 		highlights.push({
@@ -64,9 +62,7 @@ export function generateHighlights(
 	}
 
 	// 5. Collection (si appartient a une collection active)
-	const activeCollection = product.collections.find(
-		(pc) => pc.collection.status === "PUBLIC"
-	);
+	const activeCollection = product.collections.find((pc) => pc.collection.status === "PUBLIC");
 	if (activeCollection) {
 		const name = activeCollection.collection.name;
 		const displayName =

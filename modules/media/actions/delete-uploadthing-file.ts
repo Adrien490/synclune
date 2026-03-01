@@ -15,7 +15,7 @@ import { MEDIA_LIMITS } from "@/modules/media/constants/upload-limits";
  */
 export async function deleteUploadThingFile(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verify admin rights

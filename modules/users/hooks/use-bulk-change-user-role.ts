@@ -25,9 +25,9 @@ export const useBulkChangeUserRole = (options?: UseBulkChangeUserRoleOptions) =>
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

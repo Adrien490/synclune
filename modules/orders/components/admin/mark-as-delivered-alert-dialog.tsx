@@ -52,8 +52,8 @@ export function MarkAsDeliveredAlertDialog() {
 									<strong>{dialog.data?.orderNumber}</strong> comme livrée ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									Cette action force le statut si le webhook du transporteur ne
-									fonctionne pas. La date de livraison sera enregistrée.
+									Cette action force le statut si le webhook du transporteur ne fonctionne pas. La
+									date de livraison sera enregistrée.
 								</p>
 							</div>
 						</AlertDialogDescription>

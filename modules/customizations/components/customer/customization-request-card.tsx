@@ -1,3 +1,4 @@
+import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import { Badge } from "@/shared/components/ui/badge";
 import { format } from "date-fns";
@@ -14,21 +15,19 @@ interface CustomizationRequestCardProps {
 	request: UserCustomizationRequest;
 }
 
-export function CustomizationRequestCard({
-	request,
-}: CustomizationRequestCardProps) {
+export function CustomizationRequestCard({ request }: CustomizationRequestCardProps) {
 	const status = request.status as CustomizationRequestStatus;
 	const colors = CUSTOMIZATION_STATUS_COLORS[status];
 	const label = CUSTOMIZATION_STATUS_LABELS[status];
 
 	return (
-		<article className="rounded-xl border border-border/60 p-4 space-y-3">
+		<article className="border-border/60 space-y-3 rounded-xl border p-4">
 			<div className="flex items-start justify-between gap-3">
-				<div className="space-y-1 min-w-0">
-					<p className="font-medium text-foreground truncate">
+				<div className="min-w-0 space-y-1">
+					<p className="text-foreground truncate font-medium">
 						{request.productTypeLabel || "Personnalisation"}
 					</p>
-					<div className="flex items-center gap-2 text-xs text-muted-foreground">
+					<div className="text-muted-foreground flex items-center gap-2 text-xs">
 						<Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
 						<span>
 							{format(request.createdAt, "d MMMM yyyy", {
@@ -37,20 +36,18 @@ export function CustomizationRequestCard({
 						</span>
 					</div>
 				</div>
-				<Badge
-					className={`${colors.bg} ${colors.text} border-0 shrink-0`}
-				>
-					<span aria-hidden="true" className="mr-1">{colors.symbol}</span>
+				<Badge className={cn(colors.bg, colors.text, "shrink-0 border-0")}>
+					<span aria-hidden="true" className="mr-1">
+						{colors.symbol}
+					</span>
 					{label}
 				</Badge>
 			</div>
 
-			<p className="text-sm text-muted-foreground line-clamp-3">
-				{request.details}
-			</p>
+			<p className="text-muted-foreground line-clamp-3 text-sm">{request.details}</p>
 
 			{request.respondedAt && (
-				<div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-border/50">
+				<div className="text-muted-foreground border-border/50 flex items-center gap-2 border-t pt-2 text-xs">
 					<MessageSquare className="h-3 w-3 shrink-0" aria-hidden="true" />
 					<span>
 						Réponse le{" "}
@@ -62,14 +59,13 @@ export function CustomizationRequestCard({
 			)}
 
 			{request.inspirationProducts.length > 0 && (
-				<div className="flex gap-2 pt-2 border-t border-border/50">
+				<div className="border-border/50 flex gap-2 border-t pt-2">
 					{request.inspirationProducts.slice(0, 4).map((product) => {
-						const imageUrl =
-							product.skus[0]?.images[0]?.url;
+						const imageUrl = product.skus[0]?.images[0]?.url;
 						return (
 							<div
 								key={product.id}
-								className="h-10 w-10 rounded-md bg-muted overflow-hidden shrink-0"
+								className="bg-muted h-10 w-10 shrink-0 overflow-hidden rounded-md"
 							>
 								{imageUrl && (
 									<Image
@@ -77,6 +73,7 @@ export function CustomizationRequestCard({
 										alt={product.title}
 										width={40}
 										height={40}
+										sizes="40px"
 										className="h-full w-full object-cover"
 									/>
 								)}
@@ -84,7 +81,7 @@ export function CustomizationRequestCard({
 						);
 					})}
 					{request.inspirationProducts.length > 4 && (
-						<div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground shrink-0">
+						<div className="bg-muted text-muted-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-xs">
 							+{request.inspirationProducts.length - 4}
 						</div>
 					)}

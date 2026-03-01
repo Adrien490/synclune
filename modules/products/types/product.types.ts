@@ -52,18 +52,13 @@ export type ProductFilters = z.infer<typeof productFiltersSchema>;
 
 export type SortField = (typeof GET_PRODUCTS_SORT_FIELDS)[number];
 
-export type GetProductsParams = Omit<
-	z.infer<typeof getProductsSchema>,
-	"direction" | "status"
-> & {
+export type GetProductsParams = Omit<z.infer<typeof getProductsSchema>, "direction" | "status"> & {
 	direction?: "forward" | "backward";
 	status?: z.infer<typeof getProductsSchema>["status"];
 };
 
 export type GetProductsReturn = {
-	products: Array<
-		Prisma.ProductGetPayload<{ select: typeof GET_PRODUCTS_SELECT }>
-	>;
+	products: Array<Prisma.ProductGetPayload<{ select: typeof GET_PRODUCTS_SELECT }>>;
 	pagination: PaginationInfo;
 	/** Nombre total de produits correspondant aux filtres (avant pagination) */
 	totalCount: number;

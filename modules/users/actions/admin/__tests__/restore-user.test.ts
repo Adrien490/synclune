@@ -190,9 +190,7 @@ describe("restoreUser", () => {
 	});
 
 	it("should return error when user is neither deleted nor suspended", async () => {
-		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ deletedAt: null, suspendedAt: null })
-		);
+		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ deletedAt: null, suspendedAt: null }));
 
 		const result = await restoreUser(undefined, validFormData);
 
@@ -207,7 +205,7 @@ describe("restoreUser", () => {
 
 	it("should restore a suspended user", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ suspendedAt: new Date(), deletedAt: null })
+			makeUser({ suspendedAt: new Date(), deletedAt: null }),
 		);
 
 		const result = await restoreUser(undefined, validFormData);
@@ -225,7 +223,7 @@ describe("restoreUser", () => {
 
 	it("should restore a deleted user", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ deletedAt: new Date(), suspendedAt: null })
+			makeUser({ deletedAt: new Date(), suspendedAt: null }),
 		);
 
 		const result = await restoreUser(undefined, validFormData);
@@ -234,7 +232,7 @@ describe("restoreUser", () => {
 			expect.objectContaining({
 				where: { id: "user-456" },
 				data: expect.objectContaining({ deletedAt: null, suspendedAt: null }),
-			})
+			}),
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
@@ -242,21 +240,17 @@ describe("restoreUser", () => {
 	it("should return success with user display name", async () => {
 		await restoreUser(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("Marie Dupont")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("Marie Dupont"));
 	});
 
 	it("should fall back to email in success message when name is null", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ name: null, email: "marie@example.com" })
+			makeUser({ name: null, email: "marie@example.com" }),
 		);
 
 		await restoreUser(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("marie@example.com")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("marie@example.com"));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -281,7 +275,7 @@ describe("restoreUser", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la restauration de l'utilisateur"
+			"Erreur lors de la restauration de l'utilisateur",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

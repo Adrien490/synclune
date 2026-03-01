@@ -11,8 +11,5 @@ import { RefundReason } from "@/app/generated/prisma/browser";
  * - OTHER : Autre → pas de restock (par précaution)
  */
 export function shouldRestockByDefault(reason: RefundReason): boolean {
-	return (
-		reason === RefundReason.CUSTOMER_REQUEST ||
-		reason === RefundReason.WRONG_ITEM
-	);
+	return reason === RefundReason.CUSTOMER_REQUEST || reason === RefundReason.WRONG_ITEM;
 }

@@ -10,9 +10,7 @@ const REFUND_SORT_FIELDS = Object.values(SORT_OPTIONS);
 /**
  * Parse and validate refund search parameters from URL
  */
-export function parseRefundParams(searchParams: {
-	[key: string]: string | string[] | undefined;
-}) {
+export function parseRefundParams(searchParams: { [key: string]: string | string[] | undefined }) {
 	return {
 		cursor: searchParamParsers.cursor(searchParams.cursor),
 		direction: searchParamParsers.direction(searchParams.direction),
@@ -20,15 +18,13 @@ export function parseRefundParams(searchParams: {
 		sortBy: searchParamParsers.sortBy(
 			searchParams.sortBy,
 			REFUND_SORT_FIELDS,
-			"created-descending" as const
+			"created-descending" as const,
 		) as (typeof REFUND_SORT_FIELDS)[number],
 		search: searchParamParsers.search(searchParams.search),
 	};
 }
 
-export const parseRefundFilters = (
-	params: RefundsSearchParams
-): RefundFilters => {
+export const parseRefundFilters = (params: RefundsSearchParams): RefundFilters => {
 	let status: RefundFilters["status"] = undefined;
 	let reason: RefundFilters["reason"] = undefined;
 	let createdAfter: Date | undefined = undefined;

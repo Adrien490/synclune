@@ -13,46 +13,46 @@ export type { PaymentFailureDetails };
  * NOTE: Ce handler ne gère pas les emails car checkout.session.completed le fait déjà
  * Idempotent: si la commande est déjà PAID, l'opération est ignorée
  */
-export async function markOrderAsPaid(
-	orderId: string,
-	paymentIntentId: string
-): Promise<void> {
-	await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-		// Vérification d'idempotence
-		const order = await tx.order.findUnique({
-			where: { id: orderId },
-			select: { paymentStatus: true },
-		});
+export async function markOrderAsPaid(orderId: string, paymentIntentId: string): Promise<void> {
+	await prisma.$transaction(
+		async (tx: Prisma.TransactionClient) => {
+			// Vérification d'idempotence
+			const order = await tx.order.findUnique({
+				where: { id: orderId },
+				select: { paymentStatus: true },
+			});
 
-		if (!order) {
-			console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsPaid`);
-			return;
-		}
+			if (!order) {
+				console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsPaid`);
+				return;
+			}
 
-		if (order.paymentStatus === "PAID") {
-			console.log(`⏭️ [WEBHOOK] Order ${orderId} already marked as PAID, skipping`);
-			return;
-		}
+			if (order.paymentStatus === "PAID") {
+				console.log(`⏭️ [WEBHOOK] Order ${orderId} already marked as PAID, skipping`);
+				return;
+			}
 
-		await tx.order.update({
-			where: { id: orderId },
-			data: {
-				status: "PROCESSING",
-				paymentStatus: "PAID",
-				stripePaymentIntentId: paymentIntentId,
-				paidAt: new Date(),
-			},
-		});
+			await tx.order.update({
+				where: { id: orderId },
+				data: {
+					status: "PROCESSING",
+					paymentStatus: "PAID",
+					stripePaymentIntentId: paymentIntentId,
+					paidAt: new Date(),
+				},
+			});
 
-		console.log(`✅ [WEBHOOK] Order ${orderId} marked as PAID via payment_intent.succeeded`);
-	}, { timeout: 10000 });
+			console.log(`✅ [WEBHOOK] Order ${orderId} marked as PAID via payment_intent.succeeded`);
+		},
+		{ timeout: 10000 },
+	);
 }
 
 /**
  * Extrait les détails d'échec d'un PaymentIntent
  */
 export function extractPaymentFailureDetails(
-	paymentIntent: Stripe.PaymentIntent
+	paymentIntent: Stripe.PaymentIntent,
 ): PaymentFailureDetails {
 	const lastError = paymentIntent.last_payment_error;
 	return {
@@ -66,73 +66,78 @@ export function extractPaymentFailureDetails(
  * Restaure le stock pour une commande dont le paiement a échoué
  */
 export async function restoreStockForOrder(
-	orderId: string
+	orderId: string,
 ): Promise<{ shouldRestore: boolean; itemCount: number; restoredSkuIds: string[] }> {
 	// All reads and writes inside the transaction to prevent double restoration on concurrent retries
-	return prisma.$transaction(async (tx) => {
-		const order = await tx.order.findUnique({
-			where: { id: orderId },
-			select: {
-				id: true,
-				orderNumber: true,
-				status: true,
-				paymentStatus: true,
-				items: {
-					select: {
-						skuId: true,
-						quantity: true,
+	return prisma.$transaction(
+		async (tx) => {
+			const order = await tx.order.findUnique({
+				where: { id: orderId },
+				select: {
+					id: true,
+					orderNumber: true,
+					status: true,
+					paymentStatus: true,
+					items: {
+						select: {
+							skuId: true,
+							quantity: true,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		if (!order) {
-			console.error(`[WEBHOOK] Order ${orderId} not found for stock restoration`);
-			return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
-		}
+			if (!order) {
+				console.error(`[WEBHOOK] Order ${orderId} not found for stock restoration`);
+				return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
+			}
 
-		// Only restore if stock was decremented (PROCESSING status = payment had succeeded)
-		const shouldRestore = order.status === "PROCESSING" || order.paymentStatus === "PAID";
+			// Only restore if stock was decremented (PROCESSING status = payment had succeeded)
+			const shouldRestore = order.status === "PROCESSING" || order.paymentStatus === "PAID";
 
-		if (!shouldRestore || order.items.length === 0) {
-			return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
-		}
+			if (!shouldRestore || order.items.length === 0) {
+				return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
+			}
 
-		// Group quantities by skuId in case multiple items share the same SKU
-		const stockUpdates = new Map<string, number>();
-		for (const item of order.items) {
-			const current = stockUpdates.get(item.skuId) || 0;
-			stockUpdates.set(item.skuId, current + item.quantity);
-		}
+			// Group quantities by skuId in case multiple items share the same SKU
+			const stockUpdates = new Map<string, number>();
+			for (const item of order.items) {
+				const current = stockUpdates.get(item.skuId) || 0;
+				stockUpdates.set(item.skuId, current + item.quantity);
+			}
 
-		// Fetch current SKU states to determine if reactivation is appropriate
-		const skuIds = Array.from(stockUpdates.keys());
-		const skus = await tx.productSku.findMany({
-			where: { id: { in: skuIds } },
-			select: { id: true, inventory: true, isActive: true },
-		});
-		const skuMap = new Map(skus.map((s) => [s.id, s]));
+			// Fetch current SKU states to determine if reactivation is appropriate
+			const skuIds = Array.from(stockUpdates.keys());
+			const skus = await tx.productSku.findMany({
+				where: { id: { in: skuIds } },
+				select: { id: true, inventory: true, isActive: true },
+			});
+			const skuMap = new Map(skus.map((s) => [s.id, s]));
 
-		await Promise.all(
-			Array.from(stockUpdates.entries()).map(([skuId, quantity]) => {
-				const sku = skuMap.get(skuId);
-				// Only reactivate if the SKU was auto-deactivated (inventory === 0 and inactive)
-				// Don't reactivate SKUs that were manually deactivated by admin (inventory > 0 but inactive)
-				const shouldReactivate = sku && !sku.isActive && sku.inventory === 0;
+			await Promise.all(
+				Array.from(stockUpdates.entries()).map(([skuId, quantity]) => {
+					const sku = skuMap.get(skuId);
+					// Only reactivate if the SKU was auto-deactivated (inventory === 0 and inactive)
+					// Don't reactivate SKUs that were manually deactivated by admin (inventory > 0 but inactive)
+					const shouldReactivate = sku && !sku.isActive && sku.inventory === 0;
 
-				return tx.productSku.update({
-					where: { id: skuId },
-					data: {
-						inventory: { increment: quantity },
-						...(shouldReactivate && { isActive: true }),
-					},
-				});
-			})
-		);
+					return tx.productSku.update({
+						where: { id: skuId },
+						data: {
+							inventory: { increment: quantity },
+							...(shouldReactivate && { isActive: true }),
+						},
+					});
+				}),
+			);
 
-		console.log(`[WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`);
-		return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: skuIds };
-	}, { timeout: 10000 });
+			console.log(
+				`[WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`,
+			);
+			return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: skuIds };
+		},
+		{ timeout: 10000 },
+	);
 }
 
 /**
@@ -142,38 +147,41 @@ export async function restoreStockForOrder(
 export async function markOrderAsFailed(
 	orderId: string,
 	paymentIntentId: string,
-	failureDetails: PaymentFailureDetails
+	failureDetails: PaymentFailureDetails,
 ): Promise<void> {
-	await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-		const order = await tx.order.findUnique({
-			where: { id: orderId },
-			select: { paymentStatus: true },
-		});
+	await prisma.$transaction(
+		async (tx: Prisma.TransactionClient) => {
+			const order = await tx.order.findUnique({
+				where: { id: orderId },
+				select: { paymentStatus: true },
+			});
 
-		if (!order) {
-			console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsFailed`);
-			return;
-		}
+			if (!order) {
+				console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsFailed`);
+				return;
+			}
 
-		if (order.paymentStatus === "FAILED") {
-			console.log(`⏭️ [WEBHOOK] Order ${orderId} already marked as FAILED, skipping`);
-			return;
-		}
+			if (order.paymentStatus === "FAILED") {
+				console.log(`⏭️ [WEBHOOK] Order ${orderId} already marked as FAILED, skipping`);
+				return;
+			}
 
-		await tx.order.update({
-			where: { id: orderId },
-			data: {
-				paymentStatus: "FAILED",
-				status: "CANCELLED",
-				stripePaymentIntentId: paymentIntentId,
-				paymentFailureCode: failureDetails.code,
-				paymentDeclineCode: failureDetails.declineCode,
-				paymentFailureMessage: failureDetails.message,
-			},
-		});
+			await tx.order.update({
+				where: { id: orderId },
+				data: {
+					paymentStatus: "FAILED",
+					status: "CANCELLED",
+					stripePaymentIntentId: paymentIntentId,
+					paymentFailureCode: failureDetails.code,
+					paymentDeclineCode: failureDetails.declineCode,
+					paymentFailureMessage: failureDetails.message,
+				},
+			});
 
-		console.log(`❌ [WEBHOOK] Order ${orderId} marked as FAILED`);
-	}, { timeout: 10000 });
+			console.log(`❌ [WEBHOOK] Order ${orderId} marked as FAILED`);
+		},
+		{ timeout: 10000 },
+	);
 }
 
 /**
@@ -182,35 +190,40 @@ export async function markOrderAsFailed(
  */
 export async function markOrderAsCancelled(
 	orderId: string,
-	paymentIntentId: string
+	paymentIntentId: string,
 ): Promise<void> {
-	await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-		const order = await tx.order.findUnique({
-			where: { id: orderId },
-			select: { status: true, paymentStatus: true },
-		});
+	await prisma.$transaction(
+		async (tx: Prisma.TransactionClient) => {
+			const order = await tx.order.findUnique({
+				where: { id: orderId },
+				select: { status: true, paymentStatus: true },
+			});
 
-		if (!order) {
-			console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsCancelled`);
-			return;
-		}
+			if (!order) {
+				console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsCancelled`);
+				return;
+			}
 
-		if (order.status === "CANCELLED" && order.paymentStatus === "FAILED") {
-			console.log(`⏭️ [WEBHOOK] Order ${orderId} already CANCELLED with FAILED payment, skipping`);
-			return;
-		}
+			if (order.status === "CANCELLED" && order.paymentStatus === "FAILED") {
+				console.log(
+					`⏭️ [WEBHOOK] Order ${orderId} already CANCELLED with FAILED payment, skipping`,
+				);
+				return;
+			}
 
-		await tx.order.update({
-			where: { id: orderId },
-			data: {
-				status: "CANCELLED",
-				paymentStatus: "FAILED",
-				stripePaymentIntentId: paymentIntentId,
-			},
-		});
+			await tx.order.update({
+				where: { id: orderId },
+				data: {
+					status: "CANCELLED",
+					paymentStatus: "FAILED",
+					stripePaymentIntentId: paymentIntentId,
+				},
+			});
 
-		console.log(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`);
-	}, { timeout: 10000 });
+			console.log(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`);
+		},
+		{ timeout: 10000 },
+	);
 }
 
 /**
@@ -219,7 +232,7 @@ export async function markOrderAsCancelled(
 export async function initiateAutomaticRefund(
 	paymentIntentId: string,
 	orderId: string,
-	reason: string
+	reason: string,
 ): Promise<{ success: boolean; refundId?: string; error?: Error }> {
 	try {
 		const { stripe } = await import("@/shared/lib/stripe");
@@ -235,7 +248,7 @@ export async function initiateAutomaticRefund(
 			},
 			{
 				idempotencyKey: `auto-refund-${paymentIntentId}`,
-			}
+			},
 		);
 
 		console.log(`✅ [WEBHOOK] Refund created successfully: ${refund.id} for order ${orderId}`);
@@ -253,7 +266,7 @@ export async function sendRefundFailureAlert(
 	orderId: string,
 	paymentIntentId: string,
 	reason: "payment_failed" | "payment_canceled" | "other",
-	errorMessage: string
+	errorMessage: string,
 ): Promise<void> {
 	try {
 		const order = await prisma.order.findUnique({
@@ -285,6 +298,9 @@ export async function sendRefundFailureAlert(
 
 		console.log(`🚨 [WEBHOOK] Admin alert sent for failed refund on order ${orderId}`);
 	} catch (alertError) {
-		console.error(`❌ [WEBHOOK] Failed to send refund failure alert for order ${orderId}:`, alertError);
+		console.error(
+			`❌ [WEBHOOK] Failed to send refund failure alert for order ${orderId}:`,
+			alertError,
+		);
 	}
 }

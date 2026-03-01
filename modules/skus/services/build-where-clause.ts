@@ -5,9 +5,7 @@ import { buildFilterConditions } from "./build-filter-conditions";
 /**
  * Construit la clause WHERE complète pour la récupération des SKUs de produits
  */
-export const buildWhereClause = (
-	params: GetProductSkusInput
-): Prisma.ProductSkuWhereInput => {
+export const buildWhereClause = (params: GetProductSkusInput): Prisma.ProductSkuWhereInput => {
 	const whereClause: Prisma.ProductSkuWhereInput = {
 		deletedAt: null,
 	};

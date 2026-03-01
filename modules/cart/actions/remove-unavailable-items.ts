@@ -22,7 +22,7 @@ import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
  */
 export async function removeUnavailableItems(
 	_?: ActionState,
-	__formData?: FormData
+	__formData?: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting + récupération contexte
@@ -104,13 +104,11 @@ export async function removeUnavailableItems(
 
 		// 5. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		// 5b. Invalider le cache des compteurs de paniers pour les produits supprimes
-		const productIds = new Set(
-			unavailableItems.map(item => item.sku.product.id)
-		);
-		productIds.forEach(productId => {
+		const productIds = new Set(unavailableItems.map((item) => item.sku.product.id));
+		productIds.forEach((productId) => {
 			updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(productId));
 		});
 

@@ -38,6 +38,6 @@ export function useIsTouchDevice() {
 		// getSnapshot: valeur cote client
 		() => window.matchMedia(TOUCH_MEDIA_QUERY).matches,
 		// getServerSnapshot: fallback SSR (desktop par defaut)
-		() => false
+		() => false,
 	);
 }

@@ -29,7 +29,7 @@ function formatProductFilter(
 		productTypes: Map<string, string>;
 		collections: Map<string, string>;
 		searchParams: URLSearchParams;
-	}
+	},
 ) {
 	const { productTypes, collections, searchParams } = options;
 	const filterKey = filter.key.replace("filter_", "");
@@ -37,15 +37,13 @@ function formatProductFilter(
 
 	// Gestion du statut de produit
 	if (filterKey === "status") {
-		const label =
-			PRODUCT_STATUS_LABELS[value as keyof typeof PRODUCT_STATUS_LABELS];
+		const label = PRODUCT_STATUS_LABELS[value as keyof typeof PRODUCT_STATUS_LABELS];
 		return label ? { label: "Statut", displayValue: label } : null;
 	}
 
 	// Gestion du statut de stock
 	if (filterKey === "stockStatus") {
-		const label =
-			STOCK_STATUS_LABELS[value as keyof typeof STOCK_STATUS_LABELS];
+		const label = STOCK_STATUS_LABELS[value as keyof typeof STOCK_STATUS_LABELS];
 		return label ? { label: "Stock", displayValue: label } : null;
 	}
 
@@ -117,10 +115,7 @@ function formatProductFilter(
 	};
 }
 
-export function ProductsFilterBadges({
-	productTypes,
-	collections,
-}: ProductsFilterBadgesProps) {
+export function ProductsFilterBadges({ productTypes, collections }: ProductsFilterBadgesProps) {
 	const searchParams = useSearchParams();
 
 	// Create lookup maps for efficient access

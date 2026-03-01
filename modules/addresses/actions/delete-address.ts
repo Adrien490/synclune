@@ -13,7 +13,7 @@ import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 
 export async function deleteAddress(
 	_prev: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAuth();
@@ -67,7 +67,7 @@ export async function deleteAddress(
 		});
 
 		// Revalidation du cache avec tags
-		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
+		getUserAddressesInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
 		return success("Adresse supprimee avec succes");
 	} catch (e) {

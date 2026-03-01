@@ -9,9 +9,7 @@ interface UseBulkActivateSkusOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useBulkActivateSkus = (
-	options?: UseBulkActivateSkusOptions
-) => {
+export const useBulkActivateSkus = (options?: UseBulkActivateSkusOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -27,9 +25,9 @@ export const useBulkActivateSkus = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const activateSkus = (skuIds: string[]) => {

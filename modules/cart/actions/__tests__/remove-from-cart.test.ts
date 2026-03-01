@@ -92,7 +92,7 @@ function setupDefaults() {
 	mockValidateInput.mockReturnValue({ data: { cartItemId: "item-1" } });
 	mockPrisma.cartItem.findUnique.mockResolvedValue(makeCartItem());
 	mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
-		fn({ cartItem: { delete: vi.fn() }, cart: { update: vi.fn() } })
+		fn({ cartItem: { delete: vi.fn() }, cart: { update: vi.fn() } }),
 	);
 	mockGetCartInvalidationTags.mockReturnValue(["cart-tag-1", "cart-tag-2"]);
 	mockSuccess.mockReturnValue({ status: "success", message: "OK" });
@@ -138,7 +138,7 @@ describe("removeFromCart", () => {
 
 	it("returns error when userId does not match owner", async () => {
 		mockPrisma.cartItem.findUnique.mockResolvedValue(
-			makeCartItem({ cart: { userId: "other-user", sessionId: null } })
+			makeCartItem({ cart: { userId: "other-user", sessionId: null } }),
 		);
 
 		await removeFromCart(undefined, makeFormData());
@@ -151,7 +151,7 @@ describe("removeFromCart", () => {
 			context: { userId: undefined, sessionId: "sess-1" },
 		});
 		mockPrisma.cartItem.findUnique.mockResolvedValue(
-			makeCartItem({ cart: { userId: null, sessionId: "other-sess" } })
+			makeCartItem({ cart: { userId: null, sessionId: "other-sess" } }),
 		);
 
 		await removeFromCart(undefined, makeFormData());
@@ -169,7 +169,7 @@ describe("removeFromCart", () => {
 			context: { userId: undefined, sessionId: "sess-1" },
 		});
 		mockPrisma.cartItem.findUnique.mockResolvedValue(
-			makeCartItem({ cart: { userId: null, sessionId: "sess-1" } })
+			makeCartItem({ cart: { userId: null, sessionId: "sess-1" } }),
 		);
 
 		await removeFromCart(undefined, makeFormData());
@@ -180,7 +180,7 @@ describe("removeFromCart", () => {
 		const mockDelete = vi.fn();
 		const mockCartUpdate = vi.fn();
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
-			fn({ cartItem: { delete: mockDelete }, cart: { update: mockCartUpdate } })
+			fn({ cartItem: { delete: mockDelete }, cart: { update: mockCartUpdate } }),
 		);
 
 		await removeFromCart(undefined, makeFormData());
@@ -207,7 +207,7 @@ describe("removeFromCart", () => {
 		await removeFromCart(undefined, makeFormData());
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			err,
-			"Impossible de supprimer l'article du panier"
+			"Impossible de supprimer l'article du panier",
 		);
 	});
 });

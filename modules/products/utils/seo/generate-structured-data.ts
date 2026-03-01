@@ -18,19 +18,13 @@ export function generateStructuredData({
 }: StructuredDataOptions) {
 	// Calculer le prix minimum et maximum pour les offres agrégées
 	const activePrices =
-		product.skus
-			?.filter((sku) => sku.isActive)
-			.map((sku) => sku.priceInclTax) || [];
+		product.skus?.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax) || [];
 
 	const minPrice =
-		activePrices.length > 0
-			? Math.min(...activePrices)
-			: selectedSku?.priceInclTax || 0;
+		activePrices.length > 0 ? Math.min(...activePrices) : selectedSku?.priceInclTax || 0;
 
 	const maxPrice =
-		activePrices.length > 0
-			? Math.max(...activePrices)
-			: selectedSku?.priceInclTax || 0;
+		activePrices.length > 0 ? Math.max(...activePrices) : selectedSku?.priceInclTax || 0;
 
 	const hasMultiplePrices = minPrice !== maxPrice;
 
@@ -188,8 +182,7 @@ export function generateStructuredData({
 		"@type": "Product",
 		"@id": `${SITE_URL}/creations/${product.slug}#product`,
 		name: product.title,
-		description:
-			product.description || `${product.title} - Bijou artisanal fait main`,
+		description: product.description || `${product.title} - Bijou artisanal fait main`,
 		image: allImages.length > 0 ? allImages : mainImageObject ? [mainImageObject] : [],
 		sku: skuCode,
 		// MPN = Manufacturer Part Number (code produit du fabricant)
@@ -199,34 +192,36 @@ export function generateStructuredData({
 			name: "Synclune",
 		},
 		// AggregateRating - affiché seulement si des avis existent
-		...(reviewStats && reviewStats.totalCount > 0 && {
-			aggregateRating: {
-				"@type": "AggregateRating",
-				ratingValue: reviewStats.averageRating.toFixed(1),
-				reviewCount: reviewStats.totalCount,
-				bestRating: 5,
-				worstRating: 1,
-			},
-		}),
-		// Reviews individuels - max 10 pour les rich snippets Google
-		...(reviews && reviews.length > 0 && {
-			review: reviews.slice(0, 10).map((r) => ({
-				"@type": "Review",
-				reviewRating: {
-					"@type": "Rating",
-					ratingValue: r.rating,
+		...(reviewStats &&
+			reviewStats.totalCount > 0 && {
+				aggregateRating: {
+					"@type": "AggregateRating",
+					ratingValue: reviewStats.averageRating.toFixed(1),
+					reviewCount: reviewStats.totalCount,
 					bestRating: 5,
 					worstRating: 1,
 				},
-				author: {
-					"@type": "Person",
-					name: r.user?.name || "Client vérifié",
-				},
-				...(r.title && { name: r.title }),
-				reviewBody: r.content,
-				datePublished: new Date(r.createdAt).toISOString().split("T")[0],
-			})),
-		}),
+			}),
+		// Reviews individuels - max 10 pour les rich snippets Google
+		...(reviews &&
+			reviews.length > 0 && {
+				review: reviews.slice(0, 10).map((r) => ({
+					"@type": "Review",
+					reviewRating: {
+						"@type": "Rating",
+						ratingValue: r.rating,
+						bestRating: 5,
+						worstRating: 1,
+					},
+					author: {
+						"@type": "Person",
+						name: r.user?.name || "Client vérifié",
+					},
+					...(r.title && { name: r.title }),
+					reviewBody: r.content,
+					datePublished: new Date(r.createdAt).toISOString().split("T")[0],
+				})),
+			}),
 		offers,
 		...(product.type && {
 			category: product.type.label,
@@ -237,13 +232,14 @@ export function generateStructuredData({
 		...(selectedSku?.color && {
 			color: selectedSku.color.name,
 		}),
-		...(product.collections && product.collections.length > 0 && {
-			isRelatedTo: product.collections.map((pc) => ({
-				"@type": "CollectionPage",
-				name: pc.collection.name,
-				url: `${SITE_URL}/collections/${pc.collection.slug}`,
-			})),
-		}),
+		...(product.collections &&
+			product.collections.length > 0 && {
+				isRelatedTo: product.collections.map((pc) => ({
+					"@type": "CollectionPage",
+					name: pc.collection.name,
+					url: `${SITE_URL}/collections/${pc.collection.slug}`,
+				})),
+			}),
 		additionalProperty: [
 			{
 				"@type": "PropertyValue",

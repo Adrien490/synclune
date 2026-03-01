@@ -12,7 +12,7 @@ interface UseBulkUpdateCustomizationStatusOptions {
 }
 
 export function useBulkUpdateCustomizationStatus(
-	options?: UseBulkUpdateCustomizationStatusOptions
+	options?: UseBulkUpdateCustomizationStatusOptions,
 ) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -20,9 +20,9 @@ export function useBulkUpdateCustomizationStatus(
 			createToastCallbacks({
 				loadingMessage: "Mise à jour en cours...",
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

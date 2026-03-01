@@ -68,7 +68,12 @@ vi.mock("../../constants/color.constants", () => ({
 	GET_COLORS_DEFAULT_PER_PAGE: 20,
 	GET_COLORS_MAX_RESULTS_PER_PAGE: 200,
 	GET_COLORS_DEFAULT_SORT_BY: "name-ascending",
-	GET_COLORS_SORT_FIELDS: ["name-ascending", "name-descending", "skuCount-ascending", "skuCount-descending"],
+	GET_COLORS_SORT_FIELDS: [
+		"name-ascending",
+		"name-descending",
+		"skuCount-ascending",
+		"skuCount-descending",
+	],
 	COLORS_SORT_OPTIONS: {
 		NAME_ASC: "name-ascending",
 		NAME_DESC: "name-descending",
@@ -171,7 +176,7 @@ describe("getColors", () => {
 		expect(mockPrisma.color.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ name: "asc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -184,7 +189,7 @@ describe("getColors", () => {
 		expect(mockPrisma.color.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ name: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -197,7 +202,7 @@ describe("getColors", () => {
 		expect(mockPrisma.color.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ skus: { _count: "asc" } }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -210,9 +215,7 @@ describe("getColors", () => {
 		// 200 is the maximum accepted by the schema; clamping occurs inside fetchColors
 		await getColors({ sortBy: "name-ascending", direction: "forward", perPage: 200 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 200 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
 	});
 
 	it("uses default perPage when not provided", async () => {
@@ -220,9 +223,7 @@ describe("getColors", () => {
 
 		await getColors({ sortBy: "name-ascending", direction: "forward" });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 20 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
 	});
 
 	// Cursor must be exactly 25 characters (cuid2 length) to pass schema validation
@@ -233,7 +234,7 @@ describe("getColors", () => {
 		await getColors({ sortBy: "name-ascending", direction: "forward", cursor: validCursor });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ cursor: validCursor })
+			expect.objectContaining({ cursor: validCursor }),
 		);
 	});
 
@@ -243,7 +244,7 @@ describe("getColors", () => {
 		await getColors({ sortBy: "name-ascending", direction: "backward" });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ direction: "backward" })
+			expect.objectContaining({ direction: "backward" }),
 		);
 	});
 
@@ -257,7 +258,7 @@ describe("getColors", () => {
 		await getColors({ sortBy: "name-ascending", direction: "forward", search: "rouge" });
 
 		expect(mockPrisma.color.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where: whereClause })
+			expect.objectContaining({ where: whereClause }),
 		);
 	});
 
@@ -319,7 +320,7 @@ describe("getColors", () => {
 					updatedAt: true,
 					_count: { select: { skus: true } },
 				},
-			})
+			}),
 		);
 	});
 });

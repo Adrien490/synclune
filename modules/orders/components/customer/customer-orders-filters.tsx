@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { SearchInput } from "@/shared/components/search-input"
+import { SearchInput } from "@/shared/components/search-input";
 
 export function CustomerOrdersFilters() {
 	return (
@@ -12,5 +12,5 @@ export function CustomerOrdersFilters() {
 			debounceMs={400}
 			ariaLabel="Rechercher une commande par numéro"
 		/>
-	)
+	);
 }

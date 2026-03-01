@@ -23,10 +23,7 @@ interface SelectionProviderProps {
 	selectionKey?: string;
 }
 
-export function SelectionProvider({
-	children,
-	selectionKey = "selected",
-}: SelectionProviderProps) {
+export function SelectionProvider({ children, selectionKey = "selected" }: SelectionProviderProps) {
 	const selection = useSelection(selectionKey);
 
 	const contextValue: SelectionContextType = {
@@ -34,19 +31,13 @@ export function SelectionProvider({
 		clearSelection: selection.clearAll,
 	};
 
-	return (
-		<SelectionContext.Provider value={contextValue}>
-			{children}
-		</SelectionContext.Provider>
-	);
+	return <SelectionContext.Provider value={contextValue}>{children}</SelectionContext.Provider>;
 }
 
 export function useSelectionContext() {
 	const context = useContext(SelectionContext);
 	if (!context) {
-		throw new Error(
-			"useSelectionContext doit être utilisé à l'intérieur d'un SelectionProvider"
-		);
+		throw new Error("useSelectionContext doit être utilisé à l'intérieur d'un SelectionProvider");
 	}
 	return context;
 }

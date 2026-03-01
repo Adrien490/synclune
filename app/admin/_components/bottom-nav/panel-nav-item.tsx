@@ -22,13 +22,13 @@ export function PanelNavItem({ item, isActive, onClick }: PanelNavItemProps) {
 			onClick={onClick}
 			className={cn(
 				panelItemStyles.base,
-				isActive ? panelItemStyles.active : panelItemStyles.inactive
+				isActive ? panelItemStyles.active : panelItemStyles.inactive,
 			)}
 			aria-current={isActive ? "page" : undefined}
 		>
 			{isActive && <ActiveIndicator />}
 			<Icon className="size-6 shrink-0" aria-hidden="true" />
-			<span className="text-xs text-center leading-tight tracking-tight line-clamp-2">
+			<span className="line-clamp-2 text-center text-xs leading-tight tracking-tight">
 				{item.shortTitle || item.title}
 			</span>
 		</Link>

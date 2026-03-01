@@ -15,7 +15,7 @@ export function parseProductSkuParams(searchParams: {
 		sortBy: searchParamParsers.sortBy(
 			searchParams.sortBy,
 			GET_PRODUCT_SKUS_SORT_FIELDS,
-			"created-descending" as const
+			"created-descending" as const,
 		) as (typeof GET_PRODUCT_SKUS_SORT_FIELDS)[number],
 		search: searchParamParsers.search(searchParams.search),
 	};

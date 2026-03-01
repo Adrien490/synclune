@@ -73,7 +73,7 @@ describe("getProductTypeOptions", () => {
 		expect(mockPrisma.productType.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { isActive: true },
-			})
+			}),
 		);
 	});
 
@@ -85,7 +85,7 @@ describe("getProductTypeOptions", () => {
 		expect(mockPrisma.productType.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, label: true },
-			})
+			}),
 		);
 	});
 
@@ -97,7 +97,7 @@ describe("getProductTypeOptions", () => {
 		expect(mockPrisma.productType.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: { label: "asc" },
-			})
+			}),
 		);
 	});
 

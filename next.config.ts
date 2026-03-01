@@ -33,6 +33,23 @@ const nextConfig: NextConfig = {
 						key: "Permissions-Policy",
 						value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
 					},
+					{
+						key: "Content-Security-Policy",
+						value: [
+							"default-src 'self'",
+							"script-src 'self' 'unsafe-inline' https://js.stripe.com https://va.vercel-scripts.com",
+							"style-src 'self' 'unsafe-inline'",
+							"img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://images.unsplash.com data: blob:",
+							"font-src 'self'",
+							"connect-src 'self' https://*.stripe.com https://api.uploadthing.com https://*.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+							"frame-src https://*.stripe.com",
+							"worker-src 'self'",
+							"frame-ancestors 'none'",
+							"base-uri 'self'",
+							"form-action 'self'",
+							"report-uri /api/csp-report",
+						].join("; "),
+					},
 				],
 			},
 		];
@@ -45,10 +62,10 @@ const nextConfig: NextConfig = {
 		minimumCacheTTL: 2678400,
 		formats: ["image/avif", "image/webp"],
 		remotePatterns: [
-			{ protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**", search: "" },
-			{ protocol: "https", hostname: "utfs.io", pathname: "/f/**", search: "" },
-			{ protocol: "https", hostname: "ufs.sh", pathname: "/f/**", search: "" },
-			{ protocol: "https", hostname: "uploadthing.com", pathname: "/**", search: "" },
+			{ protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**" },
+			{ protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
+			{ protocol: "https", hostname: "ufs.sh", pathname: "/f/**" },
+			{ protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
 			{
 				protocol: "https",
 				hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com",

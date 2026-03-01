@@ -57,8 +57,7 @@ export const CHART_STYLES = {
 	},
 
 	mobile: {
-		scrollContainer:
-			"overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible",
+		scrollContainer: "overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible",
 		minChartWidth: "min-w-125 md:min-w-0",
 	},
 } as const;

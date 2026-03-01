@@ -97,7 +97,7 @@ export function getStripeShippingOptions(): Array<{ shipping_rate: string }> {
  */
 export function getShippingOptionsForAddress(
 	country: ShippingCountry,
-	postalCode: string
+	postalCode: string,
 ): Array<{ shipping_rate: string }> {
 	if (country === "FR") {
 		const { zone } = getShippingZoneFromPostalCode(postalCode);

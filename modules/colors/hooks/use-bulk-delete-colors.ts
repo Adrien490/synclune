@@ -29,9 +29,9 @@ export const useBulkDeleteColors = (options?: UseBulkDeleteColorsOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

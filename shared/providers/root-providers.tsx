@@ -1,6 +1,7 @@
 "use client";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { FlyToCartOverlay } from "@/modules/cart/components/fly-to-cart-overlay";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
@@ -33,7 +34,10 @@ export function RootProviders({ children }: RootProvidersProps) {
 						<NavigationGuardProvider>
 							<DialogStoreProvider>
 								<SheetStoreProvider>
-									<AlertDialogStoreProvider>{children}</AlertDialogStoreProvider>
+									<AlertDialogStoreProvider>
+										{children}
+										<FlyToCartOverlay />
+									</AlertDialogStoreProvider>
 								</SheetStoreProvider>
 							</DialogStoreProvider>
 						</NavigationGuardProvider>

@@ -12,11 +12,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { AlertTriangle, FolderOpen, Star } from "lucide-react";
 import Link from "next/link";
@@ -80,10 +76,7 @@ export async function CollectionsDataTable({
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
-									<TableSelectionCell
-										type="header"
-										itemIds={collectionIds}
-									/>
+									<TableSelectionCell type="header" itemIds={collectionIds} />
 								</TableHead>
 								<TableHead
 									key="name"
@@ -97,7 +90,7 @@ export async function CollectionsDataTable({
 									key="status"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell w-[15%]"
+									className="hidden w-[15%] sm:table-cell"
 								>
 									Statut
 								</TableHead>
@@ -105,7 +98,7 @@ export async function CollectionsDataTable({
 									key="description"
 									scope="col"
 									role="columnheader"
-									className="hidden xl:table-cell w-[25%]"
+									className="hidden w-[25%] xl:table-cell"
 								>
 									Description
 								</TableHead>
@@ -113,7 +106,7 @@ export async function CollectionsDataTable({
 									key="products"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell text-center w-[12%]"
+									className="hidden w-[12%] text-center sm:table-cell"
 								>
 									Produits
 								</TableHead>
@@ -121,7 +114,7 @@ export async function CollectionsDataTable({
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] sm:w-[10%] text-right"
+									className="w-[15%] text-right sm:w-[10%]"
 									aria-label="Actions disponibles pour chaque collection"
 								>
 									Actions
@@ -129,81 +122,70 @@ export async function CollectionsDataTable({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{collections.map((collection) => {
+							{collections.map((collection) => {
 								const productsCount = collection._count?.products || 0;
-								const truncatedDescription = truncateDescription(
-									collection.description
-								);
+								const truncatedDescription = truncateDescription(collection.description);
 								// Verifier si un produit featured est defini
 								const hasFeaturedProduct = collection.products[0]?.isFeatured === true;
 
 								return (
 									<TableRow key={collection.id}>
 										<TableCell role="gridcell">
-											<TableSelectionCell
-												type="row"
-												itemId={collection.id}
-											/>
+											<TableSelectionCell type="row" itemId={collection.id} />
 										</TableCell>
 										<TableCell role="gridcell">
-										<div className="flex items-center gap-2 overflow-hidden">
-											<Link
-												href={`/admin/catalogue/collections/${collection.slug}`}
-												className="font-semibold text-foreground truncate hover:underline"
-												title={collection.name}
-											>
-												{collection.name}
-											</Link>
-											{hasFeaturedProduct && (
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<Star className="h-4 w-4 shrink-0 fill-yellow-400 text-yellow-400" />
-													</TooltipTrigger>
-													<TooltipContent>
-														<p>Produit vedette defini</p>
-													</TooltipContent>
-												</Tooltip>
-											)}
-										</div>
-									</TableCell>
+											<div className="flex items-center gap-2 overflow-hidden">
+												<Link
+													href={`/admin/catalogue/collections/${collection.slug}`}
+													className="text-foreground truncate font-semibold hover:underline"
+													title={collection.name}
+												>
+													{collection.name}
+												</Link>
+												{hasFeaturedProduct && (
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<Star className="h-4 w-4 shrink-0 fill-yellow-400 text-yellow-400" />
+														</TooltipTrigger>
+														<TooltipContent>
+															<p>Produit vedette defini</p>
+														</TooltipContent>
+													</Tooltip>
+												)}
+											</div>
+										</TableCell>
 										<TableCell role="gridcell" className="hidden sm:table-cell">
 											<div className="flex items-center gap-2">
 												<Badge variant={STATUS_CONFIG[collection.status].variant}>
 													{STATUS_CONFIG[collection.status].label}
 												</Badge>
 												{/* Warning si PUBLIC mais aucun produit visible */}
-												{collection.status === CollectionStatus.PUBLIC &&
-													productsCount === 0 && (
-														<Tooltip>
-															<TooltipTrigger asChild>
-																<span className="text-amber-500">
-																	<AlertTriangle className="h-4 w-4" />
-																</span>
-															</TooltipTrigger>
-															<TooltipContent>
-																<p>Aucun produit visible en boutique</p>
-															</TooltipContent>
-														</Tooltip>
-													)}
+												{collection.status === CollectionStatus.PUBLIC && productsCount === 0 && (
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<span className="text-amber-500">
+																<AlertTriangle className="h-4 w-4" />
+															</span>
+														</TooltipTrigger>
+														<TooltipContent>
+															<p>Aucun produit visible en boutique</p>
+														</TooltipContent>
+													</Tooltip>
+												)}
 											</div>
 										</TableCell>
 										<TableCell role="gridcell" className="hidden xl:table-cell">
 											<div className="overflow-hidden">
 												<span
-													className="text-sm text-muted-foreground truncate block"
+													className="text-muted-foreground block truncate text-sm"
 													title={collection.description || "—"}
 												>
 													{truncatedDescription}
 												</span>
 											</div>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell text-center"
-										>
-											<span className="text-sm font-medium">
-												{productsCount}
-											</span>
+										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+											<span className="text-sm font-medium">{productsCount}</span>
 										</TableCell>
 										<TableCell role="gridcell">
 											<div className="flex justify-end">
@@ -219,7 +201,7 @@ export async function CollectionsDataTable({
 										</TableCell>
 									</TableRow>
 								);
-								})}
+							})}
 						</TableBody>
 					</Table>
 				</TableScrollContainer>

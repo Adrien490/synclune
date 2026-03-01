@@ -1,49 +1,49 @@
-"use server"
+"use server";
 
-import { updateTag } from "next/cache"
-import { cookies } from "next/headers"
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
-import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config"
-import { success, handleActionError, validateInput } from "@/shared/lib/actions"
-import type { ActionState } from "@/shared/types/server-action"
+import { updateTag } from "next/cache";
+import { cookies } from "next/headers";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { success, handleActionError, validateInput } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
 import {
 	RECENT_SEARCHES_COOKIE_NAME,
 	RECENT_SEARCHES_COOKIE_MAX_AGE,
-} from "../constants/recent-searches"
-import { removeRecentSearchSchema } from "../schemas/recent-searches.schemas"
-import { getRecentSearchesInvalidationTags } from "../constants/cache"
+} from "../constants/recent-searches";
+import { removeRecentSearchSchema } from "../schemas/recent-searches.schemas";
+import { getRecentSearchesInvalidationTags } from "../constants/cache";
 
 /**
  * Server Action pour supprimer une recherche recente specifique
  */
 export async function removeRecentSearch(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION)
-		if ("error" in rateCheck) return rateCheck.error
+		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		const validation = validateInput(removeRecentSearchSchema, {
 			term: formData.get("term"),
-		})
+		});
 
 		if ("error" in validation) {
-			return validation.error
+			return validation.error;
 		}
 
-		const { term } = validation.data
+		const { term } = validation.data;
 
-		const cookieStore = await cookies()
-		const existingCookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME)
+		const cookieStore = await cookies();
+		const existingCookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME);
 
 		// Recuperer les recherches existantes
-		let searches: string[] = []
+		let searches: string[] = [];
 		if (existingCookie?.value) {
 			try {
-				const parsed = JSON.parse(decodeURIComponent(existingCookie.value))
+				const parsed = JSON.parse(decodeURIComponent(existingCookie.value));
 				if (Array.isArray(parsed)) {
-					searches = parsed
+					searches = parsed;
 				}
 			} catch {
 				// Ignore les erreurs
@@ -51,32 +51,28 @@ export async function removeRecentSearch(
 		}
 
 		// Supprimer le terme
-		const updated = searches.filter((s) => s !== term)
+		const updated = searches.filter((s) => s !== term);
 
 		if (updated.length === 0) {
 			// Plus de recherches, supprimer le cookie
-			cookieStore.delete(RECENT_SEARCHES_COOKIE_NAME)
+			cookieStore.delete(RECENT_SEARCHES_COOKIE_NAME);
 		} else {
 			// Mettre a jour le cookie
-			cookieStore.set(
-				RECENT_SEARCHES_COOKIE_NAME,
-				encodeURIComponent(JSON.stringify(updated)),
-				{
-					path: "/",
-					maxAge: RECENT_SEARCHES_COOKIE_MAX_AGE,
-					httpOnly: true,
-					sameSite: "strict",
-					secure: process.env.NODE_ENV === "production",
-				}
-			)
+			cookieStore.set(RECENT_SEARCHES_COOKIE_NAME, encodeURIComponent(JSON.stringify(updated)), {
+				path: "/",
+				maxAge: RECENT_SEARCHES_COOKIE_MAX_AGE,
+				httpOnly: true,
+				sameSite: "strict",
+				secure: process.env.NODE_ENV === "production",
+			});
 		}
 
 		// Invalider le cache
-		const tags = getRecentSearchesInvalidationTags()
-		tags.forEach((tag) => updateTag(tag))
+		const tags = getRecentSearchesInvalidationTags();
+		tags.forEach((tag) => updateTag(tag));
 
-		return success("Recherche supprimee", { searches: updated })
+		return success("Recherche supprimee", { searches: updated });
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la suppression")
+		return handleActionError(e, "Erreur lors de la suppression");
 	}
 }

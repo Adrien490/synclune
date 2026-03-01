@@ -45,9 +45,8 @@ export function ColorsSelectionToolbar() {
 	return (
 		<>
 			<SelectionToolbar>
-				<span className="text-sm text-muted-foreground">
-					{selectedItems.length} couleur{selectedItems.length > 1 ? "s" : ""}{" "}
-					sélectionnée
+				<span className="text-muted-foreground text-sm">
+					{selectedItems.length} couleur{selectedItems.length > 1 ? "s" : ""} sélectionnée
 					{selectedItems.length > 1 ? "s" : ""}
 				</span>
 				<DropdownMenu>
@@ -69,11 +68,7 @@ export function ColorsSelectionToolbar() {
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
 					<form action={action}>
-						<input
-							type="hidden"
-							name="ids"
-							value={JSON.stringify(selectedItems)}
-						/>
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Supprimer les couleurs</AlertDialogTitle>
 							<AlertDialogDescription>
@@ -85,19 +80,14 @@ export function ColorsSelectionToolbar() {
 								?
 								<br />
 								<br />
-								<span className="text-destructive font-medium">
-									Cette action est irréversible.
-								</span>
+								<span className="text-destructive font-medium">Cette action est irréversible.</span>
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<Button
-								type="submit"
-								disabled={isPending}
-							>
+							<Button type="submit" disabled={isPending}>
 								{isPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { cacheNewsletterSubscribers } from "../constants/cache";
@@ -11,29 +8,29 @@ import {
 	GET_SUBSCRIBERS_DEFAULT_PER_PAGE,
 	GET_SUBSCRIBERS_MAX_RESULTS_PER_PAGE,
 	GET_SUBSCRIBERS_SELECT,
-	SORT_OPTIONS
+	SORT_OPTIONS,
 } from "../constants/subscriber.constants";
-import {
-	getSubscribersSchema,
-} from "../schemas/subscriber.schemas";
+import { getSubscribersSchema } from "../schemas/subscriber.schemas";
 import { buildSubscriberWhereClause } from "../services/subscriber-query-builder";
-import type {
-	GetSubscribersParams,
-	GetSubscribersReturn
-} from "../types/subscriber.types";
+import type { GetSubscribersParams, GetSubscribersReturn } from "../types/subscriber.types";
 
 // Re-export pour compatibilité
 export {
-	GET_SUBSCRIBERS_DEFAULT_PER_PAGE, GET_SUBSCRIBERS_SELECT, SORT_LABELS, SORT_OPTIONS
+	GET_SUBSCRIBERS_DEFAULT_PER_PAGE,
+	GET_SUBSCRIBERS_SELECT,
+	SORT_LABELS,
+	SORT_OPTIONS,
 } from "../constants/subscriber.constants";
 export {
 	getSubscribersSchema,
 	subscriberFiltersSchema,
-	subscriberSortBySchema
+	subscriberSortBySchema,
 } from "../schemas/subscriber.schemas";
 export type {
 	GetSubscribersParams,
-	GetSubscribersReturn, Subscriber, SubscriberFilters
+	GetSubscribersReturn,
+	Subscriber,
+	SubscriberFilters,
 } from "../types/subscriber.types";
 export const GET_SUBSCRIBERS_SORT_FIELDS = Object.values(SORT_OPTIONS);
 
@@ -44,15 +41,11 @@ export const GET_SUBSCRIBERS_SORT_FIELDS = Object.values(SORT_OPTIONS);
 /**
  * Server action to get newsletter subscribers
  */
-export async function getSubscribers(
-	params: GetSubscribersParams
-): Promise<GetSubscribersReturn> {
+export async function getSubscribers(params: GetSubscribersParams): Promise<GetSubscribersReturn> {
 	const validation = getSubscribersSchema.safeParse(params);
 
 	if (!validation.success) {
-		throw new Error(
-			"Invalid parameters: " + JSON.stringify(validation.error.issues)
-		);
+		throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
 	}
 
 	return fetchSubscribers(validation.data);
@@ -61,9 +54,7 @@ export async function getSubscribers(
 /**
  * Récupère les abonnés newsletter depuis la DB avec cache
  */
-async function fetchSubscribers(
-	params: GetSubscribersParams
-): Promise<GetSubscribersReturn> {
+async function fetchSubscribers(params: GetSubscribersParams): Promise<GetSubscribersReturn> {
 	"use cache";
 	cacheNewsletterSubscribers();
 
@@ -71,18 +62,19 @@ async function fetchSubscribers(
 		const where = buildSubscriberWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.NewsletterSubscriberOrderByWithRelationInput[] =
-			params.sortBy.startsWith("subscribed-")
-				? [{ subscribedAt: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("email-")
-					? [{ email: direction }, { id: "asc" }]
-					: params.sortBy.startsWith("status-")
-						? [{ status: direction }, { id: "asc" }]
-						: [{ subscribedAt: "desc" }, { id: "asc" }];
+		const orderBy: Prisma.NewsletterSubscriberOrderByWithRelationInput[] = params.sortBy.startsWith(
+			"subscribed-",
+		)
+			? [{ subscribedAt: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("email-")
+				? [{ email: direction }, { id: "asc" }]
+				: params.sortBy.startsWith("status-")
+					? [{ status: direction }, { id: "asc" }]
+					: [{ subscribedAt: "desc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_SUBSCRIBERS_DEFAULT_PER_PAGE),
-			GET_SUBSCRIBERS_MAX_RESULTS_PER_PAGE
+			GET_SUBSCRIBERS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -102,7 +94,7 @@ async function fetchSubscribers(
 			subscribers,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return {

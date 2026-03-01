@@ -19,9 +19,7 @@ export type ProductForDuplication = Awaited<ReturnType<typeof fetchProductForDup
  *
  * @param productId - ID du produit à dupliquer
  */
-export async function getProductForDuplication(
-	productId: string
-): Promise<ProductForDuplication> {
+export async function getProductForDuplication(productId: string): Promise<ProductForDuplication> {
 	return fetchProductForDuplication(productId);
 }
 

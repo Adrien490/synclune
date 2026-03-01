@@ -9,9 +9,9 @@ export default function CustomizationsLoading() {
 			<PageHeader variant="compact" title="Personnalisations" />
 
 			{/* Stats grid */}
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+			<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
 				{Array.from({ length: 4 }).map((_, i) => (
-					<div key={i} className="rounded-lg border bg-card p-4">
+					<div key={i} className="bg-card rounded-lg border p-4">
 						<div className="flex items-center justify-between">
 							<div className="space-y-2">
 								<Skeleton className="h-4 w-20" />
@@ -26,14 +26,14 @@ export default function CustomizationsLoading() {
 			{/* Toolbar */}
 			<div className="space-y-6">
 				<div className="flex items-center gap-3">
-					<Skeleton className="h-9 flex-1 max-w-sm" />
+					<Skeleton className="h-9 max-w-sm flex-1" />
 					<Skeleton className="h-9 w-40" />
 					<Skeleton className="h-9 w-40" />
 				</div>
 
 				{/* Table */}
-				<div className="rounded-lg border bg-card">
-					<div className="p-4 space-y-4">
+				<div className="bg-card rounded-lg border">
+					<div className="space-y-4 p-4">
 						{Array.from({ length: 5 }).map((_, i) => (
 							<div key={i} className="flex items-center gap-4">
 								<Skeleton className="h-10 flex-1" />

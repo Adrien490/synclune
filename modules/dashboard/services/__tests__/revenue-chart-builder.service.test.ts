@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-	buildRevenueMap,
-	fillMissingDates,
-} from "../revenue-chart-builder.service";
+import { buildRevenueMap, fillMissingDates } from "../revenue-chart-builder.service";
 
 // ---------------------------------------------------------------------------
 // buildRevenueMap

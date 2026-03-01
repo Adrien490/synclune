@@ -2,9 +2,9 @@
  * Cache configuration for Orders module
  */
 
-import { cacheLife, cacheTag } from "next/cache"
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache"
+import { cacheLife, cacheTag } from "next/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
 // ============================================
 // CACHE TAGS
@@ -31,7 +31,7 @@ export const ORDERS_CACHE_TAGS = {
 
 	/** Remboursements d'une commande */
 	REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
-} as const
+} as const;
 
 // ============================================
 // CACHE CONFIGURATION HELPERS
@@ -44,9 +44,9 @@ export const ORDERS_CACHE_TAGS = {
  * @param tag - Tag de cache optionnel (utiliser ORDERS_CACHE_TAGS ou SHARED_CACHE_TAGS)
  */
 export function cacheOrdersDashboard(tag?: string) {
-	cacheLife("dashboard")
+	cacheLife("dashboard");
 	if (tag) {
-		cacheTag(tag)
+		cacheTag(tag);
 	}
 }
 
@@ -56,8 +56,8 @@ export function cacheOrdersDashboard(tag?: string) {
  * - Durée : 2min fraîche, 1min revalidation, 5min expiration
  */
 export function cacheUserOrders(userId: string) {
-	cacheLife("userOrders")
-	cacheTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId))
+	cacheLife("userOrders");
+	cacheTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId));
 }
 
 // ============================================
@@ -78,21 +78,21 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
 		DASHBOARD_CACHE_TAGS.KPIS,
 		DASHBOARD_CACHE_TAGS.REVENUE_CHART,
 		DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
-	]
+	];
 
 	if (userId) {
 		tags.push(
 			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
 			ORDERS_CACHE_TAGS.LAST_ORDER(userId),
-			ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId)
-		)
+			ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId),
+		);
 	}
 
 	if (orderId) {
-		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId))
+		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId));
 	}
 
-	return tags
+	return tags;
 }
 
 /**
@@ -103,22 +103,15 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
  * invalidations inutiles sur des opérations fréquentes
  */
 export function getOrderMetadataInvalidationTags(userId?: string, orderId?: string): string[] {
-	const tags: string[] = [
-		ORDERS_CACHE_TAGS.LIST,
-		SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-	]
+	const tags: string[] = [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST];
 
 	if (userId) {
-		tags.push(
-			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
-			ORDERS_CACHE_TAGS.LAST_ORDER(userId)
-		)
+		tags.push(ORDERS_CACHE_TAGS.USER_ORDERS(userId), ORDERS_CACHE_TAGS.LAST_ORDER(userId));
 	}
 
 	if (orderId) {
-		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId))
+		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId));
 	}
 
-	return tags
+	return tags;
 }
-

@@ -25,9 +25,7 @@ export type GetProductCartsCountReturn = number;
  * @param productId - ID du produit
  * @returns Le nombre de paniers contenant ce produit
  */
-export async function getProductCartsCount(
-	productId: string
-): Promise<GetProductCartsCountReturn> {
+export async function getProductCartsCount(productId: string): Promise<GetProductCartsCountReturn> {
 	"use cache";
 	cacheLife("products");
 	cacheTag(CART_CACHE_TAGS.PRODUCT_CARTS(productId));

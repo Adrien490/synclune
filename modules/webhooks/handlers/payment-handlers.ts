@@ -25,7 +25,9 @@ export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent):
 
 	if (!orderId) {
 		// Log pour debugging - pas d'erreur car certains PaymentIntent n'ont pas d'order_id (ex: paiements hors checkout)
-		console.warn(`⚠️ [WEBHOOK] payment_intent.succeeded without order_id in metadata (PI: ${paymentIntent.id})`);
+		console.warn(
+			`⚠️ [WEBHOOK] payment_intent.succeeded without order_id in metadata (PI: ${paymentIntent.id})`,
+		);
 		return;
 	}
 
@@ -36,7 +38,9 @@ export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent):
  * Gère l'échec d'un paiement
  * Restaure le stock réservé et initie un remboursement si nécessaire
  */
-export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<WebhookHandlerResult> {
+export async function handlePaymentFailure(
+	paymentIntent: Stripe.PaymentIntent,
+): Promise<WebhookHandlerResult> {
 	const orderId = paymentIntent.metadata?.order_id;
 
 	if (!orderId) {
@@ -63,12 +67,14 @@ export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent):
 
 		// 4. Remboursement automatique si de l'argent a été capturé
 		if (paymentIntent.amount_received > 0) {
-			console.log(`💰 [WEBHOOK] Initiating automatic refund for order ${orderId} (${paymentIntent.amount_received} cents captured)`);
+			console.log(
+				`💰 [WEBHOOK] Initiating automatic refund for order ${orderId} (${paymentIntent.amount_received} cents captured)`,
+			);
 
 			const refundResult = await initiateAutomaticRefund(
 				paymentIntent.id,
 				orderId,
-				"Payment failed, automatic refund"
+				"Payment failed, automatic refund",
 			);
 
 			if (!refundResult.success && refundResult.error) {
@@ -76,7 +82,7 @@ export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent):
 					orderId,
 					paymentIntent.id,
 					"payment_failed",
-					refundResult.error.message
+					refundResult.error.message,
 				);
 			}
 		}
@@ -110,7 +116,9 @@ export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent):
  * Gère l'annulation d'un paiement
  * Annule la commande et initie un remboursement si nécessaire
  */
-export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent): Promise<WebhookHandlerResult> {
+export async function handlePaymentCanceled(
+	paymentIntent: Stripe.PaymentIntent,
+): Promise<WebhookHandlerResult> {
 	const orderId = paymentIntent.metadata?.order_id;
 
 	if (!orderId) {
@@ -132,7 +140,7 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
 			const refundResult = await initiateAutomaticRefund(
 				paymentIntent.id,
 				orderId,
-				"Payment canceled, automatic refund"
+				"Payment canceled, automatic refund",
 			);
 
 			if (!refundResult.success && refundResult.error) {
@@ -140,7 +148,7 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
 					orderId,
 					paymentIntent.id,
 					"payment_canceled",
-					refundResult.error.message
+					refundResult.error.message,
 				);
 			}
 		}
@@ -162,10 +170,12 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
 
 		return {
 			success: true,
-			tasks: [{
-				type: "INVALIDATE_CACHE",
-				tags: cacheTags,
-			}],
+			tasks: [
+				{
+					type: "INVALIDATE_CACHE",
+					tags: cacheTags,
+				},
+			],
 		};
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling payment cancelation for order ${orderId}:`, error);
@@ -179,7 +189,9 @@ export async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent)
  * When invoice_creation.enabled is true in checkout, Stripe creates invoices.
  * If a payment retry on those invoices fails, this handler sends an admin alert.
  */
-export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<WebhookHandlerResult> {
+export async function handleInvoicePaymentFailed(
+	invoice: Stripe.Invoice,
+): Promise<WebhookHandlerResult> {
 	// Try to find the related order via invoice metadata or customer email
 	const orderId = invoice.metadata?.orderId;
 	const order = orderId
@@ -199,8 +211,9 @@ export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promi
 	const amount = invoice.amount_due || 0;
 
 	// Extract error message from the invoice
-	const errorMessage = invoice.last_finalization_error?.message
-		|| `Invoice payment failed (status: ${invoice.status})`;
+	const errorMessage =
+		invoice.last_finalization_error?.message ||
+		`Invoice payment failed (status: ${invoice.status})`;
 
 	const dashboardUrl = order
 		? buildUrl(ROUTES.ADMIN.ORDER_DETAIL(order.id))

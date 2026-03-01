@@ -25,9 +25,7 @@ interface ArchiveCollectionData {
 }
 
 export function ArchiveCollectionAlertDialog() {
-	const archiveDialog = useAlertDialog<ArchiveCollectionData>(
-		ARCHIVE_COLLECTION_DIALOG_ID
-	);
+	const archiveDialog = useAlertDialog<ArchiveCollectionData>(ARCHIVE_COLLECTION_DIALOG_ID);
 
 	const { action, isPending } = useUpdateCollectionStatus({
 		onSuccess: () => {
@@ -50,11 +48,7 @@ export function ArchiveCollectionAlertDialog() {
 		<AlertDialog open={archiveDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="id"
-						value={archiveDialog.data?.collectionId ?? ""}
-					/>
+					<input type="hidden" name="id" value={archiveDialog.data?.collectionId ?? ""} />
 					<input type="hidden" name="status" value={targetStatus} />
 
 					<AlertDialogHeader>
@@ -67,14 +61,11 @@ export function ArchiveCollectionAlertDialog() {
 									<>
 										<p>
 											Êtes-vous sûr de vouloir archiver la collection{" "}
-											<strong>
-												&quot;{archiveDialog.data?.collectionName}&quot;
-											</strong>{" "}
-											?
+											<strong>&quot;{archiveDialog.data?.collectionName}&quot;</strong> ?
 										</p>
 										<p>
-											La collection ne sera plus visible sur la boutique mais restera
-											accessible dans le dashboard.
+											La collection ne sera plus visible sur la boutique mais restera accessible
+											dans le dashboard.
 										</p>
 										<p className="text-muted-foreground text-xs">
 											Vous pourrez la restaurer a tout moment.
@@ -84,14 +75,11 @@ export function ArchiveCollectionAlertDialog() {
 									<>
 										<p>
 											Êtes-vous sûr de vouloir restaurer la collection{" "}
-											<strong>
-												&quot;{archiveDialog.data?.collectionName}&quot;
-											</strong>{" "}
-											?
+											<strong>&quot;{archiveDialog.data?.collectionName}&quot;</strong> ?
 										</p>
 										<p>
-											La collection sera remise en statut &quot;Public&quot; et
-											redeviendra visible sur la boutique.
+											La collection sera remise en statut &quot;Public&quot; et redeviendra visible
+											sur la boutique.
 										</p>
 									</>
 								)}
@@ -106,14 +94,16 @@ export function ArchiveCollectionAlertDialog() {
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
-							className={
-								isArchiving
-									? "bg-orange-600 text-white hover:bg-orange-700"
-									: undefined
-							}
+							className={isArchiving ? "bg-orange-600 text-white hover:bg-orange-700" : undefined}
 						>
 							{isPending && <Loader2 className="animate-spin" />}
-							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Restaurer")}
+							{isPending
+								? isArchiving
+									? "Archivage..."
+									: "Restauration..."
+								: isArchiving
+									? "Archiver"
+									: "Restaurer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

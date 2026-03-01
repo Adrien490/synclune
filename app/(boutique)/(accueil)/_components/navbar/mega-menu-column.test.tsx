@@ -3,8 +3,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock next/link
 vi.mock("next/link", () => ({
-	default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-		<a href={href} {...props}>{children}</a>
+	default: ({
+		href,
+		children,
+		...props
+	}: {
+		href: string;
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => (
+		<a href={href} {...props}>
+			{children}
+		</a>
 	),
 }));
 
@@ -36,9 +46,7 @@ const items = [
 
 describe("MegaMenuColumn", () => {
 	it("returns null when items array is empty", () => {
-		const { container } = render(
-			<MegaMenuColumn title="Créations" items={[]} />
-		);
+		const { container } = render(<MegaMenuColumn title="Créations" items={[]} />);
 		expect(container.innerHTML).toBe("");
 	});
 
@@ -94,7 +102,7 @@ describe("MegaMenuColumn", () => {
 				title="Créations"
 				items={items}
 				viewAllLink={{ href: "/produits", label: "Voir tout" }}
-			/>
+			/>,
 		);
 
 		const viewAllLink = screen.getByRole("link", { name: /Voir tout/ });

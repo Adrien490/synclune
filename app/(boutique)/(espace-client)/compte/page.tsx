@@ -32,36 +32,27 @@ export default async function DashboardPage() {
 
 	return (
 		<>
-			<PageHeader
-				title="Tableau de bord"
-				description={`Bonjour ${firstName}`}
-				variant="compact"
-			/>
+			<PageHeader title="Tableau de bord" description={`Bonjour ${firstName}`} variant="compact" />
 
 			<div className="space-y-6">
 				<ErrorBoundary errorMessage="Impossible de charger les statistiques">
 					<Suspense fallback={<AccountStatsCardsSkeleton />}>
-						<AccountStatsCards
-							statsPromise={getAccountStats()}
-							memberSince={user.createdAt}
-						/>
+						<AccountStatsCards statsPromise={getAccountStats()} memberSince={user.createdAt} />
 					</Suspense>
 				</ErrorBoundary>
 
 				<section>
-					<h2 className="text-lg/7 tracking-tight antialiased font-semibold mb-3">
-						Liens rapides
-					</h2>
+					<h2 className="mb-3 text-lg/7 font-semibold tracking-tight antialiased">Liens rapides</h2>
 					<div className="grid gap-3 sm:grid-cols-3">
 						{quickLinks.map(({ href, label, icon: Icon }) => (
 							<Link
 								key={href}
 								href={href}
-								className="flex items-center gap-3 rounded-xl border border-border/60 p-4 hover:bg-muted transition-colors"
+								className="border-border/60 hover:bg-muted flex items-center gap-3 rounded-xl border p-4 transition-colors"
 							>
-								<Icon className="size-5 text-muted-foreground" />
+								<Icon className="text-muted-foreground size-5" />
 								<span className="font-medium">{label}</span>
-								<ChevronRight className="ml-auto size-4 text-muted-foreground" />
+								<ChevronRight className="text-muted-foreground ml-auto size-4" />
 							</Link>
 						))}
 					</div>
@@ -69,11 +60,7 @@ export default async function DashboardPage() {
 
 				<ErrorBoundary errorMessage="Impossible de charger les commandes">
 					<Suspense fallback={<RecentOrdersSkeleton />}>
-						<RecentOrders
-							ordersPromise={getUserOrders({ perPage: 5 })}
-							limit={5}
-							showViewAll
-						/>
+						<RecentOrders ordersPromise={getUserOrders({ perPage: 5 })} limit={5} showViewAll />
 					</Suspense>
 				</ErrorBoundary>
 			</div>

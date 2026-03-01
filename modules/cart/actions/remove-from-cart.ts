@@ -17,7 +17,7 @@ import { removeFromCartSchema } from "../schemas/cart.schemas";
  */
 export async function removeFromCart(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting + récupération contexte
@@ -79,7 +79,7 @@ export async function removeFromCart(
 
 		// 7. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		// 8. Invalider le cache du compteur de paniers pour ce produit (FOMO "dans X paniers")
 		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(cartItem.sku.productId));

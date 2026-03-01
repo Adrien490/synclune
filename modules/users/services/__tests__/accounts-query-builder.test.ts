@@ -6,10 +6,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	},
 }));
 
-import {
-	buildAccountsFilterConditions,
-	buildAccountsWhereClause,
-} from "../accounts-query-builder";
+import { buildAccountsFilterConditions, buildAccountsWhereClause } from "../accounts-query-builder";
 import type { AccountFilters, GetAccountsInput } from "../../schemas/accounts.schemas";
 
 function filters(overrides: Partial<AccountFilters> = {}): AccountFilters {
@@ -186,7 +183,7 @@ describe("buildAccountsFilterConditions", () => {
 				providerId: "google",
 				hasAccessToken: true,
 				createdAfter: new Date("2024-01-01"),
-			})
+			}),
 		);
 		expect(result).toHaveLength(4);
 	});
@@ -204,7 +201,7 @@ describe("buildAccountsWhereClause", () => {
 
 	it("should set AND when filters are present", () => {
 		const result = buildAccountsWhereClause(
-			input({ filters: { userId: "user1" } as AccountFilters })
+			input({ filters: { userId: "user1" } as AccountFilters }),
 		);
 		expect(result.AND).toBeDefined();
 		expect(result.AND).toContainEqual({ userId: "user1" });
@@ -222,7 +219,7 @@ describe("buildAccountsWhereClause", () => {
 					providerId: "google",
 					hasAccessToken: true,
 				} as AccountFilters,
-			})
+			}),
 		);
 		expect(result.AND).toHaveLength(2);
 	});

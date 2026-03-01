@@ -93,12 +93,8 @@ describe("POST /api/newsletter/unsubscribe", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		allowRequest();
-		mockGetNewsletterInvalidationTags.mockReturnValue([
-			"newsletter-subscribers-list",
-		]);
-		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(
-			makeSubscriber()
-		);
+		mockGetNewsletterInvalidationTags.mockReturnValue(["newsletter-subscribers-list"]);
+		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber());
 		mockPrisma.newsletterSubscriber.update.mockResolvedValue({});
 	});
 
@@ -142,9 +138,7 @@ describe("POST /api/newsletter/unsubscribe", () => {
 		});
 
 		it("returns 200 when database throws", async () => {
-			mockPrisma.newsletterSubscriber.findFirst.mockRejectedValue(
-				new Error("DB error")
-			);
+			mockPrisma.newsletterSubscriber.findFirst.mockRejectedValue(new Error("DB error"));
 
 			const response = await POST(makeRequest(VALID_TOKEN));
 
@@ -231,9 +225,7 @@ describe("POST /api/newsletter/unsubscribe", () => {
 
 	describe("idempotency", () => {
 		it("does not update already unsubscribed subscriber", async () => {
-			mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(
-				makeSubscriber("UNSUBSCRIBED")
-			);
+			mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber("UNSUBSCRIBED"));
 
 			await POST(makeRequest(VALID_TOKEN));
 
@@ -241,9 +233,7 @@ describe("POST /api/newsletter/unsubscribe", () => {
 		});
 
 		it("does not invalidate cache when already unsubscribed", async () => {
-			mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(
-				makeSubscriber("UNSUBSCRIBED")
-			);
+			mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber("UNSUBSCRIBED"));
 
 			await POST(makeRequest(VALID_TOKEN));
 
@@ -265,16 +255,14 @@ describe("POST /api/newsletter/unsubscribe", () => {
 
 	describe("pending subscriber", () => {
 		it("unsubscribes a pending subscriber", async () => {
-			mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(
-				makeSubscriber("PENDING")
-			);
+			mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber("PENDING"));
 
 			await POST(makeRequest(VALID_TOKEN));
 
 			expect(mockPrisma.newsletterSubscriber.update).toHaveBeenCalledWith(
 				expect.objectContaining({
 					data: expect.objectContaining({ status: "UNSUBSCRIBED" }),
-				})
+				}),
 			);
 		});
 	});

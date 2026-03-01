@@ -47,8 +47,7 @@ export const subscribeToNewsletterSchema = z.object({
 			const [localPart, domain] = email.split("@");
 			if (!domain) return email; // Email invalide, sera rejeté par z.email()
 
-			const correctedDomain =
-				COMMON_TYPO_CORRECTIONS[domain.toLowerCase()] || domain;
+			const correctedDomain = COMMON_TYPO_CORRECTIONS[domain.toLowerCase()] || domain;
 			return `${localPart}@${correctedDomain}`;
 		})
 		.refine(
@@ -61,18 +60,14 @@ export const subscribeToNewsletterSchema = z.object({
 			{
 				message:
 					"Les adresses email temporaires ne sont pas acceptées. Merci d'utiliser votre email principal 💝",
-			}
+			},
 		),
-	consent: z
-		.boolean()
-		.refine((val) => val === true, {
-			message: "Vous devez accepter de recevoir la newsletter",
-		}),
+	consent: z.boolean().refine((val) => val === true, {
+		message: "Vous devez accepter de recevoir la newsletter",
+	}),
 });
 
-export type SubscribeToNewsletterInput = z.infer<
-	typeof subscribeToNewsletterSchema
->;
+export type SubscribeToNewsletterInput = z.infer<typeof subscribeToNewsletterSchema>;
 
 // ============================================================================
 // CONFIRMATION TOKEN SCHEMA
@@ -82,8 +77,7 @@ export type SubscribeToNewsletterInput = z.infer<
  * Regex UUID v4 strict pour valider les tokens de confirmation
  * randomUUID() génère des UUIDs v4 qui suivent ce format
  */
-const UUID_V4_REGEX =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const confirmationTokenSchema = z.object({
 	token: z

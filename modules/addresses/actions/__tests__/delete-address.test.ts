@@ -5,33 +5,42 @@ import { ActionStatus } from "@/shared/types/server-action";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrisma, mockTx, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockValidateInput, mockHandleActionError, mockSuccess, mockError } =
-	vi.hoisted(() => {
-		const mockTx = {
+const {
+	mockPrisma,
+	mockTx,
+	mockRequireAuth,
+	mockEnforceRateLimit,
+	mockUpdateTag,
+	mockValidateInput,
+	mockHandleActionError,
+	mockSuccess,
+	mockError,
+} = vi.hoisted(() => {
+	const mockTx = {
+		address: {
+			findFirst: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+		},
+	};
+
+	return {
+		mockPrisma: {
 			address: {
 				findFirst: vi.fn(),
-				update: vi.fn(),
-				delete: vi.fn(),
 			},
-		};
-
-		return {
-			mockPrisma: {
-				address: {
-					findFirst: vi.fn(),
-				},
-				$transaction: vi.fn(),
-			},
-			mockTx,
-			mockRequireAuth: vi.fn(),
-			mockEnforceRateLimit: vi.fn(),
-			mockUpdateTag: vi.fn(),
-			mockValidateInput: vi.fn(),
-			mockHandleActionError: vi.fn(),
-			mockSuccess: vi.fn(),
-			mockError: vi.fn(),
-		};
-	});
+			$transaction: vi.fn(),
+		},
+		mockTx,
+		mockRequireAuth: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockValidateInput: vi.fn(),
+		mockHandleActionError: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockError: vi.fn(),
+	};
+});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -102,10 +111,12 @@ describe("deleteAddress", () => {
 		});
 
 		// Default: transaction executes the callback
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockTx) => Promise<unknown>) => {
-			if (typeof fn === "function") return fn(mockTx);
-			return Promise.all(fn as Promise<unknown>[]);
-		});
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockTx) => Promise<unknown>) => {
+				if (typeof fn === "function") return fn(mockTx);
+				return Promise.all(fn as Promise<unknown>[]);
+			},
+		);
 
 		// Default: no other address found when deleting a default
 		mockTx.address.findFirst.mockResolvedValue(null);

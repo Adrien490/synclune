@@ -74,7 +74,7 @@ describe("getColorOptions", () => {
 		expect(mockPrisma.color.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { isActive: true },
-			})
+			}),
 		);
 	});
 
@@ -86,7 +86,7 @@ describe("getColorOptions", () => {
 		expect(mockPrisma.color.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, name: true, hex: true },
-			})
+			}),
 		);
 	});
 
@@ -98,7 +98,7 @@ describe("getColorOptions", () => {
 		expect(mockPrisma.color.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: { name: "asc" },
-			})
+			}),
 		);
 	});
 

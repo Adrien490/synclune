@@ -1,9 +1,35 @@
-import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
+import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 
-interface InputProps extends React.ComponentProps<"input"> {
+const inputVariants = cva(
+	cn(
+		"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 shadow-xs outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+		"transition-[color,box-shadow,border-color]",
+		"hover:border-ring/70",
+		"focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
+		"aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+	),
+	{
+		variants: {
+			size: {
+				default: "min-h-11 text-base md:text-sm",
+				sm: "min-h-9 text-sm",
+			},
+		},
+		defaultVariants: {
+			size: "default",
+		},
+	},
+);
+
+type InputSize = VariantProps<typeof inputVariants>["size"];
+
+interface InputProps extends Omit<React.ComponentProps<"input">, "size"> {
+	/** Input size variant */
+	size?: InputSize;
 	/** Icône affichée au début du champ (élément SVG 16x16) */
 	startIcon?: React.ReactNode;
 	/** Icône affichée à la fin du champ (élément SVG 16x16). Note : masquée si clearable est actif et le champ a une valeur. */
@@ -14,18 +40,13 @@ interface InputProps extends React.ComponentProps<"input"> {
 	onClear?: () => void;
 }
 
-// Styles de base de l'input (exportés pour réutilisation)
-const inputBaseStyles = cn(
-	"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input min-h-11 w-full min-w-0 rounded-md border bg-transparent px-3 py-2 text-base shadow-xs outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-	"transition-[color,box-shadow,border-color]",
-	"hover:border-ring/70",
-	"focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
-	"aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-);
+// Backward-compatible export: default size styles
+const inputBaseStyles = inputVariants({ size: "default" });
 
 function Input({
 	className,
 	type,
+	size,
 	startIcon,
 	endIcon,
 	clearable,
@@ -44,7 +65,7 @@ function Input({
 				type={type}
 				data-slot="input"
 				value={value}
-				className={cn(inputBaseStyles, className)}
+				className={cn(inputVariants({ size }), className)}
 				{...props}
 			/>
 		);
@@ -67,7 +88,7 @@ function Input({
 				data-slot="input"
 				value={value}
 				className={cn(
-					inputBaseStyles,
+					inputVariants({ size }),
 					hasStartIcon && "pl-10",
 					(hasEndIcon || clearable) && "pr-10",
 					className,
@@ -98,5 +119,5 @@ function Input({
 	);
 }
 
-export { Input, inputBaseStyles };
+export { Input, inputBaseStyles, inputVariants };
 export type { InputProps };

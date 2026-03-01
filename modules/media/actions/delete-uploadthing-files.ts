@@ -15,7 +15,7 @@ import { MEDIA_LIMITS } from "@/modules/media/constants/upload-limits";
  */
 export async function deleteUploadThingFiles(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verify admin rights
@@ -43,7 +43,7 @@ export async function deleteUploadThingFiles(
 		} catch (parseError) {
 			console.error(
 				"[deleteUploadThingFiles] JSON parse failed:",
-				parseError instanceof Error ? parseError.message : String(parseError)
+				parseError instanceof Error ? parseError.message : String(parseError),
 			);
 			return error("Format JSON invalide pour les URLs de fichiers");
 		}
@@ -64,7 +64,7 @@ export async function deleteUploadThingFiles(
 		if (failedUrls.length > 0) {
 			console.warn(
 				`[deleteUploadThingFiles] ${failedUrls.length} URL(s) n'ont pas pu etre extraites:`,
-				failedUrls
+				failedUrls,
 			);
 		}
 
@@ -84,7 +84,7 @@ export async function deleteUploadThingFiles(
 		if (totalFailed > 0) {
 			return success(
 				`${actualDeleted} fichier(s) supprime(s). ${totalFailed} fichier(s) n'ont pas pu etre traite(s).`,
-				{ deletedCount: actualDeleted, failedCount: totalFailed }
+				{ deletedCount: actualDeleted, failedCount: totalFailed },
 			);
 		}
 		return success(`${actualDeleted} fichier(s) supprime(s)`, { deletedCount: actualDeleted });

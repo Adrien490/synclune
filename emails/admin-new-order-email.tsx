@@ -94,9 +94,7 @@ export const AdminNewOrderEmail = ({
 
 			{/* Client */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-					Client
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Client</Text>
 				<Section style={EMAIL_STYLES.section.card}>
 					<Text
 						style={{
@@ -108,9 +106,7 @@ export const AdminNewOrderEmail = ({
 					>
 						{customerName}
 					</Text>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
-						{customerEmail}
-					</Text>
+					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>{customerEmail}</Text>
 					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
 						{shippingAddress.phone}
 					</Text>
@@ -136,24 +132,18 @@ export const AdminNewOrderEmail = ({
 						{shippingAddress.address1}
 					</Text>
 					{shippingAddress.address2 && (
-						<Text style={EMAIL_STYLES.text.small}>
-							{shippingAddress.address2}
-						</Text>
+						<Text style={EMAIL_STYLES.text.small}>{shippingAddress.address2}</Text>
 					)}
 					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
 						{shippingAddress.postalCode} {shippingAddress.city}
 					</Text>
-					<Text style={EMAIL_STYLES.text.small}>
-						{shippingAddress.country}
-					</Text>
+					<Text style={EMAIL_STYLES.text.small}>{shippingAddress.country}</Text>
 				</Section>
 			</Section>
 
 			{/* Articles */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-					Articles
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Articles</Text>
 
 				{items.map((item, index) => (
 					<FlexRow
@@ -161,10 +151,7 @@ export const AdminNewOrderEmail = ({
 						style={{
 							marginBottom: "12px",
 							paddingBottom: "12px",
-							borderBottom:
-								index < items.length - 1
-									? `1px solid ${EMAIL_COLORS.border}`
-									: "none",
+							borderBottom: index < items.length - 1 ? `1px solid ${EMAIL_COLORS.border}` : "none",
 						}}
 						left={
 							<>
@@ -184,14 +171,10 @@ export const AdminNewOrderEmail = ({
 									</Text>
 								)}
 								{item.skuColor && (
-									<Text style={EMAIL_STYLES.text.small}>
-										Couleur: {item.skuColor}
-									</Text>
+									<Text style={EMAIL_STYLES.text.small}>Couleur: {item.skuColor}</Text>
 								)}
 								{item.skuMaterial && (
-									<Text style={EMAIL_STYLES.text.small}>
-										Matière: {item.skuMaterial}
-									</Text>
+									<Text style={EMAIL_STYLES.text.small}>Matière: {item.skuMaterial}</Text>
 								)}
 								<Text
 									style={{

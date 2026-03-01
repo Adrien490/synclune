@@ -46,7 +46,7 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 		<Card>
 			<CardContent>
 				<TableScrollContainer>
-					<Table aria-label="Liste des avis produits" striped>
+					<Table aria-label="Liste des avis produits" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[25%]">Produit</TableHead>

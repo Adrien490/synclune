@@ -17,7 +17,8 @@ export const processSteps: ProcessStep[] = [
 		description:
 			"L'idée naît souvent de mon quotidien : une couleur aperçue dans la rue, un motif sur un tissu, ou même un rêve ! J'essaye de ne pas me forcer, mais plutôt de laisser l'inspiration venir d'elle-même.",
 		color: STEP_COLORS.secondary,
-		iconHoverClass: "group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
+		iconHoverClass:
+			"group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
 		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-yellow)]",
 		intensity: { ring: "", shadow: "" },
 	},

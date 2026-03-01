@@ -26,7 +26,7 @@ function formatSkuFilter(
 	options: {
 		colors: Map<string, string>;
 		materials: Map<string, string>;
-	}
+	},
 ) {
 	const { colors, materials } = options;
 	const filterKey = filter.key.replace("filter_", "");
@@ -76,9 +76,5 @@ export function SkusFilterBadges({ colors, materials }: SkusFilterBadgesProps) {
 		materials: new Map(materials.map((m) => [m.id, m.name])),
 	};
 
-	return (
-		<FilterBadges
-			formatFilter={(filter) => formatSkuFilter(filter, filterMaps)}
-		/>
-	);
+	return <FilterBadges formatFilter={(filter) => formatSkuFilter(filter, filterMaps)} />;
 }

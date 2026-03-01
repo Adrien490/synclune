@@ -51,9 +51,4 @@ export const GET_SESSIONS_DEFAULT_SORT_BY = "createdAt";
 export const GET_SESSIONS_DEFAULT_SORT_ORDER = "desc";
 export const GET_SESSIONS_ADMIN_FALLBACK_SORT_BY = "updatedAt";
 
-export const GET_SESSIONS_SORT_FIELDS = [
-	"createdAt",
-	"updatedAt",
-	"expiresAt",
-] as const;
-
+export const GET_SESSIONS_SORT_FIELDS = ["createdAt", "updatedAt", "expiresAt"] as const;

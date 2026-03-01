@@ -17,9 +17,9 @@ export function useUpdateCartPrices() {
 				loadingMessage: "Mise à jour des prix...",
 				showSuccessToast: true,
 				showErrorToast: true,
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

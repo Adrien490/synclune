@@ -11,15 +11,17 @@ import {
 } from "./cart-item.service";
 import type { CartItem } from "../types/cart.types";
 
-function createCartItem(overrides: Partial<{
-	priceAtAdd: number;
-	quantity: number;
-	inventory: number;
-	isActive: boolean;
-	status: string;
-	compareAtPrice: number | null;
-	images: { id: string }[];
-}>): CartItem {
+function createCartItem(
+	overrides: Partial<{
+		priceAtAdd: number;
+		quantity: number;
+		inventory: number;
+		isActive: boolean;
+		status: string;
+		compareAtPrice: number | null;
+		images: { id: string }[];
+	}>,
+): CartItem {
 	return {
 		id: "item-1",
 		quantity: overrides.quantity ?? 1,
@@ -39,7 +41,17 @@ function createCartItem(overrides: Partial<{
 				slug: "bracelet-lune",
 				status: overrides.status ?? "PUBLIC",
 			},
-			images: (overrides.images ?? [{ id: "img-1", url: "/img.jpg", blurDataUrl: null, thumbnailUrl: null, altText: "alt", mediaType: "IMAGE", isPrimary: true }]) as CartItem["sku"]["images"],
+			images: (overrides.images ?? [
+				{
+					id: "img-1",
+					url: "/img.jpg",
+					blurDataUrl: null,
+					thumbnailUrl: null,
+					altText: "alt",
+					mediaType: "IMAGE",
+					isPrimary: true,
+				},
+			]) as CartItem["sku"]["images"],
 			color: { id: "color-1", name: "Or", hex: "#FFD700" },
 			material: { id: "mat-1", name: "Acier" },
 			size: null,
@@ -133,7 +145,9 @@ describe("getCartItemIssueLabel", () => {
 	});
 
 	it("should prioritize 'indisponible' over 'rupture'", () => {
-		expect(getCartItemIssueLabel(createCartItem({ isActive: false, inventory: 0 }))).toBe("indisponible");
+		expect(getCartItemIssueLabel(createCartItem({ isActive: false, inventory: 0 }))).toBe(
+			"indisponible",
+		);
 	});
 
 	it("should return null for available items", () => {
@@ -143,7 +157,9 @@ describe("getCartItemIssueLabel", () => {
 
 describe("hasCartItemDiscount", () => {
 	it("should return true when compareAtPrice > priceAtAdd", () => {
-		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 3000, priceAtAdd: 2500 }))).toBe(true);
+		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 3000, priceAtAdd: 2500 }))).toBe(
+			true,
+		);
 	});
 
 	it("should return false when compareAtPrice is null", () => {
@@ -151,18 +167,26 @@ describe("hasCartItemDiscount", () => {
 	});
 
 	it("should return false when compareAtPrice <= priceAtAdd", () => {
-		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 2500, priceAtAdd: 2500 }))).toBe(false);
-		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 2000, priceAtAdd: 2500 }))).toBe(false);
+		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 2500, priceAtAdd: 2500 }))).toBe(
+			false,
+		);
+		expect(hasCartItemDiscount(createCartItem({ compareAtPrice: 2000, priceAtAdd: 2500 }))).toBe(
+			false,
+		);
 	});
 });
 
 describe("getCartItemDiscountPercent", () => {
 	it("should calculate discount percentage", () => {
-		expect(getCartItemDiscountPercent(createCartItem({ compareAtPrice: 5000, priceAtAdd: 2500 }))).toBe(50);
+		expect(
+			getCartItemDiscountPercent(createCartItem({ compareAtPrice: 5000, priceAtAdd: 2500 })),
+		).toBe(50);
 	});
 
 	it("should round the percentage", () => {
-		expect(getCartItemDiscountPercent(createCartItem({ compareAtPrice: 3000, priceAtAdd: 2000 }))).toBe(33);
+		expect(
+			getCartItemDiscountPercent(createCartItem({ compareAtPrice: 3000, priceAtAdd: 2000 })),
+		).toBe(33);
 	});
 
 	it("should return 0 when no discount", () => {
@@ -170,13 +194,23 @@ describe("getCartItemDiscountPercent", () => {
 	});
 
 	it("should return 0 when compareAtPrice <= priceAtAdd", () => {
-		expect(getCartItemDiscountPercent(createCartItem({ compareAtPrice: 2500, priceAtAdd: 2500 }))).toBe(0);
+		expect(
+			getCartItemDiscountPercent(createCartItem({ compareAtPrice: 2500, priceAtAdd: 2500 })),
+		).toBe(0);
 	});
 });
 
 describe("getCartItemPrimaryImage", () => {
 	it("should return the first image", () => {
-		const image = { id: "img-1", url: "/img.jpg", blurDataUrl: null, thumbnailUrl: null, altText: "alt", mediaType: "IMAGE", isPrimary: true };
+		const image = {
+			id: "img-1",
+			url: "/img.jpg",
+			blurDataUrl: null,
+			thumbnailUrl: null,
+			altText: "alt",
+			mediaType: "IMAGE",
+			isPrimary: true,
+		};
 		const item = createCartItem({ images: [image] as unknown as { id: string }[] });
 		expect(getCartItemPrimaryImage(item)).toEqual(image);
 	});

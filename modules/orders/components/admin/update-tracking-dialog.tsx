@@ -21,11 +21,7 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import {
-	CARRIERS,
-	detectCarrierAndUrl,
-	type Carrier,
-} from "@/modules/orders/utils/carrier.utils";
+import { CARRIERS, detectCarrierAndUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { useStore } from "@tanstack/react-form";
 import { Calendar, Link2, Mail, Truck } from "lucide-react";
 import { useUpdateTrackingForm } from "@/modules/orders/hooks/use-update-tracking-form";
@@ -125,10 +121,7 @@ function UpdateTrackingFormContent({
 				</ResponsiveDialogDescription>
 			</ResponsiveDialogHeader>
 
-			<form
-				action={action}
-				className="space-y-6"
-			>
+			<form action={action} className="space-y-6">
 				{/* Hidden fields */}
 				<input type="hidden" name="id" value={orderId} />
 				<input type="hidden" name="trackingUrl" value={trackingUrl} />
@@ -151,7 +144,7 @@ function UpdateTrackingFormContent({
 							disabled={isPending}
 							required
 						/>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							Le transporteur sera détecté automatiquement selon le format du numéro
 						</p>
 					</div>
@@ -176,11 +169,14 @@ function UpdateTrackingFormContent({
 								))}
 							</SelectContent>
 						</Select>
-						{trackingNumber.length >= 8 && trackingNumber !== initialTrackingNumber && !customUrlMode && carrier !== "autre" && (
-							<p className="text-xs text-emerald-600">
-								Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
-							</p>
-						)}
+						{trackingNumber.length >= 8 &&
+							trackingNumber !== initialTrackingNumber &&
+							!customUrlMode &&
+							carrier !== "autre" && (
+								<p className="text-xs text-emerald-600">
+									Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
+								</p>
+							)}
 					</div>
 
 					{/* Tracking URL */}
@@ -205,7 +201,7 @@ function UpdateTrackingFormContent({
 					</div>
 
 					{/* Custom URL Mode Checkbox */}
-					<div className="flex items-start space-x-3 rounded-lg border p-3 bg-muted/20">
+					<div className="bg-muted/20 flex items-start space-x-3 rounded-lg border p-3">
 						<Checkbox
 							id="customUrlMode"
 							checked={customUrlMode}
@@ -215,14 +211,12 @@ function UpdateTrackingFormContent({
 						<div className="space-y-1 leading-none">
 							<Label
 								htmlFor="customUrlMode"
-								className="flex items-center gap-2 cursor-pointer text-sm"
+								className="flex cursor-pointer items-center gap-2 text-sm"
 							>
 								<Link2 className="h-4 w-4" />
 								URL personnalisée
 							</Label>
-							<p className="text-xs text-muted-foreground">
-								Saisir manuellement l'URL de suivi
-							</p>
+							<p className="text-muted-foreground text-xs">Saisir manuellement l'URL de suivi</p>
 						</div>
 					</div>
 
@@ -240,30 +234,25 @@ function UpdateTrackingFormContent({
 							onChange={(e) => form.setFieldValue("estimatedDelivery", e.target.value)}
 							disabled={isPending}
 						/>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							Optionnel - Affichée dans l'email et sur le suivi client
 						</p>
 					</div>
 
 					{/* Send Email Checkbox */}
-					<div className="flex items-start space-x-3 rounded-lg border p-4 bg-muted/30">
+					<div className="bg-muted/30 flex items-start space-x-3 rounded-lg border p-4">
 						<Checkbox
 							id="sendEmailCheckbox"
 							checked={sendEmail}
-							onCheckedChange={(checked) =>
-								form.setFieldValue("sendEmail", checked === true)
-							}
+							onCheckedChange={(checked) => form.setFieldValue("sendEmail", checked === true)}
 							disabled={isPending}
 						/>
 						<div className="space-y-1 leading-none">
-							<Label
-								htmlFor="sendEmailCheckbox"
-								className="flex items-center gap-2 cursor-pointer"
-							>
+							<Label htmlFor="sendEmailCheckbox" className="flex cursor-pointer items-center gap-2">
 								<Mail className="h-4 w-4" />
 								Envoyer un email au client
 							</Label>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								Un email avec les informations de suivi mises à jour sera envoyé
 							</p>
 						</div>
@@ -272,18 +261,10 @@ function UpdateTrackingFormContent({
 
 				{/* Submit buttons */}
 				<ResponsiveDialogFooter>
-					<Button
-						type="button"
-						variant="outline"
-						onClick={onClose}
-						disabled={isPending}
-					>
+					<Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
 						Annuler
 					</Button>
-					<Button
-						type="submit"
-						disabled={isPending || !trackingNumber.trim()}
-					>
+					<Button type="submit" disabled={isPending || !trackingNumber.trim()}>
 						{isPending ? "Mise à jour..." : "Mettre à jour"}
 					</Button>
 				</ResponsiveDialogFooter>

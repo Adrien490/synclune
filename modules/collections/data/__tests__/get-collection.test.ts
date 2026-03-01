@@ -133,7 +133,7 @@ describe("getCollectionBySlug", () => {
 
 		// Assert
 		expect(mockFindUnique).toHaveBeenCalledWith(
-			expect.objectContaining({ select: mockGetCollectionSelect })
+			expect.objectContaining({ select: mockGetCollectionSelect }),
 		);
 	});
 
@@ -147,7 +147,7 @@ describe("getCollectionBySlug", () => {
 
 		// Assert
 		expect(mockFindUnique).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { slug: "bagues" } })
+			expect.objectContaining({ where: { slug: "bagues" } }),
 		);
 	});
 
@@ -218,7 +218,7 @@ describe("getStorefrontCollectionBySlug", () => {
 
 		// Assert
 		expect(mockFindUnique).toHaveBeenCalledWith(
-			expect.objectContaining({ select: mockGetCollectionStorefrontSelect })
+			expect.objectContaining({ select: mockGetCollectionStorefrontSelect }),
 		);
 	});
 

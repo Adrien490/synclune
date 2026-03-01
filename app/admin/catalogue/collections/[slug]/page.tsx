@@ -20,17 +20,17 @@ import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collec
 import { CollectionProductsList } from "@/modules/collections/components/admin/collection-products-list";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const SetFeaturedProductAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/set-featured-product-alert-dialog").then((mod) => mod.SetFeaturedProductAlertDialog)
+const SetFeaturedProductAlertDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/set-featured-product-alert-dialog").then(
+		(mod) => mod.SetFeaturedProductAlertDialog,
+	),
 );
 
 type CollectionDetailPageProps = {
 	params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata({
-	params,
-}: CollectionDetailPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: CollectionDetailPageProps): Promise<Metadata> {
 	const { slug } = await params;
 	const collection = await getCollectionBySlug({ slug });
 
@@ -46,9 +46,7 @@ export async function generateMetadata({
 	};
 }
 
-export default async function CollectionDetailPage({
-	params,
-}: CollectionDetailPageProps) {
+export default async function CollectionDetailPage({ params }: CollectionDetailPageProps) {
 	const { slug } = await params;
 
 	const collection = await getCollectionBySlug({ slug });
@@ -59,7 +57,7 @@ export default async function CollectionDetailPage({
 
 	// Compter les produits publics
 	const publicProductsCount = collection.products.filter(
-		(pc) => pc.product.status === "PUBLIC"
+		(pc) => pc.product.status === "PUBLIC",
 	).length;
 
 	// Trouver le produit featured actuel
@@ -77,9 +75,7 @@ export default async function CollectionDetailPage({
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
-						<BreadcrumbLink href="/admin/catalogue/collections">
-							Collections
-						</BreadcrumbLink>
+						<BreadcrumbLink href="/admin/catalogue/collections">Collections</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
@@ -96,13 +92,13 @@ export default async function CollectionDetailPage({
 					<div className="flex items-center gap-2">
 						<Button variant="outline" asChild>
 							<Link href="/admin/catalogue/collections">
-								<ArrowLeft className="h-4 w-4 mr-2" />
+								<ArrowLeft className="mr-2 h-4 w-4" />
 								Retour
 							</Link>
 						</Button>
 						<Button asChild>
 							<Link href={`/admin/catalogue/collections/${slug}/modifier`}>
-								<Pencil className="h-4 w-4 mr-2" />
+								<Pencil className="mr-2 h-4 w-4" />
 								Modifier
 							</Link>
 						</Button>
@@ -112,9 +108,7 @@ export default async function CollectionDetailPage({
 
 			{/* Infos de la collection */}
 			<div className="flex flex-wrap gap-3">
-				<Badge variant="outline">
-					{COLLECTION_STATUS_LABELS[collection.status]}
-				</Badge>
+				<Badge variant="outline">{COLLECTION_STATUS_LABELS[collection.status]}</Badge>
 				<Badge variant="secondary">
 					{collection.products.length} produit{collection.products.length > 1 ? "s" : ""}
 				</Badge>
@@ -122,19 +116,16 @@ export default async function CollectionDetailPage({
 					{publicProductsCount} public{publicProductsCount > 1 ? "s" : ""}
 				</Badge>
 				{featuredProduct && (
-					<Badge variant="default">
-						Vedette : {featuredProduct.product.title}
-					</Badge>
+					<Badge variant="default">Vedette : {featuredProduct.product.title}</Badge>
 				)}
 			</div>
 
 			{/* Liste des produits */}
 			<div className="space-y-4">
-				<h2 className="text-lg font-semibold">
-					Produits de la collection
-				</h2>
-				<p className="text-sm text-muted-foreground">
-					Cliquez sur l'etoile pour definir le produit vedette. Ce produit sera utilise comme image representative de la collection.
+				<h2 className="text-lg font-semibold">Produits de la collection</h2>
+				<p className="text-muted-foreground text-sm">
+					Cliquez sur l'etoile pour definir le produit vedette. Ce produit sera utilise comme image
+					representative de la collection.
 				</p>
 				<CollectionProductsList
 					collectionId={collection.id}

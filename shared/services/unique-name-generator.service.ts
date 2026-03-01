@@ -21,7 +21,7 @@ interface NameResult {
 export async function generateUniqueReadableName(
 	originalName: string,
 	checkExists: ExistsCheck,
-	maxAttempts: number = 100
+	maxAttempts: number = 100,
 ): Promise<NameResult> {
 	// Premiere tentative: "Nom (copie)"
 	let candidateName = `${originalName} (copie)`;
@@ -58,7 +58,7 @@ export async function generateUniqueReadableName(
 export async function generateUniqueTechnicalName(
 	originalName: string,
 	checkExists: ExistsCheck,
-	maxAttempts: number = 100
+	maxAttempts: number = 100,
 ): Promise<NameResult> {
 	// Premiere tentative: "CODE-COPY"
 	let candidateName = `${originalName}-COPY`;

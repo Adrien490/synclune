@@ -51,28 +51,28 @@ export function CreateCollectionForm({
 						[CollectionStatus.ARCHIVED]: "Voir les archivées",
 					};
 					toast.success(
-						(result as { message?: string })?.message ||
-							"Collection créée avec succès",
+						(result as { message?: string })?.message || "Collection créée avec succès",
 						{
 							action: data?.collectionStatus
 								? {
 										label: statusActionLabels[data.collectionStatus],
 										onClick: () =>
-											router.push(
-												`/admin/catalogue/collections?status=${data.collectionStatus}`
-											),
+											router.push(`/admin/catalogue/collections?status=${data.collectionStatus}`),
 									}
 								: undefined,
-						}
+						},
 					);
 					onSuccess?.();
 					if (redirectOnSuccess) {
-						setTimeout(() => router.push("/admin/catalogue/collections"), FORM_SUCCESS_REDIRECT_DELAY_MS);
+						setTimeout(
+							() => router.push("/admin/catalogue/collections"),
+							FORM_SUCCESS_REDIRECT_DELAY_MS,
+						);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return (
@@ -85,9 +85,7 @@ export function CreateCollectionForm({
 		>
 			{/* Hidden field pour status */}
 			<form.Subscribe selector={(state) => [state.values.status]}>
-				{([status]) => (
-					<input type="hidden" name="status" value={status as string} />
-				)}
+				{([status]) => <input type="hidden" name="status" value={status as string} />}
 			</form.Subscribe>
 
 			{/* Name Field */}
@@ -143,12 +141,10 @@ export function CreateCollectionForm({
 				{(field) => (
 					<field.SelectField
 						label="Statut"
-						options={[CollectionStatus.DRAFT, CollectionStatus.PUBLIC].map(
-							(s) => ({
-								value: s,
-								label: COLLECTION_STATUS_LABELS[s],
-							})
-						)}
+						options={[CollectionStatus.DRAFT, CollectionStatus.PUBLIC].map((s) => ({
+							value: s,
+							label: COLLECTION_STATUS_LABELS[s],
+						}))}
 						disabled={isPending}
 					/>
 				)}
@@ -158,11 +154,7 @@ export function CreateCollectionForm({
 			<div className="flex justify-end pt-4">
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
-						<Button
-							type="submit"
-							disabled={!canSubmit || isPending}
-							className="min-w-35"
-						>
+						<Button type="submit" disabled={!canSubmit || isPending} className="min-w-35">
 							{isPending ? "Création..." : "Créer"}
 						</Button>
 					)}

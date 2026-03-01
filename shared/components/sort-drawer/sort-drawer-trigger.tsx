@@ -52,13 +52,13 @@ export function SortDrawerTrigger({
 				variant="ghost"
 				size="icon"
 				onClick={() => setOpen(true)}
-				className={cn("size-11 relative", className)}
+				className={cn("relative size-11", className)}
 				aria-label="Trier"
 			>
 				<ArrowUpDown className="size-5" />
 				{hasActiveSort && (
 					<span
-						className="absolute -top-0.5 -right-0.5 size-3 bg-primary rounded-full ring-2 ring-background"
+						className="bg-primary ring-background absolute -top-0.5 -right-0.5 size-3 rounded-full ring-2"
 						aria-hidden="true"
 					/>
 				)}

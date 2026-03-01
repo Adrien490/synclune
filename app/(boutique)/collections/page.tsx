@@ -61,9 +61,7 @@ const breadcrumbJsonLd = {
 	],
 };
 
-export default async function CollectionsPage({
-	searchParams,
-}: CollectionsPageProps) {
+export default async function CollectionsPage({ searchParams }: CollectionsPageProps) {
 	// Note: Pas de "use cache" ici car la page utilise searchParams (pagination)
 	// Le cache est géré au niveau de fetchCollections() qui utilise déjà "use cache"
 
@@ -71,9 +69,7 @@ export default async function CollectionsPage({
 
 	// Récupérer les collections avec filtres
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as
-		| "forward"
-		| "backward";
+	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
 	const perPage = Number(params.perPage) || GET_COLLECTIONS_DEFAULT_PER_PAGE;
 
 	// Récupérer les collections (uniquement celles publiées avec des produits)
@@ -89,11 +85,13 @@ export default async function CollectionsPage({
 	});
 
 	return (
-		<div className="min-h-screen relative">
+		<div className="relative min-h-screen">
 			{/* JSON-LD Structured Data */}
 			<script
 				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c") }}
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
+				}}
 			/>
 
 			{/* Background décoratif - Particules pour ambiance bijoux */}
@@ -105,13 +103,10 @@ export default async function CollectionsPage({
 			/>
 
 			{/* Section principale avec catalogue */}
-			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+			<section className="bg-background relative z-10 pt-4 pb-12 lg:pt-6 lg:pb-16">
+				<div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<CollectionGridSkeleton />}>
-						<CollectionGrid
-							collectionsPromise={collectionsPromise}
-							perPage={perPage}
-						/>
+						<CollectionGrid collectionsPromise={collectionsPromise} perPage={perPage} />
 					</Suspense>
 				</div>
 			</section>

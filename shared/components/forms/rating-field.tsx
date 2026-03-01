@@ -61,7 +61,7 @@ export const RatingField = ({
 					onChange={field.handleChange}
 				/>
 				{showRatingText && (
-					<span className="text-sm text-muted-foreground">
+					<span className="text-muted-foreground text-sm">
 						{field.state.value} étoile{field.state.value > 1 ? "s" : ""}
 					</span>
 				)}

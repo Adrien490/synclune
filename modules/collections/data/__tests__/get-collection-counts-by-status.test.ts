@@ -74,7 +74,7 @@ describe("getCollectionCountsByStatus", () => {
 			mockIsAdmin.mockResolvedValue(false);
 
 			await expect(getCollectionCountsByStatus()).rejects.toThrow(
-				"Accès non autorisé. Droits administrateur requis."
+				"Accès non autorisé. Droits administrateur requis.",
 			);
 		});
 
@@ -114,9 +114,7 @@ describe("getCollectionCountsByStatus", () => {
 		});
 
 		it("defaults missing statuses to 0", async () => {
-			mockGroupBy.mockResolvedValue([
-				{ status: "PUBLIC", _count: { id: 7 } },
-			]);
+			mockGroupBy.mockResolvedValue([{ status: "PUBLIC", _count: { id: 7 } }]);
 
 			const result = await getCollectionCountsByStatus();
 
@@ -136,9 +134,7 @@ describe("getCollectionCountsByStatus", () => {
 		});
 
 		it("handles only DRAFT collections", async () => {
-			mockGroupBy.mockResolvedValue([
-				{ status: "DRAFT", _count: { id: 12 } },
-			]);
+			mockGroupBy.mockResolvedValue([{ status: "DRAFT", _count: { id: 12 } }]);
 
 			const result = await getCollectionCountsByStatus();
 
@@ -150,9 +146,7 @@ describe("getCollectionCountsByStatus", () => {
 		});
 
 		it("handles only ARCHIVED collections", async () => {
-			mockGroupBy.mockResolvedValue([
-				{ status: "ARCHIVED", _count: { id: 4 } },
-			]);
+			mockGroupBy.mockResolvedValue([{ status: "ARCHIVED", _count: { id: 4 } }]);
 
 			const result = await getCollectionCountsByStatus();
 

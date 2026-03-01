@@ -1,11 +1,11 @@
-import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages"
+import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import type {
 	CartValidationIssue,
 	CartItemForValidation,
 	AvailabilityCheckResult,
-} from "../types/cart.types"
+} from "../types/cart.types";
 
-export type { CartItemForValidation, AvailabilityCheckResult } from "../types/cart.types"
+export type { CartItemForValidation, AvailabilityCheckResult } from "../types/cart.types";
 
 // ============================================================================
 // CART ITEM AVAILABILITY SERVICE
@@ -64,9 +64,7 @@ export function isCartItemUnavailable(item: CartItemForValidation): boolean {
  * Vérifie la disponibilité complète d'un item et retourne l'issue détaillée si problème
  * Utilisé pour la validation complète du panier avec messages d'erreur
  */
-export function checkCartItemAvailability(
-	item: CartItemForValidation
-): AvailabilityCheckResult {
+export function checkCartItemAvailability(item: CartItemForValidation): AvailabilityCheckResult {
 	// Vérifier le SKU existe (ne devrait jamais arriver avec les contraintes DB)
 	if (!item.sku) {
 		return {
@@ -159,9 +157,7 @@ export function checkCartItemAvailability(
 /**
  * Valide tous les items d'un panier et retourne la liste des issues
  */
-export function validateCartItems(
-	items: CartItemForValidation[]
-): CartValidationIssue[] {
+export function validateCartItems(items: CartItemForValidation[]): CartValidationIssue[] {
 	const issues: CartValidationIssue[] = [];
 
 	for (const item of items) {
@@ -177,8 +173,6 @@ export function validateCartItems(
 /**
  * Filtre les items indisponibles d'une liste
  */
-export function filterUnavailableItems<T extends CartItemForValidation>(
-	items: T[]
-): T[] {
+export function filterUnavailableItems<T extends CartItemForValidation>(items: T[]): T[] {
 	return items.filter(isCartItemUnavailable);
 }

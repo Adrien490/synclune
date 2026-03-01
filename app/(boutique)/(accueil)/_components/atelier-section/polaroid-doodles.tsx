@@ -48,10 +48,12 @@ function Doodle({ variant, color, width, height, delay, className }: DoodleProps
 				fill={config.fill ? color : "none"}
 				fillOpacity={config.fill ? 0.15 : 0}
 				className="doodle-draw"
-				style={{
-					"--path-length": "200",
-					"--draw-delay": `${delay}s`,
-				} as React.CSSProperties}
+				style={
+					{
+						"--path-length": "200",
+						"--draw-delay": `${delay}s`,
+					} as React.CSSProperties
+				}
 			/>
 		</svg>
 	);
@@ -91,7 +93,7 @@ export function PolaroidDoodles() {
 				width={26}
 				height={26}
 				delay={1.0}
-				className="absolute -bottom-4 -right-3 hidden lg:block"
+				className="absolute -right-3 -bottom-4 hidden lg:block"
 			/>
 
 			{/* Arrow — between polaroid 1 and 2, desktop only */}

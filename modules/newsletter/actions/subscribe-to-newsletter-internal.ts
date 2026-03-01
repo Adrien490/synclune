@@ -41,7 +41,8 @@ export async function subscribeToNewsletterInternal({
 			if (existingSubscriber.status === NewsletterStatus.CONFIRMED) {
 				return {
 					success: true,
-					message: "Si cette adresse n'est pas encore inscrite, un email de confirmation vous a été envoyé.",
+					message:
+						"Si cette adresse n'est pas encore inscrite, un email de confirmation vous a été envoyé.",
 					alreadySubscribed: true,
 				};
 			}
@@ -60,7 +61,9 @@ export async function subscribeToNewsletterInternal({
 				});
 
 				// Invalider le cache
-				getNewsletterInvalidationTags(existingSubscriber?.userId ?? undefined).forEach((tag) => updateTag(tag));
+				getNewsletterInvalidationTags(existingSubscriber?.userId ?? undefined).forEach((tag) =>
+					updateTag(tag),
+				);
 
 				// Envoyer l'email de confirmation
 				const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
@@ -90,7 +93,9 @@ export async function subscribeToNewsletterInternal({
 			});
 
 			// Invalider le cache
-			getNewsletterInvalidationTags(existingSubscriber?.userId ?? undefined).forEach((tag) => updateTag(tag));
+			getNewsletterInvalidationTags(existingSubscriber?.userId ?? undefined).forEach((tag) =>
+				updateTag(tag),
+			);
 
 			// Envoyer l'email de confirmation
 			const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;

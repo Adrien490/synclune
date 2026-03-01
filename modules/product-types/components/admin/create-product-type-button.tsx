@@ -7,9 +7,5 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 export function CreateProductTypeButton() {
 	const { open } = useDialog(PRODUCT_TYPE_DIALOG_ID);
 
-	return (
-		<Button onClick={() => open()}>
-			Créer un type
-		</Button>
-	);
+	return <Button onClick={() => open()}>Créer un type</Button>;
 }

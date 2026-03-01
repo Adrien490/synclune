@@ -19,24 +19,23 @@ import type { ProductSearchParams } from "./types";
  * Récupère toutes les données nécessaires au catalogue produits
  */
 export async function getCatalogData() {
-	const [productTypesData, colorsData, materials, maxPriceInCents] =
-		await Promise.all([
-			getProductTypes({
-				perPage: 50,
-				sortBy: "label-ascending",
-				filters: {
-					isActive: true,
-					hasProducts: true,
-				},
-			}),
-			getColors({
-				perPage: 100,
-				sortBy: "name-ascending",
-				filters: { isActive: true },
-			}),
-			getMaterialOptions(),
-			getMaxProductPrice(),
-		]);
+	const [productTypesData, colorsData, materials, maxPriceInCents] = await Promise.all([
+		getProductTypes({
+			perPage: 50,
+			sortBy: "label-ascending",
+			filters: {
+				isActive: true,
+				hasProducts: true,
+			},
+		}),
+		getColors({
+			perPage: 100,
+			sortBy: "name-ascending",
+			filters: { isActive: true },
+		}),
+		getMaterialOptions(),
+		getMaxProductPrice(),
+	]);
 
 	return {
 		productTypes: productTypesData.productTypes,
@@ -54,14 +53,10 @@ export function parsePaginationParams(searchParamsData: ProductSearchParams) {
 	const direction = (getFirstParam(searchParamsData.direction) || "forward") as
 		| "forward"
 		| "backward";
-	const perPage =
-		Number(getFirstParam(searchParamsData.perPage)) ||
-		GET_PRODUCTS_DEFAULT_PER_PAGE;
+	const perPage = Number(getFirstParam(searchParamsData.perPage)) || GET_PRODUCTS_DEFAULT_PER_PAGE;
 	const sortBy = getFirstParam(searchParamsData.sortBy) || "created-descending";
 	const searchTerm =
-		typeof searchParamsData.search === "string"
-			? searchParamsData.search
-			: undefined;
+		typeof searchParamsData.search === "string" ? searchParamsData.search : undefined;
 
 	return { cursor, direction, perPage, sortBy, searchTerm };
 }
@@ -71,7 +66,7 @@ export function parsePaginationParams(searchParamsData: ProductSearchParams) {
  */
 export function fetchProducts(
 	searchParamsData: ProductSearchParams,
-	additionalFilters?: Partial<ProductFilters>
+	additionalFilters?: Partial<ProductFilters>,
 ) {
 	const { cursor, direction, perPage, sortBy, searchTerm } =
 		parsePaginationParams(searchParamsData);
@@ -96,9 +91,7 @@ export function fetchProducts(
  *
  * @returns Le slug de la couleur si une seule est active, undefined sinon
  */
-export function getActiveColorSlug(
-	searchParamsData: ProductSearchParams
-): string | undefined {
+export function getActiveColorSlug(searchParamsData: ProductSearchParams): string | undefined {
 	const colorParam = searchParamsData.color;
 
 	if (!colorParam) return undefined;
@@ -122,15 +115,13 @@ export function getActiveColorSlug(
 export function countActiveFilters(
 	searchParamsData: ProductSearchParams,
 	filters: ProductFilters,
-	excludeType = false
+	excludeType = false,
 ): number {
 	let count = 0;
 
 	// Types de produits (sauf si on est sur une page catégorie)
 	if (!excludeType && searchParamsData.type) {
-		count += Array.isArray(searchParamsData.type)
-			? searchParamsData.type.length
-			: 1;
+		count += Array.isArray(searchParamsData.type) ? searchParamsData.type.length : 1;
 	}
 
 	// Couleurs

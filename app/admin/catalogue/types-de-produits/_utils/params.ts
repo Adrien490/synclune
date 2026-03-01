@@ -3,7 +3,7 @@ import { getFirstParam } from "@/shared/utils/params";
 import type { ProductTypesSearchParams } from "../page";
 
 export const parseFilters = (
-	params: ProductTypesSearchParams
+	params: ProductTypesSearchParams,
 ): GetProductTypesParams["filters"] => {
 	let isActive: boolean | undefined = undefined;
 	let isSystem: boolean | undefined = undefined;

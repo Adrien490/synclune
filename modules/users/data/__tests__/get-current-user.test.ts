@@ -4,21 +4,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockAuthGetSession,
-	mockHeaders,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
-	mockPrisma: {
-		user: { findUnique: vi.fn() },
-	},
-	mockAuthGetSession: vi.fn(),
-	mockHeaders: vi.fn(),
-	mockCacheLife: vi.fn(),
-	mockCacheTag: vi.fn(),
-}));
+const { mockPrisma, mockAuthGetSession, mockHeaders, mockCacheLife, mockCacheTag } = vi.hoisted(
+	() => ({
+		mockPrisma: {
+			user: { findUnique: vi.fn() },
+		},
+		mockAuthGetSession: vi.fn(),
+		mockHeaders: vi.fn(),
+		mockCacheLife: vi.fn(),
+		mockCacheTag: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -127,7 +123,7 @@ describe("getCurrentUser", () => {
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ id: "user-42" }),
-			})
+			}),
 		);
 	});
 
@@ -177,7 +173,7 @@ describe("fetchCurrentUser", () => {
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "user-1", deletedAt: null },
-			})
+			}),
 		);
 	});
 
@@ -187,7 +183,7 @@ describe("fetchCurrentUser", () => {
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, name: true, email: true, role: true },
-			})
+			}),
 		);
 	});
 

@@ -3,6 +3,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { CustomizationForm } from "@/modules/customizations/components/customization-form";
 import { CustomizationSidebar } from "@/modules/customizations/components/customization-sidebar";
 import type { Metadata } from "next";
@@ -28,10 +29,17 @@ export const metadata: Metadata = {
  * Affiche le formulaire de demande de personnalisation
  */
 export default async function CustomizationPage() {
-	const { productTypes } = await getProductTypes({
-		perPage: 100,
-		filters: { isActive: true },
-	});
+	const [{ productTypes }, session] = await Promise.all([
+		getProductTypes({ perPage: 100, filters: { isActive: true } }),
+		getSession(),
+	]);
+
+	const userInfo = session?.user
+		? {
+				firstName: session.user.name?.split(" ")[0] ?? "",
+				email: session.user.email,
+			}
+		: undefined;
 
 	return (
 		<div className="relative min-h-screen">
@@ -65,10 +73,10 @@ export default async function CustomizationPage() {
 
 			{/* Section principale avec formulaire */}
 			<section className={`bg-background ${SECTION_SPACING.compact} relative z-10`}>
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-12">
+				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+					<div className="flex flex-col-reverse lg:grid lg:grid-cols-[1fr_380px] lg:gap-12">
 						<div className="max-w-xl">
-							<CustomizationForm productTypes={productTypes} />
+							<CustomizationForm productTypes={productTypes} userInfo={userInfo} />
 						</div>
 						<CustomizationSidebar />
 					</div>

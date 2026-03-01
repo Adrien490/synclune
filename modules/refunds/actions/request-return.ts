@@ -31,7 +31,7 @@ const WITHDRAWAL_PERIOD_MS = 14 * 24 * 60 * 60 * 1000;
  */
 export async function requestReturn(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Auth check (customer, not admin)
@@ -131,17 +131,11 @@ export async function requestReturn(
 		// 8. Create refund for all items (full return request, admin decides final amount)
 		const refundItems = order.items
 			.filter((item) => {
-				const alreadyRefunded = item.refundItems.reduce(
-					(sum, ri) => sum + ri.quantity,
-					0
-				);
+				const alreadyRefunded = item.refundItems.reduce((sum, ri) => sum + ri.quantity, 0);
 				return item.quantity - alreadyRefunded > 0;
 			})
 			.map((item) => {
-				const alreadyRefunded = item.refundItems.reduce(
-					(sum, ri) => sum + ri.quantity,
-					0
-				);
+				const alreadyRefunded = item.refundItems.reduce((sum, ri) => sum + ri.quantity, 0);
 				const availableQuantity = item.quantity - alreadyRefunded;
 				return {
 					orderItemId: item.id,
@@ -182,7 +176,7 @@ export async function requestReturn(
 
 		return success(
 			"Votre demande de retour a été enregistrée. Nous la traiterons dans les plus brefs délais.",
-			{ refundId: refund.id }
+			{ refundId: refund.id },
 		);
 	} catch (e) {
 		return handleActionError(e, REFUND_ERROR_MESSAGES.RETURN_REQUEST_FAILED);

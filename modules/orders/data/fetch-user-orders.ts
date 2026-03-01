@@ -1,8 +1,5 @@
 import { Prisma, PaymentStatus } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import {
@@ -34,7 +31,7 @@ const getSortDirection = (sortBy: string): "asc" | "desc" => {
  */
 export async function fetchUserOrders(
 	userId: string,
-	params: GetUserOrdersParams
+	params: GetUserOrdersParams,
 ): Promise<GetUserOrdersReturn> {
 	"use cache: private";
 	cacheLife("userOrders");
@@ -57,16 +54,15 @@ export async function fetchUserOrders(
 		};
 
 		// Construire l'orderBy
-		const orderBy: Prisma.OrderOrderByWithRelationInput[] =
-			params.sortBy.startsWith("created-")
-				? [{ createdAt: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("total-")
-					? [{ total: direction }, { id: "asc" }]
-					: [{ createdAt: "desc" }, { id: "asc" }];
+		const orderBy: Prisma.OrderOrderByWithRelationInput[] = params.sortBy.startsWith("created-")
+			? [{ createdAt: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("total-")
+				? [{ total: direction }, { id: "asc" }]
+				: [{ createdAt: "desc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_USER_ORDERS_DEFAULT_PER_PAGE),
-			GET_USER_ORDERS_MAX_RESULTS_PER_PAGE
+			GET_USER_ORDERS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -86,7 +82,7 @@ export async function fetchUserOrders(
 			orders,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return {

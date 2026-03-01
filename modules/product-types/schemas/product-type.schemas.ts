@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_PRODUCT_TYPES_DEFAULT_PER_PAGE,
@@ -27,9 +24,7 @@ export const productTypeFiltersSchema = z.object({
 
 export const productTypeSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
-		GET_PRODUCT_TYPES_SORT_FIELDS.includes(
-			value as (typeof GET_PRODUCT_TYPES_SORT_FIELDS)[number]
-		)
+		GET_PRODUCT_TYPES_SORT_FIELDS.includes(value as (typeof GET_PRODUCT_TYPES_SORT_FIELDS)[number])
 		? value
 		: GET_PRODUCT_TYPES_DEFAULT_SORT_BY;
 }, z.enum(GET_PRODUCT_TYPES_SORT_FIELDS));
@@ -42,7 +37,10 @@ export const getProductTypesSchema = z.object({
 	search: z.string().trim().max(255).optional(),
 	cursor: cursorSchema,
 	direction: directionSchema,
-	perPage: createPerPageSchema(GET_PRODUCT_TYPES_DEFAULT_PER_PAGE, GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE),
+	perPage: createPerPageSchema(
+		GET_PRODUCT_TYPES_DEFAULT_PER_PAGE,
+		GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE,
+	),
 	sortBy: productTypeSortBySchema.default(GET_PRODUCT_TYPES_DEFAULT_SORT_BY),
 	filters: productTypeFiltersSchema.optional(),
 });
@@ -73,10 +71,7 @@ export const productTypeSlugSchema = z
 	.trim()
 	.min(1, "Le slug est requis")
 	.max(50, "Le slug ne peut pas depasser 50 caracteres")
-	.regex(
-		/^[a-z0-9-]+$/,
-		"Le slug ne peut contenir que des lettres minuscules, chiffres et tirets"
-	);
+	.regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets");
 
 export const createProductTypeSchema = z.object({
 	label: productTypeLabelSchema,
@@ -98,14 +93,22 @@ export const toggleProductTypeStatusSchema = z.object({
 	isActive: z.boolean(),
 });
 
-const bulkIdsSchema = z.string().transform((str) => {
-	try {
-		const parsed = JSON.parse(str);
-		return Array.isArray(parsed) ? parsed : [];
-	} catch {
-		return [];
-	}
-}).pipe(z.array(z.cuid2("ID invalide")).min(1, "Au moins un element requis").max(100, "Maximum 100 elements par operation"));
+const bulkIdsSchema = z
+	.string()
+	.transform((str) => {
+		try {
+			const parsed = JSON.parse(str);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	})
+	.pipe(
+		z
+			.array(z.cuid2("ID invalide"))
+			.min(1, "Au moins un element requis")
+			.max(100, "Maximum 100 elements par operation"),
+	);
 
 export const bulkActivateProductTypesSchema = z.object({
 	ids: bulkIdsSchema,

@@ -1,65 +1,65 @@
-import { useRef, useState, useTransition } from "react"
+import { useRef, useState, useTransition } from "react";
 
-import { quickSearch } from "@/modules/products/actions/quick-search"
-import type { QuickSearchResult } from "@/modules/products/data/quick-search-products"
-import type { SearchInputHandle } from "@/shared/components/search-input"
+import { quickSearch } from "@/modules/products/actions/quick-search";
+import type { QuickSearchResult } from "@/modules/products/data/quick-search-products";
+import type { SearchInputHandle } from "@/shared/components/search-input";
 
-import { MIN_SEARCH_LENGTH } from "./constants"
+import { MIN_SEARCH_LENGTH } from "./constants";
 
 interface UseQuickSearchParams {
-	searchInputRef: React.RefObject<SearchInputHandle | null>
-	resetActiveIndex: () => void
+	searchInputRef: React.RefObject<SearchInputHandle | null>;
+	resetActiveIndex: () => void;
 }
 
 export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSearchParams) {
-	const [inputValue, setInputValue] = useState("")
-	const [searchResults, setSearchResults] = useState<QuickSearchResult | "error" | null>(null)
-	const [searchQuery, setSearchQuery] = useState("")
-	const [isSearching, startSearch] = useTransition()
-	const latestQueryRef = useRef("")
+	const [inputValue, setInputValue] = useState("");
+	const [searchResults, setSearchResults] = useState<QuickSearchResult | "error" | null>(null);
+	const [searchQuery, setSearchQuery] = useState("");
+	const [isSearching, startSearch] = useTransition();
+	const latestQueryRef = useRef("");
 
-	const isSearchMode = inputValue.trim().length >= MIN_SEARCH_LENGTH
+	const isSearchMode = inputValue.trim().length >= MIN_SEARCH_LENGTH;
 
 	const handleInputValueChange = (value: string) => {
-		setInputValue(value)
-		resetActiveIndex()
-	}
+		setInputValue(value);
+		resetActiveIndex();
+	};
 
 	const handleLiveSearch = (query: string) => {
-		const trimmed = query.trim()
+		const trimmed = query.trim();
 		if (!trimmed || trimmed.length < MIN_SEARCH_LENGTH) {
-			setSearchResults(null)
-			setSearchQuery("")
-			return
+			setSearchResults(null);
+			setSearchQuery("");
+			return;
 		}
-		setSearchQuery(trimmed)
-		latestQueryRef.current = trimmed
+		setSearchQuery(trimmed);
+		latestQueryRef.current = trimmed;
 		startSearch(async () => {
 			try {
-				const results = await quickSearch(trimmed)
+				const results = await quickSearch(trimmed);
 				// Discard stale results if user has already typed a new query
-				if (latestQueryRef.current !== trimmed) return
-				setSearchResults(results)
+				if (latestQueryRef.current !== trimmed) return;
+				setSearchResults(results);
 			} catch (error) {
-				if (latestQueryRef.current !== trimmed) return
-				console.error("[QuickSearch] Search failed:", error)
-				setSearchResults("error")
+				if (latestQueryRef.current !== trimmed) return;
+				console.error("[QuickSearch] Search failed:", error);
+				setSearchResults("error");
 			}
-		})
-	}
+		});
+	};
 
 	const handleSearchFromSuggestion = (term: string) => {
-		searchInputRef.current?.setValue(term)
-		setInputValue(term)
-		handleLiveSearch(term)
-	}
+		searchInputRef.current?.setValue(term);
+		setInputValue(term);
+		handleLiveSearch(term);
+	};
 
 	const reset = () => {
-		setInputValue("")
-		setSearchResults(null)
-		setSearchQuery("")
-		resetActiveIndex()
-	}
+		setInputValue("");
+		setSearchResults(null);
+		setSearchQuery("");
+		resetActiveIndex();
+	};
 
 	return {
 		inputValue,
@@ -71,5 +71,5 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 		handleLiveSearch,
 		handleSearchFromSuggestion,
 		reset,
-	}
+	};
 }

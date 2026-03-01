@@ -3,17 +3,12 @@
  */
 
 import type { JewelryTypeConfig, JewelrySubType } from "../types/jewelry.types";
-import {
-	JEWELRY_TYPES,
-	SYNCLUNE_JEWELRY_TYPES,
-} from "../constants/jewelry-types.constants";
+import { JEWELRY_TYPES, SYNCLUNE_JEWELRY_TYPES } from "../constants/jewelry-types.constants";
 
 /**
  * Get the config for a jewelry type by slug
  */
-export const getJewelryTypeConfig = (
-	typeSlug: string
-): JewelryTypeConfig | undefined => {
+export const getJewelryTypeConfig = (typeSlug: string): JewelryTypeConfig | undefined => {
 	return JEWELRY_TYPES[typeSlug];
 };
 
@@ -34,9 +29,7 @@ export const getAllJewelryTypes = (): JewelryTypeConfig[] => {
 /**
  * Get a jewelry type by its key
  */
-export const getJewelryTypeByKey = (
-	key: string
-): JewelryTypeConfig | undefined => {
+export const getJewelryTypeByKey = (key: string): JewelryTypeConfig | undefined => {
 	return JEWELRY_TYPES[key];
 };
 

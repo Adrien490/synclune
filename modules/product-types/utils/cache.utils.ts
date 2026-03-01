@@ -35,5 +35,9 @@ export function cacheProductTypes() {
  * - Le menu de navigation (navbar)
  */
 export function getProductTypeInvalidationTags(): string[] {
-	return [PRODUCT_TYPES_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES, SHARED_CACHE_TAGS.NAVBAR_MENU];
+	return [
+		PRODUCT_TYPES_CACHE_TAGS.LIST,
+		SHARED_CACHE_TAGS.ADMIN_BADGES,
+		SHARED_CACHE_TAGS.NAVBAR_MENU,
+	];
 }

@@ -41,17 +41,12 @@ export type GetCollectionStorefrontReturn = Prisma.CollectionGetPayload<{
 // FUNCTION TYPES - LIST
 // ============================================================================
 
-export type GetCollectionsParams = Omit<
-	z.infer<typeof getCollectionsSchema>,
-	"direction"
-> & {
+export type GetCollectionsParams = Omit<z.infer<typeof getCollectionsSchema>, "direction"> & {
 	direction?: "forward" | "backward";
 };
 
 export type GetCollectionsReturn = {
-	collections: Array<
-		Prisma.CollectionGetPayload<{ select: typeof GET_COLLECTIONS_SELECT }>
-	>;
+	collections: Array<Prisma.CollectionGetPayload<{ select: typeof GET_COLLECTIONS_SELECT }>>;
 	pagination: PaginationInfo;
 };
 

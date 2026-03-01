@@ -10,14 +10,14 @@ interface ConfirmationResultProps {
 export async function ConfirmationResult({ token }: ConfirmationResultProps) {
 	if (!token) {
 		return (
-			<div className="text-center space-y-6">
+			<div className="space-y-6 text-center">
 				<div className="text-6xl">🔗</div>
-				<h2 className="text-xl sm:text-2xl font-display text-foreground">
+				<h2 className="font-display text-foreground text-xl sm:text-2xl">
 					Lien de confirmation manquant
 				</h2>
 				<p className="text-muted-foreground">
-					Le lien de confirmation est manquant. Vérifiez l'email que vous
-					avez reçu ou réinscrivez-vous.
+					Le lien de confirmation est manquant. Vérifiez l'email que vous avez reçu ou
+					réinscrivez-vous.
 				</p>
 				<Button asChild variant="outline">
 					<Link href="/#newsletter">Me réinscrire</Link>
@@ -29,12 +29,10 @@ export async function ConfirmationResult({ token }: ConfirmationResultProps) {
 	const result = await confirmNewsletterSubscription(token);
 
 	return (
-		<div className="text-center space-y-6">
+		<div className="space-y-6 text-center">
 			<div className="text-6xl">{result.success ? "🎉" : "😔"}</div>
-			<h2 className="text-xl sm:text-2xl font-display text-foreground">
-				{result.success
-					? "Inscription confirmée !"
-					: "Confirmation impossible"}
+			<h2 className="font-display text-foreground text-xl sm:text-2xl">
+				{result.success ? "Inscription confirmée !" : "Confirmation impossible"}
 			</h2>
 			{result.success ? (
 				<Alert>

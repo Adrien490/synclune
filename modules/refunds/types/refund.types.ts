@@ -50,10 +50,7 @@ export type GetRefundReturn = RefundDetail | null;
 // FUNCTION TYPES - LIST
 // ============================================================================
 
-export type GetRefundsParams = Omit<
-	z.infer<typeof getRefundsSchema>,
-	"direction"
-> & {
+export type GetRefundsParams = Omit<z.infer<typeof getRefundsSchema>, "direction"> & {
 	direction?: "forward" | "backward";
 };
 

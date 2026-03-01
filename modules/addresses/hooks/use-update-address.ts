@@ -29,10 +29,7 @@ interface UseUpdateAddressOptions {
  * );
  * ```
  */
-export const useUpdateAddress = (
-	addressId: string,
-	options?: UseUpdateAddressOptions
-) => {
+export const useUpdateAddress = (addressId: string, options?: UseUpdateAddressOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateAddress.bind(null, addressId),
@@ -48,9 +45,9 @@ export const useUpdateAddress = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

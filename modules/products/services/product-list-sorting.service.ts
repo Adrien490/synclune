@@ -10,9 +10,7 @@ import type { Product } from "../types/product.types";
  * Calcule le prix minimum d'un produit à partir de ses SKUs actifs
  */
 function getMinPrice(product: Product): number {
-	const activePrices = product.skus
-		.filter((sku) => sku.isActive)
-		.map((sku) => sku.priceInclTax);
+	const activePrices = product.skus.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax);
 
 	return activePrices.length > 0 ? Math.min(...activePrices) : Infinity;
 }
@@ -91,7 +89,7 @@ export function sortProducts(products: Product[], sortBy: string): Product[] {
 export function orderByIds<T extends { id: string }>(
 	items: T[],
 	orderedIds: string[],
-	fallbackSort?: (a: T, b: T) => number
+	fallbackSort?: (a: T, b: T) => number,
 ): T[] {
 	const orderMap = new Map(orderedIds.map((id, index) => [id, index]));
 	return [...items].sort((a, b) => {
@@ -115,9 +113,6 @@ export function orderByIds<T extends { id: string }>(
  * Tri par date de création décroissante (plus récent en premier)
  * Utilisé comme fallback pour les produits sans données de tri
  */
-export function sortByCreatedAtDesc<T extends { createdAt: Date | string }>(
-	a: T,
-	b: T
-): number {
+export function sortByCreatedAtDesc<T extends { createdAt: Date | string }>(a: T, b: T): number {
 	return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 }

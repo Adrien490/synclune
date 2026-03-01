@@ -6,11 +6,7 @@
  * Client-safe type for customization request status.
  * Source of truth: Prisma enum CustomizationRequestStatus in schema.prisma
  */
-export type CustomizationRequestStatus =
-	| "PENDING"
-	| "IN_PROGRESS"
-	| "COMPLETED"
-	| "CANCELLED";
+export type CustomizationRequestStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 
 // ============================================================================
 // PRODUCT TYPE - For customization form
@@ -115,4 +111,3 @@ export interface GetCustomizationRequestsResult {
 		hasPreviousPage: boolean;
 	};
 }
-

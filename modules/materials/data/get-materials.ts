@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { z } from "zod";
@@ -45,9 +42,7 @@ export type {
 /**
  * Récupère la liste des matériaux avec pagination
  */
-export async function getMaterials(
-	params: GetMaterialsParamsInput
-): Promise<GetMaterialsReturn> {
+export async function getMaterials(params: GetMaterialsParamsInput): Promise<GetMaterialsReturn> {
 	try {
 		const validation = getMaterialsSchema.safeParse(params);
 
@@ -75,18 +70,17 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 		const where = buildMaterialWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.MaterialOrderByWithRelationInput[] =
-			params.sortBy.startsWith("name-")
-				? [{ name: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("skuCount-")
-					? [{ skus: { _count: direction } }, { id: "asc" }]
-					: params.sortBy.startsWith("createdAt-")
-						? [{ createdAt: direction }, { id: "asc" }]
-						: [{ name: "asc" }, { id: "asc" }];
+		const orderBy: Prisma.MaterialOrderByWithRelationInput[] = params.sortBy.startsWith("name-")
+			? [{ name: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("skuCount-")
+				? [{ skus: { _count: direction } }, { id: "asc" }]
+				: params.sortBy.startsWith("createdAt-")
+					? [{ createdAt: direction }, { id: "asc" }]
+					: [{ name: "asc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_MATERIALS_DEFAULT_PER_PAGE),
-			GET_MATERIALS_MAX_RESULTS_PER_PAGE
+			GET_MATERIALS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -106,7 +100,7 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 			materials,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return { materials: items, pagination };

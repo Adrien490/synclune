@@ -13,40 +13,34 @@ export default function ReviewsAdminLoading() {
 			<PageHeader variant="compact" title="Avis clients" />
 
 			{/* Statistiques */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<div className="rounded-lg border bg-card p-6">
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium text-muted-foreground">
-								Total avis
-							</p>
-							<Skeleton className="h-8 w-16 mt-1" />
+							<p className="text-muted-foreground text-sm font-medium">Total avis</p>
+							<Skeleton className="mt-1 h-8 w-16" />
 						</div>
-						<MessageSquare className="h-8 w-8 text-muted-foreground" />
+						<MessageSquare className="text-muted-foreground h-8 w-8" />
 					</div>
 				</div>
 
-				<div className="rounded-lg border bg-card p-6">
+				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium text-muted-foreground">
-								Publies
-							</p>
-							<Skeleton className="h-8 w-12 mt-1" />
+							<p className="text-muted-foreground text-sm font-medium">Publies</p>
+							<Skeleton className="mt-1 h-8 w-12" />
 						</div>
-						<CheckCircle2 className="h-8 w-8 text-secondary-foreground" />
+						<CheckCircle2 className="text-secondary-foreground h-8 w-8" />
 					</div>
 				</div>
 
-				<div className="rounded-lg border bg-card p-6">
+				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium text-muted-foreground">
-								Masques
-							</p>
-							<Skeleton className="h-8 w-12 mt-1" />
+							<p className="text-muted-foreground text-sm font-medium">Masques</p>
+							<Skeleton className="mt-1 h-8 w-12" />
 						</div>
-						<EyeOff className="h-8 w-8 text-muted-foreground" />
+						<EyeOff className="text-muted-foreground h-8 w-8" />
 					</div>
 				</div>
 			</div>
@@ -64,16 +58,16 @@ export default function ReviewsAdminLoading() {
 			{/* DataTable skeleton */}
 			<div className="rounded-md border">
 				{/* Table Header */}
-				<div className="border-b bg-muted/50 p-4">
+				<div className="bg-muted/50 border-b p-4">
 					<div className="flex items-center gap-4">
 						<Skeleton className="h-4 w-4" />
 						<div className="flex-1">
 							<Skeleton className="h-4 w-20" />
 						</div>
-						<div className="hidden md:block w-24">
+						<div className="hidden w-24 md:block">
 							<Skeleton className="h-4 w-16" />
 						</div>
-						<div className="hidden lg:block w-32">
+						<div className="hidden w-32 lg:block">
 							<Skeleton className="h-4 w-24" />
 						</div>
 						<div className="w-20">
@@ -98,10 +92,10 @@ export default function ReviewsAdminLoading() {
 									<Skeleton className="h-4 w-48" />
 									<Skeleton className="h-3 w-32" />
 								</div>
-								<div className="hidden md:block w-24">
+								<div className="hidden w-24 md:block">
 									<Skeleton className="h-4 w-20" />
 								</div>
-								<div className="hidden lg:block w-32">
+								<div className="hidden w-32 lg:block">
 									<Skeleton className="h-4 w-24" />
 								</div>
 								<div className="w-20">

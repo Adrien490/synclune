@@ -91,9 +91,7 @@ export const COUNTRY_NAMES: Record<ShippingCountry, string> = {
 /**
  * Vérifie si un code pays est autorisé pour la livraison
  */
-export function isValidShippingCountry(
-	country: string
-): country is ShippingCountry {
+export function isValidShippingCountry(country: string): country is ShippingCountry {
 	return SHIPPING_COUNTRIES.includes(country as ShippingCountry);
 }
 
@@ -112,9 +110,9 @@ export const SORTED_SHIPPING_COUNTRIES = [
 	"FR", // France toujours en premier
 	"MC", // Monaco juste après
 	// Autres pays UE triés alphabétiquement
-	...SHIPPING_COUNTRIES.filter(
-		(c) => c !== "FR" && c !== "MC"
-	).sort((a, b) => COUNTRY_NAMES[a].localeCompare(COUNTRY_NAMES[b], "fr")),
+	...SHIPPING_COUNTRIES.filter((c) => c !== "FR" && c !== "MC").sort((a, b) =>
+		COUNTRY_NAMES[a].localeCompare(COUNTRY_NAMES[b], "fr"),
+	),
 ] as const;
 
 /**

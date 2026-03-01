@@ -1,10 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
-import {
-	exportUserData,
-	type UserDataExport,
-} from "@/modules/users/actions/export-user-data";
+import { exportUserData, type UserDataExport } from "@/modules/users/actions/export-user-data";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import type { ActionState } from "@/shared/types/server-action";
@@ -38,8 +35,7 @@ export function useExportUserData(options?: UseExportUserDataOptions) {
 
 	const [, formAction, isActionPending] = useActionState(
 		withCallbacks(
-			async (_prev: ActionState | undefined, _formData: FormData) =>
-				exportUserData(),
+			async (_prev: ActionState | undefined, _formData: FormData) => exportUserData(),
 			createToastCallbacks({
 				loadingMessage: "Export des données en cours...",
 				onSuccess: (result) => {
@@ -47,7 +43,7 @@ export function useExportUserData(options?: UseExportUserDataOptions) {
 						const data = result.data as UserDataExport;
 						downloadJSON(
 							data,
-							`synclune-mes-donnees-${new Date().toISOString().split("T")[0]}.json`
+							`synclune-mes-donnees-${new Date().toISOString().split("T")[0]}.json`,
 						);
 						options?.onSuccess?.(data);
 					}
@@ -57,9 +53,9 @@ export function useExportUserData(options?: UseExportUserDataOptions) {
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const exportData = () => {

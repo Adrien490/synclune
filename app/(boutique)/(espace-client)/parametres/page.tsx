@@ -3,10 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/shared/components/page-header";
-import {
-	Skeleton,
-	SkeletonGroup,
-} from "@/shared/components/ui/skeleton";
+import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { Bell, LockKeyhole, Monitor, User } from "lucide-react";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { getUserProviders } from "@/modules/auth/data/get-user-providers";
@@ -30,28 +27,25 @@ export default async function SettingsPage() {
 		<>
 			<PageHeader title="Paramètres" variant="compact" />
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-				<div className="lg:col-span-2 space-y-6">
+			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+				<div className="space-y-6 lg:col-span-2">
 					<section className="space-y-4">
 						<div>
-							<h2 className="text-base font-semibold flex items-center gap-2">
-								<User className="size-4 text-muted-foreground" />
+							<h2 className="flex items-center gap-2 text-base font-semibold">
+								<User className="text-muted-foreground size-4" />
 								Profil
 							</h2>
-							<p className="text-sm text-muted-foreground mt-0.5">
+							<p className="text-muted-foreground mt-0.5 text-sm">
 								Modifiez vos informations personnelles
 							</p>
 						</div>
-						<div className="border-t border-border/60 pt-4">
+						<div className="border-border/60 border-t pt-4">
 							<ProfileForm user={user} />
 						</div>
 					</section>
 
 					<Suspense fallback={<SecuritySkeleton />}>
-						<SecuritySectionWrapper
-							emailVerified={user.emailVerified}
-							email={user.email}
-						/>
+						<SecuritySectionWrapper emailVerified={user.emailVerified} email={user.email} />
 					</Suspense>
 
 					<GdprSection
@@ -82,13 +76,7 @@ async function SecuritySectionWrapper({
 	email: string;
 }) {
 	const providers = await getUserProviders();
-	return (
-		<SecuritySection
-			emailVerified={emailVerified}
-			providers={providers}
-			email={email}
-		/>
-	);
+	return <SecuritySection emailVerified={emailVerified} providers={providers} email={email} />;
 }
 
 async function NewsletterWrapper() {
@@ -107,12 +95,12 @@ function SecuritySkeleton() {
 			<section className="space-y-4">
 				<div>
 					<div className="flex items-center gap-2">
-						<LockKeyhole className="size-4 text-muted-foreground" />
+						<LockKeyhole className="text-muted-foreground size-4" />
 						<Skeleton className="h-5 w-24" />
 					</div>
-					<Skeleton className="h-4 w-64 mt-0.5" />
+					<Skeleton className="mt-0.5 h-4 w-64" />
 				</div>
-				<div className="border-t border-border/60 pt-4 space-y-6">
+				<div className="border-border/60 space-y-6 border-t pt-4">
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
 							<Skeleton className="h-4 w-28" />
@@ -133,12 +121,12 @@ function NewsletterSkeleton() {
 			<section className="space-y-4">
 				<div>
 					<div className="flex items-center gap-2">
-						<Bell className="size-4 text-muted-foreground" />
+						<Bell className="text-muted-foreground size-4" />
 						<Skeleton className="h-5 w-32" />
 					</div>
-					<Skeleton className="h-4 w-48 mt-0.5" />
+					<Skeleton className="mt-0.5 h-4 w-48" />
 				</div>
-				<div className="border-t border-border/60 pt-4 space-y-3">
+				<div className="border-border/60 space-y-3 border-t pt-4">
 					<Skeleton className="h-4 w-full" />
 					<Skeleton className="h-9 w-full" />
 				</div>
@@ -153,19 +141,16 @@ function SessionsSkeleton() {
 			<section className="space-y-4">
 				<div>
 					<div className="flex items-center gap-2">
-						<Monitor className="size-4 text-muted-foreground" />
+						<Monitor className="text-muted-foreground size-4" />
 						<Skeleton className="h-5 w-40" />
 					</div>
-					<Skeleton className="h-4 w-28 mt-0.5" />
+					<Skeleton className="mt-0.5 h-4 w-28" />
 				</div>
-				<div className="border-t border-border/60 pt-4">
-					<div className="divide-y divide-border/50">
+				<div className="border-border/60 border-t pt-4">
+					<div className="divide-border/50 divide-y">
 						{Array.from({ length: 2 }).map((_, i) => (
-							<div
-								key={i}
-								className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-							>
-								<Skeleton className="w-5 h-5" shape="circle" />
+							<div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+								<Skeleton className="h-5 w-5" shape="circle" />
 								<div className="flex-1 space-y-1.5">
 									<Skeleton className="h-4 w-32" />
 									<Skeleton className="h-3 w-24" />

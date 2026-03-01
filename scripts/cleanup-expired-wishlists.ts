@@ -69,7 +69,7 @@ async function main() {
 	console.log("\n📋 Aperçu des wishlists à supprimer:");
 	for (const wishlist of expiredWishlists.slice(0, 10)) {
 		console.log(
-			`   - Wishlist ${wishlist.id.slice(0, 8)}... | ${wishlist._count.items} items | Expirée: ${wishlist.expiresAt?.toISOString()}`
+			`   - Wishlist ${wishlist.id.slice(0, 8)}... | ${wishlist._count.items} items | Expirée: ${wishlist.expiresAt?.toISOString()}`,
 		);
 	}
 	if (expiredWishlists.length > 10) {

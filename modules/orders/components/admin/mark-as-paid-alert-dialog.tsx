@@ -52,8 +52,8 @@ export function MarkAsPaidAlertDialog() {
 									<strong>{dialog.data?.orderNumber}</strong> comme payée ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									Cette action est utilisée pour les paiements par virement ou
-									chèque. La commande passera en statut "En préparation".
+									Cette action est utilisée pour les paiements par virement ou chèque. La commande
+									passera en statut "En préparation".
 								</p>
 							</div>
 						</AlertDialogDescription>

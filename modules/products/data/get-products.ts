@@ -21,10 +21,7 @@ import {
 	buildExactSearchConditions,
 	type SearchResult,
 } from "../services/product-query-builder";
-import {
-	getSpellSuggestion,
-	SUGGESTION_THRESHOLD_RESULTS,
-} from "./spell-suggestion";
+import { getSpellSuggestion, SUGGESTION_THRESHOLD_RESULTS } from "./spell-suggestion";
 import { sortProducts, orderByIds } from "../services/product-list-sorting.service";
 import { cacheProducts } from "../utils/cache.utils";
 import { serializeProduct } from "../utils/serialize-product";
@@ -57,16 +54,14 @@ const hasSortByInput = (input: unknown): input is string =>
  */
 export async function getProducts(
 	params: GetProductsParams,
-	options?: { isAdmin?: boolean }
+	options?: { isAdmin?: boolean },
 ): Promise<GetProductsReturn> {
 	try {
 		// Validate input parameters
 		const validation = getProductsSchema.safeParse(params);
 
 		if (!validation.success) {
-			throw new Error(
-				"Invalid parameters: " + JSON.stringify(validation.error.issues)
-			);
+			throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
 		}
 
 		let validatedParams = validation.data as GetProductsParams;
@@ -116,11 +111,7 @@ export async function getProducts(
 
 		// Suggest a correction if few or no results with an active search
 		// Skip suggestions for admins (they often search by SKU/ID)
-		if (
-			validatedParams.search &&
-			!admin &&
-			result.totalCount <= SUGGESTION_THRESHOLD_RESULTS
-		) {
+		if (validatedParams.search && !admin && result.totalCount <= SUGGESTION_THRESHOLD_RESULTS) {
 			const suggestion = await getSpellSuggestion(validatedParams.search, {
 				status: validatedParams.status,
 			});
@@ -148,7 +139,7 @@ export async function getProducts(
  */
 async function fetchProducts(
 	params: GetProductsParams,
-	searchResult?: SearchResult
+	searchResult?: SearchResult,
 ): Promise<GetProductsReturn> {
 	"use cache";
 	cacheProducts();
@@ -184,7 +175,7 @@ async function fetchProducts(
 		// Manual pagination
 		const perPage = Math.min(
 			Math.max(1, params.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE),
-			GET_PRODUCTS_MAX_RESULTS_PER_PAGE
+			GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 		);
 
 		// Find start index based on cursor
@@ -192,9 +183,8 @@ async function fetchProducts(
 		if (params.cursor) {
 			const cursorIndex = sortedProducts.findIndex((p) => p.id === params.cursor);
 			if (cursorIndex !== -1) {
-				startIndex = params.direction === "backward"
-					? Math.max(0, cursorIndex - perPage)
-					: cursorIndex + 1;
+				startIndex =
+					params.direction === "backward" ? Math.max(0, cursorIndex - perPage) : cursorIndex + 1;
 			}
 		}
 
@@ -207,8 +197,8 @@ async function fetchProducts(
 		// - prevCursor = first element of the page (for going backward)
 		const hasNextPage = startIndex + perPage < sortedProducts.length;
 		const hasPreviousPage = startIndex > 0;
-		const nextCursor = hasNextPage ? pageProducts[pageProducts.length - 1]?.id ?? null : null;
-		const prevCursor = hasPreviousPage ? pageProducts[0]?.id ?? null : null;
+		const nextCursor = hasNextPage ? (pageProducts[pageProducts.length - 1]?.id ?? null) : null;
+		const prevCursor = hasPreviousPage ? (pageProducts[0]?.id ?? null) : null;
 
 		return {
 			products: pageProducts.map(serializeProduct),

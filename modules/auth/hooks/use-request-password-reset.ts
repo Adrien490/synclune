@@ -17,9 +17,9 @@ export function useRequestPasswordReset(options?: UseRequestPasswordResetOptions
 				showSuccessToast: false,
 				showErrorToast: false,
 				onSuccess: options?.onSuccess,
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

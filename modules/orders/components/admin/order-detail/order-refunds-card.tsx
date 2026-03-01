@@ -4,12 +4,7 @@ import {
 	REFUND_REASON_LABELS,
 } from "@/modules/refunds/constants/refund.constants";
 import { Badge } from "@/shared/components/ui/badge";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { formatDateShort } from "@/shared/utils/dates";
 import { RotateCcw, ExternalLink, Plus } from "lucide-react";
@@ -17,7 +12,9 @@ import Link from "next/link";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderRefundsCardProps } from "./types";
 
-function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
+function getStatusVariant(
+	status: string,
+): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
 	switch (status) {
 		case RefundStatus.PENDING:
 			return "warning";
@@ -64,9 +61,7 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 			</CardHeader>
 			<CardContent>
 				{refunds.length === 0 ? (
-					<p className="text-sm text-muted-foreground">
-						Aucun remboursement pour cette commande.
-					</p>
+					<p className="text-muted-foreground text-sm">Aucun remboursement pour cette commande.</p>
 				) : (
 					<div className="space-y-3">
 						{refunds.map((refund) => (
@@ -75,16 +70,17 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 								className="flex items-center justify-between gap-4 rounded-lg border p-3"
 							>
 								<div className="min-w-0 flex-1">
-									<div className="flex items-center gap-2 flex-wrap">
+									<div className="flex flex-wrap items-center gap-2">
 										<Badge variant={getStatusVariant(refund.status)}>
 											{REFUND_STATUS_LABELS[refund.status as RefundStatus] || refund.status}
 										</Badge>
-										<span className="text-sm font-medium">
-											{formatEuro(refund.amount)}
-										</span>
+										<span className="text-sm font-medium">{formatEuro(refund.amount)}</span>
 									</div>
-									<div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-										<span>{REFUND_REASON_LABELS[refund.reason as keyof typeof REFUND_REASON_LABELS] || refund.reason}</span>
+									<div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
+										<span>
+											{REFUND_REASON_LABELS[refund.reason as keyof typeof REFUND_REASON_LABELS] ||
+												refund.reason}
+										</span>
 										<span>•</span>
 										<span>{formatDateShort(new Date(refund.createdAt))}</span>
 									</div>

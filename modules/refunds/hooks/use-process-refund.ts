@@ -15,9 +15,9 @@ export function useProcessRefund(options?: UseProcessRefundOptions) {
 			processRefund,
 			createToastCallbacks({
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

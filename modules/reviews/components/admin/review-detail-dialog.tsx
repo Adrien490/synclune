@@ -119,6 +119,8 @@ export function ReviewDetailDialog({
 												className="object-cover"
 												sizes="80px"
 												quality={75}
+												placeholder={media.blurDataUrl ? "blur" : "empty"}
+												blurDataURL={media.blurDataUrl ?? undefined}
 											/>
 										</a>
 									))}

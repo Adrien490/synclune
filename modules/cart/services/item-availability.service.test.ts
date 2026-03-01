@@ -12,17 +12,19 @@ import {
 } from "./item-availability.service";
 import type { CartItemForValidation } from "../types/cart.types";
 
-function createItem(overrides?: Partial<{
-	id: string;
-	skuId: string;
-	quantity: number;
-	inventory: number;
-	isActive: boolean;
-	status: string;
-	deletedAt: Date | null;
-	productDeletedAt: Date | null;
-	productTitle: string;
-}>): CartItemForValidation {
+function createItem(
+	overrides?: Partial<{
+		id: string;
+		skuId: string;
+		quantity: number;
+		inventory: number;
+		isActive: boolean;
+		status: string;
+		deletedAt: Date | null;
+		productDeletedAt: Date | null;
+		productTitle: string;
+	}>,
+): CartItemForValidation {
 	return {
 		id: overrides?.id ?? "item-1",
 		skuId: overrides?.skuId ?? "sku-1",
@@ -56,7 +58,9 @@ describe("isCartItemDeleted", () => {
 	});
 
 	it("should return true when both are soft-deleted", () => {
-		expect(isCartItemDeleted(createItem({ deletedAt: new Date(), productDeletedAt: new Date() }))).toBe(true);
+		expect(
+			isCartItemDeleted(createItem({ deletedAt: new Date(), productDeletedAt: new Date() })),
+		).toBe(true);
 	});
 
 	it("should return false when neither is deleted", () => {
@@ -138,7 +142,11 @@ describe("isCartItemUnavailable", () => {
 	});
 
 	it("should return false for available items", () => {
-		expect(isCartItemUnavailable(createItem({ inventory: 10, quantity: 2, isActive: true, status: "PUBLIC" }))).toBe(false);
+		expect(
+			isCartItemUnavailable(
+				createItem({ inventory: 10, quantity: 2, isActive: true, status: "PUBLIC" }),
+			),
+		).toBe(false);
 	});
 });
 
@@ -192,18 +200,24 @@ describe("checkCartItemAvailability", () => {
 	});
 
 	it("should include correct cartItemId and skuId in issue", () => {
-		const result = checkCartItemAvailability(createItem({ id: "ci-42", skuId: "sku-42", isActive: false }));
+		const result = checkCartItemAvailability(
+			createItem({ id: "ci-42", skuId: "sku-42", isActive: false }),
+		);
 		expect(result.issue?.cartItemId).toBe("ci-42");
 		expect(result.issue?.skuId).toBe("sku-42");
 	});
 
 	it("should include product title in issue", () => {
-		const result = checkCartItemAvailability(createItem({ productTitle: "Collier Etoile", isActive: false }));
+		const result = checkCartItemAvailability(
+			createItem({ productTitle: "Collier Etoile", isActive: false }),
+		);
 		expect(result.issue?.productTitle).toBe("Collier Etoile");
 	});
 
 	it("should prioritize DELETED over INACTIVE", () => {
-		const result = checkCartItemAvailability(createItem({ deletedAt: new Date(), isActive: false }));
+		const result = checkCartItemAvailability(
+			createItem({ deletedAt: new Date(), isActive: false }),
+		);
 		expect(result.issue?.issueType).toBe("DELETED");
 	});
 

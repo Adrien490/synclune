@@ -6,10 +6,7 @@ import {
 	GET_SUBSCRIBERS_SELECT,
 	GET_SUBSCRIBERS_SORT_FIELDS,
 } from "../constants/subscriber.constants";
-import {
-	getSubscribersSchema,
-	subscriberFiltersSchema,
-} from "../schemas/subscriber.schemas";
+import { getSubscribersSchema, subscriberFiltersSchema } from "../schemas/subscriber.schemas";
 
 // ============================================================================
 // TYPES - NEWSLETTER STATS

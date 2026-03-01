@@ -7,19 +7,19 @@
 // =============================================================================
 
 export interface CursorPaginationParams {
-	cursor?: string
-	direction?: "forward" | "backward"
-	take: number
+	cursor?: string;
+	direction?: "forward" | "backward";
+	take: number;
 }
 
 export interface PaginationInfo {
-	nextCursor: string | null
-	prevCursor: string | null
-	hasNextPage: boolean
-	hasPreviousPage: boolean
+	nextCursor: string | null;
+	prevCursor: string | null;
+	hasNextPage: boolean;
+	hasPreviousPage: boolean;
 }
 
 export interface CursorPaginationResult<T> {
-	items: T[]
-	pagination: PaginationInfo
+	items: T[];
+	pagination: PaginationInfo;
 }

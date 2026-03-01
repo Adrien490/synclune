@@ -24,9 +24,20 @@ const MAX_RESULTS_PER_PAGE = 200;
 // DATA FUNCTION
 // ============================================================================
 
-export async function getCustomizationRequests(params: GetCustomizationRequestsParams = {}): Promise<GetCustomizationRequestsResult> {
+export async function getCustomizationRequests(
+	params: GetCustomizationRequestsParams = {},
+): Promise<GetCustomizationRequestsResult> {
 	const admin = await isAdmin();
-	if (!admin) return { items: [], pagination: { nextCursor: null, prevCursor: null, hasNextPage: false, hasPreviousPage: false } };
+	if (!admin)
+		return {
+			items: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		};
 
 	return fetchCustomizationRequests(params);
 }

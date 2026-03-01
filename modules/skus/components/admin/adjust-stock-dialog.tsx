@@ -52,7 +52,7 @@ function AdjustStockFormContent({
 		<>
 			<ResponsiveDialogHeader>
 				<ResponsiveDialogTitle className="flex items-center gap-2">
-					<Package className="h-5 w-5 text-primary" />
+					<Package className="text-primary h-5 w-5" />
 					Ajuster le stock
 				</ResponsiveDialogTitle>
 				<ResponsiveDialogDescription>
@@ -69,7 +69,7 @@ function AdjustStockFormContent({
 					<Label htmlFor="adjustment" className="text-sm font-medium">
 						Quantité
 					</Label>
-					<div className="flex items-center gap-2 mt-2">
+					<div className="mt-2 flex items-center gap-2">
 						<Button
 							type="button"
 							variant="outline"
@@ -107,21 +107,21 @@ function AdjustStockFormContent({
 				</div>
 
 				{/* Preview amélioré */}
-				<div className="p-3 rounded-md bg-muted">
+				<div className="bg-muted rounded-md p-3">
 					<div className="flex items-center justify-between text-sm">
 						<div className="text-center">
-							<div className="text-xs text-muted-foreground mb-1">Actuel</div>
+							<div className="text-muted-foreground mb-1 text-xs">Actuel</div>
 							<div className="font-semibold">{currentStock}</div>
 						</div>
-						<ArrowRight className="h-4 w-4 text-muted-foreground" />
+						<ArrowRight className="text-muted-foreground h-4 w-4" />
 						<div className="text-center">
-							<div className="text-xs text-muted-foreground mb-1">Nouveau</div>
+							<div className="text-muted-foreground mb-1 text-xs">Nouveau</div>
 							<div
 								className={cn(
 									"font-bold",
 									newStock < 0 && "text-destructive",
 									adjustment > 0 && newStock >= 0 && "text-emerald-600",
-									adjustment < 0 && newStock >= 0 && "text-amber-600"
+									adjustment < 0 && newStock >= 0 && "text-amber-600",
 								)}
 							>
 								{newStock}
@@ -129,11 +129,11 @@ function AdjustStockFormContent({
 						</div>
 					</div>
 					{adjustment !== 0 && (
-						<div className="mt-2 pt-2 border-t border-border/50 text-center">
+						<div className="border-border/50 mt-2 border-t pt-2 text-center">
 							<span
 								className={cn(
 									"text-sm font-medium",
-									adjustment > 0 ? "text-emerald-600" : "text-amber-600"
+									adjustment > 0 ? "text-emerald-600" : "text-amber-600",
 								)}
 							>
 								{adjustment > 0 ? `+${adjustment}` : adjustment}
@@ -141,9 +141,7 @@ function AdjustStockFormContent({
 						</div>
 					)}
 					{newStock < 0 && (
-						<div className="mt-2 text-xs text-destructive text-center">
-							Stock invalide
-						</div>
+						<div className="text-destructive mt-2 text-center text-xs">Stock invalide</div>
 					)}
 				</div>
 
@@ -152,8 +150,7 @@ function AdjustStockFormContent({
 					{(field) => (
 						<div>
 							<Label htmlFor="reason" className="text-sm font-medium">
-								Raison{" "}
-								<span className="text-muted-foreground font-normal">(optionnel)</span>
+								Raison <span className="text-muted-foreground font-normal">(optionnel)</span>
 							</Label>
 							<Input
 								id="reason"
@@ -169,12 +166,7 @@ function AdjustStockFormContent({
 				</form.Field>
 
 				<ResponsiveDialogFooter className="pt-2">
-					<Button
-						type="button"
-						variant="outline"
-						onClick={onClose}
-						disabled={isPending}
-					>
+					<Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
 						Annuler
 					</Button>
 					<Button type="submit" disabled={!isValid || isPending}>

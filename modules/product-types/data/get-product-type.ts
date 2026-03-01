@@ -6,16 +6,10 @@ import { cacheProductTypes } from "../constants/cache";
 
 import { GET_PRODUCT_TYPE_SELECT } from "../constants/product-type.constants";
 import { getProductTypeSchema } from "../schemas/product-type.schemas";
-import type {
-	GetProductTypeParams,
-	GetProductTypeReturn,
-} from "../types/product-type.types";
+import type { GetProductTypeParams, GetProductTypeReturn } from "../types/product-type.types";
 
 // Re-export pour compatibilité
-export type {
-	GetProductTypeParams,
-	GetProductTypeReturn,
-} from "../types/product-type.types";
+export type { GetProductTypeParams, GetProductTypeReturn } from "../types/product-type.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -25,7 +19,7 @@ export type {
  * Récupère un type de produit par son slug
  */
 export async function getProductTypeBySlug(
-	params: Partial<GetProductTypeParams>
+	params: Partial<GetProductTypeParams>,
 ): Promise<GetProductTypeReturn | null> {
 	const validation = getProductTypeSchema.safeParse(params ?? {});
 
@@ -45,7 +39,7 @@ export async function getProductTypeBySlug(
  */
 async function fetchProductType(
 	slug: string,
-	includeInactive: boolean
+	includeInactive: boolean,
 ): Promise<GetProductTypeReturn | null> {
 	"use cache";
 	cacheProductTypes();

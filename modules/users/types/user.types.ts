@@ -6,11 +6,7 @@ import {
 	GET_USERS_SELECT,
 	GET_USERS_SORT_FIELDS,
 } from "../constants/user.constants";
-import {
-	getUserSchema,
-	getUsersSchema,
-	userFiltersSchema,
-} from "../schemas/user.schemas";
+import { getUserSchema, getUsersSchema, userFiltersSchema } from "../schemas/user.schemas";
 
 // ============================================================================
 // TYPES - SINGLE USER
@@ -33,9 +29,7 @@ export type UserSortField = (typeof GET_USERS_SORT_FIELDS)[number];
 export type GetUsersParams = z.infer<typeof getUsersSchema>;
 
 export type GetUsersReturn = {
-	users: Array<
-		Prisma.UserGetPayload<{ select: typeof GET_USERS_SELECT }>
-	>;
+	users: Array<Prisma.UserGetPayload<{ select: typeof GET_USERS_SELECT }>>;
 	pagination: PaginationInfo;
 };
 

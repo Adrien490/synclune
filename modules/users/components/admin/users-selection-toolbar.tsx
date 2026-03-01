@@ -26,14 +26,7 @@ import { useBulkDeleteUsers } from "@/modules/users/hooks/use-bulk-delete-users"
 import { useBulkSuspendUsers } from "@/modules/users/hooks/use-bulk-suspend-users";
 import { useBulkRestoreUsers } from "@/modules/users/hooks/use-bulk-restore-users";
 import { useBulkChangeUserRole } from "@/modules/users/hooks/use-bulk-change-user-role";
-import {
-	CheckCircle2,
-	Loader2,
-	MoreVertical,
-	RotateCcw,
-	Trash2,
-	XCircle,
-} from "lucide-react";
+import { CheckCircle2, Loader2, MoreVertical, RotateCcw, Trash2, XCircle } from "lucide-react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 interface UsersSelectionToolbarProps {
@@ -84,9 +77,9 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 	return (
 		<>
 			<SelectionToolbar>
-				<span className="text-sm text-muted-foreground">
-					{selectedItems.length} utilisateur{selectedItems.length > 1 ? "s" : ""}{" "}
-					selectionne{selectedItems.length > 1 ? "s" : ""}
+				<span className="text-muted-foreground text-sm">
+					{selectedItems.length} utilisateur{selectedItems.length > 1 ? "s" : ""} selectionne
+					{selectedItems.length > 1 ? "s" : ""}
 				</span>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -97,9 +90,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-50">
 						<DropdownMenuSub>
-							<DropdownMenuSubTrigger>
-								Changer le role
-							</DropdownMenuSubTrigger>
+							<DropdownMenuSubTrigger>Changer le role</DropdownMenuSubTrigger>
 							<DropdownMenuSubContent>
 								<DropdownMenuItem onClick={() => promoteDialog.open()}>
 									<CheckCircle2 className="h-4 w-4" />
@@ -121,10 +112,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							Restaurer
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							onClick={() => deleteDialog.open()}
-							variant="destructive"
-						>
+						<DropdownMenuItem onClick={() => deleteDialog.open()} variant="destructive">
 							<Trash2 className="h-4 w-4" />
 							Supprimer
 						</DropdownMenuItem>
@@ -133,7 +121,10 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</SelectionToolbar>
 
 			{/* Delete Dialog */}
-			<AlertDialog open={deleteDialog.isOpen} onOpenChange={(open) => open ? deleteDialog.open() : deleteDialog.close()}>
+			<AlertDialog
+				open={deleteDialog.isOpen}
+				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={deleteAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -155,10 +146,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<Button
-								type="submit"
-								disabled={isPending}
-							>
+							<Button type="submit" disabled={isPending}>
 								{isDeletePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -177,7 +165,10 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</AlertDialog>
 
 			{/* Suspend Dialog */}
-			<AlertDialog open={suspendDialog.isOpen} onOpenChange={(open) => open ? suspendDialog.open() : suspendDialog.close()}>
+			<AlertDialog
+				open={suspendDialog.isOpen}
+				onOpenChange={(open) => (open ? suspendDialog.open() : suspendDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={suspendAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -218,7 +209,10 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</AlertDialog>
 
 			{/* Restore Dialog */}
-			<AlertDialog open={restoreDialog.isOpen} onOpenChange={(open) => open ? restoreDialog.open() : restoreDialog.close()}>
+			<AlertDialog
+				open={restoreDialog.isOpen}
+				onOpenChange={(open) => (open ? restoreDialog.open() : restoreDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={restoreAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -259,7 +253,10 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</AlertDialog>
 
 			{/* Promote to Admin Dialog */}
-			<AlertDialog open={promoteDialog.isOpen} onOpenChange={(open) => open ? promoteDialog.open() : promoteDialog.close()}>
+			<AlertDialog
+				open={promoteDialog.isOpen}
+				onOpenChange={(open) => (open ? promoteDialog.open() : promoteDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -275,9 +272,8 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 								au role d&apos;administrateur ?
 								<br />
 								<br />
-								<span className="text-amber-600 font-medium">
-									Les administrateurs ont acces a toutes les fonctionnalites du
-									dashboard.
+								<span className="font-medium text-amber-600">
+									Les administrateurs ont acces a toutes les fonctionnalites du dashboard.
 								</span>
 							</AlertDialogDescription>
 						</AlertDialogHeader>
@@ -304,7 +300,10 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</AlertDialog>
 
 			{/* Demote to User Dialog */}
-			<AlertDialog open={demoteDialog.isOpen} onOpenChange={(open) => open ? demoteDialog.open() : demoteDialog.close()}>
+			<AlertDialog
+				open={demoteDialog.isOpen}
+				onOpenChange={(open) => (open ? demoteDialog.open() : demoteDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />

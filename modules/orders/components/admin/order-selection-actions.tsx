@@ -82,10 +82,7 @@ export function OrderSelectionActions() {
 						Annuler
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						onClick={handleBulkDelete}
-						variant="destructive"
-					>
+					<DropdownMenuItem onClick={handleBulkDelete} variant="destructive">
 						<Trash2 className="h-4 w-4" />
 						Supprimer
 					</DropdownMenuItem>
@@ -93,7 +90,10 @@ export function OrderSelectionActions() {
 			</DropdownMenu>
 
 			{/* Mark as Delivered Dialog */}
-			<AlertDialog open={deliveredDialog.isOpen} onOpenChange={(open) => open ? deliveredDialog.open() : deliveredDialog.close()}>
+			<AlertDialog
+				open={deliveredDialog.isOpen}
+				onOpenChange={(open) => (open ? deliveredDialog.open() : deliveredDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={markAsDeliveredAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -133,7 +133,10 @@ export function OrderSelectionActions() {
 			</AlertDialog>
 
 			{/* Cancel Orders Dialog */}
-			<AlertDialog open={cancelDialog.isOpen} onOpenChange={(open) => open ? cancelDialog.open() : cancelDialog.close()}>
+			<AlertDialog
+				open={cancelDialog.isOpen}
+				onOpenChange={(open) => (open ? cancelDialog.open() : cancelDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={cancelOrdersAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -147,17 +150,15 @@ export function OrderSelectionActions() {
 								?
 								<br />
 								<br />
-								Les commandes déjà annulées seront ignorées. Le stock sera restauré pour les commandes en attente de paiement.
+								Les commandes déjà annulées seront ignorées. Le stock sera restauré pour les
+								commandes en attente de paiement.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Retour
 							</AlertDialogCancel>
-							<Button
-								type="submit"
-								disabled={isPending}
-							>
+							<Button type="submit" disabled={isPending}>
 								{isCancelPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />

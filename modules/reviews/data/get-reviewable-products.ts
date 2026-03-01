@@ -26,9 +26,7 @@ export async function getReviewableProducts(): Promise<ReviewableProduct[]> {
  * Fonction interne avec cache
  * Separee pour eviter l'incompatibilite cookies/headers avec "use cache"
  */
-async function fetchReviewableProducts(
-	userId: string
-): Promise<ReviewableProduct[]> {
+async function fetchReviewableProducts(userId: string): Promise<ReviewableProduct[]> {
 	"use cache: private";
 	cacheLife("userOrders");
 	cacheTag(REVIEWS_CACHE_TAGS.REVIEWABLE(userId));

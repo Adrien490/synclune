@@ -12,7 +12,7 @@ import { getProductTypeInvalidationTags } from "../utils/cache.utils";
 
 export async function refreshProductTypes(
 	_prevState: ActionState | undefined,
-	_formData: FormData
+	_formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const admin = await requireAdmin();

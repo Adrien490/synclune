@@ -65,4 +65,3 @@ export interface BatchSkuValidationResult {
 	isActive: boolean;
 	productStatus: string;
 }
-

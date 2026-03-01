@@ -92,12 +92,9 @@ export function sanitizeText(text: string): string {
 		.replace(/&#x27;/g, "'")
 		.replace(/&#x2F;/g, "/")
 		.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
-		.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-			String.fromCharCode(parseInt(hex, 16))
-		);
+		.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
 
 	// 2. Supprimer toutes les balises HTML (maintenant visibles après décodage)
 	// React échappe automatiquement le contenu lors du rendu
 	return decoded.replace(/<[^>]*>/g, "").trim();
 }
-

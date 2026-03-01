@@ -3,10 +3,7 @@ import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
-import {
-	getCollections,
-	SORT_LABELS,
-} from "@/modules/collections/data/get-collections";
+import { getCollections, SORT_LABELS } from "@/modules/collections/data/get-collections";
 import { getFirstParam } from "@/shared/utils/params";
 import { Metadata } from "next";
 import { Suspense } from "react";
@@ -21,23 +18,35 @@ import { RefreshCollectionsButton } from "@/modules/collections/components/admin
 import { parseFilters, parseStatus } from "./_utils/params";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const CollectionFormDialog = dynamic(
-	() => import("@/modules/collections/components/admin/collection-form-dialog").then((mod) => mod.CollectionFormDialog)
+const CollectionFormDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/collection-form-dialog").then(
+		(mod) => mod.CollectionFormDialog,
+	),
 );
-const DeleteCollectionAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/delete-collection-alert-dialog").then((mod) => mod.DeleteCollectionAlertDialog)
+const DeleteCollectionAlertDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/delete-collection-alert-dialog").then(
+		(mod) => mod.DeleteCollectionAlertDialog,
+	),
 );
-const BulkDeleteCollectionsAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/bulk-delete-collections-alert-dialog").then((mod) => mod.BulkDeleteCollectionsAlertDialog)
+const BulkDeleteCollectionsAlertDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/bulk-delete-collections-alert-dialog").then(
+		(mod) => mod.BulkDeleteCollectionsAlertDialog,
+	),
 );
-const ArchiveCollectionAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/archive-collection-alert-dialog").then((mod) => mod.ArchiveCollectionAlertDialog)
+const ArchiveCollectionAlertDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/archive-collection-alert-dialog").then(
+		(mod) => mod.ArchiveCollectionAlertDialog,
+	),
 );
-const BulkArchiveCollectionsAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/bulk-archive-collections-alert-dialog").then((mod) => mod.BulkArchiveCollectionsAlertDialog)
+const BulkArchiveCollectionsAlertDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/bulk-archive-collections-alert-dialog").then(
+		(mod) => mod.BulkArchiveCollectionsAlertDialog,
+	),
 );
-const ChangeCollectionStatusAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/change-collection-status-alert-dialog").then((mod) => mod.ChangeCollectionStatusAlertDialog)
+const ChangeCollectionStatusAlertDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/change-collection-status-alert-dialog").then(
+		(mod) => mod.ChangeCollectionStatusAlertDialog,
+	),
 );
 
 type CollectionFiltersSearchParams = {
@@ -66,15 +75,11 @@ type CollectionsAdminPageProps = {
 	searchParams: Promise<CollectionsSearchParams>;
 };
 
-export default async function CollectionsAdminPage({
-	searchParams,
-}: CollectionsAdminPageProps) {
+export default async function CollectionsAdminPage({ searchParams }: CollectionsAdminPageProps) {
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as
-		| "forward"
-		| "backward";
+	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
 	const sortBy = (getFirstParam(params.sortBy) || "name-ascending") as
 		| "name-ascending"
@@ -105,23 +110,18 @@ export default async function CollectionsAdminPage({
 			<BulkArchiveCollectionsAlertDialog />
 			<ChangeCollectionStatusAlertDialog />
 
-			<PageHeader
-				variant="compact"
-				title="Collections"
-				actions={<CreateCollectionButton />}
-			/>
+			<PageHeader variant="compact" title="Collections" actions={<CreateCollectionButton />} />
 
 			<div className="space-y-6">
 				{/* Onglets de statut */}
-				<CollectionStatusNavigation
-					currentStatus={status}
-					searchParams={params}
-				/>
+				<CollectionStatusNavigation currentStatus={status} searchParams={params} />
 
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des collections"
 					search={
-						<SearchInput mode="live" size="sm"
+						<SearchInput
+							mode="live"
+							size="sm"
 							paramName="search"
 							placeholder="Rechercher par nom, slug, description..."
 							ariaLabel="Rechercher une collection par nom, slug ou description"

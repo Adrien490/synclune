@@ -21,26 +21,18 @@ const icons = {
 	success: (
 		<div className="relative" aria-hidden="true">
 			<svg
-				className="size-[18px] text-primary"
+				className="text-primary size-[18px]"
 				viewBox="0 0 24 24"
 				fill="none"
 				strokeWidth="1.5"
 				stroke="currentColor"
 			>
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					d="M12 3L4 9l8 12 8-12-8-6z"
-				/>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M12 3L4 9l8 12 8-12-8-6z" />
 				<path strokeLinecap="round" strokeLinejoin="round" d="M4 9h16" />
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					d="M8.5 9L12 21l3.5-12"
-				/>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M8.5 9L12 21l3.5-12" />
 			</svg>
 			<svg
-				className="absolute -top-0.5 -right-0.5 size-2 text-secondary animate-sparkle-pulse"
+				className="text-secondary animate-sparkle-pulse absolute -top-0.5 -right-0.5 size-2"
 				viewBox="0 0 24 24"
 				fill="currentColor"
 			>
@@ -51,7 +43,7 @@ const icons = {
 	error: (
 		<div className="relative" aria-hidden="true">
 			<svg
-				className="size-[18px] text-primary animate-heart-beat"
+				className="text-primary animate-heart-beat size-[18px]"
 				viewBox="0 0 24 24"
 				fill="none"
 				strokeWidth="1.5"
@@ -62,14 +54,10 @@ const icons = {
 					strokeLinejoin="round"
 					d="M12 21C12 21 4 14 4 8.5C4 5.5 6.5 3 9.5 3C11 3 12 4 12 4C12 4 13 3 14.5 3C17.5 3 20 5.5 20 8.5C20 14 12 21 12 21Z"
 				/>
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					d="M12 4L10 10L14 12L12 21"
-				/>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M12 4L10 10L14 12L12 21" />
 			</svg>
 			<svg
-				className="absolute -bottom-0.5 -right-0.5 size-1.5 text-primary/60 animate-sparkle-pulse"
+				className="text-primary/60 animate-sparkle-pulse absolute -right-0.5 -bottom-0.5 size-1.5"
 				viewBox="0 0 24 24"
 				fill="currentColor"
 			>
@@ -80,7 +68,7 @@ const icons = {
 	warning: (
 		<div className="relative" aria-hidden="true">
 			<svg
-				className="size-[18px] text-secondary"
+				className="text-secondary size-[18px]"
 				viewBox="0 0 24 24"
 				fill="none"
 				strokeWidth="1.5"
@@ -94,7 +82,7 @@ const icons = {
 				<circle cx="12" cy="12" r="1.5" fill="none" stroke="currentColor" />
 			</svg>
 			<svg
-				className="absolute -top-0.5 -right-0.5 size-1.5 text-secondary animate-sparkle-pulse"
+				className="text-secondary animate-sparkle-pulse absolute -top-0.5 -right-0.5 size-1.5"
 				style={{ animationDelay: "1s" }}
 				viewBox="0 0 24 24"
 				fill="currentColor"
@@ -106,7 +94,7 @@ const icons = {
 	loading: (
 		<div className="relative size-[18px]" aria-hidden="true">
 			<svg
-				className="size-full text-primary/30"
+				className="text-primary/30 size-full"
 				viewBox="0 0 24 24"
 				fill="none"
 				strokeWidth="1.5"
@@ -115,7 +103,7 @@ const icons = {
 				<circle cx="12" cy="12" r="8" />
 			</svg>
 			<svg
-				className="absolute inset-0 size-full text-primary animate-spin"
+				className="text-primary absolute inset-0 size-full animate-spin"
 				viewBox="0 0 24 24"
 				fill="none"
 				strokeWidth="1.5"
@@ -124,7 +112,7 @@ const icons = {
 				<path strokeLinecap="round" d="M12 4a8 8 0 0 1 6.93 4" />
 			</svg>
 			<svg
-				className="absolute -top-0.5 -right-0.5 size-1.5 text-primary/40 animate-sparkle-pulse"
+				className="text-primary/40 animate-sparkle-pulse absolute -top-0.5 -right-0.5 size-1.5"
 				style={{ animationDelay: "0.5s" }}
 				viewBox="0 0 24 24"
 				fill="currentColor"
@@ -158,9 +146,7 @@ export function AppToaster() {
 			icons={icons}
 			closeButton
 			offset={
-				isMobile
-					? "max(1rem, env(safe-area-inset-bottom))"
-					: "max(1rem, env(safe-area-inset-top))"
+				isMobile ? "max(1rem, env(safe-area-inset-bottom))" : "max(1rem, env(safe-area-inset-top))"
 			}
 			toastOptions={{
 				className: isMobile ? "!mb-safe" : "!mt-safe",

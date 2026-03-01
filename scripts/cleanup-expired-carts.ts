@@ -69,7 +69,7 @@ async function main() {
 	console.log("\n📋 Aperçu des paniers à supprimer:");
 	for (const cart of expiredCarts.slice(0, 10)) {
 		console.log(
-			`   - Cart ${cart.id.slice(0, 8)}... | ${cart._count.items} items | Expiré: ${cart.expiresAt?.toISOString()}`
+			`   - Cart ${cart.id.slice(0, 8)}... | ${cart._count.items} items | Expiré: ${cart.expiresAt?.toISOString()}`,
 		);
 	}
 	if (expiredCarts.length > 10) {

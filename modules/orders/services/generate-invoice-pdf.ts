@@ -133,9 +133,7 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 	doc.setFontSize(8);
 	for (const item of order.items) {
 		const description = item.productTitle;
-		const variant = [item.skuColor, item.skuMaterial, item.skuSize]
-			.filter(Boolean)
-			.join(" / ");
+		const variant = [item.skuColor, item.skuMaterial, item.skuSize].filter(Boolean).join(" / ");
 
 		doc.text(description, colX.description + 2, y);
 		if (variant) {
@@ -169,11 +167,7 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 	}
 
 	doc.text("Frais de livraison", totalsX, y);
-	doc.text(
-		order.shippingCost === 0 ? "Offerts" : formatEuroPdf(order.shippingCost),
-		colX.total,
-		y,
-	);
+	doc.text(order.shippingCost === 0 ? "Offerts" : formatEuroPdf(order.shippingCost), colX.total, y);
 	y += 5;
 
 	doc.text("TVA", totalsX, y);

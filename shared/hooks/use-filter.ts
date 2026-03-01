@@ -1,15 +1,11 @@
-"use client"
+"use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useOptimistic, useTransition } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
 
-import type {
-	FilterDefinition,
-	FilterValue,
-	UseFilterOptions,
-} from "@/shared/types/hook.types"
+import type { FilterDefinition, FilterValue, UseFilterOptions } from "@/shared/types/hook.types";
 
-export type { FilterValue, FilterDefinition, UseFilterOptions } from "@/shared/types/hook.types"
+export type { FilterValue, FilterDefinition, UseFilterOptions } from "@/shared/types/hook.types";
 
 export function useFilter(options: UseFilterOptions = {}) {
 	const { filterPrefix = "filter_", preservePage = false } = options;
@@ -24,17 +20,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 
 	searchParams.forEach((value, key) => {
 		// Ignorer les paramètres de navigation
-		if (
-			[
-				"page",
-				"perPage",
-				"sortBy",
-				"sortOrder",
-				"search",
-				"cursor",
-				"direction",
-			].includes(key)
-		) {
+		if (["page", "perPage", "sortBy", "sortOrder", "search", "cursor", "direction"].includes(key)) {
 			return;
 		}
 
@@ -82,7 +68,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 				}
 				return f.key !== key;
 			});
-		}
+		},
 	);
 
 	// Construire une nouvelle URL avec les paramètres mis à jour
@@ -123,9 +109,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 					return;
 				}
 
-				const fullKey = key.startsWith(filterPrefix)
-					? key
-					: `${filterPrefix}${key}`;
+				const fullKey = key.startsWith(filterPrefix) ? key : `${filterPrefix}${key}`;
 
 				if (Array.isArray(value)) {
 					value.forEach((v) => params.append(fullKey, String(v)));

@@ -19,9 +19,7 @@ interface OrderDetailContentProps {
 	orderNumber: string;
 }
 
-export async function OrderDetailContent({
-	orderNumber,
-}: OrderDetailContentProps) {
+export async function OrderDetailContent({ orderNumber }: OrderDetailContentProps) {
 	const order = await getOrder({ orderNumber });
 
 	if (!order) {
@@ -32,34 +30,24 @@ export async function OrderDetailContent({
 	const daysRemaining = getReturnDaysRemaining(order.actualDelivery);
 
 	return (
-		<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-			<div className="lg:col-span-2 space-y-6">
+		<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+			<div className="space-y-6 lg:col-span-2">
 				<OrderItemsList items={order.items} />
-				{order.refunds.length > 0 && (
-					<OrderRefundsCard refunds={order.refunds} />
-				)}
+				{order.refunds.length > 0 && <OrderRefundsCard refunds={order.refunds} />}
 				<OrderStatusTimeline order={order} />
 				<OrderTracking order={order} />
 			</div>
 
-			<div className="lg:col-span-1 space-y-6">
+			<div className="space-y-6 lg:col-span-1">
 				<OrderSummaryCard order={order} />
 				<OrderAddressesCard order={order} />
-				{order.paymentStatus === "PAID" &&
-					order.invoiceStatus === "GENERATED" && (
-						<DownloadInvoiceButton
-							orderNumber={order.orderNumber}
-						/>
-					)}
+				{order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED" && (
+					<DownloadInvoiceButton orderNumber={order.orderNumber} />
+				)}
 				{canRequestReturn && (
-					<RequestReturnButton
-						orderId={order.id}
-						daysRemaining={daysRemaining}
-					/>
+					<RequestReturnButton orderId={order.id} daysRemaining={daysRemaining} />
 				)}
-				{order.status === "PENDING" && (
-					<CancelOrderButton orderId={order.id} />
-				)}
+				{order.status === "PENDING" && <CancelOrderButton orderId={order.id} />}
 			</div>
 		</div>
 	);

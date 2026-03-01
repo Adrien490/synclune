@@ -29,9 +29,7 @@ export function calculatePriceInfo(skus: SkuForPricing[] | undefined | null): Pr
 		return { minPrice: 0, maxPrice: 0, hasMultiplePrices: false };
 	}
 
-	const activePrices = skus
-		.filter((sku) => sku.isActive)
-		.map((sku) => sku.priceInclTax);
+	const activePrices = skus.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax);
 
 	if (activePrices.length === 0) {
 		return { minPrice: 0, maxPrice: 0, hasMultiplePrices: false };
@@ -53,7 +51,7 @@ export function calculatePriceInfo(skus: SkuForPricing[] | undefined | null): Pr
  */
 export function determineStockStatus(
 	inventory: number | undefined | null,
-	isActive: boolean | undefined | null
+	isActive: boolean | undefined | null,
 ): StockStatus {
 	const qty = inventory ?? 0;
 	const active = isActive ?? false;
@@ -78,7 +76,7 @@ export function determineStockStatus(
  */
 export function calculateDiscountPercent(
 	compareAtPrice: number | undefined | null,
-	priceInclTax: number
+	priceInclTax: number,
 ): number {
 	if (!compareAtPrice || compareAtPrice <= priceInclTax) {
 		return 0;
@@ -96,7 +94,7 @@ export function calculateDiscountPercent(
  */
 export function hasActiveDiscount(
 	compareAtPrice: number | undefined | null,
-	priceInclTax: number
+	priceInclTax: number,
 ): boolean {
 	return !!compareAtPrice && compareAtPrice > priceInclTax;
 }
@@ -128,7 +126,7 @@ export function getSchemaOrgAvailabilityUrl(stockStatus: StockStatus): string {
  */
 export function calculateSavings(
 	compareAtPrice: number | undefined | null,
-	priceInclTax: number
+	priceInclTax: number,
 ): number {
 	if (!compareAtPrice || compareAtPrice <= priceInclTax) {
 		return 0;

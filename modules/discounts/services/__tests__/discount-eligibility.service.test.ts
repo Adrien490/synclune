@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { checkDiscountEligibility } from "../discount-eligibility.service";
-import type {
-	DiscountValidation,
-	DiscountApplicationContext,
-} from "../../types/discount.types";
+import type { DiscountValidation, DiscountApplicationContext } from "../../types/discount.types";
 
 vi.mock("../../constants/discount.constants", () => ({
 	DISCOUNT_ERROR_MESSAGES: {
@@ -21,9 +18,7 @@ vi.mock("../../constants/discount.constants", () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeDiscount(
-	overrides: Record<string, unknown> = {}
-): DiscountValidation {
+function makeDiscount(overrides: Record<string, unknown> = {}): DiscountValidation {
 	return {
 		id: "discount-1",
 		code: "PROMO10",
@@ -41,7 +36,7 @@ function makeDiscount(
 }
 
 function makeContext(
-	overrides: Partial<DiscountApplicationContext> = {}
+	overrides: Partial<DiscountApplicationContext> = {},
 ): DiscountApplicationContext {
 	return {
 		subtotal: 5000,
@@ -201,9 +196,7 @@ describe("checkDiscountEligibility", () => {
 			const result = checkDiscountEligibility(discount, makeContext());
 
 			expect(result.eligible).toBe(false);
-			expect(result.error).toBe(
-				"Ce code promo a atteint sa limite d'utilisation"
-			);
+			expect(result.error).toBe("Ce code promo a atteint sa limite d'utilisation");
 		});
 
 		it("should return not eligible when usageCount exceeds maxUsageCount", () => {
@@ -211,9 +204,7 @@ describe("checkDiscountEligibility", () => {
 			const result = checkDiscountEligibility(discount, makeContext());
 
 			expect(result.eligible).toBe(false);
-			expect(result.error).toBe(
-				"Ce code promo a atteint sa limite d'utilisation"
-			);
+			expect(result.error).toBe("Ce code promo a atteint sa limite d'utilisation");
 		});
 
 		it("should return eligible when usageCount is below maxUsageCount", () => {

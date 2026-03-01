@@ -32,7 +32,7 @@ const toggleNewsletterSchema = z.object({
  */
 export async function toggleNewsletter(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	const auth = await requireAuth();
 	if ("error" in auth) return auth.error;

@@ -48,9 +48,7 @@ const STATUS_CONFIG = {
 } as const;
 
 export function ChangeCollectionStatusAlertDialog() {
-	const dialog = useAlertDialog<ChangeCollectionStatusData>(
-		CHANGE_COLLECTION_STATUS_DIALOG_ID
-	);
+	const dialog = useAlertDialog<ChangeCollectionStatusData>(CHANGE_COLLECTION_STATUS_DIALOG_ID);
 
 	const { action, isPending } = useUpdateCollectionStatus({
 		onSuccess: () => {
@@ -77,26 +75,17 @@ export function ChangeCollectionStatusAlertDialog() {
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="id"
-						value={dialog.data?.collectionId ?? ""}
-					/>
+					<input type="hidden" name="id" value={dialog.data?.collectionId ?? ""} />
 					<input type="hidden" name="status" value={targetStatus} />
 
 					<AlertDialogHeader>
-						<AlertDialogTitle>
-							Changer le statut en &quot;{config.label}&quot;
-						</AlertDialogTitle>
+						<AlertDialogTitle>Changer le statut en &quot;{config.label}&quot;</AlertDialogTitle>
 						<AlertDialogDescription asChild>
 							<div className="space-y-4">
 								<div>
 									Vous êtes sur le point de changer le statut de{" "}
 									<strong>&quot;{dialog.data?.collectionName}&quot;</strong> de{" "}
-									<span className="font-semibold">
-										{STATUS_CONFIG[currentStatus].label}
-									</span>{" "}
-									vers{" "}
+									<span className="font-semibold">{STATUS_CONFIG[currentStatus].label}</span> vers{" "}
 									<span className="font-semibold">{config.label}</span>.
 								</div>
 

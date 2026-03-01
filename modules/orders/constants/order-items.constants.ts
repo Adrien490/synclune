@@ -68,10 +68,4 @@ export const GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE = 200;
 export const GET_ORDER_ITEMS_DEFAULT_SORT_BY = "createdAt";
 export const GET_ORDER_ITEMS_DEFAULT_SORT_ORDER = "desc";
 
-export const GET_ORDER_ITEMS_SORT_FIELDS = [
-	"createdAt",
-	"updatedAt",
-	"price",
-	"quantity",
-] as const;
-
+export const GET_ORDER_ITEMS_SORT_FIELDS = ["createdAt", "updatedAt", "price", "quantity"] as const;

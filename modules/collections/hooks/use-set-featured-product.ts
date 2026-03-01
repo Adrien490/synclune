@@ -3,10 +3,7 @@
 import { useActionState, useTransition } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import {
-	removeFeaturedProduct,
-	setFeaturedProduct,
-} from "../actions/set-featured-product";
+import { removeFeaturedProduct, setFeaturedProduct } from "../actions/set-featured-product";
 
 interface UseSetFeaturedProductOptions {
 	onSuccess?: () => void;
@@ -22,9 +19,9 @@ export const useSetFeaturedProduct = (options?: UseSetFeaturedProductOptions) =>
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [, removeFeaturedAction] = useActionState(
@@ -34,9 +31,9 @@ export const useSetFeaturedProduct = (options?: UseSetFeaturedProductOptions) =>
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const setFeatured = (collectionId: string, productId: string) => {

@@ -27,10 +27,7 @@ export const searchAddressSchema = z.object({
 	// Format: "lon,lat" (ex: "2.37,48.357")
 	lonlat: z
 		.string()
-		.regex(
-			/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/,
-			"Format invalide. Utiliser: lon,lat (ex: 2.37,48.357)"
-		)
+		.regex(/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/, "Format invalide. Utiliser: lon,lat (ex: 2.37,48.357)")
 		.optional(),
 
 	// Type de localisant (optionnel)
@@ -39,7 +36,7 @@ export const searchAddressSchema = z.object({
 		.string()
 		.regex(
 			/^(PositionOfInterest|StreetAddress)(,(PositionOfInterest|StreetAddress))?$/,
-			"Type invalide. Valeurs autorisées: PositionOfInterest, StreetAddress, ou les deux séparés par une virgule"
+			"Type invalide. Valeurs autorisées: PositionOfInterest, StreetAddress, ou les deux séparés par une virgule",
 		)
 		.optional()
 		.default(SEARCH_ADDRESS_DEFAULT_TYPE),
@@ -51,7 +48,7 @@ export const searchAddressSchema = z.object({
 		.min(1, { message: "maximumResponses doit être au moins 1" })
 		.max(
 			SEARCH_ADDRESS_MAX_LIMIT,
-			`maximumResponses ne peut pas dépasser ${SEARCH_ADDRESS_MAX_LIMIT}`
+			`maximumResponses ne peut pas dépasser ${SEARCH_ADDRESS_MAX_LIMIT}`,
 		)
 		.optional()
 		.default(SEARCH_ADDRESS_DEFAULT_LIMIT),
@@ -62,7 +59,7 @@ export const searchAddressSchema = z.object({
 		.string()
 		.regex(
 			/^-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?,-?\d+(\.\d+)?$/,
-			"Format invalide. Utiliser: left,bottom,right,top"
+			"Format invalide. Utiliser: left,bottom,right,top",
 		)
 		.optional(),
 });

@@ -72,12 +72,9 @@ export const cursorSchema = z
 /**
  * Schema Zod pour la direction de pagination
  */
-export const directionSchema = z
-	.enum(["forward", "backward"])
-	.default("forward");
+export const directionSchema = z.enum(["forward", "backward"]).default("forward");
 
 /**
  * Type pour la direction de pagination
  */
 export type PaginationDirection = z.infer<typeof directionSchema>;
-

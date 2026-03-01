@@ -201,8 +201,16 @@ describe("getDiscounts", () => {
 
 		expect(mockPrisma.discount.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				select: { id: true, code: true, type: true, value: true, isActive: true, usageCount: true, createdAt: true },
-			})
+				select: {
+					id: true,
+					code: true,
+					type: true,
+					value: true,
+					isActive: true,
+					usageCount: true,
+					createdAt: true,
+				},
+			}),
 		);
 	});
 
@@ -214,7 +222,7 @@ describe("getDiscounts", () => {
 		expect(mockPrisma.discount.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { isActive: true },
-			})
+			}),
 		);
 	});
 
@@ -230,7 +238,7 @@ describe("getDiscounts", () => {
 		expect(mockPrisma.discount.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -246,7 +254,7 @@ describe("getDiscounts", () => {
 		expect(mockPrisma.discount.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ code: "asc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -262,12 +270,16 @@ describe("getDiscounts", () => {
 		expect(mockPrisma.discount.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ usageCount: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
 	it("passes cursor config from buildCursorPagination to DB query", async () => {
-		mockBuildCursorPagination.mockReturnValue({ take: 21, skip: 1, cursor: { id: "discount-prev" } });
+		mockBuildCursorPagination.mockReturnValue({
+			take: 21,
+			skip: 1,
+			cursor: { id: "discount-prev" },
+		});
 
 		await getDiscounts(makeValidParams() as never);
 
@@ -276,7 +288,7 @@ describe("getDiscounts", () => {
 				take: 21,
 				skip: 1,
 				cursor: { id: "discount-prev" },
-			})
+			}),
 		);
 	});
 
@@ -290,12 +302,7 @@ describe("getDiscounts", () => {
 
 		await getDiscounts(makeValidParams() as never);
 
-		expect(mockProcessCursorResults).toHaveBeenCalledWith(
-			discounts,
-			20,
-			"forward",
-			"some-cursor"
-		);
+		expect(mockProcessCursorResults).toHaveBeenCalledWith(discounts, 20, "forward", "some-cursor");
 	});
 
 	it("returns empty result on DB error inside fetchDiscounts", async () => {
@@ -315,9 +322,7 @@ describe("getDiscounts", () => {
 
 		await getDiscounts(makeValidParams() as never);
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 100 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }));
 	});
 
 	it("uses default perPage when perPage is 0", async () => {
@@ -328,8 +333,6 @@ describe("getDiscounts", () => {
 
 		await getDiscounts(makeValidParams() as never);
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 20 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
 	});
 });

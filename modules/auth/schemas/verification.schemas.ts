@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -33,10 +30,7 @@ const pastDateSchema = z.coerce
 	.refine((d) => d <= new Date(), "Date cannot be in the future")
 	.optional();
 
-const dateSchema = z.coerce
-	.date()
-	.min(MIN_DATE, "Date too old")
-	.optional();
+const dateSchema = z.coerce.date().min(MIN_DATE, "Date too old").optional();
 
 export const verificationFiltersSchema = z
 	.object({
@@ -71,9 +65,7 @@ export const verificationFiltersSchema = z
 
 export const verificationSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
-		GET_VERIFICATIONS_SORT_FIELDS.includes(
-			value as (typeof GET_VERIFICATIONS_SORT_FIELDS)[number]
-		)
+		GET_VERIFICATIONS_SORT_FIELDS.includes(value as (typeof GET_VERIFICATIONS_SORT_FIELDS)[number])
 		? value
 		: GET_VERIFICATIONS_DEFAULT_SORT_BY;
 }, z.enum(GET_VERIFICATIONS_SORT_FIELDS));
@@ -81,10 +73,11 @@ export const verificationSortBySchema = z.preprocess((value) => {
 export const getVerificationsSchema = z.object({
 	cursor: cursorSchema,
 	direction: directionSchema,
-	perPage: createPerPageSchema(GET_VERIFICATIONS_DEFAULT_PER_PAGE, GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE),
+	perPage: createPerPageSchema(
+		GET_VERIFICATIONS_DEFAULT_PER_PAGE,
+		GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE,
+	),
 	sortBy: verificationSortBySchema.default(GET_VERIFICATIONS_DEFAULT_SORT_BY),
-	sortOrder: z
-		.enum(["asc", "desc"])
-		.default(GET_VERIFICATIONS_DEFAULT_SORT_ORDER),
+	sortOrder: z.enum(["asc", "desc"]).default(GET_VERIFICATIONS_DEFAULT_SORT_ORDER),
 	filters: verificationFiltersSchema.default({}),
 });

@@ -50,9 +50,7 @@ export const TrackingInfo = ({
 			/>
 			{estimatedDelivery && (
 				<FlexRow
-					left={
-						<Text style={EMAIL_STYLES.text.small}>Livraison estimée</Text>
-					}
+					left={<Text style={EMAIL_STYLES.text.small}>Livraison estimée</Text>}
 					right={
 						<Text
 							style={{

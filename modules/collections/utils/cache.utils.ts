@@ -29,7 +29,11 @@ export function cacheCollections() {
  */
 export function cacheCollectionDetail(slug: string) {
 	cacheLife("collections");
-	cacheTag(COLLECTIONS_CACHE_TAGS.DETAIL(slug), COLLECTIONS_CACHE_TAGS.PRODUCTS(slug), COLLECTIONS_CACHE_TAGS.LIST);
+	cacheTag(
+		COLLECTIONS_CACHE_TAGS.DETAIL(slug),
+		COLLECTIONS_CACHE_TAGS.PRODUCTS(slug),
+		COLLECTIONS_CACHE_TAGS.LIST,
+	);
 }
 
 // ============================================

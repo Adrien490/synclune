@@ -1,27 +1,28 @@
-"use client"
+"use client";
 
-import { ChevronRight, Search, X } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { Stagger } from "@/shared/components/animations/stagger"
-import { Tap } from "@/shared/components/animations/tap"
-import ScrollFade from "@/shared/components/scroll-fade"
-import { Button } from "@/shared/components/ui/button"
-import { cn } from "@/shared/utils/cn"
-import { formatEuro } from "@/shared/utils/format-euro"
+import { ChevronRight, Search, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
+import Link from "next/link";
+import { Stagger } from "@/shared/components/animations/stagger";
+import { Tap } from "@/shared/components/animations/tap";
+import ScrollFade from "@/shared/components/scroll-fade";
+import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/shared/utils/cn";
+import { formatEuro } from "@/shared/utils/format-euro";
 
-import { CollectionCard } from "./collection-card"
-import type { QuickSearchCollection, RecentlyViewedProduct } from "./constants"
+import { CollectionCard } from "./collection-card";
+import type { QuickSearchCollection, RecentlyViewedProduct } from "./constants";
 
 interface IdleContentProps {
-	recentlyViewed: RecentlyViewedProduct[]
-	searches: string[]
-	collections: QuickSearchCollection[]
-	onClose: () => void
-	onRecentSearch: (term: string) => void
-	onRemoveSearch: (term: string) => void
-	onClearSearches: () => void
-	isPending: boolean
+	recentlyViewed: RecentlyViewedProduct[];
+	searches: string[];
+	collections: QuickSearchCollection[];
+	onClose: () => void;
+	onRecentSearch: (term: string) => void;
+	onRemoveSearch: (term: string) => void;
+	onClearSearches: () => void;
+	isPending: boolean;
 }
 
 export function IdleContent({
@@ -34,21 +35,24 @@ export function IdleContent({
 	onClearSearches,
 	isPending,
 }: IdleContentProps) {
-	const hasContent = searches.length > 0 || collections.length > 0 || recentlyViewed.length > 0
+	const hasContent = searches.length > 0 || collections.length > 0 || recentlyViewed.length > 0;
 
 	// Defer dialog close to next frame so <Link> navigation starts first
 	const handleNavigateClose = () => {
-		requestAnimationFrame(() => onClose())
-	}
+		requestAnimationFrame(() => onClose());
+	};
 
 	return (
 		<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
-			<div className="px-4 py-4 space-y-6">
+			<div className="space-y-6 px-4 py-4">
 				{/* Recently Viewed Products */}
 				{recentlyViewed.length > 0 && (
 					<section aria-labelledby="recently-viewed-heading">
-						<div className="flex items-center mb-3">
-							<h2 id="recently-viewed-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide">
+						<div className="mb-3 flex items-center">
+							<h2
+								id="recently-viewed-heading"
+								className="font-display text-muted-foreground text-base font-medium tracking-wide"
+							>
 								Vus recemment
 							</h2>
 						</div>
@@ -60,13 +64,13 @@ export function IdleContent({
 											href={`/creations/${product.slug}`}
 											onClick={handleNavigateClose}
 											className={cn(
-												"flex flex-col items-center gap-2 w-24 shrink-0",
+												"flex w-24 shrink-0 flex-col items-center gap-2",
 												"rounded-xl p-2 transition-colors",
 												"hover:bg-muted",
-												"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+												"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 											)}
 										>
-											<div className="size-20 rounded-lg overflow-hidden bg-muted shrink-0">
+											<div className="bg-muted size-20 shrink-0 overflow-hidden rounded-lg">
 												{product.image ? (
 													<Image
 														src={product.image.url}
@@ -78,12 +82,12 @@ export function IdleContent({
 														blurDataURL={product.image.blurDataUrl ?? undefined}
 													/>
 												) : (
-													<div className="size-full bg-muted" />
+													<div className="bg-muted size-full" />
 												)}
 											</div>
-											<div className="w-full text-center min-w-0">
-												<p className="text-xs font-medium truncate">{product.title}</p>
-												<p className="text-xs text-muted-foreground">{formatEuro(product.price)}</p>
+											<div className="w-full min-w-0 text-center">
+												<p className="truncate text-xs font-medium">{product.title}</p>
+												<p className="text-muted-foreground text-xs">{formatEuro(product.price)}</p>
 											</div>
 										</Link>
 									</Tap>
@@ -96,8 +100,11 @@ export function IdleContent({
 				{/* Recent Searches */}
 				{searches.length > 0 && (
 					<section aria-labelledby="recent-searches-heading">
-						<div className="flex items-center justify-between mb-3">
-							<h2 id="recent-searches-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide">
+						<div className="mb-3 flex items-center justify-between">
+							<h2
+								id="recent-searches-heading"
+								className="font-display text-muted-foreground text-base font-medium tracking-wide"
+							>
 								Recherches recentes
 							</h2>
 							<Button
@@ -105,63 +112,82 @@ export function IdleContent({
 								size="sm"
 								onClick={onClearSearches}
 								disabled={isPending}
-								className="text-xs h-auto py-1.5 px-2.5 -mr-2 hover:text-destructive"
+								className="hover:text-destructive -mr-2 h-auto px-2.5 py-1.5 text-xs"
 								aria-label="Effacer toutes les recherches recentes"
 							>
 								Effacer
 							</Button>
 						</div>
-						<Stagger role="list" className="space-y-1" stagger={0.02} delay={0.02} y={8}>
-							{searches.map((term) => (
-								<div key={term} role="listitem" className="flex items-center gap-1 group/item">
-									<Tap className="flex-1 min-w-0" scale={0.97}>
+						<div role="list" className="space-y-1">
+							<AnimatePresence mode="popLayout">
+								{searches.map((term) => (
+									<motion.div
+										key={term}
+										role="listitem"
+										layout
+										initial={{ opacity: 1, height: "auto" }}
+										exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+										transition={{ duration: 0.2 }}
+										className="group/item flex items-center gap-1"
+									>
+										<Tap className="min-w-0 flex-1" scale={0.97}>
+											<button
+												type="button"
+												onClick={() => onRecentSearch(term)}
+												disabled={isPending}
+												data-active={undefined}
+												className={cn(
+													"flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-medium transition-all",
+													"hover:bg-muted",
+													"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+													"disabled:opacity-50",
+													"data-[active=true]:bg-muted",
+												)}
+											>
+												<Search
+													className="text-muted-foreground size-4 shrink-0"
+													aria-hidden="true"
+												/>
+												<span className="flex-1 truncate">{term}</span>
+											</button>
+										</Tap>
 										<button
 											type="button"
-											onClick={() => onRecentSearch(term)}
+											onClick={() => onRemoveSearch(term)}
 											disabled={isPending}
-											data-active={undefined}
-											className={cn(
-												"w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-left font-medium",
-												"hover:bg-muted",
-												"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
-												"disabled:opacity-50",
-												"data-[active=true]:bg-muted"
-											)}
+											className="text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 items-center justify-center rounded-xl transition-all group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
+											aria-label={`Supprimer "${term}"`}
 										>
-											<Search className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
-											<span className="flex-1 truncate">{term}</span>
+											<X className="size-4" />
 										</button>
-									</Tap>
-									<button
-										type="button"
-										onClick={() => onRemoveSearch(term)}
-										disabled={isPending}
-										className="size-11 flex items-center justify-center rounded-xl transition-all shrink-0 text-muted-foreground/40 md:opacity-0 md:group-hover/item:opacity-100 group-focus-within/item:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
-										aria-label={`Supprimer "${term}"`}
-									>
-										<X className="size-4" />
-									</button>
-								</div>
-							))}
-						</Stagger>
+									</motion.div>
+								))}
+							</AnimatePresence>
+						</div>
 					</section>
 				)}
 
 				{/* Collections */}
 				{collections.length > 0 && (
 					<section aria-labelledby="collections-heading">
-						<div className="flex items-center mb-3">
-							<h2 id="collections-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide">
+						<div className="mb-3 flex items-center">
+							<h2
+								id="collections-heading"
+								className="font-display text-muted-foreground text-base font-medium tracking-wide"
+							>
 								Collections
 							</h2>
 						</div>
-						<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.02} delay={0.03} y={8}>
+						<Stagger
+							role="list"
+							className="grid grid-cols-2 gap-2"
+							stagger={0.02}
+							delay={0.03}
+							y={8}
+						>
 							{collections.map((collection) => (
 								<div key={collection.slug} role="listitem">
-									<CollectionCard
-										collection={collection}
-										onSelect={handleNavigateClose}
-									/>
+									<CollectionCard collection={collection} onSelect={handleNavigateClose} />
 								</div>
 							))}
 						</Stagger>
@@ -169,7 +195,7 @@ export function IdleContent({
 							<Link
 								href="/collections"
 								onClick={handleNavigateClose}
-								className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none rounded-md px-2 py-1"
+								className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 							>
 								Voir toutes les collections
 								<ChevronRight className="size-4" aria-hidden="true" />
@@ -180,14 +206,12 @@ export function IdleContent({
 
 				{/* Empty State */}
 				{!hasContent && (
-					<Stagger className="text-center py-8" role="status" stagger={0.03} delay={0.05} y={10}>
-						<Search className="size-10 text-muted-foreground/20 mx-auto mb-4" aria-hidden="true" />
-						<p className="text-sm text-muted-foreground">
-							Trouvez votre prochain bijou
-						</p>
+					<Stagger className="py-8 text-center" role="status" stagger={0.03} delay={0.05} y={10}>
+						<Search className="text-muted-foreground/20 mx-auto mb-4 size-10" aria-hidden="true" />
+						<p className="text-muted-foreground text-sm">Trouvez votre prochain bijou</p>
 					</Stagger>
 				)}
 			</div>
 		</ScrollFade>
-	)
+	);
 }

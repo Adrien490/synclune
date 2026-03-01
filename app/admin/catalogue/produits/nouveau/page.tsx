@@ -8,8 +8,10 @@ import { Metadata } from "next";
 import dynamic from "next/dynamic";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const DeleteGalleryMediaAlertDialog = dynamic(
-	() => import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then((mod) => mod.DeleteGalleryMediaAlertDialog)
+const DeleteGalleryMediaAlertDialog = dynamic(() =>
+	import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then(
+		(mod) => mod.DeleteGalleryMediaAlertDialog,
+	),
 );
 
 export const metadata: Metadata = {

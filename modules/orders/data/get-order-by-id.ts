@@ -21,7 +21,7 @@ export type GetOrderByIdParams = z.infer<typeof getOrderByIdSchema>;
  * Réservé aux administrateurs
  */
 export async function getOrderById(
-	params: Partial<GetOrderByIdParams>
+	params: Partial<GetOrderByIdParams>,
 ): Promise<GetOrderReturn | null> {
 	const validation = getOrderByIdSchema.safeParse(params ?? {});
 

@@ -25,9 +25,9 @@ export const useDuplicateProduct = (options?: UseDuplicateProductOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const doDuplicate = (productId: string) => {

@@ -87,9 +87,7 @@ describe("findSkuByVariants", () => {
 	});
 
 	it("should match when no selectors are provided (returns first active)", () => {
-		const skus = [
-			makeSku({ id: "sku-1", isActive: true }),
-		];
+		const skus = [makeSku({ id: "sku-1", isActive: true })];
 
 		const result = findSkuByVariants({ skus }, {});
 

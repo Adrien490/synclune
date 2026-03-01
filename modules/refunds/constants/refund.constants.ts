@@ -1,5 +1,6 @@
 import type { Prisma } from "@/app/generated/prisma/client";
 import { RefundReason, RefundStatus } from "@/app/generated/prisma/enums";
+import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // ============================================================================
 // SELECT DEFINITIONS - REFUND LIST
@@ -160,6 +161,15 @@ export const REFUND_STATUS_COLORS: Record<RefundStatus, string> = {
 	[RefundStatus.CANCELLED]: "#6b7280", // Gray
 };
 
+export const REFUND_STATUS_VARIANTS: Record<RefundStatus, BadgeVariant> = {
+	[RefundStatus.PENDING]: "warning",
+	[RefundStatus.APPROVED]: "default",
+	[RefundStatus.COMPLETED]: "success",
+	[RefundStatus.REJECTED]: "destructive",
+	[RefundStatus.FAILED]: "destructive",
+	[RefundStatus.CANCELLED]: "secondary",
+};
+
 export const REFUND_REASON_LABELS: Record<RefundReason, string> = {
 	[RefundReason.CUSTOMER_REQUEST]: "Rétractation client",
 	[RefundReason.DEFECTIVE]: "Produit défectueux",
@@ -224,4 +234,3 @@ export const REFUND_ERROR_MESSAGES = {
 	RETURN_ALREADY_REQUESTED: "Une demande de retour est déjà en cours pour cette commande.",
 	RETURN_REQUEST_FAILED: "Erreur lors de la demande de retour.",
 } as const;
-

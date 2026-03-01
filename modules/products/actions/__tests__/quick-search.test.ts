@@ -1,30 +1,29 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockEnforceRateLimit,
-	mockQuickSearchProducts,
-} = vi.hoisted(() => ({
+const { mockEnforceRateLimit, mockQuickSearchProducts } = vi.hoisted(() => ({
 	mockEnforceRateLimit: vi.fn(),
 	mockQuickSearchProducts: vi.fn(),
-}))
+}));
 
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({ enforceRateLimitForCurrentUser: mockEnforceRateLimit }))
-vi.mock("@/shared/lib/rate-limit-config", () => ({ PRODUCT_SEARCH_LIMIT: "product-search" }))
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+vi.mock("@/shared/lib/rate-limit-config", () => ({ PRODUCT_SEARCH_LIMIT: "product-search" }));
 vi.mock("@/modules/products/data/quick-search-products", () => ({
 	quickSearchProducts: mockQuickSearchProducts,
-}))
+}));
 
-import { quickSearch } from "../quick-search"
+import { quickSearch } from "../quick-search";
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
-const EMPTY_RESULT = { products: [], suggestion: null, totalCount: 0 }
+const EMPTY_RESULT = { products: [], suggestion: null, totalCount: 0 };
 
 const mockSearchResult = {
 	products: [
@@ -37,7 +36,7 @@ const mockSearchResult = {
 	],
 	suggestion: null,
 	totalCount: 1,
-}
+};
 
 // ============================================================================
 // TESTS
@@ -45,64 +44,62 @@ const mockSearchResult = {
 
 describe("quickSearch", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
+		vi.resetAllMocks();
 
-		mockEnforceRateLimit.mockResolvedValue({ success: true })
-		mockQuickSearchProducts.mockResolvedValue(mockSearchResult)
-	})
+		mockEnforceRateLimit.mockResolvedValue({ success: true });
+		mockQuickSearchProducts.mockResolvedValue(mockSearchResult);
+	});
 
 	it("should return EMPTY_RESULT when rate limited", async () => {
-		mockEnforceRateLimit.mockResolvedValue({ error: { status: "error", message: "Rate limit" } })
-		const result = await quickSearch("bracelet")
-		expect(result).toEqual(EMPTY_RESULT)
-	})
+		mockEnforceRateLimit.mockResolvedValue({ error: { status: "error", message: "Rate limit" } });
+		const result = await quickSearch("bracelet");
+		expect(result).toEqual(EMPTY_RESULT);
+	});
 
 	it("should return EMPTY_RESULT when query exceeds 100 characters", async () => {
-		const longQuery = "a".repeat(101)
-		const result = await quickSearch(longQuery)
-		expect(result).toEqual(EMPTY_RESULT)
-		expect(mockQuickSearchProducts).not.toHaveBeenCalled()
-	})
+		const longQuery = "a".repeat(101);
+		const result = await quickSearch(longQuery);
+		expect(result).toEqual(EMPTY_RESULT);
+		expect(mockQuickSearchProducts).not.toHaveBeenCalled();
+	});
 
 	it("should return search results for a valid query", async () => {
-		const result = await quickSearch("bracelet")
-		expect(result).toEqual(mockSearchResult)
-		expect(mockQuickSearchProducts).toHaveBeenCalledWith("bracelet")
-	})
+		const result = await quickSearch("bracelet");
+		expect(result).toEqual(mockSearchResult);
+		expect(mockQuickSearchProducts).toHaveBeenCalledWith("bracelet");
+	});
 
 	it("should trim whitespace from query before calling quickSearchProducts", async () => {
-		await quickSearch("  bracelet  ")
-		expect(mockQuickSearchProducts).toHaveBeenCalledWith("bracelet")
-	})
+		await quickSearch("  bracelet  ");
+		expect(mockQuickSearchProducts).toHaveBeenCalledWith("bracelet");
+	});
 
 	it("should log zero results with console.log", async () => {
-		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
-		mockQuickSearchProducts.mockResolvedValue({ products: [], suggestion: "bague", totalCount: 0 })
+		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+		mockQuickSearchProducts.mockResolvedValue({ products: [], suggestion: "bague", totalCount: 0 });
 
-		await quickSearch("bracelt")
+		await quickSearch("bracelt");
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining("zero-result")
-		)
-		consoleSpy.mockRestore()
-	})
+		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("zero-result"));
+		consoleSpy.mockRestore();
+	});
 
 	it("should not log when results are found", async () => {
-		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
-		await quickSearch("bracelet")
-		expect(consoleSpy).not.toHaveBeenCalled()
-		consoleSpy.mockRestore()
-	})
+		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+		await quickSearch("bracelet");
+		expect(consoleSpy).not.toHaveBeenCalled();
+		consoleSpy.mockRestore();
+	});
 
 	it("should return EMPTY_RESULT on unexpected exception from quickSearchProducts", async () => {
-		mockQuickSearchProducts.mockRejectedValue(new Error("DB crash"))
-		const result = await quickSearch("bracelet")
-		expect(result).toEqual(EMPTY_RESULT)
-	})
+		mockQuickSearchProducts.mockRejectedValue(new Error("DB crash"));
+		const result = await quickSearch("bracelet");
+		expect(result).toEqual(EMPTY_RESULT);
+	});
 
 	it("should return EMPTY_RESULT on unexpected exception from rate limit service", async () => {
-		mockEnforceRateLimit.mockRejectedValue(new Error("rate limit service down"))
-		const result = await quickSearch("bracelet")
-		expect(result).toEqual(EMPTY_RESULT)
-	})
-})
+		mockEnforceRateLimit.mockRejectedValue(new Error("rate limit service down"));
+		const result = await quickSearch("bracelet");
+		expect(result).toEqual(EMPTY_RESULT);
+	});
+});

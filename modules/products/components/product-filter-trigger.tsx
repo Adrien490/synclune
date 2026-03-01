@@ -47,13 +47,13 @@ export function ProductFilterTrigger({ className, variant = "full" }: ProductFil
 				variant="ghost"
 				size="icon"
 				onClick={() => open()}
-				className={cn("size-11 relative", className)}
+				className={cn("relative size-11", className)}
 				aria-label={`Filtres${hasActiveFilters ? ` (${activeFiltersCount} actifs)` : ""}`}
 			>
 				<Filter className="size-5" />
 				{hasActiveFilters && (
 					<span
-						className="absolute -top-0.5 -right-0.5 size-3 bg-primary rounded-full ring-2 ring-background"
+						className="bg-primary ring-background absolute -top-0.5 -right-0.5 size-3 rounded-full ring-2"
 						aria-hidden="true"
 					/>
 				)}
@@ -67,19 +67,19 @@ export function ProductFilterTrigger({ className, variant = "full" }: ProductFil
 			variant="outline"
 			onClick={() => open()}
 			className={cn(
-				"relative h-11 px-3 gap-2",
+				"relative h-11 gap-2 px-3",
 				"border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200",
 				hasActiveFilters && "border-primary/30 bg-primary/5",
-				className
+				className,
 			)}
 			aria-label={`Filtres${hasActiveFilters ? ` (${activeFiltersCount} actifs)` : ""}`}
 		>
-			<Filter className="w-4 h-4" />
+			<Filter className="h-4 w-4" />
 			<span>Filtres</span>
 			{hasActiveFilters && (
 				<Badge
 					variant="secondary"
-					className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold bg-primary text-primary-foreground"
+					className="bg-primary text-primary-foreground absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center p-0 text-xs font-bold"
 				>
 					{activeFiltersCount}
 				</Badge>

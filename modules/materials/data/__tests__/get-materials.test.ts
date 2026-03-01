@@ -145,9 +145,7 @@ describe("getMaterials", () => {
 	// --- Validation ---
 
 	it("throws an error when params are invalid", async () => {
-		await expect(
-			getMaterials({ sortBy: "invalid-sort" as never } as never)
-		).rejects.toThrow();
+		await expect(getMaterials({ sortBy: "invalid-sort" as never } as never)).rejects.toThrow();
 	});
 
 	// --- Cache ---
@@ -174,7 +172,7 @@ describe("getMaterials", () => {
 		expect(mockPrisma.material.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ name: "asc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -186,7 +184,7 @@ describe("getMaterials", () => {
 		expect(mockPrisma.material.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ name: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -198,7 +196,7 @@ describe("getMaterials", () => {
 		expect(mockPrisma.material.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ skus: { _count: "asc" } }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -210,7 +208,7 @@ describe("getMaterials", () => {
 		expect(mockPrisma.material.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -220,17 +218,13 @@ describe("getMaterials", () => {
 		// Schema rejects perPage > 200, so test with the maximum valid value
 		await getMaterials({ sortBy: "name-ascending", direction: "forward", perPage: 200 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 200 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
 	});
 
 	it("uses default perPage when not provided", async () => {
 		await getMaterials({ sortBy: "name-ascending", direction: "forward" });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 20 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
 	});
 
 	// Cursor must be exactly 25 characters (cuid2 length) to pass schema validation
@@ -240,7 +234,7 @@ describe("getMaterials", () => {
 		await getMaterials({ sortBy: "name-ascending", direction: "forward", cursor: validCursor });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ cursor: validCursor })
+			expect.objectContaining({ cursor: validCursor }),
 		);
 	});
 
@@ -248,7 +242,7 @@ describe("getMaterials", () => {
 		await getMaterials({ sortBy: "name-ascending", direction: "backward" });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ direction: "backward" })
+			expect.objectContaining({ direction: "backward" }),
 		);
 	});
 
@@ -261,7 +255,7 @@ describe("getMaterials", () => {
 		await getMaterials({ sortBy: "name-ascending", direction: "forward", search: "argent" });
 
 		expect(mockPrisma.material.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where: whereClause })
+			expect.objectContaining({ where: whereClause }),
 		);
 	});
 
@@ -320,7 +314,7 @@ describe("getMaterials", () => {
 					updatedAt: true,
 					_count: { select: { skus: { where: { isActive: true } } } },
 				},
-			})
+			}),
 		);
 	});
 });

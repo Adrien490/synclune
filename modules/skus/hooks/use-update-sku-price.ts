@@ -30,9 +30,9 @@ export function useUpdateSkuPrice(options?: UseUpdateSkuPriceOptions) {
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	/**
@@ -46,7 +46,7 @@ export function useUpdateSkuPrice(options?: UseUpdateSkuPriceOptions) {
 		skuId: string,
 		_skuName: string,
 		priceInclTaxEuros: number,
-		compareAtPriceEuros?: number | null
+		compareAtPriceEuros?: number | null,
 	) => {
 		startTransition(() => {
 			const formData = new FormData();

@@ -4,9 +4,7 @@ import { getFirstParam } from "@/shared/utils/params";
 import type { ProductFilters } from "@/modules/products/data/get-products";
 import { productFiltersSchema } from "@/modules/products/data/get-products";
 
-export const parseFilters = (
-	params: ProductsSearchParams
-): ProductFilters => {
+export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 	const filters: ProductFilters = {};
 
 	Object.entries(params).forEach(([key, value]) => {
@@ -44,7 +42,7 @@ export const parseFilters = (
 						(s): s is ProductStatus =>
 							s === ProductStatus.DRAFT ||
 							s === ProductStatus.PUBLIC ||
-							s === ProductStatus.ARCHIVED
+							s === ProductStatus.ARCHIVED,
 					);
 
 					if (validStatuses.length > 0) {

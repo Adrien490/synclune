@@ -27,7 +27,7 @@ type GetVerificationsParams = {
 // ============================================================================
 
 export function buildVerificationFilterConditions(
-	filters: VerificationFilters
+	filters: VerificationFilters,
 ): Prisma.VerificationWhereInput[] {
 	const conditions: Prisma.VerificationWhereInput[] = [];
 
@@ -138,7 +138,7 @@ export function buildVerificationFilterConditions(
 }
 
 export function buildVerificationWhereClause(
-	params: GetVerificationsParams
+	params: GetVerificationsParams,
 ): Prisma.VerificationWhereInput {
 	const whereClause: Prisma.VerificationWhereInput = {};
 	const andConditions: Prisma.VerificationWhereInput[] = [];

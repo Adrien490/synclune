@@ -25,9 +25,7 @@ import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
  * });
  * ```
  */
-export async function searchAddress(
-	params: SearchAddressParams
-): Promise<SearchAddressReturn> {
+export async function searchAddress(params: SearchAddressParams): Promise<SearchAddressReturn> {
 	// Rate limiting (user or IP-based)
 	const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.SEARCH);
 	if ("error" in rateCheck) {

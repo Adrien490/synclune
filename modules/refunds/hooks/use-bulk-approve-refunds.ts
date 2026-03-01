@@ -25,9 +25,9 @@ export function useBulkApproveRefunds(options?: UseBulkApproveRefundsOptions) {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const approveRefunds = (refundIds: string[]) => {

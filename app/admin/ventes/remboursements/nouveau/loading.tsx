@@ -24,16 +24,14 @@ export default function NewRefundLoading() {
 					Retour
 				</Button>
 				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">
-						Nouveau remboursement
-					</h1>
-					<Skeleton className="h-4 w-48 mt-1" />
+					<h1 className="text-2xl font-semibold tracking-tight">Nouveau remboursement</h1>
+					<Skeleton className="mt-1 h-4 w-48" />
 				</div>
 			</div>
 
 			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Left column - Items selection */}
-				<div className="lg:col-span-2 space-y-6">
+				<div className="space-y-6 lg:col-span-2">
 					<Card>
 						<CardHeader className="flex flex-row items-center justify-between space-y-0">
 							<div>
@@ -41,20 +39,15 @@ export default function NewRefundLoading() {
 									<Package className="h-5 w-5" />
 									Articles a rembourser
 								</CardTitle>
-								<CardDescription>
-									Selectionnez les articles et quantites
-								</CardDescription>
+								<CardDescription>Selectionnez les articles et quantites</CardDescription>
 							</div>
 							<Skeleton className="h-9 w-32" />
 						</CardHeader>
 						<CardContent>
 							<div className="space-y-4">
 								{Array.from({ length: 3 }).map((_, i) => (
-									<div
-										key={i}
-										className="flex items-start gap-4 p-4 border rounded-lg"
-									>
-										<Skeleton className="h-4 w-4 mt-1" />
+									<div key={i} className="flex items-start gap-4 rounded-lg border p-4">
+										<Skeleton className="mt-1 h-4 w-4" />
 										<Skeleton className="h-16 w-16 rounded-md" />
 										<div className="flex-1 space-y-2">
 											<Skeleton className="h-5 w-48" />

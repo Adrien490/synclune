@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "./fixtures";
+import { expectNoA11yViolations } from "./helpers/axe";
 
 test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 	test.beforeEach(async ({ page }) => {
@@ -282,17 +282,7 @@ test.describe("Accessibilité - Fiche produit", { tag: ["@slow"] }, () => {
 
 	test("la fiche produit passe l'audit axe-core WCAG AA", async ({ page }) => {
 		test.skip(!productHref, "Pas de produits");
-		const results = await new AxeBuilder({ page })
-			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-			.exclude(".particle-background")
-			.analyze();
-
-		if (results.violations.length > 0) {
-			const summary = results.violations
-				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-				.join("\n");
-			expect(results.violations, `Violations WCAG:\n${summary}`).toEqual([]);
-		}
+		await expectNoA11yViolations(page, { context: "Fiche produit" });
 	});
 
 	test("navigation clavier dans les variantes", async ({ page }) => {
@@ -362,6 +352,8 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		// Newsletter pages
 		{ path: "/newsletter/confirm", name: "Newsletter confirmation" },
 		{ path: "/newsletter/unsubscribe", name: "Newsletter désabonnement" },
+		// Added pages
+		{ path: "/a-propos", name: "À propos" },
 	];
 
 	for (const { path, name } of pagesToAudit) {
@@ -369,16 +361,7 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 			await page.goto(path);
 			await page.waitForLoadState("domcontentloaded");
 
-			const results = await new AxeBuilder({ page })
-				.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-				.analyze();
-
-			if (results.violations.length > 0) {
-				const summary = results.violations
-					.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-					.join("\n");
-				expect(results.violations, `Violations WCAG sur ${name}:\n${summary}`).toEqual([]);
-			}
+			await expectNoA11yViolations(page, { context: name });
 		});
 	}
 
@@ -396,17 +379,7 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		await page.goto(href);
 		await page.waitForLoadState("domcontentloaded");
 
-		const results = await new AxeBuilder({ page })
-			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-			.exclude(".particle-background")
-			.analyze();
-
-		if (results.violations.length > 0) {
-			const summary = results.violations
-				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-				.join("\n");
-			expect(results.violations, `Violations WCAG fiche produit:\n${summary}`).toEqual([]);
-		}
+		await expectNoA11yViolations(page, { context: "Fiche produit" });
 	});
 
 	test("Collection detail passe l'audit axe-core WCAG AA", async ({ page }) => {
@@ -422,16 +395,7 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		await page.goto(href);
 		await page.waitForLoadState("domcontentloaded");
 
-		const results = await new AxeBuilder({ page })
-			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-			.analyze();
-
-		if (results.violations.length > 0) {
-			const summary = results.violations
-				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-				.join("\n");
-			expect(results.violations, `Violations WCAG collection detail:\n${summary}`).toEqual([]);
-		}
+		await expectNoA11yViolations(page, { context: "Collection detail" });
 	});
 
 	test("Page catégorie /produits/[typeSlug] passe l'audit axe-core WCAG AA", async ({ page }) => {
@@ -448,16 +412,7 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		await page.goto(href);
 		await page.waitForLoadState("domcontentloaded");
 
-		const results = await new AxeBuilder({ page })
-			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-			.analyze();
-
-		if (results.violations.length > 0) {
-			const summary = results.violations
-				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-				.join("\n");
-			expect(results.violations, `Violations WCAG catégorie produits:\n${summary}`).toEqual([]);
-		}
+		await expectNoA11yViolations(page, { context: "Catégorie produits" });
 	});
 });
 
@@ -477,16 +432,7 @@ test.describe("Accessibilité - Pages légales (P2)", { tag: ["@slow"] }, () => 
 			await page.goto(path);
 			await page.waitForLoadState("domcontentloaded");
 
-			const results = await new AxeBuilder({ page })
-				.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-				.analyze();
-
-			if (results.violations.length > 0) {
-				const summary = results.violations
-					.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-					.join("\n");
-				expect(results.violations, `Violations WCAG sur ${name}:\n${summary}`).toEqual([]);
-			}
+			await expectNoA11yViolations(page, { context: name });
 		});
 	}
 });

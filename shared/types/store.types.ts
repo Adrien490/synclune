@@ -3,7 +3,7 @@
  * Consolide tous les types de stores et providers
  */
 
-import type { ReactNode } from "react"
+import type { ReactNode } from "react";
 
 // =============================================================================
 // SHEET STORE TYPES
@@ -13,20 +13,20 @@ import type { ReactNode } from "react"
  * Identifiants des sheets disponibles
  * Extensible pour futurs sheets
  */
-export type SheetId = "cart"
+export type SheetId = "cart";
 
 export type SheetState = {
-	openSheet: SheetId | null
-}
+	openSheet: SheetId | null;
+};
 
 export type SheetActions = {
-	open: (sheetId: SheetId) => void
-	close: () => void
-	toggle: (sheetId: SheetId) => void
-	isOpen: (sheetId: SheetId) => boolean
-}
+	open: (sheetId: SheetId) => void;
+	close: () => void;
+	toggle: (sheetId: SheetId) => void;
+	isOpen: (sheetId: SheetId) => boolean;
+};
 
-export type SheetStore = SheetState & SheetActions
+export type SheetStore = SheetState & SheetActions;
 
 // =============================================================================
 // DIALOG STORE TYPES
@@ -37,25 +37,23 @@ export type SheetStore = SheetState & SheetActions
  * Peut être étendu selon les besoins
  */
 export type DialogData = {
-	[key: string]: unknown
-}
+	[key: string]: unknown;
+};
 
 export type DialogState = {
-	dialogs: Record<string, { isOpen: boolean; data?: DialogData }>
-}
+	dialogs: Record<string, { isOpen: boolean; data?: DialogData }>;
+};
 
 export type DialogActions = {
-	openDialog: (dialogId: string, data?: DialogData) => void
-	closeDialog: (dialogId: string) => void
-	toggleDialog: (dialogId: string) => void
-	isDialogOpen: (dialogId: string) => boolean
-	getDialogData: <T extends DialogData = DialogData>(
-		dialogId: string
-	) => T | undefined
-	clearDialogData: (dialogId: string) => void
-}
+	openDialog: (dialogId: string, data?: DialogData) => void;
+	closeDialog: (dialogId: string) => void;
+	toggleDialog: (dialogId: string) => void;
+	isDialogOpen: (dialogId: string) => boolean;
+	getDialogData: <T extends DialogData = DialogData>(dialogId: string) => T | undefined;
+	clearDialogData: (dialogId: string) => void;
+};
 
-export type DialogStore = DialogState & DialogActions
+export type DialogStore = DialogState & DialogActions;
 
 // =============================================================================
 // ALERT DIALOG STORE TYPES
@@ -66,27 +64,27 @@ export type DialogStore = DialogState & DialogActions
  * Peut être étendu selon les besoins (ex: itemId, itemName, etc.)
  */
 export type AlertDialogData = {
-	itemId?: string
-	itemName?: string
-	action?: () => void | Promise<void>
-	[key: string]: unknown
-}
+	itemId?: string;
+	itemName?: string;
+	action?: () => void | Promise<void>;
+	[key: string]: unknown;
+};
 
 export type AlertDialogState = {
-	alertDialogs: Record<string, { isOpen: boolean; data?: AlertDialogData }>
-}
+	alertDialogs: Record<string, { isOpen: boolean; data?: AlertDialogData }>;
+};
 
 export type AlertDialogActions = {
-	openAlertDialog: (dialogId: string, data?: AlertDialogData) => void
-	closeAlertDialog: (dialogId: string) => void
-	isAlertDialogOpen: (dialogId: string) => boolean
+	openAlertDialog: (dialogId: string, data?: AlertDialogData) => void;
+	closeAlertDialog: (dialogId: string) => void;
+	isAlertDialogOpen: (dialogId: string) => boolean;
 	getAlertDialogData: <T extends AlertDialogData = AlertDialogData>(
-		dialogId: string
-	) => T | undefined
-	clearAlertDialogData: (dialogId: string) => void
-}
+		dialogId: string,
+	) => T | undefined;
+	clearAlertDialogData: (dialogId: string) => void;
+};
 
-export type AlertDialogStore = AlertDialogState & AlertDialogActions
+export type AlertDialogStore = AlertDialogState & AlertDialogActions;
 
 // =============================================================================
 // COOKIE CONSENT STORE TYPES
@@ -97,15 +95,15 @@ export type AlertDialogStore = AlertDialogState & AlertDialogActions
  */
 export interface CookieConsentState {
 	// true = cookies acceptés, false = refusés, null = pas encore choisi
-	accepted: boolean | null
+	accepted: boolean | null;
 	// Banner affiché ou non
-	bannerVisible: boolean
+	bannerVisible: boolean;
 	// Date du consentement
-	consentDate: string | null
+	consentDate: string | null;
 	// Version de la politique (pour forcer re-consentement si maj)
-	policyVersion: number
+	policyVersion: number;
 	// Indique si le store a été hydraté depuis localStorage
-	_hasHydrated: boolean
+	_hasHydrated: boolean;
 }
 
 /**
@@ -113,37 +111,37 @@ export interface CookieConsentState {
  */
 export interface CookieConsentActions {
 	// Accepter les cookies
-	acceptCookies: () => void
+	acceptCookies: () => void;
 	// Refuser les cookies
-	rejectCookies: () => void
+	rejectCookies: () => void;
 	// Afficher le banner
-	showBanner: () => void
+	showBanner: () => void;
 	// Masquer le banner
-	hideBanner: () => void
+	hideBanner: () => void;
 	// Réinitialiser (pour révocation)
-	resetConsent: () => void
+	resetConsent: () => void;
 }
 
-export type CookieConsentStore = CookieConsentState & CookieConsentActions
+export type CookieConsentStore = CookieConsentState & CookieConsentActions;
 
 // =============================================================================
 // PROVIDER TYPES
 // =============================================================================
 
 export interface SheetStoreProviderProps {
-	children: ReactNode
+	children: ReactNode;
 }
 
 export interface DialogStoreProviderProps {
-	children: ReactNode
+	children: ReactNode;
 }
 
 export interface AlertDialogStoreProviderProps {
-	children: ReactNode
+	children: ReactNode;
 }
 
 export interface CookieConsentStoreProviderProps {
-	children: ReactNode
+	children: ReactNode;
 }
 
 // =============================================================================
@@ -151,23 +149,23 @@ export interface CookieConsentStoreProviderProps {
 // =============================================================================
 
 export interface InstallPromptState {
-	visitCount: number
-	dismissCount: number
-	permanentlyDismissed: boolean
-	bannerVisible: boolean
-	_hasHydrated: boolean
+	visitCount: number;
+	dismissCount: number;
+	permanentlyDismissed: boolean;
+	bannerVisible: boolean;
+	_hasHydrated: boolean;
 }
 
 export interface InstallPromptActions {
-	recordVisit: () => void
-	dismissForSession: () => void
-	markInstalled: () => void
-	showBanner: () => void
-	hideBanner: () => void
+	recordVisit: () => void;
+	dismissForSession: () => void;
+	markInstalled: () => void;
+	showBanner: () => void;
+	hideBanner: () => void;
 }
 
-export type InstallPromptStore = InstallPromptState & InstallPromptActions
+export type InstallPromptStore = InstallPromptState & InstallPromptActions;
 
 export interface InstallPromptStoreProviderProps {
-	children: ReactNode
+	children: ReactNode;
 }

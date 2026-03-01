@@ -21,7 +21,7 @@ const DEFAULT_PRICE_RANGE: [number, number] = [0, 500];
 
 function makeParseParams(
 	search: string,
-	overrides: Partial<Omit<ParseFilterParams, "searchParams">> = {}
+	overrides: Partial<Omit<ParseFilterParams, "searchParams">> = {},
 ): ParseFilterParams {
 	return {
 		searchParams: new URLSearchParams(search),
@@ -106,14 +106,14 @@ describe("parseFilterValuesFromURL", () => {
 
 	it("should include activeProductTypeSlug when provided", () => {
 		const result = parseFilterValuesFromURL(
-			makeParseParams("", { activeProductTypeSlug: "bagues" })
+			makeParseParams("", { activeProductTypeSlug: "bagues" }),
 		);
 		expect(result.productTypes).toContain("bagues");
 	});
 
 	it("should not duplicate type if both activeProductTypeSlug and type param match", () => {
 		const result = parseFilterValuesFromURL(
-			makeParseParams("type=bagues", { activeProductTypeSlug: "bagues" })
+			makeParseParams("type=bagues", { activeProductTypeSlug: "bagues" }),
 		);
 		expect(result.productTypes).toEqual(["bagues"]);
 	});
@@ -186,14 +186,14 @@ describe("buildFilterURL", () => {
 
 	it("should navigate to category page when exactly one type is selected", () => {
 		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ productTypes: ["bagues"] }) })
+			makeBuildParams({ formData: makeFormData({ productTypes: ["bagues"] }) }),
 		);
 		expect(result.targetPath).toBe("/produits/bagues");
 	});
 
 	it("should stay on /produits with type params when multiple types selected", () => {
 		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ productTypes: ["bagues", "colliers"] }) })
+			makeBuildParams({ formData: makeFormData({ productTypes: ["bagues", "colliers"] }) }),
 		);
 		expect(result.targetPath).toBe("/produits");
 		expect(result.queryString).toContain("type=bagues");
@@ -202,21 +202,19 @@ describe("buildFilterURL", () => {
 
 	it("should return to /produits when on category page with no types selected", () => {
 		const result = buildFilterURL(
-			makeBuildParams({ isOnCategoryPage: true, currentCategorySlug: "bagues" })
+			makeBuildParams({ isOnCategoryPage: true, currentCategorySlug: "bagues" }),
 		);
 		expect(result.targetPath).toBe("/produits");
 	});
 
 	it("should add single color as set param", () => {
-		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ colors: ["or"] }) })
-		);
+		const result = buildFilterURL(makeBuildParams({ formData: makeFormData({ colors: ["or"] }) }));
 		expect(result.queryString).toContain("color=or");
 	});
 
 	it("should add multiple colors as append params", () => {
 		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ colors: ["or", "argent"] }) })
+			makeBuildParams({ formData: makeFormData({ colors: ["or", "argent"] }) }),
 		);
 		expect(result.queryString).toContain("color=or");
 		expect(result.queryString).toContain("color=argent");
@@ -224,14 +222,14 @@ describe("buildFilterURL", () => {
 
 	it("should add single material", () => {
 		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ materials: ["argent-925"] }) })
+			makeBuildParams({ formData: makeFormData({ materials: ["argent-925"] }) }),
 		);
 		expect(result.queryString).toContain("material=argent-925");
 	});
 
 	it("should add price range when not default", () => {
 		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ priceRange: [50, 300] }) })
+			makeBuildParams({ formData: makeFormData({ priceRange: [50, 300] }) }),
 		);
 		expect(result.queryString).toContain("priceMin=50");
 		expect(result.queryString).toContain("priceMax=300");
@@ -244,23 +242,19 @@ describe("buildFilterURL", () => {
 	});
 
 	it("should add rating when set", () => {
-		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ ratingMin: 4 }) })
-		);
+		const result = buildFilterURL(makeBuildParams({ formData: makeFormData({ ratingMin: 4 }) }));
 		expect(result.queryString).toContain("rating=4");
 	});
 
 	it("should add stockStatus=in_stock when inStockOnly", () => {
 		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ inStockOnly: true }) })
+			makeBuildParams({ formData: makeFormData({ inStockOnly: true }) }),
 		);
 		expect(result.queryString).toContain("stockStatus=in_stock");
 	});
 
 	it("should add onSale=true when onSale is set", () => {
-		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ onSale: true }) })
-		);
+		const result = buildFilterURL(makeBuildParams({ formData: makeFormData({ onSale: true }) }));
 		expect(result.queryString).toContain("onSale=true");
 	});
 
@@ -270,9 +264,7 @@ describe("buildFilterURL", () => {
 	});
 
 	it("should build fullUrl with ? when query params exist", () => {
-		const result = buildFilterURL(
-			makeBuildParams({ formData: makeFormData({ colors: ["or"] }) })
-		);
+		const result = buildFilterURL(makeBuildParams({ formData: makeFormData({ colors: ["or"] }) }));
 		expect(result.fullUrl).toBe("/produits?color=or");
 	});
 
@@ -290,7 +282,7 @@ describe("buildFilterURL", () => {
 			makeBuildParams({
 				currentSearchParams: currentParams,
 				formData: makeFormData({ colors: ["argent"] }),
-			})
+			}),
 		);
 		expect(result.queryString).not.toContain("color=rouge");
 		expect(result.queryString).not.toContain("material=or");
@@ -310,25 +302,21 @@ describe("buildClearFiltersURL", () => {
 	});
 
 	it("should preserve non-filter params like sortBy", () => {
-		const result = buildClearFiltersURL(
-			new URLSearchParams("color=or&sortBy=price-asc")
-		);
+		const result = buildClearFiltersURL(new URLSearchParams("color=or&sortBy=price-asc"));
 		expect(result).toContain("sortBy=price-asc");
 		expect(result).not.toContain("color=");
 	});
 
 	it("should remove all filter keys", () => {
 		const params = new URLSearchParams(
-			"color=or&material=argent&type=bagues&priceMin=50&priceMax=300&rating=4&stockStatus=in_stock&onSale=true"
+			"color=or&material=argent&type=bagues&priceMin=50&priceMax=300&rating=4&stockStatus=in_stock&onSale=true",
 		);
 		const result = buildClearFiltersURL(params);
 		expect(result).toBe("/produits");
 	});
 
 	it("should remove cursor and direction", () => {
-		const result = buildClearFiltersURL(
-			new URLSearchParams("cursor=abc&direction=forward&page=2")
-		);
+		const result = buildClearFiltersURL(new URLSearchParams("cursor=abc&direction=forward&page=2"));
 		expect(result).not.toContain("cursor");
 		expect(result).not.toContain("direction");
 	});
@@ -363,14 +351,16 @@ describe("countActiveFilters", () => {
 
 	it("should ignore pagination params (page, perPage, sortBy, search, cursor, direction)", () => {
 		const result = countActiveFilters(
-			new URLSearchParams("page=2&perPage=20&sortBy=price&search=bague&cursor=abc&direction=forward")
+			new URLSearchParams(
+				"page=2&perPage=20&sortBy=price&search=bague&cursor=abc&direction=forward",
+			),
 		);
 		expect(result.activeFiltersCount).toBe(0);
 	});
 
 	it("should count onSale, stockStatus and rating as filters", () => {
 		const result = countActiveFilters(
-			new URLSearchParams("onSale=true&stockStatus=in_stock&rating=4")
+			new URLSearchParams("onSale=true&stockStatus=in_stock&rating=4"),
 		);
 		expect(result.activeFiltersCount).toBe(3);
 	});
@@ -382,7 +372,7 @@ describe("countActiveFilters", () => {
 
 	it("should count combined filters correctly", () => {
 		const result = countActiveFilters(
-			new URLSearchParams("color=or&color=argent&priceMin=50&priceMax=300&rating=4")
+			new URLSearchParams("color=or&color=argent&priceMin=50&priceMax=300&rating=4"),
 		);
 		// 2 colors + 1 price range + 1 rating = 4
 		expect(result.activeFiltersCount).toBe(4);

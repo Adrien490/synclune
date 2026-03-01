@@ -39,9 +39,9 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 			createToastCallbacks({
 				onSuccess: handleComplete,
 				onWarning: handleComplete, // Fermer le dialog aussi en cas de warning
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const form = useAppForm({
@@ -56,10 +56,7 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 			sendEmail: true,
 			customUrlMode: false,
 		},
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
 	const formErrors = useStore(form.store, (formState) => formState.errors);

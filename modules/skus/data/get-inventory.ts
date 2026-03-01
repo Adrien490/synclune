@@ -17,9 +17,7 @@ export type { GetInventoryParams } from "../types/sku.types";
  * Récupère l'inventaire global (tous les SKUs de tous les produits)
  * Pour la page d'inventaire admin
  */
-export async function getInventory(
-	params: GetInventoryParams = {}
-): Promise<GetProductSkusReturn> {
+export async function getInventory(params: GetInventoryParams = {}): Promise<GetProductSkusReturn> {
 	const admin = await isAdmin();
 
 	if (!admin) {
@@ -53,10 +51,7 @@ export async function getInventory(
 	let validatedParams = validation.data;
 
 	// Utiliser le tri admin par défaut si non spécifié
-	if (
-		validatedParams.sortBy === GET_PRODUCT_SKUS_DEFAULT_SORT_BY &&
-		!params?.sortBy
-	) {
+	if (validatedParams.sortBy === GET_PRODUCT_SKUS_DEFAULT_SORT_BY && !params?.sortBy) {
 		validatedParams = {
 			...validatedParams,
 			sortBy: GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY,

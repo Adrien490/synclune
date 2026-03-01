@@ -46,15 +46,13 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 	return (
 		<div className="min-h-screen">
 			<section className="bg-background py-8 sm:py-10">
-				<div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					<Card className="border-2">
-						<CardHeader className="text-center space-y-4 pb-6">
-							<div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-								<ErrorIcon className="w-10 h-10 text-muted-foreground" />
+						<CardHeader className="space-y-4 pb-6 text-center">
+							<div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+								<ErrorIcon className="text-muted-foreground h-10 w-10" />
 							</div>
-							<CardTitle className="text-2xl sm:text-3xl">
-								{errorInfo.title}
-							</CardTitle>
+							<CardTitle className="text-2xl sm:text-3xl">{errorInfo.title}</CardTitle>
 							<CardDescription className="text-base">
 								Votre commande n'a pas été finalisée
 							</CardDescription>
@@ -64,9 +62,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							{/* 🔴 CORRECTION : Message d'erreur spécifique */}
 							<Alert variant={reason && reason !== "canceled" ? "destructive" : "default"}>
 								<Info className="h-4 w-4" />
-								<AlertDescription>
-									{errorInfo.description}
-								</AlertDescription>
+								<AlertDescription>{errorInfo.description}</AlertDescription>
 							</Alert>
 
 							{/* 🔴 CORRECTION : Afficher l'ID de commande si disponible */}
@@ -80,65 +76,73 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							)}
 
 							{/* 🔴 CORRECTION : Informations et conseils spécifiques */}
-							<div className="space-y-3 text-sm text-muted-foreground">
+							<div className="text-muted-foreground space-y-3 text-sm">
 								<p>
-									Votre panier est toujours disponible avec tous vos articles
-									sélectionnés. Vous pouvez reprendre votre commande à tout
-									moment.
+									Votre panier est toujours disponible avec tous vos articles sélectionnés. Vous
+									pouvez reprendre votre commande à tout moment.
 								</p>
 
 								{/* Conseils spécifiques selon le type d'erreur */}
 								{reason === "card_declined" && (
 									<p className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">💡</span>
+										<span className="mt-0.5" aria-hidden="true">
+											💡
+										</span>
 										<span>
-											<strong>Que faire ?</strong> Vérifiez que votre carte est activée pour les paiements en ligne,
-											ou contactez votre banque si le problème persiste.
+											<strong>Que faire ?</strong> Vérifiez que votre carte est activée pour les
+											paiements en ligne, ou contactez votre banque si le problème persiste.
 										</span>
 									</p>
 								)}
 
 								{reason === "insufficient_funds" && (
 									<p className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">💡</span>
+										<span className="mt-0.5" aria-hidden="true">
+											💡
+										</span>
 										<span>
-											<strong>Que faire ?</strong> Vérifiez votre solde ou utilisez une autre carte bancaire.
+											<strong>Que faire ?</strong> Vérifiez votre solde ou utilisez une autre carte
+											bancaire.
 										</span>
 									</p>
 								)}
 
 								{reason === "authentication_failed" && (
 									<p className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">💡</span>
+										<span className="mt-0.5" aria-hidden="true">
+											💡
+										</span>
 										<span>
-											<strong>Que faire ?</strong> Assurez-vous d'avoir accès à votre application bancaire
-											ou SMS pour valider l'authentification 3D Secure.
+											<strong>Que faire ?</strong> Assurez-vous d'avoir accès à votre application
+											bancaire ou SMS pour valider l'authentification 3D Secure.
 										</span>
 									</p>
 								)}
 
 								{(!reason || reason === "canceled") && (
 									<p className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">💡</span>
+										<span className="mt-0.5" aria-hidden="true">
+											💡
+										</span>
 										<span>
-											Si vous avez rencontré un problème lors du paiement,
-											n'hésite pas à me contacter !
+											Si vous avez rencontré un problème lors du paiement, n'hésite pas à me
+											contacter !
 										</span>
 									</p>
 								)}
 							</div>
 
 							{/* Reassurance message */}
-							<p className="text-sm text-muted-foreground text-center">
-								Votre panier et vos informations ont été sauvegardés.
-								Vous pouvez réessayer immédiatement.
+							<p className="text-muted-foreground text-center text-sm">
+								Votre panier et vos informations ont été sauvegardés. Vous pouvez réessayer
+								immédiatement.
 							</p>
 
 							{/* Actions */}
-							<div className="flex flex-col sm:flex-row gap-3 pt-4">
+							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
 								<Button asChild size="lg" className="flex-1">
 									<Link href="/paiement">
-										<ShoppingBag className="w-4 h-4 mr-2" />
+										<ShoppingBag className="mr-2 h-4 w-4" />
 										Reprendre ma commande
 									</Link>
 								</Button>
@@ -148,7 +152,6 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							</div>
 						</CardContent>
 					</Card>
-
 				</div>
 			</section>
 		</div>

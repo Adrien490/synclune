@@ -65,11 +65,11 @@ export function Toolbar({
 				aria-orientation="horizontal"
 				aria-busy={isPending}
 				className={cn(
-					"flex flex-row flex-wrap gap-2 items-center",
-					"md:rounded-lg md:bg-card md:border md:border-border/60",
+					"flex flex-row flex-wrap items-center gap-2",
+					"md:bg-card md:border-border/60 md:rounded-lg md:border",
 					"min-w-0 p-0 md:p-4 md:shadow-sm",
-					isPending && "opacity-60 pointer-events-none transition-opacity duration-200",
-					className
+					isPending && "pointer-events-none opacity-60 transition-opacity duration-200",
+					className,
 				)}
 			>
 				{children}
@@ -85,17 +85,15 @@ export function Toolbar({
 			aria-orientation="horizontal"
 			aria-busy={isPending}
 			className={cn(
-				"flex flex-row gap-2 items-center",
-				"md:rounded-lg md:bg-card md:border md:border-border/60",
+				"flex flex-row flex-wrap items-center gap-2",
+				"md:bg-card md:border-border/60 md:rounded-lg md:border",
 				"min-w-0 p-0 md:p-4 md:shadow-sm",
-				isPending && "opacity-60 pointer-events-none transition-opacity duration-200",
-				className
+				isPending && "pointer-events-none opacity-60 transition-opacity duration-200",
+				className,
 			)}
 		>
-			<div className="flex-1 min-w-0">{search}</div>
-			<div className="flex flex-row items-center gap-2 shrink-0">
-				{children}
-			</div>
+			<div className="min-w-0 flex-1 sm:min-w-48">{search}</div>
+			<div className="flex shrink-0 flex-row items-center gap-2">{children}</div>
 		</div>
 	);
 }

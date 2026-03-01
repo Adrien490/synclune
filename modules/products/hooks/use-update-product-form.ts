@@ -26,16 +26,17 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 	const defaultSku = product.skus[0];
 
 	// Get all images sorted by isPrimary (primary first)
-	const allMedia = defaultSku?.images
-		.slice()
-		.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
-		.map((img) => ({
-			url: img.url,
-			thumbnailUrl: img.thumbnailUrl || undefined,
-			blurDataUrl: img.blurDataUrl || undefined,
-			altText: img.altText || undefined,
-			mediaType: img.mediaType,
-		})) || [];
+	const allMedia =
+		defaultSku?.images
+			.slice()
+			.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
+			.map((img) => ({
+				url: img.url,
+				thumbnailUrl: img.thumbnailUrl || undefined,
+				blurDataUrl: img.blurDataUrl || undefined,
+				altText: img.altText || undefined,
+				mediaType: img.mediaType,
+			})) || [];
 
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -52,9 +53,9 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const form = useAppForm({
@@ -69,7 +70,9 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 			defaultSku: {
 				skuId: defaultSku?.id || "",
 				priceInclTaxEuros: defaultSku ? defaultSku.priceInclTax / 100 : 0,
-				compareAtPriceEuros: defaultSku?.compareAtPrice ? defaultSku.compareAtPrice / 100 : undefined,
+				compareAtPriceEuros: defaultSku?.compareAtPrice
+					? defaultSku.compareAtPrice / 100
+					: undefined,
 				inventory: defaultSku?.inventory || 0,
 				isActive: String(defaultSku?.isActive ?? true),
 				colorId: defaultSku?.color?.id || "",
@@ -79,10 +82,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 			},
 		},
 		// Merge server state with form state for validation errors
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
 	// Subscribe to form errors for display

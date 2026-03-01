@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -33,10 +30,7 @@ const pastDateSchema = z.coerce
 	.refine((d) => d <= new Date(), "Date cannot be in the future")
 	.optional();
 
-const dateSchema = z.coerce
-	.date()
-	.min(MIN_DATE, "Date too old")
-	.optional();
+const dateSchema = z.coerce.date().min(MIN_DATE, "Date too old").optional();
 
 export const sessionFiltersSchema = z
 	.object({
@@ -78,9 +72,7 @@ export const sessionFiltersSchema = z
 
 export const sessionSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
-		GET_SESSIONS_SORT_FIELDS.includes(
-			value as (typeof GET_SESSIONS_SORT_FIELDS)[number]
-		)
+		GET_SESSIONS_SORT_FIELDS.includes(value as (typeof GET_SESSIONS_SORT_FIELDS)[number])
 		? value
 		: GET_SESSIONS_DEFAULT_SORT_BY;
 }, z.enum(GET_SESSIONS_SORT_FIELDS));

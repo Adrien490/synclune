@@ -34,11 +34,7 @@ export function RequestPasswordResetForm() {
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
 			{/* Indication des champs obligatoires */}
 			<RequiredFieldsNote />
 
@@ -99,9 +95,7 @@ export function RequestPasswordResetForm() {
 			<form.Subscribe selector={(state) => [state.canSubmit]}>
 				{([canSubmit]) => (
 					<Button
-						disabled={
-							!canSubmit || isPending || state?.status === ActionStatus.SUCCESS
-						}
+						disabled={!canSubmit || isPending || state?.status === ActionStatus.SUCCESS}
 						className="w-full"
 						type="submit"
 					>

@@ -102,23 +102,19 @@ describe("deleteUploadThingFile", () => {
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
 		// Default: response helpers return shaped ActionState
-		mockSuccess.mockImplementation(
-			(message: string, data?: Record<string, unknown>) => ({
-				status: ActionStatus.SUCCESS,
-				message,
-				data,
-			})
-		);
+		mockSuccess.mockImplementation((message: string, data?: Record<string, unknown>) => ({
+			status: ActionStatus.SUCCESS,
+			message,
+			data,
+		}));
 		mockError.mockImplementation((message: string) => ({
 			status: ActionStatus.ERROR,
 			message,
 		}));
-		mockHandleActionError.mockImplementation(
-			(_e: unknown, fallback: string) => ({
-				status: ActionStatus.ERROR,
-				message: fallback,
-			})
-		);
+		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+			status: ActionStatus.ERROR,
+			message: fallback,
+		}));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -172,9 +168,7 @@ describe("deleteUploadThingFile", () => {
 
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith(
-			"Impossible d'extraire la cle du fichier depuis l'URL"
-		);
+		expect(mockError).toHaveBeenCalledWith("Impossible d'extraire la cle du fichier depuis l'URL");
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockDeleteFiles).not.toHaveBeenCalled();
 	});
@@ -200,9 +194,7 @@ describe("deleteUploadThingFile", () => {
 
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith(
-			"La suppression du fichier a echoue cote UploadThing"
-		);
+		expect(mockError).toHaveBeenCalledWith("La suppression du fichier a echoue cote UploadThing");
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
@@ -211,9 +203,7 @@ describe("deleteUploadThingFile", () => {
 
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith(
-			"La suppression du fichier a echoue cote UploadThing"
-		);
+		expect(mockError).toHaveBeenCalledWith("La suppression du fichier a echoue cote UploadThing");
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
@@ -241,7 +231,7 @@ describe("deleteUploadThingFile", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Impossible de supprimer le fichier"
+			"Impossible de supprimer le fichier",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

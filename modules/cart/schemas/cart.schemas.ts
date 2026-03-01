@@ -7,7 +7,12 @@ import { MAX_QUANTITY_PER_ORDER } from "../constants/cart";
 
 export const addToCartSchema = z.object({
 	skuId: z.cuid2("ID SKU invalide"),
-	quantity: z.number().int().min(1, "Quantité minimale: 1").max(MAX_QUANTITY_PER_ORDER, `Quantité maximale: ${MAX_QUANTITY_PER_ORDER}`).default(1),
+	quantity: z
+		.number()
+		.int()
+		.min(1, "Quantité minimale: 1")
+		.max(MAX_QUANTITY_PER_ORDER, `Quantité maximale: ${MAX_QUANTITY_PER_ORDER}`)
+		.default(1),
 });
 
 // ============================================================================

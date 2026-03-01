@@ -15,9 +15,9 @@ export function useCancelRefund(options?: UseCancelRefundOptions) {
 			cancelRefund,
 			createToastCallbacks({
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

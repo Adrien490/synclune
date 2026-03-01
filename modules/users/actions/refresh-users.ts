@@ -8,10 +8,7 @@ import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { success, handleActionError } from "@/shared/lib/actions";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
-export async function refreshUsers(
-	_prevState: unknown,
-	_formData: FormData
-): Promise<ActionState> {
+export async function refreshUsers(_prevState: unknown, _formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Rate limiting (before auth to avoid unnecessary DB hits)
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.REFRESH);

@@ -182,7 +182,7 @@ describe("getProductTypes", () => {
 		expect(mockPrisma.productType.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ label: "asc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -194,7 +194,7 @@ describe("getProductTypes", () => {
 		expect(mockPrisma.productType.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ label: "desc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -206,7 +206,7 @@ describe("getProductTypes", () => {
 		expect(mockPrisma.productType.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ products: { _count: "desc" } }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -219,7 +219,7 @@ describe("getProductTypes", () => {
 		expect(mockPrisma.productType.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: [{ label: "asc" }, { id: "asc" }],
-			})
+			}),
 		);
 	});
 
@@ -229,17 +229,13 @@ describe("getProductTypes", () => {
 		// Schema rejects perPage > 200, so test with the maximum valid value
 		await getProductTypes({ sortBy: "label-ascending", direction: "forward", perPage: 200 });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 200 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
 	});
 
 	it("uses default perPage when not provided", async () => {
 		await getProductTypes({ sortBy: "label-ascending", direction: "forward" });
 
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 20 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
 	});
 
 	// Cursor must be exactly 25 characters (cuid2 length) to pass schema validation
@@ -249,7 +245,7 @@ describe("getProductTypes", () => {
 		await getProductTypes({ sortBy: "label-ascending", direction: "forward", cursor: validCursor });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ cursor: validCursor })
+			expect.objectContaining({ cursor: validCursor }),
 		);
 	});
 
@@ -257,7 +253,7 @@ describe("getProductTypes", () => {
 		await getProductTypes({ sortBy: "label-ascending", direction: "backward" });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ direction: "backward" })
+			expect.objectContaining({ direction: "backward" }),
 		);
 	});
 
@@ -270,7 +266,7 @@ describe("getProductTypes", () => {
 		await getProductTypes({ sortBy: "label-ascending", direction: "forward", search: "bague" });
 
 		expect(mockPrisma.productType.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where: whereClause })
+			expect.objectContaining({ where: whereClause }),
 		);
 	});
 
@@ -339,7 +335,7 @@ describe("getProductTypes", () => {
 						},
 					},
 				},
-			})
+			}),
 		);
 	});
 

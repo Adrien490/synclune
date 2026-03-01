@@ -286,22 +286,18 @@ describe("deleteUser", () => {
 	it("should return success with user display name", async () => {
 		const result = await deleteUser(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("Marie Dupont")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("Marie Dupont"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
 	it("should fall back to email in success message when name is null", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ name: null, email: "marie@example.com" })
+			makeUser({ name: null, email: "marie@example.com" }),
 		);
 
 		await deleteUser(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("marie@example.com")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("marie@example.com"));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -337,7 +333,7 @@ describe("deleteUser", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la suppression de l'utilisateur"
+			"Erreur lors de la suppression de l'utilisateur",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

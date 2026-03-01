@@ -9,12 +9,7 @@ describe("seededRandom", () => {
 	});
 
 	it("returns different results for different seeds", () => {
-		const values = new Set([
-			seededRandom(1),
-			seededRandom(2),
-			seededRandom(3),
-			seededRandom(100),
-		]);
+		const values = new Set([seededRandom(1), seededRandom(2), seededRandom(3), seededRandom(100)]);
 		expect(values.size).toBe(4);
 	});
 

@@ -1,58 +1,57 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
+import Image from "next/image";
+import Link from "next/link";
 
-import { Tap } from "@/shared/components/animations/tap"
-import {
-	Skeleton,
-	SkeletonGroup,
-	SkeletonText,
-} from "@/shared/components/ui/skeleton"
-import { formatEuro } from "@/shared/utils/format-euro"
-import { cn } from "@/shared/utils/cn"
+import { Tap } from "@/shared/components/animations/tap";
+import { Skeleton, SkeletonGroup, SkeletonText } from "@/shared/components/ui/skeleton";
+import { formatEuro } from "@/shared/utils/format-euro";
+import { cn } from "@/shared/utils/cn";
 
-import { SEARCH_SYNONYMS } from "../../constants/search-synonyms"
-import type { QuickSearchProduct } from "../../data/quick-search-products"
-import { SKELETON_ROWS } from "./constants"
+import { SEARCH_SYNONYMS } from "../../constants/search-synonyms";
+import type { QuickSearchProduct } from "../../data/quick-search-products";
+import { SKELETON_ROWS } from "./constants";
 
 interface SearchResultItemProps {
-	product: QuickSearchProduct
-	query: string
-	onSelect: () => void
+	product: QuickSearchProduct;
+	query: string;
+	onSelect: () => void;
 }
 
-const MAX_COLOR_SWATCHES = 3
+const MAX_COLOR_SWATCHES = 3;
 
 /**
  * Compact product result item for the quick search dialog.
  * Shows thumbnail, title with highlighted match, price, and color swatches.
  */
 export function SearchResultItem({ product, query, onSelect }: SearchResultItemProps) {
-	const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0]
-	if (!defaultSku) return null
+	const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0];
+	if (!defaultSku) return null;
 
-	const image = defaultSku.images[0]
-	const isOutOfStock = product.skus.every((s) => s.inventory <= 0)
+	const image = defaultSku.images[0];
+	const isOutOfStock = product.skus.every((s) => s.inventory <= 0);
 
 	// Expand query words with synonyms for highlighting
 	// (e.g. searching "anneau" also highlights "bague" in the title)
 	const synonymTerms = query
 		.split(/\s+/)
 		.filter(Boolean)
-		.flatMap((word) => SEARCH_SYNONYMS.get(word.toLowerCase()) ?? [])
+		.flatMap((word) => SEARCH_SYNONYMS.get(word.toLowerCase()) ?? []);
 
 	// Collect unique colors
-	const seen = new Set<string>()
-	const colors = product.skus.reduce<NonNullable<(typeof product.skus)[number]["color"]>[]>((acc, s) => {
-		if (s.color && !seen.has(s.color.slug)) {
-			seen.add(s.color.slug)
-			acc.push(s.color)
-		}
-		return acc
-	}, [])
+	const seen = new Set<string>();
+	const colors = product.skus.reduce<NonNullable<(typeof product.skus)[number]["color"]>[]>(
+		(acc, s) => {
+			if (s.color && !seen.has(s.color.slug)) {
+				seen.add(s.color.slug);
+				acc.push(s.color);
+			}
+			return acc;
+		},
+		[],
+	);
 
-	const extraColors = colors.length > MAX_COLOR_SWATCHES ? colors.length - MAX_COLOR_SWATCHES : 0
+	const extraColors = colors.length > MAX_COLOR_SWATCHES ? colors.length - MAX_COLOR_SWATCHES : 0;
 
 	return (
 		<Tap scale={0.97}>
@@ -61,68 +60,69 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				onClick={onSelect}
 				data-active={undefined}
 				className={cn(
-					"flex items-center gap-3 px-3 py-2.5 rounded-xl",
+					"flex items-center gap-3 rounded-xl px-3 py-2.5",
 					"hover:bg-muted transition-colors",
-					"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
+					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					"min-h-14",
-					"data-[active=true]:bg-muted"
+					"data-[active=true]:bg-muted",
 				)}
 			>
 				{/* Thumbnail */}
-				<div className="size-12 shrink-0 rounded-lg overflow-hidden bg-muted">
+				<div className="bg-muted size-12 shrink-0 overflow-hidden rounded-lg">
 					{image ? (
 						<Image
 							src={image.url}
 							alt={image.altText ?? product.title}
 							width={48}
 							height={48}
+							sizes="48px"
 							className="size-full object-cover"
 							placeholder={image.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={image.blurDataUrl ?? undefined}
 						/>
 					) : (
-						<div className="size-full bg-muted" />
+						<div className="bg-muted size-full" />
 					)}
 				</div>
 
 				{/* Content */}
-				<div className="flex-1 min-w-0">
-					<p className="text-sm font-medium truncate">
+				<div className="min-w-0 flex-1">
+					<p className="truncate text-sm font-medium">
 						<HighlightMatch text={product.title} query={query} synonyms={synonymTerms} />
 					</p>
-					<div className="flex items-center gap-2 mt-0.5">
+					<div className="mt-0.5 flex items-center gap-2">
 						{/* Price */}
-						<span className="text-sm text-muted-foreground">
+						<span className="text-muted-foreground text-sm">
 							{formatEuro(defaultSku.priceInclTax)}
 						</span>
 						{defaultSku.compareAtPrice && defaultSku.compareAtPrice > defaultSku.priceInclTax && (
-							<span className="text-xs text-muted-foreground/50 line-through">
+							<span className="text-muted-foreground/50 text-xs line-through">
 								{formatEuro(defaultSku.compareAtPrice)}
 							</span>
 						)}
 
 						{/* Out of stock badge */}
-						{isOutOfStock && (
-							<span className="text-xs text-destructive font-medium">
-								Rupture
-							</span>
-						)}
+						{isOutOfStock && <span className="text-destructive text-xs font-medium">Rupture</span>}
 					</div>
 				</div>
 
 				{/* Color swatches */}
 				{colors.length > 0 && (
-					<div className="flex items-center gap-1 shrink-0" role="img" aria-label={`Couleurs : ${colors.map((c) => c.name).join(", ")}`}>
+					<div
+						className="flex shrink-0 items-center gap-1"
+						role="img"
+						aria-label={`Couleurs : ${colors.map((c) => c.name).join(", ")}`}
+					>
 						{colors.slice(0, MAX_COLOR_SWATCHES).map((color) => (
 							<span
 								key={color.slug}
-								className="size-2 rounded-full border border-border/50"
+								className="border-border/50 size-2 rounded-full border"
 								style={{ backgroundColor: color.hex }}
 								aria-hidden="true"
 							/>
 						))}
 						{extraColors > 0 && (
-							<span className="text-[10px] text-muted-foreground/60" aria-hidden="true">
+							<span className="text-muted-foreground/60 text-[10px]" aria-hidden="true">
 								+{extraColors}
 							</span>
 						)}
@@ -130,7 +130,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				)}
 			</Link>
 		</Tap>
-	)
+	);
 }
 
 /**
@@ -142,13 +142,13 @@ export function SearchResultsSkeleton() {
 			{Array.from({ length: SKELETON_ROWS }).map((_, i) => (
 				<div key={i} className="flex items-center gap-3 py-2">
 					<Skeleton shape="rounded" className="size-12 shrink-0" />
-					<div className="flex-1 min-w-0">
+					<div className="min-w-0 flex-1">
 						<SkeletonText lines={2} />
 					</div>
 				</div>
 			))}
 		</SkeletonGroup>
-	)
+	);
 }
 
 /**
@@ -164,38 +164,31 @@ export function HighlightMatch({
 	query,
 	synonyms,
 }: {
-	text: string
-	query: string
-	synonyms?: string[]
+	text: string;
+	query: string;
+	synonyms?: string[];
 }) {
-	const allTerms = [query, ...(synonyms ?? [])]
-		.map((t) => t.trim())
-		.filter(Boolean)
+	const allTerms = [query, ...(synonyms ?? [])].map((t) => t.trim()).filter(Boolean);
 
 	if (allTerms.length === 0) {
-		return <>{text}</>
+		return <>{text}</>;
 	}
 
-	const escaped = allTerms.map((t) =>
-		t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-	)
-	const regex = new RegExp(`(${escaped.join("|")})`, "gi")
-	const parts = text.split(regex)
+	const escaped = allTerms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+	const regex = new RegExp(`(${escaped.join("|")})`, "gi");
+	const parts = text.split(regex);
 
 	return (
 		<>
 			{parts.map((part, i) =>
 				i % 2 === 1 ? (
-					<mark
-						key={i}
-						className="bg-primary/15 text-foreground font-medium rounded-sm"
-					>
+					<mark key={i} className="bg-primary/15 text-foreground rounded-sm font-medium">
 						{part}
 					</mark>
 				) : (
 					<span key={i}>{part}</span>
-				)
+				),
 			)}
 		</>
-	)
+	);
 }

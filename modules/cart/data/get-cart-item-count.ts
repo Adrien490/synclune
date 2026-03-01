@@ -45,7 +45,7 @@ export async function getCartItemCount(): Promise<GetCartItemCountReturn> {
  */
 export async function fetchCartItemCount(
 	userId?: string,
-	sessionId?: string
+	sessionId?: string,
 ): Promise<GetCartItemCountReturn> {
 	"use cache: private";
 	cacheLife("cart");
@@ -61,10 +61,7 @@ export async function fetchCartItemCount(
 		where: {
 			cart: {
 				...(userId ? { userId } : { sessionId }),
-				OR: [
-					{ expiresAt: null },
-					{ expiresAt: { gt: new Date() } },
-				],
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
 			},
 		},
 		_sum: {

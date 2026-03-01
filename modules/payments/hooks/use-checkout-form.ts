@@ -47,10 +47,10 @@ export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
 
 						// Appeler le callback pour afficher le formulaire Stripe Embedded
 						const data = result.data as {
-							clientSecret: string
-							orderId: string
-							orderNumber: string
-						}
+							clientSecret: string;
+							orderId: string;
+							orderNumber: string;
+						};
 						onSuccess?.({
 							clientSecret: data.clientSecret,
 							orderId: data.orderId,
@@ -58,18 +58,15 @@ export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
 						});
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const form = useAppForm({
 		...getCheckoutFormOptions(session, addresses),
 		// Merge server state with form state for validation errors
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
 	// Subscribe to form errors for display

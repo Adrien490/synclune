@@ -33,7 +33,7 @@ type UsageCounts = {
 export function checkDiscountEligibility(
 	discount: DiscountValidation,
 	context: DiscountApplicationContext,
-	usageCounts?: UsageCounts
+	usageCounts?: UsageCounts,
 ): EligibilityCheckResult {
 	const { subtotal, userId, customerEmail } = context;
 
@@ -56,10 +56,7 @@ export function checkDiscountEligibility(
 		const minAmount = (discount.minOrderAmount / 100).toFixed(2);
 		return {
 			eligible: false,
-			error: DISCOUNT_ERROR_MESSAGES.MIN_ORDER_NOT_MET.replace(
-				"{amount}",
-				minAmount
-			),
+			error: DISCOUNT_ERROR_MESSAGES.MIN_ORDER_NOT_MET.replace("{amount}", minAmount),
 		};
 	}
 

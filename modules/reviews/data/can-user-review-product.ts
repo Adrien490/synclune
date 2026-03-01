@@ -1,6 +1,6 @@
-import { cacheReviewableProducts } from "../constants/cache"
-import { prisma, notDeleted } from "@/shared/lib/prisma"
-import type { CanReviewResult } from "../types/review.types"
+import { cacheReviewableProducts } from "../constants/cache";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import type { CanReviewResult } from "../types/review.types";
 
 /**
  * Vérifie si un utilisateur peut laisser un avis sur un produit
@@ -16,10 +16,10 @@ import type { CanReviewResult } from "../types/review.types"
  */
 export async function canUserReviewProduct(
 	userId: string,
-	productId: string
+	productId: string,
 ): Promise<CanReviewResult> {
 	"use cache: private";
-	cacheReviewableProducts(userId)
+	cacheReviewableProducts(userId);
 
 	// 1. Vérifier s'il a déjà laissé un avis
 	const existingReview = await prisma.productReview.findUnique({
@@ -27,7 +27,7 @@ export async function canUserReviewProduct(
 			userId_productId: { userId, productId },
 		},
 		select: { id: true, deletedAt: true },
-	})
+	});
 
 	if (existingReview && !existingReview.deletedAt) {
 		return {
@@ -35,7 +35,7 @@ export async function canUserReviewProduct(
 			orderItemId: null,
 			reason: "already_reviewed",
 			existingReviewId: existingReview.id,
-		}
+		};
 	}
 
 	// 2. Trouver un OrderItem livré sans avis associé
@@ -57,7 +57,7 @@ export async function canUserReviewProduct(
 		orderBy: {
 			order: { createdAt: "desc" },
 		},
-	})
+	});
 
 	if (!eligibleOrderItem) {
 		// Vérifier si c'est parce qu'il n'a pas acheté ou pas encore livré
@@ -74,25 +74,25 @@ export async function canUserReviewProduct(
 				},
 			},
 			select: { id: true },
-		})
+		});
 
 		if (pendingOrder) {
 			return {
 				canReview: false,
 				orderItemId: null,
 				reason: "order_not_delivered",
-			}
+			};
 		}
 
 		return {
 			canReview: false,
 			orderItemId: null,
 			reason: "no_purchase",
-		}
+		};
 	}
 
 	return {
 		canReview: true,
 		orderItemId: eligibleOrderItem.id,
-	}
+	};
 }

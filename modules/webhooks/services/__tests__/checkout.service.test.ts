@@ -112,7 +112,9 @@ import type { OrderWithItems } from "../../types/checkout.types";
 // Fixtures
 // ============================================================================
 
-function makeStripeSession(overrides: Record<string, unknown> = {}): import("stripe").default.Checkout.Session {
+function makeStripeSession(
+	overrides: Record<string, unknown> = {},
+): import("stripe").default.Checkout.Session {
 	return {
 		id: "cs_test_abc123",
 		object: "checkout.session",
@@ -304,8 +306,8 @@ describe("processOrderTransaction", () => {
 		mockGetShippingMethodFromRate.mockReturnValue("STANDARD");
 		mockGetShippingCarrierFromRate.mockReturnValue("autre");
 		// Default: transaction executes its callback
-		mockPrisma.$transaction.mockImplementation(
-			(fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockTx) => Promise<unknown>) =>
+			fn(mockTx),
 		);
 	});
 
@@ -319,7 +321,13 @@ describe("processOrderTransaction", () => {
 
 		// Stock validation now happens inside the transaction via tx.productSku.findMany
 		mockTx.productSku.findMany.mockResolvedValue([
-			{ id: "sku-1", inventory: 10, isActive: true, deletedAt: null, product: { status: "PUBLIC", deletedAt: null } },
+			{
+				id: "sku-1",
+				inventory: 10,
+				isActive: true,
+				deletedAt: null,
+				product: { status: "PUBLIC", deletedAt: null },
+			},
 		]);
 
 		const session = makeStripeSession();
@@ -351,7 +359,7 @@ describe("processOrderTransaction", () => {
 					paymentStatus: "PAID",
 					shippingCost: 600,
 				}),
-			})
+			}),
 		);
 
 		// Cart cleared for authenticated user
@@ -374,7 +382,13 @@ describe("processOrderTransaction", () => {
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
 
 		mockTx.productSku.findMany.mockResolvedValue([
-			{ id: "sku-1", inventory: 10, isActive: true, deletedAt: null, product: { status: "PUBLIC", deletedAt: null } },
+			{
+				id: "sku-1",
+				inventory: 10,
+				isActive: true,
+				deletedAt: null,
+				product: { status: "PUBLIC", deletedAt: null },
+			},
 		]);
 
 		const session = makeStripeSession({ metadata: { guestSessionId: "guest-session-xyz" } });
@@ -385,10 +399,12 @@ describe("processOrderTransaction", () => {
 		});
 		// Should NOT call deleteMany with userId
 		const deleteCalls = mockTx.cartItem.deleteMany.mock.calls;
-		expect(deleteCalls.every((call: unknown[]) => {
-			const arg = call[0] as { where: { cart: Record<string, unknown> } };
-			return !("userId" in arg.where.cart);
-		})).toBe(true);
+		expect(
+			deleteCalls.every((call: unknown[]) => {
+				const arg = call[0] as { where: { cart: Record<string, unknown> } };
+				return !("userId" in arg.where.cart);
+			}),
+		).toBe(true);
 	});
 
 	it("should skip processing and return order immediately when already PAID (idempotent)", async () => {
@@ -413,7 +429,7 @@ describe("processOrderTransaction", () => {
 
 		const session = makeStripeSession();
 		await expect(
-			processOrderTransaction("nonexistent-order", session, 600, "shr_france_123")
+			processOrderTransaction("nonexistent-order", session, 600, "shr_france_123"),
 		).rejects.toThrow("Order not found: nonexistent-order");
 	});
 
@@ -426,7 +442,7 @@ describe("processOrderTransaction", () => {
 
 		const session = makeStripeSession();
 		await expect(
-			processOrderTransaction("order-1", session, 600, "shr_france_123")
+			processOrderTransaction("order-1", session, 600, "shr_france_123"),
 		).rejects.toThrow("Invalid item in order: SKU not found (SKU: sku-1, Quantity: 2)");
 	});
 
@@ -435,12 +451,18 @@ describe("processOrderTransaction", () => {
 		mockTx.order.findUnique.mockResolvedValue(order);
 
 		mockTx.productSku.findMany.mockResolvedValue([
-			{ id: "sku-1", inventory: 0, isActive: false, deletedAt: null, product: { status: "PUBLIC", deletedAt: null } },
+			{
+				id: "sku-1",
+				inventory: 0,
+				isActive: false,
+				deletedAt: null,
+				product: { status: "PUBLIC", deletedAt: null },
+			},
 		]);
 
 		const session = makeStripeSession();
 		await expect(
-			processOrderTransaction("order-1", session, 600, "shr_france_123")
+			processOrderTransaction("order-1", session, 600, "shr_france_123"),
 		).rejects.toThrow("Invalid item in order: invalid (active=false, stock=0, deleted=false)");
 	});
 
@@ -453,7 +475,13 @@ describe("processOrderTransaction", () => {
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
 
 		mockTx.productSku.findMany.mockResolvedValue([
-			{ id: "sku-1", inventory: 10, isActive: true, deletedAt: null, product: { status: "PUBLIC", deletedAt: null } },
+			{
+				id: "sku-1",
+				inventory: 10,
+				isActive: true,
+				deletedAt: null,
+				product: { status: "PUBLIC", deletedAt: null },
+			},
 		]);
 
 		const session = makeStripeSession();
@@ -472,10 +500,7 @@ describe("processOrderTransaction", () => {
 		const session = makeStripeSession();
 		await processOrderTransaction("order-1", session, 600, "shr_france_123");
 
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(
-			expect.any(Function),
-			{ timeout: 10000 }
-		);
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
 	});
 });
 
@@ -615,8 +640,8 @@ describe("cancelExpiredOrder", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.$transaction.mockImplementation(
-			(fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockTx) => Promise<unknown>) =>
+			fn(mockTx),
 		);
 	});
 
@@ -677,7 +702,7 @@ describe("cancelExpiredOrder", () => {
 		expect(mockTx.order.update).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: { status: "CANCELLED", paymentStatus: "EXPIRED" },
-			})
+			}),
 		);
 	});
 

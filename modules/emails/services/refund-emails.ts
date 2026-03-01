@@ -1,9 +1,9 @@
-import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email"
-import { RefundApprovedEmail } from "@/emails/refund-approved-email"
-import { RefundRejectedEmail } from "@/emails/refund-rejected-email"
-import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants"
-import { renderAndSend } from "./send-email"
-import type { EmailResult } from "../types/email.types"
+import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email";
+import { RefundApprovedEmail } from "@/emails/refund-approved-email";
+import { RefundRejectedEmail } from "@/emails/refund-rejected-email";
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
+import { renderAndSend } from "./send-email";
+import type { EmailResult } from "../types/email.types";
 
 /**
  * Envoie un email de confirmation de remboursement au client
@@ -18,14 +18,14 @@ export async function sendRefundConfirmationEmail({
 	isPartialRefund,
 	orderDetailsUrl,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	refundAmount: number
-	originalOrderTotal: number
-	reason: string
-	isPartialRefund: boolean
-	orderDetailsUrl: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	refundAmount: number;
+	originalOrderTotal: number;
+	reason: string;
+	isPartialRefund: boolean;
+	orderDetailsUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		RefundConfirmationEmail({
@@ -43,7 +43,7 @@ export async function sendRefundConfirmationEmail({
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "payment" }],
 		},
-	)
+	);
 }
 
 /**
@@ -59,14 +59,14 @@ export async function sendRefundApprovedEmail({
 	isPartialRefund,
 	orderDetailsUrl,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	refundAmount: number
-	originalOrderTotal: number
-	reason: string
-	isPartialRefund: boolean
-	orderDetailsUrl: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	refundAmount: number;
+	originalOrderTotal: number;
+	reason: string;
+	isPartialRefund: boolean;
+	orderDetailsUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		RefundApprovedEmail({
@@ -84,7 +84,7 @@ export async function sendRefundApprovedEmail({
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "payment" }],
 		},
-	)
+	);
 }
 
 /**
@@ -98,12 +98,12 @@ export async function sendRefundRejectedEmail({
 	reason,
 	orderDetailsUrl,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	refundAmount: number
-	reason?: string
-	orderDetailsUrl: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	refundAmount: number;
+	reason?: string;
+	orderDetailsUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		RefundRejectedEmail({
@@ -119,5 +119,5 @@ export async function sendRefundRejectedEmail({
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "payment" }],
 		},
-	)
+	);
 }

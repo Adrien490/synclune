@@ -66,17 +66,12 @@ export type GetDiscountByCodeReturn = DiscountValidation | null;
 // FUNCTION TYPES - LIST
 // ============================================================================
 
-export type GetDiscountsParams = Omit<
-	z.infer<typeof getDiscountsSchema>,
-	"direction"
-> & {
+export type GetDiscountsParams = Omit<z.infer<typeof getDiscountsSchema>, "direction"> & {
 	direction?: "forward" | "backward";
 };
 
 export type GetDiscountsReturn = {
-	discounts: Array<
-		Prisma.DiscountGetPayload<{ select: typeof GET_DISCOUNTS_SELECT }>
-	>;
+	discounts: Array<Prisma.DiscountGetPayload<{ select: typeof GET_DISCOUNTS_SELECT }>>;
 	pagination: PaginationInfo;
 };
 
@@ -84,9 +79,7 @@ export type GetDiscountsReturn = {
 // VALIDATION TYPES
 // ============================================================================
 
-export type ValidateDiscountCodeParams = z.infer<
-	typeof validateDiscountCodeSchema
->;
+export type ValidateDiscountCodeParams = z.infer<typeof validateDiscountCodeSchema>;
 
 export type ValidateDiscountCodeReturn = {
 	valid: boolean;

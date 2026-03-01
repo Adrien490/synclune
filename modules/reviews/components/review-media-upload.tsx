@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Camera, X, Loader2 } from "lucide-react";
+import { Camera, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { cn } from "@/shared/utils/cn";
 
@@ -84,61 +85,65 @@ export function ReviewMediaUpload({
 
 			{/* Zone d'upload */}
 			{canAddMore && (
-				<div className="relative">
-					{isUploading && (
-						<div
-							className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg"
-							role="status"
-						>
-							<div className="text-muted-foreground flex items-center gap-2 text-sm">
-								<Loader2 className="size-4 animate-spin" aria-hidden="true" />
-								Upload en cours...
-							</div>
-						</div>
-					)}
-					<UploadDropzone
-						endpoint="reviewMedia"
-						onUploadBegin={() => setIsUploading(true)}
-						onClientUploadComplete={(res) => {
-							setIsUploading(false);
-							if (res && res.length > 0) {
-								const newMedia: ReviewMediaItem[] = res.map((file) => ({
-									url: file.ufsUrl,
-									blurDataUrl: file.serverData?.blurDataUrl || undefined,
-									altText: undefined,
-								}));
-								// Ne garder que les 3 premiers
-								const updatedMedia = [...media, ...newMedia].slice(
-									0,
-									REVIEW_CONFIG.MAX_MEDIA_COUNT,
-								);
-								onChange(updatedMedia);
-								toast.success(
-									`${res.length} photo${res.length > 1 ? "s" : ""} ajoutée${res.length > 1 ? "s" : ""}`,
+				<UploadDropzone
+					endpoint="reviewMedia"
+					onUploadBegin={() => setIsUploading(true)}
+					onClientUploadComplete={(res) => {
+						setIsUploading(false);
+						if (res && res.length > 0) {
+							const newMedia: ReviewMediaItem[] = res.map((file) => ({
+								url: file.ufsUrl,
+								blurDataUrl: file.serverData?.blurDataUrl || undefined,
+								altText: undefined,
+							}));
+							// Ne garder que les 3 premiers
+							const updatedMedia = [...media, ...newMedia].slice(0, REVIEW_CONFIG.MAX_MEDIA_COUNT);
+							onChange(updatedMedia);
+							toast.success(
+								`${res.length} photo${res.length > 1 ? "s" : ""} ajoutée${res.length > 1 ? "s" : ""}`,
+							);
+						}
+					}}
+					onUploadError={(error) => {
+						setIsUploading(false);
+						toast.error(error.message || "Erreur lors de l'upload");
+					}}
+					config={{
+						mode: "auto",
+					}}
+					appearance={{
+						container: cn(
+							"border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors relative",
+							"hover:border-primary/50 hover:bg-muted/50",
+							"ut-uploading:border-primary ut-uploading:bg-primary/5",
+						),
+						uploadIcon: "hidden",
+						label: "hidden",
+						allowedContent: "hidden",
+						button: "hidden",
+					}}
+					content={{
+						uploadIcon: ({ isUploading: uploading, uploadProgress }) => {
+							if (uploading) {
+								return (
+									<div
+										className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-sm"
+										role="status"
+										aria-live="polite"
+									>
+										<UploadProgress
+											progress={uploadProgress}
+											variant="compact"
+											isProcessing={uploadProgress >= 100}
+										/>
+									</div>
 								);
 							}
-						}}
-						onUploadError={(error) => {
-							setIsUploading(false);
-							toast.error(error.message || "Erreur lors de l'upload");
-						}}
-						config={{
-							mode: "auto",
-						}}
-						appearance={{
-							container: cn(
-								"border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors",
-								"hover:border-primary/50 hover:bg-muted/50",
-								"ut-uploading:border-primary ut-uploading:bg-primary/5",
-							),
-							uploadIcon: "hidden",
-							label: "hidden",
-							allowedContent: "hidden",
-							button: "hidden",
-						}}
-						content={{
-							uploadIcon: () => null,
-							label: () => (
+							return null;
+						},
+						label: ({ isUploading: uploading }) => {
+							if (uploading) return null;
+							return (
 								<div className="flex flex-col items-center gap-2 py-2">
 									<div className="bg-muted rounded-full p-2">
 										<Camera className="text-muted-foreground size-5" aria-hidden="true" />
@@ -151,12 +156,12 @@ export function ReviewMediaUpload({
 										</p>
 									</div>
 								</div>
-							),
-							allowedContent: () => null,
-							button: () => null,
-						}}
-					/>
-				</div>
+							);
+						},
+						allowedContent: () => null,
+						button: () => null,
+					}}
+				/>
 			)}
 
 			{/* Indicateur de limite atteinte */}

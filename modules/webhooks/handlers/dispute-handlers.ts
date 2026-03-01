@@ -39,12 +39,18 @@ const STRIPE_REASON_MAP: Record<string, DisputeReason> = {
  */
 function mapStripeDisputeStatus(stripeStatus: string): DisputeStatus {
 	switch (stripeStatus) {
-		case "needs_response": return DisputeStatus.NEEDS_RESPONSE;
-		case "under_review": return DisputeStatus.UNDER_REVIEW;
-		case "won": return DisputeStatus.WON;
-		case "lost": return DisputeStatus.LOST;
-		case "charge_refunded": return DisputeStatus.CHARGE_REFUNDED;
-		default: return DisputeStatus.NEEDS_RESPONSE;
+		case "needs_response":
+			return DisputeStatus.NEEDS_RESPONSE;
+		case "under_review":
+			return DisputeStatus.UNDER_REVIEW;
+		case "won":
+			return DisputeStatus.WON;
+		case "lost":
+			return DisputeStatus.LOST;
+		case "charge_refunded":
+			return DisputeStatus.CHARGE_REFUNDED;
+		default:
+			return DisputeStatus.NEEDS_RESPONSE;
 	}
 }
 
@@ -58,7 +64,7 @@ const SYSTEM_AUTHOR_NAME = "Système (webhook Stripe)";
  * 3. Send admin alert with dispute details and deadline
  */
 export async function handleDisputeCreated(
-	dispute: Stripe.Dispute
+	dispute: Stripe.Dispute,
 ): Promise<WebhookHandlerResult | null> {
 	const paymentIntentId =
 		typeof dispute.payment_intent === "string"
@@ -114,7 +120,7 @@ export async function handleDisputeCreated(
 				stripeDisputeId: dispute.id,
 				orderId: order.id,
 				amount: dispute.amount,
-				fee: (dispute.balance_transactions?.[0]?.fee ?? 0),
+				fee: dispute.balance_transactions?.[0]?.fee ?? 0,
 				reason: STRIPE_REASON_MAP[dispute.reason] || DisputeReason.GENERAL,
 				status: mapStripeDisputeStatus(dispute.status),
 				dueBy,
@@ -174,7 +180,7 @@ export async function handleDisputeCreated(
  * 3. Send admin alert with the result
  */
 export async function handleDisputeClosed(
-	dispute: Stripe.Dispute
+	dispute: Stripe.Dispute,
 ): Promise<WebhookHandlerResult | null> {
 	const paymentIntentId =
 		typeof dispute.payment_intent === "string"
@@ -256,7 +262,9 @@ export async function handleDisputeClosed(
 		}
 	});
 
-	console.log(`${won ? "✅" : "❌"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`);
+	console.log(
+		`${won ? "✅" : "❌"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`,
+	);
 
 	const baseUrl = getBaseUrl();
 	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;

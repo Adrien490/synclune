@@ -29,9 +29,7 @@ interface ProductTypeDialogData extends Record<string, unknown> {
 }
 
 export function ProductTypeFormDialog() {
-	const { isOpen, close, data } = useDialog<ProductTypeDialogData>(
-		PRODUCT_TYPE_DIALOG_ID
-	);
+	const { isOpen, close, data } = useDialog<ProductTypeDialogData>(PRODUCT_TYPE_DIALOG_ID);
 	const productType = data?.productType;
 	const isUpdateMode = !!productType;
 
@@ -51,9 +49,9 @@ export function ProductTypeFormDialog() {
 					close();
 					form.reset();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	// Update action
@@ -64,9 +62,9 @@ export function ProductTypeFormDialog() {
 				onSuccess: () => {
 					close();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const isPending = isCreatePending || isUpdatePending;
@@ -108,14 +106,8 @@ export function ProductTypeFormDialog() {
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				<form
-					action={action}
-					className="space-y-6"
-					onSubmit={() => form.handleSubmit()}
-				>
-					{isUpdateMode && productType && (
-						<input type="hidden" name="id" value={productType.id} />
-					)}
+				<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+					{isUpdateMode && productType && <input type="hidden" name="id" value={productType.id} />}
 
 					<RequiredFieldsNote />
 
@@ -171,11 +163,7 @@ export function ProductTypeFormDialog() {
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">
-									{isPending
-										? "Enregistrement..."
-										: isUpdateMode
-											? "Enregistrer"
-											: "Créer"}
+									{isPending ? "Enregistrement..." : isUpdateMode ? "Enregistrer" : "Créer"}
 								</Button>
 							)}
 						</form.Subscribe>

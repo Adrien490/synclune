@@ -20,41 +20,43 @@ export default function LegalLoading() {
 
 			{/* Main Content */}
 			<div className="bg-background">
-				<div className={`container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl ${SECTION_SPACING.default}`}>
+				<div
+					className={`container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 ${SECTION_SPACING.default}`}
+				>
 					{/* Main content card */}
-					<div className="bg-card border rounded-2xl p-8 shadow-lg space-y-8">
+					<div className="bg-card space-y-8 rounded-2xl border p-8 shadow-lg">
 						{/* Legal sections */}
 						{Array.from({ length: 6 }).map((_, i) => (
 							<section key={i} className="space-y-4">
 								{/* Section title */}
-								<Skeleton className="h-6 w-72 bg-muted/50" />
+								<Skeleton className="bg-muted/50 h-6 w-72" />
 
 								{/* Section content */}
 								<div className="space-y-3">
-									<Skeleton className="h-4 w-full bg-muted/30" />
-									<Skeleton className="h-4 w-full bg-muted/30" />
-									<Skeleton className="h-4 w-5/6 bg-muted/30" />
-									<Skeleton className="h-4 w-full bg-muted/30" />
-									<Skeleton className="h-4 w-4/5 bg-muted/30" />
+									<Skeleton className="bg-muted/30 h-4 w-full" />
+									<Skeleton className="bg-muted/30 h-4 w-full" />
+									<Skeleton className="bg-muted/30 h-4 w-5/6" />
+									<Skeleton className="bg-muted/30 h-4 w-full" />
+									<Skeleton className="bg-muted/30 h-4 w-4/5" />
 								</div>
 							</section>
 						))}
 
 						{/* Contact section */}
-						<div className="bg-muted/20 rounded-xl p-6 space-y-4">
-							<Skeleton className="h-6 w-56 bg-muted/50" />
-							<Skeleton className="h-4 w-full bg-muted/30" />
-							<Skeleton className="h-4 w-5/6 bg-muted/30" />
-							<div className="flex flex-col sm:flex-row gap-4 pt-2">
-								<Skeleton className="h-12 w-full sm:w-40 bg-primary/20" />
-								<Skeleton className="h-12 w-full sm:w-48 bg-muted/30" />
+						<div className="bg-muted/20 space-y-4 rounded-xl p-6">
+							<Skeleton className="bg-muted/50 h-6 w-56" />
+							<Skeleton className="bg-muted/30 h-4 w-full" />
+							<Skeleton className="bg-muted/30 h-4 w-5/6" />
+							<div className="flex flex-col gap-4 pt-2 sm:flex-row">
+								<Skeleton className="bg-primary/20 h-12 w-full sm:w-40" />
+								<Skeleton className="bg-muted/30 h-12 w-full sm:w-48" />
 							</div>
 						</div>
 					</div>
 
 					{/* Last update */}
 					<div className="mt-8 text-center">
-						<Skeleton className="h-4 w-56 mx-auto bg-muted/30" />
+						<Skeleton className="bg-muted/30 mx-auto h-4 w-56" />
 					</div>
 				</div>
 			</div>

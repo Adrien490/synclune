@@ -17,9 +17,9 @@ export function useSignInSocial(options?: UseSignInSocialOptions) {
 				showSuccessToast: false,
 				showErrorToast: false,
 				onSuccess: options?.onSuccess,
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

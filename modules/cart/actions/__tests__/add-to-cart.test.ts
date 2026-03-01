@@ -229,7 +229,7 @@ describe("addToCart", () => {
 
 		await addToCart(undefined, makeFormData());
 		expect(mockError).toHaveBeenCalledWith(
-			"Impossible de creer une session panier. Veuillez reessayer."
+			"Impossible de creer une session panier. Veuillez reessayer.",
 		);
 	});
 
@@ -361,10 +361,7 @@ describe("addToCart", () => {
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => fn(tx));
 
 		await addToCart(undefined, makeFormData());
-		expect(mockSuccess).toHaveBeenCalledWith(
-			"Quantité mise à jour (3)",
-			expect.any(Object)
-		);
+		expect(mockSuccess).toHaveBeenCalledWith("Quantité mise à jour (3)", expect.any(Object));
 	});
 
 	it("calls handleActionError on exception", async () => {
@@ -374,7 +371,7 @@ describe("addToCart", () => {
 		await addToCart(undefined, makeFormData());
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			err,
-			"Une erreur est survenue lors de l'ajout au panier"
+			"Une erreur est survenue lors de l'ajout au panier",
 		);
 	});
 });

@@ -1,4 +1,9 @@
-import { OrderStatus, PaymentStatus, FulfillmentStatus, InvoiceStatus } from "@/app/generated/prisma/client";
+import {
+	OrderStatus,
+	PaymentStatus,
+	FulfillmentStatus,
+	InvoiceStatus,
+} from "@/app/generated/prisma/client";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // Re-export pour compatibilité

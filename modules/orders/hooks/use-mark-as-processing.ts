@@ -15,9 +15,9 @@ export function useMarkAsProcessing(options?: UseMarkAsProcessingOptions) {
 			markAsProcessing,
 			createToastCallbacks({
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

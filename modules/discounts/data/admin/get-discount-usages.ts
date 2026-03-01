@@ -80,7 +80,7 @@ async function fetchDiscountUsages(discountId: string): Promise<DiscountUsagesRe
  * Wrapper pattern: verification admin puis appel fonction cachee
  */
 export async function getDiscountUsages(
-	discountId: string
+	discountId: string,
 ): Promise<DiscountUsagesResult | { error: string }> {
 	const adminCheck = await requireAdmin();
 	if ("error" in adminCheck) {

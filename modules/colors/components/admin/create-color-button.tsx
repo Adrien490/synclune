@@ -7,9 +7,5 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 export function CreateColorButton() {
 	const { open } = useDialog(COLOR_DIALOG_ID);
 
-	return (
-		<Button onClick={() => open()}>
-			Créer une couleur
-		</Button>
-	);
+	return <Button onClick={() => open()}>Créer une couleur</Button>;
 }

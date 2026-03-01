@@ -35,9 +35,7 @@ export async function getGlobalReviewStats(): Promise<GlobalReviewStats> {
 		`;
 
 		const totalReviews = Number(result.total_reviews);
-		const averageRating = result.weighted_avg
-			? Number(result.weighted_avg)
-			: 0;
+		const averageRating = result.weighted_avg ? Number(result.weighted_avg) : 0;
 
 		return {
 			totalReviews,

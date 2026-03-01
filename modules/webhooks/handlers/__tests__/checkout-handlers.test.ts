@@ -66,10 +66,7 @@ vi.mock("@/shared/lib/stripe", () => ({
 }));
 
 import type Stripe from "stripe";
-import {
-	handleCheckoutSessionCompleted,
-	handleCheckoutSessionExpired,
-} from "../checkout-handlers";
+import { handleCheckoutSessionCompleted, handleCheckoutSessionExpired } from "../checkout-handlers";
 
 // ============================================================================
 // Fixtures

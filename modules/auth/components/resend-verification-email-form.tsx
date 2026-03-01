@@ -13,9 +13,7 @@ interface ResendVerificationEmailFormProps {
 	defaultEmail?: string;
 }
 
-export function ResendVerificationEmailForm({
-	defaultEmail,
-}: ResendVerificationEmailFormProps) {
+export function ResendVerificationEmailForm({ defaultEmail }: ResendVerificationEmailFormProps) {
 	const { action, isPending, state } = useResendVerificationEmail();
 	const errorRef = useRef<HTMLDivElement>(null);
 
@@ -39,11 +37,7 @@ export function ResendVerificationEmailForm({
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-4"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-4" onSubmit={() => form.handleSubmit()}>
 			{/* Message de succès */}
 			{state?.status === ActionStatus.SUCCESS && state?.message && (
 				<Alert role="status" aria-live="polite">

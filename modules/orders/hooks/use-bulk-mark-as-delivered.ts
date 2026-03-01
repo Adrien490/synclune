@@ -25,9 +25,9 @@ export function useBulkMarkAsDelivered(options?: UseBulkMarkAsDeliveredOptions) 
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const markAsDelivered = (orderIds: string[]) => {

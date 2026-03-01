@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useAppForm } from "@/shared/components/forms"
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks"
-import { withCallbacks } from "@/shared/utils/with-callbacks"
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs"
-import { useActionState } from "react"
-import { createReview } from "@/modules/reviews/actions/create-review"
+import { useAppForm } from "@/shared/components/forms";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { useActionState } from "react";
+import { createReview } from "@/modules/reviews/actions/create-review";
 
 interface UseCreateReviewFormOptions {
-	productId: string
-	orderItemId: string
-	onSuccess?: (message: string) => void
+	productId: string;
+	orderItemId: string;
+	onSuccess?: (message: string) => void;
 }
 
 /**
@@ -31,13 +31,13 @@ export const useCreateReviewForm = (options: UseCreateReviewFormOptions) => {
 						"message" in result &&
 						typeof result.message === "string"
 					) {
-						options.onSuccess?.(result.message)
+						options.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
-	)
+		undefined,
+	);
 
 	const form = useAppForm({
 		defaultValues: {
@@ -49,14 +49,11 @@ export const useCreateReviewForm = (options: UseCreateReviewFormOptions) => {
 			media: [] as Array<{ url: string; blurDataUrl?: string; altText?: string }>,
 		},
 		// Merge server state with form state for validation errors
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
-	})
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
+	});
 
 	// Subscribe to form errors for display
-	const formErrors = useStore(form.store, (formState) => formState.errors)
+	const formErrors = useStore(form.store, (formState) => formState.errors);
 
 	return {
 		form,
@@ -64,5 +61,5 @@ export const useCreateReviewForm = (options: UseCreateReviewFormOptions) => {
 		action,
 		isPending,
 		formErrors,
-	}
-}
+	};
+};

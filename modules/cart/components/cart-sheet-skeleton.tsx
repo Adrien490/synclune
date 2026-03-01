@@ -12,15 +12,15 @@ export function CartSheetSkeleton() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement du panier"
-			className="flex-1 px-6 py-4 space-y-4"
+			className="flex-1 space-y-4 px-6 py-4"
 		>
 			{Array.from({ length: 3 }).map((_, i) => (
 				<div
 					key={i}
-					className="grid grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr] gap-3 p-3 border rounded-lg"
+					className="grid grid-cols-[5rem_1fr] gap-3 rounded-lg border p-3 sm:grid-cols-[6rem_1fr]"
 				>
 					{/* Image placeholder - row-span-2 matching actual layout */}
-					<Skeleton className="size-20 sm:size-24 row-span-2 rounded-md" />
+					<Skeleton className="row-span-2 size-20 rounded-md sm:size-24" />
 
 					{/* Content placeholder */}
 					<div className="min-w-0 space-y-2">

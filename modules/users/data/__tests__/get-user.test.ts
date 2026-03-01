@@ -139,7 +139,7 @@ describe("getUser", () => {
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ id: "user-1" }),
-			})
+			}),
 		);
 		expect(result).toEqual(makeUser());
 	});
@@ -157,7 +157,7 @@ describe("getUser", () => {
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ id: "user-2" }),
-			})
+			}),
 		);
 		expect(result).toEqual(makeUser({ id: "user-2" }));
 	});
@@ -190,7 +190,7 @@ describe("getUser", () => {
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ id: "user-1" }),
-			})
+			}),
 		);
 		expect(result).toEqual(makeUser());
 	});
@@ -229,7 +229,7 @@ describe("fetchUser", () => {
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "user-1", deletedAt: null },
-			})
+			}),
 		);
 	});
 
@@ -239,7 +239,7 @@ describe("fetchUser", () => {
 		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, email: true, name: true, role: true },
-			})
+			}),
 		);
 	});
 

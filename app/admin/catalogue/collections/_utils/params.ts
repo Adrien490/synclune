@@ -3,9 +3,7 @@ import type { GetCollectionsParams } from "@/modules/collections/data/get-collec
 import { getFirstParam } from "@/shared/utils/params";
 import type { CollectionsSearchParams } from "../page";
 
-export const parseFilters = (
-	params: CollectionsSearchParams
-): GetCollectionsParams["filters"] => {
+export const parseFilters = (params: CollectionsSearchParams): GetCollectionsParams["filters"] => {
 	let hasProducts: boolean | undefined = undefined;
 	let status: CollectionStatus | undefined = undefined;
 

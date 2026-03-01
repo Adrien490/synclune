@@ -3,14 +3,24 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Hoisted mocks must be declared before vi.mock calls
 const { mockAnimatedNumber } = vi.hoisted(() => ({
-	mockAnimatedNumber: vi.fn(({ value, formatter }: { value: number; formatter: (n: number) => string }) => (
-		<span data-testid="animated-number">{formatter(value)}</span>
-	)),
+	mockAnimatedNumber: vi.fn(
+		({ value, formatter }: { value: number; formatter: (n: number) => string }) => (
+			<span data-testid="animated-number">{formatter(value)}</span>
+		),
+	),
 }));
 
 // Mock next/link — render a plain anchor
 vi.mock("next/link", () => ({
-	default: ({ href, children, onClick }: { href: string; children: React.ReactNode; onClick?: () => void }) => (
+	default: ({
+		href,
+		children,
+		onClick,
+	}: {
+		href: string;
+		children: React.ReactNode;
+		onClick?: () => void;
+	}) => (
 		<a href={href} onClick={onClick}>
 			{children}
 		</a>

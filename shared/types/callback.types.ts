@@ -2,7 +2,7 @@
  * Types pour les callbacks d'actions et de toasts
  */
 
-import type { ActionState } from "./server-action"
+import type { ActionState } from "./server-action";
 
 // =============================================================================
 // TOAST CALLBACK TYPES
@@ -14,25 +14,25 @@ import type { ActionState } from "./server-action"
  */
 export type CreateToastCallbacksOptions<T = ActionState> = {
 	/** Message affiché pendant le chargement (toast.loading) */
-	loadingMessage?: string
+	loadingMessage?: string;
 	/** Afficher un toast de succès (défaut: true) */
-	showSuccessToast?: boolean
+	showSuccessToast?: boolean;
 	/** Afficher un toast de warning (défaut: true) */
-	showWarningToast?: boolean
+	showWarningToast?: boolean;
 	/** Afficher un toast d'erreur (défaut: true) */
-	showErrorToast?: boolean
+	showErrorToast?: boolean;
 	/** Callback personnalisé appelé en cas de succès */
-	onSuccess?: (result: T) => void
+	onSuccess?: (result: T) => void;
 	/** Callback personnalisé appelé en cas de warning */
-	onWarning?: (result: T) => void
+	onWarning?: (result: T) => void;
 	/** Callback personnalisé appelé en cas d'erreur */
-	onError?: (result: T) => void
+	onError?: (result: T) => void;
 	/** Bouton d'action dans le toast de succès */
 	successAction?: {
-		label: string
-		onClick: () => void
-	}
-}
+		label: string;
+		onClick: () => void;
+	};
+};
 
 // =============================================================================
 // ACTION CALLBACK TYPES
@@ -45,13 +45,13 @@ export type CreateToastCallbacksOptions<T = ActionState> = {
  */
 export type Callbacks<T, R = unknown> = {
 	/** Appelé au démarrage de l'action, retourne une référence optionnelle */
-	onStart?: () => R
+	onStart?: () => R;
 	/** Appelé à la fin de l'action avec la référence de onStart */
-	onEnd?: (reference: R) => void
+	onEnd?: (reference: R) => void;
 	/** Appelé si l'action réussit (status === SUCCESS) */
-	onSuccess?: (result: T) => void
+	onSuccess?: (result: T) => void;
 	/** Appelé si l'action retourne un warning (status === WARNING) */
-	onWarning?: (result: T) => void
+	onWarning?: (result: T) => void;
 	/** Appelé si l'action échoue (status !== SUCCESS && status !== WARNING) */
-	onError?: (result: T) => void
-}
+	onError?: (result: T) => void;
+};

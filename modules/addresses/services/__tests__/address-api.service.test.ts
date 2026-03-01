@@ -5,7 +5,11 @@ const BASE_URL = "https://data.geopf.fr/geocodage/completion";
 
 describe("buildApiUrl", () => {
 	it("should build URL with only required text parameter", () => {
-		const url = buildApiUrl({ text: "Paris", type: "PositionOfInterest,StreetAddress", maximumResponses: 10 });
+		const url = buildApiUrl({
+			text: "Paris",
+			type: "PositionOfInterest,StreetAddress",
+			maximumResponses: 10,
+		});
 		const parsed = new URL(url);
 
 		expect(parsed.origin + parsed.pathname).toBe(BASE_URL);
@@ -13,7 +17,11 @@ describe("buildApiUrl", () => {
 	});
 
 	it("should not include optional parameters when not provided", () => {
-		const url = buildApiUrl({ text: "Lyon", type: "PositionOfInterest,StreetAddress", maximumResponses: 10 });
+		const url = buildApiUrl({
+			text: "Lyon",
+			type: "PositionOfInterest,StreetAddress",
+			maximumResponses: 10,
+		});
 		const parsed = new URL(url);
 
 		expect(parsed.searchParams.has("terr")).toBe(false);
@@ -81,7 +89,11 @@ describe("buildApiUrl", () => {
 	});
 
 	it("should use the correct base URL", () => {
-		const url = buildApiUrl({ text: "test", type: "PositionOfInterest,StreetAddress", maximumResponses: 10 });
+		const url = buildApiUrl({
+			text: "test",
+			type: "PositionOfInterest,StreetAddress",
+			maximumResponses: 10,
+		});
 
 		expect(url.startsWith(BASE_URL)).toBe(true);
 	});

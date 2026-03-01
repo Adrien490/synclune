@@ -13,7 +13,7 @@ import { MATERIALS_CACHE_TAGS } from "../constants/cache";
 
 export async function refreshMaterials(
 	_prevState: unknown,
-	_formData: FormData
+	_formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const admin = await requireAdmin();

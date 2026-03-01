@@ -23,7 +23,6 @@ export { ErrorShake } from "./error-shake";
 // Grid animations
 export { StaggerGrid } from "./stagger-grid";
 
-
 // Text animations
 export { SplitText } from "./split-text";
 
@@ -53,6 +52,7 @@ export type { TapProps } from "./tap";
 export type { BubbleDreamProps } from "./bubble-dream";
 export type { HandDrawnAccentProps } from "./hand-drawn-accent";
 export type {
-	AnimationStyle, ParticleBackgroundProps, ParticleShape
+	AnimationStyle,
+	ParticleBackgroundProps,
+	ParticleShape,
 } from "./particle-background/index";
-

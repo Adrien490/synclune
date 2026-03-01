@@ -48,9 +48,9 @@ export const useDeleteAddress = (options?: UseDeleteAddressOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

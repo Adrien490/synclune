@@ -19,4 +19,4 @@ export const LEGAL_PAGES_CACHE_TAGS = {
 
 	/** Politique des cookies */
 	COOKIES: "legal-cookies",
-} as const
+} as const;

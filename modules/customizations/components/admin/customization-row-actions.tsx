@@ -25,6 +25,7 @@ import {
 	StickyNote,
 	XCircle,
 } from "lucide-react";
+import { cn } from "@/shared/utils/cn";
 import { toast } from "sonner";
 
 import { useUpdateCustomizationStatus } from "../../hooks/use-update-customization-status";
@@ -58,9 +59,7 @@ const ALL_STATUSES: CustomizationRequestStatus[] = [
 	"CANCELLED",
 ];
 
-export function CustomizationRowActions({
-	request,
-}: CustomizationRowActionsProps) {
+export function CustomizationRowActions({ request }: CustomizationRowActionsProps) {
 	const notesDialog = useDialog(UPDATE_NOTES_DIALOG_ID);
 	const { action, isPending } = useUpdateCustomizationStatus();
 
@@ -95,19 +94,24 @@ export function CustomizationRowActions({
 	const handleReplyEmail = () => {
 		window.open(
 			`mailto:${request.email}?subject=RE: Demande de personnalisation - Synclune`,
-			"_blank"
+			"_blank",
 		);
 	};
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" className="h-11 w-11 p-0 active:scale-95 transition-transform" aria-label="Actions">
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					aria-label="Actions"
+				>
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-52">
-				<DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+				<DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
 					{clientName}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
@@ -133,15 +137,16 @@ export function CustomizationRowActions({
 										className={isCurrentStatus ? "bg-muted" : ""}
 									>
 										<span
-											className={`inline-flex items-center justify-center h-4 w-4 rounded-full ${colors.dot}`}
+											className={cn(
+												"inline-flex h-4 w-4 items-center justify-center rounded-full",
+												colors.dot,
+											)}
 										>
 											<Icon className="h-3 w-3 text-white" />
 										</span>
 										{CUSTOMIZATION_STATUS_LABELS[status]}
 										{isCurrentStatus && (
-											<span className="ml-auto text-xs text-muted-foreground">
-												actuel
-											</span>
+											<span className="text-muted-foreground ml-auto text-xs">actuel</span>
 										)}
 									</DropdownMenuItem>
 								);
@@ -154,9 +159,7 @@ export function CustomizationRowActions({
 				<DropdownMenuItem onClick={handleOpenNotes}>
 					<StickyNote className="h-4 w-4" />
 					Notes internes
-					{request.adminNotes && (
-						<span className="ml-auto h-2 w-2 rounded-full bg-primary" />
-					)}
+					{request.adminNotes && <span className="bg-primary ml-auto h-2 w-2 rounded-full" />}
 				</DropdownMenuItem>
 
 				<DropdownMenuSeparator />

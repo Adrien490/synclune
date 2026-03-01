@@ -24,9 +24,9 @@ export const useRestoreUser = (options?: UseRestoreUserOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

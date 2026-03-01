@@ -1,11 +1,6 @@
 "use client";
 
-import {
-	motion,
-	useScroll,
-	useTransform,
-	useReducedMotion,
-} from "motion/react";
+import { motion, useScroll, useTransform, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import type { RefObject } from "react";
 import { useRef, useSyncExternalStore } from "react";
@@ -48,22 +43,14 @@ const getServerSnapshot = () => false;
  * Inner component handling the parallax animation.
  * Isolates scroll hooks to avoid unnecessary listeners when disabled.
  */
-function ParallaxInner({
-	containerRef,
-	safeIntensity,
-	imageElement,
-}: ParallaxInnerProps) {
+function ParallaxInner({ containerRef, safeIntensity, imageElement }: ParallaxInnerProps) {
 	const { scrollYProgress } = useScroll({
 		target: containerRef,
 		offset: ["start end", "end start"],
 	});
 
 	// Parallax effect: Y translation based on scroll progress
-	const y = useTransform(
-		scrollYProgress,
-		[0, 1],
-		[`-${safeIntensity}%`, `${safeIntensity}%`]
-	);
+	const y = useTransform(scrollYProgress, [0, 1], [`-${safeIntensity}%`, `${safeIntensity}%`]);
 
 	return (
 		<motion.div
@@ -129,11 +116,7 @@ export function ParallaxImage({
 	const isTouchDevice = useIsTouchDevice();
 
 	// Hydration safety: avoids useReducedMotion server/client mismatches
-	const isMounted = useSyncExternalStore(
-		subscribeNoop,
-		getClientSnapshot,
-		getServerSnapshot
-	);
+	const isMounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
 
 	// Cap intensity to prevent overflow (max 15%)
 	const safeIntensity = Math.min(intensity, 15);
@@ -158,17 +141,13 @@ export function ParallaxImage({
 	// This prevents a flash of animation for users with prefers-reduced-motion: reduce
 	// whose preference hasn't resolved yet on the first client render.
 	const motionIsAllowed = isMounted && shouldReduceMotion === false;
-	const shouldDisableParallax =
-		!motionIsAllowed || (disableOnTouch && isTouchDevice);
+	const shouldDisableParallax = !motionIsAllowed || (disableOnTouch && isTouchDevice);
 
 	if (shouldDisableParallax) {
 		return (
 			<div
 				ref={containerRef}
-				className={cn(
-					"relative h-full w-full overflow-hidden",
-					containerClassName
-				)}
+				className={cn("relative h-full w-full overflow-hidden", containerClassName)}
 			>
 				{imageElement}
 			</div>
@@ -178,10 +157,7 @@ export function ParallaxImage({
 	return (
 		<div
 			ref={containerRef}
-			className={cn(
-				"relative h-full w-full overflow-hidden",
-				containerClassName
-			)}
+			className={cn("relative h-full w-full overflow-hidden", containerClassName)}
 		>
 			<ParallaxInner
 				containerRef={containerRef}

@@ -8,10 +8,7 @@ interface AccountStatsCardsProps {
 	memberSince: Date;
 }
 
-export function AccountStatsCards({
-	statsPromise,
-	memberSince,
-}: AccountStatsCardsProps) {
+export function AccountStatsCards({ statsPromise, memberSince }: AccountStatsCardsProps) {
 	const stats = use(statsPromise);
 	const totalOrders = stats?.totalOrders ?? 0;
 
@@ -19,15 +16,13 @@ export function AccountStatsCards({
 
 	return (
 		<div className="grid gap-4 sm:grid-cols-2">
-			<div className="rounded-xl border border-border/60 p-4">
-				<p className="text-sm text-muted-foreground">Membre depuis</p>
-				<p className="text-lg font-semibold capitalize">
-					{memberSinceLabel}
-				</p>
+			<div className="border-border/60 rounded-xl border p-4">
+				<p className="text-muted-foreground text-sm">Membre depuis</p>
+				<p className="text-lg font-semibold capitalize">{memberSinceLabel}</p>
 			</div>
 
-			<div className="rounded-xl border border-border/60 p-4">
-				<p className="text-sm text-muted-foreground">Commandes passées</p>
+			<div className="border-border/60 rounded-xl border p-4">
+				<p className="text-muted-foreground text-sm">Commandes passées</p>
 				<p className="text-lg font-semibold">
 					{totalOrders} commande{totalOrders !== 1 ? "s" : ""}
 				</p>

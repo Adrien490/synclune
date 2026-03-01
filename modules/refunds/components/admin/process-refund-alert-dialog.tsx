@@ -39,9 +39,7 @@ export function ProcessRefundAlertDialog() {
 		}
 	};
 
-	const formattedAmount = dialog.data?.amount
-		? (dialog.data.amount / 100).toFixed(2)
-		: "0.00";
+	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
 
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
@@ -54,23 +52,21 @@ export function ProcessRefundAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									Procéder au remboursement de <strong>{formattedAmount} €</strong>{" "}
-									pour la commande <strong>{dialog.data?.orderNumber}</strong> ?
+									Procéder au remboursement de <strong>{formattedAmount} €</strong> pour la commande{" "}
+									<strong>{dialog.data?.orderNumber}</strong> ?
 								</p>
-								<p className="text-amber-600 mt-4 text-sm">
-									Cette action va effectuer le remboursement via Stripe. Le montant
-									sera crédité sur le moyen de paiement du client sous 5-10 jours
-									ouvrés.
+								<p className="mt-4 text-sm text-amber-600">
+									Cette action va effectuer le remboursement via Stripe. Le montant sera crédité sur
+									le moyen de paiement du client sous 5-10 jours ouvrés.
 								</p>
 								<p className="text-muted-foreground mt-2 text-sm">
-									Le stock sera automatiquement restauré pour les articles marqués
-									"à restocker".
+									Le stock sera automatiquement restauré pour les articles marqués "à restocker".
 								</p>
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					{state?.status && state.status !== ActionStatus.SUCCESS && (
-						<p className="text-sm text-destructive mb-4">{state.message}</p>
+						<p className="text-destructive mb-4 text-sm">{state.message}</p>
 					)}
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending}>

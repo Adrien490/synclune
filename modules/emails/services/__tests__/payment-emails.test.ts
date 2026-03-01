@@ -1,31 +1,31 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockRenderAndSend } = vi.hoisted(() => ({
 	mockRenderAndSend: vi.fn(),
-}))
+}));
 
 vi.mock("../send-email", () => ({
 	renderAndSend: mockRenderAndSend,
-}))
+}));
 
 vi.mock("@/emails/payment-failed-email", () => ({
 	PaymentFailedEmail: vi.fn((props) => ({ type: "PaymentFailedEmail", props })),
-}))
+}));
 
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_SUBJECTS: {
 		PAYMENT_FAILED: "Échec de votre paiement - Synclune",
 	},
 	EMAIL_CONTACT: "contact@test.com",
-}))
+}));
 
-import { sendPaymentFailedEmail } from "../payment-emails"
+import { sendPaymentFailedEmail } from "../payment-emails";
 
 describe("sendPaymentFailedEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendPaymentFailedEmail({
@@ -33,7 +33,7 @@ describe("sendPaymentFailedEmail", () => {
 			customerName: "Marie Dupont",
 			orderNumber: "CMD-001",
 			retryUrl: "https://test.com/paiement/retry?order=CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -49,9 +49,9 @@ describe("sendPaymentFailedEmail", () => {
 				subject: "Échec de votre paiement - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "payment" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendPaymentFailedEmail({
@@ -59,10 +59,10 @@ describe("sendPaymentFailedEmail", () => {
 			customerName: "Marie Dupont",
 			orderNumber: "CMD-001",
 			retryUrl: "https://test.com/paiement/retry?order=CMD-001",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-1" } })
-	})
+		expect(result).toEqual({ success: true, data: { id: "email-1" } });
+	});
 
 	it("should pass all params to the component correctly", async () => {
 		await sendPaymentFailedEmail({
@@ -70,7 +70,7 @@ describe("sendPaymentFailedEmail", () => {
 			customerName: "Jean Martin",
 			orderNumber: "CMD-999",
 			retryUrl: "https://test.com/paiement/retry?order=CMD-999",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -82,7 +82,7 @@ describe("sendPaymentFailedEmail", () => {
 			}),
 			expect.objectContaining({
 				to: "autre@test.com",
-			})
-		)
-	})
-})
+			}),
+		);
+	});
+});

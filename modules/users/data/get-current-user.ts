@@ -44,9 +44,7 @@ export async function getCurrentUser(): Promise<GetCurrentUserReturn> {
  * @param userId - ID de l'utilisateur à récupérer
  * @returns L'utilisateur ou null si non trouvé/supprimé
  */
-export async function fetchCurrentUser(
-	userId: string
-): Promise<GetCurrentUserReturn> {
+export async function fetchCurrentUser(userId: string): Promise<GetCurrentUserReturn> {
 	"use cache: private";
 	cacheLife("session");
 	cacheTag(USERS_CACHE_TAGS.CURRENT_USER(userId));

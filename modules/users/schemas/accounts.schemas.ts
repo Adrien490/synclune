@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -38,10 +35,7 @@ export const accountFiltersSchema = z
 			.date()
 			.min(new Date("2020-01-01"), "Date too old")
 			.optional(),
-		accessTokenExpiresAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
+		accessTokenExpiresAfter: z.coerce.date().min(new Date("2020-01-01"), "Date too old").optional(),
 		refreshTokenExpiresBefore: z.coerce
 			.date()
 			.min(new Date("2020-01-01"), "Date too old")
@@ -55,19 +49,13 @@ export const accountFiltersSchema = z
 			.min(new Date("2020-01-01"), "Date too old")
 			.max(new Date(), "Date cannot be in the future")
 			.optional(),
-		createdBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
+		createdBefore: z.coerce.date().min(new Date("2020-01-01"), "Date too old").optional(),
 		updatedAfter: z.coerce
 			.date()
 			.min(new Date("2020-01-01"), "Date too old")
 			.max(new Date(), "Date cannot be in the future")
 			.optional(),
-		updatedBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
+		updatedBefore: z.coerce.date().min(new Date("2020-01-01"), "Date too old").optional(),
 	})
 	.refine((data) => {
 		if (data.accessTokenExpiresAfter && data.accessTokenExpiresBefore) {
@@ -100,9 +88,7 @@ export const accountFiltersSchema = z
 
 export const accountSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
-		GET_ACCOUNTS_SORT_FIELDS.includes(
-			value as (typeof GET_ACCOUNTS_SORT_FIELDS)[number]
-		)
+		GET_ACCOUNTS_SORT_FIELDS.includes(value as (typeof GET_ACCOUNTS_SORT_FIELDS)[number])
 		? value
 		: GET_ACCOUNTS_DEFAULT_SORT_BY;
 }, z.enum(GET_ACCOUNTS_SORT_FIELDS));

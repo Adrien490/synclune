@@ -12,7 +12,7 @@ import type { OrderNoteItem } from "../types/order-notes.types";
  * Le cache est géré dans fetchOrderNotes() avec "use cache"
  */
 export async function getOrderNotes(
-	orderId: string
+	orderId: string,
 ): Promise<{ notes: OrderNoteItem[] } | { error: string }> {
 	try {
 		// 1. Vérification admin

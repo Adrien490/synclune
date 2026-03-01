@@ -6,12 +6,18 @@ import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
 import { validateDiscountCodeSchema } from "../schemas/discount.schemas";
-import { GET_DISCOUNT_VALIDATION_SELECT, DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
+import {
+	GET_DISCOUNT_VALIDATION_SELECT,
+	DISCOUNT_ERROR_MESSAGES,
+} from "../constants/discount.constants";
 import { calculateDiscountAmount } from "../services/discount-calculation.service";
 import { checkDiscountEligibility } from "../services/discount-eligibility.service";
 import { getDiscountUsageCounts } from "../data/get-discount-usage-counts";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import type { ValidateDiscountCodeReturn, DiscountApplicationContext } from "../types/discount.types";
+import type {
+	ValidateDiscountCodeReturn,
+	DiscountApplicationContext,
+} from "../types/discount.types";
 
 /**
  * Looks up the discount, checks eligibility, and calculates the amount.
@@ -21,7 +27,7 @@ async function lookupAndValidate(
 	validatedCode: string,
 	validatedSubtotal: number,
 	userId?: string,
-	customerEmail?: string
+	customerEmail?: string,
 ): Promise<ValidateDiscountCodeReturn> {
 	const discount = await prisma.discount.findFirst({
 		where: { code: validatedCode, ...notDeleted },
@@ -91,14 +97,15 @@ async function lookupAndValidate(
 export async function validateDiscountCode(
 	code: string,
 	subtotal: number,
-	customerEmail?: string
+	customerEmail?: string,
 ): Promise<ValidateDiscountCodeReturn> {
 	try {
 		// Rate limiting based on IP
 		const headersList = await headers();
 		const ip = (await getClientIp(headersList)) || "unknown";
 		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
-		if ("error" in rateCheck) return { valid: false, error: "Trop de tentatives. Veuillez réessayer plus tard." };
+		if ("error" in rateCheck)
+			return { valid: false, error: "Trop de tentatives. Veuillez réessayer plus tard." };
 
 		// Read userId from session server-side (never trust client-provided value)
 		const session = await getSession();
@@ -147,7 +154,7 @@ export async function validateDiscountCode(
 					retryValidation.data.code,
 					retryValidation.data.subtotal,
 					undefined,
-					retryValidation.data.customerEmail
+					retryValidation.data.customerEmail,
 				);
 			}
 
@@ -159,7 +166,7 @@ export async function validateDiscountCode(
 			validation.data.code,
 			validation.data.subtotal,
 			validation.data.userId,
-			validation.data.customerEmail
+			validation.data.customerEmail,
 		);
 	} catch {
 		return { valid: false, error: "Erreur lors de la validation du code" };

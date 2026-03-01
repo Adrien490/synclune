@@ -4,4 +4,4 @@
  */
 export const WISHLIST_DIALOG_IDS = {
 	REMOVE_ITEM: "remove-wishlist-item",
-} as const
+} as const;

@@ -60,24 +60,14 @@ function renderCell(cell: CellType): ReactNode {
 			return <Skeleton className={cn("h-6 rounded-full", cell.width)} />;
 		case "image": {
 			const size = cell.size ?? 20;
-			return (
-				<Skeleton
-					className="rounded-md"
-					style={{ height: size * 4, width: size * 4 }}
-				/>
-			);
+			return <Skeleton className="rounded-md" style={{ height: size * 4, width: size * 4 }} />;
 		}
 		case "avatar": {
 			const size = cell.size ?? 10;
-			return (
-				<Skeleton
-					className="rounded-full"
-					style={{ height: size * 4, width: size * 4 }}
-				/>
-			);
+			return <Skeleton className="rounded-full" style={{ height: size * 4, width: size * 4 }} />;
 		}
 		case "actions":
-			return <Skeleton className="h-8 w-8 ml-auto" />;
+			return <Skeleton className="ml-auto h-8 w-8" />;
 		case "custom":
 			return cell.render();
 	}
@@ -102,7 +92,7 @@ export function DataTableSkeleton({
 										className={cn(
 											col.width && `w-[${col.width}]`,
 											col.hiddenBelow && hiddenClasses[col.hiddenBelow],
-											col.align && alignClasses[col.align]
+											col.align && alignClasses[col.align],
 										)}
 										style={col.width ? { width: col.width } : undefined}
 									>
@@ -111,7 +101,7 @@ export function DataTableSkeleton({
 												"h-4",
 												col.headerWidth ?? "w-12",
 												col.align === "center" && "mx-auto",
-												col.align === "right" && "ml-auto"
+												col.align === "right" && "ml-auto",
 											)}
 										/>
 									</TableHead>
@@ -127,7 +117,7 @@ export function DataTableSkeleton({
 											className={cn(
 												col.hiddenBelow && hiddenClasses[col.hiddenBelow],
 												col.align && alignClasses[col.align],
-												col.cell.type === "image" && "py-3"
+												col.cell.type === "image" && "py-3",
 											)}
 										>
 											{renderCell(col.cell)}

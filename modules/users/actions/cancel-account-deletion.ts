@@ -54,7 +54,7 @@ export async function cancelAccountDeletion(
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 
 		return success(
-			"La suppression de votre compte a été annulée. Votre compte est de nouveau actif."
+			"La suppression de votre compte a été annulée. Votre compte est de nouveau actif.",
 		);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de l'annulation de la suppression");

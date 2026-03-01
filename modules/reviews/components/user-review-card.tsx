@@ -1,19 +1,19 @@
-import Image from "next/image"
-import Link from "next/link"
-import { BadgeCheck, MessageSquare, ExternalLink } from "lucide-react"
+import Image from "next/image";
+import Link from "next/link";
+import { BadgeCheck, MessageSquare, ExternalLink } from "lucide-react";
 
-import { Badge } from "@/shared/components/ui/badge"
+import { Badge } from "@/shared/components/ui/badge";
 
-import { RatingStars } from "@/shared/components/rating-stars"
+import { RatingStars } from "@/shared/components/rating-stars";
 
-import type { ReviewUser } from "../types/review.types"
-import { UserReviewCardActions } from "./user-review-card-actions"
-import { ReviewCardGallery } from "./review-card-gallery"
-import { REVIEW_STATUS_LABELS } from "../constants/review.constants"
+import type { ReviewUser } from "../types/review.types";
+import { UserReviewCardActions } from "./user-review-card-actions";
+import { ReviewCardGallery } from "./review-card-gallery";
+import { REVIEW_STATUS_LABELS } from "../constants/review.constants";
 
 interface UserReviewCardProps {
-	review: ReviewUser
-	className?: string
+	review: ReviewUser;
+	className?: string;
 }
 
 const formatDate = (date: Date) => {
@@ -21,21 +21,21 @@ const formatDate = (date: Date) => {
 		day: "numeric",
 		month: "long",
 		year: "numeric",
-	}).format(new Date(date))
-}
+	}).format(new Date(date));
+};
 
 /**
  * Carte d'avis pour l'espace client "Mes avis"
  * Affichage uniquement - les actions sont dans UserReviewCardActions
  */
 export function UserReviewCard({ review }: UserReviewCardProps) {
-	const productImage = review.product.skus[0]?.images[0]
+	const productImage = review.product.skus[0]?.images[0];
 
 	return (
 		<article>
 			<div className="flex flex-col sm:flex-row">
 				{/* Image produit */}
-				<div className="relative w-full sm:w-32 aspect-[3/2] sm:aspect-auto sm:h-auto shrink-0">
+				<div className="relative aspect-[3/2] w-full shrink-0 sm:aspect-auto sm:h-auto sm:w-32">
 					{productImage ? (
 						<Image
 							src={productImage.url}
@@ -47,34 +47,37 @@ export function UserReviewCard({ review }: UserReviewCardProps) {
 							blurDataURL={productImage.blurDataUrl ?? undefined}
 						/>
 					) : (
-						<div className="w-full h-full bg-muted flex items-center justify-center">
-							<MessageSquare className="size-8 text-muted-foreground" aria-hidden="true" />
+						<div className="bg-muted flex h-full w-full items-center justify-center">
+							<MessageSquare className="text-muted-foreground size-8" aria-hidden="true" />
 						</div>
 					)}
 				</div>
 
 				{/* Contenu */}
-				<div className="flex-1 p-4 space-y-3">
+				<div className="flex-1 space-y-3 p-4">
 					{/* En-tête: titre produit + statut */}
 					<div className="flex items-start justify-between gap-2">
 						<div className="min-w-0">
 							<Link
 								href={`/creations/${review.product.slug}`}
-								className="font-medium hover:text-primary transition-colors line-clamp-1 flex items-center gap-1"
+								className="hover:text-primary line-clamp-1 flex items-center gap-1 font-medium transition-colors"
 								title={review.product.title}
 							>
 								{review.product.title}
 								<ExternalLink className="size-3 shrink-0" aria-hidden="true" />
 							</Link>
-							<div className="flex flex-wrap items-center gap-2 mt-1">
+							<div className="mt-1 flex flex-wrap items-center gap-2">
 								<RatingStars rating={review.rating} size="sm" />
 								<time
 									dateTime={new Date(review.createdAt).toISOString()}
-									className="text-xs text-muted-foreground"
+									className="text-muted-foreground text-xs"
 								>
 									{formatDate(review.createdAt)}
 								</time>
-								<Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 h-5 shrink-0 text-muted-foreground">
+								<Badge
+									variant="outline"
+									className="text-muted-foreground h-5 shrink-0 gap-1 px-1.5 py-0 text-[10px]"
+								>
 									<BadgeCheck className="size-3" aria-hidden="true" />
 									Achat vérifié
 								</Badge>
@@ -90,35 +93,29 @@ export function UserReviewCard({ review }: UserReviewCardProps) {
 					</div>
 
 					{/* Titre de l'avis */}
-					{review.title && (
-						<h4 className="font-medium text-sm">{review.title}</h4>
-					)}
+					{review.title && <h4 className="text-sm font-medium">{review.title}</h4>}
 
 					{/* Contenu de l'avis */}
-					<p className="text-sm text-muted-foreground line-clamp-3">
-						{review.content}
-					</p>
+					<p className="text-muted-foreground line-clamp-3 text-sm">{review.content}</p>
 
 					{/* Photos de l'avis */}
-					{review.medias.length > 0 && (
-						<ReviewCardGallery medias={review.medias} />
-					)}
+					{review.medias.length > 0 && <ReviewCardGallery medias={review.medias} />}
 
 					{/* Réponse de la marque */}
 					{review.response && (
-						<div className="bg-muted/50 rounded-lg p-3 mt-2 border-l-2 border-primary/30">
-							<div className="flex items-baseline gap-2 mb-1">
-								<p className="text-xs font-medium text-foreground">
+						<div className="bg-muted/50 border-primary/30 mt-2 rounded-lg border-l-2 p-3">
+							<div className="mb-1 flex items-baseline gap-2">
+								<p className="text-foreground text-xs font-medium">
 									Réponse de {review.response.authorName}
 								</p>
 								<time
 									dateTime={new Date(review.response.createdAt).toISOString()}
-									className="text-[10px] text-muted-foreground"
+									className="text-muted-foreground text-[10px]"
 								>
 									{formatDate(review.response.createdAt)}
 								</time>
 							</div>
-							<p className="text-sm text-muted-foreground line-clamp-2">
+							<p className="text-muted-foreground line-clamp-2 text-sm">
 								{review.response.content}
 							</p>
 						</div>
@@ -129,5 +126,5 @@ export function UserReviewCard({ review }: UserReviewCardProps) {
 				</div>
 			</div>
 		</article>
-	)
+	);
 }

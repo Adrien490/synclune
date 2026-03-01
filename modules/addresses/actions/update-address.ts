@@ -15,7 +15,7 @@ import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 export async function updateAddress(
 	addressId: string,
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAuth();
@@ -65,7 +65,7 @@ export async function updateAddress(
 		});
 
 		// Revalidation du cache avec tags
-		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
+		getUserAddressesInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
 		return success("Adresse modifiee avec succes");
 	} catch (e) {

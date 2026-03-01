@@ -50,9 +50,7 @@ export async function getRelatedProducts(options?: {
 /**
  * Produits similaires publics pour visiteurs non authentifiés
  */
-async function fetchPublicRelatedProducts(
-	limit: number
-): Promise<Product[]> {
+async function fetchPublicRelatedProducts(limit: number): Promise<Product[]> {
 	"use cache";
 	cacheLife("relatedProducts");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
@@ -84,10 +82,7 @@ async function fetchPublicRelatedProducts(
 /**
  * Produits similaires personnalisés basés sur l'historique utilisateur
  */
-async function fetchPersonalizedRelatedProducts(
-	userId: string,
-	limit: number
-): Promise<Product[]> {
+async function fetchPersonalizedRelatedProducts(userId: string, limit: number): Promise<Product[]> {
 	"use cache";
 	cacheLife("relatedProducts");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_USER(userId));
@@ -180,7 +175,7 @@ async function fetchPersonalizedRelatedProducts(
  */
 async function fetchContextualRelatedProducts(
 	currentProductSlug: string,
-	limit: number
+	limit: number,
 ): Promise<Product[]> {
 	"use cache";
 	cacheLife("relatedProducts");
@@ -244,73 +239,71 @@ async function fetchContextualRelatedProducts(
 		const currentCollectionIds = currentProduct.collections.map((c) => c.collectionId);
 
 		// Lancer toutes les requêtes en parallèle pour optimiser les performances
-		const [
-			sameCollectionProducts,
-			sameTypeProducts,
-			similarColorProducts,
-			bestSellers,
-		] = await Promise.all([
-			// STRATÉGIE 1 : Même collection(s)
-			currentCollectionIds.length > 0
-				? prisma.product.findMany({
-						where: {
-							...baseWhere,
-							collections: {
-								some: { collectionId: { in: currentCollectionIds } },
-							},
-						},
-						select: GET_PRODUCTS_SELECT,
-						orderBy: { createdAt: "desc" },
-						take: RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION,
-					})
-				: Promise.resolve([]),
-
-			// STRATÉGIE 2 : Même type
-			currentProduct.typeId
-				? prisma.product.findMany({
-						where: {
-							...baseWhere,
-							typeId: currentProduct.typeId,
-							...(currentCollectionIds.length > 0
-								? { NOT: { collections: { some: { collectionId: { in: currentCollectionIds } } } } }
-								: {}),
-						},
-						select: GET_PRODUCTS_SELECT,
-						orderBy: { createdAt: "desc" },
-						take: RELATED_PRODUCTS_STRATEGY.SAME_TYPE,
-					})
-				: Promise.resolve([]),
-
-			// STRATÉGIE 3 : Couleurs similaires
-			currentColorIds.length > 0
-				? prisma.product.findMany({
-						where: {
-							...baseWhere,
-							skus: {
-								some: {
-									isActive: true,
-									inventory: { gt: 0 },
-									colorId: { in: currentColorIds },
+		const [sameCollectionProducts, sameTypeProducts, similarColorProducts, bestSellers] =
+			await Promise.all([
+				// STRATÉGIE 1 : Même collection(s)
+				currentCollectionIds.length > 0
+					? prisma.product.findMany({
+							where: {
+								...baseWhere,
+								collections: {
+									some: { collectionId: { in: currentCollectionIds } },
 								},
 							},
-							typeId: currentProduct.typeId
-								? { not: currentProduct.typeId }
-								: undefined,
-						},
-						select: GET_PRODUCTS_SELECT,
-						orderBy: { createdAt: "desc" },
-						take: RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS,
-					})
-				: Promise.resolve([]),
+							select: GET_PRODUCTS_SELECT,
+							orderBy: { createdAt: "desc" },
+							take: RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION,
+						})
+					: Promise.resolve([]),
 
-			// STRATÉGIE 4 : Best-sellers pour compléter
-			prisma.product.findMany({
-				where: baseWhere,
-				select: GET_PRODUCTS_SELECT,
-				orderBy: { createdAt: "desc" },
-				take: limit + 5,
-			}),
-		]);
+				// STRATÉGIE 2 : Même type
+				currentProduct.typeId
+					? prisma.product.findMany({
+							where: {
+								...baseWhere,
+								typeId: currentProduct.typeId,
+								...(currentCollectionIds.length > 0
+									? {
+											NOT: {
+												collections: { some: { collectionId: { in: currentCollectionIds } } },
+											},
+										}
+									: {}),
+							},
+							select: GET_PRODUCTS_SELECT,
+							orderBy: { createdAt: "desc" },
+							take: RELATED_PRODUCTS_STRATEGY.SAME_TYPE,
+						})
+					: Promise.resolve([]),
+
+				// STRATÉGIE 3 : Couleurs similaires
+				currentColorIds.length > 0
+					? prisma.product.findMany({
+							where: {
+								...baseWhere,
+								skus: {
+									some: {
+										isActive: true,
+										inventory: { gt: 0 },
+										colorId: { in: currentColorIds },
+									},
+								},
+								typeId: currentProduct.typeId ? { not: currentProduct.typeId } : undefined,
+							},
+							select: GET_PRODUCTS_SELECT,
+							orderBy: { createdAt: "desc" },
+							take: RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS,
+						})
+					: Promise.resolve([]),
+
+				// STRATÉGIE 4 : Best-sellers pour compléter
+				prisma.product.findMany({
+					where: baseWhere,
+					select: GET_PRODUCTS_SELECT,
+					orderBy: { createdAt: "desc" },
+					take: limit + 5,
+				}),
+			]);
 
 		// Combiner les résultats par priorité
 		addProducts(sameCollectionProducts, RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION);

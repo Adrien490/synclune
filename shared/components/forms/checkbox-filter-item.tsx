@@ -37,37 +37,33 @@ export function CheckboxFilterItem({
 		<label
 			htmlFor={id}
 			className={cn(
-				"flex items-start gap-3 py-2.5 px-3 -mx-3 rounded-lg cursor-pointer min-h-11",
+				"-mx-3 flex min-h-11 cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5",
 				"transition-colors duration-150",
 				"hover:bg-accent/50",
-				"focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-				checked && "bg-primary/5"
+				"focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2",
+				checked && "bg-primary/5",
 			)}
 		>
 			<Checkbox
 				id={id}
 				checked={checked}
 				onCheckedChange={onCheckedChange}
-				className="mt-0.5 shrink-0 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+				className="data-[state=checked]:bg-primary data-[state=checked]:border-primary mt-0.5 shrink-0"
 			/>
-			<div className="flex-1 min-w-0 flex items-center gap-2">
+			<div className="flex min-w-0 flex-1 items-center gap-2">
 				{indicator && (
 					<span className="shrink-0" aria-hidden="true">
 						{indicator}
 					</span>
 				)}
-				<div className="flex-1 min-w-0">
+				<div className="min-w-0 flex-1">
 					<span className="text-sm font-normal">{children}</span>
 					{description && (
-						<span className="block text-xs text-muted-foreground mt-0.5">
-							{description}
-						</span>
+						<span className="text-muted-foreground mt-0.5 block text-xs">{description}</span>
 					)}
 				</div>
 				{count !== undefined && (
-					<span className="text-xs text-muted-foreground shrink-0">
-						({count})
-					</span>
+					<span className="text-muted-foreground shrink-0 text-xs">({count})</span>
 				)}
 			</div>
 		</label>

@@ -1,20 +1,19 @@
-import { createStore } from "zustand/vanilla"
+import { createStore } from "zustand/vanilla";
 
-import type {
+import type { DialogData, DialogState, DialogStore } from "@/shared/types/store.types";
+
+export type {
 	DialogData,
 	DialogState,
+	DialogActions,
 	DialogStore,
-} from "@/shared/types/store.types"
-
-export type { DialogData, DialogState, DialogActions, DialogStore } from "@/shared/types/store.types"
+} from "@/shared/types/store.types";
 
 export const defaultInitState: DialogState = {
 	dialogs: {},
 };
 
-export const createDialogStore = (
-	initState: DialogState = defaultInitState
-) => {
+export const createDialogStore = (initState: DialogState = defaultInitState) => {
 	return createStore<DialogStore>()((set, get) => ({
 		...initState,
 		openDialog: (dialogId: string, data?: DialogData) =>
@@ -44,9 +43,7 @@ export const createDialogStore = (
 		isDialogOpen: (dialogId: string) => {
 			return get().dialogs[dialogId]?.isOpen ?? false;
 		},
-		getDialogData: <T extends DialogData = DialogData>(
-			dialogId: string
-		): T | undefined => {
+		getDialogData: <T extends DialogData = DialogData>(dialogId: string): T | undefined => {
 			return get().dialogs[dialogId]?.data as T | undefined;
 		},
 		clearDialogData: (dialogId: string) =>

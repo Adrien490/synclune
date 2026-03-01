@@ -22,11 +22,9 @@ interface NoResultsFiltersProps {
 export function NoResultsFilters({ resetUrl = "/produits" }: NoResultsFiltersProps) {
 	const searchParams = useSearchParams();
 	const containerRef = useRef<HTMLDivElement>(null);
-	const {
-		optimisticActiveFilters,
-		removeFilterOptimistic,
-		removeFiltersOptimistic,
-	} = useFilter({ filterPrefix: "" });
+	const { optimisticActiveFilters, removeFilterOptimistic, removeFiltersOptimistic } = useFilter({
+		filterPrefix: "",
+	});
 
 	// Ne rien afficher s'il n'y a pas de filtres actifs
 	if (optimisticActiveFilters.length === 0) {
@@ -76,15 +74,14 @@ export function NoResultsFilters({ resetUrl = "/produits" }: NoResultsFiltersPro
 	};
 
 	const filterCount = optimisticActiveFilters.length;
-	const filterText =
-		filterCount === 1 ? "1 filtre actif" : `${filterCount} filtres actifs`;
+	const filterText = filterCount === 1 ? "1 filtre actif" : `${filterCount} filtres actifs`;
 
 	return (
 		<div
 			ref={containerRef}
 			role="region"
 			aria-label="Filtres actifs"
-			className="flex flex-wrap justify-start sm:justify-center gap-2"
+			className="flex flex-wrap justify-start gap-2 sm:justify-center"
 		>
 			{/* Annonce pour lecteurs d'ecran */}
 			<div aria-live="polite" aria-atomic="true" className="sr-only">

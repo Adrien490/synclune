@@ -29,9 +29,9 @@ export const useBulkToggleMaterialStatus = (options?: UseBulkToggleMaterialStatu
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

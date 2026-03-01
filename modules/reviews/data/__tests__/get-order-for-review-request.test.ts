@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { VALID_ORDER_ID } from "@/test/factories"
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { VALID_ORDER_ID } from "@/test/factories";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -9,15 +9,15 @@ const { mockPrisma } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn() },
 	},
-}))
+}));
 
-vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }))
-vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }))
+vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
+vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("../../constants/cache", () => ({
 	cacheReviewsAdmin: vi.fn(),
-}))
+}));
 
-import { getOrderForReviewRequest } from "../get-order-for-review-request"
+import { getOrderForReviewRequest } from "../get-order-for-review-request";
 
 // ============================================================================
 // FACTORIES
@@ -48,7 +48,7 @@ function createOrderForReview() {
 				review: null,
 			},
 		],
-	}
+	};
 }
 
 // ============================================================================
@@ -57,36 +57,36 @@ function createOrderForReview() {
 
 describe("getOrderForReviewRequest", () => {
 	beforeEach(() => {
-		vi.clearAllMocks()
-	})
+		vi.clearAllMocks();
+	});
 
 	it("should return order with user, items, and review data", async () => {
-		const order = createOrderForReview()
-		mockPrisma.order.findUnique.mockResolvedValue(order)
+		const order = createOrderForReview();
+		mockPrisma.order.findUnique.mockResolvedValue(order);
 
-		const result = await getOrderForReviewRequest(VALID_ORDER_ID)
+		const result = await getOrderForReviewRequest(VALID_ORDER_ID);
 
-		expect(result).toBe(order)
+		expect(result).toBe(order);
 		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ id: VALID_ORDER_ID }),
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should return null when order not found", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null)
+		mockPrisma.order.findUnique.mockResolvedValue(null);
 
-		const result = await getOrderForReviewRequest("nonexistent")
+		const result = await getOrderForReviewRequest("nonexistent");
 
-		expect(result).toBeNull()
-	})
+		expect(result).toBeNull();
+	});
 
 	it("should return null on database error", async () => {
-		mockPrisma.order.findUnique.mockRejectedValue(new Error("timeout"))
+		mockPrisma.order.findUnique.mockRejectedValue(new Error("timeout"));
 
-		const result = await getOrderForReviewRequest(VALID_ORDER_ID)
+		const result = await getOrderForReviewRequest(VALID_ORDER_ID);
 
-		expect(result).toBeNull()
-	})
-})
+		expect(result).toBeNull();
+	});
+});

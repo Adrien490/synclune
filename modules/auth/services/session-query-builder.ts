@@ -5,9 +5,7 @@ import type { GetSessionsParams, SessionFilters } from "../types/session.types";
 // SESSION QUERY BUILDER UTILS
 // ============================================================================
 
-export function buildSessionFilterConditions(
-	filters: SessionFilters
-): Prisma.SessionWhereInput[] {
+export function buildSessionFilterConditions(filters: SessionFilters): Prisma.SessionWhereInput[] {
 	const conditions: Prisma.SessionWhereInput[] = [];
 
 	if (!filters) {
@@ -15,9 +13,7 @@ export function buildSessionFilterConditions(
 	}
 
 	if (filters.userId !== undefined) {
-		const userIds = Array.isArray(filters.userId)
-			? filters.userId
-			: [filters.userId];
+		const userIds = Array.isArray(filters.userId) ? filters.userId : [filters.userId];
 		if (userIds.length === 1) {
 			conditions.push({ userId: userIds[0] });
 		} else if (userIds.length > 1) {
@@ -26,9 +22,7 @@ export function buildSessionFilterConditions(
 	}
 
 	if (filters.ipAddress !== undefined) {
-		const ipAddresses = Array.isArray(filters.ipAddress)
-			? filters.ipAddress
-			: [filters.ipAddress];
+		const ipAddresses = Array.isArray(filters.ipAddress) ? filters.ipAddress : [filters.ipAddress];
 		if (ipAddresses.length === 1) {
 			conditions.push({
 				ipAddress: {
@@ -99,9 +93,7 @@ export function buildSessionFilterConditions(
 	return conditions;
 }
 
-export function buildSessionWhereClause(
-	params: GetSessionsParams
-): Prisma.SessionWhereInput {
+export function buildSessionWhereClause(params: GetSessionsParams): Prisma.SessionWhereInput {
 	const whereClause: Prisma.SessionWhereInput = {};
 	const andConditions: Prisma.SessionWhereInput[] = [];
 	const filters = params.filters ?? {};

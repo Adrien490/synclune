@@ -9,9 +9,7 @@ interface UseBulkDeactivateSkusOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useBulkDeactivateSkus = (
-	options?: UseBulkDeactivateSkusOptions
-) => {
+export const useBulkDeactivateSkus = (options?: UseBulkDeactivateSkusOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -27,9 +25,9 @@ export const useBulkDeactivateSkus = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const deactivateSkus = (skuIds: string[]) => {

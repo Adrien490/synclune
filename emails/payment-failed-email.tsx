@@ -19,16 +19,15 @@ export const PaymentFailedEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Paiement échoué</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, le paiement de votre commande {orderNumber}{" "}
-					a échoué. Les articles ont été remis en stock.
+					Bonjour {customerName}, le paiement de votre commande {orderNumber} a échoué. Les articles
+					ont été remis en stock.
 				</Text>
 			</Section>
 
 			{/* Info */}
 			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.text.small}>
-					Cela peut être dû à un solde insuffisant, un rejet bancaire ou un
-					problème technique.
+					Cela peut être dû à un solde insuffisant, un rejet bancaire ou un problème technique.
 				</Text>
 			</Section>
 

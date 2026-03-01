@@ -15,9 +15,9 @@ export function useMarkAsDelivered(options?: UseMarkAsDeliveredOptions) {
 			markAsDelivered,
 			createToastCallbacks({
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

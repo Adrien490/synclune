@@ -12,6 +12,7 @@ import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
 import { Gem, Heart, LogIn } from "lucide-react";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import Link from "next/link";
 import { CollectionMiniGrid } from "./collection-mini-grid";
@@ -24,7 +25,7 @@ const itemVariants: Variants = {
 	visible: (delay: number) => ({
 		opacity: 1,
 		y: 0,
-		transition: { delay, duration: 0.25, ease: [0, 0, 0.2, 1] as const },
+		transition: { delay, duration: 0.25, ease: MOTION_CONFIG.easing.easeOut },
 	}),
 	exit: { opacity: 0, y: -4, transition: { duration: 0.1 } },
 };
@@ -35,12 +36,12 @@ const linkClassName = cn(
 	"transition-[transform,color,background-color] duration-300 ease-out",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 	"text-foreground/85 hover:text-foreground hover:bg-primary/5 hover:pl-5",
-	"motion-safe:active:scale-[0.97]"
+	"motion-safe:active:scale-[0.97]",
 );
 
 const activeLinkClassName = cn(
 	linkClassName,
-	"bg-primary/12 text-foreground font-semibold border-l-2 border-primary pl-5 shadow-sm"
+	"bg-primary/12 text-foreground font-semibold border-l-2 border-primary pl-5 shadow-sm",
 );
 
 interface MenuSheetNavProps {
@@ -71,7 +72,9 @@ export function MenuSheetNav({
 	// Separate items into zones
 	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
 	const personalizationItem = navItems.find((item) => item.href === ROUTES.SHOP.CUSTOMIZATION);
-	const accountItem = navItems.find((item) => item.href === ROUTES.ACCOUNT.ROOT || item.href === ROUTES.AUTH.SIGN_IN);
+	const accountItem = navItems.find(
+		(item) => item.href === ROUTES.ACCOUNT.ROOT || item.href === ROUTES.AUTH.SIGN_IN,
+	);
 	const favoritesItem = navItems.find((item) => item.href === ROUTES.ACCOUNT.FAVORITES);
 	const isLoggedIn = !!session?.user;
 
@@ -100,11 +103,7 @@ export function MenuSheetNav({
 					{/* User header (if logged in) */}
 					{session?.user && (
 						<motion.div variants={itemVariants} custom={delay(30, 0)}>
-							<UserHeader
-								session={session}
-								wishlistCount={wishlistCount}
-								cartCount={cartCount}
-							/>
+							<UserHeader session={session} wishlistCount={wishlistCount} cartCount={cartCount} />
 						</motion.div>
 					)}
 
@@ -118,9 +117,7 @@ export function MenuSheetNav({
 										<Link
 											href={homeItem.href}
 											className={getLinkClass(homeItem.href)}
-											aria-current={
-												isMenuItemActive(homeItem.href) ? "page" : undefined
-											}
+											aria-current={isMenuItemActive(homeItem.href) ? "page" : undefined}
 										>
 											{homeItem.label}
 										</Link>
@@ -141,11 +138,7 @@ export function MenuSheetNav({
 										<Link
 											href={ROUTES.SHOP.PRODUCTS}
 											className={getLinkClass(ROUTES.SHOP.PRODUCTS)}
-											aria-current={
-												isMenuItemActive(ROUTES.SHOP.PRODUCTS)
-													? "page"
-													: undefined
-											}
+											aria-current={isMenuItemActive(ROUTES.SHOP.PRODUCTS) ? "page" : undefined}
 										>
 											Tous les bijoux
 										</Link>
@@ -158,9 +151,7 @@ export function MenuSheetNav({
 												href={ROUTES.SHOP.PRODUCT_TYPE(type.slug)}
 												className={getLinkClass(ROUTES.SHOP.PRODUCT_TYPE(type.slug))}
 												aria-current={
-													isMenuItemActive(ROUTES.SHOP.PRODUCT_TYPE(type.slug))
-														? "page"
-														: undefined
+													isMenuItemActive(ROUTES.SHOP.PRODUCT_TYPE(type.slug)) ? "page" : undefined
 												}
 											>
 												{type.label}
@@ -183,29 +174,24 @@ export function MenuSheetNav({
 										<Link
 											href={ROUTES.SHOP.COLLECTIONS}
 											className={getLinkClass(ROUTES.SHOP.COLLECTIONS)}
-											aria-current={
-												isMenuItemActive(ROUTES.SHOP.COLLECTIONS)
-													? "page"
-													: undefined
-											}
+											aria-current={isMenuItemActive(ROUTES.SHOP.COLLECTIONS) ? "page" : undefined}
 										>
 											Toutes les collections
 										</Link>
 									</SheetClose>
 								</motion.li>
 								{displayedCollections.map((collection, i) => (
-									<motion.li key={collection.slug} variants={itemVariants} custom={delay(110, i + 1)}>
+									<motion.li
+										key={collection.slug}
+										variants={itemVariants}
+										custom={delay(110, i + 1)}
+									>
 										<SheetClose asChild>
 											<Link
 												href={ROUTES.SHOP.COLLECTION(collection.slug)}
-												className={getLinkClass(
-													ROUTES.SHOP.COLLECTION(collection.slug),
-													"gap-3"
-												)}
+												className={getLinkClass(ROUTES.SHOP.COLLECTION(collection.slug), "gap-3")}
 												aria-current={
-													isMenuItemActive(
-														ROUTES.SHOP.COLLECTION(collection.slug)
-													)
+													isMenuItemActive(ROUTES.SHOP.COLLECTION(collection.slug))
 														? "page"
 														: undefined
 												}
@@ -217,10 +203,10 @@ export function MenuSheetNav({
 													/>
 												) : (
 													<div
-														className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0"
+														className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-lg"
 														aria-hidden="true"
 													>
-														<Gem className="h-5 w-5 text-primary/40" />
+														<Gem className="text-primary/40 h-5 w-5" />
 													</div>
 												)}
 												<span className="flex-1">{collection.label}</span>
@@ -242,11 +228,7 @@ export function MenuSheetNav({
 										<Link
 											href={personalizationItem.href}
 											className={getLinkClass(personalizationItem.href)}
-											aria-current={
-												isMenuItemActive(personalizationItem.href)
-													? "page"
-													: undefined
-											}
+											aria-current={isMenuItemActive(personalizationItem.href) ? "page" : undefined}
 										>
 											{personalizationItem.label}
 										</Link>
@@ -264,16 +246,18 @@ export function MenuSheetNav({
 						custom={delay(140, 0)}
 					>
 						<div className="absolute inset-0 flex items-center">
-							<div className="w-full border-t border-border/80" />
+							<div className="border-border/80 w-full border-t" />
 						</div>
-						<div className="relative bg-background/95 px-3 rounded-full">
-							<Heart className="h-4 w-4 text-muted-foreground fill-muted-foreground/20" />
+						<div className="bg-background/95 relative rounded-full px-3">
+							<Heart className="text-muted-foreground fill-muted-foreground/20 h-4 w-4" />
 						</div>
 					</motion.div>
 
 					{/* Section Account */}
 					<section aria-labelledby="section-account">
-						<SectionHeader id="section-account">{isLoggedIn ? "Mon compte" : "Compte"}</SectionHeader>
+						<SectionHeader id="section-account">
+							{isLoggedIn ? "Mon compte" : "Compte"}
+						</SectionHeader>
 						<ul className="space-y-1">
 							{/* Account link - adapts to session state */}
 							{accountItem && (
@@ -281,13 +265,8 @@ export function MenuSheetNav({
 									<SheetClose asChild>
 										<Link
 											href={accountItem.href}
-											className={getLinkClass(
-												accountItem.href,
-												!isLoggedIn ? "gap-2" : undefined
-											)}
-											aria-current={
-												isMenuItemActive(accountItem.href) ? "page" : undefined
-											}
+											className={getLinkClass(accountItem.href, !isLoggedIn ? "gap-2" : undefined)}
+											aria-current={isMenuItemActive(accountItem.href) ? "page" : undefined}
 										>
 											{!isLoggedIn && <LogIn className="size-4" aria-hidden="true" />}
 											{accountItem.label}
@@ -302,18 +281,13 @@ export function MenuSheetNav({
 									<SheetClose asChild>
 										<Link
 											href={favoritesItem.href}
-											className={getLinkClass(
-												favoritesItem.href,
-												"justify-between"
-											)}
-											aria-current={
-												isMenuItemActive(favoritesItem.href) ? "page" : undefined
-											}
+											className={getLinkClass(favoritesItem.href, "justify-between")}
+											aria-current={isMenuItemActive(favoritesItem.href) ? "page" : undefined}
 											aria-label={wishlistCount > 0 ? `Favoris (${wishlistCount})` : undefined}
 										>
 											{favoritesItem.label}
 											{wishlistCount > 0 && (
-												<Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+												<Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
 													{wishlistCount}
 												</Badge>
 											)}
@@ -329,9 +303,7 @@ export function MenuSheetNav({
 										<Link
 											href={ROUTES.ACCOUNT.ORDERS}
 											className={getLinkClass(ROUTES.ACCOUNT.ORDERS)}
-											aria-current={
-												isMenuItemActive(ROUTES.ACCOUNT.ORDERS) ? "page" : undefined
-											}
+											aria-current={isMenuItemActive(ROUTES.ACCOUNT.ORDERS) ? "page" : undefined}
 										>
 											Mes commandes
 										</Link>
@@ -345,7 +317,10 @@ export function MenuSheetNav({
 									<LogoutAlertDialog>
 										<button
 											type="button"
-											className={cn(linkClassName, "w-full text-left text-muted-foreground hover:text-foreground")}
+											className={cn(
+												linkClassName,
+												"text-muted-foreground hover:text-foreground w-full text-left",
+											)}
 										>
 											Déconnexion
 										</button>
@@ -361,11 +336,9 @@ export function MenuSheetNav({
 											href={ROUTES.AUTH.SIGN_UP}
 											className={getLinkClass(
 												ROUTES.AUTH.SIGN_UP,
-												"text-muted-foreground hover:text-foreground"
+												"text-muted-foreground hover:text-foreground",
 											)}
-											aria-current={
-												isMenuItemActive(ROUTES.AUTH.SIGN_UP) ? "page" : undefined
-											}
+											aria-current={isMenuItemActive(ROUTES.AUTH.SIGN_UP) ? "page" : undefined}
 										>
 											Créer un compte
 										</Link>

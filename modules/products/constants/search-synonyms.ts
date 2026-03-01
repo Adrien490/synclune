@@ -36,26 +36,26 @@ const SYNONYM_GROUPS: string[][] = [
 
 // Build a bidirectional lookup map from synonym groups
 function buildSynonymMap(groups: string[][]): Map<string, string[]> {
-	const map = new Map<string, string[]>()
+	const map = new Map<string, string[]>();
 
 	for (const group of groups) {
 		for (const term of group) {
-			const normalized = term.toLowerCase()
+			const normalized = term.toLowerCase();
 			const synonyms = group
 				.filter((s) => s.toLowerCase() !== normalized)
-				.map((s) => s.toLowerCase())
-			const existing = map.get(normalized)
+				.map((s) => s.toLowerCase());
+			const existing = map.get(normalized);
 			if (existing) {
 				// Merge without duplicates
-				const merged = [...new Set([...existing, ...synonyms])]
-				map.set(normalized, merged)
+				const merged = [...new Set([...existing, ...synonyms])];
+				map.set(normalized, merged);
 			} else {
-				map.set(normalized, synonyms)
+				map.set(normalized, synonyms);
 			}
 		}
 	}
 
-	return map
+	return map;
 }
 
-export const SEARCH_SYNONYMS = buildSynonymMap(SYNONYM_GROUPS)
+export const SEARCH_SYNONYMS = buildSynonymMap(SYNONYM_GROUPS);

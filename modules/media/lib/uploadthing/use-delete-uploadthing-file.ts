@@ -9,9 +9,7 @@ interface UseDeleteUploadThingFileOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useDeleteUploadThingFile = (
-	options?: UseDeleteUploadThingFileOptions
-) => {
+export const useDeleteUploadThingFile = (options?: UseDeleteUploadThingFileOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			deleteUploadThingFile,
@@ -28,9 +26,9 @@ export const useDeleteUploadThingFile = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

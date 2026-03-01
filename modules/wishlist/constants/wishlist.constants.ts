@@ -75,10 +75,7 @@ export const GET_WISHLIST_SELECT = {
 								},
 							},
 						},
-						orderBy: [
-							{ isDefault: "desc" as const },
-							{ priceInclTax: "asc" as const },
-						],
+						orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 					},
 				},
 			},
@@ -106,6 +103,6 @@ export const GET_WISHLIST_MAX_RESULTS_PER_PAGE = 200;
 // Assertion à la compilation : DEFAULT ne doit pas dépasser MAX
 if (GET_WISHLIST_DEFAULT_PER_PAGE > GET_WISHLIST_MAX_RESULTS_PER_PAGE) {
 	throw new Error(
-		`[WISHLIST] GET_WISHLIST_DEFAULT_PER_PAGE (${GET_WISHLIST_DEFAULT_PER_PAGE}) cannot exceed GET_WISHLIST_MAX_RESULTS_PER_PAGE (${GET_WISHLIST_MAX_RESULTS_PER_PAGE})`
+		`[WISHLIST] GET_WISHLIST_DEFAULT_PER_PAGE (${GET_WISHLIST_DEFAULT_PER_PAGE}) cannot exceed GET_WISHLIST_MAX_RESULTS_PER_PAGE (${GET_WISHLIST_MAX_RESULTS_PER_PAGE})`,
 	);
 }

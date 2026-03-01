@@ -74,9 +74,11 @@ describe("buildWhereClause", () => {
 	// ========================================================================
 
 	it("should add filter conditions in AND array", () => {
-		const result = buildWhereClause(params({
-			filters: { isActive: true },
-		}));
+		const result = buildWhereClause(
+			params({
+				filters: { isActive: true },
+			}),
+		);
 
 		expect(result.AND).toBeDefined();
 		expect(result.AND).toContainEqual({ isActive: true });
@@ -87,10 +89,12 @@ describe("buildWhereClause", () => {
 	// ========================================================================
 
 	it("should combine search OR and filter AND", () => {
-		const result = buildWhereClause(params({
-			search: "bague",
-			filters: { isActive: true },
-		}));
+		const result = buildWhereClause(
+			params({
+				search: "bague",
+				filters: { isActive: true },
+			}),
+		);
 
 		expect(result.deletedAt).toBeNull();
 		expect(result.OR).toBeDefined();

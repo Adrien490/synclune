@@ -176,18 +176,14 @@ export function ProductVariantSelectionActions() {
 							<br />
 							<br />
 							<span className="text-destructive font-medium">
-								Cette action est irreversible. Les variantes par defaut ne peuvent pas etre supprimees.
+								Cette action est irreversible. Les variantes par defaut ne peuvent pas etre
+								supprimees.
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isDeleting}>
-							Annuler
-						</AlertDialogCancel>
-						<Button
-							onClick={() => deleteSkus(selectedItems)}
-							disabled={isDeleting}
-						>
+						<AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+						<Button onClick={() => deleteSkus(selectedItems)} disabled={isDeleting}>
 							{isDeleting ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />

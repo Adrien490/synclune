@@ -34,7 +34,7 @@ const cancelOrderCustomerSchema = z.object({
  */
 export async function cancelOrderCustomer(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAuth();
@@ -87,9 +87,7 @@ export async function cancelOrderCustomer(
 			}
 
 			const newPaymentStatus =
-				found.paymentStatus === PaymentStatus.PAID
-					? PaymentStatus.REFUNDED
-					: found.paymentStatus;
+				found.paymentStatus === PaymentStatus.PAID ? PaymentStatus.REFUNDED : found.paymentStatus;
 
 			// Update order status
 			await tx.order.update({
@@ -147,11 +145,12 @@ export async function cancelOrderCustomer(
 
 		// Send cancellation email
 		if (order.customerEmail) {
-			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
-
-			const orderDetailsUrl = buildUrl(
-				ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)
+			const customerFirstName = extractCustomerFirstName(
+				order.customerName,
+				order.shippingFirstName,
 			);
+
+			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
 			try {
 				await sendCancelOrderConfirmationEmail({

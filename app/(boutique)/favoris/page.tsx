@@ -24,21 +24,19 @@ type WishlistPageProps = {
 	}>;
 };
 
-function parseParams(params: {
-	cursor?: string;
-	direction?: string;
-	perPage?: string;
-}) {
+function parseParams(params: { cursor?: string; direction?: string; perPage?: string }) {
 	return {
 		cursor: searchParamParsers.cursor(params.cursor),
 		direction: searchParamParsers.direction(params.direction),
-		perPage: searchParamParsers.perPage(params.perPage, GET_WISHLIST_DEFAULT_PER_PAGE, GET_WISHLIST_MAX_RESULTS_PER_PAGE),
+		perPage: searchParamParsers.perPage(
+			params.perPage,
+			GET_WISHLIST_DEFAULT_PER_PAGE,
+			GET_WISHLIST_MAX_RESULTS_PER_PAGE,
+		),
 	};
 }
 
-export default async function WishlistPage({
-	searchParams,
-}: WishlistPageProps) {
+export default async function WishlistPage({ searchParams }: WishlistPageProps) {
 	const params = await searchParams;
 	const { cursor, direction, perPage } = parseParams(params);
 
@@ -49,19 +47,13 @@ export default async function WishlistPage({
 	});
 
 	return (
-		<div className="min-h-screen relative">
-			<PageHeader
-				title="Mes favoris"
-				breadcrumbs={[{ label: "Mes favoris", href: "/favoris" }]}
-			/>
+		<div className="relative min-h-screen">
+			<PageHeader title="Mes favoris" breadcrumbs={[{ label: "Mes favoris", href: "/favoris" }]} />
 
-			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+			<section className="bg-background relative z-10 pt-4 pb-12 lg:pt-6 lg:pb-16">
+				<div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<WishlistGridSkeleton />}>
-						<WishlistList
-							wishlistPromise={wishlistPromise}
-							perPage={perPage}
-						/>
+						<WishlistList wishlistPromise={wishlistPromise} perPage={perPage} />
 					</Suspense>
 				</div>
 			</section>

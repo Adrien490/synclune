@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { ActionStatus } from "@/shared/types/server-action"
-import { createMockFormData, VALID_CUID, VALID_CUID_2 } from "@/test/factories"
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ActionStatus } from "@/shared/types/server-action";
+import { createMockFormData, VALID_CUID, VALID_CUID_2 } from "@/test/factories";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -40,39 +40,47 @@ const {
 	mockGetProductForDuplication: vi.fn(),
 	mockGetProductInvalidationTags: vi.fn(),
 	mockGetCollectionInvalidationTags: vi.fn(),
-}))
+}));
 
-vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }))
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }))
-vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({ enforceRateLimitForCurrentUser: mockEnforceRateLimit }))
-vi.mock("@/shared/lib/rate-limit-config", () => ({ ADMIN_PRODUCT_DUPLICATE_LIMIT: "admin-product-duplicate" }))
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }))
+vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	ADMIN_PRODUCT_DUPLICATE_LIMIT: "admin-product-duplicate",
+}));
+vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	notFound: mockNotFound,
-}))
-vi.mock("@/shared/utils/generate-slug", () => ({ generateSlug: mockGenerateSlug }))
-vi.mock("@/modules/skus/services/sku-generation.service", () => ({ generateSkuCode: mockGenerateSkuCode }))
-vi.mock("../../data/get-product-for-duplication", () => ({ getProductForDuplication: mockGetProductForDuplication }))
-vi.mock("../../schemas/product.schemas", () => ({ duplicateProductSchema: {} }))
+}));
+vi.mock("@/shared/utils/generate-slug", () => ({ generateSlug: mockGenerateSlug }));
+vi.mock("@/modules/skus/services/sku-generation.service", () => ({
+	generateSkuCode: mockGenerateSkuCode,
+}));
+vi.mock("../../data/get-product-for-duplication", () => ({
+	getProductForDuplication: mockGetProductForDuplication,
+}));
+vi.mock("../../schemas/product.schemas", () => ({ duplicateProductSchema: {} }));
 vi.mock("../../utils/cache.utils", () => ({
 	getProductInvalidationTags: mockGetProductInvalidationTags,
-}))
+}));
 vi.mock("@/modules/collections/utils/cache.utils", () => ({
 	getCollectionInvalidationTags: mockGetCollectionInvalidationTags,
-}))
+}));
 
-import { duplicateProduct } from "../duplicate-product"
+import { duplicateProduct } from "../duplicate-product";
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
-const validFormData = createMockFormData({ productId: VALID_CUID })
+const validFormData = createMockFormData({ productId: VALID_CUID });
 
-const validatedData = { productId: VALID_CUID }
+const validatedData = { productId: VALID_CUID };
 
 const sourceProduct = {
 	id: VALID_CUID,
@@ -109,7 +117,7 @@ const sourceProduct = {
 			],
 		},
 	],
-}
+};
 
 const duplicatedProductResult = {
 	id: VALID_CUID_2,
@@ -120,7 +128,7 @@ const duplicatedProductResult = {
 	typeId: "type_123",
 	createdAt: new Date("2026-01-01"),
 	updatedAt: new Date("2026-01-01"),
-}
+};
 
 // ============================================================================
 // TESTS
@@ -128,139 +136,145 @@ const duplicatedProductResult = {
 
 describe("duplicateProduct", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
+		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true })
-		mockEnforceRateLimit.mockResolvedValue({ success: true })
-		mockValidateInput.mockReturnValue({ data: { ...validatedData } })
-		mockGetProductForDuplication.mockResolvedValue(sourceProduct)
-		mockGenerateSlug.mockResolvedValue("copie-de-bracelet-lune")
-		mockGenerateSkuCode.mockReturnValue("NEW-SKU-001")
-		mockGetProductInvalidationTags.mockReturnValue(["products-list"])
-		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list"])
+		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockEnforceRateLimit.mockResolvedValue({ success: true });
+		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
+		mockGetProductForDuplication.mockResolvedValue(sourceProduct);
+		mockGenerateSlug.mockResolvedValue("copie-de-bracelet-lune");
+		mockGenerateSkuCode.mockReturnValue("NEW-SKU-001");
+		mockGetProductInvalidationTags.mockReturnValue(["products-list"]);
+		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list"]);
 
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma))
-		mockPrisma.product.create.mockResolvedValue(duplicatedProductResult)
-		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 1 })
-		mockPrisma.productSku.create.mockResolvedValue({ id: "new-sku-1" })
-		mockPrisma.skuMedia.create.mockResolvedValue({ id: "new-media-1" })
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
+		mockPrisma.product.create.mockResolvedValue(duplicatedProductResult);
+		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 1 });
+		mockPrisma.productSku.create.mockResolvedValue({ id: "new-sku-1" });
+		mockPrisma.skuMedia.create.mockResolvedValue({ id: "new-media-1" });
 
-		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({ status: ActionStatus.SUCCESS, message: msg, data }))
-		mockNotFound.mockImplementation((entity: string) => ({ status: ActionStatus.NOT_FOUND, message: `${entity} introuvable` }))
+		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
+			status: ActionStatus.SUCCESS,
+			message: msg,
+			data,
+		}));
+		mockNotFound.mockImplementation((entity: string) => ({
+			status: ActionStatus.NOT_FOUND,
+			message: `${entity} introuvable`,
+		}));
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
-			status: ActionStatus.ERROR, message: fallback,
-		}))
-	})
+			status: ActionStatus.ERROR,
+			message: fallback,
+		}));
+	});
 
 	it("should return auth error when not admin", async () => {
-		const authError = { status: ActionStatus.UNAUTHORIZED, message: "Non autorise" }
-		mockRequireAdmin.mockResolvedValue({ error: authError })
-		const result = await duplicateProduct(undefined, validFormData)
-		expect(result).toEqual(authError)
-	})
+		const authError = { status: ActionStatus.UNAUTHORIZED, message: "Non autorise" };
+		mockRequireAdmin.mockResolvedValue({ error: authError });
+		const result = await duplicateProduct(undefined, validFormData);
+		expect(result).toEqual(authError);
+	});
 
 	it("should return rate limit error", async () => {
-		mockEnforceRateLimit.mockResolvedValue({ error: { status: ActionStatus.ERROR, message: "Rate" } })
-		const result = await duplicateProduct(undefined, validFormData)
-		expect(result.status).toBe(ActionStatus.ERROR)
-	})
+		mockEnforceRateLimit.mockResolvedValue({
+			error: { status: ActionStatus.ERROR, message: "Rate" },
+		});
+		const result = await duplicateProduct(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+	});
 
 	it("should return validation error when Zod schema fails", async () => {
-		const valErr = { status: ActionStatus.VALIDATION_ERROR, message: "ID requis" }
-		mockValidateInput.mockReturnValue({ error: valErr })
-		const result = await duplicateProduct(undefined, validFormData)
-		expect(result).toEqual(valErr)
-	})
+		const valErr = { status: ActionStatus.VALIDATION_ERROR, message: "ID requis" };
+		mockValidateInput.mockReturnValue({ error: valErr });
+		const result = await duplicateProduct(undefined, validFormData);
+		expect(result).toEqual(valErr);
+	});
 
 	it("should return not found when source product does not exist", async () => {
-		mockGetProductForDuplication.mockResolvedValue(null)
-		const result = await duplicateProduct(undefined, validFormData)
-		expect(result.status).toBe(ActionStatus.NOT_FOUND)
-	})
+		mockGetProductForDuplication.mockResolvedValue(null);
+		const result = await duplicateProduct(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.NOT_FOUND);
+	});
 
 	it("should generate title as 'Copie de [original title]'", async () => {
-		await duplicateProduct(undefined, validFormData)
-		expect(mockGenerateSlug).toHaveBeenCalledWith(
-			mockPrisma,
-			"product",
-			"Copie de Bracelet Lune"
-		)
-	})
+		await duplicateProduct(undefined, validFormData);
+		expect(mockGenerateSlug).toHaveBeenCalledWith(mockPrisma, "product", "Copie de Bracelet Lune");
+	});
 
 	it("should create duplicated product in DRAFT status inside transaction", async () => {
-		await duplicateProduct(undefined, validFormData)
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function))
+		await duplicateProduct(undefined, validFormData);
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
 		expect(mockPrisma.product.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ status: "DRAFT", title: "Copie de Bracelet Lune" }),
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should duplicate collection associations", async () => {
-		await duplicateProduct(undefined, validFormData)
+		await duplicateProduct(undefined, validFormData);
 		expect(mockPrisma.productCollection.createMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				data: expect.arrayContaining([
-					expect.objectContaining({ collectionId: "col_1" }),
-				]),
-			})
-		)
-	})
+				data: expect.arrayContaining([expect.objectContaining({ collectionId: "col_1" })]),
+			}),
+		);
+	});
 
 	it("should generate a new SKU code for each duplicated SKU", async () => {
-		await duplicateProduct(undefined, validFormData)
-		expect(mockGenerateSkuCode).toHaveBeenCalledTimes(sourceProduct.skus.length)
-	})
+		await duplicateProduct(undefined, validFormData);
+		expect(mockGenerateSkuCode).toHaveBeenCalledTimes(sourceProduct.skus.length);
+	});
 
 	it("should create new SKU with generated code in transaction", async () => {
-		await duplicateProduct(undefined, validFormData)
+		await duplicateProduct(undefined, validFormData);
 		expect(mockPrisma.productSku.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ sku: "NEW-SKU-001" }),
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should duplicate SKU images in transaction", async () => {
-		await duplicateProduct(undefined, validFormData)
+		await duplicateProduct(undefined, validFormData);
 		expect(mockPrisma.skuMedia.create).toHaveBeenCalledTimes(
-			sourceProduct.skus.reduce((acc, s) => acc + s.images.length, 0)
-		)
-	})
+			sourceProduct.skus.reduce((acc, s) => acc + s.images.length, 0),
+		);
+	});
 
 	it("should not call productCollection.createMany when source has no collections", async () => {
-		mockGetProductForDuplication.mockResolvedValue({ ...sourceProduct, collections: [] })
-		await duplicateProduct(undefined, validFormData)
-		expect(mockPrisma.productCollection.createMany).not.toHaveBeenCalled()
-	})
+		mockGetProductForDuplication.mockResolvedValue({ ...sourceProduct, collections: [] });
+		await duplicateProduct(undefined, validFormData);
+		expect(mockPrisma.productCollection.createMany).not.toHaveBeenCalled();
+	});
 
 	it("should invalidate product and collection cache tags after duplication", async () => {
-		await duplicateProduct(undefined, validFormData)
+		await duplicateProduct(undefined, validFormData);
 		expect(mockGetProductInvalidationTags).toHaveBeenCalledWith(
 			duplicatedProductResult.slug,
-			duplicatedProductResult.id
-		)
-		expect(mockGetCollectionInvalidationTags).toHaveBeenCalledWith("bijoux")
-		expect(mockUpdateTag).toHaveBeenCalled()
-	})
+			duplicatedProductResult.id,
+		);
+		expect(mockGetCollectionInvalidationTags).toHaveBeenCalledWith("bijoux");
+		expect(mockUpdateTag).toHaveBeenCalled();
+	});
 
 	it("should return success with new product id, title and slug", async () => {
-		const result = await duplicateProduct(undefined, validFormData)
-		expect(result.status).toBe(ActionStatus.SUCCESS)
+		const result = await duplicateProduct(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mockSuccess).toHaveBeenCalledWith(
 			expect.stringContaining("Copie de Bracelet Lune"),
 			expect.objectContaining({
 				productId: duplicatedProductResult.id,
 				slug: duplicatedProductResult.slug,
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"))
-		const result = await duplicateProduct(undefined, validFormData)
-		expect(mockHandleActionError).toHaveBeenCalled()
-		expect(result.status).toBe(ActionStatus.ERROR)
-	})
-})
+		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
+		const result = await duplicateProduct(undefined, validFormData);
+		expect(mockHandleActionError).toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+});

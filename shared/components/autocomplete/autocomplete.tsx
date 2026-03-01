@@ -12,6 +12,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, m, MotionConfig } from "motion/react";
 import { AlertCircleIcon, ArrowLeftIcon, SearchIcon } from "lucide-react";
@@ -47,7 +48,9 @@ export function Autocomplete<T>({
 	debounceMs = AUTOCOMPLETE_DEFAULTS.debounceMs,
 	showResultsCount = AUTOCOMPLETE_DEFAULTS.showResultsCount,
 }: AutocompleteProps<T>) {
-	const isMobile = useIsMobile();
+	const isMobileDetected = useIsMobile();
+	const mounted = useMounted();
+	const isMobile = mounted && isMobileDetected;
 
 	// IDs uniques pour eviter les collisions
 	const id = useId();

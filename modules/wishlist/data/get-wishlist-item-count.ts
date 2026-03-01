@@ -39,7 +39,7 @@ export async function getWishlistItemCount(): Promise<GetWishlistItemCountReturn
  */
 export async function fetchWishlistItemCount(
 	userId?: string,
-	sessionId?: string
+	sessionId?: string,
 ): Promise<GetWishlistItemCountReturn> {
 	"use cache: private";
 	cacheLife("cart");

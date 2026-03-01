@@ -82,7 +82,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 		mockHardDeleteExpiredRecords.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -134,7 +134,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 				expect.objectContaining({
 					job: "hard-delete-retention",
 				}),
-				1000
+				1000,
 			);
 		});
 
@@ -171,7 +171,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 				expect.objectContaining({
 					job: "hard-delete-retention",
 					errors: 1,
-				})
+				}),
 			);
 		});
 
@@ -183,7 +183,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ error: "DB integrity error" }),
-				})
+				}),
 			);
 		});
 
@@ -195,7 +195,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ error: "string error value" }),
-				})
+				}),
 			);
 		});
 
@@ -212,9 +212,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 
 			await GET();
 
-			expect(mockCronError).toHaveBeenCalledWith(
-				"Failed to hard delete expired records"
-			);
+			expect(mockCronError).toHaveBeenCalledWith("Failed to hard delete expired records");
 		});
 
 		it("uses fallback message when null is thrown", async () => {
@@ -222,9 +220,7 @@ describe("GET /api/cron/hard-delete-retention", () => {
 
 			await GET();
 
-			expect(mockCronError).toHaveBeenCalledWith(
-				"Failed to hard delete expired records"
-			);
+			expect(mockCronError).toHaveBeenCalledWith("Failed to hard delete expired records");
 		});
 
 		it("does not call cronSuccess when the service throws", async () => {

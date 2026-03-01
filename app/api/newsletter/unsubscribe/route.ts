@@ -41,10 +41,7 @@ export async function POST(request: Request) {
 			},
 		});
 
-		if (
-			subscriber &&
-			subscriber.status !== NewsletterStatus.UNSUBSCRIBED
-		) {
+		if (subscriber && subscriber.status !== NewsletterStatus.UNSUBSCRIBED) {
 			await prisma.newsletterSubscriber.update({
 				where: { id: subscriber.id },
 				data: {

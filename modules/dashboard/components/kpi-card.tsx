@@ -24,14 +24,14 @@ const kpiCardVariants = cva(
 			},
 			priority: {
 				critical: "border-primary/60 from-primary/10 shadow-md",
-				operational: "border-blue-500/40 from-blue-500/5",
-				alert: "border-amber-500/50 from-amber-500/5",
+				operational: "border-info/40 from-info/5",
+				alert: "border-warning/50 from-warning/5",
 				info: "border-muted-foreground/30 from-muted/5",
 			},
 			status: {
 				default: "",
-				danger: "border-red-500/50 from-red-500/5",
-				warning: "border-orange-500/50 from-orange-500/5",
+				danger: "border-destructive/50 from-destructive/5",
+				warning: "border-warning/50 from-warning/5",
 			},
 		},
 		defaultVariants: {

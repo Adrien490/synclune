@@ -7,7 +7,7 @@ export default function EditCollectionLoading() {
 	return (
 		<>
 			{/* Title */}
-			<Skeleton className="h-8 w-48 mb-6" />
+			<Skeleton className="mb-6 h-8 w-48" />
 
 			{/* Form skeleton */}
 			<div className="max-w-lg space-y-6">

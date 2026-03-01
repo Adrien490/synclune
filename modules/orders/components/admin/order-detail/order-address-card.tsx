@@ -1,10 +1,5 @@
 import { MapPin, Phone } from "lucide-react";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { CopyButton } from "@/shared/components/copy-button";
 import type { OrderAddressCardProps } from "./types";
 
@@ -29,7 +24,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 				<CopyButton text={shippingAddressText} label="Adresse" />
 			</CardHeader>
 			<CardContent>
-				<address className="not-italic text-sm leading-relaxed">
+				<address className="text-sm leading-relaxed not-italic">
 					<p className="font-medium">
 						{order.shippingFirstName} {order.shippingLastName}
 					</p>
@@ -40,7 +35,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 					</p>
 					<p>{order.shippingCountry}</p>
 					{order.shippingPhone && (
-						<p className="mt-2 flex items-center gap-1 text-muted-foreground">
+						<p className="text-muted-foreground mt-2 flex items-center gap-1">
 							<Phone className="h-3 w-3" aria-hidden="true" />
 							{order.shippingPhone}
 						</p>

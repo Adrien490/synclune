@@ -81,7 +81,7 @@ describe("GET /api/cron/cleanup-webhook-events", () => {
 		mockCleanupOldWebhookEvents.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -133,14 +133,14 @@ describe("GET /api/cron/cleanup-webhook-events", () => {
 				expect.objectContaining({
 					job: "cleanup-webhook-events",
 				}),
-				1000
+				1000,
 			);
 		});
 
 		it("includes the job name 'cleanup-webhook-events' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("cleanup-webhook-events");
 		});
 
@@ -149,7 +149,7 @@ describe("GET /api/cron/cleanup-webhook-events", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(2468);
 		});
 
@@ -170,7 +170,7 @@ describe("GET /api/cron/cleanup-webhook-events", () => {
 				expect.objectContaining({
 					job: "cleanup-webhook-events",
 					errors: 1,
-				})
+				}),
 			);
 		});
 
@@ -182,7 +182,7 @@ describe("GET /api/cron/cleanup-webhook-events", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ error: "DB constraint error" }),
-				})
+				}),
 			);
 		});
 
@@ -194,7 +194,7 @@ describe("GET /api/cron/cleanup-webhook-events", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ error: "string error value" }),
-				})
+				}),
 			);
 		});
 

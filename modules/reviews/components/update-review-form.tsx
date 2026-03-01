@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { Send } from "lucide-react"
+import { Send } from "lucide-react";
 
-import { Button } from "@/shared/components/ui/button"
-import { cn } from "@/shared/utils/cn"
+import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/shared/utils/cn";
 
-import { REVIEW_CONFIG } from "../constants/review.constants"
-import { useUpdateReviewForm } from "../hooks/use-update-review-form"
-import type { ReviewUser } from "../types/review.types"
-import { ReviewMediaField } from "./review-media-field"
+import { REVIEW_CONFIG } from "../constants/review.constants";
+import { useUpdateReviewForm } from "../hooks/use-update-review-form";
+import type { ReviewUser } from "../types/review.types";
+import { ReviewMediaField } from "./review-media-field";
 
 interface UpdateReviewFormProps {
-	review: ReviewUser
-	onSuccess?: () => void
-	onCancel?: () => void
-	className?: string
+	review: ReviewUser;
+	onSuccess?: () => void;
+	onCancel?: () => void;
+	className?: string;
 }
 
 /**
@@ -34,7 +34,7 @@ export function UpdateReviewForm({
 		url: m.url,
 		blurDataUrl: m.blurDataUrl ?? undefined,
 		altText: m.altText ?? undefined,
-	}))
+	}));
 
 	const { form, action, isPending } = useUpdateReviewForm({
 		reviewId: review.id,
@@ -43,9 +43,9 @@ export function UpdateReviewForm({
 		initialContent: review.content,
 		initialMedia,
 		onSuccess: () => {
-			onSuccess?.()
+			onSuccess?.();
 		},
-	})
+	});
 
 	return (
 		<div className="group/form">
@@ -55,8 +55,8 @@ export function UpdateReviewForm({
 				aria-busy={isPending}
 				className={cn(
 					"space-y-6 transition-all duration-200",
-					"group-has-[[data-pending]]/form:blur-[1px] group-has-[[data-pending]]/form:scale-[0.99] group-has-[[data-pending]]/form:pointer-events-none",
-					className
+					"group-has-[[data-pending]]/form:pointer-events-none group-has-[[data-pending]]/form:scale-[0.99] group-has-[[data-pending]]/form:blur-[1px]",
+					className,
 				)}
 			>
 				{/* Champ caché pour l'ID */}
@@ -111,16 +111,12 @@ export function UpdateReviewForm({
 							Annuler
 						</Button>
 					)}
-					<Button
-						type="submit"
-						disabled={isPending}
-						className="flex-1"
-					>
+					<Button type="submit" disabled={isPending} className="flex-1">
 						{isPending ? (
 							"Enregistrement..."
 						) : (
 							<>
-								<Send className="size-4 mr-2" aria-hidden="true" />
+								<Send className="mr-2 size-4" aria-hidden="true" />
 								Enregistrer les modifications
 							</>
 						)}
@@ -128,5 +124,5 @@ export function UpdateReviewForm({
 				</div>
 			</form>
 		</div>
-	)
+	);
 }

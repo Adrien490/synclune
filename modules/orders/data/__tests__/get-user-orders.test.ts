@@ -4,11 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockGetSession,
-	mockGetUserOrdersSchema,
-	mockFetchUserOrders,
-} = vi.hoisted(() => ({
+const { mockGetSession, mockGetUserOrdersSchema, mockFetchUserOrders } = vi.hoisted(() => ({
 	mockGetSession: vi.fn(),
 	mockGetUserOrdersSchema: { safeParse: vi.fn() },
 	mockFetchUserOrders: vi.fn(),

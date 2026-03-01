@@ -38,10 +38,7 @@ interface RequestReturnButtonProps {
 	daysRemaining: number;
 }
 
-export function RequestReturnButton({
-	orderId,
-	daysRemaining,
-}: RequestReturnButtonProps) {
+export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnButtonProps) {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [reason, setReason] = useState("");
@@ -55,24 +52,20 @@ export function RequestReturnButton({
 					setReason("");
 					router.refresh();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return (
 		<section className="space-y-4">
-			<h2 className="text-base font-semibold flex items-center gap-2">
-				<RotateCcw className="size-4 text-muted-foreground" />
+			<h2 className="flex items-center gap-2 text-base font-semibold">
+				<RotateCcw className="text-muted-foreground size-4" />
 				Retour
 			</h2>
-			<div className="border-t border-border/60 pt-4">
-				<Button
-					variant="outline"
-					className="w-full"
-					onClick={() => setOpen(true)}
-				>
-					<RotateCcw className="h-4 w-4 mr-2" />
+			<div className="border-border/60 border-t pt-4">
+				<Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
+					<RotateCcw className="mr-2 h-4 w-4" />
 					Demander un retour
 				</Button>
 			</div>
@@ -88,12 +81,9 @@ export function RequestReturnButton({
 			>
 				<ResponsiveDialogContent className="max-w-lg">
 					<ResponsiveDialogHeader>
-						<ResponsiveDialogTitle>
-							Demander un retour
-						</ResponsiveDialogTitle>
+						<ResponsiveDialogTitle>Demander un retour</ResponsiveDialogTitle>
 						<ResponsiveDialogDescription>
-							Il vous reste {daysRemaining} jour(s) pour exercer
-							votre droit de rétractation.
+							Il vous reste {daysRemaining} jour(s) pour exercer votre droit de rétractation.
 						</ResponsiveDialogDescription>
 					</ResponsiveDialogHeader>
 
@@ -102,14 +92,8 @@ export function RequestReturnButton({
 						<input type="hidden" name="reason" value={reason} />
 
 						<div className="space-y-2">
-							<Label htmlFor="return-reason">
-								Motif du retour
-							</Label>
-							<Select
-								value={reason}
-								onValueChange={setReason}
-								disabled={isPending}
-							>
+							<Label htmlFor="return-reason">Motif du retour</Label>
+							<Select value={reason} onValueChange={setReason} disabled={isPending}>
 								<SelectTrigger id="return-reason">
 									<SelectValue placeholder="Sélectionner un motif" />
 								</SelectTrigger>
@@ -124,9 +108,7 @@ export function RequestReturnButton({
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="return-message">
-								Précisions sur votre demande (facultatif)
-							</Label>
+							<Label htmlFor="return-message">Précisions sur votre demande (facultatif)</Label>
 							<Textarea
 								id="return-message"
 								name="message"
@@ -149,13 +131,10 @@ export function RequestReturnButton({
 							>
 								Annuler
 							</Button>
-							<Button
-								type="submit"
-								disabled={!reason || isPending}
-							>
+							<Button type="submit" disabled={!reason || isPending}>
 								{isPending ? (
 									<>
-										<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 										Envoi...
 									</>
 								) : (

@@ -45,17 +45,14 @@ export const MULTI_SELECT_LABELS = {
 	moreItems: (count: number) => `+ ${count} de plus`,
 	removeItem: (label: string) => `Retirer ${label} de la sélection`,
 	removeExtra: (count: number) => `Retirer les ${count} options supplémentaires`,
-	clearSelection: (count: number) =>
-		`Effacer les ${count} options sélectionnées`,
+	clearSelection: (count: number) => `Effacer les ${count} options sélectionnées`,
 	// Annonces ARIA
 	ariaSelected: (label: string, count: number, total: number) =>
 		`${label} sélectionné. ${count} sur ${total} options.`,
 	ariaMultipleAdded: (added: number, count: number, total: number) =>
 		`${added} options ajoutées. ${count} sur ${total}.`,
-	ariaRemoved: (count: number, total: number) =>
-		`Option retirée. ${count} sur ${total} options.`,
-	ariaListOpen: (total: number) =>
-		`Liste ouverte. ${total} options. Flèches pour naviguer.`,
+	ariaRemoved: (count: number, total: number) => `Option retirée. ${count} sur ${total} options.`,
+	ariaListOpen: (total: number) => `Liste ouverte. ${total} options. Flèches pour naviguer.`,
 	ariaListClosed: "Liste fermée.",
 	ariaSearchResults: (count: number, search: string) =>
 		`${count} résultat${count === 1 ? "" : "s"} pour "${search}"`,
@@ -64,8 +61,7 @@ export const MULTI_SELECT_LABELS = {
 		`${count} option${count === 1 ? "" : "s"} sélectionnée${count === 1 ? "" : "s"} : ${labels}`,
 	ariaComboboxLabel: (count: number, total: number, placeholder: string) =>
 		`Sélection multiple : ${count} sur ${total} options sélectionnées. ${placeholder}`,
-	ariaSelectAllOptions: (count: number) =>
-		`Sélectionner les ${count} options`,
+	ariaSelectAllOptions: (count: number) => `Sélectionner les ${count} options`,
 	ariaSearchHelp: "Tapez pour filtrer. Flèches pour naviguer.",
 	ariaMultiSelectHelp:
 		"Sélection multiple. Utilisez les flèches pour naviguer, Entrée pour sélectionner, Échap pour fermer.",

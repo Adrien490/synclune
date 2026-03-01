@@ -67,10 +67,7 @@ describe("handleActionError", () => {
 
 	it("hides technical error details and uses defaultMessage", () => {
 		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-		const result = handleActionError(
-			new Error("P2002: Unique constraint"),
-			"Échec de création"
-		);
+		const result = handleActionError(new Error("P2002: Unique constraint"), "Échec de création");
 		expect(result.message).toBe("Échec de création");
 		expect(result.message).not.toContain("P2002");
 		consoleSpy.mockRestore();
@@ -80,7 +77,7 @@ describe("handleActionError", () => {
 		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		handleActionError(new TypeError("Cannot read property"));
 		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining("TypeError: Cannot read property")
+			expect.stringContaining("TypeError: Cannot read property"),
 		);
 		consoleSpy.mockRestore();
 	});

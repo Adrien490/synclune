@@ -21,7 +21,5 @@ export const ICONS_CONFIG: Metadata["icons"] = {
 		{ url: "/icons/apple-icon-152x152.png", sizes: "152x152" },
 		{ url: "/icons/apple-icon-180x180.png", sizes: "180x180" },
 	],
-	other: [
-		{ rel: "apple-touch-icon-precomposed", url: "/icons/apple-icon-precomposed.png" },
-	],
+	other: [{ rel: "apple-touch-icon-precomposed", url: "/icons/apple-icon-precomposed.png" }],
 };

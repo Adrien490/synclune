@@ -17,12 +17,7 @@ interface TableSelectionCellProps {
  * Composant generique pour les cellules de selection dans les tables
  * Remplace les variantes specifiques par module
  */
-export function TableSelectionCell({
-	type,
-	itemIds,
-	itemId,
-	ariaLabel,
-}: TableSelectionCellProps) {
+export function TableSelectionCell({ type, itemIds, itemId, ariaLabel }: TableSelectionCellProps) {
 	if (type === "header" && itemIds) {
 		return <SelectAllCheckbox itemIds={itemIds} />;
 	}

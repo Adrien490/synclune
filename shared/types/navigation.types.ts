@@ -5,7 +5,7 @@
 /**
  * Catégories d'items de navigation pour le menu mobile
  */
-export type NavCategory = "discovery" | "transaction"
+export type NavCategory = "discovery" | "transaction";
 
 /**
  * Types d'icônes disponibles (mapping côté client)
@@ -20,68 +20,68 @@ export type IconName =
 	| "heart"
 	| "log-in"
 	| "info"
-	| "layout-dashboard"
+	| "layout-dashboard";
 
 /** Image pour mega menu collections */
 export type NavItemImage = {
-	url: string
-	blurDataUrl: string | null
-	alt: string | null
-}
+	url: string;
+	blurDataUrl: string | null;
+	alt: string | null;
+};
 
 /** Produit pour mega menu (bestseller/nouveauté) */
 export type MegaMenuProduct = {
-	slug: string
-	title: string
-	priceInclTax: number // prix en centimes
-	imageUrl: string
-	blurDataUrl: string | null
-}
+	slug: string;
+	title: string;
+	priceInclTax: number; // prix en centimes
+	imageUrl: string;
+	blurDataUrl: string | null;
+};
 
 /**
  * Item enfant de navigation (sous-menu)
  */
 export type NavItemChild = {
-	href: string
-	label: string
-	badge?: string | number
-	icon?: IconName
-	description?: string | null
-	imageUrl?: string | null
-	blurDataUrl?: string | null
+	href: string;
+	label: string;
+	badge?: string | number;
+	icon?: IconName;
+	description?: string | null;
+	imageUrl?: string | null;
+	blurDataUrl?: string | null;
 	/** Images multiples pour mega menu collections (bento grid) */
-	images?: NavItemImage[]
+	images?: NavItemImage[];
 	/** Date de création (pour badge "Nouvelle" sur les collections) */
-	createdAt?: Date
-}
+	createdAt?: Date;
+};
 
 /**
  * Type de dropdown pour mega menu desktop
  */
-export type DropdownType = "creations" | "collections"
+export type DropdownType = "creations" | "collections";
 
 /**
  * Item de navigation avec enfants possibles
  */
 export type NavItemWithChildren = {
-	href: string
-	label: string
-	children?: NavItemChild[]
-	icon?: IconName
+	href: string;
+	label: string;
+	children?: NavItemChild[];
+	icon?: IconName;
 	/**
 	 * Pour desktop: si true, affiche un dropdown au hover
 	 * Pour mobile: si true, affiche un collapsible
 	 */
-	hasDropdown?: boolean
+	hasDropdown?: boolean;
 	/** Type de mega menu (creations = grille types, collections = bento images) */
-	dropdownType?: DropdownType
-}
+	dropdownType?: DropdownType;
+};
 
 /**
  * Item de navigation simple
  */
 export type NavItem = {
-	href: string
-	label: string
-	icon?: IconName
-}
+	href: string;
+	label: string;
+	icon?: IconName;
+};

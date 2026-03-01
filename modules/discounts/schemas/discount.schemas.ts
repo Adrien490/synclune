@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { DiscountType } from "@/app/generated/prisma/client";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_DISCOUNTS_DEFAULT_PER_PAGE,
@@ -21,10 +18,7 @@ export const discountCodeSchema = z
 	.min(3, "Le code doit contenir au moins 3 caractères")
 	.max(30, "Le code ne peut pas dépasser 30 caractères")
 	.toUpperCase()
-	.regex(
-		/^[A-Z0-9-]+$/,
-		"Le code ne peut contenir que des lettres majuscules, chiffres et tirets"
-	);
+	.regex(/^[A-Z0-9-]+$/, "Le code ne peut contenir que des lettres majuscules, chiffres et tirets");
 
 // ============================================================================
 // FILTERS SCHEMA
@@ -94,7 +88,11 @@ export const validateDiscountCodeSchema = z.object({
 const baseDiscountSchema = z.object({
 	code: discountCodeSchema,
 	type: z.enum(DiscountType),
-	value: z.number().int().positive("La valeur doit être positive").max(100_000_00, "La valeur ne peut pas dépasser 100 000€"),
+	value: z
+		.number()
+		.int()
+		.positive("La valeur doit être positive")
+		.max(100_000_00, "La valeur ne peut pas dépasser 100 000€"),
 	minOrderAmount: z.number().int().nonnegative().optional().nullable(),
 	maxUsageCount: z.number().int().positive().optional().nullable(),
 	maxUsagePerUser: z.number().int().positive().optional().nullable(),
@@ -112,7 +110,7 @@ const discountRefinements = <T extends typeof baseDiscountSchema>(schema: T) =>
 				}
 				return true;
 			},
-			{ message: "Un pourcentage ne peut pas dépasser 100%", path: ["value"] }
+			{ message: "Un pourcentage ne peut pas dépasser 100%", path: ["value"] },
 		)
 		.refine(
 			(data) => {
@@ -121,7 +119,7 @@ const discountRefinements = <T extends typeof baseDiscountSchema>(schema: T) =>
 				}
 				return true;
 			},
-			{ message: "La date de fin doit être postérieure à la date de début", path: ["endsAt"] }
+			{ message: "La date de fin doit être postérieure à la date de début", path: ["endsAt"] },
 		);
 
 // ============================================================================
@@ -137,7 +135,7 @@ export const createDiscountSchema = discountRefinements(baseDiscountSchema);
 export const updateDiscountSchema = discountRefinements(
 	baseDiscountSchema.extend({
 		id: z.cuid2("ID invalide"),
-	})
+	}),
 );
 
 // ============================================================================
@@ -175,6 +173,9 @@ export const toggleDiscountStatusSchema = z.object({
  * Schema pour activer/désactiver plusieurs codes promo en masse
  */
 export const bulkToggleDiscountStatusSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins un code doit être sélectionné").max(100, "Maximum 100 codes à la fois"),
+	ids: z
+		.array(z.cuid2())
+		.min(1, "Au moins un code doit être sélectionné")
+		.max(100, "Maximum 100 codes à la fois"),
 	isActive: z.boolean(),
 });

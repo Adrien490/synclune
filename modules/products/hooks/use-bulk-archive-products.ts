@@ -26,9 +26,7 @@ interface UseBulkArchiveProductsOptions {
  * };
  * ```
  */
-export const useBulkArchiveProducts = (
-	options?: UseBulkArchiveProductsOptions
-) => {
+export const useBulkArchiveProducts = (options?: UseBulkArchiveProductsOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -44,14 +42,14 @@ export const useBulkArchiveProducts = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const archiveProducts = (
 		productIds: string[],
-		targetStatus: "ARCHIVED" | "PUBLIC" = "ARCHIVED"
+		targetStatus: "ARCHIVED" | "PUBLIC" = "ARCHIVED",
 	) => {
 		startTransition(() => {
 			const formData = new FormData();

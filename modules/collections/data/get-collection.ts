@@ -2,7 +2,10 @@ import { prisma } from "@/shared/lib/prisma";
 
 import { cacheCollectionDetail } from "../utils/cache.utils";
 
-import { GET_COLLECTION_SELECT, GET_COLLECTION_STOREFRONT_SELECT } from "../constants/collection.constants";
+import {
+	GET_COLLECTION_SELECT,
+	GET_COLLECTION_STOREFRONT_SELECT,
+} from "../constants/collection.constants";
 import { getCollectionSchema } from "../schemas/collection.schemas";
 import type {
 	GetCollectionParams,
@@ -11,7 +14,11 @@ import type {
 } from "../types/collection.types";
 
 // Re-export pour compatibilité
-export type { GetCollectionParams, GetCollectionReturn, GetCollectionStorefrontReturn } from "../types/collection.types";
+export type {
+	GetCollectionParams,
+	GetCollectionReturn,
+	GetCollectionStorefrontReturn,
+} from "../types/collection.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -21,7 +28,7 @@ export type { GetCollectionParams, GetCollectionReturn, GetCollectionStorefrontR
  * Récupère une collection par son slug
  */
 export async function getCollectionBySlug(
-	params: Partial<GetCollectionParams>
+	params: Partial<GetCollectionParams>,
 ): Promise<GetCollectionReturn | null> {
 	const validation = getCollectionSchema.safeParse(params ?? {});
 
@@ -36,9 +43,7 @@ export async function getCollectionBySlug(
  * Récupère la collection depuis la DB avec cache
  * Utilise findUnique pour exploiter l'index unique sur slug
  */
-async function fetchCollection(
-	params: GetCollectionParams
-): Promise<GetCollectionReturn | null> {
+async function fetchCollection(params: GetCollectionParams): Promise<GetCollectionReturn | null> {
 	"use cache";
 	cacheCollectionDetail(params.slug);
 
@@ -64,7 +69,7 @@ async function fetchCollection(
  * GET_COLLECTION_SELECT qui charge tous les SKUs et images.
  */
 export async function getStorefrontCollectionBySlug(
-	params: Partial<GetCollectionParams>
+	params: Partial<GetCollectionParams>,
 ): Promise<GetCollectionStorefrontReturn | null> {
 	const validation = getCollectionSchema.safeParse(params ?? {});
 
@@ -76,7 +81,7 @@ export async function getStorefrontCollectionBySlug(
 }
 
 async function fetchStorefrontCollection(
-	params: GetCollectionParams
+	params: GetCollectionParams,
 ): Promise<GetCollectionStorefrontReturn | null> {
 	"use cache";
 	cacheCollectionDetail(params.slug);

@@ -21,10 +21,8 @@ export const useBadgeCountsStore = create<BadgeCountsState>((set) => ({
 	cartCount: 0,
 	setWishlistCount: (count) => set({ wishlistCount: count }),
 	setCartCount: (count) => set({ cartCount: count }),
-	incrementWishlist: () =>
-		set((state) => ({ wishlistCount: state.wishlistCount + 1 })),
+	incrementWishlist: () => set((state) => ({ wishlistCount: state.wishlistCount + 1 })),
 	decrementWishlist: () =>
 		set((state) => ({ wishlistCount: Math.max(0, state.wishlistCount - 1) })),
-	adjustCart: (delta) =>
-		set((state) => ({ cartCount: Math.max(0, state.cartCount + delta) })),
+	adjustCart: (delta) => set((state) => ({ cartCount: Math.max(0, state.cartCount + delta) })),
 }));

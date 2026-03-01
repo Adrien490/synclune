@@ -22,13 +22,13 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 				variant="ghost"
 				size="icon"
 				className={cn(
-					"absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10",
-					"size-12 md:size-11 rounded-full bg-primary",
-					"shadow-lg hover:shadow-xl text-primary-foreground",
+					"absolute top-1/2 left-2 z-10 -translate-y-1/2 sm:left-4",
+					"bg-primary size-12 rounded-full md:size-11",
+					"text-primary-foreground shadow-lg hover:shadow-xl",
 					"hover:bg-primary/90",
 					scaleClass,
 					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
-					transitionClass
+					transitionClass,
 				)}
 				onClick={onPrev}
 				aria-label="Image précédente"
@@ -39,13 +39,13 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 				variant="ghost"
 				size="icon"
 				className={cn(
-					"absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10",
-					"size-12 md:size-11 rounded-full bg-primary",
-					"shadow-lg hover:shadow-xl text-primary-foreground",
+					"absolute top-1/2 right-2 z-10 -translate-y-1/2 sm:right-4",
+					"bg-primary size-12 rounded-full md:size-11",
+					"text-primary-foreground shadow-lg hover:shadow-xl",
 					"hover:bg-primary/90",
 					scaleClass,
 					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
-					transitionClass
+					transitionClass,
 				)}
 				onClick={onNext}
 				aria-label="Image suivante"

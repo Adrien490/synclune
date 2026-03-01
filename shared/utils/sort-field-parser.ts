@@ -5,15 +5,15 @@
  * Ex: "createdAt-desc", "price-asc", "rating-desc"
  */
 
-import type { ParsedSortField } from "@/shared/types/utility.types"
+import type { ParsedSortField } from "@/shared/types/utility.types";
 
-export type { ParsedSortField } from "@/shared/types/utility.types"
+export type { ParsedSortField } from "@/shared/types/utility.types";
 
 /**
  * Vérifie si l'input sortBy est valide
  */
 export function hasSortByInput(input: unknown): input is string {
-	return typeof input === "string" && input.trim().length > 0
+	return typeof input === "string" && input.trim().length > 0;
 }
 
 /**
@@ -30,10 +30,10 @@ export function hasSortByInput(input: unknown): input is string {
  */
 export function parseSortField(
 	sortBy: string,
-	defaultField: string = "createdAt"
+	defaultField: string = "createdAt",
 ): ParsedSortField {
-	const parts = sortBy.split("-")
-	const direction = parts.pop() as "asc" | "desc"
-	const field = parts.join("-") || defaultField
-	return { field, direction }
+	const parts = sortBy.split("-");
+	const direction = parts.pop() as "asc" | "desc";
+	const field = parts.join("-") || defaultField;
+	return { field, direction };
 }

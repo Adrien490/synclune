@@ -94,7 +94,7 @@ describe("getCart", () => {
 		const result = await getCart();
 
 		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-1" } })
+			expect.objectContaining({ where: { userId: "user-1" } }),
 		);
 		expect(result).toEqual(makeCart());
 	});
@@ -107,7 +107,7 @@ describe("getCart", () => {
 		const result = await getCart();
 
 		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { sessionId: "session-abc" } })
+			expect.objectContaining({ where: { sessionId: "session-abc" } }),
 		);
 		expect(result).toEqual(makeCart({ id: "guest-cart" }));
 	});
@@ -172,7 +172,7 @@ describe("fetchCart", () => {
 		await fetchCart("user-1", undefined);
 
 		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-1" } })
+			expect.objectContaining({ where: { userId: "user-1" } }),
 		);
 	});
 
@@ -182,7 +182,7 @@ describe("fetchCart", () => {
 		await fetchCart(undefined, "session-xyz");
 
 		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { sessionId: "session-xyz" } })
+			expect.objectContaining({ where: { sessionId: "session-xyz" } }),
 		);
 	});
 
@@ -228,7 +228,7 @@ describe("fetchCart", () => {
 		await fetchCart("user-1", undefined);
 
 		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ select: { id: true, items: true } })
+			expect.objectContaining({ select: { id: true, items: true } }),
 		);
 	});
 

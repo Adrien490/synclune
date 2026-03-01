@@ -1,24 +1,27 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockRenderAndSend } = vi.hoisted(() => ({
 	mockRenderAndSend: vi.fn(),
-}))
+}));
 
 vi.mock("../send-email", () => ({
 	renderAndSend: mockRenderAndSend,
-}))
+}));
 
 vi.mock("@/emails/cancel-order-confirmation-email", () => ({
 	CancelOrderConfirmationEmail: vi.fn((props) => ({ type: "CancelOrderConfirmationEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/return-confirmation-email", () => ({
 	ReturnConfirmationEmail: vi.fn((props) => ({ type: "ReturnConfirmationEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/revert-shipping-notification-email", () => ({
-	RevertShippingNotificationEmail: vi.fn((props) => ({ type: "RevertShippingNotificationEmail", props })),
-}))
+	RevertShippingNotificationEmail: vi.fn((props) => ({
+		type: "RevertShippingNotificationEmail",
+		props,
+	})),
+}));
 
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_SUBJECTS: {
@@ -27,19 +30,19 @@ vi.mock("../../constants/email.constants", () => ({
 		ORDER_SHIPPING_REVERTED: "Mise à jour de l'expédition de votre commande - Synclune",
 	},
 	EMAIL_CONTACT: "contact@test.com",
-}))
+}));
 
 import {
 	sendCancelOrderConfirmationEmail,
 	sendReturnConfirmationEmail,
 	sendRevertShippingNotificationEmail,
-} from "../status-emails"
+} from "../status-emails";
 
 describe("sendCancelOrderConfirmationEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendCancelOrderConfirmationEmail({
@@ -50,7 +53,7 @@ describe("sendCancelOrderConfirmationEmail", () => {
 			reason: "Commande en double",
 			wasRefunded: true,
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -69,9 +72,9 @@ describe("sendCancelOrderConfirmationEmail", () => {
 				subject: "Votre commande a été annulée - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should accept undefined reason", async () => {
 		await sendCancelOrderConfirmationEmail({
@@ -81,15 +84,15 @@ describe("sendCancelOrderConfirmationEmail", () => {
 			orderTotal: 12500,
 			wasRefunded: false,
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
 				props: expect.objectContaining({ reason: undefined }),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should handle wasRefunded: false", async () => {
 		await sendCancelOrderConfirmationEmail({
@@ -99,15 +102,15 @@ describe("sendCancelOrderConfirmationEmail", () => {
 			orderTotal: 12500,
 			wasRefunded: false,
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
 				props: expect.objectContaining({ wasRefunded: false }),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendCancelOrderConfirmationEmail({
@@ -117,17 +120,17 @@ describe("sendCancelOrderConfirmationEmail", () => {
 			orderTotal: 12500,
 			wasRefunded: true,
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-1" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-1" } });
+	});
+});
 
 describe("sendReturnConfirmationEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendReturnConfirmationEmail({
@@ -137,7 +140,7 @@ describe("sendReturnConfirmationEmail", () => {
 			orderTotal: 12500,
 			reason: "Article non conforme",
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -155,9 +158,9 @@ describe("sendReturnConfirmationEmail", () => {
 				subject: "Retour enregistré pour votre commande - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should accept undefined reason", async () => {
 		await sendReturnConfirmationEmail({
@@ -166,15 +169,15 @@ describe("sendReturnConfirmationEmail", () => {
 			customerName: "Marie Dupont",
 			orderTotal: 12500,
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
 				props: expect.objectContaining({ reason: undefined }),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendReturnConfirmationEmail({
@@ -183,17 +186,17 @@ describe("sendReturnConfirmationEmail", () => {
 			customerName: "Marie Dupont",
 			orderTotal: 12500,
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-2" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-2" } });
+	});
+});
 
 describe("sendRevertShippingNotificationEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendRevertShippingNotificationEmail({
@@ -202,7 +205,7 @@ describe("sendRevertShippingNotificationEmail", () => {
 			customerName: "Marie Dupont",
 			reason: "Erreur de transporteur",
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -219,9 +222,9 @@ describe("sendRevertShippingNotificationEmail", () => {
 				subject: "Mise à jour de l'expédition de votre commande - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendRevertShippingNotificationEmail({
@@ -230,8 +233,8 @@ describe("sendRevertShippingNotificationEmail", () => {
 			customerName: "Marie Dupont",
 			reason: "Erreur de transporteur",
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-3" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-3" } });
+	});
+});

@@ -34,18 +34,14 @@ export function KpiValue({
 		"font-semibold tracking-tight text-foreground",
 		size === "featured" && "text-4xl",
 		size === "default" && "text-3xl",
-		size === "compact" && "text-2xl"
+		size === "compact" && "text-2xl",
 	);
 
 	return (
 		<div className={valueClassName}>
 			{numericValue !== undefined ? (
 				<>
-					<NumberTicker
-						value={numericValue}
-						decimalPlaces={decimalPlaces}
-						delay={animationDelay}
-					/>
+					<NumberTicker value={numericValue} decimalPlaces={decimalPlaces} delay={animationDelay} />
 					{suffix}
 				</>
 			) : (

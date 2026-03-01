@@ -133,10 +133,7 @@ export function formatRelativeTime(date: Date | string): string {
  * formatDate("2024-11-16", "en-US") // "November 16, 2024"
  * ```
  */
-export const formatDate = (
-	dateString: string,
-	locale: string = "fr-FR"
-): string => {
+export const formatDate = (dateString: string, locale: string = "fr-FR"): string => {
 	try {
 		// Parse la date en tant que date locale (pas UTC) pour éviter les problèmes de timezone
 		// En ajoutant "T00:00:00" on force l'interprétation en heure locale
@@ -253,7 +250,8 @@ export function formatRelativeDate(date: Date | string): string {
 	if (diffDays === 0) return "Aujourd'hui";
 	if (diffDays === 1) return "Hier";
 	if (diffDays < 7) return `Il y a ${diffDays} jours`;
-	if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaine${diffDays >= 14 ? "s" : ""}`;
+	if (diffDays < 30)
+		return `Il y a ${Math.floor(diffDays / 7)} semaine${diffDays >= 14 ? "s" : ""}`;
 	if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`;
 	return `Il y a ${Math.floor(diffDays / 365)} an${diffDays >= 730 ? "s" : ""}`;
 }

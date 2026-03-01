@@ -1,11 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import {
-	type FabKey,
-	FAB_COOKIE_MAX_AGE,
-	getFabCookieName,
-} from "@/shared/constants/fab";
+import { type FabKey, FAB_COOKIE_MAX_AGE, getFabCookieName } from "@/shared/constants/fab";
 
 /**
  * Server Action pour basculer la visibilité d'un FAB
@@ -16,7 +12,7 @@ import {
  */
 export async function toggleFabVisibility(
 	key: FabKey,
-	isHidden: boolean
+	isHidden: boolean,
 ): Promise<{ success: boolean; isHidden: boolean }> {
 	const cookieStore = await cookies();
 	const cookieName = getFabCookieName(key);

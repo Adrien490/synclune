@@ -34,8 +34,15 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 
 				{/* Right zone: featured products */}
 				{hasProducts && (
-					<div className="w-[320px] shrink-0 border-l border-border pl-8" role="region" aria-labelledby={featuredHeadingId}>
-						<h3 id={featuredHeadingId} className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+					<div
+						className="border-border w-[320px] shrink-0 border-l pl-8"
+						role="region"
+						aria-labelledby={featuredHeadingId}
+					>
+						<h3
+							id={featuredHeadingId}
+							className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase"
+						>
 							Nouveautés
 						</h3>
 						<div className="grid grid-cols-3 gap-3">
@@ -48,17 +55,19 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 											"rounded-lg p-1.5",
 											"transition-all duration-300 ease-out",
 											"hover:bg-accent/50",
-											"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+											"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 											"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
 										)}
 										style={{ animationDelay: `${(index + 1) * 60}ms` }}
 									>
-										<div className={cn(
-											"relative aspect-square overflow-hidden rounded-lg bg-muted",
-											"transition-[transform,box-shadow] duration-300 ease-out",
-											"motion-safe:can-hover:group-hover/product:-translate-y-0.5",
-											"can-hover:group-hover/product:shadow-md",
-										)}>
+										<div
+											className={cn(
+												"bg-muted relative aspect-square overflow-hidden rounded-lg",
+												"transition-[transform,box-shadow] duration-300 ease-out",
+												"motion-safe:can-hover:group-hover/product:-translate-y-0.5",
+												"can-hover:group-hover/product:shadow-md",
+											)}
+										>
 											<Image
 												src={product.imageUrl}
 												alt=""
@@ -71,10 +80,10 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 											/>
 										</div>
 										<div className="min-w-0">
-											<p className="text-xs font-medium line-clamp-1 text-foreground">
+											<p className="text-foreground line-clamp-1 text-xs font-medium">
 												{product.title}
 											</p>
-											<p className="text-xs text-muted-foreground">
+											<p className="text-muted-foreground text-xs">
 												{formatPrice(product.priceInclTax / 100)}
 											</p>
 										</div>

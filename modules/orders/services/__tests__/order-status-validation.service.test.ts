@@ -319,7 +319,7 @@ describe("canUpdateOrderTracking", () => {
 				status: "SHIPPED",
 				paymentStatus: "PAID",
 				trackingNumber: "ABC123",
-			})
+			}),
 		).toBe(true);
 	});
 
@@ -329,7 +329,7 @@ describe("canUpdateOrderTracking", () => {
 				status: "SHIPPED",
 				paymentStatus: "PAID",
 				trackingNumber: null,
-			})
+			}),
 		).toBe(false);
 	});
 
@@ -339,7 +339,7 @@ describe("canUpdateOrderTracking", () => {
 				status: "PENDING",
 				paymentStatus: "PAID",
 				trackingNumber: "ABC123",
-			})
+			}),
 		).toBe(false);
 	});
 });

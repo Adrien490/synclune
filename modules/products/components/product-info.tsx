@@ -14,7 +14,7 @@ interface ProductInfoProps {
  * ProductInfo - Affiche les informations de base du produit
  *
  * Responsabilités :
- * - Titre du produit avec bouton wishlist (mobile)
+ * - Titre du produit avec bouton wishlist
  * - Badge type (catégorie)
  * - Note avis cliquable
  * - Bouton wishlist
@@ -22,8 +22,8 @@ interface ProductInfoProps {
 export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoProps) {
 	return (
 		<div className="space-y-4">
-			{/* Titre avec bouton wishlist - titre masque sur desktop car affiche dans PageHeader */}
-			<div className="flex items-start justify-between gap-4 sm:hidden">
+			{/* Titre avec bouton wishlist */}
+			<div className="flex items-start justify-between gap-4">
 				<div className="flex-1 space-y-2">
 					<p
 						className="text-foreground line-clamp-2 text-3xl/10 font-medium tracking-normal"
@@ -31,10 +31,14 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 					>
 						{product.title}
 					</p>
-					{/* Badge note cliquable - scrolle vers les avis */}
-					{reviewStats && <ReviewRatingLink stats={reviewStats} />}
+					{/* Badge note cliquable - scrolle vers les avis (mobile) */}
+					{reviewStats && (
+						<div className="sm:hidden">
+							<ReviewRatingLink stats={reviewStats} />
+						</div>
+					)}
 				</div>
-				<div className="shrink-0">
+				<div className="shrink-0 sm:hidden">
 					<WishlistButton
 						productTitle={product.title}
 						productId={product.id}

@@ -17,9 +17,9 @@ export function useResendVerificationEmail(options?: UseResendVerificationEmailO
 				showSuccessToast: false,
 				showErrorToast: false,
 				onSuccess: options?.onSuccess,
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

@@ -25,9 +25,9 @@ export const useSetDefaultSku = (options?: UseSetDefaultSkuOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const setAsDefault = (skuId: string) => {

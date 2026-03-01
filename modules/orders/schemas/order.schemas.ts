@@ -1,13 +1,6 @@
 import { z } from "zod";
-import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/client";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
@@ -20,19 +13,14 @@ import {
 // HELPERS
 // ============================================================================
 
-const orderStatusSchema = z
-	.union([z.enum(OrderStatus), z.array(z.enum(OrderStatus))])
-	.optional();
+const orderStatusSchema = z.union([z.enum(OrderStatus), z.array(z.enum(OrderStatus))]).optional();
 
 const paymentStatusSchema = z
 	.union([z.enum(PaymentStatus), z.array(z.enum(PaymentStatus))])
 	.optional();
 
 const fulfillmentStatusSchema = z
-	.union([
-		z.enum(FulfillmentStatus),
-		z.array(z.enum(FulfillmentStatus)),
-	])
+	.union([z.enum(FulfillmentStatus), z.array(z.enum(FulfillmentStatus))])
 	.optional();
 
 // ============================================================================
@@ -121,87 +109,73 @@ export const getOrdersSchema = z.object({
  * Conformite Article 286 du CGI (Code General des Impots)
  * Les commercants doivent tenir un livre de recettes avec toutes les ventes
  */
-export const exportInvoicesSchema = z.object({
-	/**
-	 * Type de periode pour le filtrage
-	 * - "all" : Toutes les factures (defaut)
-	 * - "year" : Factures d'une annee specifique
-	 * - "month" : Factures d'un mois specifique
-	 * - "custom" : Periode personnalisee avec dateFrom et dateTo
-	 */
-	periodType: z
-		.enum(["all", "year", "month", "custom"])
-		.optional()
-		.default("all"),
+export const exportInvoicesSchema = z
+	.object({
+		/**
+		 * Type de periode pour le filtrage
+		 * - "all" : Toutes les factures (defaut)
+		 * - "year" : Factures d'une annee specifique
+		 * - "month" : Factures d'un mois specifique
+		 * - "custom" : Periode personnalisee avec dateFrom et dateTo
+		 */
+		periodType: z.enum(["all", "year", "month", "custom"]).optional().default("all"),
 
-	/**
-	 * Annee (format YYYY)
-	 * Requis si periodType = "year" ou "month"
-	 */
-	year: z.coerce
-		.number()
-		.int()
-		.min(2020)
-		.max(2100)
-		.optional(),
+		/**
+		 * Annee (format YYYY)
+		 * Requis si periodType = "year" ou "month"
+		 */
+		year: z.coerce.number().int().min(2020).max(2100).optional(),
 
-	/**
-	 * Mois (1-12)
-	 * Requis si periodType = "month"
-	 */
-	month: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(12)
-		.optional(),
+		/**
+		 * Mois (1-12)
+		 * Requis si periodType = "month"
+		 */
+		month: z.coerce.number().int().min(1).max(12).optional(),
 
-	/**
-	 * Date de debut pour periode custom (ISO 8601)
-	 */
-	dateFrom: z.coerce.date().optional(),
+		/**
+		 * Date de debut pour periode custom (ISO 8601)
+		 */
+		dateFrom: z.coerce.date().optional(),
 
-	/**
-	 * Date de fin pour periode custom (ISO 8601)
-	 */
-	dateTo: z.coerce.date().optional(),
+		/**
+		 * Date de fin pour periode custom (ISO 8601)
+		 */
+		dateTo: z.coerce.date().optional(),
 
-	/**
-	 * Format d'export
-	 * - "csv" : Format CSV compatible Excel (defaut)
-	 */
-	format: z.enum(["csv"]).optional().default("csv"),
+		/**
+		 * Format d'export
+		 * - "csv" : Format CSV compatible Excel (defaut)
+		 */
+		format: z.enum(["csv"]).optional().default("csv"),
 
-	/**
-	 * Filtrer par statut de facture
-	 * - "all" : Toutes les factures (defaut)
-	 * - "sent" : Seulement les factures envoyees
-	 * - "archived" : Seulement les factures archivees
-	 */
-	invoiceStatus: z
-		.enum(["all", "sent", "archived"])
-		.optional()
-		.default("all"),
-}).refine(
-	(data) => {
-		// Si periodType = "year", year est requis
-		if (data.periodType === "year" && !data.year) {
-			return false;
-		}
-		// Si periodType = "month", year et month sont requis
-		if (data.periodType === "month" && (!data.year || !data.month)) {
-			return false;
-		}
-		// Si periodType = "custom", dateFrom et dateTo sont requis
-		if (data.periodType === "custom" && (!data.dateFrom || !data.dateTo)) {
-			return false;
-		}
-		return true;
-	},
-	{
-		message: "Les paramètres de période sont invalides",
-	}
-);
+		/**
+		 * Filtrer par statut de facture
+		 * - "all" : Toutes les factures (defaut)
+		 * - "sent" : Seulement les factures envoyees
+		 * - "archived" : Seulement les factures archivees
+		 */
+		invoiceStatus: z.enum(["all", "sent", "archived"]).optional().default("all"),
+	})
+	.refine(
+		(data) => {
+			// Si periodType = "year", year est requis
+			if (data.periodType === "year" && !data.year) {
+				return false;
+			}
+			// Si periodType = "month", year et month sont requis
+			if (data.periodType === "month" && (!data.year || !data.month)) {
+				return false;
+			}
+			// Si periodType = "custom", dateFrom et dateTo sont requis
+			if (data.periodType === "custom" && (!data.dateFrom || !data.dateTo)) {
+				return false;
+			}
+			return true;
+		},
+		{
+			message: "Les paramètres de période sont invalides",
+		},
+	);
 
 export type ExportInvoicesInput = z.infer<typeof exportInvoicesSchema>;
 
@@ -228,7 +202,10 @@ export const deleteOrderSchema = z.object({
  * Seules les commandes éligibles seront supprimées
  */
 export const bulkDeleteOrdersSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée").max(100, "Maximum 100 commandes par opération"),
+	ids: z
+		.array(z.cuid2())
+		.min(1, "Au moins une commande doit être sélectionnée")
+		.max(100, "Maximum 100 commandes par opération"),
 });
 
 // ============================================================================
@@ -318,10 +295,7 @@ export const updateTrackingSchema = z.object({
 	carrier: carrierEnum.optional(),
 	estimatedDelivery: z.coerce
 		.date()
-		.refine(
-			(date) => date > new Date(),
-			"La date de livraison estimée doit être dans le futur"
-		)
+		.refine((date) => date > new Date(), "La date de livraison estimée doit être dans le futur")
 		.optional(),
 	sendEmail: z
 		.union([z.boolean(), z.enum(["true", "false"])])
@@ -413,7 +387,10 @@ export const markAsReturnedSchema = z.object({
  * Filtrage automatique : seules les commandes SHIPPED seront traitées
  */
 export const bulkMarkAsDeliveredSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée").max(100, "Maximum 100 commandes par opération"),
+	ids: z
+		.array(z.cuid2())
+		.min(1, "Au moins une commande doit être sélectionnée")
+		.max(100, "Maximum 100 commandes par opération"),
 	sendEmail: z
 		.union([z.boolean(), z.enum(["true", "false"])])
 		.optional()
@@ -433,7 +410,10 @@ export const bulkMarkAsDeliveredSchema = z.object({
  * Filtrage automatique : seules les commandes non annulées seront traitées
  */
 export const bulkCancelOrdersSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée").max(100, "Maximum 100 commandes par opération"),
+	ids: z
+		.array(z.cuid2())
+		.min(1, "Au moins une commande doit être sélectionnée")
+		.max(100, "Maximum 100 commandes par opération"),
 	reason: z.string().max(500).optional(),
 });
 
@@ -447,7 +427,10 @@ export const bulkCancelOrdersSchema = z.object({
  */
 export const addOrderNoteSchema = z.object({
 	orderId: z.cuid2({ message: "ID commande invalide" }),
-	content: z.string().min(1, "La note ne peut pas être vide").max(5000, "Note trop longue (max 5000 caractères)"),
+	content: z
+		.string()
+		.min(1, "La note ne peut pas être vide")
+		.max(5000, "Note trop longue (max 5000 caractères)"),
 });
 
 /**

@@ -24,7 +24,7 @@ type BulkDeleteProductTypesDialogData = {
 
 export function BulkDeleteProductTypesAlertDialog() {
 	const { isOpen, data, close } = useAlertDialog<BulkDeleteProductTypesDialogData>(
-		BULK_DELETE_PRODUCT_TYPES_DIALOG_ID
+		BULK_DELETE_PRODUCT_TYPES_DIALOG_ID,
 	);
 	const { clearSelection } = useSelectionContext();
 
@@ -66,11 +66,7 @@ export function BulkDeleteProductTypesAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-						>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>

@@ -85,7 +85,7 @@ describe("GET /api/cron/retry-webhooks", () => {
 		mockRetryFailedWebhooks.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -169,7 +169,7 @@ describe("GET /api/cron/retry-webhooks", () => {
 					orphansRecovered: DEFAULT_SERVICE_RESULT.orphansRecovered,
 					errors: DEFAULT_SERVICE_RESULT.errors,
 				}),
-				1000
+				1000,
 			);
 		});
 
@@ -211,7 +211,7 @@ describe("GET /api/cron/retry-webhooks", () => {
 				expect.objectContaining({
 					job: "retry-webhooks",
 					errors: 2,
-				})
+				}),
 			);
 		});
 
@@ -236,7 +236,7 @@ describe("GET /api/cron/retry-webhooks", () => {
 						permanentlyFailed: 1,
 						orphansRecovered: 0,
 					}),
-				})
+				}),
 			);
 		});
 

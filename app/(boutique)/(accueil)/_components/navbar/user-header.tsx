@@ -19,27 +19,27 @@ export function UserHeader({
 	const firstName = session.user.name?.split(" ")[0] || "vous";
 
 	return (
-		<div className="px-4 py-4 bg-primary/5 rounded-xl mb-4">
+		<div className="bg-primary/5 mb-4 rounded-xl px-4 py-4">
 			<SheetClose asChild>
 				<Link
 					href={ROUTES.ACCOUNT.ROOT}
-					className="block group"
+					className="group block"
 					aria-label={`Mon compte - ${firstName}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
 				>
-					<p className="text-base font-semibold text-foreground">
-						Bonjour {firstName}
-					</p>
-					<p className="text-sm text-muted-foreground mt-0.5">
+					<p className="text-foreground text-base font-semibold">Bonjour {firstName}</p>
+					<p className="text-muted-foreground mt-0.5 text-sm">
 						{wishlistCount > 0 && (
-							<span>{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}</span>
+							<span>
+								{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
+							</span>
 						)}
 						{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
 						{cartCount > 0 && (
-							<span>{cartCount} article{cartCount > 1 ? "s" : ""}</span>
+							<span>
+								{cartCount} article{cartCount > 1 ? "s" : ""}
+							</span>
 						)}
-						{wishlistCount === 0 && cartCount === 0 && (
-							<span>Mon espace personnel</span>
-						)}
+						{wishlistCount === 0 && cartCount === 0 && <span>Mon espace personnel</span>}
 					</p>
 				</Link>
 			</SheetClose>

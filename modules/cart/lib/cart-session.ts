@@ -6,6 +6,9 @@ import { CART_EXPIRATION_DAYS, CART_EXPIRATION_MS } from "@/modules/cart/constan
  */
 const CART_SESSION_COOKIE_NAME = "cart_session";
 
+// Regex UUID v4 pour validation
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /**
  * Durée de vie du cookie : 7 jours
  * Cette durée est réinitialisée à chaque interaction avec le panier
@@ -20,7 +23,13 @@ const CART_SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * CART_EXPIRATION_DAYS; // 7 jo
 export async function getCartSessionId(): Promise<string | null> {
 	const cookieStore = await cookies();
 	const sessionId = cookieStore.get(CART_SESSION_COOKIE_NAME)?.value;
-	return sessionId || null;
+
+	// Validation du format UUID v4
+	if (!sessionId || !UUID_V4_REGEX.test(sessionId)) {
+		return null;
+	}
+
+	return sessionId;
 }
 
 /**

@@ -24,9 +24,7 @@ export default function CollectionDetailLoading() {
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
-						<BreadcrumbLink href="/admin/catalogue/collections">
-							Collections
-						</BreadcrumbLink>
+						<BreadcrumbLink href="/admin/catalogue/collections">Collections</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
@@ -43,11 +41,11 @@ export default function CollectionDetailLoading() {
 				</div>
 				<div className="flex items-center gap-2">
 					<Button variant="outline" disabled>
-						<ArrowLeft className="h-4 w-4 mr-2" />
+						<ArrowLeft className="mr-2 h-4 w-4" />
 						Retour
 					</Button>
 					<Button disabled>
-						<Pencil className="h-4 w-4 mr-2" />
+						<Pencil className="mr-2 h-4 w-4" />
 						Modifier
 					</Button>
 				</div>
@@ -66,7 +64,7 @@ export default function CollectionDetailLoading() {
 				<Skeleton className="h-4 w-96" />
 
 				{/* Products grid skeleton */}
-				<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+				<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
 					{Array.from({ length: 10 }).map((_, i) => (
 						<div key={i} className="space-y-2">
 							<Skeleton className="aspect-square w-full rounded-lg" />

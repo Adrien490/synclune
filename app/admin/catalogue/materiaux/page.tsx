@@ -14,11 +14,15 @@ import { CreateMaterialButton } from "@/modules/materials/components/admin/creat
 import dynamic from "next/dynamic";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const MaterialFormDialog = dynamic(
-	() => import("@/modules/materials/components/material-form-dialog").then((mod) => mod.MaterialFormDialog)
+const MaterialFormDialog = dynamic(() =>
+	import("@/modules/materials/components/material-form-dialog").then(
+		(mod) => mod.MaterialFormDialog,
+	),
 );
-const DeleteMaterialAlertDialog = dynamic(
-	() => import("@/modules/materials/components/admin/delete-material-alert-dialog").then((mod) => mod.DeleteMaterialAlertDialog)
+const DeleteMaterialAlertDialog = dynamic(() =>
+	import("@/modules/materials/components/admin/delete-material-alert-dialog").then(
+		(mod) => mod.DeleteMaterialAlertDialog,
+	),
 );
 import { RefreshMaterialsButton } from "@/modules/materials/components/admin/refresh-materials-button";
 import { Metadata } from "next";
@@ -32,15 +36,11 @@ type MaterialsAdminPageProps = {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function MaterialsAdminPage({
-	searchParams,
-}: MaterialsAdminPageProps) {
+export default async function MaterialsAdminPage({ searchParams }: MaterialsAdminPageProps) {
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as
-		| "forward"
-		| "backward";
+	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
 	const sortBy = (getFirstParam(params.sortBy) || "name-ascending") as
 		| "name-ascending"
@@ -66,17 +66,15 @@ export default async function MaterialsAdminPage({
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title="Matériaux"
-				actions={<CreateMaterialButton />}
-			/>
+			<PageHeader variant="compact" title="Matériaux" actions={<CreateMaterialButton />} />
 
 			<div className="space-y-6">
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des matériaux"
 					search={
-						<SearchInput mode="live" size="sm"
+						<SearchInput
+							mode="live"
+							size="sm"
 							paramName="search"
 							placeholder="Rechercher par nom, slug ou description..."
 							ariaLabel="Rechercher un matériau par nom, slug ou description"

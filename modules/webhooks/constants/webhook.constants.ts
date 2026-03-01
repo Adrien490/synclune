@@ -2,7 +2,7 @@
  * Anti-replay window en secondes (5 minutes)
  * Stripe recommande une fenêtre de 5 minutes maximum
  */
-export const ANTI_REPLAY_WINDOW_SECONDS = 300
+export const ANTI_REPLAY_WINDOW_SECONDS = 300;
 
 /**
  * Labels pour les types d'événements (UI admin)
@@ -30,6 +30,9 @@ export const WEBHOOK_EVENT_CATEGORIES = {
 	CHECKOUT: ["checkout.session.completed", "checkout.session.expired"],
 	PAYMENT: ["payment_intent.succeeded", "payment_intent.payment_failed", "payment_intent.canceled"],
 	REFUND: ["charge.refunded", "refund.created", "refund.updated", "refund.failed"],
-	ASYNC_PAYMENT: ["checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed"],
+	ASYNC_PAYMENT: [
+		"checkout.session.async_payment_succeeded",
+		"checkout.session.async_payment_failed",
+	],
 	DISPUTE: ["charge.dispute.created", "charge.dispute.closed"],
 } as const;

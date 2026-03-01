@@ -5,9 +5,7 @@ import type { GetMaterialsParams } from "../types/materials.types";
 // MATERIAL QUERY BUILDER UTILS
 // ============================================================================
 
-export function buildMaterialSearchConditions(
-	search: string
-): Prisma.MaterialWhereInput | null {
+export function buildMaterialSearchConditions(search: string): Prisma.MaterialWhereInput | null {
 	if (!search || search.trim().length === 0) return null;
 	const searchTerm = search.trim();
 
@@ -20,9 +18,7 @@ export function buildMaterialSearchConditions(
 	};
 }
 
-export function buildMaterialWhereClause(
-	params: GetMaterialsParams
-): Prisma.MaterialWhereInput {
+export function buildMaterialWhereClause(params: GetMaterialsParams): Prisma.MaterialWhereInput {
 	const whereClause: Prisma.MaterialWhereInput = {};
 	const andConditions: Prisma.MaterialWhereInput[] = [];
 

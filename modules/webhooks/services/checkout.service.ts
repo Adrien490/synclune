@@ -80,7 +80,7 @@ function mapToOrderWithItems(order: {
  * Récupère les informations de livraison depuis la session Stripe
  */
 export async function extractShippingInfo(
-	session: Stripe.Checkout.Session
+	session: Stripe.Checkout.Session,
 ): Promise<{ shippingCost: number; shippingMethod: string; shippingRateId: string | undefined }> {
 	try {
 		const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
@@ -99,7 +99,10 @@ export async function extractShippingInfo(
 
 		return { shippingCost, shippingMethod, shippingRateId };
 	} catch (error) {
-		console.error(`❌ [WEBHOOK] Failed to retrieve shipping info for session ${session.id}:`, error);
+		console.error(
+			`❌ [WEBHOOK] Failed to retrieve shipping info for session ${session.id}:`,
+			error,
+		);
 		// Fallback to session-level data if Stripe API fails
 		const shippingCost = session.total_details?.amount_shipping || 0;
 		return { shippingCost, shippingMethod: "Livraison standard", shippingRateId: undefined };
@@ -118,137 +121,145 @@ export async function processOrderTransaction(
 	orderId: string,
 	session: Stripe.Checkout.Session,
 	shippingCost: number,
-	shippingRateId: string | undefined
+	shippingRateId: string | undefined,
 ): Promise<OrderWithItems> {
-	return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-		// 1. Récupérer la commande avec ses items et SKUs
-		const order = await tx.order.findUnique({
-			where: { id: orderId },
-			include: {
-				items: {
-					include: {
-						sku: {
-							select: {
-								id: true,
-								inventory: true,
-								sku: true,
+	return prisma.$transaction(
+		async (tx: Prisma.TransactionClient) => {
+			// 1. Récupérer la commande avec ses items et SKUs
+			const order = await tx.order.findUnique({
+				where: { id: orderId },
+				include: {
+					items: {
+						include: {
+							sku: {
+								select: {
+									id: true,
+									inventory: true,
+									sku: true,
+								},
 							},
 						},
 					},
+					user: {
+						select: { id: true },
+					},
 				},
-				user: {
-					select: { id: true },
-				},
-			},
-		});
+			});
 
-		if (!order) {
-			throw new Error(`Order not found: ${orderId}`);
-		}
-
-		// 2. Vérifier l'idempotence - Si déjà traité, on skip
-		if (order.paymentStatus === "PAID") {
-			console.log(`⚠️  [WEBHOOK] Order ${orderId} already processed, skipping`);
-			return mapToOrderWithItems(order);
-		}
-
-		// 3. Re-validation of all items INSIDE the transaction to prevent race conditions
-		// Using tx instead of global prisma to ensure consistent reads with the decrement
-		console.log(`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`);
-
-		const skuIds = order.items.map((item) => item.skuId);
-		const skus = await tx.productSku.findMany({
-			where: { id: { in: skuIds } },
-			select: {
-				id: true,
-				inventory: true,
-				isActive: true,
-				deletedAt: true,
-				product: { select: { status: true, deletedAt: true } },
-			},
-		});
-		const skuMap = new Map(skus.map((s) => [s.id, s]));
-
-		for (const item of order.items) {
-			const sku = skuMap.get(item.skuId);
-			const isValid = sku
-				&& !sku.deletedAt
-				&& !sku.product.deletedAt
-				&& sku.isActive
-				&& sku.product.status === "PUBLIC"
-				&& sku.inventory >= item.quantity;
-
-			if (!isValid) {
-				const reason = !sku
-					? "SKU not found"
-					: `invalid (active=${sku.isActive}, stock=${sku.inventory}, deleted=${!!sku.deletedAt})`;
-				console.error(
-					`[WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`
-				);
-				throw new Error(
-					`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`
-				);
+			if (!order) {
+				throw new Error(`Order not found: ${orderId}`);
 			}
-		}
 
-		console.log(`[WEBHOOK] All items validated successfully for order ${orderId}`);
+			// 2. Vérifier l'idempotence - Si déjà traité, on skip
+			if (order.paymentStatus === "PAID") {
+				console.log(`⚠️  [WEBHOOK] Order ${orderId} already processed, skipping`);
+				return mapToOrderWithItems(order);
+			}
 
-		// 4. Décrémenter le stock pour chaque item
-		for (const item of order.items) {
-			await tx.productSku.update({
-				where: { id: item.skuId },
-				data: { inventory: { decrement: item.quantity } },
+			// 3. Re-validation of all items INSIDE the transaction to prevent race conditions
+			// Using tx instead of global prisma to ensure consistent reads with the decrement
+			console.log(`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`);
+
+			const skuIds = order.items.map((item) => item.skuId);
+			const skus = await tx.productSku.findMany({
+				where: { id: { in: skuIds } },
+				select: {
+					id: true,
+					inventory: true,
+					isActive: true,
+					deletedAt: true,
+					product: { select: { status: true, deletedAt: true } },
+				},
 			});
-		}
+			const skuMap = new Map(skus.map((s) => [s.id, s]));
 
-		console.log(`✅ [WEBHOOK] Stock decremented for order ${orderId}`);
+			for (const item of order.items) {
+				const sku = skuMap.get(item.skuId);
+				const isValid =
+					sku &&
+					!sku.deletedAt &&
+					!sku.product.deletedAt &&
+					sku.isActive &&
+					sku.product.status === "PUBLIC" &&
+					sku.inventory >= item.quantity;
 
-		// 5. Mettre à jour la commande avec infos shipping
-		await tx.order.update({
-			where: { id: orderId },
-			data: {
-				status: "PROCESSING",
-				paymentStatus: "PAID",
-				paidAt: new Date(),
-				stripePaymentIntentId: session.payment_intent as string,
-				stripeCheckoutSessionId: session.id,
-				stripeCustomerId: (session.customer as string) || null,
-				shippingCost,
-				shippingMethod: getShippingMethodFromRate(shippingRateId || ""),
-				shippingCarrier: getShippingCarrierFromRate(shippingRateId || ""),
-			},
-		});
+				if (!isValid) {
+					const reason = !sku
+						? "SKU not found"
+						: `invalid (active=${sku.isActive}, stock=${sku.inventory}, deleted=${!!sku.deletedAt})`;
+					console.error(
+						`[WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`,
+					);
+					throw new Error(
+						`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`,
+					);
+				}
+			}
 
-		// 5b. Deactivate out-of-stock SKUs (single query instead of N+1)
-		const { count: deactivatedCount } = await tx.productSku.updateMany({
-			where: { id: { in: skuIds }, inventory: 0 },
-			data: { isActive: false },
-		});
-		if (deactivatedCount > 0) {
-			console.log(`📦 [WEBHOOK] ${deactivatedCount} SKU(s) deactivated (out of stock) for order ${orderId}`);
-		}
+			console.log(`[WEBHOOK] All items validated successfully for order ${orderId}`);
 
-		// 6. Vider le panier apres paiement reussi (utilisateur connecte OU invite)
-		if (order.userId) {
-			await tx.cartItem.deleteMany({
-				where: { cart: { userId: order.userId } },
-			});
-			console.log(`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment`);
-		} else {
-			// Invite : recuperer le sessionId depuis les metadata Stripe
-			const guestSessionId = session.metadata?.guestSessionId;
-			if (guestSessionId) {
-				await tx.cartItem.deleteMany({
-					where: { cart: { sessionId: guestSessionId } },
+			// 4. Décrémenter le stock pour chaque item
+			for (const item of order.items) {
+				await tx.productSku.update({
+					where: { id: item.skuId },
+					data: { inventory: { decrement: item.quantity } },
 				});
-				console.log(`🧹 [WEBHOOK] Cart cleared for guest session ${guestSessionId} after successful payment`);
 			}
-		}
 
-		console.log("✅ [WEBHOOK] Order processed successfully:", order.orderNumber);
+			console.log(`✅ [WEBHOOK] Stock decremented for order ${orderId}`);
 
-		return mapToOrderWithItems(order);
-	}, { timeout: 10000 });
+			// 5. Mettre à jour la commande avec infos shipping
+			await tx.order.update({
+				where: { id: orderId },
+				data: {
+					status: "PROCESSING",
+					paymentStatus: "PAID",
+					paidAt: new Date(),
+					stripePaymentIntentId: session.payment_intent as string,
+					stripeCheckoutSessionId: session.id,
+					stripeCustomerId: (session.customer as string) || null,
+					shippingCost,
+					shippingMethod: getShippingMethodFromRate(shippingRateId || ""),
+					shippingCarrier: getShippingCarrierFromRate(shippingRateId || ""),
+				},
+			});
+
+			// 5b. Deactivate out-of-stock SKUs (single query instead of N+1)
+			const { count: deactivatedCount } = await tx.productSku.updateMany({
+				where: { id: { in: skuIds }, inventory: 0 },
+				data: { isActive: false },
+			});
+			if (deactivatedCount > 0) {
+				console.log(
+					`📦 [WEBHOOK] ${deactivatedCount} SKU(s) deactivated (out of stock) for order ${orderId}`,
+				);
+			}
+
+			// 6. Vider le panier apres paiement reussi (utilisateur connecte OU invite)
+			if (order.userId) {
+				await tx.cartItem.deleteMany({
+					where: { cart: { userId: order.userId } },
+				});
+				console.log(`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment`);
+			} else {
+				// Invite : recuperer le sessionId depuis les metadata Stripe
+				const guestSessionId = session.metadata?.guestSessionId;
+				if (guestSessionId) {
+					await tx.cartItem.deleteMany({
+						where: { cart: { sessionId: guestSessionId } },
+					});
+					console.log(
+						`🧹 [WEBHOOK] Cart cleared for guest session ${guestSessionId} after successful payment`,
+					);
+				}
+			}
+
+			console.log("✅ [WEBHOOK] Order processed successfully:", order.orderNumber);
+
+			return mapToOrderWithItems(order);
+		},
+		{ timeout: 10000 },
+	);
 }
 
 /**
@@ -256,15 +267,13 @@ export async function processOrderTransaction(
  */
 export function buildPostCheckoutTasks(
 	order: OrderWithItems,
-	session: Stripe.Checkout.Session
+	session: Stripe.Checkout.Session,
 ): PostWebhookTask[] {
 	const tasks: PostWebhookTask[] = [];
 	const baseUrl = getBaseUrl();
 
 	// 1. Invalider les caches (panier, commandes user, stats compte, dashboard)
-	const cacheTags: string[] = [
-		...getOrderInvalidationTags(order.userId ?? undefined, order.id),
-	];
+	const cacheTags: string[] = [...getOrderInvalidationTags(order.userId ?? undefined, order.id)];
 
 	if (order.userId) {
 		// Panier de l'utilisateur
@@ -298,7 +307,8 @@ export function buildPostCheckoutTasks(
 			data: {
 				to: customerEmail,
 				orderNumber: order.orderNumber,
-				customerName: `${order.shippingFirstName || ""} ${order.shippingLastName || ""}`.trim() || "Client",
+				customerName:
+					`${order.shippingFirstName || ""} ${order.shippingLastName || ""}`.trim() || "Client",
 				items: order.items.map((item) => ({
 					productTitle: item.productTitle || "Produit",
 					skuColor: item.skuColor,
@@ -332,7 +342,8 @@ export function buildPostCheckoutTasks(
 		type: "ADMIN_NEW_ORDER_EMAIL",
 		data: {
 			orderNumber: order.orderNumber,
-			customerName: `${order.shippingFirstName || ""} ${order.shippingLastName || ""}`.trim() || "Client",
+			customerName:
+				`${order.shippingFirstName || ""} ${order.shippingLastName || ""}`.trim() || "Client",
 			customerEmail: customerEmail || "Email non disponible",
 			items: order.items.map((item) => ({
 				productTitle: item.productTitle || "Produit",
@@ -366,7 +377,9 @@ export function buildPostCheckoutTasks(
 /**
  * Marque une commande comme expirée/annulée
  */
-export async function cancelExpiredOrder(orderId: string): Promise<{ cancelled: boolean; orderNumber?: string }> {
+export async function cancelExpiredOrder(
+	orderId: string,
+): Promise<{ cancelled: boolean; orderNumber?: string }> {
 	const order = await prisma.order.findUnique({
 		where: { id: orderId },
 		select: { paymentStatus: true, orderNumber: true },
@@ -380,7 +393,7 @@ export async function cancelExpiredOrder(orderId: string): Promise<{ cancelled: 
 	// Idempotence : Ne traiter que si la commande est toujours PENDING
 	if (order.paymentStatus !== "PENDING") {
 		console.log(
-			`ℹ️  [WEBHOOK] Order ${orderId} already processed (status: ${order.paymentStatus}), skipping expiration`
+			`ℹ️  [WEBHOOK] Order ${orderId} already processed (status: ${order.paymentStatus}), skipping expiration`,
 		);
 		return { cancelled: false, orderNumber: order.orderNumber };
 	}
@@ -413,10 +426,14 @@ export async function cancelExpiredOrder(orderId: string): Promise<{ cancelled: 
 		});
 
 		if (discountUsages.length > 0) {
-			console.log(`🔓 [WEBHOOK] Released ${discountUsages.length} discount usage(s) for expired order ${orderId}`);
+			console.log(
+				`🔓 [WEBHOOK] Released ${discountUsages.length} discount usage(s) for expired order ${orderId}`,
+			);
 		}
 	});
 
-	console.log(`✅ [WEBHOOK] Order ${orderId} (${order.orderNumber}) marked as cancelled due to session expiration`);
+	console.log(
+		`✅ [WEBHOOK] Order ${orderId} (${order.orderNumber}) marked as cancelled due to session expiration`,
+	);
 	return { cancelled: true, orderNumber: order.orderNumber };
 }

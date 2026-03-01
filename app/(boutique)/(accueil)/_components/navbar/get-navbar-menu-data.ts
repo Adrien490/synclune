@@ -1,9 +1,9 @@
-import { CollectionStatus } from "@/app/generated/prisma/client"
-import type { Collection } from "@/modules/collections/types/collection.types"
-import { getCollections } from "@/modules/collections/data/get-collections"
-import { getProductTypes } from "@/modules/product-types/data/get-product-types"
-import { cacheLife, cacheTag } from "next/cache"
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
+import { CollectionStatus } from "@/app/generated/prisma/client";
+import type { Collection } from "@/modules/collections/types/collection.types";
+import { getCollections } from "@/modules/collections/data/get-collections";
+import { getProductTypes } from "@/modules/product-types/data/get-product-types";
+import { cacheLife, cacheTag } from "next/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
  * Extract up to 4 product images from a collection for Bento Grid display.
@@ -15,7 +15,9 @@ export function extractCollectionImages(products: Collection["products"]) {
 			const image = p.product?.skus[0]?.images[0];
 			return image ? { url: image.url, blurDataUrl: image.blurDataUrl, alt: image.altText } : null;
 		})
-		.filter((img): img is { url: string; blurDataUrl: string | null; alt: string | null } => img !== null);
+		.filter(
+			(img): img is { url: string; blurDataUrl: string | null; alt: string | null } => img !== null,
+		);
 }
 
 /**

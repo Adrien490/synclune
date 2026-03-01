@@ -29,8 +29,13 @@ function validateCurrencyCode(currency: string | undefined | null): string {
  */
 export async function syncStripeRefunds(
 	charge: Stripe.Charge,
-	existingRefunds: Array<{ id: string; amount: number; status: RefundStatus; stripeRefundId: string | null }>,
-	orderId: string
+	existingRefunds: Array<{
+		id: string;
+		amount: number;
+		status: RefundStatus;
+		stripeRefundId: string | null;
+	}>,
+	orderId: string,
 ): Promise<void> {
 	const stripeRefunds = charge.refunds?.data || [];
 
@@ -39,23 +44,24 @@ export async function syncStripeRefunds(
 	type RefundOperation =
 		| { type: "updateStatus"; id: string }
 		| { type: "linkRefund"; id: string; stripeRefundId: string; status: RefundStatus }
-		| { type: "upsertDashboard"; stripeRefundId: string; amount: number; currency: string; status: RefundStatus };
+		| {
+				type: "upsertDashboard";
+				stripeRefundId: string;
+				amount: number;
+				currency: string;
+				status: RefundStatus;
+		  };
 
 	const operations: RefundOperation[] = [];
 
 	for (const stripeRefund of stripeRefunds) {
 		if (!stripeRefund.id) continue;
 
-		const existingRefund = existingRefunds.find(
-			(r) => r.stripeRefundId === stripeRefund.id
-		);
+		const existingRefund = existingRefunds.find((r) => r.stripeRefundId === stripeRefund.id);
 
 		if (existingRefund) {
 			// Mettre à jour le statut si nécessaire
-			if (
-				existingRefund.status !== RefundStatus.COMPLETED &&
-				stripeRefund.status === "succeeded"
-			) {
+			if (existingRefund.status !== RefundStatus.COMPLETED && stripeRefund.status === "succeeded") {
 				operations.push({ type: "updateStatus", id: existingRefund.id });
 			}
 		} else {
@@ -68,9 +74,8 @@ export async function syncStripeRefunds(
 					type: "linkRefund",
 					id: refundId,
 					stripeRefundId: stripeRefund.id,
-					status: stripeRefund.status === "succeeded"
-						? RefundStatus.COMPLETED
-						: RefundStatus.PENDING,
+					status:
+						stripeRefund.status === "succeeded" ? RefundStatus.COMPLETED : RefundStatus.PENDING,
 				});
 			} else {
 				// Remboursement fait depuis Stripe Dashboard - upsert pour idempotence
@@ -79,9 +84,8 @@ export async function syncStripeRefunds(
 					stripeRefundId: stripeRefund.id,
 					amount: stripeRefund.amount || 0,
 					currency: stripeRefund.currency || "EUR",
-					status: stripeRefund.status === "succeeded"
-						? RefundStatus.COMPLETED
-						: RefundStatus.PENDING,
+					status:
+						stripeRefund.status === "succeeded" ? RefundStatus.COMPLETED : RefundStatus.PENDING,
 				});
 			}
 		}
@@ -91,52 +95,59 @@ export async function syncStripeRefunds(
 	if (operations.length > 0) {
 		const now = new Date();
 
-		await prisma.$transaction(async (tx) => {
-			for (const op of operations) {
-				switch (op.type) {
-					case "updateStatus":
-						await tx.refund.update({
-							where: { id: op.id },
-							data: { status: RefundStatus.COMPLETED },
-						});
-						console.log(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`);
-						break;
+		await prisma.$transaction(
+			async (tx) => {
+				for (const op of operations) {
+					switch (op.type) {
+						case "updateStatus":
+							await tx.refund.update({
+								where: { id: op.id },
+								data: { status: RefundStatus.COMPLETED },
+							});
+							console.log(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`);
+							break;
 
-					case "linkRefund":
-						await tx.refund.update({
-							where: { id: op.id },
-							data: {
-								stripeRefundId: op.stripeRefundId,
-								status: op.status,
-								processedAt: now,
-							},
-						});
-						console.log(`✅ [WEBHOOK] Linked existing refund ${op.id} to Stripe refund ${op.stripeRefundId}`);
-						break;
+						case "linkRefund":
+							await tx.refund.update({
+								where: { id: op.id },
+								data: {
+									stripeRefundId: op.stripeRefundId,
+									status: op.status,
+									processedAt: now,
+								},
+							});
+							console.log(
+								`✅ [WEBHOOK] Linked existing refund ${op.id} to Stripe refund ${op.stripeRefundId}`,
+							);
+							break;
 
-					case "upsertDashboard":
-						await tx.refund.upsert({
-							where: { stripeRefundId: op.stripeRefundId },
-							create: {
-								orderId,
-								stripeRefundId: op.stripeRefundId,
-								amount: op.amount,
-								currency: validateCurrencyCode(op.currency),
-								reason: "OTHER",
-								status: op.status,
-								note: "Remboursement effectué via Dashboard Stripe",
-								processedAt: now,
-							},
-							update: {
-								status: op.status,
-								processedAt: now,
-							},
-						});
-						console.log(`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${op.stripeRefundId}`);
-						break;
+						case "upsertDashboard":
+							await tx.refund.upsert({
+								where: { stripeRefundId: op.stripeRefundId },
+								create: {
+									orderId,
+									stripeRefundId: op.stripeRefundId,
+									amount: op.amount,
+									currency: validateCurrencyCode(op.currency),
+									reason: "OTHER",
+									status: op.status,
+									note: "Remboursement effectué via Dashboard Stripe",
+									processedAt: now,
+								},
+								update: {
+									status: op.status,
+									processedAt: now,
+								},
+							});
+							console.log(
+								`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${op.stripeRefundId}`,
+							);
+							break;
+					}
 				}
-			}
-		}, { timeout: 10000 });
+			},
+			{ timeout: 10000 },
+		);
 	}
 }
 
@@ -147,7 +158,7 @@ export async function updateOrderPaymentStatus(
 	orderId: string,
 	orderTotal: number,
 	totalRefunded: number,
-	currentPaymentStatus: PaymentStatus
+	currentPaymentStatus: PaymentStatus,
 ): Promise<{ isFullyRefunded: boolean; isPartiallyRefunded: boolean }> {
 	const isFullyRefunded = totalRefunded >= orderTotal;
 	const isPartiallyRefunded = totalRefunded > 0 && totalRefunded < orderTotal;
@@ -177,7 +188,7 @@ export async function updateOrderPaymentStatus(
  */
 export async function findRefundByStripeId(
 	stripeRefundId: string,
-	metadataRefundId?: string
+	metadataRefundId?: string,
 ): Promise<RefundRecord | null> {
 	// D'abord chercher via stripeRefundId
 	let refund = await prisma.refund.findUnique({
@@ -246,7 +257,13 @@ export function mapStripeRefundStatus(stripeStatus: string | undefined | null): 
 
 /** Valid state transitions for refund status */
 const VALID_REFUND_TRANSITIONS: Record<RefundStatus, RefundStatus[]> = {
-	[RefundStatus.PENDING]: [RefundStatus.APPROVED, RefundStatus.COMPLETED, RefundStatus.REJECTED, RefundStatus.FAILED, RefundStatus.CANCELLED],
+	[RefundStatus.PENDING]: [
+		RefundStatus.APPROVED,
+		RefundStatus.COMPLETED,
+		RefundStatus.REJECTED,
+		RefundStatus.FAILED,
+		RefundStatus.CANCELLED,
+	],
 	[RefundStatus.APPROVED]: [RefundStatus.COMPLETED, RefundStatus.FAILED, RefundStatus.CANCELLED],
 	[RefundStatus.COMPLETED]: [],
 	[RefundStatus.REJECTED]: [],
@@ -262,20 +279,24 @@ export async function updateRefundStatus(
 	refundId: string,
 	newStatus: RefundStatus,
 	stripeStatus: string,
-	currentStatus?: RefundStatus
+	currentStatus?: RefundStatus,
 ): Promise<void> {
 	// Fetch current status from DB if not provided to always validate transitions
-	const statusToValidate = currentStatus ?? (
-		await prisma.refund.findUnique({
-			where: { id: refundId },
-			select: { status: true },
-		})
-	)?.status;
+	const statusToValidate =
+		currentStatus ??
+		(
+			await prisma.refund.findUnique({
+				where: { id: refundId },
+				select: { status: true },
+			})
+		)?.status;
 
 	if (statusToValidate) {
 		const validTransitions = VALID_REFUND_TRANSITIONS[statusToValidate];
 		if (!validTransitions.includes(newStatus)) {
-			console.warn(`⚠️ [WEBHOOK] Invalid refund status transition: ${statusToValidate} -> ${newStatus} for refund ${refundId}, skipping`);
+			console.warn(
+				`⚠️ [WEBHOOK] Invalid refund status transition: ${statusToValidate} -> ${newStatus} for refund ${refundId}, skipping`,
+			);
 			return;
 		}
 	}
@@ -294,10 +315,7 @@ export async function updateRefundStatus(
 /**
  * Marque un remboursement comme échoué
  */
-export async function markRefundAsFailed(
-	refundId: string,
-	failureReason: string
-): Promise<void> {
+export async function markRefundAsFailed(refundId: string, failureReason: string): Promise<void> {
 	await prisma.refund.update({
 		where: { id: refundId },
 		data: {
@@ -314,7 +332,7 @@ export async function markRefundAsFailed(
  */
 export async function sendRefundFailedAlert(
 	refund: RefundRecord,
-	failureReason: string
+	failureReason: string,
 ): Promise<void> {
 	try {
 		const baseUrl = getBaseUrl();
@@ -330,7 +348,9 @@ export async function sendRefundFailedAlert(
 			dashboardUrl,
 		});
 
-		console.log(`🚨 [WEBHOOK] Admin alert sent for failed refund on order ${refund.order.orderNumber}`);
+		console.log(
+			`🚨 [WEBHOOK] Admin alert sent for failed refund on order ${refund.order.orderNumber}`,
+		);
 	} catch (emailError) {
 		console.error("❌ [WEBHOOK] Error sending refund failure alert:", emailError);
 	}

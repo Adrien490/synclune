@@ -221,4 +221,5 @@ export const COLLECTIONS_SORT_LABELS = {
 export {
 	COLLECTION_STATUS_LABELS,
 	COLLECTION_STATUS_COLORS,
+	COLLECTION_STATUS_VARIANTS,
 } from "./collection-status.constants";

@@ -15,8 +15,7 @@ export const NewsletterConfirmationEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Confirmation</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Cliquez sur le bouton pour confirmer votre inscription à la
-					newsletter.
+					Cliquez sur le bouton pour confirmer votre inscription à la newsletter.
 				</Text>
 			</Section>
 
@@ -29,9 +28,7 @@ export const NewsletterConfirmationEmail = ({
 
 			{/* Info */}
 			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "32px" }}>
-				<Text style={EMAIL_STYLES.text.small}>
-					Ce lien expire dans 7 jours.
-				</Text>
+				<Text style={EMAIL_STYLES.text.small}>Ce lien expire dans 7 jours.</Text>
 			</Section>
 		</EmailLayout>
 	);

@@ -15,8 +15,7 @@ function detectPlatform(): Platform {
 	// Modern API: Navigator.userAgentData (Chrome 90+, Edge 90+, Opera 76+)
 	if (
 		"userAgentData" in navigator &&
-		(navigator as Navigator & { userAgentData?: { platform?: string } })
-			.userAgentData?.platform
+		(navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform
 	) {
 		const platform = (
 			navigator as Navigator & { userAgentData: { platform: string } }
@@ -59,7 +58,7 @@ function usePlatform(): Platform {
 		// getSnapshot: client value
 		getPlatform,
 		// getServerSnapshot: SSR fallback (mac by default for majority UX)
-		() => "mac" as Platform
+		() => "mac" as Platform,
 	);
 }
 

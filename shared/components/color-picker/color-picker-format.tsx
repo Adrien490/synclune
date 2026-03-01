@@ -20,11 +20,11 @@ function PercentageInput({ className, ...props }: PercentageInputProps) {
 				{...props}
 				value={props.value ?? ""}
 				className={cn(
-					"min-h-11 md:h-8 w-[3.5rem] md:w-[3.25rem] rounded-l-none bg-secondary px-2 text-sm md:text-xs shadow-none",
-					className
+					"bg-secondary min-h-11 w-[3.5rem] rounded-l-none px-2 text-sm shadow-none md:h-8 md:w-[3.25rem] md:text-xs",
+					className,
 				)}
 			/>
-			<span className="-translate-y-1/2 absolute top-1/2 right-2 text-muted-foreground text-sm md:text-xs">
+			<span className="text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2 text-sm md:text-xs">
 				%
 			</span>
 		</div>
@@ -32,127 +32,121 @@ function PercentageInput({ className, ...props }: PercentageInputProps) {
 }
 
 export function ColorPickerFormat({ className, ...props }: ColorPickerFormatProps) {
-		const { hue, saturation, lightness, alpha, mode } = useColorPicker();
-		const color = Color.hsl(hue, saturation, lightness, alpha / 100);
+	const { hue, saturation, lightness, alpha, mode } = useColorPicker();
+	const color = Color.hsl(hue, saturation, lightness, alpha / 100);
 
-		if (mode === "hex") {
-			const hex = color.hex();
+	if (mode === "hex") {
+		const hex = color.hex();
 
-			return (
-				<div
-					data-slot="color-picker-format"
-					className={cn(
-						"-space-x-px relative flex w-full items-center rounded-md shadow-sm",
-						className
-					)}
-					{...props}
-				>
+		return (
+			<div
+				data-slot="color-picker-format"
+				className={cn(
+					"relative flex w-full items-center -space-x-px rounded-md shadow-sm",
+					className,
+				)}
+				{...props}
+			>
+				<Input
+					className="bg-secondary min-h-11 rounded-r-none px-2 text-sm shadow-none md:h-8 md:text-xs"
+					readOnly
+					aria-readonly="true"
+					aria-label="Code hexadécimal"
+					type="text"
+					value={hex}
+				/>
+				<PercentageInput value={alpha} />
+			</div>
+		);
+	}
+
+	if (mode === "rgb") {
+		const rgb = color
+			.rgb()
+			.array()
+			.map((value) => Math.round(value));
+		const labels = ["Rouge", "Vert", "Bleu"];
+
+		return (
+			<div
+				data-slot="color-picker-format"
+				className={cn("flex items-center -space-x-px rounded-md shadow-sm", className)}
+				{...props}
+			>
+				{rgb.map((value, index) => (
 					<Input
-						className="min-h-11 md:h-8 rounded-r-none bg-secondary px-2 text-sm md:text-xs shadow-none"
+						className={cn(
+							"bg-secondary min-h-11 rounded-r-none px-2 text-sm shadow-none md:h-8 md:text-xs",
+							index && "rounded-l-none",
+						)}
+						key={index}
 						readOnly
 						aria-readonly="true"
-						aria-label="Code hexadécimal"
+						aria-label={labels[index]}
 						type="text"
-						value={hex}
+						value={value}
 					/>
-					<PercentageInput value={alpha} />
-				</div>
-			);
-		}
+				))}
+				<PercentageInput value={alpha} />
+			</div>
+		);
+	}
 
-		if (mode === "rgb") {
-			const rgb = color
-				.rgb()
-				.array()
-				.map((value) => Math.round(value));
-			const labels = ["Rouge", "Vert", "Bleu"];
+	if (mode === "css") {
+		const rgb = color
+			.rgb()
+			.array()
+			.map((value) => Math.round(value));
 
-			return (
-				<div
-					data-slot="color-picker-format"
-					className={cn(
-						"-space-x-px flex items-center rounded-md shadow-sm",
-						className
-					)}
-					{...props}
-				>
-					{rgb.map((value, index) => (
-						<Input
-							className={cn(
-								"min-h-11 md:h-8 rounded-r-none bg-secondary px-2 text-sm md:text-xs shadow-none",
-								index && "rounded-l-none"
-							)}
-							key={index}
-							readOnly
-							aria-readonly="true"
-							aria-label={labels[index]}
-							type="text"
-							value={value}
-						/>
-					))}
-					<PercentageInput value={alpha} />
-				</div>
-			);
-		}
+		return (
+			<div
+				data-slot="color-picker-format"
+				className={cn("w-full rounded-md shadow-sm", className)}
+				{...props}
+			>
+				<Input
+					className="bg-secondary min-h-11 w-full px-2 text-sm shadow-none md:h-8 md:text-xs"
+					readOnly
+					aria-readonly="true"
+					aria-label="Code CSS RGBA"
+					type="text"
+					value={`rgba(${rgb.join(", ")}, ${alpha}%)`}
+				/>
+			</div>
+		);
+	}
 
-		if (mode === "css") {
-			const rgb = color
-				.rgb()
-				.array()
-				.map((value) => Math.round(value));
+	if (mode === "hsl") {
+		const hsl = color
+			.hsl()
+			.array()
+			.map((value) => Math.round(value));
+		const labels = ["Teinte", "Saturation", "Luminosité"];
 
-			return (
-				<div
-					data-slot="color-picker-format"
-					className={cn("w-full rounded-md shadow-sm", className)}
-					{...props}
-				>
+		return (
+			<div
+				data-slot="color-picker-format"
+				className={cn("flex items-center -space-x-px rounded-md shadow-sm", className)}
+				{...props}
+			>
+				{hsl.map((value, index) => (
 					<Input
-						className="min-h-11 md:h-8 w-full bg-secondary px-2 text-sm md:text-xs shadow-none"
+						className={cn(
+							"bg-secondary min-h-11 rounded-r-none px-2 text-sm shadow-none md:h-8 md:text-xs",
+							index && "rounded-l-none",
+						)}
+						key={index}
 						readOnly
 						aria-readonly="true"
-						aria-label="Code CSS RGBA"
+						aria-label={labels[index]}
 						type="text"
-						value={`rgba(${rgb.join(", ")}, ${alpha}%)`}
+						value={value}
 					/>
-				</div>
-			);
-		}
+				))}
+				<PercentageInput value={alpha} />
+			</div>
+		);
+	}
 
-		if (mode === "hsl") {
-			const hsl = color
-				.hsl()
-				.array()
-				.map((value) => Math.round(value));
-			const labels = ["Teinte", "Saturation", "Luminosité"];
-
-			return (
-				<div
-					data-slot="color-picker-format"
-					className={cn(
-						"-space-x-px flex items-center rounded-md shadow-sm",
-						className
-					)}
-					{...props}
-				>
-					{hsl.map((value, index) => (
-						<Input
-							className={cn(
-								"min-h-11 md:h-8 rounded-r-none bg-secondary px-2 text-sm md:text-xs shadow-none",
-								index && "rounded-l-none"
-							)}
-							key={index}
-							readOnly
-							aria-readonly="true"
-							aria-label={labels[index]}
-							type="text"
-							value={value}
-						/>
-					))}
-					<PercentageInput value={alpha} />
-				</div>
-			);
-		}
-
-		return null;
+	return null;
 }

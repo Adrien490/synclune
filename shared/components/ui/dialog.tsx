@@ -20,30 +20,19 @@ function Dialog({
 	});
 
 	return (
-		<DialogPrimitive.Root
-			data-slot="dialog"
-			open={open}
-			onOpenChange={onOpenChange}
-			{...props}
-		/>
+		<DialogPrimitive.Root data-slot="dialog" open={open} onOpenChange={onOpenChange} {...props} />
 	);
 }
 
-function DialogTrigger({
-	...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
 	return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({
-	...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+function DialogPortal({ ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
 	return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({
-	...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.Close>) {
 	return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
@@ -56,10 +45,10 @@ function DialogOverlay({
 			data-slot="dialog-overlay"
 			aria-hidden="true"
 			className={cn(
-				"fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm backdrop-saturate-150",
+				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
 				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
-				className
+				className,
 			)}
 			{...props}
 		/>
@@ -83,7 +72,7 @@ function DialogContent({
 			<DialogPrimitive.Content
 				data-slot="dialog-content"
 				className={cn(
-					"bg-background fixed top-[50%] left-[50%] z-[70] grid w-full translate-x-[-50%] translate-y-[-50%] rounded-xl shadow-lg",
+					"bg-background fixed top-[50%] left-[50%] z-(--z-overlay) grid w-full translate-x-[-50%] translate-y-[-50%] rounded-xl shadow-lg",
 					// Animations avec scale + slide-in-from-bottom
 					"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
 					"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
@@ -91,7 +80,7 @@ function DialogContent({
 					"motion-safe:data-[state=closed]:slide-out-to-top-[2%] motion-safe:data-[state=open]:slide-in-from-bottom-[2%]",
 					"motion-safe:duration-200",
 					!hasMaxWidth && "max-w-[90%] sm:max-w-lg",
-					className
+					className,
 				)}
 				{...props}
 			>
@@ -100,7 +89,7 @@ function DialogContent({
 					<DialogPrimitive.Close
 						data-slot="dialog-close"
 						aria-label="Fermer la boîte de dialogue"
-						className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-[max(1rem,env(safe-area-inset-top))] right-4 rounded-sm opacity-80 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 min-w-11 min-h-11 flex items-center justify-center -mr-2"
+						className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-[max(1rem,env(safe-area-inset-top))] right-4 -mr-2 flex min-h-11 min-w-11 items-center justify-center rounded-sm opacity-80 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0"
 					>
 						<XIcon className="size-5" aria-hidden="true" />
 						<span className="sr-only">Fermer</span>
@@ -125,23 +114,17 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="dialog-footer"
-			className={cn(
-				"flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
-				className
-			)}
+			className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
 			{...props}
 		/>
 	);
 }
 
-function DialogTitle({
-	className,
-	...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
 	return (
 		<DialogPrimitive.Title
 			data-slot="dialog-title"
-			className={cn("text-xl leading-none font-medium font-display", className)}
+			className={cn("font-display text-xl leading-none font-medium", className)}
 			{...props}
 		/>
 	);

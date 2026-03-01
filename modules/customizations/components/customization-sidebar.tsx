@@ -15,27 +15,38 @@ const steps = [
 
 export function CustomizationSidebar() {
 	return (
-		<aside className="mt-8 lg:mt-0 lg:sticky lg:top-24" aria-label="Informations sur le processus">
-			<div className="rounded-xl border border-border bg-card p-6 space-y-6">
-				<h2 className="text-base font-semibold">Comment ça marche ?</h2>
+		<aside className="mb-8 lg:sticky lg:top-24 lg:mb-0" aria-label="Informations sur le processus">
+			<div className="space-y-4">
+				{/* Steps */}
+				<div className="border-border bg-card space-y-6 rounded-xl border p-6">
+					<h2 className="text-base font-semibold">Comment ça marche ?</h2>
 
-				<ol className="space-y-5" aria-label="Étapes du processus">
-					{steps.map((step, index) => (
-						<li key={index} className="flex gap-4">
-							<div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground">
-								{index + 1}
-							</div>
-							<div className="space-y-0.5">
-								<p className="text-sm font-medium leading-none">
-									{step.title}
-								</p>
-								<p className="text-sm text-muted-foreground leading-relaxed">
-									{step.description}
-								</p>
-							</div>
-						</li>
-					))}
-				</ol>
+					<ol className="space-y-5" aria-label="Étapes du processus">
+						{steps.map((step, index) => (
+							<li key={index} className="flex gap-4">
+								<div className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
+									{index + 1}
+								</div>
+								<div className="space-y-0.5">
+									<p className="text-sm leading-none font-medium">{step.title}</p>
+									<p className="text-muted-foreground text-sm leading-relaxed">
+										{step.description}
+									</p>
+								</div>
+							</li>
+						))}
+					</ol>
+				</div>
+
+				{/* Price range */}
+				<div className="border-border bg-card space-y-2 rounded-xl border p-6">
+					<h2 className="text-base font-semibold">Tarifs indicatifs</h2>
+					<p className="text-muted-foreground text-sm leading-relaxed">
+						Les créations sur mesure démarrent à partir de{" "}
+						<strong className="text-foreground">30 €</strong>. Le prix final dépend des matériaux et
+						de la complexité. Vous recevrez un devis détaillé avant toute validation.
+					</p>
+				</div>
 			</div>
 		</aside>
 	);

@@ -49,13 +49,7 @@ export const GET_USERS_DEFAULT_SORT_BY = "createdAt";
 export const GET_USERS_DEFAULT_SORT_ORDER = "desc";
 export const GET_USERS_ADMIN_FALLBACK_SORT_BY = "updatedAt";
 
-export const GET_USERS_SORT_FIELDS = [
-	"createdAt",
-	"updatedAt",
-	"name",
-	"email",
-	"role",
-] as const;
+export const GET_USERS_SORT_FIELDS = ["createdAt", "updatedAt", "name", "email", "role"] as const;
 
 // ============================================================================
 // UI OPTIONS

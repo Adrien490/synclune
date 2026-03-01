@@ -9,7 +9,7 @@ import { CUID_LENGTH } from "@/shared/constants/pagination";
 export function parseSearchParam<T>(
 	value: string | string[] | undefined,
 	schema: z.ZodType<T>,
-	defaultValue: T
+	defaultValue: T,
 ): T {
 	// Get first value if array
 	const firstValue = Array.isArray(value) ? value[0] : value;
@@ -36,43 +36,22 @@ export const searchParamParsers = {
 	/**
 	 * Parse direction parameter
 	 */
-	direction: (
-		value: string | string[] | undefined
-	): "forward" | "backward" => {
-		return parseSearchParam(
-			value,
-			z.enum(["forward", "backward"]),
-			"forward"
-		);
+	direction: (value: string | string[] | undefined): "forward" | "backward" => {
+		return parseSearchParam(value, z.enum(["forward", "backward"]), "forward");
 	},
 
 	/**
 	 * Parse perPage parameter with min/max constraints
 	 */
-	perPage: (
-		value: string | string[] | undefined,
-		defaultValue = 10,
-		maxValue = 100
-	): number => {
-		return parseSearchParam(
-			value,
-			z.coerce.number().int().min(1).max(maxValue),
-			defaultValue
-		);
+	perPage: (value: string | string[] | undefined, defaultValue = 10, maxValue = 100): number => {
+		return parseSearchParam(value, z.coerce.number().int().min(1).max(maxValue), defaultValue);
 	},
 
 	/**
 	 * Parse search query with max length
 	 */
-	search: (
-		value: string | string[] | undefined,
-		maxLength = 200
-	): string | undefined => {
-		return parseSearchParam(
-			value,
-			z.string().max(maxLength),
-			undefined
-		);
+	search: (value: string | string[] | undefined, maxLength = 200): string | undefined => {
+		return parseSearchParam(value, z.string().max(maxLength), undefined);
 	},
 
 	/**
@@ -81,7 +60,7 @@ export const searchParamParsers = {
 	enum: <const T extends readonly string[]>(
 		value: string | string[] | undefined,
 		validValues: T,
-		defaultValue: T[number]
+		defaultValue: T[number],
 	): T[number] => {
 		const firstValue = Array.isArray(value) ? value[0] : value;
 
@@ -89,9 +68,7 @@ export const searchParamParsers = {
 			return defaultValue;
 		}
 
-		return validValues.includes(firstValue)
-			? (firstValue as T[number])
-			: defaultValue;
+		return validValues.includes(firstValue) ? (firstValue as T[number]) : defaultValue;
 	},
 
 	/**
@@ -100,7 +77,7 @@ export const searchParamParsers = {
 	sortBy: <const T extends readonly string[]>(
 		value: string | string[] | undefined,
 		validFields: T,
-		defaultValue: T[number]
+		defaultValue: T[number],
 	): T[number] => {
 		return searchParamParsers.enum(value, validFields, defaultValue);
 	},
@@ -108,10 +85,7 @@ export const searchParamParsers = {
 	/**
 	 * Parse boolean parameter
 	 */
-	boolean: (
-		value: string | string[] | undefined,
-		defaultValue = false
-	): boolean => {
+	boolean: (value: string | string[] | undefined, defaultValue = false): boolean => {
 		const firstValue = Array.isArray(value) ? value[0] : value;
 
 		if (!firstValue) {
@@ -124,10 +98,7 @@ export const searchParamParsers = {
 	/**
 	 * Parse array of strings with validation
 	 */
-	stringArray: (
-		value: string | string[] | undefined,
-		schema?: z.ZodString
-	): string[] => {
+	stringArray: (value: string | string[] | undefined, schema?: z.ZodString): string[] => {
 		const values = Array.isArray(value) ? value : value ? [value] : [];
 
 		if (!schema) {
@@ -140,14 +111,14 @@ export const searchParamParsers = {
 	/**
 	 * Parse date parameter
 	 */
-	date: (
-		value: string | string[] | undefined,
-		defaultValue?: Date
-	): Date | undefined => {
+	date: (value: string | string[] | undefined, defaultValue?: Date): Date | undefined => {
 		return parseSearchParam(
 			value,
-			z.string().datetime().transform((s) => new Date(s)),
-			defaultValue
+			z
+				.string()
+				.datetime()
+				.transform((s) => new Date(s)),
+			defaultValue,
 		);
 	},
 };
@@ -155,8 +126,6 @@ export const searchParamParsers = {
 /**
  * Type helper to extract first param from Next.js searchParams
  */
-export function getFirstParam(
-	param: string | string[] | undefined
-): string | undefined {
+export function getFirstParam(param: string | string[] | undefined): string | undefined {
 	return Array.isArray(param) ? param[0] : param;
 }

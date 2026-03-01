@@ -9,17 +9,13 @@ interface DownloadInvoiceButtonProps {
 	orderNumber: string;
 }
 
-export function DownloadInvoiceButton({
-	orderNumber,
-}: DownloadInvoiceButtonProps) {
+export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProps) {
 	const [isDownloading, setIsDownloading] = useState(false);
 
 	async function handleDownload() {
 		setIsDownloading(true);
 		try {
-			const response = await fetch(
-				`/api/orders/${orderNumber}/invoice`
-			);
+			const response = await fetch(`/api/orders/${orderNumber}/invoice`);
 			if (!response.ok) {
 				throw new Error("Erreur lors du téléchargement");
 			}
@@ -39,11 +35,11 @@ export function DownloadInvoiceButton({
 
 	return (
 		<section className="space-y-4">
-			<h2 className="text-base font-semibold flex items-center gap-2">
-				<FileText className="size-4 text-muted-foreground" />
+			<h2 className="flex items-center gap-2 text-base font-semibold">
+				<FileText className="text-muted-foreground size-4" />
 				Facture
 			</h2>
-			<div className="border-t border-border/60 pt-4">
+			<div className="border-border/60 border-t pt-4">
 				<Button
 					variant="outline"
 					className="w-full"
@@ -52,9 +48,9 @@ export function DownloadInvoiceButton({
 					aria-busy={isDownloading}
 				>
 					{isDownloading ? (
-						<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 					) : (
-						<Download className="h-4 w-4 mr-2" />
+						<Download className="mr-2 h-4 w-4" />
 					)}
 					{isDownloading ? "Téléchargement..." : "Télécharger la facture"}
 				</Button>

@@ -2,8 +2,8 @@
  * Cache configuration for Materials module
  */
 
-import { cacheLife, cacheTag } from "next/cache"
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
+import { cacheLife, cacheTag } from "next/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 // ============================================
 // CACHE TAGS
@@ -15,7 +15,7 @@ export const MATERIALS_CACHE_TAGS = {
 
 	/** Détail d'un matériau spécifique */
 	DETAIL: (slug: string) => `material-${slug}`,
-} as const
+} as const;
 
 // ============================================
 // CACHE CONFIGURATION HELPERS
@@ -27,8 +27,8 @@ export const MATERIALS_CACHE_TAGS = {
  * - Durée : 4h fraîche, 1h revalidation, 30j expiration
  */
 export function cacheMaterials() {
-	cacheLife("reference")
-	cacheTag(MATERIALS_CACHE_TAGS.LIST)
+	cacheLife("reference");
+	cacheTag(MATERIALS_CACHE_TAGS.LIST);
 }
 
 /**
@@ -37,8 +37,8 @@ export function cacheMaterials() {
  * - Durée : 4h fraîche, 1h revalidation, 30j expiration
  */
 export function cacheMaterialDetail(slug: string) {
-	cacheLife("reference")
-	cacheTag(MATERIALS_CACHE_TAGS.DETAIL(slug), MATERIALS_CACHE_TAGS.LIST)
+	cacheLife("reference");
+	cacheTag(MATERIALS_CACHE_TAGS.DETAIL(slug), MATERIALS_CACHE_TAGS.LIST);
 }
 
 // ============================================

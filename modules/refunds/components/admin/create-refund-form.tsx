@@ -61,22 +61,14 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 	const maxRefundable = order.total - alreadyRefunded;
 
 	// Hook du formulaire
-	const {
-		form,
-		action,
-		isPending,
-		reason,
-		items,
-		selectedItems,
-		totalAmount,
-		itemsForAction,
-	} = useCreateRefundForm({
-		orderId: order.id,
-		orderItems: order.items,
-		onSuccess: () => {
-			router.push("/admin/ventes/remboursements");
-		},
-	});
+	const { form, action, isPending, reason, items, selectedItems, totalAmount, itemsForAction } =
+		useCreateRefundForm({
+			orderId: order.id,
+			orderItems: order.items,
+			onSuccess: () => {
+				router.push("/admin/ventes/remboursements");
+			},
+		});
 
 	// Watch note from store
 	const note = useStore(form.store, (s) => s.values.note);
@@ -92,7 +84,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 			currentItems.map((item) => ({
 				...item,
 				restock: defaultRestock,
-			}))
+			})),
 		);
 	};
 
@@ -111,7 +103,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 					selected: checked,
 					quantity: checked ? Math.min(1, available) : 0,
 				};
-			})
+			}),
 		);
 	};
 
@@ -126,8 +118,8 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 			currentItems.map((item) =>
 				item.orderItemId === orderItemId
 					? { ...item, quantity: validQuantity, selected: validQuantity > 0 }
-					: item
-			)
+					: item,
+			),
 		);
 	};
 
@@ -136,8 +128,8 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		form.setFieldValue(
 			"items",
 			currentItems.map((item) =>
-				item.orderItemId === orderItemId ? { ...item, restock: checked } : item
-			)
+				item.orderItemId === orderItemId ? { ...item, restock: checked } : item,
+			),
 		);
 	};
 
@@ -153,12 +145,11 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 					selected: available > 0,
 					quantity: available,
 				};
-			})
+			}),
 		);
 	};
 
-	const canSubmit =
-		selectedItems.length > 0 && totalAmount > 0 && totalAmount <= maxRefundable;
+	const canSubmit = selectedItems.length > 0 && totalAmount > 0 && totalAmount <= maxRefundable;
 
 	return (
 		<div className="space-y-6">
@@ -171,10 +162,8 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 					</Link>
 				</Button>
 				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">
-						Nouveau remboursement
-					</h1>
-					<p className="text-sm text-muted-foreground">
+					<h1 className="text-2xl font-semibold tracking-tight">Nouveau remboursement</h1>
+					<p className="text-muted-foreground text-sm">
 						Commande {order.orderNumber} • {order.customerName}
 					</p>
 				</div>
@@ -189,7 +178,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 
 				<div className="grid gap-6 lg:grid-cols-3">
 					{/* Left column - Items selection */}
-					<div className="lg:col-span-2 space-y-6">
+					<div className="space-y-6 lg:col-span-2">
 						<Card>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0">
 								<div>
@@ -197,16 +186,9 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 										<Package className="h-5 w-5" />
 										Articles à rembourser
 									</CardTitle>
-									<CardDescription>
-										Sélectionnez les articles et quantités
-									</CardDescription>
+									<CardDescription>Sélectionnez les articles et quantités</CardDescription>
 								</div>
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={handleSelectAll}
-								>
+								<Button type="button" variant="outline" size="sm" onClick={handleSelectAll}>
 									Tout sélectionner
 								</Button>
 							</CardHeader>
@@ -253,7 +235,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 									</SelectContent>
 								</Select>
 
-								<div className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
+								<div className="text-muted-foreground bg-muted/50 rounded p-2 text-xs">
 									{getDefaultRestock(reason) ? (
 										<span className="text-emerald-600">
 											Stock restauré par défaut (article récupéré)
@@ -290,15 +272,11 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 							</CardHeader>
 							<CardContent className="space-y-3">
 								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">
-										Articles sélectionnés
-									</span>
+									<span className="text-muted-foreground">Articles sélectionnés</span>
 									<span>{selectedItems.length}</span>
 								</div>
 								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">
-										Montant du remboursement
-									</span>
+									<span className="text-muted-foreground">Montant du remboursement</span>
 									<span className="font-medium">{formatEuro(totalAmount)}</span>
 								</div>
 								<Separator />
@@ -311,7 +289,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 									<span>{formatEuro(maxRefundable)}</span>
 								</div>
 								{totalAmount > maxRefundable && (
-									<p className="text-xs text-destructive">
+									<p className="text-destructive text-xs">
 										Le montant dépasse le maximum remboursable
 									</p>
 								)}
@@ -319,11 +297,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 						</Card>
 
 						{/* Submit */}
-						<Button
-							type="submit"
-							className="w-full"
-							disabled={!canSubmit || isPending}
-						>
+						<Button type="submit" className="w-full" disabled={!canSubmit || isPending}>
 							{isPending ? (
 								"Création en cours..."
 							) : (
@@ -334,9 +308,8 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 							)}
 						</Button>
 
-						<p className="text-xs text-center text-muted-foreground">
-							Le remboursement sera créé en statut "En attente" et devra être
-							approuvé puis traité.
+						<p className="text-muted-foreground text-center text-xs">
+							Le remboursement sera créé en statut "En attente" et devra être approuvé puis traité.
 						</p>
 					</div>
 				</div>

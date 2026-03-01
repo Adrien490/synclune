@@ -28,7 +28,7 @@ describe("toggleFabVisibility", () => {
 				path: "/",
 				httpOnly: true,
 				sameSite: "strict",
-			})
+			}),
 		);
 		expect(mockCookieStore.delete).not.toHaveBeenCalled();
 		expect(result).toEqual({ success: true, isHidden: true });
@@ -37,9 +37,7 @@ describe("toggleFabVisibility", () => {
 	it("deletes cookie when showing a FAB", async () => {
 		const result = await toggleFabVisibility("storefront", false);
 
-		expect(mockCookieStore.delete).toHaveBeenCalledWith(
-			"fab-hidden-storefront"
-		);
+		expect(mockCookieStore.delete).toHaveBeenCalledWith("fab-hidden-storefront");
 		expect(mockCookieStore.set).not.toHaveBeenCalled();
 		expect(result).toEqual({ success: true, isHidden: false });
 	});
@@ -50,7 +48,7 @@ describe("toggleFabVisibility", () => {
 		expect(mockCookieStore.set).toHaveBeenCalledWith(
 			"fab-hidden-storefront",
 			"true",
-			expect.objectContaining({ secure: false })
+			expect.objectContaining({ secure: false }),
 		);
 	});
 
@@ -60,7 +58,7 @@ describe("toggleFabVisibility", () => {
 		expect(mockCookieStore.set).toHaveBeenCalledWith(
 			"fab-hidden-admin-speed-dial",
 			"true",
-			expect.any(Object)
+			expect.any(Object),
 		);
 	});
 });

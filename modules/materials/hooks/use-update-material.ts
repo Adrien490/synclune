@@ -24,9 +24,9 @@ export function useUpdateMaterial(options?: UseUpdateMaterialOptions) {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

@@ -233,7 +233,7 @@ describe("changeUserRole", () => {
 		const result = await changeUserRole(undefined, promoteFormData);
 
 		expect(mockError).toHaveBeenCalledWith(
-			"Impossible de changer le role d'un utilisateur supprime."
+			"Impossible de changer le role d'un utilisateur supprime.",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockPrisma.user.update).not.toHaveBeenCalled();
@@ -311,9 +311,7 @@ describe("changeUserRole", () => {
 
 		const result = await changeUserRole(undefined, promoteFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("administrateur")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("administrateur"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -324,9 +322,7 @@ describe("changeUserRole", () => {
 
 		const result = await changeUserRole(undefined, demoteFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("utilisateur")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("utilisateur"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -336,22 +332,18 @@ describe("changeUserRole", () => {
 
 		await changeUserRole(undefined, promoteFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("Marie Dupont")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("Marie Dupont"));
 	});
 
 	it("should fall back to email in success message when name is null", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ role: "USER", name: null, email: "marie@example.com" })
+			makeUser({ role: "USER", name: null, email: "marie@example.com" }),
 		);
 		mockValidateInput.mockReturnValue({ data: { id: "user-456", role: "ADMIN" } });
 
 		await changeUserRole(undefined, promoteFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("marie@example.com")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("marie@example.com"));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -386,7 +378,7 @@ describe("changeUserRole", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors du changement de role"
+			"Erreur lors du changement de role",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

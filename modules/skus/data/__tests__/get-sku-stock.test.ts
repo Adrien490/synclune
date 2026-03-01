@@ -120,7 +120,7 @@ describe("getSkuStock – DB not found", () => {
 		expect(mockPrisma.productSku.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "sku-abc" },
-			})
+			}),
 		);
 	});
 
@@ -130,7 +130,7 @@ describe("getSkuStock – DB not found", () => {
 		expect(mockPrisma.productSku.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { inventory: true, isActive: true },
-			})
+			}),
 		);
 	});
 });
@@ -201,7 +201,7 @@ describe("getSkuStock – return shape", () => {
 
 	it("reflects isActive false when SKU is inactive", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
-			makeSkuRow({ inventory: 5, isActive: false })
+			makeSkuRow({ inventory: 5, isActive: false }),
 		);
 
 		const result = await getSkuStock("sku-1");

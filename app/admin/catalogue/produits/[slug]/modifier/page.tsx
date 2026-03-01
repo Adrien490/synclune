@@ -16,17 +16,15 @@ import {
 } from "@/shared/components/ui/breadcrumb";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const DeleteGalleryMediaAlertDialog = dynamic(
-	() => import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then((mod) => mod.DeleteGalleryMediaAlertDialog)
+const DeleteGalleryMediaAlertDialog = dynamic(() =>
+	import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then(
+		(mod) => mod.DeleteGalleryMediaAlertDialog,
+	),
 );
 
 type EditProductPageParams = Promise<{ slug: string }>;
 
-export default async function EditProductPage({
-	params,
-}: {
-	params: EditProductPageParams;
-}) {
+export default async function EditProductPage({ params }: { params: EditProductPageParams }) {
 	const { slug } = await params;
 
 	// Récupérer le produit complet avec getProductBySlug (inclut les SKUs et images)

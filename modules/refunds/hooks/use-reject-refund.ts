@@ -15,9 +15,9 @@ export function useRejectRefund(options?: UseRejectRefundOptions) {
 			rejectRefund,
 			createToastCallbacks({
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

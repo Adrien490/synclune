@@ -25,9 +25,7 @@ export function BadgeCountsStoreProvider({
 	initialCartCount,
 	children,
 }: BadgeCountsStoreProviderProps) {
-	const setWishlistCount = useBadgeCountsStore(
-		(state) => state.setWishlistCount
-	);
+	const setWishlistCount = useBadgeCountsStore((state) => state.setWishlistCount);
 	const setCartCount = useBadgeCountsStore((state) => state.setCartCount);
 
 	// Refs pour tracker les valeurs précédentes et détecter les changements serveur

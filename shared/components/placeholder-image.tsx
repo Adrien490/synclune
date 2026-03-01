@@ -7,24 +7,18 @@ import { cn } from "@/shared/utils/cn";
  * @param className - Classes additionnelles pour aspect ratio responsive
  * @param label - Label accessible pour les lecteurs d'ecran (si fourni, le placeholder est annonce)
  */
-export function PlaceholderImage({
-	className,
-	label,
-}: {
-	className?: string;
-	label?: string;
-}) {
+export function PlaceholderImage({ className, label }: { className?: string; label?: string }) {
 	return (
 		<div
 			className={cn(
-				"relative rounded-xl overflow-hidden bg-linear-to-br from-secondary/40 via-muted/50 to-primary/30 border border-border/30 flex items-center justify-center transition-opacity duration-500 aspect-square",
-				className
+				"from-secondary/40 via-muted/50 to-primary/30 border-border/30 relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border bg-linear-to-br transition-opacity duration-500",
+				className,
 			)}
 			role={label ? "img" : undefined}
 			aria-label={label}
 			aria-hidden={label ? undefined : true}
 		>
-			<ImageIcon className="w-12 h-12 text-muted-foreground/60" aria-hidden="true" />
+			<ImageIcon className="text-muted-foreground/60 h-12 w-12" aria-hidden="true" />
 		</div>
 	);
 }

@@ -21,8 +21,7 @@ interface AddressCardActionsProps {
 export function AddressCardActions({ address }: AddressCardActionsProps) {
 	const editDialog = useDialog(ADDRESS_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_ADDRESS_DIALOG_ID);
-	const { handle: handleSetDefault, isPending: isSettingDefault } =
-		useSetDefaultAddress();
+	const { handle: handleSetDefault, isPending: isSettingDefault } = useSetDefaultAddress();
 
 	const isPending = isSettingDefault;
 
@@ -42,19 +41,13 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				{!address.isDefault && (
-					<DropdownMenuItem
-						onClick={() => handleSetDefault(address.id)}
-						disabled={isPending}
-					>
-						<Star className="h-4 w-4 mr-2" aria-hidden="true" />
+					<DropdownMenuItem onClick={() => handleSetDefault(address.id)} disabled={isPending}>
+						<Star className="mr-2 h-4 w-4" aria-hidden="true" />
 						Définir par défaut
 					</DropdownMenuItem>
 				)}
-				<DropdownMenuItem
-					onClick={() => editDialog.open({ address })}
-					disabled={isPending}
-				>
-					<Pencil className="h-4 w-4 mr-2" aria-hidden="true" />
+				<DropdownMenuItem onClick={() => editDialog.open({ address })} disabled={isPending}>
+					<Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
 					Modifier
 				</DropdownMenuItem>
 				<DropdownMenuItem
@@ -68,7 +61,7 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 					disabled={isPending}
 					className="text-destructive"
 				>
-					<Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
+					<Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
 					Supprimer
 				</DropdownMenuItem>
 			</DropdownMenuContent>

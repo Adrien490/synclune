@@ -43,10 +43,7 @@ const confirmationParamsSchema = z.object({
  * AND `orderNumber`, providing a double verification that prevents enumeration.
  * Only non-deleted orders are returned.
  */
-export async function getOrderForConfirmation(
-	orderId: string,
-	orderNumber: string
-) {
+export async function getOrderForConfirmation(orderId: string, orderNumber: string) {
 	const validation = confirmationParamsSchema.safeParse({ orderId, orderNumber });
 	if (!validation.success) return null;
 

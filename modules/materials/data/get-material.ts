@@ -21,7 +21,7 @@ export type { GetMaterialParams, GetMaterialReturn } from "../types/materials.ty
  * - Non-admin : ne voit que les matériaux actifs
  */
 export async function getMaterialBySlug(
-	params: Partial<GetMaterialParams>
+	params: Partial<GetMaterialParams>,
 ): Promise<GetMaterialReturn | null> {
 	const validation = getMaterialSchema.safeParse(params ?? {});
 
@@ -42,7 +42,7 @@ export async function getMaterialBySlug(
  */
 async function fetchMaterial(
 	slug: string,
-	includeInactive: boolean
+	includeInactive: boolean,
 ): Promise<GetMaterialReturn | null> {
 	"use cache";
 	cacheMaterialDetail(slug);

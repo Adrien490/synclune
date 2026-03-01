@@ -9,19 +9,10 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
-import {
-	ChevronLeft,
-	ChevronRight,
-	ChevronsLeft,
-	Loader2,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, Loader2 } from "lucide-react";
 import { useId } from "react";
 import { Button } from "../ui/button";
-import {
-	NAV_BUTTON_SIZE,
-	PAGE_INDICATOR_SIZE,
-	RESET_BUTTON_SIZE,
-} from "./constants";
+import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
 import { PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
@@ -107,29 +98,20 @@ export function CursorPagination({
 				"flex flex-row items-center justify-between gap-2 sm:gap-3",
 				// Opacity réduite pendant le chargement avec transition smooth pour UX fluide
 				// opacity-80 (au lieu de 70) pour meilleur contraste WCAG AA (4.5:1)
-				isPending &&
-					"opacity-80 pointer-events-none transition-opacity duration-200"
+				isPending && "pointer-events-none opacity-80 transition-opacity duration-200",
 			)}
 		>
 			{/* SEO crawl hints — React 19 hoists these to <head> */}
 			{prevUrl && <link rel="prev" href={prevUrl} />}
 			{nextUrl && <link rel="next" href={nextUrl} />}
 			{/* Live region pour screen readers */}
-			<div
-				role="status"
-				aria-live="polite"
-				aria-atomic="true"
-				className="sr-only"
-			>
+			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 				{ariaLiveMessage}
 			</div>
 			{/* Informations sur la pagination */}
-			<div className="flex items-center gap-2 sm:gap-3 text-sm">
+			<div className="flex items-center gap-2 text-sm sm:gap-3">
 				<div className="flex items-center gap-1.5 sm:gap-2">
-					<label
-						htmlFor={perPageId}
-						className="hidden sm:block text-xs text-muted-foreground"
-					>
+					<label htmlFor={perPageId} className="text-muted-foreground hidden text-xs sm:block">
 						Par page
 					</label>
 					<Select
@@ -139,7 +121,7 @@ export function CursorPagination({
 					>
 						<SelectTrigger
 							id={perPageId}
-							className="w-20 h-9"
+							className="h-9 w-20"
 							aria-label="Nombre de résultats par page"
 						>
 							<SelectValue>{perPage}</SelectValue>
@@ -154,15 +136,11 @@ export function CursorPagination({
 					</Select>
 				</div>
 
-				<span className="text-sm text-muted-foreground">
+				<span className="text-muted-foreground text-sm">
 					{currentPageSize > 0 ? (
 						<>
-							<span className="font-medium text-foreground">
-								{currentPageSize}
-							</span>
-							<span className="hidden sm:inline">
-								{" "}résultat{currentPageSize > 1 ? "s" : ""}
-							</span>
+							<span className="text-foreground font-medium">{currentPageSize}</span>
+							<span className="hidden sm:inline"> résultat{currentPageSize > 1 ? "s" : ""}</span>
 						</>
 					) : (
 						<span className="hidden sm:inline">Aucun résultat</span>
@@ -179,8 +157,8 @@ export function CursorPagination({
 					className="flex items-center gap-2"
 				>
 					<span id="pagination-shortcuts" className="sr-only">
-						Raccourcis : Alt+Flèche gauche pour page précédente, Alt+Flèche
-						droite pour page suivante
+						Raccourcis : Alt+Flèche gauche pour page précédente, Alt+Flèche droite pour page
+						suivante
 					</span>
 					{/* Bouton retour au début - toujours affiché pour éviter layout shift */}
 					<Button
@@ -188,15 +166,11 @@ export function CursorPagination({
 						size="sm"
 						disabled={isFirstPage || isPending}
 						onClick={handleReset}
-						className={cn(
-							RESET_BUTTON_SIZE,
-							"gap-1 cursor-pointer",
-							...PAGINATION_BUTTON_CLASSES
-						)}
+						className={cn(RESET_BUTTON_SIZE, "cursor-pointer gap-1", ...PAGINATION_BUTTON_CLASSES)}
 						aria-label="Retour au début"
 					>
 						{isPending && !isFirstPage ? (
-							<Loader2 className="size-5 md:size-4 motion-safe:animate-spin" />
+							<Loader2 className="size-5 motion-safe:animate-spin md:size-4" />
 						) : (
 							<ChevronsLeft className="size-5 md:size-4" />
 						)}
@@ -210,11 +184,7 @@ export function CursorPagination({
 							size="icon"
 							disabled={!hasPreviousPage || isPending}
 							onClick={handlePrevious}
-							className={cn(
-								NAV_BUTTON_SIZE,
-								"cursor-pointer",
-								...PAGINATION_BUTTON_CLASSES
-							)}
+							className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
 							aria-label="Page précédente"
 						>
 							<ChevronLeft className="size-5 md:size-4" />
@@ -222,13 +192,13 @@ export function CursorPagination({
 
 						<div
 							className={cn(
-								"px-3 text-xs sm:text-sm bg-muted/50 text-center flex items-center justify-center",
-								PAGE_INDICATOR_SIZE
+								"bg-muted/50 flex items-center justify-center px-3 text-center text-xs sm:text-sm",
+								PAGE_INDICATOR_SIZE,
 							)}
 							role="status"
 							aria-label="Position actuelle dans la pagination"
 						>
-							<span className="font-medium text-foreground">
+							<span className="text-foreground font-medium">
 								{!hasPreviousPage && !hasNextPage
 									? "Page unique"
 									: !hasPreviousPage
@@ -245,11 +215,7 @@ export function CursorPagination({
 							size="icon"
 							disabled={!hasNextPage || isPending}
 							onClick={handleNext}
-							className={cn(
-								NAV_BUTTON_SIZE,
-								"cursor-pointer",
-								...PAGINATION_BUTTON_CLASSES
-							)}
+							className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
 							aria-label="Page suivante"
 						>
 							<ChevronRight className="size-5 md:size-4" />

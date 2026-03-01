@@ -9,18 +9,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { signInSocialSchema } from "../schemas/auth.schemas";
 
-export const signInSocial = async (
-	_: unknown,
-	formData: FormData
-): Promise<ActionState> => {
+export const signInSocial = async (_: unknown, formData: FormData): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
 
 		// Protection Arcjet contre le brute-force
-		const arcjetResult = await checkArcjetProtection(
-			"/sign-in/social",
-			headersList
-		);
+		const arcjetResult = await checkArcjetProtection("/sign-in/social", headersList);
 		if (arcjetResult) return arcjetResult;
 
 		// Vérifier si l'utilisateur est déjà connecté

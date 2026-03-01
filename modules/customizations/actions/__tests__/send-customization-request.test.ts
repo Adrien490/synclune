@@ -385,14 +385,12 @@ describe("sendCustomizationRequest", () => {
 			expect.objectContaining({
 				email: "marie@example.com",
 				firstName: "Marie",
-			})
+			}),
 		);
 	});
 
 	it("should still succeed when admin email fails", async () => {
-		mockSendCustomizationRequestEmail.mockRejectedValue(
-			new Error("Email service down")
-		);
+		mockSendCustomizationRequestEmail.mockRejectedValue(new Error("Email service down"));
 
 		const result = await sendCustomizationRequest(undefined, VALID_FORM_DATA);
 
@@ -435,11 +433,12 @@ describe("sendCustomizationRequest", () => {
 
 		await sendCustomizationRequest(undefined, VALID_FORM_DATA);
 
-		const updateTagCalls = mockUpdateTag.mock.calls.map(
-			(args: unknown[]) => { const [tag] = args as [string]; return tag; }
-		);
+		const updateTagCalls = mockUpdateTag.mock.calls.map((args: unknown[]) => {
+			const [tag] = args as [string];
+			return tag;
+		});
 		const hasUserTag = updateTagCalls.some((tag: string) =>
-			tag.startsWith("customization-requests-user-")
+			tag.startsWith("customization-requests-user-"),
 		);
 		expect(hasUserTag).toBe(false);
 	});
@@ -452,10 +451,7 @@ describe("sendCustomizationRequest", () => {
 		const result = await sendCustomizationRequest(undefined, VALID_FORM_DATA);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.any(String),
-			{ id: MOCK_REQUEST.id }
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.any(String), { id: MOCK_REQUEST.id });
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -463,16 +459,11 @@ describe("sendCustomizationRequest", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should call handleActionError when DB create throws", async () => {
-		mockPrisma.customizationRequest.create.mockRejectedValue(
-			new Error("DB connection failed")
-		);
+		mockPrisma.customizationRequest.create.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await sendCustomizationRequest(undefined, VALID_FORM_DATA);
 
-		expect(mockHandleActionError).toHaveBeenCalledWith(
-			expect.any(Error),
-			expect.any(String)
-		);
+		expect(mockHandleActionError).toHaveBeenCalledWith(expect.any(Error), expect.any(String));
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 });

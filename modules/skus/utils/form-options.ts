@@ -27,9 +27,7 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 		defaultValues: {
 			skuId: sku.id,
 			priceInclTaxEuros: sku.priceInclTax / 100, // Centimes → Euros
-			compareAtPriceEuros: sku.compareAtPrice
-				? sku.compareAtPrice / 100
-				: undefined,
+			compareAtPriceEuros: sku.compareAtPrice ? sku.compareAtPrice / 100 : undefined,
 			inventory: sku.inventory,
 			isDefault: sku.isDefault,
 			isActive: sku.isActive,

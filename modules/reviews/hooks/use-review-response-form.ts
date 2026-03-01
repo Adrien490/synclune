@@ -31,17 +31,17 @@ export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 
 	const [, createFormAction, isCreatePending] = useActionState(
 		withCallbacks(createReviewResponse, callbacks),
-		undefined
+		undefined,
 	);
 
 	const [, editFormAction, isEditPending] = useActionState(
 		withCallbacks(updateReviewResponse, callbacks),
-		undefined
+		undefined,
 	);
 
 	const [, removeFormAction, isRemovePending] = useActionState(
 		withCallbacks(deleteReviewResponse, callbacks),
-		undefined
+		undefined,
 	);
 
 	const createResponse = (reviewId: string, content: string) => {

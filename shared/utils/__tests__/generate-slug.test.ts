@@ -59,14 +59,16 @@ describe("generateSlug", () => {
 	});
 
 	it("appends -2 when slug already exists", async () => {
-		const prisma = makeMockPrisma({ "bague-en-or": { id: "1" } }) as unknown as PrismaClientOrTransaction;
+		const prisma = makeMockPrisma({
+			"bague-en-or": { id: "1" },
+		}) as unknown as PrismaClientOrTransaction;
 		const result = await generateSlug(prisma, "product", "Bague en Or");
 		expect(result).toBe("bague-en-or-2");
 	});
 
 	it("increments suffix until unique", async () => {
 		const prisma = makeMockPrisma({
-			"bague": { id: "1" },
+			bague: { id: "1" },
 			"bague-2": { id: "2" },
 			"bague-3": { id: "3" },
 		}) as unknown as PrismaClientOrTransaction;
@@ -84,7 +86,7 @@ describe("generateSlug", () => {
 	it("throws on empty value", async () => {
 		const prisma = makeMockPrisma() as unknown as PrismaClientOrTransaction;
 		await expect(generateSlug(prisma, "product", "")).rejects.toThrow(
-			"La valeur pour générer le slug ne peut pas être vide"
+			"La valeur pour générer le slug ne peut pas être vide",
 		);
 	});
 

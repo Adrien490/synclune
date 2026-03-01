@@ -16,12 +16,7 @@ interface DecorativeHaloProps {
 	/**
 	 * Position du halo (pour les particules autour)
 	 */
-	position?:
-		| "top-left"
-		| "top-right"
-		| "bottom-left"
-		| "bottom-right"
-		| "custom";
+	position?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
 	/**
 	 * Classe CSS personnalisée pour la position
 	 */
@@ -116,7 +111,7 @@ export function DecorativeHalo({
 				blurClasses[blur],
 				opacityClasses[opacity],
 				animationClasses[effectiveAnimate],
-				className
+				className,
 			)}
 			style={style}
 			aria-hidden="true"

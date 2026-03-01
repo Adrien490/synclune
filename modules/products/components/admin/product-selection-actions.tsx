@@ -36,15 +36,12 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 	const bulkArchiveDialog = useAlertDialog(BULK_ARCHIVE_PRODUCTS_DIALOG_ID);
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_PRODUCTS_DIALOG_ID);
 
-	const { changeProductStatus, isPending: isChangingStatus } =
-		useBulkChangeProductStatus({
-			onSuccess: () => clearSelection(),
-		});
+	const { changeProductStatus, isPending: isChangingStatus } = useBulkChangeProductStatus({
+		onSuccess: () => clearSelection(),
+	});
 
 	// Déterminer si tous les produits sélectionnés sont archivés
-	const selectedProducts = products.filter((p) =>
-		selectedItems.includes(p.id)
-	);
+	const selectedProducts = products.filter((p) => selectedItems.includes(p.id));
 
 	const selectedProductsStatus = (() => {
 		if (selectedProducts.length === 0) {
@@ -60,13 +57,10 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 
 		const allArchived = selectedProducts.every((p) => p.status === "ARCHIVED");
 		const hasArchived = selectedProducts.some((p) => p.status === "ARCHIVED");
-		const hasNonArchived = selectedProducts.some(
-			(p) => p.status !== "ARCHIVED"
-		);
+		const hasNonArchived = selectedProducts.some((p) => p.status !== "ARCHIVED");
 		const allDraft = selectedProducts.every((p) => p.status === "DRAFT");
 		const allPublic = selectedProducts.every((p) => p.status === "PUBLIC");
-		const hasMixedStatus =
-			!allArchived && !allDraft && !allPublic && hasNonArchived;
+		const hasMixedStatus = !allArchived && !allDraft && !allPublic && hasNonArchived;
 
 		return {
 			allArchived,
@@ -206,10 +200,7 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 				) : selectedProductsStatus.hasArchived ? (
 					<>
 						{/* Mix archivé/non-archivé : Message d'erreur */}
-						<DropdownMenuItem
-							disabled
-							className="text-muted-foreground cursor-not-allowed"
-						>
+						<DropdownMenuItem disabled className="text-muted-foreground cursor-not-allowed">
 							Sélection mixte archivé/non-archivé
 						</DropdownMenuItem>
 					</>

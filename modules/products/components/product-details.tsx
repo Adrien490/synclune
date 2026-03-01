@@ -22,6 +22,8 @@ interface ProductDetailsProps {
 	cartsCount?: number;
 	/** Review stats for micro-summary near CTA */
 	reviewStats?: ProductReviewStatistics;
+	/** Whether this product is in the user's wishlist */
+	isInWishlist?: boolean;
 }
 
 /**
@@ -41,6 +43,7 @@ export function ProductDetails({
 	defaultSku,
 	cartsCount,
 	reviewStats,
+	isInWishlist,
 }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const prefersReducedMotion = useReducedMotion();
@@ -66,7 +69,12 @@ export function ProductDetails({
 					exit="exit"
 					transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
 				>
-					<ProductPriceDisplay selectedSku={currentSku} product={product} cartsCount={cartsCount} />
+					<ProductPriceDisplay
+						selectedSku={currentSku}
+						product={product}
+						cartsCount={cartsCount}
+						isInWishlist={isInWishlist}
+					/>
 				</m.div>
 			</AnimatePresence>
 

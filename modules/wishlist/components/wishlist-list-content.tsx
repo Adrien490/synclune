@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptimistic } from "react";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
@@ -82,7 +83,7 @@ export function WishlistListContent({
 										: {
 												duration: 0.2,
 												delay: Math.min(index * 0.05, 0.3),
-												ease: [0.4, 0, 0.2, 1],
+												ease: MOTION_CONFIG.easing.emphasized,
 											}
 								}
 							>

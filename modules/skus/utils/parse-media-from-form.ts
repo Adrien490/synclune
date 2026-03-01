@@ -16,7 +16,7 @@ export type { ParsedMedia } from "../types/sku.types";
  */
 export function parsePrimaryImageFromForm(
 	formData: FormData,
-	fieldName = "primaryImage"
+	fieldName = "primaryImage",
 ): ParsedMedia | undefined {
 	const raw = formData.get(fieldName);
 
@@ -48,7 +48,7 @@ export function parsePrimaryImageFromForm(
  */
 export function parseGalleryMediaFromForm(
 	formData: FormData,
-	fieldName = "galleryMedia"
+	fieldName = "galleryMedia",
 ): ParsedMedia[] {
 	const raw = formData.get(fieldName);
 
@@ -66,7 +66,7 @@ export function parseGalleryMediaFromForm(
 		// Filtrer les elements invalides
 		return parsed.filter(
 			(item): item is ParsedMedia =>
-				item && typeof item === "object" && typeof item.url === "string"
+				item && typeof item === "object" && typeof item.url === "string",
 		);
 	} catch (error) {
 		console.error(`[parse-media] Erreur parsing galleryMedia:`, error);

@@ -14,10 +14,7 @@ interface ChangePasswordDialogProps {
 	onOpenChange: (open: boolean) => void;
 }
 
-export function ChangePasswordDialog({
-	open,
-	onOpenChange,
-}: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
 	return (
 		<ResponsiveDialog open={open} onOpenChange={onOpenChange}>
 			<ResponsiveDialogContent className="sm:max-w-125">

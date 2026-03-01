@@ -44,11 +44,7 @@ export async function generateMetadata({
 	};
 }
 
-export default async function EditSkuPage({
-	params,
-}: {
-	params: EditSkuPageParams;
-}) {
+export default async function EditSkuPage({ params }: { params: EditSkuPageParams }) {
 	const { slug, skuId } = await params;
 
 	// Récupérer le produit, le SKU, les couleurs et matériaux en parallèle

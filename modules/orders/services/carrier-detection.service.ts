@@ -53,7 +53,10 @@ export function getTrackingUrl(carrier: Carrier, trackingNumber: string): string
  */
 export function detectCarrierAndUrl(trackingNumber: string): DetectionResult {
 	// Nettoyage : on enlève les espaces, tirets et points copiés par erreur
-	const cleanNumber = trackingNumber.trim().replace(/[\s\-\.]/g, '').toUpperCase();
+	const cleanNumber = trackingNumber
+		.trim()
+		.replace(/[\s\-\.]/g, "")
+		.toUpperCase();
 
 	// Vérification que le numéro n'est pas vide
 	if (!cleanNumber) {
@@ -116,4 +119,3 @@ export function detectCarrierAndUrl(trackingNumber: string): DetectionResult {
 		url: null,
 	};
 }
-

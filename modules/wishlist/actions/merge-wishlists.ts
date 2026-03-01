@@ -9,7 +9,10 @@ import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { MergeWishlistsResult } from "../types/wishlist.types";
-import { WISHLIST_ERROR_MESSAGES, WISHLIST_INFO_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import {
+	WISHLIST_ERROR_MESSAGES,
+	WISHLIST_INFO_MESSAGES,
+} from "@/modules/wishlist/constants/error-messages";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { getGuestWishlistForMerge, getUserWishlistForMerge } from "../data/get-wishlist-for-merge";
 
@@ -37,7 +40,7 @@ import { getGuestWishlistForMerge, getUserWishlistForMerge } from "../data/get-w
  */
 export async function mergeWishlists(
 	userId: string,
-	sessionId: string
+	sessionId: string,
 ): Promise<MergeWishlistsResult> {
 	try {
 		// 0a. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
@@ -134,7 +137,7 @@ export async function mergeWishlists(
 		// 7. Invalider les caches
 		const guestTags = getWishlistInvalidationTags(undefined, sessionId);
 		const userTags = getWishlistInvalidationTags(userId, undefined);
-		[...guestTags, ...userTags].forEach(tag => updateTag(tag));
+		[...guestTags, ...userTags].forEach((tag) => updateTag(tag));
 
 		return success(
 			addedCount > 0

@@ -25,9 +25,9 @@ export function useBulkRejectRefunds(options?: UseBulkRejectRefundsOptions) {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const rejectRefunds = (refundIds: string[], reason?: string) => {

@@ -304,16 +304,11 @@ describe("updateCustomizationNotes", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should call handleActionError when DB update throws", async () => {
-		mockPrisma.customizationRequest.update.mockRejectedValue(
-			new Error("DB connection failed")
-		);
+		mockPrisma.customizationRequest.update.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await updateCustomizationNotes(undefined, VALID_FORM_DATA);
 
-		expect(mockHandleActionError).toHaveBeenCalledWith(
-			expect.any(Error),
-			expect.any(String)
-		);
+		expect(mockHandleActionError).toHaveBeenCalledWith(expect.any(Error), expect.any(String));
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 });

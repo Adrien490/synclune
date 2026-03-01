@@ -70,7 +70,7 @@ function createMockSku(overrides: Partial<SkuFromList> = {}): SkuFromList {
  */
 function createMockProduct(
 	overrides: Partial<ProductFromList> = {},
-	skus: SkuFromList[] = [createMockSku()]
+	skus: SkuFromList[] = [createMockSku()],
 ): ProductFromList {
 	return {
 		id: "product-1",

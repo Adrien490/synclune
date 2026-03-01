@@ -83,7 +83,7 @@ describe("GET /api/cron/reconcile-refunds", () => {
 		mockReconcilePendingRefunds.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -165,7 +165,7 @@ describe("GET /api/cron/reconcile-refunds", () => {
 					staleAlerted: DEFAULT_SERVICE_RESULT.staleAlerted,
 					errors: DEFAULT_SERVICE_RESULT.errors,
 				}),
-				1000
+				1000,
 			);
 		});
 
@@ -212,7 +212,7 @@ describe("GET /api/cron/reconcile-refunds", () => {
 				expect.objectContaining({
 					job: "reconcile-refunds",
 					errors: 3,
-				})
+				}),
 			);
 		});
 
@@ -233,7 +233,7 @@ describe("GET /api/cron/reconcile-refunds", () => {
 						updated: 2,
 						staleAlerted: 1,
 					}),
-				})
+				}),
 			);
 		});
 

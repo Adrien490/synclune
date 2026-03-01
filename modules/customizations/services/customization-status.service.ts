@@ -9,19 +9,13 @@ import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
  * Allowed transitions for customization request statuses.
  * Defines which statuses can transition to which other statuses.
  */
-const ALLOWED_TRANSITIONS: Record<
-	CustomizationRequestStatus,
-	CustomizationRequestStatus[]
-> = {
+const ALLOWED_TRANSITIONS: Record<CustomizationRequestStatus, CustomizationRequestStatus[]> = {
 	PENDING: [
 		CustomizationRequestStatus.IN_PROGRESS,
 		CustomizationRequestStatus.COMPLETED,
 		CustomizationRequestStatus.CANCELLED,
 	],
-	IN_PROGRESS: [
-		CustomizationRequestStatus.COMPLETED,
-		CustomizationRequestStatus.CANCELLED,
-	],
+	IN_PROGRESS: [CustomizationRequestStatus.COMPLETED, CustomizationRequestStatus.CANCELLED],
 	COMPLETED: [],
 	CANCELLED: [],
 };
@@ -31,7 +25,7 @@ const ALLOWED_TRANSITIONS: Record<
  */
 export function canTransitionTo(
 	currentStatus: CustomizationRequestStatus,
-	targetStatus: CustomizationRequestStatus
+	targetStatus: CustomizationRequestStatus,
 ): boolean {
 	if (currentStatus === targetStatus) return false;
 	return ALLOWED_TRANSITIONS[currentStatus].includes(targetStatus);
@@ -41,7 +35,7 @@ export function canTransitionTo(
  * Returns the list of valid target statuses from a given status
  */
 export function getAvailableTransitions(
-	currentStatus: CustomizationRequestStatus
+	currentStatus: CustomizationRequestStatus,
 ): CustomizationRequestStatus[] {
 	return ALLOWED_TRANSITIONS[currentStatus];
 }
@@ -49,8 +43,6 @@ export function getAvailableTransitions(
 /**
  * Checks if a status is a final state (no further transitions possible)
  */
-export function isFinalStatus(
-	status: CustomizationRequestStatus
-): boolean {
+export function isFinalStatus(status: CustomizationRequestStatus): boolean {
 	return ALLOWED_TRANSITIONS[status].length === 0;
 }

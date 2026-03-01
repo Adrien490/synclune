@@ -6,7 +6,7 @@
 export function extractCustomerFirstName(
 	customerName: string | null | undefined,
 	shippingFirstName: string | null | undefined,
-	fallback = "Client"
+	fallback = "Client",
 ): string {
 	return customerName?.split(" ")[0] || shippingFirstName || fallback;
 }

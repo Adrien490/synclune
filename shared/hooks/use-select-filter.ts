@@ -24,8 +24,7 @@ export function useSelectFilter(filterKey: string, options?: UseSelectFilterOpti
 	const currentValue = searchParams.get(paramKey) || "";
 
 	// État optimiste pour une meilleure UX
-	const [optimisticValue, setOptimisticValue] =
-		useOptimistic<string>(currentValue);
+	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
 
 	// Mise à jour de l'URL avec les nouveaux paramètres
 	const updateUrlWithParams = (params: URLSearchParams, newValue: string) => {

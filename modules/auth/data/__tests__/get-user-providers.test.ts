@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockGetCurrentUser,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockGetCurrentUser, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		account: { findMany: vi.fn() },
 	},
@@ -103,7 +98,7 @@ describe("getUserProviders", () => {
 		await getUserProviders();
 
 		expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-42" } })
+			expect.objectContaining({ where: { userId: "user-42" } }),
 		);
 	});
 
@@ -114,7 +109,7 @@ describe("getUserProviders", () => {
 		await getUserProviders();
 
 		expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ select: { providerId: true } })
+			expect.objectContaining({ select: { providerId: true } }),
 		);
 	});
 

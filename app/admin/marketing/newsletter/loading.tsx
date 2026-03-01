@@ -12,13 +12,10 @@ export default function NewsletterLoading() {
 	return (
 		<div className="space-y-6">
 			{/* Page Header */}
-			<PageHeader
-				title="Newsletter"
-				variant="compact"
-			/>
+			<PageHeader title="Newsletter" variant="compact" />
 
 			{/* Statistics Section - 3 cards */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 				{/* Total subscribers */}
 				<Card>
 					<CardContent className="p-6">
@@ -73,7 +70,7 @@ export default function NewsletterLoading() {
 				{/* Tab 1: Send Newsletter */}
 				<TabsContent value="send" className="space-y-6">
 					<Card>
-						<CardContent className="p-6 space-y-6">
+						<CardContent className="space-y-6 p-6">
 							{/* Header */}
 							<div className="space-y-2">
 								<Skeleton className="h-6 w-56" />
@@ -110,7 +107,7 @@ export default function NewsletterLoading() {
 							<Skeleton className="h-10 w-full sm:max-w-md" />
 
 							{/* Sort */}
-							<Skeleton className="h-10 w-full sm:min-w-45 sm:max-w-50" />
+							<Skeleton className="h-10 w-full sm:max-w-50 sm:min-w-45" />
 
 							{/* Export button */}
 							<Skeleton className="h-10 w-30" />
@@ -120,7 +117,7 @@ export default function NewsletterLoading() {
 					{/* Data Table */}
 					<div className="rounded-md border">
 						{/* Table Header */}
-						<div className="border-b bg-muted/50 p-4">
+						<div className="bg-muted/50 border-b p-4">
 							<div className="flex items-center gap-4">
 								<div className="flex-[0.4]">
 									<Skeleton className="h-4 w-12" />

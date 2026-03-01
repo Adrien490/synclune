@@ -11,6 +11,7 @@ import { buildLightboxSlides } from "../lightbox-builder.service";
 
 function makeImageMedia(overrides = {}) {
 	return {
+		id: "img_1",
 		mediaType: "IMAGE" as const,
 		url: "https://cdn.example.com/bracelet.jpg",
 		alt: "Bracelet Lune",
@@ -21,6 +22,7 @@ function makeImageMedia(overrides = {}) {
 
 function makeVideoMedia(overrides = {}) {
 	return {
+		id: "vid_1",
 		mediaType: "VIDEO" as const,
 		url: "https://cdn.example.com/bracelet.mp4",
 		alt: "Bracelet video",
@@ -104,7 +106,7 @@ describe("buildLightboxSlides", () => {
 			null,
 		);
 
-		expect((slides[0] as Record<string, unknown[]>).sources[0]).toEqual({
+		expect((slides[0]! as unknown as Record<string, unknown[]>).sources![0]).toEqual({
 			src: "https://cdn.example.com/video.webm",
 			type: "video/webm",
 		});

@@ -7,7 +7,7 @@ import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
  * Logique intégrée directement pour simplicité et maintenabilité
  */
 export const buildFilterConditions = (
-	filters: ProductSkuFilters
+	filters: ProductSkuFilters,
 ): Prisma.ProductSkuWhereInput[] => {
 	const conditions: Prisma.ProductSkuWhereInput[] = [];
 
@@ -17,9 +17,7 @@ export const buildFilterConditions = (
 
 	// ProductId - logique intégrée (fortement recommandé)
 	if (filters.productId !== undefined) {
-		const productIds = Array.isArray(filters.productId)
-			? filters.productId
-			: [filters.productId];
+		const productIds = Array.isArray(filters.productId) ? filters.productId : [filters.productId];
 		if (productIds.length === 1) {
 			conditions.push({ productId: productIds[0] });
 		} else if (productIds.length > 1) {
@@ -29,9 +27,7 @@ export const buildFilterConditions = (
 
 	// ColorId - logique intégrée
 	if (filters.colorId !== undefined) {
-		const colorIds = Array.isArray(filters.colorId)
-			? filters.colorId
-			: [filters.colorId];
+		const colorIds = Array.isArray(filters.colorId) ? filters.colorId : [filters.colorId];
 		if (colorIds.length === 1) {
 			conditions.push({ colorId: colorIds[0] });
 		} else if (colorIds.length > 1) {
@@ -53,9 +49,7 @@ export const buildFilterConditions = (
 
 	// Material - filter by material.name (legacy)
 	if (filters.material !== undefined) {
-		const materials = Array.isArray(filters.material)
-			? filters.material
-			: [filters.material];
+		const materials = Array.isArray(filters.material) ? filters.material : [filters.material];
 		if (materials.length === 1) {
 			conditions.push({
 				material: {
@@ -270,7 +264,6 @@ export const buildFilterConditions = (
 			},
 		});
 	}
-
 
 	return conditions;
 };

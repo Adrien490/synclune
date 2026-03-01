@@ -63,9 +63,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 
 	it("should pass only valid UploadThing URLs to extractFileKeysFromUrls", async () => {
 		// First URL valid, second invalid
-		mockIsValidUploadThingUrl
-			.mockReturnValueOnce(true)
-			.mockReturnValueOnce(false);
+		mockIsValidUploadThingUrl.mockReturnValueOnce(true).mockReturnValueOnce(false);
 
 		mockExtractFileKeysFromUrls.mockReturnValue({
 			keys: ["abc123.jpg"],
@@ -130,7 +128,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 
 		expect(warnSpy).toHaveBeenCalledWith(
 			expect.stringContaining("1 URL(s)"),
-			expect.arrayContaining(["https://utfs.io/f/"])
+			expect.arrayContaining(["https://utfs.io/f/"]),
 		);
 		expect(result).toEqual({ deleted: 1, failed: 1 });
 		warnSpy.mockRestore();
@@ -181,10 +179,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 
 		await deleteUploadThingFilesFromUrls(["https://utfs.io/f/key.jpg"]);
 
-		expect(errorSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Erreur"),
-			"Service unavailable"
-		);
+		expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Erreur"), "Service unavailable");
 		errorSpy.mockRestore();
 	});
 
@@ -202,9 +197,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		const result = await deleteUploadThingFilesFromUrls(urls);
 
 		expect(result).toEqual({ deleted: 0, failed: urls.length });
-		expect(warnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("success=false")
-		);
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("success=false"));
 		warnSpy.mockRestore();
 	});
 
@@ -225,9 +218,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		]);
 
 		expect(result).toEqual({ deleted: 2, failed: 1 });
-		expect(warnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Partial deletion")
-		);
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Partial deletion"));
 		warnSpy.mockRestore();
 	});
 
@@ -243,9 +234,7 @@ describe("deleteUploadThingFilesFromUrls", () => {
 
 		await deleteUploadThingFilesFromUrls(["https://utfs.io/f/key.jpg"]);
 
-		expect(logSpy).toHaveBeenCalledWith(
-			expect.stringContaining("1 fichier(s) supprime(s)")
-		);
+		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("1 fichier(s) supprime(s)"));
 		logSpy.mockRestore();
 	});
 });

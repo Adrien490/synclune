@@ -429,16 +429,14 @@ describe("createCheckoutSession — discount edge cases", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
 				const tx = {
 					...mockPrisma,
-					$queryRaw: vi
-						.fn()
-						.mockResolvedValue([
-							{
-								isActive: false,
-								inventory: 0,
-								productTitle: "Bague Lune",
-								productStatus: "PUBLIC",
-							},
-						]),
+					$queryRaw: vi.fn().mockResolvedValue([
+						{
+							isActive: false,
+							inventory: 0,
+							productTitle: "Bague Lune",
+							productStatus: "PUBLIC",
+						},
+					]),
 					$executeRaw: vi.fn(),
 				};
 				return fn(tx as unknown as typeof mockPrisma);

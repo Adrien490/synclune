@@ -321,8 +321,8 @@ describe("cancelRefund", () => {
 
 		await cancelRefund(undefined, makeFormData());
 
-		const userTagCalls = mockUpdateTag.mock.calls.filter(
-			([tag]) => (tag as string).startsWith("orders-user-"),
+		const userTagCalls = mockUpdateTag.mock.calls.filter(([tag]) =>
+			(tag as string).startsWith("orders-user-"),
 		);
 		expect(userTagCalls).toHaveLength(0);
 	});
@@ -344,9 +344,7 @@ describe("cancelRefund", () => {
 
 		await cancelRefund(undefined, makeFormData());
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("75.99"),
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("75.99"));
 	});
 
 	it("should delegate unexpected errors to handleActionError", async () => {

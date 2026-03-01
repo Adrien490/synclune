@@ -14,10 +14,7 @@ export function useLightbox() {
 
 	const restoreFocus = () => {
 		requestAnimationFrame(() => {
-			if (
-				previousFocusRef.current &&
-				typeof previousFocusRef.current.focus === "function"
-			) {
+			if (previousFocusRef.current && typeof previousFocusRef.current.focus === "function") {
 				previousFocusRef.current.focus();
 				previousFocusRef.current = null;
 			}

@@ -17,9 +17,9 @@ export function useSignInEmail(options?: UseSignInEmailOptions) {
 				showSuccessToast: false,
 				showErrorToast: false,
 				onSuccess: options?.onSuccess,
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

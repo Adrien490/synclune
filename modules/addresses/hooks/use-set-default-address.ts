@@ -48,9 +48,9 @@ export const useSetDefaultAddress = (options?: UseSetDefaultAddressOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

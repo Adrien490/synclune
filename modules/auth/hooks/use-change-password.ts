@@ -26,9 +26,9 @@ export function useChangePassword(options?: UseChangePasswordOptions) {
 						}, NOTIFICATION_AUTO_DISMISS_DELAY_MS);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

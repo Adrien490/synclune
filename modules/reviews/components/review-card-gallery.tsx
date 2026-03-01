@@ -7,10 +7,9 @@ import { cn } from "@/shared/utils/cn";
 import { useLightbox } from "@/shared/hooks";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
-const MediaLightbox = dynamic(
-	() => import("@/modules/media/components/media-lightbox"),
-	{ ssr: false }
-);
+const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
+	ssr: false,
+});
 
 interface ReviewMedia {
 	id: string;
@@ -39,18 +38,18 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 
 	return (
 		<>
-			<div className="flex gap-2 flex-wrap">
+			<div className="flex flex-wrap gap-2">
 				{medias.map((media, index) => (
 					<button
 						key={media.id}
 						type="button"
 						onClick={() => openLightbox(index)}
 						aria-label={`Voir la photo ${index + 1} de l'avis`}
-						className="relative size-20 md:size-24 rounded-lg overflow-hidden group cursor-zoom-in focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+						className="group focus-visible:ring-ring relative size-20 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 md:size-24"
 					>
 						{/* Skeleton shimmer while loading (only when no blur placeholder) */}
 						{!loadedImages.has(media.id) && !media.blurDataUrl && (
-							<div className="absolute inset-0 animate-shimmer rounded-lg" />
+							<div className="animate-shimmer absolute inset-0 rounded-lg" />
 						)}
 						<Image
 							src={media.url}
@@ -59,7 +58,7 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 							onLoad={() => setLoadedImages((prev) => new Set(prev).add(media.id))}
 							className={cn(
 								"object-cover motion-safe:transition-[transform,opacity] motion-safe:duration-300 motion-safe:group-hover:scale-105",
-								loadedImages.has(media.id) ? "opacity-100" : "opacity-0"
+								loadedImages.has(media.id) ? "opacity-100" : "opacity-0",
 							)}
 							placeholder={media.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={media.blurDataUrl ?? undefined}

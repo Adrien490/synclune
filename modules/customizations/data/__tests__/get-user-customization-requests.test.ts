@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockGetSession,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockGetSession, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		customizationRequest: { findMany: vi.fn() },
 	},
@@ -144,7 +139,7 @@ describe("getUserCustomizationRequests", () => {
 		expect(mockPrisma.customizationRequest.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-42" }),
-			})
+			}),
 		);
 	});
 
@@ -157,7 +152,7 @@ describe("getUserCustomizationRequests", () => {
 		expect(mockPrisma.customizationRequest.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ deletedAt: null }),
-			})
+			}),
 		);
 	});
 
@@ -168,7 +163,7 @@ describe("getUserCustomizationRequests", () => {
 		await getUserCustomizationRequests();
 
 		expect(mockPrisma.customizationRequest.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ orderBy: { createdAt: "desc" } })
+			expect.objectContaining({ orderBy: { createdAt: "desc" } }),
 		);
 	});
 
@@ -248,7 +243,7 @@ describe("getUserCustomizationRequests", () => {
 					respondedAt: true,
 					inspirationProducts: expect.any(Object),
 				}),
-			})
+			}),
 		);
 	});
 });

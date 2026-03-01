@@ -9,9 +9,7 @@ interface UseToggleDiscountStatusOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useToggleDiscountStatus = (
-	options?: UseToggleDiscountStatusOptions
-) => {
+export const useToggleDiscountStatus = (options?: UseToggleDiscountStatusOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			toggleDiscountStatus,
@@ -26,9 +24,9 @@ export const useToggleDiscountStatus = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

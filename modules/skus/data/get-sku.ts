@@ -3,11 +3,7 @@ import { prisma } from "@/shared/lib/prisma";
 
 import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 import { getProductSkuSchema } from "../schemas/sku.schemas";
-import type {
-	GetProductSkuParams,
-	GetProductSkuReturn,
-	SkuWithImages,
-} from "../types/sku.types";
+import type { GetProductSkuParams, GetProductSkuReturn, SkuWithImages } from "../types/sku.types";
 import { cacheSkuDetail } from "../utils/cache.utils";
 
 // Re-export pour compatibilité
@@ -22,7 +18,7 @@ export type { GetProductSkuParams, GetProductSkuReturn, SkuWithImages } from "..
  * Protection: Nécessite un compte ADMIN
  */
 export async function getSkuByCode(
-	params: Partial<GetProductSkuParams>
+	params: Partial<GetProductSkuParams>,
 ): Promise<GetProductSkuReturn | null> {
 	const validation = getProductSkuSchema.safeParse(params ?? {});
 
@@ -42,9 +38,7 @@ export async function getSkuByCode(
 /**
  * Récupère le SKU depuis la DB avec cache
  */
-async function fetchProductSku(
-	params: GetProductSkuParams
-): Promise<GetProductSkuReturn | null> {
+async function fetchProductSku(params: GetProductSkuParams): Promise<GetProductSkuReturn | null> {
 	"use cache";
 	cacheSkuDetail(params.sku);
 

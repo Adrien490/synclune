@@ -58,14 +58,19 @@ export function ProductTypeRowActions({
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" className="h-11 w-11 p-0 motion-safe:active:scale-95 motion-safe:transition-transform" aria-label="Actions">
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+					aria-label="Actions"
+				>
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				{isSystem && (
 					<>
-						<DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+						<DropdownMenuLabel className="text-muted-foreground flex items-center gap-2 text-xs">
 							<ShieldCheck className="h-3 w-3" />
 							Type système protégé
 						</DropdownMenuLabel>

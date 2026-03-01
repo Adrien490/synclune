@@ -1,12 +1,8 @@
-import { createStore } from "zustand/vanilla"
+import { createStore } from "zustand/vanilla";
 
-import type {
-	SheetId,
-	SheetState,
-	SheetStore,
-} from "@/shared/types/store.types"
+import type { SheetId, SheetState, SheetStore } from "@/shared/types/store.types";
 
-export type { SheetId, SheetState, SheetActions, SheetStore } from "@/shared/types/store.types"
+export type { SheetId, SheetState, SheetActions, SheetStore } from "@/shared/types/store.types";
 
 export const defaultInitState: SheetState = {
 	openSheet: null,

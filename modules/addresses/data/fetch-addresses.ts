@@ -13,7 +13,7 @@ import { transformCompletionResult } from "../utils/address-transform.utils";
  * Cache: 4h fraîche, 1h revalidation, 30j expiration (profil 'reference')
  */
 export async function fetchAddresses(
-	params: ValidatedSearchAddressParams
+	params: ValidatedSearchAddressParams,
 ): Promise<SearchAddressReturn> {
 	"use cache";
 	cacheAddressSearch(params.text);
@@ -23,14 +23,12 @@ export async function fetchAddresses(
 	const response = await fetch(apiUrl, {
 		method: "GET",
 		headers: {
-			"Accept": "application/json",
+			Accept: "application/json",
 		},
 	});
 
 	if (!response.ok) {
-		throw new Error(
-			`Erreur API BAN: ${response.status} ${response.statusText}`
-		);
+		throw new Error(`Erreur API BAN: ${response.status} ${response.statusText}`);
 	}
 
 	const data: CompletionApiResponse = await response.json();

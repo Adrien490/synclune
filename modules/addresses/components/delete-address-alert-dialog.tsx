@@ -24,9 +24,7 @@ interface DeleteAddressData {
 }
 
 export function DeleteAddressAlertDialog() {
-	const deleteDialog = useAlertDialog<DeleteAddressData>(
-		DELETE_ADDRESS_DIALOG_ID
-	);
+	const deleteDialog = useAlertDialog<DeleteAddressData>(DELETE_ADDRESS_DIALOG_ID);
 
 	const { action, isPending } = useDeleteAddress({
 		onSuccess: () => {
@@ -44,11 +42,7 @@ export function DeleteAddressAlertDialog() {
 		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="addressId"
-						value={deleteDialog.data?.addressId ?? ""}
-					/>
+					<input type="hidden" name="addressId" value={deleteDialog.data?.addressId ?? ""} />
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Supprimer cette adresse ?</AlertDialogTitle>
@@ -59,10 +53,9 @@ export function DeleteAddressAlertDialog() {
 									<strong>&quot;{deleteDialog.data?.addressLabel}&quot;</strong> ?
 								</p>
 								{deleteDialog.data?.isDefault && (
-									<p className="text-orange-600 dark:text-orange-400 font-medium">
-										C'est votre adresse par défaut. Si vous en avez
-										d'autres, une nouvelle sera automatiquement
-										sélectionnée par défaut.
+									<p className="font-medium text-orange-600 dark:text-orange-400">
+										C'est votre adresse par défaut. Si vous en avez d'autres, une nouvelle sera
+										automatiquement sélectionnée par défaut.
 									</p>
 								)}
 								<p className="text-muted-foreground text-sm">
@@ -75,11 +68,7 @@ export function DeleteAddressAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-						>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>

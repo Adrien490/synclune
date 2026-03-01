@@ -26,9 +26,7 @@ interface UseBulkToggleDiscountStatusOptions {
  * };
  * ```
  */
-export function useBulkToggleDiscountStatus(
-	options?: UseBulkToggleDiscountStatusOptions
-) {
+export function useBulkToggleDiscountStatus(options?: UseBulkToggleDiscountStatusOptions) {
 	const [state, formAction, isFormPending] = useActionState(
 		withCallbacks(
 			bulkToggleDiscountStatus,
@@ -36,9 +34,9 @@ export function useBulkToggleDiscountStatus(
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

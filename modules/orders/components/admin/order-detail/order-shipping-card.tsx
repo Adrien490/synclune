@@ -3,12 +3,7 @@
 import { ExternalLink, Truck } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
@@ -47,14 +42,10 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 				{order.trackingNumber && (
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm text-muted-foreground">
-								Numéro de suivi
-							</p>
-							<p className="tabular-nums font-medium">
-								{order.trackingNumber}
-							</p>
+							<p className="text-muted-foreground text-sm">Numéro de suivi</p>
+							<p className="font-medium tabular-nums">{order.trackingNumber}</p>
 							{order.shippingCarrier && (
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									{getCarrierLabel(order.shippingCarrier as Carrier)}
 								</p>
 							)}
@@ -67,11 +58,7 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 							/>
 							{order.trackingUrl && (
 								<Button variant="outline" size="sm" asChild>
-									<a
-										href={order.trackingUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-									>
+									<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer">
 										<ExternalLink className="h-4 w-4" aria-hidden="true" />
 										Suivre
 										<span className="sr-only"> (s'ouvre dans un nouvel onglet)</span>
@@ -83,9 +70,7 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 				)}
 				{order.shippedAt && (
 					<div>
-						<p className="text-sm text-muted-foreground">
-							Date d'expédition
-						</p>
+						<p className="text-muted-foreground text-sm">Date d'expédition</p>
 						<p>
 							{format(order.shippedAt, "d MMMM yyyy 'à' HH'h'mm", {
 								locale: fr,
@@ -95,9 +80,7 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 				)}
 				{order.estimatedDelivery && (
 					<div>
-						<p className="text-sm text-muted-foreground">
-							Livraison estimée
-						</p>
+						<p className="text-muted-foreground text-sm">Livraison estimée</p>
 						<p>
 							{format(order.estimatedDelivery, "d MMMM yyyy", {
 								locale: fr,

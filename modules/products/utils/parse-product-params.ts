@@ -6,9 +6,7 @@ import { GET_PRODUCTS_SORT_FIELDS } from "../constants/product.constants";
  * Parse and validate product search parameters from URL
  * Returns safe, validated parameters with defaults for invalid values
  */
-export function parseProductParams(searchParams: {
-	[key: string]: string | string[] | undefined;
-}) {
+export function parseProductParams(searchParams: { [key: string]: string | string[] | undefined }) {
 	// Parse status - default to PUBLIC if not specified
 	const statusParam = Array.isArray(searchParams.status)
 		? searchParams.status[0]
@@ -35,7 +33,7 @@ export function parseProductParams(searchParams: {
 		sortBy: searchParamParsers.sortBy(
 			searchParams.sortBy,
 			GET_PRODUCTS_SORT_FIELDS,
-			"created-descending" as const
+			"created-descending" as const,
 		) as (typeof GET_PRODUCTS_SORT_FIELDS)[number],
 		search: searchParamParsers.search(searchParams.search),
 		status,

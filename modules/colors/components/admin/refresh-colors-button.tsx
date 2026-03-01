@@ -8,10 +8,7 @@ interface RefreshColorsButtonProps {
 	variant?: "outline" | "ghost" | "secondary";
 }
 
-export function RefreshColorsButton({
-	className,
-	variant = "outline",
-}: RefreshColorsButtonProps) {
+export function RefreshColorsButton({ className, variant = "outline" }: RefreshColorsButtonProps) {
 	const { refresh, isPending } = useRefreshColors();
 
 	return (

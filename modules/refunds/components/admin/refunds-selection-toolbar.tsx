@@ -11,9 +11,8 @@ export function RefundsSelectionToolbar() {
 
 	return (
 		<SelectionToolbar>
-			<span className="text-sm text-muted-foreground">
-				{selectedItems.length} remboursement{selectedItems.length > 1 ? "s" : ""}{" "}
-				sélectionné
+			<span className="text-muted-foreground text-sm">
+				{selectedItems.length} remboursement{selectedItems.length > 1 ? "s" : ""} sélectionné
 				{selectedItems.length > 1 ? "s" : ""}
 			</span>
 			<RefundSelectionActions />

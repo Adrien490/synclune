@@ -57,7 +57,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar>
 				<span data-testid="child">Hello</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		expect(screen.getByTestId("child")).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar aria-label="bar">
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		const el = screen.getByLabelText("bar");
@@ -78,7 +78,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar as="nav" aria-label="navigation">
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		const el = screen.getByLabelText("navigation");
@@ -89,7 +89,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar aria-label="test label">
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		expect(screen.getByLabelText("test label")).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar isHidden aria-label="bar">
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		const el = screen.getByLabelText("bar");
@@ -111,7 +111,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar aria-label="bar">
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		const el = screen.getByLabelText("bar");
@@ -123,7 +123,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar breakpointClass="lg:hidden" aria-label="bar">
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		const el = screen.getByLabelText("bar");
@@ -133,20 +133,20 @@ describe("BottomBar", () => {
 
 	it("uses custom zIndex", () => {
 		render(
-			<BottomBar zIndex="z-[75]" aria-label="bar">
+			<BottomBar zIndex="z-(--z-bar)" aria-label="bar">
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		const el = screen.getByLabelText("bar");
-		expect(el.className).toContain("z-[75]");
+		expect(el.className).toContain("z-(--z-bar)");
 	});
 
 	it("passes custom className", () => {
 		render(
 			<BottomBar className="custom-class" aria-label="bar">
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		const el = screen.getByLabelText("bar");
@@ -157,7 +157,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar height={64} enabled>
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		expect(useBottomBarHeightMock).toHaveBeenCalledWith(64, true);
@@ -167,7 +167,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar isHidden enabled>
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, false);
@@ -177,7 +177,7 @@ describe("BottomBar", () => {
 		render(
 			<BottomBar enabled={false}>
 				<span>content</span>
-			</BottomBar>
+			</BottomBar>,
 		);
 
 		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, false);
@@ -325,7 +325,7 @@ describe("useBottomBarHeight", () => {
 			<>
 				<Bar height={56} />
 				<Bar height={72} />
-			</>
+			</>,
 		);
 
 		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("72px");

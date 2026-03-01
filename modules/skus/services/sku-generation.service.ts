@@ -25,4 +25,3 @@ export function generateSkuCode(): string {
 
 	return `SKU-${timestamp}-${randomSuffix}`;
 }
-

@@ -7,10 +7,6 @@ export function RefreshMaterialsButton() {
 	const { refresh, isPending } = useRefreshMaterials();
 
 	return (
-		<RefreshButton
-			onRefresh={refresh}
-			isPending={isPending}
-			label="Rafraîchir les matériaux"
-		/>
+		<RefreshButton onRefresh={refresh} isPending={isPending} label="Rafraîchir les matériaux" />
 	);
 }

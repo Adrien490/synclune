@@ -7,32 +7,27 @@ import { PRODUCTION_URL } from "@/shared/constants/urls";
  * Extrait l'image du produit vedette (ou le premier produit PUBLIC) pour OpenGraph
  */
 function getFeaturedProductImage(
-	products: NonNullable<
-		Awaited<ReturnType<typeof getStorefrontCollectionBySlug>>
-	>["products"]
+	products: NonNullable<Awaited<ReturnType<typeof getStorefrontCollectionBySlug>>>["products"],
 ): { url: string; alt: string } | null {
 	// Chercher d'abord le produit featured PUBLIC
 	const featuredProduct = products.find(
-		(pc) => pc.isFeatured && pc.product.status === ProductStatus.PUBLIC
+		(pc) => pc.isFeatured && pc.product.status === ProductStatus.PUBLIC,
 	);
 
 	// Sinon prendre le premier produit PUBLIC
 	const productToUse =
-		featuredProduct ||
-		products.find((pc) => pc.product.status === ProductStatus.PUBLIC);
+		featuredProduct || products.find((pc) => pc.product.status === ProductStatus.PUBLIC);
 
 	if (!productToUse) return null;
 
 	// Trouver le SKU par defaut ou le premier SKU actif
 	const defaultSku =
-		productToUse.product.skus.find((s) => s.isDefault) ||
-		productToUse.product.skus[0];
+		productToUse.product.skus.find((s) => s.isDefault) || productToUse.product.skus[0];
 
 	if (!defaultSku) return null;
 
 	// Trouver l'image primaire ou la premiere image
-	const primaryImage =
-		defaultSku.images.find((i) => i.isPrimary) || defaultSku.images[0];
+	const primaryImage = defaultSku.images.find((i) => i.isPrimary) || defaultSku.images[0];
 
 	if (!primaryImage) return null;
 

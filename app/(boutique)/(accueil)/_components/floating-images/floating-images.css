@@ -1,6 +1,7 @@
 /* Hero idle float animations — only loaded on homepage */
 @keyframes hero-idle-float-1 {
-	0%, 100% {
+	0%,
+	100% {
 		transform: translate(0, 0) rotate(-8deg);
 	}
 	20% {
@@ -18,7 +19,8 @@
 }
 
 @keyframes hero-idle-float-2 {
-	0%, 100% {
+	0%,
+	100% {
 		transform: translate(0, 0) rotate(5deg);
 	}
 	20% {
@@ -36,7 +38,8 @@
 }
 
 @keyframes hero-idle-float-3 {
-	0%, 100% {
+	0%,
+	100% {
 		transform: translate(0, 0) rotate(3deg);
 	}
 	20% {
@@ -54,7 +57,8 @@
 }
 
 @keyframes hero-idle-float-4 {
-	0%, 100% {
+	0%,
+	100% {
 		transform: translate(0, 0) rotate(-4deg);
 	}
 	20% {

@@ -4,9 +4,7 @@ import { getFirstParam } from "@/shared/utils/params";
 
 type OrderFilters = NonNullable<GetOrdersParams["filters"]>;
 
-export const parseFilters = (
-	params: OrdersSearchParams
-): GetOrdersParams["filters"] => {
+export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filters"] => {
 	let status: OrderFilters["status"] = undefined;
 	let paymentStatus: OrderFilters["paymentStatus"] = undefined;
 	let totalMin: number | undefined = undefined;
@@ -26,8 +24,7 @@ export const parseFilters = (
 						status = filterValue as OrderFilters["status"];
 						break;
 					case "paymentStatus":
-						paymentStatus =
-							filterValue as OrderFilters["paymentStatus"];
+						paymentStatus = filterValue as OrderFilters["paymentStatus"];
 						break;
 					case "totalMin":
 						totalMin = Number(filterValue) * 100; // Convert euros to cents

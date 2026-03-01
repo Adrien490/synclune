@@ -57,9 +57,7 @@ export function WishlistButton({
 			? `Ajouter ${productTitle} à la wishlist`
 			: "Ajouter à la wishlist";
 
-	const tooltipText = isInWishlist
-		? "Retirer des favoris"
-		: "Enregistrer dans mes favoris";
+	const tooltipText = isInWishlist ? "Retirer des favoris" : "Enregistrer dans mes favoris";
 
 	return (
 		<form action={action} className={className}>
@@ -74,7 +72,7 @@ export function WishlistButton({
 					buttonSize,
 					"rounded-full",
 					"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
-					"motion-safe:transition-all motion-safe:duration-200"
+					"motion-safe:transition-all motion-safe:duration-200",
 				)}
 				aria-label={ariaLabel}
 				aria-pressed={isInWishlist}
@@ -94,7 +92,7 @@ export function WishlistButton({
 						isInWishlist && [
 							"drop-shadow-[0_0_6px_rgba(215,168,178,0.6)]",
 							"motion-safe:animate-[wishlist-pop_0.2s_cubic-bezier(0.34,1.56,0.64,1)]",
-						]
+						],
 					)}
 				/>
 			</Button>

@@ -1,20 +1,21 @@
- L'audit complet est disponible dans le fichier plan. Voici les sources Baymard principales utilisées:
+L'audit complet est disponible dans le fichier plan. Voici les sources Baymard principales utilisées:
 
-  Sources:
-  - https://baymard.com/blog/jewelry-and-watches-2025-benchmark
-  - https://baymard.com/blog/current-state-of-checkout-ux
-  - https://baymard.com/blog/current-state-ecommerce-product-page-ux
-  - https://baymard.com/research/ecommerce-product-lists
-  - https://baymard.com/lists/cart-abandonment-rate
-  - https://baymard.com/blog/truncating-product-gallery-thumbnails
-  - https://baymard.com/blog/user-ratings-distribution-summary
-  - https://baymard.com/blog/autocomplete-design
-  - https://baymard.com/blog/ecommerce-navigation-best-practice
-  - https://baymard.com/research/mcommerce-usability
+Sources:
+
+- https://baymard.com/blog/jewelry-and-watches-2025-benchmark
+- https://baymard.com/blog/current-state-of-checkout-ux
+- https://baymard.com/blog/current-state-ecommerce-product-page-ux
+- https://baymard.com/research/ecommerce-product-lists
+- https://baymard.com/lists/cart-abandonment-rate
+- https://baymard.com/blog/truncating-product-gallery-thumbnails
+- https://baymard.com/blog/user-ratings-distribution-summary
+- https://baymard.com/blog/autocomplete-design
+- https://baymard.com/blog/ecommerce-navigation-best-practice
+- https://baymard.com/research/mcommerce-usability
 
 ⏺ User approved Claude's plan
-  ⎿  Plan saved to: ~/.claude/plans/idempotent-humming-diffie.md · /plan to edit
-     Audit UX Baymard Institute - Synclune E-commerce Bijoux
+⎿ Plan saved to: ~/.claude/plans/idempotent-humming-diffie.md · /plan to edit
+Audit UX Baymard Institute - Synclune E-commerce Bijoux
 
      Sources Baymard Analysées
 

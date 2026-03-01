@@ -45,18 +45,22 @@ describe("buildDiscountWhereClause", () => {
 
 	describe("filter by type", () => {
 		it("should add a type filter when filters.type is provided", () => {
-			const result = buildDiscountWhereClause(params({
-				filters: { type: "PERCENTAGE" },
-			}));
+			const result = buildDiscountWhereClause(
+				params({
+					filters: { type: "PERCENTAGE" },
+				}),
+			);
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ type: "PERCENTAGE" });
 		});
 
 		it("should add a FIXED_AMOUNT type filter correctly", () => {
-			const result = buildDiscountWhereClause(params({
-				filters: { type: "FIXED_AMOUNT" },
-			}));
+			const result = buildDiscountWhereClause(
+				params({
+					filters: { type: "FIXED_AMOUNT" },
+				}),
+			);
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ type: "FIXED_AMOUNT" });
@@ -65,18 +69,22 @@ describe("buildDiscountWhereClause", () => {
 
 	describe("filter by isActive", () => {
 		it("should add an isActive true condition when filters.isActive is true", () => {
-			const result = buildDiscountWhereClause(params({
-				filters: { isActive: true },
-			}));
+			const result = buildDiscountWhereClause(
+				params({
+					filters: { isActive: true },
+				}),
+			);
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ isActive: true });
 		});
 
 		it("should add an isActive false condition when filters.isActive is false", () => {
-			const result = buildDiscountWhereClause(params({
-				filters: { isActive: false },
-			}));
+			const result = buildDiscountWhereClause(
+				params({
+					filters: { isActive: false },
+				}),
+			);
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ isActive: false });
@@ -91,18 +99,22 @@ describe("buildDiscountWhereClause", () => {
 
 	describe("filter by hasUsages", () => {
 		it("should add a usageCount gt 0 condition when filters.hasUsages is true", () => {
-			const result = buildDiscountWhereClause(params({
-				filters: { hasUsages: true },
-			}));
+			const result = buildDiscountWhereClause(
+				params({
+					filters: { hasUsages: true },
+				}),
+			);
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ usageCount: { gt: 0 } });
 		});
 
 		it("should add a usageCount equals 0 condition when filters.hasUsages is false", () => {
-			const result = buildDiscountWhereClause(params({
-				filters: { hasUsages: false },
-			}));
+			const result = buildDiscountWhereClause(
+				params({
+					filters: { hasUsages: false },
+				}),
+			);
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ usageCount: { equals: 0 } });
@@ -117,13 +129,15 @@ describe("buildDiscountWhereClause", () => {
 
 	describe("multiple filters combined", () => {
 		it("should include all active filters in AND when multiple filters are provided", () => {
-			const result = buildDiscountWhereClause(params({
-				filters: {
-					type: "PERCENTAGE",
-					isActive: true,
-					hasUsages: true,
-				},
-			}));
+			const result = buildDiscountWhereClause(
+				params({
+					filters: {
+						type: "PERCENTAGE",
+						isActive: true,
+						hasUsages: true,
+					},
+				}),
+			);
 
 			expect(result.deletedAt).toBeNull();
 			expect(result.AND).toHaveLength(3);
@@ -135,14 +149,16 @@ describe("buildDiscountWhereClause", () => {
 
 	describe("search combined with filters", () => {
 		it("should include both search and all filter conditions in AND", () => {
-			const result = buildDiscountWhereClause(params({
-				search: "ETE",
-				filters: {
-					type: "FIXED_AMOUNT",
-					isActive: false,
-					hasUsages: false,
-				},
-			}));
+			const result = buildDiscountWhereClause(
+				params({
+					search: "ETE",
+					filters: {
+						type: "FIXED_AMOUNT",
+						isActive: false,
+						hasUsages: false,
+					},
+				}),
+			);
 
 			expect(result.deletedAt).toBeNull();
 			expect(result.AND).toHaveLength(4);

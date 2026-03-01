@@ -12,9 +12,9 @@
  * @returns Moyenne arrondie à 2 décimales
  */
 export function calculateAverageRating(ratings: number[]): number {
-	if (ratings.length === 0) return 0
-	const sum = ratings.reduce((acc, rating) => acc + rating, 0)
-	return Math.round((sum / ratings.length) * 100) / 100
+	if (ratings.length === 0) return 0;
+	const sum = ratings.reduce((acc, rating) => acc + rating, 0);
+	return Math.round((sum / ratings.length) * 100) / 100;
 }
 
 /**
@@ -29,7 +29,7 @@ export function formatRating(rating: number, locale: string = "fr-FR"): string {
 	return rating.toLocaleString(locale, {
 		minimumFractionDigits: 1,
 		maximumFractionDigits: 1,
-	})
+	});
 }
 
 /**
@@ -41,7 +41,7 @@ const RATING_LABELS: Record<number, string> = {
 	3: "Bien",
 	2: "Passable",
 	1: "Mauvais",
-}
+};
 
 /**
  * Détermine le label textuel pour une note
@@ -50,5 +50,5 @@ const RATING_LABELS: Record<number, string> = {
  * @returns Label descriptif
  */
 export function getRatingLabel(rating: number): string {
-	return RATING_LABELS[rating] ?? ""
+	return RATING_LABELS[rating] ?? "";
 }

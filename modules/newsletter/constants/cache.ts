@@ -17,7 +17,4 @@ export const NEWSLETTER_CACHE_TAGS = {
 } as const;
 
 // Re-exports pour retrocompatibilite
-export {
-	cacheNewsletterSubscribers,
-	getNewsletterInvalidationTags,
-} from "../utils/cache.utils";
+export { cacheNewsletterSubscribers, getNewsletterInvalidationTags } from "../utils/cache.utils";

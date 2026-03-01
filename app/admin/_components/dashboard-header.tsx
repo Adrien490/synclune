@@ -5,11 +5,7 @@ import { DashboardBreadcrumb } from "@/app/admin/_components/dashboard-breadcrum
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 
@@ -28,26 +24,26 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ user }: DashboardHeaderProps) {
 	return (
 		<header
-			className="relative hidden md:flex h-14 md:h-16 shrink-0 items-center gap-2 justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-border"
+			className="border-border relative hidden h-14 shrink-0 items-center justify-between gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:flex md:h-16"
 			role="banner"
 			aria-label="En-tête du tableau de bord"
 		>
-			<div className="flex items-center gap-2 px-4 flex-1 min-w-0">
+			<div className="flex min-w-0 flex-1 items-center gap-2 px-4">
 				{/* Toggle sidebar avec raccourci clavier - caché sur mobile */}
 				<Tooltip>
 					<TooltipTrigger asChild>
-						<SidebarTrigger className="-ml-1 shrink-0 hidden md:flex" />
+						<SidebarTrigger className="-ml-1 hidden shrink-0 md:flex" />
 					</TooltipTrigger>
 					<TooltipContent side="right" sideOffset={8}>
 						<span>Basculer le menu</span>
-						<kbd className="ml-2 inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+						<kbd className="bg-muted text-muted-foreground ml-2 inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-xs font-medium">
 							<span className="text-xs">⌘</span>B
 						</kbd>
 					</TooltipContent>
 				</Tooltip>
 				<Separator
 					orientation="vertical"
-					className="mr-2 h-4 data-[orientation=vertical]:h-4 shrink-0 hidden md:block"
+					className="mr-2 hidden h-4 shrink-0 data-[orientation=vertical]:h-4 md:block"
 				/>
 				{/* Breadcrumb dynamique - amélioré pour mobile */}
 				<div className="min-w-0 flex-1">
@@ -55,16 +51,11 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 				</div>
 			</div>
 
-			<div className="flex items-center gap-2 px-4 shrink-0 justify-end">
+			<div className="flex shrink-0 items-center justify-end gap-2 px-4">
 				{/* Bouton Voir le site */}
 				<Tooltip>
 					<TooltipTrigger asChild>
-						<Button
-							variant="outline"
-							size="sm"
-							className="h-11 gap-2"
-							asChild
-						>
+						<Button variant="outline" size="sm" className="h-11 gap-2" asChild>
 							<Link href="/" target="_blank" rel="noopener noreferrer">
 								<ExternalLink className="h-4 w-4" aria-hidden="true" />
 								<span className="hidden sm:inline">Voir le site</span>

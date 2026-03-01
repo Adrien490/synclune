@@ -15,9 +15,7 @@ interface UseBulkArchiveCollectionsOptions {
  * Utilise useActionState avec withCallbacks pour la gestion du toast
  * et useTransition pour la methode handle
  */
-export const useBulkArchiveCollections = (
-	options?: UseBulkArchiveCollectionsOptions
-) => {
+export const useBulkArchiveCollections = (options?: UseBulkArchiveCollectionsOptions) => {
 	const [state, formAction, isFormPending] = useActionState(
 		withCallbacks(
 			bulkArchiveCollections,
@@ -32,9 +30,9 @@ export const useBulkArchiveCollections = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

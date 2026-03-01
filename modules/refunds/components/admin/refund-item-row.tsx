@@ -33,14 +33,12 @@ export function RefundItemRow({
 	const restock = itemState?.restock ?? true;
 	const imageUrl = orderItem.skuImageUrl || orderItem.productImageUrl;
 
-	const variantParts = [
-		orderItem.skuColor,
-		orderItem.skuMaterial,
-		orderItem.skuSize,
-	].filter(Boolean);
+	const variantParts = [orderItem.skuColor, orderItem.skuMaterial, orderItem.skuSize].filter(
+		Boolean,
+	);
 
 	return (
-		<div className="flex items-start gap-4 p-4 border rounded-lg">
+		<div className="flex items-start gap-4 rounded-lg border p-4">
 			<Checkbox
 				id={`item-${orderItem.id}`}
 				checked={isSelected}
@@ -49,7 +47,7 @@ export function RefundItemRow({
 			/>
 
 			{imageUrl && (
-				<div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted">
+				<div className="bg-muted relative h-16 w-16 shrink-0 overflow-hidden rounded-md">
 					<Image
 						src={imageUrl}
 						alt={orderItem.productTitle}
@@ -60,32 +58,27 @@ export function RefundItemRow({
 				</div>
 			)}
 
-			<div className="flex-1 min-w-0">
-				<Label
-					htmlFor={`item-${orderItem.id}`}
-					className="font-medium text-sm cursor-pointer"
-				>
+			<div className="min-w-0 flex-1">
+				<Label htmlFor={`item-${orderItem.id}`} className="cursor-pointer text-sm font-medium">
 					{orderItem.productTitle}
 				</Label>
 				{variantParts.length > 0 && (
-					<p className="text-xs text-muted-foreground mt-0.5">
-						{variantParts.join(" / ")}
-					</p>
+					<p className="text-muted-foreground mt-0.5 text-xs">{variantParts.join(" / ")}</p>
 				)}
-				<p className="text-sm mt-1">
+				<p className="mt-1 text-sm">
 					{formatEuro(orderItem.price)} x {orderItem.quantity}
 				</p>
 				{availableQty < orderItem.quantity && (
-					<p className="text-xs text-warning-foreground mt-1">
+					<p className="text-warning-foreground mt-1 text-xs">
 						{orderItem.quantity - availableQty} déjà remboursé(s)
 					</p>
 				)}
 			</div>
 
 			{isSelected && availableQty > 0 && (
-				<div className="flex flex-col gap-2 items-end">
+				<div className="flex flex-col items-end gap-2">
 					<div className="flex items-center gap-2">
-						<Label htmlFor={`qty-${orderItem.id}`} className="text-xs text-muted-foreground">
+						<Label htmlFor={`qty-${orderItem.id}`} className="text-muted-foreground text-xs">
 							Quantité
 						</Label>
 						<Input
@@ -95,14 +88,17 @@ export function RefundItemRow({
 							max={availableQty}
 							value={quantity}
 							onChange={(e) =>
-								onQuantityChange(orderItem.id, Math.max(1, Math.min(availableQty, Number(e.target.value))))
+								onQuantityChange(
+									orderItem.id,
+									Math.max(1, Math.min(availableQty, Number(e.target.value))),
+								)
 							}
-							className="w-16 h-8 text-center"
+							className="h-8 w-16 text-center"
 							disabled={isPending}
 						/>
 					</div>
 					<div className="flex items-center gap-2">
-						<Label htmlFor={`restock-${orderItem.id}`} className="text-xs text-muted-foreground">
+						<Label htmlFor={`restock-${orderItem.id}`} className="text-muted-foreground text-xs">
 							Remettre en stock
 						</Label>
 						<Switch

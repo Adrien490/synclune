@@ -12,18 +12,18 @@ export default function CustomizationDetailLoading() {
 	return (
 		<>
 			{/* Header skeleton */}
-			<Skeleton className="h-8 w-48 mb-4" />
+			<Skeleton className="mb-4 h-8 w-48" />
 
 			<div className="mb-6">
 				<Button variant="ghost" size="sm" disabled>
-					<ArrowLeft className="h-4 w-4 mr-2" />
+					<ArrowLeft className="mr-2 h-4 w-4" />
 					Retour à la liste
 				</Button>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				{/* Colonne principale */}
-				<div className="lg:col-span-2 space-y-6">
+				<div className="space-y-6 lg:col-span-2">
 					{/* Informations client */}
 					<Card>
 						<CardHeader>
@@ -33,22 +33,22 @@ export default function CustomizationDetailLoading() {
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								<div>
-									<p className="text-sm text-muted-foreground">Nom complet</p>
-									<Skeleton className="h-5 w-32 mt-1" />
+									<p className="text-muted-foreground text-sm">Nom complet</p>
+									<Skeleton className="mt-1 h-5 w-32" />
 								</div>
 								<div>
-									<p className="text-sm text-muted-foreground">Email</p>
-									<Skeleton className="h-5 w-48 mt-1" />
+									<p className="text-muted-foreground text-sm">Email</p>
+									<Skeleton className="mt-1 h-5 w-48" />
 								</div>
 								<div>
-									<p className="text-sm text-muted-foreground">Téléphone</p>
-									<Skeleton className="h-5 w-28 mt-1" />
+									<p className="text-muted-foreground text-sm">Téléphone</p>
+									<Skeleton className="mt-1 h-5 w-28" />
 								</div>
 								<div>
-									<p className="text-sm text-muted-foreground">Type de produit</p>
-									<Skeleton className="h-5 w-24 mt-1" />
+									<p className="text-muted-foreground text-sm">Type de produit</p>
+									<Skeleton className="mt-1 h-5 w-24" />
 								</div>
 							</div>
 						</CardContent>
@@ -79,12 +79,9 @@ export default function CustomizationDetailLoading() {
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+							<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
 								{Array.from({ length: 3 }).map((_, i) => (
-									<div
-										key={i}
-										className="rounded-lg border bg-card overflow-hidden"
-									>
+									<div key={i} className="bg-card overflow-hidden rounded-lg border">
 										<Skeleton className="aspect-square w-full" />
 										<div className="p-2">
 											<Skeleton className="h-4 w-24" />

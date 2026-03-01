@@ -24,9 +24,9 @@ export const useBulkSuspendUsers = (options?: UseBulkSuspendUsersOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

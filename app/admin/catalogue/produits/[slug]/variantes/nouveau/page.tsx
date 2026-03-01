@@ -34,10 +34,7 @@ export default async function NewProductVariantPage({
 	}
 
 	// Récupérer les options avec cache des modules (sans pagination)
-	const [colors, materials] = await Promise.all([
-		getColorOptions(),
-		getMaterialOptions(),
-	]);
+	const [colors, materials] = await Promise.all([getColorOptions(), getMaterialOptions()]);
 
 	return (
 		<div className="space-y-6">
@@ -72,7 +69,7 @@ export default async function NewProductVariantPage({
 
 			<div>
 				<h2 className="text-xl font-semibold">Nouvelle variante</h2>
-				<p className="text-sm text-muted-foreground mt-1">
+				<p className="text-muted-foreground mt-1 text-sm">
 					Créez une nouvelle variante pour "{product.title}"
 				</p>
 			</div>

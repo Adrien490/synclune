@@ -41,9 +41,9 @@ export function useDeleteAccount(options?: UseDeleteAccountOptions) {
 					router.push("/");
 					router.refresh();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

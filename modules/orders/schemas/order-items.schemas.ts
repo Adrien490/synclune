@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -33,19 +30,13 @@ export const orderItemFiltersSchema = z
 			.min(new Date("2020-01-01"), "Date too old")
 			.max(new Date(), "Date cannot be in the future")
 			.optional(),
-		createdBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
+		createdBefore: z.coerce.date().min(new Date("2020-01-01"), "Date too old").optional(),
 		updatedAfter: z.coerce
 			.date()
 			.min(new Date("2020-01-01"), "Date too old")
 			.max(new Date(), "Date cannot be in the future")
 			.optional(),
-		updatedBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
+		updatedBefore: z.coerce.date().min(new Date("2020-01-01"), "Date too old").optional(),
 		hasCustomizations: z.boolean().optional(),
 	})
 	.refine((data) => {
@@ -79,9 +70,7 @@ export const orderItemFiltersSchema = z
 
 export const orderItemSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
-		GET_ORDER_ITEMS_SORT_FIELDS.includes(
-			value as (typeof GET_ORDER_ITEMS_SORT_FIELDS)[number]
-		)
+		GET_ORDER_ITEMS_SORT_FIELDS.includes(value as (typeof GET_ORDER_ITEMS_SORT_FIELDS)[number])
 		? value
 		: GET_ORDER_ITEMS_DEFAULT_SORT_BY;
 }, z.enum(GET_ORDER_ITEMS_SORT_FIELDS));
@@ -93,7 +82,10 @@ export const orderItemSortBySchema = z.preprocess((value) => {
 export const getOrderItemsSchema = z.object({
 	cursor: cursorSchema,
 	direction: directionSchema,
-	perPage: createPerPageSchema(GET_ORDER_ITEMS_DEFAULT_PER_PAGE, GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE),
+	perPage: createPerPageSchema(
+		GET_ORDER_ITEMS_DEFAULT_PER_PAGE,
+		GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE,
+	),
 	sortBy: orderItemSortBySchema.default(GET_ORDER_ITEMS_DEFAULT_SORT_BY),
 	sortOrder: z.enum(["asc", "desc"]).default(GET_ORDER_ITEMS_DEFAULT_SORT_ORDER),
 	filters: orderItemFiltersSchema.default({}),

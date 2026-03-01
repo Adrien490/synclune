@@ -6,33 +6,50 @@ import { Button } from "@/shared/components/ui/button";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProducts } from "@/modules/products/data/get-products";
-import { GET_PRODUCTS_SORT_FIELDS, ADMIN_PRODUCTS_SORT_LABELS } from "@/modules/products/constants/product.constants";
+import {
+	GET_PRODUCTS_SORT_FIELDS,
+	ADMIN_PRODUCTS_SORT_LABELS,
+} from "@/modules/products/constants/product.constants";
 import { parseProductParams } from "@/modules/products/utils/parse-product-params";
 import Link from "next/link";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const ArchiveProductAlertDialog = dynamic(
-	() => import("@/modules/products/components/admin/archive-product-alert-dialog").then((mod) => mod.ArchiveProductAlertDialog)
+const ArchiveProductAlertDialog = dynamic(() =>
+	import("@/modules/products/components/admin/archive-product-alert-dialog").then(
+		(mod) => mod.ArchiveProductAlertDialog,
+	),
 );
-const BulkArchiveProductsAlertDialog = dynamic(
-	() => import("@/modules/products/components/admin/bulk-archive-products-alert-dialog").then((mod) => mod.BulkArchiveProductsAlertDialog)
+const BulkArchiveProductsAlertDialog = dynamic(() =>
+	import("@/modules/products/components/admin/bulk-archive-products-alert-dialog").then(
+		(mod) => mod.BulkArchiveProductsAlertDialog,
+	),
 );
-const BulkDeleteProductsAlertDialog = dynamic(
-	() => import("@/modules/products/components/admin/bulk-delete-products-alert-dialog").then((mod) => mod.BulkDeleteProductsAlertDialog)
+const BulkDeleteProductsAlertDialog = dynamic(() =>
+	import("@/modules/products/components/admin/bulk-delete-products-alert-dialog").then(
+		(mod) => mod.BulkDeleteProductsAlertDialog,
+	),
 );
-const ChangeProductStatusAlertDialog = dynamic(
-	() => import("@/modules/products/components/admin/change-product-status-alert-dialog").then((mod) => mod.ChangeProductStatusAlertDialog)
+const ChangeProductStatusAlertDialog = dynamic(() =>
+	import("@/modules/products/components/admin/change-product-status-alert-dialog").then(
+		(mod) => mod.ChangeProductStatusAlertDialog,
+	),
 );
-const DeleteProductAlertDialog = dynamic(
-	() => import("@/modules/products/components/admin/delete-product-alert-dialog").then((mod) => mod.DeleteProductAlertDialog)
+const DeleteProductAlertDialog = dynamic(() =>
+	import("@/modules/products/components/admin/delete-product-alert-dialog").then(
+		(mod) => mod.DeleteProductAlertDialog,
+	),
 );
-const DuplicateProductAlertDialog = dynamic(
-	() => import("@/modules/products/components/admin/duplicate-product-alert-dialog").then((mod) => mod.DuplicateProductAlertDialog)
+const DuplicateProductAlertDialog = dynamic(() =>
+	import("@/modules/products/components/admin/duplicate-product-alert-dialog").then(
+		(mod) => mod.DuplicateProductAlertDialog,
+	),
 );
-const ManageCollectionsDialog = dynamic(
-	() => import("@/modules/products/components/admin/manage-collections-dialog").then((mod) => mod.ManageCollectionsDialog)
+const ManageCollectionsDialog = dynamic(() =>
+	import("@/modules/products/components/admin/manage-collections-dialog").then(
+		(mod) => mod.ManageCollectionsDialog,
+	),
 );
 import { ProductStatusNavigation } from "@/modules/products/components/admin/product-status-navigation";
 import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
@@ -82,14 +99,11 @@ type ProductsAdminPageProps = {
 	searchParams: Promise<ProductsSearchParams>;
 };
 
-export default async function ProductsAdminPage({
-	searchParams,
-}: ProductsAdminPageProps) {
+export default async function ProductsAdminPage({ searchParams }: ProductsAdminPageProps) {
 	const params = await searchParams;
 
 	// Parse and validate all search parameters safely
-	const { cursor, direction, perPage, sortBy, search, status } =
-		parseProductParams(params);
+	const { cursor, direction, perPage, sortBy, search, status } = parseProductParams(params);
 
 	const productsPromise = getProducts({
 		cursor,
@@ -134,24 +148,21 @@ export default async function ProductsAdminPage({
 				title="Produits"
 				actions={
 					<Button asChild>
-						<Link href="/admin/catalogue/produits/nouveau">
-							Nouveau produit
-						</Link>
+						<Link href="/admin/catalogue/produits/nouveau">Nouveau produit</Link>
 					</Button>
 				}
 			/>
 
 			<div className="space-y-6">
 				{/* Onglets de statut */}
-				<ProductStatusNavigation
-					currentStatus={status}
-					searchParams={params}
-				/>
+				<ProductStatusNavigation currentStatus={status} searchParams={params} />
 
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des produits"
 					search={
-						<SearchInput mode="live" size="sm"
+						<SearchInput
+							mode="live"
+							size="sm"
 							paramName="search"
 							placeholder="Rechercher par titre, type..."
 							ariaLabel="Rechercher un produit par titre ou type"
@@ -171,18 +182,12 @@ export default async function ProductsAdminPage({
 						className="w-full sm:min-w-45"
 						noPrefix
 					/>
-					<ProductsFilterSheet
-						productTypes={productTypes}
-						collections={collections}
-					/>
+					<ProductsFilterSheet productTypes={productTypes} collections={collections} />
 					<RefreshProductsButton />
 				</Toolbar>
 
 				{/* Badges de filtres actifs */}
-				<ProductsFilterBadges
-					productTypes={productTypes}
-					collections={collections}
-				/>
+				<ProductsFilterBadges productTypes={productTypes} collections={collections} />
 
 				<Suspense fallback={<ProductsDataTableSkeleton />}>
 					<ProductsDataTable productsPromise={productsPromise} perPage={perPage} />

@@ -13,7 +13,7 @@ import type { CustomizationRequestDetail } from "../types/customization.types";
  * Réservé aux administrateurs (defense in depth)
  */
 export async function getCustomizationRequest(
-	id: string
+	id: string,
 ): Promise<CustomizationRequestDetail | null> {
 	const admin = await isAdmin();
 	if (!admin) return null;
@@ -25,9 +25,7 @@ export async function getCustomizationRequest(
 // FETCH FUNCTION (CACHED)
 // ============================================================================
 
-async function fetchCustomizationRequest(
-	id: string
-): Promise<CustomizationRequestDetail | null> {
+async function fetchCustomizationRequest(id: string): Promise<CustomizationRequestDetail | null> {
 	"use cache";
 	cacheCustomizationDetail(id);
 

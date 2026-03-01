@@ -1,17 +1,14 @@
-import { isRedirectError } from "next/dist/client/components/redirect-error"
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
-import { ActionStatus } from "@/shared/types/server-action"
-import type { ActionState } from "@/shared/types/server-action"
-import type { Callbacks } from "@/shared/types/callback.types"
+import { ActionStatus } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
+import type { Callbacks } from "@/shared/types/callback.types";
 
-export type { Callbacks } from "@/shared/types/callback.types"
+export type { Callbacks } from "@/shared/types/callback.types";
 
-export const withCallbacks = <
-	T extends ActionState | unknown = ActionState,
-	R = unknown,
->(
+export const withCallbacks = <T extends ActionState | unknown = ActionState, R = unknown>(
 	fn: (prev: T | undefined, formData: FormData) => Promise<T>,
-	callbacks: Callbacks<T, R>
+	callbacks: Callbacks<T, R>,
 ): ((prev: T | undefined, formData: FormData) => Promise<T>) => {
 	return async (prev: T | undefined, formData: FormData) => {
 		// Appel du callback de démarrage et récupération de la référence (pour les toasts par exemple)
@@ -70,10 +67,7 @@ export const withCallbacks = <
 			// Créer un ActionState d'erreur pour les exceptions non catchées
 			const errorResult = {
 				status: ActionStatus.ERROR,
-				message:
-					error instanceof Error
-						? error.message
-						: "Une erreur inattendue est survenue",
+				message: error instanceof Error ? error.message : "Une erreur inattendue est survenue",
 			} as T;
 
 			// Appeler le callback d'erreur

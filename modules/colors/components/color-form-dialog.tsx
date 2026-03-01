@@ -58,9 +58,9 @@ export function ColorFormDialog() {
 					close();
 					form.reset();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	// Update action
@@ -71,9 +71,9 @@ export function ColorFormDialog() {
 				onSuccess: () => {
 					close();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const isPending = isCreatePending || isUpdatePending;
@@ -115,14 +115,8 @@ export function ColorFormDialog() {
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				<form
-					action={action}
-					className="space-y-6"
-					onSubmit={() => form.handleSubmit()}
-				>
-					{isUpdateMode && color && (
-						<input type="hidden" name="id" value={color.id} />
-					)}
+				<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+					{isUpdateMode && color && <input type="hidden" name="id" value={color.id} />}
 
 					<RequiredFieldsNote />
 
@@ -202,11 +196,7 @@ export function ColorFormDialog() {
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">
-									{isPending
-										? "Enregistrement..."
-										: isUpdateMode
-											? "Enregistrer"
-											: "Créer"}
+									{isPending ? "Enregistrement..." : isUpdateMode ? "Enregistrer" : "Créer"}
 								</Button>
 							)}
 						</form.Subscribe>

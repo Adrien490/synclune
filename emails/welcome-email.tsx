@@ -5,9 +5,10 @@ import { EmailLayout } from "./_components/email-layout";
 interface WelcomeEmailProps {
 	userName: string;
 	shopUrl: string;
+	newsletterUrl: string;
 }
 
-export const WelcomeEmail = ({ userName, shopUrl }: WelcomeEmailProps) => (
+export const WelcomeEmail = ({ userName, shopUrl, newsletterUrl }: WelcomeEmailProps) => (
 	<EmailLayout preview="Bienvenue chez Synclune">
 		{/* Titre */}
 		<Section style={{ marginBottom: "24px" }}>
@@ -26,9 +27,22 @@ export const WelcomeEmail = ({ userName, shopUrl }: WelcomeEmailProps) => (
 		</Section>
 
 		{/* CTA */}
-		<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+		<Section style={{ marginBottom: "24px", textAlign: "center" }}>
 			<Button href={shopUrl} style={EMAIL_STYLES.button.primary}>
 				Découvrir les créations
+			</Button>
+		</Section>
+
+		{/* Newsletter CTA */}
+		<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "32px", textAlign: "center" }}>
+			<Text style={{ ...EMAIL_STYLES.text.body, fontWeight: "600", marginBottom: "8px" }}>
+				Envie de -10% sur votre première commande ?
+			</Text>
+			<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "16px" }}>
+				Inscrivez-vous à la newsletter pour recevoir votre code promo et nos dernières nouveautés.
+			</Text>
+			<Button href={newsletterUrl} style={EMAIL_STYLES.button.outline}>
+				S'inscrire à la newsletter
 			</Button>
 		</Section>
 	</EmailLayout>
@@ -37,6 +51,7 @@ export const WelcomeEmail = ({ userName, shopUrl }: WelcomeEmailProps) => (
 WelcomeEmail.PreviewProps = {
 	userName: "Marie",
 	shopUrl: "https://synclune.fr/produits",
+	newsletterUrl: "https://synclune.fr/#newsletter",
 } as WelcomeEmailProps;
 
 export default WelcomeEmail;

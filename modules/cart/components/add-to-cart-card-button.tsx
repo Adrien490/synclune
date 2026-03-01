@@ -1,6 +1,7 @@
 "use client";
 
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
+import { dispatchFlyToCart } from "@/modules/cart/lib/fly-to-cart";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import type { Product } from "@/modules/products/types/product.types";
 import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
@@ -53,15 +54,17 @@ export function AddToCartCardButton({
 	const hasMultipleVariants = activeSkusCount > 1;
 
 	// Handler de clic : ouvre le dialog si plusieurs variantes, sinon soumet le formulaire
-	const handleClick = (e: React.MouseEvent) => {
+	const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
 		e.stopPropagation();
 
 		if (hasMultipleVariants) {
 			// Plusieurs variantes : ouvrir le dialog de sélection
 			e.preventDefault();
 			openSkuSelector({ product, preselectedColor });
+		} else {
+			// Single SKU: trigger fly-to-cart animation
+			dispatchFlyToCart(e.currentTarget);
 		}
-		// Un seul SKU : laisser le formulaire se soumettre normalement
 	};
 
 	return (
@@ -74,12 +77,12 @@ export function AddToCartCardButton({
 					: // Icon variant: position absolue overlay
 						cn(
 							"absolute z-30",
-							"bottom-2.5 right-2.5",
-							"sm:bottom-0 sm:right-0 sm:inset-x-0",
-							"opacity-100 sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 sm:focus-within:opacity-100 sm:focus-within:translate-y-0",
-							"motion-safe:transition-[opacity,transform] duration-300"
+							"right-2.5 bottom-2.5",
+							"sm:inset-x-0 sm:right-0 sm:bottom-0",
+							"opacity-100 sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:focus-within:translate-y-0 sm:focus-within:opacity-100",
+							"duration-300 motion-safe:transition-[opacity,transform]",
 						),
-				className
+				className,
 			)}
 		>
 			<input type="hidden" name="skuId" value={skuId} />
@@ -94,13 +97,13 @@ export function AddToCartCardButton({
 					isMobileFull
 						? // Mobile full-width: bouton discret avec bordure complète
 							cn(
-								"w-full h-11 rounded-md",
+								"h-11 w-full rounded-md",
 								"bg-primary/5 text-foreground",
-								"border border-primary/50",
+								"border-primary/50 border",
 								"hover:border-primary/70 hover:bg-primary/10",
 								"active:scale-[0.98]",
-								"font-medium text-sm",
-								"motion-safe:transition-all motion-safe:duration-200"
+								"text-sm font-medium",
+								"motion-safe:transition-all motion-safe:duration-200",
 							)
 						: // Icon variant: styles responsive existants
 							cn(
@@ -109,19 +112,19 @@ export function AddToCartCardButton({
 								"bg-transparent",
 								"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
 								// Desktop: pleine largeur avec fond primary opaque + min-h-11 (WCAG 2.5.5)
-								"sm:w-full sm:min-h-11 sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
+								"sm:h-auto sm:min-h-11 sm:w-full sm:rounded-none sm:px-4 sm:py-3",
 								"sm:bg-primary sm:text-primary-foreground",
 								"sm:shadow-lg sm:shadow-black/20",
 								// Active/hover desktop - feedback visuel clair
-								"sm:hover:bg-primary/85 sm:hover:shadow-xl sm:hover:-translate-y-0.5",
-								"sm:active:bg-primary/90 sm:active:shadow-md sm:active:translate-y-0",
+								"sm:hover:bg-primary/85 sm:hover:-translate-y-0.5 sm:hover:shadow-xl",
+								"sm:active:bg-primary/90 sm:active:translate-y-0 sm:active:shadow-md",
 								// Transitions
-								"motion-safe:transition-all motion-safe:duration-200"
+								"motion-safe:transition-all motion-safe:duration-200",
 							),
 					// Disabled (commun)
-					"disabled:hover:scale-100 disabled:cursor-not-allowed",
+					"disabled:cursor-not-allowed disabled:hover:scale-100",
 					// Animation pulse + ring pendant le chargement
-					isPending && "motion-safe:animate-pulse ring-2 ring-primary/30"
+					isPending && "ring-primary/30 ring-2 motion-safe:animate-pulse",
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
@@ -142,17 +145,15 @@ export function AddToCartCardButton({
 							size={20}
 							strokeWidth={2}
 							className={cn(
-								"sm:hidden text-primary",
+								"text-primary sm:hidden",
 								"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
 								"motion-safe:transition-all motion-safe:duration-200",
-								isPending && "opacity-60"
+								isPending && "opacity-60",
 							)}
 							aria-hidden="true"
 						/>
 						{/* Desktop: texte */}
-						<span className="hidden sm:inline text-sm font-medium">
-							Ajouter au panier
-						</span>
+						<span className="hidden text-sm font-medium sm:inline">Ajouter au panier</span>
 					</>
 				)}
 			</Button>

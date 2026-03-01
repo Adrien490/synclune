@@ -26,19 +26,19 @@ export function AddressCard({ address }: AddressCardProps) {
 	return (
 		<div
 			className={cn(
-				"flex flex-col gap-3 p-4 rounded-lg border bg-card transition-colors h-full",
-				address.isDefault ? "border-primary/50 bg-primary/5" : "hover:bg-accent/50"
+				"bg-card flex h-full flex-col gap-3 rounded-lg border p-4 transition-colors",
+				address.isDefault ? "border-primary/50 bg-primary/5" : "hover:bg-accent/50",
 			)}
 		>
 			{/* Header : Nom et Actions */}
 			<div className="flex items-start justify-between gap-2">
-				<div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-					<p className="font-medium text-foreground truncate">
+				<div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+					<p className="text-foreground truncate font-medium">
 						{address.firstName} {address.lastName}
 					</p>
 					{address.isDefault && (
-						<Badge variant="secondary" className="h-5 px-1.5 shrink-0">
-							<Star className="h-3 w-3 mr-1 fill-current" aria-hidden="true" />
+						<Badge variant="secondary" className="h-5 shrink-0 px-1.5">
+							<Star className="mr-1 h-3 w-3 fill-current" aria-hidden="true" />
 							<span className="text-xs">Par défaut</span>
 						</Badge>
 					)}
@@ -47,7 +47,7 @@ export function AddressCard({ address }: AddressCardProps) {
 			</div>
 
 			{/* Adresse complète */}
-			<div className="text-sm text-muted-foreground space-y-0.5 flex-1">
+			<div className="text-muted-foreground flex-1 space-y-0.5 text-sm">
 				<p>{address.address1}</p>
 				{address.address2 && <p>{address.address2}</p>}
 				<p>
@@ -56,7 +56,7 @@ export function AddressCard({ address }: AddressCardProps) {
 			</div>
 
 			{/* Téléphone */}
-			<div className="flex items-center gap-1.5 text-sm text-muted-foreground pt-2 border-t border-border/50">
+			<div className="text-muted-foreground border-border/50 flex items-center gap-1.5 border-t pt-2 text-sm">
 				<Phone className="h-3.5 w-3.5" aria-hidden="true" />
 				<span className="truncate">{formatPhone(address.phone)}</span>
 			</div>

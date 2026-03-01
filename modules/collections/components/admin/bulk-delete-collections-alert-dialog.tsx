@@ -24,9 +24,7 @@ interface BulkDeleteCollectionsData {
 }
 
 export function BulkDeleteCollectionsAlertDialog() {
-	const dialog = useAlertDialog<BulkDeleteCollectionsData>(
-		BULK_DELETE_COLLECTIONS_DIALOG_ID
-	);
+	const dialog = useAlertDialog<BulkDeleteCollectionsData>(BULK_DELETE_COLLECTIONS_DIALOG_ID);
 	const { clearSelection } = useSelectionContext();
 
 	const { action, isPending } = useBulkDeleteCollections({
@@ -68,19 +66,17 @@ export function BulkDeleteCollectionsAlertDialog() {
 								</p>
 								{totalProductsCount > 0 && (
 									<>
-										<p className="text-amber-600 dark:text-amber-500 font-medium">
-											Ces collections contiennent au total {totalProductsCount}{" "}
-											produit{totalProductsCount > 1 ? "s" : ""}.
+										<p className="font-medium text-amber-600 dark:text-amber-500">
+											Ces collections contiennent au total {totalProductsCount} produit
+											{totalProductsCount > 1 ? "s" : ""}.
 										</p>
 										<p>
-											Les produits seront préservés mais n&apos;appartiendront plus à
-											aucune collection.
+											Les produits seront préservés mais n&apos;appartiendront plus à aucune
+											collection.
 										</p>
 									</>
 								)}
-								<p className="text-destructive font-medium">
-									Cette action est irréversible.
-								</p>
+								<p className="text-destructive font-medium">Cette action est irréversible.</p>
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
@@ -88,11 +84,7 @@ export function BulkDeleteCollectionsAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-						>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>

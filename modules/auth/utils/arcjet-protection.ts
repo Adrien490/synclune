@@ -13,7 +13,7 @@ import { getBaseUrl } from "@/shared/constants/urls";
  */
 export async function checkArcjetProtection(
 	endpoint: string,
-	headersList: Headers
+	headersList: Headers,
 ): Promise<ActionState | null> {
 	const request = new Request(`${getBaseUrl()}${endpoint}`, {
 		method: "POST",

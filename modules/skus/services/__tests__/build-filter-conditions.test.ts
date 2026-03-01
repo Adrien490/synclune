@@ -122,10 +122,7 @@ describe("buildFilterConditions", () => {
 		const result = buildFilterConditions({ stockStatus: "low_stock" } as ProductSkuFilters);
 
 		expect(result).toContainEqual({
-			AND: [
-				{ inventory: { gte: 1 } },
-				{ inventory: { lt: 3 } },
-			],
+			AND: [{ inventory: { gte: 1 } }, { inventory: { lt: 3 } }],
 		});
 	});
 

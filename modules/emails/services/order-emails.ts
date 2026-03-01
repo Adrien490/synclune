@@ -1,10 +1,10 @@
-import { OrderConfirmationEmail } from "@/emails/order-confirmation-email"
-import { ShippingConfirmationEmail } from "@/emails/shipping-confirmation-email"
-import { TrackingUpdateEmail } from "@/emails/tracking-update-email"
-import { DeliveryConfirmationEmail } from "@/emails/delivery-confirmation-email"
-import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants"
-import { renderAndSend } from "./send-email"
-import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types"
+import { OrderConfirmationEmail } from "@/emails/order-confirmation-email";
+import { ShippingConfirmationEmail } from "@/emails/shipping-confirmation-email";
+import { TrackingUpdateEmail } from "@/emails/tracking-update-email";
+import { DeliveryConfirmationEmail } from "@/emails/delivery-confirmation-email";
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
+import { renderAndSend } from "./send-email";
+import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types";
 
 /**
  * Envoie un email de confirmation de commande au client
@@ -21,16 +21,16 @@ export async function sendOrderConfirmationEmail({
 	shippingAddress,
 	trackingUrl,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	items: OrderItem[]
-	subtotal: number
-	discount: number
-	shipping: number
-	total: number
-	shippingAddress: ShippingAddress
-	trackingUrl: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	items: OrderItem[];
+	subtotal: number;
+	discount: number;
+	shipping: number;
+	total: number;
+	shippingAddress: ShippingAddress;
+	trackingUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		OrderConfirmationEmail({
@@ -44,8 +44,13 @@ export async function sendOrderConfirmationEmail({
 			shippingAddress,
 			trackingUrl,
 		}),
-		{ to, subject: EMAIL_SUBJECTS.ORDER_CONFIRMATION, replyTo: EMAIL_CONTACT, tags: [{ name: "category", value: "order" }] }
-	)
+		{
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_CONFIRMATION,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "order" }],
+		},
+	);
 }
 
 /**
@@ -61,14 +66,14 @@ export async function sendShippingConfirmationEmail({
 	shippingAddress,
 	estimatedDelivery,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	trackingNumber: string
-	trackingUrl: string | null
-	carrierLabel: string
-	shippingAddress: ShippingAddress
-	estimatedDelivery?: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	trackingNumber: string;
+	trackingUrl: string | null;
+	carrierLabel: string;
+	shippingAddress: ShippingAddress;
+	estimatedDelivery?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		ShippingConfirmationEmail({
@@ -80,8 +85,13 @@ export async function sendShippingConfirmationEmail({
 			shippingAddress,
 			estimatedDelivery,
 		}),
-		{ to, subject: EMAIL_SUBJECTS.ORDER_SHIPPED, replyTo: EMAIL_CONTACT, tags: [{ name: "category", value: "order" }] }
-	)
+		{
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_SHIPPED,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "order" }],
+		},
+	);
 }
 
 /**
@@ -96,13 +106,13 @@ export async function sendTrackingUpdateEmail({
 	carrierLabel,
 	estimatedDelivery,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	trackingNumber: string
-	trackingUrl: string | null
-	carrierLabel: string
-	estimatedDelivery?: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	trackingNumber: string;
+	trackingUrl: string | null;
+	carrierLabel: string;
+	estimatedDelivery?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		TrackingUpdateEmail({
@@ -113,8 +123,13 @@ export async function sendTrackingUpdateEmail({
 			carrierLabel,
 			estimatedDelivery,
 		}),
-		{ to, subject: EMAIL_SUBJECTS.ORDER_TRACKING_UPDATE, replyTo: EMAIL_CONTACT, tags: [{ name: "category", value: "order" }] }
-	)
+		{
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_TRACKING_UPDATE,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "order" }],
+		},
+	);
 }
 
 /**
@@ -127,11 +142,11 @@ export async function sendDeliveryConfirmationEmail({
 	deliveryDate,
 	orderDetailsUrl,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	deliveryDate: string
-	orderDetailsUrl: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	deliveryDate: string;
+	orderDetailsUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		DeliveryConfirmationEmail({
@@ -140,6 +155,11 @@ export async function sendDeliveryConfirmationEmail({
 			deliveryDate,
 			orderDetailsUrl,
 		}),
-		{ to, subject: EMAIL_SUBJECTS.ORDER_DELIVERED, replyTo: EMAIL_CONTACT, tags: [{ name: "category", value: "order" }] }
-	)
+		{
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_DELIVERED,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "order" }],
+		},
+	);
 }

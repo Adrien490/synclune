@@ -1,13 +1,13 @@
-import { ProductCard } from "@/modules/products/components/product-card"
-import { getRecentProducts } from "../data/get-recent-products"
-import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids"
-import { Reveal, Stagger } from "@/shared/components/animations"
+import { ProductCard } from "@/modules/products/components/product-card";
+import { getRecentProducts } from "../data/get-recent-products";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
+import { Reveal, Stagger } from "@/shared/components/animations";
 
 interface RecentlyViewedProductsProps {
 	/** Slug du produit actuel (a exclure de l'affichage) */
-	currentProductSlug: string
+	currentProductSlug: string;
 	/** Nombre de produits a afficher */
-	limit?: number
+	limit?: number;
 }
 
 /**
@@ -34,11 +34,11 @@ export async function RecentlyViewedProducts({
 			limit,
 		}),
 		getWishlistProductIds(),
-	])
+	]);
 
 	// Ne rien afficher si pas de produits recemment vus
 	if (recentProducts.length === 0) {
-		return null
+		return null;
 	}
 
 	return (
@@ -46,10 +46,7 @@ export async function RecentlyViewedProducts({
 			{/* En-tete de section avec animation reveal */}
 			<Reveal y={20} amount={0.3}>
 				<div className="space-y-2">
-					<h2
-						id="recently-viewed-heading"
-						className="text-2xl font-semibold tracking-tight"
-					>
+					<h2 id="recently-viewed-heading" className="text-2xl font-semibold tracking-tight">
 						Recemment vus
 					</h2>
 				</div>
@@ -57,7 +54,7 @@ export async function RecentlyViewedProducts({
 
 			{/* Grille de produits avec animation stagger au scroll */}
 			<Stagger
-				className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+				className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4"
 				inView
 				stagger={0.08}
 				y={30}
@@ -74,5 +71,5 @@ export async function RecentlyViewedProducts({
 				))}
 			</Stagger>
 		</aside>
-	)
+	);
 }

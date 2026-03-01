@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useAppForm } from "@/shared/components/forms"
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks"
-import { withCallbacks } from "@/shared/utils/with-callbacks"
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs"
-import { useActionState } from "react"
-import { updateReview } from "@/modules/reviews/actions/update-review"
+import { useAppForm } from "@/shared/components/forms";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { useActionState } from "react";
+import { updateReview } from "@/modules/reviews/actions/update-review";
 
 interface UseUpdateReviewFormOptions {
-	reviewId: string
-	initialRating: number
-	initialTitle: string
-	initialContent: string
-	initialMedia: Array<{ url: string; blurDataUrl?: string; altText?: string }>
-	onSuccess?: (message: string) => void
+	reviewId: string;
+	initialRating: number;
+	initialTitle: string;
+	initialContent: string;
+	initialMedia: Array<{ url: string; blurDataUrl?: string; altText?: string }>;
+	onSuccess?: (message: string) => void;
 }
 
 /**
@@ -34,13 +34,13 @@ export const useUpdateReviewForm = (options: UseUpdateReviewFormOptions) => {
 						"message" in result &&
 						typeof result.message === "string"
 					) {
-						options.onSuccess?.(result.message)
+						options.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
-	)
+		undefined,
+	);
 
 	const form = useAppForm({
 		defaultValues: {
@@ -51,14 +51,11 @@ export const useUpdateReviewForm = (options: UseUpdateReviewFormOptions) => {
 			media: options.initialMedia,
 		},
 		// Merge server state with form state for validation errors
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
-	})
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
+	});
 
 	// Subscribe to form errors for display
-	const formErrors = useStore(form.store, (formState) => formState.errors)
+	const formErrors = useStore(form.store, (formState) => formState.errors);
 
 	return {
 		form,
@@ -66,5 +63,5 @@ export const useUpdateReviewForm = (options: UseUpdateReviewFormOptions) => {
 		action,
 		isPending,
 		formErrors,
-	}
-}
+	};
+};

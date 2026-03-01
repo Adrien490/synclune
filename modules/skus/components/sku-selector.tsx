@@ -86,11 +86,16 @@ export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 	if (!shouldShowSelector) return null;
 
 	return (
-		<Card role="region" aria-labelledby="variant-selector-title" className="group/sku-selector border-2 border-primary/20 shadow-sm">
+		<Card
+			id="sku-selector"
+			role="region"
+			aria-labelledby="variant-selector-title"
+			className="group/sku-selector border-primary/20 border-2 shadow-sm"
+		>
 			<CardHeader>
 				<CardTitle
 					id="variant-selector-title"
-					className="text-base/6 tracking-tight antialiased flex items-center gap-2"
+					className="flex items-center gap-2 text-base/6 tracking-tight antialiased"
 				>
 					Choisissez vos options
 				</CardTitle>

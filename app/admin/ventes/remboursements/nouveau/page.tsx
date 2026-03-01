@@ -29,7 +29,10 @@ export default async function NewRefundPage({ searchParams }: NewRefundPageProps
 	}
 
 	// Vérifier que la commande peut être remboursée
-	if (order.paymentStatus !== PaymentStatus.PAID && order.paymentStatus !== PaymentStatus.REFUNDED) {
+	if (
+		order.paymentStatus !== PaymentStatus.PAID &&
+		order.paymentStatus !== PaymentStatus.REFUNDED
+	) {
 		redirect(`/admin/ventes/commandes/${orderId}`);
 	}
 

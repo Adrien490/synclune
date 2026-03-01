@@ -37,12 +37,7 @@ export function ProductFilterBadges({
 		clearAllFiltersOptimistic,
 	} = useFilter({ filterPrefix: "" });
 
-	const formatFilter = createProductFilterFormatter(
-		colors,
-		materials,
-		productTypes,
-		searchParams
-	);
+	const formatFilter = createProductFilterFormatter(colors, materials, productTypes, searchParams);
 
 	const handleRemove = (key: string, value?: string) => {
 		if (key === "priceMin") {

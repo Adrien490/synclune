@@ -1,17 +1,11 @@
 "use client";
 
 import { m, useReducedMotion } from "motion/react";
-import { useSyncExternalStore } from "react";
-import { useIsTouchDevice } from "@/shared/hooks";
+import { useIsTouchDevice, useMounted } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 import type { RevealProps } from "./types";
 
 export type { RevealProps };
-
-// useSyncExternalStore pour détecter le montage client sans useEffect
-const subscribeNoop = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
 
 /**
  * Animation reveal avec whileInView (scroll-triggered)
@@ -36,8 +30,7 @@ export function Reveal({
 }: RevealProps) {
 	const prefersReducedMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
-	// useSyncExternalStore: false côté serveur, true côté client (pas d'hydration mismatch)
-	const isClient = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
+	const isClient = useMounted();
 
 	// Côté serveur et première hydratation: toujours avec animation
 	// Côté client après mount: respecte les préférences utilisateur

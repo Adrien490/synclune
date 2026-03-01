@@ -6,7 +6,9 @@ import { prisma } from "@/shared/lib/prisma";
 
 export type SkuForValidation = Awaited<ReturnType<typeof fetchSkuForValidation>>;
 export type SkuForDetails = Awaited<ReturnType<typeof fetchSkuForDetails>>;
-export type BatchSkuRow = NonNullable<Awaited<ReturnType<typeof fetchSkusForBatchValidation>>>[number];
+export type BatchSkuRow = NonNullable<
+	Awaited<ReturnType<typeof fetchSkusForBatchValidation>>
+>[number];
 
 // ============================================================================
 // SINGLE SKU QUERIES

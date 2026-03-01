@@ -1,12 +1,12 @@
-import Link from "next/link"
-import { cn } from "@/shared/utils/cn"
-import { formatRating } from "@/shared/utils/rating-utils"
-import { RatingStars } from "@/shared/components/rating-stars"
-import type { ProductReviewStatistics } from "../types/review.types"
+import Link from "next/link";
+import { cn } from "@/shared/utils/cn";
+import { formatRating } from "@/shared/utils/rating-utils";
+import { RatingStars } from "@/shared/components/rating-stars";
+import type { ProductReviewStatistics } from "../types/review.types";
 
 interface ReviewRatingLinkProps {
-	stats: ProductReviewStatistics
-	className?: string
+	stats: ProductReviewStatistics;
+	className?: string;
 }
 
 /**
@@ -17,28 +17,24 @@ interface ReviewRatingLinkProps {
  */
 export function ReviewRatingLink({ stats, className }: ReviewRatingLinkProps) {
 	if (stats.totalCount === 0) {
-		return null
+		return null;
 	}
 
 	return (
 		<Link
 			href="#reviews"
 			className={cn(
-				"inline-flex items-center gap-1.5 text-sm hover:underline underline-offset-4",
-				"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm",
-				className
+				"inline-flex items-center gap-1.5 text-sm underline-offset-4 hover:underline",
+				"focus-visible:outline-ring focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2",
+				className,
 			)}
 			aria-label={`Note moyenne: ${formatRating(stats.averageRating)} sur 5, ${stats.totalCount} avis. Cliquez pour voir les avis.`}
 		>
-			<RatingStars
-				rating={stats.averageRating}
-				size="sm"
-				ariaLabel=""
-			/>
+			<RatingStars rating={stats.averageRating} size="sm" ariaLabel="" />
 			<span className="font-medium">{formatRating(stats.averageRating)}</span>
 			<span className="text-muted-foreground underline underline-offset-4">
 				({stats.totalCount} avis)
 			</span>
 		</Link>
-	)
+	);
 }

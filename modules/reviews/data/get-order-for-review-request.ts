@@ -19,9 +19,7 @@ export type OrderForReviewRequest = Awaited<ReturnType<typeof fetchOrderForRevie
  *
  * @param orderId - ID de la commande
  */
-export async function getOrderForReviewRequest(
-	orderId: string
-): Promise<OrderForReviewRequest> {
+export async function getOrderForReviewRequest(orderId: string): Promise<OrderForReviewRequest> {
 	return fetchOrderForReviewRequest(orderId);
 }
 

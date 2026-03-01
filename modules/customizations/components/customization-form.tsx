@@ -8,8 +8,9 @@ import {
 	type ResponsiveSelectOption,
 } from "@/shared/components/responsive-select";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
+import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
-import { X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
@@ -17,11 +18,13 @@ import type { ProductType } from "../types/customization.types";
 
 interface CustomizationFormProps {
 	productTypes: ProductType[];
+	userInfo?: { firstName: string; email: string };
 	onSuccess?: () => void;
 }
 
-export function CustomizationForm({ productTypes, onSuccess }: CustomizationFormProps) {
+export function CustomizationForm({ productTypes, userInfo, onSuccess }: CustomizationFormProps) {
 	const { form, action, isPending } = useCustomizationForm({
+		userInfo,
 		onSuccess: () => {
 			form.reset();
 			onSuccess?.();
@@ -118,8 +121,8 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 				name="details"
 				validators={{
 					onChange: ({ value }) => {
-						if (!value || value.trim().length < 20) {
-							return "Les détails doivent contenir au moins 20 caractères";
+						if (!value || value.trim().length < 10) {
+							return "Les détails doivent contenir au moins 10 caractères";
 						}
 						return undefined;
 					},
@@ -185,10 +188,43 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 								}}
 								config={{ mode: "auto" }}
 								content={{
-									label: () => "Glissez vos images ou cliquez pour parcourir",
-									allowedContent: () => "Images (JPEG, PNG, WebP) — 4 Mo max",
+									uploadIcon: ({ isDragActive, isUploading, uploadProgress }) => {
+										if (isUploading) {
+											return (
+												<div
+													className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-sm"
+													role="status"
+													aria-live="polite"
+												>
+													<UploadProgress
+														progress={uploadProgress}
+														isProcessing={uploadProgress >= 100}
+													/>
+												</div>
+											);
+										}
+										return (
+											<Upload
+												className={
+													isDragActive ? "text-primary size-8" : "text-muted-foreground size-8"
+												}
+												aria-hidden="true"
+											/>
+										);
+									},
+									label: ({ isDragActive, isUploading }) => {
+										if (isUploading) return null;
+										return isDragActive
+											? "Relâchez pour ajouter"
+											: "Glissez vos images ou cliquez pour parcourir";
+									},
+									allowedContent: ({ isUploading }) => {
+										if (isUploading) return null;
+										const remaining = 5 - urls.length;
+										return `${remaining} image${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} — JPEG, PNG, WebP — 4 Mo max`;
+									},
 								}}
-								className="border-border/50 ut-uploading:border-primary/50 rounded-lg border-2 border-dashed"
+								className="border-border/50 ut-uploading:border-primary/50 relative rounded-lg border-2 border-dashed"
 							/>
 						)}
 

@@ -23,9 +23,7 @@ interface BulkDeleteOrdersData {
 }
 
 export function BulkDeleteOrdersAlertDialog() {
-	const bulkDeleteDialog = useAlertDialog<BulkDeleteOrdersData>(
-		BULK_DELETE_ORDERS_DIALOG_ID
-	);
+	const bulkDeleteDialog = useAlertDialog<BulkDeleteOrdersData>(BULK_DELETE_ORDERS_DIALOG_ID);
 	const { clearSelection } = useSelectionContext();
 
 	const { deleteOrders, isPending } = useBulkDeleteOrders({
@@ -50,10 +48,7 @@ export function BulkDeleteOrdersAlertDialog() {
 	const count = bulkDeleteDialog.data?.orderIds?.length ?? 0;
 
 	return (
-		<AlertDialog
-			open={bulkDeleteDialog.isOpen}
-			onOpenChange={handleOpenChange}
-		>
+		<AlertDialog open={bulkDeleteDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<AlertDialogHeader>
 					<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
@@ -66,12 +61,10 @@ export function BulkDeleteOrdersAlertDialog() {
 								</strong>{" "}
 								?
 							</p>
-							<p className="text-destructive mt-2 font-medium">
-								Cette action est irréversible.
-							</p>
+							<p className="text-destructive mt-2 font-medium">Cette action est irréversible.</p>
 							<p className="text-muted-foreground mt-4 text-sm">
-								Note: Seules les commandes éligibles seront supprimées (sans
-								facture et non payées). Les autres seront ignorées.
+								Note: Seules les commandes éligibles seront supprimées (sans facture et non payées).
+								Les autres seront ignorées.
 							</p>
 						</div>
 					</AlertDialogDescription>
@@ -80,11 +73,7 @@ export function BulkDeleteOrdersAlertDialog() {
 					<AlertDialogCancel type="button" disabled={isPending}>
 						Annuler
 					</AlertDialogCancel>
-					<AlertDialogAction
-						onClick={handleDelete}
-						disabled={isPending}
-						aria-busy={isPending}
-					>
+					<AlertDialogAction onClick={handleDelete} disabled={isPending} aria-busy={isPending}>
 						{isPending && <Loader2 className="animate-spin" />}
 						{isPending ? "Suppression..." : "Supprimer"}
 					</AlertDialogAction>

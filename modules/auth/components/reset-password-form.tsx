@@ -22,7 +22,11 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
 	// Focus sur l'erreur quand elle apparaît (ignore validation errors)
 	useEffect(() => {
-		if (state?.message && state.status !== ActionStatus.SUCCESS && state.status !== ActionStatus.VALIDATION_ERROR) {
+		if (
+			state?.message &&
+			state.status !== ActionStatus.SUCCESS &&
+			state.status !== ActionStatus.VALIDATION_ERROR
+		) {
 			errorRef.current?.focus();
 		}
 	}, [state?.message, state?.status]);
@@ -37,11 +41,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
 			{/* Indication des champs obligatoires */}
 			<RequiredFieldsNote />
 
@@ -52,10 +52,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 					<AlertDescription>
 						<div className="space-y-2">
 							<p>{state.message}</p>
-							<Link
-								href="/connexion"
-								className="inline-block text-sm font-medium hover:underline"
-							>
+							<Link href="/connexion" className="inline-block text-sm font-medium hover:underline">
 								Se connecter maintenant
 							</Link>
 						</div>
@@ -64,18 +61,20 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 			)}
 
 			{/* Message d'erreur (ignore validation errors - handled by field validators) */}
-			{state?.status !== ActionStatus.SUCCESS && state?.status !== ActionStatus.VALIDATION_ERROR && state?.message && (
-				<Alert
-					ref={errorRef}
-					variant="destructive"
-					tabIndex={-1}
-					role="alert"
-					aria-live="assertive"
-				>
-					<XCircle aria-hidden="true" />
-					<AlertDescription>{state.message}</AlertDescription>
-				</Alert>
-			)}
+			{state?.status !== ActionStatus.SUCCESS &&
+				state?.status !== ActionStatus.VALIDATION_ERROR &&
+				state?.message && (
+					<Alert
+						ref={errorRef}
+						variant="destructive"
+						tabIndex={-1}
+						role="alert"
+						aria-live="assertive"
+					>
+						<XCircle aria-hidden="true" />
+						<AlertDescription>{state.message}</AlertDescription>
+					</Alert>
+				)}
 
 			{/* Champ caché pour le token */}
 			<input type="hidden" name="token" value={token} />
@@ -117,8 +116,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 						validators={{
 							onChangeListenTo: ["password"],
 							onChange: ({ value, fieldApi }) => {
-								if (!value)
-									return "La confirmation du mot de passe est requise";
+								if (!value) return "La confirmation du mot de passe est requise";
 								if (value.length < 8) {
 									return "Le mot de passe doit contenir au moins 8 caractères";
 								}
@@ -147,9 +145,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 			<form.Subscribe selector={(state) => [state.canSubmit]}>
 				{([canSubmit]) => (
 					<Button
-						disabled={
-							!canSubmit || isPending || state?.status === ActionStatus.SUCCESS
-						}
+						disabled={!canSubmit || isPending || state?.status === ActionStatus.SUCCESS}
 						className="w-full"
 						type="submit"
 					>

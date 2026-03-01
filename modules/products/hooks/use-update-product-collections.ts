@@ -13,9 +13,7 @@ interface UseUpdateProductCollectionsOptions {
 /**
  * Hook admin pour mettre à jour les collections d'un produit
  */
-export function useUpdateProductCollections(
-	options?: UseUpdateProductCollectionsOptions
-) {
+export function useUpdateProductCollections(options?: UseUpdateProductCollectionsOptions) {
 	const [isPending, startTransition] = useTransition();
 
 	const [, formAction] = useActionState(
@@ -31,15 +29,12 @@ export function useUpdateProductCollections(
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
-	const update = (
-		productId: string,
-		collectionIds: string[]
-	) => {
+	const update = (productId: string, collectionIds: string[]) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("productId", productId);

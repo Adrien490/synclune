@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import {
-	isReturnEligible,
-	getReturnDaysRemaining,
-} from "../return-eligibility.service";
+import { isReturnEligible, getReturnDaysRemaining } from "../return-eligibility.service";
 import type { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
@@ -167,21 +164,14 @@ describe("isReturnEligible", () => {
 
 		it("should return false when one refund among many is PENDING", () => {
 			const order = makeOrder({
-				refunds: [
-					{ status: "REJECTED" },
-					{ status: "COMPLETED" },
-					{ status: "PENDING" },
-				],
+				refunds: [{ status: "REJECTED" }, { status: "COMPLETED" }, { status: "PENDING" }],
 			});
 			expect(isReturnEligible(order)).toBe(false);
 		});
 
 		it("should return false when one refund among many is APPROVED", () => {
 			const order = makeOrder({
-				refunds: [
-					{ status: "REJECTED" },
-					{ status: "APPROVED" },
-				],
+				refunds: [{ status: "REJECTED" }, { status: "APPROVED" }],
 			});
 			expect(isReturnEligible(order)).toBe(false);
 		});

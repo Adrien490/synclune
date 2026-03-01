@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
 	Empty,
@@ -6,27 +6,27 @@ import {
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
-} from "@/shared/components/ui/empty"
-import { Button } from "@/shared/components/ui/button"
-import { cn } from "@/shared/utils/cn"
-import Link from "next/link"
-import { EMPTY_STATES, type EmptyStateType } from "../constants/empty-states"
+} from "@/shared/components/ui/empty";
+import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/shared/utils/cn";
+import Link from "next/link";
+import { EMPTY_STATES, type EmptyStateType } from "../constants/empty-states";
 
 interface ChartEmptyProps {
 	/** Type d'etat vide (cle de EMPTY_STATES) */
-	type: EmptyStateType
+	type: EmptyStateType;
 	/** Texte additionnel pour le contexte (ex: "sur cette periode") */
-	periodLabel?: string
+	periodLabel?: string;
 	/** Action optionnelle */
 	action?: {
-		label: string
-		href?: string
-		onClick?: () => void
-	}
+		label: string;
+		href?: string;
+		onClick?: () => void;
+	};
 	/** Hauteur minimale (pour matcher la hauteur du chart) */
-	minHeight?: number
+	minHeight?: number;
 	/** Classes CSS additionnelles */
-	className?: string
+	className?: string;
 }
 
 /**
@@ -40,19 +40,16 @@ export function ChartEmpty({
 	minHeight = 250,
 	className,
 }: ChartEmptyProps) {
-	const config = EMPTY_STATES[type]
-	const Icon = config.icon
+	const config = EMPTY_STATES[type];
+	const Icon = config.icon;
 
 	// Construire la description avec le label de periode si fourni
 	const description = periodLabel
 		? config.description.replace(".", ` ${periodLabel}.`)
-		: config.description
+		: config.description;
 
 	return (
-		<Empty
-			className={cn("py-8", className)}
-			style={{ minHeight: `${minHeight}px` }}
-		>
+		<Empty className={cn("py-8", className)} style={{ minHeight: `${minHeight}px` }}>
 			<EmptyHeader>
 				<EmptyMedia>
 					<Icon className="size-6" />
@@ -75,5 +72,5 @@ export function ChartEmpty({
 				</div>
 			)}
 		</Empty>
-	)
+	);
 }

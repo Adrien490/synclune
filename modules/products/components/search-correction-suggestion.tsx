@@ -26,12 +26,9 @@ export function SearchCorrectionSuggestion({ suggestion }: SearchCorrectionSugge
 	const href = `/produits?${newParams.toString()}`;
 
 	return (
-		<div className="text-sm text-muted-foreground" role="status" aria-live="polite">
+		<div className="text-muted-foreground text-sm" role="status" aria-live="polite">
 			Vouliez-vous dire :{" "}
-			<Link
-				href={href}
-				className="font-medium underline underline-offset-4"
-			>
+			<Link href={href} className="font-medium underline underline-offset-4">
 				{suggestion}
 			</Link>{" "}
 			?

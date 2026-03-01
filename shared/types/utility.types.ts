@@ -7,8 +7,8 @@
 // =============================================================================
 
 export interface ParsedSortField {
-	field: string
-	direction: "asc" | "desc"
+	field: string;
+	direction: "asc" | "desc";
 }
 
 // =============================================================================
@@ -16,8 +16,8 @@ export interface ParsedSortField {
 // =============================================================================
 
 export interface Point {
-	x: number
-	y: number
+	x: number;
+	y: number;
 }
 
 // =============================================================================
@@ -25,6 +25,6 @@ export interface Point {
 // =============================================================================
 
 export interface PasswordRule {
-	label: string
-	test: (password: string) => boolean
+	label: string;
+	test: (password: string) => boolean;
 }

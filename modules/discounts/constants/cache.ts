@@ -2,8 +2,8 @@
  * Cache configuration for Discount module
  */
 
-import { cacheLife, cacheTag } from "next/cache"
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
+import { cacheLife, cacheTag } from "next/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 // ============================================
 // CACHE TAGS
@@ -18,7 +18,7 @@ export const DISCOUNT_CACHE_TAGS = {
 
 	/** Compteur d'utilisation d'un code promo */
 	USAGE: (discountId: string) => `discount-usage-${discountId}`,
-} as const
+} as const;
 
 // ============================================
 // CACHE CONFIGURATION HELPERS
@@ -30,8 +30,8 @@ export const DISCOUNT_CACHE_TAGS = {
  * - Profil "cart" : 5min stale, 1min revalidation
  */
 export function cacheDiscounts() {
-	cacheLife("cart")
-	cacheTag(DISCOUNT_CACHE_TAGS.LIST)
+	cacheLife("cart");
+	cacheTag(DISCOUNT_CACHE_TAGS.LIST);
 }
 
 /**
@@ -40,8 +40,8 @@ export function cacheDiscounts() {
  * - Durée : 5min fraîche, 1min revalidation, 30min expiration
  */
 export function cacheDiscountDetail(idOrCode: string) {
-	cacheLife("cart")
-	cacheTag(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode), DISCOUNT_CACHE_TAGS.LIST)
+	cacheLife("cart");
+	cacheTag(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode), DISCOUNT_CACHE_TAGS.LIST);
 }
 
 // ============================================
@@ -57,11 +57,11 @@ export function cacheDiscountDetail(idOrCode: string) {
  * - Les badges de la sidebar admin
  */
 export function getDiscountInvalidationTags(idOrCode?: string): string[] {
-	const tags: string[] = [DISCOUNT_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]
+	const tags: string[] = [DISCOUNT_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
 
 	if (idOrCode) {
-		tags.push(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode))
+		tags.push(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode));
 	}
 
-	return tags
+	return tags;
 }

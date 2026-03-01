@@ -5,23 +5,31 @@ import { ActionStatus } from "@/shared/types/server-action";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrisma, mockRequireAuth, mockEnforceRateLimit, mockUpdateTag, mockValidateInput, mockHandleActionError, mockSuccess, mockError } =
-	vi.hoisted(() => ({
-		mockPrisma: {
-			address: {
-				findFirst: vi.fn(),
-				update: vi.fn(),
-				updateMany: vi.fn(),
-			},
+const {
+	mockPrisma,
+	mockRequireAuth,
+	mockEnforceRateLimit,
+	mockUpdateTag,
+	mockValidateInput,
+	mockHandleActionError,
+	mockSuccess,
+	mockError,
+} = vi.hoisted(() => ({
+	mockPrisma: {
+		address: {
+			findFirst: vi.fn(),
+			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
-		mockRequireAuth: vi.fn(),
-		mockEnforceRateLimit: vi.fn(),
-		mockUpdateTag: vi.fn(),
-		mockValidateInput: vi.fn(),
-		mockHandleActionError: vi.fn(),
-		mockSuccess: vi.fn(),
-		mockError: vi.fn(),
-	}));
+	},
+	mockRequireAuth: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
+	mockUpdateTag: vi.fn(),
+	mockValidateInput: vi.fn(),
+	mockHandleActionError: vi.fn(),
+	mockSuccess: vi.fn(),
+	mockError: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -220,7 +228,7 @@ describe("updateAddress", () => {
 		expect(mockPrisma.address.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: specificId, userId: "user-123" },
-			})
+			}),
 		);
 	});
 

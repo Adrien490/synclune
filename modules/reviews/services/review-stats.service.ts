@@ -1,5 +1,9 @@
 import type { PrismaTransaction } from "@/shared/types/prisma";
-import type { ProductReviewStatistics, RatingDistribution, ReviewStats } from "../types/review.types";
+import type {
+	ProductReviewStatistics,
+	RatingDistribution,
+	ReviewStats,
+} from "../types/review.types";
 import { REVIEW_CONFIG } from "../constants/review.constants";
 
 // ============================================================================
@@ -25,7 +29,7 @@ interface RatingCounts {
  * @returns Objet avec les compteurs par note
  */
 export function buildRatingCounts(
-	distribution: Array<{ rating: number; _count: number }>
+	distribution: Array<{ rating: number; _count: number }>,
 ): RatingCounts {
 	const ratingCounts: RatingCounts = {
 		rating1Count: 0,
@@ -64,7 +68,7 @@ interface ReviewStatsRow {
  */
 export async function updateProductReviewStats(
 	tx: PrismaTransaction,
-	productId: string
+	productId: string,
 ): Promise<void> {
 	// Single query: count, average, and per-rating distribution in one pass
 	const [stats] = await tx.$queryRaw<[ReviewStatsRow]>`

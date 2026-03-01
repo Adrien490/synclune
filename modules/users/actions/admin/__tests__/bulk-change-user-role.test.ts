@@ -194,7 +194,9 @@ describe("bulkChangeUserRole", () => {
 
 		const result = await bulkChangeUserRole(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Aucun utilisateur eligible pour le changement de role.");
+		expect(mockError).toHaveBeenCalledWith(
+			"Aucun utilisateur eligible pour le changement de role.",
+		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
@@ -206,7 +208,7 @@ describe("bulkChangeUserRole", () => {
 				where: expect.objectContaining({
 					role: { not: "ADMIN" },
 				}),
-			})
+			}),
 		);
 	});
 
@@ -216,15 +218,13 @@ describe("bulkChangeUserRole", () => {
 
 	it("should block downgrade when it would remove all admins", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: validIds, role: "USER" } });
-		mockPrisma.user.findMany.mockResolvedValue([
-			{ id: "user-1", role: "ADMIN" },
-		]);
+		mockPrisma.user.findMany.mockResolvedValue([{ id: "user-1", role: "ADMIN" }]);
 		mockPrisma.user.count.mockResolvedValue(1);
 
 		const result = await bulkChangeUserRole(undefined, validFormData);
 
 		expect(mockError).toHaveBeenCalledWith(
-			expect.stringContaining("Au moins un admin doit rester")
+			expect.stringContaining("Au moins un admin doit rester"),
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockPrisma.user.updateMany).not.toHaveBeenCalled();
@@ -232,9 +232,7 @@ describe("bulkChangeUserRole", () => {
 
 	it("should allow downgrade when other admins remain", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: validIds, role: "USER" } });
-		mockPrisma.user.findMany.mockResolvedValue([
-			{ id: "user-1", role: "ADMIN" },
-		]);
+		mockPrisma.user.findMany.mockResolvedValue([{ id: "user-1", role: "ADMIN" }]);
 		mockPrisma.user.count.mockResolvedValue(3);
 
 		const result = await bulkChangeUserRole(undefined, validFormData);
@@ -245,9 +243,7 @@ describe("bulkChangeUserRole", () => {
 
 	it("should not check admin count when promoting to admin", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: validIds, role: "ADMIN" } });
-		mockPrisma.user.findMany.mockResolvedValue([
-			{ id: "user-1", role: "USER" },
-		]);
+		mockPrisma.user.findMany.mockResolvedValue([{ id: "user-1", role: "USER" }]);
 
 		await bulkChangeUserRole(undefined, validFormData);
 
@@ -256,9 +252,7 @@ describe("bulkChangeUserRole", () => {
 
 	it("should not check admin count when downgrading only non-admins", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: validIds, role: "USER" } });
-		mockPrisma.user.findMany.mockResolvedValue([
-			{ id: "user-1", role: "USER" },
-		]);
+		mockPrisma.user.findMany.mockResolvedValue([{ id: "user-1", role: "USER" }]);
 
 		await bulkChangeUserRole(undefined, validFormData);
 
@@ -281,9 +275,7 @@ describe("bulkChangeUserRole", () => {
 	it("should return success with correct count and role label", async () => {
 		const result = await bulkChangeUserRole(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("administrateurs")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("administrateurs"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -294,9 +286,7 @@ describe("bulkChangeUserRole", () => {
 
 		await bulkChangeUserRole(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("utilisateurs")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("utilisateurs"));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -323,7 +313,7 @@ describe("bulkChangeUserRole", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors du changement de role"
+			"Erreur lors du changement de role",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

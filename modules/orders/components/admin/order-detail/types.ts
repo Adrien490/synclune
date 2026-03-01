@@ -1,10 +1,6 @@
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 import type { OrderRefundItem } from "@/modules/orders/data/get-order-refunds";
-import type {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/browser";
+import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 
 // ============================================================================
 // SHARED TYPES

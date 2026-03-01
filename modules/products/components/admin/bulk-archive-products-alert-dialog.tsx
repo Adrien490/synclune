@@ -24,9 +24,7 @@ interface BulkArchiveProductsData {
 }
 
 export function BulkArchiveProductsAlertDialog() {
-	const dialog = useAlertDialog<BulkArchiveProductsData>(
-		BULK_ARCHIVE_PRODUCTS_DIALOG_ID
-	);
+	const dialog = useAlertDialog<BulkArchiveProductsData>(BULK_ARCHIVE_PRODUCTS_DIALOG_ID);
 	const { clearSelection } = useSelectionContext();
 
 	const { action, isPending } = useBulkArchiveProducts({
@@ -72,13 +70,16 @@ export function BulkArchiveProductsAlertDialog() {
 									<>
 										<p>
 											Êtes-vous sûr de vouloir archiver{" "}
-											<strong>{count} bijou{count > 1 ? "x" : ""}</strong> ?
+											<strong>
+												{count} bijou{count > 1 ? "x" : ""}
+											</strong>{" "}
+											?
 										</p>
 										<p>
-											{count > 1 ? "Ces bijoux ne seront" : "Ce bijou ne sera"}{" "}
-											plus {count > 1 ? "visibles" : "visible"} sur la boutique mais{" "}
-											{count > 1 ? "resteront accessibles" : "restera accessible"}{" "}
-											dans le dashboard.
+											{count > 1 ? "Ces bijoux ne seront" : "Ce bijou ne sera"} plus{" "}
+											{count > 1 ? "visibles" : "visible"} sur la boutique mais{" "}
+											{count > 1 ? "resteront accessibles" : "restera accessible"} dans le
+											dashboard.
 										</p>
 										<p className="text-muted-foreground text-xs">
 											Vous pourrez les restaurer à tout moment.
@@ -88,13 +89,16 @@ export function BulkArchiveProductsAlertDialog() {
 									<>
 										<p>
 											Êtes-vous sûr de vouloir restaurer{" "}
-											<strong>{count} bijou{count > 1 ? "x" : ""}</strong> ?
+											<strong>
+												{count} bijou{count > 1 ? "x" : ""}
+											</strong>{" "}
+											?
 										</p>
 										<p>
-											{count > 1 ? "Ces bijoux seront remis" : "Ce bijou sera remis"}{" "}
-											en statut &quot;Public&quot; et{" "}
-											{count > 1 ? "redeviendront visibles" : "redeviendra visible"}{" "}
-											sur la boutique.
+											{count > 1 ? "Ces bijoux seront remis" : "Ce bijou sera remis"} en statut
+											&quot;Public&quot; et{" "}
+											{count > 1 ? "redeviendront visibles" : "redeviendra visible"} sur la
+											boutique.
 										</p>
 									</>
 								)}
@@ -109,14 +113,16 @@ export function BulkArchiveProductsAlertDialog() {
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
-							className={
-								isArchiving
-									? "bg-orange-600 text-white hover:bg-orange-700"
-									: undefined
-							}
+							className={isArchiving ? "bg-orange-600 text-white hover:bg-orange-700" : undefined}
 						>
 							{isPending && <Loader2 className="animate-spin" />}
-							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Restaurer")}
+							{isPending
+								? isArchiving
+									? "Archivage..."
+									: "Restauration..."
+								: isArchiving
+									? "Archiver"
+									: "Restaurer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

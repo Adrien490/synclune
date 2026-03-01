@@ -7,12 +7,8 @@ import { useActionState } from "react";
 
 export function useRevertToProcessing() {
 	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			revertToProcessing,
-			createToastCallbacks({
-			})
-		),
-		undefined
+		withCallbacks(revertToProcessing, createToastCallbacks({})),
+		undefined,
 	);
 
 	return { state, action, isPending };

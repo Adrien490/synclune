@@ -1,8 +1,8 @@
 export default function OfflineLoading() {
 	return (
-		<main className="min-h-screen flex items-center justify-center bg-background">
+		<main className="bg-background flex min-h-screen items-center justify-center">
 			<div
-				className="size-10 rounded-full border-3 border-muted border-t-primary animate-spin"
+				className="border-muted border-t-primary size-10 animate-spin rounded-full border-3"
 				role="status"
 				aria-label="Chargement"
 			/>

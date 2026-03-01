@@ -2,11 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ─── Mocks (hoisted to avoid reference errors) ──────────────────
 
-const {
-	mockTransaction,
-	mockSetTrigramThreshold,
-	mockSetStatementTimeout,
-} = vi.hoisted(() => ({
+const { mockTransaction, mockSetTrigramThreshold, mockSetStatementTimeout } = vi.hoisted(() => ({
 	mockTransaction: vi.fn(),
 	mockSetTrigramThreshold: vi.fn(),
 	mockSetStatementTimeout: vi.fn(),
@@ -34,7 +30,9 @@ import { fuzzySearchProductIds } from "./fuzzy-search";
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
-function setupTransaction(results: Array<{ productId: string; score: number; totalCount: bigint }>) {
+function setupTransaction(
+	results: Array<{ productId: string; score: number; totalCount: bigint }>,
+) {
 	mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
 		const tx = { $queryRaw: vi.fn().mockResolvedValue(results) };
 		return fn(tx);
@@ -75,24 +73,15 @@ describe("fuzzySearchProductIds", () => {
 		setupTransaction([]);
 		await fuzzySearchProductIds("collier");
 
-		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(
-			expect.anything(),
-			0.3
-		);
-		expect(mockSetStatementTimeout).toHaveBeenCalledWith(
-			expect.anything(),
-			2000
-		);
+		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(expect.anything(), 0.3);
+		expect(mockSetStatementTimeout).toHaveBeenCalledWith(expect.anything(), 2000);
 	});
 
 	it("uses custom threshold when provided", async () => {
 		setupTransaction([]);
 		await fuzzySearchProductIds("collier", { threshold: 0.5 });
 
-		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(
-			expect.anything(),
-			0.5
-		);
+		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(expect.anything(), 0.5);
 	});
 
 	// ─── Result transformation ──────────────────────────────────
@@ -126,9 +115,7 @@ describe("fuzzySearchProductIds", () => {
 	});
 
 	it("converts bigint totalCount to number", async () => {
-		setupTransaction([
-			{ productId: "id-1", score: 10, totalCount: BigInt(100) },
-		]);
+		setupTransaction([{ productId: "id-1", score: 10, totalCount: BigInt(100) }]);
 
 		const result = await fuzzySearchProductIds("collier");
 		expect(typeof result.totalCount).toBe("number");
@@ -144,9 +131,7 @@ describe("fuzzySearchProductIds", () => {
 	});
 
 	it("returns empty result on timeout", async () => {
-		mockTransaction.mockImplementation(
-			() => new Promise((resolve) => setTimeout(resolve, 5000))
-		);
+		mockTransaction.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 5000)));
 
 		const result = await fuzzySearchProductIds("collier");
 		expect(result).toEqual({ ids: [], totalCount: 0 });
@@ -155,9 +140,7 @@ describe("fuzzySearchProductIds", () => {
 	// ─── Multi-word behavior ──────────────────────────────────
 
 	it("processes multi-word search terms", async () => {
-		setupTransaction([
-			{ productId: "id-1", score: 15, totalCount: BigInt(1) },
-		]);
+		setupTransaction([{ productId: "id-1", score: 15, totalCount: BigInt(1) }]);
 
 		const result = await fuzzySearchProductIds("collier argent");
 		expect(result.ids).toEqual(["id-1"]);
@@ -165,9 +148,7 @@ describe("fuzzySearchProductIds", () => {
 	});
 
 	it("deduplicates words case-insensitively", async () => {
-		setupTransaction([
-			{ productId: "id-1", score: 10, totalCount: BigInt(1) },
-		]);
+		setupTransaction([{ productId: "id-1", score: 10, totalCount: BigInt(1) }]);
 
 		await fuzzySearchProductIds("Or or collier");
 		expect(mockTransaction).toHaveBeenCalledTimes(1);

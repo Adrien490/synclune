@@ -313,9 +313,7 @@ describe("AddToCartForm", () => {
 			setupDefaultMocks();
 			const product = createProduct({ skus: [createSku()] });
 
-			const { container } = render(
-				<AddToCartForm product={product} selectedSku={null} />
-			);
+			const { container } = render(<AddToCartForm product={product} selectedSku={null} />);
 
 			const form = container.querySelector("form#add-to-cart-form");
 			expect(form).not.toBeNull();
@@ -325,9 +323,7 @@ describe("AddToCartForm", () => {
 			setupDefaultMocks();
 			const product = createProduct({ skus: [createSku()] });
 
-			const { container } = render(
-				<AddToCartForm product={product} selectedSku={null} />
-			);
+			const { container } = render(<AddToCartForm product={product} selectedSku={null} />);
 
 			const form = container.querySelector("form");
 			expect(form?.getAttribute("aria-label")).toBe("Formulaire d'ajout au panier");
@@ -337,9 +333,7 @@ describe("AddToCartForm", () => {
 			setupDefaultMocks();
 			const product = createProduct({ skus: [createSku()] });
 
-			const { container } = render(
-				<AddToCartForm product={product} selectedSku={null} />
-			);
+			const { container } = render(<AddToCartForm product={product} selectedSku={null} />);
 
 			const form = container.querySelector("form");
 			expect(form?.getAttribute("aria-busy")).toBe("false");
@@ -362,9 +356,7 @@ describe("AddToCartForm", () => {
 
 			const product = createProduct({ skus: [createSku()] });
 
-			const { container } = render(
-				<AddToCartForm product={product} selectedSku={null} />
-			);
+			const { container } = render(<AddToCartForm product={product} selectedSku={null} />);
 
 			const form = container.querySelector("form");
 			expect(form?.getAttribute("aria-busy")).toBe("true");

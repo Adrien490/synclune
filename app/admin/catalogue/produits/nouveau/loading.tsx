@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
  */
 function MobileWizardSkeleton() {
 	return (
-		<div className="flex flex-col min-h-0">
+		<div className="flex min-h-0 flex-col">
 			{/* Barre de progression sticky */}
-			<div className="sticky top-0 z-10 -mx-4 px-4 py-3 border-b bg-background/95 backdrop-blur-sm">
+			<div className="bg-background/95 sticky top-0 z-10 -mx-4 border-b px-4 py-3 backdrop-blur-sm">
 				<div className="flex items-center justify-between gap-4">
 					{/* 3 dots de progression */}
 					<div className="flex gap-2">
@@ -25,7 +25,7 @@ function MobileWizardSkeleton() {
 			</div>
 
 			{/* Contenu - première étape (Visuels) */}
-			<div className="py-4 space-y-4">
+			<div className="space-y-4 py-4">
 				{/* Header avec compteur */}
 				<div className="flex items-center justify-between">
 					<div className="space-y-1">
@@ -36,25 +36,25 @@ function MobileWizardSkeleton() {
 				</div>
 
 				{/* Info box */}
-				<div className="flex items-center gap-3 py-3 px-3 rounded-lg border border-dashed">
+				<div className="flex items-center gap-3 rounded-lg border border-dashed px-3 py-3">
 					<Skeleton className="h-5 w-5" />
 					<Skeleton className="h-4 w-48" />
 				</div>
 
 				{/* Zone d'upload */}
-				<div className="border-2 border-dashed rounded-xl p-8">
+				<div className="rounded-xl border-2 border-dashed p-8">
 					<div className="flex flex-col items-center gap-4">
 						<Skeleton className="h-12 w-12 rounded-full" />
-						<div className="text-center space-y-2">
-							<Skeleton className="h-5 w-40 mx-auto" />
-							<Skeleton className="h-3 w-52 mx-auto" />
+						<div className="space-y-2 text-center">
+							<Skeleton className="mx-auto h-5 w-40" />
+							<Skeleton className="mx-auto h-3 w-52" />
 						</div>
 					</div>
 				</div>
 			</div>
 
 			{/* Footer navigation sticky */}
-			<div className="sticky bottom-16 z-10 -mx-4 px-4 py-3 border-t bg-background/95 backdrop-blur-sm mt-auto">
+			<div className="bg-background/95 sticky bottom-16 z-10 -mx-4 mt-auto border-t px-4 py-3 backdrop-blur-sm">
 				<Skeleton className="h-12 w-full" />
 			</div>
 		</div>
@@ -85,7 +85,7 @@ function DesktopFormSkeleton() {
 					</div>
 
 					{/* Zone d'upload */}
-					<div className="border-2 border-dashed rounded-lg p-6">
+					<div className="rounded-lg border-2 border-dashed p-6">
 						<div className="flex flex-col items-center gap-3">
 							<Skeleton className="h-12 w-12 rounded-full" />
 							<Skeleton className="h-5 w-36" />
@@ -107,7 +107,7 @@ function DesktopFormSkeleton() {
 				<div className="space-y-2">
 					<Skeleton className="h-4 w-24" />
 					<Skeleton className="h-24 w-full" />
-					<Skeleton className="h-3 w-32 ml-auto" />
+					<Skeleton className="ml-auto h-3 w-32" />
 				</div>
 
 				{/* Type + Collections */}
@@ -123,7 +123,7 @@ function DesktopFormSkeleton() {
 				</div>
 
 				{/* Séparateur attributs variante */}
-				<div className="pt-4 border-t space-y-1">
+				<div className="space-y-1 border-t pt-4">
 					<div className="flex items-center gap-2">
 						<Skeleton className="h-4 w-36" />
 						<Skeleton className="h-3.5 w-3.5 rounded-full" />

@@ -1,19 +1,21 @@
-import { createStore } from "zustand/vanilla"
-import { persist, createJSONStorage, type StateStorage } from "zustand/middleware"
+import { createStore } from "zustand/vanilla";
+import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
 
-import type {
+import type { CookieConsentState, CookieConsentStore } from "@/shared/types/store.types";
+
+export type {
 	CookieConsentState,
+	CookieConsentActions,
 	CookieConsentStore,
-} from "@/shared/types/store.types"
-
-export type { CookieConsentState, CookieConsentActions, CookieConsentStore } from "@/shared/types/store.types"
+} from "@/shared/types/store.types";
 
 /**
  * Calculate months difference between two dates (replaces date-fns for bundle size)
  */
 function getMonthsDifference(later: Date, earlier: Date): number {
-	return (later.getFullYear() - earlier.getFullYear()) * 12
-		+ (later.getMonth() - earlier.getMonth())
+	return (
+		(later.getFullYear() - earlier.getFullYear()) * 12 + (later.getMonth() - earlier.getMonth())
+	);
 }
 
 // Noop storage pour le SSR (quand localStorage n'est pas disponible)
@@ -21,7 +23,7 @@ const noopStorage: StateStorage = {
 	getItem: () => null,
 	setItem: () => {},
 	removeItem: () => {},
-}
+};
 
 /**
  * Version actuelle de la politique de cookies
@@ -48,9 +50,7 @@ export const defaultInitState: CookieConsentState = {
  * Persiste dans localStorage sous la clé "cookie-consent"
  * Durée: 6 mois (recommandation CNIL)
  */
-export const createCookieConsentStore = (
-	initState: CookieConsentState = defaultInitState
-) => {
+export const createCookieConsentStore = (initState: CookieConsentState = defaultInitState) => {
 	return createStore<CookieConsentStore>()(
 		persist(
 			(set) => ({
@@ -95,7 +95,7 @@ export const createCookieConsentStore = (
 			{
 				name: "cookie-consent", // Clé localStorage
 				storage: createJSONStorage(() =>
-					typeof window !== "undefined" ? localStorage : noopStorage
+					typeof window !== "undefined" ? localStorage : noopStorage,
 				),
 				// Vérifier la version de la politique au chargement
 				onRehydrateStorage: () => (state) => {
@@ -125,7 +125,7 @@ export const createCookieConsentStore = (
 						state._hasHydrated = true;
 					}
 				},
-			}
-		)
+			},
+		),
 	);
 };

@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { NewsletterStatus } from "@/app/generated/prisma/client";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { SORT_OPTIONS } from "../constants/subscriber.constants";
@@ -17,9 +14,7 @@ const newsletterStatusValues = Object.values(NewsletterStatus) as [string, ...st
 
 export const subscriberFiltersSchema = z
 	.object({
-		status: z
-			.enum(newsletterStatusValues)
-			.optional(),
+		status: z.enum(newsletterStatusValues).optional(),
 		subscribedAfter: stringOrDateSchema,
 		subscribedBefore: stringOrDateSchema,
 	})
@@ -55,4 +50,3 @@ export const getSubscribersSchema = z.object({
 	search: z.string().max(255).optional(),
 	filters: subscriberFiltersSchema.optional(),
 });
-

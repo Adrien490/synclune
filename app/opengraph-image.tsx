@@ -18,65 +18,63 @@ export const contentType = "image/png";
  */
 export default async function Image() {
 	return new ImageResponse(
-		(
+		<div
+			style={{
+				background: "linear-gradient(135deg, #f0b4c8 0%, #e493b3 40%, #c75b8f 100%)",
+				width: "100%",
+				height: "100%",
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				justifyContent: "center",
+				padding: "80px",
+				fontFamily: "sans-serif",
+				color: "white",
+			}}
+		>
+			{/* Nom de la marque */}
 			<div
 				style={{
-					background: "linear-gradient(135deg, #f0b4c8 0%, #e493b3 40%, #c75b8f 100%)",
-					width: "100%",
-					height: "100%",
+					fontSize: 96,
+					fontWeight: 700,
+					textAlign: "center",
+					marginBottom: "30px",
+					letterSpacing: "0.02em",
 					display: "flex",
-					flexDirection: "column",
-					alignItems: "center",
-					justifyContent: "center",
-					padding: "80px",
-					fontFamily: "sans-serif",
-					color: "white",
 				}}
 			>
-				{/* Nom de la marque */}
-				<div
-					style={{
-						fontSize: 96,
-						fontWeight: 700,
-						textAlign: "center",
-						marginBottom: "30px",
-						letterSpacing: "0.02em",
-						display: "flex",
-					}}
-				>
-					{BUSINESS_INFO.name}
-				</div>
-
-				{/* Description */}
-				<div
-					style={{
-						fontSize: 36,
-						fontWeight: 400,
-						textAlign: "center",
-						maxWidth: "900px",
-						lineHeight: 1.4,
-						opacity: 0.95,
-						display: "flex",
-					}}
-				>
-					Créatrice de bijoux faits main avec amour à Nantes
-				</div>
-
-				{/* Tagline */}
-				<div
-					style={{
-						fontSize: 28,
-						fontWeight: 300,
-						textAlign: "center",
-						marginTop: "40px",
-						opacity: 0.85,
-						display: "flex",
-					}}
-				>
-					Bijoux artisanaux colorés et originaux
-				</div>
+				{BUSINESS_INFO.name}
 			</div>
-		),
-		{ ...size }
+
+			{/* Description */}
+			<div
+				style={{
+					fontSize: 36,
+					fontWeight: 400,
+					textAlign: "center",
+					maxWidth: "900px",
+					lineHeight: 1.4,
+					opacity: 0.95,
+					display: "flex",
+				}}
+			>
+				Créatrice de bijoux faits main avec amour à Nantes
+			</div>
+
+			{/* Tagline */}
+			<div
+				style={{
+					fontSize: 28,
+					fontWeight: 300,
+					textAlign: "center",
+					marginTop: "40px",
+					opacity: 0.85,
+					display: "flex",
+				}}
+			>
+				Bijoux artisanaux colorés et originaux
+			</div>
+		</div>,
+		{ ...size },
 	);
 }

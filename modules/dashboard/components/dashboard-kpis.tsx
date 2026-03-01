@@ -1,6 +1,6 @@
-import { Euro, ShoppingBag, Receipt } from "lucide-react"
-import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis"
-import { KpiCard } from "./kpi-card"
+import { Euro, ShoppingBag, Receipt } from "lucide-react";
+import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
+import { KpiCard } from "./kpi-card";
 
 /**
  * Composant async pour les 3 KPIs du dashboard admin
@@ -9,17 +9,17 @@ import { KpiCard } from "./kpi-card"
  * - Panier moyen
  */
 export async function DashboardKpis() {
-	const kpis = await fetchDashboardKpis()
+	const kpis = await fetchDashboardKpis();
 
 	const formatCurrency = (amount: number) =>
 		new Intl.NumberFormat("fr-FR", {
 			style: "currency",
 			currency: "EUR",
 			maximumFractionDigits: 0,
-		}).format(amount)
+		}).format(amount);
 
 	return (
-		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+		<div className="grid gap-4 sm:grid-cols-3">
 			{/* CA du mois */}
 			<KpiCard
 				title="CA du mois"
@@ -63,5 +63,5 @@ export async function DashboardKpis() {
 				tooltip="Valeur moyenne des commandes ce mois"
 			/>
 		</div>
-	)
+	);
 }

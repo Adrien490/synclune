@@ -13,7 +13,7 @@ export default function EditProductLoadingPage() {
 			/>
 
 			<section className="bg-background py-8">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-32">
+				<div className="mx-auto max-w-7xl space-y-6 px-4 pb-32 sm:px-6 lg:px-8">
 					{/* Le bijou */}
 					<div className="space-y-6">
 						{/* Titre */}

@@ -24,17 +24,13 @@ export function useVariantValidation({
 
 	// Déterminer quelles variantes sont requises
 	const requiresColor =
-		product.skus &&
-		product.skus.length > 1 &&
-		variantInfo.availableColors.length > 1;
+		product.skus && product.skus.length > 1 && variantInfo.availableColors.length > 1;
 
 	const requiresMaterial =
-		product.skus &&
-		product.skus.length > 1 &&
-		variantInfo.availableMaterials.length > 1;
+		product.skus && product.skus.length > 1 && variantInfo.availableMaterials.length > 1;
 
 	const hasAdjustableSizes = variantInfo.availableSizes.some((s) =>
-		s.size.toLowerCase().includes("ajustable")
+		s.size.toLowerCase().includes("ajustable"),
 	);
 
 	const requiresSize =
@@ -43,7 +39,7 @@ export function useVariantValidation({
 		!hasAdjustableSizes &&
 		variantInfo.availableSizes.length > 0 &&
 		PRODUCT_TYPES_REQUIRING_SIZE.includes(
-			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number]
+			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number],
 		);
 
 	// Calculer les erreurs de validation

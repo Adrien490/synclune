@@ -1,15 +1,12 @@
 import { NewsletterStatus, Prisma } from "@/app/generated/prisma/client";
-import type {
-	GetSubscribersParams,
-	SubscriberFilters,
-} from "../types/subscriber.types";
+import type { GetSubscribersParams, SubscriberFilters } from "../types/subscriber.types";
 
 // ============================================================================
 // SUBSCRIBER QUERY BUILDER UTILS
 // ============================================================================
 
 export function buildSubscriberSearchConditions(
-	search: string
+	search: string,
 ): Prisma.NewsletterSubscriberWhereInput | null {
 	const trimmedSearch = search.trim();
 
@@ -26,7 +23,7 @@ export function buildSubscriberSearchConditions(
 }
 
 export function buildSubscriberFilterConditions(
-	filters: SubscriberFilters
+	filters: SubscriberFilters,
 ): Prisma.NewsletterSubscriberWhereInput {
 	const conditions: Prisma.NewsletterSubscriberWhereInput = {};
 
@@ -48,7 +45,7 @@ export function buildSubscriberFilterConditions(
 }
 
 export function buildSubscriberWhereClause(
-	params: GetSubscribersParams
+	params: GetSubscribersParams,
 ): Prisma.NewsletterSubscriberWhereInput {
 	const whereClause: Prisma.NewsletterSubscriberWhereInput = {
 		// Soft delete: exclure les abonnés supprimés par défaut

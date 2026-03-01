@@ -5,9 +5,7 @@ import Color from "color";
 import { createContext, useContext, useEffect, useEffectEvent, useRef, useState } from "react";
 import type { ColorPickerContextValue, ColorPickerProps } from "./types";
 
-const ColorPickerContext = createContext<ColorPickerContextValue | undefined>(
-	undefined
-);
+const ColorPickerContext = createContext<ColorPickerContextValue | undefined>(undefined);
 
 export const useColorPicker = (): ColorPickerContextValue => {
 	const context = useContext(ColorPickerContext);
@@ -29,14 +27,12 @@ export const ColorPicker = ({
 	const selectedColor = Color(value);
 	const defaultColor = Color(defaultValue);
 
-	const [hue, setHue] = useState(
-		selectedColor.hue() || defaultColor.hue() || 0
-	);
+	const [hue, setHue] = useState(selectedColor.hue() || defaultColor.hue() || 0);
 	const [saturation, setSaturation] = useState(
-		selectedColor.saturationl() || defaultColor.saturationl() || 100
+		selectedColor.saturationl() || defaultColor.saturationl() || 100,
 	);
 	const [lightness, setLightness] = useState(
-		selectedColor.lightness() || defaultColor.lightness() || 50
+		selectedColor.lightness() || defaultColor.lightness() || 50,
 	);
 	const [alpha, setAlpha] = useState(() => {
 		const normalizeAlpha = (v: number) => (isNaN(v) ? 1 : v);

@@ -232,9 +232,7 @@ describe("Desktop nav items", () => {
 	it("renders Mes demandes (desktopOnly item)", () => {
 		render(<AccountNav variant="desktop-only" />);
 
-		expect(
-			screen.getByRole("link", { name: /Mes demandes/i })
-		).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: /Mes demandes/i })).toBeInTheDocument();
 	});
 });
 

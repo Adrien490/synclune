@@ -13,9 +13,7 @@ interface DeleteProductData {
 }
 
 export function DeleteProductAlertDialog() {
-	const deleteDialog = useAlertDialog<DeleteProductData>(
-		DELETE_PRODUCT_DIALOG_ID
-	);
+	const deleteDialog = useAlertDialog<DeleteProductData>(DELETE_PRODUCT_DIALOG_ID);
 
 	const { action, isPending } = useDeleteProduct({
 		onSuccess: () => {
@@ -36,15 +34,11 @@ export function DeleteProductAlertDialog() {
 						<strong>&quot;{data?.productTitle}&quot;</strong> ?
 					</p>
 					<p>
-						<span className="text-destructive font-medium">
-							Cette action est irréversible
-						</span>{" "}
-						et supprimera également toutes les variantes et images
-						associées.
+						<span className="text-destructive font-medium">Cette action est irréversible</span> et
+						supprimera également toutes les variantes et images associées.
 					</p>
 					<p className="text-muted-foreground text-xs">
-						Note: Les commandes existantes conserveront les informations
-						du bijou via des snapshots.
+						Note: Les commandes existantes conserveront les informations du bijou via des snapshots.
 					</p>
 				</div>
 			)}

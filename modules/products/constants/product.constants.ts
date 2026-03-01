@@ -70,10 +70,7 @@ export const PRODUCT_LIST_SELECT = {
 				},
 			},
 		},
-		orderBy: [
-			{ isDefault: "desc" as const },
-			{ priceInclTax: "asc" as const },
-		],
+		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 	},
 } as const satisfies Prisma.ProductSelect;
 
@@ -138,10 +135,7 @@ export const GET_PRODUCT_SELECT = {
 				},
 			},
 		},
-		orderBy: [
-			{ isDefault: "desc" as const },
-			{ priceInclTax: "asc" as const },
-		],
+		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 	},
 	collections: {
 		select: {
@@ -282,7 +276,11 @@ export const QUICK_SEARCH_SELECT = {
 			inventory: true,
 			isDefault: true,
 			color: { select: { slug: true, name: true, hex: true } },
-			images: { where: { isPrimary: true }, take: 1, select: { url: true, blurDataUrl: true, altText: true } },
+			images: {
+				where: { isPrimary: true },
+				take: 1,
+				select: { url: true, blurDataUrl: true, altText: true },
+			},
 		},
 		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 	},

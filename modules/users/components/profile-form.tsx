@@ -25,18 +25,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
 		defaultValues: {
 			name: user?.name || "",
 		},
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
 	return (
-		<form
-			action={action}
-			onSubmit={() => form.handleSubmit()}
-			className="space-y-4"
-		>
+		<form action={action} onSubmit={() => form.handleSubmit()} className="space-y-4">
 			<form.AppField
 				name="name"
 				validators={{
@@ -61,7 +54,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 							autoCapitalize="words"
 							autoCorrect="off"
 						/>
-						<p className="text-sm text-muted-foreground">
+						<p className="text-muted-foreground text-sm">
 							Ce prénom sera utilisé pour vos commandes et communications
 						</p>
 					</div>
@@ -77,7 +70,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 					disabled
 					className="bg-muted cursor-not-allowed"
 				/>
-				<p className="text-sm text-muted-foreground">
+				<p className="text-muted-foreground text-sm">
 					L&apos;adresse email ne peut pas être modifiée
 				</p>
 			</div>

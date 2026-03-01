@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useActionState, useOptimistic, useTransition } from "react"
-import { withCallbacks } from "@/shared/utils/with-callbacks"
-import { ActionStatus } from "@/shared/types/server-action"
-import { removeRecentSearch } from "@/modules/products/actions/remove-recent-search"
+import { useActionState, useOptimistic, useTransition } from "react";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { ActionStatus } from "@/shared/types/server-action";
+import { removeRecentSearch } from "@/modules/products/actions/remove-recent-search";
 
 interface UseRemoveRecentSearchOptions {
 	/** Liste initiale des recherches (depuis le serveur) */
-	initialSearches: string[]
+	initialSearches: string[];
 	/** Callback apres suppression reussie */
-	onSuccess?: (searches: string[]) => void
+	onSuccess?: (searches: string[]) => void;
 	/** Callback en cas d'erreur */
-	onError?: () => void
+	onError?: () => void;
 }
 
 /**
@@ -30,52 +30,47 @@ interface UseRemoveRecentSearchOptions {
  * ```
  */
 export function useRemoveRecentSearch(options: UseRemoveRecentSearchOptions) {
-	const { initialSearches, onSuccess, onError } = options
+	const { initialSearches, onSuccess, onError } = options;
 
-	const [isTransitionPending, startTransition] = useTransition()
+	const [isTransitionPending, startTransition] = useTransition();
 
 	// Etat optimiste pour une UX reactive
-	const [optimisticSearches, setOptimisticSearches] =
-		useOptimistic(initialSearches)
+	const [optimisticSearches, setOptimisticSearches] = useOptimistic(initialSearches);
 
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(removeRecentSearch, {
 			onSuccess: (result) => {
-				if (
-					result?.data &&
-					typeof result.data === "object" &&
-					"searches" in result.data
-				) {
-					onSuccess?.(result.data.searches as string[])
+				if (result?.data && typeof result.data === "object" && "searches" in result.data) {
+					onSuccess?.(result.data.searches as string[]);
 				}
 			},
 			onError: () => {
 				// Rollback de l'etat optimiste
-				setOptimisticSearches(initialSearches)
-				onError?.()
+				setOptimisticSearches(initialSearches);
+				onError?.();
 			},
 		}),
-		undefined
-	)
+		undefined,
+	);
 
-	const isPending = isTransitionPending || isActionPending
+	const isPending = isTransitionPending || isActionPending;
 
 	/**
 	 * Supprime un terme des recherches recentes
 	 */
 	const remove = (term: string) => {
 		// Guard contre double-click
-		if (isPending) return
+		if (isPending) return;
 
 		startTransition(() => {
 			// Mise a jour optimiste
-			setOptimisticSearches(optimisticSearches.filter((s) => s !== term))
+			setOptimisticSearches(optimisticSearches.filter((s) => s !== term));
 
-			const formData = new FormData()
-			formData.set("term", term)
-			formAction(formData)
-		})
-	}
+			const formData = new FormData();
+			formData.set("term", term);
+			formAction(formData);
+		});
+	};
 
 	return {
 		state,
@@ -84,5 +79,5 @@ export function useRemoveRecentSearch(options: UseRemoveRecentSearchOptions) {
 		isPending,
 		isSuccess: state?.status === ActionStatus.SUCCESS,
 		isError: state?.status === ActionStatus.ERROR,
-	}
+	};
 }

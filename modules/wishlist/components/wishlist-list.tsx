@@ -24,10 +24,7 @@ interface WishlistListProps {
  * - Affiche un empty state si aucun item
  * - Délègue l'affichage avec optimistic updates au Client Component
  */
-export async function WishlistList({
-	wishlistPromise,
-	perPage,
-}: WishlistListProps) {
+export async function WishlistList({ wishlistPromise, perPage }: WishlistListProps) {
 	const { items, pagination, totalCount } = await wishlistPromise;
 
 	// Empty state si aucun item
@@ -41,11 +38,11 @@ export async function WishlistList({
 					<EmptyTitle>Votre wishlist est vide</EmptyTitle>
 				</EmptyHeader>
 				<EmptyContent>
-					<p className="text-muted-foreground max-w-md mb-6">
-						Découvrez nos créations artisanales et ajoutez vos coups de cœur à
-						votre wishlist pour les retrouver facilement.
+					<p className="text-muted-foreground mb-6 max-w-md">
+						Découvrez nos créations artisanales et ajoutez vos coups de cœur à votre wishlist pour
+						les retrouver facilement.
 					</p>
-					<div className="flex flex-col sm:flex-row gap-3">
+					<div className="flex flex-col gap-3 sm:flex-row">
 						<Button asChild variant="primary" size="lg">
 							<Link href="/produits">Découvrir nos créations</Link>
 						</Button>

@@ -1,5 +1,8 @@
 import { cookies } from "next/headers";
-import { WISHLIST_EXPIRATION_DAYS, WISHLIST_EXPIRATION_MS } from "@/modules/wishlist/constants/expiration.constants";
+import {
+	WISHLIST_EXPIRATION_DAYS,
+	WISHLIST_EXPIRATION_MS,
+} from "@/modules/wishlist/constants/expiration.constants";
 
 /**
  * Nom du cookie pour l'identifiant de session de la wishlist

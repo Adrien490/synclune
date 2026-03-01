@@ -14,9 +14,7 @@ interface UseUpdateCollectionStatusOptions {
  * Hook pour changer le statut d'une collection
  * Utilise useActionState avec withCallbacks pour la gestion du toast
  */
-export const useUpdateCollectionStatus = (
-	options?: UseUpdateCollectionStatusOptions
-) => {
+export const useUpdateCollectionStatus = (options?: UseUpdateCollectionStatusOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -32,9 +30,9 @@ export const useUpdateCollectionStatus = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const updateStatus = (collectionId: string, targetStatus: CollectionStatus) => {

@@ -11,18 +11,16 @@ interface UseUpdateCustomizationStatusOptions {
 	onSuccess?: () => void;
 }
 
-export function useUpdateCustomizationStatus(
-	options?: UseUpdateCustomizationStatusOptions
-) {
+export function useUpdateCustomizationStatus(options?: UseUpdateCustomizationStatusOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateCustomizationStatus,
 			createToastCallbacks({
 				loadingMessage: "Mise à jour du statut...",
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

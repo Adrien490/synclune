@@ -77,11 +77,7 @@ vi.mock("@/shared/lib/stripe", () => ({
 }));
 
 import type Stripe from "stripe";
-import {
-	handleChargeRefunded,
-	handleRefundUpdated,
-	handleRefundFailed,
-} from "../refund-handlers";
+import { handleChargeRefunded, handleRefundUpdated, handleRefundFailed } from "../refund-handlers";
 
 // ============================================================================
 // Fixtures
@@ -202,11 +198,7 @@ describe("handleChargeRefunded", () => {
 
 		await handleChargeRefunded(charge);
 
-		expect(mockSyncStripeRefunds).toHaveBeenCalledWith(
-			charge,
-			order.refunds,
-			order.id,
-		);
+		expect(mockSyncStripeRefunds).toHaveBeenCalledWith(charge, order.refunds, order.id);
 	});
 
 	it("should call updateOrderPaymentStatus with correct amount", async () => {
@@ -217,12 +209,7 @@ describe("handleChargeRefunded", () => {
 
 		await handleChargeRefunded(makeCharge({ amount_refunded: 10000 }));
 
-		expect(mockUpdateOrderPaymentStatus).toHaveBeenCalledWith(
-			"order-1",
-			10000,
-			10000,
-			"PAID",
-		);
+		expect(mockUpdateOrderPaymentStatus).toHaveBeenCalledWith("order-1", 10000, 10000, "PAID");
 	});
 
 	it("should include userId cache tag when userId exists", async () => {
@@ -388,10 +375,7 @@ describe("handleRefundFailed", () => {
 
 		await handleRefundFailed(makeStripeRefund({ failure_reason: "expired_or_canceled_card" }));
 
-		expect(mockMarkRefundAsFailed).toHaveBeenCalledWith(
-			"refund-db-1",
-			"expired_or_canceled_card",
-		);
+		expect(mockMarkRefundAsFailed).toHaveBeenCalledWith("refund-db-1", "expired_or_canceled_card");
 	});
 
 	it("should use 'unknown' when no failure_reason", async () => {

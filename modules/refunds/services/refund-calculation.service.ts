@@ -42,10 +42,7 @@ export interface OrderItemForRefundCalc {
  * ```
  */
 export function getAvailableQuantity(item: OrderItemForRefundCalc): number {
-	const alreadyRefunded = item.refundItems.reduce(
-		(sum, ri) => sum + ri.quantity,
-		0
-	);
+	const alreadyRefunded = item.refundItems.reduce((sum, ri) => sum + ri.quantity, 0);
 	return item.quantity - alreadyRefunded;
 }
 
@@ -55,9 +52,7 @@ export function getAvailableQuantity(item: OrderItemForRefundCalc): number {
  * @param refunds - Liste des remboursements existants
  * @returns Montant total déjà remboursé en centimes
  */
-export function calculateAlreadyRefunded(
-	refunds: { amount: number }[]
-): number {
+export function calculateAlreadyRefunded(refunds: { amount: number }[]): number {
 	return refunds.reduce((sum, r) => sum + r.amount, 0);
 }
 
@@ -68,10 +63,7 @@ export function calculateAlreadyRefunded(
  * @param alreadyRefunded - Montant déjà remboursé en centimes
  * @returns Montant maximum encore remboursable
  */
-export function calculateMaxRefundable(
-	orderTotal: number,
-	alreadyRefunded: number
-): number {
+export function calculateMaxRefundable(orderTotal: number, alreadyRefunded: number): number {
 	return orderTotal - alreadyRefunded;
 }
 
@@ -97,7 +89,7 @@ export function calculateMaxRefundable(
  */
 export function calculateRefundAmount(
 	selectedItems: RefundItemValue[],
-	orderItems: OrderItemForRefundCalc[]
+	orderItems: OrderItemForRefundCalc[],
 ): number {
 	return selectedItems.reduce((sum, item) => {
 		const orderItem = orderItems.find((oi) => oi.id === item.orderItemId);
@@ -118,7 +110,7 @@ export function calculateRefundAmount(
  */
 export function initializeRefundItems(
 	orderItems: OrderItemForRefundCalc[],
-	reason: RefundReason
+	reason: RefundReason,
 ): RefundItemValue[] {
 	return orderItems.map((item) => ({
 		orderItemId: item.id,
@@ -137,7 +129,7 @@ export function initializeRefundItems(
  */
 export function updateItemsRestock(
 	items: RefundItemValue[],
-	reason: RefundReason
+	reason: RefundReason,
 ): RefundItemValue[] {
 	const defaultRestock = shouldRestockByDefault(reason);
 	return items.map((item) => ({
@@ -159,7 +151,7 @@ export function updateItemsRestock(
  */
 export function validateRefundQuantity(
 	requestedQuantity: number,
-	availableQuantity: number
+	availableQuantity: number,
 ): number {
 	return Math.max(0, Math.min(requestedQuantity, availableQuantity));
 }
@@ -175,13 +167,9 @@ export function validateRefundQuantity(
 export function canSubmitRefund(
 	selectedItems: RefundItemValue[],
 	totalAmount: number,
-	maxRefundable: number
+	maxRefundable: number,
 ): boolean {
-	return (
-		selectedItems.length > 0 &&
-		totalAmount > 0 &&
-		totalAmount <= maxRefundable
-	);
+	return selectedItems.length > 0 && totalAmount > 0 && totalAmount <= maxRefundable;
 }
 
 /**
@@ -201,7 +189,7 @@ export function getSelectedItems(items: RefundItemValue[]): RefundItemValue[] {
  * @returns Articles formatés pour la server action
  */
 export function formatItemsForAction(
-	selectedItems: RefundItemValue[]
+	selectedItems: RefundItemValue[],
 ): { orderItemId: string; quantity: number; restock: boolean }[] {
 	return selectedItems.map((item) => ({
 		orderItemId: item.orderItemId,

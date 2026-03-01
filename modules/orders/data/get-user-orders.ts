@@ -11,9 +11,7 @@ import { fetchUserOrders } from "./fetch-user-orders";
  * @param params - Paramètres de pagination et tri
  * @returns Liste des commandes avec pagination
  */
-export async function getUserOrders(
-	params?: GetUserOrdersInput
-): Promise<GetUserOrdersReturn> {
+export async function getUserOrders(params?: GetUserOrdersInput): Promise<GetUserOrdersReturn> {
 	// Récupérer la session utilisateur
 	const session = await getSession();
 

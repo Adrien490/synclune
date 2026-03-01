@@ -3,8 +3,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock next/link
 vi.mock("next/link", () => ({
-	default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: unknown }) => (
-		<a href={href} {...props}>{children}</a>
+	default: ({
+		href,
+		children,
+		...props
+	}: {
+		href: string;
+		children: React.ReactNode;
+		[key: string]: unknown;
+	}) => (
+		<a href={href} {...props}>
+			{children}
+		</a>
 	),
 }));
 
@@ -15,7 +25,9 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 
 // Mock Badge
 vi.mock("@/shared/components/ui/badge", () => ({
-	Badge: ({ children }: { children: React.ReactNode }) => <span data-testid="badge">{children}</span>,
+	Badge: ({ children }: { children: React.ReactNode }) => (
+		<span data-testid="badge">{children}</span>
+	),
 }));
 
 // Mock LogoutAlertDialog
@@ -29,9 +41,15 @@ vi.mock("./collection-mini-grid", () => ({
 }));
 
 vi.mock("./section-header", () => ({
-	SectionHeader: ({ children, id, as: Tag = "h3" }: { children: React.ReactNode; id: string; as?: "h2" | "h3" }) => (
-		<Tag id={id}>{children}</Tag>
-	),
+	SectionHeader: ({
+		children,
+		id,
+		as: Tag = "h3",
+	}: {
+		children: React.ReactNode;
+		id: string;
+		as?: "h2" | "h3";
+	}) => <Tag id={id}>{children}</Tag>,
 }));
 
 vi.mock("./user-header", () => ({
@@ -70,7 +88,12 @@ const collections = [
 const baseNavItems = [
 	{ href: "/", label: "Accueil", icon: "home" as const },
 	{ href: "/produits", label: "Les créations", icon: "gem" as const, hasDropdown: true },
-	{ href: "/collections", label: "Les collections", icon: "folder-open" as const, hasDropdown: true },
+	{
+		href: "/collections",
+		label: "Les collections",
+		icon: "folder-open" as const,
+		hasDropdown: true,
+	},
 	{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" as const },
 	{ href: "/compte", label: "Mon compte", icon: "user" as const },
 	{ href: "/favoris", label: "Mes favoris", icon: "heart" as const },
@@ -86,7 +109,7 @@ describe("MenuSheetNav", () => {
 					collections={collections}
 					session={null}
 					isOpen
-				/>
+				/>,
 			);
 
 			expect(screen.getByText("Découvrir")).toBeInTheDocument();
@@ -103,7 +126,7 @@ describe("MenuSheetNav", () => {
 					collections={collections}
 					session={null}
 					isOpen
-				/>
+				/>,
 			);
 
 			const baguesLink = screen.getByRole("link", { name: "Bagues" });
@@ -121,7 +144,7 @@ describe("MenuSheetNav", () => {
 					collections={collections}
 					session={null}
 					isOpen
-				/>
+				/>,
 			);
 
 			const mariageLink = screen.getByRole("link", { name: /Mariage/ });
@@ -132,7 +155,9 @@ describe("MenuSheetNav", () => {
 	describe("logged out", () => {
 		it("shows sign-in link and sign-up link", () => {
 			const loggedOutNavItems = baseNavItems.map((item) =>
-				item.href === "/compte" ? { ...item, href: "/connexion", label: "Se connecter", icon: "log-in" as const } : item
+				item.href === "/compte"
+					? { ...item, href: "/connexion", label: "Se connecter", icon: "log-in" as const }
+					: item,
 			);
 
 			render(
@@ -142,7 +167,7 @@ describe("MenuSheetNav", () => {
 					collections={collections}
 					session={null}
 					isOpen
-				/>
+				/>,
 			);
 
 			expect(screen.getByRole("link", { name: "Se connecter" })).toBeInTheDocument();
@@ -157,7 +182,7 @@ describe("MenuSheetNav", () => {
 					collections={collections}
 					session={null}
 					isOpen
-				/>
+				/>,
 			);
 
 			expect(screen.queryByTestId("user-header")).toBeNull();
@@ -182,7 +207,7 @@ describe("MenuSheetNav", () => {
 					collections={collections}
 					session={session}
 					isOpen
-				/>
+				/>,
 			);
 
 			expect(screen.getByTestId("user-header")).toBeInTheDocument();
@@ -196,7 +221,7 @@ describe("MenuSheetNav", () => {
 					collections={collections}
 					session={session}
 					isOpen
-				/>
+				/>,
 			);
 
 			const badge = screen.getByTestId("badge");
@@ -211,7 +236,7 @@ describe("MenuSheetNav", () => {
 					collections={collections}
 					session={session}
 					isOpen
-				/>
+				/>,
 			);
 
 			expect(screen.getByRole("link", { name: "Mes commandes" })).toBeInTheDocument();

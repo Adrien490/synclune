@@ -11,9 +11,8 @@ export function OrdersSelectionToolbar() {
 
 	return (
 		<SelectionToolbar>
-			<span className="text-sm text-muted-foreground">
-				{selectedItems.length} commande{selectedItems.length > 1 ? "s" : ""}{" "}
-				sélectionnée
+			<span className="text-muted-foreground text-sm">
+				{selectedItems.length} commande{selectedItems.length > 1 ? "s" : ""} sélectionnée
 				{selectedItems.length > 1 ? "s" : ""}
 			</span>
 			<OrderSelectionActions />

@@ -1,10 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import type { BaseSkuForList } from "@/shared/types/product-sku.types";
-import {
-	getPrimarySkuForList,
-	getStockInfoForList,
-} from "../sku-selection.service";
+import { getPrimarySkuForList, getStockInfoForList } from "../sku-selection.service";
 
 function makeSku(overrides: Partial<BaseSkuForList> = {}): BaseSkuForList {
 	return {
@@ -52,8 +49,14 @@ describe("getPrimarySkuForList", () => {
 
 	it("should prioritize preferred color over default", () => {
 		const skus = [
-			makeSku({ isDefault: true, color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" } }),
-			makeSku({ isDefault: false, color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" } }),
+			makeSku({
+				isDefault: true,
+				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+			}),
+			makeSku({
+				isDefault: false,
+				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+			}),
 		];
 
 		const result = getPrimarySkuForList({ skus }, { preferredColorSlug: "argent" });
@@ -63,8 +66,16 @@ describe("getPrimarySkuForList", () => {
 
 	it("should return preferred color even if out of stock over default", () => {
 		const skus = [
-			makeSku({ isDefault: true, inventory: 10, color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" } }),
-			makeSku({ isDefault: false, inventory: 0, color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" } }),
+			makeSku({
+				isDefault: true,
+				inventory: 10,
+				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+			}),
+			makeSku({
+				isDefault: false,
+				inventory: 0,
+				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+			}),
 		];
 
 		const result = getPrimarySkuForList({ skus }, { preferredColorSlug: "argent" });
@@ -74,8 +85,14 @@ describe("getPrimarySkuForList", () => {
 
 	it("should prefer in-stock SKU of preferred color over out-of-stock", () => {
 		const skus = [
-			makeSku({ inventory: 0, color: { id: "c1", slug: "argent", hex: "#C0C0C0", name: "Argent" } }),
-			makeSku({ inventory: 3, color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" } }),
+			makeSku({
+				inventory: 0,
+				color: { id: "c1", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+			}),
+			makeSku({
+				inventory: 3,
+				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+			}),
 		];
 
 		const result = getPrimarySkuForList({ skus }, { preferredColorSlug: "argent" });
@@ -107,9 +124,7 @@ describe("getPrimarySkuForList", () => {
 	});
 
 	it("should return first SKU as last resort", () => {
-		const skus = [
-			makeSku({ isActive: false, inventory: 0 }),
-		];
+		const skus = [makeSku({ isActive: false, inventory: 0 })];
 
 		const result = getPrimarySkuForList({ skus });
 
@@ -124,10 +139,7 @@ describe("getPrimarySkuForList", () => {
 describe("getStockInfoForList", () => {
 	it("should return out_of_stock when total inventory is 0", () => {
 		const product = {
-			skus: [
-				makeSku({ inventory: 0 }),
-				makeSku({ inventory: 0 }),
-			],
+			skus: [makeSku({ inventory: 0 }), makeSku({ inventory: 0 })],
 		};
 
 		const info = getStockInfoForList(product);
@@ -140,10 +152,7 @@ describe("getStockInfoForList", () => {
 
 	it("should return in_stock when inventory is available", () => {
 		const product = {
-			skus: [
-				makeSku({ inventory: 3 }),
-				makeSku({ inventory: 7 }),
-			],
+			skus: [makeSku({ inventory: 3 }), makeSku({ inventory: 7 })],
 		};
 
 		const info = getStockInfoForList(product);

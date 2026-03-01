@@ -12,6 +12,7 @@ import type {
 } from "@/modules/dashboard/data/get-recent-orders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 
 import {
@@ -29,7 +30,9 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 	const { orders } = listData;
 
 	return (
-		<Card className={`${CHART_STYLES.card} can-hover:hover:shadow-lg transition-all duration-300`}>
+		<Card
+			className={cn(CHART_STYLES.card, "can-hover:hover:shadow-lg transition-all duration-300")}
+		>
 			<CardHeader>
 				<CardTitle className={CHART_STYLES.title}>Dernières commandes</CardTitle>
 				<CardDescription className="text-sm">Les 5 commandes les plus récentes</CardDescription>
@@ -42,7 +45,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 							href={`/admin/ventes/commandes/${order.id}`}
 							className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
 						>
-							<div className="flex-1 space-y-1">
+							<div className="min-w-0 flex-1 space-y-1">
 								<div className="flex items-center gap-2">
 									<p className="text-sm font-medium">#{order.orderNumber}</p>
 									<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
@@ -55,7 +58,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 										{PAYMENT_STATUS_LABELS[order.paymentStatus]}
 									</Badge>
 								</div>
-								<p className="text-muted-foreground text-sm">
+								<p className="text-muted-foreground truncate text-sm">
 									{order.customerName} • {order.customerEmail}
 								</p>
 								<p className="text-muted-foreground text-xs">

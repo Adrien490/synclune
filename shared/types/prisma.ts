@@ -6,6 +6,4 @@ import { prisma } from "@/shared/lib/prisma";
  *
  * Ce type représente le client Prisma passé dans les callbacks de transaction
  */
-export type PrismaTransaction = Parameters<
-	Parameters<typeof prisma.$transaction>[0]
->[0];
+export type PrismaTransaction = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];

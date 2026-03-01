@@ -184,10 +184,9 @@ describe("invalidateUserSessions", () => {
 
 		const result = await invalidateUserSessions("user-456");
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("Marie Dupont"),
-			{ deletedCount: 5 }
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("Marie Dupont"), {
+			deletedCount: 5,
+		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -196,10 +195,9 @@ describe("invalidateUserSessions", () => {
 
 		const result = await invalidateUserSessions("user-456");
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("0 session(s)"),
-			{ deletedCount: 0 }
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("0 session(s)"), {
+			deletedCount: 0,
+		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -211,7 +209,7 @@ describe("invalidateUserSessions", () => {
 
 		expect(mockSuccess).toHaveBeenCalledWith(
 			expect.stringContaining("marie@example.com"),
-			expect.any(Object)
+			expect.any(Object),
 		);
 	});
 
@@ -237,7 +235,7 @@ describe("invalidateUserSessions", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de l'invalidation des sessions"
+			"Erreur lors de l'invalidation des sessions",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

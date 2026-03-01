@@ -6,10 +6,6 @@ export const metadata: Metadata = {
 		"Gérez vos préférences de cookies et consultez les informations sur les traceurs utilisés sur Synclune",
 };
 
-export default function CookiesLayout({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+export default function CookiesLayout({ children }: { children: React.ReactNode }) {
 	return children;
 }

@@ -41,7 +41,12 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" className="h-11 w-11 p-0 active:scale-95 transition-transform" aria-label="Actions">
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					aria-label="Actions"
+				>
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
@@ -67,10 +72,7 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 					<Pencil className="h-4 w-4" />
 					Modifier
 				</DropdownMenuItem>
-				<DropdownMenuItem
-					onClick={() => duplicate(discount.id)}
-					disabled={isDuplicating}
-				>
+				<DropdownMenuItem onClick={() => duplicate(discount.id)} disabled={isDuplicating}>
 					<Copy className="h-4 w-4" />
 					Dupliquer
 				</DropdownMenuItem>

@@ -36,10 +36,7 @@ export interface CustomerOrdersTableProps {
 	perPage: number;
 }
 
-export async function CustomerOrdersTable({
-	ordersPromise,
-	perPage,
-}: CustomerOrdersTableProps) {
+export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOrdersTableProps) {
 	const { orders, pagination } = await ordersPromise;
 
 	if (orders.length === 0) {
@@ -51,8 +48,7 @@ export async function CustomerOrdersTable({
 					</EmptyMedia>
 					<EmptyTitle>Aucune commande</EmptyTitle>
 					<EmptyDescription>
-						Vous n'avez pas encore passé de commande. Découvrez nos
-						créations artisanales uniques.
+						Vous n'avez pas encore passé de commande. Découvrez nos créations artisanales uniques.
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
@@ -66,43 +62,30 @@ export async function CustomerOrdersTable({
 
 	return (
 		<div className="space-y-4">
-			<div className="border rounded-lg overflow-hidden">
+			<div className="overflow-hidden rounded-lg border">
 				<TableScrollContainer>
-					<Table
-						role="table"
-						aria-label="Liste de vos commandes"
-						className="min-w-full"
-					>
+					<Table role="table" aria-label="Liste de vos commandes" className="min-w-full">
 						<TableHeader>
 							<TableRow>
 								<TableHead scope="col" className="w-[25%] sm:w-[15%]">
 									Commande
 								</TableHead>
-								<TableHead
-									scope="col"
-									className="hidden sm:table-cell w-[15%]"
-								>
+								<TableHead scope="col" className="hidden w-[15%] sm:table-cell">
 									Date
 								</TableHead>
 								<TableHead scope="col" className="w-[20%] sm:w-[15%]">
 									Statut
 								</TableHead>
-								<TableHead
-									scope="col"
-									className="hidden lg:table-cell w-[15%]"
-								>
+								<TableHead scope="col" className="hidden w-[15%] lg:table-cell">
 									Livraison
 								</TableHead>
-								<TableHead
-									scope="col"
-									className="hidden sm:table-cell w-[10%] text-center"
-								>
+								<TableHead scope="col" className="hidden w-[10%] text-center sm:table-cell">
 									Articles
 								</TableHead>
-								<TableHead scope="col" className="w-[15%] sm:w-[10%] text-right">
+								<TableHead scope="col" className="w-[15%] text-right sm:w-[10%]">
 									Total
 								</TableHead>
-								<TableHead scope="col" className="w-[20%] sm:w-[10%] text-right">
+								<TableHead scope="col" className="w-[20%] text-right sm:w-[10%]">
 									<span className="sr-only">Actions</span>
 								</TableHead>
 							</TableRow>
@@ -113,13 +96,13 @@ export async function CustomerOrdersTable({
 									<TableCell>
 										<Link
 											href={`/commandes/${order.orderNumber}`}
-											className="tabular-nums text-sm font-medium text-primary hover:underline"
+											className="text-primary text-sm font-medium tabular-nums hover:underline"
 										>
 											{order.orderNumber}
 										</Link>
 									</TableCell>
 									<TableCell className="hidden sm:table-cell">
-										<span className="text-sm whitespace-nowrap text-muted-foreground">
+										<span className="text-muted-foreground text-sm whitespace-nowrap">
 											{format(order.createdAt, "d MMM yyyy", {
 												locale: fr,
 											})}
@@ -141,15 +124,11 @@ export async function CustomerOrdersTable({
 											{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
 										</Badge>
 									</TableCell>
-									<TableCell className="hidden sm:table-cell text-center">
-										<span className="text-sm text-muted-foreground">
-											{order._count.items}
-										</span>
+									<TableCell className="hidden text-center sm:table-cell">
+										<span className="text-muted-foreground text-sm">{order._count.items}</span>
 									</TableCell>
 									<TableCell className="text-right">
-										<span className="text-sm font-semibold">
-											{formatEuro(order.total)}
-										</span>
+										<span className="text-sm font-semibold">{formatEuro(order.total)}</span>
 									</TableCell>
 									<TableCell className="text-right">
 										<Button variant="ghost" size="sm" asChild>

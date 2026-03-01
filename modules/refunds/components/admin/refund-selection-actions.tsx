@@ -20,12 +20,7 @@ import {
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkApproveRefunds } from "@/modules/refunds/hooks/use-bulk-approve-refunds";
 import { useBulkRejectRefunds } from "@/modules/refunds/hooks/use-bulk-reject-refunds";
-import {
-	CheckCircle2,
-	Loader2,
-	MoreVertical,
-	XCircle,
-} from "lucide-react";
+import { CheckCircle2, Loader2, MoreVertical, XCircle } from "lucide-react";
 import { useState } from "react";
 
 export function RefundSelectionActions() {
@@ -67,10 +62,7 @@ export function RefundSelectionActions() {
 						Approuver
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						onClick={() => setRejectDialogOpen(true)}
-						variant="destructive"
-					>
+					<DropdownMenuItem onClick={() => setRejectDialogOpen(true)} variant="destructive">
 						<XCircle className="h-4 w-4" />
 						Refuser
 					</DropdownMenuItem>
@@ -139,11 +131,7 @@ export function RefundSelectionActions() {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Retour
 							</AlertDialogCancel>
-							<Button
-								type="submit"
-								disabled={isPending}
-								aria-busy={isPending}
-							>
+							<Button type="submit" disabled={isPending} aria-busy={isPending}>
 								{isRejectPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />

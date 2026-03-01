@@ -34,7 +34,7 @@ export function OfflineActions() {
 				Réessayer
 			</Button>
 			{stillOffline && (
-				<p className="text-sm text-muted-foreground animate-in fade-in" role="status">
+				<p className="text-muted-foreground animate-in fade-in text-sm" role="status">
 					Toujours hors ligne... Vérifiez votre connexion.
 				</p>
 			)}

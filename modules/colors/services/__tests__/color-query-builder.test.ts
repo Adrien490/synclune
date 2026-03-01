@@ -129,17 +129,21 @@ describe("buildColorWhereClause", () => {
 
 	describe("filter by isActive", () => {
 		it("should add an isActive true condition when filters.isActive is true", () => {
-			const result = buildColorWhereClause(params({
-				filters: { isActive: true },
-			}));
+			const result = buildColorWhereClause(
+				params({
+					filters: { isActive: true },
+				}),
+			);
 
 			expect(result).toEqual({ isActive: true });
 		});
 
 		it("should add an isActive false condition when filters.isActive is false", () => {
-			const result = buildColorWhereClause(params({
-				filters: { isActive: false },
-			}));
+			const result = buildColorWhereClause(
+				params({
+					filters: { isActive: false },
+				}),
+			);
 
 			expect(result).toEqual({ isActive: false });
 		});
@@ -159,10 +163,12 @@ describe("buildColorWhereClause", () => {
 
 	describe("search combined with filters", () => {
 		it("should include both search and isActive conditions in AND", () => {
-			const result = buildColorWhereClause(params({
-				search: "vert",
-				filters: { isActive: true },
-			}));
+			const result = buildColorWhereClause(
+				params({
+					search: "vert",
+					filters: { isActive: true },
+				}),
+			);
 
 			expect(result.AND).toHaveLength(2);
 			expect(result.AND).toContainEqual({ isActive: true });
@@ -176,10 +182,12 @@ describe("buildColorWhereClause", () => {
 		});
 
 		it("should add only the isActive condition when search is empty", () => {
-			const result = buildColorWhereClause(params({
-				search: "",
-				filters: { isActive: false },
-			}));
+			const result = buildColorWhereClause(
+				params({
+					search: "",
+					filters: { isActive: false },
+				}),
+			);
 
 			expect(result).toEqual({ isActive: false });
 		});

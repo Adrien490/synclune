@@ -9,7 +9,7 @@ import type { CustomizationFilters } from "../types/customization.types";
  * Builds the WHERE clause for customization requests listing
  */
 export function buildCustomizationWhereClause(
-	filters?: CustomizationFilters
+	filters?: CustomizationFilters,
 ): Prisma.CustomizationRequestWhereInput {
 	const where: Prisma.CustomizationRequestWhereInput = { deletedAt: null };
 	const AND: Prisma.CustomizationRequestWhereInput[] = [];

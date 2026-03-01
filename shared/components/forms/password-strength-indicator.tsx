@@ -32,8 +32,8 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
 							strengthLevel < 2
 								? "text-destructive"
 								: strengthLevel === 2
-									? "text-yellow-600 dark:text-yellow-400"
-									: "text-green-600 dark:text-green-400",
+									? "text-warning"
+									: "text-success",
 						)}
 					>
 						{strengthLabel}
@@ -63,7 +63,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
 							key={index}
 							className={cn(
 								"flex items-center gap-1.5 transition-colors",
-								isValid ? "text-green-600 dark:text-green-400" : "text-muted-foreground",
+								isValid ? "text-success" : "text-muted-foreground",
 							)}
 						>
 							{isValid ? (

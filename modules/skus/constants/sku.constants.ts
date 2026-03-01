@@ -202,4 +202,3 @@ export const BULK_SKU_LIMITS = {
 export const SKU_FILTERS_MIN_DATE = new Date("2020-01-01");
 export const SKU_FILTERS_MAX_INVENTORY = 100000;
 export const SKU_FILTERS_MAX_PRICE_CENTS = 99999999; // 999999.99€ en centimes
-

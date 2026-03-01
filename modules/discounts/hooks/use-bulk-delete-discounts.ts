@@ -9,9 +9,7 @@ interface UseBulkDeleteDiscountsOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useBulkDeleteDiscounts = (
-	options?: UseBulkDeleteDiscountsOptions
-) => {
+export const useBulkDeleteDiscounts = (options?: UseBulkDeleteDiscountsOptions) => {
 	const [state, formAction, isFormPending] = useActionState(
 		withCallbacks(
 			bulkDeleteDiscounts,
@@ -26,9 +24,9 @@ export const useBulkDeleteDiscounts = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

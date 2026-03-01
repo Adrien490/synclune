@@ -43,10 +43,12 @@ function Doodle({ variant, color, width, height, delay, className }: DoodleProps
 				fill={config.fill ? color : "none"}
 				fillOpacity={config.fill ? 0.15 : 0}
 				className="doodle-draw"
-				style={{
-					"--path-length": "200",
-					"--draw-delay": `${delay}s`,
-				} as React.CSSProperties}
+				style={
+					{
+						"--path-length": "200",
+						"--draw-delay": `${delay}s`,
+					} as React.CSSProperties
+				}
 			/>
 		</svg>
 	);

@@ -1,9 +1,9 @@
-import { CancelOrderConfirmationEmail } from "@/emails/cancel-order-confirmation-email"
-import { ReturnConfirmationEmail } from "@/emails/return-confirmation-email"
-import { RevertShippingNotificationEmail } from "@/emails/revert-shipping-notification-email"
-import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants"
-import { renderAndSend } from "./send-email"
-import type { EmailResult } from "../types/email.types"
+import { CancelOrderConfirmationEmail } from "@/emails/cancel-order-confirmation-email";
+import { ReturnConfirmationEmail } from "@/emails/return-confirmation-email";
+import { RevertShippingNotificationEmail } from "@/emails/revert-shipping-notification-email";
+import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
+import { renderAndSend } from "./send-email";
+import type { EmailResult } from "../types/email.types";
 
 /**
  * Envoie un email de confirmation d'annulation de commande au client
@@ -17,13 +17,13 @@ export async function sendCancelOrderConfirmationEmail({
 	wasRefunded,
 	orderDetailsUrl,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	orderTotal: number
-	reason?: string
-	wasRefunded: boolean
-	orderDetailsUrl: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	orderTotal: number;
+	reason?: string;
+	wasRefunded: boolean;
+	orderDetailsUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		CancelOrderConfirmationEmail({
@@ -40,7 +40,7 @@ export async function sendCancelOrderConfirmationEmail({
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
 		},
-	)
+	);
 }
 
 /**
@@ -54,12 +54,12 @@ export async function sendReturnConfirmationEmail({
 	reason,
 	orderDetailsUrl,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	orderTotal: number
-	reason?: string
-	orderDetailsUrl: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	orderTotal: number;
+	reason?: string;
+	orderDetailsUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		ReturnConfirmationEmail({
@@ -75,7 +75,7 @@ export async function sendReturnConfirmationEmail({
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
 		},
-	)
+	);
 }
 
 /**
@@ -88,11 +88,11 @@ export async function sendRevertShippingNotificationEmail({
 	reason,
 	orderDetailsUrl,
 }: {
-	to: string
-	orderNumber: string
-	customerName: string
-	reason: string
-	orderDetailsUrl: string
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	reason: string;
+	orderDetailsUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		RevertShippingNotificationEmail({
@@ -107,5 +107,5 @@ export async function sendRevertShippingNotificationEmail({
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
 		},
-	)
+	);
 }

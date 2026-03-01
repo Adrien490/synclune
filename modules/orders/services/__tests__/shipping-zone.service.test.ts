@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-	getShippingZoneFromPostalCode,
-} from "../shipping-zone.service";
+import { getShippingZoneFromPostalCode } from "../shipping-zone.service";
 
 // ============================================================================
 // getShippingZoneFromPostalCode

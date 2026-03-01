@@ -179,9 +179,7 @@ describe("buildSubscriberWhereClause", () => {
 
 	describe("filters", () => {
 		it("should add a status filter condition when filters.status is provided", () => {
-			const result = buildSubscriberWhereClause(
-				params({ filters: { status: "CONFIRMED" } }),
-			);
+			const result = buildSubscriberWhereClause(params({ filters: { status: "CONFIRMED" } }));
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({ status: "CONFIRMED" });
@@ -189,9 +187,7 @@ describe("buildSubscriberWhereClause", () => {
 
 		it("should add a date range filter when subscribedAfter is provided", () => {
 			const date = new Date("2024-06-01");
-			const result = buildSubscriberWhereClause(
-				params({ filters: { subscribedAfter: date } }),
-			);
+			const result = buildSubscriberWhereClause(params({ filters: { subscribedAfter: date } }));
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({
@@ -201,9 +197,7 @@ describe("buildSubscriberWhereClause", () => {
 
 		it("should add a date range filter when subscribedBefore is provided", () => {
 			const date = new Date("2024-06-30");
-			const result = buildSubscriberWhereClause(
-				params({ filters: { subscribedBefore: date } }),
-			);
+			const result = buildSubscriberWhereClause(params({ filters: { subscribedBefore: date } }));
 
 			expect(result.AND).toHaveLength(1);
 			expect(result.AND).toContainEqual({

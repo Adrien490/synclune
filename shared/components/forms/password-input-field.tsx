@@ -10,7 +10,7 @@ import { useState } from "react";
 
 interface PasswordInputFieldProps extends Omit<
 	React.InputHTMLAttributes<HTMLInputElement>,
-	"type"
+	"type" | "size"
 > {
 	/** Label affiché au-dessus du champ */
 	label?: string;

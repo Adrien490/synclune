@@ -1,15 +1,11 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 
 export function OrderDetailSkeleton() {
 	return (
 		<div className="space-y-6">
 			{/* Header */}
-			<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<div className="space-y-2">
 					<Skeleton className="h-8 w-48" />
 					<Skeleton className="h-4 w-64" />
@@ -40,7 +36,7 @@ export function OrderDetailSkeleton() {
 			{/* Main grid */}
 			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Left column */}
-				<div className="lg:col-span-2 space-y-6">
+				<div className="space-y-6 lg:col-span-2">
 					{/* Items Card */}
 					<Card>
 						<CardHeader>
@@ -48,7 +44,7 @@ export function OrderDetailSkeleton() {
 						</CardHeader>
 						<CardContent className="space-y-4">
 							{[1, 2, 3].map((i) => (
-								<div key={i} className="flex items-start gap-4 py-3 border-b last:border-0">
+								<div key={i} className="flex items-start gap-4 border-b py-3 last:border-0">
 									<Skeleton className="h-16 w-16 rounded-md" />
 									<div className="flex-1 space-y-2">
 										<Skeleton className="h-4 w-48" />
@@ -81,7 +77,7 @@ export function OrderDetailSkeleton() {
 							<Skeleton className="h-6 w-24" />
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<div className="flex justify-between items-center">
+							<div className="flex items-center justify-between">
 								<div className="space-y-2">
 									<Skeleton className="h-3 w-28" />
 									<Skeleton className="h-5 w-40" />
@@ -149,7 +145,7 @@ export function OrderDetailSkeleton() {
 						<CardContent className="space-y-4">
 							{[1, 2, 3].map((i) => (
 								<div key={i} className="flex gap-3">
-									<Skeleton className="h-8 w-8 rounded-full shrink-0" />
+									<Skeleton className="h-8 w-8 shrink-0 rounded-full" />
 									<div className="flex-1 space-y-2">
 										<Skeleton className="h-4 w-32" />
 										<Skeleton className="h-3 w-full" />

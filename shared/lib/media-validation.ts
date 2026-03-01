@@ -13,20 +13,17 @@ export const UPLOADTHING_DOMAINS = [
 	"ufs.sh",
 	"uploadthing.com",
 	"uploadthing-prod.s3.us-west-2.amazonaws.com",
-] as const
+] as const;
 
 /**
  * Domaines Synclune (CDN, domaine principal)
  */
-export const SYNCLUNE_DOMAINS = ["synclune.fr", "cdn.synclune.fr"] as const
+export const SYNCLUNE_DOMAINS = ["synclune.fr", "cdn.synclune.fr"] as const;
 
 /**
  * Tous les domaines autorisés pour les médias
  */
-export const ALLOWED_MEDIA_DOMAINS = [
-	...UPLOADTHING_DOMAINS,
-	...SYNCLUNE_DOMAINS,
-] as const
+export const ALLOWED_MEDIA_DOMAINS = [...UPLOADTHING_DOMAINS, ...SYNCLUNE_DOMAINS] as const;
 
 /**
  * Vérifie si une URL provient d'un domaine autorisé
@@ -37,15 +34,13 @@ export const ALLOWED_MEDIA_DOMAINS = [
  */
 export function isAllowedMediaDomain(
 	url: string,
-	allowedDomains: readonly string[] = UPLOADTHING_DOMAINS
+	allowedDomains: readonly string[] = UPLOADTHING_DOMAINS,
 ): boolean {
 	try {
-		const hostname = new URL(url).hostname
-		return allowedDomains.some(
-			(domain) => hostname === domain || hostname.endsWith(`.${domain}`)
-		)
+		const hostname = new URL(url).hostname;
+		return allowedDomains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
 	} catch {
-		return false
+		return false;
 	}
 }
 
@@ -57,20 +52,20 @@ export function isAllowedMediaDomain(
  * @returns true si l'URL est https et sur un domaine autorisé
  */
 export function isValidImageUrl(url: string | undefined | null): boolean {
-	if (!url) return false
+	if (!url) return false;
 
 	try {
-		const parsed = new URL(url)
+		const parsed = new URL(url);
 
 		// Doit être HTTPS
 		if (parsed.protocol !== "https:") {
-			return false
+			return false;
 		}
 
 		// Doit être sur un domaine autorisé (tous les domaines)
-		return isAllowedMediaDomain(url, ALLOWED_MEDIA_DOMAINS)
+		return isAllowedMediaDomain(url, ALLOWED_MEDIA_DOMAINS);
 	} catch {
-		return false
+		return false;
 	}
 }
 
@@ -78,8 +73,6 @@ export function isValidImageUrl(url: string | undefined | null): boolean {
  * Retourne l'URL si valide, undefined sinon
  * Utile pour les line items Stripe
  */
-export function getValidImageUrl(
-	url: string | undefined | null
-): string | undefined {
-	return isValidImageUrl(url) ? (url as string) : undefined
+export function getValidImageUrl(url: string | undefined | null): string | undefined {
+	return isValidImageUrl(url) ? (url as string) : undefined;
 }

@@ -19,23 +19,18 @@ export async function generateInvoiceNumber(): Promise<string> {
 		try {
 			return await prisma.$transaction(async (tx) => {
 				// Use raw SQL with FOR UPDATE to lock the row and prevent concurrent reads
-				const result = await tx.$queryRaw<
-					Array<{ invoiceNumber: string | null }>
-				>(
+				const result = await tx.$queryRaw<Array<{ invoiceNumber: string | null }>>(
 					Prisma.sql`SELECT "invoiceNumber" FROM "Order"
 						WHERE "invoiceNumber" LIKE ${prefix + "%"}
 						ORDER BY "invoiceNumber" DESC
 						LIMIT 1
-						FOR UPDATE`
+						FOR UPDATE`,
 				);
 
 				let nextSequence = 1;
 				const lastInvoiceNumber = result[0]?.invoiceNumber;
 				if (lastInvoiceNumber) {
-					const lastSequence = parseInt(
-						lastInvoiceNumber.slice(prefix.length),
-						10
-					);
+					const lastSequence = parseInt(lastInvoiceNumber.slice(prefix.length), 10);
 					if (!isNaN(lastSequence)) {
 						nextSequence = lastSequence + 1;
 					}

@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	deleteAccountSchema,
-	exportUserDataResponseSchema,
-} from "../schemas/user.schemas";
+import { deleteAccountSchema, exportUserDataResponseSchema } from "../schemas/user.schemas";
 
 // ============================================================================
 // DELETE ACCOUNT TYPES (RGPD - Droit à l'oubli)

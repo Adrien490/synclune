@@ -6,9 +6,7 @@ import type { GetUsersParams, UserFilters } from "../types/user.types";
 // USER QUERY BUILDER UTILS
 // ============================================================================
 
-export function buildUserFilterConditions(
-	filters: UserFilters
-): Prisma.UserWhereInput[] {
+export function buildUserFilterConditions(filters: UserFilters): Prisma.UserWhereInput[] {
 	const conditions: Prisma.UserWhereInput[] = [];
 
 	if (!filters) {
@@ -37,9 +35,7 @@ export function buildUserFilterConditions(
 	}
 
 	if (filters.email !== undefined) {
-		const emails = Array.isArray(filters.email)
-			? filters.email
-			: [filters.email];
+		const emails = Array.isArray(filters.email) ? filters.email : [filters.email];
 		if (emails.length === 1) {
 			conditions.push({
 				email: {
@@ -102,16 +98,12 @@ export function buildUserFilterConditions(
 
 	if (typeof filters.hasStripeCustomer === "boolean") {
 		conditions.push(
-			filters.hasStripeCustomer
-				? { stripeCustomerId: { not: null } }
-				: { stripeCustomerId: null }
+			filters.hasStripeCustomer ? { stripeCustomerId: { not: null } } : { stripeCustomerId: null },
 		);
 	}
 
 	if (typeof filters.hasImage === "boolean") {
-		conditions.push(
-			filters.hasImage ? { image: { not: null } } : { image: null }
-		);
+		conditions.push(filters.hasImage ? { image: { not: null } } : { image: null });
 	}
 
 	// minOrderCount: Prisma doesn't support aggregate filtering in WHERE.
@@ -127,7 +119,7 @@ export function buildUserFilterConditions(
  */
 export function buildUserWhereClause(
 	params: GetUsersParams,
-	fuzzyIds?: string[] | null
+	fuzzyIds?: string[] | null,
 ): Prisma.UserWhereInput {
 	const whereClause: Prisma.UserWhereInput = {
 		// Soft delete: exclude deleted users unless includeDeleted is set
@@ -156,10 +148,7 @@ export function buildUserWhereClause(
 		if (fuzzyIds && fuzzyIds.length > 0) {
 			// Combine fuzzy IDs with exact search (OR)
 			andConditions.push({
-				OR: [
-					{ id: { in: fuzzyIds } },
-					...exactConditions,
-				],
+				OR: [{ id: { in: fuzzyIds } }, ...exactConditions],
 			});
 		} else {
 			whereClause.OR = exactConditions;

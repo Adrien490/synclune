@@ -100,7 +100,8 @@ export function validatePrimaryImage(file: File): MediaFileValidationResult {
 	if (isVideo) {
 		return {
 			valid: false,
-			error: "Les vidéos ne peuvent pas être utilisées comme média principal. Veuillez uploader une image (JPG, PNG, WebP, GIF ou AVIF).",
+			error:
+				"Les vidéos ne peuvent pas être utilisées comme média principal. Veuillez uploader une image (JPG, PNG, WebP, GIF ou AVIF).",
 			mediaType: "VIDEO",
 			fileSize: file.size,
 			sizeLimit: MEDIA_SIZE_LIMITS.VIDEO,
@@ -124,7 +125,7 @@ export function validateMediaFiles(
 		rejectVideos?: boolean;
 		/** Maximum number of files to keep */
 		maxFiles?: number;
-	}
+	},
 ): {
 	validFiles: File[];
 	errors: string[];
@@ -134,18 +135,14 @@ export function validateMediaFiles(
 	const errors: string[] = [];
 	let skipped = 0;
 
-	const filesToProcess = options?.maxFiles
-		? files.slice(0, options.maxFiles)
-		: files;
+	const filesToProcess = options?.maxFiles ? files.slice(0, options.maxFiles) : files;
 
 	if (options?.maxFiles && files.length > options.maxFiles) {
 		skipped = files.length - options.maxFiles;
 	}
 
 	for (const file of filesToProcess) {
-		const result = options?.rejectVideos
-			? validatePrimaryImage(file)
-			: validateMediaFile(file);
+		const result = options?.rejectVideos ? validatePrimaryImage(file) : validateMediaFile(file);
 
 		if (result.valid) {
 			validFiles.push(file);
@@ -169,11 +166,7 @@ const CUID_PATTERN = /^c[a-z0-9]{24}$/;
  * - Exact domains for main endpoints
  * - Allowed suffixes for dynamic CDN subdomains
  */
-const UPLOADTHING_EXACT_HOSTS: Set<string> = new Set([
-	"utfs.io",
-	"uploadthing.com",
-	"ufs.sh",
-]);
+const UPLOADTHING_EXACT_HOSTS: Set<string> = new Set(["utfs.io", "uploadthing.com", "ufs.sh"]);
 
 /**
  * Allowed suffixes for UploadThing subdomains.

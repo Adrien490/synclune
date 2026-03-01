@@ -1,80 +1,80 @@
-import { test, expect } from "./fixtures"
-import { requireSeedData } from "./constants"
+import { test, expect } from "./fixtures";
+import { requireSeedData } from "./constants";
 
 test.describe("Visual regression - Pages cles", { tag: ["@slow"] }, () => {
 	test("homepage - snapshot", async ({ page }) => {
-		await page.goto("/")
-		await page.waitForLoadState("domcontentloaded")
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
 
 		// Wait for above-the-fold content to stabilize
-		const heading = page.getByRole("heading", { level: 1 })
-		await expect(heading).toBeVisible()
+		const heading = page.getByRole("heading", { level: 1 });
+		await expect(heading).toBeVisible();
 
 		await expect(page).toHaveScreenshot("homepage.png", {
 			fullPage: false,
 			maxDiffPixelRatio: 0.05,
 			animations: "disabled",
-		})
-	})
+		});
+	});
 
 	test("page produits - snapshot", async ({ page }) => {
-		await page.goto("/produits")
-		await page.waitForLoadState("domcontentloaded")
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
 
-		const heading = page.getByRole("heading", { level: 1 })
-		await expect(heading).toBeVisible()
+		const heading = page.getByRole("heading", { level: 1 });
+		await expect(heading).toBeVisible();
 
 		await expect(page).toHaveScreenshot("products-page.png", {
 			fullPage: false,
 			maxDiffPixelRatio: 0.05,
 			animations: "disabled",
-		})
-	})
+		});
+	});
 
 	test("page detail produit - snapshot", async ({ page, productCatalogPage }) => {
-		await productCatalogPage.goto()
+		await productCatalogPage.goto();
 
-		const productCount = await productCatalogPage.productLinks.count()
-		requireSeedData(test, productCount > 0, "No products found")
+		const productCount = await productCatalogPage.productLinks.count();
+		requireSeedData(test, productCount > 0, "No products found");
 
-		await productCatalogPage.gotoFirstProduct()
-		await page.waitForLoadState("domcontentloaded")
+		await productCatalogPage.gotoFirstProduct();
+		await page.waitForLoadState("domcontentloaded");
 
-		const heading = page.getByRole("heading", { level: 1 })
-		await expect(heading).toBeVisible()
+		const heading = page.getByRole("heading", { level: 1 });
+		await expect(heading).toBeVisible();
 
 		await expect(page).toHaveScreenshot("product-detail.png", {
 			fullPage: false,
 			maxDiffPixelRatio: 0.05,
 			animations: "disabled",
-		})
-	})
+		});
+	});
 
 	test("page connexion - snapshot", async ({ page }) => {
-		await page.goto("/connexion")
-		await page.waitForLoadState("domcontentloaded")
+		await page.goto("/connexion");
+		await page.waitForLoadState("domcontentloaded");
 
-		const submitButton = page.getByRole("button", { name: /Se connecter/i })
-		await expect(submitButton).toBeVisible()
+		const submitButton = page.getByRole("button", { name: /Se connecter/i });
+		await expect(submitButton).toBeVisible();
 
 		await expect(page).toHaveScreenshot("login-page.png", {
 			fullPage: false,
 			maxDiffPixelRatio: 0.05,
 			animations: "disabled",
-		})
-	})
+		});
+	});
 
 	test("page collections - snapshot", async ({ page }) => {
-		await page.goto("/collections")
-		await page.waitForLoadState("domcontentloaded")
+		await page.goto("/collections");
+		await page.waitForLoadState("domcontentloaded");
 
-		const heading = page.getByRole("heading", { level: 1 })
-		await expect(heading).toBeVisible()
+		const heading = page.getByRole("heading", { level: 1 });
+		await expect(heading).toBeVisible();
 
 		await expect(page).toHaveScreenshot("collections-page.png", {
 			fullPage: false,
 			maxDiffPixelRatio: 0.05,
 			animations: "disabled",
-		})
-	})
-})
+		});
+	});
+});

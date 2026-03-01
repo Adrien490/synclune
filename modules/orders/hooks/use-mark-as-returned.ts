@@ -15,9 +15,9 @@ export function useMarkAsReturned(options?: UseMarkAsReturnedOptions) {
 			markAsReturned,
 			createToastCallbacks({
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

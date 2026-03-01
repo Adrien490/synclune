@@ -36,6 +36,6 @@ export function useIsMobile() {
 		// getSnapshot: uses matchMedia for consistency with the subscribe method
 		() => window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches,
 		// getServerSnapshot: fallback SSR (false = desktop par défaut)
-		() => false
+		() => false,
 	);
 }

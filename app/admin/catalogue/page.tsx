@@ -7,8 +7,6 @@ export const metadata: Metadata = {
 	description: "Gérer le catalogue de bijoux",
 };
 
-
-
 export default function CatalogPage() {
 	return (
 		<>

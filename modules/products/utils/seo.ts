@@ -11,10 +11,7 @@ import { REVIEW_CONFIG } from "../constants/reviews.constants";
  * @param ratingValue - Note moyenne réelle
  * @param reviewCount - Nombre réel d'avis
  */
-export function getProductAggregateRating(
-	ratingValue: number,
-	reviewCount: number
-) {
+export function getProductAggregateRating(ratingValue: number, reviewCount: number) {
 	// Ne pas générer si pas d'avis réels
 	if (reviewCount === 0) {
 		return null;

@@ -159,10 +159,7 @@ describe("updateDiscount", () => {
 		mockPrisma.discount.update.mockResolvedValue({ id: "disc-123", code: "PROMO20" });
 
 		// Default: invalidation tags
-		mockGetDiscountInvalidationTags.mockReturnValue([
-			"discounts-list",
-			"discount-disc-123",
-		]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
 
 		// Default: success/error/notFound helpers return shaped ActionState
 		mockSuccess.mockImplementation((message: string, data?: Record<string, unknown>) => ({
@@ -178,12 +175,10 @@ describe("updateDiscount", () => {
 			status: ActionStatus.NOT_FOUND,
 			message: `${entity} introuvable`,
 		}));
-		mockHandleActionError.mockImplementation(
-			(_e: unknown, fallback: string) => ({
-				status: ActionStatus.ERROR,
-				message: fallback,
-			})
-		);
+		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+			status: ActionStatus.ERROR,
+			message: fallback,
+		}));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -330,10 +325,7 @@ describe("updateDiscount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should invalidate cache tags for id and old code after update", async () => {
-		mockGetDiscountInvalidationTags.mockReturnValue([
-			"discounts-list",
-			"discount-disc-123",
-		]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
 
 		await updateDiscount(undefined, validFormData);
 
@@ -375,10 +367,10 @@ describe("updateDiscount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should return ALREADY_EXISTS on Prisma P2002 error", async () => {
-		const prismaError = new Prisma.PrismaClientKnownRequestError(
-			"Unique constraint failed",
-			{ code: "P2002", clientVersion: "6.0.0" }
-		);
+		const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+			code: "P2002",
+			clientVersion: "6.0.0",
+		});
 		mockPrisma.discount.update.mockRejectedValue(prismaError);
 
 		const result = await updateDiscount(undefined, validFormData);
@@ -394,7 +386,7 @@ describe("updateDiscount", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la modification du code promo"
+			"Erreur lors de la modification du code promo",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

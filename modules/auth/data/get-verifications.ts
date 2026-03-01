@@ -1,9 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 import {
@@ -13,10 +10,7 @@ import {
 	GET_VERIFICATIONS_DEFAULT_SORT_ORDER,
 } from "../constants/verification.constants";
 import { getVerificationsSchema } from "../schemas/verification.schemas";
-import type {
-	GetVerificationsParams,
-	GetVerificationsReturn,
-} from "../types/verification.types";
+import type { GetVerificationsParams, GetVerificationsReturn } from "../types/verification.types";
 import { buildVerificationWhereClause } from "../services/verification-query-builder";
 import { cacheAuthVerifications } from "../utils/cache.utils";
 
@@ -40,7 +34,7 @@ function maskValue(value: string): string {
  * SÉCURITÉ : value JAMAIS exposé, même en admin
  */
 export async function getVerifications(
-	params: GetVerificationsParams
+	params: GetVerificationsParams,
 ): Promise<GetVerificationsReturn> {
 	try {
 		const admin = await isAdmin();
@@ -69,14 +63,11 @@ export async function getVerifications(
  * Récupère la liste des vérifications avec pagination, tri et filtrage
  * Admin uniquement avec sécurité renforcée
  */
-async function fetchVerifications(
-	params: GetVerificationsParams
-): Promise<GetVerificationsReturn> {
+async function fetchVerifications(params: GetVerificationsParams): Promise<GetVerificationsReturn> {
 	"use cache";
 	cacheAuthVerifications();
 
-	const sortOrder = (params.sortOrder ||
-		GET_VERIFICATIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
+	const sortOrder = (params.sortOrder || GET_VERIFICATIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
 
 	try {
 		const where = buildVerificationWhereClause(params);
@@ -90,7 +81,7 @@ async function fetchVerifications(
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_VERIFICATIONS_DEFAULT_PER_PAGE),
-			GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE
+			GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -109,13 +100,12 @@ async function fetchVerifications(
 			...cursorConfig,
 		});
 
-		const { items: verificationsWithoutTransform, pagination } =
-			processCursorResults(
-				verificationsRaw,
-				take,
-				params.direction,
-				params.cursor
-			);
+		const { items: verificationsWithoutTransform, pagination } = processCursorResults(
+			verificationsRaw,
+			take,
+			params.direction,
+			params.cursor,
+		);
 
 		const now = new Date();
 		const verifications = verificationsWithoutTransform.map((verification) => {

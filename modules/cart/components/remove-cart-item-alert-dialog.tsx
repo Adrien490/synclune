@@ -33,9 +33,7 @@ interface RemoveCartItemData {
  * Intégré avec CartOptimisticContext pour suppression visuelle immédiate
  */
 export function RemoveCartItemAlertDialog() {
-	const removeDialog = useAlertDialog<RemoveCartItemData>(
-		REMOVE_CART_ITEM_DIALOG_ID
-	);
+	const removeDialog = useAlertDialog<RemoveCartItemData>(REMOVE_CART_ITEM_DIALOG_ID);
 	const cartOptimistic = useCartOptimisticSafe();
 
 	const { action, isPending } = useRemoveFromCart({
@@ -75,16 +73,10 @@ export function RemoveCartItemAlertDialog() {
 		<AlertDialog open={removeDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form onSubmit={handleSubmit} aria-label="Supprimer l'article du panier">
-					<input
-						type="hidden"
-						name="cartItemId"
-						value={removeDialog.data?.cartItemId ?? ""}
-					/>
+					<input type="hidden" name="cartItemId" value={removeDialog.data?.cartItemId ?? ""} />
 
 					<AlertDialogHeader>
-						<AlertDialogTitle>
-							Retirer ce produit de votre panier ?
-						</AlertDialogTitle>
+						<AlertDialogTitle>Retirer ce produit de votre panier ?</AlertDialogTitle>
 						<AlertDialogDescription>
 							{removeDialog.data?.itemName
 								? `Vous voulez vraiment retirer ${removeDialog.data.itemName} de votre panier ? Vous pourrez toujours le retrouver dans la boutique si vous changez d'avis !`

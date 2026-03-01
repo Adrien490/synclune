@@ -22,19 +22,16 @@ interface ReturnEligibilityOrder {
  */
 export function isReturnEligible(order: ReturnEligibilityOrder): boolean {
 	const validPaymentStatus =
-		order.paymentStatus === "PAID" ||
-		order.paymentStatus === "PARTIALLY_REFUNDED";
+		order.paymentStatus === "PAID" || order.paymentStatus === "PARTIALLY_REFUNDED";
 
 	const isDelivered = order.fulfillmentStatus === "DELIVERED";
 
 	const withinDeadline =
 		!!order.actualDelivery &&
-		new Date(order.actualDelivery).getTime() +
-			WITHDRAWAL_PERIOD_DAYS * MS_PER_DAY >
-			Date.now();
+		new Date(order.actualDelivery).getTime() + WITHDRAWAL_PERIOD_DAYS * MS_PER_DAY > Date.now();
 
 	const hasActiveRefund = order.refunds.some(
-		(r) => r.status === "PENDING" || r.status === "APPROVED"
+		(r) => r.status === "PENDING" || r.status === "APPROVED",
 	);
 
 	return validPaymentStatus && isDelivered && withinDeadline && !hasActiveRefund;
@@ -44,9 +41,7 @@ export function isReturnEligible(order: ReturnEligibilityOrder): boolean {
  * Returns the number of days remaining for a return request.
  * Returns 0 if no delivery date or if the deadline has passed.
  */
-export function getReturnDaysRemaining(
-	actualDelivery: Date | null
-): number {
+export function getReturnDaysRemaining(actualDelivery: Date | null): number {
 	if (!actualDelivery) return 0;
 
 	const elapsed = Date.now() - new Date(actualDelivery).getTime();

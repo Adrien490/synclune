@@ -3,11 +3,7 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
-import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/browser";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 import {
 	CheckCircle,
 	CreditCard,
@@ -132,12 +128,10 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	};
 
 	return (
-		<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 			<div>
-				<h1 className="text-2xl font-semibold tracking-tight">
-					Commande {order.orderNumber}
-				</h1>
-				<p className="text-sm text-muted-foreground">
+				<h1 className="text-2xl font-semibold tracking-tight">Commande {order.orderNumber}</h1>
+				<p className="text-muted-foreground text-sm">
 					Créée le{" "}
 					{format(order.createdAt, "d MMMM yyyy 'à' HH'h'mm", {
 						locale: fr,

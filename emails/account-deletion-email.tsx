@@ -7,17 +7,14 @@ interface AccountDeletionEmailProps {
 	deletionDate: string;
 }
 
-export const AccountDeletionEmail = ({
-	userName,
-	deletionDate,
-}: AccountDeletionEmailProps) => (
+export const AccountDeletionEmail = ({ userName, deletionDate }: AccountDeletionEmailProps) => (
 	<EmailLayout preview="Votre compte a été supprimé">
 		{/* Titre */}
 		<Section style={{ marginBottom: "24px" }}>
 			<Text style={EMAIL_STYLES.heading.h2}>Compte supprimé</Text>
 			<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-				Bonjour {userName}, votre compte Synclune a été supprimé le{" "}
-				{deletionDate} conformément à votre demande.
+				Bonjour {userName}, votre compte Synclune a été supprimé le {deletionDate} conformément à
+				votre demande.
 			</Text>
 		</Section>
 
@@ -33,18 +30,17 @@ export const AccountDeletionEmail = ({
 				Conservation légale des données
 			</Text>
 			<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-				Conformément à l'article L123-22 du Code de Commerce, les données
-				relatives à vos commandes et factures sont conservées pendant 10 ans
-				à des fins comptables et fiscales. Vos données personnelles
-				(nom, email, adresse) ont été anonymisées.
+				Conformément à l'article L123-22 du Code de Commerce, les données relatives à vos commandes
+				et factures sont conservées pendant 10 ans à des fins comptables et fiscales. Vos données
+				personnelles (nom, email, adresse) ont été anonymisées.
 			</Text>
 		</Section>
 
 		{/* Contact */}
 		<Section style={{ marginBottom: "32px" }}>
 			<Text style={EMAIL_STYLES.text.body}>
-				Si vous avez des questions, n'hésitez pas à nous contacter.
-				Nous vous remercions pour votre confiance.
+				Si vous avez des questions, n'hésitez pas à nous contacter. Nous vous remercions pour votre
+				confiance.
 			</Text>
 		</Section>
 	</EmailLayout>

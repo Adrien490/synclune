@@ -29,8 +29,7 @@ const skeletonVariants = cva("", {
 });
 
 interface SkeletonProps
-	extends React.ComponentProps<"div">,
-		VariantProps<typeof skeletonVariants> {}
+	extends React.ComponentProps<"div">, VariantProps<typeof skeletonVariants> {}
 
 function Skeleton({ className, variant, shape, size, ...props }: SkeletonProps) {
 	return (
@@ -53,20 +52,9 @@ interface SkeletonGroupProps extends React.ComponentProps<"div"> {
  * Wrapper accessible pour groupes de skeletons.
  * Informe les lecteurs d'écran qu'un chargement est en cours.
  */
-function SkeletonGroup({
-	label,
-	children,
-	className,
-	...props
-}: SkeletonGroupProps) {
+function SkeletonGroup({ label, children, className, ...props }: SkeletonGroupProps) {
 	return (
-		<div
-			role="status"
-			aria-busy="true"
-			aria-label={label}
-			className={className}
-			{...props}
-		>
+		<div role="status" aria-busy="true" aria-label={label} className={className} {...props}>
 			{children}
 			<span className="sr-only">{label}</span>
 		</div>
@@ -106,9 +94,7 @@ function SkeletonAvatar({ size = "md", className }: SkeletonAvatarProps) {
 		md: "size-10",
 		lg: "size-12",
 	};
-	return (
-		<Skeleton shape="circle" className={cn(sizeClasses[size], className)} />
-	);
+	return <Skeleton shape="circle" className={cn(sizeClasses[size], className)} />;
 }
 
 interface SkeletonButtonProps {
@@ -123,16 +109,7 @@ function SkeletonButton({ size = "default", className }: SkeletonButtonProps) {
 		default: "h-10 w-28",
 		lg: "h-12 w-36",
 	};
-	return (
-		<Skeleton shape="rounded" className={cn(sizeClasses[size], className)} />
-	);
+	return <Skeleton shape="rounded" className={cn(sizeClasses[size], className)} />;
 }
 
-export {
-	Skeleton,
-	SkeletonGroup,
-	SkeletonText,
-	SkeletonAvatar,
-	SkeletonButton,
-	skeletonVariants,
-};
+export { Skeleton, SkeletonGroup, SkeletonText, SkeletonAvatar, SkeletonButton, skeletonVariants };

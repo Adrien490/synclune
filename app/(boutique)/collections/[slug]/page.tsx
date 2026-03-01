@@ -6,10 +6,7 @@ import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import type { SortField } from "@/modules/products/data/get-products";
-import {
-	GET_PRODUCTS_DEFAULT_PER_PAGE,
-	getProducts,
-} from "@/modules/products/data/get-products";
+import { GET_PRODUCTS_DEFAULT_PER_PAGE, getProducts } from "@/modules/products/data/get-products";
 import { PageHeader } from "@/shared/components/page-header";
 import { getFirstParam } from "@/shared/utils/params";
 import { notFound } from "next/navigation";
@@ -44,10 +41,7 @@ type CollectionPageProps = {
 	searchParams: Promise<CollectionSearchParams>;
 };
 
-export default async function CollectionPage({
-	params,
-	searchParams,
-}: CollectionPageProps) {
+export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
 	// Note: Pas de "use cache" ici car la page utilise searchParams (filtres dynamiques)
 	// Le cache est géré au niveau de getStorefrontCollectionBySlug() et getProducts()
 
@@ -67,9 +61,7 @@ export default async function CollectionPage({
 	const direction = (getFirstParam(searchParamsData.direction) || "forward") as
 		| "forward"
 		| "backward";
-	const perPage =
-		Number(getFirstParam(searchParamsData.perPage)) ||
-		GET_PRODUCTS_DEFAULT_PER_PAGE;
+	const perPage = Number(getFirstParam(searchParamsData.perPage)) || GET_PRODUCTS_DEFAULT_PER_PAGE;
 	const sortBy = getFirstParam(searchParamsData.sortBy) || "created-descending";
 
 	// Créer les Promises pour les produits et la wishlist en parallèle
@@ -104,7 +96,9 @@ export default async function CollectionPage({
 			{/* Structured Data JSON-LD pour SEO */}
 			<script
 				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+				}}
 			/>
 
 			<PageHeader
@@ -115,7 +109,7 @@ export default async function CollectionPage({
 
 			{/* Section principale avec catalogue */}
 			<section className="bg-background pt-6 pb-12 lg:pt-8 lg:pb-16">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<ProductListSkeleton />}>
 						<ProductList
 							productsPromise={productsPromise}

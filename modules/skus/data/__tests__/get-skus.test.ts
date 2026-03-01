@@ -5,11 +5,7 @@ import type { GetProductSkusParams } from "../../types/skus.types";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockIsAdmin,
-	mockFetchProductSkus,
-	mockGetProductSkusSchema,
-} = vi.hoisted(() => ({
+const { mockIsAdmin, mockFetchProductSkus, mockGetProductSkusSchema } = vi.hoisted(() => ({
 	mockIsAdmin: vi.fn(),
 	mockFetchProductSkus: vi.fn(),
 	mockGetProductSkusSchema: {
@@ -163,10 +159,13 @@ describe("getProductSkus – admin sort fallback", () => {
 			data: makeValidatedParams({ sortBy: "created-descending" }),
 		});
 
-		await getProductSkus({ ...makeDefaultInput(), sortBy: undefined as unknown as GetProductSkusParams["sortBy"] });
+		await getProductSkus({
+			...makeDefaultInput(),
+			sortBy: undefined as unknown as GetProductSkusParams["sortBy"],
+		});
 
 		expect(mockFetchProductSkus).toHaveBeenCalledWith(
-			expect.objectContaining({ sortBy: "created-descending" })
+			expect.objectContaining({ sortBy: "created-descending" }),
 		);
 	});
 
@@ -179,7 +178,7 @@ describe("getProductSkus – admin sort fallback", () => {
 		await getProductSkus({ ...makeDefaultInput(), sortBy: "price-ascending" });
 
 		expect(mockFetchProductSkus).toHaveBeenCalledWith(
-			expect.objectContaining({ sortBy: "price-ascending" })
+			expect.objectContaining({ sortBy: "price-ascending" }),
 		);
 	});
 });
@@ -219,7 +218,7 @@ describe("getProductSkus – delegation and return value", () => {
 		await getProductSkus({ ...makeDefaultInput(), search: "silver", perPage: 50 });
 
 		expect(mockFetchProductSkus).toHaveBeenCalledWith(
-			expect.objectContaining({ search: "silver", perPage: 50 })
+			expect.objectContaining({ search: "silver", perPage: 50 }),
 		);
 	});
 });

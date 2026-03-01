@@ -21,11 +21,7 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import {
-	CARRIERS,
-	detectCarrierAndUrl,
-	type Carrier,
-} from "@/modules/orders/utils/carrier.utils";
+import { CARRIERS, detectCarrierAndUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { useStore } from "@tanstack/react-form";
 import { Link2, Mail, Truck } from "lucide-react";
 import { useMarkAsShippedForm } from "@/modules/orders/hooks/use-mark-as-shipped-form";
@@ -110,10 +106,7 @@ function MarkAsShippedFormContent({
 				</ResponsiveDialogDescription>
 			</ResponsiveDialogHeader>
 
-			<form
-				action={action}
-				className="space-y-6"
-			>
+			<form action={action} className="space-y-6">
 				{/* Hidden fields */}
 				<input type="hidden" name="id" value={orderId} />
 				<input type="hidden" name="trackingUrl" value={trackingUrl} />
@@ -136,7 +129,7 @@ function MarkAsShippedFormContent({
 							disabled={isPending}
 							required
 						/>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							Le transporteur sera détecté automatiquement selon le format du numéro
 						</p>
 					</div>
@@ -190,7 +183,7 @@ function MarkAsShippedFormContent({
 					</div>
 
 					{/* Custom URL Mode Checkbox */}
-					<div className="flex items-start space-x-3 rounded-lg border p-3 bg-muted/20">
+					<div className="bg-muted/20 flex items-start space-x-3 rounded-lg border p-3">
 						<Checkbox
 							id="customUrlMode"
 							checked={customUrlMode}
@@ -200,36 +193,29 @@ function MarkAsShippedFormContent({
 						<div className="space-y-1 leading-none">
 							<Label
 								htmlFor="customUrlMode"
-								className="flex items-center gap-2 cursor-pointer text-sm"
+								className="flex cursor-pointer items-center gap-2 text-sm"
 							>
 								<Link2 className="h-4 w-4" />
 								URL personnalisée
 							</Label>
-							<p className="text-xs text-muted-foreground">
-								Saisir manuellement l'URL de suivi
-							</p>
+							<p className="text-muted-foreground text-xs">Saisir manuellement l'URL de suivi</p>
 						</div>
 					</div>
 
 					{/* Send Email Checkbox */}
-					<div className="flex items-start space-x-3 rounded-lg border p-4 bg-muted/30">
+					<div className="bg-muted/30 flex items-start space-x-3 rounded-lg border p-4">
 						<Checkbox
 							id="sendEmailCheckbox"
 							checked={sendEmail}
-							onCheckedChange={(checked) =>
-								form.setFieldValue("sendEmail", checked === true)
-							}
+							onCheckedChange={(checked) => form.setFieldValue("sendEmail", checked === true)}
 							disabled={isPending}
 						/>
 						<div className="space-y-1 leading-none">
-							<Label
-								htmlFor="sendEmailCheckbox"
-								className="flex items-center gap-2 cursor-pointer"
-							>
+							<Label htmlFor="sendEmailCheckbox" className="flex cursor-pointer items-center gap-2">
 								<Mail className="h-4 w-4" />
 								Envoyer l'email de confirmation
 							</Label>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								Un email avec le numéro de suivi sera envoyé au client
 							</p>
 						</div>
@@ -238,18 +224,10 @@ function MarkAsShippedFormContent({
 
 				{/* Submit buttons */}
 				<ResponsiveDialogFooter>
-					<Button
-						type="button"
-						variant="outline"
-						onClick={onClose}
-						disabled={isPending}
-					>
+					<Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
 						Annuler
 					</Button>
-					<Button
-						type="submit"
-						disabled={isPending || !trackingNumber.trim()}
-					>
+					<Button type="submit" disabled={isPending || !trackingNumber.trim()}>
 						{isPending ? "Expédition..." : "Valider l'expédition"}
 					</Button>
 				</ResponsiveDialogFooter>

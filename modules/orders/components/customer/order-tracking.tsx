@@ -22,31 +22,31 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 
 	return (
 		<section className="space-y-4">
-			<h2 className="text-base font-semibold flex items-center gap-2">
-				<Truck className="size-4 text-muted-foreground" />
+			<h2 className="flex items-center gap-2 text-base font-semibold">
+				<Truck className="text-muted-foreground size-4" />
 				Suivi de livraison
 			</h2>
-			<div className="border-t border-border/60 pt-4 space-y-4">
+			<div className="border-border/60 space-y-4 border-t pt-4">
 				{/* Carrier & Tracking */}
-				<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
 					{order.shippingCarrier && (
 						<div className="flex items-center gap-2">
-							<Package className="h-4 w-4 text-muted-foreground" />
+							<Package className="text-muted-foreground h-4 w-4" />
 							<span className="text-sm font-medium">
 								{getCarrierLabel(order.shippingCarrier.toLowerCase() as Carrier)}
 							</span>
 						</div>
 					)}
 					<div className="flex items-center gap-2">
-						<span className="text-sm text-muted-foreground">N° de suivi :</span>
-						<code className="px-2 py-1 bg-muted rounded text-sm font-mono">
+						<span className="text-muted-foreground text-sm">N° de suivi :</span>
+						<code className="bg-muted rounded px-2 py-1 font-mono text-sm">
 							{order.trackingNumber}
 						</code>
 					</div>
 				</div>
 
 				{/* Dates */}
-				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+				<div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
 					{order.shippedAt && (
 						<div>
 							<span className="text-muted-foreground">Expédié le : </span>
@@ -82,7 +82,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 							rel="noopener noreferrer"
 							aria-label="Suivre mon colis (s'ouvre dans un nouvel onglet)"
 						>
-							<ExternalLink className="h-4 w-4 mr-2" />
+							<ExternalLink className="mr-2 h-4 w-4" />
 							Suivre mon colis
 						</a>
 					</Button>

@@ -54,27 +54,21 @@ export function UploadProgress({
 				role="status"
 				aria-live="polite"
 				aria-busy={!isComplete}
-				className={cn(
-					"flex flex-col items-center gap-2 sm:gap-1.5",
-					className
-				)}
+				className={cn("flex flex-col items-center gap-2 sm:gap-1.5", className)}
 			>
 				{/* Screen reader text */}
 				<span className="sr-only">{srText}</span>
 
 				{/* Icon - Spinner or Check */}
 				{isComplete ? (
-					<div className="flex items-center justify-center h-7 w-7 sm:h-5 sm:w-5 rounded-full bg-emerald-500/20">
-						<Check
-							className="h-4 w-4 sm:h-3 sm:w-3 text-emerald-600"
-							aria-hidden="true"
-						/>
+					<div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 sm:h-5 sm:w-5">
+						<Check className="h-4 w-4 text-emerald-600 sm:h-3 sm:w-3" aria-hidden="true" />
 					</div>
 				) : (
 					<Loader2
 						className={cn(
-							"h-7 w-7 sm:h-5 sm:w-5 text-primary",
-							!shouldReduceMotion && "animate-spin"
+							"text-primary h-7 w-7 sm:h-5 sm:w-5",
+							!shouldReduceMotion && "animate-spin",
 						)}
 						aria-hidden="true"
 					/>
@@ -83,9 +77,9 @@ export function UploadProgress({
 				{/* Percentage or state */}
 				<span
 					className={cn(
-						"text-sm sm:text-xs font-medium",
+						"text-sm font-medium sm:text-xs",
 						isComplete ? "text-emerald-600" : "text-foreground/70",
-						!isServerProcessing && "tabular-nums"
+						!isServerProcessing && "tabular-nums",
 					)}
 					aria-hidden="true"
 				>
@@ -101,8 +95,8 @@ export function UploadProgress({
 			aria-live="polite"
 			aria-busy={!isComplete}
 			className={cn(
-				"flex flex-col items-center gap-4 sm:gap-3 w-full max-w-60 sm:max-w-50",
-				className
+				"flex w-full max-w-60 flex-col items-center gap-4 sm:max-w-50 sm:gap-3",
+				className,
 			)}
 		>
 			{/* Screen reader text */}
@@ -110,17 +104,14 @@ export function UploadProgress({
 
 			{/* Icon - Spinner or Check */}
 			{isComplete ? (
-				<div className="flex items-center justify-center h-12 w-12 sm:h-10 sm:w-10 rounded-full bg-emerald-500/20">
-					<Check
-						className="h-6 w-6 sm:h-5 sm:w-5 text-emerald-600"
-						aria-hidden="true"
-					/>
+				<div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 sm:h-10 sm:w-10">
+					<Check className="h-6 w-6 text-emerald-600 sm:h-5 sm:w-5" aria-hidden="true" />
 				</div>
 			) : (
 				<Loader2
 					className={cn(
-						"h-10 w-10 sm:h-8 sm:w-8 text-primary",
-						!shouldReduceMotion && "animate-spin"
+						"text-primary h-10 w-10 sm:h-8 sm:w-8",
+						!shouldReduceMotion && "animate-spin",
 					)}
 					aria-hidden="true"
 				/>
@@ -136,14 +127,14 @@ export function UploadProgress({
 					aria-label="Progression du téléversement"
 					className={cn(
 						"h-2 sm:h-1.5",
-						isComplete && "[&>[data-slot=progress-indicator]]:bg-emerald-500"
+						isComplete && "[&>[data-slot=progress-indicator]]:bg-emerald-500",
 					)}
 				/>
 				<p
 					className={cn(
-						"text-base sm:text-sm font-medium text-center",
+						"text-center text-base font-medium sm:text-sm",
 						isComplete ? "text-emerald-600" : "text-foreground",
-						!isServerProcessing && "tabular-nums"
+						!isServerProcessing && "tabular-nums",
 					)}
 					aria-hidden="true"
 				>

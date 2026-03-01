@@ -20,7 +20,7 @@ export default function OrderDetailLoading() {
 			{/* Bouton retour mobile */}
 			<Link
 				href="/admin/ventes/commandes"
-				className="md:hidden flex items-center gap-1 text-sm text-muted-foreground"
+				className="text-muted-foreground flex items-center gap-1 text-sm md:hidden"
 			>
 				<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 				Retour aux commandes
@@ -61,7 +61,7 @@ export default function OrderDetailLoading() {
 				{Array.from({ length: 4 }).map((_, i) => (
 					<div key={i} className="flex items-center gap-2">
 						<Skeleton className="h-8 w-8 rounded-full" />
-						<Skeleton className="h-4 w-16 hidden sm:block" />
+						<Skeleton className="hidden h-4 w-16 sm:block" />
 					</div>
 				))}
 			</div>
@@ -76,7 +76,7 @@ export default function OrderDetailLoading() {
 			{/* Grid */}
 			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Left column - 2/3 */}
-				<div className="lg:col-span-2 space-y-6">
+				<div className="space-y-6 lg:col-span-2">
 					{/* Order Items Card */}
 					<Card>
 						<CardHeader>
@@ -93,7 +93,7 @@ export default function OrderDetailLoading() {
 									<Skeleton className="h-4 w-16" />
 								</div>
 							))}
-							<div className="border-t pt-4 space-y-2">
+							<div className="space-y-2 border-t pt-4">
 								<div className="flex justify-between">
 									<Skeleton className="h-4 w-20" />
 									<Skeleton className="h-4 w-16" />
@@ -172,7 +172,7 @@ export default function OrderDetailLoading() {
 							{Array.from({ length: 3 }).map((_, i) => (
 								<div key={i} className="flex gap-3">
 									<Skeleton className="h-4 w-4 rounded-full" />
-									<div className="space-y-1 flex-1">
+									<div className="flex-1 space-y-1">
 										<Skeleton className="h-4 w-32" />
 										<Skeleton className="h-3 w-24" />
 									</div>

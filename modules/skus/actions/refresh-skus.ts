@@ -12,10 +12,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 const optionalCuid2Schema = z.string().cuid2().optional();
 
-export async function refreshSkus(
-	_prevState: unknown,
-	formData: FormData
-): Promise<ActionState> {
+export async function refreshSkus(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Auth first
 		const adminCheck = await requireAdmin();

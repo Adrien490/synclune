@@ -40,19 +40,13 @@ export const productSkuFiltersSchema = z
 			.min(SKU_FILTERS_MIN_DATE, "Date trop ancienne")
 			.max(new Date(), "La date ne peut pas être dans le futur")
 			.optional(),
-		createdBefore: z.coerce
-			.date()
-			.min(SKU_FILTERS_MIN_DATE, "Date trop ancienne")
-			.optional(),
+		createdBefore: z.coerce.date().min(SKU_FILTERS_MIN_DATE, "Date trop ancienne").optional(),
 		updatedAfter: z.coerce
 			.date()
 			.min(SKU_FILTERS_MIN_DATE, "Date trop ancienne")
 			.max(new Date(), "La date ne peut pas être dans le futur")
 			.optional(),
-		updatedBefore: z.coerce
-			.date()
-			.min(SKU_FILTERS_MIN_DATE, "Date trop ancienne")
-			.optional(),
+		updatedBefore: z.coerce.date().min(SKU_FILTERS_MIN_DATE, "Date trop ancienne").optional(),
 
 		// Filtres sur les relations
 		hasImages: z.boolean().optional(),

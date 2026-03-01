@@ -20,6 +20,7 @@ import {
 	CUSTOMIZATION_STATUS_LABELS,
 	CUSTOMIZATION_STATUS_COLORS,
 } from "@/modules/customizations/constants/status.constants";
+import { cn } from "@/shared/utils/cn";
 import { Sparkles, StickyNote } from "lucide-react";
 
 import { CustomizationRowActions } from "./customization-row-actions";
@@ -53,7 +54,11 @@ export function CustomizationsDataTable({
 			<CardContent>
 				<CustomizationSelectionToolbar />
 				<TableScrollContainer>
-					<Table aria-label="Liste des demandes de personnalisation" striped>
+					<Table
+						aria-label="Liste des demandes de personnalisation"
+						striped
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
@@ -62,9 +67,9 @@ export function CustomizationsDataTable({
 								<TableHead className="w-[18%]">Client</TableHead>
 								<TableHead className="w-[15%]">Type</TableHead>
 								<TableHead className="w-[15%]">Statut</TableHead>
-								<TableHead className="hidden md:table-cell w-[10%]">Inspirations</TableHead>
-								<TableHead className="hidden lg:table-cell w-[5%]">Notes</TableHead>
-								<TableHead className="hidden sm:table-cell w-[12%]">Date</TableHead>
+								<TableHead className="hidden w-[10%] md:table-cell">Inspirations</TableHead>
+								<TableHead className="hidden w-[5%] lg:table-cell">Notes</TableHead>
+								<TableHead className="hidden w-[12%] sm:table-cell">Date</TableHead>
 								<TableHead className="w-[8%] text-right">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
@@ -76,21 +81,15 @@ export function CustomizationsDataTable({
 									</TableCell>
 									<TableCell>
 										<div className="space-y-0.5">
-											<p className="font-medium">
-												{request.firstName}
-											</p>
-											<p className="text-sm text-muted-foreground">
-												{request.email}
-											</p>
+											<p className="font-medium">{request.firstName}</p>
+											<p className="text-muted-foreground text-sm">{request.email}</p>
 										</div>
 									</TableCell>
-									<TableCell className="text-sm">
-										{request.productTypeLabel}
-									</TableCell>
+									<TableCell className="text-sm">{request.productTypeLabel}</TableCell>
 									<TableCell>
 										<StatusBadge status={request.status} />
 									</TableCell>
-									<TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+									<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
 										{request._count.inspirationProducts > 0 ? (
 											<span>{request._count.inspirationProducts} produit(s)</span>
 										) : (
@@ -99,12 +98,12 @@ export function CustomizationsDataTable({
 									</TableCell>
 									<TableCell className="hidden lg:table-cell">
 										{request.adminNotes ? (
-											<StickyNote className="h-4 w-4 text-primary" />
+											<StickyNote className="text-primary h-4 w-4" />
 										) : (
 											<span className="text-muted-foreground/50">-</span>
 										)}
 									</TableCell>
-									<TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+									<TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
 										{formatDateShort(request.createdAt)}
 									</TableCell>
 									<TableCell className="text-right">
@@ -148,7 +147,11 @@ function StatusBadge({ status }: { status: CustomizationRequestStatus }) {
 
 	return (
 		<span
-			className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${colors.bg} ${colors.text}`}
+			className={cn(
+				"inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+				colors.bg,
+				colors.text,
+			)}
 		>
 			<span aria-hidden="true">{colors.symbol}</span>
 			{label}

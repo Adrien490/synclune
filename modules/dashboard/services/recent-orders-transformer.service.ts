@@ -1,7 +1,4 @@
-import type {
-	RecentOrderItem,
-	OrderForTransform,
-} from "../types/dashboard.types";
+import type { RecentOrderItem, OrderForTransform } from "../types/dashboard.types";
 
 export type { OrderForTransform } from "../types/dashboard.types";
 
@@ -35,8 +32,6 @@ export function transformRecentOrder(order: OrderForTransform): RecentOrderItem 
  * @param orders - Liste de commandes brutes
  * @returns Liste de commandes formatées
  */
-export function transformRecentOrders(
-	orders: OrderForTransform[]
-): RecentOrderItem[] {
+export function transformRecentOrders(orders: OrderForTransform[]): RecentOrderItem[] {
 	return orders.map(transformRecentOrder);
 }

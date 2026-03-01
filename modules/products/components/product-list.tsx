@@ -9,7 +9,10 @@ import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
 import { RefreshButton } from "./refresh-button";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
-import { SearchFallbackSuggestions, SearchFallbackSuggestionsSkeleton } from "./search-fallback-suggestions";
+import {
+	SearchFallbackSuggestions,
+	SearchFallbackSuggestionsSkeleton,
+} from "./search-fallback-suggestions";
 import { SearchCorrectionSuggestion } from "./search-correction-suggestion";
 
 interface ProductListProps {
@@ -39,7 +42,7 @@ export function ProductList({
 		return (
 			<Alert variant="destructive">
 				<AlertTriangle className="h-4 w-4" />
-				<AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3">
+				<AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center">
 					<span>Une erreur est survenue lors du chargement des produits.</span>
 					<RefreshButton />
 				</AlertDescription>
@@ -51,10 +54,7 @@ export function ProductList({
 	if (!products || products.length === 0) {
 		return (
 			<Suspense fallback={<SearchFallbackSuggestionsSkeleton />}>
-				<SearchFallbackSuggestions
-					searchTerm={searchTerm}
-					suggestion={suggestion}
-				/>
+				<SearchFallbackSuggestions searchTerm={searchTerm} suggestion={suggestion} />
 			</Suspense>
 		);
 	}
@@ -86,18 +86,12 @@ export function ProductList({
 			/>
 
 			{/* Suggestion de correction si peu de resultats */}
-			{suggestion && (
-				<SearchCorrectionSuggestion suggestion={suggestion} />
-			)}
+			{suggestion && <SearchCorrectionSuggestion suggestion={suggestion} />}
 
 			{/* Compteur de resultats - annonce aux lecteurs d'ecran lors des changements */}
 			<div className="flex items-center justify-between">
-				<p
-					className="text-sm text-muted-foreground"
-					aria-live="polite"
-					aria-atomic="true"
-				>
-					<span className="font-medium text-foreground">{totalCount}</span>{" "}
+				<p className="text-muted-foreground text-sm" aria-live="polite" aria-atomic="true">
+					<span className="text-foreground font-medium">{totalCount}</span>{" "}
 					{totalCount > 1 ? "produits" : "produit"}
 				</p>
 			</div>
@@ -106,7 +100,7 @@ export function ProductList({
 			<StaggerGrid
 				role="list"
 				aria-label="Liste des produits"
-				className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 outline-none group-has-[[data-pending]]/container:blur-[1px] group-has-[[data-pending]]/container:scale-[0.99] group-has-[[data-pending]]/container:pointer-events-none"
+				className="grid grid-cols-2 gap-4 outline-none group-has-[[data-pending]]/container:pointer-events-none group-has-[[data-pending]]/container:scale-[0.99] group-has-[[data-pending]]/container:blur-[1px] sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 2xl:grid-cols-5"
 				inView={false}
 			>
 				{products.map((product, index) => (
@@ -120,7 +114,7 @@ export function ProductList({
 					</div>
 				))}
 			</StaggerGrid>
-			<div className="flex justify-end mt-8 lg:mt-12">
+			<div className="mt-8 flex justify-end lg:mt-12">
 				<CursorPagination
 					perPage={perPage}
 					hasNextPage={hasNextPage}

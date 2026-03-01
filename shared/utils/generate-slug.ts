@@ -45,7 +45,7 @@ export type PrismaClientOrTransaction = Pick<
 export async function generateSlug(
 	prisma: PrismaClientOrTransaction,
 	model: "product" | "collection" | "productType" | "color" | "material",
-	value: string
+	value: string,
 ): Promise<string> {
 	if (!value || typeof value !== "string" || value.trim().length === 0) {
 		throw new Error("La valeur pour générer le slug ne peut pas être vide");

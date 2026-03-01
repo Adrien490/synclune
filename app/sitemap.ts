@@ -122,14 +122,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		hasMoreCollections = pagination.hasNextPage;
 	}
 
-	const collectionPages: MetadataRoute.Sitemap = allCollections.map(
-		(collection) => ({
-			url: `${SITE_URL}/collections/${collection.slug}`,
-			lastModified: new Date(collection.updatedAt),
-			changeFrequency: "weekly",
-			priority: 0.6,
-		})
-	);
+	const collectionPages: MetadataRoute.Sitemap = allCollections.map((collection) => ({
+		url: `${SITE_URL}/collections/${collection.slug}`,
+		lastModified: new Date(collection.updatedAt),
+		changeFrequency: "weekly",
+		priority: 0.6,
+	}));
 
 	// Récupérer tous les types de produits actifs avec au moins 1 produit
 	const { productTypes } = await getProductTypes({
@@ -146,10 +144,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	}));
 
 	// Combiner toutes les pages
-	return [
-		...staticPages,
-		...productPages,
-		...collectionPages,
-		...productTypePages,
-	];
+	return [...staticPages, ...productPages, ...collectionPages, ...productTypePages];
 }

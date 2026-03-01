@@ -42,7 +42,7 @@ export const customizationSchema = z.object({
 	// Détails de la personnalisation
 	details: z
 		.string({ message: "Les détails de votre projet sont requis" })
-		.min(20, { message: "Les détails doivent contenir au moins 20 caractères" })
+		.min(10, { message: "Les détails doivent contenir au moins 10 caractères" })
 		.max(2000, { message: "Les détails ne peuvent pas dépasser 2000 caractères" })
 		.trim(),
 

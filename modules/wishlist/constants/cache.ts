@@ -11,7 +11,11 @@
 export const WISHLIST_CACHE_TAGS = {
 	/** Wishlist d'un utilisateur ou visiteur */
 	WISHLIST: (userId?: string, sessionId?: string) =>
-		userId ? `wishlist-user-${userId}` : sessionId ? `wishlist-session-${sessionId}` : "wishlist-anonymous",
+		userId
+			? `wishlist-user-${userId}`
+			: sessionId
+				? `wishlist-session-${sessionId}`
+				: "wishlist-anonymous",
 
 	/** Compteur d'items dans une wishlist */
 	COUNT: (userId?: string, sessionId?: string) =>

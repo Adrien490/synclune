@@ -135,10 +135,7 @@ describe("deleteDiscount", () => {
 		mockSoftDelete.discount.mockResolvedValue(undefined);
 
 		// Default: invalidation tags
-		mockGetDiscountInvalidationTags.mockReturnValue([
-			"discounts-list",
-			"discount-PROMO20",
-		]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-PROMO20"]);
 
 		// Default: success/error/notFound helpers return shaped ActionState
 		mockSuccess.mockImplementation((message: string, data?: Record<string, unknown>) => ({
@@ -154,12 +151,10 @@ describe("deleteDiscount", () => {
 			status: ActionStatus.NOT_FOUND,
 			message: `${entity} introuvable`,
 		}));
-		mockHandleActionError.mockImplementation(
-			(_e: unknown, fallback: string) => ({
-				status: ActionStatus.ERROR,
-				message: fallback,
-			})
-		);
+		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+			status: ActionStatus.ERROR,
+			message: fallback,
+		}));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -249,9 +244,7 @@ describe("deleteDiscount", () => {
 		const result = await deleteDiscount(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toBe(
-			"Ce code promo a déjà été utilisé et ne peut pas être supprimé"
-		);
+		expect(result.message).toBe("Ce code promo a déjà été utilisé et ne peut pas être supprimé");
 		expect(mockSoftDelete.discount).not.toHaveBeenCalled();
 	});
 
@@ -277,10 +270,7 @@ describe("deleteDiscount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should invalidate cache tags after soft deletion", async () => {
-		mockGetDiscountInvalidationTags.mockReturnValue([
-			"discounts-list",
-			"discount-PROMO20",
-		]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-PROMO20"]);
 
 		await deleteDiscount(undefined, validFormData);
 
@@ -300,7 +290,7 @@ describe("deleteDiscount", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la suppression du code promo"
+			"Erreur lors de la suppression du code promo",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

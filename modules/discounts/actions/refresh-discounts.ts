@@ -11,7 +11,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshDiscounts(
 	_prevState: unknown,
-	_formData: FormData
+	_formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const admin = await requireAdmin();

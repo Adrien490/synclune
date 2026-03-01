@@ -32,9 +32,7 @@ export function DeleteColorAlertDialog() {
 						Êtes-vous sûr de vouloir supprimer la couleur{" "}
 						<strong>&quot;{data?.colorName}&quot;</strong> ?
 					</p>
-					<p className="text-destructive font-medium">
-						Cette action est irréversible.
-					</p>
+					<p className="text-destructive font-medium">Cette action est irréversible.</p>
 				</div>
 			)}
 		/>

@@ -5,17 +5,17 @@
  * Format: `e2e-{timestamp}` — short enough to be human-readable,
  * unique enough to avoid collisions between parallel runs.
  */
-export const TEST_RUN_ID = `e2e-${Date.now()}`
+export const TEST_RUN_ID = `e2e-${Date.now()}`;
 
 /** Email domain used for all test-created accounts */
-export const TEST_EMAIL_DOMAIN = "synclune-test.com"
+export const TEST_EMAIL_DOMAIN = "synclune-test.com";
 
 /**
  * Generate a unique test email for this run.
  * Pattern: `e2e-{timestamp}-{suffix}@synclune-test.com`
  */
 export function testEmail(suffix: string): string {
-	return `${TEST_RUN_ID}-${suffix}@${TEST_EMAIL_DOMAIN}`
+	return `${TEST_RUN_ID}-${suffix}@${TEST_EMAIL_DOMAIN}`;
 }
 
 /**
@@ -23,11 +23,11 @@ export function testEmail(suffix: string): string {
  * Useful for identifying test-created records (addresses, etc.)
  */
 export function testName(base: string): string {
-	return `${base}-${TEST_RUN_ID}`
+	return `${base}-${TEST_RUN_ID}`;
 }
 
 /**
  * Pattern that matches ALL test-created emails (across any run).
  * Used by global teardown for cleanup.
  */
-export const TEST_EMAIL_PATTERN = `e2e-%@${TEST_EMAIL_DOMAIN}`
+export const TEST_EMAIL_PATTERN = `e2e-%@${TEST_EMAIL_DOMAIN}`;

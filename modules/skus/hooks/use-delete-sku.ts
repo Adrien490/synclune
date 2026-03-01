@@ -42,9 +42,9 @@ export const useDeleteProductSku = (options?: UseDeleteProductSkuOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const deleteSku = (skuId: string) => {

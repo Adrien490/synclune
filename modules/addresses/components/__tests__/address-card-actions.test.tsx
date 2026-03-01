@@ -15,8 +15,20 @@ const { mockUseDialog, mockUseAlertDialog, mockHandleSetDefault } = vi.hoisted((
 vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuItem: ({ children, onClick, disabled, className }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; className?: string }) => (
-		<button onClick={onClick} disabled={disabled} className={className}>{children}</button>
+	DropdownMenuItem: ({
+		children,
+		onClick,
+		disabled,
+		className,
+	}: {
+		children: React.ReactNode;
+		onClick?: () => void;
+		disabled?: boolean;
+		className?: string;
+	}) => (
+		<button onClick={onClick} disabled={disabled} className={className}>
+			{children}
+		</button>
 	),
 	DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -67,7 +79,12 @@ function setupMocks() {
 	const mockDeleteOpen = vi.fn();
 
 	mockUseDialog.mockReturnValue({ open: mockOpen, close: vi.fn(), isOpen: false, data: null });
-	mockUseAlertDialog.mockReturnValue({ open: mockDeleteOpen, close: vi.fn(), isOpen: false, data: null });
+	mockUseAlertDialog.mockReturnValue({
+		open: mockDeleteOpen,
+		close: vi.fn(),
+		isOpen: false,
+		data: null,
+	});
 
 	return { mockOpen, mockDeleteOpen };
 }
@@ -137,11 +154,7 @@ describe("AddressCardActions", () => {
 	it("opens delete dialog with address info when clicking delete", () => {
 		const { mockDeleteOpen } = setupMocks();
 
-		render(
-			<AddressCardActions
-				address={createAddress({ id: "addr-99", isDefault: true })}
-			/>
-		);
+		render(<AddressCardActions address={createAddress({ id: "addr-99", isDefault: true })} />);
 
 		screen.getByText("Supprimer").closest("button")?.click();
 

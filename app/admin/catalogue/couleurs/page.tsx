@@ -14,11 +14,13 @@ import { CreateColorButton } from "@/modules/colors/components/admin/create-colo
 import dynamic from "next/dynamic";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const ColorFormDialog = dynamic(
-	() => import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog)
+const ColorFormDialog = dynamic(() =>
+	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
 );
-const DeleteColorAlertDialog = dynamic(
-	() => import("@/modules/colors/components/admin/delete-color-alert-dialog").then((mod) => mod.DeleteColorAlertDialog)
+const DeleteColorAlertDialog = dynamic(() =>
+	import("@/modules/colors/components/admin/delete-color-alert-dialog").then(
+		(mod) => mod.DeleteColorAlertDialog,
+	),
 );
 import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
 import { Metadata } from "next";
@@ -32,15 +34,11 @@ type ColorsAdminPageProps = {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function ColorsAdminPage({
-	searchParams,
-}: ColorsAdminPageProps) {
+export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageProps) {
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as
-		| "forward"
-		| "backward";
+	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
 	const sortBy = (getFirstParam(params.sortBy) || "name-ascending") as
 		| "name-ascending"
@@ -67,17 +65,15 @@ export default async function ColorsAdminPage({
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title="Couleurs"
-				actions={<CreateColorButton />}
-			/>
+			<PageHeader variant="compact" title="Couleurs" actions={<CreateColorButton />} />
 
 			<div className="space-y-6">
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des couleurs"
 					search={
-						<SearchInput mode="live" size="sm"
+						<SearchInput
+							mode="live"
+							size="sm"
 							paramName="search"
 							placeholder="Rechercher par nom, slug ou hex..."
 							ariaLabel="Rechercher une couleur par nom, slug ou code hex"

@@ -45,7 +45,8 @@ export function buildExportWhereClause(input: ExportInvoicesInput): Prisma.Order
 	}
 
 	if (input.invoiceStatus && input.invoiceStatus !== "all") {
-		where.invoiceStatus = input.invoiceStatus === "sent" ? InvoiceStatus.GENERATED : InvoiceStatus.VOIDED;
+		where.invoiceStatus =
+			input.invoiceStatus === "sent" ? InvoiceStatus.GENERATED : InvoiceStatus.VOIDED;
 	}
 
 	return where;
@@ -89,10 +90,7 @@ export function generateOrdersCsv(orders: ExportableOrder[]): string {
 		order.status,
 	]);
 
-	const csvContent = [
-		headers.join(SEP),
-		...rows.map((row) => row.join(SEP)),
-	].join("\n");
+	const csvContent = [headers.join(SEP), ...rows.map((row) => row.join(SEP))].join("\n");
 
 	return BOM + csvContent;
 }

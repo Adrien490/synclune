@@ -18,8 +18,7 @@ interface CollectionDialogData extends Record<string, unknown> {
 }
 
 export function CollectionFormDialog() {
-	const { isOpen, close, data } =
-		useDialog<CollectionDialogData>(COLLECTION_DIALOG_ID);
+	const { isOpen, close, data } = useDialog<CollectionDialogData>(COLLECTION_DIALOG_ID);
 	const collection = data?.collection;
 	const isUpdateMode = !!collection;
 
@@ -45,16 +44,9 @@ export function CollectionFormDialog() {
 				</ResponsiveDialogHeader>
 
 				{isUpdateMode && collection ? (
-					<EditCollectionForm
-						collection={collection}
-						onSuccess={close}
-						redirectOnSuccess={false}
-					/>
+					<EditCollectionForm collection={collection} onSuccess={close} redirectOnSuccess={false} />
 				) : (
-					<CreateCollectionForm
-						onSuccess={close}
-						redirectOnSuccess={false}
-					/>
+					<CreateCollectionForm onSuccess={close} redirectOnSuccess={false} />
 				)}
 			</ResponsiveDialogContent>
 		</ResponsiveDialog>

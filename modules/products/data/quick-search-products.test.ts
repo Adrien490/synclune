@@ -2,15 +2,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ─── Mocks (hoisted to avoid reference errors) ──────────────────
 
-const {
-	mockFuzzySearchProductIds,
-	mockGetSpellSuggestion,
-	mockPrismaFindMany,
-} = vi.hoisted(() => ({
-	mockFuzzySearchProductIds: vi.fn(),
-	mockGetSpellSuggestion: vi.fn(),
-	mockPrismaFindMany: vi.fn(),
-}));
+const { mockFuzzySearchProductIds, mockGetSpellSuggestion, mockPrismaFindMany } = vi.hoisted(
+	() => ({
+		mockFuzzySearchProductIds: vi.fn(),
+		mockGetSpellSuggestion: vi.fn(),
+		mockPrismaFindMany: vi.fn(),
+	}),
+);
 
 vi.mock("./fuzzy-search", () => ({
 	fuzzySearchProductIds: mockFuzzySearchProductIds,
@@ -222,10 +220,7 @@ describe("quickSearchProducts", () => {
 			totalCount: 3,
 		});
 		// "id-missing" is not returned by DB
-		mockPrismaFindMany.mockResolvedValue([
-			makeProduct("id-1"),
-			makeProduct("id-2"),
-		]);
+		mockPrismaFindMany.mockResolvedValue([makeProduct("id-1"), makeProduct("id-2")]);
 
 		const result = await quickSearchProducts("collier");
 

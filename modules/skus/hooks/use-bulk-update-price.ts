@@ -25,16 +25,16 @@ export const useBulkUpdatePrice = (options?: UseBulkUpdatePriceOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const updatePrice = (
 		skuIds: string[],
 		mode: "percentage" | "absolute",
 		value: number,
-		updateCompareAtPrice: boolean = false
+		updateCompareAtPrice: boolean = false,
 	) => {
 		startTransition(() => {
 			const formData = new FormData();

@@ -15,9 +15,7 @@ interface UseSubscribeToNewsletterOptions {
  * Compatible avec useActionState de React 19
  * Utilise withCallbacks pour une gestion élégante des toasts
  */
-export function useSubscribeToNewsletter(
-	options?: UseSubscribeToNewsletterOptions
-) {
+export function useSubscribeToNewsletter(options?: UseSubscribeToNewsletterOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			subscribeToNewsletter,
@@ -39,9 +37,9 @@ export function useSubscribeToNewsletter(
 					// Appeler le callback d'erreur pour rollback optimiste
 					options?.onError?.();
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

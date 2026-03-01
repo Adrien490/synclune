@@ -9,10 +9,7 @@ import type { Carrier, CarrierInfo } from "../types/carrier.types";
 export type { Carrier, CarrierInfo, DetectionResult } from "../types/carrier.types";
 
 // Re-export des fonctions de logique métier depuis services/
-export {
-	getTrackingUrl,
-	detectCarrierAndUrl,
-} from "../services/carrier-detection.service";
+export { getTrackingUrl, detectCarrierAndUrl } from "../services/carrier-detection.service";
 
 /**
  * Liste des transporteurs disponibles

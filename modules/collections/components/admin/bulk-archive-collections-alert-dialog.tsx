@@ -25,9 +25,7 @@ interface BulkArchiveCollectionsData {
 }
 
 export function BulkArchiveCollectionsAlertDialog() {
-	const dialog = useAlertDialog<BulkArchiveCollectionsData>(
-		BULK_ARCHIVE_COLLECTIONS_DIALOG_ID
-	);
+	const dialog = useAlertDialog<BulkArchiveCollectionsData>(BULK_ARCHIVE_COLLECTIONS_DIALOG_ID);
 	const { clearSelection } = useSelectionContext();
 
 	const { action, isPending } = useBulkArchiveCollections({
@@ -73,13 +71,16 @@ export function BulkArchiveCollectionsAlertDialog() {
 									<>
 										<p>
 											Êtes-vous sûr de vouloir archiver{" "}
-											<strong>{count} collection{count > 1 ? "s" : ""}</strong> ?
+											<strong>
+												{count} collection{count > 1 ? "s" : ""}
+											</strong>{" "}
+											?
 										</p>
 										<p>
-											{count > 1 ? "Ces collections ne seront" : "Cette collection ne sera"}{" "}
-											plus {count > 1 ? "visibles" : "visible"} sur la boutique mais{" "}
-											{count > 1 ? "resteront accessibles" : "restera accessible"}{" "}
-											dans le dashboard.
+											{count > 1 ? "Ces collections ne seront" : "Cette collection ne sera"} plus{" "}
+											{count > 1 ? "visibles" : "visible"} sur la boutique mais{" "}
+											{count > 1 ? "resteront accessibles" : "restera accessible"} dans le
+											dashboard.
 										</p>
 										<p className="text-muted-foreground text-xs">
 											Vous pourrez les restaurer a tout moment.
@@ -89,13 +90,18 @@ export function BulkArchiveCollectionsAlertDialog() {
 									<>
 										<p>
 											Êtes-vous sûr de vouloir restaurer{" "}
-											<strong>{count} collection{count > 1 ? "s" : ""}</strong> ?
+											<strong>
+												{count} collection{count > 1 ? "s" : ""}
+											</strong>{" "}
+											?
 										</p>
 										<p>
-											{count > 1 ? "Ces collections seront remises" : "Cette collection sera remise"}{" "}
+											{count > 1
+												? "Ces collections seront remises"
+												: "Cette collection sera remise"}{" "}
 											en statut &quot;Public&quot; et{" "}
-											{count > 1 ? "redeviendront visibles" : "redeviendra visible"}{" "}
-											sur la boutique.
+											{count > 1 ? "redeviendront visibles" : "redeviendra visible"} sur la
+											boutique.
 										</p>
 									</>
 								)}
@@ -110,14 +116,16 @@ export function BulkArchiveCollectionsAlertDialog() {
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
-							className={
-								isArchiving
-									? "bg-orange-600 text-white hover:bg-orange-700"
-									: undefined
-							}
+							className={isArchiving ? "bg-orange-600 text-white hover:bg-orange-700" : undefined}
 						>
 							{isPending && <Loader2 className="animate-spin" />}
-							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Restaurer")}
+							{isPending
+								? isArchiving
+									? "Archivage..."
+									: "Restauration..."
+								: isArchiving
+									? "Archiver"
+									: "Restaurer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

@@ -18,9 +18,7 @@ export type UserCartForMerge = Awaited<ReturnType<typeof fetchUserCartForMerge>>
  *
  * @param sessionId - ID de session visiteur
  */
-export async function getGuestCartForMerge(
-	sessionId: string
-): Promise<GuestCartForMerge> {
+export async function getGuestCartForMerge(sessionId: string): Promise<GuestCartForMerge> {
 	return fetchGuestCartForMerge(sessionId);
 }
 
@@ -29,9 +27,7 @@ export async function getGuestCartForMerge(
  *
  * @param userId - ID de l'utilisateur connecté
  */
-export async function getUserCartForMerge(
-	userId: string
-): Promise<UserCartForMerge> {
+export async function getUserCartForMerge(userId: string): Promise<UserCartForMerge> {
 	return fetchUserCartForMerge(userId);
 }
 
@@ -47,10 +43,7 @@ async function fetchGuestCartForMerge(sessionId: string) {
 	return prisma.cart.findFirst({
 		where: {
 			sessionId,
-			OR: [
-				{ expiresAt: null },
-				{ expiresAt: { gt: new Date() } },
-			],
+			OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
 		},
 		include: {
 			items: {

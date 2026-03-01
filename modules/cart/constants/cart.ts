@@ -99,4 +99,3 @@ export const GET_CART_SUMMARY_SELECT = {
 		},
 	},
 } as const satisfies Prisma.CartSelect;
-

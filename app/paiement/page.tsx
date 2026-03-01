@@ -1,8 +1,4 @@
-import {
-	Alert,
-	AlertDescription,
-	AlertTitle,
-} from "@/shared/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { validateCart } from "@/modules/cart/actions/validate-cart";
@@ -16,8 +12,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Finaliser ma commande | Synclune",
-	description:
-		"Finalisez votre commande de bijoux artisanaux faits main. Livraison en France.",
+	description: "Finalisez votre commande de bijoux artisanaux faits main. Livraison en France.",
 	robots: {
 		index: false,
 		follow: true,
@@ -56,20 +51,19 @@ export default async function CheckoutPage() {
 		return (
 			<div className="min-h-screen">
 				<section className="bg-background py-8 sm:py-10">
-					<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 						<div className="mb-6 sm:mb-8">
-							<h1 className="text-xl sm:text-2xl font-display font-medium tracking-tight">
+							<h1 className="font-display text-xl font-medium tracking-tight sm:text-2xl">
 								Finaliser ma commande
 							</h1>
 						</div>
 						<Alert variant="destructive" className="mb-6">
 							<AlertTriangle className="h-4 w-4" />
-							<AlertTitle>
-								Un petit ajustement est nécessaire
-							</AlertTitle>
+							<AlertTitle>Un petit ajustement est nécessaire</AlertTitle>
 							<AlertDescription className="mt-2 space-y-4">
 								<p className="text-sm">
-									Certains articles de votre panier ne sont plus disponibles ou ont un stock insuffisant.
+									Certains articles de votre panier ne sont plus disponibles ou ont un stock
+									insuffisant.
 								</p>
 
 								{/* Liste des problèmes */}
@@ -81,13 +75,12 @@ export default async function CheckoutPage() {
 												<span className="font-medium">{issue.productTitle}</span>
 												<span className="text-muted-foreground"> - </span>
 												<span>{issue.message}</span>
-												{issue.availableStock !== undefined &&
-													issue.availableStock > 0 && (
-														<span className="text-xs text-muted-foreground">
-															{" "}
-															(Stock disponible: {issue.availableStock})
-														</span>
-													)}
+												{issue.availableStock !== undefined && issue.availableStock > 0 && (
+													<span className="text-muted-foreground text-xs">
+														{" "}
+														(Stock disponible: {issue.availableStock})
+													</span>
+												)}
 											</div>
 										</li>
 									))}
@@ -95,7 +88,7 @@ export default async function CheckoutPage() {
 
 								<div className="flex gap-2">
 									<Button asChild>
-										<Link href="/">Retour au panier</Link>
+										<Link href="/produits">Retour à la boutique</Link>
 									</Button>
 									<Button asChild variant="outline">
 										<Link href="/creations">Continuer mes achats</Link>
@@ -112,20 +105,16 @@ export default async function CheckoutPage() {
 	return (
 		<div className="min-h-screen">
 			<section className="bg-background py-8 sm:py-10">
-				<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					<div className="mb-6 sm:mb-8">
-						<h1 className="text-xl sm:text-2xl font-display font-medium tracking-tight">
+						<h1 className="font-display text-xl font-medium tracking-tight sm:text-2xl">
 							Finaliser ma commande
 						</h1>
-						<p className="mt-1 text-sm text-muted-foreground">
+						<p className="text-muted-foreground mt-1 text-sm">
 							Paiement sécurisé et livraison rapide
 						</p>
 					</div>
-					<CheckoutForm
-						cart={cart}
-						session={session}
-						addresses={addresses}
-					/>
+					<CheckoutForm cart={cart} session={session} addresses={addresses} />
 				</div>
 			</section>
 		</div>

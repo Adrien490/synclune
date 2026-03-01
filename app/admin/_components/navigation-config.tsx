@@ -208,4 +208,3 @@ export function getBottomNavPrimaryItems(): NavItem[] {
 		.map((id) => getNavItemById(id))
 		.filter((item): item is NavItem => item !== undefined);
 }
-

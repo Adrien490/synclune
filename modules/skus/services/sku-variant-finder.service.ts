@@ -13,13 +13,9 @@ import { matchSkuVariants, type VariantSelectors } from "./sku-filter.service";
  */
 export function findSkuByVariants<
 	TSku extends BaseProductSku,
-	TProduct extends { skus?: TSku[] | null }
+	TProduct extends { skus?: TSku[] | null },
 >(product: TProduct, variants: VariantSelectors): TSku | null {
 	if (!product.skus) return null;
 
-	return (
-		product.skus.find(
-			(sku: TSku) => sku.isActive && matchSkuVariants(sku, variants)
-		) || null
-	);
+	return product.skus.find((sku: TSku) => sku.isActive && matchSkuVariants(sku, variants)) || null;
 }

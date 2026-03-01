@@ -128,10 +128,7 @@ describe("toggleDiscountStatus", () => {
 		mockPrisma.discount.update.mockResolvedValue({ id: "disc-123", isActive: false });
 
 		// Default: invalidation tags
-		mockGetDiscountInvalidationTags.mockReturnValue([
-			"discounts-list",
-			"discount-PROMO20",
-		]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-PROMO20"]);
 
 		// Default: success/notFound helpers return shaped ActionState
 		mockSuccess.mockImplementation((message: string, data?: Record<string, unknown>) => ({
@@ -143,12 +140,10 @@ describe("toggleDiscountStatus", () => {
 			status: ActionStatus.NOT_FOUND,
 			message: `${entity} introuvable`,
 		}));
-		mockHandleActionError.mockImplementation(
-			(_e: unknown, fallback: string) => ({
-				status: ActionStatus.ERROR,
-				message: fallback,
-			})
-		);
+		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+			status: ActionStatus.ERROR,
+			message: fallback,
+		}));
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -273,10 +268,7 @@ describe("toggleDiscountStatus", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should invalidate cache tags after toggling status", async () => {
-		mockGetDiscountInvalidationTags.mockReturnValue([
-			"discounts-list",
-			"discount-PROMO20",
-		]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-PROMO20"]);
 
 		await toggleDiscountStatus(undefined, validFormData);
 
@@ -296,7 +288,7 @@ describe("toggleDiscountStatus", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de la modification du code promo"
+			"Erreur lors de la modification du code promo",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

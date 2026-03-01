@@ -15,30 +15,29 @@
 > 3. **Suppression immediate vs differee ?** (Section M) — `delete-account.ts` anonymise immediatement. Passer par `PENDING_DELETION` avec periode de grace de 30 jours (recommande) ou garder le comportement actuel ?
 > 4. ~~**Commandes non-payees visibles ?** (Section F)~~ — **FERMEE** : Les commandes non payees restent masquees. Justification UX dans `fetch-user-orders.ts:47-49` : "Les commandes PENDING/FAILED/CANCELLED sont des artefacts techniques (reservations de stock) et ne doivent pas apparaitre dans Mes commandes." Le hardcode `paymentStatus: PAID` est delibere et correct.
 
-
 ---
 
 ## Tableau de suivi
 
-| Feature | Statut | Backend | Effort | Decisions bloquantes | Notes |
-|---|---|---|---|---|---|
-| Navigation (7 items) | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
-| Compte (dashboard) | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
-| Commandes (liste) | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
-| Mes avis | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
-| A - Adresses | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
-| B - Mes demandes | A faire | Complet | Faible | Decision 1 | Page a recreer, composants modules intacts |
-| C - Facture PDF | A faire | Complet | Faible | - | Page a recreer, fix securite `order.userId` applique |
-| D - Remboursements | A faire | A completer | Faible | - | Modifier `GET_ORDER_SELECT` + 1 composant |
-| E - Newsletter settings | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
-| F - Filtres commandes | A faire | A completer | Faible | ~~Decision 4~~ fermee | Filtres absents du schema (tri seul implemente). `paymentStatus: PAID` est delibere (Decision 4 fermee) |
-| G - Sessions actives | A faire | Complet | Faible | - | Page a recreer, composants modules intacts |
-| H - Demande de retour | A faire | Complet | Faible | - | Backend complet (`requestReturn` action, schema, validation 14j), composant a creer |
-| I - Changement email | A faire | A completer | Moyen | - | Email absent de `ProfileForm`, `changeEmail` non configure dans Better Auth |
-| J - Panier wishlist | A faire | Complet | Faible | - | `AddToCartCardButton` deja dans `ProductCard` |
-| K - Annulation commande client | A faire | A completer | Moyen | Decision 2 | `cancelOrder` admin-only, mais `canCancelOrder()` reutilisable |
-| L - Codes promo sur commande | A faire | A completer | Faible | - | `discountAmount` affiche mais pas le code |
-| M - Annulation suppression compte | A faire | A completer | Moyen | Decision 3 | `PENDING_DELETION` non utilise, `deletionRequestedAt` dead code |
+| Feature                           | Statut  | Backend     | Effort | Decisions bloquantes  | Notes                                                                                                   |
+| --------------------------------- | ------- | ----------- | ------ | --------------------- | ------------------------------------------------------------------------------------------------------- |
+| Navigation (7 items)              | A faire | Complet     | Faible | -                     | Page a recreer, composants modules intacts                                                              |
+| Compte (dashboard)                | A faire | Complet     | Faible | -                     | Page a recreer, composants modules intacts                                                              |
+| Commandes (liste)                 | A faire | Complet     | Faible | -                     | Page a recreer, composants modules intacts                                                              |
+| Mes avis                          | A faire | Complet     | Faible | -                     | Page a recreer, composants modules intacts                                                              |
+| A - Adresses                      | A faire | Complet     | Faible | -                     | Page a recreer, composants modules intacts                                                              |
+| B - Mes demandes                  | A faire | Complet     | Faible | Decision 1            | Page a recreer, composants modules intacts                                                              |
+| C - Facture PDF                   | A faire | Complet     | Faible | -                     | Page a recreer, fix securite `order.userId` applique                                                    |
+| D - Remboursements                | A faire | A completer | Faible | -                     | Modifier `GET_ORDER_SELECT` + 1 composant                                                               |
+| E - Newsletter settings           | A faire | Complet     | Faible | -                     | Page a recreer, composants modules intacts                                                              |
+| F - Filtres commandes             | A faire | A completer | Faible | ~~Decision 4~~ fermee | Filtres absents du schema (tri seul implemente). `paymentStatus: PAID` est delibere (Decision 4 fermee) |
+| G - Sessions actives              | A faire | Complet     | Faible | -                     | Page a recreer, composants modules intacts                                                              |
+| H - Demande de retour             | A faire | Complet     | Faible | -                     | Backend complet (`requestReturn` action, schema, validation 14j), composant a creer                     |
+| I - Changement email              | A faire | A completer | Moyen  | -                     | Email absent de `ProfileForm`, `changeEmail` non configure dans Better Auth                             |
+| J - Panier wishlist               | A faire | Complet     | Faible | -                     | `AddToCartCardButton` deja dans `ProductCard`                                                           |
+| K - Annulation commande client    | A faire | A completer | Moyen  | Decision 2            | `cancelOrder` admin-only, mais `canCancelOrder()` reutilisable                                          |
+| L - Codes promo sur commande      | A faire | A completer | Faible | -                     | `discountAmount` affiche mais pas le code                                                               |
+| M - Annulation suppression compte | A faire | A completer | Moyen  | Decision 3            | `PENDING_DELETION` non utilise, `deletionRequestedAt` dead code                                         |
 
 > **Note :** La feature H (Demande de retour client) a ete ajoutee pour couvrir l'obligation legale du droit de retractation 14 jours.
 
@@ -49,14 +48,15 @@
 ### Layout espace-client
 
 Le layout utilise un flex 2 colonnes (desktop) :
+
 - **Colonne sidebar (w-56 fixe)** : `AccountNav` (desktop only, `hidden lg:block`, sticky top-28)
 - **Colonne contenu (flex-1)** : page content
 
 ### Fichiers a creer
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/(espace-client)/layout.tsx` | **Existe** - Layout complet (flex 2 colonnes, metadata template `%s | Mon compte | Synclune`, robots noindex). A enrichir si besoin |
+| Fichier                                        | Role                                                                 |
+| ---------------------------------------------- | -------------------------------------------------------------------- | ---------- | ------------------------------------------------ |
+| `app/(boutique)/(espace-client)/layout.tsx`    | **Existe** - Layout complet (flex 2 colonnes, metadata template `%s  | Mon compte | Synclune`, robots noindex). A enrichir si besoin |
 | `app/(boutique)/(espace-client)/not-found.tsx` | **A creer** - Page 404 pour entites introuvables (commande, adresse) |
 
 > **Note :** `ROUTES.ACCOUNT` dans `shared/constants/urls.ts` definit `ROOT`, `ORDERS`, `ORDER_DETAIL`, `FAVORITES`, `REVIEWS`, `ADDRESSES`, `CUSTOMIZATIONS`, `SETTINGS`. Les anciennes entrees `PROFILE` et `SECURITY` (dead code) ont ete supprimees.
@@ -64,6 +64,7 @@ Le layout utilise un flex 2 colonnes (desktop) :
 ### Pattern page detail commande (`/commandes/[orderNumber]`)
 
 La page affiche la commande dans une grille 2/3 + 1/3 :
+
 - **Colonne principale (2/3)** : `OrderItemsList` → `OrderRefundsCard` (si refunds) → `OrderStatusTimeline` (timeline de statut) → `OrderTracking` (suivi colis, visible seulement si `trackingNumber`)
 - **Colonne sidebar (1/3)** : `OrderSummaryCard` (recapitulatif montants) → `OrderAddressesCard` (adresse de livraison) → `DownloadInvoiceButton` (si `PAID && invoiceStatus === "GENERATED"`) → `RequestReturnButton` (Feature H, si eligible retractation 14j) → `CancelOrderButton` (Feature K, si annulable)
 
@@ -76,11 +77,13 @@ La page affiche la commande dans une grille 2/3 + 1/3 :
 La page utilise un layout grille `grid-cols-1 lg:grid-cols-3 gap-6` :
 
 **Colonne principale (`lg:col-span-2`)** :
+
 1. `ProfileForm` — Formulaire de profil (nom, email en lecture seule)
 2. `SecuritySection` (dans `<Suspense>`) — Mot de passe, verification email, providers OAuth
 3. `GdprSection` — Export de donnees (`ExportDataButton`) + suppression de compte
 
 **Colonne sidebar (`lg:col-span-1`)** :
+
 1. `NewsletterSettingsCard` (`modules/newsletter/components/newsletter-settings-card.tsx`) (dans `<Suspense>`)
 2. `ActiveSessionsCard` (dans `<Suspense>`)
 
@@ -93,10 +96,12 @@ La page utilise un layout grille `grid-cols-1 lg:grid-cols-3 gap-6` :
 #### `SecuritySection` (a creer comme wrapper)
 
 Les composants enfants existants sont :
+
 - `ChangePasswordDialog` (`modules/users/components/change-password-dialog.tsx`) : dialog modal avec `ChangePasswordForm`, min 6 caracteres
 - `ResendVerificationButton` (`modules/users/components/resend-verification-button.tsx`) : bouton avec cooldown 60s, utilise localStorage
 
 `SecuritySection` devra afficher :
+
 - Un bouton "Modifier mon mot de passe" ouvrant `ChangePasswordDialog` (uniquement si le compte utilise le provider "email" — les comptes OAuth n'ont pas de mot de passe)
 - Un statut de verification email avec `ResendVerificationButton` si `emailVerified === false`
 - Les providers OAuth connectes (Google, GitHub) via le modele `Account` : afficher "Connecte via Google" etc. La gestion de liaison/deliaison de comptes peut etre V2
@@ -104,6 +109,7 @@ Les composants enfants existants sont :
 ### Pattern page compte (`/compte`) - Dashboard
 
 Page tableau de bord avec stats et raccourcis (voir section dediee ci-dessous pour les details) :
+
 - Composants existants : `AccountStatsCards`, `AccountStatsCardsSkeleton`
 - Data fetcher : `getAccountStats()` → `{ totalOrders, pendingOrders, cartItemsCount }`
 - Liens rapides vers les sections principales
@@ -137,12 +143,12 @@ Chaque page de l'espace client doit exporter ses `metadata` Next.js :
 
 4 data fetchers retournent des resultats non bornes (`findMany` sans `take` ni cursor) :
 
-| Data fetcher | Fichier | Borne naturelle ? |
-|---|---|---|
-| `getUserReviews()` | `modules/reviews/data/get-user-reviews.ts` | Non |
-| `getUserAddresses()` | `modules/addresses/data/get-user-addresses.ts` | Oui (< 10 adresses par utilisateur) |
-| `getReviewableProducts()` | `modules/reviews/data/get-reviewable-products.ts` | Non |
-| `getUserCustomizationRequests()` | `modules/customizations/data/get-user-customization-requests.ts` | Non |
+| Data fetcher                     | Fichier                                                          | Borne naturelle ?                   |
+| -------------------------------- | ---------------------------------------------------------------- | ----------------------------------- |
+| `getUserReviews()`               | `modules/reviews/data/get-user-reviews.ts`                       | Non                                 |
+| `getUserAddresses()`             | `modules/addresses/data/get-user-addresses.ts`                   | Oui (< 10 adresses par utilisateur) |
+| `getReviewableProducts()`        | `modules/reviews/data/get-reviewable-products.ts`                | Non                                 |
+| `getUserCustomizationRequests()` | `modules/customizations/data/get-user-customization-requests.ts` | Non                                 |
 
 > **Note :** Les adresses sont naturellement bornees (un utilisateur a rarement plus de 10 adresses). Pour les avis et demandes de personnalisation, ajouter un `take: 50` en V1 pour borner les resultats. En V2, migrer vers une pagination cursor-based (pattern existant dans `getUserOrders()`). Les commandes utilisent deja une pagination cursor-based correcte via `CursorPagination`.
 
@@ -150,15 +156,15 @@ Chaque page de l'espace client doit exporter ses `metadata` Next.js :
 
 Composants existants a reutiliser dans les pages de l'espace client :
 
-| Composant | Fichier | Usage |
-|---|---|---|
-| `PageHeader` (variante `compact`) | `shared/components/page-header.tsx` | En-tete de page simplifie sans breadcrumbs, adapte a l'espace client |
-| `Empty` (compound component) | `shared/components/ui/empty.tsx` | Etats vides : `<Empty>`, `EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, `EmptyContent`, `EmptyActions`. Variantes `default` / `borderless`, tailles `sm` / `default` / `lg` |
-| `CursorPagination` | `shared/components/cursor-pagination/cursor-pagination.tsx` | Pagination cursor-based avec boutons prev/next, select per-page, liens SEO `rel="prev/next"`, aria-live. Deja integre dans `CustomerOrdersTable` |
-| `RecentOrders` | `modules/orders/components/recent-orders.tsx` | Table des commandes recentes (limit configurable, lien "voir tout"). A integrer dans le dashboard `/compte` |
-| `AddressInfoCard` | `modules/addresses/components/address-info-card.tsx` | Carte d'info adresse en lecture seule. Utilisable dans le detail commande |
-| `SortDrawer` | `shared/components/sort-drawer/` | Tri sur mobile (drawer bottom). Alternative optionnelle a `SortSelect` — avec 4 options de tri, le select natif est suffisant |
-| `LogoutAlertDialog` | `modules/auth/components/logout-alert-dialog.tsx` | Dialog de confirmation de deconnexion. Utilise dans `AccountNav` |
+| Composant                         | Fichier                                                     | Usage                                                                                                                                                                                       |
+| --------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageHeader` (variante `compact`) | `shared/components/page-header.tsx`                         | En-tete de page simplifie sans breadcrumbs, adapte a l'espace client                                                                                                                        |
+| `Empty` (compound component)      | `shared/components/ui/empty.tsx`                            | Etats vides : `<Empty>`, `EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, `EmptyContent`, `EmptyActions`. Variantes `default` / `borderless`, tailles `sm` / `default` / `lg` |
+| `CursorPagination`                | `shared/components/cursor-pagination/cursor-pagination.tsx` | Pagination cursor-based avec boutons prev/next, select per-page, liens SEO `rel="prev/next"`, aria-live. Deja integre dans `CustomerOrdersTable`                                            |
+| `RecentOrders`                    | `modules/orders/components/recent-orders.tsx`               | Table des commandes recentes (limit configurable, lien "voir tout"). A integrer dans le dashboard `/compte`                                                                                 |
+| `AddressInfoCard`                 | `modules/addresses/components/address-info-card.tsx`        | Carte d'info adresse en lecture seule. Utilisable dans le detail commande                                                                                                                   |
+| `SortDrawer`                      | `shared/components/sort-drawer/`                            | Tri sur mobile (drawer bottom). Alternative optionnelle a `SortSelect` — avec 4 options de tri, le select natif est suffisant                                                               |
+| `LogoutAlertDialog`               | `modules/auth/components/logout-alert-dialog.tsx`           | Dialog de confirmation de deconnexion. Utilise dans `AccountNav`                                                                                                                            |
 
 ---
 
@@ -178,18 +184,19 @@ Composants existants a reutiliser dans les pages de l'espace client :
 import { LayoutDashboard, MapPin, MessageSquare, Package, Settings, Sparkles } from "lucide-react";
 
 const navItems = [
-  { href: "/compte", label: "Tableau de bord", icon: LayoutDashboard },
-  { href: "/commandes", label: "Commandes", icon: Package },
-  { href: "/mes-avis", label: "Mes avis", icon: MessageSquare },
-  { href: "/adresses", label: "Adresses", icon: MapPin, desktopOnly: true },
-  { href: "/mes-demandes", label: "Mes demandes", icon: Sparkles, desktopOnly: true },
-  { href: "/parametres", label: "Parametres", icon: Settings },
+	{ href: "/compte", label: "Tableau de bord", icon: LayoutDashboard },
+	{ href: "/commandes", label: "Commandes", icon: Package },
+	{ href: "/mes-avis", label: "Mes avis", icon: MessageSquare },
+	{ href: "/adresses", label: "Adresses", icon: MapPin, desktopOnly: true },
+	{ href: "/mes-demandes", label: "Mes demandes", icon: Sparkles, desktopOnly: true },
+	{ href: "/parametres", label: "Parametres", icon: Settings },
 ];
 ```
 
 ### Deconnexion
 
 Le dropdown navbar ne mene plus vers un menu avec deconnexion — il redirige directement vers l'espace client. Le bouton de deconnexion est donc integre dans `AccountNav` :
+
 - **Desktop** : bouton "Se deconnecter" avec icone `LogOut` en bas de la sidebar, separe par un divider. Ouvre `LogoutAlertDialog` (confirmation).
 - **Mobile** : le bouton de deconnexion est accessible via la page Parametres (`/parametres`) dans `GdprSection`, ou via le tableau de bord.
 
@@ -198,6 +205,7 @@ Le dropdown navbar ne mene plus vers un menu avec deconnexion — il redirige di
 Le panier (`/panier`) et les favoris (`/favoris`) sont **hors espace-client** — accessibles via la navigation principale du storefront (header/navbar), pas via `AccountNav`. `cartItemsCount` dans `AccountStats` est utilise a titre informatif dans le dashboard, mais le lien d'action pointe vers `ROUTES.SHOP.CART` (hors espace-client).
 
 **Fusion guest → authentifie** : le merge des donnees guest est gere automatiquement au login via des hooks Better Auth :
+
 - **Panier** : strategie MAX (garde la quantite la plus elevee entre guest et user), dans `modules/cart/actions/merge-carts.ts`
 - **Wishlist** : strategie UNION (ajoute tous les produits uniques du guest), dans `modules/wishlist/actions/merge-wishlists.ts`
 
@@ -221,8 +229,8 @@ La bottom bar affiche les 4 items non-`desktopOnly` : **Tableau de bord**, **Com
 
 ### Donnees disponibles
 
-| Source | Fonction | Return type |
-|---|---|---|
+| Source                                    | Fonction            | Return type                     |
+| ----------------------------------------- | ------------------- | ------------------------------- |
 | `modules/users/data/get-account-stats.ts` | `getAccountStats()` | `Promise<AccountStats \| null>` |
 
 `AccountStats` contient : `totalOrders: number`, `pendingOrders: number`, `cartItemsCount: number`.
@@ -237,16 +245,17 @@ Le cache utilise `"use cache: private"`, `cacheLife("userOrders")`, `cacheTag(OR
 
 ### Fichiers
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/(espace-client)/compte/page.tsx` | **Existe** - Page basique (profil card avec nom, email, date membre). A enrichir avec `AccountStatsCards`, `RecentOrders`, liens rapides |
-| `modules/users/components/account-stats-cards.tsx` | Cartes de stats (utilise `use(statsPromise)`, wrapper en `<Suspense>`) |
-| `modules/users/components/account-stats-cards-skeleton.tsx` | Skeleton de chargement |
-| `modules/users/data/get-account-stats.ts` | Data fetcher avec cache |
+| Fichier                                                     | Role                                                                                                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/(boutique)/(espace-client)/compte/page.tsx`            | **Existe** - Page basique (profil card avec nom, email, date membre). A enrichir avec `AccountStatsCards`, `RecentOrders`, liens rapides |
+| `modules/users/components/account-stats-cards.tsx`          | Cartes de stats (utilise `use(statsPromise)`, wrapper en `<Suspense>`)                                                                   |
+| `modules/users/components/account-stats-cards-skeleton.tsx` | Skeleton de chargement                                                                                                                   |
+| `modules/users/data/get-account-stats.ts`                   | Data fetcher avec cache                                                                                                                  |
 
 ### UI
 
 `AccountStatsCards` affiche actuellement 2 cartes :
+
 - "Membre depuis" (date formatee mois/annee)
 - "Commandes passees" (`totalOrders`)
 
@@ -276,9 +285,9 @@ Impossible : le dashboard est toujours accessible pour un utilisateur connecte.
 
 ### Donnees disponibles
 
-| Source | Fonction | Return type |
-|---|---|---|
-| `modules/orders/data/get-user-orders.ts` | `getUserOrders(params?)` | `Promise<GetUserOrdersReturn>` |
+| Source                                     | Fonction                          | Return type                                  |
+| ------------------------------------------ | --------------------------------- | -------------------------------------------- |
+| `modules/orders/data/get-user-orders.ts`   | `getUserOrders(params?)`          | `Promise<GetUserOrdersReturn>`               |
 | `modules/orders/data/fetch-user-orders.ts` | `fetchUserOrders(userId, params)` | Fonction interne avec `"use cache: private"` |
 
 `GetUserOrdersReturn` contient : `orders: UserOrder[]`, `pagination: { nextCursor, prevCursor, hasNextPage, hasPreviousPage }`.
@@ -286,6 +295,7 @@ Impossible : le dashboard est toujours accessible pour un utilisateur connecte.
 ### Pagination
 
 Pattern cursor-based existant :
+
 - `cursor` : ID du dernier element
 - `direction` : `"forward"` ou `"backward"`
 - `perPage` : 10 par defaut, max 50
@@ -297,20 +307,21 @@ Pattern cursor-based existant :
 Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `useSortSelect()` qui lit/ecrit le search param `sort` dans l'URL. Sur mobile, `SortDrawer` (`shared/components/sort-drawer/`) est disponible comme alternative (drawer bottom) mais reste optionnel — avec 4 options de tri, le `SortSelect` natif est suffisant.
 
 4 options de tri definies dans `modules/orders/constants/user-orders.constants.ts` :
+
 - "Plus recentes" (defaut), "Plus anciennes", "Montant decroissant", "Montant croissant"
 
 ### Fichiers
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/(espace-client)/commandes/page.tsx` | **A creer** - Page liste des commandes |
-| `modules/orders/components/customer/customer-orders-table.tsx` | Tableau des commandes (server component async, colonnes : numero, date, statut, livraison, articles, total) |
-| `modules/orders/components/customer/customer-orders-table-skeleton.tsx` | Skeleton de chargement |
-| `shared/components/sort-select.tsx` | Select de tri reutilisable |
-| `modules/orders/data/get-user-orders.ts` | Wrapper public (gere session) |
-| `modules/orders/data/fetch-user-orders.ts` | Data fetcher interne avec cache |
-| `modules/orders/constants/user-orders.constants.ts` | Select, sort options, labels, pagination defaults |
-| `modules/orders/schemas/user-orders.schemas.ts` | Schema Zod des params |
+| Fichier                                                                 | Role                                                                                                        |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `app/(boutique)/(espace-client)/commandes/page.tsx`                     | **A creer** - Page liste des commandes                                                                      |
+| `modules/orders/components/customer/customer-orders-table.tsx`          | Tableau des commandes (server component async, colonnes : numero, date, statut, livraison, articles, total) |
+| `modules/orders/components/customer/customer-orders-table-skeleton.tsx` | Skeleton de chargement                                                                                      |
+| `shared/components/sort-select.tsx`                                     | Select de tri reutilisable                                                                                  |
+| `modules/orders/data/get-user-orders.ts`                                | Wrapper public (gere session)                                                                               |
+| `modules/orders/data/fetch-user-orders.ts`                              | Data fetcher interne avec cache                                                                             |
+| `modules/orders/constants/user-orders.constants.ts`                     | Select, sort options, labels, pagination defaults                                                           |
+| `modules/orders/schemas/user-orders.schemas.ts`                         | Schema Zod des params                                                                                       |
 
 > **Note :** `GET_USER_ORDERS_SELECT` inclut deja les champs livraison (`estimatedDelivery`, `actualDelivery`, `shippedAt`, `trackingNumber`, `trackingUrl`, `shippingCarrier`). Le composant `CustomerOrdersTable` peut afficher "Livraison estimee le X" ou "Livree le X" dans la colonne livraison.
 
@@ -335,8 +346,8 @@ Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `
 
 ### Donnees disponibles
 
-| Source | Fonction | Return type |
-|---|---|---|
+| Source                             | Fonction                    | Return type              |
+| ---------------------------------- | --------------------------- | ------------------------ |
 | `modules/orders/data/get-order.ts` | `getOrder({ orderNumber })` | `Promise<Order \| null>` |
 
 `getOrder()` gere l'authentification et le scope `userId` automatiquement (les non-admins ne voient que leurs propres commandes). Utilise `"use cache: private"` avec `cacheLife("dashboard")` et tags specifiques a l'utilisateur.
@@ -345,23 +356,25 @@ Le tri utilise `SortSelect` (`shared/components/sort-select.tsx`) avec le hook `
 
 ### Fichiers
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | **A creer** - Page detail commande |
-| `modules/orders/data/get-order.ts` | Data fetcher avec auth + cache |
-| `modules/orders/constants/order.constants.ts` | `GET_ORDER_SELECT` (a enrichir avec `refunds` et `discountUsages`) |
+| Fichier                                                           | Role                                                               |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | **A creer** - Page detail commande                                 |
+| `modules/orders/data/get-order.ts`                                | Data fetcher avec auth + cache                                     |
+| `modules/orders/constants/order.constants.ts`                     | `GET_ORDER_SELECT` (a enrichir avec `refunds` et `discountUsages`) |
 
 ### Layout et assemblage des composants
 
 La page utilise une grille 2/3 + 1/3 :
 
 **Colonne principale (2/3)** :
+
 1. `OrderItemsList` - Liste des articles commandes
 2. `OrderRefundsCard` - Historique remboursements (Feature D, visible seulement si `order.refunds.length > 0`)
 3. `OrderStatusTimeline` - Timeline de statut
 4. `OrderTracking` - Suivi colis (visible seulement si `order.trackingNumber`)
 
 **Colonne sidebar (1/3)** :
+
 1. `OrderSummaryCard` - Recapitulatif montants + codes promo (Feature L)
 2. `OrderAddressesCard` - Adresse de livraison
 3. `DownloadInvoiceButton` - Telechargement facture (visible seulement si `order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED"`)
@@ -370,13 +383,13 @@ La page utilise une grille 2/3 + 1/3 :
 
 ### Conditions d'affichage
 
-| Composant | Condition |
-|---|---|
-| `OrderRefundsCard` | `order.refunds.length > 0` |
-| `OrderTracking` | `order.trackingNumber` non null |
-| `DownloadInvoiceButton` | `order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED"` |
-| `RequestReturnButton` | `paymentStatus in [PAID, PARTIALLY_REFUNDED]` + `fulfillmentStatus === DELIVERED` + `actualDelivery + 14j > now()` + pas de refund PENDING/APPROVED |
-| `CancelOrderButton` | `canCancelOrder(order)` + guard client (`order.status === "PENDING"`) |
+| Composant               | Condition                                                                                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OrderRefundsCard`      | `order.refunds.length > 0`                                                                                                                          |
+| `OrderTracking`         | `order.trackingNumber` non null                                                                                                                     |
+| `DownloadInvoiceButton` | `order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED"`                                                                             |
+| `RequestReturnButton`   | `paymentStatus in [PAID, PARTIALLY_REFUNDED]` + `fulfillmentStatus === DELIVERED` + `actualDelivery + 14j > now()` + pas de refund PENDING/APPROVED |
+| `CancelOrderButton`     | `canCancelOrder(order)` + guard client (`order.status === "PENDING"`)                                                                               |
 
 ### Gestion d'erreur
 
@@ -387,8 +400,8 @@ La page utilise une grille 2/3 + 1/3 :
 
 ```ts
 export async function generateMetadata({ params }: { params: Promise<{ orderNumber: string }> }) {
-  const { orderNumber } = await params
-  return { title: `Commande ${orderNumber}` }
+	const { orderNumber } = await params;
+	return { title: `Commande ${orderNumber}` };
 }
 ```
 
@@ -407,9 +420,9 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 
 ### Donnees disponibles
 
-| Source | Fonction | Return type |
-|---|---|---|
-| `modules/reviews/data/get-user-reviews.ts` | `getUserReviews()` | `Promise<ReviewUser[]>` |
+| Source                                            | Fonction                  | Return type                    |
+| ------------------------------------------------- | ------------------------- | ------------------------------ |
+| `modules/reviews/data/get-user-reviews.ts`        | `getUserReviews()`        | `Promise<ReviewUser[]>`        |
 | `modules/reviews/data/get-reviewable-products.ts` | `getReviewableProducts()` | `Promise<ReviewableProduct[]>` |
 
 `getUserReviews()` retourne les avis de l'utilisateur tries par `createdAt desc`, avec cache `"use cache: private"`, `cacheLife("userOrders")`.
@@ -418,19 +431,19 @@ export async function generateMetadata({ params }: { params: Promise<{ orderNumb
 
 ### Fichiers
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/(espace-client)/mes-avis/page.tsx` | **A creer** - Page principale |
-| `modules/reviews/components/user-review-card.tsx` | Carte d'avis (server component) : image produit, titre, etoiles, date, badge "Achat verifie", statut, contenu, reponse marque (voir detail ci-dessous) |
-| `modules/reviews/components/user-review-card-actions.tsx` | Actions (modifier, supprimer) |
-| `modules/reviews/components/edit-review-dialog.tsx` | Dialog d'edition (utilise le dialog store) |
-| `modules/reviews/components/delete-review-alert-dialog.tsx` | Dialog de suppression (utilise l'alert dialog store) |
-| `modules/reviews/components/reviewable-product-card.tsx` | Carte produit evaluable avec bouton "Laisser un avis" ouvrant `CreateReviewForm` |
-| `modules/reviews/components/create-review-form.tsx` | Formulaire de creation d'avis |
-| `modules/reviews/components/update-review-form.tsx` | Formulaire de modification d'avis |
-| `modules/reviews/hooks/use-create-review-form.ts` | Hook pour le formulaire de creation |
-| `modules/reviews/hooks/use-update-review-form.ts` | Hook pour le formulaire de modification |
-| `modules/reviews/hooks/use-delete-review.ts` | Hook de suppression |
+| Fichier                                                     | Role                                                                                                                                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `app/(boutique)/(espace-client)/mes-avis/page.tsx`          | **A creer** - Page principale                                                                                                                          |
+| `modules/reviews/components/user-review-card.tsx`           | Carte d'avis (server component) : image produit, titre, etoiles, date, badge "Achat verifie", statut, contenu, reponse marque (voir detail ci-dessous) |
+| `modules/reviews/components/user-review-card-actions.tsx`   | Actions (modifier, supprimer)                                                                                                                          |
+| `modules/reviews/components/edit-review-dialog.tsx`         | Dialog d'edition (utilise le dialog store)                                                                                                             |
+| `modules/reviews/components/delete-review-alert-dialog.tsx` | Dialog de suppression (utilise l'alert dialog store)                                                                                                   |
+| `modules/reviews/components/reviewable-product-card.tsx`    | Carte produit evaluable avec bouton "Laisser un avis" ouvrant `CreateReviewForm`                                                                       |
+| `modules/reviews/components/create-review-form.tsx`         | Formulaire de creation d'avis                                                                                                                          |
+| `modules/reviews/components/update-review-form.tsx`         | Formulaire de modification d'avis                                                                                                                      |
+| `modules/reviews/hooks/use-create-review-form.ts`           | Hook pour le formulaire de creation                                                                                                                    |
+| `modules/reviews/hooks/use-update-review-form.ts`           | Hook pour le formulaire de modification                                                                                                                |
+| `modules/reviews/hooks/use-delete-review.ts`                | Hook de suppression                                                                                                                                    |
 
 ### UI
 
@@ -444,6 +457,7 @@ Les dialogs `EditReviewDialog` et `DeleteReviewAlertDialog` sont geres via les s
 ### Affichage de `ReviewResponse` dans `UserReviewCard`
 
 La reponse de la marque s'affiche comme un bloc toujours visible (pas depliable) sous le contenu de l'avis :
+
 - **Style** : `bg-muted/50 rounded-lg p-3 border-l-2 border-primary/30`
 - **Header** : "Reponse de {authorName}" + date formatee
 - **Contenu** : texte avec `line-clamp-2` (tronque a 2 lignes)
@@ -464,6 +478,7 @@ La reponse de la marque s'affiche comme un bloc toujours visible (pas depliable)
 ### Composant wrapper a creer
 
 Un composant wrapper (ex: `UserReviewsList`) pourrait orchestrer :
+
 - La section "Produits a evaluer" en haut
 - La liste des avis en dessous
 - Les dialogs montes globalement
@@ -487,26 +502,26 @@ Un composant wrapper (ex: `UserReviewsList`) pourrait orchestrer :
 
 ### Donnees disponibles
 
-| Source | Fonction | Return type |
-|---|---|---|
-| `modules/addresses/data/get-user-addresses.ts` | `getUserAddresses()` | `Promise<UserAddress[] \| null>` |
-| `modules/addresses/data/search-address.ts` | `searchAddress(params)` | `Promise<SearchAddressReturn>` |
+| Source                                         | Fonction                | Return type                      |
+| ---------------------------------------------- | ----------------------- | -------------------------------- |
+| `modules/addresses/data/get-user-addresses.ts` | `getUserAddresses()`    | `Promise<UserAddress[] \| null>` |
+| `modules/addresses/data/search-address.ts`     | `searchAddress(params)` | `Promise<SearchAddressReturn>`   |
 
 ### Fichiers
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/(espace-client)/adresses/page.tsx` | **A creer** - Page principale |
-| `modules/addresses/components/address-list.tsx` | Grille + empty state |
-| `modules/addresses/components/address-card.tsx` | Carte individuelle |
-| `modules/addresses/components/address-card-actions.tsx` | Dropdown (modifier, supprimer, defaut) |
-| `modules/addresses/components/address-form-dialog.tsx` | Formulaire TanStack Form + autocomplete BAN |
-| `modules/addresses/components/create-address-button.tsx` | Bouton ouvrant le dialog |
-| `modules/addresses/components/delete-address-alert-dialog.tsx` | Confirmation suppression |
-| `modules/addresses/hooks/use-create-address.ts` | Hook creation |
-| `modules/addresses/hooks/use-update-address.ts` | Hook modification |
-| `modules/addresses/hooks/use-delete-address.ts` | Hook suppression |
-| `modules/addresses/hooks/use-set-default-address.ts` | Hook defaut |
+| Fichier                                                        | Role                                        |
+| -------------------------------------------------------------- | ------------------------------------------- |
+| `app/(boutique)/(espace-client)/adresses/page.tsx`             | **A creer** - Page principale               |
+| `modules/addresses/components/address-list.tsx`                | Grille + empty state                        |
+| `modules/addresses/components/address-card.tsx`                | Carte individuelle                          |
+| `modules/addresses/components/address-card-actions.tsx`        | Dropdown (modifier, supprimer, defaut)      |
+| `modules/addresses/components/address-form-dialog.tsx`         | Formulaire TanStack Form + autocomplete BAN |
+| `modules/addresses/components/create-address-button.tsx`       | Bouton ouvrant le dialog                    |
+| `modules/addresses/components/delete-address-alert-dialog.tsx` | Confirmation suppression                    |
+| `modules/addresses/hooks/use-create-address.ts`                | Hook creation                               |
+| `modules/addresses/hooks/use-update-address.ts`                | Hook modification                           |
+| `modules/addresses/hooks/use-delete-address.ts`                | Hook suppression                            |
+| `modules/addresses/hooks/use-set-default-address.ts`           | Hook defaut                                 |
 
 ### Empty state
 
@@ -545,16 +560,17 @@ model CustomizationRequest {
 
 ### Fichiers
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/(espace-client)/mes-demandes/page.tsx` | **A creer** - Page listant les demandes |
-| `modules/customizations/data/get-user-customization-requests.ts` | Data fetcher filtre par `userId` |
-| `modules/customizations/components/customer/customization-request-list.tsx` | Liste des demandes |
-| `modules/customizations/components/customer/customization-request-card.tsx` | Carte individuelle |
+| Fichier                                                                     | Role                                    |
+| --------------------------------------------------------------------------- | --------------------------------------- |
+| `app/(boutique)/(espace-client)/mes-demandes/page.tsx`                      | **A creer** - Page listant les demandes |
+| `modules/customizations/data/get-user-customization-requests.ts`            | Data fetcher filtre par `userId`        |
+| `modules/customizations/components/customer/customization-request-list.tsx` | Liste des demandes                      |
+| `modules/customizations/components/customer/customization-request-card.tsx` | Carte individuelle                      |
 
 ### Produits d'inspiration (`inspirationProducts`)
 
 `inspirationProducts` (relation M2M vers `Product[]`) s'affiche dans `CustomizationRequestCard` comme une rangee de max 4 thumbnails :
+
 - Taille : 40x40px, `rounded-md`
 - Image : `product.skus[0]?.images[0]?.url` (premier SKU, premiere image)
 - Au-dela de 4 produits : badge `+{count - 4}` affiche a la suite des thumbnails
@@ -567,6 +583,7 @@ model CustomizationRequest {
 ### Decision ouverte
 
 `adminNotes` est prevu comme "notes internes admin". Faut-il :
+
 1. Le rendre visible au client (renommer en "reponse") ?
 2. Ajouter un champ `clientResponse` separe ?
 3. Le garder interne et ne montrer que le statut ?
@@ -593,6 +610,7 @@ model CustomizationRequest {
 Quand `invoiceStatus === "VOIDED"`, le bouton de telechargement est masque (meme condition que `invoiceStatus !== "GENERATED"`). Aucune mention "Facture annulee" n'est affichee au client — il voit simplement l'absence du bouton. **Recommandation P2** : ajouter un texte conditionnel "Facture non disponible" quand `invoiceStatus === "VOIDED"` pour informer explicitement le client.
 
 Constante `INVOICE_STATUS_LABELS` a creer si on souhaite afficher le statut :
+
 - `PENDING` → "En cours de generation"
 - `GENERATED` → "Disponible"
 - `VOIDED` → "Annulee"
@@ -667,8 +685,8 @@ model RefundItem {
 
 ### Fichiers a modifier
 
-| Fichier | Modification |
-|---|---|
+| Fichier                                       | Modification                            |
+| --------------------------------------------- | --------------------------------------- |
 | `modules/orders/constants/order.constants.ts` | Ajouter `refunds` au `GET_ORDER_SELECT` |
 
 > **Note :** `GET_ORDER_SELECT` (dans `order.constants.ts`) est le select de detail commande. Ne pas confondre avec `GET_USER_ORDERS_SELECT` (dans `user-orders.constants.ts`) qui est le select de la liste des commandes et n'a pas besoin des refunds.
@@ -707,8 +725,8 @@ refunds: {
 
 ### Fichier a creer
 
-| Fichier | Role |
-|---|---|
+| Fichier                                                     | Role                             |
+| ----------------------------------------------------------- | -------------------------------- |
 | `modules/orders/components/customer/order-refunds-card.tsx` | Carte listant les remboursements |
 
 ### UI
@@ -716,6 +734,7 @@ refunds: {
 La carte s'affiche dans la colonne principale (2/3), apres `OrderItemsList` et avant `OrderTracking`. Elle n'apparait que si `order.refunds.length > 0`.
 
 Chaque remboursement affiche :
+
 - Badge de statut (`RefundStatus`) avec couleurs
 - Montant rembourse (formater en euros)
 - Raison (labels francais a creer dans une constante)
@@ -729,6 +748,7 @@ Les couleurs dans `modules/refunds/constants/refund.constants.ts` sont des hex s
 ### Remboursements partiels
 
 Un remboursement peut ne couvrir qu'une partie des articles ou un montant partiel. L'UI doit :
+
 - Afficher le montant rembourse vs le total de la commande (ex: "12,50 EUR rembourses sur 45,00 EUR")
 - Lister uniquement les articles concernes par le remboursement (via `RefundItem`)
 - Si plusieurs remboursements existent sur une meme commande, les afficher en liste chronologique
@@ -766,21 +786,22 @@ Pas d'empty state necessaire : la carte ne s'affiche que si `refunds.length > 0`
 
 ### Donnees disponibles
 
-| Source | Fonction | Return type |
-|---|---|---|
+| Source                                               | Fonction                  | Return type                                                                       |
+| ---------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------- |
 | `modules/newsletter/data/get-subscription-status.ts` | `getSubscriptionStatus()` | `Promise<{ isSubscribed: boolean, email: string \| null, isConfirmed: boolean }>` |
 
 ### Fichiers
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/(espace-client)/parametres/page.tsx` | **A creer** - Page parametres (inclut `NewsletterSettingsCard` dans la sidebar) |
-| `modules/newsletter/components/newsletter-settings-card.tsx` | Carte avec statut (dot vert/gris) + bouton subscribe/unsubscribe |
-| `modules/newsletter/data/get-subscription-status.ts` | Data fetcher avec cache |
+| Fichier                                                      | Role                                                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `app/(boutique)/(espace-client)/parametres/page.tsx`         | **A creer** - Page parametres (inclut `NewsletterSettingsCard` dans la sidebar) |
+| `modules/newsletter/components/newsletter-settings-card.tsx` | Carte avec statut (dot vert/gris) + bouton subscribe/unsubscribe                |
+| `modules/newsletter/data/get-subscription-status.ts`         | Data fetcher avec cache                                                         |
 
 ### UI
 
 `NewsletterSettingsCard` est un client component qui :
+
 - Affiche le statut d'inscription (dot vert = inscrit, gris = non inscrit)
 - Propose un bouton pour s'inscrire ou se desinscrire
 - Appelle l'action `toggleNewsletter`
@@ -808,17 +829,17 @@ Pas d'empty state necessaire : la carte ne s'affiche que si `refunds.length > 0`
 
 #### Fichiers a modifier
 
-| Fichier | Modification |
-|---|---|
+| Fichier                                             | Modification                                                             |
+| --------------------------------------------------- | ------------------------------------------------------------------------ |
 | `app/(boutique)/(espace-client)/commandes/page.tsx` | **A creer** - Ajouter parsing du search param + passer a `getUserOrders` |
-| `modules/orders/schemas/user-orders.schemas.ts` | Ajouter `search: z.string().max(50).optional()` |
-| `modules/orders/data/get-user-orders.ts` | Passer `search` a `fetchUserOrders` |
-| `modules/orders/data/fetch-user-orders.ts` | Ajouter la `where` clause sur `orderNumber` |
+| `modules/orders/schemas/user-orders.schemas.ts`     | Ajouter `search: z.string().max(50).optional()`                          |
+| `modules/orders/data/get-user-orders.ts`            | Passer `search` a `fetchUserOrders`                                      |
+| `modules/orders/data/fetch-user-orders.ts`          | Ajouter la `where` clause sur `orderNumber`                              |
 
 #### Fichier a creer
 
-| Fichier | Role |
-|---|---|
+| Fichier                                                          | Role                                                        |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- |
 | `modules/orders/components/customer/customer-orders-filters.tsx` | Barre de recherche (input recherche par numero de commande) |
 
 #### Schema V1
@@ -839,17 +860,18 @@ export const getUserOrdersSchema = z.object({
 
 ```ts
 const where: Prisma.OrderWhereInput = {
-  userId,
-  deletedAt: null,
-  ...(params.search && {
-    orderNumber: { contains: params.search, mode: "insensitive" },
-  }),
+	userId,
+	deletedAt: null,
+	...(params.search && {
+		orderNumber: { contains: params.search, mode: "insensitive" },
+	}),
 };
 ```
 
 #### UI V1
 
 `customer-orders-filters.tsx` est une simple barre de recherche au-dessus de la table :
+
 - Input recherche par numero de commande (`Order.orderNumber`)
 - Les search params URL sont utilises (pattern existant dans le projet)
 - Le tri existant (4 options via `SortSelect`) reste inchange
@@ -867,6 +889,7 @@ filterFulfillmentStatus: z.enum(["UNFULFILLED", "PROCESSING", "SHIPPED", "DELIVE
 #### UI V2
 
 Enrichir `customer-orders-filters.tsx` avec :
+
 - Select filtre par statut (`OrderStatus` : PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED)
 - Select filtre par statut livraison (`FulfillmentStatus` : UNFULFILLED, PROCESSING, SHIPPED, DELIVERED, RETURNED)
 - Filtre par plage de dates (presets : "30 derniers jours", "3 derniers mois", "6 derniers mois", "Cette annee")
@@ -897,6 +920,7 @@ La session actuelle est identifiee en comparant `session.token` (du cookie Bette
 ### UI
 
 Chaque session affiche :
+
 - Icone appareil (parser `userAgent` : desktop/mobile/tablet)
 - Navigateur + OS (parser `userAgent`)
 - Adresse IP (affichee telle quelle actuellement — masquage partiel a implementer si souhaite)
@@ -925,6 +949,7 @@ Si la revocation echoue (ex: session deja expiree) : toast d'erreur + refresh de
 ### Implementation backend existante
 
 L'action `requestReturn` (`modules/refunds/actions/request-return.ts`) :
+
 1. Verifie l'authentification (`requireAuth`)
 2. Applique un rate limit (`RETURN_REQUEST_LIMIT`)
 3. Valide l'input (`requestReturnSchema` : `orderId`, `reason`, `message` optionnel)
@@ -941,14 +966,14 @@ L'action `requestReturn` (`modules/refunds/actions/request-return.ts`) :
 ```ts
 // modules/refunds/schemas/refund.schemas.ts
 export const requestReturnSchema = z.object({
-  orderId: z.cuid2(),
-  reason: z.enum([
-    RefundReason.CUSTOMER_REQUEST,  // Retractation client
-    RefundReason.DEFECTIVE,          // Produit defectueux
-    RefundReason.WRONG_ITEM,         // Erreur de preparation
-  ]),
-  message: z.string().max(500).optional(),
-})
+	orderId: z.cuid2(),
+	reason: z.enum([
+		RefundReason.CUSTOMER_REQUEST, // Retractation client
+		RefundReason.DEFECTIVE, // Produit defectueux
+		RefundReason.WRONG_ITEM, // Erreur de preparation
+	]),
+	message: z.string().max(500).optional(),
+});
 ```
 
 > **Note :** Les raisons client sont limitees a 3 valeurs (pas LOST_IN_TRANSIT, FRAUD, OTHER qui sont reservees a l'admin).
@@ -957,25 +982,25 @@ export const requestReturnSchema = z.object({
 
 Le bouton "Demander un retour" s'affiche dans la page detail commande si **toutes** ces conditions sont remplies :
 
-| Condition | Champ | Valeur |
-|---|---|---|
-| Commande payee | `order.paymentStatus` | `PAID` ou `PARTIALLY_REFUNDED` |
-| Commande livree | `order.fulfillmentStatus` | `DELIVERED` |
-| Dans le delai de 14 jours | `order.actualDelivery` | `actualDelivery + 14j > now()` |
-| Pas de retour deja en cours | `order.refunds` | Aucun refund avec statut `PENDING` ou `APPROVED` |
+| Condition                   | Champ                     | Valeur                                           |
+| --------------------------- | ------------------------- | ------------------------------------------------ |
+| Commande payee              | `order.paymentStatus`     | `PAID` ou `PARTIALLY_REFUNDED`                   |
+| Commande livree             | `order.fulfillmentStatus` | `DELIVERED`                                      |
+| Dans le delai de 14 jours   | `order.actualDelivery`    | `actualDelivery + 14j > now()`                   |
+| Pas de retour deja en cours | `order.refunds`           | Aucun refund avec statut `PENDING` ou `APPROVED` |
 
 ### Fichiers a creer
 
-| Fichier | Role |
-|---|---|
+| Fichier                                                         | Role                                            |
+| --------------------------------------------------------------- | ----------------------------------------------- |
 | `modules/refunds/components/customer/request-return-button.tsx` | Bouton + dialog formulaire de demande de retour |
 
 ### Fichier a modifier
 
-| Fichier | Modification |
-|---|---|
-| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | Ajouter `<RequestReturnButton>` conditionnel dans la sidebar |
-| `modules/orders/constants/order.constants.ts` | Modification partagee avec Feature D — voir section D pour le select `refunds` a ajouter |
+| Fichier                                                           | Modification                                                                             |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | Ajouter `<RequestReturnButton>` conditionnel dans la sidebar                             |
+| `modules/orders/constants/order.constants.ts`                     | Modification partagee avec Feature D — voir section D pour le select `refunds` a ajouter |
 
 ### UI
 
@@ -989,6 +1014,7 @@ Le bouton s'affiche dans la colonne sidebar (1/3), apres `DownloadInvoiceButton`
 ### Affichage du statut de la demande dans le detail commande
 
 Si la commande a un refund lie (PENDING, APPROVED, COMPLETED, REJECTED) :
+
 - Afficher un bandeau informatif dans la colonne principale : "Demande de retour en cours" / "Retour approuve" / "Retour rembourse" / "Retour refuse"
 - Le statut utilise les constants existantes : `REFUND_STATUS_LABELS` et `REFUND_STATUS_COLORS` dans `modules/refunds/constants/refund.constants.ts`
 
@@ -998,12 +1024,12 @@ Afficher le nombre de jours restants pour exercer le droit de retractation : "Il
 
 ### Gestion d'erreur
 
-| Scenario | Comportement |
-|---|---|
-| Delai depasse (race condition) | Message "Le delai de retractation de 14 jours est depasse" |
-| Retour deja en cours | Message "Une demande de retour est deja en cours pour cette commande" |
-| Rate limit | Message "Trop de tentatives, reessayez plus tard" |
-| Erreur serveur | Toast generique avec retry |
+| Scenario                       | Comportement                                                          |
+| ------------------------------ | --------------------------------------------------------------------- |
+| Delai depasse (race condition) | Message "Le delai de retractation de 14 jours est depasse"            |
+| Retour deja en cours           | Message "Une demande de retour est deja en cours pour cette commande" |
+| Rate limit                     | Message "Trop de tentatives, reessayez plus tard"                     |
+| Erreur serveur                 | Toast generique avec retry                                            |
 
 ### Empty state
 
@@ -1026,15 +1052,16 @@ Pas d'empty state : le bouton n'apparait que si les conditions sont remplies.
 > **⚠ `auth.api.changeEmail` n'est PAS integre dans la config Better Auth actuelle.** Les plugins configures dans `modules/auth/lib/auth.ts` sont : `stripe()`, `customSession()`, `nextCookies()`. Il n'y a pas de plugin `changeEmail`. Il faudra soit ajouter le plugin correspondant, soit implementer le flow manuellement (token de verification + email + mise a jour).
 
 Better Auth a un flow `changeEmail` integre qui :
+
 1. Envoie un email de verification a la nouvelle adresse
 2. Met a jour l'email apres verification
 
 ### Fichiers a creer
 
-| Fichier | Role |
-|---|---|
-| `modules/users/components/change-email-form.tsx` | Formulaire de changement d'email |
-| `modules/users/actions/change-email.ts` | Server action wrapping Better Auth |
+| Fichier                                          | Role                               |
+| ------------------------------------------------ | ---------------------------------- |
+| `modules/users/components/change-email-form.tsx` | Formulaire de changement d'email   |
+| `modules/users/actions/change-email.ts`          | Server action wrapping Better Auth |
 
 ### Fichier a modifier
 
@@ -1099,21 +1126,22 @@ Le bouton est deja present dans `ProductCard` qui est utilise par la wishlist. I
 
 ### Fichiers
 
-| Fichier | Role |
-|---|---|
-| `app/(boutique)/favoris/page.tsx` | **Existe** - Page favoris (+ error.tsx, loading.tsx), hors espace-client |
-| `modules/products/components/product-card.tsx` | Carte produit (inclut `AddToCartCardButton`) |
-| `modules/cart/components/add-to-cart-card-button.tsx` | Bouton ajout panier (existant) |
+| Fichier                                               | Role                                                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------------------ |
+| `app/(boutique)/favoris/page.tsx`                     | **Existe** - Page favoris (+ error.tsx, loading.tsx), hors espace-client |
+| `modules/products/components/product-card.tsx`        | Carte produit (inclut `AddToCartCardButton`)                             |
+| `modules/cart/components/add-to-cart-card-button.tsx` | Bouton ajout panier (existant)                                           |
 
 ### Donnees disponibles
 
-| Source | Fonction | Return type |
-|---|---|---|
+| Source                                  | Fonction              | Return type                                  |
+| --------------------------------------- | --------------------- | -------------------------------------------- |
 | `modules/wishlist/data/get-wishlist.ts` | `getWishlist(params)` | `Promise<{ items, pagination, totalCount }>` |
 
 `getWishlist()` supporte les utilisateurs connectes et les visiteurs invites (via cookie de session). Pagination cursor-based avec `buildCursorPagination` / `processCursorResults`. Retourne `{ items, pagination: { nextCursor, prevCursor, hasNextPage, hasPreviousPage }, totalCount }`. Utilise `"use cache: private"`.
 
 Le `GET_WISHLIST_SELECT` inclut deja tout ce qu'il faut :
+
 ```ts
 product.skus[]: { id, sku, priceInclTax, inventory, isActive, isDefault, color, material, size, images }
 ```
@@ -1198,6 +1226,7 @@ model OrderHistory {
 ### Regles metier
 
 Le client ne peut annuler sa commande que si :
+
 - `order.status === "PENDING"` (pas encore en preparation)
 - `order.userId === session.user.id` (sa propre commande)
 
@@ -1207,88 +1236,88 @@ Une commande en `PROCESSING`, `SHIPPED`, ou `DELIVERED` ne peut pas etre annulee
 
 ### Fichiers a creer
 
-| Fichier | Role |
-|---|---|
-| `modules/orders/actions/cancel-order-customer.ts` | Server action client (avec `requireAuth`) |
-| `modules/orders/components/customer/cancel-order-button.tsx` | Bouton avec dialog de confirmation |
+| Fichier                                                      | Role                                      |
+| ------------------------------------------------------------ | ----------------------------------------- |
+| `modules/orders/actions/cancel-order-customer.ts`            | Server action client (avec `requireAuth`) |
+| `modules/orders/components/customer/cancel-order-button.tsx` | Bouton avec dialog de confirmation        |
 
 ### Fichier a modifier
 
-| Fichier | Modification |
-|---|---|
+| Fichier                                                           | Modification                                             |
+| ----------------------------------------------------------------- | -------------------------------------------------------- |
 | `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` | **A creer** - Ajouter `<CancelOrderButton>` conditionnel |
 
 ### Server action
 
 ```ts
 // modules/orders/actions/cancel-order-customer.ts
-"use server"
+"use server";
 
-import { createOrderAuditTx } from "@/modules/orders/utils/order-audit"
-import { canCancelOrder } from "@/modules/orders/services/order-status-validation.service"
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
+import { canCancelOrder } from "@/modules/orders/services/order-status-validation.service";
 
 export async function cancelOrderCustomer(
-  _: ActionState | undefined,
-  formData: FormData
+	_: ActionState | undefined,
+	formData: FormData,
 ): Promise<ActionState> {
-  const user = await requireAuth()
-  if ("error" in user) return user.error
+	const user = await requireAuth();
+	if ("error" in user) return user.error;
 
-  const validation = validateInput(schema, { orderNumber: formData.get("orderNumber") })
-  if (!validation.success) return error(validation.error.errors[0]?.message)
+	const validation = validateInput(schema, { orderNumber: formData.get("orderNumber") });
+	if (!validation.success) return error(validation.error.errors[0]?.message);
 
-  // Verifier que la commande appartient au user ET est annulable
-  const order = await prisma.order.findFirst({
-    where: {
-      orderNumber: validation.data.orderNumber,
-      userId: user.id,
-      deletedAt: null,
-    },
-    select: { id: true, orderNumber: true, status: true, paymentStatus: true },
-  })
-  if (!order) return notFound("Commande introuvable")
-  if (!canCancelOrder(order)) return error("Cette commande ne peut plus etre annulee")
+	// Verifier que la commande appartient au user ET est annulable
+	const order = await prisma.order.findFirst({
+		where: {
+			orderNumber: validation.data.orderNumber,
+			userId: user.id,
+			deletedAt: null,
+		},
+		select: { id: true, orderNumber: true, status: true, paymentStatus: true },
+	});
+	if (!order) return notFound("Commande introuvable");
+	if (!canCancelOrder(order)) return error("Cette commande ne peut plus etre annulee");
 
-  // Guard supplementaire : le client ne peut annuler que les commandes PENDING
-  // (canCancelOrder accepte aussi PROCESSING, reserve a l'admin)
-  if (order.status !== "PENDING") return error("Cette commande ne peut plus etre annulee")
+	// Guard supplementaire : le client ne peut annuler que les commandes PENDING
+	// (canCancelOrder accepte aussi PROCESSING, reserve a l'admin)
+	if (order.status !== "PENDING") return error("Cette commande ne peut plus etre annulee");
 
-  // Restauration stock conditionnelle (PENDING seulement)
-  const shouldRestoreStock = order.paymentStatus === "PENDING"
+	// Restauration stock conditionnelle (PENDING seulement)
+	const shouldRestoreStock = order.paymentStatus === "PENDING";
 
-  // Si la commande etait payee, marquer le paiement comme rembourse
-  const newPaymentStatus = order.paymentStatus === "PAID" ? "REFUNDED" : order.paymentStatus
+	// Si la commande etait payee, marquer le paiement comme rembourse
+	const newPaymentStatus = order.paymentStatus === "PAID" ? "REFUNDED" : order.paymentStatus;
 
-  await prisma.$transaction(async (tx) => {
-    await tx.order.update({
-      where: { id: order.id },
-      data: { status: "CANCELLED", paymentStatus: newPaymentStatus },
-    })
+	await prisma.$transaction(async (tx) => {
+		await tx.order.update({
+			where: { id: order.id },
+			data: { status: "CANCELLED", paymentStatus: newPaymentStatus },
+		});
 
-    if (shouldRestoreStock) {
-      // Restore stock for each SKU
-    }
+		if (shouldRestoreStock) {
+			// Restore stock for each SKU
+		}
 
-    await createOrderAuditTx(tx, {
-      orderId: order.id,
-      action: "CANCELLED",
-      previousStatus: order.status,
-      newStatus: "CANCELLED",
-      previousPaymentStatus: order.paymentStatus,
-      newPaymentStatus,
-      note: "Annulation par le client",
-      authorId: user.id,
-      authorName: user.name || "Client",
-      source: "CUSTOMER",
-    })
-  })
+		await createOrderAuditTx(tx, {
+			orderId: order.id,
+			action: "CANCELLED",
+			previousStatus: order.status,
+			newStatus: "CANCELLED",
+			previousPaymentStatus: order.paymentStatus,
+			newPaymentStatus,
+			note: "Annulation par le client",
+			authorId: user.id,
+			authorName: user.name || "Client",
+			source: "CUSTOMER",
+		});
+	});
 
-  // Send cancellation email
-  // await sendCancelOrderConfirmationEmail(...)
+	// Send cancellation email
+	// await sendCancelOrderConfirmationEmail(...)
 
-  updateTag("orders-list")
-  updateTag(`order-${order.orderNumber}`)
-  return success("Commande annulee")
+	updateTag("orders-list");
+	updateTag(`order-${order.orderNumber}`);
+	return success("Commande annulee");
 }
 ```
 
@@ -1331,9 +1360,9 @@ model DiscountUsage {
 
 ### Fichiers a modifier
 
-| Fichier | Modification |
-|---|---|
-| `modules/orders/constants/order.constants.ts` | Ajouter `discountUsages` au `GET_ORDER_SELECT` |
+| Fichier                                                     | Modification                                          |
+| ----------------------------------------------------------- | ----------------------------------------------------- |
+| `modules/orders/constants/order.constants.ts`               | Ajouter `discountUsages` au `GET_ORDER_SELECT`        |
 | `modules/orders/components/customer/order-summary-card.tsx` | Afficher le code promo a cote du montant de reduction |
 
 ### Select a ajouter dans `GET_ORDER_SELECT`
@@ -1350,6 +1379,7 @@ discountUsages: {
 ### UI
 
 Dans `OrderSummaryCard`, a cote de la ligne "Reduction" existante, ajouter le code promo :
+
 - Avant : `Reduction -12,50 EUR`
 - Apres : `Reduction (PROMO20) -12,50 EUR`
 
@@ -1368,6 +1398,7 @@ Tres faible : ajouter 1 champ au select + modifier 1 ligne dans le composant exi
 ### Contexte
 
 Le schema Prisma prevoit un flux de suppression en 2 etapes :
+
 - `User.accountStatus` : `ACTIVE` | `INACTIVE` | `PENDING_DELETION` | `ANONYMIZED`
 - `User.deletionRequestedAt` : date de la demande
 
@@ -1384,10 +1415,10 @@ Mais l'implementation actuelle (`modules/users/actions/delete-account.ts`) **byp
 
 > **Inconsistance d'anonymisation** : Les deux chemins de suppression utilisent `generateAnonymizedEmail()` (`modules/users/utils/anonymization.utils.ts`) pour l'email (format identique : `anonymized-${userId}@deleted.synclune.local`). Les differences sont :
 >
-> | Champ | `delete-account.ts` (immediat) | `process-account-deletions.service.ts` (cron) |
-> |---|---|---|
-> | Nom utilisateur | `"Compte supprime"` | `"Utilisateur supprime"` |
-> | Noms livraison | `"Anonyme"` | `"X"` |
+> | Champ           | `delete-account.ts` (immediat) | `process-account-deletions.service.ts` (cron) |
+> | --------------- | ------------------------------ | --------------------------------------------- |
+> | Nom utilisateur | `"Compte supprime"`            | `"Utilisateur supprime"`                      |
+> | Noms livraison  | `"Anonyme"`                    | `"X"`                                         |
 >
 > Les autres champs sont identiques : `customerName: "Client supprime"`, `shippingAddress1: "Adresse supprimee"`, `shippingCity: "Supprime"`, `shippingPostalCode: "00000"`.
 >
@@ -1400,6 +1431,7 @@ Mais l'implementation actuelle (`modules/users/actions/delete-account.ts`) **byp
 Avant d'implementer cette feature, il faut decider de l'approche de suppression :
 
 **Option 1 - Suppression differee (recommandee RGPD)** :
+
 - `deleteAccount` passe le statut a `PENDING_DELETION` + set `deletionRequestedAt`
 - Le cron `process-account-deletions` (existe deja, tourne quotidiennement a 5:00) traite les comptes apres 30 jours de grace
 - Le service `process-account-deletions.service.ts` est **deja complet** : il anonymise l'utilisateur, supprime sessions/adresses/panier/wishlist, anonymise les avis et commandes (conserve les donnees comptables), et nettoie les fichiers UploadThing
@@ -1408,6 +1440,7 @@ Avant d'implementer cette feature, il faut decider de l'approche de suppression 
 - **Seul `delete-account.ts` doit etre modifie** pour passer par `PENDING_DELETION` au lieu d'anonymiser immediatement
 
 **Option 2 - Garder la suppression immediate** :
+
 - Pas de feature M a implementer
 - Le cron `process-account-deletions` et son service complet resteraient inutilises
 - Plus simple mais pas de filet de securite pour les suppressions accidentelles
@@ -1420,51 +1453,52 @@ Avant d'implementer cette feature, il faut decider de l'approche de suppression 
 
 #### Fichiers a modifier
 
-| Fichier | Modification |
-|---|---|
-| `modules/users/actions/delete-account.ts` | Passer a `PENDING_DELETION` au lieu d'anonymiser |
+| Fichier                                     | Modification                                                  |
+| ------------------------------------------- | ------------------------------------------------------------- |
+| `modules/users/actions/delete-account.ts`   | Passer a `PENDING_DELETION` au lieu d'anonymiser              |
 | `modules/users/components/gdpr-section.tsx` | Ajouter bouton "Annuler la suppression" si `PENDING_DELETION` |
 
 #### Fichiers a creer
 
-| Fichier | Role |
-|---|---|
+| Fichier                                            | Role                       |
+| -------------------------------------------------- | -------------------------- |
 | `modules/users/actions/cancel-account-deletion.ts` | Server action pour annuler |
 
 #### Server action
 
 ```ts
 // modules/users/actions/cancel-account-deletion.ts
-"use server"
+"use server";
 
 export async function cancelAccountDeletion(): Promise<ActionState> {
-  const user = await requireAuth()
-  if ("error" in user) return user.error
+	const user = await requireAuth();
+	if ("error" in user) return user.error;
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { accountStatus: true },
-  })
+	const dbUser = await prisma.user.findUnique({
+		where: { id: user.id },
+		select: { accountStatus: true },
+	});
 
-  if (dbUser?.accountStatus !== "PENDING_DELETION") {
-    return error("Aucune demande de suppression en cours")
-  }
+	if (dbUser?.accountStatus !== "PENDING_DELETION") {
+		return error("Aucune demande de suppression en cours");
+	}
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      accountStatus: "ACTIVE",
-      deletionRequestedAt: null,
-    },
-  })
+	await prisma.user.update({
+		where: { id: user.id },
+		data: {
+			accountStatus: "ACTIVE",
+			deletionRequestedAt: null,
+		},
+	});
 
-  return success("Demande de suppression annulee")
+	return success("Demande de suppression annulee");
 }
 ```
 
 #### UI (dans `GdprSection`)
 
 Si `user.accountStatus === "PENDING_DELETION"` :
+
 - Masquer le bouton "Supprimer mon compte"
 - Afficher un bandeau d'alerte : "Votre compte sera supprime le {date + 30 jours}. Vous pouvez annuler cette demande."
 - Bouton "Annuler la suppression"
@@ -1490,6 +1524,7 @@ Table de cache avec `totalCount`, `averageRating`, `rating1Count`..`rating5Count
 ### Affichage livraison (`estimatedDelivery` / `actualDelivery`)
 
 Disponibles dans `GET_ORDER_SELECT` et `GET_USER_ORDERS_SELECT`. Utiles pour :
+
 - **Liste commandes** : "Livraison estimee le X" ou "Livree le X" dans la colonne livraison de `CustomerOrdersTable`
 - **Detail commande** : dans `OrderTracking` ou `OrderStatusTimeline`
 
@@ -1508,12 +1543,14 @@ Le statut `RETURNED` existe dans l'enum et dans la machine d'etat (action admin 
 ### Avatar utilisateur (`User.image`)
 
 Le champ `image` (VARCHAR 2048, URL) existe mais n'est utilise nulle part dans l'espace client. Recommandation :
+
 - **P2** : Afficher l'avatar dans la sidebar `AccountNav` et le dashboard
 - **V2** : Edition de l'avatar (upload via UploadThing)
 
 ### Suspension de compte (`User.suspendedAt`)
 
 Le schema a un champ `suspendedAt` mais aucune logique client ne le gere. Questions a trancher :
+
 - Un utilisateur suspendu peut-il acceder a l'espace client ?
 - Doit-il voir un bandeau d'information ? ("Votre compte est suspendu. Contactez le support.")
 - Les actions (annulation, retour) sont-elles bloquees ?
@@ -1538,17 +1575,17 @@ Le modele `Account` stocke les providers (email, google, github). La page parame
 
 Tableau centralise des enums utilisees cote client, avec leur fichier de constantes, les labels definis, et le composant d'affichage :
 
-| Enum | Fichier constants | Labels definis | Composant d'affichage |
-|------|-------------------|----------------|----------------------|
-| `OrderStatus` | `modules/orders/constants/status-display.ts` | `ORDER_STATUS_LABELS` | `OrderStatusBadge`, `OrderStatusTimeline` |
-| `PaymentStatus` | `modules/orders/constants/status-display.ts` | `PAYMENT_STATUS_LABELS` | `OrderSummaryCard` |
-| `FulfillmentStatus` | `modules/orders/constants/status-display.ts` | `FULFILLMENT_STATUS_LABELS` | `CustomerOrdersTable`, `OrderStatusTimeline` |
-| `RefundStatus` | `modules/refunds/constants/refund.constants.ts` | `REFUND_STATUS_LABELS` | `OrderRefundsCard` (Feature D) |
-| `RefundReason` | `modules/refunds/constants/refund.constants.ts` | `REFUND_REASON_LABELS` | `OrderRefundsCard` (Feature D) |
-| `CustomizationRequestStatus` | `modules/customizations/constants/status.constants.ts` | `CUSTOMIZATION_STATUS_LABELS` | `CustomizationRequestCard` |
-| `ReviewStatus` | `modules/reviews/constants/review.constants.ts` | `REVIEW_STATUS_LABELS` | `UserReviewCard` |
-| `AccountStatus` | `modules/users/constants/account-status.constants.ts` | `ACCOUNT_STATUS_LABELS` | `GdprSection` (Feature M) |
-| `InvoiceStatus` | **A creer** | **Aucun** | `DownloadInvoiceButton` (conditionnel) |
+| Enum                         | Fichier constants                                      | Labels definis                | Composant d'affichage                        |
+| ---------------------------- | ------------------------------------------------------ | ----------------------------- | -------------------------------------------- |
+| `OrderStatus`                | `modules/orders/constants/status-display.ts`           | `ORDER_STATUS_LABELS`         | `OrderStatusBadge`, `OrderStatusTimeline`    |
+| `PaymentStatus`              | `modules/orders/constants/status-display.ts`           | `PAYMENT_STATUS_LABELS`       | `OrderSummaryCard`                           |
+| `FulfillmentStatus`          | `modules/orders/constants/status-display.ts`           | `FULFILLMENT_STATUS_LABELS`   | `CustomerOrdersTable`, `OrderStatusTimeline` |
+| `RefundStatus`               | `modules/refunds/constants/refund.constants.ts`        | `REFUND_STATUS_LABELS`        | `OrderRefundsCard` (Feature D)               |
+| `RefundReason`               | `modules/refunds/constants/refund.constants.ts`        | `REFUND_REASON_LABELS`        | `OrderRefundsCard` (Feature D)               |
+| `CustomizationRequestStatus` | `modules/customizations/constants/status.constants.ts` | `CUSTOMIZATION_STATUS_LABELS` | `CustomizationRequestCard`                   |
+| `ReviewStatus`               | `modules/reviews/constants/review.constants.ts`        | `REVIEW_STATUS_LABELS`        | `UserReviewCard`                             |
+| `AccountStatus`              | `modules/users/constants/account-status.constants.ts`  | `ACCOUNT_STATUS_LABELS`       | `GdprSection` (Feature M)                    |
+| `InvoiceStatus`              | **A creer**                                            | **Aucun**                     | `DownloadInvoiceButton` (conditionnel)       |
 
 > **Distinction FulfillmentStatus vs OrderStatus :** `FulfillmentStatus.PROCESSING` = "En preparation" (commande en cours de traitement logistique) vs `OrderStatus.PROCESSING` = "En traitement" (commande globalement en cours). La distinction est portee par les labels differents dans `FULFILLMENT_STATUS_LABELS` et `ORDER_STATUS_LABELS`.
 
@@ -1558,13 +1595,13 @@ Tableau centralise des enums utilisees cote client, avec leur fichier de constan
 
 Chaque feature doit gerer :
 
-| Scenario | Comportement attendu |
-|---|---|
-| Fetch echoue (erreur serveur) | Afficher un message d'erreur avec bouton retry, ou `error.tsx` boundary |
-| Action echoue (mutation) | Toast d'erreur avec message contextuel, formulaire reste rempli |
+| Scenario                          | Comportement attendu                                                                                                                                                                                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Fetch echoue (erreur serveur)     | Afficher un message d'erreur avec bouton retry, ou `error.tsx` boundary                                                                                                                                                                                            |
+| Action echoue (mutation)          | Toast d'erreur avec message contextuel, formulaire reste rempli                                                                                                                                                                                                    |
 | Session expiree en cours d'action | `requireAuth()` retourne `{ error: { status: ActionStatus.UNAUTHORIZED } }` — l'erreur apparait dans le formulaire via `useActionState`. La redirection vers `/connexion` est geree par le proxy middleware lors des navigations suivantes, pas lors des mutations |
-| Rate limit atteint | `ActionStatus.ERROR` avec `data: { retryAfter: number, reset: number }` (secondes). L'UI affiche un countdown decremental "Reessayez dans X secondes" |
-| Donnees introuvables (404) | Redirection vers la page parente ou `notFound()` |
+| Rate limit atteint                | `ActionStatus.ERROR` avec `data: { retryAfter: number, reset: number }` (secondes). L'UI affiche un countdown decremental "Reessayez dans X secondes"                                                                                                              |
+| Donnees introuvables (404)        | Redirection vers la page parente ou `notFound()`                                                                                                                                                                                                                   |
 
 > **Note session expiree :** `requireAuth()` ne redirige jamais — il retourne une reponse d'erreur structuree. C'est le proxy middleware (`proxy.ts`) qui gere la redirection vers `/connexion?callbackURL={pathname}` lors de la navigation suivante en verifiant le cookie de session via `getSessionCookie()`.
 
@@ -1576,17 +1613,18 @@ Le projet utilise le pattern `useOptimistic` + `useTransition` + `startTransitio
 
 Matrice des mutations espace-client :
 
-| Mutation | Optimistic ? | Justification |
-|---|---|---|
-| Toggle newsletter (E) | Oui (deja fait) | Reversible, feedback immediat |
-| Suppression adresse (A) | Oui | Carte visible, rollback possible |
-| Revocation session (G) | Oui | Ligne visible, rollback possible |
-| Annulation commande (K) | Non | Irreversible, AlertDialog requis |
-| Demande retour (H) | Non | Irreversible, confirmation requise |
-| Changement email (I) | Non | Multi-etapes |
-| Suppression compte (M) | Non | Action rare |
+| Mutation                | Optimistic ?    | Justification                      |
+| ----------------------- | --------------- | ---------------------------------- |
+| Toggle newsletter (E)   | Oui (deja fait) | Reversible, feedback immediat      |
+| Suppression adresse (A) | Oui             | Carte visible, rollback possible   |
+| Revocation session (G)  | Oui             | Ligne visible, rollback possible   |
+| Annulation commande (K) | Non             | Irreversible, AlertDialog requis   |
+| Demande retour (H)      | Non             | Irreversible, confirmation requise |
+| Changement email (I)    | Non             | Multi-etapes                       |
+| Suppression compte (M)  | Non             | Action rare                        |
 
 Pour les mutations marquees "Oui", le pattern est :
+
 1. `useOptimistic` pour maintenir l'etat local
 2. `startTransition` pour wrapper l'appel a la server action
 3. Rollback automatique si l'action echoue (React reconcilie avec l'etat serveur)
@@ -1614,18 +1652,18 @@ Exigences minimales pour chaque nouvelle page/composant :
 
 **V2 :** Events custom a tracker :
 
-| Event | Feature | Donnees |
-|---|---|---|
-| `invoice_downloaded` | C | `orderNumber` |
-| `session_revoked` | G | `sessionId` (anonymise) |
-| `email_change_requested` | I | - |
-| `email_change_confirmed` | I | - |
-| `order_cancelled_by_customer` | K | `orderNumber`, `orderStatus` |
-| `deletion_requested` | M | - |
-| `deletion_cancelled` | M | - |
-| `wishlist_add_to_cart` | J | `productId`, `skuId` |
-| `return_requested` | H | `orderNumber`, `reason` |
-| `orders_filtered` | F | `filterType`, `filterValue` |
+| Event                         | Feature | Donnees                      |
+| ----------------------------- | ------- | ---------------------------- |
+| `invoice_downloaded`          | C       | `orderNumber`                |
+| `session_revoked`             | G       | `sessionId` (anonymise)      |
+| `email_change_requested`      | I       | -                            |
+| `email_change_confirmed`      | I       | -                            |
+| `order_cancelled_by_customer` | K       | `orderNumber`, `orderStatus` |
+| `deletion_requested`          | M       | -                            |
+| `deletion_cancelled`          | M       | -                            |
+| `wishlist_add_to_cart`        | J       | `productId`, `skuId`         |
+| `return_requested`            | H       | `orderNumber`, `reason`      |
+| `orders_filtered`             | F       | `filterType`, `filterValue`  |
 
 ### Tests
 
@@ -1636,6 +1674,7 @@ Pour chaque feature, prevoir :
 - **Tests E2E** (Playwright) : parcours critiques (annuler une commande, revoquer une session, telecharger une facture)
 
 Priorites E2E :
+
 1. K - Annulation commande (mutation critique)
 2. H - Demande de retour (obligation legale, mutation critique)
 3. G - Revocation session (securite)
@@ -1644,14 +1683,14 @@ Priorites E2E :
 
 ### Empty states
 
-| Page | Empty state |
-|---|---|
-| Adresses (A) | "Vous n'avez pas encore d'adresse enregistree." + bouton "Ajouter une adresse" |
-| Mes demandes (B) | "Vous n'avez pas encore fait de demande de personnalisation." + lien vers `/personnalisation` |
-| Commandes (liste) | "Vous n'avez pas encore passe de commande." + lien vers `/creations` |
-| Commandes (filtres actifs, F) | "Aucune commande ne correspond a vos criteres." + bouton "Reinitialiser les filtres" |
-| Mes avis | "Vous n'avez pas encore laisse d'avis." |
-| Sessions (G) | Impossible (au moins la session actuelle existe) |
+| Page                          | Empty state                                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------------------------- |
+| Adresses (A)                  | "Vous n'avez pas encore d'adresse enregistree." + bouton "Ajouter une adresse"                |
+| Mes demandes (B)              | "Vous n'avez pas encore fait de demande de personnalisation." + lien vers `/personnalisation` |
+| Commandes (liste)             | "Vous n'avez pas encore passe de commande." + lien vers `/creations`                          |
+| Commandes (filtres actifs, F) | "Aucune commande ne correspond a vos criteres." + bouton "Reinitialiser les filtres"          |
+| Mes avis                      | "Vous n'avez pas encore laisse d'avis."                                                       |
+| Sessions (G)                  | Impossible (au moins la session actuelle existe)                                              |
 
 ---
 

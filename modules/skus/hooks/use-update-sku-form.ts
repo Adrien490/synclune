@@ -18,10 +18,7 @@ interface UseUpdateProductSkuFormOptions {
  * Hook pour le formulaire d'édition de variante de produit (Product SKU)
  * Utilise TanStack Form avec Next.js App Router
  */
-export const useUpdateProductSkuForm = ({
-	sku,
-	onSuccess,
-}: UseUpdateProductSkuFormOptions) => {
+export const useUpdateProductSkuForm = ({ sku, onSuccess }: UseUpdateProductSkuFormOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateProductSku,
@@ -42,9 +39,9 @@ export const useUpdateProductSkuForm = ({
 						onSuccess?.(result.message, data);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const formOpts = getUpdateProductSkuFormOpts(sku);
@@ -52,10 +49,7 @@ export const useUpdateProductSkuForm = ({
 	const form = useAppForm({
 		...formOpts,
 		// Merge server state with form state for validation errors
-		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
-			[state]
-		),
+		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
 	// Subscribe to form errors for display

@@ -1,11 +1,6 @@
 "use client";
 
-import {
-	useInView,
-	useReducedMotion,
-	useScroll,
-	useTransform,
-} from "motion/react";
+import { useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { FloatingImage } from "./floating-image";
 import { IMAGE_POSITIONS } from "./image-positions";
@@ -22,11 +17,7 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 	});
 
 	// Single shared opacity transform instead of one per image
-	const parallaxOpacity = useTransform(
-		scrollYProgress,
-		[0, 0.4, 1],
-		[1, 1, 0.2],
-	);
+	const parallaxOpacity = useTransform(scrollYProgress, [0, 0.4, 1], [1, 1, 0.2]);
 
 	if (images.length === 0) return null;
 
@@ -34,7 +25,7 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 		<div
 			ref={containerRef}
 			aria-hidden="true"
-			className="absolute inset-0 z-0 hidden md:block pointer-events-none"
+			className="pointer-events-none absolute inset-0 z-0 hidden md:block"
 			style={{ contain: "layout paint" }}
 		>
 			{images.map((image, index) => {

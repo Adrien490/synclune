@@ -84,11 +84,11 @@ export default function EditVariantLoading() {
 							<Skeleton className="h-5 w-24" />
 							<Skeleton className="h-6 w-16" />
 						</div>
-						<div className="border-2 border-dashed rounded-lg p-8 text-center">
+						<div className="rounded-lg border-2 border-dashed p-8 text-center">
 							<Skeleton className="h-32 w-full rounded-md" />
 							<div className="mt-4 space-y-2">
-								<Skeleton className="h-4 w-56 mx-auto" />
-								<Skeleton className="h-3 w-32 mx-auto" />
+								<Skeleton className="mx-auto h-4 w-56" />
+								<Skeleton className="mx-auto h-3 w-32" />
 							</div>
 						</div>
 					</div>
@@ -96,7 +96,7 @@ export default function EditVariantLoading() {
 
 				{/* Form Footer */}
 				<div className="mt-6">
-					<div className="flex justify-between items-center gap-4">
+					<div className="flex items-center justify-between gap-4">
 						<Skeleton className="h-10 w-24" />
 						<Skeleton className="h-10 w-40" />
 					</div>

@@ -13,7 +13,7 @@ function formatOrderFilter(
 	filter: FilterDefinition,
 	options: {
 		searchParams: URLSearchParams;
-	}
+	},
 ) {
 	const { searchParams } = options;
 	const filterKey = filter.key.replace("filter_", "");
@@ -21,15 +21,13 @@ function formatOrderFilter(
 
 	// Gestion du statut de commande
 	if (filterKey === "status") {
-		const label =
-			ORDER_STATUS_LABELS[value as keyof typeof ORDER_STATUS_LABELS];
+		const label = ORDER_STATUS_LABELS[value as keyof typeof ORDER_STATUS_LABELS];
 		return label ? { label: "Statut", displayValue: label } : null;
 	}
 
 	// Gestion du statut de paiement
 	if (filterKey === "paymentStatus") {
-		const label =
-			PAYMENT_STATUS_LABELS[value as keyof typeof PAYMENT_STATUS_LABELS];
+		const label = PAYMENT_STATUS_LABELS[value as keyof typeof PAYMENT_STATUS_LABELS];
 		return label ? { label: "Paiement", displayValue: label } : null;
 	}
 
@@ -55,12 +53,8 @@ function formatOrderFilter(
 	if (filterKey === "createdAfter") {
 		const dateFrom = searchParams.get("filter_createdAfter");
 		const dateTo = searchParams.get("filter_createdBefore");
-		const fromDate = dateFrom
-			? new Date(dateFrom).toLocaleDateString("fr-FR")
-			: "...";
-		const toDate = dateTo
-			? new Date(dateTo).toLocaleDateString("fr-FR")
-			: "...";
+		const fromDate = dateFrom ? new Date(dateFrom).toLocaleDateString("fr-FR") : "...";
+		const toDate = dateTo ? new Date(dateTo).toLocaleDateString("fr-FR") : "...";
 
 		return {
 			label: "Période",
@@ -77,10 +71,7 @@ function formatOrderFilter(
 	if (filterKey === "showDeleted") {
 		return {
 			label: "Affichage",
-			displayValue:
-				value === "true"
-					? "Supprimées uniquement"
-					: "Non supprimées uniquement",
+			displayValue: value === "true" ? "Supprimées uniquement" : "Non supprimées uniquement",
 		};
 	}
 

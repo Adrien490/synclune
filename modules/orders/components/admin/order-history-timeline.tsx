@@ -17,12 +17,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
 import type { OrderAction, HistorySource } from "@/app/generated/prisma/client";
 
@@ -128,14 +123,10 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 		return (
 			<Card>
 				<CardHeader className="pb-3">
-					<CardTitle className="text-base font-medium">
-						Historique des actions
-					</CardTitle>
+					<CardTitle className="text-base font-medium">Historique des actions</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<p className="text-sm text-muted-foreground">
-						Aucun historique disponible
-					</p>
+					<p className="text-muted-foreground text-sm">Aucun historique disponible</p>
 				</CardContent>
 			</Card>
 		);
@@ -160,7 +151,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 			<CardContent>
 				<div className="relative">
 					{/* Ligne verticale */}
-					<div className="absolute left-4 top-0 bottom-0 w-px bg-border" aria-hidden="true" />
+					<div className="bg-border absolute top-0 bottom-0 left-4 w-px" aria-hidden="true" />
 
 					<ol className="space-y-4" aria-label="Historique chronologique des actions">
 						{visibleHistory.map((entry) => {
@@ -172,74 +163,57 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 									{/* Icône sur la ligne */}
 									<div
 										className={cn(
-											"absolute left-0 w-8 h-8 rounded-full bg-background border-2 flex items-center justify-center",
-											config.color
+											"bg-background absolute left-0 flex h-8 w-8 items-center justify-center rounded-full border-2",
+											config.color,
 										)}
 										aria-label={config.label}
 									>
-										<Icon className="w-4 h-4" aria-hidden="true" />
+										<Icon className="h-4 w-4" aria-hidden="true" />
 										<span className="sr-only">{config.symbol}</span>
 									</div>
 
 									{/* Contenu */}
 									<div className="bg-muted/50 rounded-lg p-3">
-										<div className="flex items-center justify-between mb-1">
-											<span className="font-medium text-sm">
-												{config.label}
-											</span>
-											<span className="text-xs text-muted-foreground">
-												{formatDistanceToNow(
-													new Date(entry.createdAt),
-													{
-														addSuffix: true,
-														locale: fr,
-													}
-												)}
+										<div className="mb-1 flex items-center justify-between">
+											<span className="text-sm font-medium">{config.label}</span>
+											<span className="text-muted-foreground text-xs">
+												{formatDistanceToNow(new Date(entry.createdAt), {
+													addSuffix: true,
+													locale: fr,
+												})}
 											</span>
 										</div>
 
 										{/* Changements de statut */}
 										{entry.newStatus && (
-											<div className="text-xs text-muted-foreground">
-												Statut :{" "}
-												{getStatusLabel(entry.previousStatus)} →{" "}
+											<div className="text-muted-foreground text-xs">
+												Statut : {getStatusLabel(entry.previousStatus)} →{" "}
 												{getStatusLabel(entry.newStatus)}
 											</div>
 										)}
 										{entry.newPaymentStatus && (
-											<div className="text-xs text-muted-foreground">
-												Paiement :{" "}
-												{getStatusLabel(entry.previousPaymentStatus)} →{" "}
+											<div className="text-muted-foreground text-xs">
+												Paiement : {getStatusLabel(entry.previousPaymentStatus)} →{" "}
 												{getStatusLabel(entry.newPaymentStatus)}
 											</div>
 										)}
-										{entry.newFulfillmentStatus &&
-											!entry.newStatus && (
-												<div className="text-xs text-muted-foreground">
-													Traitement :{" "}
-													{getStatusLabel(
-														entry.previousFulfillmentStatus
-													)}{" "}
-													→{" "}
-													{getStatusLabel(
-														entry.newFulfillmentStatus
-													)}
-												</div>
-											)}
+										{entry.newFulfillmentStatus && !entry.newStatus && (
+											<div className="text-muted-foreground text-xs">
+												Traitement : {getStatusLabel(entry.previousFulfillmentStatus)} →{" "}
+												{getStatusLabel(entry.newFulfillmentStatus)}
+											</div>
+										)}
 
 										{/* Note */}
 										{entry.note && (
-											<p className="text-sm mt-2 italic text-muted-foreground">
+											<p className="text-muted-foreground mt-2 text-sm italic">
 												&quot;{entry.note}&quot;
 											</p>
 										)}
 
 										{/* Auteur et source */}
-										<div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-											<Badge
-												variant="outline"
-												className="text-xs py-0"
-											>
+										<div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
+											<Badge variant="outline" className="py-0 text-xs">
 												{entry.source === "ADMIN"
 													? "Admin"
 													: entry.source === "WEBHOOK"
@@ -248,9 +222,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 															? "Client"
 															: "Système"}
 											</Badge>
-											{entry.authorName && (
-												<span>par {entry.authorName}</span>
-											)}
+											{entry.authorName && <span>par {entry.authorName}</span>}
 										</div>
 									</div>
 								</li>
@@ -267,7 +239,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 								onClick={() => setIsExpanded(true)}
 								className="text-muted-foreground"
 							>
-								<ChevronDown className="h-4 w-4 mr-1" aria-hidden="true" />
+								<ChevronDown className="mr-1 h-4 w-4" aria-hidden="true" />
 								Voir {hiddenCount} entrées plus anciennes
 							</Button>
 						</div>
@@ -282,7 +254,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 								onClick={() => setIsExpanded(false)}
 								className="text-muted-foreground"
 							>
-								<ChevronDown className="h-4 w-4 mr-1 rotate-180" aria-hidden="true" />
+								<ChevronDown className="mr-1 h-4 w-4 rotate-180" aria-hidden="true" />
 								Réduire
 							</Button>
 						</div>

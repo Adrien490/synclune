@@ -24,7 +24,7 @@ function buildAltText(
 		size?: string | null;
 	},
 	imageIndex?: number,
-	totalImages?: number
+	totalImages?: number,
 ): string {
 	const { productType, materialName, colorName, size } = variantInfo || {};
 
@@ -72,10 +72,7 @@ interface BuildGalleryOptions {
  * @param options - Gallery build options
  * @returns Array of ProductMedia objects ordered by priority
  */
-export function buildGallery({
-	product,
-	selectedVariants,
-}: BuildGalleryOptions): ProductMedia[] {
+export function buildGallery({ product, selectedVariants }: BuildGalleryOptions): ProductMedia[] {
 	// Safety check: return empty array if no product
 	if (!product) {
 		return [];
@@ -118,7 +115,7 @@ export function buildGallery({
 			size?: string | null;
 		},
 		source: ProductMedia["source"],
-		skuId: string
+		skuId: string,
 	): boolean => {
 		if (seenUrls.has(skuImage.url)) return false;
 		seenUrls.add(skuImage.url);
@@ -130,7 +127,7 @@ export function buildGallery({
 				productType,
 				...variantInfo,
 			},
-			gallery.length // Current index in the gallery
+			gallery.length, // Current index in the gallery
 		);
 
 		gallery.push({
@@ -213,10 +210,7 @@ export function buildGallery({
 			const media = gallery[i];
 			// Only update generated ALTs (not manually defined ones from DB)
 			if (media && !media.alt.includes(" sur ") && media.alt.includes("Photo ")) {
-				media.alt = media.alt.replace(
-					/Photo (\d+)$/,
-					`Vue $1 sur ${totalImages}`
-				);
+				media.alt = media.alt.replace(/Photo (\d+)$/, `Vue $1 sur ${totalImages}`);
 			}
 		}
 	}

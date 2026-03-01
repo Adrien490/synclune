@@ -37,14 +37,7 @@ export function InstagramIcon({
 			/>
 
 			{/* Objectif de l'appareil photo */}
-			<circle
-				cx="12"
-				cy="12"
-				r="4.5"
-				stroke="currentColor"
-				strokeWidth="2"
-				fill="none"
-			/>
+			<circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="2" fill="none" />
 
 			{/* Indicateur de mode */}
 			<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />

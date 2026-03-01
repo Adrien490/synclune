@@ -29,6 +29,9 @@ export const MOTION_CONFIG = {
 		easeOut: [0, 0, 0.2, 1],
 		easeIn: [0.4, 0, 1, 1],
 
+		// Emphasized deceleration for list/grid item animations
+		emphasized: [0.4, 0, 0.2, 1],
+
 		// Collapse specific easing
 		collapse: [0.25, 0.1, 0.25, 1],
 	},

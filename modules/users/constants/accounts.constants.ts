@@ -34,11 +34,7 @@ export const GET_ACCOUNTS_DEFAULT_SORT_BY = "createdAt";
 export const GET_ACCOUNTS_DEFAULT_SORT_ORDER = "desc";
 export const GET_ACCOUNTS_ADMIN_FALLBACK_SORT_BY = "updatedAt";
 
-export const GET_ACCOUNTS_SORT_FIELDS = [
-	"createdAt",
-	"updatedAt",
-	"providerId",
-] as const;
+export const GET_ACCOUNTS_SORT_FIELDS = ["createdAt", "updatedAt", "providerId"] as const;
 
 // ============================================================================
 // CACHE SETTINGS

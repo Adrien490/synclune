@@ -80,10 +80,18 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 	});
 
 	const { exportData, isPending: isExportPending } = useExportUserDataAdmin();
-	const { invalidate: invalidateSessions, isPending: isInvalidatePending } = useInvalidateUserSessions();
+	const { invalidate: invalidateSessions, isPending: isInvalidatePending } =
+		useInvalidateUserSessions();
 	const { sendReset, isPending: isResetPending } = useSendPasswordResetAdmin();
 
-	const isPending = isDeletePending || isSuspendPending || isRestorePending || isChangeRolePending || isExportPending || isInvalidatePending || isResetPending;
+	const isPending =
+		isDeletePending ||
+		isSuspendPending ||
+		isRestorePending ||
+		isChangeRolePending ||
+		isExportPending ||
+		isInvalidatePending ||
+		isResetPending;
 	const isDeleted = !!user.deletedAt;
 	const isSuspended = !!user.suspendedAt;
 	const isAdmin = user.role === "ADMIN";
@@ -93,7 +101,11 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="h-11 w-11 p-0 active:scale-95 transition-transform" aria-label="Actions">
+					<Button
+						variant="ghost"
+						className="h-11 w-11 p-0 transition-transform active:scale-95"
+						aria-label="Actions"
+					>
 						<MoreVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
@@ -102,20 +114,20 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 					<DropdownMenuItem asChild>
 						<Link
 							href={`/admin/ventes/commandes?userId=${user.id}`}
-							className="flex items-center cursor-pointer"
+							className="flex cursor-pointer items-center"
 						>
 							<Eye className="mr-2 h-4 w-4" />
 							Voir commandes
 						</Link>
 					</DropdownMenuItem>
-	
+
 					<DropdownMenuSeparator />
 
 					{/* Export RGPD */}
 					<DropdownMenuItem
 						onClick={() => exportData(user.id, displayName)}
 						disabled={isExportPending}
-						className="flex items-center cursor-pointer"
+						className="flex cursor-pointer items-center"
 					>
 						<Download className="mr-2 h-4 w-4" />
 						Exporter données (RGPD)
@@ -125,7 +137,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 					<DropdownMenuItem
 						onClick={() => invalidateSessions(user.id, displayName)}
 						disabled={isInvalidatePending}
-						className="flex items-center cursor-pointer"
+						className="flex cursor-pointer items-center"
 					>
 						<LogOut className="mr-2 h-4 w-4" />
 						Forcer la déconnexion
@@ -135,7 +147,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 					<DropdownMenuItem
 						onClick={() => sendReset(user.id, displayName)}
 						disabled={isResetPending}
-						className="flex items-center cursor-pointer"
+						className="flex cursor-pointer items-center"
 					>
 						<KeyRound className="mr-2 h-4 w-4" />
 						Envoyer reset mot de passe
@@ -145,21 +157,13 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 						<>
 							<DropdownMenuSeparator />
 							<DropdownMenuSub>
-								<DropdownMenuSubTrigger>
-									Changer le role
-								</DropdownMenuSubTrigger>
+								<DropdownMenuSubTrigger>Changer le role</DropdownMenuSubTrigger>
 								<DropdownMenuSubContent>
-									<DropdownMenuItem
-										onClick={() => promoteDialog.open()}
-										disabled={isAdmin}
-									>
+									<DropdownMenuItem onClick={() => promoteDialog.open()} disabled={isAdmin}>
 										<CheckCircle2 className="mr-2 h-4 w-4" />
 										Promouvoir admin
 									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={() => demoteDialog.open()}
-										disabled={!isAdmin}
-									>
+									<DropdownMenuItem onClick={() => demoteDialog.open()} disabled={!isAdmin}>
 										<XCircle className="mr-2 h-4 w-4" />
 										Retrograder utilisateur
 									</DropdownMenuItem>
@@ -168,7 +172,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<DropdownMenuSeparator />
 							{!isSuspended ? (
 								<DropdownMenuItem
-									className="flex items-center cursor-pointer"
+									className="flex cursor-pointer items-center"
 									onClick={() => suspendDialog.open()}
 								>
 									<XCircle className="mr-2 h-4 w-4" />
@@ -176,7 +180,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 								</DropdownMenuItem>
 							) : (
 								<DropdownMenuItem
-									className="flex items-center cursor-pointer"
+									className="flex cursor-pointer items-center"
 									onClick={() => restoreDialog.open()}
 								>
 									<RotateCcw className="mr-2 h-4 w-4" />
@@ -184,7 +188,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 								</DropdownMenuItem>
 							)}
 							<DropdownMenuItem
-								className="flex items-center cursor-pointer text-destructive focus:text-destructive"
+								className="text-destructive focus:text-destructive flex cursor-pointer items-center"
 								onClick={() => deleteDialog.open()}
 							>
 								<Trash2 className="mr-2 h-4 w-4" />
@@ -196,7 +200,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 						<>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
-								className="flex items-center cursor-pointer"
+								className="flex cursor-pointer items-center"
 								onClick={() => restoreDialog.open()}
 							>
 								<RotateCcw className="mr-2 h-4 w-4" />
@@ -208,7 +212,10 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</DropdownMenu>
 
 			{/* Delete Dialog */}
-			<AlertDialog open={deleteDialog.isOpen} onOpenChange={(open) => open ? deleteDialog.open() : deleteDialog.close()}>
+			<AlertDialog
+				open={deleteDialog.isOpen}
+				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={deleteAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -226,10 +233,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<Button
-								type="submit"
-								disabled={isPending}
-							>
+							<Button type="submit" disabled={isPending}>
 								{isDeletePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -248,7 +252,10 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</AlertDialog>
 
 			{/* Suspend Dialog */}
-			<AlertDialog open={suspendDialog.isOpen} onOpenChange={(open) => open ? suspendDialog.open() : suspendDialog.close()}>
+			<AlertDialog
+				open={suspendDialog.isOpen}
+				onOpenChange={(open) => (open ? suspendDialog.open() : suspendDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={suspendAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -285,7 +292,10 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</AlertDialog>
 
 			{/* Restore Dialog */}
-			<AlertDialog open={restoreDialog.isOpen} onOpenChange={(open) => open ? restoreDialog.open() : restoreDialog.close()}>
+			<AlertDialog
+				open={restoreDialog.isOpen}
+				onOpenChange={(open) => (open ? restoreDialog.open() : restoreDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={restoreAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -322,7 +332,10 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</AlertDialog>
 
 			{/* Promote to Admin Dialog */}
-			<AlertDialog open={promoteDialog.isOpen} onOpenChange={(open) => open ? promoteDialog.open() : promoteDialog.close()}>
+			<AlertDialog
+				open={promoteDialog.isOpen}
+				onOpenChange={(open) => (open ? promoteDialog.open() : promoteDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -331,13 +344,11 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<AlertDialogTitle>Promouvoir en administrateur</AlertDialogTitle>
 							<AlertDialogDescription>
 								Etes-vous sur de vouloir promouvoir{" "}
-								<span className="font-semibold">{displayName}</span> au role
-								d&apos;administrateur ?
+								<span className="font-semibold">{displayName}</span> au role d&apos;administrateur ?
 								<br />
 								<br />
-								<span className="text-amber-600 font-medium">
-									Les administrateurs ont acces a toutes les fonctionnalites du
-									dashboard.
+								<span className="font-medium text-amber-600">
+									Les administrateurs ont acces a toutes les fonctionnalites du dashboard.
 								</span>
 							</AlertDialogDescription>
 						</AlertDialogHeader>
@@ -364,7 +375,10 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</AlertDialog>
 
 			{/* Demote to User Dialog */}
-			<AlertDialog open={demoteDialog.isOpen} onOpenChange={(open) => open ? demoteDialog.open() : demoteDialog.close()}>
+			<AlertDialog
+				open={demoteDialog.isOpen}
+				onOpenChange={(open) => (open ? demoteDialog.open() : demoteDialog.close())}
+			>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -373,8 +387,8 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<AlertDialogTitle>Retrograder en utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
 								Etes-vous sur de vouloir retrograder{" "}
-								<span className="font-semibold">{displayName}</span> au role
-								d&apos;utilisateur standard ?
+								<span className="font-semibold">{displayName}</span> au role d&apos;utilisateur
+								standard ?
 								<br />
 								<br />
 								Il perdra l&apos;acces au dashboard administrateur.

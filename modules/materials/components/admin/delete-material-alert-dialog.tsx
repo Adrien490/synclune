@@ -32,9 +32,7 @@ export function DeleteMaterialAlertDialog() {
 						Êtes-vous sûr de vouloir supprimer le matériau{" "}
 						<strong>&quot;{data?.materialName}&quot;</strong> ?
 					</p>
-					<p className="text-destructive font-medium">
-						Cette action est irréversible.
-					</p>
+					<p className="text-destructive font-medium">Cette action est irréversible.</p>
 				</div>
 			)}
 		/>

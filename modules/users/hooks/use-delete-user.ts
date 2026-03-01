@@ -24,9 +24,9 @@ export const useDeleteUser = (options?: UseDeleteUserOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

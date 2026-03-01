@@ -65,7 +65,9 @@ export default function MediaLightbox({
 						pinchZoomDistanceFactor: LIGHTBOX_CONFIG.PINCH_ZOOM_DISTANCE_FACTOR,
 						scrollToZoom: true,
 					}}
-					counter={{ container: { style: { top: "unset", bottom: LIGHTBOX_CONFIG.COUNTER_BOTTOM_OFFSET } } }}
+					counter={{
+						container: { style: { top: "unset", bottom: LIGHTBOX_CONFIG.COUNTER_BOTTOM_OFFSET } },
+					}}
 					video={{
 						autoPlay: !prefersReducedMotion,
 						controls: true,

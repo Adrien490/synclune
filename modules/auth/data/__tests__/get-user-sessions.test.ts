@@ -123,16 +123,14 @@ describe("getUserSessions", () => {
 
 		expect(result).toHaveLength(1);
 		expect(mockPrisma.session.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-1" } })
+			expect.objectContaining({ where: { userId: "user-1" } }),
 		);
 	});
 
 	it("passes the current session ID to fetchUserSessions", async () => {
 		mockGetCurrentUser.mockResolvedValue(makeUser({ id: "user-1" }));
 		mockAuthApiGetSession.mockResolvedValue({ session: { id: "current-session-id" } });
-		mockPrisma.session.findMany.mockResolvedValue([
-			makeSession({ id: "current-session-id" }),
-		]);
+		mockPrisma.session.findMany.mockResolvedValue([makeSession({ id: "current-session-id" })]);
 
 		const result = await getUserSessions();
 
@@ -169,10 +167,7 @@ describe("fetchUserSessions", () => {
 	});
 
 	it("marks the current session with isCurrentSession=true", async () => {
-		const sessions = [
-			makeSession({ id: "session-A" }),
-			makeSession({ id: "session-B" }),
-		];
+		const sessions = [makeSession({ id: "session-A" }), makeSession({ id: "session-B" })];
 		mockPrisma.session.findMany.mockResolvedValue(sessions);
 
 		const result = await fetchUserSessions("user-1", "session-A");
@@ -220,7 +215,7 @@ describe("fetchUserSessions", () => {
 		await fetchUserSessions("user-42");
 
 		expect(mockPrisma.session.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-42" } })
+			expect.objectContaining({ where: { userId: "user-42" } }),
 		);
 	});
 
@@ -228,7 +223,7 @@ describe("fetchUserSessions", () => {
 		await fetchUserSessions("user-1");
 
 		expect(mockPrisma.session.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({ orderBy: { createdAt: "desc" } })
+			expect.objectContaining({ orderBy: { createdAt: "desc" } }),
 		);
 	});
 

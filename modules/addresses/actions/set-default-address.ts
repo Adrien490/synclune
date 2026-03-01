@@ -13,7 +13,7 @@ import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 
 export async function setDefaultAddress(
 	_prev: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAuth();
@@ -54,7 +54,7 @@ export async function setDefaultAddress(
 		});
 
 		// Revalidation du cache avec tags
-		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
+		getUserAddressesInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
 		return success("Adresse par defaut modifiee");
 	} catch (e) {

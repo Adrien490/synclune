@@ -7,21 +7,15 @@ interface EditCollectionPageProps {
 	params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({
-	params,
-}: EditCollectionPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: EditCollectionPageProps): Promise<Metadata> {
 	const { slug } = await params;
 	const collection = await getCollectionBySlug({ slug });
 	return {
-		title: collection
-			? `Modifier ${collection.name}`
-			: "Collection introuvable",
+		title: collection ? `Modifier ${collection.name}` : "Collection introuvable",
 	};
 }
 
-export default async function EditCollectionPage({
-	params,
-}: EditCollectionPageProps) {
+export default async function EditCollectionPage({ params }: EditCollectionPageProps) {
 	const { slug } = await params;
 	const collection = await getCollectionBySlug({ slug });
 
@@ -29,7 +23,7 @@ export default async function EditCollectionPage({
 
 	return (
 		<>
-			<h1 className="text-2xl font-semibold mb-6">{collection.name}</h1>
+			<h1 className="mb-6 text-2xl font-semibold">{collection.name}</h1>
 			<EditCollectionForm collection={collection} className="max-w-lg" />
 		</>
 	);

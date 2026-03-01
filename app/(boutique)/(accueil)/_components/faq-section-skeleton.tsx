@@ -13,28 +13,25 @@ export function FaqSectionSkeleton() {
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Header */}
-				<header className="text-center mb-10 lg:mb-12">
-					<Skeleton className="h-10 w-64 mx-auto bg-muted/50" />
-					<Skeleton className="mt-4 h-6 w-full max-w-xl mx-auto bg-muted/30" />
+				<header className="mb-10 text-center lg:mb-12">
+					<Skeleton className="bg-muted/50 mx-auto h-10 w-64" />
+					<Skeleton className="bg-muted/30 mx-auto mt-4 h-6 w-full max-w-xl" />
 				</header>
 
 				{/* Accordion items skeleton - 6 questions */}
-				<div className="max-w-3xl mx-auto space-y-3">
+				<div className="mx-auto max-w-3xl space-y-3">
 					{Array.from({ length: 6 }).map((_, i) => (
-						<div
-							key={i}
-							className="bg-muted/30 rounded-xl px-5 py-5 border shadow-sm"
-						>
-							<Skeleton className="h-5 w-full max-w-md bg-muted/50" />
+						<div key={i} className="bg-muted/30 rounded-xl border px-5 py-5 shadow-sm">
+							<Skeleton className="bg-muted/50 h-5 w-full max-w-md" />
 						</div>
 					))}
 				</div>
 
 				{/* CTA contact card */}
-				<div className="mt-12 max-w-3xl mx-auto bg-primary/5 border border-primary/15 rounded-2xl p-6 sm:p-8 text-center space-y-3">
-					<Skeleton className="h-5 w-56 mx-auto bg-muted/30" />
-					<Skeleton className="h-4 w-44 mx-auto bg-muted/20" />
-					<Skeleton className="h-11 w-40 mx-auto rounded-md bg-muted/30 mt-2" />
+				<div className="bg-primary/5 border-primary/15 mx-auto mt-12 max-w-3xl space-y-3 rounded-2xl border p-6 text-center sm:p-8">
+					<Skeleton className="bg-muted/30 mx-auto h-5 w-56" />
+					<Skeleton className="bg-muted/20 mx-auto h-4 w-44" />
+					<Skeleton className="bg-muted/30 mx-auto mt-2 h-11 w-40 rounded-md" />
 				</div>
 			</div>
 		</section>

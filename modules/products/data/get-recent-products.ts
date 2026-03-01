@@ -1,19 +1,19 @@
-import "server-only"
+import "server-only";
 
-import { cacheLife, cacheTag } from "next/cache"
-import { prisma, notDeleted } from "@/shared/lib/prisma"
-import { GET_PRODUCTS_SELECT } from "../constants/product.constants"
-import type { Product } from "../types/product.types"
-import { serializeProducts } from "../utils/serialize-product"
-import { getRecentProductSlugs } from "./get-recent-product-slugs"
-import { RECENT_PRODUCTS_DISPLAY_LIMIT } from "../constants/recent-products"
-import { RECENT_PRODUCTS_CACHE_TAGS } from "../constants/cache"
+import { cacheLife, cacheTag } from "next/cache";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { GET_PRODUCTS_SELECT } from "../constants/product.constants";
+import type { Product } from "../types/product.types";
+import { serializeProducts } from "../utils/serialize-product";
+import { getRecentProductSlugs } from "./get-recent-product-slugs";
+import { RECENT_PRODUCTS_DISPLAY_LIMIT } from "../constants/recent-products";
+import { RECENT_PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 interface GetRecentProductsOptions {
 	/** Slug du produit courant a exclure */
-	excludeSlug?: string
+	excludeSlug?: string;
 	/** Nombre maximum de produits a retourner */
-	limit?: number
+	limit?: number;
 }
 
 /**
@@ -25,32 +25,28 @@ interface GetRecentProductsOptions {
  * @param options.limit - Nombre max de produits (default: 8)
  * @returns Liste des produits recemment vus
  */
-export async function getRecentProducts(
-	options?: GetRecentProductsOptions
-): Promise<Product[]> {
-	const { excludeSlug, limit = RECENT_PRODUCTS_DISPLAY_LIMIT } = options ?? {}
+export async function getRecentProducts(options?: GetRecentProductsOptions): Promise<Product[]> {
+	const { excludeSlug, limit = RECENT_PRODUCTS_DISPLAY_LIMIT } = options ?? {};
 
 	// 1. Recuperer les slugs depuis le cookie (acces runtime)
-	const slugs = await getRecentProductSlugs()
+	const slugs = await getRecentProductSlugs();
 
 	if (slugs.length === 0) {
-		return []
+		return [];
 	}
 
 	// 2. Filtrer le produit courant
-	const filteredSlugs = excludeSlug
-		? slugs.filter((s) => s !== excludeSlug)
-		: slugs
+	const filteredSlugs = excludeSlug ? slugs.filter((s) => s !== excludeSlug) : slugs;
 
 	if (filteredSlugs.length === 0) {
-		return []
+		return [];
 	}
 
 	// 3. Limiter avant la requete DB
-	const slugsToFetch = filteredSlugs.slice(0, limit)
+	const slugsToFetch = filteredSlugs.slice(0, limit);
 
 	// 4. Deleguer a la fonction cachee
-	return fetchProductsBySlugs(slugsToFetch)
+	return fetchProductsBySlugs(slugsToFetch);
 }
 
 /**
@@ -60,9 +56,9 @@ export async function getRecentProducts(
  * Invalide par: updateTag("recent-products-list") dans addRecentProduct
  */
 async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
-	"use cache: private"
-	cacheLife("relatedProducts") // 30m stale, 10m revalidate, 3h expire
-	cacheTag(RECENT_PRODUCTS_CACHE_TAGS.LIST)
+	"use cache: private";
+	cacheLife("relatedProducts"); // 30m stale, 10m revalidate, 3h expire
+	cacheTag(RECENT_PRODUCTS_CACHE_TAGS.LIST);
 
 	try {
 		const products = await prisma.product.findMany({
@@ -77,20 +73,20 @@ async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
 				},
 			},
 			select: GET_PRODUCTS_SELECT,
-		})
+		});
 
 		// Trier selon l'ordre des slugs (plus recent en premier)
-		const productsBySlug = new Map(products.map((p) => [p.slug, p]))
+		const productsBySlug = new Map(products.map((p) => [p.slug, p]));
 		const orderedProducts = slugs
 			.map((slug) => productsBySlug.get(slug))
-			.filter((p): p is Product => p !== undefined)
+			.filter((p): p is Product => p !== undefined);
 
-		return serializeProducts(orderedProducts)
+		return serializeProducts(orderedProducts);
 	} catch (e) {
 		// Log en dev, silencieux en prod
 		if (process.env.NODE_ENV === "development") {
-			console.error("[RecentProducts] Erreur DB:", e)
+			console.error("[RecentProducts] Erreur DB:", e);
 		}
-		return []
+		return [];
 	}
 }

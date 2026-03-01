@@ -17,8 +17,9 @@ import {
 
 // Lazy loading - dialog charge uniquement a l'ouverture
 const LogoutAlertDialog = dynamic(
-	() => import("@/modules/auth/components/logout-alert-dialog").then((mod) => mod.LogoutAlertDialog),
-	{ ssr: true }
+	() =>
+		import("@/modules/auth/components/logout-alert-dialog").then((mod) => mod.LogoutAlertDialog),
+	{ ssr: true },
 );
 
 interface UserDropdownProps {
@@ -36,7 +37,7 @@ export function UserDropdown({ user }: UserDropdownProps) {
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-9 gap-2 data-[state=open]:bg-accent cursor-pointer transition-all duration-300 font-light"
+					className="data-[state=open]:bg-accent h-9 cursor-pointer gap-2 font-light transition-all duration-300"
 					aria-label={`Menu utilisateur de ${user.name}`}
 					aria-haspopup="menu"
 				>
@@ -44,15 +45,11 @@ export function UserDropdown({ user }: UserDropdownProps) {
 					<ChevronDown className="h-4 w-4 opacity-50" aria-hidden="true" />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent
-				className="w-56 rounded-lg"
-				align="end"
-				sideOffset={8}
-			>
+			<DropdownMenuContent className="w-56 rounded-lg" align="end" sideOffset={8}>
 				<DropdownMenuLabel className="p-0 font-normal">
 					<div className="px-2 py-2 text-left text-sm">
 						<p className="truncate font-light tracking-normal">{user.name}</p>
-						<p className="truncate text-xs tracking-normal text-muted-foreground font-light">
+						<p className="text-muted-foreground truncate text-xs font-light tracking-normal">
 							{user.email}
 						</p>
 					</div>

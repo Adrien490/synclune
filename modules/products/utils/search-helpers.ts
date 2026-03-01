@@ -27,9 +27,6 @@ export function splitSearchTerms(searchTerm: string): string[] {
 	return trimmed
 		.split(/\s+/)
 		.filter(Boolean)
-		.filter(
-			(word, i, arr) =>
-				arr.findIndex((w) => w.toLowerCase() === word.toLowerCase()) === i
-		)
+		.filter((word, i, arr) => arr.findIndex((w) => w.toLowerCase() === word.toLowerCase()) === i)
 		.slice(0, FUZZY_MAX_WORDS);
 }

@@ -13,10 +13,19 @@ import {
 	getOrCreateWishlistSessionId,
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session";
-import { WISHLIST_ERROR_MESSAGES, WISHLIST_FULL_SENTINEL } from "@/modules/wishlist/constants/error-messages";
+import {
+	WISHLIST_ERROR_MESSAGES,
+	WISHLIST_FULL_SENTINEL,
+} from "@/modules/wishlist/constants/error-messages";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { Prisma } from "@/app/generated/prisma/client";
-import { validateInput, handleActionError, success, error, enforceRateLimit } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	enforceRateLimit,
+} from "@/shared/lib/actions";
 
 /**
  * Server Action pour toggle un article dans la wishlist
@@ -33,7 +42,7 @@ import { validateInput, handleActionError, success, error, enforceRateLimit } fr
  */
 export async function toggleWishlistItem(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Recuperer l'authentification (user ou session invite)
@@ -142,12 +151,10 @@ export async function toggleWishlistItem(
 
 		// 6. Invalidation cache immediate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		return success(
-			transactionResult.action === "added"
-				? "Ajoute a votre wishlist"
-				: "Retire de votre wishlist",
+			transactionResult.action === "added" ? "Ajoute a votre wishlist" : "Retire de votre wishlist",
 			{
 				wishlistId: transactionResult.wishlist.id,
 				action: transactionResult.action,
@@ -159,10 +166,7 @@ export async function toggleWishlistItem(
 			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
 		}
 		// Unique constraint violation (wishlistId, productId) - race condition on double submit
-		if (
-			e instanceof Prisma.PrismaClientKnownRequestError &&
-			e.code === "P2002"
-		) {
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
 			return success("Deja dans votre wishlist");
 		}
 		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);

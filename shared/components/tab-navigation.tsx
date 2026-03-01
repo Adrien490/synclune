@@ -61,16 +61,14 @@ export function TabNavigation({
 	const hasOverflow = overflowItems.length > 0;
 
 	// Trouver l'item actif s'il est dans l'overflow
-	const activeOverflowItem = overflowItems.find(
-		(item) => item.value === activeValue
-	);
+	const activeOverflowItem = overflowItems.find((item) => item.value === activeValue);
 
 	const getPillClasses = (isActive: boolean) =>
 		cn(
 			PILL_BASE,
 			isActive
 				? "bg-primary text-primary-foreground shadow-sm"
-				: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-sm"
+				: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-sm",
 		);
 
 	return (
@@ -116,23 +114,21 @@ export function TabNavigation({
 							onClick={() => setIsDrawerOpen(true)}
 							className={cn(
 								PILL_BASE,
-								"md:hidden max-w-36",
+								"max-w-36 md:hidden",
 								activeOverflowItem
-									? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-									: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+									? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+									: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground",
 							)}
 							title={activeOverflowItem?.label}
 							aria-label="Plus d'options de navigation"
 							aria-expanded={isDrawerOpen}
 							aria-haspopup="dialog"
 						>
-							<span className="truncate">
-								{activeOverflowItem?.label || "Plus"}
-							</span>
+							<span className="truncate">{activeOverflowItem?.label || "Plus"}</span>
 							<ChevronDownIcon
 								className={cn(
 									"size-4 shrink-0 transition-transform duration-200",
-									isDrawerOpen && "rotate-180"
+									isDrawerOpen && "rotate-180",
 								)}
 								aria-hidden="true"
 							/>
@@ -142,16 +138,14 @@ export function TabNavigation({
 							<DrawerContent>
 								<DrawerHandle />
 								<DrawerHeader>
-									<DrawerTitle>
-										{panelTitle || "Parcourir par type"}
-									</DrawerTitle>
+									<DrawerTitle>{panelTitle || "Parcourir par type"}</DrawerTitle>
 								</DrawerHeader>
 								<DrawerBody>
 									{/* Grid de catégories - TOUS les items */}
 									<div
 										className={cn(
-											"grid gap-2 max-w-md mx-auto",
-											items.length === 3 ? "grid-cols-3" : "grid-cols-2"
+											"mx-auto grid max-w-md gap-2",
+											items.length === 3 ? "grid-cols-3" : "grid-cols-2",
 										)}
 									>
 										{items.map((item) => {
@@ -165,22 +159,17 @@ export function TabNavigation({
 													aria-current={isActive ? "page" : undefined}
 													className={cn(
 														"flex items-center justify-center gap-2",
-														"px-4 py-3.5 rounded-2xl",
-														"text-sm font-medium text-center",
+														"rounded-2xl px-4 py-3.5",
+														"text-center text-sm font-medium",
 														"border-2 transition-all duration-150",
 														"active:scale-[0.98]",
-														"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+														"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
 														isActive
 															? "bg-primary text-primary-foreground border-primary shadow-md"
-															: "bg-background border-border hover:border-primary/50"
+															: "bg-background border-border hover:border-primary/50",
 													)}
 												>
-													{isActive && (
-														<CheckIcon
-															className="size-4 shrink-0"
-															aria-hidden="true"
-														/>
-													)}
+													{isActive && <CheckIcon className="size-4 shrink-0" aria-hidden="true" />}
 													<span className="leading-tight">{item.label}</span>
 												</Link>
 											);

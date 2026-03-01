@@ -93,16 +93,13 @@ export function ProductsQuickFilters({ className }: ProductsQuickFiltersProps) {
 		{
 			label: "Prix moins de 50€",
 			value: "price_under_50",
-			onClick: () =>
-				applyQuickFilter({ filter_priceMin: "0", filter_priceMax: "5000" }),
+			onClick: () => applyQuickFilter({ filter_priceMin: "0", filter_priceMax: "5000" }),
 		},
 	];
 
 	// Determine which filter is active
 	const getActiveFilter = (): string | null => {
-		const hasAnyFilter = Array.from(searchParams.keys()).some((key) =>
-			key.startsWith("filter_")
-		);
+		const hasAnyFilter = Array.from(searchParams.keys()).some((key) => key.startsWith("filter_"));
 
 		if (!hasAnyFilter) return null;
 
@@ -138,8 +135,8 @@ export function ProductsQuickFilters({ className }: ProductsQuickFiltersProps) {
 					variant="outline"
 					disabled={isPending}
 					className={cn(
-						"min-h-10 sm:min-h-11 gap-2 text-sm font-medium border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
-						className
+						"border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 min-h-10 gap-2 text-sm font-medium transition-all duration-200 sm:min-h-11",
+						className,
 					)}
 				>
 					{activeFilterLabel}
@@ -151,15 +148,11 @@ export function ProductsQuickFilters({ className }: ProductsQuickFiltersProps) {
 				<DropdownMenuSeparator />
 				{quickFilters.map((filter) => {
 					const isActive =
-						filter.value === null
-							? activeFilter === null
-							: activeFilter === filter.value;
+						filter.value === null ? activeFilter === null : activeFilter === filter.value;
 
 					return (
 						<DropdownMenuItem key={filter.label} onClick={filter.onClick}>
-							<Check
-								className={`mr-2 h-4 w-4 ${isActive ? "opacity-100" : "opacity-0"}`}
-							/>
+							<Check className={cn("mr-2 h-4 w-4", isActive ? "opacity-100" : "opacity-0")} />
 							{filter.label}
 						</DropdownMenuItem>
 					);

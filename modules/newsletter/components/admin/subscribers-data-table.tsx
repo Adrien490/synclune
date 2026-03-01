@@ -47,7 +47,11 @@ export async function SubscribersDataTable({
 		<Card>
 			<CardContent>
 				<TableScrollContainer>
-					<Table aria-label="Liste des abonnés newsletter" striped>
+					<Table
+						aria-label="Liste des abonnés newsletter"
+						striped
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[35%]">Email</TableHead>

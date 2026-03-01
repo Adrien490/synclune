@@ -1,4 +1,9 @@
-import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
+import {
+	verifyCronRequest,
+	cronTimer,
+	cronSuccess,
+	cronError,
+} from "@/modules/cron/lib/verify-cron";
 import { cleanupOldWebhookEvents } from "@/modules/cron/services/cleanup-webhook-events.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
@@ -11,10 +16,13 @@ export async function GET() {
 	const startTime = cronTimer();
 	try {
 		const result = await cleanupOldWebhookEvents();
-		return cronSuccess({
-			job: "cleanup-webhook-events",
-			...result,
-		}, startTime);
+		return cronSuccess(
+			{
+				job: "cleanup-webhook-events",
+				...result,
+			},
+			startTime,
+		);
 	} catch (error) {
 		sendAdminCronFailedAlert({
 			job: "cleanup-webhook-events",
@@ -24,10 +32,6 @@ export async function GET() {
 			},
 		}).catch((e) => console.error("[CRON:cleanup-webhook-events] Failed to send admin alert", e));
 
-		return cronError(
-			error instanceof Error
-				? error.message
-				: "Failed to cleanup webhook events"
-		);
+		return cronError(error instanceof Error ? error.message : "Failed to cleanup webhook events");
 	}
 }

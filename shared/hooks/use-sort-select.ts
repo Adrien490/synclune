@@ -13,8 +13,7 @@ export function useSortSelect() {
 
 	const currentValue = searchParams.get("sortBy") || "";
 
-	const [optimisticValue, setOptimisticValue] =
-		useOptimistic<string>(currentValue);
+	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
 
 	const updateUrl = (params: URLSearchParams, newValue: string) => {
 		startTransition(() => {

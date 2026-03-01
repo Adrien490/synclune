@@ -37,9 +37,7 @@ function validateEnv(): Env {
 		console.error("");
 		console.error("Vérifiez votre fichier .env ou vos variables d'environnement.");
 
-		throw new Error(
-			"Configuration invalide. Consultez les logs pour plus de détails."
-		);
+		throw new Error("Configuration invalide. Consultez les logs pour plus de détails.");
 	}
 
 	return parsed.data;
@@ -60,4 +58,3 @@ function validateEnv(): Env {
  * ```
  */
 export const env = validateEnv();
-

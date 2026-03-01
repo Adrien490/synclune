@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { formatRelativeDate } from "@/shared/utils/dates"
+import { formatRelativeDate } from "@/shared/utils/dates";
 
 interface RelativeDateProps {
-	date: Date | string
-	className?: string
+	date: Date | string;
+	className?: string;
 }
 
 /**
@@ -12,6 +12,10 @@ interface RelativeDateProps {
  * Avoids calling new Date() during server prerendering.
  */
 export function RelativeDate({ date, className }: RelativeDateProps) {
-	const isoDate = date instanceof Date ? date.toISOString() : new Date(date).toISOString()
-	return <time dateTime={isoDate} className={className}>{formatRelativeDate(date)}</time>
+	const isoDate = date instanceof Date ? date.toISOString() : new Date(date).toISOString();
+	return (
+		<time dateTime={isoDate} className={className}>
+			{formatRelativeDate(date)}
+		</time>
+	);
 }

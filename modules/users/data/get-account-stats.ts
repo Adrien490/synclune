@@ -4,17 +4,11 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 
 import { CART_SELECT_FOR_COUNT } from "../constants/account-stats.constants";
-import type {
-	AccountStats,
-	GetAccountStatsReturn,
-} from "../types/account-stats.types";
+import type { AccountStats, GetAccountStatsReturn } from "../types/account-stats.types";
 
 // Re-export pour compatibilité
 export { CART_SELECT_FOR_COUNT } from "../constants/account-stats.constants";
-export type {
-	AccountStats,
-	GetAccountStatsReturn,
-} from "../types/account-stats.types";
+export type { AccountStats, GetAccountStatsReturn } from "../types/account-stats.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

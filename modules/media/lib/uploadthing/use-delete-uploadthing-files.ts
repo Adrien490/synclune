@@ -9,9 +9,7 @@ interface UseDeleteUploadThingFilesOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useDeleteUploadThingFiles = (
-	options?: UseDeleteUploadThingFilesOptions
-) => {
+export const useDeleteUploadThingFiles = (options?: UseDeleteUploadThingFilesOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			deleteUploadThingFiles,
@@ -28,9 +26,9 @@ export const useDeleteUploadThingFiles = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	// Helper function for components that cannot use <form> (nested forms)

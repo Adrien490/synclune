@@ -56,7 +56,7 @@ describe("validateFormData", () => {
 		const result = validateFormData(
 			fd,
 			(f) => ({ name: f.get("name"), age: Number(f.get("age")) }),
-			testSchema
+			testSchema,
 		);
 		expect(result).toEqual({ data: { name: "Alice", age: 25 } });
 	});
@@ -69,7 +69,7 @@ describe("validateFormData", () => {
 		const result = validateFormData(
 			fd,
 			(f) => ({ name: f.get("name"), age: Number(f.get("age")) }),
-			testSchema
+			testSchema,
 		);
 		expect("error" in result).toBe(true);
 	});
@@ -80,7 +80,7 @@ describe("validateFormData", () => {
 		const result = validateFormData(
 			fd,
 			(f) => ({ name: f.get("name"), age: Number(f.get("age")) }),
-			testSchema
+			testSchema,
 		);
 		expect("error" in result).toBe(true);
 	});

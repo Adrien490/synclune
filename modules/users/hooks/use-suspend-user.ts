@@ -24,9 +24,9 @@ export const useSuspendUser = (options?: UseSuspendUserOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

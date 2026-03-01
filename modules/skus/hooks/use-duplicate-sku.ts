@@ -31,9 +31,9 @@ export function useDuplicateSku(options?: UseDuplicateSkuOptions) {
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const duplicate = (skuId: string, _skuName: string) => {

@@ -16,8 +16,4 @@ export const COLORS_CACHE_TAGS = {
 } as const;
 
 // Re-exports pour retrocompatibilite
-export {
-	cacheColors,
-	cacheColorDetail,
-	getColorInvalidationTags,
-} from "../utils/cache.utils";
+export { cacheColors, cacheColorDetail, getColorInvalidationTags } from "../utils/cache.utils";

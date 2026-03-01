@@ -10,12 +10,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/shared/components/ui/select";
-import {
-	NativeSelect,
-	NativeSelectOption,
-} from "@/shared/components/ui/native-select";
+import { NativeSelect, NativeSelectOption } from "@/shared/components/ui/native-select";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 
@@ -78,7 +76,9 @@ export const SelectField = <T extends string>({
 	autoComplete,
 }: SelectFieldProps<T>) => {
 	const field = useFieldContext<T | undefined>();
-	const isMobile = useIsMobile();
+	const isMobileDetected = useIsMobile();
+	const mounted = useMounted();
+	const isMobile = mounted && isMobileDetected;
 	const triggerRef = useRef<HTMLButtonElement>(null);
 
 	const hasError = field.state.meta.errors.length > 0;
@@ -144,13 +144,11 @@ export const SelectField = <T extends string>({
 						aria-describedby={hasError ? `${field.name}-error` : undefined}
 						aria-required={required}
 					>
-						<div className="flex items-center w-full min-w-0">
+						<div className="flex w-full min-w-0 items-center">
 							<span className="flex-1 truncate text-left">
 								{field.state.value ? (
 									renderValue ? (
-										(renderValue(field.state.value) ??
-											selectedOption?.label ??
-											field.state.value)
+										(renderValue(field.state.value) ?? selectedOption?.label ?? field.state.value)
 									) : selectedOption ? (
 										renderOption ? (
 											renderOption(selectedOption)
@@ -158,9 +156,7 @@ export const SelectField = <T extends string>({
 											selectedOption.label
 										)
 									) : (
-										<span className="text-muted-foreground">
-											{field.state.value}
-										</span>
+										<span className="text-muted-foreground">{field.state.value}</span>
 									)
 								) : (
 									<SelectValue placeholder={placeholder} />
@@ -170,10 +166,10 @@ export const SelectField = <T extends string>({
 								<button
 									type="button"
 									className={cn(
-										"inline-flex items-center justify-center size-11 -mr-2 shrink-0 rounded-md",
+										"-mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-md",
 										"hover:bg-accent hover:text-accent-foreground",
-										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-										"cursor-pointer"
+										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+										"cursor-pointer",
 									)}
 									onPointerDown={(e) => {
 										e.preventDefault();

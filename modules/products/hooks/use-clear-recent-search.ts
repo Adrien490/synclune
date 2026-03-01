@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useActionState, useOptimistic, useTransition } from "react"
-import { withCallbacks } from "@/shared/utils/with-callbacks"
-import { ActionStatus } from "@/shared/types/server-action"
-import { clearRecentSearches } from "@/modules/products/actions/clear-recent-searches"
+import { useActionState, useOptimistic, useTransition } from "react";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { ActionStatus } from "@/shared/types/server-action";
+import { clearRecentSearches } from "@/modules/products/actions/clear-recent-searches";
 
 interface UseClearRecentSearchesOptions {
 	/** Liste initiale des recherches (depuis le serveur) */
-	initialSearches: string[]
+	initialSearches: string[];
 	/** Callback apres suppression reussie */
-	onSuccess?: () => void
+	onSuccess?: () => void;
 	/** Callback en cas d'erreur */
-	onError?: () => void
+	onError?: () => void;
 }
 
 /**
@@ -30,45 +30,44 @@ interface UseClearRecentSearchesOptions {
  * ```
  */
 export function useClearRecentSearches(options: UseClearRecentSearchesOptions) {
-	const { initialSearches, onSuccess, onError } = options
+	const { initialSearches, onSuccess, onError } = options;
 
-	const [isTransitionPending, startTransition] = useTransition()
+	const [isTransitionPending, startTransition] = useTransition();
 
 	// Etat optimiste pour une UX reactive
-	const [optimisticSearches, setOptimisticSearches] =
-		useOptimistic(initialSearches)
+	const [optimisticSearches, setOptimisticSearches] = useOptimistic(initialSearches);
 
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(clearRecentSearches, {
 			onSuccess: () => {
-				onSuccess?.()
+				onSuccess?.();
 			},
 			onError: () => {
 				// Rollback de l'etat optimiste
-				setOptimisticSearches(initialSearches)
-				onError?.()
+				setOptimisticSearches(initialSearches);
+				onError?.();
 			},
 		}),
-		undefined
-	)
+		undefined,
+	);
 
-	const isPending = isTransitionPending || isActionPending
+	const isPending = isTransitionPending || isActionPending;
 
 	/**
 	 * Efface toutes les recherches recentes
 	 */
 	const clear = () => {
 		// Guard contre double-click
-		if (isPending) return
+		if (isPending) return;
 
 		startTransition(() => {
 			// Mise a jour optimiste
-			setOptimisticSearches([])
+			setOptimisticSearches([]);
 
-			const formData = new FormData()
-			formAction(formData)
-		})
-	}
+			const formData = new FormData();
+			formAction(formData);
+		});
+	};
 
 	return {
 		state,
@@ -78,5 +77,5 @@ export function useClearRecentSearches(options: UseClearRecentSearchesOptions) {
 		isEmpty: optimisticSearches.length === 0,
 		isSuccess: state?.status === ActionStatus.SUCCESS,
 		isError: state?.status === ActionStatus.ERROR,
-	}
+	};
 }

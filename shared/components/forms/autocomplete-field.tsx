@@ -1,17 +1,11 @@
 "use client";
 
-import {
-	Autocomplete,
-	type AutocompleteProps,
-} from "@/shared/components/autocomplete";
+import { Autocomplete, type AutocompleteProps } from "@/shared/components/autocomplete";
 import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
 import { useFieldContext } from "@/shared/lib/form-context";
 
-type AutocompleteFieldProps<T> = Omit<
-	AutocompleteProps<T>,
-	"name" | "value" | "onChange"
-> & {
+type AutocompleteFieldProps<T> = Omit<AutocompleteProps<T>, "name" | "value" | "onChange"> & {
 	/** Label affiché au-dessus du champ */
 	label?: string;
 	/** Indique si le champ est requis */

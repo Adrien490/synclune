@@ -1,28 +1,17 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import type {
-	AccountFilters,
-	GetAccountsInput,
-} from "../schemas/accounts.schemas";
+import type { AccountFilters, GetAccountsInput } from "../schemas/accounts.schemas";
 
 // ============================================================================
 // ACCOUNTS QUERY BUILDER UTILS
 // ============================================================================
 
-export function buildAccountsFilterConditions(
-	filters: AccountFilters
-): Prisma.AccountWhereInput[] {
+export function buildAccountsFilterConditions(filters: AccountFilters): Prisma.AccountWhereInput[] {
 	const conditions: Prisma.AccountWhereInput[] = [];
 	if (!filters) return conditions;
 
 	if (filters.userId !== undefined) {
-		const userIds = Array.isArray(filters.userId)
-			? filters.userId
-			: [filters.userId];
-		conditions.push(
-			userIds.length === 1
-				? { userId: userIds[0] }
-				: { userId: { in: userIds } }
-		);
+		const userIds = Array.isArray(filters.userId) ? filters.userId : [filters.userId];
+		conditions.push(userIds.length === 1 ? { userId: userIds[0] } : { userId: { in: userIds } });
 	}
 
 	if (filters.providerId !== undefined) {
@@ -32,14 +21,12 @@ export function buildAccountsFilterConditions(
 		conditions.push(
 			providerIds.length === 1
 				? { providerId: providerIds[0] }
-				: { providerId: { in: providerIds } }
+				: { providerId: { in: providerIds } },
 		);
 	}
 
 	if (filters.accountId !== undefined) {
-		const accountIds = Array.isArray(filters.accountId)
-			? filters.accountId
-			: [filters.accountId];
+		const accountIds = Array.isArray(filters.accountId) ? filters.accountId : [filters.accountId];
 		if (accountIds.length === 1) {
 			conditions.push({
 				accountId: {
@@ -57,9 +44,7 @@ export function buildAccountsFilterConditions(
 	}
 
 	if (filters.scope !== undefined) {
-		const scopes = Array.isArray(filters.scope)
-			? filters.scope
-			: [filters.scope];
+		const scopes = Array.isArray(filters.scope) ? filters.scope : [filters.scope];
 		if (scopes.length === 1) {
 			conditions.push({
 				scope: { contains: scopes[0], mode: Prisma.QueryMode.insensitive },
@@ -73,15 +58,11 @@ export function buildAccountsFilterConditions(
 		}
 	}
 
-	if (filters.hasAccessToken === true)
-		conditions.push({ accessToken: { not: null } });
-	else if (filters.hasAccessToken === false)
-		conditions.push({ accessToken: null });
+	if (filters.hasAccessToken === true) conditions.push({ accessToken: { not: null } });
+	else if (filters.hasAccessToken === false) conditions.push({ accessToken: null });
 
-	if (filters.hasRefreshToken === true)
-		conditions.push({ refreshToken: { not: null } });
-	else if (filters.hasRefreshToken === false)
-		conditions.push({ refreshToken: null });
+	if (filters.hasRefreshToken === true) conditions.push({ refreshToken: { not: null } });
+	else if (filters.hasRefreshToken === false) conditions.push({ refreshToken: null });
 
 	if (filters.hasPassword === true) conditions.push({ password: { not: null } });
 	else if (filters.hasPassword === false) conditions.push({ password: null });
@@ -114,9 +95,7 @@ export function buildAccountsFilterConditions(
 	return conditions;
 }
 
-export function buildAccountsWhereClause(
-	params: GetAccountsInput
-): Prisma.AccountWhereInput {
+export function buildAccountsWhereClause(params: GetAccountsInput): Prisma.AccountWhereInput {
 	const whereClause: Prisma.AccountWhereInput = {};
 	const filterConditions = buildAccountsFilterConditions(params.filters ?? {});
 

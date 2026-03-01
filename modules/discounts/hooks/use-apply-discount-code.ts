@@ -49,21 +49,16 @@ export function useApplyDiscountCode(options?: UseApplyDiscountCodeOptions) {
 				onError: (result) => {
 					options?.onError?.(result?.message || "Code invalide");
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	/**
 	 * Helper pour créer le FormData et appeler l'action
 	 * Gère le trim, uppercase et Math.round automatiquement
 	 */
-	const applyCode = (
-		code: string,
-		subtotal: number,
-		userId?: string,
-		customerEmail?: string
-	) => {
+	const applyCode = (code: string, subtotal: number, userId?: string, customerEmail?: string) => {
 		const formData = new FormData();
 		formData.append("code", code.trim().toUpperCase());
 		formData.append("subtotal", Math.round(subtotal).toString());

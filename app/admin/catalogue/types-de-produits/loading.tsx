@@ -11,46 +11,49 @@ export default function ProductTypesLoading() {
 			{/* Page Header */}
 			<div className="mb-8 flex items-center justify-between">
 				<div className="space-y-3">
-					<Skeleton className="h-10 w-56 bg-linear-to-r from-primary/20 to-primary/10" />
-					<Skeleton className="h-6 w-96 bg-muted/30" />
+					<Skeleton className="from-primary/20 to-primary/10 h-10 w-56 bg-linear-to-r" />
+					<Skeleton className="bg-muted/30 h-6 w-96" />
 				</div>
-				<Skeleton className="h-10 w-48 bg-primary/30 rounded-md shadow-md" />
+				<Skeleton className="bg-primary/30 h-10 w-48 rounded-md shadow-md" />
 			</div>
 
 			<div className="space-y-6">
 				{/* Toolbar */}
-				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-					<Skeleton className="h-10 flex-1 sm:max-w-md bg-muted/40 rounded-md" />
-					<Skeleton className="h-10 w-full sm:w-48 bg-muted/40 rounded-md" />
+				<div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4">
+					<Skeleton className="bg-muted/40 h-10 flex-1 rounded-md sm:max-w-md" />
+					<Skeleton className="bg-muted/40 h-10 w-full rounded-md sm:w-48" />
 				</div>
 
 				{/* Data Table */}
-				<div className="rounded-lg border-2 border-primary/15 bg-linear-to-br from-primary/3 to-transparent overflow-hidden">
+				<div className="border-primary/15 from-primary/3 overflow-hidden rounded-lg border-2 bg-linear-to-br to-transparent">
 					{/* Table Header */}
-					<div className="border-b-2 border-primary/10 p-4 bg-linear-to-r from-primary/5 to-transparent">
-						<div className="grid grid-cols-12 gap-4 items-center">
-							<Skeleton className="h-5 w-5 bg-muted/40" />
-							<Skeleton className="h-5 w-12 col-span-2 bg-muted/50" />
-							<Skeleton className="h-5 w-24 col-span-3 bg-muted/50" />
-							<Skeleton className="h-5 w-32 col-span-3 bg-muted/40" />
-							<Skeleton className="h-5 w-20 col-span-2 bg-muted/40" />
-							<Skeleton className="h-5 w-8 bg-muted/40" />
+					<div className="border-primary/10 from-primary/5 border-b-2 bg-linear-to-r to-transparent p-4">
+						<div className="grid grid-cols-12 items-center gap-4">
+							<Skeleton className="bg-muted/40 h-5 w-5" />
+							<Skeleton className="bg-muted/50 col-span-2 h-5 w-12" />
+							<Skeleton className="bg-muted/50 col-span-3 h-5 w-24" />
+							<Skeleton className="bg-muted/40 col-span-3 h-5 w-32" />
+							<Skeleton className="bg-muted/40 col-span-2 h-5 w-20" />
+							<Skeleton className="bg-muted/40 h-5 w-8" />
 						</div>
 					</div>
 
 					{/* Table Rows */}
 					{Array.from({ length: 12 }).map((_, i) => (
-						<div key={i} className="border-b border-border last:border-0 p-4 hover:bg-primary/5 transition-colors">
-							<div className="grid grid-cols-12 gap-4 items-center">
-								<Skeleton className="h-5 w-5 bg-muted/30" />
-								<Skeleton className="h-10 w-10 col-span-2 rounded-full bg-muted/40" />
+						<div
+							key={i}
+							className="border-border hover:bg-primary/5 border-b p-4 transition-colors last:border-0"
+						>
+							<div className="grid grid-cols-12 items-center gap-4">
+								<Skeleton className="bg-muted/30 h-5 w-5" />
+								<Skeleton className="bg-muted/40 col-span-2 h-10 w-10 rounded-full" />
 								<div className="col-span-3 space-y-2">
-									<Skeleton className="h-4 w-full bg-muted/50" />
-									<Skeleton className="h-3 w-24 bg-muted/30" />
+									<Skeleton className="bg-muted/50 h-4 w-full" />
+									<Skeleton className="bg-muted/30 h-3 w-24" />
 								</div>
-								<Skeleton className="h-4 w-full col-span-3 bg-muted/40" />
-								<Skeleton className="h-4 w-12 col-span-2 bg-muted/40" />
-								<Skeleton className="h-8 w-8 rounded bg-muted/30" />
+								<Skeleton className="bg-muted/40 col-span-3 h-4 w-full" />
+								<Skeleton className="bg-muted/40 col-span-2 h-4 w-12" />
+								<Skeleton className="bg-muted/30 h-8 w-8 rounded" />
 							</div>
 						</div>
 					))}
@@ -58,11 +61,11 @@ export default function ProductTypesLoading() {
 
 				{/* Pagination */}
 				<div className="flex items-center justify-between">
-					<Skeleton className="h-5 w-40 bg-muted/30" />
+					<Skeleton className="bg-muted/30 h-5 w-40" />
 					<div className="flex items-center gap-2">
-						<Skeleton className="h-10 w-10 bg-muted/40 rounded-md" />
-						<Skeleton className="h-10 w-32 bg-muted/40 rounded-md" />
-						<Skeleton className="h-10 w-10 bg-muted/40 rounded-md" />
+						<Skeleton className="bg-muted/40 h-10 w-10 rounded-md" />
+						<Skeleton className="bg-muted/40 h-10 w-32 rounded-md" />
+						<Skeleton className="bg-muted/40 h-10 w-10 rounded-md" />
 					</div>
 				</div>
 			</div>

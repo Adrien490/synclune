@@ -11,9 +11,7 @@ import { fetchProductSkus } from "./fetch-skus";
 /**
  * Action serveur pour récupérer les SKUs de produits (admin uniquement)
  */
-export async function getProductSkus(
-	params: GetProductSkusParams
-): Promise<GetProductSkusReturn> {
+export async function getProductSkus(params: GetProductSkusParams): Promise<GetProductSkusReturn> {
 	try {
 		const admin = await isAdmin();
 
@@ -31,10 +29,7 @@ export async function getProductSkus(
 		let validatedParams = validation.data;
 
 		// Ajustement automatique du tri pour les admins
-		if (
-			validatedParams.sortBy === GET_PRODUCT_SKUS_DEFAULT_SORT_BY &&
-			!params?.sortBy
-		) {
+		if (validatedParams.sortBy === GET_PRODUCT_SKUS_DEFAULT_SORT_BY && !params?.sortBy) {
 			validatedParams = {
 				...validatedParams,
 				sortBy: GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY,

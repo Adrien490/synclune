@@ -13,17 +13,25 @@ import { parseRefundParams, parseRefundFilters } from "./_utils/params";
 import type { Metadata } from "next";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const ApproveRefundAlertDialog = dynamic(
-	() => import("@/modules/refunds/components/admin/approve-refund-alert-dialog").then((mod) => mod.ApproveRefundAlertDialog)
+const ApproveRefundAlertDialog = dynamic(() =>
+	import("@/modules/refunds/components/admin/approve-refund-alert-dialog").then(
+		(mod) => mod.ApproveRefundAlertDialog,
+	),
 );
-const ProcessRefundAlertDialog = dynamic(
-	() => import("@/modules/refunds/components/admin/process-refund-alert-dialog").then((mod) => mod.ProcessRefundAlertDialog)
+const ProcessRefundAlertDialog = dynamic(() =>
+	import("@/modules/refunds/components/admin/process-refund-alert-dialog").then(
+		(mod) => mod.ProcessRefundAlertDialog,
+	),
 );
-const RejectRefundAlertDialog = dynamic(
-	() => import("@/modules/refunds/components/admin/reject-refund-alert-dialog").then((mod) => mod.RejectRefundAlertDialog)
+const RejectRefundAlertDialog = dynamic(() =>
+	import("@/modules/refunds/components/admin/reject-refund-alert-dialog").then(
+		(mod) => mod.RejectRefundAlertDialog,
+	),
 );
-const CancelRefundAlertDialog = dynamic(
-	() => import("@/modules/refunds/components/admin/cancel-refund-alert-dialog").then((mod) => mod.CancelRefundAlertDialog)
+const CancelRefundAlertDialog = dynamic(() =>
+	import("@/modules/refunds/components/admin/cancel-refund-alert-dialog").then(
+		(mod) => mod.CancelRefundAlertDialog,
+	),
 );
 
 export type RefundFiltersSearchParams = {
@@ -50,15 +58,12 @@ type RefundsAdminPageProps = {
 	searchParams: Promise<RefundsSearchParams>;
 };
 
-export default async function RefundsAdminPage({
-	searchParams,
-}: RefundsAdminPageProps) {
+export default async function RefundsAdminPage({ searchParams }: RefundsAdminPageProps) {
 	await connection();
 
 	const params = await searchParams;
 
-	const { cursor, direction, perPage, sortBy, search } =
-		parseRefundParams(params);
+	const { cursor, direction, perPage, sortBy, search } = parseRefundParams(params);
 
 	// La promise de remboursements n'est PAS awaitée pour permettre le streaming
 	const refundsPromise = getRefunds({
@@ -72,16 +77,15 @@ export default async function RefundsAdminPage({
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title="Remboursements"
-			/>
+			<PageHeader variant="compact" title="Remboursements" />
 
 			<div className="space-y-6">
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des remboursements"
 					search={
-						<SearchInput mode="live" size="sm"
+						<SearchInput
+							mode="live"
+							size="sm"
 							paramName="search"
 							placeholder="Rechercher par numéro de commande, email client..."
 							ariaLabel="Rechercher un remboursement"

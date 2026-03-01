@@ -979,6 +979,7 @@ describe("WelcomeEmail", () => {
 	const baseProps = {
 		userName: "Marie",
 		shopUrl: "https://synclune.fr/produits",
+		newsletterUrl: "https://synclune.fr/#newsletter",
 	};
 
 	it("renders without error", async () => {

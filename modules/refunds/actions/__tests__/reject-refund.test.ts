@@ -301,9 +301,7 @@ describe("rejectRefund", () => {
 			success: true,
 			data: { id: "refund-1", reason: null },
 		});
-		mockPrisma.refund.findUnique.mockResolvedValue(
-			makeRefund({ note: "Note existante" }),
-		);
+		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ note: "Note existante" }));
 		mockPrisma.refund.update.mockResolvedValue({});
 
 		await rejectRefund(undefined, makeFormData());
@@ -368,8 +366,8 @@ describe("rejectRefund", () => {
 
 		await rejectRefund(undefined, makeFormData());
 
-		const userTagCalls = mockUpdateTag.mock.calls.filter(
-			([tag]) => (tag as string).startsWith("orders-user-"),
+		const userTagCalls = mockUpdateTag.mock.calls.filter(([tag]) =>
+			(tag as string).startsWith("orders-user-"),
 		);
 		expect(userTagCalls).toHaveLength(0);
 	});
@@ -474,9 +472,7 @@ describe("rejectRefund", () => {
 
 		await rejectRefund(undefined, makeFormData());
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("123.45"),
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("123.45"));
 	});
 
 	it("should delegate unexpected errors to handleActionError", async () => {

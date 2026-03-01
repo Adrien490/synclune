@@ -8,7 +8,7 @@ import { COLLECTIONS_CACHE_TAGS } from "@/modules/collections/constants/cache";
  * Fetches collections associated with a specific product
  */
 export async function getProductCollections(
-	productId: string
+	productId: string,
 ): Promise<{ id: string; name: string }[]> {
 	return fetchProductCollections(productId);
 }
@@ -16,15 +16,11 @@ export async function getProductCollections(
 /**
  * Fetches all available collections
  */
-export async function getAllCollections(): Promise<
-	{ id: string; name: string }[]
-> {
+export async function getAllCollections(): Promise<{ id: string; name: string }[]> {
 	return fetchAllCollections();
 }
 
-async function fetchProductCollections(
-	productId: string
-): Promise<{ id: string; name: string }[]> {
+async function fetchProductCollections(productId: string): Promise<{ id: string; name: string }[]> {
 	"use cache";
 	cacheLife("products");
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
@@ -44,9 +40,7 @@ async function fetchProductCollections(
 	}));
 }
 
-async function fetchAllCollections(): Promise<
-	{ id: string; name: string }[]
-> {
+async function fetchAllCollections(): Promise<{ id: string; name: string }[]> {
 	"use cache";
 	cacheLife("collections");
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);

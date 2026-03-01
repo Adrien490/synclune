@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import {
 	Select,
 	SelectContent,
@@ -77,7 +78,9 @@ function ResponsiveSelect({
 	"aria-invalid": ariaInvalid,
 	"aria-describedby": ariaDescribedby,
 }: ResponsiveSelectProps) {
-	const isMobile = useIsMobile();
+	const isMobileDetected = useIsMobile();
+	const mounted = useMounted();
+	const isMobile = mounted && isMobileDetected;
 
 	// Mobile: NativeSelect
 	if (isMobile) {

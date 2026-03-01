@@ -1,6 +1,11 @@
 import type { RefundStatus } from "@/app/generated/prisma/client";
 import type { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
-import type { sendAdminNewOrderEmail, sendAdminRefundFailedAlert, sendAdminDisputeAlert, sendAdminInvoiceFailedAlert } from "@/modules/emails/services/admin-emails";
+import type {
+	sendAdminNewOrderEmail,
+	sendAdminRefundFailedAlert,
+	sendAdminDisputeAlert,
+	sendAdminInvoiceFailedAlert,
+} from "@/modules/emails/services/admin-emails";
 import type { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import type { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
 
@@ -69,9 +74,7 @@ export interface WebhookHandlerResult {
 /**
  * Signature d'une fonction handler
  */
-export type WebhookHandler<T = unknown> = (
-	data: T
-) => Promise<WebhookHandlerResult | null>;
+export type WebhookHandler<T = unknown> = (data: T) => Promise<WebhookHandlerResult | null>;
 
 /**
  * Types d'événements Stripe supportés

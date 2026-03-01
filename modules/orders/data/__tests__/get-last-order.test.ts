@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockGetSession,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockGetSession, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findFirst: vi.fn() },
 	},
@@ -123,7 +118,7 @@ describe("getLastOrder", () => {
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-42" }),
-			})
+			}),
 		);
 	});
 });
@@ -162,7 +157,7 @@ describe("fetchLastOrder", () => {
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-1" }),
-			})
+			}),
 		);
 	});
 
@@ -172,7 +167,7 @@ describe("fetchLastOrder", () => {
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ paymentStatus: "PAID" }),
-			})
+			}),
 		);
 	});
 
@@ -182,7 +177,7 @@ describe("fetchLastOrder", () => {
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ deletedAt: null }),
-			})
+			}),
 		);
 	});
 
@@ -192,7 +187,7 @@ describe("fetchLastOrder", () => {
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				orderBy: { createdAt: "desc" },
-			})
+			}),
 		);
 	});
 
@@ -202,7 +197,7 @@ describe("fetchLastOrder", () => {
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, orderNumber: true },
-			})
+			}),
 		);
 	});
 

@@ -24,9 +24,9 @@ export const useBulkDeleteProductTypes = (options?: UseBulkDeleteProductTypesOpt
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

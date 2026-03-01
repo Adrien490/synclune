@@ -2,11 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ─── Mocks (hoisted to avoid reference errors) ──────────────────
 
-const {
-	mockTransaction,
-	mockSetTrigramThreshold,
-	mockSetStatementTimeout,
-} = vi.hoisted(() => ({
+const { mockTransaction, mockSetTrigramThreshold, mockSetStatementTimeout } = vi.hoisted(() => ({
 	mockTransaction: vi.fn(),
 	mockSetTrigramThreshold: vi.fn(),
 	mockSetStatementTimeout: vi.fn(),
@@ -61,7 +57,7 @@ function matchRow(
 	position: number,
 	matchWord: string | null,
 	similarity: number | null = null,
-	source: string | null = null
+	source: string | null = null,
 ): BatchResult {
 	return { inputWord, position, matchWord, similarity, source };
 }
@@ -104,28 +100,20 @@ describe("getSpellSuggestion", () => {
 		setupTransaction([]);
 		await getSpellSuggestion("colier");
 
-		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(
-			expect.anything(),
-			0.2
-		);
+		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(expect.anything(), 0.2);
 	});
 
 	it("sets dedicated timeout for suggestions", async () => {
 		setupTransaction([]);
 		await getSpellSuggestion("colier");
 
-		expect(mockSetStatementTimeout).toHaveBeenCalledWith(
-			expect.anything(),
-			1500
-		);
+		expect(mockSetStatementTimeout).toHaveBeenCalledWith(expect.anything(), 1500);
 	});
 
 	// ─── Single word suggestion ──────────────────────────────────
 
 	it("returns correction for a single misspelled word", async () => {
-		setupTransaction([
-			matchRow("colier", 0, "collier", 0.7, "product"),
-		]);
+		setupTransaction([matchRow("colier", 0, "collier", 0.7, "product")]);
 
 		const result = await getSpellSuggestion("colier");
 		expect(result).not.toBeNull();
@@ -135,9 +123,7 @@ describe("getSpellSuggestion", () => {
 	});
 
 	it("returns null when no correction found", async () => {
-		setupTransaction([
-			matchRow("xyzxyz", 0, null),
-		]);
+		setupTransaction([matchRow("xyzxyz", 0, null)]);
 
 		const result = await getSpellSuggestion("xyzxyz");
 		expect(result).toBeNull();
@@ -168,10 +154,7 @@ describe("getSpellSuggestion", () => {
 	});
 
 	it("returns null when no words need correction", async () => {
-		setupTransaction([
-			matchRow("collier", 0, null),
-			matchRow("argent", 1, null),
-		]);
+		setupTransaction([matchRow("collier", 0, null), matchRow("argent", 1, null)]);
 
 		const result = await getSpellSuggestion("collier argent");
 		expect(result).toBeNull();
@@ -191,10 +174,12 @@ describe("getSpellSuggestion", () => {
 	it("executes only one $queryRaw call for multi-word search", async () => {
 		let queryRawMock: ReturnType<typeof vi.fn>;
 		mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-			queryRawMock = vi.fn().mockResolvedValue([
-				matchRow("colier", 0, "collier", 0.7, "product"),
-				matchRow("argnt", 1, "argent", 0.6, "material"),
-			]);
+			queryRawMock = vi
+				.fn()
+				.mockResolvedValue([
+					matchRow("colier", 0, "collier", 0.7, "product"),
+					matchRow("argnt", 1, "argent", 0.6, "material"),
+				]);
 			const tx = { $queryRaw: queryRawMock };
 			return fn(tx);
 		});
@@ -207,9 +192,7 @@ describe("getSpellSuggestion", () => {
 
 	it("skips correction for very short words (< 2 chars)", async () => {
 		// Only "colier" is eligible, "a" is skipped
-		setupTransaction([
-			matchRow("colier", 1, "collier", 0.7, "product"),
-		]);
+		setupTransaction([matchRow("colier", 1, "collier", 0.7, "product")]);
 
 		const result = await getSpellSuggestion("a colier");
 		expect(result).not.toBeNull();
@@ -226,9 +209,7 @@ describe("getSpellSuggestion", () => {
 	});
 
 	it("returns null on timeout", async () => {
-		mockTransaction.mockImplementation(
-			() => new Promise((resolve) => setTimeout(resolve, 5000))
-		);
+		mockTransaction.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 5000)));
 
 		const result = await getSpellSuggestion("colier");
 		expect(result).toBeNull();

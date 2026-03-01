@@ -1,7 +1,11 @@
 import { Reveal, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
-import { PolaroidFrame, type WashiTapeColor, type WashiTapePosition } from "@/shared/components/polaroid-frame";
+import {
+	PolaroidFrame,
+	type WashiTapeColor,
+	type WashiTapePosition,
+} from "@/shared/components/polaroid-frame";
 import { cn } from "@/shared/utils/cn";
 import { PolaroidDoodles } from "./polaroid-doodles";
 
@@ -87,20 +91,21 @@ const POLAROIDS: PolaroidConfig[] = [
 
 export function PolaroidGallery() {
 	return (
-		<Reveal y={MOTION_CONFIG.section.grid.y} delay={0.3} duration={MOTION_CONFIG.section.title.duration} once>
+		<Reveal
+			y={MOTION_CONFIG.section.grid.y}
+			delay={0.3}
+			duration={MOTION_CONFIG.section.title.duration}
+			once
+		>
 			<div className="mt-12 sm:mt-16">
-				<div
-					role="region"
-					aria-label="Galerie photos de l'atelier Synclune"
-					className="relative"
-				>
+				<div role="region" aria-label="Galerie photos de l'atelier Synclune" className="relative">
 					<PolaroidDoodles />
 					<Stagger
 						stagger={MOTION_CONFIG.stagger.slow}
 						y={MOTION_CONFIG.section.grid.y}
 						inView
 						once
-						className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-2 max-w-5xl mx-auto"
+						className="mx-auto grid max-w-5xl grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-2"
 					>
 						{POLAROIDS.map((p) => (
 							<PolaroidFrame
@@ -117,10 +122,10 @@ export function PolaroidGallery() {
 									p.className,
 									p.scatterClass,
 									"motion-safe:transition-shadow motion-safe:duration-300",
-									GLOW_CLASSES[p.glowColor]
+									GLOW_CLASSES[p.glowColor],
 								)}
 							>
-								<PlaceholderImage className="w-full h-full" label={p.label} />
+								<PlaceholderImage className="h-full w-full" label={p.label} />
 							</PolaroidFrame>
 						))}
 					</Stagger>

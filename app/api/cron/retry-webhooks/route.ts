@@ -1,4 +1,9 @@
-import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
+import {
+	verifyCronRequest,
+	cronTimer,
+	cronSuccess,
+	cronError,
+} from "@/modules/cron/lib/verify-cron";
 import { retryFailedWebhooks } from "@/modules/cron/services/retry-webhooks.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
@@ -29,13 +34,14 @@ export async function GET() {
 			}).catch((e) => console.error("[CRON:retry-webhooks] Failed to send admin alert", e));
 		}
 
-		return cronSuccess({
-			job: "retry-webhooks",
-			...result,
-		}, startTime);
-	} catch (error) {
-		return cronError(
-			error instanceof Error ? error.message : "Failed to retry webhooks"
+		return cronSuccess(
+			{
+				job: "retry-webhooks",
+				...result,
+			},
+			startTime,
 		);
+	} catch (error) {
+		return cronError(error instanceof Error ? error.message : "Failed to retry webhooks");
 	}
 }

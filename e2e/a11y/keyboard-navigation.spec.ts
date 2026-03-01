@@ -247,4 +247,69 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 			).toBe(true);
 		}
 	});
+
+	test("mega menu desktop - Tab ouvre le sous-menu, Escape le ferme", async ({ page }) => {
+		// Desktop viewport
+		await page.setViewportSize({ width: 1280, height: 800 });
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Find NavigationMenu triggers (Les créations, Les collections)
+		const navTriggers = page.locator(
+			'nav[aria-label="Navigation principale"] button[data-radix-navigation-menu-trigger]',
+		);
+		if ((await navTriggers.count()) === 0) {
+			test.skip(true, "Pas de mega menu desktop");
+			return;
+		}
+
+		const trigger = navTriggers.first();
+		await trigger.focus();
+		await expect(trigger).toBeFocused();
+
+		// Enter/Space opens the mega menu content
+		await page.keyboard.press("Enter");
+		await page.waitForTimeout(200);
+
+		const menuContent = page.locator("[data-radix-navigation-menu-content]").first();
+		if ((await menuContent.count()) > 0) {
+			await expect(menuContent).toBeVisible();
+
+			// Tab navigates inside the mega menu links
+			await page.keyboard.press("Tab");
+			const focusedInMenu = await page.evaluate(() => {
+				const content = document.querySelector("[data-radix-navigation-menu-content]");
+				return content?.contains(document.activeElement);
+			});
+			expect(focusedInMenu).toBe(true);
+
+			// Escape closes the mega menu
+			await page.keyboard.press("Escape");
+			await expect(menuContent).not.toBeVisible();
+		}
+	});
+
+	test("pagination - Tab vers boutons page, Enter change de page", async ({ page }) => {
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Look for pagination navigation
+		const pagination = page.getByRole("navigation", { name: /pagination/i });
+		if ((await pagination.count()) === 0) {
+			test.skip(true, "Pas de pagination sur la page produits");
+			return;
+		}
+
+		// Find page buttons or links inside pagination
+		const pageLinks = pagination.locator("a, button").first();
+		if ((await pageLinks.count()) === 0) return;
+
+		await pageLinks.focus();
+		await expect(pageLinks).toBeFocused();
+
+		// Verify the pagination element is keyboard accessible
+		const href = await pageLinks.getAttribute("href");
+		const role = await pageLinks.evaluate((el) => el.tagName.toLowerCase());
+		expect(href || role === "button").toBeTruthy();
+	});
 });

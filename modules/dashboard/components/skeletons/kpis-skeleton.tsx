@@ -1,3 +1,4 @@
+import { cn } from "@/shared/utils/cn";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { CHART_STYLES } from "../../constants/chart-styles";
@@ -15,7 +16,7 @@ interface KpisSkeletonProps {
  */
 function KpiCardSkeleton() {
 	return (
-		<Card className={`${CHART_STYLES.card} min-h-35`}>
+		<Card className={cn(CHART_STYLES.card, "min-h-35")}>
 			{/* Header avec titre et icone */}
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 				<Skeleton className="h-4 w-24" /> {/* Titre */}
@@ -23,7 +24,7 @@ function KpiCardSkeleton() {
 			</CardHeader>
 			{/* Contenu avec valeur et evolution */}
 			<CardContent>
-				<Skeleton className="h-9 w-32 mb-2" /> {/* Valeur (text-3xl) */}
+				<Skeleton className="mb-2 h-9 w-32" /> {/* Valeur (text-3xl) */}
 				<div className="flex items-center gap-2">
 					<Skeleton className="h-4 w-12" /> {/* Evolution % */}
 					<Skeleton className="h-5 w-16 rounded-full" /> {/* Badge optionnel */}
@@ -53,7 +54,7 @@ export function KpisSkeleton({
 			role="status"
 			aria-busy="true"
 			aria-label={ariaLabel}
-			className={`grid ${CHART_STYLES.spacing.kpiGap} md:grid-cols-2 ${gridCols}`}
+			className={cn("grid", CHART_STYLES.spacing.kpiGap, "md:grid-cols-2", gridCols)}
 		>
 			{[...Array(count)].map((_, i) => (
 				<KpiCardSkeleton key={i} />

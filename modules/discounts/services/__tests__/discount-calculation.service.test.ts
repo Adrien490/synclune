@@ -15,11 +15,7 @@ import { DiscountType } from "@/app/generated/prisma/client";
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeItem(
-	priceInclTax: number,
-	quantity: number,
-	compareAtPrice: number | null = null
-) {
+function makeItem(priceInclTax: number, quantity: number, compareAtPrice: number | null = null) {
 	return { priceInclTax, quantity, compareAtPrice };
 }
 
@@ -180,10 +176,7 @@ describe("calculateEligibleSubtotal", () => {
 	});
 
 	it("should return 0 eligibleSubtotal when all items are sale items and excludeSaleItems is true", () => {
-		const items = [
-			makeItem(2000, 1, 4000),
-			makeItem(1500, 3, 2500),
-		];
+		const items = [makeItem(2000, 1, 4000), makeItem(1500, 3, 2500)];
 
 		const result = calculateEligibleSubtotal(items, true);
 
@@ -242,10 +235,7 @@ describe("calculateDiscountWithExclusion", () => {
 		});
 
 		it("should return 0 when all items are excluded and eligibleSubtotal is 0", () => {
-			const cartItems = [
-				makeItem(5000, 1, 7000),
-				makeItem(3000, 2, 4000),
-			];
+			const cartItems = [makeItem(5000, 1, 7000), makeItem(3000, 2, 4000)];
 
 			const result = calculateDiscountWithExclusion({
 				type: DiscountType.PERCENTAGE,
@@ -289,7 +279,7 @@ describe("calculateDiscountWithExclusion", () => {
 		it("should cap fixed amount at the eligible subtotal, not the total subtotal", () => {
 			const cartItems = [
 				makeItem(8000, 1, 10000), // sale item → excluded (eligible subtotal = 3000)
-				makeItem(3000, 1, null),   // full price
+				makeItem(3000, 1, null), // full price
 			];
 
 			// Fixed 5000, eligible = 3000 → capped at 3000

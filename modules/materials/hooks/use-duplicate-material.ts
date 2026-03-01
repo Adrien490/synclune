@@ -31,9 +31,9 @@ export function useDuplicateMaterial(options?: UseDuplicateMaterialOptions) {
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const duplicate = (materialId: string) => {

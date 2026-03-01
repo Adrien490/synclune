@@ -82,7 +82,7 @@ describe("GET /api/cron/process-scheduled-discounts", () => {
 		mockProcessScheduledDiscounts.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -134,7 +134,7 @@ describe("GET /api/cron/process-scheduled-discounts", () => {
 				expect.objectContaining({
 					job: "process-scheduled-discounts",
 				}),
-				1000
+				1000,
 			);
 		});
 
@@ -171,7 +171,7 @@ describe("GET /api/cron/process-scheduled-discounts", () => {
 				expect.objectContaining({
 					job: "process-scheduled-discounts",
 					errors: 1,
-				})
+				}),
 			);
 		});
 
@@ -183,7 +183,7 @@ describe("GET /api/cron/process-scheduled-discounts", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ error: "DB error" }),
-				})
+				}),
 			);
 		});
 
@@ -195,7 +195,7 @@ describe("GET /api/cron/process-scheduled-discounts", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ error: "string error value" }),
-				})
+				}),
 			);
 		});
 

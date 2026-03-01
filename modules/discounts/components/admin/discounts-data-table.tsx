@@ -26,10 +26,7 @@ interface DiscountsDataTableProps {
 	perPage: number;
 }
 
-export async function DiscountsDataTable({
-	discountsPromise,
-	perPage,
-}: DiscountsDataTableProps) {
+export async function DiscountsDataTable({ discountsPromise, perPage }: DiscountsDataTableProps) {
 	const { discounts, pagination } = await discountsPromise;
 	const discountIds = discounts.map((discount) => discount.id);
 	const discountsData = discounts.map((discount) => ({
@@ -55,7 +52,7 @@ export async function DiscountsDataTable({
 	const getTemporalStatus = (
 		startsAt: Date | null,
 		endsAt: Date | null,
-		isActive: boolean
+		isActive: boolean,
 	): { label: string; variant: "default" | "secondary" | "outline" } => {
 		if (!isActive) {
 			return { label: "Inactif", variant: "secondary" };
@@ -84,35 +81,21 @@ export async function DiscountsDataTable({
 	return (
 		<Card>
 			<CardContent>
-				<DiscountsSelectionToolbar
-					discountIds={discountIds}
-					discounts={discountsData}
-				/>
+				<DiscountsSelectionToolbar discountIds={discountIds} discounts={discountsData} />
 				<TableScrollContainer>
 					<Table aria-label="Liste des codes promo" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
-									<TableSelectionCell
-										type="header"
-										itemIds={discountIds}
-									/>
+									<TableSelectionCell type="header" itemIds={discountIds} />
 								</TableHead>
-								<TableHead className="w-[20%]">
-									Code
-								</TableHead>
-								<TableHead className="hidden sm:table-cell w-[15%]">
-									Type
-								</TableHead>
-								<TableHead className="w-[12%]">
-									Valeur
-								</TableHead>
-								<TableHead className="hidden md:table-cell w-[15%] text-center">
+								<TableHead className="w-[20%]">Code</TableHead>
+								<TableHead className="hidden w-[15%] sm:table-cell">Type</TableHead>
+								<TableHead className="w-[12%]">Valeur</TableHead>
+								<TableHead className="hidden w-[15%] text-center md:table-cell">
 									Utilisations
 								</TableHead>
-								<TableHead className="w-[10%] text-center">
-									Statut
-								</TableHead>
+								<TableHead className="w-[10%] text-center">Statut</TableHead>
 								<TableHead
 									className="w-[10%] text-right"
 									aria-label="Actions disponibles pour chaque code promo"
@@ -122,60 +105,59 @@ export async function DiscountsDataTable({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{discounts.map((discount) => (
-									<TableRow key={discount.id}>
-										<TableCell>
-											<TableSelectionCell
-												type="row"
-												itemId={discount.id}
-											/>
-										</TableCell>
-										<TableCell>
-										<code className="text-sm font-semibold bg-muted px-2 py-1 rounded">
+							{discounts.map((discount) => (
+								<TableRow key={discount.id}>
+									<TableCell>
+										<TableSelectionCell type="row" itemId={discount.id} />
+									</TableCell>
+									<TableCell>
+										<code className="bg-muted rounded px-2 py-1 text-sm font-semibold">
 											{discount.code}
 										</code>
 									</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell">
-											<span className="text-sm text-muted-foreground">
-												{DISCOUNT_TYPE_LABELS[discount.type]}
-											</span>
-										</TableCell>
-										<TableCell>
-											<span className="text-sm font-medium">
-												{formatValue(discount.type, discount.value)}
-											</span>
-										</TableCell>
-										<TableCell role="gridcell" className="hidden md:table-cell text-center">
-											<span className="text-sm">
-												{formatUsage(discount.usageCount, discount.maxUsageCount)}
-											</span>
-										</TableCell>
-										<TableCell role="gridcell" className="text-center">
-											{(() => {
-												const status = getTemporalStatus(
-													discount.startsAt,
-													discount.endsAt,
-													discount.isActive
-												);
-												return (
-													<Badge
-														variant={status.variant}
-														className={status.variant === "default" ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
-													>
-														{status.label}
-													</Badge>
-												);
-											})()}
-										</TableCell>
-										<TableCell>
-											<div className="flex justify-end">
-												<DiscountRowActions
-													discount={discount}
-												/>
-											</div>
-										</TableCell>
-									</TableRow>
-								))}
+									<TableCell role="gridcell" className="hidden sm:table-cell">
+										<span className="text-muted-foreground text-sm">
+											{DISCOUNT_TYPE_LABELS[discount.type]}
+										</span>
+									</TableCell>
+									<TableCell>
+										<span className="text-sm font-medium">
+											{formatValue(discount.type, discount.value)}
+										</span>
+									</TableCell>
+									<TableCell role="gridcell" className="hidden text-center md:table-cell">
+										<span className="text-sm">
+											{formatUsage(discount.usageCount, discount.maxUsageCount)}
+										</span>
+									</TableCell>
+									<TableCell role="gridcell" className="text-center">
+										{(() => {
+											const status = getTemporalStatus(
+												discount.startsAt,
+												discount.endsAt,
+												discount.isActive,
+											);
+											return (
+												<Badge
+													variant={status.variant}
+													className={
+														status.variant === "default"
+															? "bg-green-100 text-green-800 hover:bg-green-100"
+															: ""
+													}
+												>
+													{status.label}
+												</Badge>
+											);
+										})()}
+									</TableCell>
+									<TableCell>
+										<div className="flex justify-end">
+											<DiscountRowActions discount={discount} />
+										</div>
+									</TableCell>
+								</TableRow>
+							))}
 						</TableBody>
 					</Table>
 				</TableScrollContainer>

@@ -106,9 +106,7 @@ describe("buildInventoryFilterConditions", () => {
 	});
 
 	it("should filter by multiple productTypeIds using in operator", () => {
-		const result = buildInventoryFilterConditions(
-			filters({ productTypeId: ["type-1", "type-2"] })
-		);
+		const result = buildInventoryFilterConditions(filters({ productTypeId: ["type-1", "type-2"] }));
 		expect(result.product).toEqual({ typeId: { in: ["type-1", "type-2"] } });
 	});
 
@@ -118,9 +116,7 @@ describe("buildInventoryFilterConditions", () => {
 	});
 
 	it("should filter by multiple colorIds using in operator", () => {
-		const result = buildInventoryFilterConditions(
-			filters({ colorId: ["color-1", "color-2"] })
-		);
+		const result = buildInventoryFilterConditions(filters({ colorId: ["color-1", "color-2"] }));
 		expect(result.colorId).toEqual({ in: ["color-1", "color-2"] });
 	});
 
@@ -130,15 +126,13 @@ describe("buildInventoryFilterConditions", () => {
 	});
 
 	it("should filter by multiple materials using in operator", () => {
-		const result = buildInventoryFilterConditions(
-			filters({ material: ["Argent 925", "Or 18k"] })
-		);
+		const result = buildInventoryFilterConditions(filters({ material: ["Argent 925", "Or 18k"] }));
 		expect(result.material).toEqual({ name: { in: ["Argent 925", "Or 18k"] } });
 	});
 
 	it("should combine multiple filter conditions", () => {
 		const result = buildInventoryFilterConditions(
-			filters({ colorId: "color-1", material: "Argent 925" })
+			filters({ colorId: "color-1", material: "Argent 925" }),
 		);
 		expect(result.colorId).toBe("color-1");
 		expect(result.material).toEqual({ name: "Argent 925" });
@@ -162,15 +156,13 @@ describe("buildInventoryWhereClause", () => {
 	});
 
 	it("should include filter conditions when filters are set", () => {
-		const result = buildInventoryWhereClause(
-			params({ filters: filters({ colorId: "color-1" }) })
-		);
+		const result = buildInventoryWhereClause(params({ filters: filters({ colorId: "color-1" }) }));
 		expect(result.colorId).toBe("color-1");
 	});
 
 	it("should apply stock level critical filter with AND clause", () => {
 		const result = buildInventoryWhereClause(
-			params({ filters: filters({ stockLevel: "critical" }) })
+			params({ filters: filters({ stockLevel: "critical" }) }),
 		);
 		expect(result.AND).toBeDefined();
 		const andArr = result.AND as unknown[];
@@ -178,25 +170,21 @@ describe("buildInventoryWhereClause", () => {
 	});
 
 	it("should apply stock level low filter", () => {
-		const result = buildInventoryWhereClause(
-			params({ filters: filters({ stockLevel: "low" }) })
-		);
+		const result = buildInventoryWhereClause(params({ filters: filters({ stockLevel: "low" }) }));
 		const andArr = result.AND as unknown[];
 		expect(andArr).toContainEqual({ inventory: { lt: 3 } });
 	});
 
 	it("should apply stock level normal filter with gte and lte", () => {
 		const result = buildInventoryWhereClause(
-			params({ filters: filters({ stockLevel: "normal" }) })
+			params({ filters: filters({ stockLevel: "normal" }) }),
 		);
 		const andArr = result.AND as unknown[];
 		expect(andArr).toContainEqual({ inventory: { gte: 3, lte: 50 } });
 	});
 
 	it("should apply stock level high filter", () => {
-		const result = buildInventoryWhereClause(
-			params({ filters: filters({ stockLevel: "high" }) })
-		);
+		const result = buildInventoryWhereClause(params({ filters: filters({ stockLevel: "high" }) }));
 		const andArr = result.AND as unknown[];
 		expect(andArr).toContainEqual({ inventory: { gt: 50 } });
 	});
@@ -206,7 +194,7 @@ describe("buildInventoryWhereClause", () => {
 			params({
 				search: "bague",
 				filters: filters({ colorId: "color-1", stockLevel: "low" }),
-			})
+			}),
 		);
 		// With stockLevel, AND wraps baseConditions + stockLevel condition
 		expect(result.AND).toBeDefined();

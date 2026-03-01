@@ -1,18 +1,18 @@
-"use server"
+"use server";
 
-import { updateTag } from "next/cache"
-import { cookies } from "next/headers"
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
-import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config"
-import { success, handleActionError, validateInput } from "@/shared/lib/actions"
-import type { ActionState } from "@/shared/types/server-action"
+import { updateTag } from "next/cache";
+import { cookies } from "next/headers";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { success, handleActionError, validateInput } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
 import {
 	RECENT_SEARCHES_COOKIE_NAME,
 	RECENT_SEARCHES_COOKIE_MAX_AGE,
 	RECENT_SEARCHES_MAX_ITEMS,
-} from "../constants/recent-searches"
-import { addRecentSearchSchema } from "../schemas/recent-searches.schemas"
-import { getRecentSearchesInvalidationTags } from "../constants/cache"
+} from "../constants/recent-searches";
+import { addRecentSearchSchema } from "../schemas/recent-searches.schemas";
+import { getRecentSearchesInvalidationTags } from "../constants/cache";
 
 /**
  * Server Action pour ajouter une recherche recente
@@ -20,37 +20,37 @@ import { getRecentSearchesInvalidationTags } from "../constants/cache"
  */
 export async function addRecentSearch(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION)
-		if ("error" in rateCheck) return rateCheck.error
+		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_LIMITS.COOKIE_ACTION);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		const validation = validateInput(addRecentSearchSchema, {
 			term: formData.get("term"),
-		})
+		});
 
 		if ("error" in validation) {
-			return validation.error
+			return validation.error;
 		}
 
-		const { term } = validation.data
+		const { term } = validation.data;
 
-		const cookieStore = await cookies()
-		const existingCookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME)
+		const cookieStore = await cookies();
+		const existingCookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME);
 
 		// Recuperer les recherches existantes
-		let searches: string[] = []
+		let searches: string[] = [];
 		if (existingCookie?.value) {
 			try {
-				const parsed = JSON.parse(decodeURIComponent(existingCookie.value))
+				const parsed = JSON.parse(decodeURIComponent(existingCookie.value));
 				if (Array.isArray(parsed)) {
-					searches = parsed
+					searches = parsed;
 				}
 			} catch (parseError) {
 				// Cookie corrompu - reset silencieux mais loggé
 				if (process.env.NODE_ENV === "development") {
-					console.error("[addRecentSearch] Cookie corrompu, reset:", parseError)
+					console.error("[addRecentSearch] Cookie corrompu, reset:", parseError);
 				}
 			}
 		}
@@ -58,8 +58,8 @@ export async function addRecentSearch(
 		// Ajouter la nouvelle recherche en premier (sans doublons)
 		const updated = [term, ...searches.filter((s) => s !== term)].slice(
 			0,
-			RECENT_SEARCHES_MAX_ITEMS
-		)
+			RECENT_SEARCHES_MAX_ITEMS,
+		);
 
 		// Sauvegarder dans le cookie
 		cookieStore.set(RECENT_SEARCHES_COOKIE_NAME, encodeURIComponent(JSON.stringify(updated)), {
@@ -68,14 +68,14 @@ export async function addRecentSearch(
 			httpOnly: true,
 			sameSite: "strict",
 			secure: process.env.NODE_ENV === "production",
-		})
+		});
 
 		// Invalider le cache
-		const tags = getRecentSearchesInvalidationTags()
-		tags.forEach((tag) => updateTag(tag))
+		const tags = getRecentSearchesInvalidationTags();
+		tags.forEach((tag) => updateTag(tag));
 
-		return success("Recherche ajoutée", { searches: updated })
+		return success("Recherche ajoutée", { searches: updated });
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de l'ajout")
+		return handleActionError(e, "Erreur lors de l'ajout");
 	}
 }

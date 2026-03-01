@@ -37,10 +37,7 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 		<div className="space-y-6">
 			<OrderHeader order={order} notesCount={notesCount} />
 
-			<OrderProgressStepper
-				status={order.status}
-				paymentStatus={order.paymentStatus}
-			/>
+			<OrderProgressStepper status={order.status} paymentStatus={order.paymentStatus} />
 
 			<OrderAlerts
 				status={order.status}
@@ -52,7 +49,7 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 
 			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Left column - 2/3 */}
-				<div className="lg:col-span-2 space-y-6">
+				<div className="space-y-6 lg:col-span-2">
 					<OrderItemsCard
 						items={order.items}
 						subtotal={order.subtotal}
@@ -63,10 +60,7 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 					/>
 
 					{(order.trackingNumber || order.shippedAt) && (
-						<OrderShippingCard
-							order={order}
-							canUpdateTracking={canUpdateTracking}
-						/>
+						<OrderShippingCard order={order} canUpdateTracking={canUpdateTracking} />
 					)}
 				</div>
 
@@ -74,11 +68,7 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 				<div className="space-y-6">
 					<OrderCustomerCard order={order} />
 
-					<OrderRefundsCard
-						refunds={refunds}
-						orderId={order.id}
-						canRefund={canRefund}
-					/>
+					<OrderRefundsCard refunds={refunds} orderId={order.id} canRefund={canRefund} />
 
 					<OrderAddressCard order={order} />
 

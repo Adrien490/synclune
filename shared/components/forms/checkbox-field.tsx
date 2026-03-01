@@ -1,9 +1,5 @@
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import {
-	Field,
-	FieldError,
-	FieldLabel,
-} from "@/shared/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
 import { ReactNode } from "react";
@@ -26,10 +22,7 @@ export const CheckboxField = ({
 	const field = useFieldContext<boolean>();
 
 	return (
-		<Field
-			orientation="vertical"
-			data-invalid={field.state.meta.errors.length > 0}
-		>
+		<Field orientation="vertical" data-invalid={field.state.meta.errors.length > 0}>
 			<div className="flex items-start gap-3">
 				<Checkbox
 					disabled={disabled}
@@ -41,18 +34,12 @@ export const CheckboxField = ({
 					}}
 					onBlur={field.handleBlur}
 					aria-invalid={field.state.meta.errors.length > 0}
-					aria-describedby={
-						field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
-					}
+					aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
 					aria-required={required}
 					className={cn("mt-1", className)}
 					{...props}
 				/>
-				<input
-					type="hidden"
-					name={field.name}
-					value={field.state.value ? "true" : "false"}
-				/>
+				<input type="hidden" name={field.name} value={field.state.value ? "true" : "false"} />
 				{label && (
 					<FieldLabel htmlFor={field.name}>
 						{label}

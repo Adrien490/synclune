@@ -11,12 +11,7 @@ import {
 	bottomBarIconClass,
 	bottomBarLabelClass,
 } from "@/shared/components/bottom-bar";
-import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-} from "@/shared/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/shared/components/ui/sheet";
 import { Separator } from "@/shared/components/ui/separator";
 import { ROUTES } from "@/shared/constants/urls";
 import {
@@ -69,9 +64,7 @@ const navItems = [
 	},
 ] as const;
 
-const mobileItems = navItems.filter(
-	(item) => !("desktopOnly" in item && item.desktopOnly)
-);
+const mobileItems = navItems.filter((item) => !("desktopOnly" in item && item.desktopOnly));
 
 interface AccountNavProps {
 	/** Variant pour afficher seulement mobile ou desktop */
@@ -85,9 +78,7 @@ interface AccountNavProps {
  *
  * @param variant - "full" (defaut) affiche les deux, "mobile-only" ou "desktop-only"
  */
-const desktopOnlyItems = navItems.filter(
-	(item) => "desktopOnly" in item && item.desktopOnly
-);
+const desktopOnlyItems = navItems.filter((item) => "desktopOnly" in item && item.desktopOnly);
 
 export function AccountNav({ variant = "full" }: AccountNavProps) {
 	const pathname = usePathname();
@@ -107,11 +98,8 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 		<>
 			{/* Desktop Sidebar */}
 			{showDesktop && (
-				<aside className="hidden lg:block w-56 shrink-0 sticky top-28">
-					<nav
-						className="flex flex-col gap-1"
-						aria-label="Navigation espace client"
-					>
+				<aside className="sticky top-28 hidden w-56 shrink-0 lg:block">
+					<nav className="flex flex-col gap-1" aria-label="Navigation espace client">
 						{navItems.map((item) => {
 							const active = isActive(item.href);
 							const Icon = item.icon;
@@ -122,10 +110,10 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 									href={item.href}
 									aria-current={active ? "page" : undefined}
 									className={cn(
-										"flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border-l-2",
+										"flex items-center gap-2.5 rounded-lg border-l-2 px-4 py-2.5 text-sm font-medium transition-colors",
 										active
 											? "bg-muted text-foreground border-primary"
-											: "text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
+											: "text-muted-foreground hover:bg-muted hover:text-foreground border-transparent",
 									)}
 								>
 									<Icon className="size-4 shrink-0" aria-hidden="true" />
@@ -134,12 +122,12 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 							);
 						})}
 
-						<div className="my-2 border-t border-border" />
+						<div className="border-border my-2 border-t" />
 
 						<LogoutAlertDialog>
 							<button
 								type="button"
-								className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full text-left border-l-2 border-transparent"
+								className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center gap-2.5 rounded-lg border-l-2 border-transparent px-4 py-2.5 text-left text-sm font-medium transition-colors"
 							>
 								<LogOut className="size-4 shrink-0" aria-hidden="true" />
 								Se déconnecter
@@ -196,10 +184,7 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 						<SheetHeader>
 							<SheetTitle>Plus d'options</SheetTitle>
 						</SheetHeader>
-						<nav
-							className="flex flex-col gap-1 px-4 pb-4"
-							aria-label="Navigation supplementaire"
-						>
+						<nav className="flex flex-col gap-1 px-4 pb-4" aria-label="Navigation supplementaire">
 							{desktopOnlyItems.map((item) => {
 								const Icon = item.icon;
 								const active = isActive(item.href);
@@ -210,10 +195,10 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 										onClick={() => setMoreOpen(false)}
 										aria-current={active ? "page" : undefined}
 										className={cn(
-											"flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+											"flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
 											active
 												? "bg-muted text-foreground"
-												: "text-muted-foreground hover:bg-muted hover:text-foreground"
+												: "text-muted-foreground hover:bg-muted hover:text-foreground",
 										)}
 									>
 										<Icon className="size-4 shrink-0" aria-hidden="true" />
@@ -225,7 +210,7 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 							<LogoutAlertDialog>
 								<button
 									type="button"
-									className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full text-left"
+									className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-colors"
 								>
 									<LogOut className="size-4 shrink-0" aria-hidden="true" />
 									Se deconnecter

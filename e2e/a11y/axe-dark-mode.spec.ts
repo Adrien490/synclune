@@ -1,6 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { test, expect } from "../fixtures";
+import { expectNoA11yViolations } from "../helpers/axe";
 
 async function enableDarkMode(page: Page) {
 	await page.evaluate(() => document.documentElement.classList.add("dark"));
@@ -18,6 +18,13 @@ test.describe("Accessibilité - Dark mode axe-core", { tag: ["@slow"] }, () => {
 		{ path: "/personnalisation", name: "Personnalisation" },
 		{ path: "/inscription", name: "Inscription" },
 		{ path: "/mot-de-passe-oublie", name: "Mot de passe oublié" },
+		// Added pages
+		{ path: "/a-propos", name: "À propos" },
+		{ path: "/reinitialiser-mot-de-passe", name: "Réinitialiser mot de passe" },
+		{ path: "/renvoyer-verification", name: "Renvoyer vérification" },
+		{ path: "/verifier-email", name: "Vérifier email" },
+		{ path: "/cgv", name: "CGV" },
+		{ path: "/~offline", name: "Page offline" },
 	];
 
 	for (const { path, name } of pagesToAudit) {
@@ -26,18 +33,7 @@ test.describe("Accessibilité - Dark mode axe-core", { tag: ["@slow"] }, () => {
 			await page.waitForLoadState("domcontentloaded");
 			await enableDarkMode(page);
 
-			const results = await new AxeBuilder({ page })
-				.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-				.analyze();
-
-			if (results.violations.length > 0) {
-				const summary = results.violations
-					.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-					.join("\n");
-				expect(results.violations, `Violations WCAG dark mode sur ${name}:\n${summary}`).toEqual(
-					[],
-				);
-			}
+			await expectNoA11yViolations(page, { context: `${name} (dark mode)` });
 		});
 	}
 
@@ -56,19 +52,43 @@ test.describe("Accessibilité - Dark mode axe-core", { tag: ["@slow"] }, () => {
 		await page.waitForLoadState("domcontentloaded");
 		await enableDarkMode(page);
 
-		const results = await new AxeBuilder({ page })
-			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-			.exclude(".particle-background")
-			.analyze();
+		await expectNoA11yViolations(page, { context: "Fiche produit (dark mode)" });
+	});
 
-		if (results.violations.length > 0) {
-			const summary = results.violations
-				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-				.join("\n");
-			expect(results.violations, `Violations WCAG dark mode fiche produit:\n${summary}`).toEqual(
-				[],
-			);
+	test("Page catégorie passe l'audit axe-core WCAG AA en dark mode", async ({ page }) => {
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		const categoryLink = page.locator("a[href*='/produits/']").first();
+		if ((await categoryLink.count()) === 0) {
+			test.skip(true, "Pas de catégories de produits");
+			return;
 		}
+		const href = await categoryLink.getAttribute("href");
+		if (!href || href === "/produits") return;
+		await page.goto(href);
+		await page.waitForLoadState("domcontentloaded");
+		await enableDarkMode(page);
+
+		await expectNoA11yViolations(page, { context: "Catégorie produits (dark mode)" });
+	});
+
+	test("Collection detail passe l'audit axe-core WCAG AA en dark mode", async ({ page }) => {
+		await page.goto("/collections");
+		await page.waitForLoadState("domcontentloaded");
+
+		const firstLink = page.locator("a[href*='/collections/']").first();
+		if ((await firstLink.count()) === 0) {
+			test.skip(true, "Pas de collections dans la base");
+			return;
+		}
+		const href = await firstLink.getAttribute("href");
+		if (!href) return;
+		await page.goto(href);
+		await page.waitForLoadState("domcontentloaded");
+		await enableDarkMode(page);
+
+		await expectNoA11yViolations(page, { context: "Collection detail (dark mode)" });
 	});
 
 	test("Page compte passe l'audit axe-core WCAG AA en dark mode", async ({ page }) => {
@@ -78,15 +98,6 @@ test.describe("Accessibilité - Dark mode axe-core", { tag: ["@slow"] }, () => {
 		// If redirected to login, test the login page in dark mode instead
 		await enableDarkMode(page);
 
-		const results = await new AxeBuilder({ page })
-			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-			.analyze();
-
-		if (results.violations.length > 0) {
-			const summary = results.violations
-				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
-				.join("\n");
-			expect(results.violations, `Violations WCAG dark mode page compte:\n${summary}`).toEqual([]);
-		}
+		await expectNoA11yViolations(page, { context: "Page compte (dark mode)" });
 	});
 });

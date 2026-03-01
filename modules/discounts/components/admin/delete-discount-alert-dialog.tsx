@@ -24,9 +24,7 @@ interface DeleteDiscountData {
 }
 
 export function DeleteDiscountAlertDialog() {
-	const deleteDialog = useAlertDialog<DeleteDiscountData>(
-		DELETE_DISCOUNT_DIALOG_ID
-	);
+	const deleteDialog = useAlertDialog<DeleteDiscountData>(DELETE_DISCOUNT_DIALOG_ID);
 
 	const { action, isPending } = useDeleteDiscount({
 		onSuccess: () => {
@@ -46,11 +44,7 @@ export function DeleteDiscountAlertDialog() {
 		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="id"
-						value={deleteDialog.data?.discountId ?? ""}
-					/>
+					<input type="hidden" name="id" value={deleteDialog.data?.discountId ?? ""} />
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
@@ -62,19 +56,13 @@ export function DeleteDiscountAlertDialog() {
 								</p>
 								{usageCount > 0 ? (
 									<>
-										<p className="text-amber-600 dark:text-amber-500 font-medium">
-											Ce code a été utilisé {usageCount} fois et ne peut pas être
-											supprimé.
+										<p className="font-medium text-amber-600 dark:text-amber-500">
+											Ce code a été utilisé {usageCount} fois et ne peut pas être supprimé.
 										</p>
-										<p>
-											Vous pouvez le désactiver à la place pour empêcher son
-											utilisation.
-										</p>
+										<p>Vous pouvez le désactiver à la place pour empêcher son utilisation.</p>
 									</>
 								) : (
-									<p className="text-destructive font-medium">
-										Cette action est irréversible.
-									</p>
+									<p className="text-destructive font-medium">Cette action est irréversible.</p>
 								)}
 							</div>
 						</AlertDialogDescription>

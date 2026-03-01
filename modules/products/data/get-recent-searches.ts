@@ -1,7 +1,10 @@
-import "server-only"
+import "server-only";
 
-import { cookies } from "next/headers"
-import { RECENT_SEARCHES_COOKIE_NAME, RECENT_SEARCHES_MAX_ITEMS } from "../constants/recent-searches"
+import { cookies } from "next/headers";
+import {
+	RECENT_SEARCHES_COOKIE_NAME,
+	RECENT_SEARCHES_MAX_ITEMS,
+} from "../constants/recent-searches";
 
 /**
  * Recupere les recherches recentes depuis les cookies
@@ -11,23 +14,23 @@ import { RECENT_SEARCHES_COOKIE_NAME, RECENT_SEARCHES_MAX_ITEMS } from "../const
  * @returns Liste des recherches recentes (max 5)
  */
 export async function getRecentSearches(): Promise<string[]> {
-	const cookieStore = await cookies()
-	const cookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME)
+	const cookieStore = await cookies();
+	const cookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME);
 
 	if (!cookie?.value) {
-		return []
+		return [];
 	}
 
 	try {
-		const parsed = JSON.parse(decodeURIComponent(cookie.value))
+		const parsed = JSON.parse(decodeURIComponent(cookie.value));
 		if (Array.isArray(parsed)) {
 			return parsed
 				.filter((s): s is string => typeof s === "string" && s.length <= 100)
-				.slice(0, RECENT_SEARCHES_MAX_ITEMS)
+				.slice(0, RECENT_SEARCHES_MAX_ITEMS);
 		}
 	} catch {
 		// Ignore les erreurs de parsing
 	}
 
-	return []
+	return [];
 }

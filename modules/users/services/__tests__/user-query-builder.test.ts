@@ -11,10 +11,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-import {
-	buildUserFilterConditions,
-	buildUserWhereClause,
-} from "../user-query-builder";
+import { buildUserFilterConditions, buildUserWhereClause } from "../user-query-builder";
 import type { UserFilters, GetUsersParams } from "../../types/user.types";
 
 function filters(overrides: Partial<UserFilters> = {}): UserFilters {
@@ -93,7 +90,9 @@ describe("buildUserFilterConditions", () => {
 	});
 
 	it("should filter by multiple roles", () => {
-		const result = buildUserFilterConditions(filters({ role: ["USER", "ADMIN"] as unknown as UserFilters["role"] }));
+		const result = buildUserFilterConditions(
+			filters({ role: ["USER", "ADMIN"] as unknown as UserFilters["role"] }),
+		);
 		expect(result).toContainEqual({ role: { in: ["USER", "ADMIN"] } });
 	});
 
@@ -110,9 +109,7 @@ describe("buildUserFilterConditions", () => {
 
 	it("should not filter emailVerified when undefined", () => {
 		const result = buildUserFilterConditions(filters({}));
-		const hasEmailVerified = result.some(
-			(c) => "emailVerified" in c
-		);
+		const hasEmailVerified = result.some((c) => "emailVerified" in c);
 		expect(hasEmailVerified).toBe(false);
 	});
 
@@ -191,7 +188,7 @@ describe("buildUserFilterConditions", () => {
 				role: "ADMIN" as UserFilters["role"],
 				emailVerified: true,
 				hasOrders: true,
-			})
+			}),
 		);
 		expect(result).toHaveLength(4);
 	});
@@ -209,7 +206,7 @@ describe("buildUserWhereClause", () => {
 
 	it("should include deleted users when includeDeleted is set", () => {
 		const result = buildUserWhereClause(
-			params({ filters: { includeDeleted: true } as UserFilters })
+			params({ filters: { includeDeleted: true } as UserFilters }),
 		);
 		expect(result).not.toHaveProperty("deletedAt");
 	});
@@ -227,10 +224,7 @@ describe("buildUserWhereClause", () => {
 	});
 
 	it("should combine fuzzy IDs with exact search in AND > OR", () => {
-		const result = buildUserWhereClause(
-			params({ search: "alice" }),
-			["id1", "id2"]
-		);
+		const result = buildUserWhereClause(params({ search: "alice" }), ["id1", "id2"]);
 		expect(result.OR).toBeUndefined();
 		expect(result.AND).toBeDefined();
 		const andConditions = result.AND as Array<Record<string, unknown>>;
@@ -258,7 +252,7 @@ describe("buildUserWhereClause", () => {
 
 	it("should include filter conditions in AND", () => {
 		const result = buildUserWhereClause(
-			params({ filters: { emailVerified: true } as UserFilters })
+			params({ filters: { emailVerified: true } as UserFilters }),
 		);
 		expect(result.AND).toBeDefined();
 		expect(result.AND).toContainEqual({ emailVerified: true });

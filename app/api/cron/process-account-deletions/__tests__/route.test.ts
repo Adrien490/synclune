@@ -82,7 +82,7 @@ describe("GET /api/cron/process-account-deletions", () => {
 		mockProcessAccountDeletions.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -137,14 +137,14 @@ describe("GET /api/cron/process-account-deletions", () => {
 					errors: DEFAULT_SERVICE_RESULT.errors,
 					hasMore: DEFAULT_SERVICE_RESULT.hasMore,
 				}),
-				1000
+				1000,
 			);
 		});
 
 		it("includes the job name 'process-account-deletions' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("process-account-deletions");
 		});
 
@@ -183,7 +183,7 @@ describe("GET /api/cron/process-account-deletions", () => {
 				expect.objectContaining({
 					job: "process-account-deletions",
 					errors: 2,
-				})
+				}),
 			);
 		});
 
@@ -199,7 +199,7 @@ describe("GET /api/cron/process-account-deletions", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ processed: 5, hasMore: true }),
-				})
+				}),
 			);
 		});
 

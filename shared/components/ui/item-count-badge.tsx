@@ -18,7 +18,7 @@ const itemCountBadgeVariants = cva(
 		defaultVariants: {
 			size: "default",
 		},
-	}
+	},
 );
 
 export interface ItemCountBadgeProps extends VariantProps<typeof itemCountBadgeVariants> {
@@ -70,7 +70,7 @@ export function ItemCountBadge({
 					className={cn(
 						itemCountBadgeVariants({ size }),
 						shouldPulse && "animate-badge-pulse",
-						className
+						className,
 					)}
 					aria-hidden="true"
 				>

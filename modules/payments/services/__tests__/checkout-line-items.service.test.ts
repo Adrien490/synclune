@@ -55,9 +55,9 @@ describe("buildStripeLineItems", () => {
 		const result = buildStripeLineItems([makeCartItem({ quantity: 2 })], [makeSkuResult()]);
 
 		expect(result.lineItems).toHaveLength(1);
-		expect(result.lineItems[0].price_data?.unit_amount).toBe(2990);
-		expect(result.lineItems[0].quantity).toBe(2);
-		expect(result.lineItems[0].price_data?.currency).toBe("eur");
+		expect(result.lineItems[0]!.price_data?.unit_amount).toBe(2990);
+		expect(result.lineItems[0]!.quantity).toBe(2);
+		expect(result.lineItems[0]!.price_data?.currency).toBe("eur");
 	});
 
 	it("should compute subtotal correctly for multiple items", () => {
@@ -117,7 +117,7 @@ describe("buildStripeLineItems", () => {
 			],
 		);
 
-		expect(result.lineItems[0].price_data?.product_data?.name).toBe(
+		expect(result.lineItems[0]!.price_data?.product_data?.name).toBe(
 			"Bracelet Lune - Taille: M - Argent 925",
 		);
 	});
@@ -127,7 +127,7 @@ describe("buildStripeLineItems", () => {
 
 		const result = buildStripeLineItems([makeCartItem()], [makeSkuResult()]);
 
-		expect(result.lineItems[0].price_data?.product_data?.images).toEqual([
+		expect(result.lineItems[0]!.price_data?.product_data?.images).toEqual([
 			"https://cdn.example.com/img.jpg",
 		]);
 	});
@@ -153,13 +153,13 @@ describe("buildStripeLineItems", () => {
 			],
 		);
 
-		expect(result.lineItems[0].price_data?.product_data?.images).toBeUndefined();
+		expect(result.lineItems[0]!.price_data?.product_data?.images).toBeUndefined();
 	});
 
 	it("should include metadata with skuId and productId", () => {
 		const result = buildStripeLineItems([makeCartItem()], [makeSkuResult()]);
 
-		expect(result.lineItems[0].price_data?.product_data?.metadata).toEqual({
+		expect(result.lineItems[0]!.price_data?.product_data?.metadata).toEqual({
 			skuId: "sku_1",
 			productId: "prod_1",
 		});
@@ -172,7 +172,7 @@ describe("buildStripeLineItems", () => {
 		);
 
 		expect(result.lineItems).toHaveLength(1);
-		expect(result.lineItems[0].price_data?.product_data?.metadata?.skuId).toBe("sku_1");
+		expect(result.lineItems[0]!.price_data?.product_data?.metadata?.skuId).toBe("sku_1");
 	});
 
 	it("should return empty line items for empty cart", () => {
@@ -204,7 +204,7 @@ describe("buildStripeLineItems", () => {
 		);
 
 		expect(result.lineItems).toHaveLength(1);
-		expect(result.lineItems[0].price_data?.product_data?.images).toBeUndefined();
+		expect(result.lineItems[0]!.price_data?.product_data?.images).toBeUndefined();
 	});
 
 	it("should only include size when material is absent", () => {
@@ -226,6 +226,6 @@ describe("buildStripeLineItems", () => {
 			],
 		);
 
-		expect(result.lineItems[0].price_data?.product_data?.name).toBe("Bracelet - Taille: L");
+		expect(result.lineItems[0]!.price_data?.product_data?.name).toBe("Bracelet - Taille: L");
 	});
 });

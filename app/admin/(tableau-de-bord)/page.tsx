@@ -43,14 +43,7 @@ export default async function AdminDashboardPage() {
 						/>
 					}
 				>
-					<Suspense
-						fallback={
-							<KpisSkeleton
-								count={3}
-								ariaLabel="Chargement des indicateurs"
-							/>
-						}
-					>
+					<Suspense fallback={<KpisSkeleton count={3} ariaLabel="Chargement des indicateurs" />}>
 						<DashboardKpis />
 					</Suspense>
 				</ErrorBoundary>
@@ -68,10 +61,7 @@ export default async function AdminDashboardPage() {
 					>
 						<Suspense
 							fallback={
-								<ChartSkeleton
-									height={300}
-									ariaLabel="Chargement du graphique des revenus"
-								/>
+								<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />
 							}
 						>
 							<RevenueChartWrapper />
@@ -89,10 +79,7 @@ export default async function AdminDashboardPage() {
 					>
 						<Suspense
 							fallback={
-								<ListSkeleton
-									itemCount={5}
-									ariaLabel="Chargement des commandes récentes"
-								/>
+								<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes récentes" />
 							}
 						>
 							<RecentOrdersWrapper />

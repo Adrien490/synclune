@@ -1,11 +1,6 @@
 "use client";
 
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -18,12 +13,12 @@ import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { ChevronDown, Pencil, Shield, ShoppingBag, Tag, TruckIcon } from "lucide-react";
-import {
-	VisaIcon,
-	MastercardIcon,
-	CBIcon,
-} from "@/shared/components/icons/payment-icons";
+import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { addBusinessDays, format } from "date-fns";
+import { fr } from "date-fns/locale";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import Image from "next/image";
 import Link from "next/link";
@@ -43,9 +38,16 @@ interface CheckoutSummaryProps {
  * Détecte automatiquement la Corse via le code postal pour afficher les bons frais
  * Mobile: collapsible summary. Desktop: sticky sidebar.
  */
-export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appliedDiscount }: CheckoutSummaryProps) {
+export function CheckoutSummary({
+	cart,
+	selectedCountry = "FR",
+	postalCode,
+	appliedDiscount,
+}: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
-	const isMobile = useIsMobile();
+	const isMobileDetected = useIsMobile();
+	const mounted = useMounted();
+	const isMobile = mounted && isMobileDetected;
 
 	// Calculer le nombre total d'articles
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -57,6 +59,17 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 
 	// Frais de port (dynamique selon le pays et code postal pour la Corse)
 	const shipping = calculateShipping(selectedCountry, postalCode);
+
+	// Delivery date estimation based on selected country/zone
+	const isCorse = selectedCountry === "FR" && postalCode?.startsWith("20");
+	const shippingRate = isCorse
+		? SHIPPING_RATES.CORSE
+		: selectedCountry === "FR"
+			? SHIPPING_RATES.FR
+			: SHIPPING_RATES.EU;
+	const minDelivery = addBusinessDays(new Date(), shippingRate.minDays);
+	const maxDelivery = addBusinessDays(new Date(), shippingRate.maxDays);
+	const deliveryEstimate = `${format(minDelivery, "d", { locale: fr })}-${format(maxDelivery, "d MMM", { locale: fr })}`;
 
 	// Discount
 	const discountAmount = appliedDiscount?.discountAmount ?? 0;
@@ -71,7 +84,7 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 				{cart.items.map((item) => (
 					<div key={item.id} className="flex gap-3 text-sm">
 						{/* Image */}
-						<div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted border">
+						<div className="bg-muted relative h-16 w-16 shrink-0 overflow-hidden rounded-md border">
 							{item.sku.images[0] ? (
 								<Image
 									src={item.sku.images[0].url}
@@ -80,46 +93,38 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 									sizes="64px"
 									quality={70}
 									className="object-cover"
+									placeholder={item.sku.images[0].blurDataUrl ? "blur" : "empty"}
+									blurDataURL={item.sku.images[0].blurDataUrl ?? undefined}
 								/>
 							) : (
-								<div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+								<div className="text-muted-foreground flex h-full w-full items-center justify-center text-xs">
 									N/A
 								</div>
 							)}
 						</div>
 
 						{/* Détails */}
-						<div className="flex-1 min-w-0">
-							<p className="font-medium line-clamp-2 text-sm">
-								{item.sku.product.title}
-							</p>
+						<div className="min-w-0 flex-1">
+							<p className="line-clamp-2 text-sm font-medium">{item.sku.product.title}</p>
 							{item.sku.size && (
-								<p className="text-xs text-muted-foreground">
-									Taille: {item.sku.size}
-								</p>
+								<p className="text-muted-foreground text-xs">Taille: {item.sku.size}</p>
 							)}
 							{item.sku.color && (
-								<p className="text-xs text-muted-foreground">
-									Couleur: {item.sku.color.name}
-								</p>
+								<p className="text-muted-foreground text-xs">Couleur: {item.sku.color.name}</p>
 							)}
 							{item.sku.material && (
-								<p className="text-xs text-muted-foreground">
-									Matière: {item.sku.material.name}
-								</p>
+								<p className="text-muted-foreground text-xs">Matière: {item.sku.material.name}</p>
 							)}
-							<p className="text-xs text-muted-foreground mt-1">
-								Qté: {item.quantity}
-							</p>
+							<p className="text-muted-foreground mt-1 text-xs">Qté: {item.quantity}</p>
 						</div>
 
 						{/* Prix */}
 						<div className="text-right">
-							<p className="tabular-nums font-medium text-sm">
+							<p className="text-sm font-medium tabular-nums">
 								{formatEuro(item.priceAtAdd * item.quantity)}
 							</p>
 							{item.quantity > 1 && (
-								<p className="text-xs text-muted-foreground">
+								<p className="text-muted-foreground text-xs">
 									{formatEuro(item.priceAtAdd)} × {item.quantity}
 								</p>
 							)}
@@ -134,9 +139,9 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 					type="button"
 					onClick={openCart}
 					aria-label="Modifier mon panier"
-					className="text-xs text-foreground underline hover:no-underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+					className="text-foreground focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm text-xs underline hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 				>
-					<Pencil className="w-3 h-3" />
+					<Pencil className="h-3 w-3" />
 					Modifier mon panier
 				</button>
 			</div>
@@ -145,40 +150,37 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 
 			{/* Détails du panier */}
 			<div className="space-y-3 text-sm/6 tracking-normal antialiased">
-				<div className="flex justify-between items-center">
+				<div className="flex items-center justify-between">
 					<span className="text-muted-foreground">
 						Sous-total ({totalItems} article{totalItems > 1 ? "s" : ""})
 					</span>
-					<span className="tabular-nums font-medium text-base/6">
-						{formatEuro(subtotal)}
-					</span>
+					<span className="text-base/6 font-medium tabular-nums">{formatEuro(subtotal)}</span>
 				</div>
 
 				{/* Discount line */}
 				{appliedDiscount && discountAmount > 0 && (
-					<div className="flex justify-between items-center">
-						<span className="text-green-600 dark:text-green-400 flex items-center gap-1.5">
-							<Tag className="w-4 h-4" />
+					<div className="flex items-center justify-between">
+						<span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+							<Tag className="h-4 w-4" />
 							Réduction ({appliedDiscount.code})
 						</span>
-						<span className="tabular-nums font-medium text-base/6 text-green-600 dark:text-green-400">
+						<span className="text-base/6 font-medium text-green-600 tabular-nums dark:text-green-400">
 							-{formatEuro(discountAmount)}
 						</span>
 					</div>
 				)}
 
 				{/* Frais de port */}
-				<div className="flex justify-between items-center">
+				<div className="flex items-center justify-between">
 					<span className="text-muted-foreground flex items-center gap-1.5">
-						<TruckIcon className="w-4 h-4" />
+						<TruckIcon className="h-4 w-4" />
 						Livraison
 					</span>
-					<span className="tabular-nums font-medium text-base/6">
-						{formatEuro(shipping)}
-					</span>
+					<span className="text-base/6 font-medium tabular-nums">{formatEuro(shipping)}</span>
 				</div>
-				<p className="text-xs text-muted-foreground pl-5.5">
-					Expédition sous 2 à 5 jours ouvrés
+				<p className="text-muted-foreground pl-5.5 text-xs">
+					Livraison estimée le{" "}
+					<span className="text-foreground font-medium">{deliveryEstimate}</span>
 				</p>
 			</div>
 
@@ -186,14 +188,12 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 
 			{/* Total */}
 			<div className="space-y-2" aria-live="polite" aria-atomic="true">
-				<div className="flex justify-between items-center text-lg/7 sm:text-xl/7 tracking-tight antialiased font-semibold">
+				<div className="flex items-center justify-between text-lg/7 font-semibold tracking-tight antialiased sm:text-xl/7">
 					<span>Total</span>
-					<span className="tabular-nums text-xl/7 sm:text-2xl/8">
-						{formatEuro(total)}
-					</span>
+					<span className="text-xl/7 tabular-nums sm:text-2xl/8">{formatEuro(total)}</span>
 				</div>
 				{/* Info micro-entreprise */}
-				<div className="text-xs/5 tracking-normal antialiased text-muted-foreground text-right">
+				<div className="text-muted-foreground text-right text-xs/5 tracking-normal antialiased">
 					TVA non applicable, art. 293 B du CGI
 				</div>
 			</div>
@@ -202,19 +202,19 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 			<div className="space-y-3 pt-2">
 				{/* Icônes cartes acceptées */}
 				<div className="flex items-center justify-center gap-2">
-					<VisaIcon className="h-5 w-auto text-muted-foreground" />
-					<MastercardIcon className="h-5 w-auto text-muted-foreground" />
-					<CBIcon className="h-5 w-auto text-muted-foreground" />
+					<VisaIcon className="text-muted-foreground h-5 w-auto" />
+					<MastercardIcon className="text-muted-foreground h-5 w-auto" />
+					<CBIcon className="text-muted-foreground h-5 w-auto" />
 				</div>
 
 				{/* Message sécurité */}
-				<div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-					<Shield className="w-3.5 h-3.5 text-green-600" />
+				<div className="text-muted-foreground flex items-center justify-center gap-1.5 text-xs">
+					<Shield className="h-3.5 w-3.5 text-green-600" />
 					<span>Paiement 100% sécurisé</span>
 				</div>
 
 				{/* Trust links */}
-				<div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+				<div className="text-muted-foreground flex items-center justify-center gap-3 text-xs">
 					<Link href="/retractation" className="underline hover:no-underline" target="_blank">
 						Politique de retour
 					</Link>
@@ -233,27 +233,23 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 				{/* Accessible heading */}
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
-				<Card className="rounded-xl shadow-sm border">
+				<Card className="rounded-xl border shadow-sm">
 					<CollapsibleTrigger className="w-full text-left">
 						<CardHeader className="pb-0">
 							<div className="flex items-center justify-between">
 								<CardTitle className="flex items-center gap-2 text-base">
-									<ShoppingBag className="w-4 h-4" />
+									<ShoppingBag className="h-4 w-4" />
 									{totalItems} article{totalItems > 1 ? "s" : ""}
 								</CardTitle>
 								<div className="flex items-center gap-2">
-									<span className="tabular-nums font-semibold text-lg">
-										{formatEuro(total)}
-									</span>
-									<ChevronDown className="w-4 h-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+									<span className="text-lg font-semibold tabular-nums">{formatEuro(total)}</span>
+									<ChevronDown className="text-muted-foreground h-4 w-4 transition-transform [[data-state=open]>&]:rotate-180" />
 								</div>
 							</div>
 						</CardHeader>
 					</CollapsibleTrigger>
 					<CollapsibleContent>
-						<CardContent className="space-y-4 pt-4 pb-6">
-							{summaryContent}
-						</CardContent>
+						<CardContent className="space-y-4 pt-4 pb-6">{summaryContent}</CardContent>
 					</CollapsibleContent>
 				</Card>
 			</Collapsible>
@@ -261,20 +257,18 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode, appl
 	}
 
 	return (
-		<Card className="rounded-xl shadow-sm border sticky top-20">
+		<Card className="sticky top-20 rounded-xl border shadow-sm">
 			{/* Heading h2 pour lecteurs d'écran */}
 			<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 			<CardHeader className="pb-4">
 				<CardTitle className="flex items-center gap-2 text-lg/7 tracking-tight antialiased">
-					<ShoppingBag className="w-5 h-5" />
+					<ShoppingBag className="h-5 w-5" />
 					Votre commande
 				</CardTitle>
 			</CardHeader>
 
-			<CardContent className="space-y-4 pb-6">
-				{summaryContent}
-			</CardContent>
+			<CardContent className="space-y-4 pb-6">{summaryContent}</CardContent>
 		</Card>
 	);
 }

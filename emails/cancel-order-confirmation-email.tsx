@@ -72,9 +72,7 @@ export const CancelOrderConfirmationEmail = ({
 
 			{/* Info remboursement */}
 			{wasRefunded && (
-				<Section
-					style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}
-				>
+				<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
 					<Text
 						style={{
 							...EMAIL_STYLES.text.body,
@@ -85,8 +83,7 @@ export const CancelOrderConfirmationEmail = ({
 						Remboursement
 					</Text>
 					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-						Le remboursement de {formatEuro(orderTotal)} sera crédité sous{" "}
-						{REFUND_DELAY_TEXT}.
+						Le remboursement de {formatEuro(orderTotal)} sera crédité sous {REFUND_DELAY_TEXT}.
 					</Text>
 				</Section>
 			)}

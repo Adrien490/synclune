@@ -2,10 +2,7 @@ import { prisma } from "@/shared/lib/prisma";
 
 import { GET_PRODUCT_SELECT } from "../constants/product.constants";
 import { getProductSchema } from "../schemas/product.schemas";
-import type {
-	GetProductParams,
-	GetProductReturn,
-} from "../types/product.types";
+import type { GetProductParams, GetProductReturn } from "../types/product.types";
 import { cacheProductDetail } from "../utils/cache.utils";
 
 // Re-export pour compatibilité
@@ -17,7 +14,7 @@ export type {
 } from "../types/product.types";
 
 export async function getProductBySlug(
-	params: Partial<GetProductParams>
+	params: Partial<GetProductParams>,
 ): Promise<GetProductReturn | null> {
 	const validation = getProductSchema.safeParse(params ?? {});
 
@@ -32,9 +29,7 @@ export async function getProductBySlug(
  * Fonction interne avec cache pour récupérer le produit
  * Utilise findUnique pour exploiter l'index unique sur slug (~40-50% plus rapide)
  */
-async function fetchProduct(
-	params: GetProductParams
-): Promise<GetProductReturn | null> {
+async function fetchProduct(params: GetProductParams): Promise<GetProductReturn | null> {
 	"use cache";
 	cacheProductDetail(params.slug);
 

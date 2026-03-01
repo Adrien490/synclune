@@ -122,7 +122,11 @@ function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
 	);
 }
 
-function InputGroupInput({ className, ...props }: React.ComponentProps<"input">) {
+function InputGroupInput({
+	className,
+	size: _nativeSize,
+	...props
+}: React.ComponentProps<"input">) {
 	return (
 		<Input
 			data-slot="input-group-control"

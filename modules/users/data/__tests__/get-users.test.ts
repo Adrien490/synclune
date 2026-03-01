@@ -225,7 +225,7 @@ describe("getUsers", () => {
 					expect.objectContaining({ table: "User", column: "name" }),
 					expect.objectContaining({ table: "User", column: "email" }),
 				]),
-			})
+			}),
 		);
 	});
 
@@ -250,10 +250,8 @@ describe("getUsers", () => {
 		// The final query should sort by updatedAt (fallback)
 		expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				orderBy: expect.arrayContaining([
-					expect.objectContaining({ updatedAt: "desc" }),
-				]),
-			})
+				orderBy: expect.arrayContaining([expect.objectContaining({ updatedAt: "desc" })]),
+			}),
 		);
 	});
 
@@ -267,10 +265,8 @@ describe("getUsers", () => {
 
 		expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				orderBy: expect.arrayContaining([
-					expect.objectContaining({ name: "desc" }),
-				]),
-			})
+				orderBy: expect.arrayContaining([expect.objectContaining({ name: "desc" })]),
+			}),
 		);
 	});
 
@@ -280,7 +276,7 @@ describe("getUsers", () => {
 		expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, name: true, email: true },
-			})
+			}),
 		);
 	});
 
@@ -308,7 +304,7 @@ describe("getUsers", () => {
 		expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { deletedAt: null, role: "USER" },
-			})
+			}),
 		);
 	});
 
@@ -321,8 +317,6 @@ describe("getUsers", () => {
 		await getUsers(makeValidParams({ perPage: 999 }));
 
 		// take should be capped at GET_USERS_MAX_RESULTS_PER_PAGE (200)
-		expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-			expect.objectContaining({ take: 200 })
-		);
+		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
 	});
 });

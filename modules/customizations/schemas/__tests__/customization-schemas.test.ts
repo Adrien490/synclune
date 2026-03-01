@@ -133,7 +133,7 @@ describe("customizationSchema", () => {
 	});
 
 	describe("details", () => {
-		it("should reject details shorter than 20 characters", () => {
+		it("should reject details shorter than 10 characters", () => {
 			const result = customizationSchema.safeParse({
 				...validData,
 				details: "Too short",

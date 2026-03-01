@@ -14,8 +14,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 
 export const metadata: Metadata = {
 	title: "Vérification de l'email | Synclune",
-	description:
-		"Vérifiez votre adresse email pour activer votre compte Synclune.",
+	description: "Vérifiez votre adresse email pour activer votre compte Synclune.",
 	robots: "noindex, nofollow",
 	openGraph: {
 		title: "Vérification de l'email | Synclune",
@@ -59,9 +58,7 @@ async function verifyEmailToken(token: string) {
 	}
 }
 
-export default async function VerifyEmailPage({
-	searchParams,
-}: VerifyEmailPageProps) {
+export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageProps) {
 	const params = await searchParams;
 	const token = params.token;
 	const error = params.error;
@@ -101,10 +98,10 @@ export default async function VerifyEmailPage({
 	return (
 		<div className="relative">
 			{/* Lien retour */}
-			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+			<div className="absolute top-4 left-4 z-20 sm:top-6 sm:left-6">
 				<Link
 					href="/"
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group min-h-11 min-w-11 -ml-2 pl-2"
+					className="text-muted-foreground hover:text-foreground group -ml-2 inline-flex min-h-11 min-w-11 items-center gap-2 pl-2 text-sm transition-colors duration-200"
 				>
 					<ArrowLeft
 						size={16}
@@ -116,17 +113,22 @@ export default async function VerifyEmailPage({
 			</div>
 
 			{/* Logo en haut à droite */}
-			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+			<div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
 				<LogoAnimated size={44} preload href="/" />
 			</div>
 
 			{/* Contenu principal */}
-			<div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+			<div className="relative z-10 flex min-h-screen items-center justify-center p-4">
 				<div className="w-full max-w-md space-y-8">
 					{/* Header */}
-					<div className="text-center space-y-7">
+					<div className="space-y-7 text-center">
 						<div className="space-y-3">
-							<h1 className={cn("text-2xl sm:text-3xl lg:text-4xl font-semibold text-foreground", cormorantGaramond.className)}>
+							<h1
+								className={cn(
+									"text-foreground text-2xl font-semibold sm:text-3xl lg:text-4xl",
+									cormorantGaramond.className,
+								)}
+							>
 								Vérification d'email
 							</h1>
 						</div>
@@ -137,9 +139,13 @@ export default async function VerifyEmailPage({
 						{isSuccess ? (
 							/* Message de succès */
 							<div className="space-y-4">
-								<div className="rounded-md bg-green-500/15 border border-green-500/30 p-6 flex flex-col items-center gap-4" role="status" aria-live="polite">
+								<div
+									className="flex flex-col items-center gap-4 rounded-md border border-green-500/30 bg-green-500/15 p-6"
+									role="status"
+									aria-live="polite"
+								>
 									<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
-									<div className="text-center space-y-2">
+									<div className="space-y-2 text-center">
 										<p className="text-lg font-medium text-green-700 dark:text-green-400">
 											Email vérifié
 										</p>
@@ -151,7 +157,7 @@ export default async function VerifyEmailPage({
 									</div>
 								</div>
 
-								<div className="text-center space-y-2">
+								<div className="space-y-2 text-center">
 									<Button asChild className="w-full">
 										<Link href={isConnected ? "/" : "/connexion"}>
 											{isConnected ? "Retour au site" : "Se connecter"}
@@ -162,31 +168,31 @@ export default async function VerifyEmailPage({
 						) : (
 							/* Message d'erreur */
 							<div className="space-y-4">
-								<div className="rounded-md bg-destructive/15 border border-destructive/30 p-6 flex flex-col items-center gap-4" role="alert" aria-live="assertive">
-									<AlertCircle className="h-12 w-12 text-destructive" aria-hidden="true" />
-									<div className="text-center space-y-2">
-										<p className="text-lg font-medium text-destructive">
-											{!token && !error
-												? "Lien incomplet"
-												: "Erreur de vérification"}
+								<div
+									className="bg-destructive/15 border-destructive/30 flex flex-col items-center gap-4 rounded-md border p-6"
+									role="alert"
+									aria-live="assertive"
+								>
+									<AlertCircle className="text-destructive h-12 w-12" aria-hidden="true" />
+									<div className="space-y-2 text-center">
+										<p className="text-destructive text-lg font-medium">
+											{!token && !error ? "Lien incomplet" : "Erreur de vérification"}
 										</p>
-										<p className="text-sm text-destructive/90">
-											{errorMessage}
-										</p>
+										<p className="text-destructive/90 text-sm">{errorMessage}</p>
 									</div>
 								</div>
 
 								{/* Formulaire de renvoi d'email */}
 								<div className="space-y-3">
 									<div className="text-center">
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground text-sm">
 											Vous n'avez pas reçu l'email ou le lien a expiré ?
 										</p>
 									</div>
 									<ResendVerificationEmailForm />
 								</div>
 
-								<div className="text-center pt-2 space-y-2">
+								<div className="space-y-2 pt-2 text-center">
 									<Button asChild variant="outline" className="w-full">
 										<Link href="/connexion">Retour à la connexion</Link>
 									</Button>

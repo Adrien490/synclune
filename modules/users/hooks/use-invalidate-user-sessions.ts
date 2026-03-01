@@ -14,9 +14,7 @@ interface UseInvalidateUserSessionsOptions {
 /**
  * Hook admin pour forcer la déconnexion d'un utilisateur
  */
-export function useInvalidateUserSessions(
-	options?: UseInvalidateUserSessionsOptions
-) {
+export function useInvalidateUserSessions(options?: UseInvalidateUserSessionsOptions) {
 	const [isPending, startTransition] = useTransition();
 
 	const [, formAction, isActionPending] = useActionState(
@@ -33,9 +31,9 @@ export function useInvalidateUserSessions(
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const invalidate = (userId: string, _userName: string) => {

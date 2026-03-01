@@ -97,9 +97,11 @@ describe("buildOrderFilterConditions", () => {
 	});
 
 	it("should filter by multiple statuses", () => {
-		const result = buildOrderFilterConditions(filters({
-			status: ["SHIPPED", "DELIVERED"],
-		}));
+		const result = buildOrderFilterConditions(
+			filters({
+				status: ["SHIPPED", "DELIVERED"],
+			}),
+		);
 		expect(result.status).toEqual({ in: ["SHIPPED", "DELIVERED"] });
 	});
 
@@ -114,16 +116,20 @@ describe("buildOrderFilterConditions", () => {
 	});
 
 	it("should filter by multiple paymentStatuses", () => {
-		const result = buildOrderFilterConditions(filters({
-			paymentStatus: ["PAID", "REFUNDED"],
-		}));
+		const result = buildOrderFilterConditions(
+			filters({
+				paymentStatus: ["PAID", "REFUNDED"],
+			}),
+		);
 		expect(result.paymentStatus).toEqual({ in: ["PAID", "REFUNDED"] });
 	});
 
 	it("should filter by single fulfillmentStatus", () => {
-		const result = buildOrderFilterConditions(filters({
-			fulfillmentStatus: "SHIPPED",
-		}));
+		const result = buildOrderFilterConditions(
+			filters({
+				fulfillmentStatus: "SHIPPED",
+			}),
+		);
 		expect(result.fulfillmentStatus).toBe("SHIPPED");
 	});
 
@@ -138,10 +144,12 @@ describe("buildOrderFilterConditions", () => {
 	});
 
 	it("should filter by totalMin and totalMax", () => {
-		const result = buildOrderFilterConditions(filters({
-			totalMin: 1000,
-			totalMax: 5000,
-		}));
+		const result = buildOrderFilterConditions(
+			filters({
+				totalMin: 1000,
+				totalMax: 5000,
+			}),
+		);
 		expect(result.total).toEqual({ gte: 1000, lte: 5000 });
 	});
 
@@ -160,19 +168,23 @@ describe("buildOrderFilterConditions", () => {
 	it("should filter by createdAfter and createdBefore", () => {
 		const after = new Date("2024-01-01");
 		const before = new Date("2024-12-31");
-		const result = buildOrderFilterConditions(filters({
-			createdAfter: after,
-			createdBefore: before,
-		}));
+		const result = buildOrderFilterConditions(
+			filters({
+				createdAfter: after,
+				createdBefore: before,
+			}),
+		);
 		expect(result.createdAt).toEqual({ gte: after, lte: before });
 	});
 
 	it("should combine multiple filters", () => {
-		const result = buildOrderFilterConditions(filters({
-			status: "SHIPPED",
-			paymentStatus: "PAID",
-			totalMin: 500,
-		}));
+		const result = buildOrderFilterConditions(
+			filters({
+				status: "SHIPPED",
+				paymentStatus: "PAID",
+				totalMin: 500,
+			}),
+		);
 		expect(result.status).toBe("SHIPPED");
 		expect(result.paymentStatus).toBe("PAID");
 		expect(result.total).toEqual({ gte: 500 });
@@ -192,9 +204,7 @@ describe("buildOrderWhereClause", () => {
 	it("should include default filter conditions (exclude PENDING)", () => {
 		const result = buildOrderWhereClause(params({}));
 		expect(result.AND).toBeDefined();
-		expect(result.AND).toContainEqual(
-			expect.objectContaining({ status: { not: "PENDING" } })
-		);
+		expect(result.AND).toContainEqual(expect.objectContaining({ status: { not: "PENDING" } }));
 	});
 
 	it("should add search conditions when search is provided", () => {
@@ -204,14 +214,9 @@ describe("buildOrderWhereClause", () => {
 	});
 
 	it("should include fuzzy IDs when provided", () => {
-		const result = buildOrderWhereClause(
-			params({ search: "test" }),
-			["id1", "id2"]
-		);
+		const result = buildOrderWhereClause(params({ search: "test" }), ["id1", "id2"]);
 		const andConditions = result.AND as Array<Record<string, unknown>>;
-		const orCondition = andConditions.find(
-			(c) => "OR" in c
-		);
+		const orCondition = andConditions.find((c) => "OR" in c);
 		expect(orCondition).toBeDefined();
 	});
 

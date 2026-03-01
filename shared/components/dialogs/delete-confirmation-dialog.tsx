@@ -108,11 +108,7 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-						>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? pendingLabel : submitLabel}
 						</AlertDialogAction>

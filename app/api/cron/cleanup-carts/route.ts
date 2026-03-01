@@ -1,4 +1,9 @@
-import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
+import {
+	verifyCronRequest,
+	cronTimer,
+	cronSuccess,
+	cronError,
+} from "@/modules/cron/lib/verify-cron";
 import { cleanupExpiredCarts } from "@/modules/cron/services/cleanup-carts.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
@@ -11,10 +16,13 @@ export async function GET() {
 	const startTime = cronTimer();
 	try {
 		const result = await cleanupExpiredCarts();
-		return cronSuccess({
-			job: "cleanup-carts",
-			...result,
-		}, startTime);
+		return cronSuccess(
+			{
+				job: "cleanup-carts",
+				...result,
+			},
+			startTime,
+		);
 	} catch (error) {
 		sendAdminCronFailedAlert({
 			job: "cleanup-carts",
@@ -22,8 +30,6 @@ export async function GET() {
 			details: { error: error instanceof Error ? error.message : String(error) },
 		}).catch((e) => console.error("[CRON:cleanup-carts] Failed to send admin alert", e));
 
-		return cronError(
-			error instanceof Error ? error.message : "Failed to cleanup carts"
-		);
+		return cronError(error instanceof Error ? error.message : "Failed to cleanup carts");
 	}
 }

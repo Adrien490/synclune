@@ -125,6 +125,7 @@ Couverture tres rare pour une boutique artisanale.
 **Impact : -30 a -50% de conversions potentielles perdues**
 
 C'est le probleme #1. Les stats sont claires :
+
 - Afficher 5+ avis peut augmenter les conversions de **270%**
 - 93% des consommateurs disent que les avis impactent leurs achats
 - 88% font autant confiance aux avis en ligne qu'aux recommandations personnelles
@@ -134,11 +135,13 @@ C'est le probleme #1. Les stats sont claires :
 Le module `reviews/` est complet (creation, moderation, stats, medias, reponses admin) mais rien n'est expose sur la homepage.
 
 **Recommandation :**
+
 - **Section temoignages/avis** (nouvelle section entre Collections et AtelierStory) avec 3-5 avis clients sous forme de cartes avec etoiles, photo optionnelle, texte, et produit achete
 - **Bandeau social proof dans le hero** : "X clients satisfaits" ou "Note moyenne 4.8/5" visible above-the-fold
 - **Etoiles sur les ProductCard** : afficher la note moyenne et le nombre d'avis sur chaque carte produit
 
 **Fichiers concernes :**
+
 - `app/(boutique)/(accueil)/page.tsx` -- ajouter section + data fetch
 - `modules/products/components/product-card.tsx` -- ajouter RatingStars (le composant existe deja dans `shared/components/rating-stars.tsx`)
 - Nouvelle section `_components/testimonials-section.tsx`
@@ -151,12 +154,14 @@ Le module `reviews/` est complet (creation, moderation, stats, medias, reponses 
 Le hero actuel affiche des particules animees (coeurs + perles en drift) + texte rotatif ("colores", "uniques", "joyeux") + 2 CTA. C'est visuellement agreable mais ne montre **aucun bijou**. En 2026, les hero e-commerce performants montrent le produit immediatement -- le visiteur doit comprendre en < 3 secondes ce qui est vendu.
 
 **Recommandation :**
+
 - Ajouter une image hero de bijoux (lifestyle shot ou macro detail) ou un carrousel de produits phares
 - Alternative : video autoplay muette (6-10s) montrant les bijoux portes ou le processus de creation
 - Garder les particules comme fond subtil derriere l'image/video
 - Ajouter un indicateur de social proof above-the-fold (note globale + nombre de clients)
 
 **Fichiers concernes :**
+
 - `app/(boutique)/(accueil)/_components/hero-section.tsx`
 
 ### 2.3 IMPORTANT -- Pas de UGC (User Generated Content)
@@ -166,6 +171,7 @@ Le hero actuel affiche des particules animees (coeurs + perles en drift) + texte
 Les photos polaroid de l'atelier sont statiques et montrent le processus, pas les clients portant les bijoux. En 2026, les galeries UGC shoppables (photos Instagram/TikTok de vrais clients) sont un standard pour les marques artisanales.
 
 **Recommandation :**
+
 - **Galerie Instagram/UGC** : Section "Portees par vous" ou "#Synclune" avec photos de clientes portant les bijoux, cliquables vers les produits correspondants
 - A minima, integrer un lien vers le feed Instagram avec preview de quelques posts recents
 
@@ -174,6 +180,7 @@ Les photos polaroid de l'atelier sont statiques et montrent le processus, pas le
 **Impact : Taux d'inscription sous-optimal**
 
 La section newsletter actuelle propose :
+
 - Titre : "Ma newsletter"
 - Texte : "Les nouveautes en avant-premiere, des offres exclusives et des surprises reservees aux abonnees !"
 - Anti-spam : "1 a 2 emails par mois maximum"
@@ -181,10 +188,12 @@ La section newsletter actuelle propose :
 C'est bien ecrit mais il manque un **incentive concret**. Les meilleures pratiques montrent que proposer un avantage clair augmente les inscriptions de 30-50%.
 
 **Recommandation :**
+
 - Ajouter un incentive clair : "-10% sur ta premiere commande" ou "Guide d'entretien bijoux offert"
 - Rendre l'incentive visuel et prominent (badge ou highlight)
 
 **Fichiers concernes :**
+
 - `app/(boutique)/(accueil)/_components/newsletter-section.tsx`
 
 ### 2.5 MOYEN -- Pas de sticky CTA mobile
@@ -194,6 +203,7 @@ C'est bien ecrit mais il manque un **incentive concret**. Les meilleures pratiqu
 Apres avoir scroll passe le hero, le CTA principal disparait. Sur mobile, un bouton CTA sticky (en bas de l'ecran) ou une mini-barre de navigation flottante maintient l'intention d'achat tout au long du scroll.
 
 **Recommandation :**
+
 - Barre sticky mobile en bas de l'ecran apparaissant apres le hero : "Decouvrir la boutique" (CTA principal)
 - Ou : integrer le lien boutique dans la navbar qui est deja sticky avec effet glass
 
@@ -220,6 +230,7 @@ Des chiffres concrets rassurent : "200+ bijoux crees", "150+ clients satisfaits"
 ### P1 -- Section Temoignages Clients (Impact: Tres eleve)
 
 **Quoi :** Nouvelle section entre CollectionsSection et AtelierStory affichant 3-5 avis clients reels avec :
+
 - Photo (optionnelle) + prenom + ville
 - Note etoilee (composant `RatingStars` existe deja)
 - Texte de l'avis
@@ -298,22 +309,22 @@ Des chiffres concrets rassurent : "200+ bijoux crees", "150+ clients satisfaits"
 
 ## PARTIE 4 : Verdict par section
 
-| Section | Utile ? | Verdict |
-|---------|---------|---------|
-| **HeroSection** (texte rotatif + particules) | Oui, mais incomplet | Le texte rotatif est engageant, mais il manque une image produit et du social proof |
-| **ValuePropositionBar** (4 piliers) | Tres utile | Pattern classique qui fonctionne. Les 4 piliers sont pertinents. Garder tel quel |
-| **CuratedPicks** (coups de coeur) | Tres utile | L'authenticite "choix de Leane" + citation personnelle est differenciante. Ajouter les etoiles |
-| **LatestCreations** (nouveautes) | Tres utile | Contenu dynamique qui incite au retour. Ajouter les etoiles |
-| **CollectionsSection** (carrousel) | Utile | Bon pour l'exploration. Carrousel bien implemente avec skip link et fleches labelisees |
-| **AtelierStory** (histoire + polaroids) | Tres utile | Differenciateur #1. Le storytelling artisanal est exactement ce que recommandent les experts 2026 |
-| **CreativeProcess** (4 etapes) | Utile | Transparence sur le savoir-faire = confiance. Le parallax desktop est bien dose |
-| **FaqSection** (6 questions) | Tres utile | Couvre les objections principales. Le schema FAQPage est un bon SEO move |
-| **NewsletterSection** | Utile, a ameliorer | Bonne position en fin de page mais manque d'incentive |
-| **Particules desktop** (coeurs + perles) | Discutable | Beau techniquement mais ne communique pas "bijoux". Pourrait etre remplace par du contenu produit |
-| **Galerie polaroid** (atelier) | Tres utile | Esthetique authentique et chaleureuse, parfait pour l'artisanal |
-| **ScrollProgressLine** | Utile | Micro-interaction subtile qui renforce le sentiment de progression |
-| **GlitterSparkles** (newsletter bg) | Delicat | Coherent avec l'univers bijoux mais masque sur mobile (bon choix performance) |
-| **StructuredData** (@graph) | Tres utile | Consolidation exemplaire des schemas. Streaming non-bloquant via Suspense |
+| Section                                      | Utile ?             | Verdict                                                                                           |
+| -------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| **HeroSection** (texte rotatif + particules) | Oui, mais incomplet | Le texte rotatif est engageant, mais il manque une image produit et du social proof               |
+| **ValuePropositionBar** (4 piliers)          | Tres utile          | Pattern classique qui fonctionne. Les 4 piliers sont pertinents. Garder tel quel                  |
+| **CuratedPicks** (coups de coeur)            | Tres utile          | L'authenticite "choix de Leane" + citation personnelle est differenciante. Ajouter les etoiles    |
+| **LatestCreations** (nouveautes)             | Tres utile          | Contenu dynamique qui incite au retour. Ajouter les etoiles                                       |
+| **CollectionsSection** (carrousel)           | Utile               | Bon pour l'exploration. Carrousel bien implemente avec skip link et fleches labelisees            |
+| **AtelierStory** (histoire + polaroids)      | Tres utile          | Differenciateur #1. Le storytelling artisanal est exactement ce que recommandent les experts 2026 |
+| **CreativeProcess** (4 etapes)               | Utile               | Transparence sur le savoir-faire = confiance. Le parallax desktop est bien dose                   |
+| **FaqSection** (6 questions)                 | Tres utile          | Couvre les objections principales. Le schema FAQPage est un bon SEO move                          |
+| **NewsletterSection**                        | Utile, a ameliorer  | Bonne position en fin de page mais manque d'incentive                                             |
+| **Particules desktop** (coeurs + perles)     | Discutable          | Beau techniquement mais ne communique pas "bijoux". Pourrait etre remplace par du contenu produit |
+| **Galerie polaroid** (atelier)               | Tres utile          | Esthetique authentique et chaleureuse, parfait pour l'artisanal                                   |
+| **ScrollProgressLine**                       | Utile               | Micro-interaction subtile qui renforce le sentiment de progression                                |
+| **GlitterSparkles** (newsletter bg)          | Delicat             | Coherent avec l'univers bijoux mais masque sur mobile (bon choix performance)                     |
+| **StructuredData** (@graph)                  | Tres utile          | Consolidation exemplaire des schemas. Streaming non-bloquant via Suspense                         |
 
 ---
 
@@ -321,117 +332,117 @@ Des chiffres concrets rassurent : "200+ bijoux crees", "150+ clients satisfaits"
 
 ### page.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Architecture | Streaming SSR exemplaire : promises paralleles + Suspense boundaries |
-| Cache | Delegation aux composants enfants (`"use cache"` dans chaque section statique) |
-| Data flow | `reviewStatsPromise` + `wishlistIdsPromise` dupliques intelligemment |
-| Skeletons | CLS-safe avec `CuratedPicksSkeleton`, `LatestCreationsSkeleton`, `CollectionsSectionSkeleton` |
+| Aspect       | Evaluation                                                                                    |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| Architecture | Streaming SSR exemplaire : promises paralleles + Suspense boundaries                          |
+| Cache        | Delegation aux composants enfants (`"use cache"` dans chaque section statique)                |
+| Data flow    | `reviewStatsPromise` + `wishlistIdsPromise` dupliques intelligemment                          |
+| Skeletons    | CLS-safe avec `CuratedPicksSkeleton`, `LatestCreationsSkeleton`, `CollectionsSectionSkeleton` |
 
 ### hero-section.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Cache | `"use cache"` + `cacheLife("reference")` -- contenu statique, cache long |
-| Performance | Particules en lazy load desktop-only, pas d'images (pas de LCP penalise) |
-| A11y | `role="region"`, `aria-labelledby`, `aria-describedby`, `ScrollIndicator` masque mobile |
-| SEO | `itemProp="headline"` sur le h1 |
-| Manque | Image produit, social proof, le hero ne montre pas ce qui est vendu |
+| Aspect      | Evaluation                                                                              |
+| ----------- | --------------------------------------------------------------------------------------- |
+| Cache       | `"use cache"` + `cacheLife("reference")` -- contenu statique, cache long                |
+| Performance | Particules en lazy load desktop-only, pas d'images (pas de LCP penalise)                |
+| A11y        | `role="region"`, `aria-labelledby`, `aria-describedby`, `ScrollIndicator` masque mobile |
+| SEO         | `itemProp="headline"` sur le h1                                                         |
+| Manque      | Image produit, social proof, le hero ne montre pas ce qui est vendu                     |
 
 ### value-proposition-bar.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Cache | `"use cache"` + `cacheLife("reference")` |
-| A11y | Titre sr-only, `role="list"` + `role="listitem"`, icones `aria-hidden` |
-| SEO | Microdata ItemList (position, name, description par pilier) |
-| Animation | `motion-safe:` prefixes, glow via CSS custom properties |
-| Note | Seule section utilisant microdata au lieu de JSON-LD (inconsistance mineure) |
+| Aspect    | Evaluation                                                                   |
+| --------- | ---------------------------------------------------------------------------- |
+| Cache     | `"use cache"` + `cacheLife("reference")`                                     |
+| A11y      | Titre sr-only, `role="list"` + `role="listitem"`, icones `aria-hidden`       |
+| SEO       | Microdata ItemList (position, name, description par pilier)                  |
+| Animation | `motion-safe:` prefixes, glow via CSS custom properties                      |
+| Note      | Seule section utilisant microdata au lieu de JSON-LD (inconsistance mineure) |
 
 ### curated-picks.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Data | Promise streaming via `use()`, guard `< 2 products` |
-| SEO | Schema ItemList inline via `generateCuratedPicksSchema` |
-| A11y | sr-only description "Selection de bijoux artisanaux...", `aria-describedby` sur CTA |
-| Storytelling | Citation Dancing Script + emojis Leane |
-| Config | Slugs hardcodes dans `curated-picks.ts` (pas de validation DB) |
+| Aspect       | Evaluation                                                                          |
+| ------------ | ----------------------------------------------------------------------------------- |
+| Data         | Promise streaming via `use()`, guard `< 2 products`                                 |
+| SEO          | Schema ItemList inline via `generateCuratedPicksSchema`                             |
+| A11y         | sr-only description "Selection de bijoux artisanaux...", `aria-describedby` sur CTA |
+| Storytelling | Citation Dancing Script + emojis Leane                                              |
+| Config       | Slugs hardcodes dans `curated-picks.ts` (pas de validation DB)                      |
 
 ### latest-creations.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Data | Promise streaming via `use()`, guard `length === 0` |
-| A11y | `aria-labelledby`, `aria-describedby`, sr-only CTA description |
-| UX | Baymard-compliant "Nouvelles creations" (full scope label, pas juste "Nouveautes") |
+| Aspect | Evaluation                                                                         |
+| ------ | ---------------------------------------------------------------------------------- |
+| Data   | Promise streaming via `use()`, guard `length === 0`                                |
+| A11y   | `aria-labelledby`, `aria-describedby`, sr-only CTA description                     |
+| UX     | Baymard-compliant "Nouvelles creations" (full scope label, pas juste "Nouveautes") |
 
 ### collections-section.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Data | Promise streaming, extraction d'images via `extractCollectionImages()` |
-| A11y | Skip link carousel, fleches labelisees, `containScroll="trimSnaps"` |
-| Responsive | `clamp(200px, 72vw, 280px)` mobile, `md:basis-1/3 lg:basis-1/4` desktop |
-| Guard | `showArrows = collections.length > 3` (suppose 3 items visibles -- fragile) |
+| Aspect     | Evaluation                                                                  |
+| ---------- | --------------------------------------------------------------------------- |
+| Data       | Promise streaming, extraction d'images via `extractCollectionImages()`      |
+| A11y       | Skip link carousel, fleches labelisees, `containScroll="trimSnaps"`         |
+| Responsive | `clamp(200px, 72vw, 280px)` mobile, `md:basis-1/3 lg:basis-1/4` desktop     |
+| Guard      | `showArrows = collections.length > 3` (suppose 3 items visibles -- fragile) |
 
 ### atelier-story.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Cache | `"use cache"` + `cacheLife("reference")` |
-| Storytelling | Narration personnelle, polaroids rotatifs, washi tape |
-| A11y | Titre h2 sr-only, emojis `role="img"`, decoratifs `aria-hidden`, group pour galerie |
-| SEO | `data-voice-queries`, `data-content-type="about-creator"` |
-| Attention | Utilise `PlaceholderImage` -- verifier que les vraies photos sont uploadees |
+| Aspect       | Evaluation                                                                          |
+| ------------ | ----------------------------------------------------------------------------------- |
+| Cache        | `"use cache"` + `cacheLife("reference")`                                            |
+| Storytelling | Narration personnelle, polaroids rotatifs, washi tape                               |
+| A11y         | Titre h2 sr-only, emojis `role="img"`, decoratifs `aria-hidden`, group pour galerie |
+| SEO          | `data-voice-queries`, `data-content-type="about-creator"`                           |
+| Attention    | Utilise `PlaceholderImage` -- verifier que les vraies photos sont uploadees         |
 
 ### creative-process.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Cache | `"use cache"` + `cacheLife("reference")` |
-| A11y | Skip link vers CTA, numeros d'etapes sr-only, articles semantiques, 48px touch targets |
-| Animation | Intensite progressive par etape (ring + shadow), hover par icone (rotation, scale, glow) |
-| Performance | Parallax desktop-only via `ParallaxImage`, `quality={80}`, blur data URL |
-| Risque | `ScrollProgressLine` -- verifier que le scroll listener utilise `requestAnimationFrame` |
+| Aspect      | Evaluation                                                                               |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| Cache       | `"use cache"` + `cacheLife("reference")`                                                 |
+| A11y        | Skip link vers CTA, numeros d'etapes sr-only, articles semantiques, 48px touch targets   |
+| Animation   | Intensite progressive par etape (ring + shadow), hover par icone (rotation, scale, glow) |
+| Performance | Parallax desktop-only via `ParallaxImage`, `quality={80}`, blur data URL                 |
+| Risque      | `ScrollProgressLine` -- verifier que le scroll listener utilise `requestAnimationFrame`  |
 
 ### faq-section.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| SEO | FAQPage JSON-LD inline, `inLanguage: "fr-FR"`, escape `\\u003c` |
-| A11y | `aria-labelledby`, accordion delegue au composant enfant `FaqAccordion` |
-| Fragilite | Injection de liens via `{{link\d+}}` regex -- pas de fallback si index manquant |
-| Pas de cache | Synchrone, pas de `"use cache"` (pourrait beneficier de cache reference) |
+| Aspect       | Evaluation                                                                      |
+| ------------ | ------------------------------------------------------------------------------- |
+| SEO          | FAQPage JSON-LD inline, `inLanguage: "fr-FR"`, escape `\\u003c`                 |
+| A11y         | `aria-labelledby`, accordion delegue au composant enfant `FaqAccordion`         |
+| Fragilite    | Injection de liens via `{{link\d+}}` regex -- pas de fallback si index manquant |
+| Pas de cache | Synchrone, pas de `"use cache"` (pourrait beneficier de cache reference)        |
 
 ### newsletter-section.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| Cache | `"use cache"` + `cacheLife("reference")` |
-| A11y | `aria-labelledby`, `aria-describedby` |
-| UX | Anti-spam + signature cursive |
-| Manque | Pas d'incentive concret (-10%, guide offert, etc.) |
-| Background | GlitterSparkles desktop-only (12 sparkles, 4-8px) |
+| Aspect     | Evaluation                                         |
+| ---------- | -------------------------------------------------- |
+| Cache      | `"use cache"` + `cacheLife("reference")`           |
+| A11y       | `aria-labelledby`, `aria-describedby`              |
+| UX         | Anti-spam + signature cursive                      |
+| Manque     | Pas d'incentive concret (-10%, guide offert, etc.) |
+| Background | GlitterSparkles desktop-only (12 sparkles, 4-8px)  |
 
 ### product-card.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
+| Aspect      | Evaluation                                                                       |
+| ----------- | -------------------------------------------------------------------------------- |
 | Performance | Priority loading pour les 4 premieres images, sizes responsive, blur placeholder |
-| A11y | IDs uniques via `sectionId`, badges `role="status"`, wishlist/cart accessible |
-| UX | Badge urgency stock bas, glow pastel hover, lift effect 2D, reduced-motion safe |
-| Manque | Pas d'etoiles / note moyenne affichee |
-| Data | `getProductCardData()` O(n) single-pass pour SKU, prix, stock, image, couleurs |
+| A11y        | IDs uniques via `sectionId`, badges `role="status"`, wishlist/cart accessible    |
+| UX          | Badge urgency stock bas, glow pastel hover, lift effect 2D, reduced-motion safe  |
+| Manque      | Pas d'etoiles / note moyenne affichee                                            |
+| Data        | `getProductCardData()` O(n) single-pass pour SKU, prix, stock, image, couleurs   |
 
 ### structured-data.tsx
 
-| Aspect | Evaluation |
-|--------|------------|
-| SEO | `@graph` consolide : Organization, WebSite, LocalBusiness, Person, Article |
-| Performance | Promise streaming via `use()` + Suspense |
-| AggregateRating | Inclus dans LocalBusiness si reviews existent |
-| Note | Article schema hardcode dans le composant (pourrait etre factorise) |
+| Aspect          | Evaluation                                                                 |
+| --------------- | -------------------------------------------------------------------------- |
+| SEO             | `@graph` consolide : Organization, WebSite, LocalBusiness, Person, Article |
+| Performance     | Promise streaming via `use()` + Suspense                                   |
+| AggregateRating | Inclus dans LocalBusiness si reviews existent                              |
+| Note            | Article schema hardcode dans le composant (pourrait etre factorise)        |
 
 ---
 
@@ -439,36 +450,36 @@ Des chiffres concrets rassurent : "200+ bijoux crees", "150+ clients satisfaits"
 
 ### Sprint 1 (Impact immediat, complexite faible)
 
-| # | Tache | Priorite | Effort |
-|---|-------|----------|--------|
-| 1 | Indicateur social proof dans le hero (P3) | Critique | ~2h |
-| 2 | Etoiles sur les ProductCard homepage (P2) | Eleve | ~3h |
-| 3 | Incentive newsletter (P6) | Moyen | ~30min |
+| #   | Tache                                     | Priorite | Effort |
+| --- | ----------------------------------------- | -------- | ------ |
+| 1   | Indicateur social proof dans le hero (P3) | Critique | ~2h    |
+| 2   | Etoiles sur les ProductCard homepage (P2) | Eleve    | ~3h    |
+| 3   | Incentive newsletter (P6)                 | Moyen    | ~30min |
 
 ### Sprint 2 (Impact eleve, complexite moyenne)
 
-| # | Tache | Priorite | Effort |
-|---|-------|----------|--------|
-| 4 | Section temoignages clients (P1) | Critique | ~6h |
-| 5 | Image/video produit dans le hero (P4) | Eleve | ~4h |
-| 6 | Section chiffres cles (P5) | Moyen | ~3h |
+| #   | Tache                                 | Priorite | Effort |
+| --- | ------------------------------------- | -------- | ------ |
+| 4   | Section temoignages clients (P1)      | Critique | ~6h    |
+| 5   | Image/video produit dans le hero (P4) | Eleve    | ~4h    |
+| 6   | Section chiffres cles (P5)            | Moyen    | ~3h    |
 
 ### Sprint 3 (Enrichissement)
 
-| # | Tache | Priorite | Effort |
-|---|-------|----------|--------|
-| 7 | Galerie UGC / Instagram (P7) | Moyen | ~8h |
-| 8 | Sticky CTA mobile (2.5) | Moyen | ~3h |
-| 9 | Verifier/remplacer PlaceholderImages (2.6) | Moyen | ~1h |
-| 10 | Corriger inconsistances techniques (2.8) | Mineur | ~2h |
+| #   | Tache                                      | Priorite | Effort |
+| --- | ------------------------------------------ | -------- | ------ |
+| 7   | Galerie UGC / Instagram (P7)               | Moyen    | ~8h    |
+| 8   | Sticky CTA mobile (2.5)                    | Moyen    | ~3h    |
+| 9   | Verifier/remplacer PlaceholderImages (2.6) | Moyen    | ~1h    |
+| 10  | Corriger inconsistances techniques (2.8)   | Mineur   | ~2h    |
 
 ### Sprint 4 (Long terme)
 
-| # | Tache | Priorite | Effort |
-|---|-------|----------|--------|
-| 11 | AI Chat Assistant (P8) | Moyen | ~20h+ |
-| 12 | Personnalisation dynamique (P9) | Moyen | ~15h+ |
-| 13 | A/B testing infrastructure | Moyen | ~10h+ |
+| #   | Tache                           | Priorite | Effort |
+| --- | ------------------------------- | -------- | ------ |
+| 11  | AI Chat Assistant (P8)          | Moyen    | ~20h+  |
+| 12  | Personnalisation dynamique (P9) | Moyen    | ~15h+  |
+| 13  | A/B testing infrastructure      | Moyen    | ~10h+  |
 
 ---
 
@@ -488,12 +499,12 @@ Pour valider les ameliorations :
 
 **Score global : 8/10** -- La landing page est techniquement excellente (performance, accessibilite, SEO, storytelling). Le deficit principal est l'absence totale de preuve sociale visible (avis clients, etoiles, temoignages) malgre un module reviews complet en backend. Combler ce manque est la priorite #1 pour maximiser les conversions.
 
-| Categorie | Note | Commentaire |
-|-----------|------|-------------|
-| Performance | 9/10 | Streaming SSR, cache, code splitting, lazy loading |
-| Accessibilite | 9/10 | Skip links, ARIA, reduced-motion, touch targets |
-| SEO | 8.5/10 | @graph, FAQPage, ItemList, microdata |
-| Storytelling | 9/10 | Narration authentique, polaroids, processus creatif |
-| Preuve sociale | 2/10 | Aucun avis, etoile ou temoignage visible |
-| Conversion | 6/10 | Bon flux narratif mais manque de social proof et incentive |
-| Mobile | 8/10 | PWA, responsive, mais pas de sticky CTA |
+| Categorie      | Note   | Commentaire                                                |
+| -------------- | ------ | ---------------------------------------------------------- |
+| Performance    | 9/10   | Streaming SSR, cache, code splitting, lazy loading         |
+| Accessibilite  | 9/10   | Skip links, ARIA, reduced-motion, touch targets            |
+| SEO            | 8.5/10 | @graph, FAQPage, ItemList, microdata                       |
+| Storytelling   | 9/10   | Narration authentique, polaroids, processus creatif        |
+| Preuve sociale | 2/10   | Aucun avis, etoile ou temoignage visible                   |
+| Conversion     | 6/10   | Bon flux narratif mais manque de social proof et incentive |
+| Mobile         | 8/10   | PWA, responsive, mais pas de sticky CTA                    |

@@ -23,9 +23,7 @@ interface DuplicateProductData {
 }
 
 export function DuplicateProductAlertDialog() {
-	const duplicateDialog = useAlertDialog<DuplicateProductData>(
-		DUPLICATE_PRODUCT_DIALOG_ID
-	);
+	const duplicateDialog = useAlertDialog<DuplicateProductData>(DUPLICATE_PRODUCT_DIALOG_ID);
 
 	const { action, isPending } = useDuplicateProduct({
 		onSuccess: () => {
@@ -45,11 +43,7 @@ export function DuplicateProductAlertDialog() {
 		<AlertDialog open={duplicateDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="productId"
-						value={duplicateDialog.data?.productId ?? ""}
-					/>
+					<input type="hidden" name="productId" value={duplicateDialog.data?.productId ?? ""} />
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Dupliquer ce bijou</AlertDialogTitle>
@@ -60,12 +54,12 @@ export function DuplicateProductAlertDialog() {
 									<strong>&quot;{duplicateDialog.data?.productTitle}&quot;</strong> ?
 								</p>
 								<p className="mt-4">Une copie sera créée avec :</p>
-								<ul className="list-disc list-inside mt-2 space-y-1">
+								<ul className="mt-2 list-inside list-disc space-y-1">
 									<li>Le titre préfixé par &quot;Copie de&quot;</li>
 									<li>Toutes les variantes et leurs images</li>
 									<li>Le statut mis en &quot;Brouillon&quot;</li>
 								</ul>
-								<p className="text-muted-foreground text-xs mt-4">
+								<p className="text-muted-foreground mt-4 text-xs">
 									Vous pourrez ensuite modifier le bijou dupliqué selon vos besoins.
 								</p>
 							</div>

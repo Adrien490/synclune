@@ -5,10 +5,7 @@ import type { CartOptimisticAction } from "../contexts/cart-optimistic-context";
  * Reducer for optimistic cart state updates
  * Handles item removal and quantity changes
  */
-export function cartReducer(
-	state: GetCartReturn,
-	action: CartOptimisticAction
-): GetCartReturn {
+export function cartReducer(state: GetCartReturn, action: CartOptimisticAction): GetCartReturn {
 	if (!state) return state;
 	switch (action.type) {
 		case "remove":
@@ -20,9 +17,7 @@ export function cartReducer(
 			return {
 				...state,
 				items: state.items.map((item) =>
-					item.id === action.itemId
-						? { ...item, quantity: action.quantity }
-						: item
+					item.id === action.itemId ? { ...item, quantity: action.quantity } : item,
 				),
 			};
 		default: {

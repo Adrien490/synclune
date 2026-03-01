@@ -1,4 +1,9 @@
-import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
+import {
+	verifyCronRequest,
+	cronTimer,
+	cronSuccess,
+	cronError,
+} from "@/modules/cron/lib/verify-cron";
 import { reconcilePendingRefunds } from "@/modules/cron/services/reconcile-refunds.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
@@ -19,17 +24,22 @@ export async function GET() {
 			sendAdminCronFailedAlert({
 				job: "reconcile-refunds",
 				errors: result.errors,
-				details: { checked: result.checked, updated: result.updated, staleAlerted: result.staleAlerted },
+				details: {
+					checked: result.checked,
+					updated: result.updated,
+					staleAlerted: result.staleAlerted,
+				},
 			}).catch((e) => console.error("[CRON:reconcile-refunds] Failed to send admin alert", e));
 		}
 
-		return cronSuccess({
-			job: "reconcile-refunds",
-			...result,
-		}, startTime);
-	} catch (error) {
-		return cronError(
-			error instanceof Error ? error.message : "Failed to reconcile refunds"
+		return cronSuccess(
+			{
+				job: "reconcile-refunds",
+				...result,
+			},
+			startTime,
 		);
+	} catch (error) {
+		return cronError(error instanceof Error ? error.message : "Failed to reconcile refunds");
 	}
 }

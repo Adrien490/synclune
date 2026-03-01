@@ -10,13 +10,13 @@ export const TIMEOUTS = {
 	DATA_LOAD: 10000,
 	/** Auth redirects, Stripe iframe */
 	AUTH_REDIRECT: 15000,
-} as const
+} as const;
 
 /** Shared selectors used across page objects */
 export const SELECTORS = {
 	/** Product link pattern - matches /creations/{slug} */
 	PRODUCT_LINK: 'a[href*="/creations/"]',
-} as const
+} as const;
 
 /**
  * Requires seed data to be present for a test to run.
@@ -31,9 +31,9 @@ export function requireSeedData(
 	condition: boolean,
 	message: string,
 ): void {
-	if (condition) return
+	if (condition) return;
 	if (process.env.CI) {
-		throw new Error(`[CI] Seed data missing: ${message}`)
+		throw new Error(`[CI] Seed data missing: ${message}`);
 	}
-	testFn.skip(true, message)
+	testFn.skip(true, message);
 }

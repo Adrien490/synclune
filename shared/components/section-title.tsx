@@ -76,7 +76,7 @@ export function SectionTitle({
 				// Alignement
 				alignVariants[align],
 				// Classes personnalisées
-				className
+				className,
 			)}
 		>
 			{children}

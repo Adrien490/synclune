@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockIsAdmin,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		refund: { findUnique: vi.fn() },
 	},
@@ -161,7 +156,7 @@ describe("getRefundById", () => {
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ id: "refund-cuid-999" }),
-			})
+			}),
 		);
 	});
 
@@ -171,7 +166,7 @@ describe("getRefundById", () => {
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ deletedAt: null }),
-			})
+			}),
 		);
 	});
 
@@ -181,7 +176,7 @@ describe("getRefundById", () => {
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, orderId: true, amount: true, status: true, items: true },
-			})
+			}),
 		);
 	});
 

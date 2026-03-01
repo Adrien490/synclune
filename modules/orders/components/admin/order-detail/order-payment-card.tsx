@@ -1,12 +1,7 @@
 import { CreditCard, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { CopyButton } from "@/shared/components/copy-button";
 import type { OrderPaymentCardProps } from "./types";
@@ -23,13 +18,13 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 			<CardContent className="space-y-3">
 				{order.paymentMethod && (
 					<div>
-						<p className="text-sm text-muted-foreground">Méthode</p>
+						<p className="text-muted-foreground text-sm">Méthode</p>
 						<p className="capitalize">{order.paymentMethod}</p>
 					</div>
 				)}
 				{order.paidAt && (
 					<div>
-						<p className="text-sm text-muted-foreground">Date de paiement</p>
+						<p className="text-muted-foreground text-sm">Date de paiement</p>
 						<p>
 							{format(order.paidAt, "d MMMM yyyy 'à' HH'h'mm", {
 								locale: fr,
@@ -39,11 +34,9 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 				)}
 				{order.stripePaymentIntentId && (
 					<div>
-						<p className="text-sm text-muted-foreground">
-							Stripe Payment Intent
-						</p>
+						<p className="text-muted-foreground text-sm">Stripe Payment Intent</p>
 						<div className="flex items-center gap-2">
-							<code className="text-xs bg-muted px-1.5 py-0.5 rounded tabular-nums truncate max-w-[150px]">
+							<code className="bg-muted max-w-[150px] truncate rounded px-1.5 py-0.5 text-xs tabular-nums">
 								{order.stripePaymentIntentId}
 							</code>
 							<CopyButton
@@ -52,12 +45,7 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 								className="h-6 w-6 p-0"
 								size="icon"
 							/>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="h-6 w-6 p-0"
-								asChild
-							>
+							<Button variant="ghost" size="sm" className="h-6 w-6 p-0" asChild>
 								<a
 									href={`https://dashboard.stripe.com/payments/${order.stripePaymentIntentId}`}
 									target="_blank"

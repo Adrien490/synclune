@@ -11,7 +11,7 @@ import { ADMIN_PRODUCT_REFRESH_LIMIT } from "@/shared/lib/rate-limit-config";
 
 export async function refreshProducts(
 	_prevState: unknown,
-	_formData: FormData
+	_formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const admin = await requireAdmin();

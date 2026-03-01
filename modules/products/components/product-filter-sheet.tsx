@@ -27,6 +27,7 @@ import {
 	getCategorySlugFromPath,
 	type FilterFormData,
 } from "@/modules/products/services/product-filter-params.service";
+import { cn } from "@/shared/utils/cn";
 import { Check, Search, X } from "lucide-react";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
@@ -378,13 +379,13 @@ export function ProductFilterSheet({
 															}}
 															indicator={
 																<span
-																	className={`relative h-6 w-6 rounded-full shadow-sm ${
-																		light ? "border-border border" : "border-border/50 border"
-																	} ${
+																	className={cn(
+																		"relative h-6 w-6 rounded-full shadow-sm",
+																		light ? "border-border border" : "border-border/50 border",
 																		isSelected
 																			? "ring-primary ring-2 ring-offset-1"
-																			: "ring-1 ring-black/5 ring-inset"
-																	}`}
+																			: "ring-1 ring-black/5 ring-inset",
+																	)}
 																	style={{
 																		backgroundColor: color.hex,
 																	}}

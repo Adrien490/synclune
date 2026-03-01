@@ -43,36 +43,28 @@ export function SortSelect({
 			aria-busy={isPending}
 			className={cn(
 				"relative",
-				isPending &&
-					"opacity-60 pointer-events-none transition-opacity duration-200",
-				className
+				isPending && "pointer-events-none opacity-60 transition-opacity duration-200",
+				className,
 			)}
 		>
-			<Select
-				value={value || ""}
-				onValueChange={setSort}
-				disabled={isPending}
-			>
+			<Select value={value || ""} onValueChange={setSort} disabled={isPending}>
 				<div className="relative">
 					<SelectTrigger
 						ref={triggerRef}
 						className={cn(
 							"min-h-10 sm:min-h-11",
 							"overflow-hidden",
-							"hover:shadow-sm hover:-translate-y-px transition-all duration-150",
-							value ? "pr-18 sm:pr-20" : "pr-10"
+							"transition-all duration-150 hover:-translate-y-px hover:shadow-sm",
+							value ? "pr-18 sm:pr-20" : "pr-10",
 						)}
 						aria-label={label}
 					>
-						<div className="flex items-center gap-2 min-w-0 flex-1">
-							<span className="text-foreground/70 text-xs sm:text-sm mr-2 shrink-0 whitespace-nowrap">
+						<div className="flex min-w-0 flex-1 items-center gap-2">
+							<span className="text-foreground/70 mr-2 shrink-0 text-xs whitespace-nowrap sm:text-sm">
 								{label}
 							</span>
-							<div className="flex-1 min-w-0">
-								<SelectValue
-									placeholder={placeholder}
-									className="truncate block"
-								/>
+							<div className="min-w-0 flex-1">
+								<SelectValue placeholder={placeholder} className="block truncate" />
 							</div>
 						</div>
 					</SelectTrigger>
@@ -85,10 +77,10 @@ export function SortSelect({
 							onClick={handleClear}
 							disabled={isPending}
 							className={cn(
-								"absolute right-9 sm:right-10 top-1/2 -translate-y-1/2 z-10",
+								"absolute top-1/2 right-9 z-10 -translate-y-1/2 sm:right-10",
 								"h-9 w-9 sm:h-10 sm:w-10",
 								"text-muted-foreground hover:text-foreground",
-								"hover:bg-accent/50 active:bg-accent/70"
+								"hover:bg-accent/50 active:bg-accent/70",
 							)}
 							aria-label={`Effacer le tri ${selectedOption?.label || "actuel"}`}
 							title={`Effacer le tri ${selectedOption?.label || "actuel"}`}
@@ -111,7 +103,7 @@ export function SortSelect({
 						}}
 					>
 						{options.length === 0 ? (
-							<div className="py-6 text-center text-sm text-muted-foreground">
+							<div className="text-muted-foreground py-6 text-center text-sm">
 								Aucune option disponible
 							</div>
 						) : (
@@ -126,20 +118,11 @@ export function SortSelect({
 			</Select>
 
 			{/* Live region for screen readers */}
-			<div
-				role="status"
-				aria-live="polite"
-				aria-atomic="true"
-				className="sr-only"
-			>
+			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 				{isPending && value && (
-					<span>
-						Chargement des résultats pour le tri : {selectedOption?.label}
-					</span>
+					<span>Chargement des résultats pour le tri : {selectedOption?.label}</span>
 				)}
-				{isPending && !value && (
-					<span>Chargement des résultats par défaut</span>
-				)}
+				{isPending && !value && <span>Chargement des résultats par défaut</span>}
 			</div>
 		</div>
 	);

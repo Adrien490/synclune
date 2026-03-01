@@ -66,6 +66,7 @@ export const InputField = ({
 	autoCapitalize,
 	autoCorrect,
 	maxLength,
+	size: _nativeSize,
 	...rest
 }: HTMLInputProps) => {
 	const field = useFieldContext<string | number | null>();

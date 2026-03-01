@@ -19,35 +19,30 @@ import type { DiscountType } from "@/app/generated/prisma/client";
 import { Metadata } from "next";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const DiscountFormDialog = dynamic(
-	() =>
-		import("@/modules/discounts/components/admin/discount-form-dialog").then(
-			(mod) => mod.DiscountFormDialog
-		)
+const DiscountFormDialog = dynamic(() =>
+	import("@/modules/discounts/components/admin/discount-form-dialog").then(
+		(mod) => mod.DiscountFormDialog,
+	),
 );
-const DeleteDiscountAlertDialog = dynamic(
-	() =>
-		import(
-			"@/modules/discounts/components/admin/delete-discount-alert-dialog"
-		).then((mod) => mod.DeleteDiscountAlertDialog)
+const DeleteDiscountAlertDialog = dynamic(() =>
+	import("@/modules/discounts/components/admin/delete-discount-alert-dialog").then(
+		(mod) => mod.DeleteDiscountAlertDialog,
+	),
 );
-const ToggleDiscountStatusAlertDialog = dynamic(
-	() =>
-		import(
-			"@/modules/discounts/components/admin/toggle-discount-status-alert-dialog"
-		).then((mod) => mod.ToggleDiscountStatusAlertDialog)
+const ToggleDiscountStatusAlertDialog = dynamic(() =>
+	import("@/modules/discounts/components/admin/toggle-discount-status-alert-dialog").then(
+		(mod) => mod.ToggleDiscountStatusAlertDialog,
+	),
 );
-const BulkDeleteDiscountsAlertDialog = dynamic(
-	() =>
-		import(
-			"@/modules/discounts/components/admin/bulk-delete-discounts-alert-dialog"
-		).then((mod) => mod.BulkDeleteDiscountsAlertDialog)
+const BulkDeleteDiscountsAlertDialog = dynamic(() =>
+	import("@/modules/discounts/components/admin/bulk-delete-discounts-alert-dialog").then(
+		(mod) => mod.BulkDeleteDiscountsAlertDialog,
+	),
 );
-const DiscountUsagesDialog = dynamic(
-	() =>
-		import(
-			"@/modules/discounts/components/admin/discount-usages-dialog"
-		).then((mod) => mod.DiscountUsagesDialog)
+const DiscountUsagesDialog = dynamic(() =>
+	import("@/modules/discounts/components/admin/discount-usages-dialog").then(
+		(mod) => mod.DiscountUsagesDialog,
+	),
 );
 
 export const metadata: Metadata = {
@@ -59,19 +54,13 @@ type DiscountsAdminPageProps = {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function DiscountsAdminPage({
-	searchParams,
-}: DiscountsAdminPageProps) {
+export default async function DiscountsAdminPage({ searchParams }: DiscountsAdminPageProps) {
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as
-		| "forward"
-		| "backward";
-	const perPage =
-		Number(getFirstParam(params.perPage)) || GET_DISCOUNTS_DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) ||
-		"created-descending") as
+	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
+	const perPage = Number(getFirstParam(params.perPage)) || GET_DISCOUNTS_DEFAULT_PER_PAGE;
+	const sortBy = (getFirstParam(params.sortBy) || "created-descending") as
 		| "created-descending"
 		| "created-ascending"
 		| "code-ascending"
@@ -81,9 +70,7 @@ export default async function DiscountsAdminPage({
 	const search = getFirstParam(params.search);
 
 	// Parse filters from search params
-	const filterType = getFirstParam(params.filter_type) as
-		| DiscountType
-		| undefined;
+	const filterType = getFirstParam(params.filter_type) as DiscountType | undefined;
 	const filterIsActive = getFirstParam(params.filter_isActive);
 	const filterHasUsages = getFirstParam(params.filter_hasUsages);
 
@@ -110,11 +97,7 @@ export default async function DiscountsAdminPage({
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title="Codes promo"
-				actions={<CreateDiscountButton />}
-			/>
+			<PageHeader variant="compact" title="Codes promo" actions={<CreateDiscountButton />} />
 
 			<div className="space-y-6">
 				<Toolbar
@@ -148,10 +131,7 @@ export default async function DiscountsAdminPage({
 				<DiscountsFilterBadges />
 
 				<Suspense fallback={<DiscountsDataTableSkeleton />}>
-					<DiscountsDataTable
-						discountsPromise={discountsPromise}
-						perPage={perPage}
-					/>
+					<DiscountsDataTable discountsPromise={discountsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 

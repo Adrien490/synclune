@@ -6,20 +6,23 @@ import { SelectFilter } from "@/shared/components/select-filter";
 import dynamic from "next/dynamic";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const ProductTypeFormDialog = dynamic(
-	() => import("@/modules/product-types/components/product-type-form-dialog").then((mod) => mod.ProductTypeFormDialog)
+const ProductTypeFormDialog = dynamic(() =>
+	import("@/modules/product-types/components/product-type-form-dialog").then(
+		(mod) => mod.ProductTypeFormDialog,
+	),
 );
-const DeleteProductTypeAlertDialog = dynamic(
-	() => import("@/modules/product-types/components/admin/delete-product-type-alert-dialog").then((mod) => mod.DeleteProductTypeAlertDialog)
+const DeleteProductTypeAlertDialog = dynamic(() =>
+	import("@/modules/product-types/components/admin/delete-product-type-alert-dialog").then(
+		(mod) => mod.DeleteProductTypeAlertDialog,
+	),
 );
-const BulkDeleteProductTypesAlertDialog = dynamic(
-	() => import("@/modules/product-types/components/admin/bulk-delete-product-types-alert-dialog").then((mod) => mod.BulkDeleteProductTypesAlertDialog)
+const BulkDeleteProductTypesAlertDialog = dynamic(() =>
+	import("@/modules/product-types/components/admin/bulk-delete-product-types-alert-dialog").then(
+		(mod) => mod.BulkDeleteProductTypesAlertDialog,
+	),
 );
 import { CreateProductTypeButton } from "@/modules/product-types/components/admin/create-product-type-button";
-import {
-	getProductTypes,
-	SORT_LABELS,
-} from "@/modules/product-types/data/get-product-types";
+import { getProductTypes, SORT_LABELS } from "@/modules/product-types/data/get-product-types";
 import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import { ProductTypesDataTable } from "@/modules/product-types/components/admin/product-types-data-table";
@@ -56,16 +59,12 @@ type ProductTypesAdminPageProps = {
 	searchParams: Promise<ProductTypesSearchParams>;
 };
 
-export default async function ProductTypesAdminPage({
-	searchParams,
-}: ProductTypesAdminPageProps) {
+export default async function ProductTypesAdminPage({ searchParams }: ProductTypesAdminPageProps) {
 	const params = await searchParams;
 
 	// Extract params
 	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) || "forward") as
-		| "forward"
-		| "backward";
+	const direction = (getFirstParam(params.direction) || "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
 	const sortBy = (getFirstParam(params.sortBy) || "label-ascending") as
 		| "label-ascending"
@@ -89,17 +88,15 @@ export default async function ProductTypesAdminPage({
 			<ProductTypeFormDialog />
 			<DeleteProductTypeAlertDialog />
 			<BulkDeleteProductTypesAlertDialog />
-			<PageHeader
-				variant="compact"
-				title="Types de bijoux"
-				actions={<CreateProductTypeButton />}
-			/>
+			<PageHeader variant="compact" title="Types de bijoux" actions={<CreateProductTypeButton />} />
 
 			<div className="space-y-6">
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des types de bijoux"
 					search={
-						<SearchInput mode="live" size="sm"
+						<SearchInput
+							mode="live"
+							size="sm"
 							paramName="search"
 							placeholder="Rechercher par label, slug..."
 							ariaLabel="Rechercher un type de bijou par label ou slug"

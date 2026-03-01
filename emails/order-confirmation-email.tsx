@@ -32,9 +32,7 @@ export const OrderConfirmationEmail = ({
 		<EmailLayout preview={`Commande ${orderNumber} confirmée`}>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>
-					Commande confirmée
-				</Text>
+				<Text style={EMAIL_STYLES.heading.h2}>Commande confirmée</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
 					Bonjour {customerName}, votre commande est enregistrée.
 				</Text>
@@ -64,9 +62,7 @@ export const OrderConfirmationEmail = ({
 
 			{/* Articles */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-					Articles
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Articles</Text>
 
 				{items.map((item, index) => (
 					<FlexRow
@@ -74,10 +70,7 @@ export const OrderConfirmationEmail = ({
 						style={{
 							marginBottom: "12px",
 							paddingBottom: index < items.length - 1 ? "12px" : "0",
-							borderBottom:
-								index < items.length - 1
-									? `1px solid ${EMAIL_COLORS.border}`
-									: "none",
+							borderBottom: index < items.length - 1 ? `1px solid ${EMAIL_COLORS.border}` : "none",
 						}}
 						left={
 							<>
@@ -92,10 +85,8 @@ export const OrderConfirmationEmail = ({
 									{item.productTitle}
 								</Text>
 								<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
-									{[item.skuSize, item.skuColor, item.skuMaterial]
-										.filter(Boolean)
-										.join(" · ")}{" "}
-									× {item.quantity}
+									{[item.skuSize, item.skuColor, item.skuMaterial].filter(Boolean).join(" · ")} ×{" "}
+									{item.quantity}
 								</Text>
 							</>
 						}
@@ -191,9 +182,7 @@ export const OrderConfirmationEmail = ({
 
 			{/* Adresse */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Livraison
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Livraison</Text>
 				<Section style={EMAIL_STYLES.section.card}>
 					<Text style={{ ...EMAIL_STYLES.text.body, margin: 0 }}>
 						{shippingAddress.firstName} {shippingAddress.lastName}
@@ -203,8 +192,7 @@ export const OrderConfirmationEmail = ({
 						{shippingAddress.address2 && `, ${shippingAddress.address2}`}
 					</Text>
 					<Text style={EMAIL_STYLES.text.small}>
-						{shippingAddress.postalCode} {shippingAddress.city},{" "}
-						{shippingAddress.country}
+						{shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
 					</Text>
 				</Section>
 			</Section>

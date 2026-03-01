@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 
@@ -14,11 +11,7 @@ import {
 	GET_COLORS_SELECT,
 } from "../constants/color.constants";
 import { getColorsSchema } from "../schemas/color.schemas";
-import type {
-	GetColorsParams,
-	GetColorsParamsInput,
-	GetColorsReturn,
-} from "../types/color.types";
+import type { GetColorsParams, GetColorsParamsInput, GetColorsReturn } from "../types/color.types";
 import { buildColorWhereClause } from "../services/color-query-builder";
 
 // Re-export pour compatibilité
@@ -48,9 +41,7 @@ export { COLORS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/color.constant
 /**
  * Récupère la liste des couleurs avec pagination
  */
-export async function getColors(
-	params: GetColorsParamsInput
-): Promise<GetColorsReturn> {
+export async function getColors(params: GetColorsParamsInput): Promise<GetColorsReturn> {
 	const validation = getColorsSchema.safeParse(params);
 
 	if (!validation.success) {
@@ -79,16 +70,15 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 		const where = buildColorWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.ColorOrderByWithRelationInput[] =
-			params.sortBy.startsWith("name-")
-				? [{ name: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("skuCount-")
-					? [{ skus: { _count: direction } }, { id: "asc" }]
-					: [{ name: "asc" }, { id: "asc" }];
+		const orderBy: Prisma.ColorOrderByWithRelationInput[] = params.sortBy.startsWith("name-")
+			? [{ name: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("skuCount-")
+				? [{ skus: { _count: direction } }, { id: "asc" }]
+				: [{ name: "asc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_COLORS_DEFAULT_PER_PAGE),
-			GET_COLORS_MAX_RESULTS_PER_PAGE
+			GET_COLORS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -108,7 +98,7 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 			colors,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return { colors: items, pagination };

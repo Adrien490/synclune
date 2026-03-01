@@ -42,12 +42,12 @@ function parseParams(params: {
 		perPage: searchParamParsers.perPage(
 			params.perPage,
 			GET_USER_ORDERS_DEFAULT_PER_PAGE,
-			GET_USER_ORDERS_MAX_RESULTS_PER_PAGE
+			GET_USER_ORDERS_MAX_RESULTS_PER_PAGE,
 		),
 		sortBy: searchParamParsers.sortBy(
 			params.sortBy,
 			GET_USER_ORDERS_SORT_FIELDS,
-			USER_ORDERS_SORT_OPTIONS.CREATED_DESC
+			USER_ORDERS_SORT_OPTIONS.CREATED_DESC,
 		),
 		search: searchParamParsers.search(params.search, 50),
 	};

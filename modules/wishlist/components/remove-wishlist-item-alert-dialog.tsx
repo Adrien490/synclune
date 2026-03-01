@@ -33,9 +33,7 @@ type RemoveWishlistItemData = AlertDialogData & {
  * - Toast de confirmation après suppression réussie
  */
 export function RemoveWishlistItemAlertDialog() {
-	const removeDialog = useAlertDialog<RemoveWishlistItemData>(
-		WISHLIST_DIALOG_IDS.REMOVE_ITEM
-	);
+	const removeDialog = useAlertDialog<RemoveWishlistItemData>(WISHLIST_DIALOG_IDS.REMOVE_ITEM);
 
 	// Connect to optimistic list context for immediate visual feedback
 	const wishlistListOptimistic = useWishlistListOptimistic();
@@ -76,23 +74,17 @@ export function RemoveWishlistItemAlertDialog() {
 		<AlertDialog open={removeDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={handleAction}>
-					<input
-						type="hidden"
-						name="productId"
-						value={removeDialog.data?.productId ?? ""}
-					/>
+					<input type="hidden" name="productId" value={removeDialog.data?.productId ?? ""} />
 
 					<AlertDialogHeader>
-						<AlertDialogTitle>
-							Retirer ce produit de votre wishlist ?
-						</AlertDialogTitle>
+						<AlertDialogTitle>Retirer ce produit de votre wishlist ?</AlertDialogTitle>
 						<AlertDialogDescription asChild>
 							<div className="space-y-3">
 								<p>
 									{removeDialog.data?.itemName ? (
 										<>
 											Vous voulez vraiment retirer{" "}
-											<span className="font-medium text-foreground">
+											<span className="text-foreground font-medium">
 												{removeDialog.data.itemName}
 											</span>{" "}
 											de votre wishlist ?
@@ -102,7 +94,8 @@ export function RemoveWishlistItemAlertDialog() {
 									)}
 								</p>
 								<p className="text-muted-foreground text-sm">
-									Vous pourrez toujours le retrouver dans la boutique<span aria-hidden="true"> 💕</span>
+									Vous pourrez toujours le retrouver dans la boutique
+									<span aria-hidden="true"> 💕</span>
 								</p>
 							</div>
 						</AlertDialogDescription>

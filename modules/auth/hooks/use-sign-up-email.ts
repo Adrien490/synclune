@@ -26,9 +26,9 @@ export function useSignUpEmail(options?: UseSignUpEmailOptions) {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

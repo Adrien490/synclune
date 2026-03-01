@@ -10,10 +10,7 @@ interface MaterialActiveToggleProps {
 	isActive: boolean;
 }
 
-export function MaterialActiveToggle({
-	materialId,
-	isActive,
-}: MaterialActiveToggleProps) {
+export function MaterialActiveToggle({ materialId, isActive }: MaterialActiveToggleProps) {
 	const [optimisticIsActive, setOptimisticIsActive] = useOptimistic(isActive);
 	const [isTransitionPending, startTransition] = useTransition();
 

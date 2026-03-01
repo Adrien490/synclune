@@ -7,12 +7,9 @@
  * - Catégoriser les changements (hausse/baisse)
  */
 
-import type {
-	CartItemForPriceCheck,
-	PriceChangeResult,
-} from "../types/cart.types"
+import type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.types";
 
-export type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.types"
+export type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.types";
 
 // ============================================================================
 // CART PRICING CALCULATOR SERVICE
@@ -28,30 +25,26 @@ export type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.typ
  * @returns Résultat détaillé des changements de prix
  */
 export function detectPriceChanges<T extends CartItemForPriceCheck>(
-	items: T[]
+	items: T[],
 ): PriceChangeResult<T> {
-	const itemsWithPriceChange = items.filter(
-		(item) => item.priceAtAdd !== item.sku.priceInclTax
-	);
+	const itemsWithPriceChange = items.filter((item) => item.priceAtAdd !== item.sku.priceInclTax);
 
 	const itemsWithPriceIncrease = itemsWithPriceChange.filter(
-		(item) => item.sku.priceInclTax > item.priceAtAdd
+		(item) => item.sku.priceInclTax > item.priceAtAdd,
 	);
 
 	const itemsWithPriceDecrease = itemsWithPriceChange.filter(
-		(item) => item.sku.priceInclTax < item.priceAtAdd
+		(item) => item.sku.priceInclTax < item.priceAtAdd,
 	);
 
 	const totalSavings = itemsWithPriceDecrease.reduce(
-		(sum, item) =>
-			sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity,
-		0
+		(sum, item) => sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity,
+		0,
 	);
 
 	const totalIncrease = itemsWithPriceIncrease.reduce(
-		(sum, item) =>
-			sum + (item.sku.priceInclTax - item.priceAtAdd) * item.quantity,
-		0
+		(sum, item) => sum + (item.sku.priceInclTax - item.priceAtAdd) * item.quantity,
+		0,
 	);
 
 	return {
@@ -82,11 +75,7 @@ export function hasPriceChanges(items: CartItemForPriceCheck[]): boolean {
 export function calculateTotalSavings(items: CartItemForPriceCheck[]): number {
 	return items
 		.filter((item) => item.sku.priceInclTax < item.priceAtAdd)
-		.reduce(
-			(sum, item) =>
-				sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity,
-			0
-		);
+		.reduce((sum, item) => sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity, 0);
 }
 
 /**

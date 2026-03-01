@@ -19,7 +19,7 @@ import { validateDiscountCode } from "./validate-discount-code";
  */
 export async function applyDiscountCode(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	// Rate limiting based on IP (fallback to "unknown" to prevent bypass)
 	const headersList = await headers();

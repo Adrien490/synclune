@@ -1,8 +1,4 @@
-import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	ORDER_STATUS_LABELS,
@@ -10,14 +6,8 @@ import {
 } from "@/modules/orders/constants/status-display";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import {
-	CheckCircle2,
-	Clock,
-	CreditCard,
-	Package,
-	Truck,
-	XCircle,
-} from "lucide-react";
+import { cn } from "@/shared/utils/cn";
+import { CheckCircle2, Clock, CreditCard, Package, Truck, XCircle } from "lucide-react";
 
 interface OrderStatusTimelineProps {
 	order: {
@@ -60,9 +50,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 			label: "Expédiée",
 			date: order.shippedAt,
 			icon: Truck,
-			completed:
-				order.fulfillmentStatus === "SHIPPED" ||
-				order.fulfillmentStatus === "DELIVERED",
+			completed: order.fulfillmentStatus === "SHIPPED" || order.fulfillmentStatus === "DELIVERED",
 		},
 		{
 			label: "Livrée",
@@ -77,29 +65,27 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 	return (
 		<section className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h2 className="text-base font-semibold flex items-center gap-2">
-					<Clock className="size-4 text-muted-foreground" />
+				<h2 className="flex items-center gap-2 text-base font-semibold">
+					<Clock className="text-muted-foreground size-4" />
 					Suivi de commande
 				</h2>
 				<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
 					{ORDER_STATUS_LABELS[order.status]}
 				</Badge>
 			</div>
-			<div className="border-t border-border/60 pt-4">
+			<div className="border-border/60 border-t pt-4">
 				{isCancelled ? (
-					<div className="flex items-center gap-3 p-4 bg-destructive/10 rounded-lg">
-						<XCircle className="h-6 w-6 text-destructive" />
+					<div className="bg-destructive/10 flex items-center gap-3 rounded-lg p-4">
+						<XCircle className="text-destructive h-6 w-6" />
 						<div>
-							<p className="font-medium text-destructive">Commande annulée</p>
-							<p className="text-sm text-muted-foreground">
-								Cette commande a été annulée.
-							</p>
+							<p className="text-destructive font-medium">Commande annulée</p>
+							<p className="text-muted-foreground text-sm">Cette commande a été annulée.</p>
 						</div>
 					</div>
 				) : (
 					<div className="relative">
 						{/* Timeline line */}
-						<div className="absolute left-4 top-6 bottom-6 w-0.5 bg-border" />
+						<div className="bg-border absolute top-6 bottom-6 left-4 w-0.5" />
 
 						<div className="space-y-6">
 							{steps.map((step, index) => {
@@ -112,15 +98,16 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 									<div key={index} className="relative flex gap-4">
 										{/* Icon */}
 										<div
-											className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+											className={cn(
+												"relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2",
 												isFailed
 													? "border-destructive bg-destructive/10 text-destructive"
 													: isCompleted
 														? "border-primary bg-primary text-primary-foreground"
 														: isActive
 															? "border-primary bg-background text-primary"
-															: "border-border bg-muted text-muted-foreground"
-											}`}
+															: "border-border bg-muted text-muted-foreground",
+											)}
 										>
 											<Icon className="h-4 w-4" aria-hidden="true" />
 										</div>
@@ -128,16 +115,15 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 										{/* Content */}
 										<div className="flex-1 pt-1">
 											<p
-												className={`text-sm font-medium ${
-													isCompleted || isActive
-														? "text-foreground"
-														: "text-muted-foreground"
-												}`}
+												className={cn(
+													"text-sm font-medium",
+													isCompleted || isActive ? "text-foreground" : "text-muted-foreground",
+												)}
 											>
 												{step.label}
 											</p>
 											{step.date && isCompleted && (
-												<p className="text-xs text-muted-foreground">
+												<p className="text-muted-foreground text-xs">
 													{format(step.date, "d MMMM yyyy 'à' HH:mm", {
 														locale: fr,
 													})}

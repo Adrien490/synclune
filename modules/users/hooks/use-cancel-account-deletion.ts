@@ -7,11 +7,8 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
 export function useCancelAccountDeletion() {
 	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			cancelAccountDeletion,
-			createToastCallbacks()
-		),
-		undefined
+		withCallbacks(cancelAccountDeletion, createToastCallbacks()),
+		undefined,
 	);
 
 	return {

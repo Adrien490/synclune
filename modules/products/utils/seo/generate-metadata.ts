@@ -76,9 +76,7 @@ export async function generateProductMetadata({
 
 	// ✅ SIMPLE : product.skus[0] = SKU principal
 	const primarySku = product.skus[0];
-	const price = primarySku?.priceInclTax
-		? `${(primarySku.priceInclTax / 100).toFixed(2)}€`
-		: "";
+	const price = primarySku?.priceInclTax ? `${(primarySku.priceInclTax / 100).toFixed(2)}€` : "";
 
 	// Construire le titre SEO optimisé (< 60 caractères garanti)
 	const title = buildSeoTitle(product.title, price || undefined);
@@ -124,9 +122,11 @@ export async function generateProductMetadata({
 			images: [imageUrl],
 		},
 		other: {
-			"product:price:amount": price || (primarySku?.priceInclTax ? (primarySku.priceInclTax / 100).toFixed(2) : ""),
+			"product:price:amount":
+				price || (primarySku?.priceInclTax ? (primarySku.priceInclTax / 100).toFixed(2) : ""),
 			"product:price:currency": "EUR",
-			"product:availability": primarySku?.inventory && primarySku.inventory > 0 ? "in stock" : "out of stock",
+			"product:availability":
+				primarySku?.inventory && primarySku.inventory > 0 ? "in stock" : "out of stock",
 			"product:condition": "new",
 			"product:brand": "Synclune",
 		},

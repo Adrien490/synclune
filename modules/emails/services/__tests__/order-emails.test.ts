@@ -1,28 +1,28 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockRenderAndSend } = vi.hoisted(() => ({
 	mockRenderAndSend: vi.fn(),
-}))
+}));
 
 vi.mock("../send-email", () => ({
 	renderAndSend: mockRenderAndSend,
-}))
+}));
 
 vi.mock("@/emails/order-confirmation-email", () => ({
 	OrderConfirmationEmail: vi.fn((props) => ({ type: "OrderConfirmationEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/shipping-confirmation-email", () => ({
 	ShippingConfirmationEmail: vi.fn((props) => ({ type: "ShippingConfirmationEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/tracking-update-email", () => ({
 	TrackingUpdateEmail: vi.fn((props) => ({ type: "TrackingUpdateEmail", props })),
-}))
+}));
 
 vi.mock("@/emails/delivery-confirmation-email", () => ({
 	DeliveryConfirmationEmail: vi.fn((props) => ({ type: "DeliveryConfirmationEmail", props })),
-}))
+}));
 
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_SUBJECTS: {
@@ -32,14 +32,14 @@ vi.mock("../../constants/email.constants", () => ({
 		ORDER_DELIVERED: "Votre commande a été livrée - Synclune",
 	},
 	EMAIL_CONTACT: "contact@test.com",
-}))
+}));
 
 import {
 	sendOrderConfirmationEmail,
 	sendShippingConfirmationEmail,
 	sendTrackingUpdateEmail,
 	sendDeliveryConfirmationEmail,
-} from "../order-emails"
+} from "../order-emails";
 
 const mockShippingAddress = {
 	firstName: "Marie",
@@ -48,7 +48,7 @@ const mockShippingAddress = {
 	city: "Paris",
 	postalCode: "75001",
 	country: "FR",
-}
+};
 
 const mockItems = [
 	{
@@ -59,13 +59,13 @@ const mockItems = [
 		quantity: 1,
 		price: 12000,
 	},
-]
+];
 
 describe("sendOrderConfirmationEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendOrderConfirmationEmail({
@@ -79,7 +79,7 @@ describe("sendOrderConfirmationEmail", () => {
 			total: 12500,
 			shippingAddress: mockShippingAddress,
 			trackingUrl: "https://tracking.test.com/abc",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -101,9 +101,9 @@ describe("sendOrderConfirmationEmail", () => {
 				subject: "Confirmation de commande - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendOrderConfirmationEmail({
@@ -117,17 +117,17 @@ describe("sendOrderConfirmationEmail", () => {
 			total: 12500,
 			shippingAddress: mockShippingAddress,
 			trackingUrl: "https://tracking.test.com/abc",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-1" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-1" } });
+	});
+});
 
 describe("sendShippingConfirmationEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendShippingConfirmationEmail({
@@ -139,7 +139,7 @@ describe("sendShippingConfirmationEmail", () => {
 			carrierLabel: "Colissimo",
 			shippingAddress: mockShippingAddress,
 			estimatedDelivery: "2026-02-28",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -159,9 +159,9 @@ describe("sendShippingConfirmationEmail", () => {
 				subject: "Votre commande a été expédiée - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should accept null trackingUrl", async () => {
 		await sendShippingConfirmationEmail({
@@ -172,15 +172,15 @@ describe("sendShippingConfirmationEmail", () => {
 			trackingUrl: null,
 			carrierLabel: "Colissimo",
 			shippingAddress: mockShippingAddress,
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
 				props: expect.objectContaining({ trackingUrl: null }),
 			}),
-			expect.anything()
-		)
-	})
+			expect.anything(),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendShippingConfirmationEmail({
@@ -191,17 +191,17 @@ describe("sendShippingConfirmationEmail", () => {
 			trackingUrl: null,
 			carrierLabel: "Colissimo",
 			shippingAddress: mockShippingAddress,
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-2" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-2" } });
+	});
+});
 
 describe("sendTrackingUpdateEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendTrackingUpdateEmail({
@@ -212,7 +212,7 @@ describe("sendTrackingUpdateEmail", () => {
 			trackingUrl: "https://tracking.test.com/TRACK123",
 			carrierLabel: "Chronopost",
 			estimatedDelivery: "2026-02-27",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -231,9 +231,9 @@ describe("sendTrackingUpdateEmail", () => {
 				subject: "Mise à jour du suivi de votre commande - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendTrackingUpdateEmail({
@@ -243,17 +243,17 @@ describe("sendTrackingUpdateEmail", () => {
 			trackingNumber: "TRACK123",
 			trackingUrl: null,
 			carrierLabel: "Chronopost",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-3" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-3" } });
+	});
+});
 
 describe("sendDeliveryConfirmationEmail", () => {
 	beforeEach(() => {
-		vi.resetAllMocks()
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-4" } })
-	})
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-4" } });
+	});
 
 	it("should call renderAndSend with correct component props", async () => {
 		await sendDeliveryConfirmationEmail({
@@ -262,7 +262,7 @@ describe("sendDeliveryConfirmationEmail", () => {
 			customerName: "Marie Dupont",
 			deliveryDate: "2026-02-24",
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -279,9 +279,9 @@ describe("sendDeliveryConfirmationEmail", () => {
 				subject: "Votre commande a été livrée - Synclune",
 				replyTo: "contact@test.com",
 				tags: [{ name: "category", value: "order" }],
-			})
-		)
-	})
+			}),
+		);
+	});
 
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendDeliveryConfirmationEmail({
@@ -290,8 +290,8 @@ describe("sendDeliveryConfirmationEmail", () => {
 			customerName: "Marie Dupont",
 			deliveryDate: "2026-02-24",
 			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		})
+		});
 
-		expect(result).toEqual({ success: true, data: { id: "email-4" } })
-	})
-})
+		expect(result).toEqual({ success: true, data: { id: "email-4" } });
+	});
+});

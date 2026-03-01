@@ -23,9 +23,7 @@ interface MarkAsProcessingData {
 }
 
 export function MarkAsProcessingAlertDialog() {
-	const dialog = useAlertDialog<MarkAsProcessingData>(
-		MARK_AS_PROCESSING_DIALOG_ID
-	);
+	const dialog = useAlertDialog<MarkAsProcessingData>(MARK_AS_PROCESSING_DIALOG_ID);
 
 	const { action, isPending } = useMarkAsProcessing({
 		onSuccess: () => {
@@ -54,8 +52,8 @@ export function MarkAsProcessingAlertDialog() {
 									<strong>{dialog.data?.orderNumber}</strong> en préparation ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									Le statut passera de "En attente" à "En préparation". Vous pourrez
-									ensuite l'expédier une fois le colis prêt.
+									Le statut passera de "En attente" à "En préparation". Vous pourrez ensuite
+									l'expédier une fois le colis prêt.
 								</p>
 							</div>
 						</AlertDialogDescription>

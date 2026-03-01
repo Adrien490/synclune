@@ -15,9 +15,9 @@ export function useMarkAsPaid(options?: UseMarkAsPaidOptions) {
 			markAsPaid,
 			createToastCallbacks({
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

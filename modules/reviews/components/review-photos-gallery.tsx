@@ -1,30 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
+import { useState } from "react";
+import Image from "next/image";
 
-import { useLightbox } from "@/shared/hooks"
-import dynamic from "next/dynamic"
+import { useLightbox } from "@/shared/hooks";
+import dynamic from "next/dynamic";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
-const MediaLightbox = dynamic(
-	() => import("@/modules/media/components/media-lightbox"),
-	{ ssr: false }
-)
+const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
+	ssr: false,
+});
 
-import type { ReviewPublic } from "../types/review.types"
+import type { ReviewPublic } from "../types/review.types";
 
 interface PhotoWithReview {
-	id: string
-	url: string
-	blurDataUrl: string | null
-	altText: string | null
-	reviewId: string
-	userName: string | null
+	id: string;
+	url: string;
+	blurDataUrl: string | null;
+	altText: string | null;
+	reviewId: string;
+	userName: string | null;
 }
 
 interface ReviewPhotosGalleryProps {
-	reviews: ReviewPublic[]
+	reviews: ReviewPublic[];
 }
 
 /**
@@ -32,8 +31,8 @@ interface ReviewPhotosGalleryProps {
  * Affiche toutes les photos des avis et permet de naviguer vers l'avis correspondant
  */
 export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
-	const { isOpen, open, close } = useLightbox()
-	const [currentIndex, setCurrentIndex] = useState(0)
+	const { isOpen, open, close } = useLightbox();
+	const [currentIndex, setCurrentIndex] = useState(0);
 
 	// Extraire toutes les photos avec leur reviewId
 	const allPhotos: PhotoWithReview[] = reviews.flatMap((review) =>
@@ -41,47 +40,50 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 			...media,
 			reviewId: review.id,
 			userName: review.user.name,
-		}))
-	)
+		})),
+	);
 
 	// Ne rien afficher si aucune photo
 	if (allPhotos.length === 0) {
-		return null
+		return null;
 	}
 
 	const openAtIndex = (index: number) => {
-		setCurrentIndex(index)
-		open()
-	}
+		setCurrentIndex(index);
+		open();
+	};
 
 	const handleClose = () => {
-		close()
+		close();
 
 		// Scroll vers l'avis correspondant à la photo actuellement affichée
-		const currentPhoto = allPhotos[currentIndex]
+		const currentPhoto = allPhotos[currentIndex];
 		if (currentPhoto) {
 			document
 				.getElementById(`review-${currentPhoto.reviewId}`)
-				?.scrollIntoView({ behavior: "smooth", block: "center" })
+				?.scrollIntoView({ behavior: "smooth", block: "center" });
 		}
-	}
+	};
 
-	const slides = allPhotos.map((photo) => ({ src: photo.url, alt: photo.altText || "Photo client" }))
+	const slides = allPhotos.map((photo) => ({
+		src: photo.url,
+		alt: photo.altText || "Photo client",
+	}));
 
 	return (
 		<section aria-labelledby="customer-photos-heading" className="space-y-3">
-			<h3 id="customer-photos-heading" className="text-sm font-medium text-foreground">
+			<h3 id="customer-photos-heading" className="text-foreground text-sm font-medium">
 				Photos clients ({allPhotos.length})
 			</h3>
 
-			<div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+			<div className="scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent -mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
 				{allPhotos.map((photo, index) => (
 					<button
 						key={photo.id}
 						type="button"
 						onClick={() => openAtIndex(index)}
 						aria-label={`Photo ${index + 1} de l'avis de ${photo.userName || "Anonyme"}`}
-						className="relative size-20 flex-shrink-0 rounded-lg overflow-hidden group cursor-zoom-in focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+						className="group focus-visible:ring-ring relative size-20 flex-shrink-0 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
 					>
 						<Image
 							src={photo.url}
@@ -105,5 +107,5 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 				onIndexChange={setCurrentIndex}
 			/>
 		</section>
-	)
+	);
 }

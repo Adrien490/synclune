@@ -82,7 +82,7 @@ describe("anonymizeUserInTransaction", () => {
 			}),
 		});
 
-		const updateData = mockTx.user.update.mock.calls[0][0].data;
+		const updateData = mockTx.user.update.mock.calls[0]![0].data;
 		expect(updateData.anonymizedAt).toBeInstanceOf(Date);
 		expect(updateData.deletedAt).toBeInstanceOf(Date);
 	});

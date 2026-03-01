@@ -74,7 +74,7 @@ describe("GET /api/cron/cleanup-wishlists", () => {
 		mockCronTimer.mockReturnValue(1000);
 		mockCleanupExpiredWishlists.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -128,7 +128,7 @@ describe("GET /api/cron/cleanup-wishlists", () => {
 					deletedCount: DEFAULT_SERVICE_RESULT.deletedCount,
 					hasMore: DEFAULT_SERVICE_RESULT.hasMore,
 				}),
-				1000
+				1000,
 			);
 		});
 

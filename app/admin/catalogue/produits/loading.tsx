@@ -31,7 +31,7 @@ export default function ProductsListLoading() {
 					<Skeleton className="h-10 w-full sm:max-w-md" />
 
 					{/* Sort */}
-					<Skeleton className="h-10 w-full sm:min-w-45 sm:max-w-50" />
+					<Skeleton className="h-10 w-full sm:max-w-50 sm:min-w-45" />
 
 					{/* Filter button */}
 					<Skeleton className="h-10 w-25" />
@@ -47,7 +47,7 @@ export default function ProductsListLoading() {
 			{/* Data Table */}
 			<div className="rounded-md border">
 				{/* Table Header */}
-				<div className="border-b bg-muted/50 p-4">
+				<div className="bg-muted/50 border-b p-4">
 					<div className="flex items-center gap-4">
 						<Skeleton className="h-4 w-4" />
 						<div className="hidden lg:block">
@@ -56,20 +56,20 @@ export default function ProductsListLoading() {
 						<div className="flex-1">
 							<Skeleton className="h-4 w-20" />
 						</div>
-						<div className="hidden lg:block w-[15%]">
+						<div className="hidden w-[15%] lg:block">
 							<Skeleton className="h-4 w-16" />
 						</div>
-						<div className="hidden sm:block text-center">
-							<Skeleton className="h-4 w-20 mx-auto" />
+						<div className="hidden text-center sm:block">
+							<Skeleton className="mx-auto h-4 w-20" />
 						</div>
 						<div className="hidden lg:block">
 							<Skeleton className="h-4 w-16" />
 						</div>
-						<div className="hidden lg:block text-center">
-							<Skeleton className="h-4 w-12 mx-auto" />
+						<div className="hidden text-center lg:block">
+							<Skeleton className="mx-auto h-4 w-12" />
 						</div>
 						<div className="w-[15%] sm:w-[8%]">
-							<Skeleton className="h-4 w-16 ml-auto" />
+							<Skeleton className="ml-auto h-4 w-16" />
 						</div>
 					</div>
 				</div>
@@ -94,13 +94,13 @@ export default function ProductsListLoading() {
 								</div>
 
 								{/* Type - hidden on lg- */}
-								<div className="hidden lg:block w-[15%]">
+								<div className="hidden w-[15%] lg:block">
 									<Skeleton className="h-6 w-20 rounded-full" />
 								</div>
 
 								{/* Variants count - hidden on sm- */}
-								<div className="hidden sm:block text-center">
-									<Skeleton className="h-4 w-8 mx-auto" />
+								<div className="hidden text-center sm:block">
+									<Skeleton className="mx-auto h-4 w-8" />
 								</div>
 
 								{/* Price range - hidden on lg- */}
@@ -109,12 +109,12 @@ export default function ProductsListLoading() {
 								</div>
 
 								{/* Stock - hidden on lg- */}
-								<div className="hidden lg:block text-center">
-									<Skeleton className="h-6 w-12 mx-auto rounded-full" />
+								<div className="hidden text-center lg:block">
+									<Skeleton className="mx-auto h-6 w-12 rounded-full" />
 								</div>
 
 								{/* Actions */}
-								<div className="w-[15%] sm:w-[8%] flex justify-end">
+								<div className="flex w-[15%] justify-end sm:w-[8%]">
 									<Skeleton className="h-8 w-8 rounded-md" />
 								</div>
 							</div>

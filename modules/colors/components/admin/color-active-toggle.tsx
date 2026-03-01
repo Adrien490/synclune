@@ -10,10 +10,7 @@ interface ColorActiveToggleProps {
 	isActive: boolean;
 }
 
-export function ColorActiveToggle({
-	colorId,
-	isActive,
-}: ColorActiveToggleProps) {
+export function ColorActiveToggle({ colorId, isActive }: ColorActiveToggleProps) {
 	const [optimisticIsActive, setOptimisticIsActive] = useOptimistic(isActive);
 	const [isTransitionPending, startTransition] = useTransition();
 

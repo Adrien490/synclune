@@ -11,18 +11,16 @@ interface UseUpdateCustomizationNotesOptions {
 	onSuccess?: () => void;
 }
 
-export function useUpdateCustomizationNotes(
-	options?: UseUpdateCustomizationNotesOptions
-) {
+export function useUpdateCustomizationNotes(options?: UseUpdateCustomizationNotesOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateCustomizationNotes,
 			createToastCallbacks({
 				loadingMessage: "Enregistrement...",
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

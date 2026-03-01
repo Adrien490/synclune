@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	SHIPPING_COUNTRIES,
-	COUNTRY_ERROR_MESSAGE,
-} from "@/shared/constants/countries";
+import { SHIPPING_COUNTRIES, COUNTRY_ERROR_MESSAGE } from "@/shared/constants/countries";
 import { emailOptionalSchema } from "@/shared/schemas/email.schemas";
 import { phoneSchema } from "@/shared/schemas/phone.schemas";
 import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
@@ -28,13 +25,16 @@ export const createCheckoutSessionSchema = z.object({
 		.array(
 			z.object({
 				skuId: z.string(),
-				quantity: z.number().int().positive().max(MAX_QUANTITY_PER_ORDER, `Maximum ${MAX_QUANTITY_PER_ORDER} unités par article`),
+				quantity: z
+					.number()
+					.int()
+					.positive()
+					.max(MAX_QUANTITY_PER_ORDER, `Maximum ${MAX_QUANTITY_PER_ORDER} unités par article`),
 				priceAtAdd: z.number().int().positive(),
-			})
+			}),
 		)
 		.min(1, "Le panier doit contenir au moins un article"),
 	shippingAddress: addressSchema,
 	email: emailOptionalSchema, // Requis si guest
 	discountCode: discountCodeSchema.optional(), // Code promo optionnel (trim + uppercase + regex validated)
 });
-

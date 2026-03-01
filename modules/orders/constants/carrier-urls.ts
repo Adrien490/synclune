@@ -40,7 +40,6 @@ export const CARRIER_TRACKING_URLS = {
 	 */
 	DPD: (trackingNumber: string) =>
 		`https://trace.dpd.fr/fr/trace/${encodeURIComponent(trackingNumber)}`,
-
 } as const;
 
 // ============================================================================

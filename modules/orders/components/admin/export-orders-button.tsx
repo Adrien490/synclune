@@ -87,25 +87,20 @@ export function ExportOrdersButton() {
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				<Button variant="outline" size="sm">
-					<Download className="h-4 w-4 mr-2" />
+					<Download className="mr-2 h-4 w-4" />
 					Exporter
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>Exporter le livre de recettes</DialogTitle>
-					<DialogDescription>
-						Export CSV des commandes payées (Article 286 CGI)
-					</DialogDescription>
+					<DialogDescription>Export CSV des commandes payées (Article 286 CGI)</DialogDescription>
 				</DialogHeader>
 
 				<div className="space-y-4 py-4">
 					<div className="space-y-2">
 						<Label>Période</Label>
-						<Select
-							value={periodType}
-							onValueChange={(v) => setPeriodType(v as PeriodType)}
-						>
+						<Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
 							<SelectTrigger>
 								<SelectValue />
 							</SelectTrigger>
@@ -127,7 +122,9 @@ export function ExportOrdersButton() {
 								</SelectTrigger>
 								<SelectContent>
 									{years.map((y) => (
-										<SelectItem key={y} value={y}>{y}</SelectItem>
+										<SelectItem key={y} value={y}>
+											{y}
+										</SelectItem>
 									))}
 								</SelectContent>
 							</Select>
@@ -144,7 +141,9 @@ export function ExportOrdersButton() {
 								<SelectContent>
 									{Array.from({ length: 12 }, (_, i) => {
 										const m = String(i + 1);
-										const label = new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(new Date(2024, i));
+										const label = new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(
+											new Date(2024, i),
+										);
 										return (
 											<SelectItem key={m} value={m}>
 												{label.charAt(0).toUpperCase() + label.slice(1)}
@@ -160,19 +159,11 @@ export function ExportOrdersButton() {
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
 								<Label>Du</Label>
-								<Input
-									type="date"
-									value={dateFrom}
-									onChange={(e) => setDateFrom(e.target.value)}
-								/>
+								<Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
 							</div>
 							<div className="space-y-2">
 								<Label>Au</Label>
-								<Input
-									type="date"
-									value={dateTo}
-									onChange={(e) => setDateTo(e.target.value)}
-								/>
+								<Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
 							</div>
 						</div>
 					)}
@@ -184,9 +175,9 @@ export function ExportOrdersButton() {
 					</Button>
 					<Button onClick={handleExport} disabled={isExporting}>
 						{isExporting ? (
-							<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 						) : (
-							<Download className="h-4 w-4 mr-2" />
+							<Download className="mr-2 h-4 w-4" />
 						)}
 						{isExporting ? "Export en cours..." : "Télécharger CSV"}
 					</Button>

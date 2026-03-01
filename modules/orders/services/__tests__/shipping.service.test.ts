@@ -3,10 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("@/app/generated/prisma/client", () => ({}));
 
 vi.mock("@/shared/constants/countries", () => ({
-	SHIPPING_COUNTRIES: [
-		"FR", "DE", "BE", "LU", "NL", "IT", "ES", "PT", "AT", "IE",
-		"MC", "CH",
-	],
+	SHIPPING_COUNTRIES: ["FR", "DE", "BE", "LU", "NL", "IT", "ES", "PT", "AT", "IE", "MC", "CH"],
 }));
 
 vi.mock("@/modules/orders/constants/shipping-rates", () => ({

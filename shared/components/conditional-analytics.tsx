@@ -3,14 +3,13 @@
 import dynamic from "next/dynamic";
 import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
 
-const Analytics = dynamic(
-	() => import("@vercel/analytics/next").then((mod) => mod.Analytics),
-	{ ssr: false }
-);
+const Analytics = dynamic(() => import("@vercel/analytics/next").then((mod) => mod.Analytics), {
+	ssr: false,
+});
 
 const SpeedInsights = dynamic(
 	() => import("@vercel/speed-insights/next").then((mod) => mod.SpeedInsights),
-	{ ssr: false }
+	{ ssr: false },
 );
 
 /**

@@ -4,41 +4,38 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks - must be declared before any imports
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockTx,
-	mockHandleCheckoutSessionCompleted,
-	mockGetBaseUrl,
-} = vi.hoisted(() => {
-	// Transaction client mirrors the prisma mock methods needed by handleAsyncPaymentFailed
-	const mockTx = {
-		discountUsage: {
-			findMany: vi.fn(),
-			deleteMany: vi.fn(),
-		},
-		discount: {
-			update: vi.fn(),
-		},
-		order: {
-			update: vi.fn(),
-		},
-	};
+const { mockPrisma, mockTx, mockHandleCheckoutSessionCompleted, mockGetBaseUrl } = vi.hoisted(
+	() => {
+		// Transaction client mirrors the prisma mock methods needed by handleAsyncPaymentFailed
+		const mockTx = {
+			discountUsage: {
+				findMany: vi.fn(),
+				deleteMany: vi.fn(),
+			},
+			discount: {
+				update: vi.fn(),
+			},
+			order: {
+				update: vi.fn(),
+			},
+		};
 
-	const mockPrisma = {
-		order: {
-			findUnique: vi.fn(),
-		},
-		$transaction: vi.fn(),
-		_mockTx: mockTx,
-	};
+		const mockPrisma = {
+			order: {
+				findUnique: vi.fn(),
+			},
+			$transaction: vi.fn(),
+			_mockTx: mockTx,
+		};
 
-	return {
-		mockPrisma,
-		mockTx,
-		mockHandleCheckoutSessionCompleted: vi.fn(),
-		mockGetBaseUrl: vi.fn(),
-	};
-});
+		return {
+			mockPrisma,
+			mockTx,
+			mockHandleCheckoutSessionCompleted: vi.fn(),
+			mockGetBaseUrl: vi.fn(),
+		};
+	},
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -86,10 +83,7 @@ vi.mock("@/shared/lib/stripe", () => ({
 	},
 }));
 
-import {
-	handleAsyncPaymentSucceeded,
-	handleAsyncPaymentFailed,
-} from "../async-payment-handlers";
+import { handleAsyncPaymentSucceeded, handleAsyncPaymentFailed } from "../async-payment-handlers";
 
 // ============================================================================
 // Fixtures
@@ -144,7 +138,7 @@ describe("handleAsyncPaymentSucceeded", () => {
 		});
 
 		await expect(handleAsyncPaymentSucceeded(session)).rejects.toThrow(
-			"No order ID found in async payment session metadata"
+			"No order ID found in async payment session metadata",
 		);
 		expect(mockHandleCheckoutSessionCompleted).not.toHaveBeenCalled();
 	});
@@ -171,7 +165,7 @@ describe("handleAsyncPaymentSucceeded", () => {
 		mockHandleCheckoutSessionCompleted.mockRejectedValue(downstreamError);
 
 		await expect(handleAsyncPaymentSucceeded(session)).rejects.toThrow(
-			"Checkout processing failed"
+			"Checkout processing failed",
 		);
 	});
 });
@@ -186,7 +180,7 @@ describe("handleAsyncPaymentFailed", () => {
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
 		// Default: transaction executes its callback with mockTx
 		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)
+			async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx),
 		);
 	});
 
@@ -263,7 +257,7 @@ describe("handleAsyncPaymentFailed", () => {
 		});
 
 		await expect(handleAsyncPaymentFailed(session)).rejects.toThrow(
-			"No order ID found in failed async payment session metadata"
+			"No order ID found in failed async payment session metadata",
 		);
 		expect(mockPrisma.order.findUnique).not.toHaveBeenCalled();
 	});
@@ -272,9 +266,7 @@ describe("handleAsyncPaymentFailed", () => {
 		const session = makeSession();
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 
-		await expect(handleAsyncPaymentFailed(session)).rejects.toThrow(
-			"Order not found: order-1"
-		);
+		await expect(handleAsyncPaymentFailed(session)).rejects.toThrow("Order not found: order-1");
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
@@ -333,7 +325,7 @@ describe("handleAsyncPaymentFailed", () => {
 			expect.objectContaining({
 				where: { id: "order-1" },
 				data: { paymentStatus: "FAILED", status: "CANCELLED" },
-			})
+			}),
 		);
 
 		expect(result.success).toBe(true);

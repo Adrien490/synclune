@@ -14,7 +14,7 @@ export function extractCollectionImages(products: Collection["products"]): Colle
 
 /** Extract min/max price range from collection products (in cents) */
 export function extractPriceRange(
-	products: Collection["products"]
+	products: Collection["products"],
 ): { min: number; max: number } | undefined {
 	if (!products?.length) return undefined;
 	const prices = products

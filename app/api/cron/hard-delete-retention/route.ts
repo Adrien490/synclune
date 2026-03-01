@@ -1,4 +1,9 @@
-import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
+import {
+	verifyCronRequest,
+	cronTimer,
+	cronSuccess,
+	cronError,
+} from "@/modules/cron/lib/verify-cron";
 import { hardDeleteExpiredRecords } from "@/modules/cron/services/hard-delete-retention.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
@@ -11,10 +16,13 @@ export async function GET() {
 	const startTime = cronTimer();
 	try {
 		const result = await hardDeleteExpiredRecords();
-		return cronSuccess({
-			job: "hard-delete-retention",
-			...result,
-		}, startTime);
+		return cronSuccess(
+			{
+				job: "hard-delete-retention",
+				...result,
+			},
+			startTime,
+		);
 	} catch (error) {
 		sendAdminCronFailedAlert({
 			job: "hard-delete-retention",
@@ -23,9 +31,7 @@ export async function GET() {
 		}).catch((e) => console.error("[CRON:hard-delete-retention] Failed to send admin alert", e));
 
 		return cronError(
-			error instanceof Error
-				? error.message
-				: "Failed to hard delete expired records"
+			error instanceof Error ? error.message : "Failed to hard delete expired records",
 		);
 	}
 }

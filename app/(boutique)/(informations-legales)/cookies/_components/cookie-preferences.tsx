@@ -30,23 +30,25 @@ export function CookiePreferences() {
 
 	return (
 		<div className="space-y-6">
-			<div className="p-4 bg-muted/50 rounded-lg border">
-				<h3 className="font-semibold mb-2">Statut actuel</h3>
-				<p className="text-sm text-muted-foreground">
+			<div className="bg-muted/50 rounded-lg border p-4">
+				<h3 className="mb-2 font-semibold">Statut actuel</h3>
+				<p className="text-muted-foreground text-sm">
 					{accepted === null ? (
 						"Vous n'avez pas encore fait de choix."
 					) : accepted ? (
 						<>
-							Cookies <span className="text-green-600 dark:text-green-400 font-medium">acceptés</span>
+							Cookies{" "}
+							<span className="font-medium text-green-600 dark:text-green-400">acceptés</span>
 						</>
 					) : (
 						<>
-							Cookies <span className="text-orange-600 dark:text-orange-400 font-medium">refusés</span>
+							Cookies{" "}
+							<span className="font-medium text-orange-600 dark:text-orange-400">refusés</span>
 						</>
 					)}
 				</p>
 				{consentDate && (
-					<p className="text-xs text-muted-foreground mt-1">
+					<p className="text-muted-foreground mt-1 text-xs">
 						Dernière modification : {new Date(consentDate).toLocaleDateString("fr-FR")}
 					</p>
 				)}
@@ -54,7 +56,10 @@ export function CookiePreferences() {
 
 			{/* Message de confirmation */}
 			{saved && (
-				<div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md" role="status">
+				<div
+					className="rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950/20"
+					role="status"
+				>
 					<p className="text-sm text-green-800 dark:text-green-200">
 						Vos préférences ont été enregistrées
 					</p>
@@ -62,7 +67,7 @@ export function CookiePreferences() {
 			)}
 
 			{/* Boutons d'action */}
-			<div className="flex flex-col sm:flex-row gap-3">
+			<div className="flex flex-col gap-3 sm:flex-row">
 				<Button onClick={handleAccept} className="flex-1">
 					Accepter les cookies
 				</Button>

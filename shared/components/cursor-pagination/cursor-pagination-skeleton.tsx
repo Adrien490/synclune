@@ -1,9 +1,5 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import {
-	NAV_BUTTON_SIZE,
-	PAGE_INDICATOR_SIZE,
-	RESET_BUTTON_SIZE,
-} from "./constants";
+import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
 
 export function CursorPaginationSkeleton({
 	showNavigation = true,
@@ -18,9 +14,9 @@ export function CursorPaginationSkeleton({
 			className="flex flex-row items-center justify-between gap-2 sm:gap-3"
 		>
 			{/* Informations sur la pagination */}
-			<div className="flex items-center gap-2 sm:gap-3 text-sm">
+			<div className="flex items-center gap-2 text-sm sm:gap-3">
 				<div className="flex items-center gap-1.5 sm:gap-2">
-					<Skeleton className="hidden sm:block h-3 w-14" />
+					<Skeleton className="hidden h-3 w-14 sm:block" />
 					<Skeleton className="h-9 w-16 sm:w-20" />
 				</div>
 				<Skeleton className="h-4 w-8 sm:w-24" />

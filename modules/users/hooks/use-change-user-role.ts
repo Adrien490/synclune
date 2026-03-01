@@ -25,9 +25,9 @@ export const useChangeUserRole = (options?: UseChangeUserRoleOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const [isTransitionPending, startTransition] = useTransition();

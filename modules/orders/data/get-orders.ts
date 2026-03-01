@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
@@ -15,29 +12,21 @@ import {
 	GET_ORDERS_MAX_RESULTS_PER_PAGE,
 	GET_ORDERS_SELECT,
 } from "../constants/order.constants";
-import {
-	getOrdersSchema
-} from "../schemas/order.schemas";
+import { getOrdersSchema } from "../schemas/order.schemas";
 import { buildOrderWhereClause } from "../services/order-query-builder";
-import type {
-	GetOrdersParams,
-	GetOrdersReturn
-} from "../types/order.types";
+import type { GetOrdersParams, GetOrdersReturn } from "../types/order.types";
 
 // Re-export pour compatibilité
 export {
 	GET_ORDERS_DEFAULT_PER_PAGE,
-	GET_ORDERS_MAX_RESULTS_PER_PAGE, GET_ORDERS_SELECT, GET_ORDERS_SORT_FIELDS, SORT_LABELS, SORT_OPTIONS
+	GET_ORDERS_MAX_RESULTS_PER_PAGE,
+	GET_ORDERS_SELECT,
+	GET_ORDERS_SORT_FIELDS,
+	SORT_LABELS,
+	SORT_OPTIONS,
 } from "../constants/order.constants";
-export {
-	getOrdersSchema,
-	orderFiltersSchema,
-	orderSortBySchema
-} from "../schemas/order.schemas";
-export type {
-	GetOrdersParams,
-	GetOrdersReturn, Order, OrderFilters
-} from "../types/order.types";
+export { getOrdersSchema, orderFiltersSchema, orderSortBySchema } from "../schemas/order.schemas";
+export type { GetOrdersParams, GetOrdersReturn, Order, OrderFilters } from "../types/order.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -46,9 +35,7 @@ export type {
 /**
  * Action serveur pour récupérer les commandes (admin)
  */
-export async function getOrders(
-	params: GetOrdersParams
-): Promise<GetOrdersReturn> {
+export async function getOrders(params: GetOrdersParams): Promise<GetOrdersReturn> {
 	const admin = await requireAdmin();
 	if ("error" in admin) {
 		throw new Error("Unauthorized");
@@ -57,9 +44,7 @@ export async function getOrders(
 	const validation = getOrdersSchema.safeParse(params);
 
 	if (!validation.success) {
-		throw new Error(
-			"Invalid parameters: " + JSON.stringify(validation.error.issues)
-		);
+		throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
 	}
 
 	// Fuzzy search on customer name/email for typo tolerance
@@ -83,7 +68,7 @@ export async function getOrders(
  */
 async function fetchOrders(
 	params: GetOrdersParams,
-	fuzzyIds?: string[] | null
+	fuzzyIds?: string[] | null,
 ): Promise<GetOrdersReturn> {
 	"use cache";
 	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
@@ -92,22 +77,21 @@ async function fetchOrders(
 		const where = buildOrderWhereClause(params, fuzzyIds);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.OrderOrderByWithRelationInput[] =
-			params.sortBy.startsWith("created-")
-				? [{ createdAt: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("total-")
-					? [{ total: direction }, { id: "asc" }]
-					: params.sortBy.startsWith("status-")
-						? [{ status: direction }, { id: "asc" }]
-						: params.sortBy.startsWith("paymentStatus-")
-							? [{ paymentStatus: direction }, { id: "asc" }]
-							: params.sortBy.startsWith("fulfillmentStatus-")
-								? [{ fulfillmentStatus: direction }, { id: "asc" }]
-								: [{ createdAt: "desc" }, { id: "asc" }];
+		const orderBy: Prisma.OrderOrderByWithRelationInput[] = params.sortBy.startsWith("created-")
+			? [{ createdAt: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("total-")
+				? [{ total: direction }, { id: "asc" }]
+				: params.sortBy.startsWith("status-")
+					? [{ status: direction }, { id: "asc" }]
+					: params.sortBy.startsWith("paymentStatus-")
+						? [{ paymentStatus: direction }, { id: "asc" }]
+						: params.sortBy.startsWith("fulfillmentStatus-")
+							? [{ fulfillmentStatus: direction }, { id: "asc" }]
+							: [{ createdAt: "desc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_ORDERS_DEFAULT_PER_PAGE),
-			GET_ORDERS_MAX_RESULTS_PER_PAGE
+			GET_ORDERS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -127,7 +111,7 @@ async function fetchOrders(
 			orders,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return {

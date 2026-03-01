@@ -1,10 +1,6 @@
 "use server";
 
-import {
-	success,
-	handleActionError,
-	validateInput,
-} from "@/shared/lib/actions";
+import { success, handleActionError, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { toggleFabVisibility } from "./toggle-fab-visibility";
 import { setFabVisibilitySchema } from "@/shared/schemas/fab-visibility.schema";
@@ -15,7 +11,7 @@ import { setFabVisibilitySchema } from "@/shared/schemas/fab-visibility.schema";
  */
 export async function setFabVisibility(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	const validation = validateInput(setFabVisibilitySchema, {
 		key: formData.get("key"),

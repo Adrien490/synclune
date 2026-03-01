@@ -30,7 +30,7 @@ export type { SearchResult } from "../types/product-services.types";
  */
 export async function buildSearchConditions(
 	search: string,
-	options?: { status?: ProductStatus }
+	options?: { status?: ProductStatus },
 ): Promise<SearchResult> {
 	const term = search.trim();
 	if (!term) return { fuzzyIds: null, exactConditions: [] };
@@ -85,9 +85,7 @@ function getWordVariants(word: string): string[] {
 /**
  * Build OR conditions for a single word (+ synonyms) across all fields (title, description, related)
  */
-function buildPerWordOrConditions(
-	word: string
-): Prisma.ProductWhereInput {
+function buildPerWordOrConditions(word: string): Prisma.ProductWhereInput {
 	const variants = getWordVariants(word);
 	return {
 		OR: variants.flatMap((variant) => [
@@ -112,9 +110,7 @@ function buildPerWordOrConditions(
  * Build OR conditions for a single word across related fields only
  * (SKU, color, material, collection)
  */
-function buildPerWordRelatedConditions(
-	word: string
-): Prisma.ProductWhereInput[] {
+function buildPerWordRelatedConditions(word: string): Prisma.ProductWhereInput[] {
 	return [
 		{
 			skus: {
@@ -187,9 +183,7 @@ function buildPerWordRelatedConditions(
  * Includes title and description.
  * AND logic: each word must match at least one field.
  */
-function buildFullExactSearchConditions(
-	words: string[]
-): Prisma.ProductWhereInput[] {
+function buildFullExactSearchConditions(words: string[]): Prisma.ProductWhereInput[] {
 	if (words.length === 0) return [];
 
 	// Each word must match at least one field (AND of per-word ORs)
@@ -202,9 +196,7 @@ function buildFullExactSearchConditions(
  * AND logic: each word must match at least one related field.
  * Expanded with synonyms for each word.
  */
-function buildRelatedFieldsSearchConditions(
-	words: string[]
-): Prisma.ProductWhereInput[] {
+function buildRelatedFieldsSearchConditions(words: string[]): Prisma.ProductWhereInput[] {
 	if (words.length === 0) return [];
 
 	// Each word (+ synonyms) must match at least one related field
@@ -216,16 +208,14 @@ function buildRelatedFieldsSearchConditions(
 	});
 }
 
-export function buildProductFilterConditions(
-	filters: ProductFilters
-): Prisma.ProductWhereInput[] {
+export function buildProductFilterConditions(filters: ProductFilters): Prisma.ProductWhereInput[] {
 	const conditions: Prisma.ProductWhereInput[] = [];
 	if (!filters) return conditions;
 
 	if (filters.status !== undefined) {
-		const statuses = (
-			Array.isArray(filters.status) ? filters.status : [filters.status]
-		).filter(Boolean);
+		const statuses = (Array.isArray(filters.status) ? filters.status : [filters.status]).filter(
+			Boolean,
+		);
 		if (statuses.length === 1) {
 			conditions.push({ status: statuses[0] });
 		} else if (statuses.length > 1) {
@@ -234,9 +224,7 @@ export function buildProductFilterConditions(
 	}
 
 	if (filters.type !== undefined) {
-		const types = (
-			Array.isArray(filters.type) ? filters.type : [filters.type]
-		).filter(Boolean);
+		const types = (Array.isArray(filters.type) ? filters.type : [filters.type]).filter(Boolean);
 		if (types.length === 1) {
 			conditions.push({ type: { slug: types[0] } });
 		} else if (types.length > 1) {
@@ -245,9 +233,7 @@ export function buildProductFilterConditions(
 	}
 
 	if (filters.color !== undefined) {
-		const colors = (
-			Array.isArray(filters.color) ? filters.color : [filters.color]
-		).filter(Boolean);
+		const colors = (Array.isArray(filters.color) ? filters.color : [filters.color]).filter(Boolean);
 		if (colors.length === 1) {
 			conditions.push({
 				skus: { some: { isActive: true, color: { slug: colors[0] } } },
@@ -276,9 +262,7 @@ export function buildProductFilterConditions(
 
 	if (filters.collectionId !== undefined) {
 		const collectionIds = (
-			Array.isArray(filters.collectionId)
-				? filters.collectionId
-				: [filters.collectionId]
+			Array.isArray(filters.collectionId) ? filters.collectionId : [filters.collectionId]
 		).filter(Boolean);
 		if (collectionIds.length === 1) {
 			conditions.push({
@@ -293,9 +277,7 @@ export function buildProductFilterConditions(
 
 	if (filters.collectionSlug !== undefined) {
 		const collectionSlugs = (
-			Array.isArray(filters.collectionSlug)
-				? filters.collectionSlug
-				: [filters.collectionSlug]
+			Array.isArray(filters.collectionSlug) ? filters.collectionSlug : [filters.collectionSlug]
 		).filter(Boolean);
 		if (collectionSlugs.length === 1) {
 			conditions.push({
@@ -315,13 +297,9 @@ export function buildProductFilterConditions(
 
 	// Validation bounds: price must be >= 0
 	const validPriceMin =
-		typeof filters.priceMin === "number" && filters.priceMin >= 0
-			? filters.priceMin
-			: undefined;
+		typeof filters.priceMin === "number" && filters.priceMin >= 0 ? filters.priceMin : undefined;
 	const validPriceMax =
-		typeof filters.priceMax === "number" && filters.priceMax >= 0
-			? filters.priceMax
-			: undefined;
+		typeof filters.priceMax === "number" && filters.priceMax >= 0 ? filters.priceMax : undefined;
 
 	if (validPriceMin !== undefined && validPriceMax !== undefined) {
 		conditions.push({
@@ -404,11 +382,7 @@ export function buildProductFilterConditions(
 	}
 
 	// Rating filter (minimum average rating, 0-5)
-	if (
-		typeof filters.ratingMin === "number" &&
-		filters.ratingMin >= 0 &&
-		filters.ratingMin <= 5
-	) {
+	if (typeof filters.ratingMin === "number" && filters.ratingMin >= 0 && filters.ratingMin <= 5) {
 		conditions.push({
 			reviewStats: {
 				averageRating: { gte: filters.ratingMin },
@@ -429,7 +403,7 @@ export function buildProductFilterConditions(
  */
 export function buildProductWhereClause(
 	params: GetProductsParams,
-	searchResult?: SearchResult
+	searchResult?: SearchResult,
 ): Prisma.ProductWhereInput {
 	const whereClause: Prisma.ProductWhereInput = {};
 	const andConditions: Prisma.ProductWhereInput[] = [];
@@ -459,10 +433,7 @@ export function buildProductWhereClause(
 			// exactConditions are per-word AND conditions, so wrap in AND
 			if (exactConditions.length > 0) {
 				andConditions.push({
-					OR: [
-						{ id: { in: fuzzyIds } },
-						{ AND: exactConditions },
-					],
+					OR: [{ id: { in: fuzzyIds } }, { AND: exactConditions }],
 				});
 			} else {
 				andConditions.push({ id: { in: fuzzyIds } });

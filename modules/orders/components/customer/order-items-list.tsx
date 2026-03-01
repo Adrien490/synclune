@@ -23,11 +23,11 @@ interface OrderItemsListProps {
 export function OrderItemsList({ items }: OrderItemsListProps) {
 	return (
 		<section className="space-y-4">
-			<h2 className="text-base font-semibold flex items-center gap-2">
-				<ShoppingBag className="size-4 text-muted-foreground" />
+			<h2 className="flex items-center gap-2 text-base font-semibold">
+				<ShoppingBag className="text-muted-foreground size-4" />
 				Articles commandés ({items.length})
 			</h2>
-			<div className="border-t border-border/60 pt-4">
+			<div className="border-border/60 border-t pt-4">
 				<div className="divide-y">
 					{items.map((item) => {
 						const imageUrl = item.skuImageUrl || item.productImageUrl;
@@ -36,12 +36,9 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 							.join(" • ");
 
 						return (
-							<div
-								key={item.id}
-								className="flex gap-4 py-4 first:pt-0 last:pb-0"
-							>
+							<div key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
 								{/* Image */}
-								<div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
+								<div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
 									{imageUrl ? (
 										<Image
 											src={imageUrl}
@@ -52,34 +49,24 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 											quality={80}
 										/>
 									) : (
-										<div className="flex h-full items-center justify-center text-muted-foreground">
+										<div className="text-muted-foreground flex h-full items-center justify-center">
 											<span className="text-xs">Image</span>
 										</div>
 									)}
 								</div>
 
 								{/* Details */}
-								<div className="flex-1 min-w-0">
-									<h4 className="font-medium text-sm truncate">
-										{item.productTitle}
-									</h4>
-									{variants && (
-										<p className="text-xs text-muted-foreground mt-0.5">
-											{variants}
-										</p>
-									)}
-									<p className="text-xs text-muted-foreground mt-1">
-										Quantité : {item.quantity}
-									</p>
+								<div className="min-w-0 flex-1">
+									<h4 className="truncate text-sm font-medium">{item.productTitle}</h4>
+									{variants && <p className="text-muted-foreground mt-0.5 text-xs">{variants}</p>}
+									<p className="text-muted-foreground mt-1 text-xs">Quantité : {item.quantity}</p>
 								</div>
 
 								{/* Price */}
-								<div className="text-right shrink-0">
-									<p className="font-semibold text-sm">
-										{formatEuro(item.price * item.quantity)}
-									</p>
+								<div className="shrink-0 text-right">
+									<p className="text-sm font-semibold">{formatEuro(item.price * item.quantity)}</p>
 									{item.quantity > 1 && (
-										<p className="text-xs text-muted-foreground">
+										<p className="text-muted-foreground text-xs">
 											{formatEuro(item.price)} / unité
 										</p>
 									)}

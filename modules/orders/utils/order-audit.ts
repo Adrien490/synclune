@@ -21,9 +21,7 @@ export type { CreateOrderAuditParams };
  * Crée une entrée d'audit pour une commande
  * Utiliser cette fonction dans les Server Actions hors transaction
  */
-export async function createOrderAudit(
-	params: CreateOrderAuditParams
-): Promise<void> {
+export async function createOrderAudit(params: CreateOrderAuditParams): Promise<void> {
 	await prisma.orderHistory.create({
 		data: {
 			orderId: params.orderId,
@@ -49,7 +47,7 @@ export async function createOrderAudit(
  */
 export async function createOrderAuditTx(
 	tx: Prisma.TransactionClient,
-	params: CreateOrderAuditParams
+	params: CreateOrderAuditParams,
 ): Promise<void> {
 	await tx.orderHistory.create({
 		data: {
@@ -92,7 +90,7 @@ export function buildStatusChangeAudit(
 		authorName?: string;
 		source?: HistorySource;
 		metadata?: Record<string, unknown>;
-	}
+	},
 ): CreateOrderAuditParams {
 	return {
 		orderId,
@@ -104,9 +102,7 @@ export function buildStatusChangeAudit(
 				? previousOrder.paymentStatus
 				: undefined,
 		newPaymentStatus:
-			previousOrder.paymentStatus !== newOrder.paymentStatus
-				? newOrder.paymentStatus
-				: undefined,
+			previousOrder.paymentStatus !== newOrder.paymentStatus ? newOrder.paymentStatus : undefined,
 		previousFulfillmentStatus:
 			previousOrder.fulfillmentStatus !== newOrder.fulfillmentStatus
 				? previousOrder.fulfillmentStatus

@@ -22,16 +22,16 @@ interface OrderSummaryCardProps {
 export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 	return (
 		<section className="space-y-4">
-			<h2 className="text-base font-semibold flex items-center gap-2">
-				<Receipt className="size-4 text-muted-foreground" />
+			<h2 className="flex items-center gap-2 text-base font-semibold">
+				<Receipt className="text-muted-foreground size-4" />
 				Récapitulatif
 			</h2>
-			<div className="border-t border-border/60 pt-4 space-y-4">
+			<div className="border-border/60 space-y-4 border-t pt-4">
 				{/* Order info */}
 				<div className="space-y-1 text-sm">
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">N° de commande</span>
-						<span className="tabular-nums font-medium">{order.orderNumber}</span>
+						<span className="font-medium tabular-nums">{order.orderNumber}</span>
 					</div>
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">Date</span>
@@ -62,27 +62,24 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 					{order.discountAmount > 0 && (
 						<div className="flex justify-between text-green-600">
 							<span>
-							Réduction
-							{order.discountUsages && order.discountUsages.length > 0 &&
-								` (${order.discountUsages.map(d => d.discountCode).join(", ")})`}
-						</span>
+								Réduction
+								{order.discountUsages &&
+									order.discountUsages.length > 0 &&
+									` (${order.discountUsages.map((d) => d.discountCode).join(", ")})`}
+							</span>
 							<span>-{formatEuro(order.discountAmount)}</span>
 						</div>
 					)}
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">Livraison</span>
-						<span>
-							{order.shippingCost === 0
-								? "Offerte"
-								: formatEuro(order.shippingCost)}
-						</span>
+						<span>{order.shippingCost === 0 ? "Offerte" : formatEuro(order.shippingCost)}</span>
 					</div>
 				</div>
 
 				<Separator />
 
 				{/* Total */}
-				<div className="flex justify-between items-center">
+				<div className="flex items-center justify-between">
 					<span className="font-semibold">Total</span>
 					<span className="text-lg font-bold">{formatEuro(order.total)}</span>
 				</div>

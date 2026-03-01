@@ -19,11 +19,11 @@ export function ReviewCardSkeleton({
 	return (
 		<article
 			className={cn(
-				"overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm",
-				className
+				"bg-card text-card-foreground overflow-hidden rounded-lg border shadow-sm",
+				className,
 			)}
 		>
-			<CardContent className="py-4 space-y-4">
+			<CardContent className="space-y-4 py-4">
 				{/* En-tete: nom, date, etoiles */}
 				<div className="space-y-1">
 					<Skeleton className="h-5 w-32" />
@@ -47,18 +47,15 @@ export function ReviewCardSkeleton({
 				{showMedia && (
 					<div className="flex gap-2">
 						{Array.from({ length: 3 }).map((_, i) => (
-							<Skeleton
-								key={i}
-								className="size-20 md:size-24 rounded-lg"
-							/>
+							<Skeleton key={i} className="size-20 rounded-lg md:size-24" />
 						))}
 					</div>
 				)}
 
 				{/* Reponse de la marque */}
 				{showResponse && (
-					<div className="mt-4 pt-4 border-t border-border">
-						<div className="bg-muted/50 rounded-lg p-3 space-y-2">
+					<div className="border-border mt-4 border-t pt-4">
+						<div className="bg-muted/50 space-y-2 rounded-lg p-3">
 							<div className="flex items-center gap-2">
 								<Skeleton className="h-3 w-24" />
 								<Skeleton className="h-3 w-16" />
@@ -72,4 +69,3 @@ export function ReviewCardSkeleton({
 		</article>
 	);
 }
-

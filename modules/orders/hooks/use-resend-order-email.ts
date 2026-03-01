@@ -17,11 +17,11 @@ export function useResendOrderEmail() {
 			async (_prev: ActionState | undefined, formData: FormData) =>
 				resendOrderEmail(
 					formData.get("orderId") as string,
-					formData.get("emailType") as ResendEmailType
+					formData.get("emailType") as ResendEmailType,
 				),
-			createToastCallbacks({})
+			createToastCallbacks({}),
 		),
-		undefined
+		undefined,
 	);
 
 	const resend = (orderId: string, emailType: ResendEmailType) => {

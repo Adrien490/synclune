@@ -1,4 +1,9 @@
-import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
+import {
+	verifyCronRequest,
+	cronTimer,
+	cronSuccess,
+	cronError,
+} from "@/modules/cron/lib/verify-cron";
 import { syncAsyncPayments } from "@/modules/cron/services/sync-async-payments.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
@@ -24,13 +29,14 @@ export async function GET() {
 			}).catch((e) => console.error("[CRON:sync-async-payments] Failed to send admin alert", e));
 		}
 
-		return cronSuccess({
-			job: "sync-async-payments",
-			...result,
-		}, startTime);
-	} catch (error) {
-		return cronError(
-			error instanceof Error ? error.message : "Failed to sync async payments"
+		return cronSuccess(
+			{
+				job: "sync-async-payments",
+				...result,
+			},
+			startTime,
 		);
+	} catch (error) {
+		return cronError(error instanceof Error ? error.message : "Failed to sync async payments");
 	}
 }

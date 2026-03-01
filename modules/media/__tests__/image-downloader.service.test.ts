@@ -15,7 +15,12 @@ vi.mock("sharp", () => {
 
 import { delay } from "@/shared/utils/delay";
 import sharp from "sharp";
-import { truncateUrl, isRetryableError, withRetry, downloadImage } from "../services/image-downloader.service";
+import {
+	truncateUrl,
+	isRetryableError,
+	withRetry,
+	downloadImage,
+} from "../services/image-downloader.service";
 import { IMAGE_DOWNLOADER_CONFIG } from "../constants/media.constants";
 
 const mockDelay = vi.mocked(delay);
@@ -186,10 +191,7 @@ describe("withRetry", () => {
 
 	it("should retry and return the result when the function fails once then succeeds", async () => {
 		const retryableError = new Error("network error");
-		const fn = vi
-			.fn()
-			.mockRejectedValueOnce(retryableError)
-			.mockResolvedValueOnce("recovered");
+		const fn = vi.fn().mockRejectedValueOnce(retryableError).mockResolvedValueOnce("recovered");
 
 		const result = await withRetry(fn, { maxRetries: 3, baseDelay: 100 });
 
@@ -204,7 +206,7 @@ describe("withRetry", () => {
 		const fn = vi.fn().mockRejectedValue(nonRetryableError);
 
 		await expect(withRetry(fn, { maxRetries: 3, baseDelay: 100 })).rejects.toThrow(
-			"HTTP 404: Not Found"
+			"HTTP 404: Not Found",
 		);
 
 		expect(fn).toHaveBeenCalledTimes(1);
@@ -216,7 +218,7 @@ describe("withRetry", () => {
 		const fn = vi.fn().mockRejectedValue(error);
 
 		await expect(withRetry(fn, { maxRetries: 3, baseDelay: 100 })).rejects.toThrow(
-			"persistent network failure"
+			"persistent network failure",
 		);
 
 		expect(fn).toHaveBeenCalledTimes(3);
@@ -260,7 +262,7 @@ describe("withRetry", () => {
 		const fn = vi.fn().mockRejectedValue("raw string error");
 
 		await expect(withRetry(fn, { maxRetries: 1, baseDelay: 0 })).rejects.toThrow(
-			"raw string error"
+			"raw string error",
 		);
 	});
 
@@ -298,7 +300,7 @@ describe("downloadImage", () => {
 			contentType?: string | null;
 			contentLength?: string | null;
 			body?: ArrayBuffer;
-		} = {}
+		} = {},
 	): Response {
 		const {
 			ok = true,
@@ -353,7 +355,7 @@ describe("downloadImage", () => {
 				headers: expect.objectContaining({
 					"User-Agent": IMAGE_DOWNLOADER_CONFIG.USER_AGENT,
 				}),
-			})
+			}),
 		);
 	});
 
@@ -370,7 +372,7 @@ describe("downloadImage", () => {
 	it("should throw with the HTTP status when the response is 404", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(makeResponse({ ok: false, status: 404, statusText: "Not Found" }))
+			vi.fn().mockResolvedValue(makeResponse({ ok: false, status: 404, statusText: "Not Found" })),
 		);
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow("HTTP 404: Not Found");
@@ -379,9 +381,11 @@ describe("downloadImage", () => {
 	it("should throw with the HTTP status when the response is 500", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(
-				makeResponse({ ok: false, status: 500, statusText: "Internal Server Error" })
-			)
+			vi
+				.fn()
+				.mockResolvedValue(
+					makeResponse({ ok: false, status: 500, statusText: "Internal Server Error" }),
+				),
 		);
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow("HTTP 500: Internal Server Error");
@@ -394,41 +398,35 @@ describe("downloadImage", () => {
 	it("should throw when Content-Type is text/html", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(makeResponse({ contentType: "text/html; charset=utf-8" }))
+			vi.fn().mockResolvedValue(makeResponse({ contentType: "text/html; charset=utf-8" })),
 		);
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow(
-			"Content-Type invalide: text/html; charset=utf-8 (image/* attendu)"
+			"Content-Type invalide: text/html; charset=utf-8 (image/* attendu)",
 		);
 	});
 
 	it("should throw when Content-Type is application/json", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(makeResponse({ contentType: "application/json" }))
+			vi.fn().mockResolvedValue(makeResponse({ contentType: "application/json" })),
 		);
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow(
-			"Content-Type invalide: application/json (image/* attendu)"
+			"Content-Type invalide: application/json (image/* attendu)",
 		);
 	});
 
 	it("should throw with 'absent' when Content-Type header is missing", async () => {
-		vi.stubGlobal(
-			"fetch",
-			vi.fn().mockResolvedValue(makeResponse({ contentType: null }))
-		);
+		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeResponse({ contentType: null })));
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow(
-			"Content-Type invalide: absent (image/* attendu)"
+			"Content-Type invalide: absent (image/* attendu)",
 		);
 	});
 
 	it("should not throw for image/png Content-Type", async () => {
-		vi.stubGlobal(
-			"fetch",
-			vi.fn().mockResolvedValue(makeResponse({ contentType: "image/png" }))
-		);
+		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeResponse({ contentType: "image/png" })));
 
 		await expect(downloadImage(TEST_URL)).resolves.toBeInstanceOf(Buffer);
 	});
@@ -443,13 +441,11 @@ describe("downloadImage", () => {
 
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(
-				makeResponse({ contentLength: String(declaredSize) })
-			)
+			vi.fn().mockResolvedValue(makeResponse({ contentLength: String(declaredSize) })),
 		);
 
 		await expect(downloadImage(TEST_URL, { maxImageSize: maxSize })).rejects.toThrow(
-			"Image trop volumineuse: 2.00MB (max: 1MB)"
+			"Image trop volumineuse: 2.00MB (max: 1MB)",
 		);
 	});
 
@@ -458,12 +454,12 @@ describe("downloadImage", () => {
 
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(
-				makeResponse({ contentLength: String(maxSize) })
-			)
+			vi.fn().mockResolvedValue(makeResponse({ contentLength: String(maxSize) })),
 		);
 
-		await expect(downloadImage(TEST_URL, { maxImageSize: maxSize })).resolves.toBeInstanceOf(Buffer);
+		await expect(downloadImage(TEST_URL, { maxImageSize: maxSize })).resolves.toBeInstanceOf(
+			Buffer,
+		);
 	});
 
 	// --------------------------------------------------------------------------
@@ -477,13 +473,11 @@ describe("downloadImage", () => {
 
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(
-				makeResponse({ contentLength: null, body: largeBody })
-			)
+			vi.fn().mockResolvedValue(makeResponse({ contentLength: null, body: largeBody })),
 		);
 
 		await expect(downloadImage(TEST_URL, { maxImageSize: maxSize })).rejects.toThrow(
-			"Image trop volumineuse"
+			"Image trop volumineuse",
 		);
 	});
 
@@ -494,13 +488,11 @@ describe("downloadImage", () => {
 
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(
-				makeResponse({ contentLength: declaredSize, body: actualBody })
-			)
+			vi.fn().mockResolvedValue(makeResponse({ contentLength: declaredSize, body: actualBody })),
 		);
 
 		await expect(downloadImage(TEST_URL, { maxImageSize: maxSize })).rejects.toThrow(
-			"Image trop volumineuse: 2.00MB (max: 1MB)"
+			"Image trop volumineuse: 2.00MB (max: 1MB)",
 		);
 	});
 
@@ -514,7 +506,7 @@ describe("downloadImage", () => {
 		} as unknown as ReturnType<typeof sharp>);
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow(
-			"Buffer invalide: format d'image non reconnu par Sharp"
+			"Buffer invalide: format d'image non reconnu par Sharp",
 		);
 	});
 
@@ -531,10 +523,7 @@ describe("downloadImage", () => {
 			metadata: vi.fn().mockResolvedValue({ format: "webp" }),
 		} as unknown as ReturnType<typeof sharp>);
 
-		vi.stubGlobal(
-			"fetch",
-			vi.fn().mockResolvedValue(makeResponse({ contentType: "image/webp" }))
-		);
+		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(makeResponse({ contentType: "image/webp" })));
 
 		await expect(downloadImage(TEST_URL)).resolves.toBeInstanceOf(Buffer);
 	});
@@ -553,7 +542,7 @@ describe("downloadImage", () => {
 				headers: expect.objectContaining({
 					"User-Agent": customAgent,
 				}),
-			})
+			}),
 		);
 	});
 
@@ -563,13 +552,11 @@ describe("downloadImage", () => {
 
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(
-				makeResponse({ contentLength: oversizedBody })
-			)
+			vi.fn().mockResolvedValue(makeResponse({ contentLength: oversizedBody })),
 		);
 
 		await expect(downloadImage(TEST_URL, { maxImageSize: maxSize })).rejects.toThrow(
-			"Image trop volumineuse"
+			"Image trop volumineuse",
 		);
 	});
 
@@ -591,7 +578,7 @@ describe("downloadImage", () => {
 						reject(abortError);
 					});
 				});
-			})
+			}),
 		);
 
 		const downloadPromise = downloadImage(TEST_URL, { downloadTimeout: 100 });
@@ -619,7 +606,7 @@ describe("downloadImage", () => {
 
 		vi.stubGlobal(
 			"fetch",
-			vi.fn().mockResolvedValue(makeResponse({ ok: false, status: 404, statusText: "Not Found" }))
+			vi.fn().mockResolvedValue(makeResponse({ ok: false, status: 404, statusText: "Not Found" })),
 		);
 
 		await expect(downloadImage(TEST_URL)).rejects.toThrow();

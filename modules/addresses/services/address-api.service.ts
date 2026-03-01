@@ -28,10 +28,7 @@ export function buildApiUrl(params: ValidatedSearchAddressParams): string {
 	}
 
 	if (params.maximumResponses !== undefined) {
-		url.searchParams.set(
-			"maximumResponses",
-			params.maximumResponses.toString()
-		);
+		url.searchParams.set("maximumResponses", params.maximumResponses.toString());
 	}
 
 	if (params.bbox !== undefined) {

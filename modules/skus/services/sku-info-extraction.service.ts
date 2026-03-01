@@ -1,23 +1,17 @@
 import { slugify } from "@/shared/utils/generate-slug";
-import type {
-	BaseProductSku,
-	ProductVariantInfo,
-} from "@/shared/types/product-sku.types";
+import type { BaseProductSku, ProductVariantInfo } from "@/shared/types/product-sku.types";
 
 /**
  * Extrait les informations complètes sur les variantes disponibles
  */
 export function extractVariantInfo<
 	TSku extends BaseProductSku,
-	TProduct extends { skus?: TSku[] | null }
+	TProduct extends { skus?: TSku[] | null },
 >(product: TProduct): ProductVariantInfo {
 	const activeSkus = product.skus?.filter((sku: TSku) => sku.isActive) || [];
 
 	// Couleurs disponibles
-	const colorMap = new Map<
-		string,
-		{ hex?: string; slug?: string; name: string; count: number }
-	>();
+	const colorMap = new Map<string, { hex?: string; slug?: string; name: string; count: number }>();
 
 	// Matériaux disponibles
 	const materialMap = new Map<string, { name: string; count: number }>();
@@ -85,12 +79,10 @@ export function extractVariantInfo<
 			name: value.name,
 			availableSkus: value.count,
 		})),
-		availableMaterials: Array.from(materialMap.values()).map(
-			({ name, count }) => ({
-				name,
-				availableSkus: count,
-			})
-		),
+		availableMaterials: Array.from(materialMap.values()).map(({ name, count }) => ({
+			name,
+			availableSkus: count,
+		})),
 		availableSizes: Array.from(sizeMap.entries()).map(([size, count]) => ({
 			size,
 			availableSkus: count,

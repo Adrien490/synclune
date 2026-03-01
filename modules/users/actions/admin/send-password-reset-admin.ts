@@ -4,13 +4,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	error,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { auth } from "@/modules/auth/lib/auth";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
@@ -54,17 +48,17 @@ export async function sendPasswordResetAdmin(userId: string): Promise<ActionStat
 
 		// 4. Vérifier que l'utilisateur a un compte credential
 		const hasCredentialAccount = user.accounts.some(
-			(account) => account.providerId === "credential"
+			(account) => account.providerId === "credential",
 		);
 
 		if (!hasCredentialAccount) {
 			const oauthProvider = user.accounts.find(
-				(account) => account.providerId !== "credential"
+				(account) => account.providerId !== "credential",
 			)?.providerId;
 			const providerName = oauthProvider === "google" ? "Google" : oauthProvider;
 
 			return error(
-				`Cet utilisateur utilise uniquement l'authentification ${providerName}. Il n'a pas de mot de passe à réinitialiser.`
+				`Cet utilisateur utilise uniquement l'authentification ${providerName}. Il n'a pas de mot de passe à réinitialiser.`,
 			);
 		}
 

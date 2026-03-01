@@ -95,13 +95,11 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	} = permissions;
 
 	const canTrack = isShipped && order.trackingUrl;
-	const canMarkAsReturned =
-		isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
+	const canMarkAsReturned = isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
 
 	// Deletable if never paid (no PAID or REFUNDED status)
 	const canDelete =
-		order.paymentStatus !== PaymentStatus.PAID &&
-		order.paymentStatus !== PaymentStatus.REFUNDED;
+		order.paymentStatus !== PaymentStatus.PAID && order.paymentStatus !== PaymentStatus.REFUNDED;
 
 	// =========================================================================
 	// HANDLERS
@@ -179,12 +177,17 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" className="h-11 w-11 p-0 active:scale-95 transition-transform" aria-label={`Actions pour la commande ${order.orderNumber}`}>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					aria-label={`Actions pour la commande ${order.orderNumber}`}
+				>
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-48">
-				<DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+				<DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
 					{order.orderNumber}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
@@ -267,11 +270,7 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 				{/* SHIPPED : Suivre le colis */}
 				{canTrack && (
 					<DropdownMenuItem asChild>
-						<a
-							href={order.trackingUrl!}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
+						<a href={order.trackingUrl!} target="_blank" rel="noopener noreferrer">
 							<ExternalLink className="h-4 w-4" />
 							Suivre le colis
 						</a>

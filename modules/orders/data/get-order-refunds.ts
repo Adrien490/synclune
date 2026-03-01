@@ -13,7 +13,7 @@ export type { OrderRefundItem } from "../types/order-refunds.types";
  * Le cache est géré dans fetchOrderRefunds() avec "use cache"
  */
 export async function getOrderRefunds(
-	orderId: string
+	orderId: string,
 ): Promise<{ refunds: OrderRefundItem[] } | { error: string }> {
 	try {
 		// 1. Vérification admin

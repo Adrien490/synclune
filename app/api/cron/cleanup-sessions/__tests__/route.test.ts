@@ -74,7 +74,7 @@ describe("GET /api/cron/cleanup-sessions", () => {
 		mockCronTimer.mockReturnValue(1000);
 		mockCleanupExpiredSessions.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -128,14 +128,14 @@ describe("GET /api/cron/cleanup-sessions", () => {
 					deletedCount: DEFAULT_SERVICE_RESULT.deletedCount,
 					hasMore: DEFAULT_SERVICE_RESULT.hasMore,
 				}),
-				1000
+				1000,
 			);
 		});
 
 		it("includes the job name 'cleanup-sessions' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("cleanup-sessions");
 		});
 
@@ -144,7 +144,7 @@ describe("GET /api/cron/cleanup-sessions", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(8888);
 		});
 

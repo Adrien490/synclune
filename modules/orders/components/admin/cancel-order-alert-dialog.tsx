@@ -54,13 +54,13 @@ export function CancelOrderAlertDialog() {
 								</p>
 								{cancelDialog.data?.isPaid && (
 									<p className="mt-2 text-amber-600">
-										Cette commande a été payée. Le statut de paiement sera passé à
-										REFUNDED. N'oubliez pas de procéder au remboursement via Stripe.
+										Cette commande a été payée. Le statut de paiement sera passé à REFUNDED.
+										N'oubliez pas de procéder au remboursement via Stripe.
 									</p>
 								)}
 								<p className="text-muted-foreground mt-4 text-sm">
-									La commande restera en base de données pour préserver la
-									traçabilité comptable (numérotation des factures).
+									La commande restera en base de données pour préserver la traçabilité comptable
+									(numérotation des factures).
 								</p>
 							</div>
 						</AlertDialogDescription>

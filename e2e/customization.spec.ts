@@ -1,101 +1,109 @@
-import { test, expect } from "./fixtures"
-import { testEmail } from "./helpers/test-run"
+import { test, expect } from "./fixtures";
+import { testEmail } from "./helpers/test-run";
 
 test.describe("Personnalisation - Demande sur mesure", { tag: ["@regression"] }, () => {
 	test("la page de personnalisation est accessible", async ({ page }) => {
-		await page.goto("/personnalisation")
-		await page.waitForLoadState("domcontentloaded")
+		await page.goto("/personnalisation");
+		await page.waitForLoadState("domcontentloaded");
 
-		const heading = page.getByRole("heading", { level: 1 })
-		await expect(heading).toBeVisible()
-	})
+		const heading = page.getByRole("heading", { level: 1 });
+		await expect(heading).toBeVisible();
+	});
 
 	test("le formulaire de personnalisation contient les champs requis", async ({ page }) => {
-		await page.goto("/personnalisation")
-		await page.waitForLoadState("domcontentloaded")
+		await page.goto("/personnalisation");
+		await page.waitForLoadState("domcontentloaded");
 
 		// Required fields
-		await expect(page.getByLabel(/Prénom/i)).toBeVisible()
-		await expect(page.getByLabel(/Adresse email/i).or(page.getByLabel(/Email/i))).toBeVisible()
-		await expect(page.getByLabel(/Décrivez votre projet/i).or(page.locator("textarea"))).toBeVisible()
+		await expect(page.getByLabel(/Prénom/i)).toBeVisible();
+		await expect(page.getByLabel(/Adresse email/i).or(page.getByLabel(/Email/i))).toBeVisible();
+		await expect(
+			page.getByLabel(/Décrivez votre projet/i).or(page.locator("textarea")),
+		).toBeVisible();
 
 		// Optional fields
-		const phoneField = page.getByLabel(/Téléphone/i)
-		if (await phoneField.count() > 0) {
-			await expect(phoneField).toBeVisible()
+		const phoneField = page.getByLabel(/Téléphone/i);
+		if ((await phoneField.count()) > 0) {
+			await expect(phoneField).toBeVisible();
 		}
 
 		// Consent checkbox
-		const consentCheckbox = page.getByLabel(/politique de confidentialité/i)
-		await expect(consentCheckbox).toBeVisible()
-	})
+		const consentCheckbox = page.getByLabel(/politique de confidentialité/i);
+		await expect(consentCheckbox).toBeVisible();
+	});
 
 	test("le formulaire valide les champs obligatoires", async ({ page }) => {
-		await page.goto("/personnalisation")
-		await page.waitForLoadState("domcontentloaded")
+		await page.goto("/personnalisation");
+		await page.waitForLoadState("domcontentloaded");
 
 		// Try to submit with empty fields
-		const submitButton = page.getByRole("button", { name: /Envoyer/i })
-		test.skip(await submitButton.count() === 0, "No submit button found")
+		const submitButton = page.getByRole("button", { name: /Envoyer/i });
+		test.skip((await submitButton.count()) === 0, "No submit button found");
 
 		// Fill only the name (leave other required fields empty)
-		await page.getByLabel(/Prénom/i).fill("Marie")
-		await page.getByLabel(/Prénom/i).blur()
+		await page.getByLabel(/Prénom/i).fill("Marie");
+		await page.getByLabel(/Prénom/i).blur();
 
 		// Submit without description and email
 		// Submit should either be disabled or show validation errors when clicked
 		if (await submitButton.isDisabled()) {
 			// Verified: button is correctly disabled with incomplete form
-			await expect(submitButton).toBeDisabled()
+			await expect(submitButton).toBeDisabled();
 		} else {
-			await submitButton.click()
+			await submitButton.click();
 			// Should show validation errors
-			const errorMessage = page.getByText(/obligatoire|requis|invalide/i)
-			await expect(errorMessage.first()).toBeVisible({ timeout: 3000 })
+			const errorMessage = page.getByText(/obligatoire|requis|invalide/i);
+			await expect(errorMessage.first()).toBeVisible({ timeout: 3000 });
 		}
-	})
+	});
 
 	test("le formulaire valide le format email", async ({ page }) => {
-		await page.goto("/personnalisation")
-		await page.waitForLoadState("domcontentloaded")
+		await page.goto("/personnalisation");
+		await page.waitForLoadState("domcontentloaded");
 
-		const emailInput = page.getByLabel(/Adresse email/i).or(page.getByLabel(/Email/i))
-		test.skip(await emailInput.count() === 0, "No email field found")
+		const emailInput = page.getByLabel(/Adresse email/i).or(page.getByLabel(/Email/i));
+		test.skip((await emailInput.count()) === 0, "No email field found");
 
-		await emailInput.first().fill("pas-un-email")
-		await emailInput.first().blur()
+		await emailInput.first().fill("pas-un-email");
+		await emailInput.first().blur();
 
-		const errorMessage = page.getByText(/email.*invalide|format/i)
-		await expect(errorMessage.first()).toBeVisible({ timeout: 3000 })
-	})
+		const errorMessage = page.getByText(/email.*invalide|format/i);
+		await expect(errorMessage.first()).toBeVisible({ timeout: 3000 });
+	});
 
-	test("soumettre le formulaire avec des donnees valides affiche une confirmation", async ({ page }) => {
-		await page.goto("/personnalisation")
-		await page.waitForLoadState("domcontentloaded")
+	test("soumettre le formulaire avec des donnees valides affiche une confirmation", async ({
+		page,
+	}) => {
+		await page.goto("/personnalisation");
+		await page.waitForLoadState("domcontentloaded");
 
 		// Fill all required fields
-		await page.getByLabel(/Prénom/i).fill("Marie")
+		await page.getByLabel(/Prénom/i).fill("Marie");
 
-		const emailInput = page.getByLabel(/Adresse email/i).or(page.getByLabel(/Email/i))
-		await emailInput.first().fill(testEmail("customization"))
+		const emailInput = page.getByLabel(/Adresse email/i).or(page.getByLabel(/Email/i));
+		await emailInput.first().fill(testEmail("customization"));
 
-		const descriptionField = page.getByLabel(/Décrivez votre projet/i).or(page.locator("textarea").first())
-		await descriptionField.fill("Je souhaite une bague sur mesure en argent avec une pierre naturelle.")
+		const descriptionField = page
+			.getByLabel(/Décrivez votre projet/i)
+			.or(page.locator("textarea").first());
+		await descriptionField.fill(
+			"Je souhaite une bague sur mesure en argent avec une pierre naturelle.",
+		);
 
 		// Accept consent
-		const consentCheckbox = page.getByLabel(/politique de confidentialité/i)
-		if (await consentCheckbox.count() > 0) {
-			await consentCheckbox.check()
+		const consentCheckbox = page.getByLabel(/politique de confidentialité/i);
+		if ((await consentCheckbox.count()) > 0) {
+			await consentCheckbox.check();
 		}
 
-		const submitButton = page.getByRole("button", { name: /Envoyer/i })
-		test.skip(await submitButton.count() === 0, "No submit button found")
-		test.skip(await submitButton.isDisabled(), "Submit button is disabled")
+		const submitButton = page.getByRole("button", { name: /Envoyer/i });
+		test.skip((await submitButton.count()) === 0, "No submit button found");
+		test.skip(await submitButton.isDisabled(), "Submit button is disabled");
 
-		await submitButton.click()
+		await submitButton.click();
 
 		// Expect explicit success feedback — rate limit is a failure, not an acceptable state
-		const successFeedback = page.getByText(/envoyé|reçu|merci|confirmation/i)
-		await expect(successFeedback.first()).toBeVisible({ timeout: 10000 })
-	})
-})
+		const successFeedback = page.getByText(/envoyé|reçu|merci|confirmation/i);
+		await expect(successFeedback.first()).toBeVisible({ timeout: 10000 });
+	});
+});

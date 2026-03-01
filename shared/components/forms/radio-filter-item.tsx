@@ -31,11 +31,11 @@ export function RadioFilterItem({
 		<label
 			htmlFor={id}
 			className={cn(
-				"flex items-start gap-3 py-2.5 px-3 -mx-3 rounded-lg cursor-pointer min-h-11",
+				"-mx-3 flex min-h-11 cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5",
 				"transition-colors duration-150",
 				"hover:bg-accent/50",
-				"focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-				checked && "bg-primary/5"
+				"focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2",
+				checked && "bg-primary/5",
 			)}
 		>
 			<input
@@ -46,18 +46,16 @@ export function RadioFilterItem({
 				checked={checked}
 				onChange={(e) => onCheckedChange(e.target.checked)}
 				className={cn(
-					"mt-0.5 shrink-0 size-4 rounded-full border border-primary text-primary",
-					"focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+					"border-primary text-primary mt-0.5 size-4 shrink-0 rounded-full border",
+					"focus-visible:ring-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
 					"disabled:cursor-not-allowed disabled:opacity-50",
-					"accent-primary"
+					"accent-primary",
 				)}
 			/>
-			<div className="flex-1 min-w-0">
+			<div className="min-w-0 flex-1">
 				<span className="text-sm font-normal">{children}</span>
 				{description && (
-					<span className="block text-xs text-muted-foreground mt-0.5">
-						{description}
-					</span>
+					<span className="text-muted-foreground mt-0.5 block text-xs">{description}</span>
 				)}
 			</div>
 		</label>

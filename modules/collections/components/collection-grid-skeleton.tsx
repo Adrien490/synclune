@@ -5,7 +5,7 @@ export function CollectionGridSkeleton() {
 	return (
 		<div className="space-y-8">
 			{/* Grille des collections - structure alignée avec CollectionGrid */}
-			<div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+			<div className="xs:grid-cols-2 grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3 lg:gap-8 xl:grid-cols-4">
 				{Array.from({ length: 8 }).map((_, i) => (
 					<div key={i} className="grid gap-4">
 						{/* Image skeleton - aspect-square comme dans CollectionCard */}

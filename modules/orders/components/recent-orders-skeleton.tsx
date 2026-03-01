@@ -15,7 +15,7 @@ export function RecentOrdersSkeleton() {
 				<Skeleton className="h-7 w-48" />
 			</div>
 
-			<div className="border rounded-lg">
+			<div className="rounded-lg border">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -43,7 +43,7 @@ export function RecentOrdersSkeleton() {
 									<Skeleton className="h-4 w-20" />
 								</TableCell>
 								<TableCell className="text-right">
-									<Skeleton className="h-5 w-16 ml-auto" />
+									<Skeleton className="ml-auto h-5 w-16" />
 								</TableCell>
 								<TableCell>
 									<Skeleton className="h-4 w-4" />

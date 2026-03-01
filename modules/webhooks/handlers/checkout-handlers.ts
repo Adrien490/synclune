@@ -17,12 +17,14 @@ import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
  * C'est le handler principal qui traite les paiements réussis
  */
 export async function handleCheckoutSessionCompleted(
-	session: Stripe.Checkout.Session
+	session: Stripe.Checkout.Session,
 ): Promise<WebhookHandlerResult | null> {
 	// Validation payment_status AVANT tout traitement
 	// Pour les paiements asynchrones (SEPA, etc.), payment_status peut être 'unpaid'
 	if (session.payment_status === "unpaid") {
-		console.log(`⏳ [WEBHOOK] Session ${session.id} payment_status is 'unpaid', waiting for async payment confirmation`);
+		console.log(
+			`⏳ [WEBHOOK] Session ${session.id} payment_status is 'unpaid', waiting for async payment confirmation`,
+		);
 		return null;
 	}
 
@@ -39,7 +41,9 @@ export async function handleCheckoutSessionCompleted(
 	try {
 		// 1. Extraire les informations de livraison depuis Stripe
 		const { shippingCost, shippingMethod, shippingRateId } = await extractShippingInfo(session);
-		console.log(`📦 [WEBHOOK] Shipping extracted for order ${orderId}: ${shippingCost / 100}€ (${shippingMethod})`);
+		console.log(
+			`📦 [WEBHOOK] Shipping extracted for order ${orderId}: ${shippingCost / 100}€ (${shippingMethod})`,
+		);
 
 		// 2. Traiter la commande dans une transaction atomique
 		const order = await processOrderTransaction(orderId, session, shippingCost, shippingRateId);
@@ -54,9 +58,12 @@ export async function handleCheckoutSessionCompleted(
 				where: { id: orderId },
 				select: { customerEmail: true },
 			});
-			if (dbOrder?.customerEmail && stripeEmail.toLowerCase() !== dbOrder.customerEmail.toLowerCase()) {
+			if (
+				dbOrder?.customerEmail &&
+				stripeEmail.toLowerCase() !== dbOrder.customerEmail.toLowerCase()
+			) {
 				console.warn(
-					`[WEBHOOK] Email mismatch for order ${orderId}: Stripe=${stripeEmail}, Order=${dbOrder.customerEmail}`
+					`[WEBHOOK] Email mismatch for order ${orderId}: Stripe=${stripeEmail}, Order=${dbOrder.customerEmail}`,
 				);
 				// Create an admin OrderNote for visibility
 				await prisma.orderNote.create({
@@ -89,7 +96,7 @@ export async function handleCheckoutSessionCompleted(
  * Marque la commande comme annulée après expiration sans paiement
  */
 export async function handleCheckoutSessionExpired(
-	session: Stripe.Checkout.Session
+	session: Stripe.Checkout.Session,
 ): Promise<WebhookHandlerResult> {
 	const orderId = session.metadata?.orderId || session.client_reference_id;
 
@@ -105,23 +112,25 @@ export async function handleCheckoutSessionExpired(
 
 		return {
 			success: true,
-			tasks: [{
-				type: "INVALIDATE_CACHE",
-				tags: [
-					ORDERS_CACHE_TAGS.LIST,
-					SHARED_CACHE_TAGS.ADMIN_BADGES,
-					SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-					DASHBOARD_CACHE_TAGS.KPIS,
-					DASHBOARD_CACHE_TAGS.REVENUE_CHART,
-					DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
-					DISCOUNT_CACHE_TAGS.LIST,
-				],
-			}],
+			tasks: [
+				{
+					type: "INVALIDATE_CACHE",
+					tags: [
+						ORDERS_CACHE_TAGS.LIST,
+						SHARED_CACHE_TAGS.ADMIN_BADGES,
+						SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
+						DASHBOARD_CACHE_TAGS.KPIS,
+						DASHBOARD_CACHE_TAGS.REVENUE_CHART,
+						DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
+						DISCOUNT_CACHE_TAGS.LIST,
+					],
+				},
+			],
 		};
 	} catch (error) {
 		console.error(
 			`❌ [WEBHOOK] Error handling expired checkout session for order ${orderId}:`,
-			error
+			error,
 		);
 		throw error;
 	}

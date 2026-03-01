@@ -16,9 +16,7 @@ interface UseRemoveUnavailableItemsOptions {
  * Hook pour retirer tous les articles indisponibles du panier
  * Compatible avec useActionState de React 19
  */
-export const useRemoveUnavailableItems = (
-	options?: UseRemoveUnavailableItemsOptions
-) => {
+export const useRemoveUnavailableItems = (options?: UseRemoveUnavailableItemsOptions) => {
 	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
 
 	const [state, action, isPending] = useActionState(
@@ -38,9 +36,9 @@ export const useRemoveUnavailableItems = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

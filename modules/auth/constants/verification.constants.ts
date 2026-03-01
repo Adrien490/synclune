@@ -30,9 +30,4 @@ export const GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE = 200;
 export const GET_VERIFICATIONS_DEFAULT_SORT_BY = "createdAt";
 export const GET_VERIFICATIONS_DEFAULT_SORT_ORDER = "desc";
 
-export const GET_VERIFICATIONS_SORT_FIELDS = [
-	"createdAt",
-	"updatedAt",
-	"expiresAt",
-] as const;
-
+export const GET_VERIFICATIONS_SORT_FIELDS = ["createdAt", "updatedAt", "expiresAt"] as const;

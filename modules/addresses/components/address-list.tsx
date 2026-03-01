@@ -23,17 +23,13 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 			{/* Section header */}
 			<div className="flex items-center justify-between gap-4">
 				<div>
-					<h2 id="addresses-heading" className="text-lg font-semibold text-foreground">
+					<h2 id="addresses-heading" className="text-foreground text-lg font-semibold">
 						Adresses enregistrées
 					</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						Gérez vos adresses de livraison
-					</p>
+					<p className="text-muted-foreground mt-1 text-sm">Gérez vos adresses de livraison</p>
 				</div>
 				{addresses && addresses.length > 0 && (
-					<CreateAddressButton size="sm">
-						Ajouter
-					</CreateAddressButton>
+					<CreateAddressButton size="sm">Ajouter</CreateAddressButton>
 				)}
 			</div>
 
@@ -51,7 +47,7 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 					</EmptyContent>
 				</Empty>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{addresses.map((address) => (
 						<AddressCard key={address.id} address={address} />
 					))}

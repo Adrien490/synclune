@@ -5,10 +5,7 @@
  * Les constantes (tarifs) sont dans @/modules/orders/constants/shipping-rates
  */
 
-import {
-	SHIPPING_RATES,
-	type ShippingRate,
-} from "@/modules/orders/constants/shipping-rates";
+import { SHIPPING_RATES, type ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 import type { AllowedShippingCountry } from "../types/order.types";
@@ -44,9 +41,7 @@ export function getShippingRate(country: string): ShippingRate {
  * @param country - Code pays ISO 3166-1 alpha-2
  * @returns true si le pays est couvert par nos tarifs de livraison
  */
-export function isShippingAvailable(
-	country: string
-): country is AllowedShippingCountry {
+export function isShippingAvailable(country: string): country is AllowedShippingCountry {
 	return SHIPPING_COUNTRIES.includes(country as ShippingCountry);
 }
 
@@ -89,7 +84,7 @@ export function formatShippingPrice(amountInCents: number): string {
  */
 export function calculateShipping(
 	countryCode: ShippingCountry = "FR",
-	postalCode?: string
+	postalCode?: string,
 ): number {
 	try {
 		// Détection Corse pour les commandes FR avec code postal
@@ -128,7 +123,7 @@ export function calculateShipping(
  */
 export function getShippingInfo(
 	countryCode: ShippingCountry = "FR",
-	postalCode?: string
+	postalCode?: string,
 ): ShippingRate {
 	// Détection Corse pour les commandes FR avec code postal
 	if (countryCode === "FR" && postalCode) {

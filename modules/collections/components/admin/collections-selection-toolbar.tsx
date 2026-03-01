@@ -12,14 +12,7 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import {
-	Archive,
-	ArchiveRestore,
-	FileEdit,
-	Globe,
-	MoreVertical,
-	Trash2,
-} from "lucide-react";
+import { Archive, ArchiveRestore, FileEdit, Globe, MoreVertical, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useBulkArchiveCollections } from "@/modules/collections/hooks/use-bulk-archive-collections";
 import { BULK_DELETE_COLLECTIONS_DIALOG_ID } from "./bulk-delete-collections-alert-dialog";
@@ -34,22 +27,17 @@ interface CollectionsSelectionToolbarProps {
 	}>;
 }
 
-export function CollectionsSelectionToolbar({
-	collections,
-}: CollectionsSelectionToolbarProps) {
+export function CollectionsSelectionToolbar({ collections }: CollectionsSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_COLLECTIONS_DIALOG_ID);
 	const bulkArchiveDialog = useAlertDialog(BULK_ARCHIVE_COLLECTIONS_DIALOG_ID);
 
-	const { handle: bulkChangeStatus, isPending: isChangingStatus } =
-		useBulkArchiveCollections({
-			onSuccess: () => clearSelection(),
-		});
+	const { handle: bulkChangeStatus, isPending: isChangingStatus } = useBulkArchiveCollections({
+		onSuccess: () => clearSelection(),
+	});
 
 	// Determiner le statut des collections selectionnees
-	const selectedCollections = collections.filter((c) =>
-		selectedItems.includes(c.id)
-	);
+	const selectedCollections = collections.filter((c) => selectedItems.includes(c.id));
 
 	const selectedCollectionsStatus = (() => {
 		if (selectedCollections.length === 0) {
@@ -63,23 +51,12 @@ export function CollectionsSelectionToolbar({
 			};
 		}
 
-		const allArchived = selectedCollections.every(
-			(c) => c.status === CollectionStatus.ARCHIVED
-		);
-		const hasArchived = selectedCollections.some(
-			(c) => c.status === CollectionStatus.ARCHIVED
-		);
-		const hasNonArchived = selectedCollections.some(
-			(c) => c.status !== CollectionStatus.ARCHIVED
-		);
-		const allDraft = selectedCollections.every(
-			(c) => c.status === CollectionStatus.DRAFT
-		);
-		const allPublic = selectedCollections.every(
-			(c) => c.status === CollectionStatus.PUBLIC
-		);
-		const hasMixedStatus =
-			!allArchived && !allDraft && !allPublic && hasNonArchived;
+		const allArchived = selectedCollections.every((c) => c.status === CollectionStatus.ARCHIVED);
+		const hasArchived = selectedCollections.some((c) => c.status === CollectionStatus.ARCHIVED);
+		const hasNonArchived = selectedCollections.some((c) => c.status !== CollectionStatus.ARCHIVED);
+		const allDraft = selectedCollections.every((c) => c.status === CollectionStatus.DRAFT);
+		const allPublic = selectedCollections.every((c) => c.status === CollectionStatus.PUBLIC);
+		const hasMixedStatus = !allArchived && !allDraft && !allPublic && hasNonArchived;
 
 		return {
 			allArchived,
@@ -122,13 +99,8 @@ export function CollectionsSelectionToolbar({
 		}
 
 		// Calculate total products count from selected collections
-		const selectedCollections = collections.filter((c) =>
-			selectedItems.includes(c.id)
-		);
-		const totalProductsCount = selectedCollections.reduce(
-			(sum, c) => sum + c.productsCount,
-			0
-		);
+		const selectedCollections = collections.filter((c) => selectedItems.includes(c.id));
+		const totalProductsCount = selectedCollections.reduce((sum, c) => sum + c.productsCount, 0);
 
 		bulkDeleteDialog.open({
 			collectionIds: selectedItems,
@@ -158,9 +130,8 @@ export function CollectionsSelectionToolbar({
 
 	return (
 		<SelectionToolbar>
-			<span className="text-sm text-muted-foreground">
-				{selectedItems.length} collection{selectedItems.length > 1 ? "s" : ""}{" "}
-				selectionnee
+			<span className="text-muted-foreground text-sm">
+				{selectedItems.length} collection{selectedItems.length > 1 ? "s" : ""} selectionnee
 				{selectedItems.length > 1 ? "s" : ""}
 			</span>
 			<DropdownMenu>
@@ -172,49 +143,36 @@ export function CollectionsSelectionToolbar({
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-50">
 					{/* Actions de changement de statut (DRAFT/PUBLIC) */}
-					{!selectedCollectionsStatus.allArchived &&
-						!selectedCollectionsStatus.hasArchived && (
-							<>
-								{selectedCollectionsStatus.allDraft && (
-									<DropdownMenuItem
-										onClick={handlePublish}
-										disabled={isChangingStatus}
-									>
+					{!selectedCollectionsStatus.allArchived && !selectedCollectionsStatus.hasArchived && (
+						<>
+							{selectedCollectionsStatus.allDraft && (
+								<DropdownMenuItem onClick={handlePublish} disabled={isChangingStatus}>
+									<Globe className="h-4 w-4" />
+									Publier
+								</DropdownMenuItem>
+							)}
+							{selectedCollectionsStatus.allPublic && (
+								<DropdownMenuItem onClick={handleUnpublish} disabled={isChangingStatus}>
+									<FileEdit className="h-4 w-4" />
+									Mettre en brouillon
+								</DropdownMenuItem>
+							)}
+							{selectedCollectionsStatus.hasMixedStatus && (
+								<>
+									<DropdownMenuItem onClick={handlePublish} disabled={isChangingStatus}>
 										<Globe className="h-4 w-4" />
 										Publier
 									</DropdownMenuItem>
-								)}
-								{selectedCollectionsStatus.allPublic && (
-									<DropdownMenuItem
-										onClick={handleUnpublish}
-										disabled={isChangingStatus}
-									>
+									<DropdownMenuItem onClick={handleUnpublish} disabled={isChangingStatus}>
 										<FileEdit className="h-4 w-4" />
 										Mettre en brouillon
 									</DropdownMenuItem>
-								)}
-								{selectedCollectionsStatus.hasMixedStatus && (
-									<>
-										<DropdownMenuItem
-											onClick={handlePublish}
-											disabled={isChangingStatus}
-										>
-											<Globe className="h-4 w-4" />
-											Publier
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onClick={handleUnpublish}
-											disabled={isChangingStatus}
-										>
-											<FileEdit className="h-4 w-4" />
-											Mettre en brouillon
-										</DropdownMenuItem>
-									</>
-								)}
+								</>
+							)}
 
-								<DropdownMenuSeparator />
-							</>
-						)}
+							<DropdownMenuSeparator />
+						</>
+					)}
 
 					{/* Actions conditionnelles selon le statut archive */}
 					{selectedCollectionsStatus.allArchived ? (
@@ -224,10 +182,7 @@ export function CollectionsSelectionToolbar({
 								<ArchiveRestore className="h-4 w-4" />
 								Restaurer
 							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={handleBulkDelete}
-								variant="destructive"
-							>
+							<DropdownMenuItem onClick={handleBulkDelete} variant="destructive">
 								<Trash2 className="h-4 w-4" />
 								Supprimer
 							</DropdownMenuItem>
@@ -235,10 +190,7 @@ export function CollectionsSelectionToolbar({
 					) : selectedCollectionsStatus.hasArchived ? (
 						<>
 							{/* Mix archive/non-archive : Message d'erreur */}
-							<DropdownMenuItem
-								disabled
-								className="text-muted-foreground cursor-not-allowed"
-							>
+							<DropdownMenuItem disabled className="text-muted-foreground cursor-not-allowed">
 								Selection mixte archive/non-archive
 							</DropdownMenuItem>
 						</>

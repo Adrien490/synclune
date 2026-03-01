@@ -13,7 +13,17 @@ import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/use-update-sku-s
 import { useDuplicateSku } from "@/modules/skus/hooks/use-duplicate-sku";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { Check, Copy, DollarSign, MoreVertical, Package, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import {
+	Check,
+	Copy,
+	DollarSign,
+	MoreVertical,
+	Package,
+	Pencil,
+	Power,
+	PowerOff,
+	Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { DELETE_PRODUCT_SKU_DIALOG_ID } from "./delete-sku-alert-dialog";
 import { ADJUST_STOCK_DIALOG_ID } from "./adjust-stock-dialog";
@@ -86,7 +96,7 @@ export function ProductSkuRowActions({
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-11 w-11 p-0 active:scale-95 transition-transform"
+					className="h-11 w-11 p-0 transition-transform active:scale-95"
 					aria-label="Actions pour cette variante"
 				>
 					<MoreVertical className="h-4 w-4" />
@@ -96,9 +106,7 @@ export function ProductSkuRowActions({
 			<DropdownMenuContent align="end" className="w-45">
 				{/* Modifier */}
 				<DropdownMenuItem asChild>
-					<Link
-						href={`/admin/catalogue/produits/${productSlug}/variantes/${skuId}/modifier`}
-					>
+					<Link href={`/admin/catalogue/produits/${productSlug}/variantes/${skuId}/modifier`}>
 						<Pencil className="h-4 w-4" />
 						Modifier
 					</Link>
@@ -106,10 +114,7 @@ export function ProductSkuRowActions({
 
 				{/* Activer/Désactiver - Non disponible pour la variante par défaut */}
 				{!isDefault && (
-					<DropdownMenuItem
-						onClick={handleToggleStatus}
-						disabled={isToggling}
-					>
+					<DropdownMenuItem onClick={handleToggleStatus} disabled={isToggling}>
 						{isActive ? (
 							<>
 								<PowerOff className="h-4 w-4" />
@@ -137,10 +142,7 @@ export function ProductSkuRowActions({
 				</DropdownMenuItem>
 
 				{/* Dupliquer */}
-				<DropdownMenuItem
-					onClick={() => duplicate(skuId, skuName)}
-					disabled={isDuplicating}
-				>
+				<DropdownMenuItem onClick={() => duplicate(skuId, skuName)} disabled={isDuplicating}>
 					<Copy className="h-4 w-4" />
 					Dupliquer
 				</DropdownMenuItem>
@@ -154,10 +156,7 @@ export function ProductSkuRowActions({
 							Définir par défaut
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							variant="destructive"
-							onClick={handleDelete}
-						>
+						<DropdownMenuItem variant="destructive" onClick={handleDelete}>
 							<Trash2 className="h-4 w-4" />
 							Supprimer
 						</DropdownMenuItem>

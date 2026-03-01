@@ -34,7 +34,7 @@ const HEX_PATTERN = /^#[0-9A-Fa-f]{6}$/;
  */
 function truncateAltText(
 	text: string,
-	maxLength = PRODUCT_CAROUSEL_CONFIG.MAX_ALT_TEXT_LENGTH
+	maxLength = PRODUCT_CAROUSEL_CONFIG.MAX_ALT_TEXT_LENGTH,
 ): string {
 	if (text.length <= maxLength) return text;
 	return text.slice(0, maxLength - 3) + "...";
@@ -62,18 +62,13 @@ type ExtractedImage = {
  * @param productTitle - Titre du produit pour le texte alt
  * @returns Image extraite ou null si aucune image trouvée
  */
-function extractImageFromSku(
-	sku: SkuFromList,
-	productTitle: string
-): ExtractedImage | null {
+function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedImage | null {
 	if (!sku.images || sku.images.length === 0) {
 		return null;
 	}
 
 	// Priorité 1: Image marquée isPrimary
-	const primaryImage = sku.images.find(
-		(img) => img.isPrimary && img.mediaType === "IMAGE"
-	);
+	const primaryImage = sku.images.find((img) => img.isPrimary && img.mediaType === "IMAGE");
 	if (primaryImage) {
 		return {
 			id: primaryImage.id,
@@ -81,9 +76,7 @@ function extractImageFromSku(
 			mediaType: "IMAGE",
 			alt: truncateAltText(
 				primaryImage.altText ||
-					`${productTitle} - ${
-						sku.material?.name || sku.color?.name || "Image principale"
-					}`
+					`${productTitle} - ${sku.material?.name || sku.color?.name || "Image principale"}`,
 			),
 			blurDataUrl: primaryImage.blurDataUrl ?? undefined,
 		};
@@ -98,9 +91,7 @@ function extractImageFromSku(
 			mediaType: "IMAGE",
 			alt: truncateAltText(
 				firstImage.altText ||
-					`${productTitle} - ${
-						sku.material?.name || sku.color?.name || "Variante"
-					}`
+					`${productTitle} - ${sku.material?.name || sku.color?.name || "Variante"}`,
 			),
 			blurDataUrl: firstImage.blurDataUrl ?? undefined,
 		};
@@ -132,7 +123,7 @@ export function getPrimaryPriceForList(product: ProductFromList): {
 	// Pas de SKU actif - log warning en dev pour détecter les données manquantes
 	if (process.env.NODE_ENV === "development") {
 		console.warn(
-			`[getPrimaryPriceForList] Produit "${product.slug}" n'a aucun SKU actif. Prix retourné: 0`
+			`[getPrimaryPriceForList] Produit "${product.slug}" n'a aucun SKU actif. Prix retourné: 0`,
 		);
 	}
 
@@ -198,7 +189,7 @@ export type { ProductCardData } from "../types/product.types";
  */
 export function getProductCardData(
 	product: ProductFromList,
-	activeColorSlug?: string
+	activeColorSlug?: string,
 ): ProductCardData {
 	const skus = product.skus ?? [];
 
@@ -242,9 +233,7 @@ export function getProductCardData(
 
 	// Warning en dev si pas de SKU
 	if (!defaultSku && process.env.NODE_ENV === "development") {
-		console.warn(
-			`[getProductCardData] Produit "${product.slug}" n'a aucun SKU actif.`
-		);
+		console.warn(`[getProductCardData] Produit "${product.slug}" n'a aucun SKU actif.`);
 	}
 
 	// Stock info avec support low_stock
@@ -271,19 +260,10 @@ export function getProductCardData(
 
 	// Image principale (réutilise la logique existante mais avec le SKU déjà trouvé)
 	const activeSkus = skus.filter((s) => s.isActive);
-	const primaryImage = getPrimaryImageFromSku(
-		defaultSku,
-		product,
-		activeSkus
-	);
+	const primaryImage = getPrimaryImageFromSku(defaultSku, product, activeSkus);
 
 	// Secondary image for hover effect (different from primary)
-	const secondaryImage = getSecondaryImage(
-		defaultSku,
-		activeSkus,
-		product.title,
-		primaryImage.id
-	);
+	const secondaryImage = getSecondaryImage(defaultSku, activeSkus, product.title, primaryImage.id);
 
 	return {
 		defaultSku,
@@ -305,12 +285,12 @@ function getSecondaryImage(
 	defaultSku: SkuFromList | null,
 	activeSkus: SkuFromList[],
 	productTitle: string,
-	primaryImageId: string
+	primaryImageId: string,
 ): ExtractedImage | null {
 	// Priority 1: Another image from the default SKU
 	if (defaultSku?.images) {
 		const secondaryFromDefaultSku = defaultSku.images.find(
-			(img) => img.mediaType === "IMAGE" && img.id !== primaryImageId
+			(img) => img.mediaType === "IMAGE" && img.id !== primaryImageId,
 		);
 		if (secondaryFromDefaultSku) {
 			return {
@@ -318,8 +298,7 @@ function getSecondaryImage(
 				url: secondaryFromDefaultSku.url,
 				mediaType: "IMAGE",
 				alt: truncateAltText(
-					secondaryFromDefaultSku.altText ||
-						`${productTitle} - Vue alternative`
+					secondaryFromDefaultSku.altText || `${productTitle} - Vue alternative`,
 				),
 				blurDataUrl: secondaryFromDefaultSku.blurDataUrl ?? undefined,
 			};
@@ -343,7 +322,7 @@ function getSecondaryImage(
 function getPrimaryImageFromSku(
 	primarySku: SkuFromList | null,
 	product: ProductFromList,
-	activeSkus: SkuFromList[]
+	activeSkus: SkuFromList[],
 ): ExtractedImage {
 	// Priorité 1: Image du SKU principal
 	if (primarySku) {
@@ -363,4 +342,3 @@ function getPrimaryImageFromSku(
 		alt: truncateAltText(`${product.title} - ${FALLBACK_PRODUCT_IMAGE.alt}`),
 	};
 }
-

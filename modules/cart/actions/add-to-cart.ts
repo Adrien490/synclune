@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
-import { validateInput, handleActionError, success, error, BusinessError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	BusinessError,
+} from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import { getCartExpirationDate, getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
@@ -20,7 +26,7 @@ import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "../constants/cart";
  */
 export async function addToCart(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Extraction des données du FormData
@@ -36,7 +42,9 @@ export async function addToCart(
 		const validatedData = validated.data;
 
 		// 3. Rate limiting + récupération contexte
-		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.ADD, { createSessionIfMissing: true });
+		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.ADD, {
+			createSessionIfMissing: true,
+		});
 		if (!rateLimitResult.success) {
 			return rateLimitResult.errorState;
 		}
@@ -79,15 +87,17 @@ export async function addToCart(
 		const transactionResult = await prisma.$transaction(async (tx) => {
 			// 6a. Verrouiller le SKU en PREMIER avec FOR UPDATE pour éviter les race conditions
 			// Le lock doit être acquis AVANT de lire existingItem pour garantir la cohérence
-			const skuRows = await tx.$queryRaw<Array<{
-				inventory: number;
-				isActive: boolean;
-				priceInclTax: number;
-				deletedAt: Date | null;
-				productId: string;
-				productStatus: string;
-				productDeletedAt: Date | null;
-			}>>`
+			const skuRows = await tx.$queryRaw<
+				Array<{
+					inventory: number;
+					isActive: boolean;
+					priceInclTax: number;
+					deletedAt: Date | null;
+					productId: string;
+					productStatus: string;
+					productDeletedAt: Date | null;
+				}>
+			>`
 				SELECT
 					s.inventory,
 					s."isActive",
@@ -200,7 +210,7 @@ export async function addToCart(
 		// 7. Invalider immédiatement le cache du panier (read-your-own-writes)
 		// Note: updateTag suffit car les cache tags couvrent toutes les données panier
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		// 8. Invalider le cache du compteur de paniers pour ce produit (FOMO "dans X paniers")
 		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(transactionResult.productId));

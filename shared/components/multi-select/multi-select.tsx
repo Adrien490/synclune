@@ -17,6 +17,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
 import { ArrowLeftIcon, CheckIcon, ChevronDown, XCircle, XIcon } from "lucide-react";
 import * as React from "react";
@@ -77,7 +78,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 		// Ref pour cleanup du timeout focus (P0 - Memory leak fix)
 		const focusTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-		const isMobile = useIsMobile();
+		const isMobileDetected = useIsMobile();
+		const mounted = useMounted();
+		const isMobile = mounted && isMobileDetected;
 
 		// Announce function - messages nettoyés via useEffect
 		const announce = (message: string, priority: "polite" | "assertive" = "polite") => {
@@ -150,7 +153,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						buttonRef.current.focus();
 						const originalOutline = buttonRef.current.style.outline;
 						const originalOutlineOffset = buttonRef.current.style.outlineOffset;
-						buttonRef.current.style.outline = "2px solid hsl(var(--ring))";
+						buttonRef.current.style.outline = "2px solid oklch(var(--ring))";
 						buttonRef.current.style.outlineOffset = "2px";
 
 						// P0 Fix: Clear previous timeout to prevent memory leak

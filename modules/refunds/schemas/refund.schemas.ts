@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { RefundReason, RefundStatus } from "@/app/generated/prisma/client";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
@@ -25,12 +22,8 @@ export const getRefundSchema = z.object({
 // ============================================================================
 
 export const refundFiltersSchema = z.object({
-	status: z
-		.union([z.enum(RefundStatus), z.array(z.enum(RefundStatus))])
-		.optional(),
-	reason: z
-		.union([z.enum(RefundReason), z.array(z.enum(RefundReason))])
-		.optional(),
+	status: z.union([z.enum(RefundStatus), z.array(z.enum(RefundStatus))]).optional(),
+	reason: z.union([z.enum(RefundReason), z.array(z.enum(RefundReason))]).optional(),
 	orderId: z.cuid2().optional(),
 	createdAfter: stringOrDateSchema,
 	createdBefore: stringOrDateSchema,
@@ -131,7 +124,10 @@ export const cancelRefundSchema = z.object({
 // ============================================================================
 
 export const bulkApproveRefundsSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins un remboursement doit être sélectionné").max(100, "Maximum 100 remboursements par opération"),
+	ids: z
+		.array(z.cuid2())
+		.min(1, "Au moins un remboursement doit être sélectionné")
+		.max(100, "Maximum 100 remboursements par opération"),
 });
 
 // ============================================================================
@@ -139,7 +135,10 @@ export const bulkApproveRefundsSchema = z.object({
 // ============================================================================
 
 export const bulkRejectRefundsSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins un remboursement doit être sélectionné").max(100, "Maximum 100 remboursements par opération"),
+	ids: z
+		.array(z.cuid2())
+		.min(1, "Au moins un remboursement doit être sélectionné")
+		.max(100, "Maximum 100 remboursements par opération"),
 	reason: z.string().max(500).optional(),
 });
 
@@ -164,10 +163,6 @@ export const getOrderForRefundSchema = z.object({
  */
 export const requestReturnSchema = z.object({
 	orderId: z.cuid2(),
-	reason: z.enum([
-		RefundReason.CUSTOMER_REQUEST,
-		RefundReason.DEFECTIVE,
-		RefundReason.WRONG_ITEM,
-	]),
+	reason: z.enum([RefundReason.CUSTOMER_REQUEST, RefundReason.DEFECTIVE, RefundReason.WRONG_ITEM]),
 	message: z.string().max(500).optional(),
 });

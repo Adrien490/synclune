@@ -82,7 +82,7 @@ describe("GET /api/cron/review-request-emails", () => {
 		mockSendDelayedReviewRequestEmails.mockResolvedValue(DEFAULT_SERVICE_RESULT);
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockCronSuccess.mockImplementation((data: Record<string, unknown>) =>
-			makeSuccessResponse(data)
+			makeSuccessResponse(data),
 		);
 		mockCronError.mockImplementation((message: string) => makeErrorResponse(message));
 	});
@@ -137,14 +137,14 @@ describe("GET /api/cron/review-request-emails", () => {
 					sent: DEFAULT_SERVICE_RESULT.sent,
 					errors: DEFAULT_SERVICE_RESULT.errors,
 				}),
-				1000
+				1000,
 			);
 		});
 
 		it("includes the job name 'review-request-emails' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("review-request-emails");
 		});
 
@@ -183,7 +183,7 @@ describe("GET /api/cron/review-request-emails", () => {
 				expect.objectContaining({
 					job: "review-request-emails",
 					errors: 2,
-				})
+				}),
 			);
 		});
 
@@ -199,7 +199,7 @@ describe("GET /api/cron/review-request-emails", () => {
 			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 				expect.objectContaining({
 					details: expect.objectContaining({ found: 4, sent: 3 }),
-				})
+				}),
 			);
 		});
 
@@ -238,9 +238,7 @@ describe("GET /api/cron/review-request-emails", () => {
 
 			await GET();
 
-			expect(mockCronError).toHaveBeenCalledWith(
-				"Failed to send review request emails"
-			);
+			expect(mockCronError).toHaveBeenCalledWith("Failed to send review request emails");
 		});
 
 		it("uses fallback message when null is thrown", async () => {
@@ -248,9 +246,7 @@ describe("GET /api/cron/review-request-emails", () => {
 
 			await GET();
 
-			expect(mockCronError).toHaveBeenCalledWith(
-				"Failed to send review request emails"
-			);
+			expect(mockCronError).toHaveBeenCalledWith("Failed to send review request emails");
 		});
 
 		it("does not call cronSuccess when the service throws", async () => {

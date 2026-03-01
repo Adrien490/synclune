@@ -20,7 +20,7 @@ class LimitExceededError extends Error {}
  */
 export async function createAddress(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification de l'authentification
@@ -83,12 +83,12 @@ export async function createAddress(
 		});
 
 		// 6. Revalidation du cache avec tags
-		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
+		getUserAddressesInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
 		return success(
 			isDefault
 				? "Adresse ajoutee et definie comme adresse par defaut"
-				: "Adresse ajoutee avec succes"
+				: "Adresse ajoutee avec succes",
 		);
 	} catch (e) {
 		if (e instanceof LimitExceededError) {

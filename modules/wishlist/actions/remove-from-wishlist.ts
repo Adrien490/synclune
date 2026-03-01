@@ -14,7 +14,13 @@ import {
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
-import { validateInput, handleActionError, success, error, enforceRateLimit } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	enforceRateLimit,
+} from "@/shared/lib/actions";
 
 /**
  * Server Action pour retirer un article de la wishlist
@@ -24,7 +30,7 @@ import { validateInput, handleActionError, success, error, enforceRateLimit } fr
  */
 export async function removeFromWishlist(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Recuperer l'authentification (user ou session invite)
@@ -83,12 +89,10 @@ export async function removeFromWishlist(
 
 		// 6. Invalidation cache immediate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		return success(
-			deleteResult.count > 0
-				? "Retire de votre wishlist"
-				: WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND,
+			deleteResult.count > 0 ? "Retire de votre wishlist" : WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND,
 			{
 				wishlistId: wishlist.id,
 				removed: deleteResult.count > 0,

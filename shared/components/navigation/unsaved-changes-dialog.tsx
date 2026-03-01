@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
 	AlertDialog,
@@ -9,8 +9,8 @@ import {
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog"
-import { useNavigationGuard } from "@/shared/contexts/navigation-guard-context"
+} from "@/shared/components/ui/alert-dialog";
+import { useNavigationGuard } from "@/shared/contexts/navigation-guard-context";
 
 /**
  * Modal de confirmation pour les modifications non sauvegardées.
@@ -18,14 +18,10 @@ import { useNavigationGuard } from "@/shared/contexts/navigation-guard-context"
  * à l'intérieur du NavigationGuardProvider.
  */
 export function UnsavedChangesDialog() {
-	const {
-		pendingNavigation,
-		guardMessage,
-		confirmNavigation,
-		cancelNavigation,
-	} = useNavigationGuard()
+	const { pendingNavigation, guardMessage, confirmNavigation, cancelNavigation } =
+		useNavigationGuard();
 
-	const isOpen = pendingNavigation !== null
+	const isOpen = pendingNavigation !== null;
 
 	return (
 		<AlertDialog open={isOpen} onOpenChange={(open) => !open && cancelNavigation()}>
@@ -35,14 +31,12 @@ export function UnsavedChangesDialog() {
 					<AlertDialogDescription>{guardMessage}</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel onClick={cancelNavigation}>
-						Rester sur la page
-					</AlertDialogCancel>
+					<AlertDialogCancel onClick={cancelNavigation}>Rester sur la page</AlertDialogCancel>
 					<AlertDialogAction onClick={confirmNavigation}>
 						Quitter sans sauvegarder
 					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
-	)
+	);
 }

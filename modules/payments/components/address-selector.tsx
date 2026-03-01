@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import type { UserAddress } from "@/modules/addresses/types/user-addresses.types"
-import { cn } from "@/shared/utils/cn"
-import { MapPin } from "lucide-react"
+import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
+import { cn } from "@/shared/utils/cn";
+import { MapPin } from "lucide-react";
 
 interface AddressSelectorProps {
-	addresses: UserAddress[]
-	selectedAddressId: string | null
-	onSelectAddress: (address: UserAddress) => void
+	addresses: UserAddress[];
+	selectedAddressId: string | null;
+	onSelectAddress: (address: UserAddress) => void;
 }
 
 /**
@@ -19,26 +19,26 @@ export function AddressSelector({
 	selectedAddressId,
 	onSelectAddress,
 }: AddressSelectorProps) {
-	if (addresses.length <= 1) return null
+	if (addresses.length <= 1) return null;
 
 	return (
 		<fieldset className="space-y-2">
 			<legend className="text-sm font-medium">Adresses enregistrées</legend>
 			<div className="grid gap-2" role="radiogroup">
 				{addresses.map((address) => {
-					const isSelected = address.id === selectedAddressId
-					const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ")
-					const addressLine = [address.address1, address.city].filter(Boolean).join(", ")
+					const isSelected = address.id === selectedAddressId;
+					const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ");
+					const addressLine = [address.address1, address.city].filter(Boolean).join(", ");
 
 					return (
 						<label
 							key={address.id}
 							className={cn(
-								"flex items-start gap-3 rounded-lg border p-3 text-sm transition-colors cursor-pointer",
-								"has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2",
+								"flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors",
+								"has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-2",
 								isSelected
 									? "border-primary bg-primary/5"
-									: "border-border hover:border-primary/50 hover:bg-muted/50"
+									: "border-border hover:border-primary/50 hover:bg-muted/50",
 							)}
 						>
 							<input
@@ -49,23 +49,23 @@ export function AddressSelector({
 								onChange={() => onSelectAddress(address)}
 								className="sr-only"
 							/>
-							<MapPin className={cn(
-								"w-4 h-4 mt-0.5 shrink-0",
-								isSelected ? "text-primary" : "text-muted-foreground"
-							)} />
+							<MapPin
+								className={cn(
+									"mt-0.5 h-4 w-4 shrink-0",
+									isSelected ? "text-primary" : "text-muted-foreground",
+								)}
+							/>
 							<div className="min-w-0 flex-1">
-								<p className="font-medium truncate">{fullName}</p>
+								<p className="truncate font-medium">{fullName}</p>
 								<p className="text-muted-foreground truncate">{addressLine}</p>
 							</div>
 							{address.isDefault && (
-								<span className="text-xs text-muted-foreground shrink-0 mt-0.5">
-									Par défaut
-								</span>
+								<span className="text-muted-foreground mt-0.5 shrink-0 text-xs">Par défaut</span>
 							)}
 						</label>
-					)
+					);
 				})}
 			</div>
 		</fieldset>
-	)
+	);
 }

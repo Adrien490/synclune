@@ -1,5 +1,6 @@
 "use client";
 
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { m, useReducedMotion } from "motion/react";
 
 export interface SplitTextProps {
@@ -48,7 +49,9 @@ export function SplitText({ children, stagger = 0.08, className }: SplitTextProp
 					key={`${word}-${i}`}
 					variants={wordVariants}
 					transition={
-						prefersReducedMotion ? { duration: 0 } : { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }
+						prefersReducedMotion
+							? { duration: 0 }
+							: { duration: 0.5, ease: MOTION_CONFIG.easing.easeInOut }
 					}
 					className="inline-block"
 					aria-hidden="true"

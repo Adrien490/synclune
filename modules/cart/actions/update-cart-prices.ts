@@ -19,7 +19,7 @@ import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
  */
 export async function updateCartPrices(
 	_?: ActionState,
-	__formData?: FormData
+	__formData?: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting + récupération contexte
@@ -40,10 +40,7 @@ export async function updateCartPrices(
 		const cart = await prisma.cart.findFirst({
 			where: {
 				...(userId ? { userId } : { sessionId: sessionId! }),
-				OR: [
-					{ expiresAt: null },
-					{ expiresAt: { gt: new Date() } },
-				],
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
 			},
 			include: {
 				items: {
@@ -81,7 +78,7 @@ export async function updateCartPrices(
 				item.sku.isActive &&
 				!item.sku.deletedAt &&
 				item.sku.product.status === "PUBLIC" &&
-				!item.sku.product.deletedAt
+				!item.sku.product.deletedAt,
 		);
 
 		if (itemsToUpdate.length === 0) {
@@ -100,13 +97,13 @@ export async function updateCartPrices(
 					data: {
 						priceAtAdd: item.sku.priceInclTax,
 					},
-				})
-			)
+				}),
+			),
 		);
 
 		// 5. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

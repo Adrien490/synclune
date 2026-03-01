@@ -1,8 +1,4 @@
-import {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-} from "@/app/generated/prisma/browser";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 import { AlertTriangle, Clock, RotateCcw, XCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import type { OrderAlertsProps } from "./types";
@@ -23,9 +19,7 @@ export function OrderAlerts({ status, paymentStatus, fulfillmentStatus }: OrderA
 				<Alert variant="destructive">
 					<XCircle className="h-4 w-4" />
 					<AlertTitle>Commande annulée</AlertTitle>
-					<AlertDescription>
-						Cette commande a été annulée.
-					</AlertDescription>
+					<AlertDescription>Cette commande a été annulée.</AlertDescription>
 				</Alert>
 			)}
 			{isPaymentFailed && (

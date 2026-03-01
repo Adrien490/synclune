@@ -69,7 +69,11 @@ export async function ProductVariantsDataTable({
 			<CardContent>
 				<ProductVariantsSelectionToolbar />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des variantes du produit" className="min-w-full">
+					<Table
+						role="table"
+						aria-label="Liste des variantes du produit"
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead
@@ -89,14 +93,14 @@ export async function ProductVariantsDataTable({
 								>
 									Image
 								</TableHead>
-								<TableHead key="sku" scope="col" role="columnheader">
+								<TableHead key="sku" scope="col" role="columnheader" className="w-[20%]">
 									Référence
 								</TableHead>
 								<TableHead
 									key="color"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell"
+									className="hidden w-[12%] sm:table-cell"
 								>
 									Couleur
 								</TableHead>
@@ -104,7 +108,7 @@ export async function ProductVariantsDataTable({
 									key="material"
 									scope="col"
 									role="columnheader"
-									className="hidden xl:table-cell"
+									className="hidden w-[12%] xl:table-cell"
 								>
 									Matériau
 								</TableHead>
@@ -112,18 +116,18 @@ export async function ProductVariantsDataTable({
 									key="size"
 									scope="col"
 									role="columnheader"
-									className="hidden 2xl:table-cell"
+									className="hidden w-[8%] 2xl:table-cell"
 								>
 									Taille
 								</TableHead>
-								<TableHead key="price" scope="col" role="columnheader">
+								<TableHead key="price" scope="col" role="columnheader" className="w-[12%]">
 									Prix
 								</TableHead>
 								<TableHead
 									key="stock"
 									scope="col"
 									role="columnheader"
-									className="hidden text-center sm:table-cell"
+									className="hidden w-[10%] text-center sm:table-cell"
 								>
 									Stock
 								</TableHead>
@@ -131,7 +135,7 @@ export async function ProductVariantsDataTable({
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="text-right"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque variante"
 								>
 									Actions

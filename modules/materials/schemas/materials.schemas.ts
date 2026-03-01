@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_MATERIALS_DEFAULT_PER_PAGE,
@@ -54,10 +51,7 @@ export const materialSlugSchema = z
 	.trim()
 	.min(1, "Le slug est requis")
 	.max(100, "Le slug ne peut pas depasser 100 caracteres")
-	.regex(
-		/^[a-z0-9-]+$/,
-		"Le slug ne peut contenir que des lettres minuscules, chiffres et tirets"
-	);
+	.regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets");
 
 export const materialNameSchema = z
 	.string()
@@ -94,7 +88,10 @@ export const deleteMaterialSchema = z.object({
 });
 
 export const bulkDeleteMaterialsSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne").max(200, "Maximum 200 materiaux par operation"),
+	ids: z
+		.array(z.cuid2("ID invalide"))
+		.min(1, "Aucun materiau selectionne")
+		.max(200, "Maximum 200 materiaux par operation"),
 });
 
 export const toggleMaterialStatusSchema = z.object({
@@ -103,7 +100,10 @@ export const toggleMaterialStatusSchema = z.object({
 });
 
 export const bulkToggleMaterialStatusSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne").max(200, "Maximum 200 materiaux par operation"),
+	ids: z
+		.array(z.cuid2("ID invalide"))
+		.min(1, "Aucun materiau selectionne")
+		.max(200, "Maximum 200 materiaux par operation"),
 	isActive: z.boolean(),
 });
 

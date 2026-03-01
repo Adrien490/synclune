@@ -5,10 +5,7 @@ import {
 	GET_VERIFICATION_SELECT,
 	GET_VERIFICATIONS_DEFAULT_SELECT,
 } from "../constants/verification.constants";
-import {
-	getVerificationSchema,
-	getVerificationsSchema,
-} from "../schemas/verification.schemas";
+import { getVerificationSchema, getVerificationsSchema } from "../schemas/verification.schemas";
 
 // ============================================================================
 // TYPES - VERIFICATION (single)

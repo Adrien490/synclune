@@ -67,9 +67,8 @@ export function MaterialsSelectionToolbar() {
 	return (
 		<>
 			<SelectionToolbar>
-				<span className="text-sm text-muted-foreground">
-					{selectedItems.length} matériau{selectedItems.length > 1 ? "x" : ""}{" "}
-					sélectionné
+				<span className="text-muted-foreground text-sm">
+					{selectedItems.length} matériau{selectedItems.length > 1 ? "x" : ""} sélectionné
 					{selectedItems.length > 1 ? "s" : ""}
 				</span>
 				<DropdownMenu>
@@ -100,11 +99,7 @@ export function MaterialsSelectionToolbar() {
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
 					<form action={deleteAction}>
-						<input
-							type="hidden"
-							name="ids"
-							value={JSON.stringify(selectedItems)}
-						/>
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Supprimer les materiaux</AlertDialogTitle>
 							<AlertDialogDescription>
@@ -116,19 +111,14 @@ export function MaterialsSelectionToolbar() {
 								?
 								<br />
 								<br />
-								<span className="text-destructive font-medium">
-									Cette action est irreversible.
-								</span>
+								<span className="text-destructive font-medium">Cette action est irreversible.</span>
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<Button
-								type="submit"
-								disabled={isPending}
-							>
+							<Button type="submit" disabled={isPending}>
 								{isDeletePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -149,11 +139,7 @@ export function MaterialsSelectionToolbar() {
 			<AlertDialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
 				<AlertDialogContent>
 					<form action={toggleAction}>
-						<input
-							type="hidden"
-							name="ids"
-							value={JSON.stringify(selectedItems)}
-						/>
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<input type="hidden" name="isActive" value="true" />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Activer les materiaux</AlertDialogTitle>
@@ -194,11 +180,7 @@ export function MaterialsSelectionToolbar() {
 			<AlertDialog open={deactivateDialogOpen} onOpenChange={setDeactivateDialogOpen}>
 				<AlertDialogContent>
 					<form action={toggleAction}>
-						<input
-							type="hidden"
-							name="ids"
-							value={JSON.stringify(selectedItems)}
-						/>
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<input type="hidden" name="isActive" value="false" />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Désactiver les materiaux</AlertDialogTitle>

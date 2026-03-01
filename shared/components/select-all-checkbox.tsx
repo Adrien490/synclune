@@ -8,16 +8,11 @@ interface SelectAllCheckboxProps {
 }
 
 export function SelectAllCheckbox({ itemIds }: SelectAllCheckboxProps) {
-	const { areAllSelected, areSomeSelected, handleSelectionChange } =
-		useSelectionContext();
+	const { areAllSelected, areSomeSelected, handleSelectionChange } = useSelectionContext();
 	const allSelected = areAllSelected(itemIds);
 	const someSelected = areSomeSelected(itemIds);
 
-	const checkedState = allSelected
-		? true
-		: someSelected
-			? "indeterminate"
-			: false;
+	const checkedState = allSelected ? true : someSelected ? "indeterminate" : false;
 
 	return (
 		<Checkbox

@@ -149,7 +149,7 @@ describe("getCollections", () => {
 			expect(mockFindMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [{ name: "asc" }, { id: "asc" }],
-				})
+				}),
 			);
 		});
 
@@ -162,7 +162,7 @@ describe("getCollections", () => {
 			expect(mockFindMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [{ name: "desc" }, { id: "asc" }],
-				})
+				}),
 			);
 		});
 
@@ -175,7 +175,7 @@ describe("getCollections", () => {
 			expect(mockFindMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-				})
+				}),
 			);
 		});
 
@@ -188,7 +188,7 @@ describe("getCollections", () => {
 			expect(mockFindMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-				})
+				}),
 			);
 		});
 
@@ -201,7 +201,7 @@ describe("getCollections", () => {
 			expect(mockFindMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [{ products: { _count: "asc" } }, { id: "asc" }],
-				})
+				}),
 			);
 		});
 
@@ -214,7 +214,7 @@ describe("getCollections", () => {
 			expect(mockFindMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [{ products: { _count: "desc" } }, { id: "asc" }],
-				})
+				}),
 			);
 		});
 
@@ -227,7 +227,7 @@ describe("getCollections", () => {
 			expect(mockFindMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					orderBy: [{ name: "asc" }, { id: "asc" }],
-				})
+				}),
 			);
 		});
 	});
@@ -260,9 +260,7 @@ describe("getCollections", () => {
 
 			await getCollections(params as never);
 
-			expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-				expect.objectContaining({ take: 1 })
-			);
+			expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
 		});
 
 		it("clamps perPage to maximum 200", async () => {
@@ -272,7 +270,7 @@ describe("getCollections", () => {
 			await getCollections(params as never);
 
 			expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-				expect.objectContaining({ take: 200 })
+				expect.objectContaining({ take: 200 }),
 			);
 		});
 
@@ -282,9 +280,7 @@ describe("getCollections", () => {
 
 			await getCollections(params as never);
 
-			expect(mockBuildCursorPagination).toHaveBeenCalledWith(
-				expect.objectContaining({ take: 20 })
-			);
+			expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
 		});
 
 		it("passes cursor results to processCursorResults", async () => {
@@ -295,12 +291,7 @@ describe("getCollections", () => {
 
 			await getCollections(params as never);
 
-			expect(mockProcessCursorResults).toHaveBeenCalledWith(
-				collections,
-				10,
-				"backward",
-				"abc"
-			);
+			expect(mockProcessCursorResults).toHaveBeenCalledWith(collections, 10, "backward", "abc");
 		});
 	});
 
@@ -328,9 +319,7 @@ describe("getCollections", () => {
 
 			await getCollections(makeValidParams() as never);
 
-			expect(mockFindMany).toHaveBeenCalledWith(
-				expect.objectContaining({ where: whereClause })
-			);
+			expect(mockFindMany).toHaveBeenCalledWith(expect.objectContaining({ where: whereClause }));
 		});
 	});
 
@@ -355,7 +344,7 @@ describe("getCollections", () => {
 			await getCollections(makeValidParams() as never);
 
 			expect(mockFindMany).toHaveBeenCalledWith(
-				expect.objectContaining({ select: mockGetCollectionsSelect })
+				expect.objectContaining({ select: mockGetCollectionsSelect }),
 			);
 		});
 	});

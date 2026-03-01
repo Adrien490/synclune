@@ -4,8 +4,7 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { InputGroup, InputGroupInput } from "@/shared/components/ui/input-group";
 import { useFieldContext } from "@/shared/lib/form-context";
 
-interface InputGroupFieldProps
-	extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	/**
 	 * Addon(s) à afficher avant ou après le champ.
 	 * Utiliser InputGroupAddon avec `align` pour positionner.
@@ -81,7 +80,7 @@ export const InputGroupField = ({
 				(typeof field.state.value === "number" && isNaN(field.state.value))
 				? ""
 				: (field.state.value as number)
-			: (field.state.value as string) ?? "";
+			: ((field.state.value as string) ?? "");
 
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
@@ -103,11 +102,7 @@ export const InputGroupField = ({
 					autoComplete={autoComplete}
 					pattern={pattern}
 					aria-invalid={field.state.meta.errors.length > 0}
-					aria-describedby={
-						field.state.meta.errors.length > 0
-							? `${field.name}-error`
-							: undefined
-					}
+					aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
 					aria-required={required}
 					{...props}
 				/>

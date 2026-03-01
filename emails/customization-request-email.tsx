@@ -27,9 +27,7 @@ export const CustomizationRequestEmail = ({
 		>
 			{/* Client */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-					Client
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Client</Text>
 				<Section style={EMAIL_STYLES.section.card}>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
@@ -103,9 +101,7 @@ export const CustomizationRequestEmail = ({
 			{/* Inspirations */}
 			{inspirationProducts && inspirationProducts.length > 0 && (
 				<Section style={{ marginBottom: "24px" }}>
-					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-						Inspirations
-					</Text>
+					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Inspirations</Text>
 					<Section style={EMAIL_STYLES.section.card}>
 						{inspirationProducts.map((product, index) => (
 							<Text key={index} style={EMAIL_STYLES.text.small}>
@@ -118,9 +114,7 @@ export const CustomizationRequestEmail = ({
 
 			{/* Détails */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Description
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Description</Text>
 				<Section style={EMAIL_STYLES.section.card}>
 					{details.split("\n").map((line, i) => (
 						<Text
@@ -158,10 +152,7 @@ CustomizationRequestEmail.PreviewProps = {
 	productTypeLabel: "Collier",
 	details:
 		"Bonjour,\n\nJe souhaiterais un collier personnalisé avec les initiales de ma fille gravées sur un pendentif rond en argent. Les initiales seraient 'ML' en écriture cursive. J'aimerais que le pendentif fasse environ 2cm de diamètre.\n\nPouvez-vous me faire un devis et m'indiquer les délais de réalisation ?\n\nMerci d'avance !",
-	inspirationProducts: [
-		{ title: "Collier Lune Céleste" },
-		{ title: "Pendentif Étoile Filante" },
-	],
+	inspirationProducts: [{ title: "Collier Lune Céleste" }, { title: "Pendentif Étoile Filante" }],
 } as CustomizationRequestEmailProps;
 
 export default CustomizationRequestEmail;

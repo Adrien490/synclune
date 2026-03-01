@@ -52,12 +52,10 @@ export function MarkAsReturnedAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									La commande <strong>{dialog.data?.orderNumber}</strong> a été
-									marquée comme retournée.
+									La commande <strong>{dialog.data?.orderNumber}</strong> a été marquée comme
+									retournée.
 								</p>
-								<p className="mt-2">
-									Souhaitez-vous créer un remboursement pour cette commande ?
-								</p>
+								<p className="mt-2">Souhaitez-vous créer un remboursement pour cette commande ?</p>
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
@@ -94,8 +92,8 @@ export function MarkAsReturnedAlertDialog() {
 									<strong>{dialog.data?.orderNumber}</strong> comme retournée ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									Le statut de livraison passera à "Retourné". Vous pourrez ensuite
-									créer un remboursement si nécessaire.
+									Le statut de livraison passera à "Retourné". Vous pourrez ensuite créer un
+									remboursement si nécessaire.
 								</p>
 							</div>
 						</AlertDialogDescription>

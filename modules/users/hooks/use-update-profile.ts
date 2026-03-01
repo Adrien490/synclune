@@ -45,9 +45,9 @@ export const useUpdateProfile = (options?: UseUpdateProfileOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return {

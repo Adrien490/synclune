@@ -7,11 +7,13 @@ import type { GetProductReturn } from "../../types/product.types";
 // HELPERS
 // ============================================================================
 
-function makeSku(overrides: Partial<{
-	material: { id: string; name: string } | null;
-	size: string | null;
-	isActive: boolean;
-}> = {}): GetProductReturn["skus"][0] {
+function makeSku(
+	overrides: Partial<{
+		material: { id: string; name: string } | null;
+		size: string | null;
+		isActive: boolean;
+	}> = {},
+): GetProductReturn["skus"][0] {
 	return {
 		id: "sku-1",
 		sku: "TEST-SKU",
@@ -28,10 +30,12 @@ function makeSku(overrides: Partial<{
 	} as unknown as GetProductReturn["skus"][0];
 }
 
-function makeCollection(overrides: Partial<{
-	status: string;
-	name: string;
-}> = {}): GetProductReturn["collections"][0] {
+function makeCollection(
+	overrides: Partial<{
+		status: string;
+		name: string;
+	}> = {},
+): GetProductReturn["collections"][0] {
 	return {
 		collection: {
 			id: "col-1",
@@ -42,10 +46,12 @@ function makeCollection(overrides: Partial<{
 	} as unknown as GetProductReturn["collections"][0];
 }
 
-function makeProduct(overrides: Partial<{
-	skus: GetProductReturn["skus"];
-	collections: GetProductReturn["collections"];
-}> = {}): GetProductReturn {
+function makeProduct(
+	overrides: Partial<{
+		skus: GetProductReturn["skus"];
+		collections: GetProductReturn["collections"];
+	}> = {},
+): GetProductReturn {
 	return {
 		id: "prod-1",
 		title: "Bague en or",
@@ -99,10 +105,7 @@ describe("generateHighlights", () => {
 
 	it("should include adjustable highlight when any sku has ajustable size", () => {
 		const product = makeProduct({
-			skus: [
-				makeSku({ size: "52" }),
-				makeSku({ size: "Taille ajustable" }),
-			],
+			skus: [makeSku({ size: "52" }), makeSku({ size: "Taille ajustable" })],
 		});
 		const result = generateHighlights(product);
 		const adjustable = result.find((h) => h.id === "adjustable");

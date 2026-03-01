@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-	getTrackingUrl,
-	detectCarrierAndUrl,
-} from "../carrier-detection.service";
+import { getTrackingUrl, detectCarrierAndUrl } from "../carrier-detection.service";
 
 // ============================================================================
 // getTrackingUrl
@@ -12,30 +9,24 @@ import {
 describe("getTrackingUrl", () => {
 	it("should return La Poste URL for colissimo", () => {
 		const url = getTrackingUrl("colissimo", "8N12345678901");
-		expect(url).toBe(
-			"https://www.laposte.fr/outils/suivre-vos-envois?code=8N12345678901"
-		);
+		expect(url).toBe("https://www.laposte.fr/outils/suivre-vos-envois?code=8N12345678901");
 	});
 
 	it("should return La Poste URL for lettre_suivie", () => {
 		const url = getTrackingUrl("lettre_suivie", "1L12345678901");
-		expect(url).toBe(
-			"https://www.laposte.fr/outils/suivre-vos-envois?code=1L12345678901"
-		);
+		expect(url).toBe("https://www.laposte.fr/outils/suivre-vos-envois?code=1L12345678901");
 	});
 
 	it("should return Chronopost URL", () => {
 		const url = getTrackingUrl("chronopost", "XY123456789FR");
 		expect(url).toBe(
-			"https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=XY123456789FR"
+			"https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=XY123456789FR",
 		);
 	});
 
 	it("should return Mondial Relay URL", () => {
 		const url = getTrackingUrl("mondial_relay", "12345678");
-		expect(url).toBe(
-			"https://www.mondialrelay.fr/suivi-de-colis?numeroExpedition=12345678"
-		);
+		expect(url).toBe("https://www.mondialrelay.fr/suivi-de-colis?numeroExpedition=12345678");
 	});
 
 	it("should return DPD URL", () => {
@@ -49,9 +40,7 @@ describe("getTrackingUrl", () => {
 
 	it("should trim whitespace from tracking number", () => {
 		const url = getTrackingUrl("colissimo", "  8N12345678901  ");
-		expect(url).toBe(
-			"https://www.laposte.fr/outils/suivre-vos-envois?code=8N12345678901"
-		);
+		expect(url).toBe("https://www.laposte.fr/outils/suivre-vos-envois?code=8N12345678901");
 	});
 });
 

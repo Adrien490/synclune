@@ -5,8 +5,7 @@
 
 import { BRAND } from "./brand";
 
-export const SITE_URL =
-	process.env.NEXT_PUBLIC_SITE_URL ?? "https://synclune.fr";
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://synclune.fr";
 
 export const BUSINESS_INFO = {
 	name: "Synclune",
@@ -121,10 +120,7 @@ export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
 			},
 		],
 		priceRange: "€€",
-		sameAs: [
-			BUSINESS_INFO.social.instagram.url,
-			BUSINESS_INFO.social.tiktok.url,
-		],
+		sameAs: [BUSINESS_INFO.social.instagram.url, BUSINESS_INFO.social.tiktok.url],
 		brand: {
 			"@type": "Brand",
 			name: BUSINESS_INFO.name,
@@ -228,10 +224,7 @@ export function getFounderSchema() {
 			"Artisan créatrice de bijoux faits main à Nantes. Passionnée par les couleurs et les créations uniques, je conçois chaque pièce avec amour dans mon atelier nantais.",
 		url: SITE_URL,
 		image: `${SITE_URL}/opengraph-image`,
-		sameAs: [
-			BUSINESS_INFO.social.instagram.url,
-			BUSINESS_INFO.social.tiktok.url,
-		],
+		sameAs: [BUSINESS_INFO.social.instagram.url, BUSINESS_INFO.social.tiktok.url],
 		worksFor: {
 			"@id": `${SITE_URL}/#organization`,
 		},
@@ -277,10 +270,7 @@ export function getOrganizationSchema() {
 		},
 		description: BUSINESS_INFO.description,
 		email: BUSINESS_INFO.email,
-		sameAs: [
-			BUSINESS_INFO.social.instagram.url,
-			BUSINESS_INFO.social.tiktok.url,
-		],
+		sameAs: [BUSINESS_INFO.social.instagram.url, BUSINESS_INFO.social.tiktok.url],
 		address: {
 			"@type": "PostalAddress",
 			streetAddress: BUSINESS_INFO.location.street,
@@ -325,4 +315,3 @@ export function getWebSiteSchema() {
 		},
 	};
 }
-

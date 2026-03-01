@@ -9,9 +9,7 @@ interface UseBulkDeleteProductsOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export const useBulkDeleteProducts = (
-	options?: UseBulkDeleteProductsOptions
-) => {
+export const useBulkDeleteProducts = (options?: UseBulkDeleteProductsOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -27,9 +25,9 @@ export const useBulkDeleteProducts = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const deleteProducts = (productIds: string[]) => {

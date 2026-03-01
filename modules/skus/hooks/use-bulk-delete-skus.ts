@@ -25,9 +25,9 @@ export const useBulkDeleteSkus = (options?: UseBulkDeleteSkusOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const deleteSkus = (skuIds: string[]) => {

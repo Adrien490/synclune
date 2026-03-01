@@ -1,21 +1,21 @@
-import type { Prisma } from "@/app/generated/prisma/client"
-import { notDeleted } from "@/shared/lib/prisma"
-import { parseSortField, hasSortByInput } from "@/shared/utils/sort-field-parser"
+import type { Prisma } from "@/app/generated/prisma/client";
+import { notDeleted } from "@/shared/lib/prisma";
+import { parseSortField, hasSortByInput } from "@/shared/utils/sort-field-parser";
 
-import type { GetReviewsParams } from "../types/review.types"
+import type { GetReviewsParams } from "../types/review.types";
 
 // Re-export pour rétrocompatibilité
-export { parseSortField, hasSortByInput }
+export { parseSortField, hasSortByInput };
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
 /** Allowed sort fields for reviews (runtime allowlist) */
-const ALLOWED_SORT_FIELDS = new Set(["createdAt", "rating", "updatedAt"])
+const ALLOWED_SORT_FIELDS = new Set(["createdAt", "rating", "updatedAt"]);
 
 /** Default sort field if the provided one is not allowed */
-const DEFAULT_SORT_FIELD = "createdAt"
+const DEFAULT_SORT_FIELD = "createdAt";
 
 /**
  * Construit la clause orderBy Prisma à partir du sortBy string
@@ -26,9 +26,9 @@ const DEFAULT_SORT_FIELD = "createdAt"
  * buildReviewOrderBy("rating-asc") // { rating: "asc" }
  */
 export function buildReviewOrderBy(sortBy: string): Prisma.ProductReviewOrderByWithRelationInput {
-	const { field, direction } = parseSortField(sortBy)
-	const safeField = ALLOWED_SORT_FIELDS.has(field) ? field : DEFAULT_SORT_FIELD
-	return { [safeField]: direction }
+	const { field, direction } = parseSortField(sortBy);
+	const safeField = ALLOWED_SORT_FIELDS.has(field) ? field : DEFAULT_SORT_FIELD;
+	return { [safeField]: direction };
 }
 
 /**
@@ -39,65 +39,65 @@ export function buildReviewOrderBy(sortBy: string): Prisma.ProductReviewOrderByW
  */
 export function buildReviewWhereClause(
 	params: GetReviewsParams,
-	isAdminContext: boolean
+	isAdminContext: boolean,
 ): Prisma.ProductReviewWhereInput {
 	const where: Prisma.ProductReviewWhereInput = {
 		...notDeleted,
-	}
+	};
 
 	// Filtres communs
 	if (params.productId) {
-		where.productId = params.productId
+		where.productId = params.productId;
 	}
 
 	if (params.filterRating) {
-		where.rating = params.filterRating
+		where.rating = params.filterRating;
 	}
 
 	// Contexte storefront : uniquement les avis publiés
 	if (!isAdminContext) {
-		where.status = "PUBLISHED"
-		return where
+		where.status = "PUBLISHED";
+		return where;
 	}
 
 	// Contexte admin : filtres avancés
 	if (params.status) {
-		where.status = params.status
+		where.status = params.status;
 	}
 
 	if (params.userId) {
-		where.userId = params.userId
+		where.userId = params.userId;
 	}
 
 	if (params.hasResponse !== undefined) {
 		if (params.hasResponse) {
-			where.response = { isNot: null }
+			where.response = { isNot: null };
 		} else {
-			where.response = null
+			where.response = null;
 		}
 	}
 
 	if (params.dateFrom || params.dateTo) {
-		where.createdAt = {}
+		where.createdAt = {};
 		if (params.dateFrom) {
-			where.createdAt.gte = params.dateFrom
+			where.createdAt.gte = params.dateFrom;
 		}
 		if (params.dateTo) {
-			where.createdAt.lte = params.dateTo
+			where.createdAt.lte = params.dateTo;
 		}
 	}
 
 	// Recherche textuelle
 	if (params.search && params.search.trim()) {
-		const searchTerm = params.search.trim()
+		const searchTerm = params.search.trim();
 		where.OR = [
 			{ title: { contains: searchTerm, mode: "insensitive" } },
 			{ content: { contains: searchTerm, mode: "insensitive" } },
 			{ user: { name: { contains: searchTerm, mode: "insensitive" } } },
 			{ user: { email: { contains: searchTerm, mode: "insensitive" } } },
 			{ product: { title: { contains: searchTerm, mode: "insensitive" } } },
-		]
+		];
 	}
 
-	return where
+	return where;
 }

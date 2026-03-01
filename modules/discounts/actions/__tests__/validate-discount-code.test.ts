@@ -160,7 +160,7 @@ describe("validateDiscountCode", () => {
 		expect(mockEnforceRateLimit).toHaveBeenCalledWith(
 			"ip:10.0.0.1",
 			"validate-discount",
-			"10.0.0.1"
+			"10.0.0.1",
 		);
 	});
 
@@ -169,11 +169,7 @@ describe("validateDiscountCode", () => {
 
 		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
 
-		expect(mockEnforceRateLimit).toHaveBeenCalledWith(
-			"ip:unknown",
-			"validate-discount",
-			"unknown"
-		);
+		expect(mockEnforceRateLimit).toHaveBeenCalledWith("ip:unknown", "validate-discount", "unknown");
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -201,7 +197,7 @@ describe("validateDiscountCode", () => {
 		expect(mockPrisma.discount.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { code: "PROMO20", deletedAt: null },
-			})
+			}),
 		);
 	});
 
@@ -224,11 +220,7 @@ describe("validateDiscountCode", () => {
 
 	it("should return error for invalid customerEmail", async () => {
 		// No session, invalid guest email
-		const result = await validateDiscountCode(
-			VALID_CODE,
-			VALID_SUBTOTAL,
-			"not-an-email"
-		);
+		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL, "not-an-email");
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Adresse email invalide");
@@ -252,7 +244,7 @@ describe("validateDiscountCode", () => {
 		expect(mockGetDiscountUsageCounts).toHaveBeenCalledWith(
 			expect.objectContaining({
 				customerEmail: "valid@test.com",
-			})
+			}),
 		);
 	});
 
@@ -275,7 +267,7 @@ describe("validateDiscountCode", () => {
 		expect(mockPrisma.discount.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ deletedAt: null }),
-			})
+			}),
 		);
 	});
 
@@ -366,7 +358,7 @@ describe("validateDiscountCode", () => {
 		expect(mockGetDiscountUsageCounts).toHaveBeenCalledWith(
 			expect.objectContaining({
 				userId: "clxxxxxxxxxxxxxxxxxxxxxxx",
-			})
+			}),
 		);
 	});
 
@@ -381,27 +373,19 @@ describe("validateDiscountCode", () => {
 		};
 		mockPrisma.discount.findFirst.mockResolvedValue(discountWithPerUser);
 
-		await validateDiscountCode(
-			VALID_CODE,
-			VALID_SUBTOTAL,
-			"guest@test.com"
-		);
+		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL, "guest@test.com");
 
 		expect(mockGetDiscountUsageCounts).toHaveBeenCalledWith(
 			expect.objectContaining({
 				customerEmail: "session@test.com",
-			})
+			}),
 		);
 	});
 
 	it("should work for guest checkout without session", async () => {
 		mockGetSession.mockResolvedValue(null);
 
-		const result = await validateDiscountCode(
-			VALID_CODE,
-			VALID_SUBTOTAL,
-			"guest@test.com"
-		);
+		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL, "guest@test.com");
 
 		expect(result.valid).toBe(true);
 	});

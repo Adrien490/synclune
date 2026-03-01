@@ -25,16 +25,12 @@ export const useBulkAdjustStock = (options?: UseBulkAdjustStockOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
-	const adjustStock = (
-		skuIds: string[],
-		mode: "relative" | "absolute",
-		value: number
-	) => {
+	const adjustStock = (skuIds: string[], mode: "relative" | "absolute", value: number) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("ids", JSON.stringify(skuIds));

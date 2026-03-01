@@ -1,4 +1,9 @@
-import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
+import {
+	verifyCronRequest,
+	cronTimer,
+	cronSuccess,
+	cronError,
+} from "@/modules/cron/lib/verify-cron";
 import { processAccountDeletions } from "@/modules/cron/services/process-account-deletions.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
@@ -18,18 +23,21 @@ export async function GET() {
 				job: "process-account-deletions",
 				errors: result.errors,
 				details: { processed: result.processed, hasMore: result.hasMore },
-			}).catch((e) => console.error("[CRON:process-account-deletions] Failed to send admin alert", e));
+			}).catch((e) =>
+				console.error("[CRON:process-account-deletions] Failed to send admin alert", e),
+			);
 		}
 
-		return cronSuccess({
-			job: "process-account-deletions",
-			...result,
-		}, startTime);
+		return cronSuccess(
+			{
+				job: "process-account-deletions",
+				...result,
+			},
+			startTime,
+		);
 	} catch (error) {
 		return cronError(
-			error instanceof Error
-				? error.message
-				: "Failed to process account deletions"
+			error instanceof Error ? error.message : "Failed to process account deletions",
 		);
 	}
 }

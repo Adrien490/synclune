@@ -20,13 +20,11 @@ interface LatestCreationsProps {
  * Header renders immediately (subtitle is LCP element).
  * Grid is wrapped in Suspense for streaming.
  */
-export function LatestCreations({
-	productsPromise,
-}: LatestCreationsProps) {
+export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 	return (
 		<section
 			id="latest-creations"
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
 		>
@@ -34,15 +32,13 @@ export function LatestCreations({
 				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
 				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
-						<SectionTitle id="latest-creations-title">
-							Nouvelles créations
-						</SectionTitle>
+						<SectionTitle id="latest-creations-title">Nouvelles créations</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
 					{/* No Fade on subtitle — it's the LCP element, must paint immediately */}
 					<p
 						id="latest-creations-subtitle"
-						className="mt-5 text-lg/8 tracking-normal text-muted-foreground max-w-2xl mx-auto"
+						className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
 					>
 						Tout juste sorties de l'atelier et réalisées avec amour !
 					</p>
@@ -59,9 +55,7 @@ export function LatestCreations({
  * Inner grid component — calls use() to unwrap the products promise.
  * Wrapped in Suspense by the parent LatestCreations.
  */
-function LatestCreationsGrid({
-	productsPromise,
-}: LatestCreationsProps) {
+function LatestCreationsGrid({ productsPromise }: LatestCreationsProps) {
 	const { products } = use(productsPromise);
 
 	if (products.length === 0) {
@@ -76,8 +70,8 @@ function LatestCreationsGrid({
 		description: "Les dernières créations de bijoux artisanaux faits main",
 		numberOfItems: products.length,
 		itemListElement: products.map((product, index) => {
-			const defaultSku = product.skus.find(s => s.isDefault) ?? product.skus[0];
-			const primaryImage = defaultSku?.images.find(img => img.isPrimary) ?? defaultSku?.images[0];
+			const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0];
+			const primaryImage = defaultSku?.images.find((img) => img.isPrimary) ?? defaultSku?.images[0];
 			return {
 				"@type": "ListItem",
 				position: index + 1,
@@ -91,9 +85,10 @@ function LatestCreationsGrid({
 							"@type": "Offer",
 							price: (defaultSku.priceInclTax / 100).toFixed(2),
 							priceCurrency: "EUR",
-							availability: defaultSku.inventory > 0
-								? "https://schema.org/InStock"
-								: "https://schema.org/OutOfStock",
+							availability:
+								defaultSku.inventory > 0
+									? "https://schema.org/InStock"
+									: "https://schema.org/OutOfStock",
 						},
 					}),
 				},
@@ -111,19 +106,14 @@ function LatestCreationsGrid({
 				}}
 			/>
 			<Stagger
-				className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
+				className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8"
 				stagger={MOTION_CONFIG.section.grid.stagger}
 				y={MOTION_CONFIG.section.grid.y}
 				inView
 				once={true}
 			>
 				{products.map((product, index) => (
-					<ProductCard
-						key={product.id}
-						product={product}
-						index={index}
-						sectionId="latest"
-					/>
+					<ProductCard key={product.id} product={product} index={index} sectionId="latest" />
 				))}
 			</Stagger>
 			<Fade
@@ -138,12 +128,10 @@ function LatestCreationsGrid({
 					asChild
 					size="lg"
 					variant="outline"
-					className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+					className="transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
 					aria-describedby="latest-creations-cta-description"
 				>
-					<Link href="/produits?sortBy=created-descending">
-						Voir tous les nouveaux bijoux
-					</Link>
+					<Link href="/produits?sortBy=created-descending">Voir tous les nouveaux bijoux</Link>
 				</Button>
 				<span id="latest-creations-cta-description" className="sr-only">
 					Découvrir tous les bijoux récemment créés dans la boutique Synclune

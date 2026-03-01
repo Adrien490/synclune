@@ -13,13 +13,7 @@ vi.mock("lucide-react", () => ({
 
 // Mock Badge to render children with variant as a data attribute
 vi.mock("@/shared/components/ui/badge", () => ({
-	Badge: ({
-		children,
-		variant,
-	}: {
-		children: React.ReactNode;
-		variant?: string;
-	}) => (
+	Badge: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
 		<span data-testid="badge" data-variant={variant}>
 			{children}
 		</span>
@@ -98,7 +92,7 @@ describe("OrderStatusTimeline", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({ status: "DELIVERED", fulfillmentStatus: "DELIVERED" })}
-				/>
+				/>,
 			);
 			expect(screen.getByTestId("badge").getAttribute("data-variant")).toBe("success");
 		});
@@ -151,44 +145,34 @@ describe("OrderStatusTimeline", () => {
 	describe("payment step", () => {
 		it("shows payment step with foreground text when paymentStatus is PAID", () => {
 			render(
-				<OrderStatusTimeline
-					order={createOrder({ paymentStatus: "PAID", paidAt: PAID_DATE })}
-				/>
+				<OrderStatusTimeline order={createOrder({ paymentStatus: "PAID", paidAt: PAID_DATE })} />,
 			);
 			const label = screen.getByText("Paiement reçu");
 			expect(label.className).toContain("text-foreground");
 		});
 
 		it("shows payment step with muted text when paymentStatus is PENDING", () => {
-			render(
-				<OrderStatusTimeline order={createOrder({ paymentStatus: "PENDING" })} />
-			);
+			render(<OrderStatusTimeline order={createOrder({ paymentStatus: "PENDING" })} />);
 			const label = screen.getByText("Paiement reçu");
 			expect(label.className).toContain("text-muted-foreground");
 		});
 
 		it("shows payment step with muted text when paymentStatus is FAILED", () => {
 			// A failed step is not completed and not active — label gets muted class
-			render(
-				<OrderStatusTimeline order={createOrder({ paymentStatus: "FAILED" })} />
-			);
+			render(<OrderStatusTimeline order={createOrder({ paymentStatus: "FAILED" })} />);
 			const label = screen.getByText("Paiement reçu");
 			expect(label.className).toContain("text-muted-foreground");
 		});
 
 		it("shows payment step with muted text when paymentStatus is EXPIRED", () => {
-			render(
-				<OrderStatusTimeline order={createOrder({ paymentStatus: "EXPIRED" })} />
-			);
+			render(<OrderStatusTimeline order={createOrder({ paymentStatus: "EXPIRED" })} />);
 			const label = screen.getByText("Paiement reçu");
 			expect(label.className).toContain("text-muted-foreground");
 		});
 
 		it("displays the paid date when paymentStatus is PAID and paidAt is set", () => {
 			render(
-				<OrderStatusTimeline
-					order={createOrder({ paymentStatus: "PAID", paidAt: PAID_DATE })}
-				/>
+				<OrderStatusTimeline order={createOrder({ paymentStatus: "PAID", paidAt: PAID_DATE })} />,
 			);
 			// The mock always returns "1 janvier 2024 à 10:00"
 			expect(screen.getAllByText("1 janvier 2024 à 10:00").length).toBeGreaterThan(0);
@@ -196,7 +180,7 @@ describe("OrderStatusTimeline", () => {
 
 		it("does not display a date for the payment step when paymentStatus is PENDING and paidAt is null", () => {
 			render(
-				<OrderStatusTimeline order={createOrder({ paymentStatus: "PENDING", paidAt: null })} />
+				<OrderStatusTimeline order={createOrder({ paymentStatus: "PENDING", paidAt: null })} />,
 			);
 			// createdAt date is still shown for step 1, but paidAt-based date for step 2 should not appear
 			// Only one date element visible — the "Commande passée" date
@@ -213,7 +197,7 @@ describe("OrderStatusTimeline", () => {
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "PROCESSING",
 					})}
-				/>
+				/>,
 			);
 			const label = screen.getByText("En préparation");
 			expect(label.className).toContain("text-foreground");
@@ -228,7 +212,7 @@ describe("OrderStatusTimeline", () => {
 						fulfillmentStatus: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
 					})}
-				/>
+				/>,
 			);
 			const label = screen.getByText("En préparation");
 			expect(label.className).toContain("text-foreground");
@@ -243,18 +227,14 @@ describe("OrderStatusTimeline", () => {
 						fulfillmentStatus: "DELIVERED",
 						actualDelivery: DELIVERED_DATE,
 					})}
-				/>
+				/>,
 			);
 			const label = screen.getByText("En préparation");
 			expect(label.className).toContain("text-foreground");
 		});
 
 		it("shows preparation step as pending when fulfillmentStatus is UNFULFILLED", () => {
-			render(
-				<OrderStatusTimeline
-					order={createOrder({ fulfillmentStatus: "UNFULFILLED" })}
-				/>
-			);
+			render(<OrderStatusTimeline order={createOrder({ fulfillmentStatus: "UNFULFILLED" })} />);
 			const label = screen.getByText("En préparation");
 			expect(label.className).toContain("text-muted-foreground");
 		});
@@ -270,7 +250,7 @@ describe("OrderStatusTimeline", () => {
 						fulfillmentStatus: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
 					})}
-				/>
+				/>,
 			);
 			const label = screen.getByText("Expédiée");
 			expect(label.className).toContain("text-foreground");
@@ -286,7 +266,7 @@ describe("OrderStatusTimeline", () => {
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: DELIVERED_DATE,
 					})}
-				/>
+				/>,
 			);
 			const label = screen.getByText("Expédiée");
 			expect(label.className).toContain("text-foreground");
@@ -300,7 +280,7 @@ describe("OrderStatusTimeline", () => {
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "PROCESSING",
 					})}
-				/>
+				/>,
 			);
 			const label = screen.getByText("Expédiée");
 			expect(label.className).toContain("text-muted-foreground");
@@ -318,7 +298,7 @@ describe("OrderStatusTimeline", () => {
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: DELIVERED_DATE,
 					})}
-				/>
+				/>,
 			);
 			const label = screen.getByText("Livrée");
 			expect(label.className).toContain("text-foreground");
@@ -333,7 +313,7 @@ describe("OrderStatusTimeline", () => {
 						fulfillmentStatus: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
 					})}
-				/>
+				/>,
 			);
 			const label = screen.getByText("Livrée");
 			expect(label.className).toContain("text-muted-foreground");
@@ -349,7 +329,7 @@ describe("OrderStatusTimeline", () => {
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: DELIVERED_DATE,
 					})}
-				/>
+				/>,
 			);
 			// Multiple date elements appear for completed steps
 			expect(screen.getAllByText("1 janvier 2024 à 10:00").length).toBeGreaterThan(0);
@@ -363,7 +343,7 @@ describe("OrderStatusTimeline", () => {
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: null,
 					})}
-				/>
+				/>,
 			);
 			const deliveredLabel = screen.getByText("Livrée");
 			const container = deliveredLabel.closest(".flex-1");

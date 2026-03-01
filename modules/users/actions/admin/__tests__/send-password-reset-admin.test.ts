@@ -180,28 +180,24 @@ describe("sendPasswordResetAdmin", () => {
 
 	it("should return error when user has no credential account (Google)", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ accounts: [{ providerId: "google" }] })
+			makeUser({ accounts: [{ providerId: "google" }] }),
 		);
 
 		const result = await sendPasswordResetAdmin("user-456");
 
-		expect(mockError).toHaveBeenCalledWith(
-			expect.stringContaining("Google")
-		);
+		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("Google"));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockAuth.api.requestPasswordReset).not.toHaveBeenCalled();
 	});
 
 	it("should return error when user has no credential account (GitHub)", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ accounts: [{ providerId: "github" }] })
+			makeUser({ accounts: [{ providerId: "github" }] }),
 		);
 
 		const result = await sendPasswordResetAdmin("user-456");
 
-		expect(mockError).toHaveBeenCalledWith(
-			expect.stringContaining("github")
-		);
+		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("github"));
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
@@ -223,9 +219,7 @@ describe("sendPasswordResetAdmin", () => {
 	it("should return success with display name", async () => {
 		const result = await sendPasswordResetAdmin("user-456");
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("Marie Dupont")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("Marie Dupont"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -234,14 +228,12 @@ describe("sendPasswordResetAdmin", () => {
 
 		await sendPasswordResetAdmin("user-456");
 
-		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("marie@example.com")
-		);
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("marie@example.com"));
 	});
 
 	it("should send reset for user with both credential and OAuth accounts", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(
-			makeUser({ accounts: [{ providerId: "credential" }, { providerId: "google" }] })
+			makeUser({ accounts: [{ providerId: "credential" }, { providerId: "google" }] }),
 		);
 
 		const result = await sendPasswordResetAdmin("user-456");
@@ -261,7 +253,7 @@ describe("sendPasswordResetAdmin", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),
-			"Erreur lors de l'envoi de l'email"
+			"Erreur lors de l'envoi de l'email",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

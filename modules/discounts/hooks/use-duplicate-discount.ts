@@ -31,9 +31,9 @@ export function useDuplicateDiscount(options?: UseDuplicateDiscountOptions) {
 						options?.onError?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const duplicate = (discountId: string) => {

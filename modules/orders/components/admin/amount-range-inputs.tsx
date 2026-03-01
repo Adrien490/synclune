@@ -9,21 +9,15 @@ interface AmountRangeInputsProps {
 	maxPrice?: number;
 }
 
-export function AmountRangeInputs({
-	value,
-	onChange,
-	maxPrice = 10000,
-}: AmountRangeInputsProps) {
+export function AmountRangeInputs({ value, onChange, maxPrice = 10000 }: AmountRangeInputsProps) {
 	const [min, max] = value;
 
 	return (
 		<fieldset className="space-y-3">
-			<legend className="font-medium text-sm text-foreground">
-				Montant de la commande
-			</legend>
+			<legend className="text-foreground text-sm font-medium">Montant de la commande</legend>
 			<div className="grid grid-cols-2 gap-3">
 				<div className="space-y-1.5">
-					<Label htmlFor="price-min" className="text-xs text-muted-foreground">
+					<Label htmlFor="price-min" className="text-muted-foreground text-xs">
 						Min
 					</Label>
 					<div className="relative">
@@ -40,13 +34,13 @@ export function AmountRangeInputs({
 							placeholder="0"
 							className="pr-7"
 						/>
-						<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+						<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm">
 							EUR
 						</span>
 					</div>
 				</div>
 				<div className="space-y-1.5">
-					<Label htmlFor="price-max" className="text-xs text-muted-foreground">
+					<Label htmlFor="price-max" className="text-muted-foreground text-xs">
 						Max
 					</Label>
 					<div className="relative">
@@ -63,7 +57,7 @@ export function AmountRangeInputs({
 							placeholder={String(maxPrice)}
 							className="pr-7"
 						/>
-						<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+						<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm">
 							EUR
 						</span>
 					</div>

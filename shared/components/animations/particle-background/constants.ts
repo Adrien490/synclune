@@ -34,13 +34,11 @@ export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 	},
 	drop: {
 		type: "clipPath",
-		clipPath:
-			"polygon(50% 0%, 75% 25%, 85% 55%, 75% 80%, 50% 100%, 25% 80%, 15% 55%, 25% 25%)",
+		clipPath: "polygon(50% 0%, 75% 25%, 85% 55%, 75% 80%, 50% 100%, 25% 80%, 15% 55%, 25% 25%)",
 	},
 	"sparkle-4": {
 		type: "clipPath",
-		clipPath:
-			"polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%)",
+		clipPath: "polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%)",
 	},
 };
 
@@ -81,7 +79,13 @@ export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 	rise: (p) => ({
 		y: ["0%", "-25%", "-50%", "-25%", "0%"],
 		x: ["0%", "5%", "-3%", "-5%", "0%"],
-		opacity: [p.opacity, Math.min(p.opacity * 1.1, 1), p.opacity * 0.6, Math.min(p.opacity * 1.1, 1), p.opacity],
+		opacity: [
+			p.opacity,
+			Math.min(p.opacity * 1.1, 1),
+			p.opacity * 0.6,
+			Math.min(p.opacity * 1.1, 1),
+			p.opacity,
+		],
 		...subtleRotate(p),
 	}),
 	orbit: (p) => ({

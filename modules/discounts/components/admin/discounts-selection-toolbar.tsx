@@ -25,9 +25,7 @@ interface DiscountsSelectionToolbarProps {
 	}>;
 }
 
-export function DiscountsSelectionToolbar({
-	discounts,
-}: DiscountsSelectionToolbarProps) {
+export function DiscountsSelectionToolbar({ discounts }: DiscountsSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_DISCOUNTS_DIALOG_ID);
 
@@ -41,13 +39,8 @@ export function DiscountsSelectionToolbar({
 			return;
 		}
 
-		const selectedDiscounts = discounts.filter((d) =>
-			selectedItems.includes(d.id)
-		);
-		const totalUsageCount = selectedDiscounts.reduce(
-			(sum, d) => sum + d.usageCount,
-			0
-		);
+		const selectedDiscounts = discounts.filter((d) => selectedItems.includes(d.id));
+		const totalUsageCount = selectedDiscounts.reduce((sum, d) => sum + d.usageCount, 0);
 
 		bulkDeleteDialog.open({
 			discountIds: selectedItems,
@@ -68,9 +61,9 @@ export function DiscountsSelectionToolbar({
 
 	return (
 		<SelectionToolbar>
-			<span className="text-sm text-muted-foreground">
-				{selectedItems.length} code{selectedItems.length > 1 ? "s" : ""} promo
-				sélectionné{selectedItems.length > 1 ? "s" : ""}
+			<span className="text-muted-foreground text-sm">
+				{selectedItems.length} code{selectedItems.length > 1 ? "s" : ""} promo sélectionné
+				{selectedItems.length > 1 ? "s" : ""}
 			</span>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>

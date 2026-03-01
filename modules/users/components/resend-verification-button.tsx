@@ -17,9 +17,7 @@ const COOLDOWN_DURATION = 60;
  * Inclut un cooldown de 60 secondes pour éviter le spam
  * Le cooldown persiste via localStorage pour survivre aux rafraîchissements
  */
-export function ResendVerificationButton({
-	email,
-}: ResendVerificationButtonProps) {
+export function ResendVerificationButton({ email }: ResendVerificationButtonProps) {
 	const COOLDOWN_KEY = getResendVerificationCooldownKey(email);
 
 	// Initialize cooldown from localStorage (survives page refresh)

@@ -17,10 +17,7 @@ export default function AddressesPage() {
 
 	return (
 		<>
-			<PageHeader
-				title="Mes adresses"
-				variant="compact"
-			/>
+			<PageHeader title="Mes adresses" variant="compact" />
 
 			<Suspense fallback={<AddressListSkeleton />}>
 				<AddressList addressesPromise={addressesPromise} />

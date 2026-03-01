@@ -6,9 +6,7 @@ interface VerificationEmailProps {
 	verificationUrl: string;
 }
 
-export const VerificationEmail = ({
-	verificationUrl,
-}: VerificationEmailProps) => (
+export const VerificationEmail = ({ verificationUrl }: VerificationEmailProps) => (
 	<EmailLayout preview="Vérifiez votre adresse email">
 		{/* Titre */}
 		<Section style={{ marginBottom: "24px" }}>
@@ -27,9 +25,7 @@ export const VerificationEmail = ({
 
 		{/* Info */}
 		<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "32px" }}>
-			<Text style={EMAIL_STYLES.text.small}>
-				Ce lien expire dans 24 heures.
-			</Text>
+			<Text style={EMAIL_STYLES.text.small}>Ce lien expire dans 24 heures.</Text>
 		</Section>
 	</EmailLayout>
 );

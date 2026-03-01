@@ -14,11 +14,7 @@ export const metadata: Metadata = {
 	robots: { index: false },
 };
 
-export default async function EspaceClientLayout({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+export default async function EspaceClientLayout({ children }: { children: React.ReactNode }) {
 	const reqHeaders = await headers();
 	const session = await auth.api.getSession({
 		headers: reqHeaders,
@@ -32,7 +28,7 @@ export default async function EspaceClientLayout({
 	const isPendingDeletion = user?.accountStatus === "PENDING_DELETION";
 
 	return (
-		<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-6 lg:pb-10">
+		<div className="mx-auto max-w-6xl px-4 pt-20 pb-6 sm:px-6 sm:pt-28 lg:px-8 lg:pb-10">
 			{isPendingDeletion && (
 				<div
 					role="status"
@@ -40,8 +36,7 @@ export default async function EspaceClientLayout({
 				>
 					<TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
 					<p>
-						Votre compte est en cours de suppression. Vous pouvez annuler
-						cette demande depuis vos{" "}
+						Votre compte est en cours de suppression. Vous pouvez annuler cette demande depuis vos{" "}
 						<a href="/parametres" className="font-medium underline">
 							paramètres
 						</a>
@@ -51,7 +46,7 @@ export default async function EspaceClientLayout({
 			)}
 			<div className="lg:flex lg:gap-10">
 				<AccountNav />
-				<div className="flex-1 min-w-0">{children}</div>
+				<div className="min-w-0 flex-1">{children}</div>
 			</div>
 		</div>
 	);

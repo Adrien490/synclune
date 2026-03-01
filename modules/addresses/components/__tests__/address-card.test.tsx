@@ -51,9 +51,7 @@ describe("AddressCard", () => {
 	});
 
 	it("renders address2 when present", () => {
-		render(
-			<AddressCard address={createAddress({ address2: "Bâtiment B" })} />
-		);
+		render(<AddressCard address={createAddress({ address2: "Bâtiment B" })} />);
 
 		expect(screen.getByText("Bâtiment B")).toBeInTheDocument();
 	});
@@ -65,9 +63,7 @@ describe("AddressCard", () => {
 	});
 
 	it("shows default badge when isDefault is true", () => {
-		render(
-			<AddressCard address={createAddress({ isDefault: true })} />
-		);
+		render(<AddressCard address={createAddress({ isDefault: true })} />);
 
 		expect(screen.getByText("Par défaut")).toBeInTheDocument();
 	});
@@ -86,33 +82,25 @@ describe("AddressCard", () => {
 
 	describe("phone formatting", () => {
 		it("formats +33 international numbers with spaces", () => {
-			render(
-				<AddressCard address={createAddress({ phone: "+33612345678" })} />
-			);
+			render(<AddressCard address={createAddress({ phone: "+33612345678" })} />);
 
 			expect(screen.getByText("+33 6 12 34 56 78")).toBeInTheDocument();
 		});
 
 		it("formats 0X national numbers with spaces", () => {
-			render(
-				<AddressCard address={createAddress({ phone: "0612345678" })} />
-			);
+			render(<AddressCard address={createAddress({ phone: "0612345678" })} />);
 
 			expect(screen.getByText("06 12 34 56 78")).toBeInTheDocument();
 		});
 
 		it("returns unformatted phone for non-FR numbers", () => {
-			render(
-				<AddressCard address={createAddress({ phone: "+4915112345678" })} />
-			);
+			render(<AddressCard address={createAddress({ phone: "+4915112345678" })} />);
 
 			expect(screen.getByText("+4915112345678")).toBeInTheDocument();
 		});
 
 		it("formats landline numbers correctly", () => {
-			render(
-				<AddressCard address={createAddress({ phone: "0145678901" })} />
-			);
+			render(<AddressCard address={createAddress({ phone: "0145678901" })} />);
 
 			expect(screen.getByText("01 45 67 89 01")).toBeInTheDocument();
 		});

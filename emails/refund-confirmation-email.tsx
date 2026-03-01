@@ -1,6 +1,11 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES, REFUND_DELAY_TEXT, REFUND_REASON_LABELS } from "./email-colors";
+import {
+	EMAIL_COLORS,
+	EMAIL_STYLES,
+	REFUND_DELAY_TEXT,
+	REFUND_REASON_LABELS,
+} from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 import { FlexRow } from "./_components/flex-row";
 
@@ -31,9 +36,8 @@ export const RefundConfirmationEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Remboursement effectué</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, votre remboursement de{" "}
-					{formatEuro(refundAmount)} a été effectué. Le montant sera crédité
-					sous {REFUND_DELAY_TEXT}.
+					Bonjour {customerName}, votre remboursement de {formatEuro(refundAmount)} a été effectué.
+					Le montant sera crédité sous {REFUND_DELAY_TEXT}.
 				</Text>
 			</Section>
 

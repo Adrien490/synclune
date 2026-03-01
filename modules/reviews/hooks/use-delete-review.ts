@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useActionState, useTransition } from "react"
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks"
-import { withCallbacks } from "@/shared/utils/with-callbacks"
-import { deleteReview } from "../actions/delete-review"
+import { useActionState, useTransition } from "react";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { deleteReview } from "../actions/delete-review";
 
 interface UseDeleteReviewOptions {
-	onSuccess?: (message: string) => void
+	onSuccess?: (message: string) => void;
 }
 
 /**
@@ -45,32 +45,32 @@ export const useDeleteReview = (options?: UseDeleteReviewOptions) => {
 						"message" in result &&
 						typeof result.message === "string"
 					) {
-						options?.onSuccess?.(result.message)
+						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
-	)
+		undefined,
+	);
 
-	const [isTransitionPending, startTransition] = useTransition()
+	const [isTransitionPending, startTransition] = useTransition();
 
 	/**
 	 * Méthode utilitaire pour appeler l'action programmatiquement
 	 * @param reviewId L'ID de l'avis à supprimer
 	 */
 	const handle = (reviewId: string) => {
-		const formData = new FormData()
-		formData.append("id", reviewId)
+		const formData = new FormData();
+		formData.append("id", reviewId);
 		startTransition(() => {
-			formAction(formData)
-		})
-	}
+			formAction(formData);
+		});
+	};
 
 	return {
 		state,
 		action: formAction,
 		isPending: isFormPending || isTransitionPending,
 		handle,
-	}
-}
+	};
+};

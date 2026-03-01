@@ -27,11 +27,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
 			{/* Messages */}
 			{state?.message && state.status !== ActionStatus.VALIDATION_ERROR && (
 				<>
@@ -91,8 +87,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 							if (value.length > 128) {
 								return "Le mot de passe ne doit pas dépasser 128 caractères";
 							}
-							const currentPassword =
-								fieldApi.form.getFieldValue("currentPassword");
+							const currentPassword = fieldApi.form.getFieldValue("currentPassword");
 							if (currentPassword && value === currentPassword) {
 								return "Le nouveau mot de passe doit être différent de l'ancien";
 							}
@@ -109,7 +104,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 								disabled={isPending || state?.status === ActionStatus.SUCCESS}
 								required
 							/>
-							<p className="text-xs text-muted-foreground">
+							<p className="text-muted-foreground text-xs">
 								Minimum 6 caractères, maximum 128 caractères
 							</p>
 						</div>
@@ -148,23 +143,21 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 				</form.AppField>
 
 				{/* Option pour déconnecter les autres sessions */}
-				<div className="flex items-start gap-3 pt-2 rounded-lg border p-4 bg-muted/50">
+				<div className="bg-muted/50 flex items-start gap-3 rounded-lg border p-4 pt-2">
 					<Checkbox
 						id="revokeOtherSessions"
 						checked={revokeOtherSessions}
-						onCheckedChange={(checked) =>
-							setRevokeOtherSessions(checked === true)
-						}
+						onCheckedChange={(checked) => setRevokeOtherSessions(checked === true)}
 						disabled={isPending || state?.status === ActionStatus.SUCCESS}
 					/>
 					<div className="space-y-1">
 						<label
 							htmlFor="revokeOtherSessions"
-							className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+							className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 						>
 							Déconnecter tous les autres appareils
 						</label>
-						<p className="text-xs text-muted-foreground">
+						<p className="text-muted-foreground text-xs">
 							Déconnecte toutes vos sessions actives sauf celle-ci
 						</p>
 					</div>

@@ -23,19 +23,19 @@ export function PageHeaderSkeleton({
 	if (variant === "compact") {
 		return (
 			<div
-				className={cn("space-y-6 mb-4 md:mb-6 animate-pulse", className)}
+				className={cn("mb-4 animate-pulse space-y-6 md:mb-6", className)}
 				role="status"
 				aria-busy="true"
 				aria-label="Chargement de l'en-tête"
 			>
-				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
+				<div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
 					<div className="min-w-0 flex-1 space-y-3">
-						<div className="h-9 w-48 bg-muted rounded" />
-						{hasDescription && <div className="h-5 w-72 bg-muted rounded" />}
+						<div className="bg-muted h-9 w-48 rounded" />
+						{hasDescription && <div className="bg-muted h-5 w-72 rounded" />}
 					</div>
 					{hasActions && (
-						<div className="shrink-0 w-full md:w-auto">
-							<div className="h-9 w-32 bg-muted rounded" />
+						<div className="w-full shrink-0 md:w-auto">
+							<div className="bg-muted h-9 w-32 rounded" />
 						</div>
 					)}
 				</div>
@@ -45,31 +45,26 @@ export function PageHeaderSkeleton({
 
 	return (
 		<header
-			className={cn(
-				"relative overflow-hidden bg-background border-b border-border",
-				className
-			)}
+			className={cn("bg-background border-border relative overflow-hidden border-b", className)}
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de l'en-tête"
 		>
-			<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-32 pb-2 sm:pb-4 animate-pulse">
-				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+			<div className="relative mx-auto max-w-6xl animate-pulse px-4 pt-20 pb-2 sm:px-6 sm:pt-32 sm:pb-4 lg:px-8">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
 					<div className="min-w-0 flex-1 space-y-2">
 						{/* Breadcrumb mobile */}
-						<div className="sm:hidden h-5 w-20 bg-muted rounded" />
+						<div className="bg-muted h-5 w-20 rounded sm:hidden" />
 						{/* Breadcrumb desktop */}
-						<div className="hidden sm:block h-4 w-32 bg-muted rounded" />
+						<div className="bg-muted hidden h-4 w-32 rounded sm:block" />
 						{/* Title */}
-						<div className="h-8 w-64 bg-muted rounded" />
+						<div className="bg-muted h-8 w-64 rounded" />
 						{/* Description */}
-						{hasDescription && (
-							<div className="h-5 w-96 max-w-full bg-muted rounded" />
-						)}
+						{hasDescription && <div className="bg-muted h-5 w-96 max-w-full rounded" />}
 					</div>
 					{hasActions && (
-						<div className="shrink-0 w-full sm:w-auto">
-							<div className="h-9 w-32 bg-muted rounded" />
+						<div className="w-full shrink-0 sm:w-auto">
+							<div className="bg-muted h-9 w-32 rounded" />
 						</div>
 					)}
 				</div>

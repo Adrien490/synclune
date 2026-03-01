@@ -25,9 +25,9 @@ export function useBulkDeleteOrders(options?: UseBulkDeleteOrdersOptions) {
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const deleteOrders = (orderIds: string[]) => {

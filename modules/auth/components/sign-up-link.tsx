@@ -11,7 +11,7 @@ export function SignUpLink() {
 		: "/inscription";
 
 	return (
-		<div className="text-sm text-muted-foreground">
+		<div className="text-muted-foreground text-sm">
 			Première visite ?{" "}
 			<Link href={href} className="font-medium underline">
 				Créez votre compte

@@ -1,4 +1,5 @@
-import type { Prisma } from "@/app/generated/prisma/client"
+import type { Prisma } from "@/app/generated/prisma/client";
+import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // ============================================
 // CONFIGURATION
@@ -28,7 +29,7 @@ export const REVIEW_CONFIG = {
 	MAX_RESPONSE_LENGTH: 1000,
 	/** Longueur min de la réponse admin */
 	MIN_RESPONSE_LENGTH: 20,
-} as const
+} as const;
 
 // ============================================
 // Prisma SELECT Definitions
@@ -66,7 +67,7 @@ export const REVIEW_PUBLIC_SELECT = {
 			deletedAt: true,
 		},
 	},
-} as const satisfies Prisma.ProductReviewSelect
+} as const satisfies Prisma.ProductReviewSelect;
 
 /**
  * SELECT pour la section homepage (social proof)
@@ -94,7 +95,7 @@ export const REVIEW_HOMEPAGE_SELECT = {
 			},
 		},
 	},
-} as const satisfies Prisma.ProductReviewSelect
+} as const satisfies Prisma.ProductReviewSelect;
 
 /**
  * SELECT pour la liste admin des avis
@@ -142,7 +143,7 @@ export const REVIEW_ADMIN_SELECT = {
 			deletedAt: true,
 		},
 	},
-} as const satisfies Prisma.ProductReviewSelect
+} as const satisfies Prisma.ProductReviewSelect;
 
 /**
  * SELECT pour la page "Mes avis" (espace client)
@@ -194,7 +195,7 @@ export const REVIEW_USER_SELECT = {
 			deletedAt: true,
 		},
 	},
-} as const satisfies Prisma.ProductReviewSelect
+} as const satisfies Prisma.ProductReviewSelect;
 
 /**
  * SELECT pour les statistiques d'un produit
@@ -207,7 +208,7 @@ export const REVIEW_STATS_SELECT = {
 	rating3Count: true,
 	rating4Count: true,
 	rating5Count: true,
-} as const satisfies Prisma.ProductReviewStatsSelect
+} as const satisfies Prisma.ProductReviewStatsSelect;
 
 // ============================================
 // Statuts et labels
@@ -219,15 +220,15 @@ export const REVIEW_STATS_SELECT = {
 export const REVIEW_STATUS_LABELS = {
 	PUBLISHED: "Publié",
 	HIDDEN: "Masqué",
-} as const
+} as const;
 
 /**
- * Couleurs des badges de statut (pour l'UI admin)
+ * Variantes de badge pour l'affichage des statuts
  */
-export const REVIEW_STATUS_COLORS = {
+export const REVIEW_STATUS_VARIANTS: Record<string, BadgeVariant> = {
 	PUBLISHED: "success",
 	HIDDEN: "secondary",
-} as const
+} as const;
 
 // ============================================
 // Tri (Sort Options)
@@ -241,7 +242,7 @@ export const REVIEW_SORT_OPTIONS = {
 	OLDEST: "oldest",
 	HIGHEST_RATING: "highest-rating",
 	LOWEST_RATING: "lowest-rating",
-} as const
+} as const;
 
 /**
  * Labels français pour les options de tri
@@ -251,12 +252,12 @@ export const REVIEW_SORT_LABELS: Record<string, string> = {
 	oldest: "Plus anciens",
 	"highest-rating": "Meilleures notes",
 	"lowest-rating": "Notes les plus basses",
-}
+};
 
 /**
  * Tri par défaut
  */
-export const REVIEW_DEFAULT_SORT = REVIEW_SORT_OPTIONS.RECENT
+export const REVIEW_DEFAULT_SORT = REVIEW_SORT_OPTIONS.RECENT;
 
 // ============================================
 // Constantes unifiées (pattern get-products.ts)
@@ -265,22 +266,22 @@ export const REVIEW_DEFAULT_SORT = REVIEW_SORT_OPTIONS.RECENT
 /**
  * Tri par défaut pour l'API unifiée
  */
-export const GET_REVIEWS_DEFAULT_SORT_BY = "createdAt-desc"
+export const GET_REVIEWS_DEFAULT_SORT_BY = "createdAt-desc";
 
 /**
  * Tri par défaut admin si aucun tri explicite fourni
  */
-export const GET_REVIEWS_ADMIN_FALLBACK_SORT_BY = "createdAt-desc"
+export const GET_REVIEWS_ADMIN_FALLBACK_SORT_BY = "createdAt-desc";
 
 /**
  * Nombre de résultats par page par défaut
  */
-export const GET_REVIEWS_DEFAULT_PER_PAGE = REVIEW_CONFIG.DEFAULT_PER_PAGE
+export const GET_REVIEWS_DEFAULT_PER_PAGE = REVIEW_CONFIG.DEFAULT_PER_PAGE;
 
 /**
  * Nombre maximum de résultats par page
  */
-export const GET_REVIEWS_MAX_PER_PAGE = REVIEW_CONFIG.MAX_PER_PAGE
+export const GET_REVIEWS_MAX_PER_PAGE = REVIEW_CONFIG.MAX_PER_PAGE;
 
 /**
  * Champs de tri disponibles
@@ -292,7 +293,7 @@ export const GET_REVIEWS_SORT_FIELDS = [
 	"rating-asc",
 	"updatedAt-desc",
 	"updatedAt-asc",
-] as const
+] as const;
 
 /**
  * Labels français pour les champs de tri
@@ -304,7 +305,7 @@ export const REVIEW_SORT_FIELD_LABELS: Record<string, string> = {
 	"rating-asc": "Notes les plus basses",
 	"updatedAt-desc": "Modifié récemment",
 	"updatedAt-asc": "Modifié anciennement",
-}
+};
 
 // ============================================
 // Schema.org / Rich Snippets
@@ -317,17 +318,17 @@ export const REVIEW_SCHEMA_ORG = {
 	"@type": "AggregateRating",
 	bestRating: REVIEW_CONFIG.MAX_RATING,
 	worstRating: REVIEW_CONFIG.MIN_RATING,
-} as const
+} as const;
 
 // ============================================
 // Dialog IDs
 // ============================================
 
 /** ID du dialog de modification d'avis */
-export const EDIT_REVIEW_DIALOG_ID = "edit-review"
+export const EDIT_REVIEW_DIALOG_ID = "edit-review";
 
 /** ID du dialog de suppression d'avis */
-export const DELETE_REVIEW_DIALOG_ID = "delete-review"
+export const DELETE_REVIEW_DIALOG_ID = "delete-review";
 
 // ============================================
 // Messages d'erreur
@@ -354,4 +355,4 @@ export const REVIEW_ERROR_MESSAGES = {
 	EMAIL_FAILED: "Erreur lors de l'envoi de l'email",
 	RATE_LIMIT: "Trop de tentatives. Réessayez plus tard.",
 	INVALID_DATA: "Données invalides",
-} as const
+} as const;

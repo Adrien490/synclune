@@ -31,20 +31,30 @@ import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-she
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
-const DeleteProductSkuAlertDialog = dynamic(
-	() => import("@/modules/skus/components/admin/delete-sku-alert-dialog").then((mod) => mod.DeleteProductSkuAlertDialog)
+const DeleteProductSkuAlertDialog = dynamic(() =>
+	import("@/modules/skus/components/admin/delete-sku-alert-dialog").then(
+		(mod) => mod.DeleteProductSkuAlertDialog,
+	),
 );
-const AdjustStockDialog = dynamic(
-	() => import("@/modules/skus/components/admin/adjust-stock-dialog").then((mod) => mod.AdjustStockDialog)
+const AdjustStockDialog = dynamic(() =>
+	import("@/modules/skus/components/admin/adjust-stock-dialog").then(
+		(mod) => mod.AdjustStockDialog,
+	),
 );
-const UpdatePriceDialog = dynamic(
-	() => import("@/modules/skus/components/admin/update-price-dialog").then((mod) => mod.UpdatePriceDialog)
+const UpdatePriceDialog = dynamic(() =>
+	import("@/modules/skus/components/admin/update-price-dialog").then(
+		(mod) => mod.UpdatePriceDialog,
+	),
 );
-const BulkAdjustStockDialog = dynamic(
-	() => import("@/modules/skus/components/admin/bulk-adjust-stock-dialog").then((mod) => mod.BulkAdjustStockDialog)
+const BulkAdjustStockDialog = dynamic(() =>
+	import("@/modules/skus/components/admin/bulk-adjust-stock-dialog").then(
+		(mod) => mod.BulkAdjustStockDialog,
+	),
 );
-const BulkUpdatePriceDialog = dynamic(
-	() => import("@/modules/skus/components/admin/bulk-update-price-dialog").then((mod) => mod.BulkUpdatePriceDialog)
+const BulkUpdatePriceDialog = dynamic(() =>
+	import("@/modules/skus/components/admin/bulk-update-price-dialog").then(
+		(mod) => mod.BulkUpdatePriceDialog,
+	),
 );
 
 export type ProductVariantsSearchParams = {
@@ -72,9 +82,7 @@ function normalizeArray(value: string | string[] | undefined): string[] {
 
 // Parse les filtres depuis les parametres URL
 function parseVariantFilters(params: ProductVariantsSearchParams) {
-	const stockStatuses = normalizeArray(params.filter_stockStatus).filter(
-		(s) => s !== "all"
-	);
+	const stockStatuses = normalizeArray(params.filter_stockStatus).filter((s) => s !== "all");
 	const colorIds = normalizeArray(params.filter_colorId);
 	const materialIds = normalizeArray(params.filter_materialId);
 
@@ -98,9 +106,7 @@ function parseVariantFilters(params: ProductVariantsSearchParams) {
 	};
 }
 
-export async function generateMetadata({
-	params,
-}: ProductVariantsPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ProductVariantsPageProps): Promise<Metadata> {
 	const { slug } = await params;
 	const product = await getProductBySlug({ slug, includeDraft: true });
 
@@ -124,8 +130,7 @@ export default async function ProductVariantsPage({
 	const searchParamsData = await searchParams;
 
 	// Parse and validate all search parameters safely
-	const { cursor, direction, perPage, sortBy, search } =
-		parseProductSkuParams(searchParamsData);
+	const { cursor, direction, perPage, sortBy, search } = parseProductSkuParams(searchParamsData);
 
 	// Parse les filtres
 	const filters = parseVariantFilters(searchParamsData);
@@ -198,7 +203,7 @@ export default async function ProductVariantsPage({
 					<div className="flex items-center gap-2">
 						<Button variant="outline" asChild>
 							<Link href={`/admin/catalogue/produits/${slug}/modifier`}>
-								<ArrowLeft className="h-4 w-4 mr-2" />
+								<ArrowLeft className="mr-2 h-4 w-4" />
 								Modifier le produit
 							</Link>
 						</Button>
@@ -215,7 +220,9 @@ export default async function ProductVariantsPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des variantes"
 					search={
-						<SearchInput mode="live" size="sm"
+						<SearchInput
+							mode="live"
+							size="sm"
 							paramName="search"
 							placeholder="Rechercher une variante..."
 							ariaLabel="Rechercher une variante"
@@ -223,10 +230,7 @@ export default async function ProductVariantsPage({
 						/>
 					}
 				>
-					<SkusFilterSheet
-						colorOptions={colorOptions}
-						materialOptions={materialOptions}
-					/>
+					<SkusFilterSheet colorOptions={colorOptions} materialOptions={materialOptions} />
 					<SelectFilter
 						filterKey="sortBy"
 						label="Trier par"

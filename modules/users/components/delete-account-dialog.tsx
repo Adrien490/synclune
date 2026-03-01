@@ -50,22 +50,21 @@ export function DeleteAccountDialog() {
 				<AlertDialogHeader>
 					<AlertDialogTitle>Supprimer votre compte ?</AlertDialogTitle>
 					<AlertDialogDescription>
-						Votre compte sera supprimé après un délai de 30 jours. Vous
-						pourrez annuler cette demande en vous reconnectant pendant
-						cette période.
+						Votre compte sera supprimé après un délai de 30 jours. Vous pourrez annuler cette
+						demande en vous reconnectant pendant cette période.
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 
-				<div className="text-sm text-muted-foreground space-y-2">
-					<ul className="list-disc list-inside space-y-1">
+				<div className="text-muted-foreground space-y-2 text-sm">
+					<ul className="list-inside list-disc space-y-1">
 						<li>Vos informations personnelles</li>
 						<li>Vos adresses</li>
 						<li>Vos favoris</li>
 						<li>Votre panier</li>
 					</ul>
 					<p>
-						Vos commandes seront conservées de manière anonymisée pour des
-						raisons comptables légales.
+						Vos commandes seront conservées de manière anonymisée pour des raisons comptables
+						légales.
 					</p>
 				</div>
 

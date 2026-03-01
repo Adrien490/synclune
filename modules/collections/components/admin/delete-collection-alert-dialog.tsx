@@ -24,9 +24,7 @@ interface DeleteCollectionData {
 }
 
 export function DeleteCollectionAlertDialog() {
-	const deleteDialog = useAlertDialog<DeleteCollectionData>(
-		DELETE_COLLECTION_DIALOG_ID
-	);
+	const deleteDialog = useAlertDialog<DeleteCollectionData>(DELETE_COLLECTION_DIALOG_ID);
 
 	const { action, isPending } = useDeleteCollection({
 		onSuccess: () => {
@@ -46,11 +44,7 @@ export function DeleteCollectionAlertDialog() {
 		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
-					<input
-						type="hidden"
-						name="id"
-						value={deleteDialog.data?.collectionId ?? ""}
-					/>
+					<input type="hidden" name="id" value={deleteDialog.data?.collectionId ?? ""} />
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
@@ -62,19 +56,17 @@ export function DeleteCollectionAlertDialog() {
 								</p>
 								{productsCount > 0 ? (
 									<>
-										<p className="text-amber-600 dark:text-amber-500 font-medium">
+										<p className="font-medium text-amber-600 dark:text-amber-500">
 											Cette collection contient {productsCount} produit
 											{productsCount > 1 ? "s" : ""}.
 										</p>
 										<p>
-											Les produits seront préservés mais n&apos;appartiendront plus à
-											aucune collection.
+											Les produits seront préservés mais n&apos;appartiendront plus à aucune
+											collection.
 										</p>
 									</>
 								) : null}
-								<p className="text-destructive font-medium">
-									Cette action est irréversible.
-								</p>
+								<p className="text-destructive font-medium">Cette action est irréversible.</p>
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
@@ -82,11 +74,7 @@ export function DeleteCollectionAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-						>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <Loader2 className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>

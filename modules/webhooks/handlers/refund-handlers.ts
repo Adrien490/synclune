@@ -23,9 +23,8 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 
 	try {
 		// 1. Récupérer le payment intent associé
-		const paymentIntentId = typeof charge.payment_intent === "string"
-			? charge.payment_intent
-			: charge.payment_intent?.id;
+		const paymentIntentId =
+			typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
 
 		if (!paymentIntentId) {
 			console.error("❌ [WEBHOOK] No payment intent found for refunded charge");
@@ -68,12 +67,12 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			order.id,
 			order.total,
 			totalRefundedOnStripe,
-			order.paymentStatus
+			order.paymentStatus,
 		);
 
 		console.log(
 			`📄 [WEBHOOK] Refund processed for order ${order.orderNumber} ` +
-			`(${isFullyRefunded ? "total" : "partial"}: ${totalRefundedOnStripe / 100}€)`
+				`(${isFullyRefunded ? "total" : "partial"}: ${totalRefundedOnStripe / 100}€)`,
 		);
 
 		// 5. Build post-tasks (email + cache invalidation)
@@ -126,14 +125,16 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
  * Gère les événements refund.created et refund.updated
  * Synchronise le statut du remboursement avec la base de données
  */
-export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<WebhookHandlerResult> {
+export async function handleRefundUpdated(
+	stripeRefund: Stripe.Refund,
+): Promise<WebhookHandlerResult> {
 	console.log(`💰 [WEBHOOK] Refund updated: ${stripeRefund.id}, status: ${stripeRefund.status}`);
 
 	try {
 		// 1. Trouver le remboursement local
 		const refund = await findRefundByStripeId(
 			stripeRefund.id,
-			stripeRefund.metadata?.refund_id ?? undefined
+			stripeRefund.metadata?.refund_id ?? undefined,
 		);
 
 		if (!refund) {
@@ -146,14 +147,21 @@ export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<
 
 		// 3. Mettre à jour si le statut a changé
 		if (newStatus && refund.status !== newStatus) {
-			await updateRefundStatus(refund.id, newStatus, stripeRefund.status || "unknown", refund.status);
+			await updateRefundStatus(
+				refund.id,
+				newStatus,
+				stripeRefund.status || "unknown",
+				refund.status,
+			);
 
 			return {
 				success: true,
-				tasks: [{
-					type: "INVALIDATE_CACHE",
-					tags: [ORDERS_CACHE_TAGS.REFUNDS(refund.orderId)],
-				}],
+				tasks: [
+					{
+						type: "INVALIDATE_CACHE",
+						tags: [ORDERS_CACHE_TAGS.REFUNDS(refund.orderId)],
+					},
+				],
 			};
 		}
 
@@ -168,14 +176,16 @@ export async function handleRefundUpdated(stripeRefund: Stripe.Refund): Promise<
  * Gère les échecs de remboursement
  * Marque le remboursement comme FAILED et alerte l'admin
  */
-export async function handleRefundFailed(stripeRefund: Stripe.Refund): Promise<WebhookHandlerResult> {
+export async function handleRefundFailed(
+	stripeRefund: Stripe.Refund,
+): Promise<WebhookHandlerResult> {
 	console.log(`❌ [WEBHOOK] Refund failed: ${stripeRefund.id}`);
 
 	try {
 		// 1. Trouver le remboursement local
 		const refund = await findRefundByStripeId(
 			stripeRefund.id,
-			stripeRefund.metadata?.refund_id ?? undefined
+			stripeRefund.metadata?.refund_id ?? undefined,
 		);
 
 		if (!refund) {

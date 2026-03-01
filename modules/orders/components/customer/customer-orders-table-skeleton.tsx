@@ -11,26 +11,18 @@ import {
 
 export function CustomerOrdersTableSkeleton() {
 	return (
-		<div className="border rounded-lg overflow-hidden">
+		<div className="overflow-hidden rounded-lg border">
 			<TableScrollContainer>
 				<Table className="min-w-full">
 					<TableHeader>
 						<TableRow>
 							<TableHead className="w-[25%] sm:w-[15%]">Commande</TableHead>
-							<TableHead className="hidden sm:table-cell w-[15%]">
-								Date
-							</TableHead>
+							<TableHead className="hidden w-[15%] sm:table-cell">Date</TableHead>
 							<TableHead className="w-[20%] sm:w-[15%]">Statut</TableHead>
-							<TableHead className="hidden lg:table-cell w-[15%]">
-								Livraison
-							</TableHead>
-							<TableHead className="hidden sm:table-cell w-[10%] text-center">
-								Articles
-							</TableHead>
-							<TableHead className="w-[15%] sm:w-[10%] text-right">
-								Total
-							</TableHead>
-							<TableHead className="w-[20%] sm:w-[10%] text-right">
+							<TableHead className="hidden w-[15%] lg:table-cell">Livraison</TableHead>
+							<TableHead className="hidden w-[10%] text-center sm:table-cell">Articles</TableHead>
+							<TableHead className="w-[15%] text-right sm:w-[10%]">Total</TableHead>
+							<TableHead className="w-[20%] text-right sm:w-[10%]">
 								<span className="sr-only">Actions</span>
 							</TableHead>
 						</TableRow>
@@ -50,14 +42,14 @@ export function CustomerOrdersTableSkeleton() {
 								<TableCell className="hidden lg:table-cell">
 									<Skeleton className="h-6 w-20 rounded-full" />
 								</TableCell>
-								<TableCell className="hidden sm:table-cell text-center">
-									<Skeleton className="h-4 w-6 mx-auto" />
+								<TableCell className="hidden text-center sm:table-cell">
+									<Skeleton className="mx-auto h-4 w-6" />
 								</TableCell>
 								<TableCell className="text-right">
-									<Skeleton className="h-4 w-16 ml-auto" />
+									<Skeleton className="ml-auto h-4 w-16" />
 								</TableCell>
 								<TableCell className="text-right">
-									<Skeleton className="h-8 w-16 ml-auto" />
+									<Skeleton className="ml-auto h-8 w-16" />
 								</TableCell>
 							</TableRow>
 						))}

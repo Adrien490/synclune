@@ -22,7 +22,7 @@ interface ScheduleReviewRequestResult {
  * @param orderId - L'ID de la commande
  */
 export async function scheduleReviewRequestEmail(
-	orderId: string
+	orderId: string,
 ): Promise<ScheduleReviewRequestResult> {
 	try {
 		const result = await sendReviewRequestEmailInternal(orderId);
@@ -30,7 +30,7 @@ export async function scheduleReviewRequestEmail(
 		if (result.status !== ActionStatus.SUCCESS) {
 			// Log mais ne bloque pas le flux principal (la livraison est plus importante)
 			console.warn(
-				`[REVIEW_REQUEST] Could not send review request email for order ${orderId}: ${result.message}`
+				`[REVIEW_REQUEST] Could not send review request email for order ${orderId}: ${result.message}`,
 			);
 			return {
 				success: false,
@@ -45,7 +45,10 @@ export async function scheduleReviewRequestEmail(
 		};
 	} catch (error) {
 		// Ne jamais faire echouer le flux principal a cause de l'email d'avis
-		console.error(`[REVIEW_REQUEST] Error scheduling review request email for order ${orderId}:`, error);
+		console.error(
+			`[REVIEW_REQUEST] Error scheduling review request email for order ${orderId}:`,
+			error,
+		);
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : "Unknown error",
@@ -60,7 +63,7 @@ export async function scheduleReviewRequestEmail(
  * @param orderIds - Les IDs des commandes
  */
 export async function scheduleReviewRequestEmailsBulk(
-	orderIds: string[]
+	orderIds: string[],
 ): Promise<{ sent: number; failed: number }> {
 	let sent = 0;
 	let failed = 0;
@@ -75,9 +78,7 @@ export async function scheduleReviewRequestEmailsBulk(
 		}
 	}
 
-	console.log(
-		`[REVIEW_REQUEST] Bulk review request emails: ${sent} sent, ${failed} failed`
-	);
+	console.log(`[REVIEW_REQUEST] Bulk review request emails: ${sent} sent, ${failed} failed`);
 
 	return { sent, failed };
 }

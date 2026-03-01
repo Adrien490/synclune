@@ -18,7 +18,7 @@ import {
  */
 export function createPerPageSchema(
 	defaultValue: number = PAGINATION_DEFAULTS.ADMIN,
-	maxValue: number = PAGINATION_LIMITS.MAX_ADMIN
+	maxValue: number = PAGINATION_LIMITS.MAX_ADMIN,
 ) {
 	return z.coerce
 		.number()
@@ -32,10 +32,7 @@ export function createPerPageSchema(
  * Crée un schema de pagination complet réutilisable
  * @param options - Options de configuration
  */
-export function createPaginationSchema(options?: {
-	defaultPerPage?: number;
-	maxPerPage?: number;
-}) {
+export function createPaginationSchema(options?: { defaultPerPage?: number; maxPerPage?: number }) {
 	const { defaultPerPage = PAGINATION_DEFAULTS.ADMIN, maxPerPage = PAGINATION_LIMITS.MAX_ADMIN } =
 		options ?? {};
 
@@ -59,7 +56,7 @@ export function createPaginationSchema(options?: {
 export function constrainPerPage(
 	value: number | undefined | null,
 	defaultValue: number = PAGINATION_DEFAULTS.ADMIN,
-	maxValue: number = PAGINATION_LIMITS.MAX_ADMIN
+	maxValue: number = PAGINATION_LIMITS.MAX_ADMIN,
 ): number {
 	return Math.min(Math.max(1, value ?? defaultValue), maxValue);
 }

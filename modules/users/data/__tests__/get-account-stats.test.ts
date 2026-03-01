@@ -4,12 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockGetSession,
-	mockCacheLife,
-	mockCacheTag,
-} = vi.hoisted(() => ({
+const { mockPrisma, mockGetSession, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { count: vi.fn() },
 		cart: { findUnique: vi.fn() },
@@ -95,9 +90,7 @@ describe("getAccountStats", () => {
 
 	it("returns account stats for authenticated user", async () => {
 		// First call (totalOrders) = 5, second call (pendingOrders) = 2
-		mockPrisma.order.count
-			.mockResolvedValueOnce(5)
-			.mockResolvedValueOnce(2);
+		mockPrisma.order.count.mockResolvedValueOnce(5).mockResolvedValueOnce(2);
 
 		const result = await getAccountStats();
 
@@ -111,9 +104,7 @@ describe("getAccountStats", () => {
 	it("calls fetchAccountStats with session userId", async () => {
 		mockGetSession.mockResolvedValue({ user: { id: "user-42" } });
 		mockPrisma.order.count.mockReset();
-		mockPrisma.order.count
-			.mockResolvedValueOnce(1)
-			.mockResolvedValueOnce(0);
+		mockPrisma.order.count.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
 		mockPrisma.cart.findUnique.mockResolvedValue(null);
 
 		const result = await getAccountStats();
@@ -121,7 +112,7 @@ describe("getAccountStats", () => {
 		expect(mockPrisma.order.count).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ userId: "user-42" }),
-			})
+			}),
 		);
 		expect(result).toEqual({
 			totalOrders: 1,
@@ -161,7 +152,7 @@ describe("fetchAccountStats", () => {
 		expect(mockPrisma.order.count).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { userId: "user-1", deletedAt: null },
-			})
+			}),
 		);
 	});
 
@@ -171,7 +162,7 @@ describe("fetchAccountStats", () => {
 		expect(mockPrisma.order.count).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { userId: "user-1", status: "PROCESSING", deletedAt: null },
-			})
+			}),
 		);
 	});
 
@@ -181,7 +172,7 @@ describe("fetchAccountStats", () => {
 		expect(mockPrisma.cart.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { userId: "user-1" },
-			})
+			}),
 		);
 	});
 
@@ -191,14 +182,12 @@ describe("fetchAccountStats", () => {
 		expect(mockPrisma.cart.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { _count: { select: { items: true } } },
-			})
+			}),
 		);
 	});
 
 	it("returns correct stats with all three values", async () => {
-		mockPrisma.order.count
-			.mockResolvedValueOnce(10)
-			.mockResolvedValueOnce(3);
+		mockPrisma.order.count.mockResolvedValueOnce(10).mockResolvedValueOnce(3);
 
 		const result = await fetchAccountStats("user-1");
 

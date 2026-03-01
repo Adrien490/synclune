@@ -1,8 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
+import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { z } from "zod";
@@ -46,9 +43,7 @@ export { COLLECTIONS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/collectio
 /**
  * Récupère la liste des collections avec pagination
  */
-export async function getCollections(
-	params: GetCollectionsParams
-): Promise<GetCollectionsReturn> {
+export async function getCollections(params: GetCollectionsParams): Promise<GetCollectionsReturn> {
 	try {
 		const validation = getCollectionsSchema.safeParse(params);
 
@@ -68,9 +63,7 @@ export async function getCollections(
 /**
  * Récupère les collections depuis la DB avec cache
  */
-async function fetchCollections(
-	params: GetCollectionsParams
-): Promise<GetCollectionsReturn> {
+async function fetchCollections(params: GetCollectionsParams): Promise<GetCollectionsReturn> {
 	"use cache";
 	cacheCollections();
 
@@ -78,18 +71,17 @@ async function fetchCollections(
 		const where = buildCollectionWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.CollectionOrderByWithRelationInput[] =
-			params.sortBy.startsWith("name-")
-				? [{ name: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("created-")
-					? [{ createdAt: direction }, { id: "asc" }]
-					: params.sortBy.startsWith("products-")
-						? [{ products: { _count: direction } }, { id: "asc" }]
-						: [{ name: "asc" }, { id: "asc" }];
+		const orderBy: Prisma.CollectionOrderByWithRelationInput[] = params.sortBy.startsWith("name-")
+			? [{ name: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("created-")
+				? [{ createdAt: direction }, { id: "asc" }]
+				: params.sortBy.startsWith("products-")
+					? [{ products: { _count: direction } }, { id: "asc" }]
+					: [{ name: "asc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_COLLECTIONS_DEFAULT_PER_PAGE),
-			GET_COLLECTIONS_MAX_RESULTS_PER_PAGE
+			GET_COLLECTIONS_MAX_RESULTS_PER_PAGE,
 		);
 
 		const cursorConfig = buildCursorPagination({
@@ -109,7 +101,7 @@ async function fetchCollections(
 			collections,
 			take,
 			params.direction,
-			params.cursor
+			params.cursor,
 		);
 
 		return { collections: items, pagination };

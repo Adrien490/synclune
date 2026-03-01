@@ -10,18 +10,14 @@ import { cn } from "@/shared/utils/cn";
  * Note: Sur écrans tactiles, utiliser open/onOpenChange pour contrôler manuellement,
  * ou préférer Popover qui fonctionne nativement avec le touch.
  */
-function HoverCard({
-	...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
-	return <HoverCardPrimitive.Root data-slot="hover-card" openDelay={100} closeDelay={200} {...props} />;
+function HoverCard({ ...props }: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
+	return (
+		<HoverCardPrimitive.Root data-slot="hover-card" openDelay={100} closeDelay={200} {...props} />
+	);
 }
 
-function HoverCardTrigger({
-	...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Trigger>) {
-	return (
-		<HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
-	);
+function HoverCardTrigger({ ...props }: React.ComponentProps<typeof HoverCardPrimitive.Trigger>) {
+	return <HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />;
 }
 
 function HoverCardContent({
@@ -43,7 +39,7 @@ function HoverCardContent({
 					"motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95",
 					"motion-safe:data-[side=bottom]:slide-in-from-top-2 motion-safe:data-[side=left]:slide-in-from-right-2",
 					"motion-safe:data-[side=right]:slide-in-from-left-2 motion-safe:data-[side=top]:slide-in-from-bottom-2",
-					className
+					className,
 				)}
 				{...props}
 			/>

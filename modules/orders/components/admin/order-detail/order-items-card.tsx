@@ -1,11 +1,6 @@
 import { Package } from "lucide-react";
 import Image from "next/image";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderItemsCardProps } from "./types";
@@ -33,17 +28,12 @@ export function OrderItemsCard({
 							.filter(Boolean)
 							.join(" / ");
 
-						const imageAlt = variant
-							? `${item.productTitle} - ${variant}`
-							: item.productTitle;
+						const imageAlt = variant ? `${item.productTitle} - ${variant}` : item.productTitle;
 
 						return (
-							<div
-								key={item.id}
-								className="flex items-start gap-4 py-3 border-b last:border-0"
-							>
+							<div key={item.id} className="flex items-start gap-4 border-b py-3 last:border-0">
 								{/* Image */}
-								<div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border bg-muted">
+								<div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-md border">
 									{item.skuImageUrl || item.productImageUrl ? (
 										<Image
 											src={item.skuImageUrl || item.productImageUrl || ""}
@@ -55,29 +45,23 @@ export function OrderItemsCard({
 										/>
 									) : (
 										<div className="flex h-full w-full items-center justify-center">
-											<Package className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+											<Package className="text-muted-foreground h-6 w-6" aria-hidden="true" />
 										</div>
 									)}
 								</div>
 
 								{/* Details */}
-								<div className="flex-1 min-w-0">
-									<p className="font-medium truncate">{item.productTitle}</p>
-									{variant && (
-										<p className="text-sm text-muted-foreground">{variant}</p>
-									)}
-									<p className="text-sm text-muted-foreground">
-										Qté : {item.quantity}
-									</p>
+								<div className="min-w-0 flex-1">
+									<p className="truncate font-medium">{item.productTitle}</p>
+									{variant && <p className="text-muted-foreground text-sm">{variant}</p>}
+									<p className="text-muted-foreground text-sm">Qté : {item.quantity}</p>
 								</div>
 
 								{/* Price */}
-								<div className="text-right shrink-0">
-									<p className="font-medium">
-										{formatEuro(item.price * item.quantity)}
-									</p>
+								<div className="shrink-0 text-right">
+									<p className="font-medium">{formatEuro(item.price * item.quantity)}</p>
 									{item.quantity > 1 && (
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground text-sm">
 											{formatEuro(item.price)} / unité
 										</p>
 									)}
@@ -103,9 +87,7 @@ export function OrderItemsCard({
 					)}
 					<div className="flex justify-between text-sm">
 						<span className="text-muted-foreground">Livraison</span>
-						<span>
-							{shippingCost === 0 ? "Gratuite" : formatEuro(shippingCost)}
-						</span>
+						<span>{shippingCost === 0 ? "Gratuite" : formatEuro(shippingCost)}</span>
 					</div>
 					{taxAmount > 0 && (
 						<div className="flex justify-between text-sm">
@@ -114,7 +96,7 @@ export function OrderItemsCard({
 						</div>
 					)}
 					<Separator />
-					<div className="flex justify-between font-semibold text-lg">
+					<div className="flex justify-between text-lg font-semibold">
 						<span>Total</span>
 						<span>{formatEuro(total)}</span>
 					</div>

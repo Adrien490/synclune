@@ -15,9 +15,9 @@ export function useCancelOrder(options?: UseCancelOrderOptions) {
 			cancelOrder,
 			createToastCallbacks({
 				onSuccess: () => options?.onSuccess?.(),
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	return { state, action, isPending };

@@ -18,9 +18,7 @@ interface CustomizationRequestListProps {
 	requestsPromise: Promise<UserCustomizationRequest[] | null>;
 }
 
-export function CustomizationRequestList({
-	requestsPromise,
-}: CustomizationRequestListProps) {
+export function CustomizationRequestList({ requestsPromise }: CustomizationRequestListProps) {
 	const requests = use(requestsPromise);
 
 	if (!requests || requests.length === 0) {
@@ -42,12 +40,9 @@ export function CustomizationRequestList({
 	}
 
 	return (
-		<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+		<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 			{requests.map((request) => (
-				<CustomizationRequestCard
-					key={request.id}
-					request={request}
-				/>
+				<CustomizationRequestCard key={request.id} request={request} />
 			))}
 		</div>
 	);

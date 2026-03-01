@@ -9,10 +9,7 @@
  *       est dans @/modules/orders/services/shipping.service.ts
  */
 
-import {
-	SHIPPING_COUNTRIES,
-	type ShippingCountry,
-} from "@/shared/constants/countries";
+import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 import type { ShippingCarrier, ShippingRate, AllowedShippingCountry } from "../types/order.types";
 
 // Re-export pour compatibilité

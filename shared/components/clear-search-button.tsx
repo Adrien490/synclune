@@ -48,11 +48,7 @@ export function ClearSearchButton({ className }: ClearSearchButtonProps) {
 			onClick={handleClear}
 			disabled={isPending}
 			aria-busy={isPending}
-			className={cn(
-				"size-11 text-muted-foreground",
-				isPending && "opacity-70",
-				className
-			)}
+			className={cn("text-muted-foreground size-11", isPending && "opacity-70", className)}
 			aria-label={`Effacer la recherche "${searchTerm}"`}
 		>
 			{isPending ? <Spinner className="size-4" /> : <X className="size-5" />}

@@ -22,7 +22,7 @@ export type CartWithSkuPrices = Awaited<ReturnType<typeof fetchCartWithSkuPrices
  */
 export async function getCartWithSkuPrices(
 	userId?: string,
-	sessionId?: string
+	sessionId?: string,
 ): Promise<CartWithSkuPrices> {
 	return fetchCartWithSkuPrices(userId, sessionId);
 }
@@ -43,10 +43,7 @@ async function fetchCartWithSkuPrices(userId?: string, sessionId?: string) {
 	return prisma.cart.findFirst({
 		where: {
 			...(userId ? { userId } : { sessionId: sessionId! }),
-			OR: [
-				{ expiresAt: null },
-				{ expiresAt: { gt: new Date() } },
-			],
+			OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
 		},
 		include: {
 			items: {

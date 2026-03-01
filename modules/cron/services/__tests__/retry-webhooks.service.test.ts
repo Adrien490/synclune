@@ -163,7 +163,10 @@ describe("retryFailedWebhooks", () => {
 			.mockResolvedValueOnce([mockEvent]);
 		mockIsEventSupported.mockReturnValue(true);
 
-		const stripeEvent = { id: "evt_stripe_success", type: "payment_intent.succeeded" } as Stripe.Event;
+		const stripeEvent = {
+			id: "evt_stripe_success",
+			type: "payment_intent.succeeded",
+		} as Stripe.Event;
 		mockStripe.events.retrieve.mockResolvedValue(stripeEvent);
 		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.webhookEvent.update.mockResolvedValue({});
@@ -256,7 +259,7 @@ describe("retryFailedWebhooks", () => {
 				}),
 				orderBy: { receivedAt: "asc" },
 				take: 10,
-			})
+			}),
 		);
 	});
 });

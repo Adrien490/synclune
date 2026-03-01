@@ -21,7 +21,7 @@ export type { GetColorParams, GetColorReturn } from "../types/color.types";
  * - Non-admin : ne voit que les couleurs actives
  */
 export async function getColorBySlug(
-	params: Partial<GetColorParams>
+	params: Partial<GetColorParams>,
 ): Promise<GetColorReturn | null> {
 	const validation = getColorSchema.safeParse(params ?? {});
 
@@ -40,10 +40,7 @@ export async function getColorBySlug(
  * Utilise findFirst pour pouvoir filtrer par isActive
  * includeInactive is a separate param to ensure distinct cache keys between admin/public
  */
-async function fetchColor(
-	slug: string,
-	includeInactive: boolean
-): Promise<GetColorReturn | null> {
+async function fetchColor(slug: string, includeInactive: boolean): Promise<GetColorReturn | null> {
 	"use cache";
 	cacheColorDetail(slug);
 

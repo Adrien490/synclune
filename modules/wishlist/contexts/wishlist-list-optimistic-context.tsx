@@ -10,7 +10,8 @@ export interface WishlistListOptimisticContextValue {
 	onItemRemoved: (productId: string) => void;
 }
 
-export const WishlistListOptimisticContext = createContext<WishlistListOptimisticContextValue | null>(null);
+export const WishlistListOptimisticContext =
+	createContext<WishlistListOptimisticContextValue | null>(null);
 
 /**
  * Hook pour accéder au contexte optimiste de la liste wishlist

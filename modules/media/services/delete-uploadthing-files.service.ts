@@ -21,7 +21,7 @@ import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file
  * @returns Result with count of deleted files and failures
  */
 export async function deleteUploadThingFilesFromUrls(
-	urls: string[]
+	urls: string[],
 ): Promise<{ deleted: number; failed: number }> {
 	if (urls.length === 0) {
 		return { deleted: 0, failed: 0 };
@@ -40,7 +40,7 @@ export async function deleteUploadThingFilesFromUrls(
 	if (failedUrls.length > 0) {
 		console.warn(
 			`[deleteUploadThingFilesFromUrls] ${failedUrls.length} URL(s) n'ont pas pu etre extraites:`,
-			failedUrls
+			failedUrls,
 		);
 	}
 
@@ -54,7 +54,7 @@ export async function deleteUploadThingFilesFromUrls(
 
 		if (!result.success) {
 			console.warn(
-				`[deleteUploadThingFilesFromUrls] UTApi.deleteFiles returned success=false for ${fileKeys.length} key(s)`
+				`[deleteUploadThingFilesFromUrls] UTApi.deleteFiles returned success=false for ${fileKeys.length} key(s)`,
 			);
 			return { deleted: 0, failed: urls.length };
 		}
@@ -64,11 +64,11 @@ export async function deleteUploadThingFilesFromUrls(
 
 		if (utFailures > 0) {
 			console.warn(
-				`[deleteUploadThingFilesFromUrls] Partial deletion: ${actualDeleted}/${fileKeys.length} fichier(s) supprime(s)`
+				`[deleteUploadThingFilesFromUrls] Partial deletion: ${actualDeleted}/${fileKeys.length} fichier(s) supprime(s)`,
 			);
 		} else {
 			console.log(
-				`[deleteUploadThingFilesFromUrls] ${actualDeleted} fichier(s) supprime(s) avec succes`
+				`[deleteUploadThingFilesFromUrls] ${actualDeleted} fichier(s) supprime(s) avec succes`,
 			);
 		}
 
@@ -77,7 +77,7 @@ export async function deleteUploadThingFilesFromUrls(
 		// Log error but don't block the main operation
 		console.error(
 			"[deleteUploadThingFilesFromUrls] Erreur lors de la suppression des fichiers:",
-			error instanceof Error ? error.message : String(error)
+			error instanceof Error ? error.message : String(error),
 		);
 
 		return { deleted: 0, failed: urls.length };
@@ -92,7 +92,7 @@ export async function deleteUploadThingFilesFromUrls(
  * @returns true if the file was deleted, false otherwise
  */
 export async function deleteUploadThingFileFromUrl(
-	url: string | null | undefined
+	url: string | null | undefined,
 ): Promise<boolean> {
 	if (!url || !isValidUploadThingUrl(url)) {
 		return false;

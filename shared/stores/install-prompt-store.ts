@@ -1,25 +1,22 @@
-import { createStore } from "zustand/vanilla"
-import { persist, createJSONStorage, type StateStorage } from "zustand/middleware"
+import { createStore } from "zustand/vanilla";
+import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
 
-import type {
-	InstallPromptState,
-	InstallPromptStore,
-} from "@/shared/types/store.types"
+import type { InstallPromptState, InstallPromptStore } from "@/shared/types/store.types";
 
 export type {
 	InstallPromptState,
 	InstallPromptActions,
 	InstallPromptStore,
-} from "@/shared/types/store.types"
+} from "@/shared/types/store.types";
 
 // Noop storage for SSR (when localStorage is not available)
 const noopStorage: StateStorage = {
 	getItem: () => null,
 	setItem: () => {},
 	removeItem: () => {},
-}
+};
 
-const MAX_DISMISS_COUNT = 3
+const MAX_DISMISS_COUNT = 3;
 
 export const defaultInitState: InstallPromptState = {
 	visitCount: 0,
@@ -27,7 +24,7 @@ export const defaultInitState: InstallPromptState = {
 	permanentlyDismissed: false,
 	bannerVisible: false,
 	_hasHydrated: false,
-}
+};
 
 /**
  * Zustand store for the PWA install prompt banner.
@@ -36,54 +33,52 @@ export const defaultInitState: InstallPromptState = {
  * Banner shows after 2+ visits unless permanently dismissed (3 dismissals).
  * Persists in localStorage under "install-prompt".
  */
-export const createInstallPromptStore = (
-	initState: InstallPromptState = defaultInitState
-) => {
+export const createInstallPromptStore = (initState: InstallPromptState = defaultInitState) => {
 	return createStore<InstallPromptStore>()(
 		persist(
 			(set, get) => ({
 				...initState,
 
 				recordVisit: () => {
-					const { visitCount, permanentlyDismissed } = get()
-					const newCount = visitCount + 1
+					const { visitCount, permanentlyDismissed } = get();
+					const newCount = visitCount + 1;
 					set({
 						visitCount: newCount,
 						bannerVisible: newCount >= 2 && !permanentlyDismissed,
-					})
+					});
 				},
 
 				dismissForSession: () => {
-					const { dismissCount } = get()
-					const newDismissCount = dismissCount + 1
+					const { dismissCount } = get();
+					const newDismissCount = dismissCount + 1;
 					set({
 						dismissCount: newDismissCount,
 						bannerVisible: false,
 						permanentlyDismissed: newDismissCount >= MAX_DISMISS_COUNT,
-					})
+					});
 				},
 
 				markInstalled: () => {
 					set({
 						permanentlyDismissed: true,
 						bannerVisible: false,
-					})
+					});
 				},
 
 				showBanner: () => {
 					if (!get().permanentlyDismissed) {
-						set({ bannerVisible: true })
+						set({ bannerVisible: true });
 					}
 				},
 
 				hideBanner: () => {
-					set({ bannerVisible: false })
+					set({ bannerVisible: false });
 				},
 			}),
 			{
 				name: "install-prompt",
 				storage: createJSONStorage(() =>
-					typeof window !== "undefined" ? localStorage : noopStorage
+					typeof window !== "undefined" ? localStorage : noopStorage,
 				),
 				partialize: (state) => ({
 					visitCount: state.visitCount,
@@ -92,12 +87,11 @@ export const createInstallPromptStore = (
 				}),
 				onRehydrateStorage: () => (state) => {
 					if (state) {
-						state.bannerVisible =
-							state.visitCount >= 2 && !state.permanentlyDismissed
-						state._hasHydrated = true
+						state.bannerVisible = state.visitCount >= 2 && !state.permanentlyDismissed;
+						state._hasHydrated = true;
 					}
 				},
-			}
-		)
-	)
-}
+			},
+		),
+	);
+};

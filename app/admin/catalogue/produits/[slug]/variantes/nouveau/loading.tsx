@@ -66,11 +66,11 @@ export default function CreateVariantLoading() {
 				{/* Image principale */}
 				<div className="space-y-2">
 					<Skeleton className="h-4 w-32" />
-					<div className="border-2 border-dashed rounded-lg p-8 text-center">
+					<div className="rounded-lg border-2 border-dashed p-8 text-center">
 						<Skeleton className="h-48 w-full rounded-md" />
 						<div className="mt-4 space-y-2">
-							<Skeleton className="h-4 w-48 mx-auto" />
-							<Skeleton className="h-3 w-32 mx-auto" />
+							<Skeleton className="mx-auto h-4 w-48" />
+							<Skeleton className="mx-auto h-3 w-32" />
 						</div>
 					</div>
 				</div>
@@ -80,11 +80,11 @@ export default function CreateVariantLoading() {
 					<div className="flex items-center justify-between">
 						<Skeleton className="h-6 w-32" />
 					</div>
-					<div className="border-2 border-dashed rounded-lg p-8 text-center">
+					<div className="rounded-lg border-2 border-dashed p-8 text-center">
 						<Skeleton className="h-32 w-full rounded-md" />
 						<div className="mt-4 space-y-2">
-							<Skeleton className="h-4 w-56 mx-auto" />
-							<Skeleton className="h-3 w-32 mx-auto" />
+							<Skeleton className="mx-auto h-4 w-56" />
+							<Skeleton className="mx-auto h-3 w-32" />
 						</div>
 					</div>
 				</div>

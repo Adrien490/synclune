@@ -17,7 +17,7 @@ export default function ProductVariantsLoading() {
 			{/* Data Table */}
 			<div className="rounded-md border">
 				{/* Table Header */}
-				<div className="border-b bg-muted/50 p-4">
+				<div className="bg-muted/50 border-b p-4">
 					<div className="flex items-center gap-4">
 						<Skeleton className="h-4 w-4" />
 						<div className="w-[10%]">
@@ -27,13 +27,13 @@ export default function ProductVariantsLoading() {
 							<Skeleton className="h-4 w-32" />
 						</div>
 						<div className="w-[10%] text-center">
-							<Skeleton className="h-4 w-16 mx-auto" />
+							<Skeleton className="mx-auto h-4 w-16" />
 						</div>
 						<div className="w-[10%] text-center">
-							<Skeleton className="h-4 w-12 mx-auto" />
+							<Skeleton className="mx-auto h-4 w-12" />
 						</div>
 						<div className="w-[8%]">
-							<Skeleton className="h-4 w-16 ml-auto" />
+							<Skeleton className="ml-auto h-4 w-16" />
 						</div>
 					</div>
 				</div>
@@ -61,17 +61,17 @@ export default function ProductVariantsLoading() {
 								</div>
 
 								{/* Active Toggle */}
-								<div className="w-[10%] flex justify-center">
+								<div className="flex w-[10%] justify-center">
 									<Skeleton className="h-6 w-11 rounded-full" />
 								</div>
 
 								{/* Stock */}
-								<div className="w-[10%] flex justify-center">
+								<div className="flex w-[10%] justify-center">
 									<Skeleton className="h-4 w-8" />
 								</div>
 
 								{/* Actions */}
-								<div className="w-[8%] flex justify-end">
+								<div className="flex w-[8%] justify-end">
 									<Skeleton className="h-8 w-8 rounded-md" />
 								</div>
 							</div>

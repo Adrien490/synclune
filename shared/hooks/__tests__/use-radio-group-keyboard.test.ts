@@ -1,21 +1,21 @@
-import { renderHook } from "@testing-library/react"
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import React from "react"
+import { renderHook } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import React from "react";
 
 // ---------------------------------------------------------------------------
 // Import under test
 // ---------------------------------------------------------------------------
 
-import { useRadioGroupKeyboard } from "../use-radio-group-keyboard"
+import { useRadioGroupKeyboard } from "../use-radio-group-keyboard";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 interface Option {
-	id: string
-	label: string
-	disabled?: boolean
+	id: string;
+	label: string;
+	disabled?: boolean;
 }
 
 const OPTIONS: Option[] = [
@@ -23,13 +23,13 @@ const OPTIONS: Option[] = [
 	{ id: "b", label: "Beta" },
 	{ id: "c", label: "Gamma" },
 	{ id: "d", label: "Delta" },
-]
+];
 
 function makeKeyEvent(key: string): React.KeyboardEvent {
 	return {
 		key,
 		preventDefault: vi.fn(),
-	} as unknown as React.KeyboardEvent
+	} as unknown as React.KeyboardEvent;
 }
 
 // ---------------------------------------------------------------------------
@@ -37,11 +37,11 @@ function makeKeyEvent(key: string): React.KeyboardEvent {
 // ---------------------------------------------------------------------------
 
 describe("useRadioGroupKeyboard", () => {
-	let onSelect: ReturnType<typeof vi.fn<(option: Option) => void>>
+	let onSelect: ReturnType<typeof vi.fn<(option: Option) => void>>;
 
 	beforeEach(() => {
-		onSelect = vi.fn<(option: Option) => void>()
-	})
+		onSelect = vi.fn<(option: Option) => void>();
+	});
 
 	// -------------------------------------------------------------------------
 	// Return value
@@ -54,13 +54,13 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			expect(result.current.containerRef).toBeDefined()
-			expect(typeof result.current.handleKeyDown).toBe("function")
-		})
-	})
+			expect(result.current.containerRef).toBeDefined();
+			expect(typeof result.current.handleKeyDown).toBe("function");
+		});
+	});
 
 	// -------------------------------------------------------------------------
 	// Arrow key navigation
@@ -73,15 +73,15 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			const event = makeKeyEvent("ArrowDown")
-			result.current.handleKeyDown(event, 0)
+			const event = makeKeyEvent("ArrowDown");
+			result.current.handleKeyDown(event, 0);
 
-			expect(onSelect).toHaveBeenCalledWith(OPTIONS[1])
-			expect(event.preventDefault).toHaveBeenCalled()
-		})
+			expect(onSelect).toHaveBeenCalledWith(OPTIONS[1]);
+			expect(event.preventDefault).toHaveBeenCalled();
+		});
 
 		it("wraps around to the first option from the last", () => {
 			const { result } = renderHook(() =>
@@ -89,14 +89,14 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			result.current.handleKeyDown(makeKeyEvent("ArrowDown"), OPTIONS.length - 1)
+			result.current.handleKeyDown(makeKeyEvent("ArrowDown"), OPTIONS.length - 1);
 
-			expect(onSelect).toHaveBeenCalledWith(OPTIONS[0])
-		})
-	})
+			expect(onSelect).toHaveBeenCalledWith(OPTIONS[0]);
+		});
+	});
 
 	describe("ArrowUp navigation", () => {
 		it("moves to the previous option when ArrowUp is pressed", () => {
@@ -105,15 +105,15 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			const event = makeKeyEvent("ArrowUp")
-			result.current.handleKeyDown(event, 2)
+			const event = makeKeyEvent("ArrowUp");
+			result.current.handleKeyDown(event, 2);
 
-			expect(onSelect).toHaveBeenCalledWith(OPTIONS[1])
-			expect(event.preventDefault).toHaveBeenCalled()
-		})
+			expect(onSelect).toHaveBeenCalledWith(OPTIONS[1]);
+			expect(event.preventDefault).toHaveBeenCalled();
+		});
 
 		it("wraps around to the last option when ArrowUp is pressed at the first", () => {
 			const { result } = renderHook(() =>
@@ -121,14 +121,14 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			result.current.handleKeyDown(makeKeyEvent("ArrowUp"), 0)
+			result.current.handleKeyDown(makeKeyEvent("ArrowUp"), 0);
 
-			expect(onSelect).toHaveBeenCalledWith(OPTIONS[OPTIONS.length - 1])
-		})
-	})
+			expect(onSelect).toHaveBeenCalledWith(OPTIONS[OPTIONS.length - 1]);
+		});
+	});
 
 	describe("ArrowRight / ArrowLeft navigation", () => {
 		it("ArrowRight behaves the same as ArrowDown", () => {
@@ -137,13 +137,13 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			result.current.handleKeyDown(makeKeyEvent("ArrowRight"), 1)
+			result.current.handleKeyDown(makeKeyEvent("ArrowRight"), 1);
 
-			expect(onSelect).toHaveBeenCalledWith(OPTIONS[2])
-		})
+			expect(onSelect).toHaveBeenCalledWith(OPTIONS[2]);
+		});
 
 		it("ArrowLeft behaves the same as ArrowUp", () => {
 			const { result } = renderHook(() =>
@@ -151,14 +151,14 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			result.current.handleKeyDown(makeKeyEvent("ArrowLeft"), 1)
+			result.current.handleKeyDown(makeKeyEvent("ArrowLeft"), 1);
 
-			expect(onSelect).toHaveBeenCalledWith(OPTIONS[0])
-		})
-	})
+			expect(onSelect).toHaveBeenCalledWith(OPTIONS[0]);
+		});
+	});
 
 	// -------------------------------------------------------------------------
 	// Disabled options
@@ -170,7 +170,7 @@ describe("useRadioGroupKeyboard", () => {
 				{ id: "a", label: "Alpha" },
 				{ id: "b", label: "Beta", disabled: true },
 				{ id: "c", label: "Gamma" },
-			]
+			];
 
 			const { result } = renderHook(() =>
 				useRadioGroupKeyboard({
@@ -178,20 +178,20 @@ describe("useRadioGroupKeyboard", () => {
 					getOptionId: (o) => o.id,
 					isOptionDisabled: (o) => !!o.disabled,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			result.current.handleKeyDown(makeKeyEvent("ArrowDown"), 0)
+			result.current.handleKeyDown(makeKeyEvent("ArrowDown"), 0);
 
 			// Should skip index 1 (disabled) and land on index 2
-			expect(onSelect).toHaveBeenCalledWith(optionsWithDisabled[2])
-		})
+			expect(onSelect).toHaveBeenCalledWith(optionsWithDisabled[2]);
+		});
 
 		it("does not call onSelect when all options are disabled", () => {
 			const allDisabled: Option[] = [
 				{ id: "a", label: "Alpha", disabled: true },
 				{ id: "b", label: "Beta", disabled: true },
-			]
+			];
 
 			const { result } = renderHook(() =>
 				useRadioGroupKeyboard({
@@ -199,14 +199,14 @@ describe("useRadioGroupKeyboard", () => {
 					getOptionId: (o) => o.id,
 					isOptionDisabled: (o) => !!o.disabled,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			result.current.handleKeyDown(makeKeyEvent("ArrowDown"), 0)
+			result.current.handleKeyDown(makeKeyEvent("ArrowDown"), 0);
 
-			expect(onSelect).not.toHaveBeenCalled()
-		})
-	})
+			expect(onSelect).not.toHaveBeenCalled();
+		});
+	});
 
 	// -------------------------------------------------------------------------
 	// Home / End navigation
@@ -219,22 +219,22 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			const event = makeKeyEvent("Home")
-			result.current.handleKeyDown(event, 3)
+			const event = makeKeyEvent("Home");
+			result.current.handleKeyDown(event, 3);
 
-			expect(onSelect).toHaveBeenCalledWith(OPTIONS[0])
-			expect(event.preventDefault).toHaveBeenCalled()
-		})
+			expect(onSelect).toHaveBeenCalledWith(OPTIONS[0]);
+			expect(event.preventDefault).toHaveBeenCalled();
+		});
 
 		it("skips disabled options when finding the first option", () => {
 			const optionsWithFirstDisabled: Option[] = [
 				{ id: "a", label: "Alpha", disabled: true },
 				{ id: "b", label: "Beta" },
 				{ id: "c", label: "Gamma" },
-			]
+			];
 
 			const { result } = renderHook(() =>
 				useRadioGroupKeyboard({
@@ -242,14 +242,14 @@ describe("useRadioGroupKeyboard", () => {
 					getOptionId: (o) => o.id,
 					isOptionDisabled: (o) => !!o.disabled,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			result.current.handleKeyDown(makeKeyEvent("Home"), 2)
+			result.current.handleKeyDown(makeKeyEvent("Home"), 2);
 
-			expect(onSelect).toHaveBeenCalledWith(optionsWithFirstDisabled[1])
-		})
-	})
+			expect(onSelect).toHaveBeenCalledWith(optionsWithFirstDisabled[1]);
+		});
+	});
 
 	describe("End key", () => {
 		it("moves to the last option", () => {
@@ -258,16 +258,16 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			const event = makeKeyEvent("End")
-			result.current.handleKeyDown(event, 0)
+			const event = makeKeyEvent("End");
+			result.current.handleKeyDown(event, 0);
 
-			expect(onSelect).toHaveBeenCalledWith(OPTIONS[OPTIONS.length - 1])
-			expect(event.preventDefault).toHaveBeenCalled()
-		})
-	})
+			expect(onSelect).toHaveBeenCalledWith(OPTIONS[OPTIONS.length - 1]);
+			expect(event.preventDefault).toHaveBeenCalled();
+		});
+	});
 
 	// -------------------------------------------------------------------------
 	// Unhandled keys
@@ -280,14 +280,14 @@ describe("useRadioGroupKeyboard", () => {
 					options: OPTIONS,
 					getOptionId: (o) => o.id,
 					onSelect,
-				})
-			)
+				}),
+			);
 
-			result.current.handleKeyDown(makeKeyEvent("Enter"), 0)
-			result.current.handleKeyDown(makeKeyEvent(" "), 0)
-			result.current.handleKeyDown(makeKeyEvent("Tab"), 0)
+			result.current.handleKeyDown(makeKeyEvent("Enter"), 0);
+			result.current.handleKeyDown(makeKeyEvent(" "), 0);
+			result.current.handleKeyDown(makeKeyEvent("Tab"), 0);
 
-			expect(onSelect).not.toHaveBeenCalled()
-		})
-	})
-})
+			expect(onSelect).not.toHaveBeenCalled();
+		});
+	});
+});

@@ -39,9 +39,7 @@ export function RejectRefundAlertDialog() {
 		}
 	};
 
-	const formattedAmount = dialog.data?.amount
-		? (dialog.data.amount / 100).toFixed(2)
-		: "0.00";
+	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
 
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
@@ -54,19 +52,17 @@ export function RejectRefundAlertDialog() {
 						<AlertDialogDescription asChild>
 							<div>
 								<p>
-									Refuser la demande de remboursement de{" "}
-									<strong>{formattedAmount} €</strong> pour la commande{" "}
-									<strong>{dialog.data?.orderNumber}</strong> ?
+									Refuser la demande de remboursement de <strong>{formattedAmount} €</strong> pour
+									la commande <strong>{dialog.data?.orderNumber}</strong> ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									Cette action est définitive. La demande sera marquée comme
-									refusée.
+									Cette action est définitive. La demande sera marquée comme refusée.
 								</p>
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					{state?.status && state.status !== ActionStatus.SUCCESS && (
-						<p className="text-sm text-destructive mb-4">{state.message}</p>
+						<p className="text-destructive mb-4 text-sm">{state.message}</p>
 					)}
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending}>

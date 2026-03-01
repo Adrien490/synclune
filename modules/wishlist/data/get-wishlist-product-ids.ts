@@ -29,10 +29,7 @@ export async function getWishlistProductIds(): Promise<Set<string>> {
 /**
  * Fonction cachée qui récupère les Product IDs de la wishlist
  */
-async function fetchWishlistProductIds(
-	userId?: string,
-	sessionId?: string
-): Promise<Set<string>> {
+async function fetchWishlistProductIds(userId?: string, sessionId?: string): Promise<Set<string>> {
 	"use cache: private";
 	cacheLife("cart");
 
@@ -55,7 +52,9 @@ async function fetchWishlistProductIds(
 		});
 
 		// Filtrer les nulls (ne devrait pas arriver avec le where ci-dessus, mais TypeScript l'exige)
-		return new Set(wishlistItems.map((item) => item.productId).filter((id): id is string => id !== null));
+		return new Set(
+			wishlistItems.map((item) => item.productId).filter((id): id is string => id !== null),
+		);
 	} catch {
 		return new Set<string>();
 	}

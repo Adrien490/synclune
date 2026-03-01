@@ -1,6 +1,6 @@
-import { prisma, notDeleted } from "@/shared/lib/prisma"
-import { SITE_URL } from "@/shared/constants/seo-config"
-import { NextResponse } from "next/server"
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { SITE_URL } from "@/shared/constants/seo-config";
+import { NextResponse } from "next/server";
 
 /**
  * Sitemap Images pour Google Images
@@ -44,30 +44,30 @@ export async function GET() {
 				},
 			},
 		},
-	})
+	});
 
 	// Construire le XML
 	const urlEntries = products
 		.map((product) => {
 			// Collecter toutes les images uniques du produit
-			const imageUrls = new Set<string>()
-			const images: Array<{ url: string; alt: string }> = []
+			const imageUrls = new Set<string>();
+			const images: Array<{ url: string; alt: string }> = [];
 
 			for (const sku of product.skus) {
 				for (const image of sku.images) {
 					if (!imageUrls.has(image.url)) {
-						imageUrls.add(image.url)
+						imageUrls.add(image.url);
 						images.push({
 							url: image.url,
 							alt:
 								image.altText ||
 								`${product.title} - ${product.type?.label || "Bijou artisanal"} fait main Synclune`,
-						})
+						});
 					}
 				}
 			}
 
-			if (images.length === 0) return null
+			if (images.length === 0) return null;
 
 			const imageElements = images
 				.map(
@@ -76,29 +76,29 @@ export async function GET() {
         <image:loc>${escapeXml(img.url)}</image:loc>
         <image:caption>${escapeXml(img.alt)}</image:caption>
         <image:title>${escapeXml(product.title)}</image:title>
-      </image:image>`
+      </image:image>`,
 				)
-				.join("")
+				.join("");
 
 			return `
   <url>
     <loc>${SITE_URL}/creations/${product.slug}</loc>${imageElements}
-  </url>`
+  </url>`;
 		})
 		.filter(Boolean)
-		.join("")
+		.join("");
 
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">${urlEntries}
-</urlset>`
+</urlset>`;
 
 	return new NextResponse(xml, {
 		headers: {
 			"Content-Type": "application/xml",
 			"Cache-Control": "public, max-age=86400, s-maxage=86400",
 		},
-	})
+	});
 }
 
 /**
@@ -110,5 +110,5 @@ function escapeXml(str: string): string {
 		.replace(/</g, "&lt;")
 		.replace(/>/g, "&gt;")
 		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&apos;")
+		.replace(/'/g, "&apos;");
 }

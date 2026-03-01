@@ -63,8 +63,7 @@ export const ShippingConfirmationEmail = ({
 						{shippingAddress.address2 && `, ${shippingAddress.address2}`}
 					</Text>
 					<Text style={EMAIL_STYLES.text.small}>
-						{shippingAddress.postalCode} {shippingAddress.city},{" "}
-						{shippingAddress.country}
+						{shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
 					</Text>
 				</Section>
 			</Section>
@@ -85,8 +84,7 @@ ShippingConfirmationEmail.PreviewProps = {
 	orderNumber: "CMD-1730000000-ABCD",
 	customerName: "Marie",
 	trackingNumber: "8N00234567890",
-	trackingUrl:
-		"https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
+	trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
 	carrierLabel: "Colissimo",
 	shippingAddress: {
 		firstName: "Marie",

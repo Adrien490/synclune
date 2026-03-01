@@ -33,7 +33,7 @@ export function createProductFilterFormatter(
 	colors: GetColorsReturn["colors"],
 	materials: MaterialOption[],
 	productTypes: ProductTypeOption[],
-	searchParams: ReadonlyURLSearchParams
+	searchParams: ReadonlyURLSearchParams,
 ) {
 	// Créer le mapping dynamique des couleurs
 	const colorMapping: Record<string, string> = {};
@@ -119,8 +119,7 @@ export function createProductFilterFormatter(
 
 		// Pour les filtres avec des valeurs prédéfinies
 		if ("values" in filterConfig && filterConfig.values) {
-			const mappedValue =
-				filterConfig.values[value as keyof typeof filterConfig.values];
+			const mappedValue = filterConfig.values[value as keyof typeof filterConfig.values];
 			if (mappedValue) {
 				displayValue = mappedValue;
 			}

@@ -81,11 +81,7 @@ import { mergeCarts } from "../merge-carts";
 // Factories
 // ============================================================================
 
-function makeGuestItem(
-	skuId: string,
-	quantity: number,
-	overrides: Record<string, unknown> = {}
-) {
+function makeGuestItem(skuId: string, quantity: number, overrides: Record<string, unknown> = {}) {
 	return {
 		id: `gi-${skuId}`,
 		skuId,
@@ -120,18 +116,14 @@ function setupDefaults() {
 	mockGetSession.mockResolvedValue({ user: { id: "user-1" } });
 	mockCheckMergeCartsRateLimit.mockResolvedValue({ success: true });
 	mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1", deletedAt: null });
-	mockGetGuestCartForMerge.mockResolvedValue(
-		makeGuestCart([makeGuestItem("sku-1", 2)])
-	);
+	mockGetGuestCartForMerge.mockResolvedValue(makeGuestCart([makeGuestItem("sku-1", 2)]));
 	mockGetUserCartForMerge.mockResolvedValue(makeUserCart());
-	mockBatchValidateSkusForMerge.mockResolvedValue(
-		new Map([["sku-1", { isValid: true }]])
-	);
+	mockBatchValidateSkusForMerge.mockResolvedValue(new Map([["sku-1", { isValid: true }]]));
 	mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
 		fn({
 			cartItem: { create: vi.fn(), update: vi.fn() },
 			cart: { delete: vi.fn() },
-		})
+		}),
 	);
 	mockGetCartInvalidationTags.mockReturnValue(["tag-1"]);
 }
@@ -213,61 +205,49 @@ describe("mergeCarts", () => {
 		expect(mockPrisma.cart.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ userId: "user-1", expiresAt: null }),
-			})
+			}),
 		);
 	});
 
 	it("uses MAX quantity strategy for conflicting items", async () => {
-		mockGetGuestCartForMerge.mockResolvedValue(
-			makeGuestCart([makeGuestItem("sku-1", 5)])
-		);
-		mockGetUserCartForMerge.mockResolvedValue(
-			makeUserCart([makeUserItem("sku-1", 3)])
-		);
-		mockBatchValidateSkusForMerge.mockResolvedValue(
-			new Map([["sku-1", { isValid: true }]])
-		);
+		mockGetGuestCartForMerge.mockResolvedValue(makeGuestCart([makeGuestItem("sku-1", 5)]));
+		mockGetUserCartForMerge.mockResolvedValue(makeUserCart([makeUserItem("sku-1", 3)]));
+		mockBatchValidateSkusForMerge.mockResolvedValue(new Map([["sku-1", { isValid: true }]]));
 
 		const mockCartItemUpdate = vi.fn();
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: unknown) => unknown) =>
-				fn({
-					cartItem: { create: vi.fn(), update: mockCartItemUpdate },
-					cart: { delete: vi.fn() },
-				})
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+			fn({
+				cartItem: { create: vi.fn(), update: mockCartItemUpdate },
+				cart: { delete: vi.fn() },
+			}),
 		);
 
 		await mergeCarts("user-1", "sess-1");
 		expect(mockCartItemUpdate).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: { quantity: 5 },
-			})
+			}),
 		);
 	});
 
 	it("adds new items from guest cart", async () => {
-		mockGetGuestCartForMerge.mockResolvedValue(
-			makeGuestCart([makeGuestItem("sku-new", 2)])
-		);
+		mockGetGuestCartForMerge.mockResolvedValue(makeGuestCart([makeGuestItem("sku-new", 2)]));
 		mockGetUserCartForMerge.mockResolvedValue(makeUserCart());
-		mockBatchValidateSkusForMerge.mockResolvedValue(
-			new Map([["sku-new", { isValid: true }]])
-		);
+		mockBatchValidateSkusForMerge.mockResolvedValue(new Map([["sku-new", { isValid: true }]]));
 
 		const mockCartItemCreate = vi.fn();
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: unknown) => unknown) =>
-				fn({
-					cartItem: { create: mockCartItemCreate, update: vi.fn() },
-					cart: { delete: vi.fn() },
-				})
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+			fn({
+				cartItem: { create: mockCartItemCreate, update: vi.fn() },
+				cart: { delete: vi.fn() },
+			}),
 		);
 
 		await mergeCarts("user-1", "sess-1");
 		expect(mockCartItemCreate).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ skuId: "sku-new", quantity: 2 }),
-			})
+			}),
 		);
 	});
 
@@ -277,16 +257,15 @@ describe("mergeCarts", () => {
 				makeGuestItem("sku-inactive", 1, {
 					sku: { isActive: false, product: { id: "p1", status: "PUBLIC" } },
 				}),
-			])
+			]),
 		);
 
 		const mockCartItemCreate = vi.fn();
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: unknown) => unknown) =>
-				fn({
-					cartItem: { create: mockCartItemCreate, update: vi.fn() },
-					cart: { delete: vi.fn() },
-				})
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+			fn({
+				cartItem: { create: mockCartItemCreate, update: vi.fn() },
+				cart: { delete: vi.fn() },
+			}),
 		);
 
 		await mergeCarts("user-1", "sess-1");
@@ -299,16 +278,15 @@ describe("mergeCarts", () => {
 				makeGuestItem("sku-draft", 1, {
 					sku: { isActive: true, product: { id: "p1", status: "DRAFT" } },
 				}),
-			])
+			]),
 		);
 
 		const mockCartItemCreate = vi.fn();
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: unknown) => unknown) =>
-				fn({
-					cartItem: { create: mockCartItemCreate, update: vi.fn() },
-					cart: { delete: vi.fn() },
-				})
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+			fn({
+				cartItem: { create: mockCartItemCreate, update: vi.fn() },
+				cart: { delete: vi.fn() },
+			}),
 		);
 
 		await mergeCarts("user-1", "sess-1");
@@ -316,20 +294,15 @@ describe("mergeCarts", () => {
 	});
 
 	it("skips items that fail validation", async () => {
-		mockGetGuestCartForMerge.mockResolvedValue(
-			makeGuestCart([makeGuestItem("sku-bad", 2)])
-		);
-		mockBatchValidateSkusForMerge.mockResolvedValue(
-			new Map([["sku-bad", { isValid: false }]])
-		);
+		mockGetGuestCartForMerge.mockResolvedValue(makeGuestCart([makeGuestItem("sku-bad", 2)]));
+		mockBatchValidateSkusForMerge.mockResolvedValue(new Map([["sku-bad", { isValid: false }]]));
 
 		const mockCartItemCreate = vi.fn();
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: unknown) => unknown) =>
-				fn({
-					cartItem: { create: mockCartItemCreate, update: vi.fn() },
-					cart: { delete: vi.fn() },
-				})
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+			fn({
+				cartItem: { create: mockCartItemCreate, update: vi.fn() },
+				cart: { delete: vi.fn() },
+			}),
 		);
 
 		await mergeCarts("user-1", "sess-1");
@@ -338,12 +311,11 @@ describe("mergeCarts", () => {
 
 	it("deletes guest cart in transaction", async () => {
 		const mockTxCartDelete = vi.fn();
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: unknown) => unknown) =>
-				fn({
-					cartItem: { create: vi.fn(), update: vi.fn() },
-					cart: { delete: mockTxCartDelete },
-				})
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+			fn({
+				cartItem: { create: vi.fn(), update: vi.fn() },
+				cart: { delete: mockTxCartDelete },
+			}),
 		);
 
 		await mergeCarts("user-1", "sess-1");
@@ -375,32 +347,27 @@ describe("mergeCarts", () => {
 
 		const result = await mergeCarts("user-1", "sess-1");
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toBe(
-			"Une erreur est survenue lors de la fusion des paniers"
-		);
+		expect(result.message).toBe("Une erreur est survenue lors de la fusion des paniers");
 		consoleSpy.mockRestore();
 	});
 
 	it("returns merged items and conflicts count on success", async () => {
 		mockGetGuestCartForMerge.mockResolvedValue(
-			makeGuestCart([makeGuestItem("sku-1", 2), makeGuestItem("sku-2", 1)])
+			makeGuestCart([makeGuestItem("sku-1", 2), makeGuestItem("sku-2", 1)]),
 		);
-		mockGetUserCartForMerge.mockResolvedValue(
-			makeUserCart([makeUserItem("sku-1", 3)])
-		);
+		mockGetUserCartForMerge.mockResolvedValue(makeUserCart([makeUserItem("sku-1", 3)]));
 		mockBatchValidateSkusForMerge.mockResolvedValue(
 			new Map([
 				["sku-1", { isValid: true }],
 				["sku-2", { isValid: true }],
-			])
+			]),
 		);
 
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: unknown) => unknown) =>
-				fn({
-					cartItem: { create: vi.fn(), update: vi.fn() },
-					cart: { delete: vi.fn() },
-				})
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+			fn({
+				cartItem: { create: vi.fn(), update: vi.fn() },
+				cart: { delete: vi.fn() },
+			}),
 		);
 
 		const result = await mergeCarts("user-1", "sess-1");

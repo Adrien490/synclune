@@ -20,7 +20,7 @@ export async function NewsletterSection() {
 			aria-labelledby="newsletter-title"
 			aria-describedby="newsletter-subtitle"
 			className={cn(
-				"relative overflow-hidden bg-muted/20",
+				"bg-muted/20 relative overflow-hidden",
 				"mask-t-from-90% mask-t-to-100% mask-b-from-90% mask-b-to-100%",
 				SECTION_SPACING.section,
 			)}
@@ -32,27 +32,43 @@ export async function NewsletterSection() {
 						<SectionTitle id="newsletter-title">Ma newsletter</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
-					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
+					<Fade
+						y={MOTION_CONFIG.section.subtitle.y}
+						delay={MOTION_CONFIG.section.subtitle.delay}
+						duration={MOTION_CONFIG.section.subtitle.duration}
+					>
 						<p
 							id="newsletter-subtitle"
-							className="mt-5 text-lg/8 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
+							className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal antialiased"
 						>
-							Les nouveautés en avant-première, des offres exclusives et
-							des surprises réservées aux abonnées !
+							Les nouveautés en avant-première, des offres exclusives et des surprises réservées aux
+							abonnées !
 						</p>
 					</Fade>
 				</header>
 
 				{/* Centered form */}
-				<Fade inView once y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration}>
-					<div className="max-w-md mx-auto">
+				<Fade
+					inView
+					once
+					y={MOTION_CONFIG.section.cta.y}
+					delay={MOTION_CONFIG.section.cta.delay}
+					duration={MOTION_CONFIG.section.cta.duration}
+				>
+					<div className="mx-auto max-w-md">
 						<NewsletterForm />
 					</div>
 				</Fade>
 
 				{/* Anti-spam assurance */}
-				<Fade inView once y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
-					<p className="mt-6 text-center text-sm text-muted-foreground">
+				<Fade
+					inView
+					once
+					y={MOTION_CONFIG.section.subtitle.y}
+					delay={MOTION_CONFIG.section.cta.delay}
+					duration={MOTION_CONFIG.section.subtitle.duration}
+				>
+					<p className="text-muted-foreground mt-6 text-center text-sm">
 						1 à 2 emails par mois maximum. Désinscription en un clic.
 					</p>
 				</Fade>

@@ -18,18 +18,13 @@ export function BottomNavItem({ item, isActive }: BottomNavItemProps) {
 	return (
 		<Link
 			href={item.url}
-			className={cn(
-				navItemStyles.base,
-				isActive ? navItemStyles.active : navItemStyles.inactive
-			)}
+			className={cn(navItemStyles.base, isActive ? navItemStyles.active : navItemStyles.inactive)}
 			aria-label={item.title}
 			aria-current={isActive ? "page" : undefined}
 		>
 			{isActive && <ActiveIndicator />}
 			<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-			<span className="text-sm leading-none">
-				{item.shortTitle || item.title}
-			</span>
+			<span className="text-sm leading-none">{item.shortTitle || item.title}</span>
 		</Link>
 	);
 }
