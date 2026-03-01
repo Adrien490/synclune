@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { motion, useInView, useReducedMotion } from "motion/react";
+import { m, useInView, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 import { seededRandom } from "@/shared/utils/seeded-random";
 
@@ -161,7 +161,7 @@ const BubbleSet = ({ bubbles, speed, isInView, reducedMotion }: BubbleSetProps) 
 						};
 
 				return (
-					<motion.div
+					<m.div
 						key={bubble.id}
 						className="absolute rounded-full will-change-transform"
 						style={{

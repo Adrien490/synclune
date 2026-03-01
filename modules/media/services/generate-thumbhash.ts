@@ -44,7 +44,7 @@ function isValidThumbHashDataUrl(dataUrl: string): boolean {
  */
 async function extractRgbaData(
 	buffer: Buffer,
-	maxSize: number
+	maxSize: number,
 ): Promise<{ rgba: Uint8Array; width: number; height: number }> {
 	const image = sharp(buffer).ensureAlpha();
 
@@ -82,14 +82,13 @@ async function extractRgbaData(
  */
 export async function generateThumbHash(
 	imageUrl: string,
-	options: GenerateThumbHashOptions = {}
+	options: GenerateThumbHashOptions = {},
 ): Promise<ThumbHashResult | undefined> {
-	const validateDomain = options.validateDomain ?? true;
 	const maxSize = options.maxSize ?? THUMBHASH_CONFIG.maxSize;
 	const log = options.logWarning ?? defaultLogger;
 
 	// Source domain validation (SSRF protection)
-	if (validateDomain && !isValidUploadThingUrl(imageUrl)) {
+	if (!isValidUploadThingUrl(imageUrl)) {
 		log("[ThumbHash] Domaine non autorise", { url: truncateUrl(imageUrl) });
 		return undefined;
 	}
@@ -139,13 +138,12 @@ export async function generateThumbHash(
  */
 export async function generateThumbHashWithRetry(
 	imageUrl: string,
-	options: GenerateThumbHashOptions = {}
+	options: GenerateThumbHashOptions = {},
 ): Promise<ThumbHashResult> {
-	const validateDomain = options.validateDomain ?? true;
 	const maxSize = options.maxSize ?? THUMBHASH_CONFIG.maxSize;
 
 	// Source domain validation (SSRF protection)
-	if (validateDomain && !isValidUploadThingUrl(imageUrl)) {
+	if (!isValidUploadThingUrl(imageUrl)) {
 		throw new Error(`Domaine non autorise: ${new URL(imageUrl).hostname}`);
 	}
 
@@ -174,7 +172,7 @@ export async function generateThumbHashWithRetry(
 		{
 			maxRetries: THUMBHASH_CONFIG.maxRetries,
 			baseDelay: THUMBHASH_CONFIG.retryBaseDelay,
-		}
+		},
 	);
 }
 
@@ -187,14 +185,14 @@ export async function generateThumbHashWithRetry(
  */
 export async function generateThumbHashFromBuffer(
 	buffer: Buffer,
-	options: Pick<GenerateThumbHashOptions, "maxSize" | "maxImageSize"> = {}
+	options: Pick<GenerateThumbHashOptions, "maxSize" | "maxImageSize"> = {},
 ): Promise<ThumbHashResult> {
 	const maxSize = options.maxSize ?? THUMBHASH_CONFIG.maxSize;
 	const maxImageSize = options.maxImageSize ?? THUMBHASH_CONFIG.maxImageSize;
 
 	if (buffer.length > maxImageSize) {
 		throw new Error(
-			`Image trop volumineuse: ${(buffer.length / 1024 / 1024).toFixed(2)}MB (max: ${(maxImageSize / 1024 / 1024).toFixed(0)}MB)`
+			`Image trop volumineuse: ${(buffer.length / 1024 / 1024).toFixed(2)}MB (max: ${(maxImageSize / 1024 / 1024).toFixed(0)}MB)`,
 		);
 	}
 
@@ -212,4 +210,3 @@ export async function generateThumbHashFromBuffer(
 
 	return { hash, dataUrl, width, height };
 }
-

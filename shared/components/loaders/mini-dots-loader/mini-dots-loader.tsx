@@ -1,17 +1,13 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { bgColorClass, loaderAnimations, sizeClasses } from "./constants";
 import { MiniDotsLoaderProps } from "./types";
 
-export function MiniDotsLoader({
-	size = "sm",
-	color = "primary",
-	className,
-}: MiniDotsLoaderProps) {
+export function MiniDotsLoader({ size = "sm", color = "primary", className }: MiniDotsLoaderProps) {
 	return (
-		<motion.div
+		<m.div
 			role="status"
 			aria-label="Chargement en cours"
 			className={cn("inline-flex gap-0.5", className)}
@@ -20,14 +16,10 @@ export function MiniDotsLoader({
 			animate="animate"
 		>
 			{[0, 1, 2].map((i) => (
-				<motion.span
+				<m.span
 					key={i}
 					variants={loaderAnimations.dot}
-					className={cn(
-						"inline-block rounded-full",
-						sizeClasses.dots[size],
-						bgColorClass[color]
-					)}
+					className={cn("inline-block rounded-full", sizeClasses.dots[size], bgColorClass[color])}
 					transition={{
 						duration: 0.6,
 						repeat: Infinity,
@@ -37,6 +29,6 @@ export function MiniDotsLoader({
 					}}
 				/>
 			))}
-		</motion.div>
+		</m.div>
 	);
 }

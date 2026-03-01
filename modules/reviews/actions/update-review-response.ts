@@ -2,8 +2,9 @@
 
 import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { logAudit } from "@/shared/lib/audit-log";
 import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config";
 import { success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -23,8 +24,9 @@ export async function updateReviewResponse(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.RESPONSE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -76,6 +78,15 @@ export async function updateReviewResponse(
 		await prisma.reviewResponse.update({
 			where: { id },
 			data: { content: sanitizedContent },
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "review.updateResponse",
+			targetType: "reviewResponse",
+			targetId: id,
+			metadata: { reviewId: response.review.id },
 		});
 
 		// 5. Invalider le cache

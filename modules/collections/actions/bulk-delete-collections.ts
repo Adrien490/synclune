@@ -1,7 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
@@ -14,12 +15,13 @@ import { bulkDeleteCollectionsSchema } from "../schemas/collection.schemas";
 
 export async function bulkDeleteCollections(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Admin auth check
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.BULK_DELETE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -57,10 +59,7 @@ export async function bulkDeleteCollections(
 
 		// Note: On peut supprimer les collections meme avec des produits
 		// car la relation est onDelete: SetNull (les produits seront preserves)
-		const totalProducts = collectionsWithUsage.reduce(
-			(sum, col) => sum + col._count.products,
-			0
-		);
+		const totalProducts = collectionsWithUsage.reduce((sum, col) => sum + col._count.products, 0);
 
 		// Supprimer les collections
 		const result = await prisma.collection.deleteMany({
@@ -73,9 +72,18 @@ export async function bulkDeleteCollections(
 
 		// Invalider le cache pour chaque collection supprimee
 		for (const collection of collectionsWithUsage) {
-			getCollectionInvalidationTags(collection.slug).forEach(tag => updateTag(tag));
+			getCollectionInvalidationTags(collection.slug).forEach((tag) => updateTag(tag));
 		}
 		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "collection.bulkDelete",
+			targetType: "collection",
+			targetId: validatedData.ids.join(","),
+			metadata: { count: result.count, totalProducts },
+		});
 
 		// Message avec info sur les produits
 		const message =

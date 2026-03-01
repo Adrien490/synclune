@@ -1,13 +1,13 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, success, error, notFound, validationError } from "@/shared/lib/actions";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -25,8 +25,9 @@ export async function deleteProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_DELETE_LIMIT);
@@ -41,11 +42,7 @@ export async function deleteProductSku(
 		const result = deleteProductSkuSchema.safeParse(rawData);
 
 		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message ?? "Données invalides.",
-			};
+			return validationError(result.error.issues[0]?.message ?? "Données invalides.");
 		}
 
 		const { skuId: validatedSkuId } = result.data;
@@ -92,19 +89,14 @@ export async function deleteProductSku(
 		});
 
 		if (!existingSku) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "La variante de produit n'existe pas.",
-			};
+			return notFound("Variante de produit");
 		}
 
 		// 5. Verifier qu'il y a au moins 2 SKUs pour le produit
 		if (existingSku.product._count.skus <= 1) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					"Impossible de supprimer la derniere variante d'un produit. Un produit doit avoir au moins une variante.",
-			};
+			return error(
+				"Impossible de supprimer la derniere variante d'un produit. Un produit doit avoir au moins une variante.",
+			);
 		}
 
 		// 6. CRITIQUE : Verifier que le SKU n'est pas associe a des commandes
@@ -112,12 +104,10 @@ export async function deleteProductSku(
 		const orderItemsCount = existingSku._count.orderItems;
 
 		if (orderItemsCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					`Cette variante ne peut pas être supprimée car elle est associée à ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
+			return error(
+				`Cette variante ne peut pas être supprimée car elle est associée à ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
 					"Pour conserver l'historique des commandes, veuillez désactiver cette variante à la place.",
-			};
+			);
 		}
 
 		// 6b. CRITIQUE : Verifier que le SKU n'est pas dans des paniers
@@ -125,12 +115,10 @@ export async function deleteProductSku(
 		const cartItemsCount = existingSku._count.cartItems;
 
 		if (cartItemsCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					`Cette variante ne peut pas être supprimée car elle est présente dans ${cartItemsCount} panier${cartItemsCount > 1 ? "s" : ""}. ` +
+			return error(
+				`Cette variante ne peut pas être supprimée car elle est présente dans ${cartItemsCount} panier${cartItemsCount > 1 ? "s" : ""}. ` +
 					"Veuillez désactiver cette variante à la place.",
-			};
+			);
 		}
 
 		// 7. Pour les produits PUBLIC : verifier qu'il reste au moins 1 SKU actif apres suppression
@@ -139,11 +127,9 @@ export async function deleteProductSku(
 			const activeSkusCount = existingSku.product.skus.length;
 
 			if (activeSkusCount <= 1) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
-						"Impossible de supprimer la derniere variante active d'un produit PUBLIC. Veuillez creer une autre variante active ou mettre le produit en DRAFT.",
-				};
+				return error(
+					"Impossible de supprimer la derniere variante active d'un produit PUBLIC. Veuillez creer une autre variante active ou mettre le produit en DRAFT.",
+				);
 			}
 		}
 
@@ -203,21 +189,27 @@ export async function deleteProductSku(
 		);
 		tags.forEach((tag) => updateTag(tag));
 
-		// 13. Success
+		// 13. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "sku.delete",
+			targetType: "sku",
+			targetId: validatedSkuId,
+			metadata: { sku: existingSku.sku, productTitle: existingSku.product.title },
+		});
+
+		// 14. Success
 		const successMessage = promotedSkuSku
 			? `Variante ${existingSku.sku} supprimée avec succès. La variante ${promotedSkuSku} est maintenant la variante principale.`
 			: `Variante ${existingSku.sku} supprimée avec succès.`;
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: successMessage,
-			data: {
-				skuId: validatedSkuId,
-				sku: existingSku.sku,
-				productTitle: existingSku.product.title,
-				promotedSku: promotedSkuSku,
-			},
-		};
+		return success(successMessage, {
+			skuId: validatedSkuId,
+			sku: existingSku.sku,
+			productTitle: existingSku.product.title,
+			promotedSku: promotedSkuSku,
+		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression de la variante");
 	}

@@ -16,7 +16,7 @@ const SizeGuideDialog = dynamic(() =>
 );
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { Check } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 
 interface SizeSelectorProps {
 	sizes: Size[];
@@ -159,7 +159,7 @@ export function SizeSelector({
 								{sizeOption.size}
 							</span>
 							{isSelected && (
-								<motion.div
+								<m.div
 									initial={shouldReduceMotion ? {} : { scale: 0 }}
 									animate={{ scale: 1 }}
 									transition={
@@ -170,7 +170,7 @@ export function SizeSelector({
 									className="absolute top-1.5 right-1.5"
 								>
 									<Check className="text-primary h-3.5 w-3.5" aria-hidden="true" />
-								</motion.div>
+								</m.div>
 							)}
 						</button>
 					);

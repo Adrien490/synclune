@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -16,12 +17,13 @@ import { updateProductTypeSchema } from "../schemas/product-type.schemas";
 
 export async function updateProductType(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification de l'authentification et des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.UPDATE);
@@ -51,7 +53,9 @@ export async function updateProductType(
 
 		// 5. Protection: Les types systeme ne peuvent pas etre modifies (label/slug)
 		if (existingType.isSystem) {
-			return error(`Le type "${existingType.label}" est un type systeme et ne peut pas etre modifie`);
+			return error(
+				`Le type "${existingType.label}" est un type systeme et ne peut pas etre modifie`,
+			);
 		}
 
 		// 6. Verifier l'unicite du label (sauf si c'est le meme)
@@ -76,11 +80,18 @@ export async function updateProductType(
 			where: { id: validatedData.id },
 			data: {
 				label: sanitizeText(validatedData.label),
-				description: validatedData.description
-					? sanitizeText(validatedData.description)
-					: null,
+				description: validatedData.description ? sanitizeText(validatedData.description) : null,
 				slug,
 			},
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "productType.update",
+			targetType: "productType",
+			targetId: validatedData.id,
+			metadata: { label: validatedData.label },
 		});
 
 		// 9. Invalider le cache des types de produits

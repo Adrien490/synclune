@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -14,12 +15,13 @@ import { bulkToggleColorStatusSchema } from "../schemas/color.schemas";
 
 export async function bulkToggleColorStatus(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Admin authorization check
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.BULK_OPERATIONS);
@@ -52,12 +54,23 @@ export async function bulkToggleColorStatus(
 			},
 		});
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "color.bulkToggleStatus",
+			targetType: "color",
+			targetId: validatedData.ids.join(","),
+			metadata: { count: result.count, isActive: validatedData.isActive },
+		});
+
 		// Invalidate cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
 		const statusText = validatedData.isActive ? "activée" : "désactivée";
-		return success(`${result.count} couleur${result.count > 1 ? "s" : ""} ${statusText}${result.count > 1 ? "s" : ""} avec succès`);
+		return success(
+			`${result.count} couleur${result.count > 1 ? "s" : ""} ${statusText}${result.count > 1 ? "s" : ""} avec succès`,
+		);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le statut des couleurs");
 	}

@@ -61,6 +61,10 @@ export const EMAIL_SUBJECTS = {
 	CUSTOMIZATION_CANCELLED: "Votre demande de personnalisation a été annulée - Synclune",
 	ACCOUNT_DELETED: "Votre compte a été supprimé - Synclune",
 	REVIEW_REQUEST: "Votre avis compte ! - Synclune",
+	REVIEW_REMINDER: "Rappel : votre avis compte ! - Synclune",
 	REVIEW_RESPONSE: "Nous avons répondu à votre avis - Synclune",
 	WELCOME: "Bienvenue chez Synclune ! ✨",
+	ABANDONED_CART: "Vous avez oublié quelque chose... - Synclune",
+	BACK_IN_STOCK: "Bonne nouvelle ! Un article de votre liste est de retour - Synclune",
+	CROSS_SELL: "Complétez votre collection - Synclune",
 } as const;

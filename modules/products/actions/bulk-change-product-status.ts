@@ -1,12 +1,19 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_BULK_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	notFound,
+	validationError,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { bulkChangeProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../utils/cache.utils";
@@ -18,12 +25,13 @@ import { validateProductForPublication } from "../services/product-validation.se
  */
 export async function bulkChangeProductStatus(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_BULK_STATUS_LIMIT);
@@ -83,12 +91,10 @@ export async function bulkChangeProductStatus(
 		}
 
 		// 5. Verifier qu'aucun produit n'est archive
-		const archivedProducts = existingProducts.filter(
-			(p) => p.status === "ARCHIVED"
-		);
+		const archivedProducts = existingProducts.filter((p) => p.status === "ARCHIVED");
 		if (archivedProducts.length > 0) {
 			return validationError(
-				"Impossible de changer le statut de produits archives. Veuillez d'abord les restaurer."
+				"Impossible de changer le statut de produits archives. Veuillez d'abord les restaurer.",
 			);
 		}
 
@@ -103,7 +109,7 @@ export async function bulkChangeProductStatus(
 			}
 			if (invalidProducts.length > 0) {
 				return validationError(
-					`Impossible de publier ${invalidProducts.length} produit${invalidProducts.length > 1 ? "s" : ""} : ${invalidProducts.join(", ")}. Chaque produit doit avoir au moins un SKU actif avec du stock et une image.`
+					`Impossible de publier ${invalidProducts.length} produit${invalidProducts.length > 1 ? "s" : ""} : ${invalidProducts.join(", ")}. Chaque produit doit avoir au moins un SKU actif avec du stock et une image.`,
 				);
 			}
 		}
@@ -123,7 +129,7 @@ export async function bulkChangeProductStatus(
 		// 7. Invalidate cache tags pour tous les produits
 		for (const product of existingProducts) {
 			const productTags = getProductInvalidationTags(product.slug, product.id);
-			productTags.forEach(tag => updateTag(tag));
+			productTags.forEach((tag) => updateTag(tag));
 		}
 
 		// 7.1 Invalider les caches des collections associees (deduplique)
@@ -139,9 +145,18 @@ export async function bulkChangeProductStatus(
 
 		// 8. Message de succes
 		const count = existingProducts.length;
-		const actionLabel =
-			validatedData.targetStatus === "PUBLIC" ? "publié" : "mis en brouillon";
+		const actionLabel = validatedData.targetStatus === "PUBLIC" ? "publié" : "mis en brouillon";
 		const successMessage = `${count} produit${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succès`;
+
+		// 9. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "product.bulkChangeStatus",
+			targetType: "product",
+			targetId: validatedData.productIds.join(","),
+			metadata: { count, targetStatus: validatedData.targetStatus },
+		});
 
 		return success(successMessage, {
 			productIds: validatedData.productIds,

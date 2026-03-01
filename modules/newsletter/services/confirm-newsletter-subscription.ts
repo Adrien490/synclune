@@ -9,6 +9,7 @@ import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 import { confirmationTokenSchema } from "../schemas/newsletter.schemas";
 import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
+import { createNewsletterPromoCode } from "./create-newsletter-promo-code";
 
 interface ConfirmResult {
 	success: boolean;
@@ -21,7 +22,7 @@ interface ConfirmResult {
  * Follows the webhook exception pattern: transactional service with complete logic.
  */
 export async function confirmNewsletterSubscription(
-	token: string | undefined
+	token: string | undefined,
 ): Promise<ConfirmResult> {
 	try {
 		// Arcjet protection: Shield + Rate Limiting against brute-force
@@ -39,26 +40,21 @@ export async function confirmNewsletterSubscription(
 			if (decision.reason.isRateLimit()) {
 				return {
 					success: false,
-					message:
-						"Trop de tentatives de confirmation. Veuillez réessayer dans quelques minutes.",
+					message: "Trop de tentatives de confirmation. Veuillez réessayer dans quelques minutes.",
 				};
 			}
 
 			if (decision.reason.isShield()) {
-				console.warn(
-					"[CONFIRM_SUBSCRIPTION] Shield blocked suspicious request"
-				);
+				console.warn("[CONFIRM_SUBSCRIPTION] Shield blocked suspicious request");
 				return {
 					success: false,
-					message:
-						"Votre requête a été bloquée pour des raisons de sécurité.",
+					message: "Votre requête a été bloquée pour des raisons de sécurité.",
 				};
 			}
 
 			return {
 				success: false,
-				message:
-					"Votre requête n'a pas pu être traitée. Veuillez réessayer.",
+				message: "Votre requête n'a pas pu être traitée. Veuillez réessayer.",
 			};
 		}
 
@@ -85,8 +81,7 @@ export async function confirmNewsletterSubscription(
 		if (!subscriber) {
 			return {
 				success: false,
-				message:
-					"Lien de confirmation invalide ou expiré. Veuillez vous réinscrire.",
+				message: "Lien de confirmation invalide ou expiré. Veuillez vous réinscrire.",
 			};
 		}
 
@@ -94,8 +89,7 @@ export async function confirmNewsletterSubscription(
 		if (subscriber.status === NewsletterStatus.CONFIRMED) {
 			return {
 				success: true,
-				message:
-					"Votre email est déjà confirmé ! Vous êtes bien inscrit(e).",
+				message: "Votre email est déjà confirmé ! Vous êtes bien inscrit(e).",
 			};
 		}
 
@@ -103,13 +97,11 @@ export async function confirmNewsletterSubscription(
 		if (!subscriber.confirmationSentAt) {
 			return {
 				success: false,
-				message:
-					"Lien de confirmation invalide. Veuillez vous réinscrire.",
+				message: "Lien de confirmation invalide. Veuillez vous réinscrire.",
 			};
 		}
 
-		const tokenAge =
-			Date.now() - new Date(subscriber.confirmationSentAt).getTime();
+		const tokenAge = Date.now() - new Date(subscriber.confirmationSentAt).getTime();
 		const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
 
 		if (tokenAge > sevenDaysInMs) {
@@ -121,8 +113,7 @@ export async function confirmNewsletterSubscription(
 		}
 
 		// Get confirmation IP for GDPR traceability
-		const confirmationIpAddress =
-			(await getClientIp(headersList)) || "unknown";
+		const confirmationIpAddress = (await getClientIp(headersList)) || "unknown";
 
 		// Activate subscriber
 		await prisma.newsletterSubscriber.update({
@@ -140,18 +131,24 @@ export async function confirmNewsletterSubscription(
 		// Invalidate cache (pass userId to invalidate user-specific status)
 		getNewsletterInvalidationTags(subscriber.userId ?? undefined).forEach((tag) => updateTag(tag));
 
+		// Generate unique -10% promo code for the new subscriber
+		let promoCode: string | undefined;
+		try {
+			promoCode = await createNewsletterPromoCode();
+		} catch (promoError) {
+			console.error("[CONFIRM_SUBSCRIPTION] Erreur création code promo:", promoError);
+		}
+
 		// Send welcome email (non-blocking: don't fail confirmation if email fails)
 		try {
 			const unsubscribeUrl = `${NEWSLETTER_BASE_URL}/newsletter/unsubscribe?token=${subscriber.unsubscribeToken}`;
 			await sendNewsletterWelcomeEmail({
 				to: subscriber.email,
 				unsubscribeUrl,
+				promoCode,
 			});
 		} catch (emailError) {
-			console.error(
-				"[CONFIRM_SUBSCRIPTION] Erreur envoi email bienvenue:",
-				emailError
-			);
+			console.error("[CONFIRM_SUBSCRIPTION] Erreur envoi email bienvenue:", emailError);
 		}
 
 		return {

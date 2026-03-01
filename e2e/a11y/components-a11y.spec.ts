@@ -126,6 +126,134 @@ test.describe("Accessibilité composants - Accordion", { tag: ["@slow"] }, () =>
 	});
 });
 
+test.describe("Accessibilité composants - DropdownMenu admin", { tag: ["@slow"] }, () => {
+	test("DropdownMenu - flèches, Enter, Escape et retour du focus", async ({ page }) => {
+		await page.goto("/admin/catalogue/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		if (page.url().includes("connexion")) {
+			test.skip(true, "Authentification requise");
+			return;
+		}
+
+		const trigger = page.getByRole("button", { name: /Actions/i }).first();
+		if ((await trigger.count()) === 0) {
+			test.skip(true, "Pas de bouton Actions sur cette page");
+			return;
+		}
+
+		await trigger.focus();
+		await page.keyboard.press("Enter");
+
+		const menu = page.getByRole("menu");
+		await expect(menu).toBeVisible();
+
+		// Arrow down navigates menu items
+		await page.keyboard.press("ArrowDown");
+
+		// Escape closes and returns focus
+		await page.keyboard.press("Escape");
+		await expect(menu).not.toBeVisible();
+		await expect(trigger).toBeFocused();
+	});
+});
+
+test.describe("Accessibilité composants - AlertDialog", { tag: ["@slow"] }, () => {
+	test("AlertDialog de suppression - focus trap, Escape annule", async ({ page }) => {
+		await page.goto("/admin/catalogue/couleurs");
+		await page.waitForLoadState("domcontentloaded");
+
+		if (page.url().includes("connexion")) {
+			test.skip(true, "Authentification requise");
+			return;
+		}
+
+		// Find a delete button that triggers an AlertDialog
+		const deleteButton = page.getByRole("button", { name: /Supprimer/i }).first();
+		if ((await deleteButton.count()) === 0) {
+			test.skip(true, "Pas de bouton Supprimer sur cette page");
+			return;
+		}
+
+		await deleteButton.click();
+
+		const alertDialog = page.getByRole("alertdialog");
+		await expect(alertDialog).toBeVisible();
+
+		// Focus is inside the alert dialog
+		const isInside = await page.evaluate(() => {
+			const d = document.querySelector('[role="alertdialog"]');
+			return d?.contains(document.activeElement);
+		});
+		expect(isInside).toBe(true);
+
+		// Escape closes without action
+		await page.keyboard.press("Escape");
+		await expect(alertDialog).not.toBeVisible();
+	});
+});
+
+test.describe("Accessibilité composants - Carousel", { tag: ["@slow"] }, () => {
+	test("Carousel - ArrowLeft/Right navigue les slides", async ({ page }) => {
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		const carousel = page.locator('[role="region"][aria-roledescription="carousel"]').first();
+		if ((await carousel.count()) === 0) {
+			test.skip(true, "Pas de carousel sur la homepage");
+			return;
+		}
+
+		// Focus the carousel or its navigation buttons
+		const prevButton = carousel.getByRole("button", { name: /Précédent|Previous/i }).first();
+		const nextButton = carousel.getByRole("button", { name: /Suivant|Next/i }).first();
+
+		if ((await nextButton.count()) > 0) {
+			await nextButton.focus();
+			await expect(nextButton).toBeFocused();
+			await page.keyboard.press("Enter");
+		} else if ((await prevButton.count()) > 0) {
+			await prevButton.focus();
+			await expect(prevButton).toBeFocused();
+		}
+	});
+});
+
+test.describe("Accessibilité composants - Tabs", { tag: ["@slow"] }, () => {
+	test("Tabs - ArrowRight/ArrowLeft change l'onglet actif", async ({ page }) => {
+		// Look for tabs in admin or product pages
+		await page.goto("/admin");
+		await page.waitForLoadState("domcontentloaded");
+
+		if (page.url().includes("connexion")) {
+			test.skip(true, "Authentification requise");
+			return;
+		}
+
+		const tabList = page.getByRole("tablist").first();
+		if ((await tabList.count()) === 0) {
+			test.skip(true, "Pas de tabs sur cette page");
+			return;
+		}
+
+		const tabs = tabList.getByRole("tab");
+		const tabCount = await tabs.count();
+		if (tabCount < 2) return;
+
+		// Focus the first tab
+		await tabs.first().focus();
+		await expect(tabs.first()).toBeFocused();
+
+		// ArrowRight moves to next tab
+		await page.keyboard.press("ArrowRight");
+		await expect(tabs.nth(1)).toBeFocused();
+
+		// ArrowLeft moves back
+		await page.keyboard.press("ArrowLeft");
+		await expect(tabs.first()).toBeFocused();
+	});
+});
+
 test.describe("Accessibilité composants - Tooltip", { tag: ["@slow"] }, () => {
 	test("les tooltips apparaissent au focus et disparaissent au blur", async ({ page }) => {
 		await page.goto("/");

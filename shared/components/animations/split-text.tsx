@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 
 export interface SplitTextProps {
 	children: string;
@@ -36,7 +36,7 @@ export function SplitText({ children, stagger = 0.08, className }: SplitTextProp
 	// Always render same DOM structure to avoid hydration mismatch
 	// (useReducedMotion returns null on server, true/false on client)
 	return (
-		<motion.span
+		<m.span
 			className={className}
 			initial={prefersReducedMotion ? "visible" : "hidden"}
 			animate="visible"
@@ -44,7 +44,7 @@ export function SplitText({ children, stagger = 0.08, className }: SplitTextProp
 			aria-label={children}
 		>
 			{words.map((word, i) => (
-				<motion.span
+				<m.span
 					key={`${word}-${i}`}
 					variants={wordVariants}
 					transition={
@@ -55,8 +55,8 @@ export function SplitText({ children, stagger = 0.08, className }: SplitTextProp
 				>
 					{word}
 					{i < words.length - 1 && "\u00A0"}
-				</motion.span>
+				</m.span>
 			))}
-		</motion.span>
+		</m.span>
 	);
 }

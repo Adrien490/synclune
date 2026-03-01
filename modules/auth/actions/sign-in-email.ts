@@ -6,12 +6,13 @@ import type { ActionState } from "@/shared/types/server-action";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { AUTH_ERROR_CODES } from "../constants/error-messages";
 import { signInEmailSchema } from "../schemas/auth.schemas";
 import { checkArcjetProtection } from "../utils/arcjet-protection";
 
 export const signInEmail = async (
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
@@ -65,9 +66,7 @@ export const signInEmail = async (
 			}
 
 			if (errorMessage.includes("email") && errorMessage.includes("not verified")) {
-				return error(
-					"EMAIL_NOT_VERIFIED"
-				);
+				return error(AUTH_ERROR_CODES.EMAIL_NOT_VERIFIED);
 			}
 		}
 

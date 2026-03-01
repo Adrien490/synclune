@@ -1,6 +1,6 @@
 "use client";
 
-import { type MotionValue, motion, useMotionValue, useTransform } from "motion/react";
+import { type MotionValue, m, useMotionValue, useTransform } from "motion/react";
 import { ANIMATION_PRESETS } from "./constants";
 import type { Particle, ParticleSetProps } from "./types";
 import { getShapeStyles, getSvgConfig, getTransition, isSvgShape } from "./utils";
@@ -33,9 +33,21 @@ function resolveShape(p: Particle) {
 }
 
 /** SVG shape element shared by both animated and static particles */
-function SvgShape({ config, color }: { config: { viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" }; color: string }) {
+function SvgShape({
+	config,
+	color,
+}: {
+	config: { viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" };
+	color: string;
+}) {
 	return (
-		<svg viewBox={config.viewBox} className="w-full h-full" fill={color} aria-hidden="true" role="presentation">
+		<svg
+			viewBox={config.viewBox}
+			className="h-full w-full"
+			fill={color}
+			aria-hidden="true"
+			role="presentation"
+		>
 			<path d={config.path} fillRule={config.fillRule} />
 		</svg>
 	);
@@ -43,8 +55,8 @@ function SvgShape({ config, color }: { config: { viewBox: string; path: string; 
 
 /**
  * Animated particle with mouse parallax.
- * Uses an outer motion.span for the mouse offset (transforms driven by MotionValues)
- * and an inner motion.span for the looping keyframe animation, avoiding conflicts.
+ * Uses an outer m.span for the mouse offset (transforms driven by MotionValues)
+ * and an inner m.span for the looping keyframe animation, avoiding conflicts.
  *
  * Opacity is controlled at two levels:
  * 1. **Animation preset** — keyframe opacity in ANIMATION_PRESETS (via adjustedP)
@@ -79,27 +91,28 @@ function AnimatedParticle({
 	const py = useTransform(mouseY, (v) => v * strength);
 
 	// Opacity is handled by the animation preset via adjustedP — no need for style.opacity
-	const content = isSvg && svgConfig ? (
-		<motion.span
-			className="block w-full h-full"
-			animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
-			transition={getTransition(p)}
-		>
-			<SvgShape config={svgConfig} color={p.color} />
-		</motion.span>
-	) : (
-		<motion.span
-			className="block w-full h-full"
-			style={shapeStyles}
-			animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
-			transition={getTransition(p)}
-		/>
-	);
+	const content =
+		isSvg && svgConfig ? (
+			<m.span
+				className="block h-full w-full"
+				animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
+				transition={getTransition(p)}
+			>
+				<SvgShape config={svgConfig} color={p.color} />
+			</m.span>
+		) : (
+			<m.span
+				className="block h-full w-full"
+				style={shapeStyles}
+				animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
+				transition={getTransition(p)}
+			/>
+		);
 
 	return (
-		<motion.span className="absolute" style={{ ...style, x: px, y: py, opacity: scrollOpacity }}>
+		<m.span className="absolute" style={{ ...style, x: px, y: py, opacity: scrollOpacity }}>
 			{content}
-		</motion.span>
+		</m.span>
 	);
 }
 
@@ -117,22 +130,20 @@ function StaticParticle({
 	const style = particleStyle(p, highContrast);
 	const opacity = effectiveOpacity(p, highContrast);
 
-	const inner = isSvg && svgConfig ? (
-		<span className="block w-full h-full" style={{ opacity }}>
-			<SvgShape config={svgConfig} color={p.color} />
-		</span>
-	) : (
-		<span
-			className="block w-full h-full"
-			style={{ opacity, ...shapeStyles }}
-		/>
-	);
+	const inner =
+		isSvg && svgConfig ? (
+			<span className="block h-full w-full" style={{ opacity }}>
+				<SvgShape config={svgConfig} color={p.color} />
+			</span>
+		) : (
+			<span className="block h-full w-full" style={{ opacity, ...shapeStyles }} />
+		);
 
 	if (scrollOpacity) {
 		return (
-			<motion.span className="absolute" style={{ ...style, opacity: scrollOpacity }}>
+			<m.span className="absolute" style={{ ...style, opacity: scrollOpacity }}>
 				{inner}
-			</motion.span>
+			</m.span>
 		);
 	}
 
@@ -168,7 +179,12 @@ export function ParticleSet({
 		return (
 			<>
 				{particles.map((p) => (
-					<StaticParticle key={p.id} p={p} highContrast={highContrast} scrollOpacity={scrollOpacity} />
+					<StaticParticle
+						key={p.id}
+						p={p}
+						highContrast={highContrast}
+						scrollOpacity={scrollOpacity}
+					/>
 				))}
 			</>
 		);

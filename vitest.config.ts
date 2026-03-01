@@ -46,6 +46,38 @@ export default defineConfig({
 				branches: 60,
 				functions: 70,
 				lines: 70,
+				"modules/payments/services/": {
+					statements: 80,
+					branches: 70,
+				},
+				"modules/webhooks/": {
+					statements: 90,
+					branches: 80,
+				},
+				"modules/cron/services/": {
+					statements: 90,
+					branches: 80,
+				},
+				"modules/orders/services/": {
+					statements: 85,
+					branches: 75,
+				},
+				"modules/discounts/services/": {
+					statements: 90,
+					branches: 80,
+				},
+				"modules/refunds/services/": {
+					statements: 85,
+					branches: 75,
+				},
+				"modules/cart/services/": {
+					statements: 85,
+					branches: 75,
+				},
+				"shared/utils/": {
+					statements: 80,
+					branches: 70,
+				},
 			},
 		},
 	},

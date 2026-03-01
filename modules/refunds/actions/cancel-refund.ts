@@ -13,6 +13,7 @@ import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { logAudit } from "@/shared/lib/audit-log";
 import { cancelRefundSchema } from "../schemas/refund.schemas";
 
 /**
@@ -30,7 +31,7 @@ export async function cancelRefund(
 	try {
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: _adminUser } = auth;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -90,6 +91,19 @@ export async function cancelRefund(
 		if (refund.order.user?.id) {
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
 		}
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "refund.cancel",
+			targetType: "refund",
+			targetId: refund.id,
+			metadata: {
+				orderNumber: refund.order.orderNumber,
+				amount: refund.amount,
+				previousStatus: refund.status,
+			},
+		});
 
 		return success(
 			`Remboursement de ${(refund.amount / 100).toFixed(2)} € annulé pour la commande ${refund.order.orderNumber}`,

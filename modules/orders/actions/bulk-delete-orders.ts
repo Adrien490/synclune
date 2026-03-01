@@ -1,7 +1,7 @@
 "use server";
 
 import { PaymentStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -11,6 +11,7 @@ import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
+import { logAudit } from "@/shared/lib/audit-log";
 import { bulkDeleteOrdersSchema } from "../schemas/order.schemas";
 
 /**
@@ -26,11 +27,12 @@ import { bulkDeleteOrdersSchema } from "../schemas/order.schemas";
  */
 export async function bulkDeleteOrders(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -66,7 +68,7 @@ export async function bulkDeleteOrders(
 			(order) =>
 				!order.invoiceNumber &&
 				order.paymentStatus !== PaymentStatus.PAID &&
-				order.paymentStatus !== PaymentStatus.REFUNDED
+				order.paymentStatus !== PaymentStatus.REFUNDED,
 		);
 
 		const deletableIds = deletableOrders.map((order) => order.id);
@@ -83,14 +85,29 @@ export async function bulkDeleteOrders(
 		});
 
 		// Invalider les caches pour chaque userId unique
-		const uniqueUserIds = [...new Set(deletableOrders.map(o => o.userId).filter(Boolean))] as string[];
-		uniqueUserIds.forEach(userId => {
-			getOrderInvalidationTags(userId).forEach(tag => updateTag(tag));
+		const uniqueUserIds = [
+			...new Set(deletableOrders.map((o) => o.userId).filter(Boolean)),
+		] as string[];
+		uniqueUserIds.forEach((userId) => {
+			getOrderInvalidationTags(userId).forEach((tag) => updateTag(tag));
 		});
 		// Toujours invalider la liste admin (même si pas d'userId)
-		getOrderInvalidationTags().forEach(tag => updateTag(tag));
+		getOrderInvalidationTags().forEach((tag) => updateTag(tag));
 		// Invalider l'historique de chaque commande
-		deletableOrders.forEach(o => updateTag(ORDERS_CACHE_TAGS.HISTORY(o.id)));
+		deletableOrders.forEach((o) => updateTag(ORDERS_CACHE_TAGS.HISTORY(o.id)));
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.bulkDelete",
+			targetType: "order",
+			targetId: deletableIds.join(","),
+			metadata: {
+				count: deletableIds.length,
+				orderNumbers: deletableOrders.map((o) => o.orderNumber),
+				skippedCount,
+			},
+		});
 
 		const message =
 			skippedCount > 0

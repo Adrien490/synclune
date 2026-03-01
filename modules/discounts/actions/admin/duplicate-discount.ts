@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -25,11 +26,12 @@ const duplicateDiscountSchema = z.object({
  */
 export async function duplicateDiscount(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.DUPLICATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -101,9 +103,21 @@ export async function duplicateDiscount(
 			select: { id: true, code: true },
 		});
 
-		getDiscountInvalidationTags(duplicate.code).forEach(tag => updateTag(tag));
+		getDiscountInvalidationTags(duplicate.code).forEach((tag) => updateTag(tag));
 
-		return success(`Code promo duplique: ${duplicate.code}`, { id: duplicate.id, code: duplicate.code });
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "discount.duplicate",
+			targetType: "discount",
+			targetId: duplicate.id,
+			metadata: { code: duplicate.code, originalDiscountId: discountId },
+		});
+
+		return success(`Code promo duplique: ${duplicate.code}`, {
+			id: duplicate.id,
+			code: duplicate.code,
+		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la duplication");
 	}

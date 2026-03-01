@@ -1,10 +1,6 @@
 "use server";
 
-import {
-	OrderStatus,
-	FulfillmentStatus,
-	HistorySource,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendRevertShippingNotificationEmail } from "@/modules/emails/services/status-emails";
@@ -16,6 +12,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
+import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { revertToProcessingSchema } from "../schemas/order.schemas";
@@ -37,7 +34,7 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
  */
 export async function revertToProcessing(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -135,12 +132,15 @@ export async function revertToProcessing(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
 		// Envoyer l'email de notification au client
 		let emailSent = false;
 		if (order.customerEmail) {
-			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
+			const customerFirstName = extractCustomerFirstName(
+				order.customerName,
+				order.shippingFirstName,
+			);
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
@@ -158,11 +158,27 @@ export async function revertToProcessing(
 			}
 		}
 
-		const trackingInfo = order.trackingNumber
-			? ` (ancien suivi: ${order.trackingNumber})`
-			: "";
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.revertToProcessing",
+			targetType: "order",
+			targetId: order.id,
+			metadata: {
+				orderNumber: order.orderNumber,
+				previousStatus: order.status,
+				reason: result.data.reason,
+				previousTrackingNumber: order.trackingNumber,
+			},
+		});
 
-		const emailMessage = emailSent ? " Email envoyé au client." : order.customerEmail ? " (Échec envoi email)" : "";
+		const trackingInfo = order.trackingNumber ? ` (ancien suivi: ${order.trackingNumber})` : "";
+
+		const emailMessage = emailSent
+			? " Email envoyé au client."
+			: order.customerEmail
+				? " (Échec envoi email)"
+				: "";
 
 		return {
 			status: ActionStatus.SUCCESS,

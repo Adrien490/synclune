@@ -13,6 +13,11 @@ test.describe("Accessibilité - Dark mode axe-core", { tag: ["@slow"] }, () => {
 		{ path: "/", name: "Homepage" },
 		{ path: "/produits", name: "Catalogue" },
 		{ path: "/connexion", name: "Connexion" },
+		{ path: "/collections", name: "Collections" },
+		{ path: "/favoris", name: "Favoris" },
+		{ path: "/personnalisation", name: "Personnalisation" },
+		{ path: "/inscription", name: "Inscription" },
+		{ path: "/mot-de-passe-oublie", name: "Mot de passe oublié" },
 	];
 
 	for (const { path, name } of pagesToAudit) {

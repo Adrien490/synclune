@@ -1,6 +1,7 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
@@ -26,8 +27,9 @@ export async function updateProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_UPDATE_LIMIT);
@@ -282,7 +284,17 @@ export async function updateProductSku(
 		);
 		tags.forEach((tag) => updateTag(tag));
 
-		// 10. Success - Return ActionState format
+		// 10. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "sku.update",
+			targetType: "sku",
+			targetId: productSku.id,
+			metadata: { sku: productSku.sku, productTitle: productSku.product.title, priceInclTaxCents },
+		});
+
+		// 11. Success - Return ActionState format
 		return {
 			status: ActionStatus.SUCCESS,
 			message: successMessage,

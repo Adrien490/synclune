@@ -20,7 +20,6 @@ export function useLogout(options?: UseLogoutOptions) {
 			logout,
 			createToastCallbacks({
 				showSuccessToast: false,
-				showErrorToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 					// Redirection après un court délai pour feedback visuel
@@ -29,9 +28,13 @@ export function useLogout(options?: UseLogoutOptions) {
 						router.refresh();
 					}, 300);
 				},
-			})
+				onError: () => {
+					// Rollback optimistic state — user is still logged in
+					setOptimisticIsLoggedOut(false);
+				},
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const action = (formData: FormData) => {

@@ -13,7 +13,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { AnimatePresence, m, MotionConfig } from "motion/react";
 import { AlertCircleIcon, ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import Image from "next/image";
@@ -236,7 +236,7 @@ export function Autocomplete<T>({
 		const imageData = getItemImage?.(item);
 
 		return (
-			<motion.div
+			<m.div
 				key={index}
 				id={getItemId(index)}
 				role="option"
@@ -288,7 +288,7 @@ export function Autocomplete<T>({
 						)}
 					</div>
 				</div>
-			</motion.div>
+			</m.div>
 		);
 	};
 
@@ -476,7 +476,7 @@ export function Autocomplete<T>({
 						{/* Hint pour minQueryLength */}
 						<AnimatePresence>
 							{showMinQueryHint && (
-								<motion.p
+								<m.p
 									id={hintId}
 									className="text-muted-foreground border-b px-4 py-2 text-sm"
 									initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
@@ -485,7 +485,7 @@ export function Autocomplete<T>({
 									transition={AUTOCOMPLETE_ANIMATIONS.hint.transition}
 								>
 									Tapez encore {remainingChars} caractère{remainingChars > 1 ? "s" : ""}
-								</motion.p>
+								</m.p>
 							)}
 						</AnimatePresence>
 
@@ -546,7 +546,7 @@ export function Autocomplete<T>({
 				{/* Hint pour minQueryLength */}
 				<AnimatePresence>
 					{showMinQueryHint && (
-						<motion.p
+						<m.p
 							id={hintId}
 							className="text-muted-foreground mt-1.5 ml-0.5 text-sm md:text-xs"
 							initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
@@ -555,7 +555,7 @@ export function Autocomplete<T>({
 							transition={AUTOCOMPLETE_ANIMATIONS.hint.transition}
 						>
 							Tapez encore {remainingChars} caractère{remainingChars > 1 ? "s" : ""}
-						</motion.p>
+						</m.p>
 					)}
 				</AnimatePresence>
 
@@ -564,7 +564,7 @@ export function Autocomplete<T>({
 
 				<AnimatePresence>
 					{showResults && (
-						<motion.div
+						<m.div
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
@@ -575,7 +575,7 @@ export function Autocomplete<T>({
 							transition={AUTOCOMPLETE_ANIMATIONS.dropdown.transition}
 						>
 							{renderListContent()}
-						</motion.div>
+						</m.div>
 					)}
 				</AnimatePresence>
 			</div>

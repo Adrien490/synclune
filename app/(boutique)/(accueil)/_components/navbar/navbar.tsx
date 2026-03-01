@@ -11,8 +11,13 @@ import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
-import { QuickSearchDialog, QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
+import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { ROUTES } from "@/shared/constants/urls";
+import dynamic from "next/dynamic";
+
+const QuickSearchDialog = dynamic(() =>
+	import("@/modules/products/components/quick-search-dialog").then((mod) => mod.QuickSearchDialog),
+);
 import { cn } from "@/shared/utils/cn";
 import { DesktopNav } from "./desktop-nav";
 import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
@@ -31,14 +36,15 @@ const iconButtonClassName = cn(
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
 	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
-	const [session, cartCount, wishlistCount, recentSearches, menuData, recentProducts] = await Promise.all([
-		getSession(),
-		getCartItemCount(),
-		getWishlistItemCount(),
-		getRecentSearches(),
-		getNavbarMenuData(),
-		getRecentProducts({ limit: 4 }),
-	]);
+	const [session, cartCount, wishlistCount, recentSearches, menuData, recentProducts] =
+		await Promise.all([
+			getSession(),
+			getCartItemCount(),
+			getWishlistItemCount(),
+			getRecentSearches(),
+			getNavbarMenuData(),
+			getRecentProducts({ limit: 4 }),
+		]);
 
 	const { collectionsData, productTypesData } = menuData;
 
@@ -96,26 +102,31 @@ export async function Navbar() {
 	const mobileNavItems = getMobileNavItems(session, productTypes, menuCollections, userIsAdmin);
 
 	// Featured products for the mega menu (up to 3 recent products with images)
-	const featuredProducts = recentProducts.slice(0, 3).map((p) => {
-		const { sku, image } = extractProductImage(p);
-		return {
-			slug: p.slug,
-			title: p.title,
-			priceInclTax: sku?.priceInclTax ?? 0,
-			imageUrl: image?.url ?? "",
-			blurDataUrl: image?.blurDataUrl ?? null,
-		};
-	}).filter((p) => p.imageUrl);
+	const featuredProducts = recentProducts
+		.slice(0, 3)
+		.map((p) => {
+			const { sku, image } = extractProductImage(p);
+			return {
+				slug: p.slug,
+				title: p.title,
+				priceInclTax: sku?.priceInclTax ?? 0,
+				imageUrl: image?.url ?? "",
+				blurDataUrl: image?.blurDataUrl ?? null,
+			};
+		})
+		.filter((p) => p.imageUrl);
 
 	// Restrict session data passed to client components (exclude token, ipAddress, userAgent)
-	const sessionData = session ? {
-		user: {
-			name: session.user.name,
-			email: session.user.email,
-			image: session.user.image ?? null,
-			role: session.user.role,
-		}
-	} : null;
+	const sessionData = session
+		? {
+				user: {
+					name: session.user.name,
+					email: session.user.email,
+					image: session.user.image ?? null,
+					role: session.user.role,
+				},
+			}
+		: null;
 
 	// Générer les items de navigation desktop avec mega menus
 	const desktopNavItems = getDesktopNavItems({ productTypes, collections: menuCollections });
@@ -125,109 +136,99 @@ export async function Navbar() {
 			initialWishlistCount={safeWishlistCount}
 			initialCartCount={safeCartCount}
 		>
-		<NavbarWrapper>
-			<nav
-				aria-label="Navigation principale"
-				className="transition-all duration-300 ease-in-out"
-			>
-				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="flex h-16 sm:h-20 items-center gap-4">
-						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
-						<div className="flex flex-1 items-center lg:flex-none min-w-0">
-							{/* Menu burger (mobile uniquement) */}
-							<MenuSheet
-								navItems={mobileNavItems}
-								productTypes={productTypes}
-								collections={menuCollections}
-								isAdmin={userIsAdmin}
-								session={sessionData}
-							/>
-
-							{/* Recherche mobile (juste à droite du menu) */}
-							<QuickSearchTrigger className={cn("sm:hidden inline-flex", iconButtonClassName)} />
-
-							<Logo
-								href="/"
-								size={48}
-								className="hidden lg:flex min-w-0 max-w-full"
-								shadow
-								sizes="64px"
-								showText
-								textClassName="text-xl lg:text-2xl text-foreground truncate"
-							/>
-						</div>
-
-						{/* Section centrale: Logo (mobile) / Navigation desktop */}
-						<div className="flex items-center justify-center lg:flex-1">
-							{/* Logo mobile centré (icône seule, shrink au scroll) */}
-							<Logo
-								href="/"
-								size={44}
-								className="lg:hidden"
-								shadow
-								sizes="44px"
-							/>
-							<DesktopNav navItems={desktopNavItems} featuredProducts={featuredProducts} />
-						</div>
-
-						{/* Section droite: Favoris + Recherche + Compte + Panier */}
-						<div className="flex flex-1 items-center justify-end min-w-0">
-							<div className="flex items-center gap-2 sm:gap-3 shrink-0">
-								{/* Icône favoris (visible sur mobile et desktop) */}
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Link
-											href={ROUTES.ACCOUNT.FAVORITES}
-											className={cn("inline-flex", iconButtonClassName)}
-											aria-label="Accéder à mes favoris"
-										>
-											<Heart
-												size={20}
-												className="transition-transform duration-300 ease-out group-hover:scale-105"
-												aria-hidden="true"
-											/>
-											<WishlistBadge />
-										</Link>
-									</TooltipTrigger>
-									<TooltipContent className="hidden sm:block">Favoris</TooltipContent>
-								</Tooltip>
-
-								{/* Recherche globale (visible sur desktop seulement) */}
-								<QuickSearchTrigger className="hidden sm:inline-flex" />
-								<QuickSearchDialog
-									recentSearches={recentSearches}
-									collections={collections}
+			<NavbarWrapper>
+				<nav aria-label="Navigation principale" className="transition-all duration-300 ease-in-out">
+					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+						<div className="flex h-16 items-center gap-4 sm:h-20">
+							{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
+							<div className="flex min-w-0 flex-1 items-center lg:flex-none">
+								{/* Menu burger (mobile uniquement) */}
+								<MenuSheet
+									navItems={mobileNavItems}
 									productTypes={productTypes}
-									recentlyViewed={recentlyViewed}
-	
+									collections={menuCollections}
+									isAdmin={userIsAdmin}
+									session={sessionData}
 								/>
 
-								{/* Lien compte (visible sur desktop seulement) */}
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Link
-											href={session ? ROUTES.ACCOUNT.ROOT : ROUTES.AUTH.SIGN_IN}
-											className={cn("hidden sm:inline-flex", iconButtonClassName)}
-											aria-label={session ? "Mon compte" : "Se connecter"}
-										>
-											<User
-												size={20}
-												className="transition-transform duration-300 ease-out group-hover:scale-105"
-												aria-hidden="true"
-											/>
-										</Link>
-									</TooltipTrigger>
-									<TooltipContent>{session ? "Mon compte" : "Se connecter"}</TooltipContent>
-								</Tooltip>
+								{/* Recherche mobile (juste à droite du menu) */}
+								<QuickSearchTrigger className={cn("inline-flex sm:hidden", iconButtonClassName)} />
 
-								{/* Icône panier - Ouvre le cart sheet */}
-								<CartSheetTrigger className={cn("inline-flex", iconButtonClassName)} />
+								<Logo
+									href="/"
+									size={48}
+									className="hidden max-w-full min-w-0 lg:flex"
+									shadow
+									sizes="64px"
+									showText
+									textClassName="text-xl lg:text-2xl text-foreground truncate"
+								/>
+							</div>
+
+							{/* Section centrale: Logo (mobile) / Navigation desktop */}
+							<div className="flex items-center justify-center lg:flex-1">
+								{/* Logo mobile centré (icône seule, shrink au scroll) */}
+								<Logo href="/" size={44} className="lg:hidden" shadow sizes="44px" />
+								<DesktopNav navItems={desktopNavItems} featuredProducts={featuredProducts} />
+							</div>
+
+							{/* Section droite: Favoris + Recherche + Compte + Panier */}
+							<div className="flex min-w-0 flex-1 items-center justify-end">
+								<div className="flex shrink-0 items-center gap-2 sm:gap-3">
+									{/* Icône favoris (visible sur mobile et desktop) */}
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Link
+												href={ROUTES.ACCOUNT.FAVORITES}
+												className={cn("inline-flex", iconButtonClassName)}
+												aria-label="Accéder à mes favoris"
+											>
+												<Heart
+													size={20}
+													className="transition-transform duration-300 ease-out group-hover:scale-105"
+													aria-hidden="true"
+												/>
+												<WishlistBadge />
+											</Link>
+										</TooltipTrigger>
+										<TooltipContent className="hidden sm:block">Favoris</TooltipContent>
+									</Tooltip>
+
+									{/* Recherche globale (visible sur desktop seulement) */}
+									<QuickSearchTrigger className="hidden sm:inline-flex" />
+									<QuickSearchDialog
+										recentSearches={recentSearches}
+										collections={collections}
+										productTypes={productTypes}
+										recentlyViewed={recentlyViewed}
+									/>
+
+									{/* Lien compte (visible sur desktop seulement) */}
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Link
+												href={session ? ROUTES.ACCOUNT.ROOT : ROUTES.AUTH.SIGN_IN}
+												className={cn("hidden sm:inline-flex", iconButtonClassName)}
+												aria-label={session ? "Mon compte" : "Se connecter"}
+											>
+												<User
+													size={20}
+													className="transition-transform duration-300 ease-out group-hover:scale-105"
+													aria-hidden="true"
+												/>
+											</Link>
+										</TooltipTrigger>
+										<TooltipContent>{session ? "Mon compte" : "Se connecter"}</TooltipContent>
+									</Tooltip>
+
+									{/* Icône panier - Ouvre le cart sheet */}
+									<CartSheetTrigger className={cn("inline-flex", iconButtonClassName)} />
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			</nav>
-		</NavbarWrapper>
+				</nav>
+			</NavbarWrapper>
 		</BadgeCountsStoreProvider>
 	);
 }

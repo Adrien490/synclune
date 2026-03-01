@@ -2,34 +2,28 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useTransition } from "react";
+import { useActionState } from "react";
 import { toggleProductStatus } from "@/modules/products/actions/toggle-product-status";
 
 interface UseToggleProductStatusOptions {
 	onSuccess?: (message: string) => void;
+	onError?: () => void;
 }
 
 /**
- * Hook pour basculer le statut d'un produit (DRAFT ↔ PUBLIC)
+ * Hook pour basculer le statut d'un produit (DRAFT ↔ PUBLIC ↔ ARCHIVED)
  * Utilise useActionState avec withCallbacks pour la gestion du toast
  *
  * @example
  * ```tsx
  * const { isPending, toggleStatus } = useToggleProductStatus({
  *   onSuccess: () => {
- *     router.refresh();
+ *     dialog.close();
  *   },
  * });
- *
- * const handleToggle = () => {
- *   toggleStatus(productId, currentStatus);
- * };
  * ```
  */
-export const useToggleProductStatus = (
-	options?: UseToggleProductStatusOptions
-) => {
-	const [isTransitionPending, startTransition] = useTransition();
+export const useToggleProductStatus = (options?: UseToggleProductStatusOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			toggleProductStatus,
@@ -44,31 +38,32 @@ export const useToggleProductStatus = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+				onError: () => {
+					options?.onError?.();
+				},
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	const toggleStatus = (
 		productId: string,
 		currentStatus: "DRAFT" | "PUBLIC" | "ARCHIVED",
-		targetStatus?: "DRAFT" | "PUBLIC" | "ARCHIVED"
+		targetStatus?: "DRAFT" | "PUBLIC" | "ARCHIVED",
 	) => {
-		startTransition(() => {
-			const formData = new FormData();
-			formData.append("productId", productId);
-			formData.append("currentStatus", currentStatus);
-			if (targetStatus) {
-				formData.append("targetStatus", targetStatus);
-			}
-			action(formData);
-		});
+		const formData = new FormData();
+		formData.append("productId", productId);
+		formData.append("currentStatus", currentStatus);
+		if (targetStatus) {
+			formData.append("targetStatus", targetStatus);
+		}
+		action(formData);
 	};
 
 	return {
 		state,
 		action,
-		isPending: isPending || isTransitionPending,
+		isPending,
 		toggleStatus,
 	};
 };

@@ -108,6 +108,24 @@ export function forbidden(message = "Accès non autorisé"): ActionState {
 }
 
 /**
+ * Crée un ActionState CONFLICT
+ *
+ * @param message - Message de conflit
+ * @returns ActionState avec status CONFLICT
+ *
+ * @example
+ * ```ts
+ * return conflict("Cet email est déjà inscrit à la newsletter");
+ * ```
+ */
+export function conflict(message: string): ActionState {
+	return {
+		status: ActionStatus.CONFLICT,
+		message,
+	};
+}
+
+/**
  * Crée un ActionState VALIDATION_ERROR
  *
  * @param message - Message d'erreur de validation

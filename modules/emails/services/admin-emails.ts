@@ -1,14 +1,14 @@
-import { AdminNewOrderEmail } from "@/emails/admin-new-order-email"
-import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email"
-import { AdminWebhookFailedEmail } from "@/emails/admin-webhook-failed-email"
-import { AdminInvoiceFailedEmail } from "@/emails/admin-invoice-failed-email"
-import { AdminCronFailedEmail } from "@/emails/admin-cron-failed-email"
-import { AdminCheckoutFailedEmail } from "@/emails/admin-checkout-failed-email"
-import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email"
-import { EMAIL_ADMIN } from "../constants/email.constants"
-import { renderAndSend } from "./send-email"
-import { EXTERNAL_URLS, getBaseUrl } from "@/shared/constants/urls"
-import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types"
+import { AdminNewOrderEmail } from "@/emails/admin-new-order-email";
+import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email";
+import { AdminWebhookFailedEmail } from "@/emails/admin-webhook-failed-email";
+import { AdminInvoiceFailedEmail } from "@/emails/admin-invoice-failed-email";
+import { AdminCronFailedEmail } from "@/emails/admin-cron-failed-email";
+import { AdminCheckoutFailedEmail } from "@/emails/admin-checkout-failed-email";
+import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email";
+import { EMAIL_ADMIN } from "../constants/email.constants";
+import { renderAndSend } from "./send-email";
+import { EXTERNAL_URLS, getBaseUrl } from "@/shared/constants/urls";
+import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types";
 
 /**
  * Envoie un email de notification admin pour une nouvelle commande
@@ -25,16 +25,16 @@ export async function sendAdminNewOrderEmail({
 	shippingAddress,
 	dashboardUrl,
 }: {
-	orderNumber: string
-	customerName: string
-	customerEmail: string
-	items: OrderItem[]
-	subtotal: number
-	discount: number
-	shipping: number
-	total: number
-	shippingAddress: ShippingAddress & { phone: string }
-	dashboardUrl: string
+	orderNumber: string;
+	customerName: string;
+	customerEmail: string;
+	items: OrderItem[];
+	subtotal: number;
+	discount: number;
+	shipping: number;
+	total: number;
+	shippingAddress: ShippingAddress & { phone: string };
+	dashboardUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		AdminNewOrderEmail({
@@ -53,8 +53,8 @@ export async function sendAdminNewOrderEmail({
 			to: EMAIL_ADMIN,
 			subject: `🎉 Nouvelle commande ${orderNumber} - ${(total / 100).toFixed(2)}€`,
 			tags: [{ name: "category", value: "admin" }],
-		}
-	)
+		},
+	);
 }
 
 /**
@@ -69,15 +69,15 @@ export async function sendAdminRefundFailedAlert({
 	stripePaymentIntentId,
 	dashboardUrl,
 }: {
-	orderNumber: string
-	customerEmail: string
-	amount: number
-	reason: "payment_failed" | "payment_canceled" | "other"
-	errorMessage: string
-	stripePaymentIntentId: string
-	dashboardUrl: string
+	orderNumber: string;
+	customerEmail: string;
+	amount: number;
+	reason: "payment_failed" | "payment_canceled" | "other";
+	errorMessage: string;
+	stripePaymentIntentId: string;
+	dashboardUrl: string;
 }): Promise<EmailResult> {
-	const stripeDashboardUrl = `https://dashboard.stripe.com/payments/${stripePaymentIntentId}`
+	const stripeDashboardUrl = `https://dashboard.stripe.com/payments/${stripePaymentIntentId}`;
 	return renderAndSend(
 		AdminRefundFailedEmail({
 			orderNumber,
@@ -91,10 +91,10 @@ export async function sendAdminRefundFailedAlert({
 		}),
 		{
 			to: EMAIL_ADMIN,
-			subject: `🚨 ACTION REQUISE : Échec remboursement ${orderNumber}`,
+			subject: `[Admin] Échec remboursement — ${orderNumber}`,
 			tags: [{ name: "category", value: "admin" }],
-		}
-	)
+		},
+	);
 }
 
 /**
@@ -106,13 +106,13 @@ export async function sendWebhookFailedAlertEmail({
 	attempts,
 	error,
 }: {
-	eventId: string
-	eventType: string
-	attempts: number
-	error: string
+	eventId: string;
+	eventType: string;
+	attempts: number;
+	error: string;
 }): Promise<EmailResult> {
-	const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.WEBHOOKS
-	const adminDashboardUrl = `${getBaseUrl()}/admin`
+	const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.WEBHOOKS;
+	const adminDashboardUrl = `${getBaseUrl()}/admin`;
 	return renderAndSend(
 		AdminWebhookFailedEmail({
 			eventId,
@@ -124,10 +124,10 @@ export async function sendWebhookFailedAlertEmail({
 		}),
 		{
 			to: EMAIL_ADMIN,
-			subject: `[ALERTE] Webhook ${eventType} échoué (${attempts} tentatives)`,
+			subject: `[Admin] Webhook ${eventType} échoué (${attempts} tentatives)`,
 			tags: [{ name: "category", value: "admin" }],
-		}
-	)
+		},
+	);
 }
 
 /**
@@ -138,18 +138,16 @@ export async function sendAdminCronFailedAlert({
 	errors,
 	details,
 }: {
-	job: string
-	errors: number
-	details: Record<string, unknown>
+	job: string;
+	errors: number;
+	details: Record<string, unknown>;
 }): Promise<EmailResult> {
-	return renderAndSend(
-		AdminCronFailedEmail({ job, errors, details }),
-		{
-			to: EMAIL_ADMIN,
-			subject: `[ALERTE CRON] ${job} — ${errors} erreur(s)`,
-			tags: [{ name: "category", value: "admin" }],
-		}
-	)
+	const dashboardUrl = `${getBaseUrl()}/admin`;
+	return renderAndSend(AdminCronFailedEmail({ job, errors, details, dashboardUrl }), {
+		to: EMAIL_ADMIN,
+		subject: `[Admin] Cron ${job} — ${errors} erreur(s)`,
+		tags: [{ name: "category", value: "admin" }],
+	});
 }
 
 /**
@@ -163,24 +161,26 @@ export async function sendAdminCheckoutFailedAlert({
 	total,
 	errorMessage,
 }: {
-	orderNumber: string
-	customerEmail: string
-	total: number
-	errorMessage: string
+	orderNumber: string;
+	customerEmail: string;
+	total: number;
+	errorMessage: string;
 }): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin`;
 	return renderAndSend(
 		AdminCheckoutFailedEmail({
 			orderNumber,
 			customerEmail,
 			total,
 			errorMessage,
+			dashboardUrl,
 		}),
 		{
 			to: EMAIL_ADMIN,
-			subject: `[ALERTE CHECKOUT] Échec session Stripe — ${orderNumber}`,
+			subject: `[Admin] Échec checkout Stripe — ${orderNumber}`,
 			tags: [{ name: "category", value: "admin" }],
-		}
-	)
+		},
+	);
 }
 
 /**
@@ -196,14 +196,14 @@ export async function sendAdminDisputeAlert({
 	dashboardUrl,
 	stripeDashboardUrl,
 }: {
-	orderNumber: string
-	customerEmail: string
-	amount: number
-	reason: string
-	disputeId: string
-	deadline: string | null
-	dashboardUrl: string
-	stripeDashboardUrl: string
+	orderNumber: string;
+	customerEmail: string;
+	amount: number;
+	reason: string;
+	disputeId: string;
+	deadline: string | null;
+	dashboardUrl: string;
+	stripeDashboardUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		AdminDisputeAlertEmail({
@@ -218,10 +218,10 @@ export async function sendAdminDisputeAlert({
 		}),
 		{
 			to: EMAIL_ADMIN,
-			subject: `[LITIGE] Commande ${orderNumber} — Action requise`,
+			subject: `[Admin] Litige commande ${orderNumber} — Action requise`,
 			tags: [{ name: "category", value: "admin" }],
-		}
-	)
+		},
+	);
 }
 
 /**
@@ -241,14 +241,14 @@ export async function sendAdminInvoiceFailedAlert({
 	stripePaymentIntentId,
 	dashboardUrl,
 }: {
-	orderNumber: string
-	customerEmail: string
-	customerCompanyName?: string
-	customerSiret?: string
-	amount: number
-	errorMessage: string
-	stripePaymentIntentId?: string
-	dashboardUrl: string
+	orderNumber: string;
+	customerEmail: string;
+	customerCompanyName?: string;
+	customerSiret?: string;
+	amount: number;
+	errorMessage: string;
+	stripePaymentIntentId?: string;
+	dashboardUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		AdminInvoiceFailedEmail({
@@ -263,8 +263,8 @@ export async function sendAdminInvoiceFailedAlert({
 		}),
 		{
 			to: EMAIL_ADMIN,
-			subject: `🚨 ACTION REQUISE : Échec génération facture ${orderNumber}`,
+			subject: `[Admin] Échec génération facture — ${orderNumber}`,
 			tags: [{ name: "category", value: "admin" }],
-		}
-	)
+		},
+	);
 }

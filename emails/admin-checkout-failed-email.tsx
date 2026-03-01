@@ -1,5 +1,5 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Section, Text } from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 import { ErrorCodeBlock } from "./_components/error-code-block";
@@ -10,6 +10,7 @@ interface AdminCheckoutFailedEmailProps {
 	customerEmail: string;
 	total: number;
 	errorMessage: string;
+	dashboardUrl: string;
 }
 
 export const AdminCheckoutFailedEmail = ({
@@ -17,6 +18,7 @@ export const AdminCheckoutFailedEmail = ({
 	customerEmail,
 	total,
 	errorMessage,
+	dashboardUrl,
 }: AdminCheckoutFailedEmailProps) => {
 	return (
 		<EmailLayout
@@ -24,15 +26,14 @@ export const AdminCheckoutFailedEmail = ({
 			headerText="Échec checkout Stripe"
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Vérifiez les logs Vercel et le dashboard Stripe pour plus
-					d&apos;informations.
+					Vérifiez les logs Vercel et le dashboard Stripe pour plus d&apos;informations.
 				</Text>
 			}
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
 				<Text style={EMAIL_STYLES.text.small}>
-					La création de la session Stripe Checkout a échoué. La commande a été
-					nettoyée automatiquement.
+					La création de la session Stripe Checkout a échoué. La commande a été nettoyée
+					automatiquement.
 				</Text>
 			</Section>
 
@@ -91,10 +92,15 @@ export const AdminCheckoutFailedEmail = ({
 
 			{/* Error details */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Erreur
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Erreur</Text>
 				<ErrorCodeBlock error={errorMessage} />
+			</Section>
+
+			{/* CTA */}
+			<Section style={{ textAlign: "center", marginBottom: "32px" }}>
+				<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
+					Voir le dashboard
+				</Button>
 			</Section>
 		</EmailLayout>
 	);
@@ -104,8 +110,8 @@ AdminCheckoutFailedEmail.PreviewProps = {
 	orderNumber: "SYN-20260220-A1B2",
 	customerEmail: "client@example.com",
 	total: 8900,
-	errorMessage:
-		"StripeConnectionError: Could not connect to Stripe API after 2 retries",
+	errorMessage: "StripeConnectionError: Could not connect to Stripe API after 2 retries",
+	dashboardUrl: "https://synclune.fr/admin",
 } as AdminCheckoutFailedEmailProps;
 
 export default AdminCheckoutFailedEmail;

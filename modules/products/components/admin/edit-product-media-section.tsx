@@ -121,7 +121,7 @@ export function EditProductMediaSection({
 								position: "relative",
 								boxShadow: isDragActive
 									? "0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 12px color-mix(in oklch, var(--primary) 10%, transparent)"
-									: "0 1px 3px rgba(0, 0, 0, 0.1)",
+									: "var(--shadow-sm)",
 							}),
 							uploadIcon: ({ isDragActive, isUploading }) => ({
 								color: isDragActive

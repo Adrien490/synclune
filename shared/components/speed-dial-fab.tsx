@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, Plus, X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useRef, useEffect, useState, useEffectEvent } from "react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
@@ -147,7 +147,7 @@ export function SpeedDialFab({
 				<div ref={statusRef} role="status" aria-live="polite" className="sr-only" />
 
 				<AnimatePresence mode="wait">
-					<motion.div
+					<m.div
 						key="fab-hidden"
 						initial={reducedMotion ? undefined : { opacity: 0, x: 20 }}
 						animate={{ opacity: 1, x: 0 }}
@@ -186,7 +186,7 @@ export function SpeedDialFab({
 								<p className="text-sm">{showTooltip}</p>
 							</TooltipContent>
 						</Tooltip>
-					</motion.div>
+					</m.div>
 				</AnimatePresence>
 			</>
 		);
@@ -197,7 +197,7 @@ export function SpeedDialFab({
 			<div ref={statusRef} role="status" aria-live="polite" className="sr-only" />
 
 			<AnimatePresence mode="wait">
-				<motion.div
+				<m.div
 					key="fab-visible"
 					ref={containerRef}
 					data-fab-container
@@ -243,7 +243,7 @@ export function SpeedDialFab({
 					{/* Actions du Speed Dial */}
 					<AnimatePresence>
 						{isOpen && (
-							<motion.div
+							<m.div
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0 }}
@@ -253,7 +253,7 @@ export function SpeedDialFab({
 								aria-label="Actions rapides"
 							>
 								{actions.map((action, index) => (
-									<motion.div
+									<m.div
 										key={action.id}
 										initial={reducedMotion ? undefined : { opacity: 0, y: 20, scale: 0.8 }}
 										animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -305,16 +305,16 @@ export function SpeedDialFab({
 												<span className="sr-only">{action.label}</span>
 											</Button>
 										)}
-									</motion.div>
+									</m.div>
 								))}
-							</motion.div>
+							</m.div>
 						)}
 					</AnimatePresence>
 
 					{/* Backdrop quand ouvert */}
 					<AnimatePresence>
 						{isOpen && (
-							<motion.div
+							<m.div
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0 }}
@@ -351,11 +351,11 @@ export function SpeedDialFab({
 								aria-haspopup="menu"
 								aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
 							>
-								<motion.div animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.2 }}>
+								<m.div animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.2 }}>
 									{isOpen
 										? openIcon || <X className="size-6" aria-hidden="true" />
 										: mainIcon || <Plus className="size-6" aria-hidden="true" />}
-								</motion.div>
+								</m.div>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent side="left" sideOffset={12}>
@@ -372,7 +372,7 @@ export function SpeedDialFab({
 							{ariaDescription}
 						</span>
 					)}
-				</motion.div>
+				</m.div>
 			</AnimatePresence>
 		</>
 	);

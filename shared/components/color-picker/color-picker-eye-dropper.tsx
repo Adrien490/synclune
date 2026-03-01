@@ -19,7 +19,6 @@ export const ColorPickerEyeDropper = ({ className, ...props }: ColorPickerEyeDro
 		}
 
 		try {
-			// @ts-expect-error - EyeDropper API is experimental
 			const eyeDropper = new EyeDropper();
 			const result = await eyeDropper.open();
 			const color = Color(result.sRGBHex);

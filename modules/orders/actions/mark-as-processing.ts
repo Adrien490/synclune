@@ -1,19 +1,15 @@
 "use server";
 
-import {
-	OrderStatus,
-	FulfillmentStatus,
-	HistorySource,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, success, error, notFound, validationError } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
+import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsProcessingSchema } from "../schemas/order.schemas";
@@ -33,7 +29,7 @@ import { canMarkAsProcessing } from "../services/order-status-validation.service
  */
 export async function markAsProcessing(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -48,10 +44,7 @@ export async function markAsProcessing(
 		const result = markAsProcessingSchema.safeParse({ id });
 
 		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
+			return validationError(result.error.issues[0]?.message || "Données invalides");
 		}
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
@@ -99,10 +92,7 @@ export async function markAsProcessing(
 		});
 
 		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return notFound("Commande");
 		}
 
 		if ("_error" in order) {
@@ -112,19 +102,25 @@ export async function markAsProcessing(
 				cancelled: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_CANCELLED,
 				unpaid: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_UNPAID,
 			} as const;
-			return {
-				status: ActionStatus.ERROR,
-				message: errorMessages[order._error],
-			};
+			return error(errorMessages[order._error]);
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} passée en préparation.`,
-		};
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.markProcessing",
+			targetType: "order",
+			targetId: order.id,
+			metadata: {
+				orderNumber: order.orderNumber,
+				previousStatus: order.status,
+			},
+		});
+
+		return success(`Commande ${order.orderNumber} passée en préparation.`);
 	} catch (e) {
 		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_PROCESSING_FAILED);
 	}

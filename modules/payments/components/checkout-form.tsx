@@ -11,7 +11,7 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { AlertCircle, CreditCard, Info, Loader2, Lock, Mail, MapPin } from "lucide-react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import { StripeWordmark } from "./stripe-wordmark";
 import {
@@ -211,7 +211,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 						>
 							<AnimatePresence mode="wait">
 								{clientSecret && submittedAddress ? (
-									<motion.div key="payment" className="space-y-6" {...fadeSlide}>
+									<m.div key="payment" className="space-y-6" {...fadeSlide}>
 										{/* Step indicator */}
 										<CheckoutStepIndicator currentStep={2} />
 
@@ -257,9 +257,9 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 												Commande n°{orderInfo.orderNumber}
 											</p>
 										)}
-									</motion.div>
+									</m.div>
 								) : (
-									<motion.form
+									<m.form
 										key="address"
 										{...fadeSlide}
 										action={action}
@@ -745,7 +745,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 												</Button>
 											)}
 										</form.Subscribe>
-									</motion.form>
+									</m.form>
 								)}
 							</AnimatePresence>
 						</ErrorBoundary>

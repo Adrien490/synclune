@@ -1,6 +1,7 @@
 import { updateTag } from "next/cache";
 import { RefundStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
 import {
 	mapStripeRefundStatus,
@@ -11,7 +12,13 @@ import {
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
-import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_THROTTLE_MS, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
+import {
+	BATCH_DEADLINE_MS,
+	BATCH_SIZE_MEDIUM,
+	STRIPE_THROTTLE_MS,
+	STRIPE_TIMEOUT_MS,
+	THRESHOLDS,
+} from "@/modules/cron/constants/limits";
 
 /**
  * Reconciles pending refunds by polling Stripe.
@@ -28,11 +35,11 @@ export async function reconcilePendingRefunds(): Promise<{
 	staleAlerted: number;
 	hasMore: boolean;
 } | null> {
-	console.log("[CRON:reconcile-refunds] Starting refund reconciliation...");
+	logger.info("Starting refund reconciliation", { cronJob: "reconcile-refunds" });
 
 	const stripe = getStripeClient();
 	if (!stripe) {
-		console.error("[CRON:reconcile-refunds] STRIPE_SECRET_KEY not configured");
+		logger.error("STRIPE_SECRET_KEY not configured", undefined, { cronJob: "reconcile-refunds" });
 		return null;
 	}
 
@@ -65,9 +72,10 @@ export async function reconcilePendingRefunds(): Promise<{
 		take: BATCH_SIZE_MEDIUM,
 	});
 
-	console.log(
-		`[CRON:reconcile-refunds] Found ${pendingRefunds.length} pending refunds to check`
-	);
+	logger.info("Found pending refunds to check", {
+		cronJob: "reconcile-refunds",
+		count: pendingRefunds.length,
+	});
 
 	let updated = 0;
 	let errors = 0;
@@ -76,7 +84,7 @@ export async function reconcilePendingRefunds(): Promise<{
 
 	for (const refund of pendingRefunds) {
 		if (Date.now() > deadline) {
-			console.warn("[CRON:reconcile-refunds] Approaching timeout, stopping batch early");
+			logger.warn("Approaching timeout, stopping batch early", { cronJob: "reconcile-refunds" });
 			break;
 		}
 		if (!refund.stripeRefundId) continue;
@@ -84,12 +92,11 @@ export async function reconcilePendingRefunds(): Promise<{
 		try {
 			// Throttle to avoid Stripe rate limits
 			if (updated > 0 || errors > 0) {
-				await new Promise(resolve => setTimeout(resolve, STRIPE_THROTTLE_MS));
+				await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
 			}
-			const stripeRefund = await stripe.refunds.retrieve(
-				refund.stripeRefundId,
-				{ timeout: STRIPE_TIMEOUT_MS }
-			);
+			const stripeRefund = await stripe.refunds.retrieve(refund.stripeRefundId, {
+				timeout: STRIPE_TIMEOUT_MS,
+			});
 
 			const newStatus = mapStripeRefundStatus(stripeRefund.status);
 
@@ -99,29 +106,33 @@ export async function reconcilePendingRefunds(): Promise<{
 					await updateRefundStatus(
 						refund.id,
 						RefundStatus.COMPLETED,
-						stripeRefund.status || "unknown"
+						stripeRefund.status || "unknown",
 					);
-					console.log(
-						`[CRON:reconcile-refunds] Refund ${refund.id} marked as COMPLETED`
-					);
+					logger.info("Refund marked as COMPLETED", {
+						cronJob: "reconcile-refunds",
+						refundId: refund.id,
+					});
 					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
 					updated++;
 				} else if (newStatus === RefundStatus.FAILED) {
 					const failureReason = stripeRefund.failure_reason || "Unknown failure";
 					await markRefundAsFailed(refund.id, failureReason);
-					sendRefundFailedAlert(refund, failureReason).catch((e) => console.error("[CRON:reconcile-refunds] Failed to send refund alert", e));
-					console.log(
-						`[CRON:reconcile-refunds] Refund ${refund.id} marked as FAILED`
+					sendRefundFailedAlert(refund, failureReason).catch((e) =>
+						logger.error("Failed to send refund alert", e, { cronJob: "reconcile-refunds" }),
 					);
+					logger.info("Refund marked as FAILED", {
+						cronJob: "reconcile-refunds",
+						refundId: refund.id,
+					});
 					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
 					updated++;
 				}
 			}
 		} catch (error) {
-			console.error(
-				`[CRON:reconcile-refunds] Error checking refund ${refund.id}:`,
-				error
-			);
+			logger.error("Error checking refund", error, {
+				cronJob: "reconcile-refunds",
+				refundId: refund.id,
+			});
 			errors++;
 		}
 	}
@@ -158,19 +169,21 @@ export async function reconcilePendingRefunds(): Promise<{
 	let staleAlerted = 0;
 
 	if (staleRefunds.length > 0) {
-		console.warn(
-			`[CRON:reconcile-refunds] Found ${staleRefunds.length} stale refund(s) without Stripe ID`
-		);
+		logger.warn("Found stale refund(s) without Stripe ID", {
+			cronJob: "reconcile-refunds",
+			count: staleRefunds.length,
+		});
 
 		for (const stale of staleRefunds) {
-			const ageHours = Math.round(
-				(Date.now() - stale.createdAt.getTime()) / (1000 * 60 * 60)
-			);
-			console.warn(
-				`[CRON:reconcile-refunds] Stale refund ${stale.id} (${stale.status}, ${ageHours}h old) ` +
-				`for order ${stale.order.orderNumber} - amount: ${stale.amount} cents. ` +
-				`No stripeRefundId found. Admin action required.`
-			);
+			const ageHours = Math.round((Date.now() - stale.createdAt.getTime()) / (1000 * 60 * 60));
+			logger.warn("Stale refund detected, admin action required", {
+				cronJob: "reconcile-refunds",
+				refundId: stale.id,
+				status: stale.status,
+				ageHours,
+				orderNumber: stale.order.orderNumber,
+				amountCents: stale.amount,
+			});
 
 			// Create an admin OrderNote to flag the stale refund (deduplicated)
 			try {
@@ -183,9 +196,10 @@ export async function reconcilePendingRefunds(): Promise<{
 				});
 
 				if (existingNote) {
-					console.log(
-						`[CRON:reconcile-refunds] Note already exists for stale refund ${stale.id}, skipping`
-					);
+					logger.info("Note already exists for stale refund, skipping", {
+						cronJob: "reconcile-refunds",
+						refundId: stale.id,
+					});
 					continue;
 				}
 
@@ -203,10 +217,10 @@ export async function reconcilePendingRefunds(): Promise<{
 				staleAlerted++;
 				tagsToInvalidate.add(ORDERS_CACHE_TAGS.NOTES(stale.orderId));
 			} catch (noteError) {
-				console.error(
-					`[CRON:reconcile-refunds] Error creating note for stale refund ${stale.id}:`,
-					noteError
-				);
+				logger.error("Error creating note for stale refund", noteError, {
+					cronJob: "reconcile-refunds",
+					refundId: stale.id,
+				});
 				errors++;
 			}
 		}
@@ -225,15 +239,19 @@ export async function reconcilePendingRefunds(): Promise<{
 		}
 	}
 
-	console.log(
-		`[CRON:reconcile-refunds] Reconciliation completed: ${updated} updated, ${staleAlerted} stale alerted, ${errors} errors`
-	);
+	logger.info("Reconciliation completed", {
+		cronJob: "reconcile-refunds",
+		updated,
+		staleAlerted,
+		errors,
+	});
 
 	return {
 		checked: pendingRefunds.length,
 		updated,
 		errors,
 		staleAlerted,
-		hasMore: pendingRefunds.length === BATCH_SIZE_MEDIUM || staleRefunds.length === BATCH_SIZE_MEDIUM,
+		hasMore:
+			pendingRefunds.length === BATCH_SIZE_MEDIUM || staleRefunds.length === BATCH_SIZE_MEDIUM,
 	};
 }

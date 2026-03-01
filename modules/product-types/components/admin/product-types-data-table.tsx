@@ -15,6 +15,7 @@ import { Tags } from "lucide-react";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
 import { ProductTypesSelectionToolbar } from "./product-types-selection-toolbar";
+import { CreateProductTypeButton } from "./create-product-type-button";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface ProductTypesDataTableProps {
@@ -35,6 +36,7 @@ export async function ProductTypesDataTable({
 				icon={Tags}
 				title="Aucun type trouvé"
 				description="Aucun type de bijou ne correspond aux critères de recherche."
+				actionElement={<CreateProductTypeButton />}
 			/>
 		);
 	}
@@ -44,14 +46,15 @@ export async function ProductTypesDataTable({
 			<CardContent>
 				<ProductTypesSelectionToolbar />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des types de produits" className="min-w-full table-fixed">
+					<Table
+						role="table"
+						aria-label="Liste des types de produits"
+						className="min-w-full table-fixed"
+					>
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
-									<TableSelectionCell
-										type="header"
-										itemIds={productTypeIds}
-									/>
+									<TableSelectionCell type="header" itemIds={productTypeIds} />
 								</TableHead>
 								<TableHead
 									key="label"
@@ -65,7 +68,7 @@ export async function ProductTypesDataTable({
 									key="description"
 									scope="col"
 									role="columnheader"
-									className="hidden lg:table-cell w-[30%]"
+									className="hidden w-[30%] lg:table-cell"
 								>
 									Description
 								</TableHead>
@@ -73,7 +76,7 @@ export async function ProductTypesDataTable({
 									key="products"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell text-center w-[15%]"
+									className="hidden w-[15%] text-center sm:table-cell"
 								>
 									Produits
 								</TableHead>
@@ -81,7 +84,7 @@ export async function ProductTypesDataTable({
 									key="active"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell text-center w-[10%]"
+									className="hidden w-[10%] text-center sm:table-cell"
 								>
 									Actif
 								</TableHead>
@@ -89,7 +92,7 @@ export async function ProductTypesDataTable({
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] sm:w-[10%] text-right"
+									className="w-[15%] text-right sm:w-[10%]"
 									aria-label="Actions disponibles pour chaque type de produit"
 								>
 									Actions
@@ -97,47 +100,33 @@ export async function ProductTypesDataTable({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{productTypes.map((productType) => {
+							{productTypes.map((productType) => {
 								const productsCount = productType._count?.products || 0;
 
 								return (
 									<TableRow key={productType.id}>
 										<TableCell role="gridcell">
-											<TableSelectionCell
-												type="row"
-												itemId={productType.id}
-											/>
+											<TableSelectionCell type="row" itemId={productType.id} />
 										</TableCell>
 										<TableCell role="gridcell">
-										<div className="overflow-hidden">
-											<span
-												className="font-semibold text-foreground truncate block"
-												title={productType.label}
-											>
-												{productType.label}
-											</span>
-										</div>
-									</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden lg:table-cell"
-										>
-											<div className="text-sm text-muted-foreground line-clamp-2">
+											<div className="overflow-hidden">
+												<span
+													className="text-foreground block truncate font-semibold"
+													title={productType.label}
+												>
+													{productType.label}
+												</span>
+											</div>
+										</TableCell>
+										<TableCell role="gridcell" className="hidden lg:table-cell">
+											<div className="text-muted-foreground line-clamp-2 text-sm">
 												{productType.description || "-"}
 											</div>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell text-center"
-										>
-											<span className="text-sm font-medium">
-												{productsCount}
-											</span>
+										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+											<span className="text-sm font-medium">{productsCount}</span>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell text-center"
-										>
+										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
 											<ProductTypeActiveToggle
 												productTypeId={productType.id}
 												isActive={productType.isActive}
@@ -156,7 +145,7 @@ export async function ProductTypesDataTable({
 										</TableCell>
 									</TableRow>
 								);
-								})}
+							})}
 						</TableBody>
 					</Table>
 				</TableScrollContainer>

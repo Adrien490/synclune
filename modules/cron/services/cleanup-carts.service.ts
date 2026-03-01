@@ -1,4 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 
 /**
@@ -17,7 +18,7 @@ export async function cleanupExpiredCarts(): Promise<{
 	let orphanedItemsCount = 0;
 	let hasMore = false;
 
-	console.log("[CRON:cleanup-carts] Starting expired carts cleanup...");
+	logger.info("Starting expired carts cleanup", { cronJob: "cleanup-carts" });
 
 	try {
 		// 1. Find expired guest carts (bounded to avoid long-running deletes)
@@ -37,12 +38,12 @@ export async function cleanupExpiredCarts(): Promise<{
 		deletedCount = deleteResult.count;
 		hasMore = cartsToDelete.length === CLEANUP_DELETE_LIMIT;
 
-		console.log(`[CRON:cleanup-carts] Deleted ${deletedCount} expired carts`);
+		logger.info("Deleted expired carts", { cronJob: "cleanup-carts", deletedCount });
 
 		if (hasMore) {
-			console.warn(
-				"[CRON:cleanup-carts] Delete limit reached, remaining carts will be cleaned on next run"
-			);
+			logger.warn("Delete limit reached, remaining carts will be cleaned on next run", {
+				cronJob: "cleanup-carts",
+			});
 		}
 
 		// 2. Clean up orphaned CartItems (safety net if cascade didn't trigger)
@@ -61,19 +62,17 @@ export async function cleanupExpiredCarts(): Promise<{
 		orphanedItemsCount = Number(rawCount);
 
 		if (orphanedItemsCount > 0) {
-			console.log(
-				`[CRON:cleanup-carts] Cleaned up ${orphanedItemsCount} orphaned cart items`
-			);
+			logger.info("Cleaned up orphaned cart items", {
+				cronJob: "cleanup-carts",
+				orphanedItemsCount,
+			});
 		}
 	} catch (error) {
-		console.error(
-			"[CRON:cleanup-carts] Error during cleanup:",
-			error instanceof Error ? error.message : String(error)
-		);
+		logger.error("Error during cleanup", error, { cronJob: "cleanup-carts" });
 		throw error;
 	}
 
-	console.log("[CRON:cleanup-carts] Cleanup completed");
+	logger.info("Cleanup completed", { cronJob: "cleanup-carts" });
 
 	return {
 		deletedCount,

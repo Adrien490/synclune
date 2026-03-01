@@ -1,6 +1,7 @@
 import { updateTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
 import {
 	markOrderAsPaid,
@@ -12,7 +13,13 @@ import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
-import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, STRIPE_THROTTLE_MS, STRIPE_TIMEOUT_MS, THRESHOLDS } from "@/modules/cron/constants/limits";
+import {
+	BATCH_DEADLINE_MS,
+	BATCH_SIZE_MEDIUM,
+	STRIPE_THROTTLE_MS,
+	STRIPE_TIMEOUT_MS,
+	THRESHOLDS,
+} from "@/modules/cron/constants/limits";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
 /**
@@ -28,11 +35,11 @@ export async function syncAsyncPayments(): Promise<{
 	errors: number;
 	hasMore: boolean;
 } | null> {
-	console.log("[CRON:sync-async-payments] Starting async payment sync...");
+	logger.info("Starting async payment sync", { cronJob: "sync-async-payments" });
 
 	const stripe = getStripeClient();
 	if (!stripe) {
-		console.error("[CRON:sync-async-payments] STRIPE_SECRET_KEY not configured");
+		logger.error("STRIPE_SECRET_KEY not configured", undefined, { cronJob: "sync-async-payments" });
 		return null;
 	}
 
@@ -60,9 +67,10 @@ export async function syncAsyncPayments(): Promise<{
 		take: BATCH_SIZE_MEDIUM,
 	});
 
-	console.log(
-		`[CRON:sync-async-payments] Found ${pendingOrders.length} pending orders to check`
-	);
+	logger.info("Found pending orders to check", {
+		cronJob: "sync-async-payments",
+		count: pendingOrders.length,
+	});
 
 	let updated = 0;
 	let errors = 0;
@@ -71,7 +79,7 @@ export async function syncAsyncPayments(): Promise<{
 
 	for (const order of pendingOrders) {
 		if (Date.now() > deadline) {
-			console.warn("[CRON:sync-async-payments] Approaching timeout, stopping batch early");
+			logger.warn("Approaching timeout, stopping batch early", { cronJob: "sync-async-payments" });
 			break;
 		}
 		if (!order.stripePaymentIntentId) continue;
@@ -79,18 +87,18 @@ export async function syncAsyncPayments(): Promise<{
 		try {
 			// Throttle to avoid Stripe rate limits
 			if (updated > 0 || errors > 0) {
-				await new Promise(resolve => setTimeout(resolve, STRIPE_THROTTLE_MS));
+				await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
 			}
-			const paymentIntent = await stripe.paymentIntents.retrieve(
-				order.stripePaymentIntentId,
-				{ timeout: STRIPE_TIMEOUT_MS }
-			);
+			const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, {
+				timeout: STRIPE_TIMEOUT_MS,
+			});
 
 			if (paymentIntent.status === "succeeded") {
 				// Payment succeeded but webhook was missed
-				console.log(
-					`[CRON:sync-async-payments] Order ${order.orderNumber} payment succeeded (webhook missed)`
-				);
+				logger.info("Order payment succeeded (webhook missed)", {
+					cronJob: "sync-async-payments",
+					orderNumber: order.orderNumber,
+				});
 				await markOrderAsPaid(order.id, order.stripePaymentIntentId);
 				updated++;
 			} else if (
@@ -98,9 +106,11 @@ export async function syncAsyncPayments(): Promise<{
 				paymentIntent.status === "requires_payment_method"
 			) {
 				// Payment failed
-				console.log(
-					`[CRON:sync-async-payments] Order ${order.orderNumber} payment failed: ${paymentIntent.status}`
-				);
+				logger.info("Order payment failed", {
+					cronJob: "sync-async-payments",
+					orderNumber: order.orderNumber,
+					stripeStatus: paymentIntent.status,
+				});
 				const failureDetails = extractPaymentFailureDetails(paymentIntent);
 				await markOrderAsFailed(order.id, order.stripePaymentIntentId, failureDetails);
 				try {
@@ -109,10 +119,12 @@ export async function syncAsyncPayments(): Promise<{
 						tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 					}
 				} catch (stockError) {
-					const stockErrorMessage = stockError instanceof Error ? stockError.message : String(stockError);
-					console.error(
-						`[STOCK-RESTORE-FAILED] Order ${order.orderNumber} (${order.id}): stock not restored after payment failure`,
-						stockErrorMessage
+					const stockErrorMessage =
+						stockError instanceof Error ? stockError.message : String(stockError);
+					logger.error(
+						"[STOCK-RESTORE-FAILED] Stock not restored after payment failure",
+						stockError,
+						{ cronJob: "sync-async-payments", orderNumber: order.orderNumber, orderId: order.id },
 					);
 					sendAdminCronFailedAlert({
 						job: "sync-async-payments",
@@ -124,17 +136,19 @@ export async function syncAsyncPayments(): Promise<{
 							error: stockErrorMessage,
 						},
 					}).catch((e) =>
-						console.error("[CRON:sync-async-payments] Failed to send stock restore alert", e)
+						logger.error("Failed to send stock restore alert", e, {
+							cronJob: "sync-async-payments",
+						}),
 					);
 				}
 				updated++;
 			}
 			// Other statuses (processing, requires_action) are still pending
 		} catch (error) {
-			console.error(
-				`[CRON:sync-async-payments] Error checking order ${order.orderNumber}:`,
-				error instanceof Error ? error.message : String(error)
-			);
+			logger.error("Error checking order", error, {
+				cronJob: "sync-async-payments",
+				orderNumber: order.orderNumber,
+			});
 			errors++;
 		}
 	}
@@ -152,9 +166,7 @@ export async function syncAsyncPayments(): Promise<{
 		}
 	}
 
-	console.log(
-		`[CRON:sync-async-payments] Sync completed: ${updated} updated, ${errors} errors`
-	);
+	logger.info("Sync completed", { cronJob: "sync-async-payments", updated, errors });
 
 	return {
 		checked: pendingOrders.length,

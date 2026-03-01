@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, notFound, validateInput } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -23,12 +24,13 @@ import { duplicateMaterialSchema } from "../schemas/materials.schemas";
  */
 export async function duplicateMaterial(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.DUPLICATE);
@@ -86,11 +88,23 @@ export async function duplicateMaterial(
 			},
 		});
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "material.duplicate",
+			targetType: "material",
+			targetId: duplicate.id,
+			metadata: { originalId: materialId, name: duplicate.name },
+		});
+
 		// 7. Invalider le cache
 		const tags = getMaterialInvalidationTags(duplicate.slug);
 		tags.forEach((tag) => updateTag(tag));
 
-		return success(`Materiau duplique: ${duplicate.name}`, { id: duplicate.id, name: duplicate.name });
+		return success(`Materiau duplique: ${duplicate.name}`, {
+			id: duplicate.id,
+			name: duplicate.name,
+		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer le materiau");
 	}

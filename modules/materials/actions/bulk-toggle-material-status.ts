@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -14,12 +15,13 @@ import { bulkToggleMaterialStatusSchema } from "../schemas/materials.schemas";
 
 export async function bulkToggleMaterialStatus(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.BULK_OPERATIONS);
@@ -59,6 +61,15 @@ export async function bulkToggleMaterialStatus(
 			},
 		});
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "material.bulkToggleStatus",
+			targetType: "material",
+			targetId: validatedData.ids.join(","),
+			metadata: { count: result.count, isActive: validatedData.isActive },
+		});
+
 		// Invalider le cache (list + detail de chaque materiau)
 		const tags = getMaterialInvalidationTags();
 		for (const slug of slugs) {
@@ -68,7 +79,9 @@ export async function bulkToggleMaterialStatus(
 		uniqueTags.forEach((tag) => updateTag(tag));
 
 		const statusText = validatedData.isActive ? "active" : "desactive";
-		return success(`${result.count} materiau${result.count > 1 ? "x" : ""} ${statusText}${result.count > 1 ? "s" : ""} avec succes`);
+		return success(
+			`${result.count} materiau${result.count > 1 ? "x" : ""} ${statusText}${result.count > 1 ? "s" : ""} avec succes`,
+		);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le statut des materiaux");
 	}

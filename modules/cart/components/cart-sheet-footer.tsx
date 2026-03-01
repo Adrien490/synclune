@@ -20,20 +20,23 @@ export function CartSheetFooter({
 	onClose,
 }: CartSheetFooterProps) {
 	return (
-		<SheetFooter className="px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
+		<SheetFooter className="mt-auto shrink-0 border-t px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
 			<div className="w-full space-y-2">
 				{/* Subtotal */}
-				<div className="flex justify-between items-center">
+				<div className="flex items-center justify-between">
 					<span className="font-semibold">
 						Sous-total ({totalItems} article{totalItems > 1 ? "s" : ""})
 					</span>
 					<span
 						aria-busy={isPending}
-						className="tabular-nums font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:motion-safe:animate-pulse"
+						className="text-lg font-bold tabular-nums transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:motion-safe:animate-pulse"
 					>
 						<AnimatedNumber value={subtotal} formatter={formatEuro} />
 					</span>
 				</div>
+
+				{/* Shipping estimate */}
+				<p className="text-muted-foreground text-xs">Livraison à partir de 6,00 €</p>
 
 				{/* Primary CTA */}
 				{hasStockIssues ? (
@@ -50,9 +53,11 @@ export function CartSheetFooter({
 					<Button
 						asChild
 						size="lg"
-						className="w-full shadow-md hover:shadow-lg transition-shadow group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+						className="w-full shadow-md transition-shadow group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 hover:shadow-lg"
 					>
-						<Link href="/paiement" onClick={onClose}>Passer commande</Link>
+						<Link href="/paiement" onClick={onClose}>
+							Passer commande
+						</Link>
 					</Button>
 				)}
 
@@ -61,7 +66,7 @@ export function CartSheetFooter({
 					<button
 						type="button"
 						onClick={onClose}
-						className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+						className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm text-sm underline underline-offset-4 transition-colors group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 					>
 						Continuer mes achats
 					</button>

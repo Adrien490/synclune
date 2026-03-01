@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { useSyncExternalStore } from "react";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
@@ -53,7 +53,7 @@ export function Reveal({
 	}
 
 	return (
-		<motion.div
+		<m.div
 			className={className}
 			role={role}
 			initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y }}
@@ -67,6 +67,6 @@ export function Reveal({
 			{...rest}
 		>
 			{children}
-		</motion.div>
+		</m.div>
 	);
 }

@@ -3,8 +3,13 @@
 import { FieldLabel } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
-import { ResponsiveSelect, type ResponsiveSelectOption } from "@/shared/components/responsive-select";
+import {
+	ResponsiveSelect,
+	type ResponsiveSelectOption,
+} from "@/shared/components/responsive-select";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
+import { UploadDropzone } from "@/modules/media/utils/uploadthing";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
@@ -15,10 +20,7 @@ interface CustomizationFormProps {
 	onSuccess?: () => void;
 }
 
-export function CustomizationForm({
-	productTypes,
-	onSuccess,
-}: CustomizationFormProps) {
+export function CustomizationForm({ productTypes, onSuccess }: CustomizationFormProps) {
 	const { form, action, isPending } = useCustomizationForm({
 		onSuccess: () => {
 			form.reset();
@@ -57,9 +59,7 @@ export function CustomizationForm({
 			/>
 
 			{/* Champ caché pour productTypeLabel */}
-			<form.Subscribe
-				selector={(state) => state.values.productTypeLabel}
-			>
+			<form.Subscribe selector={(state) => state.values.productTypeLabel}>
 				{(productTypeLabel) => (
 					<>
 						{productTypeLabel && (
@@ -81,8 +81,7 @@ export function CustomizationForm({
 						})),
 						{ value: "Autre", label: "Autre" },
 					];
-					const hasError =
-						field.state.meta.errors && field.state.meta.errors.length > 0;
+					const hasError = field.state.meta.errors && field.state.meta.errors.length > 0;
 
 					return (
 						<div className="space-y-2">
@@ -104,7 +103,7 @@ export function CustomizationForm({
 									id="productTypeLabel-error"
 									role="alert"
 									aria-live="polite"
-									className="text-sm text-destructive"
+									className="text-destructive text-sm"
 								>
 									{field.state.meta.errors[0]}
 								</p>
@@ -137,6 +136,66 @@ export function CustomizationForm({
 					/>
 				)}
 			</form.AppField>
+
+			{/* Images d'inspiration (optionnel) */}
+			<form.Subscribe selector={(state) => state.values.inspirationImageUrls}>
+				{(urls) => (
+					<div className="space-y-2">
+						<FieldLabel htmlFor="inspirationImages" optional>
+							Images d&apos;inspiration
+						</FieldLabel>
+						<p className="text-muted-foreground text-sm">
+							Ajoutez jusqu&apos;à 5 images pour illustrer votre idée
+						</p>
+
+						{urls.length > 0 && (
+							<div className="flex flex-wrap gap-2">
+								{urls.map((url, index) => (
+									<div key={url} className="group relative">
+										<img
+											src={url}
+											alt={`Inspiration ${index + 1}`}
+											className="h-20 w-20 rounded-md border object-cover"
+										/>
+										<button
+											type="button"
+											onClick={() => {
+												const newUrls = urls.filter((_, i) => i !== index);
+												form.setFieldValue("inspirationImageUrls", newUrls);
+											}}
+											className="bg-destructive text-destructive-foreground absolute -top-1.5 -right-1.5 rounded-full p-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+											aria-label={`Supprimer l'image ${index + 1}`}
+										>
+											<X className="h-3 w-3" />
+										</button>
+									</div>
+								))}
+							</div>
+						)}
+
+						{urls.length < 5 && (
+							<UploadDropzone
+								endpoint="customizationMedia"
+								onClientUploadComplete={(res) => {
+									const newUrls = [...urls, ...res.map((f) => f.ufsUrl)].slice(0, 5);
+									form.setFieldValue("inspirationImageUrls", newUrls);
+								}}
+								onUploadError={(error) => {
+									toast.error(error.message || "Erreur lors de l'upload");
+								}}
+								config={{ mode: "auto" }}
+								content={{
+									label: () => "Glissez vos images ou cliquez pour parcourir",
+									allowedContent: () => "Images (JPEG, PNG, WebP) — 4 Mo max",
+								}}
+								className="border-border/50 ut-uploading:border-primary/50 rounded-lg border-2 border-dashed"
+							/>
+						)}
+
+						<input type="hidden" name="inspirationImageUrls" value={JSON.stringify(urls)} />
+					</div>
+				)}
+			</form.Subscribe>
 
 			{/* Prénom */}
 			<form.AppField
@@ -215,11 +274,8 @@ export function CustomizationForm({
 			>
 				{(field) => (
 					<div className="space-y-1">
-						<field.CheckboxField
-							label="J'accepte la politique de confidentialité"
-							required
-						/>
-						<p className="text-sm leading-relaxed text-muted-foreground ml-7">
+						<field.CheckboxField label="J'accepte la politique de confidentialité" required />
+						<p className="text-muted-foreground ml-7 text-sm leading-relaxed">
 							Consultez notre{" "}
 							<a
 								href="/confidentialite"
@@ -236,14 +292,14 @@ export function CustomizationForm({
 			</form.AppField>
 
 			{/* Submit sticky sur mobile */}
-			<div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:py-4 sm:mx-0 sm:px-0 flex justify-center sm:justify-start">
+			<div className="bg-background/95 border-border/50 sticky bottom-0 -mx-4 flex justify-center border-t px-4 py-4 backdrop-blur-sm sm:static sm:mx-0 sm:justify-start sm:border-0 sm:bg-transparent sm:px-0 sm:py-4 sm:backdrop-blur-none">
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
 						<Button
 							type="submit"
 							disabled={!canSubmit || isPending}
 							size="lg"
-							className="w-full sm:w-auto sm:min-w-55 relative overflow-hidden group"
+							className="group relative w-full overflow-hidden sm:w-auto sm:min-w-55"
 							aria-busy={isPending}
 						>
 							{isPending ? (
@@ -251,7 +307,7 @@ export function CustomizationForm({
 							) : (
 								<>
 									Envoyer mon message
-									<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+									<span className="from-accent/0 via-accent/20 to-accent/0 absolute inset-0 bg-linear-to-r opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 								</>
 							)}
 						</Button>

@@ -1,4 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 
 /**
@@ -17,7 +18,7 @@ export async function cleanupExpiredWishlists(): Promise<{
 	let orphanedItemsCount = 0;
 	let hasMore = false;
 
-	console.log("[CRON:cleanup-wishlists] Starting expired wishlists cleanup...");
+	logger.info("Starting expired wishlists cleanup", { cronJob: "cleanup-wishlists" });
 
 	try {
 		// 1. Find expired guest wishlists (bounded to avoid long-running deletes)
@@ -37,14 +38,12 @@ export async function cleanupExpiredWishlists(): Promise<{
 		deletedCount = deleteResult.count;
 		hasMore = wishlistsToDelete.length === CLEANUP_DELETE_LIMIT;
 
-		console.log(
-			`[CRON:cleanup-wishlists] Deleted ${deletedCount} expired wishlists`
-		);
+		logger.info("Deleted expired wishlists", { cronJob: "cleanup-wishlists", deletedCount });
 
 		if (hasMore) {
-			console.warn(
-				"[CRON:cleanup-wishlists] Delete limit reached, remaining wishlists will be cleaned on next run"
-			);
+			logger.warn("Delete limit reached, remaining wishlists will be cleaned on next run", {
+				cronJob: "cleanup-wishlists",
+			});
 		}
 
 		// 2. Clean up orphaned WishlistItems (safety net if cascade didn't trigger)
@@ -63,19 +62,17 @@ export async function cleanupExpiredWishlists(): Promise<{
 		orphanedItemsCount = Number(rawCount);
 
 		if (orphanedItemsCount > 0) {
-			console.log(
-				`[CRON:cleanup-wishlists] Cleaned up ${orphanedItemsCount} orphaned wishlist items`
-			);
+			logger.info("Cleaned up orphaned wishlist items", {
+				cronJob: "cleanup-wishlists",
+				orphanedItemsCount,
+			});
 		}
 	} catch (error) {
-		console.error(
-			"[CRON:cleanup-wishlists] Error during cleanup:",
-			error instanceof Error ? error.message : String(error)
-		);
+		logger.error("Error during cleanup", error, { cronJob: "cleanup-wishlists" });
 		throw error;
 	}
 
-	console.log("[CRON:cleanup-wishlists] Cleanup completed");
+	logger.info("Cleanup completed", { cronJob: "cleanup-wishlists" });
 
 	return {
 		deletedCount,

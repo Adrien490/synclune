@@ -6,12 +6,8 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	error,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
+import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkChangeUserRoleSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -19,7 +15,7 @@ import { getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function bulkChangeUserRole(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting (before auth to avoid unnecessary DB hits)
@@ -29,6 +25,7 @@ export async function bulkChangeUserRole(
 		// 2. Verification des droits admin
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider les donnees
 		const idsString = formData.get("ids");
@@ -79,7 +76,9 @@ export async function bulkChangeUserRole(
 				});
 
 				if (totalAdminCount - adminsToDowngrade.length < 1) {
-					return error("Impossible de retirer tous les administrateurs. Au moins un admin doit rester.");
+					return error(
+						"Impossible de retirer tous les administrateurs. Au moins un admin doit rester.",
+					);
 				}
 			}
 		}
@@ -101,9 +100,18 @@ export async function bulkChangeUserRole(
 			}
 		}
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "user.bulkChangeRole",
+			targetType: "user",
+			targetId: eligibleIds.join(","),
+			metadata: { newRole: validatedData.role, count: eligibleIds.length },
+		});
+
 		const roleLabel = validatedData.role === Role.ADMIN ? "administrateurs" : "utilisateurs";
 		return success(
-			`${result.count} utilisateur${result.count > 1 ? "s" : ""} ${result.count > 1 ? "sont" : "est"} maintenant ${roleLabel}.`
+			`${result.count} utilisateur${result.count > 1 ? "s" : ""} ${result.count > 1 ? "sont" : "est"} maintenant ${roleLabel}.`,
 		);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors du changement de role");

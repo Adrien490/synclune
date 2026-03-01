@@ -4,13 +4,9 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
+import { validateInput, success, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
@@ -28,8 +24,9 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Vérification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2b. Validation du userId
 		const validation = validateInput(adminUserIdSchema, { userId });
@@ -53,6 +50,15 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 		// 5. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "user.invalidateSessions",
+			targetType: "user",
+			targetId: userId,
+			metadata: { sessionCount: result.count },
+		});
 
 		const displayName = user.name || user.email;
 		return success(`${result.count} session(s) de ${displayName} invalidée(s)`, {

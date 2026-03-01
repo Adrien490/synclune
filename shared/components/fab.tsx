@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useRef, useState, useEffect, useEffectEvent } from "react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
@@ -138,7 +138,7 @@ export function Fab({
 
 			<AnimatePresence mode="wait">
 				{isHidden ? (
-					<motion.div
+					<m.div
 						key="fab-hidden"
 						initial={shouldAnimate ? { opacity: 0, x: -20 } : false}
 						animate={{ opacity: 1, x: 0 }}
@@ -179,9 +179,9 @@ export function Fab({
 								<p className="text-sm">{showTooltip}</p>
 							</TooltipContent>
 						</Tooltip>
-					</motion.div>
+					</m.div>
 				) : (
-					<motion.div
+					<m.div
 						key="fab-visible"
 						ref={containerRef}
 						data-fab-container
@@ -307,7 +307,7 @@ export function Fab({
 								{ariaDescription}
 							</span>
 						)}
-					</motion.div>
+					</m.div>
 				)}
 			</AnimatePresence>
 		</>

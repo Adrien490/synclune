@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	useActionState,
-	useOptimistic,
-	useTransition,
-	useRef,
-	useEffect,
-} from "react";
+import { useActionState, useOptimistic, useTransition, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toggleWishlistItem } from "@/modules/wishlist/actions/toggle-wishlist-item";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -45,20 +39,14 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const pathname = usePathname();
 
 	// Store pour optimistic UI du badge navbar
-	const incrementWishlist = useBadgeCountsStore(
-		(state) => state.incrementWishlist
-	);
-	const decrementWishlist = useBadgeCountsStore(
-		(state) => state.decrementWishlist
-	);
+	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist);
+	const decrementWishlist = useBadgeCountsStore((state) => state.decrementWishlist);
 
 	// Contexte pour notifier la liste parente (optionnel, null si hors contexte)
 	const wishlistListOptimistic = useWishlistListOptimistic();
 
 	const [isTransitionPending, startTransition] = useTransition();
-	const [optimisticIsInWishlist, setOptimisticIsInWishlist] = useOptimistic(
-		initialIsInWishlist
-	);
+	const [optimisticIsInWishlist, setOptimisticIsInWishlist] = useOptimistic(initialIsInWishlist);
 
 	// Ref pour tracker l'état actuel sans re-render (évite closure stale)
 	const isInWishlistRef = useRef(initialIsInWishlist);
@@ -102,6 +90,9 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 						decrementWishlist(); // On avait incrementé à tort
 					}
 
+					// Force re-fetch to restore optimistically removed grid items
+					router.refresh();
+
 					// Redirection vers connexion si non authentifié
 					if (
 						result &&
@@ -113,9 +104,9 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 						router.push(`/connexion?callbackUrl=${callbackUrl}`);
 					}
 				},
-			})
+			}),
 		),
-		undefined
+		undefined,
 	);
 
 	// Reset du flag de processing quand l'action est terminée

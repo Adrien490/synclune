@@ -64,6 +64,7 @@ export const ROUTES = {
 		CHECKOUT: "/paiement",
 		CHECKOUT_RETURN: "/paiement/retour",
 		CUSTOMIZATION: "/personnalisation",
+		ABOUT: "/a-propos",
 	},
 
 	// Legal pages

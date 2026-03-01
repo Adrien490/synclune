@@ -15,24 +15,20 @@ describe("isVideoUrl", () => {
 		expect(isVideoUrl("https://example.com/video.mp4")).toBe(true);
 	});
 
-	it("returns true for .webm URL", () => {
-		expect(isVideoUrl("https://example.com/video.webm")).toBe(true);
+	it("returns false for .webm URL (unsupported format)", () => {
+		expect(isVideoUrl("https://example.com/video.webm")).toBe(false);
 	});
 
-	it("returns true for .mov URL", () => {
-		expect(isVideoUrl("https://example.com/video.mov")).toBe(true);
+	it("returns false for .mov URL (unsupported format)", () => {
+		expect(isVideoUrl("https://example.com/video.mov")).toBe(false);
 	});
 
-	it("returns true for .avi URL", () => {
-		expect(isVideoUrl("https://example.com/video.avi")).toBe(true);
+	it("returns false for .avi URL (unsupported format)", () => {
+		expect(isVideoUrl("https://example.com/video.avi")).toBe(false);
 	});
 
 	it("returns true for uppercase extension (.MP4)", () => {
 		expect(isVideoUrl("https://example.com/video.MP4")).toBe(true);
-	});
-
-	it("returns true for mixed-case extension (.Mov)", () => {
-		expect(isVideoUrl("https://example.com/video.Mov")).toBe(true);
 	});
 
 	it("returns false for an image URL", () => {
@@ -103,8 +99,8 @@ describe("detectMediaType", () => {
 		expect(detectMediaType("https://example.com/video.mp4")).toBe("VIDEO");
 	});
 
-	it("returns VIDEO for a .webm URL", () => {
-		expect(detectMediaType("https://example.com/video.webm")).toBe("VIDEO");
+	it("returns IMAGE (default) for a .webm URL (unsupported video format)", () => {
+		expect(detectMediaType("https://example.com/video.webm")).toBe("IMAGE");
 	});
 
 	it("returns IMAGE for a .jpg URL", () => {

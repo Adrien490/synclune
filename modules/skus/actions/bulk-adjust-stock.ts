@@ -1,6 +1,7 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -17,8 +18,9 @@ export async function bulkAdjustStock(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_BULK_OPERATIONS_LIMIT);
@@ -60,6 +62,12 @@ export async function bulkAdjustStock(
 				message: "Le stock ne peut pas etre negatif",
 			};
 		}
+
+		// Snapshot SKUs with zero stock before update (for back-in-stock notifications)
+		const zeroStockSkus = await prisma.productSku.findMany({
+			where: { id: { in: ids }, inventory: { lte: 0 } },
+			select: { id: true, productId: true },
+		});
 
 		// Appliquer les modifications avec atomic conditional update
 		if (mode === "absolute") {
@@ -128,6 +136,24 @@ export async function bulkAdjustStock(
 		// Invalider le cache
 		const uniqueTags = collectBulkInvalidationTags(skusData);
 		invalidateTags(uniqueTags);
+
+		// Notify wishlist users for products that went from 0 to positive stock
+		if (zeroStockSkus.length > 0 && (mode === "absolute" ? value > 0 : value > 0)) {
+			const productIds = [...new Set(zeroStockSkus.map((s) => s.productId))];
+			import("@/modules/wishlist/services/notify-back-in-stock")
+				.then(({ notifyBackInStock }) => Promise.all(productIds.map((id) => notifyBackInStock(id))))
+				.catch((err) => console.error("[BULK-STOCK] Back-in-stock notification failed:", err));
+		}
+
+		// Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "sku.bulkAdjustStock",
+			targetType: "sku",
+			targetId: ids.join(","),
+			metadata: { count: skusData.length, mode, value },
+		});
 
 		const modeLabel = mode === "absolute" ? "defini a" : "ajuste de";
 		const valueLabel = mode === "relative" && value > 0 ? `+${value}` : value.toString();

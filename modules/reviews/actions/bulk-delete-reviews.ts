@@ -2,9 +2,10 @@
 
 import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { success, error, validationError, handleActionError } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
@@ -24,8 +25,9 @@ export async function bulkDeleteReviews(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 1b. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.BULK_OPERATIONS);
@@ -93,6 +95,15 @@ export async function bulkDeleteReviews(
 
 			// Recalculer les stats pour chaque produit affecté en parallèle
 			await Promise.all(productIds.map((productId) => updateProductReviewStats(tx, productId)));
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "review.bulkDelete",
+			targetType: "review",
+			targetId: ids.join(","),
+			metadata: { count: reviews.length },
 		});
 
 		// 5. Invalider le cache pour chaque avis et produit

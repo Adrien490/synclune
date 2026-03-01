@@ -46,5 +46,23 @@
 		"path": ".next/static/chunks/app/admin/catalogue/**/*.js",
 		"limit": "150 kB",
 		"gzip": true
+	},
+	{
+		"name": "Collections",
+		"path": ".next/static/chunks/app/(boutique)/collections/**/*.js",
+		"limit": "70 kB",
+		"gzip": true
+	},
+	{
+		"name": "Account (espace client)",
+		"path": ".next/static/chunks/app/(boutique)/(espace-client)/**/*.js",
+		"limit": "60 kB",
+		"gzip": true
+	},
+	{
+		"name": "Legal pages",
+		"path": ".next/static/chunks/app/(boutique)/(informations-legales)/**/*.js",
+		"limit": "30 kB",
+		"gzip": true
 	}
 ]

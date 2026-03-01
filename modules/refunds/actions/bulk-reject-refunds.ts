@@ -17,6 +17,7 @@ import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { logAudit } from "@/shared/lib/audit-log";
 import { bulkRejectRefundsSchema } from "../schemas/refund.schemas";
 
 /**
@@ -30,11 +31,12 @@ import { bulkRejectRefundsSchema } from "../schemas/refund.schemas";
  */
 export async function bulkRejectRefunds(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -80,7 +82,9 @@ export async function bulkRejectRefunds(
 		});
 
 		if (refunds.length === 0) {
-			return error("Aucun remboursement éligible au rejet (seuls les remboursements en attente peuvent être rejetés)");
+			return error(
+				"Aucun remboursement éligible au rejet (seuls les remboursements en attente peuvent être rejetés)",
+			);
 		}
 
 		// Sanitiser la raison avant stockage
@@ -102,7 +106,6 @@ export async function bulkRejectRefunds(
 						note: updatedNote,
 					},
 				});
-
 			}
 		});
 
@@ -112,11 +115,13 @@ export async function bulkRejectRefunds(
 		updateTag(DASHBOARD_CACHE_TAGS.KPIS);
 		updateTag(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 		updateTag(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
-		const uniqueOrderIds = [...new Set(refunds.map(r => r.order.id))];
-		uniqueOrderIds.forEach(orderId => updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId)));
+		const uniqueOrderIds = [...new Set(refunds.map((r) => r.order.id))];
+		uniqueOrderIds.forEach((orderId) => updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId)));
 
 		// Invalidate per-user caches
-		const uniqueUserIds = [...new Set(refunds.map(r => r.order.user?.id).filter(Boolean))] as string[];
+		const uniqueUserIds = [
+			...new Set(refunds.map((r) => r.order.user?.id).filter(Boolean)),
+		] as string[];
 		for (const userId of uniqueUserIds) {
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId));
 		}
@@ -133,7 +138,10 @@ export async function bulkRejectRefunds(
 					reason: sanitizedReason || undefined,
 					orderDetailsUrl,
 				}).catch((emailError) => {
-					console.error(`[BULK_REJECT_REFUNDS] Échec envoi email pour ${refund.order.orderNumber}:`, emailError);
+					console.error(
+						`[BULK_REJECT_REFUNDS] Échec envoi email pour ${refund.order.orderNumber}:`,
+						emailError,
+					);
 				});
 			}
 		}
@@ -145,6 +153,19 @@ export async function bulkRejectRefunds(
 		if (skipped > 0) {
 			message += ` - ${skipped} ignoré${skipped > 1 ? "s" : ""} (déjà traité${skipped > 1 ? "s" : ""})`;
 		}
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "refund.bulkReject",
+			targetType: "refund",
+			targetId: refunds.map((r) => r.id).join(","),
+			metadata: {
+				count: refunds.length,
+				totalAmount: totalAmount,
+				reason: sanitizedReason,
+			},
+		});
 
 		return {
 			status: ActionStatus.SUCCESS,

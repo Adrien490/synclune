@@ -193,7 +193,7 @@ describe("sendAdminRefundFailedAlert", () => {
 			}),
 			expect.objectContaining({
 				to: "admin@test.com",
-				subject: "🚨 ACTION REQUISE : Échec remboursement CMD-001",
+				subject: "[Admin] Échec remboursement — CMD-001",
 				tags: [{ name: "category", value: "admin" }],
 			}),
 		);
@@ -263,7 +263,7 @@ describe("sendWebhookFailedAlertEmail", () => {
 			}),
 			expect.objectContaining({
 				to: "admin@test.com",
-				subject: "[ALERTE] Webhook payment_intent.succeeded échoué (3 tentatives)",
+				subject: "[Admin] Webhook payment_intent.succeeded échoué (3 tentatives)",
 				tags: [{ name: "category", value: "admin" }],
 			}),
 		);
@@ -336,7 +336,7 @@ describe("sendAdminCronFailedAlert", () => {
 			}),
 			expect.objectContaining({
 				to: "admin@test.com",
-				subject: "[ALERTE CRON] cleanup-carts — 5 erreur(s)",
+				subject: "[Admin] Cron cleanup-carts — 5 erreur(s)",
 				tags: [{ name: "category", value: "admin" }],
 			}),
 		);
@@ -350,7 +350,7 @@ describe("sendAdminCronFailedAlert", () => {
 		});
 
 		const callArgs = mockRenderAndSend.mock.calls[0]![1];
-		expect(callArgs.subject).toBe("[ALERTE CRON] sync-async-payments — 12 erreur(s)");
+		expect(callArgs.subject).toBe("[Admin] Cron sync-async-payments — 12 erreur(s)");
 	});
 
 	it("should return the result from renderAndSend", async () => {
@@ -390,7 +390,7 @@ describe("sendAdminCheckoutFailedAlert", () => {
 			}),
 			expect.objectContaining({
 				to: "admin@test.com",
-				subject: "[ALERTE CHECKOUT] Échec session Stripe — CMD-001",
+				subject: "[Admin] Échec checkout Stripe — CMD-001",
 				tags: [{ name: "category", value: "admin" }],
 			}),
 		);
@@ -442,7 +442,7 @@ describe("sendAdminDisputeAlert", () => {
 			}),
 			expect.objectContaining({
 				to: "admin@test.com",
-				subject: "[LITIGE] Commande CMD-001 — Action requise",
+				subject: "[Admin] Litige commande CMD-001 — Action requise",
 				tags: [{ name: "category", value: "admin" }],
 			}),
 		);
@@ -518,7 +518,7 @@ describe("sendAdminInvoiceFailedAlert", () => {
 			}),
 			expect.objectContaining({
 				to: "admin@test.com",
-				subject: "🚨 ACTION REQUISE : Échec génération facture CMD-001",
+				subject: "[Admin] Échec génération facture — CMD-001",
 				tags: [{ name: "category", value: "admin" }],
 			}),
 		);

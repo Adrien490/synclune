@@ -6,12 +6,8 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	error,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
+import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkDeleteUsersSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -19,7 +15,7 @@ import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/c
 
 export async function bulkDeleteUsers(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting (before auth to avoid unnecessary DB hits)
@@ -29,6 +25,7 @@ export async function bulkDeleteUsers(
 		// 2. Verification des droits admin
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
@@ -69,7 +66,9 @@ export async function bulkDeleteUsers(
 				where: { role: Role.ADMIN, ...notDeleted },
 			});
 			if (totalAdminCount - adminsToDelete.length < 1) {
-				return error("Impossible de supprimer tous les administrateurs. Au moins un admin doit rester.");
+				return error(
+					"Impossible de supprimer tous les administrateurs. Au moins un admin doit rester.",
+				);
 			}
 		}
 
@@ -96,8 +95,17 @@ export async function bulkDeleteUsers(
 			}
 		}
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "user.bulkDelete",
+			targetType: "user",
+			targetId: eligibleIds.join(","),
+			metadata: { count: eligibleIds.length },
+		});
+
 		return success(
-			`${result.count} utilisateur${result.count > 1 ? "s" : ""} supprime${result.count > 1 ? "s" : ""} avec succes.`
+			`${result.count} utilisateur${result.count > 1 ? "s" : ""} supprime${result.count > 1 ? "s" : ""} avec succes.`,
 		);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression des utilisateurs");

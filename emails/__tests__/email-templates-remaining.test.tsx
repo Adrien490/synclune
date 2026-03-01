@@ -556,6 +556,7 @@ describe("CustomizationConfirmationEmail", () => {
 		productTypeLabel: "Collier",
 		details: "Je souhaiterais un collier personnalisé avec les initiales 'ML'.",
 		inspirationProducts: [{ title: "Collier Lune Céleste" }],
+		shopUrl: "https://synclune.fr/creations",
 	};
 
 	it("renders without error", async () => {
@@ -948,6 +949,7 @@ describe("AdminCheckoutFailedEmail", () => {
 		customerEmail: "client@example.com",
 		total: 8900,
 		errorMessage: "StripeConnectionError: Could not connect to Stripe API after 2 retries",
+		dashboardUrl: "https://synclune.fr/admin",
 	};
 
 	it("renders without error", async () => {
@@ -1012,6 +1014,7 @@ describe("AdminCronFailedEmail", () => {
 			failed: 3,
 			lastError: "Connection timeout after 30s",
 		},
+		dashboardUrl: "https://synclune.fr/admin",
 	};
 
 	it("renders without error", async () => {

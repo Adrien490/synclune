@@ -13,9 +13,7 @@ interface PasswordStrengthIndicatorProps {
 	password: string;
 }
 
-export function PasswordStrengthIndicator({
-	password,
-}: PasswordStrengthIndicatorProps) {
+export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicatorProps) {
 	const strengthLevel = getStrengthLevel(password);
 	const strengthLabel = getStrengthLabel(strengthLevel);
 	const strengthColor = getStrengthColor(strengthLevel);
@@ -31,26 +29,27 @@ export function PasswordStrengthIndicator({
 					<span
 						className={cn(
 							"font-medium",
-							strengthLevel < 2 ? "text-destructive" : "text-green-600"
+							strengthLevel < 2
+								? "text-destructive"
+								: strengthLevel === 2
+									? "text-yellow-600 dark:text-yellow-400"
+									: "text-green-600 dark:text-green-400",
 						)}
 					>
 						{strengthLabel}
 					</span>
 				</div>
 				<div
-					className="h-1.5 w-full bg-muted rounded-full overflow-hidden"
+					className="bg-muted h-1.5 w-full overflow-hidden rounded-full"
 					role="progressbar"
 					aria-valuenow={strengthLevel}
 					aria-valuemin={0}
-					aria-valuemax={2}
+					aria-valuemax={3}
 					aria-label={`Force du mot de passe : ${strengthLabel}`}
 				>
 					<div
-						className={cn(
-							"h-full transition-all duration-300 rounded-full",
-							strengthColor
-						)}
-						style={{ width: `${(strengthLevel / 2) * 100}%` }}
+						className={cn("h-full rounded-full transition-all duration-300", strengthColor)}
+						style={{ width: `${(strengthLevel / 3) * 100}%` }}
 					/>
 				</div>
 			</div>
@@ -64,7 +63,7 @@ export function PasswordStrengthIndicator({
 							key={index}
 							className={cn(
 								"flex items-center gap-1.5 transition-colors",
-								isValid ? "text-green-600" : "text-muted-foreground"
+								isValid ? "text-green-600 dark:text-green-400" : "text-muted-foreground",
 							)}
 						>
 							{isValid ? (

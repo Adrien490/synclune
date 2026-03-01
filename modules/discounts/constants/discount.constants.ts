@@ -1,5 +1,6 @@
 import type { Prisma } from "@/app/generated/prisma/client";
 import { DiscountType } from "@/app/generated/prisma/browser";
+import type { ReadonlyValues } from "@/shared/types/sort.types";
 
 // ============================================================================
 // SELECT DEFINITIONS - DISCOUNT DETAIL
@@ -76,9 +77,8 @@ export const DISCOUNTS_SORT_OPTIONS = {
 	USAGE_ASC: "usage-ascending",
 } as const;
 
-export const GET_DISCOUNTS_SORT_FIELDS = Object.values(
-	DISCOUNTS_SORT_OPTIONS
-) as unknown as readonly (typeof DISCOUNTS_SORT_OPTIONS)[keyof typeof DISCOUNTS_SORT_OPTIONS][];
+export const GET_DISCOUNTS_SORT_FIELDS: ReadonlyValues<typeof DISCOUNTS_SORT_OPTIONS> =
+	Object.values(DISCOUNTS_SORT_OPTIONS);
 
 export const GET_DISCOUNTS_DEFAULT_SORT_BY = DISCOUNTS_SORT_OPTIONS.CREATED_DESC;
 
@@ -123,4 +123,3 @@ export const DISCOUNT_ERROR_MESSAGES = {
 	DELETE_FAILED: "Erreur lors de la suppression du code promo",
 	HAS_USAGES: "Ce code promo a déjà été utilisé et ne peut pas être supprimé",
 } as const;
-

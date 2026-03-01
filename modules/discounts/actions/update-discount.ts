@@ -6,7 +6,8 @@ import { updateTag } from "next/cache";
 import { updateDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -20,11 +21,12 @@ import { getDiscountInvalidationTags, DISCOUNT_CACHE_TAGS } from "../constants/c
  */
 export async function updateDiscount(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -37,18 +39,12 @@ export async function updateDiscount(
 			minOrderAmount: formData.get("minOrderAmount")
 				? Number(formData.get("minOrderAmount"))
 				: null,
-			maxUsageCount: formData.get("maxUsageCount")
-				? Number(formData.get("maxUsageCount"))
-				: null,
+			maxUsageCount: formData.get("maxUsageCount") ? Number(formData.get("maxUsageCount")) : null,
 			maxUsagePerUser: formData.get("maxUsagePerUser")
 				? Number(formData.get("maxUsagePerUser"))
 				: null,
-			startsAt: formData.get("startsAt")
-				? new Date(formData.get("startsAt") as string)
-				: null,
-			endsAt: formData.get("endsAt")
-				? new Date(formData.get("endsAt") as string)
-				: null,
+			startsAt: formData.get("startsAt") ? new Date(formData.get("startsAt") as string) : null,
+			endsAt: formData.get("endsAt") ? new Date(formData.get("endsAt") as string) : null,
 		};
 
 		const validated = validateInput(updateDiscountSchema, rawData);
@@ -95,20 +91,26 @@ export async function updateDiscount(
 		});
 
 		// Invalidate cache for: list, id-based detail, and code-based detail
-		getDiscountInvalidationTags(id).forEach(tag => updateTag(tag));
+		getDiscountInvalidationTags(id).forEach((tag) => updateTag(tag));
 		// Always invalidate the old code's cache (used by get-discount-by-code)
 		updateTag(DISCOUNT_CACHE_TAGS.DETAIL(existing.code));
 		if (sanitizedCode !== existing.code) {
 			// Also invalidate the new code if it changed
-			getDiscountInvalidationTags(sanitizedCode).forEach(tag => updateTag(tag));
+			getDiscountInvalidationTags(sanitizedCode).forEach((tag) => updateTag(tag));
 		}
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "discount.update",
+			targetType: "discount",
+			targetId: id,
+			metadata: { code: sanitizedCode, type: data.type, value: data.value },
+		});
 
 		return success(`Code promo "${sanitizedCode}" mis à jour`);
 	} catch (e) {
-		if (
-			e instanceof Prisma.PrismaClientKnownRequestError &&
-			e.code === "P2002"
-		) {
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
 			return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
 		}
 		return handleActionError(e, DISCOUNT_ERROR_MESSAGES.UPDATE_FAILED);

@@ -23,19 +23,16 @@ export const AdminWebhookFailedEmail = ({
 }: AdminWebhookFailedEmailProps) => {
 	return (
 		<EmailLayout
-			preview={`ALERTE : Webhook ${eventType} en échec (${attempts} tentatives)`}
+			preview={`Webhook ${eventType} en échec (${attempts} tentatives)`}
 			headerText="Webhook Stripe en échec"
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Cet email a été envoyé automatiquement par le système de
-					monitoring Synclune.
+					Cet email a été envoyé automatiquement par le système de monitoring Synclune.
 				</Text>
 			}
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-				<Text style={EMAIL_STYLES.text.small}>
-					Action manuelle peut-être requise
-				</Text>
+				<Text style={EMAIL_STYLES.text.small}>Action manuelle peut-être requise</Text>
 			</Section>
 
 			{/* Details */}
@@ -60,11 +57,7 @@ export const AdminWebhookFailedEmail = ({
 					/>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
-						left={
-							<Text style={EMAIL_STYLES.text.small}>
-								Type d&apos;événement
-							</Text>
-						}
+						left={<Text style={EMAIL_STYLES.text.small}>Type d&apos;événement</Text>}
 						right={
 							<Text
 								style={{
@@ -99,9 +92,7 @@ export const AdminWebhookFailedEmail = ({
 
 			{/* Error */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Dernière erreur
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Dernière erreur</Text>
 				<ErrorCodeBlock error={error} />
 			</Section>
 
@@ -119,10 +110,7 @@ export const AdminWebhookFailedEmail = ({
 					</Button>
 				</div>
 				<div>
-					<Button
-						href={adminDashboardUrl}
-						style={EMAIL_STYLES.button.primary}
-					>
+					<Button href={adminDashboardUrl} style={EMAIL_STYLES.button.primary}>
 						Dashboard Admin
 					</Button>
 				</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "./motion.config";
 import type { SlideProps } from "./types";
 
@@ -39,7 +39,7 @@ export function Slide({
 	};
 
 	return (
-		<motion.div
+		<m.div
 			className={className}
 			initial={getInitial()}
 			animate={{ opacity: 1, x: 0, y: 0 }}
@@ -50,6 +50,6 @@ export function Slide({
 			}}
 		>
 			{children}
-		</motion.div>
+		</m.div>
 	);
 }

@@ -26,6 +26,7 @@ updates:
         patterns:
           - stripe
           - "@stripe/*"
+          - "@better-auth/stripe"
       prisma:
         patterns:
           - prisma
@@ -40,6 +41,42 @@ updates:
           - tailwindcss
           - "@tailwindcss/*"
           - tw-animate-css
+          - tailwind-merge
+          - tailwind-variants
+      auth:
+        patterns:
+          - better-auth
+          - "@better-auth/*"
+          - "@better-fetch/*"
+      email:
+        patterns:
+          - react-email
+          - "@react-email/*"
+          - resend
+      serwist:
+        patterns:
+          - serwist
+          - "@serwist/*"
+          - esbuild-wasm
+      dnd-kit:
+        patterns:
+          - "@dnd-kit/*"
+      embla:
+        patterns:
+          - embla-carousel*
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+      uploadthing:
+        patterns:
+          - uploadthing
+          - "@uploadthing/*"
+      vercel:
+        patterns:
+          - "@vercel/*"
+      arcjet:
+        patterns:
+          - "@arcjet/*"
 
   - package-ecosystem: github-actions
     directory: /

@@ -2,7 +2,7 @@
 
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { Button } from "@/shared/components/ui/button";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { X } from "lucide-react";
 import { ReactNode } from "react";
@@ -23,7 +23,7 @@ export function SelectionToolbar({ children }: SelectionToolbarProps) {
 	return (
 		<AnimatePresence mode="wait">
 			{selectedCount > 0 && (
-				<motion.div
+				<m.div
 					role="toolbar"
 					aria-label="Actions sur la sélection"
 					initial={{ opacity: 0, height: 0 }}
@@ -33,39 +33,28 @@ export function SelectionToolbar({ children }: SelectionToolbarProps) {
 						duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.collapse,
 						ease: MOTION_CONFIG.easing.collapse,
 					}}
-					className="overflow-hidden mb-4"
+					className="mb-4 overflow-hidden"
 				>
-					<div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-primary/20 bg-primary/5">
+					<div className="border-primary/20 bg-primary/5 flex items-center gap-3 rounded-lg border px-3 py-2">
 						{/* Selection counter */}
 						<div className="flex items-center gap-2">
-							<div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-								<motion.span
+							<div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold">
+								<m.span
 									key={selectedCount}
-									initial={
-										shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }
-									}
+									initial={shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }}
 									animate={{ scale: 1, opacity: 1 }}
 									transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 								>
 									{selectedCount}
-								</motion.span>
+								</m.span>
 							</div>
-							<p
-								className="text-sm font-medium"
-								aria-live="polite"
-								aria-atomic="true"
-							>
-								{selectedCount > 1
-									? "sélectionnés"
-									: "sélectionné"}
+							<p className="text-sm font-medium" aria-live="polite" aria-atomic="true">
+								{selectedCount > 1 ? "sélectionnés" : "sélectionné"}
 							</p>
 						</div>
 
 						{/* Separator */}
-						<div
-							className="h-4 w-px bg-border/50 hidden sm:block"
-							aria-hidden="true"
-						/>
+						<div className="bg-border/50 hidden h-4 w-px sm:block" aria-hidden="true" />
 
 						{/* Spacer */}
 						<div className="flex-1" />
@@ -77,14 +66,14 @@ export function SelectionToolbar({ children }: SelectionToolbarProps) {
 								variant="ghost"
 								size="sm"
 								onClick={clearSelection}
-								className="h-7 px-2 text-muted-foreground hover:text-foreground hover:bg-destructive/10 transition-colors cursor-pointer"
+								className="text-muted-foreground hover:text-foreground hover:bg-destructive/10 h-7 cursor-pointer px-2 transition-colors"
 								aria-label="Effacer la sélection"
 							>
 								<X className="h-3.5 w-3.5" />
 							</Button>
 						</div>
 					</div>
-				</motion.div>
+				</m.div>
 			)}
 		</AnimatePresence>
 	);

@@ -1,4 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
+import type { ReadonlyValues } from "@/shared/types/sort.types";
 
 // ============================================================================
 // SELECT DEFINITION - USER ORDERS
@@ -43,9 +44,8 @@ export const USER_ORDERS_SORT_OPTIONS = {
 	TOTAL_ASC: "total-ascending",
 } as const;
 
-export const GET_USER_ORDERS_SORT_FIELDS = Object.values(
-	USER_ORDERS_SORT_OPTIONS
-) as unknown as readonly (typeof USER_ORDERS_SORT_OPTIONS)[keyof typeof USER_ORDERS_SORT_OPTIONS][];
+export const GET_USER_ORDERS_SORT_FIELDS: ReadonlyValues<typeof USER_ORDERS_SORT_OPTIONS> =
+	Object.values(USER_ORDERS_SORT_OPTIONS);
 
 export const USER_ORDERS_SORT_LABELS = {
 	[USER_ORDERS_SORT_OPTIONS.CREATED_DESC]: "Plus récentes",
@@ -53,4 +53,3 @@ export const USER_ORDERS_SORT_LABELS = {
 	[USER_ORDERS_SORT_OPTIONS.TOTAL_DESC]: "Montant décroissant",
 	[USER_ORDERS_SORT_OPTIONS.TOTAL_ASC]: "Montant croissant",
 } as const;
-

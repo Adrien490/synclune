@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { Children, isValidElement, type ReactNode, type Key } from "react";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
@@ -82,7 +82,7 @@ export function Stagger({
 
 	if (inView) {
 		return (
-			<motion.div
+			<m.div
 				className={className}
 				role={role}
 				initial="hidden"
@@ -92,16 +92,16 @@ export function Stagger({
 				{...rest}
 			>
 				{childrenArray.map((child, index) => (
-					<motion.div key={getStableKey(child, index)} variants={itemVariants}>
+					<m.div key={getStableKey(child, index)} variants={itemVariants}>
 						{child}
-					</motion.div>
+					</m.div>
 				))}
-			</motion.div>
+			</m.div>
 		);
 	}
 
 	return (
-		<motion.div
+		<m.div
 			className={className}
 			role={role}
 			initial="hidden"
@@ -110,10 +110,10 @@ export function Stagger({
 			{...rest}
 		>
 			{childrenArray.map((child, index) => (
-				<motion.div key={getStableKey(child, index)} variants={itemVariants}>
+				<m.div key={getStableKey(child, index)} variants={itemVariants}>
 					{child}
-				</motion.div>
+				</m.div>
 			))}
-		</motion.div>
+		</m.div>
 	);
 }

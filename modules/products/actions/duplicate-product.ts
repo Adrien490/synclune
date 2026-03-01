@@ -2,15 +2,11 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import {
-	validateInput,
-	success,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { validateInput, success, notFound, handleActionError } from "@/shared/lib/actions";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { duplicateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
@@ -26,12 +22,13 @@ import { ADMIN_PRODUCT_DUPLICATE_LIMIT } from "@/shared/lib/rate-limit-config";
  */
 export async function duplicateProduct(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_DUPLICATE_LIMIT);
@@ -133,28 +130,36 @@ export async function duplicateProduct(
 		});
 
 		// 7. Invalidate cache tags
-		const productTags = getProductInvalidationTags(
-			duplicatedProduct.slug,
-			duplicatedProduct.id
-		);
-		productTags.forEach(tag => updateTag(tag));
+		const productTags = getProductInvalidationTags(duplicatedProduct.slug, duplicatedProduct.id);
+		productTags.forEach((tag) => updateTag(tag));
 
 		// Si le produit appartient a des collections, invalider aussi les collections
 		for (const pc of sourceProduct.collections) {
 			const collectionTags = getCollectionInvalidationTags(pc.collection.slug);
-			collectionTags.forEach(tag => updateTag(tag));
+			collectionTags.forEach((tag) => updateTag(tag));
 		}
 
-		// 8. Success
+		// 8. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "product.duplicate",
+			targetType: "product",
+			targetId: duplicatedProduct.id,
+			metadata: {
+				title: duplicatedProduct.title,
+				slug: duplicatedProduct.slug,
+				sourceProductId: productId,
+			},
+		});
+
+		// 9. Success
 		return success(`Produit "${duplicatedProduct.title}" dupliqué avec succès.`, {
 			productId: duplicatedProduct.id,
 			title: duplicatedProduct.title,
 			slug: duplicatedProduct.slug,
 		});
 	} catch (e) {
-		return handleActionError(
-			e,
-			"Une erreur est survenue lors de la duplication du produit."
-		);
+		return handleActionError(e, "Une erreur est survenue lors de la duplication du produit.");
 	}
 }

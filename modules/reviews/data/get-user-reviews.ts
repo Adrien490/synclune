@@ -42,5 +42,5 @@ async function fetchUserReviews(userId: string): Promise<ReviewUser[]> {
 		orderBy: { createdAt: "desc" },
 	});
 
-	return stripDeletedResponses(reviews) as unknown as ReviewUser[];
+	return stripDeletedResponses(reviews) as ReviewUser[];
 }

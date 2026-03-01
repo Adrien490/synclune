@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/shared/components/ui/button";
 import { RotateCcw } from "lucide-react";
 
@@ -42,6 +43,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 	componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
 		console.error("[ErrorBoundary] Erreur capturee:", error);
 		console.error("[ErrorBoundary] ComponentStack:", errorInfo.componentStack);
+		Sentry.captureException(error, {
+			contexts: { react: { componentStack: errorInfo.componentStack } },
+		});
 	}
 
 	handleRetry = () => {

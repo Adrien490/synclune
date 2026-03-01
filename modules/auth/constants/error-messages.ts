@@ -1,4 +1,12 @@
 /**
+ * Error codes used in action responses to signal specific auth states.
+ * Shared between actions and form components to avoid string coupling.
+ */
+export const AUTH_ERROR_CODES = {
+	EMAIL_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
+} as const;
+
+/**
  * Messages d'erreur d'authentification
  * Affichés sur la page /error avec le paramètre ?error=xxx
  */

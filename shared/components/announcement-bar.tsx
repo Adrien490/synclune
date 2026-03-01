@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
@@ -123,7 +123,7 @@ export function AnnouncementBar({
 	return (
 		<AnimatePresence>
 			{isVisible && (
-				<motion.div
+				<m.div
 					ref={barRef}
 					role="region"
 					aria-label="Barre d'annonce promotionnelle"
@@ -188,7 +188,7 @@ export function AnnouncementBar({
 					>
 						<X size={16} aria-hidden="true" />
 					</button>
-				</motion.div>
+				</m.div>
 			)}
 		</AnimatePresence>
 	);

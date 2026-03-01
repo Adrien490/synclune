@@ -25,12 +25,6 @@ export function isImage(mediaType: MediaType): boolean {
 
 /** Video extension to MIME type mapping */
 const VIDEO_MIME_TYPES: Record<string, string> = {
-	webm: "video/webm",
-	ogg: "video/ogg",
-	ogv: "video/ogg",
-	mov: "video/quicktime",
-	avi: "video/x-msvideo",
-	mkv: "video/x-matroska",
 	mp4: "video/mp4",
 };
 

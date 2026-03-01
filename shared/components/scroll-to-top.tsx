@@ -3,13 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { ChevronUp } from "lucide-react";
-import {
-	AnimatePresence,
-	motion,
-	useMotionValueEvent,
-	useReducedMotion,
-	useScroll,
-} from "motion/react";
+import { AnimatePresence, m, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 
 const SCROLL_THRESHOLD = 1200;
@@ -41,7 +35,7 @@ function ScrollRing() {
 				className="text-primary/10"
 			/>
 			{/* Progress */}
-			<motion.circle
+			<m.circle
 				cx={ringSize / 2}
 				cy={ringSize / 2}
 				r={radius}
@@ -110,7 +104,7 @@ export function ScrollToTop() {
 
 			<AnimatePresence>
 				{visible && (
-					<motion.button
+					<m.button
 						type="button"
 						onClick={scrollToTop}
 						aria-label="Retour en haut de la page"
@@ -130,7 +124,7 @@ export function ScrollToTop() {
 					>
 						{!reducedMotion && <ScrollRing />}
 						<ChevronUp className="size-5" aria-hidden="true" />
-					</motion.button>
+					</m.button>
 				)}
 			</AnimatePresence>
 		</>

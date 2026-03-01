@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useEffect, useState } from "react";
@@ -87,7 +87,7 @@ export function PrimaryImageUpload({
 			{/* Uploaded image */}
 			<AnimatePresence mode="wait">
 				{imageUrl ? (
-					<motion.div
+					<m.div
 						key="primary-image-preview"
 						initial={{ opacity: 0, y: -10 }}
 						animate={{ opacity: 1, y: 0 }}
@@ -187,9 +187,9 @@ export function PrimaryImageUpload({
 								</Button>
 							</div>
 						</div>
-					</motion.div>
+					</m.div>
 				) : (
-					<motion.div
+					<m.div
 						key="primary-image-upload-zone"
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
@@ -197,7 +197,7 @@ export function PrimaryImageUpload({
 						className="w-full"
 					>
 						{renderUploadZone()}
-					</motion.div>
+					</m.div>
 				)}
 			</AnimatePresence>
 		</div>

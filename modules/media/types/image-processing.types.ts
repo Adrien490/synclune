@@ -48,8 +48,6 @@ export interface GenerateThumbHashOptions {
 	maxImageSize?: number;
 	/** Max resize dimension (pixels, max 100) */
 	maxSize?: number;
-	/** Validate that the URL is an UploadThing domain */
-	validateDomain?: boolean;
 	/** Custom log function (default: console.warn) */
 	logWarning?: ThumbHashLogFn;
 }

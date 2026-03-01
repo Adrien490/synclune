@@ -1,10 +1,17 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	notFound,
+	validationError,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { bulkArchiveProductsSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../utils/cache.utils";
@@ -17,12 +24,13 @@ import { ADMIN_PRODUCT_BULK_ARCHIVE_LIMIT } from "@/shared/lib/rate-limit-config
  */
 export async function bulkArchiveProducts(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_BULK_ARCHIVE_LIMIT);
@@ -117,7 +125,7 @@ export async function bulkArchiveProducts(
 		// 7. Invalidate cache tags pour tous les produits
 		for (const product of existingProducts) {
 			const productTags = getProductInvalidationTags(product.slug, product.id);
-			productTags.forEach(tag => updateTag(tag));
+			productTags.forEach((tag) => updateTag(tag));
 		}
 
 		// 7.1 Invalider les caches des collections associees (deduplique)
@@ -133,14 +141,21 @@ export async function bulkArchiveProducts(
 
 		// 8. Message de succes
 		const count = existingProducts.length;
-		const actionLabel =
-			validatedData.targetStatus === "ARCHIVED" ? "archivé" : "désarchivé";
+		const actionLabel = validatedData.targetStatus === "ARCHIVED" ? "archivé" : "désarchivé";
 		const successMessage = `${count} produit${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succès`;
 
-		// 9. Success (avec warning si applicable)
-		const finalMessage = warningMessage
-			? `${successMessage}. ${warningMessage}`
-			: successMessage;
+		// 9. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "product.bulkArchive",
+			targetType: "product",
+			targetId: validatedData.productIds.join(","),
+			metadata: { count, targetStatus: validatedData.targetStatus },
+		});
+
+		// 10. Success (avec warning si applicable)
+		const finalMessage = warningMessage ? `${successMessage}. ${warningMessage}` : successMessage;
 
 		return success(finalMessage, {
 			productIds: validatedData.productIds,

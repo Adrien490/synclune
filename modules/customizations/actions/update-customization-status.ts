@@ -5,15 +5,11 @@ import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
-import {
-	validateInput,
-	handleActionError,
-	success,
-	error,
-} from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
@@ -26,11 +22,12 @@ import { updateStatusSchema } from "../schemas/update-status.schema";
 
 export async function updateCustomizationStatus(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	// 1. Auth check
-	const admin = await requireAdmin();
-	if ("error" in admin) return admin.error;
+	const auth = await requireAdminWithUser();
+	if ("error" in auth) return auth.error;
+	const { user: adminUser } = auth;
 
 	const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_CUSTOMIZATION_LIMITS.UPDATE);
 	if ("error" in rateLimit) return rateLimit.error;
@@ -52,7 +49,16 @@ export async function updateCustomizationStatus(
 		// 3. Check if request exists
 		const existing = await prisma.customizationRequest.findFirst({
 			where: { id: requestId, ...notDeleted },
-			select: { id: true, userId: true, status: true, email: true, firstName: true, productTypeLabel: true, details: true, adminNotes: true },
+			select: {
+				id: true,
+				userId: true,
+				status: true,
+				email: true,
+				firstName: true,
+				productTypeLabel: true,
+				details: true,
+				adminNotes: true,
+			},
 		});
 
 		if (!existing) {
@@ -75,6 +81,15 @@ export async function updateCustomizationStatus(
 				status,
 				...(isFirstResponse && { respondedAt: new Date() }),
 			},
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "customization.updateStatus",
+			targetType: "customization",
+			targetId: requestId,
+			metadata: { previousStatus: existing.status, newStatus: status },
 		});
 
 		// 6. Invalidate cache

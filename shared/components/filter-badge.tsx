@@ -5,7 +5,7 @@ import { FilterDefinition } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
-import { motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
+import { m, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 
 const ANIMATION_PROPS = {
 	initial: { opacity: 0 },
@@ -76,7 +76,7 @@ export function FilterBadge({ filter, formatFilter, onRemove }: FilterBadgeProps
 	const enableDrag = isMobile && !shouldReduceMotion;
 
 	return (
-		<motion.button
+		<m.button
 			type="button"
 			{...animationProps}
 			transition={transitionProps}
@@ -127,7 +127,7 @@ export function FilterBadge({ filter, formatFilter, onRemove }: FilterBadgeProps
 			</span>
 
 			{/* X icon - responsive: plain on mobile, circle on desktop */}
-			<motion.span
+			<m.span
 				aria-hidden="true"
 				variants={ICON_VARIANTS}
 				initial="initial"
@@ -140,7 +140,7 @@ export function FilterBadge({ filter, formatFilter, onRemove }: FilterBadgeProps
 				)}
 			>
 				<X className="size-3.5 sm:size-3" />
-			</motion.span>
-		</motion.button>
+			</m.span>
+		</m.button>
 	);
 }

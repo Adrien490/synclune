@@ -10,10 +10,12 @@ import { Button } from "@/shared/components/ui/button";
 import { Filter, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
-import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types";
+import type { ReviewPublic, ProductReviewStatistics, ReviewSortField } from "../types/review.types";
 import { ReviewCard } from "./review-card";
 import { ReviewPhotosGallery } from "./review-photos-gallery";
 import { ReviewSummary } from "./review-summary";
+import { ReviewSortSelect } from "./review-sort-select";
+import { ReviewsLoadMore } from "./reviews-load-more";
 
 interface ReviewsListProps {
 	/** Avis initiaux (déjà résolus) */
@@ -30,22 +32,25 @@ interface ReviewsListProps {
 	hasMore?: boolean;
 	/** Filtre par note actif */
 	ratingFilter?: number;
+	/** Tri actif */
+	sortBy?: ReviewSortField;
 	/** Utilisateur authentifie (pour afficher le CTA d'avis) */
 	isAuthenticated?: boolean;
 }
 
 /**
- * Liste des avis avec résumé
+ * Liste des avis avec résumé, tri et pagination
  * Server component qui affiche les avis pré-chargés
  */
 export function ReviewsList({
 	initialReviews = [],
 	stats,
 	totalCount,
-	productId: _productId,
-	nextCursor: _nextCursor,
-	hasMore: _hasMore,
+	productId,
+	nextCursor,
+	hasMore,
 	ratingFilter,
+	sortBy,
 	isAuthenticated,
 }: ReviewsListProps) {
 	const isFiltered = ratingFilter !== undefined;
@@ -105,13 +110,21 @@ export function ReviewsList({
 			{/* Résumé avec distribution cliquable */}
 			<ReviewSummary stats={stats} />
 
-			{/* Indicateur de filtre actif */}
-			{isFiltered && (
-				<p className="text-muted-foreground text-sm" role="status" aria-live="polite">
-					{totalCount} avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""} sur{" "}
-					{stats.totalCount} au total
-				</p>
-			)}
+			{/* Toolbar: filtre actif + tri */}
+			<div className="flex items-center justify-between gap-4">
+				{/* Indicateur de filtre actif */}
+				{isFiltered ? (
+					<p className="text-muted-foreground text-sm" role="status" aria-live="polite">
+						{totalCount} avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""} sur{" "}
+						{stats.totalCount} au total
+					</p>
+				) : (
+					<div />
+				)}
+
+				{/* Tri des avis */}
+				{stats.totalCount > 1 && <ReviewSortSelect />}
+			</div>
 
 			{/* Galerie photos clients (Baymard) - seulement si pas filtré ou avis avec photos */}
 			{!isFiltered && <ReviewPhotosGallery reviews={initialReviews} />}
@@ -135,6 +148,17 @@ export function ReviewsList({
 					</div>
 				))}
 			</div>
+
+			{/* Load more + additional reviews */}
+			{productId && (
+				<ReviewsLoadMore
+					productId={productId}
+					initialCursor={nextCursor ?? null}
+					initialHasMore={hasMore ?? false}
+					ratingFilter={ratingFilter}
+					sortBy={sortBy}
+				/>
+			)}
 		</div>
 	);
 }

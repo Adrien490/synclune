@@ -5,14 +5,9 @@ import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	error,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
+import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { changeUserRoleSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -20,7 +15,7 @@ import { getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function changeUserRole(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
@@ -28,8 +23,9 @@ export async function changeUserRole(
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Verification des droits admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider les donnees
 		const rawData = {
@@ -43,10 +39,7 @@ export async function changeUserRole(
 		const { id: userId, role: newRole } = validation.data;
 
 		// 4. Verifier qu'on ne change pas son propre role
-		const userAuth = await requireAuth();
-		if ("error" in userAuth) return userAuth.error;
-
-		if (userAuth.user.id === userId) {
+		if (adminUser.id === userId) {
 			return error("Vous ne pouvez pas changer votre propre role.");
 		}
 
@@ -94,6 +87,15 @@ export async function changeUserRole(
 		for (const tag of getUserFullInvalidationTags(userId)) {
 			updateTag(tag);
 		}
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "user.changeRole",
+			targetType: "user",
+			targetId: userId,
+			metadata: { previousRole: user.role, newRole },
+		});
 
 		const roleLabel = newRole === Role.ADMIN ? "administrateur" : "utilisateur";
 		return success(`${user.name || user.email} est maintenant ${roleLabel}.`);

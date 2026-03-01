@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -16,12 +17,13 @@ import { updateMaterialSchema } from "../schemas/materials.schemas";
 
 export async function updateMaterial(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.UPDATE);
@@ -30,7 +32,7 @@ export async function updateMaterial(
 		// 3. Extraire les donnees du FormData
 		const rawData = {
 			id: formData.get("id"),
-			name: sanitizeText(formData.get("name") as string ?? ""),
+			name: sanitizeText((formData.get("name") as string) ?? ""),
 			slug: formData.get("slug"),
 			description: formData.get("description")
 				? sanitizeText(formData.get("description") as string)
@@ -78,6 +80,15 @@ export async function updateMaterial(
 				description: validatedData.description,
 				isActive: validatedData.isActive,
 			},
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "material.update",
+			targetType: "material",
+			targetId: validatedData.id,
+			metadata: { name: validatedData.name },
 		});
 
 		// Invalider le cache

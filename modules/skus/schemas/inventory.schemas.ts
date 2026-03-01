@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-	cursorSchema,
-	directionSchema,
-} from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -29,11 +26,15 @@ export const inventoryFiltersSchema = z.object({
 // SORT SCHEMA
 // ============================================================================
 
-export const inventorySortBySchema = z.preprocess((value) => {
-	return typeof value === "string" && GET_INVENTORY_SORT_FIELDS.includes(value as (typeof GET_INVENTORY_SORT_FIELDS)[number])
-		? value
-		: GET_INVENTORY_DEFAULT_SORT_BY;
-}, z.enum(GET_INVENTORY_SORT_FIELDS as unknown as [string, ...string[]]));
+export const inventorySortBySchema = z.preprocess(
+	(value) => {
+		return typeof value === "string" &&
+			GET_INVENTORY_SORT_FIELDS.includes(value as (typeof GET_INVENTORY_SORT_FIELDS)[number])
+			? value
+			: GET_INVENTORY_DEFAULT_SORT_BY;
+	},
+	z.enum(GET_INVENTORY_SORT_FIELDS as readonly [string, ...string[]]),
+);
 
 // ============================================================================
 // MAIN SCHEMA

@@ -48,6 +48,7 @@ type ProductSearchParams = Promise<{
 	material?: string;
 	size?: string;
 	ratingFilter?: string;
+	sortBy?: string;
 }>;
 
 export default async function ProductPage({
@@ -146,6 +147,13 @@ export default async function ProductPage({
 	const parsedRating = urlParams.ratingFilter ? parseInt(urlParams.ratingFilter, 10) : NaN;
 	const ratingFilter = parsedRating >= 1 && parsedRating <= 5 ? parsedRating : undefined;
 
+	// Validate sortBy
+	const validSortFields = new Set(["createdAt-desc", "createdAt-asc", "rating-desc", "rating-asc"]);
+	const sortBy =
+		urlParams.sortBy && validSortFields.has(urlParams.sortBy)
+			? (urlParams.sortBy as import("@/modules/reviews/types/review.types").ReviewSortField)
+			: undefined;
+
 	return (
 		<div className="relative min-h-screen">
 			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
@@ -194,6 +202,7 @@ export default async function ProductPage({
 										product={product}
 										defaultSku={selectedSku}
 										cartsCount={cartsCount}
+										reviewStats={reviewStats}
 									/>
 								</section>
 							</div>
@@ -207,6 +216,7 @@ export default async function ProductPage({
 									productId={product.id}
 									productSlug={product.slug}
 									ratingFilter={ratingFilter}
+									sortBy={sortBy}
 									reviewStats={reviewStats}
 								/>
 							</Suspense>

@@ -1,4 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
+import type { ReadonlyValues } from "@/shared/types/sort.types";
 
 // ============================================================================
 // SELECT DEFINITIONS - ORDER LIST
@@ -186,9 +187,8 @@ export const SORT_OPTIONS = {
 	FULFILLMENT_STATUS_DESC: "fulfillmentStatus-descending",
 } as const;
 
-export const GET_ORDERS_SORT_FIELDS = Object.values(
-	SORT_OPTIONS
-) as unknown as readonly (typeof SORT_OPTIONS)[keyof typeof SORT_OPTIONS][];
+export const GET_ORDERS_SORT_FIELDS: ReadonlyValues<typeof SORT_OPTIONS> =
+	Object.values(SORT_OPTIONS);
 
 export const SORT_LABELS = {
 	[SORT_OPTIONS.CREATED_DESC]: "Plus récentes",
@@ -248,5 +248,6 @@ export const ORDER_ERROR_MESSAGES = {
 	CANNOT_RETURN_NOT_DELIVERED: "Seule une commande livrée peut être marquée comme retournée.",
 	// Update shipping address
 	UPDATE_SHIPPING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse de livraison.",
-	CANNOT_UPDATE_ADDRESS_SHIPPED: "L'adresse ne peut plus être modifiée car la commande a été expédiée.",
+	CANNOT_UPDATE_ADDRESS_SHIPPED:
+		"L'adresse ne peut plus être modifiée car la commande a été expédiée.",
 } as const;

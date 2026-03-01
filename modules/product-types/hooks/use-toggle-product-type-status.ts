@@ -2,17 +2,15 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useTransition } from "react";
+import { useActionState } from "react";
 import { toggleProductTypeStatus } from "@/modules/product-types/actions/toggle-product-type-status";
 
 interface UseToggleProductTypeStatusOptions {
 	onSuccess?: (message: string) => void;
+	onError?: () => void;
 }
 
-export const useToggleProductTypeStatus = (
-	options?: UseToggleProductTypeStatusOptions
-) => {
-	const [isTransitionPending, startTransition] = useTransition();
+export const useToggleProductTypeStatus = (options?: UseToggleProductTypeStatusOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			toggleProductTypeStatus,
@@ -27,24 +25,28 @@ export const useToggleProductTypeStatus = (
 						options?.onSuccess?.(result.message);
 					}
 				},
-			})
+				onError: () => {
+					options?.onError?.();
+				},
+			}),
 		),
-		undefined
+		undefined,
 	);
 
+	// No startTransition here — callers (e.g. ProductTypeActiveToggle) wrap
+	// this in their own startTransition alongside useOptimistic updates,
+	// ensuring the optimistic state persists until the action resolves.
 	const toggleStatus = (productTypeId: string, isActive: boolean) => {
-		startTransition(() => {
-			const formData = new FormData();
-			formData.append("productTypeId", productTypeId);
-			formData.append("isActive", isActive.toString());
-			action(formData);
-		});
+		const formData = new FormData();
+		formData.append("productTypeId", productTypeId);
+		formData.append("isActive", isActive.toString());
+		action(formData);
 	};
 
 	return {
 		state,
 		action,
-		isPending: isPending || isTransitionPending,
+		isPending,
 		toggleStatus,
 	};
 };

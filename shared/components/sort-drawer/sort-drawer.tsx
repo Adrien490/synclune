@@ -2,7 +2,7 @@
 
 import { useOptimistic, useRef, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Check, X } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
@@ -80,8 +80,7 @@ export function SortDrawer({
 	const currentValue = searchParams.get(paramKey) || "";
 
 	// Optimistic state for immediate UI feedback
-	const [optimisticValue, setOptimisticValue] =
-		useOptimistic<string>(currentValue);
+	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
 
 	// Get current selected label for aria-live and header
 	const selectedLabel = options.find((o) => o.value === optimisticValue)?.label;
@@ -123,10 +122,7 @@ export function SortDrawer({
 	};
 
 	// Handle keyboard navigation
-	const handleKeyDown = (
-		e: React.KeyboardEvent<HTMLButtonElement>,
-		index: number
-	) => {
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
 		const optionCount = allOptions.length;
 		let nextIndex: number | null = null;
 
@@ -159,20 +155,18 @@ export function SortDrawer({
 	return (
 		<Drawer open={open} onOpenChange={onOpenChange}>
 			<DrawerContent>
-				<DrawerHeader className="pb-2 relative">
+				<DrawerHeader className="relative pb-2">
 					<DrawerTitle className="flex items-center gap-2">
 						{title}
 						{selectedLabel && (
-							<span className="text-sm text-muted-foreground font-normal">
-								({selectedLabel})
-							</span>
+							<span className="text-muted-foreground text-sm font-normal">({selectedLabel})</span>
 						)}
 					</DrawerTitle>
 					<Button
 						variant="ghost"
 						size="icon"
 						onClick={() => onOpenChange(false)}
-						className="absolute right-4 top-4 size-11"
+						className="absolute top-4 right-4 size-11"
 						aria-label="Fermer"
 					>
 						<X className="size-4" />
@@ -183,13 +177,11 @@ export function SortDrawer({
 						role="radiogroup"
 						aria-label={title}
 						aria-busy={isPending}
-						className="flex flex-col divide-y divide-border/50"
+						className="divide-border/50 flex flex-col divide-y"
 					>
 						{allOptions.map((option, index) => {
 							const isSelected =
-								option.value === ""
-									? optimisticValue === ""
-									: optimisticValue === option.value;
+								option.value === "" ? optimisticValue === "" : optimisticValue === option.value;
 							const isResetOption = option.value === "" && showResetOption;
 
 							return (
@@ -206,45 +198,34 @@ export function SortDrawer({
 									onKeyDown={(e) => handleKeyDown(e, index)}
 									disabled={isPending}
 									className={cn(
-										"flex items-center justify-between w-full",
-										"px-4 py-3.5 -mx-1",
+										"flex w-full items-center justify-between",
+										"-mx-1 px-4 py-3.5",
 										"text-left text-base",
 										"transition-colors duration-150",
-										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:rounded-lg",
+										"focus-visible:ring-primary focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 										isSelected && !isResetOption
-											? "bg-primary/5 font-medium -mx-1 px-5 rounded-lg"
+											? "bg-primary/5 -mx-1 rounded-lg px-5 font-medium"
 											: isSelected && isResetOption
-												? "bg-muted/30 text-muted-foreground font-medium -mx-1 px-5 rounded-lg"
+												? "bg-muted/30 text-muted-foreground -mx-1 rounded-lg px-5 font-medium"
 												: "hover:bg-muted/50 text-foreground",
-										isPending && "opacity-60 pointer-events-none",
-										isResetOption && !isSelected && "text-muted-foreground"
+										isPending && "pointer-events-none opacity-60",
+										isResetOption && !isSelected && "text-muted-foreground",
 									)}
 								>
 									<span className="flex items-center gap-2">
-										{isResetOption && (
-											<X className="size-4" aria-hidden="true" />
-										)}
+										{isResetOption && <X className="size-4" aria-hidden="true" />}
 										{option.label}
 									</span>
 									<AnimatePresence mode="wait">
 										{isSelected && !isResetOption && (
-											<motion.div
-												initial={
-													shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }
-												}
+											<m.div
+												initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
 												animate={{ opacity: 1, scale: 1 }}
-												exit={
-													shouldReduceMotion
-														? undefined
-														: { opacity: 0, scale: 0.8 }
-												}
+												exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.8 }}
 												transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 											>
-												<Check
-													className="size-5 text-primary shrink-0"
-													aria-hidden="true"
-												/>
-											</motion.div>
+												<Check className="text-primary size-5 shrink-0" aria-hidden="true" />
+											</m.div>
 										)}
 									</AnimatePresence>
 								</button>
@@ -254,9 +235,7 @@ export function SortDrawer({
 
 					{/* Live region for screen readers */}
 					<span role="status" aria-live="polite" className="sr-only">
-						{isPending
-							? `Tri en cours : ${selectedLabel || "par défaut"}...`
-							: ""}
+						{isPending ? `Tri en cours : ${selectedLabel || "par défaut"}...` : ""}
 					</span>
 				</DrawerBody>
 			</DrawerContent>

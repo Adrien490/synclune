@@ -37,9 +37,6 @@ export default async function RootLayout({
 				{/* Preconnect to Stripe for faster checkout initialization */}
 				<link rel="dns-prefetch" href="https://js.stripe.com" />
 				<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
-				{/* Preconnect to Google Fonts for faster font loading */}
-				<link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 			</head>
 			<body
 				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}

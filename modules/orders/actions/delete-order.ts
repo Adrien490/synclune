@@ -1,7 +1,7 @@
 "use server";
 
 import { PaymentStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, softDelete, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -11,6 +11,7 @@ import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
+import { logAudit } from "@/shared/lib/audit-log";
 import { deleteOrderSchema } from "../schemas/order.schemas";
 
 /**
@@ -32,11 +33,12 @@ import { deleteOrderSchema } from "../schemas/order.schemas";
  */
 export async function deleteOrder(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -81,7 +83,18 @@ export async function deleteOrder(
 		await softDelete.order(id);
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.delete",
+			targetType: "order",
+			targetId: order.id,
+			metadata: {
+				orderNumber: order.orderNumber,
+			},
+		});
 
 		return success(`Commande ${order.orderNumber} supprimee.`);
 	} catch (e) {

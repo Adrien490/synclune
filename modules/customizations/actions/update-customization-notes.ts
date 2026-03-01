@@ -4,20 +4,13 @@ import { updateTag } from "next/cache";
 
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
-import {
-	validateInput,
-	handleActionError,
-	success,
-	error,
-} from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeText } from "@/shared/lib/sanitize";
-import {
-	getCustomizationInvalidationTags,
-	CUSTOMIZATION_CACHE_TAGS,
-} from "../constants/cache";
+import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
 import { updateNotesSchema } from "../schemas/update-notes.schema";
 
 // ============================================================================
@@ -26,11 +19,12 @@ import { updateNotesSchema } from "../schemas/update-notes.schema";
 
 export async function updateCustomizationNotes(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	// 1. Auth check
-	const admin = await requireAdmin();
-	if ("error" in admin) return admin.error;
+	const auth = await requireAdminWithUser();
+	if ("error" in auth) return auth.error;
+	const { user: adminUser } = auth;
 
 	const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_CUSTOMIZATION_LIMITS.UPDATE);
 	if ("error" in rateLimit) return rateLimit.error;
@@ -66,6 +60,15 @@ export async function updateCustomizationNotes(
 		await prisma.customizationRequest.update({
 			where: { id: requestId },
 			data: { adminNotes: sanitizedNotes },
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "customization.updateNotes",
+			targetType: "customization",
+			targetId: requestId,
+			metadata: { hasNotes: !!sanitizedNotes },
 		});
 
 		// 5. Invalidate cache

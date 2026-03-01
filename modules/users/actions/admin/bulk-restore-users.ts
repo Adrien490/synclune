@@ -5,13 +5,9 @@ import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	error,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
+import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkRestoreUsersSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -19,7 +15,7 @@ import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/c
 
 export async function bulkRestoreUsers(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
@@ -27,8 +23,9 @@ export async function bulkRestoreUsers(
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Verification des droits admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
@@ -48,10 +45,7 @@ export async function bulkRestoreUsers(
 		const eligibleUsers = await prisma.user.findMany({
 			where: {
 				id: { in: validatedData.ids },
-				OR: [
-					{ deletedAt: { not: null } },
-					{ suspendedAt: { not: null } },
-				],
+				OR: [{ deletedAt: { not: null } }, { suspendedAt: { not: null } }],
 			},
 			select: { id: true },
 		});
@@ -82,8 +76,17 @@ export async function bulkRestoreUsers(
 			}
 		}
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "user.bulkRestore",
+			targetType: "user",
+			targetId: eligibleIds.join(","),
+			metadata: { count: eligibleIds.length },
+		});
+
 		return success(
-			`${result.count} utilisateur${result.count > 1 ? "s" : ""} restaure${result.count > 1 ? "s" : ""} avec succes.`
+			`${result.count} utilisateur${result.count > 1 ? "s" : ""} restaure${result.count > 1 ? "s" : ""} avec succes.`,
 		);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la restauration des utilisateurs");

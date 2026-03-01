@@ -9,6 +9,8 @@
  * @module shared/lib/circuit-breaker
  */
 
+import { logger } from "@/shared/lib/logger";
+
 type CircuitState = "CLOSED" | "OPEN" | "HALF_OPEN";
 
 export interface CircuitBreakerOptions {
@@ -62,7 +64,11 @@ export class CircuitBreaker {
 			if (Date.now() - this.circuit.lastFailureTime >= this.resetTimeout) {
 				this.circuit.state = "HALF_OPEN";
 				this.circuit.successCount = 0;
-				console.log(`[CircuitBreaker] ${this.name}: OPEN → HALF_OPEN (probing)`);
+				logger.info("Circuit breaker state transition", {
+					service: this.name,
+					from: "OPEN",
+					to: "HALF_OPEN",
+				});
 			} else {
 				throw new CircuitBreakerError(this.name);
 			}
@@ -84,7 +90,11 @@ export class CircuitBreaker {
 			this.circuit.state = "CLOSED";
 			this.circuit.failureCount = 0;
 			this.circuit.successCount = 0;
-			console.log(`[CircuitBreaker] ${this.name}: HALF_OPEN → CLOSED (recovered)`);
+			logger.info("Circuit breaker state transition", {
+				service: this.name,
+				from: "HALF_OPEN",
+				to: "CLOSED",
+			});
 		} else if (this.circuit.state === "CLOSED") {
 			// Reset failure count on success
 			this.circuit.failureCount = 0;
@@ -98,12 +108,19 @@ export class CircuitBreaker {
 		if (this.circuit.state === "HALF_OPEN") {
 			// Failed during probe — re-open
 			this.circuit.state = "OPEN";
-			console.warn(`[CircuitBreaker] ${this.name}: HALF_OPEN → OPEN (probe failed)`);
+			logger.warn("Circuit breaker state transition", {
+				service: this.name,
+				from: "HALF_OPEN",
+				to: "OPEN",
+			});
 		} else if (this.circuit.failureCount >= this.failureThreshold) {
 			this.circuit.state = "OPEN";
-			console.warn(
-				`[CircuitBreaker] ${this.name}: CLOSED → OPEN (${this.circuit.failureCount} failures)`,
-			);
+			logger.warn("Circuit breaker state transition", {
+				service: this.name,
+				from: "CLOSED",
+				to: "OPEN",
+				failureCount: this.circuit.failureCount,
+			});
 		}
 	}
 

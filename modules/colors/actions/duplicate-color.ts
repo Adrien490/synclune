@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
@@ -24,12 +25,13 @@ import { duplicateColorSchema } from "../schemas/color.schemas";
  */
 export async function duplicateColor(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.DUPLICATE);
@@ -54,13 +56,10 @@ export async function duplicateColor(
 		}
 
 		// 5. Generer un nouveau nom unique via le service
-		const nameResult = await generateUniqueReadableName(
-			original.name,
-			async (name) => {
-				const existing = await prisma.color.findFirst({ where: { name } });
-				return existing !== null;
-			}
-		);
+		const nameResult = await generateUniqueReadableName(original.name, async (name) => {
+			const existing = await prisma.color.findFirst({ where: { name } });
+			return existing !== null;
+		});
 
 		if (!nameResult.success) {
 			return error(nameResult.error ?? "Impossible de générer un nom unique");
@@ -81,11 +80,23 @@ export async function duplicateColor(
 			},
 		});
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "color.duplicate",
+			targetType: "color",
+			targetId: duplicate.id,
+			metadata: { originalId: colorId, name: duplicate.name },
+		});
+
 		// 8. Invalider le cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return success(`Couleur dupliquee: ${duplicate.name}`, { id: duplicate.id, name: duplicate.name });
+		return success(`Couleur dupliquee: ${duplicate.name}`, {
+			id: duplicate.id,
+			name: duplicate.name,
+		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer la couleur");
 	}

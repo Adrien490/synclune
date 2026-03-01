@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { GetCartReturn } from "@/modules/cart/types/cart.types";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { ArrowRight, Check, Minus, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -293,7 +293,7 @@ function ColorSelector({
 				/>
 				<span className="text-sm">{color.name}</span>
 				{isSelected && (
-					<motion.div
+					<m.div
 						initial={{ scale: 0 }}
 						animate={{ scale: 1 }}
 						transition={{
@@ -303,7 +303,7 @@ function ColorSelector({
 						}}
 					>
 						<Check className="text-primary h-4 w-4 shrink-0" aria-hidden="true" />
-					</motion.div>
+					</m.div>
 				)}
 				{!isAvailable && (
 					<div
@@ -433,7 +433,7 @@ function MaterialSelector({
 						>
 							<span className="text-sm">{material.name}</span>
 							{isSelected && (
-								<motion.div
+								<m.div
 									initial={{ scale: 0 }}
 									animate={{ scale: 1 }}
 									transition={{
@@ -443,7 +443,7 @@ function MaterialSelector({
 									}}
 								>
 									<Check className="text-primary h-4 w-4 shrink-0" aria-hidden="true" />
-								</motion.div>
+								</m.div>
 							)}
 							{!isAvailable && (
 								<div
@@ -546,7 +546,7 @@ function SizeSelectorGroup({
 						>
 							<span className="truncate text-sm font-medium">{size}</span>
 							{isSelected && (
-								<motion.div
+								<m.div
 									initial={{ scale: 0 }}
 									animate={{ scale: 1 }}
 									transition={{
@@ -557,7 +557,7 @@ function SizeSelectorGroup({
 									className="absolute top-1.5 right-1.5"
 								>
 									<Check className="text-primary h-3.5 w-3.5" aria-hidden="true" />
-								</motion.div>
+								</m.div>
 							)}
 							{!isAvailable && (
 								<div
@@ -1011,7 +1011,7 @@ function SkuSelectorFormContent({
 			>
 				{/* Image + Price */}
 				<div className="flex gap-4">
-					<motion.div
+					<m.div
 						key={currentImage.url}
 						initial={
 							shouldReduceMotion
@@ -1038,11 +1038,11 @@ function SkuSelectorFormContent({
 							sizes="(min-width: 640px) 160px, 96px"
 							quality={85}
 						/>
-					</motion.div>
+					</m.div>
 					<div className="flex flex-col justify-center">
 						{/* Price display */}
 						<AnimatePresence mode="wait">
-							<motion.div
+							<m.div
 								key={displayPrice}
 								initial={
 									shouldReduceMotion
@@ -1092,11 +1092,11 @@ function SkuSelectorFormContent({
 									</>
 								)}
 								<span className="sr-only"> - Prix du produit</span>
-							</motion.div>
+							</m.div>
 						</AnimatePresence>
 						{/* Low stock badge */}
 						{selectedSku && selectedSku.inventory <= STOCK_THRESHOLDS.LOW && availableToAdd > 0 && (
-							<motion.span
+							<m.span
 								role="status"
 								animate={
 									shouldReduceMotion
@@ -1113,7 +1113,7 @@ function SkuSelectorFormContent({
 								className="mt-1 text-xs font-medium text-amber-600"
 							>
 								Plus que {selectedSku.inventory} en stock
-							</motion.span>
+							</m.span>
 						)}
 						{quantityInCart > 0 && (
 							<span role="status" className="text-muted-foreground mt-1 text-xs">

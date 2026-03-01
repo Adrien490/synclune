@@ -28,13 +28,11 @@ export const AdminInvoiceFailedEmail = ({
 }: AdminInvoiceFailedEmailProps) => {
 	return (
 		<EmailLayout
-			preview={`ACTION REQUISE : Échec génération facture - ${orderNumber}`}
+			preview={`Échec génération facture — ${orderNumber}`}
 			headerText="Échec génération facture"
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-				<Text style={EMAIL_STYLES.text.small}>
-					Conformité légale - Action requise
-				</Text>
+				<Text style={EMAIL_STYLES.text.small}>Conformité légale - Action requise</Text>
 			</Section>
 
 			{/* Details */}
@@ -128,18 +126,14 @@ export const AdminInvoiceFailedEmail = ({
 
 			{/* Error */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Erreur
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Erreur</Text>
 				<ErrorCodeBlock error={errorMessage} />
 			</Section>
 
 			{/* Stripe ID */}
 			{stripePaymentIntentId && (
 				<Section style={{ marginBottom: "24px" }}>
-					<Text
-						style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}
-					>
+					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
 						Identifiant Stripe
 					</Text>
 					<Section style={EMAIL_STYLES.section.card}>

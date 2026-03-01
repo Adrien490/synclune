@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { type ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
@@ -16,17 +16,11 @@ export interface TapProps {
  * Animation tap/click avec whileTap
  * Feedback tactile pour les boutons et éléments cliquables
  */
-export function Tap({
-	children,
-	className,
-	scale = 0.97,
-	duration = 0.1,
-	role,
-}: TapProps) {
+export function Tap({ children, className, scale = 0.97, duration = 0.1, role }: TapProps) {
 	const shouldReduceMotion = useReducedMotion();
 
 	return (
-		<motion.div
+		<m.div
 			className={className}
 			role={role}
 			tabIndex={-1}
@@ -43,6 +37,6 @@ export function Tap({
 			}}
 		>
 			{children}
-		</motion.div>
+		</m.div>
 	);
 }

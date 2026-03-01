@@ -2,7 +2,8 @@
 
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
@@ -19,12 +20,13 @@ import { COLLECTION_STATUS_LABELS } from "../constants/collection.constants";
  */
 export async function updateCollectionStatus(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Admin auth check
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -69,8 +71,21 @@ export async function updateCollectionStatus(
 
 		// 7. Invalidate cache tags
 		const collectionTags = getCollectionInvalidationTags(existingCollection.slug);
-		collectionTags.forEach(tag => updateTag(tag));
+		collectionTags.forEach((tag) => updateTag(tag));
 		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "collection.updateStatus",
+			targetType: "collection",
+			targetId: id,
+			metadata: {
+				name: existingCollection.name,
+				oldStatus: existingCollection.status,
+				newStatus: status,
+			},
+		});
 
 		// 8. Messages de succes contextuels
 		const statusMessages: Record<CollectionStatus, string> = {

@@ -1,7 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -16,12 +17,13 @@ import { getSkuInvalidationTags } from "../utils/cache.utils";
  */
 export async function updateProductSkuStatus(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_TOGGLE_STATUS_LIMIT);
@@ -63,7 +65,7 @@ export async function updateProductSkuStatus(
 		// 6. Verifier qu'on ne desactive pas la variante principale
 		if (existingSku.isDefault && !validatedIsActive) {
 			return error(
-				"Impossible de desactiver la variante principale d'un produit. Veuillez d'abord definir une autre variante comme principale."
+				"Impossible de desactiver la variante principale d'un produit. Veuillez d'abord definir une autre variante comme principale.",
 			);
 		}
 
@@ -83,14 +85,24 @@ export async function updateProductSkuStatus(
 			updatedSku.sku,
 			existingSku.productId,
 			existingSku.product?.slug,
-			updatedSku.id
+			updatedSku.id,
 		);
-		tags.forEach(tag => updateTag(tag));
+		tags.forEach((tag) => updateTag(tag));
 
-		// 9. Success
+		// 9. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "sku.updateStatus",
+			targetType: "sku",
+			targetId: updatedSku.id,
+			metadata: { sku: updatedSku.sku, isActive: validatedIsActive },
+		});
+
+		// 10. Success
 		return success(
 			`Variante ${updatedSku.sku} ${validatedIsActive ? "activee" : "desactivee"} avec succes.`,
-			updatedSku
+			updatedSku,
 		);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la mise à jour du statut");

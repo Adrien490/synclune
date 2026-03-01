@@ -69,7 +69,7 @@ export type SignInEmailInput = z.infer<typeof signInEmailSchema>;
 // ============================================================================
 
 export const signInSocialSchema = z.object({
-	provider: z.enum(["google"], {
+	provider: z.enum(["google", "apple"], {
 		message: "Le provider est requis",
 	}),
 	callbackURL: callbackURLSchema,

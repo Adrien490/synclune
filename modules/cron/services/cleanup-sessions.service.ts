@@ -1,4 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { BATCH_DEADLINE_MS, CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 
 /**
@@ -27,7 +28,7 @@ export async function cleanupExpiredSessions(): Promise<{
 	let refreshTokensCleared = 0;
 	let hasMore = false;
 
-	console.log("[CRON:cleanup-sessions] Starting expired sessions cleanup...");
+	logger.info("Starting expired sessions cleanup", { cronJob: "cleanup-sessions" });
 
 	try {
 		// 1. Delete expired sessions (bounded)
@@ -43,20 +44,18 @@ export async function cleanupExpiredSessions(): Promise<{
 
 		sessionsDeleted = sessionsResult.count;
 
-		console.log(
-			`[CRON:cleanup-sessions] Deleted ${sessionsDeleted} expired sessions`
-		);
+		logger.info("Deleted expired sessions", { cronJob: "cleanup-sessions", sessionsDeleted });
 
 		if (sessionsToDelete.length === CLEANUP_DELETE_LIMIT) {
 			hasMore = true;
-			console.warn(
-				"[CRON:cleanup-sessions] Session delete limit reached, remaining will be cleaned on next run"
-			);
+			logger.warn("Session delete limit reached, remaining will be cleaned on next run", {
+				cronJob: "cleanup-sessions",
+			});
 		}
 
 		// 2. Delete expired verification tokens (bounded)
 		if (Date.now() > deadline) {
-			console.warn("[CRON:cleanup-sessions] Approaching timeout, stopping after sessions");
+			logger.warn("Approaching timeout, stopping after sessions", { cronJob: "cleanup-sessions" });
 			return { sessionsDeleted, verificationsDeleted, tokensCleared: 0, hasMore: true };
 		}
 
@@ -72,9 +71,10 @@ export async function cleanupExpiredSessions(): Promise<{
 
 		verificationsDeleted = verificationsResult.count;
 
-		console.log(
-			`[CRON:cleanup-sessions] Deleted ${verificationsDeleted} expired verifications`
-		);
+		logger.info("Deleted expired verifications", {
+			cronJob: "cleanup-sessions",
+			verificationsDeleted,
+		});
 
 		if (verificationsToDelete.length === CLEANUP_DELETE_LIMIT) {
 			hasMore = true;
@@ -82,7 +82,9 @@ export async function cleanupExpiredSessions(): Promise<{
 
 		// 3. Clear expired access tokens (short-lived, don't touch refresh tokens)
 		if (Date.now() > deadline) {
-			console.warn("[CRON:cleanup-sessions] Approaching timeout, stopping after verifications");
+			logger.warn("Approaching timeout, stopping after verifications", {
+				cronJob: "cleanup-sessions",
+			});
 			return { sessionsDeleted, verificationsDeleted, tokensCleared: 0, hasMore: true };
 		}
 
@@ -108,7 +110,9 @@ export async function cleanupExpiredSessions(): Promise<{
 
 		// 4. Clear expired refresh tokens (long-lived, separate from access tokens)
 		if (Date.now() > deadline) {
-			console.warn("[CRON:cleanup-sessions] Approaching timeout, stopping after access tokens");
+			logger.warn("Approaching timeout, stopping after access tokens", {
+				cronJob: "cleanup-sessions",
+			});
 			return {
 				sessionsDeleted,
 				verificationsDeleted,
@@ -139,11 +143,13 @@ export async function cleanupExpiredSessions(): Promise<{
 
 		const tokensCleared = accessTokensCleared + refreshTokensCleared;
 
-		console.log(
-			`[CRON:cleanup-sessions] Cleared ${accessTokensCleared} expired access tokens, ${refreshTokensCleared} expired refresh tokens`
-		);
+		logger.info("Cleared expired tokens", {
+			cronJob: "cleanup-sessions",
+			accessTokensCleared,
+			refreshTokensCleared,
+		});
 
-		console.log("[CRON:cleanup-sessions] Cleanup completed");
+		logger.info("Cleanup completed", { cronJob: "cleanup-sessions" });
 
 		return {
 			sessionsDeleted,
@@ -152,10 +158,7 @@ export async function cleanupExpiredSessions(): Promise<{
 			hasMore,
 		};
 	} catch (error) {
-		console.error(
-			"[CRON:cleanup-sessions] Error during cleanup:",
-			error instanceof Error ? error.message : String(error)
-		);
+		logger.error("Error during cleanup", error, { cronJob: "cleanup-sessions" });
 		throw error;
 	}
 }

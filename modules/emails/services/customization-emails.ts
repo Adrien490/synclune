@@ -1,10 +1,10 @@
-import { CustomizationRequestEmail } from "@/emails/customization-request-email"
-import { CustomizationConfirmationEmail } from "@/emails/customization-confirmation-email"
-import { CustomizationStatusEmail } from "@/emails/customization-status-email"
-import { buildUrl, ROUTES } from "@/shared/constants/urls"
-import { EMAIL_SUBJECTS, EMAIL_ADMIN, EMAIL_CONTACT } from "../constants/email.constants"
-import { renderAndSend } from "./send-email"
-import type { EmailResult } from "../types/email.types"
+import { CustomizationRequestEmail } from "@/emails/customization-request-email";
+import { CustomizationConfirmationEmail } from "@/emails/customization-confirmation-email";
+import { CustomizationStatusEmail } from "@/emails/customization-status-email";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { EMAIL_SUBJECTS, EMAIL_ADMIN, EMAIL_CONTACT } from "../constants/email.constants";
+import { renderAndSend } from "./send-email";
+import type { EmailResult } from "../types/email.types";
 
 /**
  * Envoie une notification admin pour une nouvelle demande de personnalisation
@@ -17,12 +17,12 @@ export async function sendCustomizationRequestEmail({
 	details,
 	inspirationProducts,
 }: {
-	firstName: string
-	email: string
-	phone?: string
-	productTypeLabel: string
-	details: string
-	inspirationProducts?: Array<{ title: string }>
+	firstName: string;
+	email: string;
+	phone?: string;
+	productTypeLabel: string;
+	details: string;
+	inspirationProducts?: Array<{ title: string }>;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		CustomizationRequestEmail({
@@ -38,8 +38,8 @@ export async function sendCustomizationRequestEmail({
 			subject: `${EMAIL_SUBJECTS.CUSTOMIZATION_REQUEST} - ${firstName}`,
 			replyTo: email,
 			tags: [{ name: "category", value: "customization" }],
-		}
-	)
+		},
+	);
 }
 
 /**
@@ -52,32 +52,34 @@ export async function sendCustomizationConfirmationEmail({
 	details,
 	inspirationProducts,
 }: {
-	firstName: string
-	email: string
-	productTypeLabel: string
-	details: string
-	inspirationProducts?: Array<{ title: string }>
+	firstName: string;
+	email: string;
+	productTypeLabel: string;
+	details: string;
+	inspirationProducts?: Array<{ title: string }>;
 }): Promise<EmailResult> {
+	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS);
 	return renderAndSend(
 		CustomizationConfirmationEmail({
 			firstName,
 			productTypeLabel,
 			details,
 			inspirationProducts,
+			shopUrl,
 		}),
 		{
 			to: email,
 			subject: EMAIL_SUBJECTS.CUSTOMIZATION_CONFIRMATION,
 			tags: [{ name: "category", value: "customization" }],
-		}
-	)
+		},
+	);
 }
 
 const CUSTOMIZATION_STATUS_SUBJECTS: Record<string, string> = {
 	IN_PROGRESS: EMAIL_SUBJECTS.CUSTOMIZATION_IN_PROGRESS,
 	COMPLETED: EMAIL_SUBJECTS.CUSTOMIZATION_COMPLETED,
 	CANCELLED: EMAIL_SUBJECTS.CUSTOMIZATION_CANCELLED,
-}
+};
 
 /**
  * Envoie un email de mise a jour de statut de personnalisation au client
@@ -90,14 +92,14 @@ export async function sendCustomizationStatusEmail({
 	adminNotes,
 	details,
 }: {
-	email: string
-	firstName: string
-	productTypeLabel: string
-	status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
-	adminNotes?: string | null
-	details: string
+	email: string;
+	firstName: string;
+	productTypeLabel: string;
+	status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+	adminNotes?: string | null;
+	details: string;
 }): Promise<EmailResult> {
-	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS)
+	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS);
 	return renderAndSend(
 		CustomizationStatusEmail({
 			firstName,
@@ -112,6 +114,6 @@ export async function sendCustomizationStatusEmail({
 			subject: CUSTOMIZATION_STATUS_SUBJECTS[status] || EMAIL_SUBJECTS.CUSTOMIZATION_IN_PROGRESS,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "customization" }],
-		}
-	)
+		},
+	);
 }

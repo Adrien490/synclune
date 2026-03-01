@@ -1,9 +1,6 @@
 "use server";
 
-import {
-	FulfillmentStatus,
-	HistorySource,
-} from "@/app/generated/prisma/client";
+import { FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendReturnConfirmationEmail } from "@/modules/emails/services/status-emails";
@@ -15,6 +12,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
+import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsReturnedSchema } from "../schemas/order.schemas";
@@ -35,7 +33,7 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
  */
 export async function markAsReturned(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -114,9 +112,10 @@ export async function markAsReturned(
 		}
 
 		if ("_error" in order) {
-			const message = order._error === "already_returned"
-				? ORDER_ERROR_MESSAGES.ALREADY_RETURNED
-				: ORDER_ERROR_MESSAGES.CANNOT_RETURN_NOT_DELIVERED;
+			const message =
+				order._error === "already_returned"
+					? ORDER_ERROR_MESSAGES.ALREADY_RETURNED
+					: ORDER_ERROR_MESSAGES.CANNOT_RETURN_NOT_DELIVERED;
 			return {
 				status: ActionStatus.ERROR,
 				message,
@@ -124,12 +123,15 @@ export async function markAsReturned(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
 		// Envoyer l'email de confirmation de retour au client
 		let emailSent = false;
 		if (order.customerEmail) {
-			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
+			const customerFirstName = extractCustomerFirstName(
+				order.customerName,
+				order.shippingFirstName,
+			);
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
@@ -148,7 +150,24 @@ export async function markAsReturned(
 			}
 		}
 
-		const emailMessage = emailSent ? " Email envoyé au client." : order.customerEmail ? " (Échec envoi email)" : "";
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.markReturned",
+			targetType: "order",
+			targetId: order.id,
+			metadata: {
+				orderNumber: order.orderNumber,
+				previousFulfillmentStatus: order.fulfillmentStatus,
+				reason: result.data.reason,
+			},
+		});
+
+		const emailMessage = emailSent
+			? " Email envoyé au client."
+			: order.customerEmail
+				? " (Échec envoi email)"
+				: "";
 
 		return {
 			status: ActionStatus.SUCCESS,

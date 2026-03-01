@@ -1,3 +1,4 @@
+export { AppleIcon, type AppleIconProps } from "./apple-icon";
 export { GoogleIcon, type GoogleIconProps } from "./google-icon";
 export { HeartIcon, type HeartIconProps } from "./heart-icon";
 export { InstagramIcon } from "./instagram-icon";

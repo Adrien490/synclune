@@ -13,6 +13,9 @@ export const CUSTOMIZATION_DEFAULT_VALUES = {
 	// Détails de personnalisation
 	details: "",
 
+	// Images d'inspiration
+	inspirationImageUrls: [] as string[],
+
 	// Consentements
 	rgpdConsent: false,
 

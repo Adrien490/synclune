@@ -23,13 +23,14 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 		<header
 			data-scrolled={isScrolled}
 			className={cn(
+				"pwa-header",
 				"group fixed inset-x-0 z-40",
 				"top-[var(--announcement-bar-height)]",
 				"transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
 				"border-b",
 				isScrolled
-					? "bg-background/95 backdrop-blur-md border-border shadow-lg shadow-black/[0.08]"
-					: "bg-transparent border-transparent"
+					? "bg-background/95 border-border shadow-lg shadow-black/[0.08] backdrop-blur-md"
+					: "border-transparent bg-transparent",
 			)}
 		>
 			{children}

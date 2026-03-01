@@ -5,7 +5,8 @@ import { updateTag } from "next/cache";
 import { toggleDiscountStatusSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -18,11 +19,12 @@ import { getDiscountInvalidationTags } from "../constants/cache";
  */
 export async function toggleDiscountStatus(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.TOGGLE_STATUS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -48,12 +50,21 @@ export async function toggleDiscountStatus(
 			data: { isActive: newStatus },
 		});
 
-		getDiscountInvalidationTags(discount.code).forEach(tag => updateTag(tag));
+		getDiscountInvalidationTags(discount.code).forEach((tag) => updateTag(tag));
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "discount.toggleStatus",
+			targetType: "discount",
+			targetId: id,
+			metadata: { code: discount.code, oldStatus: discount.isActive, newStatus: newStatus },
+		});
 
 		return success(
 			newStatus
 				? `Code promo "${discount.code}" activé`
-				: `Code promo "${discount.code}" désactivé`
+				: `Code promo "${discount.code}" désactivé`,
 		);
 	} catch (e) {
 		return handleActionError(e, DISCOUNT_ERROR_MESSAGES.UPDATE_FAILED);

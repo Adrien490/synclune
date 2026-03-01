@@ -2,7 +2,7 @@
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useEffect, useEffectEvent, useState } from "react";
 
 export interface RotatingWordProps {
@@ -21,7 +21,7 @@ export interface RotatingWordProps {
  * the animated word requires client-side JS (better LCP).
  *
  * Anti-CLS: width is locked to the longest word via an invisible placeholder.
- * Respects prefers-reduced-motion.
+ * Respects prefers-reduced-m.
  */
 export function RotatingWord({ words, duration = 3000, className }: RotatingWordProps) {
 	const [currentIndex, setCurrentIndex] = useState(0);
@@ -66,7 +66,7 @@ export function RotatingWord({ words, duration = 3000, className }: RotatingWord
 		>
 			<span className="relative inline-flex items-center" aria-hidden="true">
 				<AnimatePresence mode="wait">
-					<motion.span
+					<m.span
 						key={shouldReduceMotion ? "static" : currentIndex}
 						initial={shouldReduceMotion ? false : { y: 20, opacity: 0, filter: "blur(4px)" }}
 						animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
@@ -79,7 +79,7 @@ export function RotatingWord({ words, duration = 3000, className }: RotatingWord
 						className={cn(textStyles, "absolute inset-0 flex items-center justify-center")}
 					>
 						{words[shouldReduceMotion ? 0 : currentIndex]}
-					</motion.span>
+					</m.span>
 				</AnimatePresence>
 
 				{/* Invisible placeholder - reserves width of the longest word */}

@@ -1,10 +1,6 @@
 "use server";
 
-import {
-	OrderStatus,
-	FulfillmentStatus,
-	HistorySource,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
@@ -16,6 +12,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
+import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
@@ -39,7 +36,7 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
  */
 export async function markAsDelivered(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -124,9 +121,10 @@ export async function markAsDelivered(
 		}
 
 		if ("_error" in order) {
-			const message = order._error === "already_delivered"
-				? ORDER_ERROR_MESSAGES.ALREADY_DELIVERED
-				: ORDER_ERROR_MESSAGES.CANNOT_DELIVER_NOT_SHIPPED;
+			const message =
+				order._error === "already_delivered"
+					? ORDER_ERROR_MESSAGES.ALREADY_DELIVERED
+					: ORDER_ERROR_MESSAGES.CANNOT_DELIVER_NOT_SHIPPED;
 			return {
 				status: ActionStatus.ERROR,
 				message,
@@ -134,7 +132,7 @@ export async function markAsDelivered(
 		}
 
 		// Invalider les caches (orders list admin + commandes user + reviewable products)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 		if (order.userId) {
 			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(order.userId));
 		}
@@ -142,7 +140,10 @@ export async function markAsDelivered(
 		// Envoyer l'email de confirmation de livraison au client
 		let emailSent = false;
 		if (result.data.sendEmail && order.customerEmail) {
-			const customerFirstName = extractCustomerFirstName(order.customerName, order.shippingFirstName);
+			const customerFirstName = extractCustomerFirstName(
+				order.customerName,
+				order.shippingFirstName,
+			);
 
 			// Formater la date de livraison
 			const deliveryDateStr = deliveryDate.toLocaleDateString("fr-FR", {
@@ -177,7 +178,23 @@ export async function markAsDelivered(
 			console.error("[MARK_AS_DELIVERED] Échec planification email avis:", reviewEmailError);
 		}
 
-		const emailMessage = emailSent ? " Email envoyé au client." : result.data.sendEmail ? " (Échec envoi email)" : "";
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.markDelivered",
+			targetType: "order",
+			targetId: order.id,
+			metadata: {
+				orderNumber: order.orderNumber,
+				previousStatus: order.status,
+			},
+		});
+
+		const emailMessage = emailSent
+			? " Email envoyé au client."
+			: result.data.sendEmail
+				? " (Échec envoi email)"
+				: "";
 
 		return {
 			status: ActionStatus.SUCCESS,

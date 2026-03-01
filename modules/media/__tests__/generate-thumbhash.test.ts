@@ -97,22 +97,8 @@ describe("generateThumbHash", () => {
 
 		expect(customLog).toHaveBeenCalledWith(
 			"[ThumbHash] Domaine non autorise",
-			expect.objectContaining({ url: expect.any(String) })
+			expect.objectContaining({ url: expect.any(String) }),
 		);
-	});
-
-	it("should skip domain check and attempt download when validateDomain is false", async () => {
-		// Even with an invalid domain, the service should proceed to downloadImage
-		mockDownloadImage.mockRejectedValue(new Error("Connection refused"));
-
-		const result = await generateThumbHash("https://evil.com/image.jpg", {
-			validateDomain: false,
-		});
-
-		expect(mockIsValidUploadThingUrl).not.toHaveBeenCalled();
-		expect(mockDownloadImage).toHaveBeenCalled();
-		// Download fails -> result is undefined
-		expect(result).toBeUndefined();
 	});
 
 	it("should return a ThumbHashResult on success", async () => {
@@ -147,7 +133,7 @@ describe("generateThumbHash", () => {
 		expect(result).toBeUndefined();
 		expect(customLog).toHaveBeenCalledWith(
 			"[ThumbHash] Generation echouee",
-			expect.objectContaining({ error: "Connection refused" })
+			expect.objectContaining({ error: "Connection refused" }),
 		);
 	});
 
@@ -165,7 +151,7 @@ describe("generateThumbHash", () => {
 		expect(result).toBeUndefined();
 		expect(customLog).toHaveBeenCalledWith(
 			"[ThumbHash] Timeout",
-			expect.objectContaining({ timeoutMs: expect.any(Number) })
+			expect.objectContaining({ timeoutMs: expect.any(Number) }),
 		);
 	});
 
@@ -187,7 +173,7 @@ describe("generateThumbHash", () => {
 		expect(result).toBeUndefined();
 		expect(customLog).toHaveBeenCalledWith(
 			"[ThumbHash] Format invalide genere",
-			expect.objectContaining({ expected: expect.any(String) })
+			expect.objectContaining({ expected: expect.any(String) }),
 		);
 	});
 
@@ -205,7 +191,7 @@ describe("generateThumbHash", () => {
 			expect.objectContaining({
 				downloadTimeout: 5000,
 				maxImageSize: 1024,
-			})
+			}),
 		);
 	});
 
@@ -244,7 +230,7 @@ describe("generateThumbHash", () => {
 			expect.objectContaining({
 				downloadTimeout: THUMBHASH_CONFIG.downloadTimeout,
 				maxImageSize: THUMBHASH_CONFIG.maxImageSize,
-			})
+			}),
 		);
 	});
 });
@@ -262,17 +248,15 @@ describe("generateThumbHashWithRetry", () => {
 	it("should throw when domain validation fails for a non-UploadThing URL", async () => {
 		mockIsValidUploadThingUrl.mockReturnValue(false);
 
-		await expect(
-			generateThumbHashWithRetry("https://evil.com/image.jpg")
-		).rejects.toThrow("Domaine non autorise");
+		await expect(generateThumbHashWithRetry("https://evil.com/image.jpg")).rejects.toThrow(
+			"Domaine non autorise",
+		);
 	});
 
 	it("should not call withRetry when domain validation fails", async () => {
 		mockIsValidUploadThingUrl.mockReturnValue(false);
 
-		await expect(
-			generateThumbHashWithRetry("https://evil.com/image.jpg")
-		).rejects.toThrow();
+		await expect(generateThumbHashWithRetry("https://evil.com/image.jpg")).rejects.toThrow();
 
 		expect(mockWithRetry).not.toHaveBeenCalled();
 	});
@@ -294,7 +278,7 @@ describe("generateThumbHashWithRetry", () => {
 			expect.objectContaining({
 				maxRetries: THUMBHASH_CONFIG.maxRetries,
 				baseDelay: THUMBHASH_CONFIG.retryBaseDelay,
-			})
+			}),
 		);
 		expect(result).toEqual(fakeResult);
 	});
@@ -303,9 +287,9 @@ describe("generateThumbHashWithRetry", () => {
 		mockIsValidUploadThingUrl.mockReturnValue(true);
 		mockWithRetry.mockRejectedValue(new Error("All retries failed"));
 
-		await expect(
-			generateThumbHashWithRetry("https://utfs.io/f/abc123.jpg")
-		).rejects.toThrow("All retries failed");
+		await expect(generateThumbHashWithRetry("https://utfs.io/f/abc123.jpg")).rejects.toThrow(
+			"All retries failed",
+		);
 	});
 
 	it("should pass custom maxSize option to the retry callback", async () => {
@@ -341,9 +325,9 @@ describe("generateThumbHashWithRetry", () => {
 		mockRgbaToThumbHash.mockReturnValue(new Uint8Array([1, 2, 3]));
 		mockThumbHashToDataURL.mockReturnValue("data:image/jpeg;base64,not-png");
 
-		await expect(
-			generateThumbHashWithRetry("https://utfs.io/f/abc123.jpg")
-		).rejects.toThrow("Format de ThumbHash invalide genere");
+		await expect(generateThumbHashWithRetry("https://utfs.io/f/abc123.jpg")).rejects.toThrow(
+			"Format de ThumbHash invalide genere",
+		);
 	});
 });
 
@@ -361,7 +345,7 @@ describe("generateThumbHashFromBuffer", () => {
 		const oversizedBuffer = Buffer.alloc(THUMBHASH_CONFIG.maxImageSize + 1);
 
 		await expect(generateThumbHashFromBuffer(oversizedBuffer)).rejects.toThrow(
-			"Image trop volumineuse"
+			"Image trop volumineuse",
 		);
 	});
 
@@ -369,9 +353,9 @@ describe("generateThumbHashFromBuffer", () => {
 		const maxImageSize = 1024;
 		const oversizedBuffer = Buffer.alloc(maxImageSize + 1);
 
-		await expect(
-			generateThumbHashFromBuffer(oversizedBuffer, { maxImageSize })
-		).rejects.toThrow("Image trop volumineuse");
+		await expect(generateThumbHashFromBuffer(oversizedBuffer, { maxImageSize })).rejects.toThrow(
+			"Image trop volumineuse",
+		);
 	});
 
 	it("should return a ThumbHashResult on success", async () => {
@@ -410,7 +394,7 @@ describe("generateThumbHashFromBuffer", () => {
 		mockThumbHashToDataURL.mockReturnValue("data:image/jpeg;base64,not-png");
 
 		await expect(generateThumbHashFromBuffer(imageBuffer)).rejects.toThrow(
-			"Format de ThumbHash invalide genere"
+			"Format de ThumbHash invalide genere",
 		);
 	});
 
@@ -425,7 +409,7 @@ describe("generateThumbHashFromBuffer", () => {
 		expect(mockResize).toHaveBeenCalledWith(
 			THUMBHASH_CONFIG.maxSize,
 			THUMBHASH_CONFIG.maxSize,
-			expect.any(Object)
+			expect.any(Object),
 		);
 	});
 

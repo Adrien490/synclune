@@ -3,6 +3,7 @@
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useRef, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { removeFromCart } from "@/modules/cart/actions/remove-from-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import type { ActionState } from "@/shared/types/server-action";
@@ -20,6 +21,8 @@ interface UseRemoveFromCartOptions {
  * Inclut optimistic UI pour le badge navbar via useBadgeCountsStore
  */
 export const useRemoveFromCart = (options?: UseRemoveFromCartOptions) => {
+	const router = useRouter();
+
 	// Store pour optimistic UI du badge navbar
 	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
 
@@ -47,6 +50,8 @@ export const useRemoveFromCart = (options?: UseRemoveFromCartOptions) => {
 					onError: () => {
 						// Rollback du badge navbar
 						adjustCart(pendingQuantityRef.current);
+						// Force re-fetch cart data to restore optimistically removed items
+						router.refresh();
 					},
 				}),
 			)(prev, formData),

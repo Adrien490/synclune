@@ -10,7 +10,7 @@ import {
 	useTransition,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Search, X } from "lucide-react";
 
 import { useAppForm } from "@/shared/components/forms";
@@ -279,7 +279,7 @@ export function SearchInput({
 				>
 					<AnimatePresence mode="wait">
 						{isPending && mode === "live" ? (
-							<motion.span
+							<m.span
 								key="loader"
 								className="flex items-center"
 								initial={shouldReduceMotion ? false : { opacity: 0 }}
@@ -288,9 +288,9 @@ export function SearchInput({
 								transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 							>
 								<MiniDotsLoader size="sm" color="primary" />
-							</motion.span>
+							</m.span>
 						) : (
-							<motion.span
+							<m.span
 								key="search"
 								initial={shouldReduceMotion ? false : { opacity: 0 }}
 								animate={{ opacity: 1 }}
@@ -298,7 +298,7 @@ export function SearchInput({
 								transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 							>
 								<Search className="size-4" />
-							</motion.span>
+							</m.span>
 						)}
 					</AnimatePresence>
 				</div>
@@ -356,7 +356,7 @@ export function SearchInput({
 
 							<AnimatePresence mode="wait">
 								{field.state.value && (
-									<motion.div
+									<m.div
 										initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
 										animate={{ opacity: 1, scale: 1 }}
 										exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.8 }}
@@ -376,7 +376,7 @@ export function SearchInput({
 										>
 											<X className={styles.clearIcon} />
 										</Button>
-									</motion.div>
+									</m.div>
 								)}
 							</AnimatePresence>
 						</>

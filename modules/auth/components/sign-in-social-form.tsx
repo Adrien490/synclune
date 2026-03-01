@@ -39,18 +39,16 @@ export function SignInSocialForm() {
 							type="submit"
 							variant="outline"
 							size="lg"
-							className="w-full bg-background/50 transition-all duration-300 hover:bg-background/70 border-2 border-border hover:border-primary/30 disabled:hover:border-border group"
+							className="bg-background/50 hover:bg-background/70 border-border hover:border-primary/30 disabled:hover:border-border group w-full border-2 transition-all duration-300"
 						>
 							{isPending ? (
 								<Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
 							) : (
-								<div className="flex items-center justify-center w-full gap-3">
+								<div className="flex w-full items-center justify-center gap-3">
 									<span className="transition-transform duration-300 group-hover:scale-110">
 										{provider.icon}
 									</span>
-									<span className="font-medium">
-										{`Continuer avec ${provider.name}`}
-									</span>
+									<span className="font-medium">{`Continuer avec ${provider.name}`}</span>
 								</div>
 							)}
 						</Button>

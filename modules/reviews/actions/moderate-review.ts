@@ -2,8 +2,9 @@
 
 import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { logAudit } from "@/shared/lib/audit-log";
 import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config";
 import { success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
@@ -23,8 +24,9 @@ export async function moderateReview(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.MODERATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -79,6 +81,15 @@ export async function moderateReview(
 			if (review.productId) {
 				await updateProductReviewStats(tx, review.productId);
 			}
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "review.moderate",
+			targetType: "review",
+			targetId: id,
+			metadata: { previousStatus: review.status, newStatus },
 		});
 
 		// 5. Invalider le cache

@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { cn } from "@/shared/utils/cn"
+import { cn } from "@/shared/utils/cn";
 import {
-	motion,
+	m,
 	type MotionValue,
 	useInView,
 	useReducedMotion,
 	useSpring,
 	useTransform,
-} from "motion/react"
-import { useEffect, useEffectEvent, useRef } from "react"
+} from "motion/react";
+import { useEffect, useEffectEvent, useRef } from "react";
 
 /**
  * Configuration spring optimisee pour l'animation de nombres
@@ -21,33 +21,33 @@ const NUMBER_SPRING_CONFIG = {
 	mass: 0.8,
 	stiffness: 75,
 	damping: 15,
-}
+};
 
 function formatNumber(value: number, decimalPlaces: number, locale: string): string {
 	return Intl.NumberFormat(locale, {
 		minimumFractionDigits: decimalPlaces,
 		maximumFractionDigits: decimalPlaces,
-	}).format(Number(value.toFixed(decimalPlaces)))
+	}).format(Number(value.toFixed(decimalPlaces)));
 }
 
 interface AnimatedNumberProps {
 	/** Valeur cible a atteindre */
-	value: number
+	value: number;
 	/** Valeur de depart (default: 0) */
-	startValue?: number
+	startValue?: number;
 	/** Direction de l'animation */
-	direction?: "up" | "down"
+	direction?: "up" | "down";
 	/** Delai avant le debut de l'animation en secondes */
-	delay?: number
+	delay?: number;
 	/** Nombre de decimales a afficher */
-	decimalPlaces?: number
+	decimalPlaces?: number;
 	/** Locale pour le formatage des nombres */
-	locale?: string
+	locale?: string;
 	/** Classes CSS additionnelles */
-	className?: string
+	className?: string;
 	/** Callbacks d'animation */
-	onAnimationStart?: () => void
-	onAnimationComplete?: () => void
+	onAnimationStart?: () => void;
+	onAnimationComplete?: () => void;
 }
 
 export function AnimatedNumber({
@@ -61,52 +61,52 @@ export function AnimatedNumber({
 	onAnimationStart,
 	onAnimationComplete,
 }: AnimatedNumberProps) {
-	const ref = useRef<HTMLSpanElement>(null)
-	const shouldReduceMotion = useReducedMotion()
-	const isInView = useInView(ref, { once: true, margin: "0px" })
+	const ref = useRef<HTMLSpanElement>(null);
+	const shouldReduceMotion = useReducedMotion();
+	const isInView = useInView(ref, { once: true, margin: "0px" });
 
-	const initialValue = direction === "down" ? value : startValue
-	const spring = useSpring(initialValue, NUMBER_SPRING_CONFIG)
+	const initialValue = direction === "down" ? value : startValue;
+	const spring = useSpring(initialValue, NUMBER_SPRING_CONFIG);
 
 	const display: MotionValue<string> = useTransform(spring, (current) =>
-		formatNumber(current, decimalPlaces, locale)
-	)
+		formatNumber(current, decimalPlaces, locale),
+	);
 
-	const formattedValue = formatNumber(value, decimalPlaces, locale)
+	const formattedValue = formatNumber(value, decimalPlaces, locale);
 
 	// Effect Events: read callbacks without re-triggering effects on identity changes
 	const onStart = useEffectEvent(() => {
-		onAnimationStart?.()
-		spring.set(direction === "down" ? startValue : value)
-	})
+		onAnimationStart?.();
+		spring.set(direction === "down" ? startValue : value);
+	});
 
 	const onComplete = useEffectEvent(() => {
-		onAnimationComplete?.()
-	})
+		onAnimationComplete?.();
+	});
 
 	// Declencher l'animation quand le composant entre dans le viewport
 	useEffect(() => {
-		if (shouldReduceMotion || !isInView) return
+		if (shouldReduceMotion || !isInView) return;
 
-		const timer = setTimeout(onStart, delay * 1000)
+		const timer = setTimeout(onStart, delay * 1000);
 
-		return () => clearTimeout(timer)
-	}, [isInView, delay, value, shouldReduceMotion])
+		return () => clearTimeout(timer);
+	}, [isInView, delay, value, shouldReduceMotion]);
 
 	// Detecter la fin de l'animation
 	useEffect(() => {
-		if (shouldReduceMotion) return
+		if (shouldReduceMotion) return;
 
-		const targetValue = direction === "down" ? startValue : value
+		const targetValue = direction === "down" ? startValue : value;
 		const unsubscribe = spring.on("change", (current) => {
 			// Considerer l'animation terminee quand on est tres proche de la cible
 			if (Math.abs(current - targetValue) < 0.01) {
-				onComplete()
+				onComplete();
 			}
-		})
+		});
 
-		return () => unsubscribe()
-	}, [spring, value, startValue, direction, shouldReduceMotion])
+		return () => unsubscribe();
+	}, [spring, value, startValue, direction, shouldReduceMotion]);
 
 	// Si reduced motion, afficher directement la valeur finale
 	if (shouldReduceMotion) {
@@ -120,11 +120,11 @@ export function AnimatedNumber({
 			>
 				{formattedValue}
 			</span>
-		)
+		);
 	}
 
 	return (
-		<motion.span
+		<m.span
 			ref={ref}
 			role="status"
 			aria-live="polite"
@@ -132,9 +132,9 @@ export function AnimatedNumber({
 			className={cn("inline-block tabular-nums", className)}
 		>
 			{display}
-		</motion.span>
-	)
+		</m.span>
+	);
 }
 
 // Alias pour compatibilite avec l'ancien composant
-export const NumberTicker = AnimatedNumber
+export const NumberTicker = AnimatedNumber;

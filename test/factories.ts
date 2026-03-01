@@ -261,13 +261,12 @@ export function createMockWebhookEvent(overrides: Record<string, unknown> = {}) 
 	return {
 		id: "we_cm1234567890abcde",
 		stripeEventId: "evt_test_abc123",
-		type: "checkout.session.completed",
-		processed: false,
-		processingStartedAt: null,
+		eventType: "checkout.session.completed",
+		status: "PENDING",
+		errorMessage: null,
+		attempts: 0,
+		receivedAt: new Date("2026-01-15"),
 		processedAt: null,
-		error: null,
-		retryCount: 0,
-		createdAt: new Date("2026-01-15"),
 		...overrides,
 	};
 }
@@ -325,6 +324,112 @@ export function createMockNewsletterSubscriber(overrides: Record<string, unknown
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),
 		deletedAt: null,
+		...overrides,
+	};
+}
+
+// ============================================================================
+// CUSTOMIZATION REQUESTS
+// ============================================================================
+
+export function createMockCustomizationRequest(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "cr_cm1234567890abcde",
+		userId: VALID_USER_ID,
+		firstName: "Marie",
+		email: "marie@example.com",
+		phone: "+33612345678",
+		productTypeLabel: "Bague",
+		productTypeId: "type_123",
+		details: "Bague personnalisee avec gravure initiales",
+		inspirationImageUrls: [],
+		status: "PENDING",
+		createdAt: new Date("2026-01-15"),
+		updatedAt: new Date("2026-01-15"),
+		deletedAt: null,
+		...overrides,
+	};
+}
+
+// ============================================================================
+// DISPUTES
+// ============================================================================
+
+export function createMockDispute(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "dp_cm1234567890abcde",
+		stripeDisputeId: "dp_test_abc123",
+		orderId: VALID_ORDER_ID,
+		amount: 4999,
+		fee: 1500,
+		currency: "EUR",
+		reason: "FRAUDULENT",
+		status: "NEEDS_RESPONSE",
+		dueBy: new Date("2026-02-15"),
+		resolvedAt: null,
+		createdAt: new Date("2026-01-20"),
+		updatedAt: new Date("2026-01-20"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// DISCOUNT USAGE
+// ============================================================================
+
+export function createMockDiscountUsage(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "du_cm1234567890abcde",
+		discountId: "disc_cm1234567890abcde",
+		userId: VALID_USER_ID,
+		orderId: VALID_ORDER_ID,
+		discountCode: "PROMO20",
+		amountApplied: 998,
+		createdAt: new Date("2026-01-15"),
+		updatedAt: new Date("2026-01-15"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// ORDER ITEMS (standalone)
+// ============================================================================
+
+export function createMockOrderItem(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "oi_cm1234567890abcde",
+		orderId: VALID_ORDER_ID,
+		productId: VALID_PRODUCT_ID,
+		skuId: VALID_SKU_ID,
+		productTitle: "Bracelet Lune",
+		productDescription: null,
+		productImageUrl: "https://cdn.example.com/bracelet.jpg",
+		skuSku: "BRC-LUNE-OR-M",
+		skuColor: "Or",
+		skuMaterial: "Argent 925",
+		skuSize: "M",
+		skuImageUrl: null,
+		price: 4999,
+		quantity: 1,
+		createdAt: new Date("2026-01-15"),
+		updatedAt: new Date("2026-01-15"),
+		...overrides,
+	};
+}
+
+// ============================================================================
+// REFUND ITEMS (standalone)
+// ============================================================================
+
+export function createMockRefundItem(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "ri_cm1234567890abcde",
+		refundId: "ref_cm1234567890abcde",
+		orderItemId: "oi_cm1234567890abcde",
+		quantity: 1,
+		amount: 4999,
+		restock: true,
+		createdAt: new Date("2026-01-20"),
 		...overrides,
 	};
 }

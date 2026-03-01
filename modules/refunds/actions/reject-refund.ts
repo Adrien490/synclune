@@ -16,6 +16,7 @@ import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { logAudit } from "@/shared/lib/audit-log";
 import { rejectRefundSchema } from "../schemas/refund.schemas";
 
 /**
@@ -28,11 +29,12 @@ import { rejectRefundSchema } from "../schemas/refund.schemas";
  */
 export async function rejectRefund(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -126,7 +128,22 @@ export async function rejectRefund(
 			}
 		}
 
-		return success(`Remboursement de ${(refund.amount / 100).toFixed(2)} € refusé pour la commande ${refund.order.orderNumber}`);
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "refund.reject",
+			targetType: "refund",
+			targetId: refund.id,
+			metadata: {
+				orderNumber: refund.order.orderNumber,
+				amount: refund.amount,
+				reason: sanitizedReason,
+			},
+		});
+
+		return success(
+			`Remboursement de ${(refund.amount / 100).toFixed(2)} € refusé pour la commande ${refund.order.orderNumber}`,
+		);
 	} catch (error) {
 		return handleActionError(error, REFUND_ERROR_MESSAGES.REJECT_FAILED);
 	}

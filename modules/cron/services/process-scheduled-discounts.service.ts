@@ -1,4 +1,5 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { BATCH_DEADLINE_MS, CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
@@ -17,9 +18,9 @@ export async function processScheduledDiscounts(): Promise<{
 	deactivated: number;
 	hasMore: boolean;
 }> {
-	console.log(
-		"[CRON:process-scheduled-discounts] Starting scheduled discounts processing..."
-	);
+	logger.info("Starting scheduled discounts processing", {
+		cronJob: "process-scheduled-discounts",
+	});
 
 	const now = new Date();
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
@@ -37,9 +38,7 @@ export async function processScheduledDiscounts(): Promise<{
 	});
 
 	// Filter out discounts manually deactivated by admin (updatedAt > startsAt)
-	const toActivate = candidates.filter(
-		(d) => d.updatedAt <= d.startsAt
-	);
+	const toActivate = candidates.filter((d) => d.updatedAt <= d.startsAt);
 
 	let activatedCount = 0;
 	if (toActivate.length > 0) {
@@ -48,14 +47,18 @@ export async function processScheduledDiscounts(): Promise<{
 			data: { isActive: true },
 		});
 		activatedCount = activated.count;
-		console.log(
-			`[CRON:process-scheduled-discounts] Activated ${activatedCount} discounts (${candidates.length - toActivate.length} skipped: manually deactivated)`
-		);
+		logger.info("Activated discounts", {
+			cronJob: "process-scheduled-discounts",
+			activatedCount,
+			skipped: candidates.length - toActivate.length,
+		});
 	}
 
 	// Check deadline before deactivation phase
 	if (Date.now() > deadline) {
-		console.warn("[CRON:process-scheduled-discounts] Approaching timeout, skipping deactivation phase");
+		logger.warn("Approaching timeout, skipping deactivation phase", {
+			cronJob: "process-scheduled-discounts",
+		});
 		if (activatedCount > 0) {
 			updateTag(DISCOUNT_CACHE_TAGS.LIST);
 		}
@@ -80,9 +83,10 @@ export async function processScheduledDiscounts(): Promise<{
 			data: { isActive: false },
 		});
 		deactivatedCount = deactivated.count;
-		console.log(
-			`[CRON:process-scheduled-discounts] Deactivated ${deactivatedCount} discounts`
-		);
+		logger.info("Deactivated discounts", {
+			cronJob: "process-scheduled-discounts",
+			deactivatedCount,
+		});
 	}
 
 	// Invalidate discount cache if any changes were made
@@ -90,13 +94,16 @@ export async function processScheduledDiscounts(): Promise<{
 		updateTag(DISCOUNT_CACHE_TAGS.LIST);
 	}
 
-	console.log(
-		`[CRON:process-scheduled-discounts] Completed: ${activatedCount} activated, ${deactivatedCount} deactivated`
-	);
+	logger.info("Scheduled discounts processing completed", {
+		cronJob: "process-scheduled-discounts",
+		activated: activatedCount,
+		deactivated: deactivatedCount,
+	});
 
 	return {
 		activated: activatedCount,
 		deactivated: deactivatedCount,
-		hasMore: candidates.length === CLEANUP_DELETE_LIMIT || expiredIds.length === CLEANUP_DELETE_LIMIT,
+		hasMore:
+			candidates.length === CLEANUP_DELETE_LIMIT || expiredIds.length === CLEANUP_DELETE_LIMIT,
 	};
 }

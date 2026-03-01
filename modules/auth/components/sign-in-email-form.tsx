@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
+import { AUTH_ERROR_CODES } from "@/modules/auth/constants/error-messages";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -40,11 +41,7 @@ export function SignInEmailForm() {
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
 			{/* Indication des champs obligatoires */}
 			<RequiredFieldsNote />
 
@@ -52,12 +49,21 @@ export function SignInEmailForm() {
 			{state?.status !== ActionStatus.SUCCESS &&
 				state?.status !== ActionStatus.VALIDATION_ERROR &&
 				state?.message && (
-					<Alert ref={errorRef} variant="destructive" tabIndex={-1} role="alert" aria-live="assertive">
+					<Alert
+						ref={errorRef}
+						variant="destructive"
+						tabIndex={-1}
+						role="alert"
+						aria-live="assertive"
+					>
 						<AlertDescription>
-							{state.message === "EMAIL_NOT_VERIFIED" ? (
+							{state.message === AUTH_ERROR_CODES.EMAIL_NOT_VERIFIED ? (
 								<>
 									Votre email n'a pas été vérifié.{" "}
-									<Link href="/renvoyer-verification" className="underline font-medium hover:no-underline">
+									<Link
+										href="/renvoyer-verification"
+										className="font-medium underline hover:no-underline"
+									>
 										Renvoyer l'email de vérification
 									</Link>
 								</>
@@ -145,7 +151,7 @@ export function SignInEmailForm() {
 			<div className="text-center">
 				<Link
 					href="/mot-de-passe-oublie"
-					className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+					className="text-muted-foreground hover:text-foreground text-sm transition-colors"
 				>
 					Mot de passe oublié ?
 				</Link>

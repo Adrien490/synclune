@@ -1,14 +1,10 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import type { ActionState } from "@/shared/types/server-action";
-import {
-	validateInput,
-	success,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { validateInput, success, notFound, handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { updateProductCollectionsSchema } from "../schemas/product.schemas";
@@ -24,11 +20,12 @@ import { ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT } from "@/shared/lib/rate-limit-
  */
 export async function updateProductCollections(
 	prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	// 1. Vérification admin
-	const adminCheck = await requireAdmin();
-	if ("error" in adminCheck) return adminCheck.error;
+	const auth = await requireAdminWithUser();
+	if ("error" in auth) return auth.error;
+	const { user: adminUser } = auth;
 
 	// 1.1 Rate limiting
 	const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT);
@@ -102,7 +99,7 @@ export async function updateProductCollections(
 								collectionId,
 							})),
 						}),
-				  ]
+					]
 				: []),
 		]);
 
@@ -128,15 +125,22 @@ export async function updateProductCollections(
 		const productTags = getProductInvalidationTags(product.slug, product.id);
 		productTags.forEach((tag) => updateTag(tag));
 
+		// 11. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "product.updateCollections",
+			targetType: "product",
+			targetId: product.id,
+			metadata: { title: product.title, collectionIds: validation.data.collectionIds },
+		});
+
 		return success(
 			validation.data.collectionIds.length > 0
 				? `${product.title} ajouté à ${validation.data.collectionIds.length} collection(s)`
-				: `${product.title} retiré de toutes les collections`
+				: `${product.title} retiré de toutes les collections`,
 		);
 	} catch (e) {
-		return handleActionError(
-			e,
-			"Impossible de mettre à jour les collections du produit"
-		);
+		return handleActionError(e, "Impossible de mettre à jour les collections du produit");
 	}
 }

@@ -5,7 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useRef, useState } from "react";
 import { FilterBadge } from "./filter-badge";
@@ -169,7 +169,7 @@ export function FilterBadges({
 
 				{/* "Show more/less" button */}
 				{hasMoreFilters && (
-					<motion.div
+					<m.div
 						key="show-more-button"
 						layout
 						initial={shouldReduceMotion ? false : { opacity: 0 }}
@@ -200,12 +200,12 @@ export function FilterBadges({
 								</>
 							)}
 						</Button>
-					</motion.div>
+					</m.div>
 				)}
 
 				{/* "Clear all" button */}
 				{activeFilters.length >= 1 && (
-					<motion.div
+					<m.div
 						key="clear-all-button"
 						layout
 						initial={shouldReduceMotion ? false : { opacity: 0 }}
@@ -228,7 +228,7 @@ export function FilterBadges({
 						>
 							Tout effacer
 						</Button>
-					</motion.div>
+					</m.div>
 				)}
 			</AnimatePresence>
 		</div>

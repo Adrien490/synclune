@@ -6,12 +6,8 @@ import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	error,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
+import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkSuspendUsersSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -19,7 +15,7 @@ import { getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function bulkSuspendUsers(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
@@ -29,6 +25,7 @@ export async function bulkSuspendUsers(
 		// 2. Verification des droits admin
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
@@ -86,8 +83,17 @@ export async function bulkSuspendUsers(
 			}
 		}
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "user.bulkSuspend",
+			targetType: "user",
+			targetId: eligibleIds.join(","),
+			metadata: { count: eligibleIds.length },
+		});
+
 		return success(
-			`${eligibleIds.length} utilisateur${eligibleIds.length > 1 ? "s" : ""} suspendu${eligibleIds.length > 1 ? "s" : ""} avec succes.`
+			`${eligibleIds.length} utilisateur${eligibleIds.length > 1 ? "s" : ""} suspendu${eligibleIds.length > 1 ? "s" : ""} avec succes.`,
 		);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suspension des utilisateurs");

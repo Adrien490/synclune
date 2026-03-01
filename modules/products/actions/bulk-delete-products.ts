@@ -2,10 +2,18 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, success, error, notFound, validationError, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	error,
+	notFound,
+	validationError,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { bulkDeleteProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
@@ -20,12 +28,13 @@ import { ADMIN_PRODUCT_BULK_DELETE_LIMIT } from "@/shared/lib/rate-limit-config"
  */
 export async function bulkDeleteProducts(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_BULK_DELETE_LIMIT);
@@ -95,7 +104,7 @@ export async function bulkDeleteProducts(
 		if (orderItemsCount > 0) {
 			return error(
 				`Les produits selectionnes ne peuvent pas etre supprimes car ils sont associes a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
-				"Pour conserver l'historique des commandes, veuillez archiver les produits a la place."
+					"Pour conserver l'historique des commandes, veuillez archiver les produits a la place.",
 			);
 		}
 
@@ -133,31 +142,42 @@ export async function bulkDeleteProducts(
 
 		// 8. Invalidate cart caches for affected users
 		for (const { cart } of affectedCarts) {
-			const cartTags = getCartInvalidationTags(cart.userId ?? undefined, cart.sessionId ?? undefined);
-			cartTags.forEach(tag => updateTag(tag));
+			const cartTags = getCartInvalidationTags(
+				cart.userId ?? undefined,
+				cart.sessionId ?? undefined,
+			);
+			cartTags.forEach((tag) => updateTag(tag));
 		}
 
 		// 9. Invalidate cache tags pour tous les produits supprimes
 		for (const product of existingProducts) {
 			const productTags = getProductInvalidationTags(product.slug, product.id);
-			productTags.forEach(tag => updateTag(tag));
+			productTags.forEach((tag) => updateTag(tag));
 
 			// Si le produit appartenait a des collections, invalider aussi leurs caches
 			for (const pc of product.collections) {
-				const collectionTags = getCollectionInvalidationTags(
-					pc.collection.slug
-				);
-				collectionTags.forEach(tag => updateTag(tag));
+				const collectionTags = getCollectionInvalidationTags(pc.collection.slug);
+				collectionTags.forEach((tag) => updateTag(tag));
 			}
 		}
 
-		// 10. Success
+		// 10. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "product.bulkDelete",
+			targetType: "product",
+			targetId: validatedProductIds.join(","),
+			metadata: { count: existingProducts.length },
+		});
+
+		// 11. Success
 		return success(
 			`${existingProducts.length} produit${existingProducts.length > 1 ? "s" : ""} supprimé${existingProducts.length > 1 ? "s" : ""} avec succès.`,
 			{
 				deletedCount: existingProducts.length,
 				productIds: validatedProductIds,
-			}
+			},
 		);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression des produits");

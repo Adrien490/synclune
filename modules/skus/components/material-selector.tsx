@@ -10,7 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 
 interface MaterialSelectorProps {
 	materials: Material[];
@@ -130,7 +130,7 @@ export function MaterialSelector({ materials, product, defaultSku }: MaterialSel
 								{material.name}
 							</span>
 							{isSelected && (
-								<motion.div
+								<m.div
 									initial={shouldReduceMotion ? {} : { scale: 0 }}
 									animate={{ scale: 1 }}
 									transition={
@@ -140,7 +140,7 @@ export function MaterialSelector({ materials, product, defaultSku }: MaterialSel
 									}
 								>
 									<Check className="text-primary h-4 w-4" aria-hidden="true" />
-								</motion.div>
+								</m.div>
 							)}
 						</button>
 					);

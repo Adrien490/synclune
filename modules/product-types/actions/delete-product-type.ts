@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -18,12 +19,13 @@ import { deleteProductTypeSchema } from "../schemas/product-type.schemas";
  */
 export async function deleteProductType(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.DELETE);
@@ -65,17 +67,30 @@ export async function deleteProductType(
 
 		// 5. Protection: Bloquer la suppression des types systeme
 		if (productType.isSystem) {
-			return error(`Le type "${productType.label}" est un type systeme et ne peut pas etre supprime`);
+			return error(
+				`Le type "${productType.label}" est un type systeme et ne peut pas etre supprime`,
+			);
 		}
 
 		// 6. Protection: Bloquer la suppression des types avec produits actifs
 		if (productType._count.products > 0) {
-			return error(`Le type "${productType.label}" a ${productType._count.products} produit(s) actif(s) et ne peut pas etre supprime`);
+			return error(
+				`Le type "${productType.label}" a ${productType._count.products} produit(s) actif(s) et ne peut pas etre supprime`,
+			);
 		}
 
 		// 7. Suppression
 		await prisma.productType.delete({
 			where: { id: productTypeId },
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "productType.delete",
+			targetType: "productType",
+			targetId: productTypeId,
+			metadata: { label: productType.label },
 		});
 
 		// 6. Invalidation du cache

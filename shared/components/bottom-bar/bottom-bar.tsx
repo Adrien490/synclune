@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { useBottomBarHeight } from "@/shared/hooks";
 import { cn } from "@/shared/utils/cn";
@@ -11,8 +11,7 @@ import { cn } from "@/shared/utils/cn";
 // ---------------------------------------------------------------------------
 
 /** Classes for the inner container (flex row with dividers). */
-export const bottomBarContainerClass =
-	"flex items-stretch h-14";
+export const bottomBarContainerClass = "flex items-stretch h-14";
 
 /** Classes for an individual item (button or link) inside the bar. */
 export const bottomBarItemClass = cn(
@@ -54,7 +53,7 @@ export const bottomBarBadgeClass = cn(
 export function ActiveDot() {
 	return (
 		<span
-			className="absolute -top-0.5 left-1/2 -translate-x-1/2 size-1.5 bg-primary rounded-full animate-in zoom-in-50 duration-200"
+			className="bg-primary animate-in zoom-in-50 absolute -top-0.5 left-1/2 size-1.5 -translate-x-1/2 rounded-full duration-200"
 			aria-hidden="true"
 		/>
 	);
@@ -96,7 +95,7 @@ export function BottomBar({
 	useBottomBarHeight(height, enabled && !isHidden);
 	const prefersReducedMotion = useReducedMotion();
 
-	const Component = as === "nav" ? motion.nav : motion.div;
+	const Component = as === "nav" ? m.nav : m.div;
 
 	return (
 		<Component
@@ -107,12 +106,12 @@ export function BottomBar({
 			{...(isHidden && { inert: true })}
 			className={cn(
 				breakpointClass,
-				"fixed bottom-0 left-0 right-0",
+				"fixed right-0 bottom-0 left-0",
 				zIndex,
 				"pb-[env(safe-area-inset-bottom)]",
 				// bg-background/95 acts as fallback when backdrop-filter is unsupported
 				"bg-background/95 backdrop-blur-md",
-				"border-t border-x border-border",
+				"border-border border-x border-t",
 				"rounded-t-2xl",
 				"shadow-[0_-4px_20px_rgba(0,0,0,0.08)]",
 				isHidden && "pointer-events-none",

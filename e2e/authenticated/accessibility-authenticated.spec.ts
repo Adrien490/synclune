@@ -30,6 +30,47 @@ test.describe("Accessibilité - Pages authentifiées", { tag: ["@slow"] }, () =>
 		});
 	}
 
+	test("Page checkout passe l'audit axe-core WCAG AA", async ({ page }) => {
+		await page.goto("/paiement");
+		await page.waitForLoadState("domcontentloaded");
+
+		// If redirected because cart is empty, skip
+		if (!page.url().includes("paiement")) {
+			test.skip(true, "Panier vide - redirection");
+			return;
+		}
+
+		const results = await new AxeBuilder({ page })
+			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+			.exclude("iframe[src*='stripe']")
+			.analyze();
+
+		if (results.violations.length > 0) {
+			const summary = results.violations
+				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
+				.join("\n");
+			expect(results.violations, `Violations WCAG sur Checkout:\n${summary}`).toEqual([]);
+		}
+	});
+
+	test("Page confirmation paiement passe l'audit axe-core WCAG AA", async ({ page }) => {
+		await page.goto("/paiement/confirmation");
+		await page.waitForLoadState("domcontentloaded");
+
+		const results = await new AxeBuilder({ page })
+			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+			.analyze();
+
+		if (results.violations.length > 0) {
+			const summary = results.violations
+				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
+				.join("\n");
+			expect(results.violations, `Violations WCAG sur Confirmation paiement:\n${summary}`).toEqual(
+				[],
+			);
+		}
+	});
+
 	test("Détail commande passe l'audit axe-core WCAG AA", async ({ page }) => {
 		await page.goto("/compte/commandes");
 		await page.waitForLoadState("domcontentloaded");

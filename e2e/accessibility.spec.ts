@@ -352,7 +352,16 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		{ path: "/mot-de-passe-oublie", name: "Mot de passe oublié" },
 		{ path: "/personnalisation", name: "Personnalisation" },
 		{ path: "/paiement/annulation", name: "Checkout annulation" },
+		{ path: "/paiement/retour", name: "Checkout retour" },
 		{ path: "/~offline", name: "Page offline" },
+		// Auth pages
+		{ path: "/reinitialiser-mot-de-passe", name: "Réinitialiser mot de passe" },
+		{ path: "/renvoyer-verification", name: "Renvoyer vérification" },
+		{ path: "/verifier-email", name: "Vérifier email" },
+		{ path: "/error", name: "Page erreur auth" },
+		// Newsletter pages
+		{ path: "/newsletter/confirm", name: "Newsletter confirmation" },
+		{ path: "/newsletter/unsubscribe", name: "Newsletter désabonnement" },
 	];
 
 	for (const { path, name } of pagesToAudit) {
@@ -422,6 +431,32 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
 				.join("\n");
 			expect(results.violations, `Violations WCAG collection detail:\n${summary}`).toEqual([]);
+		}
+	});
+
+	test("Page catégorie /produits/[typeSlug] passe l'audit axe-core WCAG AA", async ({ page }) => {
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		const categoryLink = page.locator("a[href*='/produits/']").first();
+		if ((await categoryLink.count()) === 0) {
+			test.skip(true, "Pas de catégories de produits");
+			return;
+		}
+		const href = await categoryLink.getAttribute("href");
+		if (!href || href === "/produits") return;
+		await page.goto(href);
+		await page.waitForLoadState("domcontentloaded");
+
+		const results = await new AxeBuilder({ page })
+			.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+			.analyze();
+
+		if (results.violations.length > 0) {
+			const summary = results.violations
+				.map((v) => `[${v.id}] ${v.description} (${v.nodes.length} node(s))`)
+				.join("\n");
+			expect(results.violations, `Violations WCAG catégorie produits:\n${summary}`).toEqual([]);
 		}
 	});
 });

@@ -1,7 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
@@ -16,12 +17,13 @@ import { setFeaturedProductSchema } from "../schemas/collection.schemas";
  */
 export async function setFeaturedProduct(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Admin auth check
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -84,12 +86,25 @@ export async function setFeaturedProduct(
 		]);
 
 		// 5. Invalider le cache de la collection
-		const collectionTags = getCollectionInvalidationTags(
-			productCollection.collection.slug
-		);
+		const collectionTags = getCollectionInvalidationTags(productCollection.collection.slug);
 		collectionTags.forEach((tag) => updateTag(tag));
 
-		return success(`"${productCollection.product.title}" est maintenant le produit vedette de "${productCollection.collection.name}".`);
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "collection.setFeaturedProduct",
+			targetType: "collection",
+			targetId: collectionId,
+			metadata: {
+				productId,
+				productTitle: productCollection.product.title,
+				collectionName: productCollection.collection.name,
+			},
+		});
+
+		return success(
+			`"${productCollection.product.title}" est maintenant le produit vedette de "${productCollection.collection.name}".`,
+		);
 	} catch (e) {
 		return handleActionError(e, "Impossible de définir le produit vedette");
 	}
@@ -100,12 +115,13 @@ export async function setFeaturedProduct(
  */
 export async function removeFeaturedProduct(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Admin auth check
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -155,12 +171,25 @@ export async function removeFeaturedProduct(
 		});
 
 		// 5. Invalider le cache de la collection
-		const collectionTags = getCollectionInvalidationTags(
-			productCollection.collection.slug
-		);
+		const collectionTags = getCollectionInvalidationTags(productCollection.collection.slug);
 		collectionTags.forEach((tag) => updateTag(tag));
 
-		return success(`"${productCollection.product.title}" n'est plus le produit vedette de "${productCollection.collection.name}".`);
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "collection.removeFeaturedProduct",
+			targetType: "collection",
+			targetId: collectionId,
+			metadata: {
+				productId,
+				productTitle: productCollection.product.title,
+				collectionName: productCollection.collection.name,
+			},
+		});
+
+		return success(
+			`"${productCollection.product.title}" n'est plus le produit vedette de "${productCollection.collection.name}".`,
+		);
 	} catch (e) {
 		return handleActionError(e, "Impossible de retirer le produit vedette");
 	}

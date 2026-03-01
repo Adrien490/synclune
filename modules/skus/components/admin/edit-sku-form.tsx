@@ -13,7 +13,7 @@ import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Euro, ImagePlus, Info, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -356,7 +356,7 @@ export function EditProductVariantForm({
 															position: "relative",
 															boxShadow: isDragActive
 																? "0 0 0 2px color-mix(in oklch, var(--primary) 20%, transparent), 0 8px 24px color-mix(in oklch, var(--primary) 15%, transparent)"
-																: "0 2px 8px rgba(0, 0, 0, 0.1)",
+																: "var(--shadow-md)",
 														}),
 														uploadIcon: ({ isDragActive, isUploading }) => ({
 															color: isDragActive
@@ -480,7 +480,7 @@ export function EditProductVariantForm({
 
 										<AnimatePresence mode="popLayout">
 											{field.state.value.length > 0 && (
-												<motion.div
+												<m.div
 													initial={{ opacity: 0 }}
 													animate={{ opacity: 1 }}
 													exit={{ opacity: 0 }}
@@ -496,7 +496,7 @@ export function EditProductVariantForm({
 														onChange={(newMedia) => field.setValue(newMedia)}
 														skipUtapiDelete={true}
 													/>
-												</motion.div>
+												</m.div>
 											)}
 										</AnimatePresence>
 
@@ -574,7 +574,7 @@ export function EditProductVariantForm({
 														position: "relative",
 														boxShadow: isDragActive
 															? "0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 12px color-mix(in oklch, var(--primary) 10%, transparent)"
-															: "0 1px 3px rgba(0, 0, 0, 0.1)",
+															: "var(--shadow-sm)",
 													}),
 													uploadIcon: ({ isDragActive, isUploading }) => ({
 														color: isDragActive

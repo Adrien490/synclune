@@ -13,8 +13,7 @@ function decimalToNumber(value: Decimal | number): number {
  * Serialise un produit pour les Client Components (Decimal → number)
  *
  * Prisma type averageRating comme Decimal, mais les Client Components
- * ont besoin d'un number serialisable. Le cast au niveau reviewStats
- * est necessaire car le type retour doit rester Product.
+ * ont besoin d'un number serialisable.
  *
  * @param product - Produit avec potentiellement un Decimal
  * @returns Produit avec reviewStats.averageRating converti en number
@@ -26,8 +25,8 @@ export function serializeProduct(product: Product): Product {
 		...product,
 		reviewStats: {
 			...product.reviewStats,
-			averageRating: decimalToNumber(product.reviewStats.averageRating),
-		} as unknown as typeof product.reviewStats,
+			averageRating: decimalToNumber(product.reviewStats.averageRating) as unknown as Decimal,
+		},
 	};
 }
 

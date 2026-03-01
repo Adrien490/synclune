@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -14,12 +15,13 @@ import { toggleColorStatusSchema } from "../schemas/color.schemas";
 
 export async function toggleColorStatus(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Admin authorization check
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.TOGGLE_STATUS);
@@ -53,13 +55,22 @@ export async function toggleColorStatus(
 			},
 		});
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "color.toggleStatus",
+			targetType: "color",
+			targetId: validatedData.id,
+			metadata: { name: existingColor.name, isActive: validatedData.isActive },
+		});
+
 		// Invalidate cache
 		const tags = getColorInvalidationTags(existingColor.slug);
 		tags.forEach((tag) => updateTag(tag));
 
-		return success(validatedData.isActive
-			? "Couleur activée avec succès"
-			: "Couleur désactivée avec succès");
+		return success(
+			validatedData.isActive ? "Couleur activée avec succès" : "Couleur désactivée avec succès",
+		);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le statut de la couleur");
 	}

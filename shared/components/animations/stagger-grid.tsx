@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import React, { type ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
@@ -79,7 +79,7 @@ export function StaggerGrid({
 
 	if (inView) {
 		return (
-			<motion.div
+			<m.div
 				className={className}
 				role={role}
 				initial="hidden"
@@ -89,16 +89,16 @@ export function StaggerGrid({
 				{...rest}
 			>
 				{childrenArray.map((child, index) => (
-					<motion.div key={index} variants={itemVariants}>
+					<m.div key={index} variants={itemVariants}>
 						{child}
-					</motion.div>
+					</m.div>
 				))}
-			</motion.div>
+			</m.div>
 		);
 	}
 
 	return (
-		<motion.div
+		<m.div
 			className={className}
 			role={role}
 			initial="hidden"
@@ -107,10 +107,10 @@ export function StaggerGrid({
 			{...rest}
 		>
 			{childrenArray.map((child, index) => (
-				<motion.div key={index} variants={itemVariants}>
+				<m.div key={index} variants={itemVariants}>
 					{child}
-				</motion.div>
+				</m.div>
 			))}
-		</motion.div>
+		</m.div>
 	);
 }

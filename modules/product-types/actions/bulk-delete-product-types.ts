@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -18,15 +19,18 @@ import { bulkDeleteProductTypesSchema } from "../schemas/product-type.schemas";
  */
 export async function bulkDeleteProductTypes(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.BULK_OPERATIONS);
+		const rateLimit = await enforceRateLimitForCurrentUser(
+			ADMIN_PRODUCT_TYPE_LIMITS.BULK_OPERATIONS,
+		);
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Extraction et validation
@@ -65,23 +69,19 @@ export async function bulkDeleteProductTypes(
 
 		// 4. Séparer les types supprimables des non-supprimables
 		const systemTypes = productTypes.filter((pt) => pt.isSystem);
-		const typesWithProducts = productTypes.filter(
-			(pt) => !pt.isSystem && pt._count.products > 0
-		);
-		const deletableTypes = productTypes.filter(
-			(pt) => !pt.isSystem && pt._count.products === 0
-		);
+		const typesWithProducts = productTypes.filter((pt) => !pt.isSystem && pt._count.products > 0);
+		const deletableTypes = productTypes.filter((pt) => !pt.isSystem && pt._count.products === 0);
 
 		if (deletableTypes.length === 0) {
 			const errors: string[] = [];
 			if (systemTypes.length > 0) {
 				errors.push(
-					`${systemTypes.length} type(s) système non supprimable(s): ${systemTypes.map((t) => t.label).join(", ")}`
+					`${systemTypes.length} type(s) système non supprimable(s): ${systemTypes.map((t) => t.label).join(", ")}`,
 				);
 			}
 			if (typesWithProducts.length > 0) {
 				errors.push(
-					`${typesWithProducts.length} type(s) avec produits actifs: ${typesWithProducts.map((t) => t.label).join(", ")}`
+					`${typesWithProducts.length} type(s) avec produits actifs: ${typesWithProducts.map((t) => t.label).join(", ")}`,
 				);
 			}
 			return error(`Aucun type supprimable. ${errors.join(". ")}`);
@@ -90,6 +90,15 @@ export async function bulkDeleteProductTypes(
 		// 5. Supprimer les types éligibles
 		await prisma.productType.deleteMany({
 			where: { id: { in: deletableTypes.map((pt) => pt.id) } },
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "productType.bulkDelete",
+			targetType: "productType",
+			targetId: deletableTypes.map((pt) => pt.id).join(","),
+			metadata: { count: deletableTypes.length },
 		});
 
 		// 6. Invalidation du cache

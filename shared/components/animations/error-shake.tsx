@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
@@ -44,7 +44,7 @@ export function ErrorShake({
 			: { x: 0 };
 
 	return (
-		<motion.div
+		<m.div
 			className={cn(
 				className,
 				showFlash && "outline-destructive rounded outline-2 outline-offset-2",
@@ -61,6 +61,6 @@ export function ErrorShake({
 			}}
 		>
 			{children}
-		</motion.div>
+		</m.div>
 	);
 }

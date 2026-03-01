@@ -5,15 +5,11 @@ import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
-import {
-	validateInput,
-	handleActionError,
-	success,
-	error,
-} from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
@@ -26,11 +22,12 @@ import { bulkUpdateStatusSchema } from "../schemas/bulk-update-status.schema";
 
 export async function bulkUpdateCustomizationStatus(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	// 1. Auth check
-	const admin = await requireAdmin();
-	if ("error" in admin) return admin.error;
+	const auth = await requireAdminWithUser();
+	if ("error" in auth) return auth.error;
+	const { user: adminUser } = auth;
 
 	const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_CUSTOMIZATION_LIMITS.BULK_UPDATE);
 	if ("error" in rateLimit) return rateLimit.error;
@@ -55,7 +52,16 @@ export async function bulkUpdateCustomizationStatus(
 				id: { in: requestIds },
 				...notDeleted,
 			},
-			select: { id: true, userId: true, status: true, email: true, firstName: true, productTypeLabel: true, details: true, adminNotes: true },
+			select: {
+				id: true,
+				userId: true,
+				status: true,
+				email: true,
+				firstName: true,
+				productTypeLabel: true,
+				details: true,
+				adminNotes: true,
+			},
 		});
 
 		if (existingRequests.length === 0) {
@@ -63,9 +69,7 @@ export async function bulkUpdateCustomizationStatus(
 		}
 
 		// 4. Filter out requests with invalid transitions
-		const validRequests = existingRequests.filter((r) =>
-			canTransitionTo(r.status, status)
-		);
+		const validRequests = existingRequests.filter((r) => canTransitionTo(r.status, status));
 
 		if (validRequests.length === 0) {
 			return error("Aucune transition de statut valide");
@@ -76,7 +80,7 @@ export async function bulkUpdateCustomizationStatus(
 			.filter(
 				(r) =>
 					r.status === CustomizationRequestStatus.PENDING &&
-					status !== CustomizationRequestStatus.PENDING
+					status !== CustomizationRequestStatus.PENDING,
 			)
 			.map((r) => r.id);
 
@@ -90,7 +94,7 @@ export async function bulkUpdateCustomizationStatus(
 				prisma.customizationRequest.updateMany({
 					where: { id: { in: needsRespondedAt } },
 					data: { status, respondedAt: new Date() },
-				})
+				}),
 			);
 		}
 
@@ -99,11 +103,20 @@ export async function bulkUpdateCustomizationStatus(
 				prisma.customizationRequest.updateMany({
 					where: { id: { in: otherIds } },
 					data: { status },
-				})
+				}),
 			);
 		}
 
 		await prisma.$transaction(txOperations);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "customization.bulkUpdateStatus",
+			targetType: "customization",
+			targetId: validIds.join(","),
+			metadata: { count: validRequests.length, status },
+		});
 
 		// 7. Invalidate cache (LIST, STATS, DETAIL per request, USER_REQUESTS per user)
 		const tags = getCustomizationInvalidationTags();
@@ -144,10 +157,9 @@ export async function bulkUpdateCustomizationStatus(
 		}
 
 		const count = validRequests.length;
-		return success(
-			`${count} demande${count > 1 ? "s" : ""} mise${count > 1 ? "s" : ""} a jour`,
-			{ count }
-		);
+		return success(`${count} demande${count > 1 ? "s" : ""} mise${count > 1 ? "s" : ""} a jour`, {
+			count,
+		});
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise à jour en masse");
 	}

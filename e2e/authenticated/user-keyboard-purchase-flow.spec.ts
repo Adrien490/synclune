@@ -91,6 +91,79 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		}
 	});
 
+	test("validation des erreurs de formulaire checkout au clavier", async ({ page }) => {
+		await page.goto("/paiement");
+		await page.waitForLoadState("domcontentloaded");
+
+		if (page.url().includes("connexion") || !page.url().includes("paiement")) {
+			test.skip(true, "Authentification requise ou panier vide");
+			return;
+		}
+
+		// Find the submit button and try submitting empty form
+		const submitButton = page.getByRole("button", { name: /Payer|Valider|Commander/i }).first();
+		if ((await submitButton.count()) === 0) {
+			test.skip(true, "Pas de bouton de soumission");
+			return;
+		}
+
+		await submitButton.focus();
+		await page.keyboard.press("Enter");
+
+		// After failed validation, focus should move to first error field
+		await page.waitForTimeout(500);
+
+		const focusedTag = await page.evaluate(() => document.activeElement?.tagName?.toLowerCase());
+		const hasErrorMessage = await page.locator('[role="alert"], [aria-invalid="true"]').count();
+
+		// Either focus moved to an input or error messages appeared
+		expect(
+			focusedTag === "input" || focusedTag === "select" || hasErrorMessage > 0,
+			"Le formulaire doit montrer des erreurs ou déplacer le focus vers le premier champ invalide",
+		).toBe(true);
+	});
+
+	test("navigation clavier dans la galerie produit", async ({ page }) => {
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		const productLink = page.locator("article a[href*='/creations/']").first();
+		if ((await productLink.count()) === 0) {
+			test.skip(true, "Pas de produits dans la base");
+			return;
+		}
+		const href = await productLink.getAttribute("href");
+		if (!href) return;
+		await page.goto(href);
+		await page.waitForLoadState("domcontentloaded");
+
+		// Look for thumbnail buttons in the product gallery
+		const thumbnails = page
+			.locator(
+				"button[aria-label*='miniature' i], button[aria-label*='thumbnail' i], [data-gallery] button, [role='tablist'] button",
+			)
+			.first();
+		if ((await thumbnails.count()) === 0) {
+			// Try generic image gallery buttons
+			const galleryButtons = page.locator("[data-gallery] button, .gallery button").first();
+			if ((await galleryButtons.count()) === 0) {
+				test.skip(true, "Pas de galerie avec miniatures");
+				return;
+			}
+			await galleryButtons.focus();
+			await expect(galleryButtons).toBeFocused();
+			return;
+		}
+
+		await thumbnails.focus();
+		await expect(thumbnails).toBeFocused();
+
+		// Tab to next thumbnail
+		await page.keyboard.press("Tab");
+		const focusedTag = await page.evaluate(() => document.activeElement?.tagName?.toLowerCase());
+		expect(["button", "a", "img"]).toContain(focusedTag);
+	});
+
 	test("le focus ne sort pas du formulaire checkout pendant la saisie", async ({ page }) => {
 		await page.goto("/paiement");
 		await page.waitForLoadState("domcontentloaded");

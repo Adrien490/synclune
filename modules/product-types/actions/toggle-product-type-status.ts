@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -14,12 +15,13 @@ import { toggleProductTypeStatusSchema } from "../schemas/product-type.schemas";
 
 export async function toggleProductTypeStatus(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.TOGGLE_STATUS);
@@ -46,13 +48,24 @@ export async function toggleProductTypeStatus(
 		}
 
 		if (productType.isSystem) {
-			return error(`Le type "${productType.label}" est un type systeme et ne peut pas etre modifie`);
+			return error(
+				`Le type "${productType.label}" est un type systeme et ne peut pas etre modifie`,
+			);
 		}
 
 		// Mettre a jour le statut
 		await prisma.productType.update({
 			where: { id: productTypeId },
 			data: { isActive },
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "productType.toggleStatus",
+			targetType: "productType",
+			targetId: productTypeId,
+			metadata: { label: productType.label, isActive },
 		});
 
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));

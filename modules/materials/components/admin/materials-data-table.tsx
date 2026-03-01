@@ -16,6 +16,7 @@ import { Gem } from "lucide-react";
 import { use } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
 import { MaterialsSelectionToolbar } from "@/modules/materials/components/materials-selection-toolbar";
+import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface MaterialsDataTableProps {
@@ -33,6 +34,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 				icon={Gem}
 				title="Aucun materiau trouve"
 				description="Aucun materiau ne correspond aux criteres de recherche."
+				actionElement={<CreateMaterialButton />}
 			/>
 		);
 	}
@@ -60,7 +62,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 									key="description"
 									scope="col"
 									role="columnheader"
-									className="hidden md:table-cell w-[30%]"
+									className="hidden w-[30%] md:table-cell"
 								>
 									Description
 								</TableHead>
@@ -68,7 +70,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 									key="status"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell text-center w-[10%]"
+									className="hidden w-[10%] text-center sm:table-cell"
 								>
 									Statut
 								</TableHead>
@@ -76,7 +78,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 									key="skus"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell text-center w-[10%]"
+									className="hidden w-[10%] text-center sm:table-cell"
 								>
 									Variantes
 								</TableHead>
@@ -84,7 +86,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] sm:w-[10%] text-right"
+									className="w-[15%] text-right sm:w-[10%]"
 									aria-label="Actions disponibles pour chaque matériau"
 								>
 									Actions
@@ -92,7 +94,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{materials.map((material) => {
+							{materials.map((material) => {
 								const skuCount = material._count?.skus || 0;
 
 								return (
@@ -101,33 +103,24 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 											<TableSelectionCell type="row" itemId={material.id} />
 										</TableCell>
 										<TableCell role="gridcell">
-										<div className="overflow-hidden">
-											<span
-												className="font-semibold text-foreground truncate block"
-												title={material.name}
-											>
-												{material.name}
-											</span>
-										</div>
-									</TableCell>
+											<div className="overflow-hidden">
+												<span
+													className="text-foreground block truncate font-semibold"
+													title={material.name}
+												>
+													{material.name}
+												</span>
+											</div>
+										</TableCell>
 										<TableCell role="gridcell" className="hidden md:table-cell">
-											<span className="text-sm text-muted-foreground line-clamp-2">
+											<span className="text-muted-foreground line-clamp-2 text-sm">
 												{material.description || "-"}
 											</span>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell text-center"
-										>
-											<MaterialActiveToggle
-												materialId={material.id}
-												isActive={material.isActive}
-											/>
+										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+											<MaterialActiveToggle materialId={material.id} isActive={material.isActive} />
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell text-center"
-										>
+										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
 											<span className="text-sm font-medium">{skuCount}</span>
 										</TableCell>
 										<TableCell role="gridcell" className="text-right">
@@ -141,7 +134,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 										</TableCell>
 									</TableRow>
 								);
-								})}
+							})}
 						</TableBody>
 					</Table>
 				</TableScrollContainer>

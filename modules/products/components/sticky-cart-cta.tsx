@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Button } from "@/shared/components/ui/button";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
@@ -97,7 +97,7 @@ export function StickyCartCTA({
 	return (
 		<AnimatePresence>
 			{isVisible && (
-				<motion.div
+				<m.div
 					variants={slideVariants}
 					initial="hidden"
 					animate="visible"
@@ -196,7 +196,7 @@ export function StickyCartCTA({
 										: "Ajouter au panier"}
 						</Button>
 					</form>
-				</motion.div>
+				</m.div>
 			)}
 		</AnimatePresence>
 	);

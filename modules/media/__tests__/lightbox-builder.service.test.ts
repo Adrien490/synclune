@@ -1,10 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("../utils/media-utils", () => ({
-	getVideoMimeType: vi.fn((url: string) => {
-		if (url.endsWith(".webm")) return "video/webm";
-		return "video/mp4";
-	}),
+	getVideoMimeType: vi.fn(() => "video/mp4"),
 }));
 
 import { buildLightboxSlides } from "../services/lightbox-builder.service";
@@ -61,10 +58,7 @@ describe("buildLightboxSlides", () => {
 	});
 
 	it("handles mixed image and video medias", () => {
-		const slides = buildLightboxSlides(
-			[createImageMedia(), createVideoMedia()],
-			false
-		);
+		const slides = buildLightboxSlides([createImageMedia(), createVideoMedia()], false);
 		expect(slides).toHaveLength(2);
 		expect(slides[0]).toHaveProperty("src");
 		expect(slides[1]).toHaveProperty("type", "video");
@@ -97,26 +91,23 @@ describe("buildLightboxSlides", () => {
 	it("uses thumbnailUrl as poster when available", () => {
 		const slides = buildLightboxSlides(
 			[createVideoMedia({ thumbnailUrl: "https://utfs.io/f/poster.jpg" })],
-			false
+			false,
 		);
 		expect(slides[0]).toHaveProperty("poster", "https://utfs.io/f/poster.jpg");
 	});
 
 	it("sets poster to undefined when thumbnailUrl is null", () => {
-		const slides = buildLightboxSlides(
-			[createVideoMedia({ thumbnailUrl: null })],
-			false
-		);
+		const slides = buildLightboxSlides([createVideoMedia({ thumbnailUrl: null })], false);
 		expect(slides[0]).toHaveProperty("poster", undefined);
 	});
 
-	it("detects webm MIME type for .webm videos", () => {
+	it("always uses video/mp4 MIME type (only supported format)", () => {
 		const slides = buildLightboxSlides(
-			[createVideoMedia({ url: "https://utfs.io/f/video.webm" })],
-			false
+			[createVideoMedia({ url: "https://utfs.io/f/video.mp4" })],
+			false,
 		);
 		expect((slides[0] as unknown as Record<string, unknown>).sources).toEqual([
-			{ src: "https://utfs.io/f/video.webm", type: "video/webm" },
+			{ src: "https://utfs.io/f/video.mp4", type: "video/mp4" },
 		]);
 	});
 });

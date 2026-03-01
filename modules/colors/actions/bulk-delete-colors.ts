@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -14,12 +15,13 @@ import { bulkDeleteColorsSchema } from "../schemas/color.schemas";
 
 export async function bulkDeleteColors(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.BULK_OPERATIONS);
@@ -59,7 +61,9 @@ export async function bulkDeleteColors(
 
 		if (usedColors.length > 0) {
 			const colorNames = usedColors.map((c) => c.name).join(", ");
-			return error(`${usedColors.length} couleur${usedColors.length > 1 ? "s" : ""} (${colorNames}) ${usedColors.length > 1 ? "sont utilisees" : "est utilisee"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`);
+			return error(
+				`${usedColors.length} couleur${usedColors.length > 1 ? "s" : ""} (${colorNames}) ${usedColors.length > 1 ? "sont utilisees" : "est utilisee"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`,
+			);
 		}
 
 		// Supprimer les couleurs
@@ -71,6 +75,15 @@ export async function bulkDeleteColors(
 			},
 		});
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "color.bulkDelete",
+			targetType: "color",
+			targetId: validatedData.ids.join(","),
+			metadata: { count: result.count },
+		});
+
 		// Invalider le cache (list + detail for each deleted color)
 		const tagSet = new Set(getColorInvalidationTags());
 		for (const color of colorsWithUsage) {
@@ -78,7 +91,9 @@ export async function bulkDeleteColors(
 		}
 		tagSet.forEach((tag) => updateTag(tag));
 
-		return success(`${result.count} couleur${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès`);
+		return success(
+			`${result.count} couleur${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès`,
+		);
 	} catch (e) {
 		return handleActionError(e, "Impossible de supprimer les couleurs");
 	}

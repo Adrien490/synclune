@@ -34,12 +34,29 @@ export const EMAIL_COLORS = {
 } as const;
 
 /**
+ * Dark mode color overrides
+ * Used in @media (prefers-color-scheme: dark) styles injected in EmailLayout <Head>
+ */
+export const EMAIL_COLORS_DARK = {
+	primary: "#F0B4C8",
+	text: {
+		primary: "#E8E8E8",
+		secondary: "#A0A0A0",
+	},
+	background: {
+		main: "#1A1A1A",
+		card: "#2A2A2A",
+		white: "#222222",
+	},
+	border: "#3A3A3A",
+} as const;
+
+/**
  * Styles inline réutilisables pour les composants d'email
  */
 export const EMAIL_STYLES = {
 	body: {
-		fontFamily:
-			"system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+		fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
 	},
 
 	container: {

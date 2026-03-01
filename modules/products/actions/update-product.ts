@@ -2,9 +2,16 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
-import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	notFound,
+	validationError,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
@@ -23,12 +30,13 @@ import { ADMIN_PRODUCT_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
  */
 export async function updateProduct(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_LIMIT);
@@ -49,14 +57,8 @@ export async function updateProduct(
 
 		// Extraire les donnees (approche simple comme collection)
 		// Parse media from form: primaryImage + galleryMedia → media array
-		const primaryImage = parseJSON(
-			formData.get("defaultSku.primaryImage"),
-			null
-		);
-		const galleryMedia = parseJSON<unknown[]>(
-			formData.get("defaultSku.galleryMedia"),
-			[]
-		);
+		const primaryImage = parseJSON(formData.get("defaultSku.primaryImage"), null);
+		const galleryMedia = parseJSON<unknown[]>(formData.get("defaultSku.galleryMedia"), []);
 		// Combine: primary first, then gallery
 		const media = primaryImage ? [primaryImage, ...galleryMedia] : galleryMedia;
 
@@ -81,10 +83,7 @@ export async function updateProduct(
 		};
 
 		// Parse deleted image URLs for UTAPI deletion
-		const deletedImageUrls = parseJSON<string[]>(
-			formData.get("deletedImageUrls"),
-			[]
-		);
+		const deletedImageUrls = parseJSON<string[]>(formData.get("deletedImageUrls"), []);
 
 		// 3. Validation avec Zod
 		const validation = validateInput(updateProductSchema, rawData);
@@ -141,7 +140,7 @@ export async function updateProduct(
 			existingProduct._count.skus === 1
 		) {
 			return validationError(
-				"Impossible de desactiver le seul SKU d'un produit PUBLIC. Veuillez creer un autre SKU actif ou mettre le produit en DRAFT."
+				"Impossible de desactiver le seul SKU d'un produit PUBLIC. Veuillez creer un autre SKU actif ou mettre le produit en DRAFT.",
 			);
 		}
 
@@ -149,8 +148,7 @@ export async function updateProduct(
 		const normalizedTypeId = validatedData.typeId?.trim() || null;
 		const normalizedCollectionIds = validatedData.collectionIds?.filter((id) => id.trim()) || [];
 		const normalizedColorId = validatedData.defaultSku.colorId?.trim() || null;
-		const normalizedMaterialId =
-			validatedData.defaultSku.materialId?.trim() || null;
+		const normalizedMaterialId = validatedData.defaultSku.materialId?.trim() || null;
 		const normalizedSize = validatedData.defaultSku.size?.trim() || null;
 		// Sanitisation XSS de la description
 		const normalizedDescription = validatedData.description?.trim()
@@ -158,9 +156,7 @@ export async function updateProduct(
 			: null;
 
 		// 7. Convert priceInclTaxEuros to cents for database
-		const priceInclTaxCents = Math.round(
-			validatedData.defaultSku.priceInclTaxEuros * 100
-		);
+		const priceInclTaxCents = Math.round(validatedData.defaultSku.priceInclTaxEuros * 100);
 		const compareAtPriceCents = validatedData.defaultSku.compareAtPriceEuros
 			? Math.round(validatedData.defaultSku.compareAtPriceEuros * 100)
 			: null;
@@ -184,9 +180,7 @@ export async function updateProduct(
 					select: { id: true, isActive: true },
 				});
 				if (!productType || !productType.isActive) {
-					throw new Error(
-						"Le type de produit spécifié n'existe pas ou n'est pas actif."
-					);
+					throw new Error("Le type de produit spécifié n'existe pas ou n'est pas actif.");
 				}
 			}
 
@@ -287,8 +281,7 @@ export async function updateProduct(
 							thumbnailUrl: image.thumbnailUrl || null,
 							blurDataUrl: image.blurDataUrl || null,
 							altText: image.altText || null,
-							mediaType:
-								image.mediaType || detectMediaType(image.url),
+							mediaType: image.mediaType || detectMediaType(image.url),
 							isPrimary: image.isPrimary,
 							position: image.position,
 						},
@@ -300,11 +293,8 @@ export async function updateProduct(
 		});
 
 		// 10. Invalidate cache tags
-		const productTags = getProductInvalidationTags(
-			updatedProduct.slug,
-			updatedProduct.id
-		);
-		productTags.forEach(tag => updateTag(tag));
+		const productTags = getProductInvalidationTags(updatedProduct.slug, updatedProduct.id);
+		productTags.forEach((tag) => updateTag(tag));
 
 		// Invalider le cache stock temps réel du SKU modifié
 		updateTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(validatedData.defaultSku.skuId));
@@ -312,7 +302,7 @@ export async function updateProduct(
 		// Invalider les anciennes collections
 		for (const pc of existingProduct.collections) {
 			const collectionTags = getCollectionInvalidationTags(pc.collection.slug);
-			collectionTags.forEach(tag => updateTag(tag));
+			collectionTags.forEach((tag) => updateTag(tag));
 		}
 
 		// Invalider les nouvelles collections
@@ -323,7 +313,7 @@ export async function updateProduct(
 			});
 			for (const collection of newCollections) {
 				const collectionTags = getCollectionInvalidationTags(collection.slug);
-				collectionTags.forEach(tag => updateTag(tag));
+				collectionTags.forEach((tag) => updateTag(tag));
 			}
 		}
 
@@ -335,12 +325,30 @@ export async function updateProduct(
 			} catch (e) {
 				// DB update already succeeded, orphaned files will be cleaned by monthly cron
 				if (process.env.NODE_ENV === "development") {
-					console.error("[update-product] Failed to delete UploadThing files:", deletedImageUrls, e);
+					console.error(
+						"[update-product] Failed to delete UploadThing files:",
+						deletedImageUrls,
+						e,
+					);
 				}
 			}
 		}
 
-		// 12. Success
+		// 12. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "product.update",
+			targetType: "product",
+			targetId: updatedProduct.id,
+			metadata: {
+				title: updatedProduct.title,
+				slug: updatedProduct.slug,
+				status: updatedProduct.status,
+			},
+		});
+
+		// 13. Success
 		return success(`Produit "${updatedProduct.title}" modifié avec succès.`, updatedProduct);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le produit");

@@ -1,8 +1,9 @@
 "use server";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -15,12 +16,13 @@ import { createMaterialSchema } from "../schemas/materials.schemas";
 
 export async function createMaterial(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.CREATE);
@@ -28,7 +30,7 @@ export async function createMaterial(
 
 		// 3. Extraire les donnees du FormData
 		const rawData = {
-			name: sanitizeText(formData.get("name") as string ?? ""),
+			name: sanitizeText((formData.get("name") as string) ?? ""),
 			description: formData.get("description")
 				? sanitizeText(formData.get("description") as string)
 				: null,
@@ -52,12 +54,21 @@ export async function createMaterial(
 		const slug = await generateSlug(prisma, "material", validatedData.name);
 
 		// Creer le materiau
-		await prisma.material.create({
+		const created = await prisma.material.create({
 			data: {
 				name: validatedData.name,
 				slug,
 				description: validatedData.description,
 			},
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "material.create",
+			targetType: "material",
+			targetId: created.id,
+			metadata: { name: validatedData.name },
 		});
 
 		// Invalider le cache

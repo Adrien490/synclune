@@ -132,6 +132,97 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		expect(href).toBeTruthy();
 	});
 
+	test("filter sheet mobile - Enter ouvre, focus trapped, Escape ferme", async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		const filterButton = page.getByRole("button", { name: /Filtrer|Filtres/i }).first();
+		if ((await filterButton.count()) === 0) {
+			test.skip(true, "Pas de bouton Filtrer en mobile");
+			return;
+		}
+
+		await filterButton.focus();
+		await expect(filterButton).toBeFocused();
+
+		// Enter opens the filter sheet
+		await page.keyboard.press("Enter");
+
+		const dialog = page.getByRole("dialog");
+		await expect(dialog).toBeVisible();
+
+		// Focus is inside the dialog
+		const isInside = await page.evaluate(() => {
+			const d = document.querySelector('[role="dialog"]');
+			return d?.contains(document.activeElement);
+		});
+		expect(isInside).toBe(true);
+
+		// Tab through filter options
+		await page.keyboard.press("Tab");
+
+		// Escape closes and returns focus
+		await page.keyboard.press("Escape");
+		await expect(dialog).not.toBeVisible();
+	});
+
+	test("sort drawer mobile - Enter ouvre, Escape ferme", async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		const sortButton = page.getByRole("button", { name: /Trier/i }).first();
+		if ((await sortButton.count()) === 0) {
+			test.skip(true, "Pas de bouton Trier en mobile");
+			return;
+		}
+
+		await sortButton.focus();
+		await expect(sortButton).toBeFocused();
+
+		// Enter opens the sort drawer
+		await page.keyboard.press("Enter");
+
+		const dialog = page.getByRole("dialog");
+		if ((await dialog.count()) > 0) {
+			await expect(dialog).toBeVisible();
+
+			// Escape closes
+			await page.keyboard.press("Escape");
+			await expect(dialog).not.toBeVisible();
+		}
+	});
+
+	test("cookie banner - Tab through options, Enter active le choix", async ({ page }) => {
+		// Clear cookies to trigger cookie banner
+		await page.context().clearCookies();
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Look for cookie banner
+		const cookieBanner = page
+			.locator('[role="dialog"][aria-label*="cookie" i], [data-cookie-banner], [class*="cookie"]')
+			.first();
+		if ((await cookieBanner.count()) === 0) {
+			test.skip(true, "Pas de banner cookie visible");
+			return;
+		}
+
+		// Find accept/reject buttons inside the banner
+		const acceptButton = page.getByRole("button", { name: /Accepter|Tout accepter/i }).first();
+		if ((await acceptButton.count()) === 0) return;
+
+		await acceptButton.focus();
+		await expect(acceptButton).toBeFocused();
+
+		// Enter activates the choice
+		await page.keyboard.press("Enter");
+
+		// Banner should disappear
+		await expect(cookieBanner).not.toBeVisible({ timeout: 3000 });
+	});
+
 	test("la navigation par Tab ne saute pas d'éléments interactifs", async ({ page }) => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");

@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
@@ -57,7 +58,10 @@ async function recoverOrphanedProcessingEvents(): Promise<number> {
 		},
 	});
 
-	console.warn(`[CRON:retry-webhooks] Recovered ${result.count} orphaned PROCESSING events`);
+	logger.warn("Recovered orphaned PROCESSING events", {
+		cronJob: "retry-webhooks",
+		count: result.count,
+	});
 
 	return result.count;
 }
@@ -77,11 +81,11 @@ export async function retryFailedWebhooks(): Promise<{
 	orphansRecovered: number;
 	hasMore: boolean;
 } | null> {
-	console.log("[CRON:retry-webhooks] Starting failed webhook retry...");
+	logger.info("Starting failed webhook retry", { cronJob: "retry-webhooks" });
 
 	const stripe = getStripeClient();
 	if (!stripe) {
-		console.error("[CRON:retry-webhooks] STRIPE_SECRET_KEY not configured");
+		logger.error("STRIPE_SECRET_KEY not configured", undefined, { cronJob: "retry-webhooks" });
 		return null;
 	}
 
@@ -102,7 +106,10 @@ export async function retryFailedWebhooks(): Promise<{
 		take: BATCH_SIZE_SMALL,
 	});
 
-	console.log(`[CRON:retry-webhooks] Found ${failedEvents.length} failed events to retry`);
+	logger.info("Found failed events to retry", {
+		cronJob: "retry-webhooks",
+		count: failedEvents.length,
+	});
 
 	let retried = 0;
 	let succeeded = 0;
@@ -112,15 +119,16 @@ export async function retryFailedWebhooks(): Promise<{
 
 	for (const webhookEvent of failedEvents) {
 		if (Date.now() > deadline) {
-			console.warn("[CRON:retry-webhooks] Approaching timeout, stopping batch early");
+			logger.warn("Approaching timeout, stopping batch early", { cronJob: "retry-webhooks" });
 			break;
 		}
 		try {
 			// Check if the event type is supported
 			if (!isEventSupported(webhookEvent.eventType)) {
-				console.log(
-					`[CRON:retry-webhooks] Skipping unsupported event type: ${webhookEvent.eventType}`,
-				);
+				logger.info("Skipping unsupported event type", {
+					cronJob: "retry-webhooks",
+					eventType: webhookEvent.eventType,
+				});
 				await prisma.webhookEvent.update({
 					where: { id: webhookEvent.id },
 					data: { status: WebhookEventStatus.SKIPPED },
@@ -134,9 +142,10 @@ export async function retryFailedWebhooks(): Promise<{
 				stripeEvent = await stripe.events.retrieve(webhookEvent.stripeEventId);
 			} catch {
 				// Event no longer exists in Stripe (deleted after 30 days)
-				console.warn(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} not found in Stripe`,
-				);
+				logger.warn("Event not found in Stripe", {
+					cronJob: "retry-webhooks",
+					stripeEventId: webhookEvent.stripeEventId,
+				});
 				await prisma.webhookEvent.update({
 					where: { id: webhookEvent.id },
 					data: {
@@ -156,9 +165,10 @@ export async function retryFailedWebhooks(): Promise<{
 				},
 			});
 			if (claimed.count === 0) {
-				console.log(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} already claimed, skipping`,
-				);
+				logger.info("Event already claimed, skipping", {
+					cronJob: "retry-webhooks",
+					stripeEventId: webhookEvent.stripeEventId,
+				});
 				continue;
 			}
 
@@ -182,7 +192,10 @@ export async function retryFailedWebhooks(): Promise<{
 				await executePostWebhookTasks(result.tasks);
 			}
 
-			console.log(`[CRON:retry-webhooks] Successfully retried event ${webhookEvent.stripeEventId}`);
+			logger.info("Successfully retried event", {
+				cronJob: "retry-webhooks",
+				stripeEventId: webhookEvent.stripeEventId,
+			});
 			succeeded++;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
@@ -211,22 +224,31 @@ export async function retryFailedWebhooks(): Promise<{
 			});
 
 			if (isPermanentlyFailed) {
-				console.error(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} permanently failed after ${newAttempts} attempts`,
-				);
+				logger.error("Event permanently failed", error, {
+					cronJob: "retry-webhooks",
+					stripeEventId: webhookEvent.stripeEventId,
+					attempts: newAttempts,
+				});
 				permanentlyFailed++;
 			} else {
-				console.warn(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} retry failed (attempt ${newAttempts}/${MAX_WEBHOOK_RETRY_ATTEMPTS})`,
-				);
+				logger.warn("Event retry failed", {
+					cronJob: "retry-webhooks",
+					stripeEventId: webhookEvent.stripeEventId,
+					attempt: newAttempts,
+					maxAttempts: MAX_WEBHOOK_RETRY_ATTEMPTS,
+				});
 				errors++;
 			}
 		}
 	}
 
-	console.log(
-		`[CRON:retry-webhooks] Retry completed: ${retried} retried, ${succeeded} succeeded, ${permanentlyFailed} permanently failed, ${errors} errors`,
-	);
+	logger.info("Retry completed", {
+		cronJob: "retry-webhooks",
+		retried,
+		succeeded,
+		permanentlyFailed,
+		errors,
+	});
 
 	return {
 		found: failedEvents.length,

@@ -1,8 +1,9 @@
 "use server";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -13,12 +14,13 @@ import { toggleMaterialStatusSchema } from "../schemas/materials.schemas";
 
 export async function toggleMaterialStatus(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.TOGGLE_STATUS);
@@ -52,14 +54,21 @@ export async function toggleMaterialStatus(
 			},
 		});
 
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "material.toggleStatus",
+			targetType: "material",
+			targetId: validatedData.id,
+			metadata: { name: existingMaterial.name, isActive: validatedData.isActive },
+		});
+
 		// Invalider le cache
 		const tags = getMaterialInvalidationTags(existingMaterial.slug);
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(
-			validatedData.isActive
-				? "Matériau activé avec succès"
-				: "Matériau désactivé avec succès"
+			validatedData.isActive ? "Matériau activé avec succès" : "Matériau désactivé avec succès",
 		);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la modification du statut");

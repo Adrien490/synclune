@@ -164,7 +164,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							"bottom-4 left-4",
 							"sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2",
 							// Touch targets (WCAG 2.5.5)
-							"size-10 sm:size-12 md:size-10",
+							"size-11 sm:size-12 md:size-11",
 							// Thème: primary avec opacité
 							"bg-primary/80 rounded-full border-0",
 							"can-hover:hover:shadow-xl shadow-lg",
@@ -185,7 +185,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							"right-4 bottom-4",
 							"sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2",
 							// Touch targets (WCAG 2.5.5)
-							"size-10 sm:size-12 md:size-10",
+							"size-11 sm:size-12 md:size-11",
 							// Thème: primary avec opacité
 							"bg-primary/80 rounded-full border-0",
 							"can-hover:hover:shadow-xl shadow-lg",
@@ -209,7 +209,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 										size="icon"
 										className={cn(
 											// Zone tactile (WCAG 2.5.5)
-											"size-10 cursor-pointer p-0 sm:size-11",
+											"size-11 cursor-pointer p-0",
 											"flex items-center justify-center",
 											"transition-[background-color] duration-300",
 											// Thème: hover avec card

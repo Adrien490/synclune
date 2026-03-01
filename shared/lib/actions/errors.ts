@@ -8,6 +8,7 @@
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { ZodError } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { logger, type LogContext } from "@/shared/lib/logger";
 
 /**
  * Erreur metier affichable a l'utilisateur
@@ -51,7 +52,11 @@ export class BusinessError extends Error {
  * }
  * ```
  */
-export function handleActionError(error: unknown, defaultMessage?: string): ActionState {
+export function handleActionError(
+	error: unknown,
+	defaultMessage?: string,
+	context?: LogContext,
+): ActionState {
 	// Redirect errors doivent être re-thrown (Next.js)
 	if (isRedirectError(error)) {
 		throw error;
@@ -77,7 +82,7 @@ export function handleActionError(error: unknown, defaultMessage?: string): Acti
 	// Erreurs techniques (message masque pour securite)
 	// Log server-side pour debug (le message original reste dans les logs serveur)
 	if (error instanceof Error) {
-		console.error(`[handleActionError] ${error.name}: ${error.message}`);
+		logger.error(`[handleActionError] ${error.name}: ${error.message}`, error, context);
 	}
 
 	return {
@@ -85,4 +90,3 @@ export function handleActionError(error: unknown, defaultMessage?: string): Acti
 		message: defaultMessage || "Une erreur est survenue",
 	};
 }
-

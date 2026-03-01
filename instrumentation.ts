@@ -1,9 +1,16 @@
+import * as Sentry from "@sentry/nextjs";
 import type { Instrumentation } from "next";
 
 export async function register() {
 	const runtime =
 		typeof (globalThis as Record<string, unknown>).EdgeRuntime === "string" ? "edge" : "nodejs";
 	console.log(`[instrumentation] Server started | runtime=${runtime} env=${process.env.NODE_ENV}`);
+
+	if (runtime === "edge") {
+		await import("./sentry.edge.config");
+	} else {
+		await import("./sentry.server.config");
+	}
 
 	// Validate environment variables on startup (server-side only)
 	if (runtime === "nodejs") {
@@ -40,4 +47,20 @@ export const onRequestError: Instrumentation.onRequestError = (err, request, con
 	};
 
 	console.error(`[onRequestError] ${label}`, JSON.stringify(payload));
+
+	Sentry.captureException(error, {
+		tags: {
+			routeType: context.routeType,
+			routerKind: context.routerKind,
+			method,
+		},
+		contexts: {
+			nextjs: {
+				routePath: context.routePath,
+				routeType: context.routeType,
+				path,
+				method,
+			},
+		},
+	});
 };

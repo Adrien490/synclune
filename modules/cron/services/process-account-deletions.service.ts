@@ -1,7 +1,11 @@
 import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { deleteUploadThingFileFromUrl, deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
+import { logger } from "@/shared/lib/logger";
+import {
+	deleteUploadThingFileFromUrl,
+	deleteUploadThingFilesFromUrls,
+} from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
 import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
@@ -24,12 +28,10 @@ export async function processAccountDeletions(): Promise<{
 	errors: number;
 	hasMore: boolean;
 }> {
-	console.log(
-		"[CRON:process-account-deletions] Starting account deletion processing..."
-	);
+	logger.info("Starting account deletion processing", { cronJob: "process-account-deletions" });
 
 	const gracePeriodEnd = new Date(
-		Date.now() - RETENTION.GDPR_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+		Date.now() - RETENTION.GDPR_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
 	);
 
 	// Find PENDING_DELETION accounts past the grace period
@@ -48,9 +50,10 @@ export async function processAccountDeletions(): Promise<{
 		take: BATCH_SIZE_MEDIUM,
 	});
 
-	console.log(
-		`[CRON:process-account-deletions] Found ${accountsToAnonymize.length} accounts to anonymize`
-	);
+	logger.info("Found accounts to anonymize", {
+		cronJob: "process-account-deletions",
+		count: accountsToAnonymize.length,
+	});
 
 	const startTime = Date.now();
 	let processed = 0;
@@ -58,7 +61,7 @@ export async function processAccountDeletions(): Promise<{
 
 	for (const user of accountsToAnonymize) {
 		if (Date.now() - startTime > BATCH_DEADLINE_MS) {
-			console.log("[CRON:process-account-deletions] Deadline reached, stopping early");
+			logger.info("Deadline reached, stopping early", { cronJob: "process-account-deletions" });
 			break;
 		}
 
@@ -75,9 +78,12 @@ export async function processAccountDeletions(): Promise<{
 			});
 			const reviewMediaUrls = reviewMedias.map((m) => m.url);
 
-			await prisma.$transaction(async (tx) => {
-				await anonymizeUserInTransaction(tx, user.id);
-			}, { timeout: 15_000 });
+			await prisma.$transaction(
+				async (tx) => {
+					await anonymizeUserInTransaction(tx, user.id);
+				},
+				{ timeout: 15_000 },
+			);
 
 			// Send deletion confirmation email AFTER successful transaction
 			// (prevents sending false confirmations if the transaction fails)
@@ -113,12 +119,10 @@ export async function processAccountDeletions(): Promise<{
 					await deleteUploadThingFileFromUrl(avatarUrl);
 				} catch (avatarError) {
 					// Non-blocking: avatar becomes orphan, cleaned up by cleanup-orphan-media
-					console.warn(
-						`[CRON:process-account-deletions] Failed to delete avatar for ${user.id}:`,
-						avatarError instanceof Error
-							? avatarError.message
-							: String(avatarError)
-					);
+					logger.warn("Failed to delete avatar", {
+						cronJob: "process-account-deletions",
+						userId: user.id,
+					});
 				}
 			}
 
@@ -127,31 +131,29 @@ export async function processAccountDeletions(): Promise<{
 				try {
 					await deleteUploadThingFilesFromUrls(reviewMediaUrls);
 				} catch (mediaError) {
-					console.warn(
-						`[CRON:process-account-deletions] Failed to delete review media for ${user.id}:`,
-						mediaError instanceof Error
-							? mediaError.message
-							: String(mediaError)
-					);
+					logger.warn("Failed to delete review media", {
+						cronJob: "process-account-deletions",
+						userId: user.id,
+					});
 				}
 			}
 
-			console.log(
-				`[CRON:process-account-deletions] Anonymized account ${user.id}`
-			);
+			logger.info("Anonymized account", { cronJob: "process-account-deletions", userId: user.id });
 			processed++;
 		} catch (error) {
-			console.error(
-				`[CRON:process-account-deletions] Error anonymizing account ${user.id}:`,
-				error
-			);
+			logger.error("Error anonymizing account", error, {
+				cronJob: "process-account-deletions",
+				userId: user.id,
+			});
 			errors++;
 		}
 	}
 
-	console.log(
-		`[CRON:process-account-deletions] Completed: ${processed} processed, ${errors} errors`
-	);
+	logger.info("Account deletion processing completed", {
+		cronJob: "process-account-deletions",
+		processed,
+		errors,
+	});
 
 	return {
 		processed,

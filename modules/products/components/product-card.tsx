@@ -186,7 +186,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 				"motion-reduce:transition-colors",
 				"shadow-sm",
 				"can-hover:hover:border-primary/40",
-				"can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
+				"can-hover:hover:shadow-[0_8px_30px_-8px_var(--color-glow-pink),0_4px_15px_-5px_var(--color-glow-lavender)]",
 				// Lift effect on hover (scale + translateY)
 				"motion-safe:can-hover:hover:scale-[1.02]",
 				// Focus state for keyboard navigation

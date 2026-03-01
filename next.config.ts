@@ -1,33 +1,23 @@
 import type { NextConfig } from "next";
 import { withSerwist } from "@serwist/turbopack";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
 	cacheComponents: true,
 	experimental: {
-		optimizePackageImports: ["motion/react", "recharts", "lucide-react"],
+		optimizePackageImports: [
+			"motion/react",
+			"recharts",
+			"lucide-react",
+			"react-day-picker",
+			"@dnd-kit/core",
+			"@dnd-kit/sortable",
+			"cmdk",
+			"sonner",
+		],
 	},
 
 	async headers() {
-		// CSP enforced — validated in staging
-		const cspReportUri = process.env.CSP_REPORT_URI ?? "/api/csp-report";
-
-		const cspDirectives = [
-			"default-src 'self'",
-			`script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://js.stripe.com https://va.vercel-scripts.com`,
-			"style-src 'self' 'unsafe-inline'",
-			"img-src 'self' data: blob: https://utfs.io https://*.ufs.sh https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://images.unsplash.com",
-			"font-src 'self' https://fonts.gstatic.com",
-			"connect-src 'self' https://*.stripe.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://utfs.io https://*.ufs.sh https://uploadthing.com",
-			"frame-src 'self' https://js.stripe.com",
-			"worker-src 'self' blob:",
-			"manifest-src 'self'",
-			"base-uri 'self'",
-			"form-action 'self'",
-			"object-src 'none'",
-			"report-to csp-endpoint",
-			`report-uri ${cspReportUri}`,
-		].join("; ");
-
 		return [
 			{
 				source: "/:path*",
@@ -35,7 +25,6 @@ const nextConfig: NextConfig = {
 					{ key: "X-Content-Type-Options", value: "nosniff" },
 					{ key: "X-Frame-Options", value: "DENY" },
 					{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-					{ key: "Content-Security-Policy", value: cspDirectives },
 					{
 						key: "Strict-Transport-Security",
 						value: "max-age=63072000; includeSubDomains; preload",
@@ -43,10 +32,6 @@ const nextConfig: NextConfig = {
 					{
 						key: "Permissions-Policy",
 						value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
-					},
-					{
-						key: "Reporting-Endpoints",
-						value: `csp-endpoint="${cspReportUri}"`,
 					},
 				],
 			},
@@ -94,4 +79,11 @@ const nextConfig: NextConfig = {
 	},
 };
 
-export default withSerwist(nextConfig);
+export default withSentryConfig(withSerwist(nextConfig), {
+	tunnelRoute: "/monitoring",
+	sourcemaps: {
+		deleteSourcemapsAfterUpload: true,
+	},
+	telemetry: false,
+	silent: !process.env.CI,
+});

@@ -1,7 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
@@ -14,12 +15,13 @@ import { deleteCollectionSchema } from "../schemas/collection.schemas";
 
 export async function deleteCollection(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Admin auth check
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.DELETE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -58,8 +60,17 @@ export async function deleteCollection(
 		});
 
 		// Invalider le cache
-		getCollectionInvalidationTags(existingCollection.slug).forEach(tag => updateTag(tag));
+		getCollectionInvalidationTags(existingCollection.slug).forEach((tag) => updateTag(tag));
 		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "collection.delete",
+			targetType: "collection",
+			targetId: validatedData.id,
+			metadata: { name: existingCollection.name, productCount },
+		});
 
 		// Message different selon si la collection avait des produits
 		const message =

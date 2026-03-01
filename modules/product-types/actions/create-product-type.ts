@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -16,12 +17,13 @@ import { createProductTypeSchema } from "../schemas/product-type.schemas";
 
 export async function createProductType(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification de l'authentification et des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.CREATE);
@@ -52,7 +54,7 @@ export async function createProductType(
 		const slug = await generateSlug(prisma, "productType", validatedData.label);
 
 		// 6. Creer le type de produit
-		await prisma.productType.create({
+		const created = await prisma.productType.create({
 			data: {
 				label: sanitizeText(validatedData.label),
 				description: validatedData.description
@@ -62,6 +64,15 @@ export async function createProductType(
 				isActive: true,
 				isSystem: false, // Les types crees manuellement ne sont pas systeme
 			},
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "productType.create",
+			targetType: "productType",
+			targetId: created.id,
+			metadata: { label: validatedData.label },
 		});
 
 		// 7. Invalider le cache des types de produits

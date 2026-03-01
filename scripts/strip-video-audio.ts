@@ -290,7 +290,7 @@ async function uploadVideo(filePath: string, mediaId: string): Promise<string> {
 	const fileBuffer = await readFile(filePath);
 	const ext = extname(filePath) || ".mp4";
 	const fileName = `video-${mediaId}${ext}`;
-	const mimeType = ext === ".webm" ? "video/webm" : "video/mp4";
+	const mimeType = "video/mp4";
 	const file = new File([fileBuffer], fileName, { type: mimeType });
 
 	const response = await utapi.uploadFiles([file]);

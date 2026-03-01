@@ -34,13 +34,11 @@ export const AdminRefundFailedEmail = ({
 
 	return (
 		<EmailLayout
-			preview={`ACTION REQUISE : Échec du remboursement - ${orderNumber}`}
+			preview={`Échec remboursement — ${orderNumber}`}
 			headerText="Échec du remboursement"
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-				<Text style={{ ...EMAIL_STYLES.text.small }}>
-					Action manuelle requise
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.text.small }}>Action manuelle requise</Text>
 			</Section>
 
 			{/* Détails */}
@@ -114,17 +112,13 @@ export const AdminRefundFailedEmail = ({
 
 			{/* Erreur */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Erreur
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Erreur</Text>
 				<ErrorCodeBlock error={errorMessage} />
 			</Section>
 
 			{/* Stripe IDs */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Identifiants Stripe
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Identifiants Stripe</Text>
 				<Section style={EMAIL_STYLES.section.card}>
 					<Text style={EMAIL_STYLES.text.tiny}>Payment Intent ID</Text>
 					<Text
@@ -173,8 +167,7 @@ AdminRefundFailedEmail.PreviewProps = {
 		"Error: This PaymentIntent cannot be refunded because it has a status of requires_payment_method.",
 	stripePaymentIntentId: "pi_1234567890abcdefghij",
 	dashboardUrl: "https://synclune.fr/dashboard/orders/clxxx12345",
-	stripeDashboardUrl:
-		"https://dashboard.stripe.com/payments/pi_1234567890abcdefghij",
+	stripeDashboardUrl: "https://dashboard.stripe.com/payments/pi_1234567890abcdefghij",
 } as AdminRefundFailedEmailProps;
 
 export default AdminRefundFailedEmail;

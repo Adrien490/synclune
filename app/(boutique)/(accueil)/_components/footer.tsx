@@ -36,35 +36,40 @@ export async function Footer() {
 	cacheTag("footer");
 	return (
 		<footer
-			className="relative bg-gradient-to-b from-muted/20 via-background to-background overflow-hidden"
+			className="pwa-footer from-muted/20 via-background to-background relative overflow-hidden bg-gradient-to-b"
 			aria-labelledby="footer-heading"
 		>
 			{/* Titre sr-only pour hiérarchie des headings */}
-			<h2 id="footer-heading" className="sr-only">Informations et liens utiles</h2>
+			<h2 id="footer-heading" className="sr-only">
+				Informations et liens utiles
+			</h2>
 
 			{/* Masque flou en haut pour transition douce (réduit sur mobile) */}
 			<div
-				className="absolute top-0 left-0 right-0 h-6 sm:h-12 bg-linear-to-b from-background to-transparent pointer-events-none"
+				className="from-background pointer-events-none absolute top-0 right-0 left-0 h-6 bg-linear-to-b to-transparent sm:h-12"
 				aria-hidden="true"
 			/>
 
 			<div className={`relative z-10 ${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
 				{/* Single Fade wrapper — 1 IntersectionObserver instead of 4 */}
-				<Fade y={MOTION_CONFIG.section.footer.y} duration={MOTION_CONFIG.section.footer.duration} inView once disableOnTouch>
+				<Fade
+					y={MOTION_CONFIG.section.footer.y}
+					duration={MOTION_CONFIG.section.footer.duration}
+					inView
+					once
+					disableOnTouch
+				>
 					{/* Navigation principale - Ordre: Logo, Navigation, Contact, Réseaux */}
-					<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-8">
+					<div className="mb-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
 						{/* Colonne 1: Logo + phrase perso */}
 						<div className="order-1 space-y-4">
 							<div className="mb-4">
 								<Logo href="/" size={40} quality={75} className="lg:[&_>_div]:size-12" />
 							</div>
-							<div className="space-y-2 max-w-xs">
-								<p className="text-sm/6 antialiased text-muted-foreground">
-									<span className="relative inline-block font-medium text-foreground">
-										Des bijoux{" "}
-										<span className="text-foreground">
-											colorés
-										</span>
+							<div className="max-w-xs space-y-2">
+								<p className="text-muted-foreground text-sm/6 antialiased">
+									<span className="text-foreground relative inline-block font-medium">
+										Des bijoux <span className="text-foreground">colorés</span>
 										<HandDrawnAccent
 											variant="underline"
 											color="currentColor"
@@ -86,7 +91,7 @@ export async function Footer() {
 						<nav aria-labelledby="footer-nav-title" className="order-2">
 							<h3
 								id="footer-nav-title"
-								className="text-base/6 font-medium antialiased text-foreground mb-4"
+								className="text-foreground mb-4 text-base/6 font-medium antialiased"
 							>
 								Navigation
 							</h3>
@@ -95,7 +100,7 @@ export async function Footer() {
 									<li key={item.href}>
 										<Link
 											href={item.href}
-											className="text-sm/6 antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg inline-flex items-center px-3 py-2 min-h-11"
+											className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
 										>
 											{item.label}
 										</Link>
@@ -108,7 +113,7 @@ export async function Footer() {
 						<section aria-labelledby="footer-contact-title" className="order-3">
 							<h3
 								id="footer-contact-title"
-								className="text-base/6 font-medium antialiased text-foreground mb-4"
+								className="text-foreground mb-4 text-base/6 font-medium antialiased"
 							>
 								Contact
 							</h3>
@@ -116,26 +121,24 @@ export async function Footer() {
 								{/* Email - CTA principal avec style proéminent */}
 								<a
 									href={`mailto:${BRAND.contact.email}`}
-									className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 wrap-break-words focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+									className="text-foreground hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
 									aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 								>
 									{BRAND.contact.email}
 								</a>
 
-								<p className="text-sm/6 antialiased text-muted-foreground px-3">
-									Atelier basé à {BRAND.contact.location.city}, {BRAND.contact.location.region}, {BRAND.contact.location.country}
+								<p className="text-muted-foreground px-3 text-sm/6 antialiased">
+									Atelier basé à {BRAND.contact.location.city}, {BRAND.contact.location.region},{" "}
+									{BRAND.contact.location.country}
 								</p>
 							</div>
 						</section>
 
 						{/* Colonne 4: Réseaux sociaux */}
-						<nav
-							aria-labelledby="footer-social-title"
-							className="order-4"
-						>
+						<nav aria-labelledby="footer-social-title" className="order-4">
 							<h3
 								id="footer-social-title"
-								className="text-base/6 font-medium antialiased text-foreground mb-4"
+								className="text-foreground mb-4 text-base/6 font-medium antialiased"
 							>
 								Réseaux sociaux
 							</h3>
@@ -145,7 +148,7 @@ export async function Footer() {
 										href={BRAND.social.instagram.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
 										aria-label={`Suivre ${BRAND.name} sur Instagram (nouvelle fenêtre)`}
 									>
 										<InstagramIcon
@@ -153,7 +156,7 @@ export async function Footer() {
 											size={20}
 											className="text-foreground transition-transform duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_var(--color-glow-pink)]"
 										/>
-										<span className="text-sm/6 font-medium antialiased text-foreground">
+										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.instagram.handle}
 										</span>
 									</a>
@@ -163,7 +166,7 @@ export async function Footer() {
 										href={BRAND.social.tiktok.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
 										aria-label={`Suivre ${BRAND.name} sur TikTok (nouvelle fenêtre)`}
 									>
 										<TikTokIcon
@@ -171,7 +174,7 @@ export async function Footer() {
 											size={20}
 											className="text-foreground transition-transform duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_var(--color-glow-mint)]"
 										/>
-										<span className="text-sm/6 font-medium antialiased text-foreground">
+										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.tiktok.handle}
 										</span>
 									</a>
@@ -182,11 +185,14 @@ export async function Footer() {
 
 					{/* Reassurance - Baymard UX trust signals */}
 					<section aria-label="Engagements et garanties" className="mb-8">
-						<ul className="grid sm:grid-cols-3 gap-3">
+						<ul className="grid gap-3 sm:grid-cols-3">
 							{REASSURANCE_ITEMS.map((item) => (
-								<li key={item.title} className="flex items-center rounded-xl bg-card/50 border border-border/60 px-5 py-4 shadow-sm">
+								<li
+									key={item.title}
+									className="bg-card/50 border-border/60 flex items-center rounded-xl border px-5 py-4 shadow-sm"
+								>
 									<div className="text-sm">
-										<p className="font-medium text-foreground">{item.title}</p>
+										<p className="text-foreground font-medium">{item.title}</p>
 										<p className="text-muted-foreground">{item.description}</p>
 									</div>
 								</li>
@@ -195,36 +201,51 @@ export async function Footer() {
 					</section>
 
 					{/* Paiement sécurisé */}
-					<section className="flex flex-col items-center gap-3 pt-8 border-t border-border" aria-labelledby="footer-payment-title">
-						<h3 id="footer-payment-title" className="sr-only">Paiement sécurisé</h3>
-						<p className="flex items-center gap-2 text-sm text-muted-foreground">
+					<section
+						className="border-border flex flex-col items-center gap-3 border-t pt-8"
+						aria-labelledby="footer-payment-title"
+					>
+						<h3 id="footer-payment-title" className="sr-only">
+							Paiement sécurisé
+						</h3>
+						<p className="text-muted-foreground flex items-center gap-2 text-sm">
 							<span>Sécurisé par</span>
 							<StripeWordmark className="text-muted-foreground hover:text-foreground transition-colors duration-200" />
 						</p>
 						<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
-							<li><VisaIcon aria-label="Visa accepté" className="text-muted-foreground" /></li>
-							<li><MastercardIcon aria-label="Mastercard accepté" className="text-muted-foreground" /></li>
-							<li><CBIcon aria-label="Carte Bancaire acceptée" className="text-muted-foreground" /></li>
-							<li><PayPalIcon aria-label="PayPal accepté" className="text-muted-foreground" /></li>
-							<li><ApplePayIcon aria-label="Apple Pay accepté" className="text-muted-foreground" /></li>
+							<li>
+								<VisaIcon aria-label="Visa accepté" className="text-muted-foreground" />
+							</li>
+							<li>
+								<MastercardIcon aria-label="Mastercard accepté" className="text-muted-foreground" />
+							</li>
+							<li>
+								<CBIcon aria-label="Carte Bancaire acceptée" className="text-muted-foreground" />
+							</li>
+							<li>
+								<PayPalIcon aria-label="PayPal accepté" className="text-muted-foreground" />
+							</li>
+							<li>
+								<ApplePayIcon aria-label="Apple Pay accepté" className="text-muted-foreground" />
+							</li>
 						</ul>
 					</section>
 
 					{/* Copyright + Liens légaux */}
 					<div className="flex flex-col items-center gap-4 pt-6">
-						<p className="text-sm/6 antialiased text-muted-foreground text-center">
+						<p className="text-muted-foreground text-center text-sm/6 antialiased">
 							© {new Date().getFullYear()} {BRAND.name}. Tous droits réservés.
 						</p>
 						<nav
 							aria-label="Liens légaux"
-							className="flex flex-col sm:flex-row sm:flex-wrap justify-center items-center gap-x-2"
+							className="flex flex-col items-center justify-center gap-x-2 sm:flex-row sm:flex-wrap"
 						>
 							{legalLinks.map((link) => (
 								<Link
 									key={link.href}
 									href={link.href}
 									aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
-									className="text-sm antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg px-3 py-2 min-h-11 inline-flex items-center justify-center sm:justify-start"
+									className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 sm:justify-start"
 								>
 									{link.label}
 								</Link>

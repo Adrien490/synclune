@@ -30,7 +30,12 @@ import { generateThumbHashWithRetry } from "../modules/media/services/generate-t
 import { THUMBHASH_CONFIG } from "../modules/media/constants/media.constants";
 import { isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
 import { delay } from "../shared/utils/delay";
-import type { MediaItem, ProcessResult as BaseProcessResult, ProcessMetrics, StructuredLog } from "../modules/media/types/script.types";
+import type {
+	MediaItem,
+	ProcessResult as BaseProcessResult,
+	ProcessMetrics,
+	StructuredLog,
+} from "../modules/media/types/script.types";
 import { requireScriptEnvVars } from "../shared/utils/script-env";
 
 // ============================================================================
@@ -47,7 +52,6 @@ requireScriptEnvVars(["DATABASE_URL"] as const, SCRIPT_NAME);
 const DRY_RUN = process.argv.includes("--dry-run");
 const JSON_LOGS = process.argv.includes("--json");
 const FORCE_ALL = process.argv.includes("--force");
-const ALLOW_EXTERNAL = process.argv.includes("--allow-external");
 const PARALLEL_ARG = process.argv.find((arg) => arg.startsWith("--parallel="));
 const PARALLEL_COUNT = PARALLEL_ARG ? parseInt(PARALLEL_ARG.split("=")[1], 10) : 5;
 
@@ -156,28 +160,15 @@ function createMetrics(overrides: Partial<ProcessMetrics> = {}): ProcessMetrics 
  */
 async function processImage(
 	image: MediaItemWithBlur,
-	table: "SkuMedia" | "ReviewMedia"
+	table: "SkuMedia" | "ReviewMedia",
 ): Promise<ThumbHashProcessResult> {
 	const startTime = performance.now();
 	const previousFormat = detectFormat(image.blurDataUrl);
 
-	// Validation du domaine source (sauf si --allow-external)
-	if (!ALLOW_EXTERNAL && !isValidUploadThingUrl(image.url)) {
-		return {
-			id: image.id,
-			success: false,
-			error: `Domaine non autorisé: ${new URL(image.url).hostname}`,
-			previousFormat,
-			metrics: createMetrics({ totalMs: Math.round(performance.now() - startTime) }),
-		};
-	}
-
 	try {
 		// Mesure génération ThumbHash (inclut téléchargement)
 		const thumbhashStart = performance.now();
-		const result = await generateThumbHashWithRetry(image.url, {
-			validateDomain: !ALLOW_EXTERNAL, // Désactivé si --allow-external
-		});
+		const result = await generateThumbHashWithRetry(image.url);
 		const blurMs = Math.round(performance.now() - thumbhashStart);
 
 		// Mesure mise à jour DB
@@ -225,7 +216,7 @@ async function processImage(
  */
 async function processBatch(
 	images: MediaItemWithBlur[],
-	table: "SkuMedia" | "ReviewMedia"
+	table: "SkuMedia" | "ReviewMedia",
 ): Promise<ThumbHashProcessResult[]> {
 	return Promise.all(images.map((image) => processImage(image, table)));
 }
@@ -234,7 +225,7 @@ async function processBatch(
  * Migre une table vers ThumbHash
  */
 async function migrateTable(
-	table: "SkuMedia" | "ReviewMedia"
+	table: "SkuMedia" | "ReviewMedia",
 ): Promise<{ success: number; error: number; skipped: number }> {
 	logInfo(`\n📊 Migration ${table}...`);
 
@@ -246,12 +237,12 @@ async function migrateTable(
 			where: { mediaType: "IMAGE" },
 			select: { id: true, url: true, skuId: true, blurDataUrl: true },
 		});
-		images = allImages.map(img => ({ ...img, blurDataUrl: img.blurDataUrl }));
+		images = allImages.map((img) => ({ ...img, blurDataUrl: img.blurDataUrl }));
 	} else {
 		const allImages = await prisma.reviewMedia.findMany({
 			select: { id: true, url: true, reviewId: true, blurDataUrl: true },
 		});
-		images = allImages.map(img => ({
+		images = allImages.map((img) => ({
 			id: img.id,
 			url: img.url,
 			skuId: img.reviewId,
@@ -268,7 +259,7 @@ async function migrateTable(
 		logInfo(`   Mode --force: ${images.length} images à régénérer`);
 	} else {
 		// Filtrer les images qui n'ont pas de ThumbHash
-		toProcess = images.filter(img => !isThumbHash(img.blurDataUrl));
+		toProcess = images.filter((img) => !isThumbHash(img.blurDataUrl));
 		skipped = images.length - toProcess.length;
 		logInfo(`   ${toProcess.length} images à migrer (${skipped} déjà en ThumbHash)`);
 	}
@@ -297,7 +288,8 @@ async function migrateTable(
 			if (result.success) {
 				successCount++;
 				const timing = result.metrics ? ` (${result.metrics.totalMs}ms)` : "";
-				const formatInfo = result.previousFormat !== "none" ? ` [${result.previousFormat} → thumbhash]` : "";
+				const formatInfo =
+					result.previousFormat !== "none" ? ` [${result.previousFormat} → thumbhash]` : "";
 				logInfo(`   ✅ [${processed}/${toProcess.length}] ${result.id}${formatInfo}${timing}`);
 			} else {
 				errorCount++;
@@ -321,8 +313,9 @@ async function migrateTable(
 async function main() {
 	logInfo("🔄 Migration vers ThumbHash (standard 2025)\n");
 	logInfo(`Mode: ${DRY_RUN ? "DRY RUN (simulation)" : "PRODUCTION"}`);
-	logInfo(`Force régénération: ${FORCE_ALL ? "OUI (toutes les images)" : "NON (seulement les non-ThumbHash)"}`);
-	logInfo(`Domaines externes: ${ALLOW_EXTERNAL ? "AUTORISÉS (Unsplash, etc.)" : "BLOQUÉS (UploadThing uniquement)"}`);
+	logInfo(
+		`Force régénération: ${FORCE_ALL ? "OUI (toutes les images)" : "NON (seulement les non-ThumbHash)"}`,
+	);
 	logInfo(`Parallélisation: ${PARALLEL_COUNT} images simultanées`);
 	logInfo(`Logs JSON: ${JSON_LOGS ? "activés" : "désactivés"}`);
 

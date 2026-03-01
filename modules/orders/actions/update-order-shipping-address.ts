@@ -11,6 +11,7 @@ import { handleActionError } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
+import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderMetadataInvalidationTags } from "../constants/cache";
 import { updateOrderShippingAddressSchema } from "../schemas/order.schemas";
@@ -26,11 +27,12 @@ import { createOrderAuditTx } from "../utils/order-audit";
  */
 export async function updateOrderShippingAddress(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -78,7 +80,11 @@ export async function updateOrderShippingAddress(
 			if (!found) return null;
 
 			// Cannot update address after shipment
-			if (found.fulfillmentStatus === FulfillmentStatus.SHIPPED || found.fulfillmentStatus === FulfillmentStatus.DELIVERED || found.fulfillmentStatus === FulfillmentStatus.RETURNED) {
+			if (
+				found.fulfillmentStatus === FulfillmentStatus.SHIPPED ||
+				found.fulfillmentStatus === FulfillmentStatus.DELIVERED ||
+				found.fulfillmentStatus === FulfillmentStatus.RETURNED
+			) {
 				return { ...found, _error: "already_shipped" as const };
 			}
 
@@ -138,7 +144,20 @@ export async function updateOrderShippingAddress(
 		}
 
 		// Invalidate caches
-		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
+			updateTag(tag),
+		);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.updateShippingAddress",
+			targetType: "order",
+			targetId: order.id,
+			metadata: {
+				orderNumber: order.orderNumber,
+			},
+		});
 
 		return {
 			status: ActionStatus.SUCCESS,

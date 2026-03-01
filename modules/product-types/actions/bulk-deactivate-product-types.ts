@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -14,15 +15,18 @@ import { bulkDeactivateProductTypesSchema } from "../schemas/product-type.schema
 
 export async function bulkDeactivateProductTypes(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.BULK_OPERATIONS);
+		const rateLimit = await enforceRateLimitForCurrentUser(
+			ADMIN_PRODUCT_TYPE_LIMITS.BULK_OPERATIONS,
+		);
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawData = {
@@ -58,6 +62,15 @@ export async function bulkDeactivateProductTypes(
 		await prisma.productType.updateMany({
 			where: { id: { in: deactivatableIds } },
 			data: { isActive: false },
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "productType.bulkDeactivate",
+			targetType: "productType",
+			targetId: deactivatableIds.join(","),
+			metadata: { count: deactivatableIds.length },
 		});
 
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));

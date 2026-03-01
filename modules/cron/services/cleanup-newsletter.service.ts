@@ -1,5 +1,6 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { CLEANUP_DELETE_LIMIT, RETENTION, BATCH_SIZE_LARGE } from "@/modules/cron/constants/limits";
 
 /**
@@ -12,7 +13,7 @@ export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 	deleted: number;
 	hasMore: boolean;
 }> {
-	console.log("[CRON:cleanup-newsletter] Starting unconfirmed subscriptions cleanup...");
+	logger.info("Starting unconfirmed subscriptions cleanup", { cronJob: "cleanup-newsletter" });
 
 	try {
 		const expiryDate = new Date(
@@ -37,24 +38,22 @@ export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 		const hasMore = toDelete.length === CLEANUP_DELETE_LIMIT;
 
 		if (hasMore) {
-			console.warn(
-				"[CRON:cleanup-newsletter] Delete limit reached, remaining will be cleaned on next run",
-			);
+			logger.warn("Delete limit reached, remaining will be cleaned on next run", {
+				cronJob: "cleanup-newsletter",
+			});
 		}
 
-		console.log(
-			`[CRON:cleanup-newsletter] Deleted ${deleteResult.count} unconfirmed subscriptions`,
-		);
+		logger.info("Deleted unconfirmed subscriptions", {
+			cronJob: "cleanup-newsletter",
+			count: deleteResult.count,
+		});
 
 		return {
 			deleted: deleteResult.count,
 			hasMore,
 		};
 	} catch (error) {
-		console.error(
-			"[CRON:cleanup-newsletter] Error during cleanup:",
-			error instanceof Error ? error.message : String(error),
-		);
+		logger.error("Error during cleanup", error, { cronJob: "cleanup-newsletter" });
 		throw error;
 	}
 }
@@ -70,7 +69,7 @@ export async function unsubscribeInactiveNewsletterSubscribers(): Promise<{
 	unsubscribed: number;
 	hasMore: boolean;
 }> {
-	console.log("[CRON:cleanup-newsletter] Starting inactive subscribers cleanup...");
+	logger.info("Starting inactive subscribers cleanup", { cronJob: "cleanup-newsletter" });
 
 	try {
 		const inactivityDate = new Date(
@@ -88,7 +87,7 @@ export async function unsubscribeInactiveNewsletterSubscribers(): Promise<{
 		});
 
 		if (toUnsubscribe.length === 0) {
-			console.log("[CRON:cleanup-newsletter] No inactive subscribers found");
+			logger.info("No inactive subscribers found", { cronJob: "cleanup-newsletter" });
 			return { unsubscribed: 0, hasMore: false };
 		}
 
@@ -103,24 +102,24 @@ export async function unsubscribeInactiveNewsletterSubscribers(): Promise<{
 		const hasMore = toUnsubscribe.length === BATCH_SIZE_LARGE;
 
 		if (hasMore) {
-			console.warn(
-				"[CRON:cleanup-newsletter] Batch limit reached for inactive subscribers, remaining will be processed on next run",
+			logger.warn(
+				"Batch limit reached for inactive subscribers, remaining will be processed on next run",
+				{ cronJob: "cleanup-newsletter" },
 			);
 		}
 
-		console.log(
-			`[CRON:cleanup-newsletter] Unsubscribed ${updateResult.count} inactive subscribers (confirmed > ${RETENTION.NEWSLETTER_INACTIVITY_YEARS} years ago)`,
-		);
+		logger.info("Unsubscribed inactive subscribers", {
+			cronJob: "cleanup-newsletter",
+			count: updateResult.count,
+			inactivityYears: RETENTION.NEWSLETTER_INACTIVITY_YEARS,
+		});
 
 		return {
 			unsubscribed: updateResult.count,
 			hasMore,
 		};
 	} catch (error) {
-		console.error(
-			"[CRON:cleanup-newsletter] Error during inactive cleanup:",
-			error instanceof Error ? error.message : String(error),
-		);
+		logger.error("Error during inactive cleanup", error, { cronJob: "cleanup-newsletter" });
 		throw error;
 	}
 }

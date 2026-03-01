@@ -7,7 +7,7 @@ import {
 } from "@/shared/providers/cookie-consent-store-provider";
 import { Button } from "./ui/button";
 import { Logo } from "./logo";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { useEffect, useRef, useState } from "react";
 import type { BeforeInstallPromptEvent } from "@/shared/types/pwa.types";
@@ -126,7 +126,7 @@ export function InstallPromptBanner() {
 	return (
 		<AnimatePresence>
 			{shouldShow && (
-				<motion.div
+				<m.div
 					initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
@@ -219,7 +219,7 @@ export function InstallPromptBanner() {
 							</div>
 						</div>
 					</FocusScope>
-				</motion.div>
+				</m.div>
 			)}
 		</AnimatePresence>
 	);

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
@@ -33,7 +33,7 @@ export function HoverScale({
 	const shouldReduceMotion = useReducedMotion();
 
 	return (
-		<motion.div
+		<m.div
 			className={className}
 			whileHover={
 				shouldReduceMotion
@@ -56,6 +56,6 @@ export function HoverScale({
 			}
 		>
 			{children}
-		</motion.div>
+		</m.div>
 	);
 }

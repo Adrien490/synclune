@@ -6,6 +6,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
+import { CartItemMoveToWishlist } from "./cart-item-move-to-wishlist";
 import type { CartItem } from "../types/cart.types";
 import {
 	getCartItemSubtotal,
@@ -219,12 +220,15 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					/>
 				)}
 
-				{/* Supprimer - à droite */}
-				<CartItemRemoveButton
-					cartItemId={item.id}
-					itemName={item.sku.product.title}
-					quantity={item.quantity}
-				/>
+				{/* Favoris + Supprimer - à droite */}
+				<div className="flex items-center">
+					<CartItemMoveToWishlist cartItemId={item.id} itemName={item.sku.product.title} />
+					<CartItemRemoveButton
+						cartItemId={item.id}
+						itemName={item.sku.product.title}
+						quantity={item.quantity}
+					/>
+				</div>
 			</div>
 		</article>
 	);

@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -14,14 +15,12 @@ import { generateSlug } from "@/shared/utils/generate-slug";
 import { getColorInvalidationTags } from "../constants/cache";
 import { updateColorSchema } from "../schemas/color.schemas";
 
-export async function updateColor(
-	_prevState: unknown,
-	formData: FormData
-): Promise<ActionState> {
+export async function updateColor(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.UPDATE);
@@ -73,6 +72,15 @@ export async function updateColor(
 				slug,
 				hex: validatedData.hex,
 			},
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "color.update",
+			targetType: "color",
+			targetId: validatedData.id,
+			metadata: { name: validatedData.name, hex: validatedData.hex },
 		});
 
 		// Invalider le cache (ancien et nouveau slug si different)

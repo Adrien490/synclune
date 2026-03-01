@@ -21,6 +21,8 @@ import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 interface UsersDataTableProps {
 	usersPromise: Promise<GetUsersReturn>;
 	perPage: number;
+	/** Base path for the "reset filters" link in empty state */
+	resetHref?: string;
 }
 
 function formatDate(date: Date | string): string {
@@ -31,7 +33,7 @@ function formatDate(date: Date | string): string {
 	}).format(new Date(date));
 }
 
-export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
+export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTableProps) {
 	const { users, pagination } = use(usersPromise);
 	const userIds = users.map((user) => user.id);
 
@@ -41,6 +43,7 @@ export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
 				icon={Users}
 				title="Aucun client trouve"
 				description="Aucun client ne correspond aux criteres de recherche."
+				action={resetHref ? { label: "Réinitialiser les filtres", href: resetHref } : undefined}
 			/>
 		);
 	}
@@ -56,18 +59,10 @@ export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
 								<TableHead className="w-[5%]">
 									<TableSelectionCell type="header" itemIds={userIds} />
 								</TableHead>
-								<TableHead className="w-[25%]">
-									Nom
-								</TableHead>
-								<TableHead className="w-[30%]">
-									Email
-								</TableHead>
-								<TableHead className="hidden xl:table-cell w-[10%]">
-									Commandes
-								</TableHead>
-								<TableHead className="hidden sm:table-cell w-[18%]">
-									Inscription
-								</TableHead>
+								<TableHead className="w-[25%]">Nom</TableHead>
+								<TableHead className="w-[30%]">Email</TableHead>
+								<TableHead className="hidden w-[10%] xl:table-cell">Commandes</TableHead>
+								<TableHead className="hidden w-[18%] sm:table-cell">Inscription</TableHead>
 								<TableHead
 									className="w-[12%] text-right"
 									aria-label="Actions disponibles pour chaque utilisateur"
@@ -82,28 +77,25 @@ export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
 								const displayName = user.name || "Utilisateur";
 
 								return (
-									<TableRow
-										key={user.id}
-										className={user.deletedAt ? "opacity-50" : undefined}
-									>
+									<TableRow key={user.id} className={user.deletedAt ? "opacity-50" : undefined}>
 										<TableCell>
 											<TableSelectionCell type="row" itemId={user.id} />
 										</TableCell>
 										<TableCell>
 											<div className="overflow-hidden">
-												<span
-													className="font-bold truncate block"
-													title={displayName}
-												>
+												<span className="block truncate font-bold" title={displayName}>
 													{displayName}
 												</span>
 											</div>
 										</TableCell>
 										<TableCell>
 											<div className="flex items-center gap-2">
-												<span className="text-sm truncate">{user.email}</span>
+												<span className="truncate text-sm">{user.email}</span>
 												{user.emailVerified && (
-													<CheckCircle className="h-4 w-4 text-green-600 shrink-0" aria-label="Email vérifié" />
+													<CheckCircle
+														className="h-4 w-4 shrink-0 text-green-600"
+														aria-label="Email vérifié"
+													/>
 												)}
 											</div>
 										</TableCell>
@@ -111,7 +103,7 @@ export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
 											{orderCount > 0 ? (
 												<Link
 													href={`/admin/ventes/commandes?userId=${user.id}`}
-													className="text-foreground hover:underline font-medium"
+													className="text-foreground font-medium hover:underline"
 													aria-label={`${orderCount} commande${orderCount > 1 ? "s" : ""} - Voir les commandes`}
 												>
 													{orderCount}
@@ -121,7 +113,7 @@ export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
 											)}
 										</TableCell>
 										<TableCell className="hidden sm:table-cell">
-											<span className="text-sm text-muted-foreground">
+											<span className="text-muted-foreground text-sm">
 												{formatDate(user.createdAt)}
 											</span>
 										</TableCell>

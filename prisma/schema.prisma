@@ -374,6 +374,9 @@ model Cart {
 
   expiresAt DateTime?
 
+  // Abandoned cart recovery
+  abandonedEmailSentAt DateTime? // Date d'envoi de l'email de relance panier abandonne
+
   items CartItem[]
 
   createdAt DateTime @default(now())
@@ -435,6 +438,9 @@ model WishlistItem {
   // SetNull permet l'archivage produit sans bloquer les wishlists existantes
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  // Back-in-stock notification
+  backInStockNotifiedAt DateTime? // Date d'envoi de la notification retour en stock
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -557,8 +563,10 @@ model Order {
   actualDelivery    DateTime? // Date reelle de livraison
   shippedAt         DateTime? // Date d'expedition
 
-  // === EMAIL INCITATIF AVIS ===
-  reviewRequestSentAt DateTime? // Date d'envoi de l'email de demande d'avis
+  // === EMAILS POST-LIVRAISON ===
+  reviewRequestSentAt  DateTime? // Date d'envoi de l'email de demande d'avis
+  reviewReminderSentAt DateTime? // Date d'envoi du rappel de demande d'avis
+  crossSellEmailSentAt DateTime? // Date d'envoi de l'email de cross-sell
 
   // === STATUTS ===
   status            OrderStatus       @default(PENDING)
@@ -1172,6 +1180,9 @@ model CustomizationRequest {
 
   // === DESCRIPTION ===
   details String @db.Text // Description detaillee de la demande
+
+  // === IMAGES D'INSPIRATION ===
+  inspirationImageUrls String[] // URLs des images uploadees par le client (max 5)
 
   // === STATUT ET SUIVI ===
   status      CustomizationRequestStatus @default(PENDING)

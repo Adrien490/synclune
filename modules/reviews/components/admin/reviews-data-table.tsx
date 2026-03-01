@@ -1,9 +1,9 @@
-import { ReviewStatus } from "@/app/generated/prisma/client"
-import { CursorPagination } from "@/shared/components/cursor-pagination"
-import { TableScrollContainer } from "@/shared/components/table-scroll-container"
-import { Card, CardContent } from "@/shared/components/ui/card"
-import { TableEmptyState } from "@/shared/components/data-table/table-empty-state"
-import { Badge } from "@/shared/components/ui/badge"
+import { ReviewStatus } from "@/app/generated/prisma/client";
+import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
+import { Badge } from "@/shared/components/ui/badge";
 import {
 	Table,
 	TableBody,
@@ -11,28 +11,25 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "@/shared/components/ui/table"
-import { formatDateShort } from "@/shared/utils/dates"
-import { CheckCircle2, EyeOff, MessageSquare } from "lucide-react"
-import Link from "next/link"
+} from "@/shared/components/ui/table";
+import { formatDateShort } from "@/shared/utils/dates";
+import { CheckCircle2, EyeOff, MessageSquare } from "lucide-react";
+import Link from "next/link";
 
-import { RatingStars } from "@/shared/components/rating-stars"
+import { RatingStars } from "@/shared/components/rating-stars";
 
-import type { GetReviewsReturn, ReviewAdmin } from "../../types/review.types"
-import { REVIEW_STATUS_LABELS } from "../../constants/review.constants"
-import { ReviewRowActions } from "./review-row-actions"
+import type { GetReviewsReturn, ReviewAdmin } from "../../types/review.types";
+import { REVIEW_STATUS_LABELS } from "../../constants/review.constants";
+import { ReviewRowActions } from "./review-row-actions";
 
 export interface ReviewsDataTableProps {
-	reviewsPromise: Promise<GetReviewsReturn>
-	perPage?: number
+	reviewsPromise: Promise<GetReviewsReturn>;
+	perPage?: number;
 }
 
-export async function ReviewsDataTable({
-	reviewsPromise,
-	perPage = 20,
-}: ReviewsDataTableProps) {
-	const { reviews, pagination } = await reviewsPromise
-	const adminReviews = reviews as ReviewAdmin[]
+export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: ReviewsDataTableProps) {
+	const { reviews, pagination } = await reviewsPromise;
+	const adminReviews = reviews as ReviewAdmin[];
 
 	if (reviews.length === 0) {
 		return (
@@ -40,8 +37,9 @@ export async function ReviewsDataTable({
 				icon={MessageSquare}
 				title="Aucun avis trouvé"
 				description="Aucun avis ne correspond aux critères de recherche."
+				action={{ label: "Réinitialiser les filtres", href: "/admin/marketing/avis" }}
 			/>
-		)
+		);
 	}
 
 	return (
@@ -55,7 +53,7 @@ export async function ReviewsDataTable({
 								<TableHead className="w-[20%]">Client</TableHead>
 								<TableHead className="w-[10%]">Note</TableHead>
 								<TableHead className="w-[15%]">Statut</TableHead>
-								<TableHead className="hidden md:table-cell w-[15%]">Date</TableHead>
+								<TableHead className="hidden w-[15%] md:table-cell">Date</TableHead>
 								<TableHead className="w-[10%]">Réponse</TableHead>
 								<TableHead className="w-[5%] text-right" aria-label="Actions">
 									Actions
@@ -70,7 +68,7 @@ export async function ReviewsDataTable({
 										<Link
 											href={`/creations/${review.product.slug}`}
 											target="_blank"
-											className="font-medium hover:text-primary transition-colors line-clamp-1"
+											className="hover:text-primary line-clamp-1 font-medium transition-colors"
 										>
 											{review.product.title}
 										</Link>
@@ -79,12 +77,10 @@ export async function ReviewsDataTable({
 									{/* Client */}
 									<TableCell>
 										<div className="min-w-0">
-											<p className="text-sm font-medium truncate">
+											<p className="truncate text-sm font-medium">
 												{review.user.name || "Anonyme"}
 											</p>
-											<p className="text-sm text-muted-foreground truncate">
-												{review.user.email}
-											</p>
+											<p className="text-muted-foreground truncate text-sm">{review.user.email}</p>
 										</div>
 									</TableCell>
 
@@ -96,12 +92,22 @@ export async function ReviewsDataTable({
 									{/* Statut */}
 									<TableCell>
 										{review.status === ReviewStatus.PUBLISHED ? (
-											<Badge variant="default" className="gap-1" role="status" aria-label={`Statut : ${REVIEW_STATUS_LABELS.PUBLISHED}`}>
+											<Badge
+												variant="default"
+												className="gap-1"
+												role="status"
+												aria-label={`Statut : ${REVIEW_STATUS_LABELS.PUBLISHED}`}
+											>
 												<CheckCircle2 className="size-3" aria-hidden="true" />
 												{REVIEW_STATUS_LABELS.PUBLISHED}
 											</Badge>
 										) : (
-											<Badge variant="secondary" className="gap-1" role="status" aria-label={`Statut : ${REVIEW_STATUS_LABELS.HIDDEN}`}>
+											<Badge
+												variant="secondary"
+												className="gap-1"
+												role="status"
+												aria-label={`Statut : ${REVIEW_STATUS_LABELS.HIDDEN}`}
+											>
 												<EyeOff className="size-3" aria-hidden="true" />
 												{REVIEW_STATUS_LABELS.HIDDEN}
 											</Badge>
@@ -109,7 +115,7 @@ export async function ReviewsDataTable({
 									</TableCell>
 
 									{/* Date */}
-									<TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+									<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
 										<time dateTime={new Date(review.createdAt).toISOString()}>
 											{formatDateShort(review.createdAt)}
 										</time>
@@ -122,7 +128,7 @@ export async function ReviewsDataTable({
 												Répondu
 											</Badge>
 										) : (
-											<span className="text-xs text-muted-foreground">-</span>
+											<span className="text-muted-foreground text-xs">-</span>
 										)}
 									</TableCell>
 
@@ -150,5 +156,5 @@ export async function ReviewsDataTable({
 				)}
 			</CardContent>
 		</Card>
-	)
+	);
 }

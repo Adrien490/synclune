@@ -5,30 +5,23 @@ import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	error,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
+import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { restoreUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
-export async function restoreUser(
-	_prevState: unknown,
-	formData: FormData
-): Promise<ActionState> {
+export async function restoreUser(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
 		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Verification des droits admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider l'ID
 		const rawData = { id: formData.get("id") as string };
@@ -64,6 +57,20 @@ export async function restoreUser(
 		// 6. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "user.restore",
+			targetType: "user",
+			targetId: userId,
+			metadata: {
+				userName: user.name,
+				userEmail: user.email,
+				wasDeleted: !!user.deletedAt,
+				wasSuspended: !!user.suspendedAt,
+			},
+		});
 
 		return success(`L'utilisateur ${user.name || user.email} a ete restaure.`);
 	} catch (e) {

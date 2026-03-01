@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	motion,
-	useMotionValueEvent,
-	useReducedMotion,
-	useScroll,
-	useTransform,
-} from "motion/react";
+import { m, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
@@ -70,23 +64,23 @@ export function ScrollIndicator({
 	};
 
 	return (
-		<motion.button
+		<m.button
 			type="button"
 			onClick={handleClick}
 			aria-label={ariaLabel}
 			{...(!isVisible && { inert: true })}
 			className={cn(
 				// Position au-dessus des zones mask avec fallback minimum
-				"absolute left-1/2 -translate-x-1/2 z-20",
+				"absolute left-1/2 z-20 -translate-x-1/2",
 				"bottom-[max(12%,3rem)]",
 				// Zone tactile 48x48px minimum (p-2.5 + icône 28px = 48px)
-				"p-2.5 rounded-full",
+				"rounded-full p-2.5",
 				// Couleurs avec contraste suffisant
 				"text-muted-foreground hover:text-foreground",
 				"transition-colors duration-200",
 				// Focus accessible
-				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-				className
+				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+				className,
 			)}
 			style={{ opacity }}
 			animate={shouldReduceMotion || !isVisible ? undefined : { y: [0, 8, 0] }}
@@ -101,6 +95,6 @@ export function ScrollIndicator({
 			}
 		>
 			<ChevronDown size={28} strokeWidth={1.5} aria-hidden="true" focusable="false" />
-		</motion.button>
+		</m.button>
 	);
 }

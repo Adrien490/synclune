@@ -1,10 +1,6 @@
 "use server";
 
-import {
-	OrderStatus,
-	FulfillmentStatus,
-	HistorySource,
-} from "@/app/generated/prisma/client";
+import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { scheduleReviewRequestEmailsBulk } from "@/modules/webhooks/services/review-request.service";
@@ -16,6 +12,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
+import { logAudit } from "@/shared/lib/audit-log";
 import { bulkMarkAsDeliveredSchema } from "../schemas/order.schemas";
 import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "../constants/cache";
 import { createOrderAuditTx } from "../utils/order-audit";
@@ -31,7 +28,7 @@ import { extractCustomerFirstName } from "../utils/customer-name";
  */
 export async function bulkMarkAsDelivered(
 	_prevState: unknown,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -65,7 +62,14 @@ export async function bulkMarkAsDelivered(
 				status: OrderStatus.SHIPPED,
 				...notDeleted,
 			},
-			select: { id: true, orderNumber: true, userId: true, customerEmail: true, customerName: true, shippingFirstName: true },
+			select: {
+				id: true,
+				orderNumber: true,
+				userId: true,
+				customerEmail: true,
+				customerName: true,
+				shippingFirstName: true,
+			},
 		});
 
 		if (eligibleOrders.length === 0) {
@@ -102,8 +106,8 @@ export async function bulkMarkAsDelivered(
 							bulk: true,
 							deliveryDate: deliveryDate.toISOString(),
 						},
-					})
-				)
+					}),
+				),
 			);
 		});
 
@@ -125,7 +129,10 @@ export async function bulkMarkAsDelivered(
 						deliveryDate: formattedDeliveryDate,
 						orderDetailsUrl,
 					}).catch((emailError) => {
-						console.error(`[BULK_MARK_AS_DELIVERED] Échec envoi email pour ${order.orderNumber}:`, emailError);
+						console.error(
+							`[BULK_MARK_AS_DELIVERED] Échec envoi email pour ${order.orderNumber}:`,
+							emailError,
+						);
 					});
 				}
 			}
@@ -136,17 +143,33 @@ export async function bulkMarkAsDelivered(
 		await scheduleReviewRequestEmailsBulk(eligibleIds);
 
 		// Invalider les caches pour chaque userId unique
-		const uniqueUserIds = [...new Set(eligibleOrders.map(o => o.userId).filter(Boolean))] as string[];
-		uniqueUserIds.forEach(userId => {
-			getOrderInvalidationTags(userId).forEach(tag => updateTag(tag));
+		const uniqueUserIds = [
+			...new Set(eligibleOrders.map((o) => o.userId).filter(Boolean)),
+		] as string[];
+		uniqueUserIds.forEach((userId) => {
+			getOrderInvalidationTags(userId).forEach((tag) => updateTag(tag));
 		});
 		// Toujours invalider la liste admin (même si pas d'userId)
-		getOrderInvalidationTags().forEach(tag => updateTag(tag));
+		getOrderInvalidationTags().forEach((tag) => updateTag(tag));
 		// Invalider l'historique de chaque commande
-		eligibleOrders.forEach(o => updateTag(ORDERS_CACHE_TAGS.HISTORY(o.id)));
+		eligibleOrders.forEach((o) => updateTag(ORDERS_CACHE_TAGS.HISTORY(o.id)));
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.bulkMarkDelivered",
+			targetType: "order",
+			targetId: eligibleIds.join(","),
+			metadata: {
+				count: eligibleOrders.length,
+				orderNumbers: eligibleOrders.map((o) => o.orderNumber),
+			},
+		});
 
 		const count = eligibleOrders.length;
-		return success(`${count} commande${count > 1 ? "s" : ""} marquee${count > 1 ? "s" : ""} comme livree${count > 1 ? "s" : ""}.`);
+		return success(
+			`${count} commande${count > 1 ? "s" : ""} marquee${count > 1 ? "s" : ""} comme livree${count > 1 ? "s" : ""}.`,
+		);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la mise a jour des commandes.");
 	}

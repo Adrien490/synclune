@@ -5,13 +5,15 @@ import { getReviews } from "../data/get-reviews";
 import { getProductReviewStats } from "../data/get-product-review-stats";
 import { ReviewsList } from "./reviews-list";
 import { ReviewSummaryCompact } from "./review-summary-compact";
-import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types";
+import type { ReviewPublic, ReviewSortField, ProductReviewStatistics } from "../types/review.types";
 
 interface ProductReviewsSectionProps {
 	productId: string;
 	productSlug: string;
 	/** Filtre par note (1-5), passé depuis les searchParams de la page */
 	ratingFilter?: number;
+	/** Tri des avis */
+	sortBy?: ReviewSortField;
 	/** Pre-fetched stats to avoid double fetch from parent page */
 	reviewStats?: ProductReviewStatistics;
 }
@@ -24,6 +26,7 @@ export async function ProductReviewsSection({
 	productId,
 	productSlug: _productSlug,
 	ratingFilter,
+	sortBy,
 	reviewStats,
 }: ProductReviewsSectionProps) {
 	// Charger les avis (et stats seulement si pas déjà fournies en prop)
@@ -33,6 +36,7 @@ export async function ProductReviewsSection({
 			productId,
 			perPage: 10,
 			filterRating: ratingFilter,
+			sortBy,
 		}),
 		reviewStats ? Promise.resolve(reviewStats) : getProductReviewStats(productId),
 		getSession(),
@@ -64,6 +68,7 @@ export async function ProductReviewsSection({
 				hasMore={reviewsData.pagination.hasNextPage}
 				totalCount={isFiltered ? filteredCount : reviewsData.totalCount}
 				ratingFilter={ratingFilter}
+				sortBy={sortBy}
 				isAuthenticated={!!session?.user}
 			/>
 		</section>

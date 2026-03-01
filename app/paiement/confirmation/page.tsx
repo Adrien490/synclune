@@ -3,9 +3,10 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Fade } from "@/shared/components/animations/fade";
 import { Stagger } from "@/shared/components/animations/stagger";
+import { SuccessIcon } from "./_components/success-icon";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { CheckCircle2, Clock, Heart, Package, Sparkles, UserPlus } from "lucide-react";
+import { Clock, Heart, Package, Sparkles, UserPlus } from "lucide-react";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -67,11 +68,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 					{/* Message de succès principal */}
 					<Card className="border-primary/20 from-primary/5 to-background border-2 bg-linear-to-br">
 						<CardHeader className="space-y-4 pb-6 text-center">
-							<Fade y={15} duration={0.5}>
-								<div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
-									<CheckCircle2 className="text-primary h-10 w-10" />
-								</div>
-							</Fade>
+							<SuccessIcon />
 							<Fade y={10} delay={0.15}>
 								<CardTitle className="text-2xl sm:text-3xl">
 									Merci pour votre confiance ! <span aria-hidden="true">✨</span>
@@ -277,12 +274,21 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Actions */}
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
-								<Button asChild size="lg" className="flex-1">
-									<Link href="/">
-										<Package className="mr-2 h-4 w-4" />
-										Retour à l'accueil
-									</Link>
-								</Button>
+								{session ? (
+									<Button asChild size="lg" className="flex-1">
+										<Link href={`/commandes/${order.orderNumber}`}>
+											<Package className="mr-2 h-4 w-4" />
+											Suivre ma commande
+										</Link>
+									</Button>
+								) : (
+									<Button asChild size="lg" className="flex-1">
+										<Link href="/">
+											<Package className="mr-2 h-4 w-4" />
+											Retour à l'accueil
+										</Link>
+									</Button>
+								)}
 								<Button asChild variant="outline" size="lg" className="flex-1">
 									<Link href="/produits">Continuer mes achats</Link>
 								</Button>

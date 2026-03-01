@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -12,14 +13,12 @@ import type { ActionState } from "@/shared/types/server-action";
 import { getColorInvalidationTags } from "../constants/cache";
 import { deleteColorSchema } from "../schemas/color.schemas";
 
-export async function deleteColor(
-	_prevState: unknown,
-	formData: FormData
-): Promise<ActionState> {
+export async function deleteColor(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.DELETE);
@@ -54,12 +53,23 @@ export async function deleteColor(
 		// Verifier si la couleur est utilisee
 		const skuCount = existingColor._count.skus;
 		if (skuCount > 0) {
-			return error(`Cette couleur est utilisee par ${skuCount} variante${skuCount > 1 ? "s" : ""}. Veuillez modifier ces variantes avant de supprimer la couleur.`);
+			return error(
+				`Cette couleur est utilisee par ${skuCount} variante${skuCount > 1 ? "s" : ""}. Veuillez modifier ces variantes avant de supprimer la couleur.`,
+			);
 		}
 
 		// Supprimer la couleur
 		await prisma.color.delete({
 			where: { id: validatedData.id },
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "color.delete",
+			targetType: "color",
+			targetId: validatedData.id,
+			metadata: { name: existingColor.name },
 		});
 
 		// Invalider le cache

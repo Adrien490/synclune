@@ -6,7 +6,7 @@ import {
 } from "@/shared/providers/cookie-consent-store-provider";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { useEffect, useRef } from "react";
 
@@ -76,7 +76,7 @@ export function CookieBanner() {
 	return (
 		<AnimatePresence>
 			{shouldShow && (
-				<motion.div
+				<m.div
 					initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
@@ -140,7 +140,7 @@ export function CookieBanner() {
 							</div>
 						</div>
 					</FocusScope>
-				</motion.div>
+				</m.div>
 			)}
 		</AnimatePresence>
 	);

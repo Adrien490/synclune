@@ -22,36 +22,34 @@ interface ProductCareInfoProps {
  */
 export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 	return (
-		<Accordion type="multiple" defaultValue={[]} className="w-full">
+		<Accordion type="multiple" defaultValue={["shipping"]} className="w-full">
 			{/* Section Livraison */}
 			<AccordionItem value="shipping">
-				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
+				<AccordionTrigger className="hover:bg-muted/50 -mx-2 rounded-lg px-2 text-sm/6 font-semibold tracking-normal antialiased transition-colors">
 					Livraison
 				</AccordionTrigger>
-				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
+				<AccordionContent className="text-muted-foreground space-y-3 text-sm/6 tracking-normal antialiased">
 					{/* Emballage */}
 					<div>
-						<p className="font-medium text-foreground">Emballage soigné</p>
+						<p className="text-foreground font-medium">Emballage soigné</p>
 						<p>Chaque produit arrive dans un joli écrin</p>
 					</div>
 
 					{/* France */}
 					<div>
-						<p className="font-medium text-foreground">France métropolitaine</p>
+						<p className="text-foreground font-medium">France métropolitaine</p>
 						<p>
-							{formatShippingPrice(SHIPPING_RATES.FR.amount)} ·{" "}
-							{SHIPPING_RATES.FR.minDays}-{SHIPPING_RATES.FR.maxDays} jours
-							ouvrés
+							{formatShippingPrice(SHIPPING_RATES.FR.amount)} · {SHIPPING_RATES.FR.minDays}-
+							{SHIPPING_RATES.FR.maxDays} jours ouvrés
 						</p>
 					</div>
 
 					{/* Europe */}
 					<div>
-						<p className="font-medium text-foreground">Union Européenne</p>
+						<p className="text-foreground font-medium">Union Européenne</p>
 						<p>
-							{formatShippingPrice(SHIPPING_RATES.EU.amount)} ·{" "}
-							{SHIPPING_RATES.EU.minDays}-{SHIPPING_RATES.EU.maxDays} jours
-							ouvrés
+							{formatShippingPrice(SHIPPING_RATES.EU.amount)} · {SHIPPING_RATES.EU.minDays}-
+							{SHIPPING_RATES.EU.maxDays} jours ouvrés
 						</p>
 					</div>
 				</AccordionContent>
@@ -59,14 +57,15 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 
 			{/* Section Entretien */}
 			<AccordionItem value="care">
-				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
+				<AccordionTrigger className="hover:bg-muted/50 -mx-2 rounded-lg px-2 text-sm/6 font-semibold tracking-normal antialiased transition-colors">
 					Entretien
 				</AccordionTrigger>
-				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
+				<AccordionContent className="text-muted-foreground space-y-3 text-sm/6 tracking-normal antialiased">
 					<p>
-						J'ai passé des heures à créer votre produit (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
+						J'ai passé des heures à créer votre produit (parfois avec quelques galères), alors voici
+						mes conseils pour qu'il dure longtemps :
 					</p>
-					<ul className="space-y-2 list-disc list-inside">
+					<ul className="list-inside list-disc space-y-2">
 						<li>Évitez l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
 						<li>Rangez-le dans son petit écrin après chaque utilisation</li>
 						<li>Un petit coup de chiffon doux de temps en temps, et c'est nickel</li>

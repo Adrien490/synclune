@@ -12,12 +12,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
-import {
-	validateInput,
-	success,
-	error,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { customizationSchema } from "../schemas/customization.schema";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
@@ -31,7 +26,7 @@ import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../c
  */
 export async function sendCustomizationRequest(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting (protection anti-spam)
@@ -42,18 +37,18 @@ export async function sendCustomizationRequest(
 		const rateLimit = await checkRateLimit(rateLimitId, CUSTOMIZATION_LIMITS.QUOTE_REQUEST);
 
 		if (!rateLimit.success) {
-			return error(
-				rateLimit.error || "Trop de demandes envoyées. Veuillez réessayer plus tard."
-			);
+			return error(rateLimit.error || "Trop de demandes envoyées. Veuillez réessayer plus tard.");
 		}
 
 		// 2. Extraction des données du FormData
+		const inspirationImageUrlsRaw = formData.get("inspirationImageUrls") as string;
 		const rawData = {
 			firstName: formData.get("firstName") as string,
 			email: formData.get("email") as string,
 			phone: (formData.get("phone") as string) || "",
 			productTypeLabel: (formData.get("productTypeLabel") as string) || "",
 			details: (formData.get("details") as string) || "",
+			inspirationImageUrls: inspirationImageUrlsRaw ? JSON.parse(inspirationImageUrlsRaw) : [],
 			rgpdConsent: formData.get("rgpdConsent") === "true",
 			website: (formData.get("website") as string) || "",
 		};
@@ -77,10 +72,14 @@ export async function sendCustomizationRequest(
 
 		// 5. Rate limiting par email (protection contre spam multi-IP)
 		const emailRateLimitId = `customization:email:${validatedData.email.toLowerCase()}`;
-		const emailRateLimit = await checkRateLimit(emailRateLimitId, {
-			limit: 5,
-			windowMs: 24 * 60 * 60 * 1000, // 5 demandes par email par 24h
-		}, ipAddress);
+		const emailRateLimit = await checkRateLimit(
+			emailRateLimitId,
+			{
+				limit: 5,
+				windowMs: 24 * 60 * 60 * 1000, // 5 demandes par email par 24h
+			},
+			ipAddress,
+		);
 
 		if (!emailRateLimit.success) {
 			return error("Trop de demandes pour cette adresse email. Réessaie demain.");
@@ -108,6 +107,7 @@ export async function sendCustomizationRequest(
 				productTypeLabel: validatedData.productTypeLabel,
 				productTypeId: productType?.id || null,
 				details: validatedData.details,
+				inspirationImageUrls: validatedData.inspirationImageUrls ?? [],
 				userId,
 			},
 		});
@@ -164,7 +164,7 @@ export async function sendCustomizationRequest(
 		// 13. Success
 		return success(
 			"Votre demande de personnalisation a bien été envoyée. Nous vous répondrons dans les plus brefs délais.",
-			{ id: customizationRequest.id }
+			{ id: customizationRequest.id },
 		);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de l'envoi de votre demande.");

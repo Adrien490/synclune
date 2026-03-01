@@ -10,7 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 
 interface ColorSelectorProps {
 	colors: Color[];
@@ -58,6 +58,27 @@ export function ColorSelector({
 			size: currentSize || undefined,
 		});
 		return compatibleSkus.length > 0;
+	};
+
+	// Prefetch primary image on hover to speed up gallery transition
+	const prefetchColorImage = (colorId: string) => {
+		const compatibleSkus = filterCompatibleSkus(product, {
+			colorSlug: colorId,
+			materialSlug: currentMaterial || undefined,
+			size: currentSize || undefined,
+		});
+		const sku = compatibleSkus[0];
+		const primaryImage = sku?.images?.[0];
+		if (primaryImage?.url) {
+			const link = document.createElement("link");
+			link.rel = "prefetch";
+			link.as = "image";
+			link.href = primaryImage.url;
+			// Avoid duplicate prefetch links
+			if (!document.querySelector(`link[href="${primaryImage.url}"]`)) {
+				document.head.appendChild(link);
+			}
+		}
 	};
 
 	// Mettre à jour la couleur dans l'URL (optimiste)
@@ -128,6 +149,9 @@ export function ColorSelector({
 							data-option-id={colorIdentifier}
 							onClick={() => updateColor(colorIdentifier)}
 							onKeyDown={(e) => handleKeyDown(e, index)}
+							onPointerEnter={() =>
+								isAvailable && !isSelected && prefetchColorImage(colorIdentifier)
+							}
 							disabled={!isAvailable}
 							className={cn(
 								"group relative flex min-h-13 items-center gap-2.5 rounded-xl border-2 p-3.5 transition-all sm:min-h-11 sm:rounded-lg sm:p-3",
@@ -155,7 +179,7 @@ export function ColorSelector({
 								)}
 							</div>
 							{isSelected && (
-								<motion.div
+								<m.div
 									initial={shouldReduceMotion ? {} : { scale: 0 }}
 									animate={{ scale: 1 }}
 									transition={
@@ -165,7 +189,7 @@ export function ColorSelector({
 									}
 								>
 									<Check className="text-primary ml-auto h-4 w-4" aria-hidden="true" />
-								</motion.div>
+								</m.div>
 							)}
 						</button>
 					);

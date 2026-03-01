@@ -5,31 +5,24 @@ import { updateTag } from "next/cache";
 import { prisma, softDelete, notDeleted } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	success,
-	error,
-	notFound,
-	handleActionError,
-} from "@/shared/lib/actions";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
+import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 
-export async function deleteUser(
-	_prevState: unknown,
-	formData: FormData
-): Promise<ActionState> {
+export async function deleteUser(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
 		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.DELETE_USER);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Verification des droits admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider l'ID
 		const rawData = { id: formData.get("id") as string };
@@ -39,10 +32,7 @@ export async function deleteUser(
 		const { id: userId } = validation.data;
 
 		// 4. Verifier qu'on ne supprime pas son propre compte
-		const userAuth = await requireAuth();
-		if ("error" in userAuth) return userAuth.error;
-
-		if (userAuth.user.id === userId) {
+		if (adminUser.id === userId) {
 			return error("Vous ne pouvez pas supprimer votre propre compte.");
 		}
 
@@ -80,6 +70,15 @@ export async function deleteUser(
 		for (const tag of getUserFullInvalidationTags(userId)) {
 			updateTag(tag);
 		}
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "user.delete",
+			targetType: "user",
+			targetId: userId,
+			metadata: { userName: user.name, userEmail: user.email, userRole: user.role },
+		});
 
 		return success(`L'utilisateur ${user.name || user.email} a ete supprime.`);
 	} catch (e) {

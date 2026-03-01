@@ -1,10 +1,17 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	notFound,
+	validationError,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../utils/cache.utils";
@@ -19,12 +26,13 @@ import { ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-confi
  */
 export async function toggleProductStatus(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT);
@@ -128,15 +136,14 @@ export async function toggleProductStatus(
 		});
 
 		// 7. Invalidate cache tags (invalidation ciblee)
-		const productTags = getProductInvalidationTags(
-			existingProduct.slug,
-			existingProduct.id
-		);
-		productTags.forEach(tag => updateTag(tag));
+		const productTags = getProductInvalidationTags(existingProduct.slug, existingProduct.id);
+		productTags.forEach((tag) => updateTag(tag));
 
 		// 7.1 Invalider les caches des collections associees
 		for (const productCollection of existingProduct.collections) {
-			getCollectionInvalidationTags(productCollection.collection.slug).forEach((tag) => updateTag(tag));
+			getCollectionInvalidationTags(productCollection.collection.slug).forEach((tag) =>
+				updateTag(tag),
+			);
 		}
 
 		// 8. Messages de succes contextuels
@@ -146,7 +153,17 @@ export async function toggleProductStatus(
 			ARCHIVED: `"${existingProduct.title}" archive`,
 		};
 
-		// 9. Success (avec warning si applicable)
+		// 9. Audit log
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "product.toggleStatus",
+			targetType: "product",
+			targetId: productId,
+			metadata: { title: existingProduct.title, oldStatus: currentStatus, newStatus },
+		});
+
+		// 10. Success (avec warning si applicable)
 		const successMessage = warningMessage
 			? `${statusMessages[newStatus]}. ${warningMessage}`
 			: statusMessages[newStatus];

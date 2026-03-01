@@ -4,7 +4,8 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { validateInput, handleActionError, success } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -17,11 +18,12 @@ import { bulkToggleDiscountStatusSchema } from "../schemas/discount.schemas";
  */
 export async function bulkToggleDiscountStatus(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -43,7 +45,16 @@ export async function bulkToggleDiscountStatus(
 		});
 
 		// Invalider la liste des discounts
-		getDiscountInvalidationTags().forEach(tag => updateTag(tag));
+		getDiscountInvalidationTags().forEach((tag) => updateTag(tag));
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "discount.bulkToggleStatus",
+			targetType: "discount",
+			targetId: ids.join(","),
+			metadata: { count: ids.length, isActive },
+		});
 
 		const message = isActive
 			? `${ids.length} code(s) promo activé(s)`

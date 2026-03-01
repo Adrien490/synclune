@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView, useReducedMotion } from "motion/react";
+import { m, useInView, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 
 import { cn } from "@/shared/utils/cn";
@@ -88,7 +88,7 @@ const svgPaths: Record<
  * Composant SVG décoratif "fait main" avec animation de dessin
  *
  * Utilise stroke-dashoffset pour créer un effet de dessin au scroll.
- * Respecte prefers-reduced-motion.
+ * Respecte prefers-reduced-m.
  *
  * @example
  * ```tsx
@@ -162,7 +162,7 @@ export function HandDrawnAccent({
 			aria-hidden="true"
 			focusable="false"
 		>
-			<motion.path
+			<m.path
 				d={config.path}
 				stroke={color}
 				strokeWidth={strokeWidth}

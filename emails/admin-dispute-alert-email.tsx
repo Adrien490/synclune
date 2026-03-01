@@ -27,7 +27,7 @@ export const AdminDisputeAlertEmail = ({
 }: AdminDisputeAlertEmailProps) => {
 	return (
 		<EmailLayout
-			preview={`LITIGE : Commande ${orderNumber} — Action requise`}
+			preview={`Litige commande ${orderNumber} — Action requise`}
 			headerText="Litige Stripe"
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
@@ -125,9 +125,7 @@ export const AdminDisputeAlertEmail = ({
 
 			{/* Stripe IDs */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-					Identifiant Stripe
-				</Text>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Identifiant Stripe</Text>
 				<Section style={EMAIL_STYLES.section.card}>
 					<Text style={EMAIL_STYLES.text.tiny}>Dispute ID</Text>
 					<Text

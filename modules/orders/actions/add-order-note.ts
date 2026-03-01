@@ -6,6 +6,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
+import { logAudit } from "@/shared/lib/audit-log";
 import { addOrderNoteSchema } from "../schemas/order.schemas";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -14,14 +15,12 @@ import { updateTag } from "next/cache";
 /**
  * Server Action ADMIN pour ajouter une note interne à une commande
  */
-export async function addOrderNote(
-	orderId: string,
-	content: string
-): Promise<ActionState> {
+export async function addOrderNote(orderId: string, content: string): Promise<ActionState> {
 	try {
 		// 1. Vérification authentification et admin
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -53,6 +52,15 @@ export async function addOrderNote(
 
 		// 6. Invalider le cache
 		updateTag(ORDERS_CACHE_TAGS.NOTES(orderId));
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.addNote",
+			targetType: "order",
+			targetId: orderId,
+			metadata: {},
+		});
 
 		return success("Note ajoutee");
 	} catch (e) {

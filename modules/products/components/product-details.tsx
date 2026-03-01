@@ -9,14 +9,19 @@ import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
 import { Separator } from "@/shared/components/ui/separator";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { RatingStars } from "@/shared/components/rating-stars";
+import { formatRating } from "@/shared/utils/rating-utils";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 
 interface ProductDetailsProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
 	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
 	cartsCount?: number;
+	/** Review stats for micro-summary near CTA */
+	reviewStats?: ProductReviewStatistics;
 }
 
 /**
@@ -35,6 +40,7 @@ export function ProductDetails({
 	product,
 	defaultSku,
 	cartsCount,
+	reviewStats,
 }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const prefersReducedMotion = useReducedMotion();
@@ -52,7 +58,7 @@ export function ProductDetails({
 		<div className="space-y-8">
 			{/* 1. Prix (Baymard: visible en premier) */}
 			<AnimatePresence mode="wait">
-				<motion.div
+				<m.div
 					key={`price-${currentSku?.id || "no-sku"}`}
 					variants={fadeVariants}
 					initial="initial"
@@ -61,21 +67,36 @@ export function ProductDetails({
 					transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
 				>
 					<ProductPriceDisplay selectedSku={currentSku} product={product} cartsCount={cartsCount} />
-				</motion.div>
+				</m.div>
 			</AnimatePresence>
 
-			{/* 2. Sélection des variantes */}
+			{/* 2. Review micro-summary near decision zone (Baymard: social proof near CTA) */}
+			{reviewStats && reviewStats.totalCount > 0 && (
+				<a
+					href="#reviews"
+					className="text-muted-foreground hover:text-foreground flex w-fit items-center gap-2 text-sm transition-colors"
+					aria-label={`Note moyenne: ${formatRating(reviewStats.averageRating)} sur 5, basée sur ${reviewStats.totalCount} avis. Voir les avis`}
+				>
+					<RatingStars rating={reviewStats.averageRating} maxRating={5} size="sm" />
+					<span className="text-foreground font-medium">
+						{formatRating(reviewStats.averageRating)}
+					</span>
+					<span>({reviewStats.totalCount} avis)</span>
+				</a>
+			)}
+
+			{/* 3. Sélection des variantes */}
 			<VariantSelector product={product} defaultSku={defaultSku} />
 
-			{/* 3. CTA principal (monté pour réduire la distance au fold - Baymard) */}
+			{/* 4. CTA principal (monté pour réduire la distance au fold - Baymard) */}
 			<AddToCartForm product={product} selectedSku={currentSku} />
 
-			{/* 4. Réassurance (après CTA - "decision support") */}
+			{/* 5. Réassurance (après CTA - "decision support") */}
 			<ProductReassurance />
 
 			{/* 5. Caractéristiques principales */}
 			<AnimatePresence mode="wait">
-				<motion.div
+				<m.div
 					key={`chars-${currentSku?.id || "no-sku"}`}
 					variants={fadeVariants}
 					initial="initial"
@@ -84,7 +105,7 @@ export function ProductDetails({
 					transition={{ duration: prefersReducedMotion ? 0 : 0.15, delay: 0.05 }}
 				>
 					<ProductCharacteristics selectedSku={currentSku} />
-				</motion.div>
+				</m.div>
 			</AnimatePresence>
 
 			<Separator className="bg-border" />
@@ -96,7 +117,7 @@ export function ProductDetails({
 			{product.description && (
 				<div
 					id="product-description"
-					className="text-base tracking-normal antialiased text-muted-foreground leading-relaxed max-w-prose space-y-3"
+					className="text-muted-foreground max-w-prose space-y-3 text-base leading-relaxed tracking-normal antialiased"
 					itemProp="description"
 				>
 					{product.description.split("\n").map((line, i) => (

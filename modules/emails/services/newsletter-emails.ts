@@ -1,9 +1,9 @@
-import { NewsletterConfirmationEmail } from "@/emails/newsletter-confirmation-email"
-import { NewsletterWelcomeEmail } from "@/emails/newsletter-welcome-email"
-import { buildUrl, ROUTES } from "@/shared/constants/urls"
-import { EMAIL_SUBJECTS } from "../constants/email.constants"
-import { renderAndSend } from "./send-email"
-import type { EmailResult } from "../types/email.types"
+import { NewsletterConfirmationEmail } from "@/emails/newsletter-confirmation-email";
+import { NewsletterWelcomeEmail } from "@/emails/newsletter-welcome-email";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { EMAIL_SUBJECTS } from "../constants/email.constants";
+import { renderAndSend } from "./send-email";
+import type { EmailResult } from "../types/email.types";
 
 /**
  * Envoie un email de confirmation d'inscription a la newsletter
@@ -12,14 +12,14 @@ export async function sendNewsletterConfirmationEmail({
 	to,
 	confirmationUrl,
 }: {
-	to: string
-	confirmationUrl: string
+	to: string;
+	confirmationUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(NewsletterConfirmationEmail({ confirmationUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.NEWSLETTER_CONFIRMATION,
 		tags: [{ name: "category", value: "marketing" }],
-	})
+	});
 }
 
 /**
@@ -28,12 +28,14 @@ export async function sendNewsletterConfirmationEmail({
 export async function sendNewsletterWelcomeEmail({
 	to,
 	unsubscribeUrl,
+	promoCode,
 }: {
-	to: string
-	unsubscribeUrl: string
+	to: string;
+	unsubscribeUrl: string;
+	promoCode?: string;
 }): Promise<EmailResult> {
-	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS)
-	return renderAndSend(NewsletterWelcomeEmail({ email: to, unsubscribeUrl, shopUrl }), {
+	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS);
+	return renderAndSend(NewsletterWelcomeEmail({ email: to, unsubscribeUrl, shopUrl, promoCode }), {
 		to,
 		subject: EMAIL_SUBJECTS.NEWSLETTER_WELCOME,
 		headers: {
@@ -41,5 +43,5 @@ export async function sendNewsletterWelcomeEmail({
 			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
 		},
 		tags: [{ name: "category", value: "marketing" }],
-	})
+	});
 }

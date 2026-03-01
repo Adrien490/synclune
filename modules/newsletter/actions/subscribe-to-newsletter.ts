@@ -2,16 +2,15 @@
 
 import { ajNewsletter } from "@/shared/lib/arcjet";
 import { getClientIp } from "@/shared/lib/rate-limit";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error, conflict } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { subscribeToNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { subscribeToNewsletterInternal } from "./subscribe-to-newsletter-internal";
 
 export async function subscribeToNewsletter(
 	_previousState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// Récupérer les informations de traçabilité RGPD
@@ -34,7 +33,9 @@ export async function subscribeToNewsletter(
 			}
 
 			if (decision.reason.isBot()) {
-				return error("Votre requête semble provenir d'un bot. Veuillez réessayer depuis un navigateur normal.");
+				return error(
+					"Votre requête semble provenir d'un bot. Veuillez réessayer depuis un navigateur normal.",
+				);
 			}
 
 			if (decision.reason.isShield()) {
@@ -65,10 +66,7 @@ export async function subscribeToNewsletter(
 		}
 
 		if (internalResult.alreadySubscribed) {
-			return {
-				status: ActionStatus.CONFLICT,
-				message: internalResult.message,
-			};
+			return conflict(internalResult.message);
 		}
 
 		// Cache already invalidated by subscribeToNewsletterInternal

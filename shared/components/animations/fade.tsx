@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 import type { FadeProps } from "./types";
@@ -69,7 +69,7 @@ export function Fade({
 					delay: shouldReduceMotion ? 0 : delay,
 					ease: MOTION_CONFIG.easing.easeInOut,
 				},
-		  }
+			}
 		: {
 				initial: shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: y },
 				animate: { opacity: 1, y: 0 },
@@ -79,11 +79,11 @@ export function Fade({
 					delay: shouldReduceMotion ? 0 : delay,
 					ease: MOTION_CONFIG.easing.easeInOut,
 				},
-		  };
+			};
 
 	return (
-		<motion.div className={className} {...animationProps}>
+		<m.div className={className} {...animationProps}>
 			{children}
-		</motion.div>
+		</m.div>
 	);
 }

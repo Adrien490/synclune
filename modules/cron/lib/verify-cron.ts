@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { logger } from "@/shared/lib/logger";
 
 /**
  * Verify that the request is from Vercel Cron
@@ -20,7 +21,7 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 
 	// If CRON_SECRET is not set, reject all requests in production
 	if (!cronSecret) {
-		console.error("[CRON] CRON_SECRET environment variable is not set");
+		logger.error("CRON_SECRET environment variable is not set", undefined, { cronJob: "verify" });
 		return NextResponse.json({ error: "Cron secret not configured" }, { status: 500 });
 	}
 
@@ -34,7 +35,7 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 			headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
 			headersList.get("x-real-ip") ??
 			"unknown";
-		console.warn("[CRON] Unauthorized cron request attempt", { ip });
+		logger.warn("Unauthorized cron request attempt", { cronJob: "verify", ip });
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
@@ -65,7 +66,7 @@ export function cronSuccess(data: Record<string, unknown>, startTime?: number): 
  * Standard error response for cron jobs
  */
 export function cronError(message: string, status = 500): NextResponse {
-	console.error(`[CRON] Error: ${message}`);
+	logger.error(`Cron error: ${message}`, undefined, { cronJob: "unknown" });
 	return NextResponse.json(
 		{
 			success: false,

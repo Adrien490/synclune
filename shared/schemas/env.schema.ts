@@ -75,6 +75,13 @@ export const envSchema = z
 		RATE_LIMIT_BLACKLIST: z.string().optional(),
 
 		// ========================================
+		// Observability (Sentry)
+		// ========================================
+		NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+		SENTRY_ORG: z.string().optional(),
+		SENTRY_PROJECT: z.string().optional(),
+
+		// ========================================
 		// Node
 		// ========================================
 		NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

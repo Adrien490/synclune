@@ -3,6 +3,7 @@
 import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { success, notFound, error, validationError, handleActionError } from "@/shared/lib/actions";
 import { sendReviewResponseEmail } from "@/modules/emails/services/review-emails";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -27,8 +28,9 @@ export async function createReviewResponse(
 		// 1. Vérification authentification + admin (un seul appel)
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
-		const user = auth.user;
+		const user = adminUser;
 
 		// 1b. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.RESPONSE);
@@ -108,6 +110,15 @@ export async function createReviewResponse(
 			select: {
 				id: true,
 			},
+		});
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "review.createResponse",
+			targetType: "review",
+			targetId: reviewId,
+			metadata: { responseId: response.id },
 		});
 
 		// 5. Invalider le cache

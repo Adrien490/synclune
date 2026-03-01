@@ -15,6 +15,7 @@ import { updateTag } from "next/cache";
 
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
@@ -37,7 +38,7 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
  */
 export async function markAsPaid(
 	_prevState: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		const auth = await requireAdminWithUser();
@@ -125,9 +126,7 @@ export async function markAsPaid(
 					});
 
 					if (result.count === 0) {
-						throw new Error(
-							`Stock insuffisant ou SKU inactif pour ${item.productTitle}`
-						);
+						throw new Error(`Stock insuffisant ou SKU inactif pour ${item.productTitle}`);
 					}
 				}
 			}
@@ -173,9 +172,10 @@ export async function markAsPaid(
 		}
 
 		if ("_error" in order) {
-			const message = order._error === "already_paid"
-				? ORDER_ERROR_MESSAGES.ALREADY_PAID
-				: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
+			const message =
+				order._error === "already_paid"
+					? ORDER_ERROR_MESSAGES.ALREADY_PAID
+					: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
 			return {
 				status: ActionStatus.ERROR,
 				message,
@@ -183,7 +183,7 @@ export async function markAsPaid(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach(tag => updateTag(tag));
+		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
 		// Send order confirmation email for manual payment
 		let emailSent = false;
@@ -223,11 +223,28 @@ export async function markAsPaid(
 			}
 		}
 
-		const stockMessage = !order._stockAlreadyReserved && order.items.length > 0
-			? ` Stock décrémenté pour ${order.items.length} article(s).`
-			: "";
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "order.markPaid",
+			targetType: "order",
+			targetId: order.id,
+			metadata: {
+				orderNumber: order.orderNumber,
+				previousPaymentStatus: order.paymentStatus,
+			},
+		});
 
-		const emailMessage = emailSent ? " Email envoyé au client." : order.customerEmail ? " (Échec envoi email)" : "";
+		const stockMessage =
+			!order._stockAlreadyReserved && order.items.length > 0
+				? ` Stock décrémenté pour ${order.items.length} article(s).`
+				: "";
+
+		const emailMessage = emailSent
+			? " Email envoyé au client."
+			: order.customerEmail
+				? " (Échec envoi email)"
+				: "";
 
 		return {
 			status: ActionStatus.SUCCESS,

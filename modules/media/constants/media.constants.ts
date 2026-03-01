@@ -19,8 +19,8 @@ export const MAX_GALLERY_IMAGES = 20;
 // SUPPORTED EXTENSIONS
 // ============================================================================
 
-/** Supported video extensions */
-export const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".avi"] as const;
+/** Supported video extensions (MP4 only for universal cross-browser compatibility) */
+export const VIDEO_EXTENSIONS = [".mp4"] as const;
 
 /** Supported image extensions */
 export const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif"] as const;
@@ -29,13 +29,8 @@ export const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avi
 // MIME TYPES
 // ============================================================================
 
-/** Video MIME types */
-export const VIDEO_MIME_TYPES = [
-	"video/mp4",
-	"video/webm",
-	"video/quicktime",
-	"video/x-msvideo",
-] as const;
+/** Video MIME types (MP4 only for universal cross-browser compatibility) */
+export const VIDEO_MIME_TYPES = ["video/mp4"] as const;
 
 /** Image MIME types */
 export const IMAGE_MIME_TYPES = [
@@ -88,11 +83,7 @@ export const THUMBNAIL_CONFIG = {
 // ============================================================================
 
 /** Allowed UploadThing domains for downloading */
-export const ALLOWED_UPLOADTHING_DOMAINS = [
-	"utfs.io",
-	"uploadthing.com",
-	"ufs.sh",
-] as const;
+export const ALLOWED_UPLOADTHING_DOMAINS = ["utfs.io", "uploadthing.com", "ufs.sh"] as const;
 
 /** Configuration for the generate-video-thumbnails.ts migration script */
 export const VIDEO_MIGRATION_CONFIG = {
@@ -303,5 +294,4 @@ export const VIDEO_EVENT_TIMEOUTS = {
 	LOADED_METADATA_MS: 10000,
 	/** Timeout for the seeked event (ms) */
 	SEEKED_MS: 5000,
-} as const
-
+} as const;

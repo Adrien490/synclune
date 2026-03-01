@@ -1,7 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
@@ -16,12 +17,13 @@ import { createCollectionSchema } from "../schemas/collection.schemas";
 
 export async function createCollection(
 	_: ActionState | undefined,
-	formData: FormData
+	formData: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Admin auth check
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.CREATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -70,8 +72,17 @@ export async function createCollection(
 		});
 
 		// Invalider le cache
-		getCollectionInvalidationTags(slug).forEach(tag => updateTag(tag));
+		getCollectionInvalidationTags(slug).forEach((tag) => updateTag(tag));
 		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name || adminUser.email,
+			action: "collection.create",
+			targetType: "collection",
+			targetId: slug,
+			metadata: { name: sanitizedName, status: validatedData.status },
+		});
 
 		return success("Collection créée avec succès", {
 			collectionStatus: validatedData.status,

@@ -10,6 +10,8 @@ import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/cron/constants/limits";
 import { dispatchEvent } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
+import { logger } from "@/shared/lib/logger";
+import * as Sentry from "@sentry/nextjs";
 
 /**
  * Webhook Stripe
@@ -25,11 +27,11 @@ export async function POST(req: Request) {
 	const correlationId = crypto.randomUUID().slice(0, 8);
 
 	try {
-		console.log(`📥 [webhook:${correlationId}] Incoming webhook request`);
+		logger.info("Incoming webhook request", { correlationId });
 
 		// 1. Validation des variables d'environnement
 		if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-			console.error(`❌ [webhook:${correlationId}] Stripe configuration missing`);
+			logger.error("Stripe configuration missing", undefined, { correlationId });
 			return NextResponse.json({ error: "Stripe configuration missing" }, { status: 500 });
 		}
 
@@ -43,7 +45,7 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "No signature" }, { status: 400 });
 		}
 
-		// 2. 🔴 Vérification de la signature (CRITIQUE - Sécurité)
+		// 2. Vérification de la signature (CRITIQUE - Sécurité)
 		let event: Stripe.Event;
 		try {
 			event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
@@ -51,22 +53,22 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
 		}
 
-		// 3. 🔴 ANTI-REPLAY CHECK (Best Practice Stripe 2025)
-		// Rejeter les événements trop anciens pour éviter les attaques de replay
+		// 3. ANTI-REPLAY CHECK (Best Practice Stripe 2025)
 		const eventAgeSeconds = Math.floor(Date.now() / 1000) - event.created;
 		if (eventAgeSeconds > ANTI_REPLAY_WINDOW_SECONDS) {
-			console.warn(
-				`⚠️ [webhook:${correlationId}] Event too old (${eventAgeSeconds}s), rejecting for anti-replay:`,
-				event.id,
-			);
+			logger.warn("Event too old, rejecting for anti-replay", {
+				correlationId,
+				eventId: event.id,
+				eventType: event.type,
+				eventAgeSeconds,
+			});
 			return NextResponse.json(
 				{ error: "Event too old (anti-replay protection)" },
 				{ status: 400 },
 			);
 		}
 
-		// 4. 🔴 IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
-		// Vérifie si l'événement a déjà été traité pour éviter les doublons
+		// 4. IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
 		const existingEvent = await prisma.webhookEvent.findUnique({
 			where: { stripeEventId: event.id },
 			select: { id: true, status: true },
@@ -76,10 +78,12 @@ export async function POST(req: Request) {
 			existingEvent?.status === WebhookEventStatus.COMPLETED ||
 			existingEvent?.status === WebhookEventStatus.SKIPPED
 		) {
-			console.log(
-				`⏭️ [webhook:${correlationId}] Event already processed (${existingEvent.status}):`,
-				event.id,
-			);
+			logger.info("Event already processed, skipping", {
+				correlationId,
+				eventId: event.id,
+				eventType: event.type,
+				status: existingEvent.status,
+			});
 			return NextResponse.json({ received: true, status: "duplicate" });
 		}
 
@@ -99,9 +103,11 @@ export async function POST(req: Request) {
 
 		try {
 			// 5. Dispatch au handler approprié
-			const result = await dispatchEvent(event);
+			const result = await Sentry.startSpan({ name: `webhook.${event.type}`, op: "webhook" }, () =>
+				dispatchEvent(event),
+			);
 
-			// 6. 🔴 MARQUER COMME COMPLÉTÉ OU SKIPPED
+			// 6. MARQUER COMME COMPLÉTÉ OU SKIPPED
 			const finalStatus = result?.skipped
 				? WebhookEventStatus.SKIPPED
 				: WebhookEventStatus.COMPLETED;
@@ -113,22 +119,29 @@ export async function POST(req: Request) {
 				},
 			});
 
-			// 7. 🔴 RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
-			// Retourner 200 immédiatement, puis exécuter les tâches en arrière-plan
+			// 7. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
 			const response = NextResponse.json({ received: true, status: "processed" });
 
-			// Exécuter les tâches post-webhook (emails, cache) via after()
-			// Ne bloque pas la réponse au webhook
 			const tasks = result?.tasks;
 			if (tasks?.length) {
 				after(async () => {
-					console.log(`📧 [webhook:${correlationId}] Executing ${tasks.length} post-webhook tasks`);
+					logger.info(`Executing ${tasks.length} post-webhook tasks`, {
+						correlationId,
+						eventType: event.type,
+					});
 					await executePostWebhookTasks(tasks);
-					console.log(`📧 [webhook:${correlationId}] Post-webhook tasks completed`);
+					logger.info("Post-webhook tasks completed", {
+						correlationId,
+						eventType: event.type,
+					});
 				});
 			}
 
-			console.log(`✅ [webhook:${correlationId}] ${event.type} processed successfully`);
+			logger.info("Webhook processed successfully", {
+				correlationId,
+				eventType: event.type,
+				eventId: event.id,
+			});
 
 			return response;
 		} catch (error) {
@@ -154,7 +167,12 @@ export async function POST(req: Request) {
 				});
 			}
 
-			console.error(`❌ [webhook:${correlationId}] Error processing webhook event:`, error);
+			logger.error("Error processing webhook event", error, {
+				correlationId,
+				eventType: event.type,
+				eventId: event.id,
+				attempts: webhookRecord.attempts,
+			});
 			throw error;
 		}
 	} catch {

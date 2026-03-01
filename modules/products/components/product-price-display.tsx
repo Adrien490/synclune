@@ -9,7 +9,7 @@ import {
 	calculateDiscountPercent,
 	hasActiveDiscount,
 } from "@/modules/products/services/product-pricing.service";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { addBusinessDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -147,7 +147,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					</Badge>
 				)}
 				{stockStatus === "low_stock" && (
-					<motion.div
+					<m.div
 						animate={shouldReduceMotion ? {} : { opacity: [1, 0.7, 1] }}
 						transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
 					>
@@ -159,7 +159,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 						>
 							<span className="font-bold">Plus que {inventory}</span> en stock !
 						</Badge>
-					</motion.div>
+					</m.div>
 				)}
 				{stockStatus === "out_of_stock" && (
 					<Badge
@@ -207,7 +207,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				</p>
 			)}
 
-			{/* Section rupture de stock */}
+			{/* Section rupture de stock with notify CTA */}
 			{stockStatus === "out_of_stock" && (
 				<div className="space-y-3">
 					<div
@@ -216,6 +216,9 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					>
 						<p>Cette petite merveille sera bientôt disponible !</p>
 					</div>
+					<p className="text-muted-foreground text-xs">
+						Ajoutez ce produit à vos favoris pour être notifié(e) de son retour en stock.
+					</p>
 				</div>
 			)}
 		</div>

@@ -2,7 +2,7 @@
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useEffect, useEffectEvent, useState } from "react";
 
 export interface LayoutTextFlipProps {
@@ -104,7 +104,7 @@ export function LayoutTextFlip({
 				<span className="relative inline-flex items-center" aria-hidden="true">
 					{/* Texte animé - position absolute */}
 					<AnimatePresence mode="wait">
-						<motion.span
+						<m.span
 							key={currentIndex}
 							initial={{ y: 20, opacity: 0, filter: "blur(4px)" }}
 							animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
@@ -116,7 +116,7 @@ export function LayoutTextFlip({
 							className={cn(textStyles, "absolute inset-0 flex items-center justify-center")}
 						>
 							{words[currentIndex]}
-						</motion.span>
+						</m.span>
 					</AnimatePresence>
 
 					{/* Placeholder invisible - réserve la largeur du mot le plus long */}
