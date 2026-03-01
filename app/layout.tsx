@@ -51,8 +51,7 @@ export default async function RootLayout({
 					</ErrorBoundary>
 					<RootProviders>
 						<ConditionalAnalytics />
-						{children}
-
+						<Suspense fallback={null}>{children}</Suspense>
 						<UnsavedChangesDialog />
 						<CookieBanner />
 						<InstallPromptBanner />
