@@ -2,7 +2,6 @@ import { Footer } from "@/app/(boutique)/(accueil)/_components/footer";
 import { Navbar } from "@/app/(boutique)/(accueil)/_components/navbar";
 import { NavbarSkeleton } from "@/app/(boutique)/(accueil)/_components/navbar/navbar-skeleton";
 import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton";
-import { CartSheetRecommendations } from "@/modules/cart/components/cart-sheet-recommendations";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { ScrollToTop } from "@/shared/components/scroll-to-top";
@@ -60,14 +59,7 @@ async function CartAndSkuLoader() {
 	const cart = await getCart();
 	return (
 		<>
-			<CartSheet
-				cart={cart}
-				recommendations={
-					<Suspense fallback={null}>
-						<CartSheetRecommendations />
-					</Suspense>
-				}
-			/>
+			<CartSheet cart={cart} />
 			<SkuSelectorDialog cart={cart} />
 		</>
 	);
