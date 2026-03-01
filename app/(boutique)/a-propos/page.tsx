@@ -208,13 +208,13 @@ export default async function AboutPage() {
 							className="mb-8 flex justify-center lg:mb-0 lg:shrink-0"
 						>
 							<Image
-								src={IMAGES.ATELIER}
-								alt="Atelier de création de bijoux artisanaux Synclune à Nantes"
+								src={IMAGES.FOUNDER}
+								alt="Léane, créatrice de bijoux artisanaux Synclune"
 								width={320}
 								height={400}
 								className="rounded-2xl object-cover shadow-md"
 								placeholder="blur"
-								blurDataURL={IMAGES.ATELIER_BLUR}
+								blurDataURL={IMAGES.FOUNDER_BLUR}
 								sizes="(max-width: 1024px) 280px, 320px"
 							/>
 						</Reveal>

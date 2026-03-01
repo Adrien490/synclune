@@ -4,6 +4,7 @@
  */
 
 import { BRAND } from "./brand";
+import { IMAGES } from "./images";
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://synclune.fr";
 
@@ -223,7 +224,7 @@ export function getFounderSchema() {
 		description:
 			"Artisan créatrice de bijoux faits main à Nantes. Passionnée par les couleurs et les créations uniques, je conçois chaque pièce avec amour dans mon atelier nantais.",
 		url: SITE_URL,
-		image: `${SITE_URL}/opengraph-image`,
+		image: IMAGES.FOUNDER,
 		sameAs: [BUSINESS_INFO.social.instagram.url, BUSINESS_INFO.social.tiktok.url],
 		worksFor: {
 			"@id": `${SITE_URL}/#organization`,
