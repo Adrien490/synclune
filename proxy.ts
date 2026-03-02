@@ -38,6 +38,8 @@ const publicRoutes = [
 	"/~offline",
 	"/monitoring",
 	"/serwist",
+	// Checkout (guest checkout supporté)
+	"/paiement",
 ];
 
 // Routes d'authentification (redirection si déjà connecté)
@@ -60,7 +62,6 @@ const protectedRoutes = [
 	"/mes-avis",
 	"/mes-demandes",
 	"/parametres",
-	"/paiement",
 ] as const;
 
 // Routes protégées par admin (admin requis)

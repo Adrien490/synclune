@@ -63,13 +63,7 @@ test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 
 			const url = page.url();
 
-			// Unauthenticated users should be redirected to login
-			if (url.includes("/connexion")) {
-				await expect(page).toHaveURL(/\/connexion/);
-				return;
-			}
-
-			// Authenticated users with empty cart should see an empty state or be redirected to shop
+			// With empty cart, users should be redirected to homepage or shop
 			if (url.includes("/produits") || url.includes("/boutique")) {
 				await expect(page).toHaveURL(/\/(produits|boutique)/);
 				return;
