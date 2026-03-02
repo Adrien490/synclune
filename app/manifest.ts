@@ -4,8 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
 	return {
 		name: "Synclune - Créations artisanales",
 		short_name: "Synclune",
-		description:
-			"Découvrez nos créations de bijoux artisanaux faits main. Bagues, colliers, bracelets et boucles d'oreilles uniques.",
+		description: "Découvrez nos créations de bijoux artisanaux faits main",
 		start_url: "/",
 		display: "standalone",
 		background_color: "#fcfcfd",
