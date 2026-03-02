@@ -30,6 +30,12 @@ const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export const auth = betterAuth({
+	account: {
+		accountLinking: {
+			enabled: true,
+			trustedProviders: ["google"],
+		},
+	},
 	user: {
 		additionalFields: {
 			firstName: {

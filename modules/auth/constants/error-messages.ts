@@ -30,6 +30,11 @@ export const AUTH_ERROR_MESSAGES: Record<string, { title: string; description: s
 		description:
 			"Vérifiez votre adresse email avant de vous connecter. Un email de vérification a été envoyé à votre adresse.",
 	},
+	unable_to_link_account: {
+		title: "Impossible de lier votre compte",
+		description:
+			"Un compte avec cette adresse email existe déjà avec une autre méthode de connexion. Connectez-vous avec votre méthode habituelle.",
+	},
 	default: {
 		title: "Erreur d'authentification",
 		description: "Une erreur inattendue est survenue. Réessayez ultérieurement.",

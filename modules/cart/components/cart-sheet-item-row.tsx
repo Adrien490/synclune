@@ -215,7 +215,10 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 
 				{/* Favoris + Supprimer - à droite */}
 				<div className="flex items-center">
-					<CartItemMoveToWishlist cartItemId={item.id} itemName={item.sku.product.title} />
+					<CartItemMoveToWishlist
+						productId={item.sku.product.id}
+						itemName={item.sku.product.title}
+					/>
 					<CartItemRemoveButton
 						cartItemId={item.id}
 						itemName={item.sku.product.title}

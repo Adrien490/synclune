@@ -5,24 +5,24 @@ import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { moveToWishlist } from "../actions/move-to-wishlist";
+import { addToWishlist } from "@/modules/wishlist/actions/add-to-wishlist";
 
 interface CartItemMoveToWishlistProps {
-	cartItemId: string;
+	productId: string;
 	itemName: string;
 }
 
 /**
- * Button to move a cart item to the wishlist
+ * Button to add a cart item's product to the wishlist (without removing from cart)
  * Compact design for the cart sheet
  */
-export function CartItemMoveToWishlist({ cartItemId, itemName }: CartItemMoveToWishlistProps) {
+export function CartItemMoveToWishlist({ productId, itemName }: CartItemMoveToWishlistProps) {
 	const router = useRouter();
 
-	const { action, isPending } = useActionWithToast(moveToWishlist, {
+	const { action, isPending } = useActionWithToast(addToWishlist, {
 		toastOptions: { showSuccessToast: false },
-		onSuccess: () => {
-			toast.success("Déplacé vers vos favoris", {
+		onSuccess: (result) => {
+			toast.success(result.message, {
 				action: { label: "Voir", onClick: () => router.push("/favoris") },
 			});
 		},
@@ -30,14 +30,14 @@ export function CartItemMoveToWishlist({ cartItemId, itemName }: CartItemMoveToW
 
 	return (
 		<form action={action}>
-			<input type="hidden" name="cartItemId" value={cartItemId} />
+			<input type="hidden" name="productId" value={productId} />
 			<Button
 				type="submit"
 				variant="ghost"
 				size="icon"
 				disabled={isPending}
 				className="text-muted-foreground size-8 hover:text-pink-600"
-				aria-label={`Déplacer ${itemName} vers les favoris`}
+				aria-label={`Ajouter ${itemName} aux favoris`}
 				title="Ajouter aux favoris"
 			>
 				<Heart className="size-3.5" aria-hidden="true" />
