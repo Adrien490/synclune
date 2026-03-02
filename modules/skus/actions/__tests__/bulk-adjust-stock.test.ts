@@ -41,6 +41,27 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	validateInput: (
+		schema: {
+			safeParse: (data: unknown) => {
+				success: boolean;
+				data?: unknown;
+				error?: { issues: { message: string }[] };
+			};
+		},
+		data: unknown,
+	) => {
+		const result = schema.safeParse(data);
+		if (!result.success) {
+			return {
+				error: {
+					status: "validation_error",
+					message: result.error?.issues[0]?.message ?? "Invalid",
+				},
+			};
+		}
+		return { data: result.data };
+	},
 	BusinessError: class BusinessError extends Error {
 		constructor(message: string) {
 			super(message);
@@ -50,7 +71,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 }));
 vi.mock("../../schemas/sku.schemas", () => ({
-	bulkAdjustStockSchema: { parse: mockSchemaParse },
+	bulkAdjustStockSchema: { safeParse: mockSchemaParse },
 }));
 vi.mock("../../utils/cache.utils", () => ({
 	collectBulkInvalidationTags: mockCollectBulkInvalidationTags,
@@ -96,7 +117,10 @@ describe("bulkAdjustStock", () => {
 		mockCollectBulkInvalidationTags.mockReturnValue(new Set(["skus-list"]));
 		mockInvalidateTags.mockReturnValue(undefined);
 
-		mockSchemaParse.mockReturnValue({ ids: validIds, mode: "absolute", value: 10 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: validIds, mode: "absolute", value: 10 },
+		});
 
 		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 2 });
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData());
@@ -128,7 +152,10 @@ describe("bulkAdjustStock", () => {
 	});
 
 	it("should return error when no IDs are provided", async () => {
-		mockSchemaParse.mockReturnValue({ ids: [], mode: "absolute", value: 10 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: [], mode: "absolute", value: 10 },
+		});
 		const result = await bulkAdjustStock(undefined, makeFormData([], "absolute", "10"));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Aucune variante");
@@ -136,28 +163,40 @@ describe("bulkAdjustStock", () => {
 
 	it("should return error when IDs exceed the bulk limit", async () => {
 		const manyIds = Array.from({ length: 51 }, (_, i) => `id-${i}`);
-		mockSchemaParse.mockReturnValue({ ids: manyIds, mode: "absolute", value: 10 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: manyIds, mode: "absolute", value: 10 },
+		});
 		const result = await bulkAdjustStock(undefined, makeFormData(manyIds, "absolute", "10"));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Maximum 50");
 	});
 
 	it("should return error when relative adjustment value is 0", async () => {
-		mockSchemaParse.mockReturnValue({ ids: validIds, mode: "relative", value: 0 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: validIds, mode: "relative", value: 0 },
+		});
 		const result = await bulkAdjustStock(undefined, makeFormData(validIds, "relative", "0"));
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("ne peut pas etre 0");
+		expect(result.message).toContain("ne peut pas être 0");
 	});
 
 	it("should return error when absolute value is negative", async () => {
-		mockSchemaParse.mockReturnValue({ ids: validIds, mode: "absolute", value: -5 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: validIds, mode: "absolute", value: -5 },
+		});
 		const result = await bulkAdjustStock(undefined, makeFormData(validIds, "absolute", "-5"));
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("negatif");
+		expect(result.message).toContain("négatif");
 	});
 
 	it("should call updateMany for absolute mode", async () => {
-		mockSchemaParse.mockReturnValue({ ids: validIds, mode: "absolute", value: 10 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: validIds, mode: "absolute", value: 10 },
+		});
 		await bulkAdjustStock(undefined, makeFormData(validIds, "absolute", "10"));
 		expect(mockPrisma.productSku.updateMany).toHaveBeenCalledWith({
 			where: { id: { in: validIds } },
@@ -166,13 +205,19 @@ describe("bulkAdjustStock", () => {
 	});
 
 	it("should use $executeRaw for positive relative adjustment", async () => {
-		mockSchemaParse.mockReturnValue({ ids: validIds, mode: "relative", value: 5 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: validIds, mode: "relative", value: 5 },
+		});
 		await bulkAdjustStock(undefined, makeFormData(validIds, "relative", "5"));
 		expect(mockPrisma.$executeRaw).toHaveBeenCalled();
 	});
 
 	it("should use $transaction for negative relative adjustment to prevent negative stock", async () => {
-		mockSchemaParse.mockReturnValue({ ids: validIds, mode: "relative", value: -3 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: validIds, mode: "relative", value: -3 },
+		});
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
 				mockPrisma.$executeRaw.mockImplementation(() => Promise.resolve(2));
@@ -187,7 +232,7 @@ describe("bulkAdjustStock", () => {
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		const result = await bulkAdjustStock(undefined, makeFormData(validIds, "absolute", "10"));
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("Aucune variante trouvee");
+		expect(result.message).toContain("Aucune variante trouvée");
 	});
 
 	it("should invalidate cache tags after successful update", async () => {
@@ -197,7 +242,10 @@ describe("bulkAdjustStock", () => {
 	});
 
 	it("should return success with count and mode in message for positive relative", async () => {
-		mockSchemaParse.mockReturnValue({ ids: validIds, mode: "relative", value: 5 });
+		mockSchemaParse.mockReturnValue({
+			success: true,
+			data: { ids: validIds, mode: "relative", value: 5 },
+		});
 		const result = await bulkAdjustStock(undefined, makeFormData(validIds, "relative", "5"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("+5");

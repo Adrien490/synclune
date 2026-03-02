@@ -51,8 +51,8 @@ export function ProductSkuActiveToggle({
 			disabled={isDefaultAndActive}
 			activeLabel={
 				isDefaultAndActive
-					? "La variante principale ne peut pas etre desactivee"
-					: "Desactiver la variante"
+					? "La variante principale ne peut pas être désactivée"
+					: "Désactiver la variante"
 			}
 			inactiveLabel="Activer la variante"
 		/>

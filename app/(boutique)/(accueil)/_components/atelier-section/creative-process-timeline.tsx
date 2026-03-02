@@ -1,31 +1,18 @@
 import { cn } from "@/shared/utils/cn";
-import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
+import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles, type LucideIcon } from "lucide-react";
 import { CreativeProcessGlitter } from "./creative-process-glitter";
 import { MobileStepCircle } from "./mobile-step-circle";
 import { processSteps } from "./process-steps";
 
-const STEP_ICONS = [
-	<Lightbulb
-		key="lightbulb"
-		className="h-6 w-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300"
-		aria-hidden="true"
-	/>,
-	<Pencil
-		key="pencil"
-		className="h-6 w-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300"
-		aria-hidden="true"
-	/>,
-	<Hammer
-		key="hammer"
-		className="h-6 w-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300"
-		aria-hidden="true"
-	/>,
-	<CheckCircle
-		key="check"
-		className="h-6 w-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300"
-		aria-hidden="true"
-	/>,
-];
+const STEP_ICONS: LucideIcon[] = [Lightbulb, Pencil, Hammer, CheckCircle];
+
+const ICON_CLASS =
+	"h-6 w-6 motion-safe:transition-[color,filter,transform] motion-safe:duration-300";
+
+function StepIcon({ index }: { index: number }) {
+	const Icon = STEP_ICONS[index];
+	return Icon ? <Icon className={ICON_CLASS} aria-hidden="true" /> : null;
+}
 
 export function CreativeProcessTimeline() {
 	const isLast = (index: number) => index === processSteps.length - 1;
@@ -60,7 +47,7 @@ export function CreativeProcessTimeline() {
 									step.intensity.shadow,
 								)}
 							>
-								{STEP_ICONS[index]}
+								<StepIcon index={index} />
 								{isLast(index) && <CreativeProcessGlitter />}
 							</div>
 
@@ -111,7 +98,7 @@ export function CreativeProcessTimeline() {
 									step.intensity.shadow,
 								)}
 							>
-								{STEP_ICONS[index]}
+								<StepIcon index={index} />
 								{isLast(index) && (
 									<div className="hidden sm:block">
 										<CreativeProcessGlitter />

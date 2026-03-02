@@ -194,6 +194,10 @@ export const createCheckoutSession = async (
 					validatedData.shippingAddress.postalCode,
 				);
 
+				if (shippingCost === null) {
+					throw new BusinessError("Livraison non disponible pour cette zone (Corse, DOM-TOM)");
+				}
+
 				// Apply discount code atomically
 				let discountAmount = 0;
 				let appliedDiscountId: string | null = null;

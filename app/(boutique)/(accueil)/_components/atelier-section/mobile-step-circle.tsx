@@ -21,23 +21,6 @@ export function MobileStepCircle({ index, color, intensity }: MobileStepCirclePr
 	const isInView = useInView(ref, { once: true, amount: 0.5 });
 	const shouldReduceMotion = useReducedMotion();
 
-	if (shouldReduceMotion) {
-		return (
-			<div
-				ref={ref}
-				aria-hidden="true"
-				className={cn(
-					"flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold sm:hidden",
-					color,
-					intensity.ring,
-					intensity.shadow,
-				)}
-			>
-				{index + 1}
-			</div>
-		);
-	}
-
 	return (
 		<motion.div
 			ref={ref}
@@ -48,9 +31,19 @@ export function MobileStepCircle({ index, color, intensity }: MobileStepCirclePr
 				intensity.ring,
 				intensity.shadow,
 			)}
-			initial={{ opacity: 0.5, scale: 0.9 }}
-			animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0.5, scale: 0.9 }}
-			transition={{ duration: MOTION_CONFIG.duration.emphasis, ease: MOTION_CONFIG.easing.easeOut }}
+			initial={shouldReduceMotion ? false : { opacity: 0.5, scale: 0.9 }}
+			animate={
+				shouldReduceMotion
+					? undefined
+					: isInView
+						? { opacity: 1, scale: 1 }
+						: { opacity: 0.5, scale: 0.9 }
+			}
+			transition={
+				shouldReduceMotion
+					? undefined
+					: { duration: MOTION_CONFIG.duration.emphasis, ease: MOTION_CONFIG.easing.easeOut }
+			}
 		>
 			{index + 1}
 		</motion.div>

@@ -94,6 +94,7 @@ export const ROUTES = {
 		DASHBOARD: "/admin",
 		ORDERS: "/admin/ventes/commandes",
 		ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
+		REFUNDS: "/admin/ventes/remboursements",
 		PRODUCTS: "/admin/catalogue/produits",
 		INVENTORY: "/admin/catalogue/inventaire",
 	},

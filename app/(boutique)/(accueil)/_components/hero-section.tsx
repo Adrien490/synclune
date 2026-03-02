@@ -140,7 +140,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 
 			{/* Scroll indicator - dynamically imported (decorative, hidden on mobile) */}
 			<ScrollIndicator
-				targetIds={["latest-creations", "collections"]}
+				targetIds={["latest-creations", "collections", "atelier-section"]}
 				ariaLabel="Voir la suite"
 				className="hidden sm:block"
 			/>

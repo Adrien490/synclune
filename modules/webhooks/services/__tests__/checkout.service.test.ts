@@ -99,6 +99,11 @@ vi.mock("@/modules/products/constants/cache", () => ({
 
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: mockGetBaseUrl,
+	ROUTES: {
+		ADMIN: {
+			ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
+		},
+	},
 }));
 
 import {
@@ -594,7 +599,9 @@ describe("buildPostCheckoutTasks", () => {
 		if (adminEmailTask?.type === "ADMIN_NEW_ORDER_EMAIL") {
 			expect(adminEmailTask.data.orderNumber).toBe("SYN-001");
 			expect(adminEmailTask.data.customerEmail).toBe("client@example.com");
-			expect(adminEmailTask.data.dashboardUrl).toBe("https://synclune.fr/dashboard/orders/order-1");
+			expect(adminEmailTask.data.dashboardUrl).toBe(
+				"https://synclune.fr/admin/ventes/commandes/order-1",
+			);
 		}
 	});
 
@@ -645,7 +652,7 @@ describe("cancelExpiredOrder", () => {
 	});
 
 	it("should cancel a PENDING order and release discount usages", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue({
+		mockTx.order.findUnique.mockResolvedValue({
 			paymentStatus: "PENDING",
 			orderNumber: "SYN-001",
 		});
@@ -685,7 +692,7 @@ describe("cancelExpiredOrder", () => {
 	});
 
 	it("should cancel a PENDING order without discount usages and skip deleteMany", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue({
+		mockTx.order.findUnique.mockResolvedValue({
 			paymentStatus: "PENDING",
 			orderNumber: "SYN-002",
 		});
@@ -706,7 +713,7 @@ describe("cancelExpiredOrder", () => {
 	});
 
 	it("should skip cancellation and return false when order is already PAID", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue({
+		mockTx.order.findUnique.mockResolvedValue({
 			paymentStatus: "PAID",
 			orderNumber: "SYN-003",
 		});
@@ -714,11 +721,12 @@ describe("cancelExpiredOrder", () => {
 		const result = await cancelExpiredOrder("order-3");
 
 		expect(result).toEqual({ cancelled: false, orderNumber: "SYN-003" });
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should skip cancellation and return false when order is already FAILED", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue({
+		mockTx.order.findUnique.mockResolvedValue({
 			paymentStatus: "FAILED",
 			orderNumber: "SYN-004",
 		});
@@ -726,26 +734,29 @@ describe("cancelExpiredOrder", () => {
 		const result = await cancelExpiredOrder("order-4");
 
 		expect(result).toEqual({ cancelled: false, orderNumber: "SYN-004" });
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should return false with no orderNumber when order does not exist", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findUnique.mockResolvedValue(null);
 
 		const result = await cancelExpiredOrder("nonexistent-order");
 
 		expect(result).toEqual({ cancelled: false });
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
-	it("should look up the order by id before entering the transaction", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+	it("should look up the order by id inside the transaction", async () => {
+		mockTx.order.findUnique.mockResolvedValue(null);
 
 		await cancelExpiredOrder("order-xyz");
 
-		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith({
+		expect(mockTx.order.findUnique).toHaveBeenCalledWith({
 			where: { id: "order-xyz" },
 			select: { paymentStatus: true, orderNumber: true },
 		});
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
 	});
 });

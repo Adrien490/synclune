@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import {
@@ -83,13 +84,17 @@ export async function executePostWebhookTasks(
 			const errorMessage =
 				rejected.reason instanceof Error ? rejected.reason.message : String(rejected.reason);
 			result.errors.push({ type: task.type, error: errorMessage });
-			console.error(`[WEBHOOK-AFTER] Failed to execute task ${task.type}:`, rejected.reason);
+			logger.error(`[WEBHOOK-AFTER] Failed to execute task ${task.type}:`, rejected.reason, {
+				service: "webhook",
+			});
 		}
 	}
 
 	// Log résumé si des erreurs
 	if (result.failed > 0) {
-		console.warn(`⚠️ [WEBHOOK-AFTER] ${result.failed}/${tasks.length} tasks failed`);
+		logger.warn(`⚠️ [WEBHOOK-AFTER] ${result.failed}/${tasks.length} tasks failed`, {
+			service: "webhook",
+		});
 
 		// Alert admin if critical customer-facing emails failed
 		const criticalFailures = result.errors.filter((e) => CRITICAL_EMAIL_TASKS.has(e.type));
@@ -102,7 +107,9 @@ export async function executePostWebhookTasks(
 					error: criticalFailures.map((f) => `${f.type}: ${f.error}`).join("; "),
 				});
 			} catch {
-				console.error("[WEBHOOK-AFTER] Failed to send admin alert for email failures");
+				logger.error("[WEBHOOK-AFTER] Failed to send admin alert for email failures", undefined, {
+					service: "webhook",
+				});
 			}
 		}
 	}

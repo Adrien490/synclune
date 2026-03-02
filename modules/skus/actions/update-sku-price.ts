@@ -67,7 +67,7 @@ export async function updateSkuPrice(
 		});
 
 		if (!sku) {
-			return error("Variante non trouvee");
+			return error("Variante non trouvée");
 		}
 
 		// 5. Convertir euros → centimes

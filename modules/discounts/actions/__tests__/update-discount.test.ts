@@ -263,31 +263,35 @@ describe("updateDiscount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should skip uniqueness check when code is unchanged", async () => {
-		// sanitizedCode === existing.code → no findFirst call
+		// sanitizedCode === existing.code → only one findUnique call (existence check)
 		mockSanitizeText.mockReturnValue("PROMO20");
 		mockPrisma.discount.findUnique.mockResolvedValue({ id: "disc-123", code: "PROMO20" });
 
 		await updateDiscount(undefined, validFormData);
 
-		expect(mockPrisma.discount.findFirst).not.toHaveBeenCalled();
+		// findUnique called once for existence check, not a second time for uniqueness
+		expect(mockPrisma.discount.findUnique).toHaveBeenCalledTimes(1);
 	});
 
 	it("should check uniqueness when code is changed", async () => {
 		mockSanitizeText.mockReturnValue("NEWCODE");
-		mockPrisma.discount.findUnique.mockResolvedValue({ id: "disc-123", code: "PROMO20" });
+		mockPrisma.discount.findUnique
+			.mockResolvedValueOnce({ id: "disc-123", code: "PROMO20" })
+			.mockResolvedValueOnce(null);
 
 		await updateDiscount(undefined, validFormData);
 
-		expect(mockPrisma.discount.findFirst).toHaveBeenCalledWith({
-			where: { code: "NEWCODE", deletedAt: null },
+		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith({
+			where: { code: "NEWCODE" },
 			select: { id: true },
 		});
 	});
 
 	it("should return ALREADY_EXISTS error when new code conflicts with existing discount", async () => {
 		mockSanitizeText.mockReturnValue("TAKEN");
-		mockPrisma.discount.findUnique.mockResolvedValue({ id: "disc-123", code: "PROMO20" });
-		mockPrisma.discount.findFirst.mockResolvedValue({ id: "other-disc" });
+		mockPrisma.discount.findUnique
+			.mockResolvedValueOnce({ id: "disc-123", code: "PROMO20" })
+			.mockResolvedValueOnce({ id: "other-disc" });
 
 		const result = await updateDiscount(undefined, validFormData);
 
@@ -302,8 +306,9 @@ describe("updateDiscount", () => {
 
 	it("should update discount with sanitized code and validated data", async () => {
 		mockSanitizeText.mockReturnValue("PROMO20-SANITIZED");
-		mockPrisma.discount.findUnique.mockResolvedValue({ id: "disc-123", code: "PROMO20" });
-		mockPrisma.discount.findFirst.mockResolvedValue(null);
+		mockPrisma.discount.findUnique
+			.mockResolvedValueOnce({ id: "disc-123", code: "PROMO20" })
+			.mockResolvedValueOnce(null);
 
 		await updateDiscount(undefined, validFormData);
 
@@ -344,8 +349,9 @@ describe("updateDiscount", () => {
 
 	it("should also invalidate new code tags when code changed", async () => {
 		mockSanitizeText.mockReturnValue("UPDATED-CODE");
-		mockPrisma.discount.findUnique.mockResolvedValue({ id: "disc-123", code: "OLD-CODE" });
-		mockPrisma.discount.findFirst.mockResolvedValue(null);
+		mockPrisma.discount.findUnique
+			.mockResolvedValueOnce({ id: "disc-123", code: "OLD-CODE" })
+			.mockResolvedValueOnce(null);
 		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-detail"]);
 
 		await updateDiscount(undefined, validFormData);

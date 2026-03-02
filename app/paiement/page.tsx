@@ -4,6 +4,7 @@ import { getCart } from "@/modules/cart/data/get-cart";
 import { validateCart } from "@/modules/cart/actions/validate-cart";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
+import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -97,15 +98,24 @@ export default async function CheckoutPage() {
 	}
 
 	return (
-		<div className="min-h-screen">
-			<section className="bg-background py-8 sm:py-10">
+		<div className="relative min-h-screen">
+			{/* Decorative background */}
+			<div className="from-primary/[0.02] to-secondary/[0.03] fixed inset-0 -z-10 bg-gradient-to-br via-transparent" />
+
+			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					<div className="mb-6 sm:mb-8">
-						<h1 className="font-display text-xl font-medium tracking-tight sm:text-2xl">
+						<h1 className="font-display text-2xl font-medium tracking-wide sm:text-3xl">
 							Finaliser ma commande
 						</h1>
-						<p className="text-muted-foreground mt-1 text-sm">
-							Paiement sécurisé et livraison rapide
+						<HandDrawnUnderline
+							color="var(--primary)"
+							width={80}
+							strokeWidth={1.5}
+							inView={false}
+						/>
+						<p className="text-muted-foreground mt-2 text-sm">
+							Paiement sécurisé et livraison soignée
 						</p>
 					</div>
 					<CheckoutForm cart={cart} session={session} addresses={addresses} />

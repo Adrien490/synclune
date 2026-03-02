@@ -1,23 +1,18 @@
 "use client";
 
 import { FieldLabel } from "@/shared/components/forms";
-import { MediaCounterBadge } from "@/modules/media/components/media-counter-badge";
-import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
-import { PrimaryImageUpload } from "@/modules/media/components/admin/primary-image-upload";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon } from "@/shared/components/ui/input-group";
-import { Label } from "@/shared/components/ui/label";
-import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { useUpdateProductSkuForm } from "@/modules/skus/hooks/use-update-sku-form";
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
-import { cn } from "@/shared/utils/cn";
-import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
+import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
-import { AnimatePresence, m } from "motion/react";
-import { Euro, ImagePlus, Info, Upload } from "lucide-react";
+import { Euro } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
+import { SkuPrimaryImageField } from "./sku-primary-image-field";
+import { SkuGalleryField } from "./sku-gallery-field";
 
 interface EditProductVariantFormProps {
 	colors: Array<{
@@ -211,7 +206,7 @@ export function EditProductVariantForm({
 							</div>
 						</div>
 
-						{/* Prix et stock */}
+						{/* Prix */}
 						<div className="space-y-4 border-t pt-6">
 							{/* Prix final */}
 							<form.AppField
@@ -276,398 +271,28 @@ export function EditProductVariantForm({
 						{/* Image principale */}
 						<form.Field name="primaryImage">
 							{(field) => (
-								<div className="space-y-2">
-									<Label htmlFor="primary-image-upload">Image principale</Label>
-									<PrimaryImageUpload
-										imageUrl={field.state.value?.url}
-										mediaType={field.state.value?.mediaType}
-										onRemove={() => field.handleChange(undefined)}
-										skipUtapiDelete={true}
-										productName={product.title}
-										renderUploadZone={() => (
-											<div className="relative">
-												<UploadDropzone
-													endpoint="catalogMedia"
-													onChange={async (files) => {
-														if (files.length > 1) {
-															toast.error("Vous ne pouvez uploader qu'une seule image principale");
-															return;
-														}
-
-														const file = files[0];
-														if (!file) return;
-														const isVideo = file.type.startsWith("video/");
-
-														if (isVideo) {
-															toast.error(
-																"Les vidéos ne peuvent pas être utilisées comme média principal",
-															);
-															return;
-														}
-
-														const maxSize = 16 * 1024 * 1024;
-														if (file.size > maxSize) {
-															toast.error("L'image dépasse la limite de 16MB");
-															return;
-														}
-
-														try {
-															const res = await startPrimaryImageUpload(files);
-															const serverData = res?.[0]?.serverData;
-															if (serverData?.url) {
-																field.handleChange({
-																	url: serverData.url,
-																	blurDataUrl: serverData.blurDataUrl ?? undefined,
-																	thumbnailUrl: undefined,
-																	altText: product.title,
-																	mediaType: "IMAGE",
-																});
-															}
-														} catch {
-															toast.error("Échec de l'upload");
-														}
-													}}
-													onUploadError={(error) => {
-														toast.error(`Erreur: ${error.message}`);
-													}}
-													className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
-													appearance={{
-														container: ({ isDragActive, isUploading }) => ({
-															border: "3px dashed",
-															borderColor: isDragActive
-																? "var(--primary)"
-																: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
-															borderRadius: "1rem",
-															backgroundColor: isDragActive
-																? "color-mix(in oklch, var(--primary) 5%, transparent)"
-																: "color-mix(in oklch, var(--muted) 30%, transparent)",
-															padding: "2rem",
-															transition: "all 0.2s ease-in-out",
-															height: "min(280px, 25vh)",
-															minHeight: "220px",
-															maxHeight: "350px",
-															display: "flex",
-															flexDirection: "column",
-															alignItems: "center",
-															justifyContent: "center",
-															gap: "0.75rem",
-															cursor: isUploading ? "not-allowed" : "pointer",
-															opacity: isUploading ? 0.7 : 1,
-															position: "relative",
-															boxShadow: isDragActive
-																? "0 0 0 2px color-mix(in oklch, var(--primary) 20%, transparent), 0 8px 24px color-mix(in oklch, var(--primary) 15%, transparent)"
-																: "var(--shadow-md)",
-														}),
-														uploadIcon: ({ isDragActive, isUploading }) => ({
-															color: isDragActive
-																? "var(--primary)"
-																: "color-mix(in oklch, var(--primary) 70%, transparent)",
-															width: "3.5rem",
-															height: "3.5rem",
-															transition: "all 0.2s ease-in-out",
-															transform: isDragActive ? "scale(1.15)" : "scale(1)",
-															opacity: isUploading ? 0.5 : 1,
-														}),
-														label: ({ isDragActive, isUploading }) => ({
-															color: isDragActive ? "var(--primary)" : "var(--foreground)",
-															fontSize: "1rem",
-															fontWeight: "600",
-															textAlign: "center",
-															transition: "color 0.2s ease-in-out",
-															opacity: isUploading ? 0.5 : 1,
-															width: "100%",
-															wordBreak: "break-word",
-														}),
-														allowedContent: ({ isUploading }) => ({
-															color: "var(--muted-foreground)",
-															fontSize: "0.875rem",
-															textAlign: "center",
-															marginTop: "0.5rem",
-															opacity: isUploading ? 0.5 : 1,
-														}),
-													}}
-													content={{
-														uploadIcon: ({ isDragActive, isUploading, uploadProgress }) => {
-															if (isUploading) {
-																return (
-																	<div className="bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-sm">
-																		<UploadProgress
-																			progress={uploadProgress}
-																			isProcessing={uploadProgress >= 100}
-																		/>
-																	</div>
-																);
-															}
-															return (
-																<Upload
-																	className={cn(
-																		"h-16 w-16 transition-all duration-200",
-																		isDragActive ? "text-primary scale-110" : "text-primary/70",
-																	)}
-																/>
-															);
-														},
-														label: ({ isDragActive, isUploading }) => {
-															if (isUploading) {
-																return null;
-															}
-
-															if (isDragActive) {
-																return (
-																	<div className="text-center">
-																		<p className="text-primary text-lg font-semibold">
-																			Relâchez pour uploader
-																		</p>
-																	</div>
-																);
-															}
-
-															return (
-																<div className="space-y-2 text-center">
-																	<p className="text-lg font-semibold">
-																		Glissez votre image principale ici
-																	</p>
-																	<p className="text-muted-foreground text-sm">
-																		ou cliquez pour sélectionner
-																	</p>
-																	<p className="text-muted-foreground mt-2 text-xs">
-																		Image • Max 16MB
-																	</p>
-																</div>
-															);
-														},
-														allowedContent: () => null,
-														button: () => (
-															<span className="sr-only">Sélectionner une image principale</span>
-														),
-													}}
-													config={{
-														mode: "auto",
-													}}
-												/>
-											</div>
-										)}
-									/>
-								</div>
+								<SkuPrimaryImageField
+									value={field.state.value}
+									onChange={(value) => field.handleChange(value)}
+									productName={product.title}
+									startUpload={startPrimaryImageUpload}
+									isUploading={isPrimaryImageUploading}
+								/>
 							)}
 						</form.Field>
 
 						{/* Galerie */}
 						<form.Field name="galleryMedia" mode="array">
-							{(field) => {
-								const currentCount = field.state.value.length;
-								const maxCount = 5;
-								const isAtLimit = currentCount >= maxCount;
-
-								return (
-									<div className="space-y-3">
-										<div className="flex items-center justify-between">
-											<Label>Galerie (optionnel)</Label>
-											<MediaCounterBadge count={currentCount} max={maxCount} />
-										</div>
-
-										{isAtLimit && (
-											<div className="bg-secondary/10 border-secondary flex items-start gap-2 rounded-lg border p-3">
-												<Info className="text-secondary-foreground mt-0.5 h-4 w-4 shrink-0" />
-												<div className="text-secondary-foreground text-sm">
-													<p className="font-medium">Limite atteinte</p>
-													<p className="mt-0.5 text-xs">
-														Supprimez un média pour en ajouter un nouveau.
-													</p>
-												</div>
-											</div>
-										)}
-
-										<AnimatePresence mode="popLayout">
-											{field.state.value.length > 0 && (
-												<m.div
-													initial={{ opacity: 0 }}
-													animate={{ opacity: 1 }}
-													exit={{ opacity: 0 }}
-												>
-													<MediaUploadGrid
-														media={field.state.value.map((m) => ({
-															url: m.url,
-															mediaType: m.mediaType,
-															altText: m.altText ?? undefined,
-															thumbnailUrl: m.thumbnailUrl ?? undefined,
-															blurDataUrl: m.blurDataUrl ?? undefined,
-														}))}
-														onChange={(newMedia) => field.setValue(newMedia)}
-														skipUtapiDelete={true}
-													/>
-												</m.div>
-											)}
-										</AnimatePresence>
-
-										{field.state.value.length === 0 && (
-											<div className="bg-muted/20 border-border flex items-center gap-3 rounded-lg border border-dashed px-3 py-3 text-left">
-												<ImagePlus className="text-muted-foreground/50 h-6 w-6 shrink-0" />
-												<div>
-													<p className="text-foreground text-sm font-medium">Aucun média</p>
-													<p className="text-muted-foreground text-xs">
-														Jusqu'à {maxCount} images et vidéos
-													</p>
-												</div>
-											</div>
-										)}
-
-										{!isAtLimit && (
-											<UploadDropzone
-												endpoint="catalogMedia"
-												onBeforeUploadBegin={(files) => {
-													const remaining = maxCount - field.state.value.length;
-													if (files.length > remaining) {
-														toast.warning(
-															`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`,
-														);
-														return files.slice(0, remaining);
-													}
-													return files;
-												}}
-												onChange={async (files) => {
-													const remaining = maxCount - field.state.value.length;
-													const filesToUpload = files.slice(0, remaining);
-													if (files.length > remaining) {
-														toast.warning(
-															`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`,
-														);
-													}
-													if (filesToUpload.length === 0) return;
-
-													const results = await uploadGalleryMedia(filesToUpload);
-													results.forEach((result) => {
-														field.pushValue({
-															url: result.url,
-															blurDataUrl: result.blurDataUrl,
-															thumbnailUrl: result.thumbnailUrl,
-															altText: product.title,
-															mediaType: result.mediaType,
-														});
-													});
-												}}
-												onUploadError={(error) => {
-													toast.error(`Erreur: ${error.message}`);
-												}}
-												className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
-												appearance={{
-													container: ({ isDragActive, isUploading }) => ({
-														border: "2px dashed",
-														borderColor: isDragActive
-															? "var(--primary)"
-															: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
-														borderRadius: "0.75rem",
-														backgroundColor: isDragActive
-															? "color-mix(in oklch, var(--primary) 5%, transparent)"
-															: "color-mix(in oklch, var(--muted) 30%, transparent)",
-														padding: "1rem",
-														transition: "all 0.2s ease-in-out",
-														height: "min(140px, 20vh)",
-														minHeight: "120px",
-														display: "flex",
-														flexDirection: "column",
-														alignItems: "center",
-														justifyContent: "center",
-														gap: "0.5rem",
-														cursor: isUploading ? "not-allowed" : "pointer",
-														opacity: isUploading ? 0.7 : 1,
-														position: "relative",
-														boxShadow: isDragActive
-															? "0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 12px color-mix(in oklch, var(--primary) 10%, transparent)"
-															: "var(--shadow-sm)",
-													}),
-													uploadIcon: ({ isDragActive, isUploading }) => ({
-														color: isDragActive
-															? "var(--primary)"
-															: "color-mix(in oklch, var(--primary) 70%, transparent)",
-														width: "2rem",
-														height: "2rem",
-														transition: "all 0.2s ease-in-out",
-														transform: isDragActive ? "scale(1.1)" : "scale(1)",
-														opacity: isUploading ? 0.5 : 1,
-													}),
-													label: ({ isDragActive, isUploading }) => ({
-														color: isDragActive ? "var(--primary)" : "var(--foreground)",
-														fontSize: "0.875rem",
-														fontWeight: "500",
-														textAlign: "center",
-														transition: "color 0.2s ease-in-out",
-														opacity: isUploading ? 0.5 : 1,
-														width: "100%",
-														wordBreak: "break-word",
-													}),
-													allowedContent: ({ isUploading }) => ({
-														color: "var(--muted-foreground)",
-														fontSize: "0.75rem",
-														textAlign: "center",
-														marginTop: "0.25rem",
-														opacity: isUploading ? 0.5 : 1,
-													}),
-												}}
-												content={{
-													uploadIcon: ({ isDragActive, isUploading, uploadProgress }) => {
-														if (isUploading) {
-															return (
-																<div
-																	className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-sm"
-																	role="status"
-																	aria-live="polite"
-																>
-																	<UploadProgress
-																		progress={uploadProgress}
-																		isProcessing={uploadProgress >= 100}
-																	/>
-																</div>
-															);
-														}
-														return (
-															<Upload
-																className={cn(
-																	"h-10 w-10 transition-all duration-200",
-																	isDragActive ? "text-primary scale-110" : "text-primary/70",
-																)}
-															/>
-														);
-													},
-													label: ({ isDragActive, isUploading }) => {
-														if (isUploading) {
-															return null;
-														}
-
-														if (isDragActive) {
-															return (
-																<div className="text-center">
-																	<p className="text-primary text-sm font-medium">
-																		Relâchez pour ajouter
-																	</p>
-																</div>
-															);
-														}
-
-														const remaining = maxCount - field.state.value.length;
-														return (
-															<div className="space-y-1 text-center">
-																<p className="text-sm font-medium">Ajouter à la galerie</p>
-																<p className="text-muted-foreground text-xs">
-																	{remaining} {remaining > 1 ? "médias restants" : "média restant"}{" "}
-																	• Max 16MB (image) / 512MB (vidéo)
-																</p>
-															</div>
-														);
-													},
-													allowedContent: () => null,
-													button: () => (
-														<span className="sr-only">Sélectionner des images pour la galerie</span>
-													),
-												}}
-												config={{
-													mode: "auto",
-												}}
-											/>
-										)}
-									</div>
-								);
-							}}
+							{(field) => (
+								<SkuGalleryField
+									value={field.state.value}
+									setValue={(value) => field.setValue(value)}
+									pushValue={(value) => field.pushValue(value)}
+									productName={product.title}
+									uploadMedia={uploadGalleryMedia}
+									isUploading={isGalleryUploading}
+								/>
+							)}
 						</form.Field>
 					</div>
 

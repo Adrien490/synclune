@@ -17,7 +17,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		discount: {
-			findFirst: vi.fn(),
+			findUnique: vi.fn(),
 		},
 	},
 	mockHeaders: vi.fn(),
@@ -123,7 +123,7 @@ describe("validateDiscountCode", () => {
 		mockGetSession.mockResolvedValue(null);
 
 		// Default: discount found
-		mockPrisma.discount.findFirst.mockResolvedValue(mockDiscount);
+		mockPrisma.discount.findUnique.mockResolvedValue(mockDiscount);
 
 		// Default: eligible
 		mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
@@ -195,7 +195,7 @@ describe("validateDiscountCode", () => {
 	it("should normalize code to uppercase", async () => {
 		await validateDiscountCode("promo20", VALID_SUBTOTAL);
 
-		expect(mockPrisma.discount.findFirst).toHaveBeenCalledWith(
+		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { code: "PROMO20", deletedAt: null },
 			}),
@@ -216,7 +216,7 @@ describe("validateDiscountCode", () => {
 
 		// Should still succeed via retry path
 		expect(result.valid).toBe(true);
-		expect(mockPrisma.discount.findFirst).toHaveBeenCalled();
+		expect(mockPrisma.discount.findUnique).toHaveBeenCalled();
 	});
 
 	it("should return error for invalid customerEmail", async () => {
@@ -237,7 +237,7 @@ describe("validateDiscountCode", () => {
 			...mockDiscount,
 			maxUsagePerUser: 1,
 		};
-		mockPrisma.discount.findFirst.mockResolvedValue(discountWithPerUser);
+		mockPrisma.discount.findUnique.mockResolvedValue(discountWithPerUser);
 
 		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
 
@@ -254,7 +254,7 @@ describe("validateDiscountCode", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should return error when discount not found", async () => {
-		mockPrisma.discount.findFirst.mockResolvedValue(null);
+		mockPrisma.discount.findUnique.mockResolvedValue(null);
 
 		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
 
@@ -265,7 +265,7 @@ describe("validateDiscountCode", () => {
 	it("should query with deletedAt: null", async () => {
 		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
 
-		expect(mockPrisma.discount.findFirst).toHaveBeenCalledWith(
+		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ deletedAt: null }),
 			}),
@@ -293,7 +293,7 @@ describe("validateDiscountCode", () => {
 			...mockDiscount,
 			maxUsagePerUser: 3,
 		};
-		mockPrisma.discount.findFirst.mockResolvedValue(discountWithPerUser);
+		mockPrisma.discount.findUnique.mockResolvedValue(discountWithPerUser);
 
 		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
 
@@ -352,7 +352,7 @@ describe("validateDiscountCode", () => {
 			...mockDiscount,
 			maxUsagePerUser: 1,
 		};
-		mockPrisma.discount.findFirst.mockResolvedValue(discountWithPerUser);
+		mockPrisma.discount.findUnique.mockResolvedValue(discountWithPerUser);
 
 		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
 
@@ -372,7 +372,7 @@ describe("validateDiscountCode", () => {
 			...mockDiscount,
 			maxUsagePerUser: 1,
 		};
-		mockPrisma.discount.findFirst.mockResolvedValue(discountWithPerUser);
+		mockPrisma.discount.findUnique.mockResolvedValue(discountWithPerUser);
 
 		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL, "guest@test.com");
 

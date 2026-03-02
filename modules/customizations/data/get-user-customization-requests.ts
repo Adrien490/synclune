@@ -37,7 +37,7 @@ export type UserCustomizationRequest = NonNullable<
  */
 export async function getUserCustomizationRequests() {
 	const session = await getSession();
-	if (!session?.user.id) return null;
+	if (!session?.user?.id) return null;
 	return fetchUserCustomizationRequests(session.user.id);
 }
 

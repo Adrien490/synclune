@@ -13,7 +13,7 @@ export function DiscountsDataTableSkeleton() {
 				{ width: "10%", cell: { type: "text", width: "w-14" } },
 				{ width: "10%", cell: { type: "actions" } },
 			]}
-			pagination="offset"
+			pagination="cursor"
 		/>
 	);
 }

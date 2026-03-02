@@ -39,6 +39,27 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	validateInput: (
+		schema: {
+			safeParse: (data: unknown) => {
+				success: boolean;
+				data?: unknown;
+				error?: { issues: { message: string }[] };
+			};
+		},
+		data: unknown,
+	) => {
+		const result = schema.safeParse(data);
+		if (!result.success) {
+			return {
+				error: {
+					status: "validation_error",
+					message: result.error?.issues[0]?.message ?? "Invalid",
+				},
+			};
+		}
+		return { data: result.data };
+	},
 	BusinessError: class BusinessError extends Error {
 		constructor(message: string) {
 			super(message);
@@ -48,7 +69,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 }));
 vi.mock("../../schemas/sku.schemas", () => ({
-	bulkDeactivateSkusSchema: { parse: mockSchemaParse },
+	bulkDeactivateSkusSchema: { safeParse: mockSchemaParse },
 }));
 vi.mock("../../utils/cache.utils", () => ({
 	collectBulkInvalidationTags: mockCollectBulkInvalidationTags,
@@ -104,7 +125,7 @@ describe("bulkDeactivateSkus", () => {
 		mockCollectBulkInvalidationTags.mockReturnValue(new Set(["skus-list"]));
 		mockInvalidateTags.mockReturnValue(undefined);
 
-		mockSchemaParse.mockReturnValue({ ids: validIds });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: validIds } });
 
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData());
 		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 2 });
@@ -132,7 +153,7 @@ describe("bulkDeactivateSkus", () => {
 	});
 
 	it("should return error when no IDs are provided", async () => {
-		mockSchemaParse.mockReturnValue({ ids: [] });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: [] } });
 		const result = await bulkDeactivateSkus(undefined, makeFormData([]));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Aucune variante");
@@ -140,7 +161,7 @@ describe("bulkDeactivateSkus", () => {
 
 	it("should return error when IDs exceed the bulk limit", async () => {
 		const manyIds = Array.from({ length: 101 }, (_, i) => `id-${i}`);
-		mockSchemaParse.mockReturnValue({ ids: manyIds });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: manyIds } });
 		const result = await bulkDeactivateSkus(undefined, makeFormData(manyIds));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Maximum 100");
@@ -152,7 +173,7 @@ describe("bulkDeactivateSkus", () => {
 		);
 		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("defaut");
+		expect(result.message).toContain("défaut");
 	});
 
 	it("should return error when all selected SKUs are default", async () => {
@@ -161,7 +182,7 @@ describe("bulkDeactivateSkus", () => {
 		);
 		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("variante par defaut");
+		expect(result.message).toContain("variante par défaut");
 	});
 
 	it("should call updateMany with isActive=false when no default SKUs", async () => {

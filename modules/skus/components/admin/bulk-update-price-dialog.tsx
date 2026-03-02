@@ -76,7 +76,7 @@ export function BulkUpdatePriceDialog() {
 							<ResponsiveDialogTitle>Modifier les prix</ResponsiveDialogTitle>
 						</div>
 						<ResponsiveDialogDescription>
-							{count} variante{count > 1 ? "s" : ""} selectionnee{count > 1 ? "s" : ""}
+							{count} variante{count > 1 ? "s" : ""} sélectionnée{count > 1 ? "s" : ""}
 						</ResponsiveDialogDescription>
 					</ResponsiveDialogHeader>
 
@@ -129,7 +129,7 @@ export function BulkUpdatePriceDialog() {
 							</div>
 							{mode === "percentage" && (
 								<p className="text-muted-foreground text-xs">
-									Utilisez un nombre negatif pour reduire les prix (ex: -10 pour -10%)
+									Utilisez un nombre négatif pour réduire les prix (ex: -10 pour -10%)
 								</p>
 							)}
 						</div>
@@ -142,7 +142,7 @@ export function BulkUpdatePriceDialog() {
 								onCheckedChange={(checked) => setUpdateCompareAtPrice(checked === true)}
 							/>
 							<Label htmlFor="updateCompareAtPrice" className="cursor-pointer text-sm font-normal">
-								Appliquer egalement aux prix barres
+								Appliquer également aux prix barrés
 							</Label>
 						</div>
 
@@ -152,13 +152,13 @@ export function BulkUpdatePriceDialog() {
 								<>
 									Les prix seront{" "}
 									<span className="font-semibold">
-										{value >= 0 ? `augmentes de ${value}%` : `reduits de ${Math.abs(value)}%`}
+										{value >= 0 ? `augmentés de ${value}%` : `réduits de ${Math.abs(value)}%`}
 									</span>
 								</>
 							) : (
 								<>
 									Tous les prix seront{" "}
-									<span className="font-semibold">definis a {value.toFixed(2)} EUR</span>
+									<span className="font-semibold">définis à {value.toFixed(2)} EUR</span>
 								</>
 							)}
 						</div>

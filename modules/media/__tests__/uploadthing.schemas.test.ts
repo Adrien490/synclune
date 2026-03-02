@@ -141,5 +141,20 @@ describe("deleteUploadThingFilesSchema", () => {
 			});
 			expect(result.success).toBe(false);
 		});
+
+		it("rejects an array exceeding the 100 URL limit", () => {
+			const urls = Array.from({ length: 101 }, (_, i) => `https://utfs.io/f/file${i}.jpg`);
+			const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: urls });
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error.issues[0]?.message).toContain("Maximum 100");
+			}
+		});
+
+		it("accepts exactly 100 URLs", () => {
+			const urls = Array.from({ length: 100 }, (_, i) => `https://utfs.io/f/file${i}.jpg`);
+			const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: urls });
+			expect(result.success).toBe(true);
+		});
 	});
 });

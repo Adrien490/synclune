@@ -36,13 +36,13 @@ export async function updateProductType(
 			description: formData.get("description") ?? undefined,
 		};
 
-		// 3. Valider les donnees
+		// 4. Valider les donnees
 		const validated = validateInput(updateProductTypeSchema, rawData);
 		if ("error" in validated) return validated.error;
 
 		const validatedData = validated.data;
 
-		// 4. Verifier que le type existe
+		// 5. Verifier que le type existe
 		const existingType = await prisma.productType.findUnique({
 			where: { id: validatedData.id },
 		});
@@ -51,17 +51,17 @@ export async function updateProductType(
 			return notFound("Type de produit");
 		}
 
-		// 5. Protection: Les types systeme ne peuvent pas etre modifies (label/slug)
+		// 6. Protection: Les types systeme ne peuvent pas etre modifies (label/slug)
 		if (existingType.isSystem) {
 			return error(
 				`Le type "${existingType.label}" est un type systeme et ne peut pas etre modifie`,
 			);
 		}
 
-		// 6. Verifier l'unicite du label (sauf si c'est le meme)
-		if (validatedData.label !== existingType.label) {
+		// 7. Verifier l'unicite du label (case-insensitive, sauf si c'est le meme)
+		if (validatedData.label.toLowerCase() !== existingType.label.toLowerCase()) {
 			const labelExists = await prisma.productType.findFirst({
-				where: { label: validatedData.label },
+				where: { label: { equals: validatedData.label, mode: "insensitive" } },
 			});
 
 			if (labelExists) {
@@ -69,13 +69,13 @@ export async function updateProductType(
 			}
 		}
 
-		// 7. Generer un nouveau slug si le label a change
+		// 8. Generer un nouveau slug si le label a change
 		const slug =
 			validatedData.label !== existingType.label
 				? await generateSlug(prisma, "productType", validatedData.label)
 				: existingType.slug;
 
-		// 8. Mettre a jour le type
+		// 9. Mettre a jour le type
 		await prisma.productType.update({
 			where: { id: validatedData.id },
 			data: {
@@ -94,7 +94,7 @@ export async function updateProductType(
 			metadata: { label: validatedData.label },
 		});
 
-		// 9. Invalider le cache des types de produits
+		// 10. Invalider le cache des types de produits
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 
 		return success("Type de produit modifié avec succès");

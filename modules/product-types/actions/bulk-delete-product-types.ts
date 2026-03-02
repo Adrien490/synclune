@@ -53,32 +53,45 @@ export async function bulkDeleteProductTypes(
 			return error("Au moins un type de bijou doit être sélectionné");
 		}
 
-		// 3. Récupérer les types pour vérification
-		const productTypes = await prisma.productType.findMany({
-			where: { id: { in: ids } },
-			select: {
-				id: true,
-				label: true,
-				isSystem: true,
-				_count: {
-					select: {
-						products: {
-							where: {
-								status: "PUBLIC",
-								skus: { some: { isActive: true } },
+		// 4. Verifier et supprimer dans une transaction pour eviter les race conditions
+		const result = await prisma.$transaction(async (tx) => {
+			const productTypes = await tx.productType.findMany({
+				where: { id: { in: ids } },
+				select: {
+					id: true,
+					label: true,
+					isSystem: true,
+					_count: {
+						select: {
+							products: {
+								where: {
+									status: "PUBLIC",
+									skus: { some: { isActive: true } },
+								},
 							},
 						},
 					},
 				},
-			},
+			});
+
+			const systemTypes = productTypes.filter((pt) => pt.isSystem);
+			const typesWithProducts = productTypes.filter((pt) => !pt.isSystem && pt._count.products > 0);
+			const deletableTypes = productTypes.filter((pt) => !pt.isSystem && pt._count.products === 0);
+
+			if (deletableTypes.length === 0) {
+				return { systemTypes, typesWithProducts, deletableTypes, deleted: false as const };
+			}
+
+			await tx.productType.deleteMany({
+				where: { id: { in: deletableTypes.map((pt) => pt.id) } },
+			});
+
+			return { systemTypes, typesWithProducts, deletableTypes, deleted: true as const };
 		});
 
-		// 4. Séparer les types supprimables des non-supprimables
-		const systemTypes = productTypes.filter((pt) => pt.isSystem);
-		const typesWithProducts = productTypes.filter((pt) => !pt.isSystem && pt._count.products > 0);
-		const deletableTypes = productTypes.filter((pt) => !pt.isSystem && pt._count.products === 0);
+		const { systemTypes, typesWithProducts, deletableTypes } = result;
 
-		if (deletableTypes.length === 0) {
+		if (!result.deleted) {
 			const errors: string[] = [];
 			if (systemTypes.length > 0) {
 				errors.push(
@@ -93,11 +106,6 @@ export async function bulkDeleteProductTypes(
 			return error(`Aucun type supprimable. ${errors.join(". ")}`);
 		}
 
-		// 5. Supprimer les types éligibles
-		await prisma.productType.deleteMany({
-			where: { id: { in: deletableTypes.map((pt) => pt.id) } },
-		});
-
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
@@ -107,10 +115,10 @@ export async function bulkDeleteProductTypes(
 			metadata: { count: deletableTypes.length },
 		});
 
-		// 6. Invalidation du cache
+		// 5. Invalidation du cache
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 
-		// 7. Construire le message de retour
+		// 6. Construire le message de retour
 		const skipped = systemTypes.length + typesWithProducts.length;
 		let message = `${deletableTypes.length} type(s) de bijou supprimé(s)`;
 		if (skipped > 0) {

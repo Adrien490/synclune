@@ -225,11 +225,11 @@ describe("isActive logic", () => {
 // ---------------------------------------------------------------------------
 
 describe("Desktop nav items", () => {
-	it("renders all 6 nav items including desktopOnly", () => {
+	it("renders all 7 nav items including desktopOnly", () => {
 		render(<AccountNav variant="desktop-only" />);
 
 		const links = screen.getAllByRole("link");
-		expect(links).toHaveLength(6);
+		expect(links).toHaveLength(7);
 	});
 
 	it("renders Adresses (desktopOnly item)", () => {

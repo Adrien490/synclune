@@ -8,9 +8,9 @@
 
 export type MediaData = {
 	url: string;
-	thumbnailUrl?: string | null;
-	blurDataUrl?: string;
-	altText?: string;
+	thumbnailUrl: string | undefined;
+	blurDataUrl: string | undefined;
+	altText: string | undefined;
 	mediaType: "IMAGE" | "VIDEO";
 };
 

@@ -13,9 +13,9 @@ export function NewsletterSettingsCard({ isSubscribed }: NewsletterSettingsCardP
 	const { action, isPending } = useActionWithToast(toggleNewsletter);
 
 	return (
-		<section className="space-y-4">
+		<section className="space-y-4" aria-labelledby="newsletter-heading">
 			<div>
-				<h2 className="flex items-center gap-2 text-base font-semibold">
+				<h2 id="newsletter-heading" className="flex items-center gap-2 text-base font-semibold">
 					<Bell className="text-muted-foreground size-4" />
 					Newsletter
 				</h2>
@@ -28,12 +28,12 @@ export function NewsletterSettingsCard({ isSubscribed }: NewsletterSettingsCardP
 					<div className="flex items-center gap-2 text-sm">
 						{isSubscribed ? (
 							<>
-								<span className="h-2 w-2 rounded-full bg-green-500" />
+								<span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
 								<span className="text-muted-foreground">Inscrit(e)</span>
 							</>
 						) : (
 							<>
-								<span className="h-2 w-2 rounded-full bg-gray-400" />
+								<span className="h-2 w-2 rounded-full bg-gray-400" aria-hidden="true" />
 								<span className="text-muted-foreground">Non inscrit(e)</span>
 							</>
 						)}

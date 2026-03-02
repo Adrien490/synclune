@@ -54,41 +54,53 @@ export async function bulkDeleteOrders(
 		const validated = validateInput(bulkDeleteOrdersSchema, { ids });
 		if ("error" in validated) return validated.error;
 
-		// Récupérer les commandes pour vérifier leur éligibilité (exclure déjà supprimées)
-		const orders = await prisma.order.findMany({
-			where: {
-				id: { in: validated.data.ids },
-				...notDeleted,
-			},
-			select: {
-				id: true,
-				orderNumber: true,
-				userId: true,
-				invoiceNumber: true,
-				paymentStatus: true,
-			},
-		});
+		// Transaction: fetch + validate + soft delete atomically (prevents TOCTOU race)
+		const { deletableOrders, deletableIds, skippedCount } = await prisma.$transaction(
+			async (tx) => {
+				// Récupérer les commandes pour vérifier leur éligibilité (exclure déjà supprimées)
+				const orders = await tx.order.findMany({
+					where: {
+						id: { in: validated.data.ids },
+						...notDeleted,
+					},
+					select: {
+						id: true,
+						orderNumber: true,
+						userId: true,
+						invoiceNumber: true,
+						paymentStatus: true,
+					},
+				});
 
-		// Filter orders eligible for deletion
-		const deletableOrders = orders.filter(
-			(order) =>
-				!order.invoiceNumber &&
-				order.paymentStatus !== PaymentStatus.PAID &&
-				order.paymentStatus !== PaymentStatus.REFUNDED,
+				// Filter orders eligible for deletion
+				const eligible = orders.filter(
+					(order) =>
+						!order.invoiceNumber &&
+						order.paymentStatus !== PaymentStatus.PAID &&
+						order.paymentStatus !== PaymentStatus.REFUNDED,
+				);
+
+				const eligibleIds = eligible.map((order) => order.id);
+
+				if (eligibleIds.length > 0) {
+					// Soft delete des commandes éligibles (Art. L123-22 Code de Commerce - conservation 10 ans)
+					await tx.order.updateMany({
+						where: { id: { in: eligibleIds } },
+						data: { deletedAt: new Date() },
+					});
+				}
+
+				return {
+					deletableOrders: eligible,
+					deletableIds: eligibleIds,
+					skippedCount: orders.length - eligibleIds.length,
+				};
+			},
 		);
-
-		const deletableIds = deletableOrders.map((order) => order.id);
-		const skippedCount = orders.length - deletableIds.length;
 
 		if (deletableIds.length === 0) {
 			return error(ORDER_ERROR_MESSAGES.BULK_DELETE_NONE_ELIGIBLE);
 		}
-
-		// Soft delete des commandes éligibles (Art. L123-22 Code de Commerce - conservation 10 ans)
-		await prisma.order.updateMany({
-			where: { id: { in: deletableIds } },
-			data: { deletedAt: new Date() },
-		});
 
 		// Invalider les caches pour chaque userId unique
 		const uniqueUserIds = [

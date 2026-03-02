@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useRef, useTransition } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import {
 	Sheet,
@@ -35,6 +35,7 @@ import {
 import { CartOptimisticContext } from "../contexts/cart-optimistic-context";
 import { cartReducer } from "../services/cart-reducer.service";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { CART_TARGET_ATTR } from "../lib/fly-to-cart";
 
 interface CartSheetProps {
 	cart: GetCartReturn;
@@ -45,6 +46,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 	const { isOpen, close } = useSheet("cart");
 	const shouldReduceMotion = useReducedMotion();
 	const [isPending, startTransition] = useTransition();
+	const triggerRef = useRef<HTMLElement | null>(null);
 
 	// Optimistic state for items list and quantities
 	const [optimisticCart, updateOptimisticCart] = useOptimistic(cart, cartReducer);
@@ -72,10 +74,24 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 
 	return (
 		<CartOptimisticContext.Provider value={cartOptimisticValue}>
-			<Sheet direction="right" open={isOpen} onOpenChange={(open) => !open && close()}>
+			<Sheet
+				direction="right"
+				open={isOpen}
+				onOpenChange={(open) => {
+					if (open) {
+						// Capture the trigger element for focus return
+						triggerRef.current = document.querySelector<HTMLElement>(`[${CART_TARGET_ATTR}]`);
+					} else {
+						close();
+						// Return focus to trigger after sheet close animation
+						requestAnimationFrame(() => triggerRef.current?.focus());
+					}
+				}}
+			>
 				<SheetContent
 					className="group/sheet flex w-full flex-col gap-0 p-0 sm:max-w-lg"
 					data-pending={isPending ? "" : undefined}
+					aria-busy={isPending}
 				>
 					<SheetHeader className="shrink-0 border-b px-6 py-4">
 						<SheetTitle>

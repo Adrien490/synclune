@@ -34,10 +34,10 @@ export function DeleteProductTypeAlertDialog() {
 					<p>
 						Voulez-vous vraiment supprimer le type <strong>&quot;{data?.label}&quot;</strong> ?
 					</p>
-					{data?.productsCount && data.productsCount > 0 && (
-						<p className="font-medium text-orange-600">
-							Attention : {data.productsCount} bijou(x) utilise(nt) ce type. Ils seront dissociés de
-							ce type.
+					{data?.productsCount != null && data.productsCount > 0 && (
+						<p className="text-destructive font-medium">
+							Impossible : {data.productsCount} produit(s) actif(s) utilise(nt) ce type. Retirez-les
+							avant de supprimer.
 						</p>
 					)}
 					<p className="text-muted-foreground text-sm">Cette action est irréversible.</p>

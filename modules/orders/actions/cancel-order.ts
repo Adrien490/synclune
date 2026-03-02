@@ -183,8 +183,7 @@ export async function cancelOrder(
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
-		// Envoyer l'email de confirmation d'annulation au client
-		let emailSent = false;
+		// Fire-and-forget email to avoid blocking the admin response
 		if (order.customerEmail) {
 			const customerFirstName = extractCustomerFirstName(
 				order.customerName,
@@ -193,20 +192,17 @@ export async function cancelOrder(
 
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
-			try {
-				await sendCancelOrderConfirmationEmail({
-					to: order.customerEmail,
-					orderNumber: order.orderNumber,
-					customerName: customerFirstName,
-					orderTotal: order.total,
-					reason: sanitizedReason ?? undefined,
-					wasRefunded: order._newPaymentStatus === PaymentStatus.REFUNDED,
-					orderDetailsUrl,
-				});
-				emailSent = true;
-			} catch (emailError) {
+			void sendCancelOrderConfirmationEmail({
+				to: order.customerEmail,
+				orderNumber: order.orderNumber,
+				customerName: customerFirstName,
+				orderTotal: order.total,
+				reason: sanitizedReason ?? undefined,
+				wasRefunded: order._newPaymentStatus === PaymentStatus.REFUNDED,
+				orderDetailsUrl,
+			}).catch((emailError) => {
 				console.error("[CANCEL_ORDER] Échec envoi email:", emailError);
-			}
+			});
 		}
 
 		const refundMessage =
@@ -221,15 +217,9 @@ export async function cancelOrder(
 					? " Stock non restauré (commande déjà payée/traitée)."
 					: "";
 
-		const emailMessage = emailSent
-			? " Email envoyé au client."
-			: order.customerEmail
-				? " (Échec envoi email)"
-				: "";
-
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} annulée.${refundMessage}${stockMessage}${emailMessage}`,
+			message: `Commande ${order.orderNumber} annulée.${refundMessage}${stockMessage}`,
 		};
 	} catch (e) {
 		return handleActionError(e, ORDER_ERROR_MESSAGES.CANCEL_FAILED);

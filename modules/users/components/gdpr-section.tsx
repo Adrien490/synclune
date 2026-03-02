@@ -14,9 +14,9 @@ export function GdprSection({ accountStatus, deletionRequestedAt }: GdprSectionP
 	const isPendingDeletion = accountStatus === "PENDING_DELETION";
 
 	return (
-		<section className="space-y-4">
+		<section className="space-y-4" aria-labelledby="gdpr-heading">
 			<div>
-				<h2 className="flex items-center gap-2 text-base font-semibold">
+				<h2 id="gdpr-heading" className="flex items-center gap-2 text-base font-semibold">
 					<Shield className="text-muted-foreground size-4" />
 					Données personnelles
 				</h2>

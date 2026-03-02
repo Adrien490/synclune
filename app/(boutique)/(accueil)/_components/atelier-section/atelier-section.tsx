@@ -118,6 +118,7 @@ export async function AtelierSection() {
 							y={MOTION_CONFIG.section.grid.y}
 							inView
 							once
+							disableOnTouch
 							className="text-muted-foreground space-y-4 text-base leading-relaxed sm:space-y-6 sm:text-lg"
 						>
 							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>

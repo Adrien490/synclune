@@ -60,7 +60,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				onClick={onSelect}
 				data-active={undefined}
 				className={cn(
-					"flex items-center gap-3 rounded-xl px-3 py-2.5",
+					"group/result flex items-center gap-3 rounded-xl px-3 py-2.5",
 					"hover:bg-muted transition-colors",
 					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					"min-h-14",
@@ -76,7 +76,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 							width={48}
 							height={48}
 							sizes="48px"
-							className="size-full object-cover"
+							className="size-full object-cover transition-transform duration-200 group-hover/result:scale-110"
 							placeholder={image.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={image.blurDataUrl ?? undefined}
 						/>
@@ -96,9 +96,14 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 							{formatEuro(defaultSku.priceInclTax)}
 						</span>
 						{defaultSku.compareAtPrice && defaultSku.compareAtPrice > defaultSku.priceInclTax && (
-							<span className="text-muted-foreground/50 text-xs line-through">
-								{formatEuro(defaultSku.compareAtPrice)}
-							</span>
+							<>
+								<span className="text-muted-foreground/50 text-xs line-through">
+									{formatEuro(defaultSku.compareAtPrice)}
+								</span>
+								<span className="bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 text-[10px] font-medium">
+									-{Math.round((1 - defaultSku.priceInclTax / defaultSku.compareAtPrice) * 100)}%
+								</span>
+							</>
 						)}
 
 						{/* Out of stock badge */}

@@ -20,6 +20,8 @@ const {
 	mockPrisma: {
 		order: { findUnique: vi.fn() },
 		refund: { create: vi.fn() },
+		$transaction: vi.fn(),
+		$queryRaw: vi.fn(),
 	},
 	mockRequireAuth: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -126,6 +128,10 @@ describe("requestReturn", () => {
 			data: { orderId: VALID_CUID, reason: "Produit ne correspond pas", message: undefined },
 		});
 		mockSanitizeText.mockImplementation((t: string) => t);
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
+		mockPrisma.$queryRaw.mockResolvedValue([{ id: VALID_CUID }]);
 		mockPrisma.order.findUnique.mockResolvedValue(createDeliveredOrder());
 		mockPrisma.refund.create.mockResolvedValue({ id: "refund-1" });
 

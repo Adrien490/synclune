@@ -53,9 +53,9 @@ export async function ProductVariantsDataTable({
 					<TableEmptyState
 						icon={Package}
 						title="Aucune variante"
-						description="Ce produit n'a pas encore de variante. Creez-en une pour commencer."
+						description="Ce produit n'a pas encore de variante. Créez-en une pour commencer."
 						action={{
-							label: "Creer une variante",
+							label: "Créer une variante",
 							href: `/admin/catalogue/produits/${productSlug}/variantes/nouveau`,
 						}}
 					/>

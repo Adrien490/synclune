@@ -21,6 +21,7 @@ export const WEBHOOK_EVENT_LABELS: Record<string, string> = {
 	"checkout.session.async_payment_failed": "Paiement asynchrone échoué",
 	"charge.dispute.created": "Litige ouvert",
 	"charge.dispute.closed": "Litige clôturé",
+	"invoice.payment_failed": "Paiement facture échoué",
 } as const;
 
 /**
@@ -35,4 +36,5 @@ export const WEBHOOK_EVENT_CATEGORIES = {
 		"checkout.session.async_payment_failed",
 	],
 	DISPUTE: ["charge.dispute.created", "charge.dispute.closed"],
+	INVOICE: ["invoice.payment_failed"],
 } as const;

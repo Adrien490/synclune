@@ -32,6 +32,7 @@ export type QuickSearchResult = {
 	suggestion: string | null;
 	totalCount: number;
 	rateLimited?: boolean;
+	error?: boolean;
 };
 
 // ============================================================================
@@ -92,6 +93,6 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 		if (process.env.NODE_ENV === "development") {
 			console.error("[quickSearchProducts]", error);
 		}
-		return { products: [], suggestion: null, totalCount: 0 };
+		return { products: [], suggestion: null, totalCount: 0, error: true };
 	}
 }

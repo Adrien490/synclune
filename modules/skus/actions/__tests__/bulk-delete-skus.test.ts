@@ -43,6 +43,27 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	validateInput: (
+		schema: {
+			safeParse: (data: unknown) => {
+				success: boolean;
+				data?: unknown;
+				error?: { issues: { message: string }[] };
+			};
+		},
+		data: unknown,
+	) => {
+		const result = schema.safeParse(data);
+		if (!result.success) {
+			return {
+				error: {
+					status: "validation_error",
+					message: result.error?.issues[0]?.message ?? "Invalid",
+				},
+			};
+		}
+		return { data: result.data };
+	},
 	BusinessError: class BusinessError extends Error {
 		constructor(message: string) {
 			super(message);
@@ -55,7 +76,7 @@ vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
 	deleteUploadThingFilesFromUrls: mockDeleteUploadThingFilesFromUrls,
 }));
 vi.mock("../../schemas/sku.schemas", () => ({
-	bulkDeleteSkusSchema: { parse: mockSchemaParse },
+	bulkDeleteSkusSchema: { safeParse: mockSchemaParse },
 }));
 vi.mock("../../utils/cache.utils", () => ({
 	collectBulkInvalidationTags: mockCollectBulkInvalidationTags,
@@ -80,7 +101,14 @@ function makeFormData(ids: string[]) {
 }
 
 function createMockSkusData(
-	overrides: Partial<{ isDefault: boolean; images: { url: string }[] }>[] = [],
+	overrides: Partial<{
+		isDefault: boolean;
+		isActive: boolean;
+		images: { url: string }[];
+		productStatus: string;
+		productSkuCount: number;
+		productActiveSkus: { id: string }[];
+	}>[] = [],
 ) {
 	return [
 		{
@@ -88,7 +116,17 @@ function createMockSkusData(
 			sku: "BRC-OR-M",
 			productId: "prod-1",
 			isDefault: overrides[0]?.isDefault ?? false,
-			product: { slug: "bracelet-or" },
+			isActive: overrides[0]?.isActive ?? true,
+			product: {
+				slug: "bracelet-or",
+				status: overrides[0]?.productStatus ?? "PUBLIC",
+				_count: { skus: overrides[0]?.productSkuCount ?? 3 },
+				skus: overrides[0]?.productActiveSkus ?? [
+					{ id: VALID_CUID },
+					{ id: VALID_CUID_2 },
+					{ id: "sku-remaining" },
+				],
+			},
 			images: overrides[0]?.images ?? [{ url: "https://utfs.io/f/img1.jpg" }],
 		},
 		{
@@ -96,7 +134,17 @@ function createMockSkusData(
 			sku: "BRC-AR-M",
 			productId: "prod-1",
 			isDefault: overrides[1]?.isDefault ?? false,
-			product: { slug: "bracelet-or" },
+			isActive: overrides[1]?.isActive ?? true,
+			product: {
+				slug: "bracelet-or",
+				status: overrides[1]?.productStatus ?? "PUBLIC",
+				_count: { skus: overrides[1]?.productSkuCount ?? 3 },
+				skus: overrides[1]?.productActiveSkus ?? [
+					{ id: VALID_CUID },
+					{ id: VALID_CUID_2 },
+					{ id: "sku-remaining" },
+				],
+			},
 			images: overrides[1]?.images ?? [],
 		},
 	];
@@ -115,7 +163,7 @@ describe("bulkDeleteSkus", () => {
 		mockCollectBulkInvalidationTags.mockReturnValue(new Set(["skus-list"]));
 		mockInvalidateTags.mockReturnValue(undefined);
 
-		mockSchemaParse.mockReturnValue({ ids: validIds });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: validIds } });
 
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData());
 		mockPrisma.productSku.deleteMany.mockResolvedValue({ count: 2 });
@@ -146,7 +194,7 @@ describe("bulkDeleteSkus", () => {
 	});
 
 	it("should return error when no IDs are provided", async () => {
-		mockSchemaParse.mockReturnValue({ ids: [] });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: [] } });
 		const result = await bulkDeleteSkus(undefined, makeFormData([]));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Aucune variante");
@@ -154,7 +202,7 @@ describe("bulkDeleteSkus", () => {
 
 	it("should return error when IDs exceed the bulk limit", async () => {
 		const manyIds = Array.from({ length: 101 }, (_, i) => `id-${i}`);
-		mockSchemaParse.mockReturnValue({ ids: manyIds });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: manyIds } });
 		const result = await bulkDeleteSkus(undefined, makeFormData(manyIds));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Maximum 100");
@@ -164,7 +212,7 @@ describe("bulkDeleteSkus", () => {
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData([{ isDefault: true }]));
 		const result = await bulkDeleteSkus(undefined, makeFormData(validIds));
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("defaut");
+		expect(result.message).toContain("défaut");
 	});
 
 	it("should return error when SKUs are linked to order items", async () => {

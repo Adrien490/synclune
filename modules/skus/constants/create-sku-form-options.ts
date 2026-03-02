@@ -1,5 +1,7 @@
 // Form options partagées entre client et serveur
 
+import type { MediaData } from "@/modules/skus/types/sku-form.types";
+
 export const createProductSkuFormOpts = {
 	defaultValues: {
 		productId: "",
@@ -12,21 +14,7 @@ export const createProductSkuFormOpts = {
 		colorId: "",
 		materialId: "",
 		size: "",
-		primaryImage: undefined as
-			| {
-					url: string;
-					thumbnailUrl?: string | null;
-					blurDataUrl?: string;
-					altText?: string;
-					mediaType: "IMAGE" | "VIDEO";
-			  }
-			| undefined,
-		galleryMedia: [] as Array<{
-			url: string;
-			thumbnailUrl?: string | null;
-			blurDataUrl?: string;
-			altText?: string;
-			mediaType: "IMAGE" | "VIDEO";
-		}>,
+		primaryImage: undefined as MediaData | undefined,
+		galleryMedia: [] as MediaData[],
 	},
 };

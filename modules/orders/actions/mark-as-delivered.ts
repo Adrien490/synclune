@@ -4,7 +4,7 @@ import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/p
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
-import { scheduleReviewRequestEmail } from "@/modules/webhooks/services/review-request.service";
+import { scheduleReviewRequestEmail } from "@/modules/reviews/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError, safeFormGet } from "@/shared/lib/actions";

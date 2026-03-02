@@ -140,7 +140,7 @@ describe("updateSkuPrice", () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(null);
 		const result = await updateSkuPrice(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("Variante non trouvee");
+		expect(result.message).toContain("Variante non trouvée");
 	});
 
 	it("should convert euros to cents correctly (30.00 → 3000)", async () => {

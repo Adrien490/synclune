@@ -150,7 +150,7 @@ describe("updateProductSkuStatus", () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: false } });
 		const result = await updateProductSkuStatus(undefined, deactivateFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("Impossible de desactiver");
+		expect(result.message).toContain("Impossible de désactiver");
 	});
 
 	it("should succeed when deactivating a non-default SKU", async () => {

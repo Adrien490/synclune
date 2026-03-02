@@ -275,7 +275,7 @@ export function generateStructuredData({
 
 	// Retourner le Schema.org avec @graph pour inclure Product + BreadcrumbList
 	return {
-		"@context": "https://schema.org/",
+		"@context": "https://schema.org",
 		"@graph": [productData, breadcrumbList],
 	};
 }

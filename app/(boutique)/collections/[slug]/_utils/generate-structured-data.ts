@@ -76,7 +76,7 @@ export function generateCollectionStructuredData(collection: Collection) {
 
 	// Retourner le Schema.org avec @graph
 	return {
-		"@context": "https://schema.org/",
+		"@context": "https://schema.org",
 		"@graph": [collectionPage, breadcrumbList],
 	};
 }

@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { logger } from "@/shared/lib/logger";
 import type { WebhookHandlerResult } from "../types/webhook.types";
 import {
 	extractShippingInfo,
@@ -22,8 +23,9 @@ export async function handleCheckoutSessionCompleted(
 	// Validation payment_status AVANT tout traitement
 	// Pour les paiements asynchrones (SEPA, etc.), payment_status peut être 'unpaid'
 	if (session.payment_status === "unpaid") {
-		console.log(
+		logger.info(
 			`⏳ [WEBHOOK] Session ${session.id} payment_status is 'unpaid', waiting for async payment confirmation`,
+			{ service: "webhook" },
 		);
 		return null;
 	}
@@ -34,15 +36,18 @@ export async function handleCheckoutSessionCompleted(
 	const orderId = session.metadata?.orderId ?? session.client_reference_id;
 
 	if (!orderId) {
-		console.error("❌ [WEBHOOK] No order ID found in checkout session");
+		logger.error("❌ [WEBHOOK] No order ID found in checkout session", undefined, {
+			service: "webhook",
+		});
 		throw new Error("No order ID found in checkout session metadata");
 	}
 
 	try {
 		// 1. Extraire les informations de livraison depuis Stripe
 		const { shippingCost, shippingMethod, shippingRateId } = await extractShippingInfo(session);
-		console.log(
+		logger.info(
 			`📦 [WEBHOOK] Shipping extracted for order ${orderId}: ${shippingCost / 100}€ (${shippingMethod})`,
+			{ service: "webhook" },
 		);
 
 		// 2. Traiter la commande dans une transaction atomique
@@ -62,8 +67,9 @@ export async function handleCheckoutSessionCompleted(
 				dbOrder?.customerEmail &&
 				stripeEmail.toLowerCase() !== dbOrder.customerEmail.toLowerCase()
 			) {
-				console.warn(
+				logger.warn(
 					`[WEBHOOK] Email mismatch for order ${orderId}: Stripe=${stripeEmail}, Order=${dbOrder.customerEmail}`,
+					{ service: "webhook" },
 				);
 				// Create an admin OrderNote for visibility
 				await prisma.orderNote.create({
@@ -86,7 +92,9 @@ export async function handleCheckoutSessionCompleted(
 
 		return { success: true, tasks };
 	} catch (error) {
-		console.error("❌ [WEBHOOK] Error handling checkout session completed:", error);
+		logger.error("❌ [WEBHOOK] Error handling checkout session completed:", error, {
+			service: "webhook",
+		});
 		throw error;
 	}
 }
@@ -101,11 +109,16 @@ export async function handleCheckoutSessionExpired(
 	const orderId = session.metadata?.orderId ?? session.client_reference_id;
 
 	if (!orderId) {
-		console.error("❌ [WEBHOOK] No order ID found in expired checkout session");
+		logger.error("❌ [WEBHOOK] No order ID found in expired checkout session", undefined, {
+			service: "webhook",
+		});
 		throw new Error("No order ID found in expired checkout session metadata");
 	}
 
-	console.log(`⏰ [WEBHOOK] Processing expired checkout session: ${session.id}, order: ${orderId}`);
+	logger.info(
+		`⏰ [WEBHOOK] Processing expired checkout session: ${session.id}, order: ${orderId}`,
+		{ service: "webhook" },
+	);
 
 	try {
 		await cancelExpiredOrder(orderId);
@@ -128,9 +141,10 @@ export async function handleCheckoutSessionExpired(
 			],
 		};
 	} catch (error) {
-		console.error(
+		logger.error(
 			`❌ [WEBHOOK] Error handling expired checkout session for order ${orderId}:`,
 			error,
+			{ service: "webhook" },
 		);
 		throw error;
 	}

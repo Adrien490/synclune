@@ -35,25 +35,25 @@ export async function createProductType(
 			description: formData.get("description") ?? undefined,
 		};
 
-		// 3. Valider les donnees
+		// 4. Valider les donnees
 		const validated = validateInput(createProductTypeSchema, rawData);
 		if ("error" in validated) return validated.error;
 
 		const validatedData = validated.data;
 
-		// 4. Verifier l'unicite du label
+		// 5. Verifier l'unicite du label (case-insensitive)
 		const existingLabel = await prisma.productType.findFirst({
-			where: { label: validatedData.label },
+			where: { label: { equals: validatedData.label, mode: "insensitive" } },
 		});
 
 		if (existingLabel) {
 			return error("Ce label de type existe deja. Veuillez en choisir un autre.");
 		}
 
-		// 5. Generer un slug unique automatiquement
+		// 6. Generer un slug unique automatiquement
 		const slug = await generateSlug(prisma, "productType", validatedData.label);
 
-		// 6. Creer le type de produit
+		// 7. Creer le type de produit
 		const created = await prisma.productType.create({
 			data: {
 				label: sanitizeText(validatedData.label),
@@ -75,7 +75,7 @@ export async function createProductType(
 			metadata: { label: validatedData.label },
 		});
 
-		// 7. Invalider le cache des types de produits
+		// 8. Invalider le cache des types de produits
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 
 		return success("Type de produit créé avec succès");

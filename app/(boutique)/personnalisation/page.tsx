@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 			"Vous avez une idée de bijou personnalisé ? N'hésitez pas à me raconter votre projet, même si c'est pas encore clair. On affinera ensemble !",
 		url: `${SITE_URL}/personnalisation`,
 		type: "website",
+		images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
 	},
 };
 

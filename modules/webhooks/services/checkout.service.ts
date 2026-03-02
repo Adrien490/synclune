@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { logger } from "@/shared/lib/logger";
 import { type Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";
@@ -12,7 +13,7 @@ import {
 } from "@/modules/orders/constants/stripe-shipping-rates";
 import type { PostWebhookTask } from "../types/webhook.types";
 import type { OrderWithItems } from "../types/checkout.types";
-import { getBaseUrl } from "@/shared/constants/urls";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Mappe un order Prisma vers OrderWithItems
@@ -99,9 +100,10 @@ export async function extractShippingInfo(
 
 		return { shippingCost, shippingMethod, shippingRateId };
 	} catch (error) {
-		console.error(
+		logger.error(
 			`❌ [WEBHOOK] Failed to retrieve shipping info for session ${session.id}:`,
 			error,
+			{ service: "webhook" },
 		);
 		// Fallback to session-level data if Stripe API fails
 		const shippingCost = session.total_details?.amount_shipping ?? 0;
@@ -152,13 +154,17 @@ export async function processOrderTransaction(
 
 			// 2. Vérifier l'idempotence - Si déjà traité, on skip
 			if (order.paymentStatus === "PAID") {
-				console.log(`⚠️  [WEBHOOK] Order ${orderId} already processed, skipping`);
+				logger.info(`⚠️  [WEBHOOK] Order ${orderId} already processed, skipping`, {
+					service: "webhook",
+				});
 				return mapToOrderWithItems(order);
 			}
 
 			// 3. Re-validation of all items INSIDE the transaction to prevent race conditions
 			// Using tx instead of global prisma to ensure consistent reads with the decrement
-			console.log(`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`);
+			logger.info(`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`, {
+				service: "webhook",
+			});
 
 			const skuIds = order.items.map((item) => item.skuId);
 			const skus = await tx.productSku.findMany({
@@ -187,8 +193,10 @@ export async function processOrderTransaction(
 					const reason = !sku
 						? "SKU not found"
 						: `invalid (active=${sku.isActive}, stock=${sku.inventory}, deleted=${!!sku.deletedAt})`;
-					console.error(
+					logger.error(
 						`[WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`,
+						undefined,
+						{ service: "webhook" },
 					);
 					throw new Error(
 						`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`,
@@ -196,7 +204,9 @@ export async function processOrderTransaction(
 				}
 			}
 
-			console.log(`[WEBHOOK] All items validated successfully for order ${orderId}`);
+			logger.info(`[WEBHOOK] All items validated successfully for order ${orderId}`, {
+				service: "webhook",
+			});
 
 			// 4. Décrémenter le stock pour chaque item
 			for (const item of order.items) {
@@ -206,7 +216,7 @@ export async function processOrderTransaction(
 				});
 			}
 
-			console.log(`✅ [WEBHOOK] Stock decremented for order ${orderId}`);
+			logger.info(`✅ [WEBHOOK] Stock decremented for order ${orderId}`, { service: "webhook" });
 
 			// 5. Mettre à jour la commande avec infos shipping
 			await tx.order.update({
@@ -230,8 +240,9 @@ export async function processOrderTransaction(
 				data: { isActive: false },
 			});
 			if (deactivatedCount > 0) {
-				console.log(
+				logger.info(
 					`📦 [WEBHOOK] ${deactivatedCount} SKU(s) deactivated (out of stock) for order ${orderId}`,
+					{ service: "webhook" },
 				);
 			}
 
@@ -240,7 +251,9 @@ export async function processOrderTransaction(
 				await tx.cartItem.deleteMany({
 					where: { cart: { userId: order.userId } },
 				});
-				console.log(`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment`);
+				logger.info(`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment`, {
+					service: "webhook",
+				});
 			} else {
 				// Invite : recuperer le sessionId depuis les metadata Stripe
 				const guestSessionId = session.metadata?.guestSessionId;
@@ -248,13 +261,16 @@ export async function processOrderTransaction(
 					await tx.cartItem.deleteMany({
 						where: { cart: { sessionId: guestSessionId } },
 					});
-					console.log(
+					logger.info(
 						`🧹 [WEBHOOK] Cart cleared for guest session ${guestSessionId} after successful payment`,
+						{ service: "webhook" },
 					);
 				}
 			}
 
-			console.log("✅ [WEBHOOK] Order processed successfully:", order.orderNumber);
+			logger.info("✅ [WEBHOOK] Order processed successfully:" + " " + order.orderNumber, {
+				service: "webhook",
+			});
 
 			return mapToOrderWithItems(order);
 		},
@@ -336,7 +352,7 @@ export function buildPostCheckoutTasks(
 	}
 
 	// 3. Notifier l'admin
-	const dashboardUrl = `${baseUrl}/dashboard/orders/${order.id}`;
+	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
 
 	tasks.push({
 		type: "ADMIN_NEW_ORDER_EMAIL",
@@ -380,60 +396,69 @@ export function buildPostCheckoutTasks(
 export async function cancelExpiredOrder(
 	orderId: string,
 ): Promise<{ cancelled: boolean; orderNumber?: string }> {
-	const order = await prisma.order.findUnique({
-		where: { id: orderId },
-		select: { paymentStatus: true, orderNumber: true },
-	});
-
-	if (!order) {
-		console.warn(`⚠️  [WEBHOOK] Order not found for expired session: ${orderId}`);
-		return { cancelled: false };
-	}
-
-	// Idempotence : Ne traiter que si la commande est toujours PENDING
-	if (order.paymentStatus !== "PENDING") {
-		console.log(
-			`ℹ️  [WEBHOOK] Order ${orderId} already processed (status: ${order.paymentStatus}), skipping expiration`,
-		);
-		return { cancelled: false, orderNumber: order.orderNumber };
-	}
-
-	// Release discount usages + cancel order in a single interactive transaction
-	// The findMany MUST be inside the transaction to prevent double-decrement on webhook replay
-	await prisma.$transaction(async (tx) => {
-		const discountUsages = await tx.discountUsage.findMany({
-			where: { orderId },
-			select: { id: true, discountId: true },
-		});
-
-		for (const usage of discountUsages) {
-			await tx.discount.update({
-				where: { id: usage.discountId },
-				data: { usageCount: { decrement: 1 } },
+	// All reads and writes inside the transaction to prevent TOCTOU race condition:
+	// without this, checkout.session.completed could pay the order between the findUnique
+	// and the start of the transaction, causing a PAID order to be overwritten as EXPIRED.
+	const result = await prisma.$transaction(
+		async (tx) => {
+			const order = await tx.order.findUnique({
+				where: { id: orderId },
+				select: { paymentStatus: true, orderNumber: true },
 			});
-		}
 
-		if (discountUsages.length > 0) {
-			await tx.discountUsage.deleteMany({ where: { orderId } });
-		}
+			if (!order) {
+				logger.warn(`⚠️  [WEBHOOK] Order not found for expired session: ${orderId}`, {
+					service: "webhook",
+				});
+				return { cancelled: false } as const;
+			}
 
-		await tx.order.update({
-			where: { id: orderId },
-			data: {
-				status: "CANCELLED",
-				paymentStatus: "EXPIRED",
-			},
-		});
+			// Idempotence: only process if the order is still PENDING
+			if (order.paymentStatus !== "PENDING") {
+				logger.info(
+					`ℹ️  [WEBHOOK] Order ${orderId} already processed (status: ${order.paymentStatus}), skipping expiration`,
+					{ service: "webhook" },
+				);
+				return { cancelled: false, orderNumber: order.orderNumber } as const;
+			}
 
-		if (discountUsages.length > 0) {
-			console.log(
-				`🔓 [WEBHOOK] Released ${discountUsages.length} discount usage(s) for expired order ${orderId}`,
+			// Release discount usages
+			const discountUsages = await tx.discountUsage.findMany({
+				where: { orderId },
+				select: { id: true, discountId: true },
+			});
+
+			for (const usage of discountUsages) {
+				await tx.discount.update({
+					where: { id: usage.discountId },
+					data: { usageCount: { decrement: 1 } },
+				});
+			}
+
+			if (discountUsages.length > 0) {
+				await tx.discountUsage.deleteMany({ where: { orderId } });
+				logger.info(
+					`🔓 [WEBHOOK] Released ${discountUsages.length} discount usage(s) for expired order ${orderId}`,
+					{ service: "webhook" },
+				);
+			}
+
+			await tx.order.update({
+				where: { id: orderId },
+				data: {
+					status: "CANCELLED",
+					paymentStatus: "EXPIRED",
+				},
+			});
+
+			logger.info(
+				`✅ [WEBHOOK] Order ${orderId} (${order.orderNumber}) marked as cancelled due to session expiration`,
+				{ service: "webhook" },
 			);
-		}
-	});
-
-	console.log(
-		`✅ [WEBHOOK] Order ${orderId} (${order.orderNumber}) marked as cancelled due to session expiration`,
+			return { cancelled: true, orderNumber: order.orderNumber } as const;
+		},
+		{ timeout: 10000 },
 	);
-	return { cancelled: true, orderNumber: order.orderNumber };
+
+	return result;
 }

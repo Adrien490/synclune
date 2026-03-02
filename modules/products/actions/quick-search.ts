@@ -31,6 +31,6 @@ export async function quickSearch(query: string): Promise<QuickSearchResult> {
 
 		return result;
 	} catch {
-		return EMPTY_RESULT;
+		return { ...EMPTY_RESULT, error: true };
 	}
 }

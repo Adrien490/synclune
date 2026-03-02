@@ -29,9 +29,9 @@ export default async function SettingsPage() {
 
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				<div className="space-y-6 lg:col-span-2">
-					<section className="space-y-4">
+					<section className="space-y-4" aria-labelledby="profile-heading">
 						<div>
-							<h2 className="flex items-center gap-2 text-base font-semibold">
+							<h2 id="profile-heading" className="flex items-center gap-2 text-base font-semibold">
 								<User className="text-muted-foreground size-4" />
 								Profil
 							</h2>

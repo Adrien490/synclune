@@ -162,7 +162,7 @@ describe("GET /api/cron/sync-async-payments", () => {
 		it("includes the job name 'sync-async-payments' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("sync-async-payments");
 		});
 
@@ -171,7 +171,7 @@ describe("GET /api/cron/sync-async-payments", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(5555);
 		});
 

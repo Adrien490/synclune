@@ -37,7 +37,7 @@ export async function bulkDeactivateSkus(
 		if (ids.length === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Aucune variante selectionnee",
+				message: "Aucune variante sélectionnée",
 			};
 		}
 
@@ -60,12 +60,20 @@ export async function bulkDeactivateSkus(
 			},
 		});
 
+		if (skusData.length !== ids.length) {
+			const missing = ids.length - skusData.length;
+			return {
+				status: ActionStatus.ERROR,
+				message: `${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
+			};
+		}
+
 		// Verifier qu'aucune variante par defaut n'est selectionnee
 		const defaultSkus = skusData.filter((s) => s.isDefault);
 		if (defaultSkus.length > 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Impossible de desactiver une variante par defaut",
+				message: "Impossible de désactiver une variante par défaut",
 			};
 		}
 

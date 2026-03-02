@@ -1,9 +1,9 @@
-import { notFound } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 /**
- * Page À propos — temporarily hidden (returns 404).
- * Source code preserved for future re-activation.
+ * Page À propos — temporarily hidden.
+ * 308 redirect to homepage to preserve link equity from external links.
  */
 export default function AboutPage() {
-	notFound();
+	permanentRedirect("/");
 }

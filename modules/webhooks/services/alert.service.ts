@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { sendWebhookFailedAlertEmail } from "@/modules/emails/services/admin-emails";
 
 interface WebhookFailedAlertParams {
@@ -22,7 +23,7 @@ export async function sendWebhookFailedAlert({
 	const result = await sendWebhookFailedAlertEmail({ eventId, eventType, attempts, error });
 
 	if (!result.success) {
-		console.error("[WEBHOOK_ALERT] Erreur envoi alerte:", result.error);
+		logger.error("[WEBHOOK_ALERT] Erreur envoi alerte:", result.error, { service: "webhook" });
 	}
 
 	return result;

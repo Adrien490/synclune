@@ -40,6 +40,7 @@ const {
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	softDelete: mockSoftDelete,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -229,7 +230,7 @@ describe("deleteDiscount", () => {
 		await deleteDiscount(undefined, validFormData);
 
 		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith({
-			where: { id: "disc-123" },
+			where: { id: "disc-123", deletedAt: null },
 			select: {
 				id: true,
 				code: true,

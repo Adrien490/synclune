@@ -114,7 +114,9 @@ export function usePrefetchImages({
 					// Compare with optimized Next.js URL (size adapted to viewport)
 					const prefetchSize = getPrefetchImageSize();
 					const optimizedUrl = nextImageUrl(imageUrl, prefetchSize, MAIN_IMAGE_QUALITY);
-					const existingLink = allGalleryLinks.find((link) => link.href === optimizedUrl);
+					const existingLink = allGalleryLinks.find(
+						(link) => link.getAttribute("href") === optimizedUrl,
+					);
 					if (existingLink) continue;
 
 					// Create prefetch link with optimized Next.js URL
@@ -145,7 +147,7 @@ export function usePrefetchImages({
 				);
 
 				for (const link of allPrefetchLinks) {
-					if (!currentUrls.has(link.href)) {
+					if (!currentUrls.has(link.getAttribute("href")!)) {
 						link.remove();
 					}
 				}

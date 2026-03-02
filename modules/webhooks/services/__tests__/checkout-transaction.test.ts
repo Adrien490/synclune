@@ -58,6 +58,11 @@ vi.mock("@/modules/products/constants/cache", () => ({
 
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: vi.fn().mockReturnValue("https://synclune.fr"),
+	ROUTES: {
+		ADMIN: {
+			ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
+		},
+	},
 }));
 
 import { processOrderTransaction } from "../checkout.service";

@@ -8,6 +8,7 @@ import { DiscountType } from "@/app/generated/prisma/client";
 const { mockPrisma } = vi.hoisted(() => ({
 	mockPrisma: {
 		discount: {
+			findFirst: vi.fn(),
 			create: vi.fn(),
 		},
 	},
@@ -29,6 +30,7 @@ describe("createNewsletterPromoCode", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-03-02T10:00:00Z"));
 
+		mockPrisma.discount.findFirst.mockResolvedValue(null);
 		mockPrisma.discount.create.mockResolvedValue({});
 	});
 

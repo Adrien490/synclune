@@ -44,15 +44,17 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 	const errorInfo = getCheckoutCancelMessage(reason);
 	const ErrorIcon = errorInfo.icon;
 	return (
-		<div className="min-h-screen">
-			<section className="bg-background py-8 sm:py-10">
+		<div className="relative min-h-screen">
+			{/* Decorative background */}
+			<div className="from-primary/[0.02] to-secondary/[0.03] fixed inset-0 -z-10 bg-gradient-to-br via-transparent" />
+			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-					<Card className="border-2">
+					<Card className="border-primary/10 rounded-2xl shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
-							<div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+							<div className="bg-muted/80 mx-auto flex h-18 w-18 items-center justify-center rounded-full">
 								<ErrorIcon className="text-muted-foreground h-10 w-10" />
 							</div>
-							<CardTitle className="text-2xl sm:text-3xl">{errorInfo.title}</CardTitle>
+							<CardTitle className="font-display text-2xl sm:text-3xl">{errorInfo.title}</CardTitle>
 							<CardDescription className="text-base">
 								Votre commande n'a pas été finalisée
 							</CardDescription>

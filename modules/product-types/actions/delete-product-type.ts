@@ -48,48 +48,54 @@ export async function deleteProductType(
 
 		const { productTypeId } = validated.data;
 
-		// 4. Verifier que le type existe, n'est pas systeme, et n'a pas de produits actifs
-		const productType = await prisma.productType.findUnique({
-			where: { id: productTypeId },
-			select: {
-				id: true,
-				isSystem: true,
-				label: true,
-				_count: {
-					select: {
-						products: {
-							where: {
-								status: "PUBLIC",
-								skus: { some: { isActive: true } },
+		// 4. Verifier et supprimer dans une transaction pour eviter les race conditions
+		const result = await prisma.$transaction(async (tx) => {
+			const pt = await tx.productType.findUnique({
+				where: { id: productTypeId },
+				select: {
+					id: true,
+					isSystem: true,
+					label: true,
+					_count: {
+						select: {
+							products: {
+								where: {
+									status: "PUBLIC",
+									skus: { some: { isActive: true } },
+								},
 							},
 						},
 					},
 				},
-			},
+			});
+
+			if (!pt) return { status: "notFound" as const };
+
+			if (pt.isSystem) {
+				return {
+					status: "blocked" as const,
+					message: `Le type "${pt.label}" est un type systeme et ne peut pas etre supprime`,
+				};
+			}
+
+			if (pt._count.products > 0) {
+				return {
+					status: "blocked" as const,
+					message: `Le type "${pt.label}" a ${pt._count.products} produit(s) actif(s) et ne peut pas etre supprime`,
+				};
+			}
+
+			await tx.productType.delete({ where: { id: productTypeId } });
+			return { status: "deleted" as const, label: pt.label };
 		});
 
-		if (!productType) {
+		if (result.status === "notFound") {
 			return notFound("Type de produit");
 		}
 
-		// 5. Protection: Bloquer la suppression des types systeme
-		if (productType.isSystem) {
-			return error(
-				`Le type "${productType.label}" est un type systeme et ne peut pas etre supprime`,
-			);
+		if (result.status === "blocked") {
+			return error(result.message);
 		}
-
-		// 6. Protection: Bloquer la suppression des types avec produits actifs
-		if (productType._count.products > 0) {
-			return error(
-				`Le type "${productType.label}" a ${productType._count.products} produit(s) actif(s) et ne peut pas etre supprime`,
-			);
-		}
-
-		// 7. Suppression
-		await prisma.productType.delete({
-			where: { id: productTypeId },
-		});
 
 		void logAudit({
 			adminId: adminUser.id,
@@ -97,10 +103,10 @@ export async function deleteProductType(
 			action: "productType.delete",
 			targetType: "productType",
 			targetId: productTypeId,
-			metadata: { label: productType.label },
+			metadata: { label: result.label },
 		});
 
-		// 6. Invalidation du cache
+		// 5. Invalidation du cache
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 
 		return success("Type de produit supprimé avec succès");

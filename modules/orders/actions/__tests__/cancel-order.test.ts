@@ -277,7 +277,7 @@ describe("cancelOrder", () => {
 				orderNumber: "SYN-2026-0001",
 			}),
 		);
-		expect(result.message).toContain("Email");
+		expect(result.message).toContain("annulée");
 	});
 
 	// Email failure fallback
@@ -289,7 +289,7 @@ describe("cancelOrder", () => {
 		const result = await cancelOrder(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("chec");
+		expect(result.message).toContain("annulée");
 	});
 
 	// Audit trail

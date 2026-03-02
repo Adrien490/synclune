@@ -5,13 +5,16 @@ import type { GetProductSkusParams } from "../../types/skus.types";
 // Hoisted mocks
 // ============================================================================
 
-const { mockIsAdmin, mockFetchProductSkus, mockGetProductSkusSchema } = vi.hoisted(() => ({
-	mockIsAdmin: vi.fn(),
-	mockFetchProductSkus: vi.fn(),
-	mockGetProductSkusSchema: {
-		safeParse: vi.fn(),
-	},
-}));
+const { mockIsAdmin, mockFetchProductSkus, mockGetProductSkusSchema, mockRedirect } = vi.hoisted(
+	() => ({
+		mockIsAdmin: vi.fn(),
+		mockFetchProductSkus: vi.fn(),
+		mockGetProductSkusSchema: {
+			safeParse: vi.fn(),
+		},
+		mockRedirect: vi.fn(),
+	}),
+);
 
 vi.mock("@/modules/auth/utils/guards", () => ({
 	isAdmin: mockIsAdmin,
@@ -28,6 +31,10 @@ vi.mock("../../schemas/get-skus.schemas", () => ({
 vi.mock("../../constants/sku.constants", () => ({
 	GET_PRODUCT_SKUS_DEFAULT_SORT_BY: "created-descending",
 	GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY: "created-descending",
+}));
+
+vi.mock("next/navigation", () => ({
+	redirect: mockRedirect,
 }));
 
 import { getProductSkus } from "../get-skus";
@@ -68,6 +75,9 @@ function makeDefaultInput(): GetProductSkusParams {
 
 function setupDefaults() {
 	mockIsAdmin.mockResolvedValue(true);
+	mockRedirect.mockImplementation(() => {
+		throw new Error("NEXT_REDIRECT");
+	});
 	mockGetProductSkusSchema.safeParse.mockReturnValue({
 		success: true,
 		data: makeValidatedParams(),
@@ -88,10 +98,11 @@ describe("getProductSkus – auth guard", () => {
 		setupDefaults();
 	});
 
-	it("throws 'Admin access required' when user is not admin", async () => {
+	it("redirects to /connexion when user is not admin", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 
-		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("Admin access required");
+		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("NEXT_REDIRECT");
+		expect(mockRedirect).toHaveBeenCalledWith("/connexion");
 	});
 
 	it("does not query DB when user is not admin", async () => {
@@ -239,9 +250,10 @@ describe("getProductSkus – error handling", () => {
 		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("DB down");
 	});
 
-	it("re-throws admin access error so caller can handle it", async () => {
+	it("redirects when user is not admin", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 
-		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("Admin access required");
+		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("NEXT_REDIRECT");
+		expect(mockRedirect).toHaveBeenCalledWith("/connexion");
 	});
 });

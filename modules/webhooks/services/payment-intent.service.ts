@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { logger } from "@/shared/lib/logger";
 import { type Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
@@ -23,12 +24,16 @@ export async function markOrderAsPaid(orderId: string, paymentIntentId: string):
 			});
 
 			if (!order) {
-				console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsPaid`);
+				logger.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsPaid`, undefined, {
+					service: "webhook",
+				});
 				return;
 			}
 
 			if (order.paymentStatus === "PAID") {
-				console.log(`⏭️ [WEBHOOK] Order ${orderId} already marked as PAID, skipping`);
+				logger.info(`⏭️ [WEBHOOK] Order ${orderId} already marked as PAID, skipping`, {
+					service: "webhook",
+				});
 				return;
 			}
 
@@ -42,7 +47,9 @@ export async function markOrderAsPaid(orderId: string, paymentIntentId: string):
 				},
 			});
 
-			console.log(`✅ [WEBHOOK] Order ${orderId} marked as PAID via payment_intent.succeeded`);
+			logger.info(`✅ [WEBHOOK] Order ${orderId} marked as PAID via payment_intent.succeeded`, {
+				service: "webhook",
+			});
 		},
 		{ timeout: 10000 },
 	);
@@ -88,7 +95,9 @@ export async function restoreStockForOrder(
 			});
 
 			if (!order) {
-				console.error(`[WEBHOOK] Order ${orderId} not found for stock restoration`);
+				logger.error(`[WEBHOOK] Order ${orderId} not found for stock restoration`, undefined, {
+					service: "webhook",
+				});
 				return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
 			}
 
@@ -131,8 +140,9 @@ export async function restoreStockForOrder(
 				}),
 			);
 
-			console.log(
+			logger.info(
 				`[WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`,
+				{ service: "webhook" },
 			);
 			return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: skuIds };
 		},
@@ -157,12 +167,16 @@ export async function markOrderAsFailed(
 			});
 
 			if (!order) {
-				console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsFailed`);
+				logger.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsFailed`, undefined, {
+					service: "webhook",
+				});
 				return;
 			}
 
 			if (order.paymentStatus === "FAILED") {
-				console.log(`⏭️ [WEBHOOK] Order ${orderId} already marked as FAILED, skipping`);
+				logger.info(`⏭️ [WEBHOOK] Order ${orderId} already marked as FAILED, skipping`, {
+					service: "webhook",
+				});
 				return;
 			}
 
@@ -178,7 +192,7 @@ export async function markOrderAsFailed(
 				},
 			});
 
-			console.log(`❌ [WEBHOOK] Order ${orderId} marked as FAILED`);
+			logger.info(`❌ [WEBHOOK] Order ${orderId} marked as FAILED`, { service: "webhook" });
 		},
 		{ timeout: 10000 },
 	);
@@ -200,13 +214,16 @@ export async function markOrderAsCancelled(
 			});
 
 			if (!order) {
-				console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsCancelled`);
+				logger.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsCancelled`, undefined, {
+					service: "webhook",
+				});
 				return;
 			}
 
 			if (order.status === "CANCELLED" && order.paymentStatus === "FAILED") {
-				console.log(
+				logger.info(
 					`⏭️ [WEBHOOK] Order ${orderId} already CANCELLED with FAILED payment, skipping`,
+					{ service: "webhook" },
 				);
 				return;
 			}
@@ -220,7 +237,7 @@ export async function markOrderAsCancelled(
 				},
 			});
 
-			console.log(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`);
+			logger.info(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`, { service: "webhook" });
 		},
 		{ timeout: 10000 },
 	);
@@ -251,10 +268,14 @@ export async function initiateAutomaticRefund(
 			},
 		);
 
-		console.log(`✅ [WEBHOOK] Refund created successfully: ${refund.id} for order ${orderId}`);
+		logger.info(`✅ [WEBHOOK] Refund created successfully: ${refund.id} for order ${orderId}`, {
+			service: "webhook",
+		});
 		return { success: true, refundId: refund.id };
 	} catch (error) {
-		console.error(`❌ [WEBHOOK] Failed to create refund for order ${orderId}:`, error);
+		logger.error(`❌ [WEBHOOK] Failed to create refund for order ${orderId}:`, error, {
+			service: "webhook",
+		});
 		return { success: false, error: error instanceof Error ? error : new Error(String(error)) };
 	}
 }
@@ -279,7 +300,9 @@ export async function sendRefundFailureAlert(
 		});
 
 		if (!order) {
-			console.error(`❌ [WEBHOOK] Order not found for refund alert: ${orderId}`);
+			logger.error(`❌ [WEBHOOK] Order not found for refund alert: ${orderId}`, undefined, {
+				service: "webhook",
+			});
 			return;
 		}
 
@@ -296,11 +319,14 @@ export async function sendRefundFailureAlert(
 			dashboardUrl,
 		});
 
-		console.log(`🚨 [WEBHOOK] Admin alert sent for failed refund on order ${orderId}`);
+		logger.info(`🚨 [WEBHOOK] Admin alert sent for failed refund on order ${orderId}`, {
+			service: "webhook",
+		});
 	} catch (alertError) {
-		console.error(
+		logger.error(
 			`❌ [WEBHOOK] Failed to send refund failure alert for order ${orderId}:`,
 			alertError,
+			{ service: "webhook" },
 		);
 	}
 }

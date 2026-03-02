@@ -44,8 +44,20 @@ export async function bulkToggleDiscountStatus(
 			data: { isActive },
 		});
 
-		// Invalider la liste des discounts
-		getDiscountInvalidationTags().forEach((tag) => updateTag(tag));
+		// Fetch affected codes for detail cache invalidation
+		const updated = await prisma.discount.findMany({
+			where: { id: { in: ids }, ...notDeleted },
+			select: { code: true },
+		});
+
+		// Invalidate list + detail caches for each affected discount
+		const tags = new Set<string>(getDiscountInvalidationTags());
+		for (const d of updated) {
+			for (const tag of getDiscountInvalidationTags(d.code)) {
+				tags.add(tag);
+			}
+		}
+		tags.forEach((tag) => updateTag(tag));
 
 		void logAudit({
 			adminId: adminUser.id,

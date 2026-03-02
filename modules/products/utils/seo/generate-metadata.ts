@@ -91,8 +91,9 @@ export async function generateProductMetadata({
 	const canonicalUrl = `/creations/${slug}`;
 	const fullUrl = `${PRODUCTION_URL}/creations/${slug}`;
 
-	// Image du produit pour OpenGraph (première image du SKU principal)
-	const mainImage = primarySku?.images[0];
+	// Image du produit pour OpenGraph (image marquée isPrimary, sinon première image)
+	const skuImages = primarySku?.images ?? [];
+	const mainImage = skuImages.find((img) => img.isPrimary) ?? skuImages[0];
 	const imageUrl = mainImage?.url ?? `${PRODUCTION_URL}/opengraph-image`;
 
 	return {

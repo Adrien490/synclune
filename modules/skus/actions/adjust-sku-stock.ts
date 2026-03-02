@@ -68,9 +68,9 @@ export async function adjustSkuStock(
 					where: { id: skuId },
 					select: { inventory: true },
 				});
-				if (!sku) return error("Variante non trouvee");
+				if (!sku) return error("Variante non trouvée");
 				return error(
-					`Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demande: ${adjustment}`,
+					`Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demandé: ${adjustment}`,
 				);
 			}
 		} else {
@@ -81,7 +81,7 @@ export async function adjustSkuStock(
 			`;
 
 			if (result === 0) {
-				return error("Variante non trouvee");
+				return error("Variante non trouvée");
 			}
 		}
 
@@ -97,7 +97,7 @@ export async function adjustSkuStock(
 			},
 		});
 
-		if (!sku) return error("Variante non trouvee");
+		if (!sku) return error("Variante non trouvée");
 
 		// 6. Invalider le cache avec les tags appropriés
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);

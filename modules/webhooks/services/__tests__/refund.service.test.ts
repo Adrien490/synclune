@@ -41,6 +41,9 @@ const {
 			ACCOUNT: {
 				ORDER_DETAIL: (orderNumber: string) => `/compte/commandes/${orderNumber}`,
 			},
+			ADMIN: {
+				REFUNDS: "/admin/ventes/remboursements",
+			},
 		},
 	};
 });

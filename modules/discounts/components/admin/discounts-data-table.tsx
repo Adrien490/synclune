@@ -20,6 +20,10 @@ import { DiscountsSelectionToolbar } from "./discounts-selection-toolbar";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 import { CreateDiscountButton } from "./create-discount-button";
 import { formatEuro } from "@/shared/utils/format-euro";
+import {
+	getDiscountStatus,
+	type DiscountStatus,
+} from "@/modules/discounts/services/discount-validation.service";
 
 interface DiscountsDataTableProps {
 	discountsPromise: Promise<GetDiscountsReturn>;
@@ -49,22 +53,15 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 		return `${usageCount} / ${maxUsageCount}`;
 	};
 
-	const getTemporalStatus = (
-		startsAt: Date | null,
-		endsAt: Date | null,
-		isActive: boolean,
-	): { label: string; variant: "default" | "secondary" | "outline" } => {
-		if (!isActive) {
-			return { label: "Inactif", variant: "secondary" };
-		}
-		const now = new Date();
-		if (startsAt && new Date(startsAt) > now) {
-			return { label: "Planifié", variant: "outline" };
-		}
-		if (endsAt && new Date(endsAt) < now) {
-			return { label: "Expiré", variant: "secondary" };
-		}
-		return { label: "Actif", variant: "default" };
+	const STATUS_BADGE_CONFIG: Record<
+		DiscountStatus,
+		{ label: string; variant: "default" | "secondary" | "outline" }
+	> = {
+		active: { label: "Actif", variant: "default" },
+		inactive: { label: "Inactif", variant: "secondary" },
+		scheduled: { label: "Planifié", variant: "outline" },
+		expired: { label: "Expiré", variant: "secondary" },
+		exhausted: { label: "Épuisé", variant: "secondary" },
 	};
 
 	if (discounts.length === 0) {
@@ -137,11 +134,7 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 									</TableCell>
 									<TableCell role="gridcell" className="text-center">
 										{(() => {
-											const status = getTemporalStatus(
-												discount.startsAt,
-												discount.endsAt,
-												discount.isActive,
-											);
+											const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
 											return (
 												<Badge
 													variant={status.variant}

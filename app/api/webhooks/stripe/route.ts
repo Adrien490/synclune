@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
-import { WebhookEventStatus } from "@/app/generated/prisma/client";
+import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { ANTI_REPLAY_WINDOW_SECONDS } from "@/modules/webhooks/constants/webhook.constants";
 import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/cron/constants/limits";
@@ -12,6 +12,8 @@ import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-t
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
+
+export const maxDuration = 60;
 
 /**
  * Webhook Stripe
@@ -88,18 +90,33 @@ export async function POST(req: Request) {
 		}
 
 		// Enregistrer l'événement comme PROCESSING (atomic upsert)
-		const webhookRecord = await prisma.webhookEvent.upsert({
-			where: { stripeEventId: event.id },
-			create: {
-				stripeEventId: event.id,
-				eventType: event.type,
-				status: WebhookEventStatus.PROCESSING,
-			},
-			update: {
-				attempts: { increment: 1 },
-				status: WebhookEventStatus.PROCESSING,
-			},
-		});
+		// Catch P2002 unique constraint violation on concurrent identical webhooks
+		// to return 200 instead of 500, avoiding unnecessary Stripe retries
+		let webhookRecord;
+		try {
+			webhookRecord = await prisma.webhookEvent.upsert({
+				where: { stripeEventId: event.id },
+				create: {
+					stripeEventId: event.id,
+					eventType: event.type,
+					status: WebhookEventStatus.PROCESSING,
+				},
+				update: {
+					attempts: { increment: 1 },
+					status: WebhookEventStatus.PROCESSING,
+				},
+			});
+		} catch (e) {
+			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+				logger.info("Concurrent duplicate webhook detected, returning 200", {
+					correlationId,
+					eventId: event.id,
+					eventType: event.type,
+				});
+				return NextResponse.json({ received: true, status: "duplicate" });
+			}
+			throw e;
+		}
 
 		try {
 			// 5. Skip unsupported event types (avoid TypeError + infinite Stripe retries)

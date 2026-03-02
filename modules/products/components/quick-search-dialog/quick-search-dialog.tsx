@@ -3,7 +3,7 @@
 import { AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Fade } from "@/shared/components/animations/fade";
@@ -21,7 +21,7 @@ import { useRecentSearches } from "@/modules/products/hooks/use-recent-searches"
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 
-import { QUICK_SEARCH_DIALOG_ID, SEARCH_DEBOUNCE_MS } from "./constants";
+import { QUICK_SEARCH_DIALOG_ID, RESULTS_CONTAINER_ID, SEARCH_DEBOUNCE_MS } from "./constants";
 import type {
 	QuickSearchCollection,
 	QuickSearchProductType,
@@ -32,7 +32,7 @@ import { QuickSearchContent } from "./quick-search-content";
 import { QuickTagPills } from "./quick-tag-pills";
 import { SearchResultsSkeleton } from "./search-result-item";
 import { useKeyboardNavigation } from "./use-keyboard-navigation";
-import { useQuickSearch } from "./use-quick-search";
+import { isSearchError, useQuickSearch } from "./use-quick-search";
 
 interface QuickSearchDialogProps {
 	recentSearches?: string[];
@@ -77,6 +77,21 @@ export function QuickSearchDialog({
 	} = useQuickSearch({ searchInputRef, resetActiveIndex });
 
 	const hasPartialInput = inputValue.trim().length > 0 && !isSearchMode;
+
+	// Cycling placeholder through product types
+	const [placeholderIndex, setPlaceholderIndex] = useState(0);
+	useEffect(() => {
+		if (inputValue.length > 0 || productTypes.length === 0) return;
+		const id = setInterval(() => {
+			setPlaceholderIndex((i) => (i + 1) % productTypes.length);
+		}, 3000);
+		return () => clearInterval(id);
+	}, [inputValue.length, productTypes.length]);
+
+	const currentType = productTypes[placeholderIndex % (productTypes.length || 1)];
+	const placeholder = currentType
+		? `Rechercher : ${currentType.label}...`
+		: "Rechercher un bijou...";
 
 	const navigateToSearch = (term: string, { saveToRecent = true } = {}) => {
 		if (isPending) return;
@@ -196,7 +211,7 @@ export function QuickSearchDialog({
 						mode="live"
 						debounceMs={SEARCH_DEBOUNCE_MS}
 						size="md"
-						placeholder="Rechercher un bijou..."
+						placeholder={placeholder}
 						// eslint-disable-next-line jsx-a11y/no-autofocus
 						autoFocus
 						preventMobileBlur
@@ -207,6 +222,7 @@ export function QuickSearchDialog({
 						onSubmit={handleEnterKey}
 						activeDescendantId={activeDescendantId}
 						ariaExpanded={isSearchMode}
+						ariaControls={RESULTS_CONTAINER_ID}
 						onKeyDown={(e) => {
 							if (e.key === "ArrowDown") {
 								e.preventDefault();
@@ -226,7 +242,7 @@ export function QuickSearchDialog({
 				{/* Hint when input is too short */}
 				{hasPartialInput && (
 					<p className="text-muted-foreground px-4 pb-2 text-xs">
-						Tapez au moins 2 caractères pour rechercher
+						Tapez au moins 3 caractères pour rechercher
 					</p>
 				)}
 
@@ -248,6 +264,7 @@ export function QuickSearchDialog({
 				{/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="group" container with keyboard arrow navigation for search results */}
 				<div
 					ref={contentRef}
+					id={RESULTS_CONTAINER_ID}
 					role="group"
 					aria-label="Résultats de recherche"
 					className={cn(
@@ -262,9 +279,9 @@ export function QuickSearchDialog({
 					<AnimatePresence mode="wait">
 						{isSearchMode ? (
 							<Fade key="search-results" y={6} className="h-full">
-								{isSearching && (!searchResults || searchResults === "error") ? (
+								{isSearching && (!searchResults || isSearchError(searchResults)) ? (
 									<SearchResultsSkeleton />
-								) : searchResults === "error" ? (
+								) : isSearchError(searchResults) ? (
 									<div className="flex h-full flex-col items-center justify-center gap-3 px-4 py-8">
 										<p className="text-muted-foreground text-sm">
 											La recherche est temporairement indisponible.

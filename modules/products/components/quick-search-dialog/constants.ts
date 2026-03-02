@@ -32,8 +32,14 @@ export const MAX_MATCHED_TYPES = 2;
 /** Number of skeleton rows in the loading state */
 export const SKELETON_ROWS = 4;
 
-/** Minimum query length to trigger a search */
-export const MIN_SEARCH_LENGTH = 2;
+/** Minimum query length to trigger a search (aligned with FUZZY_MIN_LENGTH) */
+export const MIN_SEARCH_LENGTH = 3;
 
 /** Debounce delay (ms) for the live search input */
 export const SEARCH_DEBOUNCE_MS = 300;
+
+/** Branded error type replacing the raw "error" string literal */
+export type QuickSearchError = { type: "error" };
+
+/** ID for the results container (used by aria-controls) */
+export const RESULTS_CONTAINER_ID = "qs-results";

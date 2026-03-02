@@ -7,15 +7,18 @@ import { Tap } from "@/shared/components/animations/tap";
 import { cn } from "@/shared/utils/cn";
 
 import type { QuickSearchProductType } from "./constants";
+import { HighlightMatch } from "./search-result-item";
 
 interface CategoryCardProps {
 	type: QuickSearchProductType;
 	onSelect: () => void;
 	/** Compact variant for search results, full variant for idle */
 	variant?: "compact" | "full";
+	/** Search query for highlighting in compact mode */
+	query?: string;
 }
 
-export function CategoryCard({ type, onSelect, variant = "full" }: CategoryCardProps) {
+export function CategoryCard({ type, onSelect, variant = "full", query }: CategoryCardProps) {
 	const isCompact = variant === "compact";
 
 	return (
@@ -40,7 +43,9 @@ export function CategoryCard({ type, onSelect, variant = "full" }: CategoryCardP
 				{isCompact && (
 					<Sparkles className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
 				)}
-				<span className={isCompact ? "truncate" : undefined}>{type.label}</span>
+				<span className={isCompact ? "truncate" : undefined}>
+					{isCompact && query ? <HighlightMatch text={type.label} query={query} /> : type.label}
+				</span>
 			</Link>
 		</Tap>
 	);

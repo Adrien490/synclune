@@ -350,7 +350,7 @@ model SkuMedia {
 
   url          String    @db.VarChar(2048)
   thumbnailUrl String?   @db.VarChar(2048) // Thumbnail pour videos (poster)
-  blurDataUrl  String?   @db.Text // Base64 blur placeholder (~200 bytes)
+  blurDataUrl  String?   @db.VarChar(255) // ThumbHash base64 placeholder (~35-50 chars)
   altText      String?   @db.VarChar(255)
   mediaType    MediaType @default(IMAGE)
   isPrimary    Boolean   @default(false)
@@ -360,6 +360,7 @@ model SkuMedia {
   updatedAt DateTime @updatedAt
 
   @@index([skuId, position])
+  @@index([skuId, isPrimary])
 }
 
 // ============================================================================

@@ -40,7 +40,7 @@ export async function bulkUpdatePrice(
 		if (ids.length === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Aucune variante selectionnee",
+				message: "Aucune variante sélectionnée",
 			};
 		}
 
@@ -54,14 +54,14 @@ export async function bulkUpdatePrice(
 		if (mode === "percentage" && value === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Le pourcentage ne peut pas etre 0",
+				message: "Le pourcentage ne peut pas être 0",
 			};
 		}
 
 		if (mode === "absolute" && value < 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Le prix ne peut pas etre negatif",
+				message: "Le prix ne peut pas être négatif",
 			};
 		}
 
@@ -81,7 +81,7 @@ export async function bulkUpdatePrice(
 		if (skusData.length === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Aucune variante trouvee",
+				message: "Aucune variante trouvée",
 			};
 		}
 
@@ -113,7 +113,7 @@ export async function bulkUpdatePrice(
 		if (invalidPrices.length > 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: `${invalidPrices.length} variante(s) auraient un prix trop eleve. Maximum: 999999.99 EUR`,
+				message: `${invalidPrices.length} variante(s) auraient un prix trop élevé. Maximum: 999999.99 EUR`,
 			};
 		}
 
@@ -159,8 +159,8 @@ export async function bulkUpdatePrice(
 
 		const modeLabel =
 			mode === "absolute"
-				? `defini a ${(value / 100).toFixed(2)} EUR`
-				: `ajuste de ${value > 0 ? "+" : ""}${value}%`;
+				? `défini à ${(value / 100).toFixed(2)} EUR`
+				: `ajusté de ${value > 0 ? "+" : ""}${value}%`;
 
 		return {
 			status: ActionStatus.SUCCESS,

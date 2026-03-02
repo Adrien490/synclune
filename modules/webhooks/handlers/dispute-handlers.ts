@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { logger } from "@/shared/lib/logger";
 import { DisputeReason, DisputeStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
@@ -72,7 +73,10 @@ export async function handleDisputeCreated(
 			: dispute.payment_intent?.id;
 
 	if (!paymentIntentId) {
-		console.error("[WEBHOOK] Dispute without payment_intent:", dispute.id);
+		logger.error("[WEBHOOK] Dispute without payment_intent:", undefined, {
+			service: "webhook",
+			disputeId: dispute.id,
+		});
 		throw new Error(`Dispute ${dispute.id} has no payment_intent`);
 	}
 
@@ -86,7 +90,9 @@ export async function handleDisputeCreated(
 	});
 
 	if (!order) {
-		console.error(`[WEBHOOK] No order found for disputed PI ${paymentIntentId}`);
+		logger.error(`[WEBHOOK] No order found for disputed PI ${paymentIntentId}`, undefined, {
+			service: "webhook",
+		});
 		throw new Error(`No order found for dispute ${dispute.id} (PI: ${paymentIntentId})`);
 	}
 
@@ -100,7 +106,9 @@ export async function handleDisputeCreated(
 	});
 
 	if (existingNote) {
-		console.log(`[WEBHOOK] Dispute note already exists for ${dispute.id}, skipping creation`);
+		logger.info(`[WEBHOOK] Dispute note already exists for ${dispute.id}, skipping creation`, {
+			service: "webhook",
+		});
 		return { success: true, skipped: true, reason: "Dispute note already created" };
 	}
 
@@ -114,30 +122,35 @@ export async function handleDisputeCreated(
 		? new Date(dispute.evidence_details.due_by * 1000)
 		: null;
 
-	await prisma.$transaction(async (tx) => {
-		await tx.dispute.create({
-			data: {
-				stripeDisputeId: dispute.id,
-				orderId: order.id,
-				amount: dispute.amount,
-				fee: dispute.balance_transactions[0]?.fee ?? 0,
-				reason: STRIPE_REASON_MAP[dispute.reason] ?? DisputeReason.GENERAL,
-				status: mapStripeDisputeStatus(dispute.status),
-				dueBy,
-			},
-		});
+	await prisma.$transaction(
+		async (tx) => {
+			await tx.dispute.create({
+				data: {
+					stripeDisputeId: dispute.id,
+					orderId: order.id,
+					amount: dispute.amount,
+					fee: dispute.balance_transactions[0]?.fee ?? 0,
+					reason: STRIPE_REASON_MAP[dispute.reason] ?? DisputeReason.GENERAL,
+					status: mapStripeDisputeStatus(dispute.status),
+					dueBy,
+				},
+			});
 
-		await tx.orderNote.create({
-			data: {
-				orderId: order.id,
-				content: noteContent,
-				authorId: SYSTEM_AUTHOR_ID,
-				authorName: SYSTEM_AUTHOR_NAME,
-			},
-		});
+			await tx.orderNote.create({
+				data: {
+					orderId: order.id,
+					content: noteContent,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: SYSTEM_AUTHOR_NAME,
+				},
+			});
+		},
+		{ timeout: 10000 },
+	);
+
+	logger.info(`⚠️ [WEBHOOK] Dispute ${dispute.id} created for order ${order.orderNumber}`, {
+		service: "webhook",
 	});
-
-	console.log(`⚠️ [WEBHOOK] Dispute ${dispute.id} created for order ${order.orderNumber}`);
 
 	const baseUrl = getBaseUrl();
 	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
@@ -188,7 +201,10 @@ export async function handleDisputeClosed(
 			: dispute.payment_intent?.id;
 
 	if (!paymentIntentId) {
-		console.error("[WEBHOOK] Dispute closed without payment_intent:", dispute.id);
+		logger.error("[WEBHOOK] Dispute closed without payment_intent:", undefined, {
+			service: "webhook",
+			disputeId: dispute.id,
+		});
 		throw new Error(`Dispute ${dispute.id} closed has no payment_intent`);
 	}
 
@@ -203,7 +219,9 @@ export async function handleDisputeClosed(
 	});
 
 	if (!order) {
-		console.error(`[WEBHOOK] No order found for closed dispute PI ${paymentIntentId}`);
+		logger.error(`[WEBHOOK] No order found for closed dispute PI ${paymentIntentId}`, undefined, {
+			service: "webhook",
+		});
 		throw new Error(`No order found for closed dispute ${dispute.id} (PI: ${paymentIntentId})`);
 	}
 
@@ -217,7 +235,9 @@ export async function handleDisputeClosed(
 	});
 
 	if (existingNote) {
-		console.log(`[WEBHOOK] Dispute closed note already exists for ${dispute.id}, skipping`);
+		logger.info(`[WEBHOOK] Dispute closed note already exists for ${dispute.id}, skipping`, {
+			service: "webhook",
+		});
 		return { success: true, skipped: true, reason: "Dispute closed note already created" };
 	}
 
@@ -227,43 +247,47 @@ export async function handleDisputeClosed(
 	// Update Dispute record, create OrderNote, and update order status atomically
 	const noteContent = `[LITIGE CLOTURE] Litige ${dispute.id} clôturé: ${statusLabel}.${!won ? " Le montant a été débité par Stripe." : ""}`;
 
-	await prisma.$transaction(async (tx) => {
-		// Update Dispute record if it exists
-		const existingDispute = await tx.dispute.findUnique({
-			where: { stripeDisputeId: dispute.id },
-			select: { id: true },
-		});
-
-		if (existingDispute) {
-			await tx.dispute.update({
+	await prisma.$transaction(
+		async (tx) => {
+			// Update Dispute record if it exists
+			const existingDispute = await tx.dispute.findUnique({
 				where: { stripeDisputeId: dispute.id },
+				select: { id: true },
+			});
+
+			if (existingDispute) {
+				await tx.dispute.update({
+					where: { stripeDisputeId: dispute.id },
+					data: {
+						status: mapStripeDisputeStatus(dispute.status),
+						resolvedAt: new Date(),
+					},
+				});
+			}
+
+			await tx.orderNote.create({
 				data: {
-					status: mapStripeDisputeStatus(dispute.status),
-					resolvedAt: new Date(),
+					orderId: order.id,
+					content: noteContent,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: SYSTEM_AUTHOR_NAME,
 				},
 			});
-		}
 
-		await tx.orderNote.create({
-			data: {
-				orderId: order.id,
-				content: noteContent,
-				authorId: SYSTEM_AUTHOR_ID,
-				authorName: SYSTEM_AUTHOR_NAME,
-			},
-		});
+			// If lost, Stripe has already debited the amount — mark as REFUNDED
+			if (!won && order.paymentStatus !== "REFUNDED") {
+				await tx.order.update({
+					where: { id: order.id },
+					data: { paymentStatus: "REFUNDED" },
+				});
+			}
+		},
+		{ timeout: 10000 },
+	);
 
-		// If lost, Stripe has already debited the amount — mark as REFUNDED
-		if (!won && order.paymentStatus !== "REFUNDED") {
-			await tx.order.update({
-				where: { id: order.id },
-				data: { paymentStatus: "REFUNDED" },
-			});
-		}
-	});
-
-	console.log(
+	logger.info(
 		`${won ? "✅" : "❌"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`,
+		{ service: "webhook" },
 	);
 
 	const baseUrl = getBaseUrl();

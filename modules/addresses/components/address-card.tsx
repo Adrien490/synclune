@@ -26,7 +26,7 @@ export function AddressCard({ address }: AddressCardProps) {
 	return (
 		<div
 			className={cn(
-				"bg-card flex h-full flex-col gap-3 rounded-lg border p-4 transition-colors",
+				"bg-card flex h-full flex-col gap-3 rounded-xl border p-4 transition-colors",
 				address.isDefault ? "border-primary/50 bg-primary/5" : "hover:bg-accent/50",
 			)}
 		>

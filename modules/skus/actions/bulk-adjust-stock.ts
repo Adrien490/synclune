@@ -39,7 +39,7 @@ export async function bulkAdjustStock(
 		if (ids.length === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Aucune variante selectionnee",
+				message: "Aucune variante sélectionnée",
 			};
 		}
 
@@ -53,7 +53,7 @@ export async function bulkAdjustStock(
 		if (value === 0 && mode === "relative") {
 			return {
 				status: ActionStatus.ERROR,
-				message: "La valeur d'ajustement ne peut pas etre 0",
+				message: "La valeur d'ajustement ne peut pas être 0",
 			};
 		}
 
@@ -61,7 +61,7 @@ export async function bulkAdjustStock(
 		if (mode === "absolute" && value < 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Le stock ne peut pas etre negatif",
+				message: "Le stock ne peut pas être négatif",
 			};
 		}
 
@@ -121,7 +121,15 @@ export async function bulkAdjustStock(
 		if (skusData.length === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Aucune variante trouvee",
+				message: "Aucune variante trouvée",
+			};
+		}
+
+		if (skusData.length !== ids.length) {
+			const missing = ids.length - skusData.length;
+			return {
+				status: ActionStatus.ERROR,
+				message: `${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s). Le stock a été ajusté uniquement pour les variantes existantes.`,
 			};
 		}
 
@@ -139,7 +147,7 @@ export async function bulkAdjustStock(
 			metadata: { count: skusData.length, mode, value },
 		});
 
-		const modeLabel = mode === "absolute" ? "defini a" : "ajuste de";
+		const modeLabel = mode === "absolute" ? "défini à" : "ajusté de";
 		const valueLabel = mode === "relative" && value > 0 ? `+${value}` : value.toString();
 
 		return {

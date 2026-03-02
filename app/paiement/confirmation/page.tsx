@@ -6,7 +6,7 @@ import { Stagger } from "@/shared/components/animations/stagger";
 import { SuccessIcon } from "./_components/success-icon";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Clock, Heart, Package, Sparkles, UserPlus } from "lucide-react";
+import { Clock, Heart, Package, Phone, Sparkles, UserPlus } from "lucide-react";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -61,16 +61,18 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 	}
 
 	return (
-		<div className="min-h-screen">
+		<div className="relative min-h-screen">
+			{/* Decorative background */}
+			<div className="from-primary/[0.02] to-secondary/[0.03] fixed inset-0 -z-10 bg-gradient-to-br via-transparent" />
 			<h1 className="sr-only">Confirmation de commande</h1>
-			<section className="bg-background py-8 sm:py-10">
+			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
-					<Card className="border-primary/20 from-primary/5 to-background border-2 bg-linear-to-br">
+					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<SuccessIcon />
 							<Fade y={10} delay={0.15}>
-								<CardTitle className="text-2xl sm:text-3xl">
+								<CardTitle className="font-display text-2xl sm:text-3xl">
 									Merci pour votre confiance ! <span aria-hidden="true">✨</span>
 								</CardTitle>
 							</Fade>
@@ -101,12 +103,12 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Articles commandés */}
 							{order.items.length > 0 && (
-								<div className="bg-muted/50 space-y-3 rounded-lg p-4">
+								<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
 									<h3 className="text-base font-semibold">Articles commandés</h3>
 									<div className="space-y-3">
 										{order.items.map((item) => (
 											<div key={item.id} className="flex gap-3 text-sm">
-												<div className="bg-muted relative h-14 w-14 shrink-0 overflow-hidden rounded-md border">
+												<div className="bg-muted relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border">
 													{item.skuImageUrl ? (
 														<Image
 															src={item.skuImageUrl}
@@ -143,7 +145,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							)}
 
 							{/* Récapitulatif montants */}
-							<div className="bg-muted/50 space-y-3 rounded-lg p-4">
+							<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
 								<h3 className="text-base font-semibold">Récapitulatif</h3>
 								<div className="space-y-2 text-sm">
 									<div className="flex justify-between">
@@ -168,7 +170,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							</div>
 
 							{/* Adresse de livraison */}
-							<div className="bg-muted/50 space-y-2 rounded-lg p-4">
+							<div className="bg-muted/50 border-primary/5 space-y-2 rounded-xl border p-4">
 								<h3 className="text-base font-semibold">Adresse de livraison</h3>
 								<div className="text-muted-foreground text-sm">
 									<p className="text-foreground font-medium">
@@ -180,7 +182,8 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										{order.shippingPostalCode} {order.shippingCity}
 									</p>
 									<p className="mt-1 text-xs">
-										<span aria-hidden="true">📞</span> {order.shippingPhone}
+										<Phone className="inline h-3.5 w-3.5" aria-hidden="true" />{" "}
+										{order.shippingPhone}
 									</p>
 								</div>
 							</div>
@@ -199,7 +202,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Prochaines étapes */}
 							<div className="space-y-4">
-								<h3 className="flex items-center gap-2 font-semibold">
+								<h3 className="font-display flex items-center gap-2 font-semibold">
 									<Sparkles className="text-primary h-5 w-5" />
 									Que va-t-il se passer maintenant ?
 								</h3>
@@ -248,7 +251,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Guest account creation CTA (Baymard: post-purchase account creation) */}
 							{!session && (
-								<Card className="border-dashed">
+								<Card className="rounded-xl border-dashed">
 									<CardContent className="flex items-start gap-4 p-4">
 										<div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
 											<UserPlus className="text-primary h-5 w-5" />

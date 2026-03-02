@@ -151,48 +151,49 @@ export function GallerySlide({
 	// Vidéo : même rendu mobile/desktop
 	if (media.mediaType === "VIDEO") {
 		return (
-			<button
-				type="button"
-				id={id}
-				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
-				onClick={onOpen}
-				aria-label="Ouvrir la vidéo en plein écran"
-			>
-				{videoState === "loading" && <VideoLoadingSpinner />}
-				{videoState === "error" && (
-					<VideoErrorFallback onRetry={handleRetry} poster={media.thumbnailUrl ?? undefined} />
-				)}
-				<video
-					ref={videoRef}
-					preload="metadata"
-					className={cn(
-						"h-full w-full object-cover",
-						transitionClass,
-						videoState !== "ready" ? "opacity-0" : "opacity-100",
-					)}
-					muted
-					loop={!prefersReduced}
-					playsInline
-					autoPlay={isActive && !prefersReduced}
-					poster={media.thumbnailUrl ?? undefined}
-					onCanPlay={() => {
-						if (videoRef.current && videoRef.current.readyState >= 3) {
-							setVideoState("ready");
-						}
-					}}
-					onPlaying={() => setVideoState("ready")}
-					onError={() => setVideoState("error")}
-					aria-label={`Vidéo ${title}`}
-					aria-describedby={`video-desc-${index}`}
+			<div id={id} role="tabpanel">
+				<button
+					type="button"
+					className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
+					onClick={onOpen}
+					aria-label="Ouvrir la vidéo en plein écran"
 				>
-					<source src={media.url} type={getVideoMimeType(media.url)} />
-					{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
-					<track kind="captions" srcLang="fr" label="Français" default />
-				</video>
-				<span id={`video-desc-${index}`} className="sr-only">
-					Vidéo de démonstration du produit sans audio
-				</span>
-			</button>
+					{videoState === "loading" && <VideoLoadingSpinner />}
+					{videoState === "error" && (
+						<VideoErrorFallback onRetry={handleRetry} poster={media.thumbnailUrl ?? undefined} />
+					)}
+					<video
+						ref={videoRef}
+						preload="metadata"
+						className={cn(
+							"h-full w-full object-cover",
+							transitionClass,
+							videoState !== "ready" ? "opacity-0" : "opacity-100",
+						)}
+						muted
+						loop={!prefersReduced}
+						playsInline
+						autoPlay={isActive && !prefersReduced}
+						poster={media.thumbnailUrl ?? undefined}
+						onCanPlay={() => {
+							if (videoRef.current && videoRef.current.readyState >= 3) {
+								setVideoState("ready");
+							}
+						}}
+						onPlaying={() => setVideoState("ready")}
+						onError={() => setVideoState("error")}
+						aria-label={`Vidéo ${title}`}
+						aria-describedby={`video-desc-${index}`}
+					>
+						<source src={media.url} type={getVideoMimeType(media.url)} />
+						{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
+						<track kind="captions" srcLang="fr" label="Français" default />
+					</video>
+					<span id={`video-desc-${index}`} className="sr-only">
+						Vidéo de démonstration du produit sans audio
+					</span>
+				</button>
+			</div>
 		);
 	}
 

@@ -2,7 +2,6 @@ import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
-import { z } from "zod";
 import { logger } from "@/shared/lib/logger";
 
 import { cacheDiscounts } from "../constants/cache";
@@ -42,20 +41,13 @@ export { DISCOUNTS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/discount.co
  * Récupère la liste des codes promo avec pagination
  */
 export async function getDiscounts(params: GetDiscountsParams): Promise<GetDiscountsReturn> {
-	try {
-		const validation = getDiscountsSchema.safeParse(params);
+	const validation = getDiscountsSchema.safeParse(params);
 
-		if (!validation.success) {
-			throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
-		}
-
-		return fetchDiscounts(validation.data);
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			throw new Error("Invalid parameters");
-		}
-		throw error;
+	if (!validation.success) {
+		throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
 	}
+
+	return fetchDiscounts(validation.data);
 }
 
 /**

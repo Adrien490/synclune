@@ -15,6 +15,7 @@ import {
 	type toggleProductTypeStatusSchema,
 	type bulkActivateProductTypesSchema,
 	type bulkDeactivateProductTypesSchema,
+	type bulkDeleteProductTypesSchema,
 } from "../schemas/product-type.schemas";
 
 // ============================================================================
@@ -64,6 +65,7 @@ export type DeleteProductTypeInput = z.infer<typeof deleteProductTypeSchema>;
 export type ToggleProductTypeStatusInput = z.infer<typeof toggleProductTypeStatusSchema>;
 export type BulkActivateProductTypesInput = z.infer<typeof bulkActivateProductTypesSchema>;
 export type BulkDeactivateProductTypesInput = z.infer<typeof bulkDeactivateProductTypesSchema>;
+export type BulkDeleteProductTypesInput = z.infer<typeof bulkDeleteProductTypesSchema>;
 
 // ============================================================================
 // UI/FORM TYPES
@@ -75,14 +77,4 @@ export type BulkDeactivateProductTypesInput = z.infer<typeof bulkDeactivateProdu
 export type ProductTypeOption = {
 	id: string;
 	label: string;
-};
-
-/**
- * Type pour les hooks de formulaire d'édition
- */
-export type ProductTypeFormData = {
-	id: string;
-	label: string;
-	description?: string | null;
-	slug: string;
 };

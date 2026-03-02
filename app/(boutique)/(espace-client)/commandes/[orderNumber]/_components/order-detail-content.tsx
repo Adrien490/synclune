@@ -30,15 +30,15 @@ export async function OrderDetailContent({ orderNumber }: OrderDetailContentProp
 	const daysRemaining = getReturnDaysRemaining(order.actualDelivery);
 
 	return (
-		<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-			<div className="space-y-6 lg:col-span-2">
+		<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+			<div className="space-y-6 md:col-span-2">
 				<OrderItemsList items={order.items} />
 				{order.refunds.length > 0 && <OrderRefundsCard refunds={order.refunds} />}
 				<OrderStatusTimeline order={order} />
 				<OrderTracking order={order} />
 			</div>
 
-			<div className="space-y-6 lg:col-span-1">
+			<div className="space-y-6 md:col-span-1">
 				<OrderSummaryCard order={order} />
 				<OrderAddressesCard order={order} />
 				{order.paymentStatus === "PAID" && order.invoiceStatus === "GENERATED" && (

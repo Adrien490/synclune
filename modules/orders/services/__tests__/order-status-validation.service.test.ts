@@ -123,6 +123,14 @@ describe("canMarkAsShipped", () => {
 		});
 		expect(result).toEqual({ canShip: false, reason: "unpaid" });
 	});
+
+	it("should allow shipping a partially refunded order", () => {
+		const result = canMarkAsShipped({
+			status: "PROCESSING",
+			paymentStatus: "PARTIALLY_REFUNDED",
+		});
+		expect(result).toEqual({ canShip: true });
+	});
 });
 
 // ============================================================================
@@ -204,6 +212,12 @@ describe("canRefundOrder", () => {
 
 	it("should block refund for an already refunded order", () => {
 		expect(canRefundOrder({ status: "PROCESSING", paymentStatus: "REFUNDED" })).toBe(false);
+	});
+
+	it("should allow refund for a partially refunded order", () => {
+		expect(canRefundOrder({ status: "PROCESSING", paymentStatus: "PARTIALLY_REFUNDED" })).toBe(
+			true,
+		);
 	});
 });
 
@@ -481,6 +495,14 @@ describe("canMarkAsProcessing", () => {
 		});
 		expect(result).toEqual({ canProcess: false, reason: "unpaid" });
 	});
+
+	it("should allow processing when paymentStatus is PARTIALLY_REFUNDED", () => {
+		const result = canMarkAsProcessing({
+			status: "PENDING",
+			paymentStatus: "PARTIALLY_REFUNDED",
+		});
+		expect(result).toEqual({ canProcess: true });
+	});
 });
 
 // ============================================================================
@@ -519,16 +541,16 @@ describe("canRevertToProcessing", () => {
 // ============================================================================
 
 describe("getOrderPermissions - PARTIALLY_REFUNDED payment status", () => {
-	it("should allow canMarkAsShipped for PROCESSING + PARTIALLY_REFUNDED (same as PAID)", () => {
+	it("should treat PARTIALLY_REFUNDED same as PAID for paid-gated permissions", () => {
 		const permissions = getOrderPermissions({
 			status: "PROCESSING",
 			paymentStatus: "PARTIALLY_REFUNDED",
 		});
 
-		// PARTIALLY_REFUNDED is not PAID, so paid-gated permissions are off
-		expect(permissions.canMarkAsShipped).toBe(false);
-		expect(permissions.canRefund).toBe(false);
-		expect(permissions.canMarkAsProcessing).toBe(false);
+		// PARTIALLY_REFUNDED allows shipping, refunding, and processing (remaining items)
+		expect(permissions.canMarkAsShipped).toBe(true);
+		expect(permissions.canRefund).toBe(true);
+		expect(permissions.canMarkAsProcessing).toBe(false); // already PROCESSING
 		expect(permissions.canCancel).toBe(true);
 		expect(permissions.canMarkAsDelivered).toBe(false);
 		expect(permissions.canRevertToProcessing).toBe(false);
@@ -544,18 +566,28 @@ describe("getOrderPermissions - PARTIALLY_REFUNDED payment status", () => {
 		expect(permissions.canMarkAsPaid).toBe(false);
 	});
 
-	it("should not allow canRefund for SHIPPED + PARTIALLY_REFUNDED", () => {
+	it("should allow canRefund for SHIPPED + PARTIALLY_REFUNDED", () => {
 		const permissions = getOrderPermissions({
 			status: "SHIPPED",
 			paymentStatus: "PARTIALLY_REFUNDED",
 			trackingNumber: "XYZ999",
 		});
 
-		expect(permissions.canRefund).toBe(false);
+		expect(permissions.canRefund).toBe(true);
 		expect(permissions.canMarkAsDelivered).toBe(true);
 		expect(permissions.canRevertToProcessing).toBe(true);
-		// canUpdateTracking requires tracking number but not PAID
 		expect(permissions.canUpdateTracking).toBe(true);
+	});
+
+	it("should allow canMarkAsProcessing for PENDING + PARTIALLY_REFUNDED", () => {
+		const permissions = getOrderPermissions({
+			status: "PENDING",
+			paymentStatus: "PARTIALLY_REFUNDED",
+		});
+
+		expect(permissions.canMarkAsProcessing).toBe(true);
+		expect(permissions.canRefund).toBe(false); // PENDING is not in refundable statuses
+		expect(permissions.canCancel).toBe(true);
 	});
 });
 

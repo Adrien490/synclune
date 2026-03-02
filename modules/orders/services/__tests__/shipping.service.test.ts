@@ -130,12 +130,12 @@ describe("calculateShipping", () => {
 		expect(calculateShipping("FR")).toBe(499);
 	});
 
-	it("should return 0 for Corsican postal code (not available)", () => {
-		expect(calculateShipping("FR", "20000")).toBe(0);
+	it("should return null for Corsican postal code (not available)", () => {
+		expect(calculateShipping("FR", "20000")).toBeNull();
 	});
 
-	it("should return 0 for 20200 postal code (Corse not available)", () => {
-		expect(calculateShipping("FR", "20200")).toBe(0);
+	it("should return null for 20200 postal code (Corse not available)", () => {
+		expect(calculateShipping("FR", "20200")).toBeNull();
 	});
 
 	it("should return FR rate for non-Corsican postal code", () => {

@@ -114,6 +114,26 @@ function isPrivateHostname(hostname: string): boolean {
 		if (a === 0) return true;
 	}
 
+	// IPv6 private ranges (strip brackets for URL-style [::1])
+	const ipv6 = hostname.startsWith("[") ? hostname.slice(1, -1) : hostname;
+	const lower = ipv6.toLowerCase();
+
+	// IPv4-mapped IPv6 (::ffff:127.0.0.1, ::ffff:10.0.0.1, etc.)
+	if (lower.startsWith("::ffff:")) {
+		const mapped = lower.slice(7);
+		// Recurse with the mapped IPv4 address
+		if (isPrivateHostname(mapped)) return true;
+	}
+
+	// fc00::/7 — Unique Local Addresses (includes fd00::/8)
+	if (lower.startsWith("fc") || lower.startsWith("fd")) return true;
+
+	// fe80::/10 — Link-local
+	if (lower.startsWith("fe80")) return true;
+
+	// :: (unspecified address, equivalent to 0.0.0.0)
+	if (lower === "::") return true;
+
 	return false;
 }
 

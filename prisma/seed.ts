@@ -22,6 +22,14 @@ import {
 } from "../app/generated/prisma/client";
 
 // ============================================
+// PRODUCTION GUARD
+// ============================================
+if (process.env.NODE_ENV === "production") {
+	console.error("❌ Seed interdit en production. Utilisez NODE_ENV=development.");
+	process.exit(1);
+}
+
+// ============================================
 // CONFIGURATION
 // ============================================
 const CONFIG = {
@@ -56,22 +64,49 @@ function buildOrderNumber(index: number): string {
 	return `SYN-${CONFIG.orderPrefix}-${index.toString().padStart(4, "0")}`;
 }
 
+// EU country data for realistic multi-country addresses
+const EU_COUNTRIES = [
+	{ code: "FR", weight: 70, phonePrefix: "+33", zipFormat: "#####" },
+	{ code: "BE", weight: 10, phonePrefix: "+32", zipFormat: "####" },
+	{ code: "DE", weight: 10, phonePrefix: "+49", zipFormat: "#####" },
+	{ code: "ES", weight: 5, phonePrefix: "+34", zipFormat: "#####" },
+	{ code: "IT", weight: 5, phonePrefix: "+39", zipFormat: "#####" },
+] as const;
+
 function generateShippingAddress() {
 	const line2 = sampleBoolean(0.3) ? faker.location.secondaryAddress() : null;
 	const firstName = faker.person.firstName();
 	const lastName = faker.person.lastName();
+	const country = faker.helpers.weightedArrayElement(
+		EU_COUNTRIES.map((c) => ({ weight: c.weight, value: c })),
+	);
+	const phone = faker.helpers.replaceSymbols(`${country.phonePrefix} # ## ## ## ##`);
+
 	return {
 		customerEmail: faker.internet.email({ firstName, lastName }).toLowerCase(),
 		customerName: `${firstName} ${lastName}`,
+		customerPhone: phone,
 		shippingFirstName: firstName,
 		shippingLastName: lastName,
 		shippingAddress1: faker.location.streetAddress(),
 		shippingAddress2: line2,
-		shippingPostalCode: faker.location.zipCode("#####"),
+		shippingPostalCode: faker.location.zipCode(country.zipFormat),
 		shippingCity: faker.location.city(),
-		shippingCountry: "FR",
-		shippingPhone: faker.helpers.replaceSymbols("+33 # ## ## ## ##"),
+		shippingCountry: country.code,
+		shippingPhone: phone,
 	};
+}
+
+function getShippingCostForCountry(country: string): number {
+	if (country === "FR")
+		return faker.helpers.weightedArrayElement([
+			{ weight: 9, value: 499 },
+			{ weight: 1, value: 0 },
+		]);
+	return faker.helpers.weightedArrayElement([
+		{ weight: 9, value: 950 },
+		{ weight: 1, value: 0 },
+	]);
 }
 
 function randomRecentDate(): Date {
@@ -98,6 +133,9 @@ async function cleanup(): Promise<void> {
 	}
 
 	console.log("🧹 Nettoyage de la base de données...");
+
+	await prisma.auditLog.deleteMany();
+	await prisma.dispute.deleteMany();
 
 	await prisma.reviewMedia.deleteMany();
 	await prisma.reviewResponse.deleteMany();
@@ -1397,12 +1435,28 @@ async function main(): Promise<void> {
 				slug: productData.slug,
 				title: productData.title,
 				description: productData.description,
-				status: ProductStatus.PUBLIC,
+				// Last 2 products are DRAFT (M1: workflow brouillon→publication)
+				status:
+					productsData.indexOf(productData) >= productsData.length - 2
+						? ProductStatus.DRAFT
+						: ProductStatus.PUBLIC,
 				typeId,
 				skus: {
 					create: productData.skus.map((skuData, index) => {
-						const skuCode = `${productData.slug.toUpperCase().replace(/-/g, "")}-${skuData.colorSlug.toUpperCase().replace(/-/g, "")}-${index + 1}`;
+						// Short SKU code: first 3 chars of type + first 2 of color + index
+						const typePrefix = productData.typeSlug.slice(0, 3).toUpperCase();
+						const colorPrefix = skuData.colorSlug.replace(/-/g, "").slice(0, 2).toUpperCase();
+						const productIndex = productsData.indexOf(productData) + 1;
+						const skuCode = `${typePrefix}-${colorPrefix}-${productIndex.toString().padStart(2, "0")}${index + 1}`;
 						const imageUrl = images[index % images.length]!;
+
+						// 20% of SKUs get a compareAtPrice (strikethrough price)
+						const compareAtPrice = sampleBoolean(0.2)
+							? Math.round(
+									skuData.price *
+										(1 + faker.number.float({ min: 0.15, max: 0.3, fractionDigits: 2 })),
+								)
+							: null;
 
 						return {
 							sku: skuCode,
@@ -1410,6 +1464,7 @@ async function main(): Promise<void> {
 							materialId: materialMap.get(skuData.materialSlug)!,
 							size: skuData.size ?? null,
 							priceInclTax: skuData.price,
+							compareAtPrice,
 							inventory: skuData.inventory,
 							isActive: true,
 							isDefault: skuData.isDefault ?? false,
@@ -1420,6 +1475,10 @@ async function main(): Promise<void> {
 										altText: `${productData.title} - ${skuData.colorSlug}`,
 										mediaType: MediaType.IMAGE,
 										isPrimary: true,
+										// Static blur placeholder for ~50% of media (m1)
+										blurDataUrl: sampleBoolean(0.5)
+											? "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAADklEQVQI12P4z8BQDwAEgAF/QualzQAAAABJRU5ErkJggg=="
+											: null,
 									},
 								],
 							},
@@ -1481,17 +1540,20 @@ async function main(): Promise<void> {
 				.toLowerCase()
 				.replace(/[^a-z0-9]+/g, ".");
 
+			const isVerified = sampleBoolean(0.7);
 			return {
 				id: faker.string.nanoid(12),
 				role: index < 2 ? "ADMIN" : "USER",
 				name: fullName,
 				email: `${emailSlug}${index}@synclune.fr`,
-				emailVerified: sampleBoolean(0.7),
+				emailVerified: isVerified,
+				termsAcceptedAt: isVerified && sampleBoolean(0.7) ? faker.date.past({ years: 0.5 }) : null,
 			} satisfies Prisma.UserCreateManyInput;
 		}),
 	];
 
 	await prisma.user.createMany({ data: usersData });
+	const verifiedUsers = usersData.filter((u) => u.emailVerified && u.role === "USER");
 	console.log(`✅ ${usersData.length} utilisateurs créés`);
 
 	// ============================================
@@ -1529,6 +1591,7 @@ async function main(): Promise<void> {
 					},
 				},
 			},
+			type: { select: { slug: true } },
 		},
 	});
 
@@ -1567,6 +1630,9 @@ async function main(): Promise<void> {
 				productId: product.id,
 				skuId: sku.id,
 				productTitle: product.title,
+				productDescription: product.description,
+				productImageUrl: sku.images[0]?.url ?? null,
+				skuSku: sku.sku,
 				skuColor: sku.color?.name ?? null,
 				skuMaterial: sku.material?.name ?? null,
 				skuSize: sku.size ?? null,
@@ -1578,7 +1644,8 @@ async function main(): Promise<void> {
 
 		if (itemsData.length === 0) continue;
 
-		const shipping = faker.helpers.arrayElement([0, 499, 699, 899]);
+		const shippingData = generateShippingAddress();
+		const shipping = getShippingCostForCountry(shippingData.shippingCountry);
 		const total = subtotal + shipping;
 
 		const status = faker.helpers.weightedArrayElement([
@@ -1589,12 +1656,39 @@ async function main(): Promise<void> {
 			{ weight: 1, value: OrderStatus.CANCELLED },
 		]);
 
+		// Cancelled orders: 60% were cancelled before payment (PENDING), 40% after (REFUNDED)
+		// PENDING orders: ~15% FAILED, ~10% EXPIRED, rest stay PENDING
 		const paymentStatus =
 			status === OrderStatus.CANCELLED
-				? PaymentStatus.REFUNDED
-				: status === OrderStatus.PENDING
+				? sampleBoolean(0.6)
 					? PaymentStatus.PENDING
+					: PaymentStatus.REFUNDED
+				: status === OrderStatus.PENDING
+					? faker.helpers.weightedArrayElement([
+							{ weight: 75, value: PaymentStatus.PENDING },
+							{ weight: 15, value: PaymentStatus.FAILED },
+							{ weight: 10, value: PaymentStatus.EXPIRED },
+						])
 					: PaymentStatus.PAID;
+
+		// Payment failure details for FAILED orders
+		const paymentFailureData =
+			paymentStatus === PaymentStatus.FAILED
+				? {
+						paymentFailureCode: faker.helpers.arrayElement([
+							"card_declined",
+							"expired_card",
+							"insufficient_funds",
+							"processing_error",
+						]),
+						paymentFailureMessage: faker.helpers.arrayElement([
+							"Your card was declined.",
+							"Your card has expired.",
+							"Your card has insufficient funds.",
+							"An error occurred while processing your card.",
+						]),
+					}
+				: {};
 
 		let fulfillmentStatus: FulfillmentStatus = FulfillmentStatus.UNFULFILLED;
 		if (status === OrderStatus.SHIPPED) {
@@ -1609,15 +1703,17 @@ async function main(): Promise<void> {
 
 		const orderDate = randomRecentDate();
 
-		// Stripe IDs for paid orders
+		// Stripe IDs for paid/refunded orders + checkout session for pending
 		const stripeIds =
-			paymentStatus === PaymentStatus.PAID
+			paymentStatus === PaymentStatus.PAID || paymentStatus === PaymentStatus.REFUNDED
 				? {
 						stripeCheckoutSessionId: `cs_test_${faker.string.alphanumeric(24)}`,
 						stripePaymentIntentId: `pi_${faker.string.alphanumeric(24)}`,
 						stripeCustomerId: customerId ? userStripeCustomerMap.get(customerId)! : null,
 					}
-				: {};
+				: paymentStatus === PaymentStatus.PENDING
+					? { stripeCheckoutSessionId: `cs_test_${faker.string.alphanumeric(24)}` }
+					: {};
 
 		let trackingData: Partial<Prisma.OrderCreateInput> = {};
 		if (status === OrderStatus.SHIPPED || status === OrderStatus.DELIVERED) {
@@ -1630,11 +1726,20 @@ async function main(): Promise<void> {
 			const shippedAt = new Date(orderDate);
 			shippedAt.setDate(shippedAt.getDate() + faker.number.int({ min: 1, max: 3 }));
 
+			const deliveryDays =
+				shippingData.shippingCountry === "FR"
+					? faker.number.int({ min: 2, max: 3 })
+					: faker.number.int({ min: 4, max: 7 });
+			const estimatedDelivery = new Date(shippedAt);
+			estimatedDelivery.setDate(estimatedDelivery.getDate() + deliveryDays);
+
 			trackingData = {
 				shippingMethod,
+				shippingCarrier: "colissimo",
 				trackingNumber: faker.string.alphanumeric({ length: 13, casing: "upper" }),
 				trackingUrl: `https://www.laposte.fr/outils/suivre-vos-envois?code=${faker.string.alphanumeric({ length: 13, casing: "upper" })}`,
 				shippedAt,
+				estimatedDelivery,
 			};
 
 			if (status === OrderStatus.DELIVERED) {
@@ -1643,8 +1748,6 @@ async function main(): Promise<void> {
 				trackingData.actualDelivery = deliveredAt;
 			}
 		}
-
-		const shippingData = generateShippingAddress();
 
 		await prisma.order.create({
 			data: {
@@ -1659,6 +1762,7 @@ async function main(): Promise<void> {
 				fulfillmentStatus,
 				...shippingData,
 				...stripeIds,
+				...paymentFailureData,
 				paidAt: paymentStatus === PaymentStatus.PAID ? orderDate : null,
 				createdAt: orderDate,
 				updatedAt: orderDate,
@@ -1709,6 +1813,34 @@ async function main(): Promise<void> {
 	}
 
 	console.log(`✅ ${usersWithPaidOrders.length} utilisateurs mis à jour avec stripeCustomerId`);
+
+	// ============================================
+	// NUMÉROS DE FACTURE (Article 286 CGI)
+	// ============================================
+	const invoiceableOrders = await prisma.order.findMany({
+		where: {
+			paymentStatus: PaymentStatus.PAID,
+			status: { in: [OrderStatus.SHIPPED, OrderStatus.DELIVERED] },
+		},
+		select: { id: true, createdAt: true },
+		orderBy: { createdAt: "asc" },
+	});
+
+	let invoiceSeq = 1;
+	for (const order of invoiceableOrders) {
+		const year = order.createdAt.getFullYear();
+		const invoiceNumber = `F-${year}-${invoiceSeq.toString().padStart(5, "0")}`;
+		await prisma.order.update({
+			where: { id: order.id },
+			data: {
+				invoiceNumber,
+				invoiceStatus: "GENERATED",
+				invoiceGeneratedAt: order.createdAt,
+			},
+		});
+		invoiceSeq++;
+	}
+	console.log(`✅ ${invoiceableOrders.length} numéros de facture assignés`);
 
 	// ============================================
 	// SESSIONS (batch)
@@ -1988,32 +2120,38 @@ async function main(): Promise<void> {
 		const firstName = user.name?.split(" ")[0] ?? faker.person.firstName();
 		const lastName = user.name?.split(" ").slice(1).join(" ") ?? faker.person.lastName();
 
-		// Default address
+		// Default address (M9: mixed FR/EU countries)
+		const defaultCountry = faker.helpers.weightedArrayElement(
+			EU_COUNTRIES.map((c) => ({ weight: c.weight, value: c })),
+		);
 		addressesData.push({
 			userId: user.id,
 			firstName,
 			lastName,
 			address1: faker.location.streetAddress(),
 			address2: sampleBoolean(0.3) ? faker.location.secondaryAddress() : null,
-			postalCode: faker.location.zipCode("#####"),
+			postalCode: faker.location.zipCode(defaultCountry.zipFormat),
 			city: faker.location.city(),
-			country: "FR",
-			phone: faker.helpers.replaceSymbols("+33 # ## ## ## ##"),
+			country: defaultCountry.code,
+			phone: faker.helpers.replaceSymbols(`${defaultCountry.phonePrefix} # ## ## ## ##`),
 			isDefault: true,
 		});
 
 		// 40% have a second address
 		if (sampleBoolean(0.4)) {
+			const secondCountry = faker.helpers.weightedArrayElement(
+				EU_COUNTRIES.map((c) => ({ weight: c.weight, value: c })),
+			);
 			addressesData.push({
 				userId: user.id,
 				firstName,
 				lastName,
 				address1: faker.location.streetAddress(),
 				address2: sampleBoolean(0.5) ? "Bureau " + faker.number.int({ min: 100, max: 999 }) : null,
-				postalCode: faker.location.zipCode("#####"),
+				postalCode: faker.location.zipCode(secondCountry.zipFormat),
 				city: faker.location.city(),
-				country: "FR",
-				phone: faker.helpers.replaceSymbols("+33 # ## ## ## ##"),
+				country: secondCountry.code,
+				phone: faker.helpers.replaceSymbols(`${secondCountry.phonePrefix} # ## ## ## ##`),
 				isDefault: false,
 			});
 		}
@@ -2318,11 +2456,58 @@ async function main(): Promise<void> {
 			logError("refund", error);
 		}
 	}
-	console.log(`✅ ${refundsCreated} remboursements créés`);
+	// Refunds for cancelled orders with REFUNDED payment status (C1 fix)
+	const cancelledRefundedOrders = await prisma.order.findMany({
+		where: {
+			status: OrderStatus.CANCELLED,
+			paymentStatus: PaymentStatus.REFUNDED,
+		},
+		include: { items: true },
+	});
+
+	for (const order of cancelledRefundedOrders) {
+		if (order.items.length === 0) continue;
+		const refundAmount = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+		const refundDate = new Date(order.createdAt);
+		refundDate.setHours(refundDate.getHours() + faker.number.int({ min: 1, max: 48 }));
+
+		try {
+			await prisma.refund.create({
+				data: {
+					orderId: order.id,
+					amount: refundAmount,
+					reason: RefundReason.CUSTOMER_REQUEST,
+					status: RefundStatus.COMPLETED,
+					stripeRefundId: `re_${faker.string.alphanumeric(24)}`,
+					note: "Remboursement suite à annulation de commande",
+					createdBy: adminUser.id,
+					processedAt: refundDate,
+					createdAt: refundDate,
+					items: {
+						create: order.items.map((item) => ({
+							orderItemId: item.id,
+							quantity: item.quantity,
+							amount: item.price * item.quantity,
+							restock: true,
+						})),
+					},
+				},
+			});
+			refundsCreated++;
+		} catch (error) {
+			logError("refund-cancelled", error);
+		}
+	}
+
+	console.log(
+		`✅ ${refundsCreated} remboursements créés (dont ${cancelledRefundedOrders.length} pour commandes annulées)`,
+	);
 
 	// ============================================
 	// HISTORIQUE DES COMMANDES (batch)
 	// ============================================
+	const adminUsers = usersData.filter((u) => u.role === "ADMIN");
+
 	const allOrders = await prisma.order.findMany({
 		select: {
 			id: true,
@@ -2375,7 +2560,7 @@ async function main(): Promise<void> {
 				action: OrderAction.PROCESSING,
 				previousStatus: OrderStatus.PENDING,
 				newStatus: OrderStatus.PROCESSING,
-				authorName: "Admin Dev",
+				authorName: faker.helpers.arrayElement(adminUsers).name,
 				source: HistorySource.ADMIN,
 				createdAt: currentDate,
 			});
@@ -2390,7 +2575,7 @@ async function main(): Promise<void> {
 				action: OrderAction.SHIPPED,
 				previousStatus: OrderStatus.PROCESSING,
 				newStatus: OrderStatus.SHIPPED,
-				authorName: "Admin Dev",
+				authorName: faker.helpers.arrayElement(adminUsers).name,
 				source: HistorySource.ADMIN,
 				createdAt: currentDate,
 			});
@@ -2420,7 +2605,7 @@ async function main(): Promise<void> {
 				previousStatus: OrderStatus.PENDING,
 				newStatus: OrderStatus.CANCELLED,
 				note: "Annulation à la demande du client",
-				authorName: "Admin Dev",
+				authorName: faker.helpers.arrayElement(adminUsers).name,
 				source: HistorySource.ADMIN,
 				createdAt: currentDate,
 			});
@@ -2460,11 +2645,12 @@ async function main(): Promise<void> {
 		const noteDate = new Date(order.createdAt);
 		noteDate.setHours(noteDate.getHours() + faker.number.int({ min: 2, max: 72 }));
 
+		const noteAdmin = faker.helpers.arrayElement(adminUsers);
 		orderNotesData.push({
 			orderId: order.id,
 			content: faker.helpers.arrayElement(noteContents),
-			authorId: adminUser.id,
-			authorName: "Admin Dev",
+			authorId: noteAdmin.id,
+			authorName: noteAdmin.name,
 			createdAt: noteDate,
 		});
 	}
@@ -2551,29 +2737,41 @@ async function main(): Promise<void> {
 		"clara.garcia@outlook.fr",
 	];
 
+	// Link first 3 confirmed subscribers to existing users (M13)
+	const usersForNewsletter = verifiedUsers.slice(0, 3);
+
 	const newsletterData: Prisma.NewsletterSubscriberCreateManyInput[] = newsletterEmails.map(
 		(email, i) => {
 			let status: NewsletterStatus;
 			let confirmedAt: Date | null = null;
 			let unsubscribedAt: Date | null = null;
+			let confirmationSentAt: Date | null = null;
 			const confirmationToken = i < 4 ? faker.string.alphanumeric(32) : null;
 
 			if (i < 6) {
 				status = NewsletterStatus.CONFIRMED;
+				confirmationSentAt = faker.date.past({ years: 0.6 });
 				confirmedAt = faker.date.past({ years: 0.5 });
 			} else if (i < 10) {
 				status = NewsletterStatus.PENDING;
+				confirmationSentAt = faker.date.recent({ days: 7 });
 			} else {
 				status = NewsletterStatus.UNSUBSCRIBED;
+				confirmationSentAt = faker.date.past({ years: 1.1 });
 				confirmedAt = faker.date.past({ years: 1 });
 				unsubscribedAt = faker.date.recent({ days: 30 });
 			}
 
+			// Link to user accounts (M13)
+			const linkedUser = i < usersForNewsletter.length ? usersForNewsletter[i] : null;
+
 			return {
-				email,
+				email: linkedUser?.email ?? email,
+				userId: linkedUser?.id ?? null,
 				unsubscribeToken: faker.string.uuid(),
 				status,
 				confirmationToken,
+				confirmationSentAt,
 				confirmedAt,
 				unsubscribedAt,
 				ipAddress: faker.internet.ipv4(),
@@ -2709,32 +2907,127 @@ async function main(): Promise<void> {
 		CustomizationRequestStatus.PENDING,
 	];
 
-	const customizationData: Prisma.CustomizationRequestCreateManyInput[] = customizationDetails.map(
-		(details, i) => {
-			const productType = productTypesForCustomization[i % productTypesForCustomization.length]!;
+	// Use individual creates to support inspirationProducts connect (M12)
+	const inspirationProductIds = allProducts.slice(0, 6).map((p) => p.id);
 
-			return {
-				firstName: faker.person.firstName(),
-				email: faker.internet.email().toLowerCase(),
+	let customizationsCreated = 0;
+	for (let i = 0; i < customizationDetails.length; i++) {
+		const details = customizationDetails[i]!;
+		const productType = productTypesForCustomization[i % productTypesForCustomization.length]!;
+		const cStatus = customizationStatuses[i]!;
+
+		// First 2 requests linked to existing users (M12)
+		const linkedUser = i < 2 ? verifiedUsers[i] : null;
+
+		await prisma.customizationRequest.create({
+			data: {
+				firstName: linkedUser?.name.split(" ")[0] ?? faker.person.firstName(),
+				email: linkedUser?.email ?? faker.internet.email().toLowerCase(),
 				phone: sampleBoolean(0.6) ? faker.helpers.replaceSymbols("+33 # ## ## ## ##") : null,
+				userId: linkedUser?.id ?? null,
 				productTypeId: productType.id,
 				productTypeLabel: productType.label,
 				details,
-				status: customizationStatuses[i],
+				status: cStatus,
 				adminNotes:
-					customizationStatuses[i] === CustomizationRequestStatus.IN_PROGRESS
+					cStatus === CustomizationRequestStatus.IN_PROGRESS
 						? "Devis envoyé, en attente de validation client"
 						: null,
 				respondedAt:
-					customizationStatuses[i] !== CustomizationRequestStatus.PENDING
-						? faker.date.recent({ days: 14 })
-						: null,
-			};
-		},
-	);
+					cStatus !== CustomizationRequestStatus.PENDING ? faker.date.recent({ days: 14 }) : null,
+				// Connect 1-2 inspiration products for linked users (M12)
+				inspirationProducts: linkedUser
+					? {
+							connect: faker.helpers
+								.arrayElements(inspirationProductIds, { min: 1, max: 2 })
+								.map((id) => ({ id })),
+						}
+					: undefined,
+			},
+		});
+		customizationsCreated++;
+	}
+	console.log(`✅ ${customizationsCreated} demandes de personnalisation créées`);
 
-	await prisma.customizationRequest.createMany({ data: customizationData });
-	console.log(`✅ ${customizationData.length} demandes de personnalisation créées`);
+	// ============================================
+	// DISPUTES (M4)
+	// ============================================
+	const ordersForDisputes = await prisma.order.findMany({
+		where: {
+			paymentStatus: PaymentStatus.PAID,
+			status: { in: [OrderStatus.DELIVERED, OrderStatus.SHIPPED] },
+		},
+		select: { id: true, total: true, createdAt: true },
+		take: 3,
+		orderBy: { createdAt: "desc" },
+	});
+
+	const disputeReasons = ["FRAUDULENT", "PRODUCT_NOT_RECEIVED", "PRODUCT_UNACCEPTABLE"] as const;
+	const disputeStatuses = ["NEEDS_RESPONSE", "UNDER_REVIEW", "LOST"] as const;
+
+	for (let i = 0; i < ordersForDisputes.length; i++) {
+		const order = ordersForDisputes[i]!;
+		const disputeDate = new Date(order.createdAt);
+		disputeDate.setDate(disputeDate.getDate() + faker.number.int({ min: 5, max: 30 }));
+
+		const dueBy = new Date(disputeDate);
+		dueBy.setDate(dueBy.getDate() + 21);
+
+		await prisma.dispute.create({
+			data: {
+				stripeDisputeId: `dp_${faker.string.alphanumeric(24)}`,
+				orderId: order.id,
+				amount: order.total,
+				fee: 1500,
+				reason: disputeReasons[i]!,
+				status: disputeStatuses[i]!,
+				dueBy: disputeStatuses[i] === "NEEDS_RESPONSE" ? dueBy : null,
+				resolvedAt: disputeStatuses[i] === "LOST" ? disputeDate : null,
+				createdAt: disputeDate,
+			},
+		});
+	}
+	console.log(`✅ ${ordersForDisputes.length} disputes créées`);
+
+	// ============================================
+	// AUDIT LOG (M5)
+	// ============================================
+	const auditActions = [
+		{ action: "product.create", targetType: "product", note: "Created product" },
+		{ action: "product.update", targetType: "product", note: "Updated price" },
+		{ action: "product.archive", targetType: "product", note: "Archived product" },
+		{ action: "order.cancel", targetType: "order", note: "Cancelled by admin" },
+		{ action: "order.update_status", targetType: "order", note: "Updated to shipped" },
+		{ action: "refund.process", targetType: "refund", note: "Processed refund" },
+		{ action: "refund.reject", targetType: "refund", note: "Rejected refund request" },
+		{ action: "discount.create", targetType: "discount", note: "Created BIENVENUE10" },
+		{ action: "discount.deactivate", targetType: "discount", note: "Deactivated expired code" },
+		{ action: "sku.update_stock", targetType: "sku", note: "Stock adjustment +10" },
+		{ action: "user.ban", targetType: "user", note: "Suspended account" },
+		{ action: "collection.update", targetType: "collection", note: "Updated featured" },
+		{ action: "dispute.respond", targetType: "dispute", note: "Submitted evidence" },
+		{ action: "product_type.create", targetType: "product_type", note: "Created new type" },
+		{ action: "review.hide", targetType: "review", note: "Hidden inappropriate review" },
+	];
+
+	const auditLogData: Prisma.AuditLogCreateManyInput[] = auditActions.map((entry, i) => {
+		const admin = faker.helpers.arrayElement(adminUsers);
+		const logDate = new Date();
+		logDate.setDate(logDate.getDate() - faker.number.int({ min: 1, max: 45 }));
+
+		return {
+			adminId: admin.id,
+			adminName: admin.name,
+			action: entry.action,
+			targetType: entry.targetType,
+			targetId: faker.string.alphanumeric(25),
+			metadata: { note: entry.note, index: i },
+			createdAt: logDate,
+		};
+	});
+
+	await prisma.auditLog.createMany({ data: auditLogData });
+	console.log(`✅ ${auditLogData.length} entrées d'audit log créées`);
 
 	// ============================================
 	// SOFT-DELETED RECORDS (for testing filters)

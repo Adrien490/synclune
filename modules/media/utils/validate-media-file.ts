@@ -165,8 +165,16 @@ const CUID_PATTERN = /^c[a-z0-9]{24}$/;
  * Allowed UploadThing domains (strict list).
  * - Exact domains for main endpoints
  * - Allowed suffixes for dynamic CDN subdomains
+ * - S3 legacy domain for older uploads
+ *
+ * Must stay in sync with UPLOADTHING_DOMAINS in shared/lib/media-validation.ts
  */
-const UPLOADTHING_EXACT_HOSTS: Set<string> = new Set(["utfs.io", "uploadthing.com", "ufs.sh"]);
+const UPLOADTHING_EXACT_HOSTS: Set<string> = new Set([
+	"utfs.io",
+	"uploadthing.com",
+	"ufs.sh",
+	"uploadthing-prod.s3.us-west-2.amazonaws.com",
+]);
 
 /**
  * Allowed suffixes for UploadThing subdomains.

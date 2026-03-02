@@ -177,17 +177,18 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 		href: ROUTES.SHOP.PRODUCTS,
 		label: "Les créations",
 		icon: "gem",
-		hasDropdown: true,
+		hasDropdown: !!(productTypes && productTypes.length > 0),
 		dropdownType: "creations",
-		children: productTypes
-			? [
-					{ href: ROUTES.SHOP.PRODUCTS, label: "Toutes les créations", icon: "gem" },
-					...productTypes.map((type) => ({
-						href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
-						label: type.label,
-					})),
-				]
-			: undefined,
+		children:
+			productTypes && productTypes.length > 0
+				? [
+						{ href: ROUTES.SHOP.PRODUCTS, label: "Toutes les créations", icon: "gem" },
+						...productTypes.map((type) => ({
+							href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
+							label: type.label,
+						})),
+					]
+				: undefined,
 	};
 
 	// Mega menu "Les collections" avec images
@@ -195,20 +196,21 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 		href: ROUTES.SHOP.COLLECTIONS,
 		label: "Les collections",
 		icon: "folder-open",
-		hasDropdown: true,
+		hasDropdown: !!(collections && collections.length > 0),
 		dropdownType: "collections",
-		children: collections
-			? [
-					{ href: ROUTES.SHOP.COLLECTIONS, label: "Toutes les collections", icon: "folder-open" },
-					...collections.map((collection) => ({
-						href: ROUTES.SHOP.COLLECTION(collection.slug),
-						label: collection.label,
-						description: collection.description,
-						images: collection.images,
-						createdAt: collection.createdAt,
-					})),
-				]
-			: undefined,
+		children:
+			collections && collections.length > 0
+				? [
+						{ href: ROUTES.SHOP.COLLECTIONS, label: "Toutes les collections", icon: "folder-open" },
+						...collections.map((collection) => ({
+							href: ROUTES.SHOP.COLLECTION(collection.slug),
+							label: collection.label,
+							description: collection.description,
+							images: collection.images,
+							createdAt: collection.createdAt,
+						})),
+					]
+				: undefined,
 	};
 
 	return [

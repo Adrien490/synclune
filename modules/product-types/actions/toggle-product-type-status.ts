@@ -47,7 +47,7 @@ export async function toggleProductTypeStatus(
 		// Verifier que le type existe et n'est pas systeme
 		const productType = await prisma.productType.findUnique({
 			where: { id: productTypeId },
-			select: { id: true, isSystem: true, label: true },
+			select: { id: true, isSystem: true, isActive: true, label: true },
 		});
 
 		if (!productType) {
@@ -58,6 +58,11 @@ export async function toggleProductTypeStatus(
 			return error(
 				`Le type "${productType.label}" est un type systeme et ne peut pas etre modifie`,
 			);
+		}
+
+		// Skip if already in the desired state
+		if (productType.isActive === isActive) {
+			return success(`Type déjà ${isActive ? "activé" : "désactivé"}`);
 		}
 
 		// Mettre a jour le statut

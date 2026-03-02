@@ -84,7 +84,7 @@ describe("reconcilePendingRefunds", () => {
 		expect(call.where.deletedAt).toBeNull();
 
 		const minAge = new Date(Date.now() - THRESHOLDS.REFUND_RECONCILE_MIN_AGE_MS);
-		expect(call.where.processedAt.lt.getTime()).toBe(minAge.getTime());
+		expect(call.where.OR[0].processedAt.lt.getTime()).toBe(minAge.getTime());
 		expect(call.take).toBe(25);
 
 		// Phase 2: stale PENDING/APPROVED refunds without stripeRefundId

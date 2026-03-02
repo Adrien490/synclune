@@ -40,6 +40,27 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	validateInput: (
+		schema: {
+			safeParse: (data: unknown) => {
+				success: boolean;
+				data?: unknown;
+				error?: { issues: { message: string }[] };
+			};
+		},
+		data: unknown,
+	) => {
+		const result = schema.safeParse(data);
+		if (!result.success) {
+			return {
+				error: {
+					status: "validation_error",
+					message: result.error?.issues[0]?.message ?? "Invalid",
+				},
+			};
+		}
+		return { data: result.data };
+	},
 	BusinessError: class BusinessError extends Error {
 		constructor(message: string) {
 			super(message);
@@ -49,7 +70,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 }));
 vi.mock("../../schemas/sku.schemas", () => ({
-	bulkUpdatePriceSchema: { parse: mockSchemaParse },
+	bulkUpdatePriceSchema: { safeParse: mockSchemaParse },
 }));
 vi.mock("../../utils/cache.utils", () => ({
 	collectBulkInvalidationTags: mockCollectBulkInvalidationTags,
@@ -111,10 +132,13 @@ describe("bulkUpdatePrice", () => {
 		mockInvalidateTags.mockReturnValue(undefined);
 
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "absolute",
-			value: 4500,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "absolute",
+				value: 4500,
+				updateCompareAtPrice: false,
+			},
 		});
 
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData());
@@ -147,10 +171,13 @@ describe("bulkUpdatePrice", () => {
 
 	it("should return error when no IDs are provided", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: [],
-			mode: "absolute",
-			value: 4500,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: [],
+				mode: "absolute",
+				value: 4500,
+				updateCompareAtPrice: false,
+			},
 		});
 		const result = await bulkUpdatePrice(undefined, makeFormData([], "absolute", "4500"));
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -160,10 +187,13 @@ describe("bulkUpdatePrice", () => {
 	it("should return error when IDs exceed the price update limit", async () => {
 		const manyIds = Array.from({ length: 26 }, (_, i) => `id-${i}`);
 		mockSchemaParse.mockReturnValue({
-			ids: manyIds,
-			mode: "absolute",
-			value: 4500,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: manyIds,
+				mode: "absolute",
+				value: 4500,
+				updateCompareAtPrice: false,
+			},
 		});
 		const result = await bulkUpdatePrice(undefined, makeFormData(manyIds, "absolute", "4500"));
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -172,10 +202,13 @@ describe("bulkUpdatePrice", () => {
 
 	it("should return error when percentage mode has value 0", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "percentage",
-			value: 0,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "percentage",
+				value: 0,
+				updateCompareAtPrice: false,
+			},
 		});
 		const result = await bulkUpdatePrice(undefined, makeFormData(validIds, "percentage", "0"));
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -184,29 +217,35 @@ describe("bulkUpdatePrice", () => {
 
 	it("should return error when absolute mode has negative value", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "absolute",
-			value: -100,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "absolute",
+				value: -100,
+				updateCompareAtPrice: false,
+			},
 		});
 		const result = await bulkUpdatePrice(undefined, makeFormData(validIds, "absolute", "-100"));
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("negatif");
+		expect(result.message).toContain("négatif");
 	});
 
 	it("should return error when no SKUs are found in DB", async () => {
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		const result = await bulkUpdatePrice(undefined, makeFormData(validIds, "absolute", "4500"));
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("Aucune variante trouvee");
+		expect(result.message).toContain("Aucune variante trouvée");
 	});
 
 	it("should return error when calculated price exceeds maximum", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "absolute",
-			value: 100000000,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "absolute",
+				value: 100000000,
+				updateCompareAtPrice: false,
+			},
 		});
 		const result = await bulkUpdatePrice(
 			undefined,
@@ -218,10 +257,13 @@ describe("bulkUpdatePrice", () => {
 
 	it("should use absolute price directly in absolute mode", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "absolute",
-			value: 4500,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "absolute",
+				value: 4500,
+				updateCompareAtPrice: false,
+			},
 		});
 		await bulkUpdatePrice(undefined, makeFormData(validIds, "absolute", "4500"));
 		expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
@@ -233,10 +275,13 @@ describe("bulkUpdatePrice", () => {
 
 	it("should apply percentage to current price in percentage mode", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "percentage",
-			value: 10,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "percentage",
+				value: 10,
+				updateCompareAtPrice: false,
+			},
 		});
 		await bulkUpdatePrice(undefined, makeFormData(validIds, "percentage", "10"));
 		// First SKU: 5000 * 1.1 = 5500
@@ -250,10 +295,13 @@ describe("bulkUpdatePrice", () => {
 
 	it("should apply same ratio to compareAtPrice when updateCompareAtPrice=true in absolute mode", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "absolute",
-			value: 4500,
-			updateCompareAtPrice: true,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "absolute",
+				value: 4500,
+				updateCompareAtPrice: true,
+			},
 		});
 		await bulkUpdatePrice(undefined, makeFormData(validIds, "absolute", "4500", "true"));
 		// First SKU has compareAtPrice=6000, absolute mode sets it to same new price
@@ -267,10 +315,13 @@ describe("bulkUpdatePrice", () => {
 
 	it("should apply percentage ratio to compareAtPrice when updateCompareAtPrice=true in percentage mode", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "percentage",
-			value: 10,
-			updateCompareAtPrice: true,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "percentage",
+				value: 10,
+				updateCompareAtPrice: true,
+			},
 		});
 		await bulkUpdatePrice(undefined, makeFormData(validIds, "percentage", "10", "true"));
 		// First SKU compareAtPrice=6000 * 1.1 = 6600
@@ -295,10 +346,13 @@ describe("bulkUpdatePrice", () => {
 
 	it("should return success with mode label in message for absolute mode", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "absolute",
-			value: 4500,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "absolute",
+				value: 4500,
+				updateCompareAtPrice: false,
+			},
 		});
 		const result = await bulkUpdatePrice(undefined, makeFormData(validIds, "absolute", "4500"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -307,10 +361,13 @@ describe("bulkUpdatePrice", () => {
 
 	it("should return success with percentage label in message for percentage mode", async () => {
 		mockSchemaParse.mockReturnValue({
-			ids: validIds,
-			mode: "percentage",
-			value: 10,
-			updateCompareAtPrice: false,
+			success: true,
+			data: {
+				ids: validIds,
+				mode: "percentage",
+				value: 10,
+				updateCompareAtPrice: false,
+			},
 		});
 		const result = await bulkUpdatePrice(undefined, makeFormData(validIds, "percentage", "10"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);

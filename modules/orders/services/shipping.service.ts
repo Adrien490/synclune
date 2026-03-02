@@ -71,34 +71,34 @@ export function formatShippingPrice(amountInCents: number): string {
  *
  * @param countryCode - Code pays ISO 3166-1 alpha-2 (ex: "FR", "BE")
  * @param postalCode - Code postal optionnel pour détecter la Corse
- * @returns Montant des frais de port en centimes, ou 0 si pays non supporte
+ * @returns Montant des frais de port en centimes, or null if shipping unavailable (Corsica, unsupported country)
  *
  * @example
  * ```typescript
  * calculateShipping();              // 499 (France metro par defaut)
  * calculateShipping("FR");          // 499 (France metro)
- * calculateShipping("FR", "20000"); // 0 (Corse - non disponible)
+ * calculateShipping("FR", "20000"); // null (Corse - non disponible)
  * calculateShipping("BE");          // 950 (UE)
  * ```
  */
 export function calculateShipping(
 	countryCode: ShippingCountry = "FR",
 	postalCode?: string,
-): number {
+): number | null {
 	try {
 		// Détection Corse — livraison non disponible
 		if (countryCode === "FR" && postalCode) {
 			const { zone } = getShippingZoneFromPostalCode(postalCode);
 			if (zone === "CORSE") {
-				return 0;
+				return null;
 			}
 		}
 
 		const rate = getShippingRate(countryCode);
 		return rate.amount;
 	} catch {
-		// Pays non supporte - retourner 0 pour eviter les erreurs
-		return 0;
+		// Pays non supporte
+		return null;
 	}
 }
 

@@ -92,7 +92,7 @@ vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendDeliveryConfirmationEmail: mockSendDeliveryEmail,
 }));
 
-vi.mock("@/modules/webhooks/services/review-request.service", () => ({
+vi.mock("@/modules/reviews/services/review-request.service", () => ({
 	scheduleReviewRequestEmailsBulk: mockScheduleReviewEmails,
 }));
 

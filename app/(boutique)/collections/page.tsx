@@ -11,7 +11,7 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
-	title: "Les Collections - Synclune | Collections de bijoux artisanaux",
+	title: "Collections de bijoux artisanaux | Synclune",
 	description:
 		"Explorez toutes les collections de bijoux colorés et originaux faits main. Chaque collection a son univers : Pokémon, Van Gogh, et bien d'autres !",
 	keywords:
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 		canonical: "/collections",
 	},
 	openGraph: {
-		title: "Les Collections - Synclune | Bijoux artisanaux faits main",
+		title: "Collections de bijoux artisanaux | Synclune",
 		description:
 			"Explorez toutes les collections de bijoux colorés faits main. Chaque collection a son univers unique !",
 		url: `${SITE_URL}/collections`,

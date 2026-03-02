@@ -49,20 +49,18 @@ describe("sendWebhookFailedAlert", () => {
 			success: false,
 			error: emailError,
 		});
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
 		const result = await sendWebhookFailedAlert(defaultParams);
 
 		expect(result.success).toBe(false);
-		expect(consoleSpy).toHaveBeenCalledWith("[WEBHOOK_ALERT] Erreur envoi alerte:", emailError);
+		expect(result.error).toBe(emailError);
 	});
 
-	it("should not log when email succeeds", async () => {
+	it("should not throw when email succeeds", async () => {
 		mockSendWebhookFailedAlertEmail.mockResolvedValue({ success: true });
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-		await sendWebhookFailedAlert(defaultParams);
+		const result = await sendWebhookFailedAlert(defaultParams);
 
-		expect(consoleSpy).not.toHaveBeenCalled();
+		expect(result.success).toBe(true);
 	});
 });

@@ -16,6 +16,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { ROUTES } from "@/shared/constants/urls";
 import {
 	Ellipsis,
+	Heart,
 	Home,
 	LogOut,
 	MapPin,
@@ -44,6 +45,12 @@ const navItems = [
 		href: ROUTES.ACCOUNT.REVIEWS,
 		label: "Mes avis",
 		icon: MessageSquare,
+	},
+	{
+		href: ROUTES.ACCOUNT.FAVORITES,
+		label: "Favoris",
+		icon: Heart,
+		desktopOnly: true,
 	},
 	{
 		href: ROUTES.ACCOUNT.ADDRESSES,
@@ -213,7 +220,7 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 									className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-colors"
 								>
 									<LogOut className="size-4 shrink-0" aria-hidden="true" />
-									Se deconnecter
+									Se déconnecter
 								</button>
 							</LogoutAlertDialog>
 						</nav>

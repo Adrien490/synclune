@@ -46,12 +46,12 @@ function RevokeSessionButton({ sessionId }: { sessionId: string }) {
 				size="icon"
 				className="text-muted-foreground hover:text-destructive h-8 w-8 shrink-0"
 				disabled={isPending}
-				title="Révoquer cette session"
+				aria-label="Révoquer cette session"
 			>
 				{isPending ? (
-					<Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+					<Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
 				) : (
-					<X className="h-4 w-4" />
+					<X className="h-4 w-4" aria-hidden="true" />
 				)}
 			</Button>
 		</form>
@@ -62,9 +62,9 @@ export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 	const activeSessions = sessions.filter((s) => !s.isExpired);
 
 	return (
-		<section className="space-y-4">
+		<section className="space-y-4" aria-labelledby="sessions-heading">
 			<div>
-				<h2 className="flex items-center gap-2 text-base font-semibold">
+				<h2 id="sessions-heading" className="flex items-center gap-2 text-base font-semibold">
 					<Monitor className="text-muted-foreground size-4" />
 					Appareils connectés
 				</h2>

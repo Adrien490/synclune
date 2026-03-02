@@ -27,16 +27,10 @@ export default function CheckoutLoading() {
 								<Skeleton className="h-4 w-72" />
 							</div>
 
-							{/* Prénom / Nom */}
-							<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-16" />
-									<Skeleton className="h-10 w-full" />
-								</div>
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-12" />
-									<Skeleton className="h-10 w-full" />
-								</div>
+							{/* Nom complet */}
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-24" />
+								<Skeleton className="h-10 w-full" />
 							</div>
 
 							{/* Adresse */}

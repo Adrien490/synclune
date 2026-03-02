@@ -68,8 +68,6 @@ vi.mock("../../constants/cache", () => ({
 		LIST: "newsletter-subscribers-list",
 		USER_STATUS: (userId: string) => `newsletter-user-${userId}`,
 	},
-}));
-vi.mock("../../utils/cache.utils", () => ({
 	getNewsletterInvalidationTags: mockGetNewsletterInvalidationTags,
 }));
 vi.mock("@/app/generated/prisma/client", () => ({

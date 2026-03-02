@@ -53,7 +53,9 @@ export function CheckoutSummary({
 	}, 0);
 
 	// Frais de port (dynamique selon le pays et code postal pour la Corse)
-	const shipping = calculateShipping(selectedCountry, postalCode);
+	const shippingRaw = calculateShipping(selectedCountry, postalCode);
+	const shippingUnavailable = shippingRaw === null;
+	const shipping = shippingRaw ?? 0;
 
 	// Delivery date estimation based on selected country/zone
 	const shippingRate = selectedCountry === "FR" ? SHIPPING_RATES.FR : SHIPPING_RATES.EU;
@@ -74,7 +76,7 @@ export function CheckoutSummary({
 				{cart.items.map((item) => (
 					<div key={item.id} className="flex gap-3 text-sm">
 						{/* Image */}
-						<div className="bg-muted relative h-16 w-16 shrink-0 overflow-hidden rounded-md border">
+						<div className="bg-muted border-primary/10 relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border">
 							{item.sku.images[0] ? (
 								<Image
 									src={item.sku.images[0].url}
@@ -166,18 +168,30 @@ export function CheckoutSummary({
 						<TruckIcon className="h-4 w-4" />
 						Livraison
 					</span>
-					<span className="text-base/6 font-medium tabular-nums">{formatEuro(shipping)}</span>
+					<span className="text-base/6 font-medium tabular-nums">
+						{shippingUnavailable ? "Indisponible" : formatEuro(shipping)}
+					</span>
 				</div>
-				<p className="text-muted-foreground pl-5.5 text-xs">
-					Livraison estimée le{" "}
-					<span className="text-foreground font-medium">{deliveryEstimate}</span>
-				</p>
+				{shippingUnavailable ? (
+					<p className="text-destructive pl-5.5 text-xs">
+						Nous ne livrons pas encore dans cette zone. Contactez-nous pour trouver une solution.
+					</p>
+				) : (
+					<p className="text-muted-foreground pl-5.5 text-xs">
+						Livraison estimée le{" "}
+						<span className="text-foreground font-medium">{deliveryEstimate}</span>
+					</p>
+				)}
 			</div>
 
 			<Separator />
 
 			{/* Total */}
-			<div className="space-y-2" aria-live="polite" aria-atomic="true">
+			<div
+				className="bg-primary/[0.03] -mx-1 space-y-2 rounded-xl p-3"
+				aria-live="polite"
+				aria-atomic="true"
+			>
 				<div className="flex items-center justify-between text-lg/7 font-semibold tracking-tight antialiased sm:text-xl/7">
 					<span>Total</span>
 					<span className="text-xl/7 tabular-nums sm:text-2xl/8">{formatEuro(total)}</span>
@@ -189,7 +203,7 @@ export function CheckoutSummary({
 			</div>
 
 			{/* Badges de confiance (Baymard: icônes CB + message sécurité) */}
-			<div className="space-y-3 pt-2">
+			<div className="border-primary/5 space-y-3 border-t pt-4">
 				{/* Icônes cartes acceptées */}
 				<div className="flex items-center justify-center gap-2">
 					<VisaIcon className="text-muted-foreground h-5 w-auto" />
@@ -223,7 +237,7 @@ export function CheckoutSummary({
 			<Collapsible className="md:hidden">
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
-				<Card className="rounded-xl border shadow-sm">
+				<Card className="border-primary/10 rounded-2xl shadow-md">
 					<CollapsibleTrigger className="w-full text-left">
 						<CardHeader className="pb-0">
 							<div className="flex items-center justify-between">
@@ -245,12 +259,12 @@ export function CheckoutSummary({
 			</Collapsible>
 
 			{/* Desktop: sticky sidebar */}
-			<Card className="hidden rounded-xl border shadow-sm md:sticky md:top-20 md:block">
+			<Card className="border-primary/10 hidden rounded-2xl shadow-md md:sticky md:top-24 md:block">
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 				<CardHeader className="pb-4">
-					<CardTitle className="flex items-center gap-2 text-lg/7 tracking-tight antialiased">
-						<ShoppingBag className="h-5 w-5" />
+					<CardTitle className="font-display flex items-center gap-2 text-lg/7 tracking-wide antialiased">
+						<ShoppingBag className="text-primary/70 h-5 w-5" />
 						Votre commande
 					</CardTitle>
 				</CardHeader>

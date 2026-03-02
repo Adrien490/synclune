@@ -64,8 +64,11 @@ export function canMarkAsShipped(order: OrderForShipValidation): ShipValidationR
 		return { canShip: false, reason: "cancelled" };
 	}
 
-	// Vérifier si payée
-	if (order.paymentStatus !== PaymentStatus.PAID) {
+	// Vérifier si payée (PARTIALLY_REFUNDED = still has funds to fulfill remaining items)
+	if (
+		order.paymentStatus !== PaymentStatus.PAID &&
+		order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED
+	) {
 		return { canShip: false, reason: "unpaid" };
 	}
 
@@ -108,8 +111,11 @@ export function canCancelOrder(order: OrderForShipValidation): boolean {
  * @returns true si la commande peut être remboursée
  */
 export function canRefundOrder(order: OrderForShipValidation): boolean {
-	// Doit être payée pour être remboursée
-	if (order.paymentStatus !== PaymentStatus.PAID) {
+	// Doit être payée (ou partiellement remboursée) pour être remboursée
+	if (
+		order.paymentStatus !== PaymentStatus.PAID &&
+		order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED
+	) {
 		return false;
 	}
 
@@ -167,7 +173,10 @@ export function canMarkAsProcessing(order: OrderForShipValidation): ProcessingVa
 	if (order.status === OrderStatus.CANCELLED) {
 		return { canProcess: false, reason: "cancelled" };
 	}
-	if (order.paymentStatus !== PaymentStatus.PAID) {
+	if (
+		order.paymentStatus !== PaymentStatus.PAID &&
+		order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED
+	) {
 		return { canProcess: false, reason: "unpaid" };
 	}
 	return { canProcess: true };
@@ -199,24 +208,26 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	const isCancelled = order.status === OrderStatus.CANCELLED;
 
 	const isPaid = order.paymentStatus === PaymentStatus.PAID;
+	const isPartiallyRefunded = order.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
+	const isPaidOrPartiallyRefunded = isPaid || isPartiallyRefunded;
 	const isPaymentPending = order.paymentStatus === PaymentStatus.PENDING;
 	const hasTrackingNumber = !!order.trackingNumber;
 
 	return {
-		// Remboursement possible si payé et pas annulé/retourné
-		canRefund: (isProcessing || isShipped || isDelivered) && isPaid,
+		// Remboursement possible si payé (ou partiellement remboursé) et pas annulé/retourné
+		canRefund: (isProcessing || isShipped || isDelivered) && isPaidOrPartiallyRefunded,
 
 		// Mise à jour du suivi possible si expédié/livré avec numéro de suivi
 		canUpdateTracking: (isShipped || isDelivered) && hasTrackingNumber,
 
-		// Expédition possible si en traitement et payé
-		canMarkAsShipped: isProcessing && isPaid,
+		// Expédition possible si en traitement et payé (ou partiellement remboursé)
+		canMarkAsShipped: isProcessing && isPaidOrPartiallyRefunded,
 
 		// Livraison possible si expédié
 		canMarkAsDelivered: isShipped,
 
-		// Passage en traitement possible si en attente et payé
-		canMarkAsProcessing: isPending && isPaid,
+		// Passage en traitement possible si en attente et payé (ou partiellement remboursé)
+		canMarkAsProcessing: isPending && isPaidOrPartiallyRefunded,
 
 		// Marquage comme payé possible si paiement en attente
 		canMarkAsPaid: isPaymentPending && (isPending || isProcessing),

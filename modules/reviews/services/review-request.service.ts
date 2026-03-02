@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/services/send-review-request-email.service";
 import { ActionStatus } from "@/shared/types/server-action";
 
@@ -29,8 +30,9 @@ export async function scheduleReviewRequestEmail(
 
 		if (result.status !== ActionStatus.SUCCESS) {
 			// Log mais ne bloque pas le flux principal (la livraison est plus importante)
-			console.warn(
+			logger.warn(
 				`[REVIEW_REQUEST] Could not send review request email for order ${orderId}: ${result.message}`,
+				{ service: "review-request" },
 			);
 			return {
 				success: false,
@@ -38,16 +40,19 @@ export async function scheduleReviewRequestEmail(
 			};
 		}
 
-		console.log(`[REVIEW_REQUEST] Review request email scheduled for order ${orderId}`);
+		logger.info(`[REVIEW_REQUEST] Review request email scheduled for order ${orderId}`, {
+			service: "review-request",
+		});
 		return {
 			success: true,
 			message: result.message,
 		};
 	} catch (error) {
 		// Ne jamais faire echouer le flux principal a cause de l'email d'avis
-		console.error(
+		logger.error(
 			`[REVIEW_REQUEST] Error scheduling review request email for order ${orderId}:`,
 			error,
+			{ service: "review-request" },
 		);
 		return {
 			success: false,
@@ -78,7 +83,9 @@ export async function scheduleReviewRequestEmailsBulk(
 		}
 	}
 
-	console.log(`[REVIEW_REQUEST] Bulk review request emails: ${sent} sent, ${failed} failed`);
+	logger.info(`[REVIEW_REQUEST] Bulk review request emails: ${sent} sent, ${failed} failed`, {
+		service: "review-request",
+	});
 
 	return { sent, failed };
 }

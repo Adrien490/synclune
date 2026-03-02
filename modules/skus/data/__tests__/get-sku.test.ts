@@ -4,17 +4,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag, mockCacheSkuDetail } = vi.hoisted(
-	() => ({
-		mockPrisma: {
-			productSku: { findUnique: vi.fn() },
-		},
-		mockIsAdmin: vi.fn(),
-		mockCacheLife: vi.fn(),
-		mockCacheTag: vi.fn(),
-		mockCacheSkuDetail: vi.fn(),
-	}),
-);
+const {
+	mockPrisma,
+	mockIsAdmin,
+	mockCacheLife,
+	mockCacheTag,
+	mockCacheSkuDetail,
+	mockCacheSkuDetailById,
+} = vi.hoisted(() => ({
+	mockPrisma: {
+		productSku: { findUnique: vi.fn() },
+	},
+	mockIsAdmin: vi.fn(),
+	mockCacheLife: vi.fn(),
+	mockCacheTag: vi.fn(),
+	mockCacheSkuDetail: vi.fn(),
+	mockCacheSkuDetailById: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -32,6 +38,7 @@ vi.mock("next/cache", () => ({
 
 vi.mock("../../utils/cache.utils", () => ({
 	cacheSkuDetail: mockCacheSkuDetail,
+	cacheSkuDetailById: mockCacheSkuDetailById,
 }));
 
 vi.mock("../../constants/sku.constants", () => ({
@@ -243,12 +250,12 @@ describe("getSkuById", () => {
 		expect(result).toEqual(skuWithImages);
 	});
 
-	it("calls cacheSkuDetail with the skuId", async () => {
+	it("calls cacheSkuDetailById with the skuId", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(makeSkuWithImages());
 
 		await getSkuById("sku-id-1");
 
-		expect(mockCacheSkuDetail).toHaveBeenCalledWith("sku-id-1");
+		expect(mockCacheSkuDetailById).toHaveBeenCalledWith("sku-id-1");
 	});
 
 	it("returns null when Prisma throws", async () => {

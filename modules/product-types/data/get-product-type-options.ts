@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheProductTypes } from "../constants/cache";
 import type { ProductTypeOption } from "../types/product-type.types";
@@ -32,7 +33,10 @@ async function fetchProductTypeOptions(): Promise<ProductTypeOption[]> {
 		});
 
 		return productTypes;
-	} catch {
+	} catch (error) {
+		Sentry.captureException(error, {
+			tags: { module: "product-types", operation: "getProductTypeOptions" },
+		});
 		return [];
 	}
 }

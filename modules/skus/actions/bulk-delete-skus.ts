@@ -38,7 +38,7 @@ export async function bulkDeleteSkus(
 		if (ids.length === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Aucune variante selectionnee",
+				message: "Aucune variante sélectionnée",
 			};
 		}
 
@@ -73,12 +73,20 @@ export async function bulkDeleteSkus(
 			},
 		});
 
+		if (skusData.length !== ids.length) {
+			const missing = ids.length - skusData.length;
+			return {
+				status: ActionStatus.ERROR,
+				message: `${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
+			};
+		}
+
 		// Verifier qu'aucune variante par defaut n'est selectionnee
 		const defaultSkus = skusData.filter((s) => s.isDefault);
 		if (defaultSkus.length > 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Impossible de supprimer une variante par defaut",
+				message: "Impossible de supprimer une variante par défaut",
 			};
 		}
 
@@ -139,7 +147,7 @@ export async function bulkDeleteSkus(
 				status: ActionStatus.ERROR,
 				message:
 					`Impossible de supprimer ces variantes car ${orderItemsCount} sont liees a des commandes. ` +
-					"Pour conserver l'historique, veuillez desactiver ces variantes a la place.",
+					"Pour conserver l'historique, veuillez désactiver ces variantes à la place.",
 			};
 		}
 
@@ -153,7 +161,7 @@ export async function bulkDeleteSkus(
 				status: ActionStatus.ERROR,
 				message:
 					`Impossible de supprimer ces variantes car ${cartItemsCount} sont presentes dans des paniers. ` +
-					"Veuillez desactiver ces variantes a la place.",
+					"Veuillez désactiver ces variantes à la place.",
 			};
 		}
 

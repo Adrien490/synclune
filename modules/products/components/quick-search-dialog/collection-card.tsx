@@ -8,15 +8,23 @@ import { Tap } from "@/shared/components/animations/tap";
 import { cn } from "@/shared/utils/cn";
 
 import type { QuickSearchCollection } from "./constants";
+import { HighlightMatch } from "./search-result-item";
 
 interface CollectionCardProps {
 	collection: QuickSearchCollection;
 	onSelect: () => void;
 	/** Compact variant for search results, full variant for idle */
 	variant?: "compact" | "full";
+	/** Search query for highlighting in compact mode */
+	query?: string;
 }
 
-export function CollectionCard({ collection, onSelect, variant = "full" }: CollectionCardProps) {
+export function CollectionCard({
+	collection,
+	onSelect,
+	variant = "full",
+	query,
+}: CollectionCardProps) {
 	const isCompact = variant === "compact";
 
 	return (
@@ -56,7 +64,9 @@ export function CollectionCard({ collection, onSelect, variant = "full" }: Colle
 							) : (
 								<Layers className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
 							)}
-							<span className="truncate font-medium">{collection.name}</span>
+							<span className="truncate font-medium">
+								{query ? <HighlightMatch text={collection.name} query={query} /> : collection.name}
+							</span>
 						</div>
 						<span className="text-muted-foreground/60 shrink-0 text-xs tabular-nums">
 							{collection.productCount}

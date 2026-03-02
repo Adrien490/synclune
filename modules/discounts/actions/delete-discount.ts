@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma, softDelete } from "@/shared/lib/prisma";
+import { prisma, softDelete, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { deleteDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
@@ -48,7 +48,7 @@ export async function deleteDiscount(
 
 		// Vérifier si le discount a été utilisé
 		const discount = await prisma.discount.findUnique({
-			where: { id },
+			where: { id, ...notDeleted },
 			select: {
 				id: true,
 				code: true,

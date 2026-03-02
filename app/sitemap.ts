@@ -10,7 +10,7 @@ import { type MetadataRoute } from "next";
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	// Fixed date for static pages — only update when content actually changes
-	const staticLastModified = new Date(process.env.DEPLOY_DATE ?? "2025-06-01");
+	const staticLastModified = new Date(process.env.DEPLOY_DATE ?? "2026-03-01");
 
 	// Pages statiques avec leurs priorités et fréquences de mise à jour
 	const staticPages: MetadataRoute.Sitemap = [

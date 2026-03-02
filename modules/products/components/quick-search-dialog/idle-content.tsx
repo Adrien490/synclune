@@ -57,9 +57,9 @@ export function IdleContent({
 							</h2>
 						</div>
 						<ScrollFade axis="horizontal" className="-mx-4 px-4">
-							<div className="flex gap-3">
+							<div className="flex snap-x snap-mandatory gap-3">
 								{recentlyViewed.map((product) => (
-									<Tap key={product.slug} scale={0.97}>
+									<Tap key={product.slug} scale={0.97} className="snap-start">
 										<Link
 											href={`/creations/${product.slug}`}
 											onClick={handleNavigateClose}

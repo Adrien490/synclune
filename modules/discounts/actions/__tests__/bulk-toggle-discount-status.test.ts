@@ -18,6 +18,7 @@ const {
 	mockPrisma: {
 		discount: {
 			updateMany: vi.fn(),
+			findMany: vi.fn(),
 		},
 	},
 	mockRequireAdmin: vi.fn(),
@@ -121,6 +122,7 @@ describe("bulkToggleDiscountStatus", () => {
 		}));
 
 		mockPrisma.discount.updateMany.mockResolvedValue({ count: 2 });
+		mockPrisma.discount.findMany.mockResolvedValue([{ code: "CODE1" }, { code: "CODE2" }]);
 	});
 
 	// --------------------------------------------------------------------------
@@ -242,13 +244,20 @@ describe("bulkToggleDiscountStatus", () => {
 	// Cache invalidation
 	// --------------------------------------------------------------------------
 
-	it("should invalidate discount list cache", async () => {
+	it("should invalidate discount list and detail caches", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: VALID_IDS, isActive: true } });
+		mockGetDiscountInvalidationTags.mockImplementation((code?: string) =>
+			code ? [`discounts-list`, `discount-${code}`] : ["discounts-list", "admin-badges"],
+		);
+		mockPrisma.discount.findMany.mockResolvedValue([{ code: "CODE1" }, { code: "CODE2" }]);
 
 		await bulkToggleDiscountStatus(undefined, makeFormData());
 
-		// Called without argument to get list tags
+		// Called without argument for list tags
 		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith();
+		// Called per fetched discount code
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("CODE1");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("CODE2");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
 	});
 

@@ -94,12 +94,7 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 							{orders.map((order) => (
 								<TableRow key={order.id}>
 									<TableCell>
-										<Link
-											href={`/commandes/${order.orderNumber}`}
-											className="text-primary text-sm font-medium tabular-nums hover:underline"
-										>
-											{order.orderNumber}
-										</Link>
+										<span className="text-sm font-medium tabular-nums">{order.orderNumber}</span>
 									</TableCell>
 									<TableCell className="hidden sm:table-cell">
 										<span className="text-muted-foreground text-sm whitespace-nowrap">

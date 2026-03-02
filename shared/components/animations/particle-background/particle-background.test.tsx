@@ -512,11 +512,8 @@ describe("ParticleBackground parallax", () => {
 		const { container } = render(<ParticleBackground count={2} disableOnTouch />);
 		expect(container.firstElementChild).toBeNull();
 
-		// mouseX and mouseY should never have been set (parallax effect bails out early)
-		const mouseXMv = motionValues[0]!;
-		const mouseYMv = motionValues[1]!;
-		expect(mouseXMv.setFn).not.toHaveBeenCalled();
-		expect(mouseYMv.setFn).not.toHaveBeenCalled();
+		// No motion values should have been created (component returned null before hooks)
+		expect(motionValues).toHaveLength(0);
 
 		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(false);
 	});

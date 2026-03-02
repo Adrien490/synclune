@@ -3,6 +3,7 @@ import { withSerwist } from "@serwist/turbopack";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+	poweredByHeader: false,
 	cacheComponents: true,
 	reactCompiler: true,
 	experimental: {

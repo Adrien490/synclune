@@ -4,13 +4,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
+const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag, mockSentry } = vi.hoisted(() => ({
 	mockPrisma: {
-		productType: { findFirst: vi.fn() },
+		productType: { findUnique: vi.fn() },
 	},
 	mockIsAdmin: vi.fn(),
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
+	mockSentry: { captureException: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -20,6 +21,8 @@ vi.mock("@/shared/lib/prisma", () => ({
 vi.mock("@/modules/auth/utils/guards", () => ({
 	isAdmin: mockIsAdmin,
 }));
+
+vi.mock("@sentry/nextjs", () => mockSentry);
 
 vi.mock("next/cache", () => ({
 	cacheLife: mockCacheLife,
@@ -84,104 +87,94 @@ describe("getProductTypeBySlug", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockIsAdmin.mockResolvedValue(false);
-		mockPrisma.productType.findFirst.mockResolvedValue(null);
+		mockPrisma.productType.findUnique.mockResolvedValue(null);
 	});
 
 	it("returns null when slug is missing", async () => {
 		const result = await getProductTypeBySlug({});
 
 		expect(result).toBeNull();
-		expect(mockPrisma.productType.findFirst).not.toHaveBeenCalled();
+		expect(mockPrisma.productType.findUnique).not.toHaveBeenCalled();
 	});
 
 	it("returns null when slug is empty string", async () => {
 		const result = await getProductTypeBySlug({ slug: "" });
 
 		expect(result).toBeNull();
-		expect(mockPrisma.productType.findFirst).not.toHaveBeenCalled();
+		expect(mockPrisma.productType.findUnique).not.toHaveBeenCalled();
 	});
 
 	it("returns active product type for non-admin user", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 		const productType = makeProductType();
-		mockPrisma.productType.findFirst.mockResolvedValue(productType);
+		mockPrisma.productType.findUnique.mockResolvedValue(productType);
 
 		const result = await getProductTypeBySlug({ slug: "bague" });
 
 		expect(result).toEqual(productType);
-		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
+		expect(mockPrisma.productType.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { slug: "bague", isActive: true },
+				where: { slug: "bague" },
 			}),
 		);
 	});
 
-	it("filters by isActive=true for non-admin user", async () => {
+	it("returns null for inactive product type when non-admin user", async () => {
 		mockIsAdmin.mockResolvedValue(false);
-		mockPrisma.productType.findFirst.mockResolvedValue(null);
+		const inactiveType = makeProductType({ isActive: false });
+		mockPrisma.productType.findUnique.mockResolvedValue(inactiveType);
 
-		await getProductTypeBySlug({ slug: "bague" });
+		const result = await getProductTypeBySlug({ slug: "bague" });
 
-		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ isActive: true }),
-			}),
-		);
+		expect(result).toBeNull();
 	});
 
-	it("does not filter by isActive for admin with includeInactive=true", async () => {
+	it("returns inactive product type for admin with includeInactive=true", async () => {
 		mockIsAdmin.mockResolvedValue(true);
 		const inactiveType = makeProductType({ isActive: false });
-		mockPrisma.productType.findFirst.mockResolvedValue(inactiveType);
+		mockPrisma.productType.findUnique.mockResolvedValue(inactiveType);
 
-		await getProductTypeBySlug({ slug: "bague", includeInactive: true });
+		const result = await getProductTypeBySlug({ slug: "bague", includeInactive: true });
 
-		const call = mockPrisma.productType.findFirst.mock.calls[0]![0];
-		expect(call.where).not.toHaveProperty("isActive");
+		expect(result).toEqual(inactiveType);
 	});
 
-	it("still filters by isActive when admin but includeInactive is false", async () => {
+	it("returns null for inactive type when admin but includeInactive is false", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		mockPrisma.productType.findFirst.mockResolvedValue(null);
+		const inactiveType = makeProductType({ isActive: false });
+		mockPrisma.productType.findUnique.mockResolvedValue(inactiveType);
 
-		await getProductTypeBySlug({ slug: "bague", includeInactive: false });
+		const result = await getProductTypeBySlug({ slug: "bague", includeInactive: false });
 
-		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ isActive: true }),
-			}),
-		);
+		expect(result).toBeNull();
 	});
 
-	it("still filters by isActive when admin but includeInactive is not provided", async () => {
+	it("returns null for inactive type when admin but includeInactive is not provided", async () => {
 		mockIsAdmin.mockResolvedValue(true);
-		mockPrisma.productType.findFirst.mockResolvedValue(null);
+		const inactiveType = makeProductType({ isActive: false });
+		mockPrisma.productType.findUnique.mockResolvedValue(inactiveType);
 
-		await getProductTypeBySlug({ slug: "bague" });
+		const result = await getProductTypeBySlug({ slug: "bague" });
 
-		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ isActive: true }),
-			}),
-		);
+		expect(result).toBeNull();
 	});
 
 	it("queries by the correct slug", async () => {
 		mockIsAdmin.mockResolvedValue(false);
-		mockPrisma.productType.findFirst.mockResolvedValue(null);
+		mockPrisma.productType.findUnique.mockResolvedValue(null);
 
 		await getProductTypeBySlug({ slug: "bracelet" });
 
-		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
+		expect(mockPrisma.productType.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: expect.objectContaining({ slug: "bracelet" }),
+				where: { slug: "bracelet" },
 			}),
 		);
 	});
 
 	it("returns null when product type is not found", async () => {
 		mockIsAdmin.mockResolvedValue(false);
-		mockPrisma.productType.findFirst.mockResolvedValue(null);
+		mockPrisma.productType.findUnique.mockResolvedValue(null);
 
 		const result = await getProductTypeBySlug({ slug: "nonexistent" });
 
@@ -190,7 +183,7 @@ describe("getProductTypeBySlug", () => {
 
 	it("calls cacheLife with reference profile", async () => {
 		mockIsAdmin.mockResolvedValue(false);
-		mockPrisma.productType.findFirst.mockResolvedValue(makeProductType());
+		mockPrisma.productType.findUnique.mockResolvedValue(makeProductType());
 
 		await getProductTypeBySlug({ slug: "bague" });
 
@@ -199,29 +192,36 @@ describe("getProductTypeBySlug", () => {
 
 	it("calls cacheTag with the product-types list tag", async () => {
 		mockIsAdmin.mockResolvedValue(false);
-		mockPrisma.productType.findFirst.mockResolvedValue(makeProductType());
+		mockPrisma.productType.findUnique.mockResolvedValue(makeProductType());
 
 		await getProductTypeBySlug({ slug: "bague" });
 
 		expect(mockCacheTag).toHaveBeenCalledWith("product-types-list");
 	});
 
-	it("returns null on database error", async () => {
+	it("returns null on database error and captures exception", async () => {
 		mockIsAdmin.mockResolvedValue(false);
-		mockPrisma.productType.findFirst.mockRejectedValue(new Error("DB error"));
+		const dbError = new Error("DB error");
+		mockPrisma.productType.findUnique.mockRejectedValue(dbError);
 
 		const result = await getProductTypeBySlug({ slug: "bague" });
 
 		expect(result).toBeNull();
+		expect(mockSentry.captureException).toHaveBeenCalledWith(
+			dbError,
+			expect.objectContaining({
+				tags: { module: "product-types", operation: "getProductType" },
+			}),
+		);
 	});
 
 	it("uses GET_PRODUCT_TYPE_SELECT for the DB query", async () => {
 		mockIsAdmin.mockResolvedValue(false);
-		mockPrisma.productType.findFirst.mockResolvedValue(makeProductType());
+		mockPrisma.productType.findUnique.mockResolvedValue(makeProductType());
 
 		await getProductTypeBySlug({ slug: "bague" });
 
-		expect(mockPrisma.productType.findFirst).toHaveBeenCalledWith(
+		expect(mockPrisma.productType.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: {
 					id: true,

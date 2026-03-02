@@ -34,6 +34,10 @@ export function CartSheetFooter({
 						<AnimatedNumber value={subtotal} formatter={formatEuro} />
 					</span>
 				</div>
+				{/* SR-only live region for subtotal changes */}
+				<div aria-live="polite" aria-atomic="true" className="sr-only">
+					Sous-total : {formatEuro(subtotal)}
+				</div>
 
 				{/* Shipping estimate */}
 				<p className="text-muted-foreground text-xs">Livraison à partir de 6,00 €</p>

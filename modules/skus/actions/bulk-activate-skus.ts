@@ -37,7 +37,7 @@ export async function bulkActivateSkus(
 		if (ids.length === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Aucune variante selectionnee",
+				message: "Aucune variante sélectionnée",
 			};
 		}
 
@@ -58,6 +58,14 @@ export async function bulkActivateSkus(
 				product: { select: { slug: true } },
 			},
 		});
+
+		if (skusData.length !== ids.length) {
+			const missing = ids.length - skusData.length;
+			return {
+				status: ActionStatus.ERROR,
+				message: `${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
+			};
+		}
 
 		// Activer toutes les variantes
 		await prisma.productSku.updateMany({

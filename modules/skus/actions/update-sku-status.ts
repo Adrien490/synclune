@@ -71,7 +71,7 @@ export async function updateProductSkuStatus(
 		// 6. Verifier qu'on ne desactive pas la variante principale
 		if (existingSku.isDefault && !validatedIsActive) {
 			return error(
-				"Impossible de desactiver la variante principale d'un produit. Veuillez d'abord definir une autre variante comme principale.",
+				"Impossible de désactiver la variante principale d'un produit. Veuillez d'abord définir une autre variante comme principale.",
 			);
 		}
 
@@ -107,7 +107,7 @@ export async function updateProductSkuStatus(
 
 		// 10. Success
 		return success(
-			`Variante ${updatedSku.sku} ${validatedIsActive ? "activee" : "desactivee"} avec succes.`,
+			`Variante ${updatedSku.sku} ${validatedIsActive ? "activée" : "désactivée"} avec succès.`,
 			updatedSku,
 		);
 	} catch (e) {

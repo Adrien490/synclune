@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockPrisma, mockCacheLife, mockCacheTag, mockCacheDiscountDetail } = vi.hoisted(() => ({
 	mockPrisma: {
-		discount: { findFirst: vi.fn() },
+		discount: { findUnique: vi.fn() },
 	},
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
@@ -77,7 +77,7 @@ function makeDiscount(overrides: Record<string, unknown> = {}) {
 }
 
 function setupDefaults() {
-	mockPrisma.discount.findFirst.mockResolvedValue(makeDiscount());
+	mockPrisma.discount.findUnique.mockResolvedValue(makeDiscount());
 	mockSchema.safeParse.mockReturnValue({
 		success: true,
 		data: { code: "PROMO10" },
@@ -103,12 +103,12 @@ describe("getDiscountByCode", () => {
 		const result = await getDiscountByCode({});
 
 		expect(result).toBeNull();
-		expect(mockPrisma.discount.findFirst).not.toHaveBeenCalled();
+		expect(mockPrisma.discount.findUnique).not.toHaveBeenCalled();
 	});
 
 	it("returns discount when code is valid", async () => {
 		const discount = makeDiscount();
-		mockPrisma.discount.findFirst.mockResolvedValue(discount);
+		mockPrisma.discount.findUnique.mockResolvedValue(discount);
 
 		const result = await getDiscountByCode({ code: "PROMO10" });
 
@@ -116,7 +116,7 @@ describe("getDiscountByCode", () => {
 	});
 
 	it("returns null when discount code does not exist", async () => {
-		mockPrisma.discount.findFirst.mockResolvedValue(null);
+		mockPrisma.discount.findUnique.mockResolvedValue(null);
 
 		const result = await getDiscountByCode({ code: "NOTFOUND" });
 
@@ -131,7 +131,7 @@ describe("getDiscountByCode", () => {
 
 		await getDiscountByCode({ code: "SUMMER20" });
 
-		expect(mockPrisma.discount.findFirst).toHaveBeenCalledWith(
+		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ code: "SUMMER20" }),
 			}),
@@ -141,7 +141,7 @@ describe("getDiscountByCode", () => {
 	it("includes notDeleted filter in where clause", async () => {
 		await getDiscountByCode({ code: "PROMO10" });
 
-		expect(mockPrisma.discount.findFirst).toHaveBeenCalledWith(
+		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({ deletedAt: null }),
 			}),
@@ -151,7 +151,7 @@ describe("getDiscountByCode", () => {
 	it("uses GET_DISCOUNT_VALIDATION_SELECT for the DB query", async () => {
 		await getDiscountByCode({ code: "PROMO10" });
 
-		expect(mockPrisma.discount.findFirst).toHaveBeenCalledWith(
+		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
 				select: { id: true, code: true, type: true, value: true, isActive: true, usageCount: true },
 			}),
@@ -170,7 +170,7 @@ describe("getDiscountByCode", () => {
 	});
 
 	it("returns null on DB error", async () => {
-		mockPrisma.discount.findFirst.mockRejectedValue(new Error("DB connection failed"));
+		mockPrisma.discount.findUnique.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await getDiscountByCode({ code: "PROMO10" });
 

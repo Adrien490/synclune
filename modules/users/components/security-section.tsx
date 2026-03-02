@@ -27,9 +27,9 @@ export function SecuritySection({ emailVerified, providers, email }: SecuritySec
 
 	return (
 		<>
-			<section className="space-y-4">
+			<section className="space-y-4" aria-labelledby="security-heading">
 				<div>
-					<h2 className="flex items-center gap-2 text-base font-semibold">
+					<h2 id="security-heading" className="flex items-center gap-2 text-base font-semibold">
 						<LockKeyhole className="text-muted-foreground size-4" />
 						Sécurité
 					</h2>

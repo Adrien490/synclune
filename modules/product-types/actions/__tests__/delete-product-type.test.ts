@@ -19,6 +19,7 @@ const {
 	mockGetProductTypeInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
+		$transaction: vi.fn(),
 		productType: {
 			findUnique: vi.fn(),
 			delete: vi.fn(),
@@ -91,6 +92,13 @@ describe("deleteProductType", () => {
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { productTypeId: "pt-1" } });
 		mockGetProductTypeInvalidationTags.mockReturnValue(["product-types-list"]);
+
+		// Default: transaction executes the callback with a mock tx
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				return fn(mockPrisma);
+			},
+		);
 		mockPrisma.productType.findUnique.mockResolvedValue(makeProductType());
 		mockPrisma.productType.delete.mockResolvedValue({ id: "pt-1" });
 
@@ -170,7 +178,7 @@ describe("deleteProductType", () => {
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.productType.delete.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 		const result = await deleteProductType(undefined, validFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);

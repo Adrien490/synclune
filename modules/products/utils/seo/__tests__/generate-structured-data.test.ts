@@ -65,7 +65,7 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku(),
 		});
 
-		expect(result["@context"]).toBe("https://schema.org/");
+		expect(result["@context"]).toBe("https://schema.org");
 		expect(result["@graph"]).toHaveLength(2);
 		expect(graph(result)[0]["@type"]).toBe("Product");
 		expect(graph(result)[1]["@type"]).toBe("BreadcrumbList");

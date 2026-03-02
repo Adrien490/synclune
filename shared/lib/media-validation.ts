@@ -7,6 +7,8 @@
 
 /**
  * Domaines UploadThing autorisés pour les médias uploadés
+ *
+ * Must stay in sync with UPLOADTHING_EXACT_HOSTS in modules/media/utils/validate-media-file.ts
  */
 export const UPLOADTHING_DOMAINS = [
 	"utfs.io",

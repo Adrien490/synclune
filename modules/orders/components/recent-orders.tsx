@@ -68,7 +68,7 @@ export function RecentOrders({ ordersPromise, limit = 5, showViewAll = false }: 
 			) : (
 				<>
 					<TableScrollContainer className="rounded-lg border">
-						<Table>
+						<Table aria-label="Commandes récentes">
 							<TableHeader>
 								<TableRow>
 									<TableHead>Commande</TableHead>
@@ -76,7 +76,9 @@ export function RecentOrders({ ordersPromise, limit = 5, showViewAll = false }: 
 									<TableHead className="hidden sm:table-cell">Date</TableHead>
 									<TableHead className="hidden md:table-cell">Articles</TableHead>
 									<TableHead className="text-right">Total</TableHead>
-									<TableHead className="w-[50px]"></TableHead>
+									<TableHead className="w-[50px]">
+										<span className="sr-only">Actions</span>
+									</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>

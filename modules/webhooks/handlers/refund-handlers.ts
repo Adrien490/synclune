@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	syncStripeRefunds,
@@ -19,7 +20,7 @@ import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.typ
  * Synchronise les remboursements Stripe avec la base de données
  */
 export async function handleChargeRefunded(charge: Stripe.Charge): Promise<WebhookHandlerResult> {
-	console.log(`💰 [WEBHOOK] Charge refunded: ${charge.id}`);
+	logger.info(`💰 [WEBHOOK] Charge refunded: ${charge.id}`, { service: "webhook" });
 
 	try {
 		// 1. Récupérer le payment intent associé
@@ -27,7 +28,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
 
 		if (!paymentIntentId) {
-			console.error("❌ [WEBHOOK] No payment intent found for refunded charge");
+			logger.error("❌ [WEBHOOK] No payment intent found for refunded charge", undefined, {
+				service: "webhook",
+			});
 			throw new Error("No payment intent found for refunded charge");
 		}
 
@@ -54,7 +57,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		});
 
 		if (!order) {
-			console.warn(`⚠️ [WEBHOOK] Order not found for payment intent ${paymentIntentId}`);
+			logger.warn(`⚠️ [WEBHOOK] Order not found for payment intent ${paymentIntentId}`, {
+				service: "webhook",
+			});
 			return { success: true, skipped: true, reason: "Order not found" };
 		}
 
@@ -70,9 +75,10 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			order.paymentStatus,
 		);
 
-		console.log(
+		logger.info(
 			`📄 [WEBHOOK] Refund processed for order ${order.orderNumber} ` +
 				`(${isFullyRefunded ? "total" : "partial"}: ${totalRefundedOnStripe / 100}€)`,
+			{ service: "webhook" },
 		);
 
 		// 5. Build post-tasks (email + cache invalidation)
@@ -116,7 +122,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 
 		return { success: true, tasks };
 	} catch (error) {
-		console.error(`❌ [WEBHOOK] Error handling charge refunded:`, error);
+		logger.error(`❌ [WEBHOOK] Error handling charge refunded:`, error, { service: "webhook" });
 		throw error;
 	}
 }
@@ -128,7 +134,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 export async function handleRefundUpdated(
 	stripeRefund: Stripe.Refund,
 ): Promise<WebhookHandlerResult> {
-	console.log(`💰 [WEBHOOK] Refund updated: ${stripeRefund.id}, status: ${stripeRefund.status}`);
+	logger.info(`💰 [WEBHOOK] Refund updated: ${stripeRefund.id}, status: ${stripeRefund.status}`, {
+		service: "webhook",
+	});
 
 	try {
 		// 1. Trouver le remboursement local
@@ -138,7 +146,10 @@ export async function handleRefundUpdated(
 		);
 
 		if (!refund) {
-			console.log(`ℹ️ [WEBHOOK] Refund ${stripeRefund.id} not found in database (may be external)`);
+			logger.info(
+				`ℹ️ [WEBHOOK] Refund ${stripeRefund.id} not found in database (may be external)`,
+				{ service: "webhook" },
+			);
 			return { success: true, skipped: true, reason: "Refund not found in database" };
 		}
 
@@ -167,7 +178,7 @@ export async function handleRefundUpdated(
 
 		return { success: true };
 	} catch (error) {
-		console.error(`❌ [WEBHOOK] Error handling refund updated:`, error);
+		logger.error(`❌ [WEBHOOK] Error handling refund updated:`, error, { service: "webhook" });
 		throw error;
 	}
 }
@@ -179,7 +190,7 @@ export async function handleRefundUpdated(
 export async function handleRefundFailed(
 	stripeRefund: Stripe.Refund,
 ): Promise<WebhookHandlerResult> {
-	console.log(`❌ [WEBHOOK] Refund failed: ${stripeRefund.id}`);
+	logger.info(`❌ [WEBHOOK] Refund failed: ${stripeRefund.id}`, { service: "webhook" });
 
 	try {
 		// 1. Trouver le remboursement local
@@ -189,7 +200,9 @@ export async function handleRefundFailed(
 		);
 
 		if (!refund) {
-			console.warn(`⚠️ [WEBHOOK] Failed refund ${stripeRefund.id} not found in database`);
+			logger.warn(`⚠️ [WEBHOOK] Failed refund ${stripeRefund.id} not found in database`, {
+				service: "webhook",
+			});
 			return { success: true, skipped: true, reason: "Refund not found in database" };
 		}
 
@@ -206,7 +219,7 @@ export async function handleRefundFailed(
 		});
 
 		const baseUrl = getBaseUrl();
-		const dashboardUrl = `${baseUrl}/admin/ventes/remboursements`;
+		const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.REFUNDS}`;
 		tasks.push({
 			type: "ADMIN_REFUND_FAILED_ALERT",
 			data: {
@@ -222,7 +235,7 @@ export async function handleRefundFailed(
 
 		return { success: true, tasks };
 	} catch (error) {
-		console.error(`❌ [WEBHOOK] Error handling refund failed:`, error);
+		logger.error(`❌ [WEBHOOK] Error handling refund failed:`, error, { service: "webhook" });
 		throw error;
 	}
 }

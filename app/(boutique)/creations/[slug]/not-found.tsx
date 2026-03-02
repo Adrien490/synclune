@@ -1,6 +1,12 @@
 import { ParticleBackground } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+	title: "Produit non trouvé - Synclune",
+	robots: { index: false, follow: false },
+};
 
 export default function ProductNotFound() {
 	return (

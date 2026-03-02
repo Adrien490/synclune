@@ -48,11 +48,11 @@ export default async function DashboardPage() {
 							<Link
 								key={href}
 								href={href}
-								className="border-border/60 hover:bg-muted flex items-center gap-3 rounded-xl border p-4 transition-colors"
+								className="group border-border/60 hover:bg-muted flex items-center gap-3 rounded-xl border p-4 transition-colors"
 							>
 								<Icon className="text-muted-foreground size-5" />
 								<span className="font-medium">{label}</span>
-								<ChevronRight className="text-muted-foreground ml-auto size-4" />
+								<ChevronRight className="text-muted-foreground ml-auto size-4 transition-transform group-hover:translate-x-0.5" />
 							</Link>
 						))}
 					</div>

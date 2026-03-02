@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { logger } from "@/shared/lib/logger";
 import {
 	markOrderAsPaid,
 	extractPaymentFailureDetails,
@@ -25,8 +26,9 @@ export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent):
 
 	if (!orderId) {
 		// Log pour debugging - pas d'erreur car certains PaymentIntent n'ont pas d'order_id (ex: paiements hors checkout)
-		console.warn(
+		logger.warn(
 			`⚠️ [WEBHOOK] payment_intent.succeeded without order_id in metadata (PI: ${paymentIntent.id})`,
+			{ service: "webhook" },
 		);
 		return;
 	}
@@ -44,7 +46,9 @@ export async function handlePaymentFailure(
 	const orderId = paymentIntent.metadata.order_id;
 
 	if (!orderId) {
-		console.error("❌ [WEBHOOK] No order_id in payment intent metadata");
+		logger.error("❌ [WEBHOOK] No order_id in payment intent metadata", undefined, {
+			service: "webhook",
+		});
 		throw new Error("No order_id in payment intent metadata");
 	}
 
@@ -52,7 +56,8 @@ export async function handlePaymentFailure(
 		// 1. Extraire les détails d'échec
 		const failureDetails = extractPaymentFailureDetails(paymentIntent);
 
-		console.log(`[AUDIT] Payment failure details`, {
+		logger.info(`[AUDIT] Payment failure details`, {
+			service: "webhook",
 			orderId,
 			failureCode: failureDetails.code,
 			declineCode: failureDetails.declineCode,
@@ -67,8 +72,9 @@ export async function handlePaymentFailure(
 
 		// 4. Remboursement automatique si de l'argent a été capturé
 		if (paymentIntent.amount_received > 0) {
-			console.log(
+			logger.info(
 				`💰 [WEBHOOK] Initiating automatic refund for order ${orderId} (${paymentIntent.amount_received} cents captured)`,
+				{ service: "webhook" },
 			);
 
 			const refundResult = await initiateAutomaticRefund(
@@ -87,7 +93,7 @@ export async function handlePaymentFailure(
 			}
 		}
 
-		console.log(`❌ [WEBHOOK] Order ${orderId} payment failed`);
+		logger.info(`❌ [WEBHOOK] Order ${orderId} payment failed`, { service: "webhook" });
 
 		// 5. Build cache invalidation tasks
 		const cacheTags: string[] = [
@@ -107,7 +113,9 @@ export async function handlePaymentFailure(
 			tasks: [{ type: "INVALIDATE_CACHE", tags: cacheTags }],
 		};
 	} catch (error) {
-		console.error(`❌ [WEBHOOK] Error handling payment failure for order ${orderId}:`, error);
+		logger.error(`❌ [WEBHOOK] Error handling payment failure for order ${orderId}:`, error, {
+			service: "webhook",
+		});
 		throw error;
 	}
 }
@@ -122,7 +130,9 @@ export async function handlePaymentCanceled(
 	const orderId = paymentIntent.metadata.order_id;
 
 	if (!orderId) {
-		console.error("❌ [WEBHOOK] No order_id in payment intent metadata");
+		logger.error("❌ [WEBHOOK] No order_id in payment intent metadata", undefined, {
+			service: "webhook",
+		});
 		throw new Error("No order_id in payment intent metadata");
 	}
 
@@ -135,7 +145,9 @@ export async function handlePaymentCanceled(
 
 		// 3. Remboursement automatique si paiement a été capturé
 		if (paymentIntent.status === "canceled" && paymentIntent.amount_received > 0) {
-			console.log(`💰 [WEBHOOK] Initiating automatic refund for canceled order ${orderId}`);
+			logger.info(`💰 [WEBHOOK] Initiating automatic refund for canceled order ${orderId}`, {
+				service: "webhook",
+			});
 
 			const refundResult = await initiateAutomaticRefund(
 				paymentIntent.id,
@@ -153,7 +165,7 @@ export async function handlePaymentCanceled(
 			}
 		}
 
-		console.log(`⚠️ [WEBHOOK] Order ${orderId} payment canceled`);
+		logger.info(`⚠️ [WEBHOOK] Order ${orderId} payment canceled`, { service: "webhook" });
 
 		// 4. Build cache invalidation tasks
 		const cacheTags: string[] = [
@@ -178,7 +190,9 @@ export async function handlePaymentCanceled(
 			],
 		};
 	} catch (error) {
-		console.error(`❌ [WEBHOOK] Error handling payment cancelation for order ${orderId}:`, error);
+		logger.error(`❌ [WEBHOOK] Error handling payment cancelation for order ${orderId}:`, error, {
+			service: "webhook",
+		});
 		throw error;
 	}
 }
@@ -219,7 +233,9 @@ export async function handleInvoicePaymentFailed(
 		? buildUrl(ROUTES.ADMIN.ORDER_DETAIL(order.id))
 		: buildUrl(ROUTES.ADMIN.ORDERS);
 
-	console.log(`❌ [WEBHOOK] Invoice payment failed for order ${orderNumber} (${amount} cents)`);
+	logger.info(`❌ [WEBHOOK] Invoice payment failed for order ${orderNumber} (${amount} cents)`, {
+		service: "webhook",
+	});
 
 	return {
 		success: true,

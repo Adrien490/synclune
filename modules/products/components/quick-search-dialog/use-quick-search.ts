@@ -4,7 +4,11 @@ import { quickSearch } from "@/modules/products/actions/quick-search";
 import type { QuickSearchResult } from "@/modules/products/data/quick-search-products";
 import type { SearchInputHandle } from "@/shared/components/search-input";
 
-import { MIN_SEARCH_LENGTH } from "./constants";
+import { MIN_SEARCH_LENGTH, type QuickSearchError } from "./constants";
+
+export function isSearchError(v: unknown): v is QuickSearchError {
+	return v != null && typeof v === "object" && "type" in v;
+}
 
 interface UseQuickSearchParams {
 	searchInputRef: React.RefObject<SearchInputHandle | null>;
@@ -13,7 +17,9 @@ interface UseQuickSearchParams {
 
 export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSearchParams) {
 	const [inputValue, setInputValue] = useState("");
-	const [searchResults, setSearchResults] = useState<QuickSearchResult | "error" | null>(null);
+	const [searchResults, setSearchResults] = useState<QuickSearchResult | QuickSearchError | null>(
+		null,
+	);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isSearching, startSearch] = useTransition();
 	const latestQueryRef = useRef("");
@@ -43,7 +49,7 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 			} catch (error) {
 				if (latestQueryRef.current !== trimmed) return;
 				console.error("[QuickSearch] Search failed:", error);
-				setSearchResults("error");
+				setSearchResults({ type: "error" });
 			}
 		});
 	};

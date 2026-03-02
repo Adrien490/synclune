@@ -29,7 +29,7 @@ async function lookupAndValidate(
 	userId?: string,
 	customerEmail?: string,
 ): Promise<ValidateDiscountCodeReturn> {
-	const discount = await prisma.discount.findFirst({
+	const discount = await prisma.discount.findUnique({
 		where: { code: validatedCode, ...notDeleted },
 		select: GET_DISCOUNT_VALIDATION_SELECT,
 	});

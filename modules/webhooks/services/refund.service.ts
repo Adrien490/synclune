@@ -1,8 +1,9 @@
 import type Stripe from "stripe";
+import { logger } from "@/shared/lib/logger";
 import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
-import { getBaseUrl } from "@/shared/constants/urls";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { RefundSyncResult, RefundRecord } from "../types/webhook.types";
 
 // Re-export types for backwards compatibility
@@ -19,7 +20,9 @@ function validateCurrencyCode(currency: string | undefined | null): string {
 	if (VALID_CURRENCY_CODES.has(normalized)) {
 		return normalized;
 	}
-	console.warn(`⚠️ [WEBHOOK] Unknown currency code: ${currency}, defaulting to EUR`);
+	logger.warn(`⚠️ [WEBHOOK] Unknown currency code: ${currency}, defaulting to EUR`, {
+		service: "webhook",
+	});
 	return "EUR";
 }
 
@@ -104,7 +107,9 @@ export async function syncStripeRefunds(
 								where: { id: op.id },
 								data: { status: RefundStatus.COMPLETED },
 							});
-							console.log(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`);
+							logger.info(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`, {
+								service: "webhook",
+							});
 							break;
 
 						case "linkRefund":
@@ -116,8 +121,9 @@ export async function syncStripeRefunds(
 									processedAt: now,
 								},
 							});
-							console.log(
+							logger.info(
 								`✅ [WEBHOOK] Linked existing refund ${op.id} to Stripe refund ${op.stripeRefundId}`,
+								{ service: "webhook" },
 							);
 							break;
 
@@ -139,8 +145,9 @@ export async function syncStripeRefunds(
 									processedAt: now,
 								},
 							});
-							console.log(
+							logger.info(
 								`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${op.stripeRefundId}`,
+								{ service: "webhook" },
 							);
 							break;
 					}
@@ -294,8 +301,9 @@ export async function updateRefundStatus(
 	if (statusToValidate) {
 		const validTransitions = VALID_REFUND_TRANSITIONS[statusToValidate];
 		if (!validTransitions.includes(newStatus)) {
-			console.warn(
+			logger.warn(
 				`⚠️ [WEBHOOK] Invalid refund status transition: ${statusToValidate} -> ${newStatus} for refund ${refundId}, skipping`,
+				{ service: "webhook" },
 			);
 			return;
 		}
@@ -309,7 +317,9 @@ export async function updateRefundStatus(
 		},
 	});
 
-	console.log(`✅ [WEBHOOK] Refund ${refundId} status updated to ${newStatus}`);
+	logger.info(`✅ [WEBHOOK] Refund ${refundId} status updated to ${newStatus}`, {
+		service: "webhook",
+	});
 }
 
 /**
@@ -324,7 +334,9 @@ export async function markRefundAsFailed(refundId: string, failureReason: string
 		},
 	});
 
-	console.log(`✅ [WEBHOOK] Refund ${refundId} marked as FAILED (reason: ${failureReason})`);
+	logger.info(`✅ [WEBHOOK] Refund ${refundId} marked as FAILED (reason: ${failureReason})`, {
+		service: "webhook",
+	});
 }
 
 /**
@@ -336,7 +348,7 @@ export async function sendRefundFailedAlert(
 ): Promise<void> {
 	try {
 		const baseUrl = getBaseUrl();
-		const dashboardUrl = `${baseUrl}/admin/ventes/remboursements`;
+		const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.REFUNDS}`;
 
 		await sendAdminRefundFailedAlert({
 			orderNumber: refund.order.orderNumber,
@@ -348,10 +360,13 @@ export async function sendRefundFailedAlert(
 			dashboardUrl,
 		});
 
-		console.log(
+		logger.info(
 			`🚨 [WEBHOOK] Admin alert sent for failed refund on order ${refund.order.orderNumber}`,
+			{ service: "webhook" },
 		);
 	} catch (emailError) {
-		console.error("❌ [WEBHOOK] Error sending refund failure alert:", emailError);
+		logger.error("❌ [WEBHOOK] Error sending refund failure alert:", emailError, {
+			service: "webhook",
+		});
 	}
 }

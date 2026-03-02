@@ -120,7 +120,7 @@ describe("fetchProductSkus – cache directives", () => {
 	it("calls cacheTag with admin inventory list tag", async () => {
 		await fetchProductSkus(makeParams());
 
-		expect(mockCacheTag).toHaveBeenCalledWith("admin-inventory-list");
+		expect(mockCacheTag).toHaveBeenCalledWith("admin-inventory-list", "skus-list");
 	});
 });
 

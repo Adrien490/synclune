@@ -7,7 +7,7 @@ import { ProductCard } from "@/modules/products/components/product-card";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
 import Link from "next/link";
 import { Suspense, use } from "react";
-import { LatestCreationsGridSkeleton } from "./latest-creations-skeleton";
+import { LatestCreationsSkeleton } from "./latest-creations-skeleton";
 
 interface LatestCreationsProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -16,10 +16,28 @@ interface LatestCreationsProps {
 /**
  * Latest Creations section - Grid of most recent jewelry.
  *
- * Header renders immediately (subtitle is LCP element).
- * Grid is wrapped in Suspense for streaming.
+ * Entire section (header + grid) is inside Suspense so it only renders
+ * when products are available. Returns null if the DB is empty.
  */
 export function LatestCreations({ productsPromise }: LatestCreationsProps) {
+	return (
+		<Suspense fallback={<LatestCreationsSkeleton />}>
+			<LatestCreationsGrid productsPromise={productsPromise} />
+		</Suspense>
+	);
+}
+
+/**
+ * Inner grid component — calls use() to unwrap the products promise.
+ * Owns the full section markup so nothing renders when products are empty.
+ */
+function LatestCreationsGrid({ productsPromise }: LatestCreationsProps) {
+	const { products } = use(productsPromise);
+
+	if (products.length === 0) {
+		return null;
+	}
+
 	return (
 		<section
 			id="latest-creations"
@@ -34,7 +52,6 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						<SectionTitle id="latest-creations-title">Nouvelles créations</SectionTitle>
 						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
 					</Fade>
-					{/* No Fade on subtitle — it's the LCP element, must paint immediately */}
 					<p
 						id="latest-creations-subtitle"
 						className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
@@ -42,59 +59,39 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						Tout juste sorties de l'atelier et réalisées avec amour !
 					</p>
 				</header>
-				<Suspense fallback={<LatestCreationsGridSkeleton />}>
-					<LatestCreationsGrid productsPromise={productsPromise} />
-				</Suspense>
+				<Stagger
+					className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8"
+					stagger={MOTION_CONFIG.section.grid.stagger}
+					y={MOTION_CONFIG.section.grid.y}
+					inView
+					once={true}
+				>
+					{products.map((product, index) => (
+						<ProductCard key={product.id} product={product} index={index} sectionId="latest" />
+					))}
+				</Stagger>
+				<Fade
+					y={MOTION_CONFIG.section.cta.y}
+					delay={MOTION_CONFIG.section.cta.delay}
+					duration={MOTION_CONFIG.section.cta.duration}
+					inView
+					once
+					className="text-center"
+				>
+					<Button
+						asChild
+						size="lg"
+						variant="outline"
+						className="transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+						aria-describedby="latest-creations-cta-description"
+					>
+						<Link href="/produits?sortBy=created-descending">Voir tous les nouveaux bijoux</Link>
+					</Button>
+					<span id="latest-creations-cta-description" className="sr-only">
+						Découvrir tous les bijoux récemment créés dans la boutique Synclune
+					</span>
+				</Fade>
 			</div>
 		</section>
-	);
-}
-
-/**
- * Inner grid component — calls use() to unwrap the products promise.
- * Wrapped in Suspense by the parent LatestCreations.
- */
-function LatestCreationsGrid({ productsPromise }: LatestCreationsProps) {
-	const { products } = use(productsPromise);
-
-	if (products.length === 0) {
-		return null;
-	}
-
-	return (
-		<>
-			<Stagger
-				className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8"
-				stagger={MOTION_CONFIG.section.grid.stagger}
-				y={MOTION_CONFIG.section.grid.y}
-				inView
-				once={true}
-			>
-				{products.map((product, index) => (
-					<ProductCard key={product.id} product={product} index={index} sectionId="latest" />
-				))}
-			</Stagger>
-			<Fade
-				y={MOTION_CONFIG.section.cta.y}
-				delay={MOTION_CONFIG.section.cta.delay}
-				duration={MOTION_CONFIG.section.cta.duration}
-				inView
-				once
-				className="text-center"
-			>
-				<Button
-					asChild
-					size="lg"
-					variant="outline"
-					className="transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
-					aria-describedby="latest-creations-cta-description"
-				>
-					<Link href="/produits?sortBy=created-descending">Voir tous les nouveaux bijoux</Link>
-				</Button>
-				<span id="latest-creations-cta-description" className="sr-only">
-					Découvrir tous les bijoux récemment créés dans la boutique Synclune
-				</span>
-			</Fade>
-		</>
 	);
 }

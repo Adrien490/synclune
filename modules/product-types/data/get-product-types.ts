@@ -1,8 +1,8 @@
 import { type Prisma } from "@/app/generated/prisma/client";
+import * as Sentry from "@sentry/nextjs";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
-import { z } from "zod";
 
 import { cacheProductTypes } from "../constants/cache";
 
@@ -19,25 +19,13 @@ import type {
 } from "../types/product-type.types";
 import { buildProductTypeWhereClause } from "../services/product-type-query-builder";
 
-// Re-export pour compatibilité
-export {
-	GET_PRODUCT_TYPES_DEFAULT_PER_PAGE,
-	GET_PRODUCT_TYPES_SORT_FIELDS,
-	PRODUCT_TYPES_SORT_LABELS,
-	PRODUCT_TYPES_SORT_OPTIONS,
-} from "../constants/product-type.constants";
-export { productTypeFiltersSchema, productTypeSortBySchema } from "../schemas/product-type.schemas";
+// Re-exports
+export { PRODUCT_TYPES_SORT_LABELS as SORT_LABELS } from "../constants/product-type.constants";
 export type {
 	GetProductTypesParams,
 	GetProductTypesParamsInput,
 	GetProductTypesReturn,
-	ProductType,
-	ProductTypeFilters,
 } from "../types/product-type.types";
-
-// Aliases pour compatibilité
-export { PRODUCT_TYPES_SORT_LABELS as SORT_LABELS } from "../constants/product-type.constants";
-export { PRODUCT_TYPES_SORT_OPTIONS as SORT_OPTIONS } from "../constants/product-type.constants";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -50,20 +38,13 @@ export { PRODUCT_TYPES_SORT_OPTIONS as SORT_OPTIONS } from "../constants/product
 export async function getProductTypes(
 	params: GetProductTypesParamsInput,
 ): Promise<GetProductTypesReturn> {
-	try {
-		const validation = getProductTypesSchema.safeParse(params);
+	const validation = getProductTypesSchema.safeParse(params);
 
-		if (!validation.success) {
-			throw new Error("Invalid parameters");
-		}
-
-		return fetchProductTypes(validation.data);
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			throw new Error("Invalid parameters");
-		}
-		throw error;
+	if (!validation.success) {
+		throw new Error("Invalid parameters");
 	}
+
+	return fetchProductTypes(validation.data);
 }
 
 /**
@@ -110,7 +91,11 @@ async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProd
 
 		return { productTypes: items, pagination };
 	} catch (error) {
-		const baseReturn = {
+		Sentry.captureException(error, {
+			tags: { module: "product-types", operation: "getProductTypes" },
+		});
+
+		return {
 			productTypes: [],
 			pagination: {
 				nextCursor: null,
@@ -118,14 +103,6 @@ async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProd
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
-			error:
-				process.env.NODE_ENV === "development"
-					? error instanceof Error
-						? error.message
-						: "Unknown error"
-					: "Failed to fetch product types",
 		};
-
-		return baseReturn as GetProductTypesReturn & { error: string };
 	}
 }

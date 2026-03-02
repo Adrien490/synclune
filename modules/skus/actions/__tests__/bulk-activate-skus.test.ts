@@ -39,6 +39,27 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	validateInput: (
+		schema: {
+			safeParse: (data: unknown) => {
+				success: boolean;
+				data?: unknown;
+				error?: { issues: { message: string }[] };
+			};
+		},
+		data: unknown,
+	) => {
+		const result = schema.safeParse(data);
+		if (!result.success) {
+			return {
+				error: {
+					status: "validation_error",
+					message: result.error?.issues[0]?.message ?? "Invalid",
+				},
+			};
+		}
+		return { data: result.data };
+	},
 	BusinessError: class BusinessError extends Error {
 		constructor(message: string) {
 			super(message);
@@ -48,7 +69,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 }));
 vi.mock("../../schemas/sku.schemas", () => ({
-	bulkActivateSkusSchema: { parse: mockSchemaParse },
+	bulkActivateSkusSchema: { safeParse: mockSchemaParse },
 }));
 vi.mock("../../utils/cache.utils", () => ({
 	collectBulkInvalidationTags: mockCollectBulkInvalidationTags,
@@ -92,7 +113,7 @@ describe("bulkActivateSkus", () => {
 		mockCollectBulkInvalidationTags.mockReturnValue(new Set(["skus-list"]));
 		mockInvalidateTags.mockReturnValue(undefined);
 
-		mockSchemaParse.mockReturnValue({ ids: validIds });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: validIds } });
 
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData());
 		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 2 });
@@ -120,7 +141,7 @@ describe("bulkActivateSkus", () => {
 	});
 
 	it("should return error when no IDs are provided", async () => {
-		mockSchemaParse.mockReturnValue({ ids: [] });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: [] } });
 		const result = await bulkActivateSkus(undefined, makeFormData([]));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Aucune variante");
@@ -128,7 +149,7 @@ describe("bulkActivateSkus", () => {
 
 	it("should return error when IDs exceed the bulk limit", async () => {
 		const manyIds = Array.from({ length: 101 }, (_, i) => `id-${i}`);
-		mockSchemaParse.mockReturnValue({ ids: manyIds });
+		mockSchemaParse.mockReturnValue({ success: true, data: { ids: manyIds } });
 		const result = await bulkActivateSkus(undefined, makeFormData(manyIds));
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Maximum 100");

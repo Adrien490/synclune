@@ -59,6 +59,8 @@ type SearchInputProps = {
 	activeDescendantId?: string;
 	/** Whether the associated listbox/popup is expanded (enables combobox role) */
 	ariaExpanded?: boolean;
+	/** ID of the element controlled by this input (for aria-controls) */
+	ariaControls?: string;
 	/** Additional keydown handler on the input (composed with internal handler) */
 	onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 	/** Imperative handle ref */
@@ -111,6 +113,7 @@ export function SearchInput({
 	onLiveSearch,
 	activeDescendantId,
 	ariaExpanded,
+	ariaControls,
 	onKeyDown: externalKeyDown,
 	ref,
 }: SearchInputProps) {
@@ -326,6 +329,7 @@ export function SearchInput({
 								autoFocus={autoFocus}
 								role={ariaExpanded !== undefined ? "combobox" : undefined}
 								aria-expanded={ariaExpanded}
+								aria-controls={ariaControls}
 								aria-activedescendant={activeDescendantId}
 								type="search"
 								inputMode="search"

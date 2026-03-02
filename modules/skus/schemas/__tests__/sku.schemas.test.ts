@@ -313,9 +313,9 @@ describe("adjustSkuStockSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("should accept a zero adjustment", () => {
+	it("should reject a zero adjustment", () => {
 		const result = adjustSkuStockSchema.safeParse({ skuId: VALID_CUID, adjustment: 0 });
-		expect(result.success).toBe(true);
+		expect(result.success).toBe(false);
 	});
 
 	it("should accept optional reason when provided", () => {

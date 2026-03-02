@@ -25,6 +25,7 @@ const {
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -129,6 +130,9 @@ describe("bulkDeleteOrders", () => {
 			data: data as { ids: string[] },
 		}));
 
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.order.findMany.mockResolvedValue([createDeletableOrder()]);
 		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});

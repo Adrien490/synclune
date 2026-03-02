@@ -1,4 +1,4 @@
-import { type Prisma } from "@/app/generated/prisma/client";
+import * as Sentry from "@sentry/nextjs";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -44,22 +44,21 @@ async function fetchProductType(
 	"use cache";
 	cacheProductTypes();
 
-	const where: Prisma.ProductTypeWhereInput = {
-		slug,
-	};
-
-	if (!includeInactive) {
-		where.isActive = true;
-	}
-
 	try {
-		const productType = await prisma.productType.findFirst({
-			where,
+		const productType = await prisma.productType.findUnique({
+			where: { slug },
 			select: GET_PRODUCT_TYPE_SELECT,
 		});
 
+		if (!productType) return null;
+		if (!includeInactive && !productType.isActive) return null;
+
 		return productType;
-	} catch {
+	} catch (error) {
+		Sentry.captureException(error, {
+			tags: { module: "product-types", operation: "getProductType" },
+			extra: { slug, includeInactive },
+		});
 		return null;
 	}
 }

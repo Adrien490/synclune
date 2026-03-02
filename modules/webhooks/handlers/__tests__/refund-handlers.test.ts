@@ -68,6 +68,9 @@ vi.mock("@/shared/constants/urls", () => ({
 		ACCOUNT: {
 			ORDER_DETAIL: (orderNumber: string) => `/commandes/${orderNumber}`,
 		},
+		ADMIN: {
+			REFUNDS: "/admin/ventes/remboursements",
+		},
 	},
 }));
 

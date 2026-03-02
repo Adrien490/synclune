@@ -10,6 +10,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
+import { Stagger } from "@/shared/components/animations/stagger";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { matchesWordStart } from "@/modules/products/utils/match-word-start";
 
@@ -56,7 +57,9 @@ export function QuickSearchContent({
 	const hasSearchResults = products.length > 0;
 	const hasMatchedNav = matchedCollections.length > 0 || matchedTypes.length > 0;
 	const isRateLimited = results.rateLimited === true;
-	const showEmptyState = !hasSearchResults && !hasMatchedNav && !suggestion && !isRateLimited;
+	const isError = results.error === true;
+	const showEmptyState =
+		!hasSearchResults && !hasMatchedNav && !suggestion && !isRateLimited && !isError;
 
 	return (
 		<div className="flex h-full flex-col">
@@ -96,6 +99,7 @@ export function QuickSearchContent({
 										collection={collection}
 										onSelect={onClose}
 										variant="compact"
+										query={query}
 									/>
 								))}
 							</div>
@@ -110,7 +114,13 @@ export function QuickSearchContent({
 							</h3>
 							<div className="space-y-1">
 								{matchedTypes.map((type) => (
-									<CategoryCard key={type.slug} type={type} onSelect={onClose} variant="compact" />
+									<CategoryCard
+										key={type.slug}
+										type={type}
+										onSelect={onClose}
+										variant="compact"
+										query={query}
+									/>
 								))}
 							</div>
 						</section>
@@ -123,13 +133,25 @@ export function QuickSearchContent({
 						</p>
 					)}
 
+					{/* Server error */}
+					{isError && !isRateLimited && (
+						<p className="text-muted-foreground py-4 text-center text-sm">
+							Une erreur est survenue lors de la recherche. Veuillez reessayer.
+						</p>
+					)}
+
 					{/* Product results */}
 					{hasSearchResults && (
 						<section aria-label="Produits">
 							<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
 								Produits
 							</h3>
-							<div className="space-y-0.5">
+							{products.length < totalCount && (
+								<p className="text-muted-foreground/60 mb-2 text-xs">
+									{products.length} sur {totalCount}
+								</p>
+							)}
+							<Stagger className="space-y-0.5" stagger={0.02} delay={0.03} y={4}>
 								{products.map((product) => (
 									<SearchResultItem
 										key={product.id}
@@ -138,7 +160,7 @@ export function QuickSearchContent({
 										onSelect={onSelectResult}
 									/>
 								))}
-							</div>
+							</Stagger>
 						</section>
 					)}
 

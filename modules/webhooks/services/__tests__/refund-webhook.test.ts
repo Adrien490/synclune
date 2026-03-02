@@ -39,6 +39,11 @@ vi.mock("@/modules/emails/services/admin-emails", () => ({
 
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: mockGetBaseUrl,
+	ROUTES: {
+		ADMIN: {
+			REFUNDS: "/admin/ventes/remboursements",
+		},
+	},
 }));
 
 // Mock the Prisma enum

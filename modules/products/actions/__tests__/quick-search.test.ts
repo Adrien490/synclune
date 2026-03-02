@@ -91,15 +91,15 @@ describe("quickSearch", () => {
 		consoleSpy.mockRestore();
 	});
 
-	it("should return EMPTY_RESULT on unexpected exception from quickSearchProducts", async () => {
+	it("should return EMPTY_RESULT with error flag on unexpected exception from quickSearchProducts", async () => {
 		mockQuickSearchProducts.mockRejectedValue(new Error("DB crash"));
 		const result = await quickSearch("bracelet");
-		expect(result).toEqual(EMPTY_RESULT);
+		expect(result).toEqual({ ...EMPTY_RESULT, error: true });
 	});
 
-	it("should return EMPTY_RESULT on unexpected exception from rate limit service", async () => {
+	it("should return EMPTY_RESULT with error flag on unexpected exception from rate limit service", async () => {
 		mockEnforceRateLimit.mockRejectedValue(new Error("rate limit service down"));
 		const result = await quickSearch("bracelet");
-		expect(result).toEqual(EMPTY_RESULT);
+		expect(result).toEqual({ ...EMPTY_RESULT, error: true });
 	});
 });

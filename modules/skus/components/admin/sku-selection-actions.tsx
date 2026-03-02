@@ -69,7 +69,7 @@ export function ProductVariantSelectionActions() {
 			toast.error("Veuillez sélectionner au moins une variante.");
 			return;
 		}
-		toast.info("Export CSV non implemente");
+		toast.info("Export CSV non implémenté");
 	};
 
 	const handleActivate = () => {
@@ -150,7 +150,7 @@ export function ProductVariantSelectionActions() {
 
 					<DropdownMenuItem onClick={handleDeactivate} disabled={isDeactivating}>
 						<XCircle className="h-4 w-4" />
-						Desactiver
+						Désactiver
 					</DropdownMenuItem>
 
 					<DropdownMenuSeparator />
@@ -176,8 +176,8 @@ export function ProductVariantSelectionActions() {
 							<br />
 							<br />
 							<span className="text-destructive font-medium">
-								Cette action est irreversible. Les variantes par defaut ne peuvent pas etre
-								supprimees.
+								Cette action est irréversible. Les variantes par défaut ne peuvent pas être
+								supprimées.
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
