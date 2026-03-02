@@ -62,6 +62,7 @@ export function RotatingWord({ words, duration = 3000, className }: RotatingWord
 			className={pillStyles}
 			style={{ contain: "layout paint" }}
 			lang="fr"
+			role="group"
 			aria-label={words.join(" et ")}
 		>
 			<span className="relative inline-flex items-center" aria-hidden="true">

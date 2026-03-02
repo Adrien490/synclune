@@ -8,7 +8,7 @@ import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { AlertCircle, CreditCard, Info, Loader2, Lock, Mail, MapPin } from "lucide-react";
+import { AlertCircle, Info, Loader2, Lock, Mail } from "lucide-react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
@@ -217,8 +217,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 								<AddressSummary address={submittedAddress} onEdit={handleEdit} />
 
 								{/* En-tête paiement */}
-								<h2 className="font-display flex items-center gap-2 text-lg font-medium tracking-wide sm:text-xl">
-									<CreditCard className="h-5 w-5" />
+								<h2 className="font-display text-lg font-medium tracking-wide sm:text-xl">
 									Paiement sécurisé
 								</h2>
 
@@ -332,8 +331,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 									<CheckoutStepIndicator currentStep={1} />
 
 									{/* Step 1 heading */}
-									<h2 className="font-display flex items-center gap-2 text-lg font-medium tracking-wide sm:text-xl">
-										<MapPin className="h-5 w-5" />
+									<h2 className="font-display text-lg font-medium tracking-wide sm:text-xl">
 										Adresse de livraison
 									</h2>
 

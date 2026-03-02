@@ -42,6 +42,7 @@ export function SplitText({ children, stagger = 0.08, className }: SplitTextProp
 			initial={prefersReducedMotion ? "visible" : "hidden"}
 			animate="visible"
 			transition={prefersReducedMotion ? { duration: 0 } : { staggerChildren: stagger }}
+			role="group"
 			aria-label={children}
 		>
 			{words.map((word, i) => (
