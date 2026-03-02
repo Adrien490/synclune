@@ -50,6 +50,10 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 	} as never;
 }
 
+function graph(result: ReturnType<typeof generateStructuredData>): any[] {
+	return result["@graph"];
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -63,8 +67,8 @@ describe("generateStructuredData", () => {
 
 		expect(result["@context"]).toBe("https://schema.org/");
 		expect(result["@graph"]).toHaveLength(2);
-		expect(result["@graph"][0]["@type"]).toBe("Product");
-		expect(result["@graph"][1]["@type"]).toBe("BreadcrumbList");
+		expect(graph(result)[0]["@type"]).toBe("Product");
+		expect(graph(result)[1]["@type"]).toBe("BreadcrumbList");
 	});
 
 	it("uses single Offer when all prices are equal", () => {
@@ -94,7 +98,7 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku({ priceInclTax: 4999 }),
 		});
 
-		const productData = result["@graph"][0];
+		const productData = graph(result)[0];
 		expect(productData.offers["@type"]).toBe("Offer");
 		expect(productData.offers.price).toBe("49.99");
 	});
@@ -126,7 +130,7 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku({ priceInclTax: 3999 }),
 		});
 
-		const productData = result["@graph"][0];
+		const productData = graph(result)[0];
 		expect(productData.offers["@type"]).toBe("AggregateOffer");
 		expect(productData.offers.lowPrice).toBe("39.99");
 		expect(productData.offers.highPrice).toBe("59.99");
@@ -139,23 +143,23 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku(),
 			reviewStats: null,
 		});
-		expect(withoutReviews["@graph"][0].aggregateRating).toBeUndefined();
+		expect(graph(withoutReviews)[0].aggregateRating).toBeUndefined();
 
 		const withZeroReviews = generateStructuredData({
 			product: makeProduct(),
 			selectedSku: makeSku(),
 			reviewStats: { totalCount: 0, averageRating: 0 } as never,
 		});
-		expect(withZeroReviews["@graph"][0].aggregateRating).toBeUndefined();
+		expect(graph(withZeroReviews)[0].aggregateRating).toBeUndefined();
 
 		const withReviews = generateStructuredData({
 			product: makeProduct(),
 			selectedSku: makeSku(),
 			reviewStats: { totalCount: 12, averageRating: 4.5 } as never,
 		});
-		expect(withReviews["@graph"][0].aggregateRating).toBeDefined();
-		expect(withReviews["@graph"][0].aggregateRating.ratingValue).toBe("4.5");
-		expect(withReviews["@graph"][0].aggregateRating.reviewCount).toBe(12);
+		expect(graph(withReviews)[0].aggregateRating).toBeDefined();
+		expect(graph(withReviews)[0].aggregateRating.ratingValue).toBe("4.5");
+		expect(graph(withReviews)[0].aggregateRating.reviewCount).toBe(12);
 	});
 
 	it("caps review list at 10 for rich snippet compliance", () => {
@@ -173,7 +177,7 @@ describe("generateStructuredData", () => {
 			reviews: reviews as never[],
 		});
 
-		expect(result["@graph"][0].review).toHaveLength(10);
+		expect(graph(result)[0].review).toHaveLength(10);
 	});
 
 	it("does not include review array when no reviews provided", () => {
@@ -183,7 +187,7 @@ describe("generateStructuredData", () => {
 			reviews: [],
 		});
 
-		expect(result["@graph"][0].review).toBeUndefined();
+		expect(graph(result)[0].review).toBeUndefined();
 	});
 
 	it("sets availability based on SKU inventory", () => {
@@ -191,13 +195,13 @@ describe("generateStructuredData", () => {
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 5 }),
 		});
-		expect(inStock["@graph"][0].offers.availability).toBe("https://schema.org/InStock");
+		expect(graph(inStock)[0].offers.availability).toBe("https://schema.org/InStock");
 
 		const outOfStock = generateStructuredData({
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 0 }),
 		});
-		expect(outOfStock["@graph"][0].offers.availability).toBe("https://schema.org/OutOfStock");
+		expect(graph(outOfStock)[0].offers.availability).toBe("https://schema.org/OutOfStock");
 	});
 
 	it("includes breadcrumb with product type when available", () => {
@@ -206,7 +210,7 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku(),
 		});
 
-		const breadcrumb = result["@graph"][1];
+		const breadcrumb = graph(result)[1];
 		expect(breadcrumb.itemListElement).toHaveLength(4);
 		expect(breadcrumb.itemListElement[2].name).toBe("Bracelet");
 	});
@@ -217,7 +221,7 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku(),
 		});
 
-		const breadcrumb = result["@graph"][1];
+		const breadcrumb = graph(result)[1];
 		expect(breadcrumb.itemListElement).toHaveLength(3);
 		expect(breadcrumb.itemListElement[2].name).toBe("Bracelet Lune");
 	});
@@ -228,7 +232,7 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku(),
 		});
 
-		const offers = result["@graph"][0].offers;
+		const offers = graph(result)[0].offers;
 		expect(offers.hasMerchantReturnPolicy).toBeDefined();
 		expect(offers.hasMerchantReturnPolicy.merchantReturnDays).toBe(14);
 		expect(offers.shippingDetails).toBeDefined();
@@ -241,7 +245,7 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku({ material: { name: "Argent 925" }, color: { name: "Or" } }),
 		});
 
-		const productData = result["@graph"][0];
+		const productData = graph(result)[0];
 		expect(productData.material).toBe("Argent 925");
 		expect(productData.color).toBe("Or");
 	});
@@ -251,7 +255,7 @@ describe("generateStructuredData", () => {
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 1 }),
 		});
-		const stockProp = unique["@graph"][0].additionalProperty.find(
+		const stockProp = graph(unique)[0].additionalProperty.find(
 			(p: Record<string, string>) => p.name === "Stock",
 		);
 		expect(stockProp.value).toBe("Pièce unique");
@@ -260,7 +264,7 @@ describe("generateStructuredData", () => {
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 3 }),
 		});
-		const lowStockProp = low["@graph"][0].additionalProperty.find(
+		const lowStockProp = graph(low)[0].additionalProperty.find(
 			(p: Record<string, string>) => p.name === "Stock",
 		);
 		expect(lowStockProp.value).toBe("Stock limité");
@@ -269,7 +273,7 @@ describe("generateStructuredData", () => {
 			product: makeProduct(),
 			selectedSku: makeSku({ inventory: 10 }),
 		});
-		const normalStockProp = normal["@graph"][0].additionalProperty.find(
+		const normalStockProp = graph(normal)[0].additionalProperty.find(
 			(p: Record<string, string>) => p.name === "Stock",
 		);
 		expect(normalStockProp.value).toBe("En stock");
@@ -281,7 +285,7 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku(),
 		});
 
-		const images = result["@graph"][0].image;
+		const images = graph(result)[0].image;
 		expect(images.length).toBeGreaterThan(0);
 		expect(images[0]["@type"]).toBe("ImageObject");
 		expect(images[0].width).toBe(1200);
@@ -294,6 +298,6 @@ describe("generateStructuredData", () => {
 			selectedSku: makeSku({ sku: "BRC-CUSTOM-001" }),
 		});
 
-		expect(result["@graph"][0].mpn).toBe("BRC-CUSTOM-001");
+		expect(graph(result)[0].mpn).toBe("BRC-CUSTOM-001");
 	});
 });

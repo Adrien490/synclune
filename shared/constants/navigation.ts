@@ -124,9 +124,6 @@ export function getMobileNavItems(
 		// ✨ PERSONNALISER - Service différenciateur
 		{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
 
-		// 📖 À PROPOS - Histoire de l'atelier
-		{ href: ROUTES.SHOP.ABOUT, label: "À propos", icon: "heart" },
-
 		// 👤 COMPTE - Gestion utilisateur
 		session
 			? { href: ROUTES.ACCOUNT.ROOT, label: "Mon compte", icon: "user" }
@@ -218,7 +215,6 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 		creationsItem,
 		collectionsItem,
 		{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
-		{ href: ROUTES.SHOP.ABOUT, label: "À propos", icon: "heart" },
 	];
 }
 
@@ -227,7 +223,6 @@ export const footerNavItems = [
 	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations" },
 	{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections" },
 	{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation" },
-	{ href: ROUTES.SHOP.ABOUT, label: "À propos" },
 	{ href: ROUTES.ACCOUNT.ROOT, label: "Mon compte" },
 ] as const;
 

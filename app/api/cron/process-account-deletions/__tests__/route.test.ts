@@ -153,7 +153,7 @@ describe("GET /api/cron/process-account-deletions", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(4444);
 		});
 

@@ -352,8 +352,6 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		// Newsletter pages
 		{ path: "/newsletter/confirm", name: "Newsletter confirmation" },
 		{ path: "/newsletter/unsubscribe", name: "Newsletter désabonnement" },
-		// Added pages
-		{ path: "/a-propos", name: "À propos" },
 	];
 
 	for (const { path, name } of pagesToAudit) {

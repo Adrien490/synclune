@@ -47,6 +47,7 @@ vi.mock("@/modules/emails/services/payment-emails", () => ({
 }));
 
 import { executePostWebhookTasks } from "../execute-post-tasks";
+import type { PostWebhookTask } from "../../types/webhook.types";
 
 // ============================================================================
 // TESTS
@@ -79,7 +80,7 @@ describe("executePostWebhookTasks", () => {
 		const tasks = [
 			{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: { to: "a@test.com" } },
 			{ type: "ADMIN_NEW_ORDER_EMAIL" as const, data: { orderNumber: "SYN-001" } },
-		];
+		] as PostWebhookTask[];
 
 		const result = await executePostWebhookTasks(tasks);
 
@@ -98,7 +99,7 @@ describe("executePostWebhookTasks", () => {
 			{ type: "ADMIN_REFUND_FAILED_ALERT" as const, data: { d: 5 } },
 			{ type: "ADMIN_DISPUTE_ALERT" as const, data: { d: 6 } },
 			{ type: "ADMIN_INVOICE_FAILED_ALERT" as const, data: { d: 7 } },
-		];
+		] as unknown as PostWebhookTask[];
 
 		const result = await executePostWebhookTasks(tasks);
 
@@ -132,7 +133,7 @@ describe("executePostWebhookTasks", () => {
 		const tasks = [
 			{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: {} },
 			{ type: "ADMIN_NEW_ORDER_EMAIL" as const, data: {} },
-		];
+		] as PostWebhookTask[];
 
 		const result = await executePostWebhookTasks(tasks);
 
@@ -148,7 +149,7 @@ describe("executePostWebhookTasks", () => {
 	it("sends admin alert when critical customer-facing email fails", async () => {
 		mockSendOrderConfirmationEmail.mockRejectedValue(new Error("SMTP error"));
 
-		const tasks = [{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: {} }];
+		const tasks = [{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: {} }] as PostWebhookTask[];
 
 		await executePostWebhookTasks(tasks);
 
@@ -165,7 +166,7 @@ describe("executePostWebhookTasks", () => {
 	it("does NOT send admin alert for non-critical task failures", async () => {
 		mockSendAdminDisputeAlert.mockRejectedValue(new Error("Fail"));
 
-		const tasks = [{ type: "ADMIN_DISPUTE_ALERT" as const, data: {} }];
+		const tasks = [{ type: "ADMIN_DISPUTE_ALERT" as const, data: {} }] as PostWebhookTask[];
 
 		await executePostWebhookTasks(tasks);
 
@@ -179,7 +180,7 @@ describe("executePostWebhookTasks", () => {
 		const tasks = [
 			{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: {} },
 			{ type: "REFUND_CONFIRMATION_EMAIL" as const, data: {} },
-		];
+		] as PostWebhookTask[];
 
 		await executePostWebhookTasks(tasks);
 
@@ -201,7 +202,7 @@ describe("executePostWebhookTasks", () => {
 		mockSendOrderConfirmationEmail.mockRejectedValue(new Error("SMTP error"));
 		mockSendWebhookFailedAlertEmail.mockRejectedValue(new Error("Alert also failed"));
 
-		const tasks = [{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: {} }];
+		const tasks = [{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: {} }] as PostWebhookTask[];
 
 		// Should not throw
 		const result = await executePostWebhookTasks(tasks);
@@ -212,7 +213,7 @@ describe("executePostWebhookTasks", () => {
 	it("converts non-Error rejection reasons to string", async () => {
 		mockSendPaymentFailedEmail.mockRejectedValue("string error reason");
 
-		const tasks = [{ type: "PAYMENT_FAILED_EMAIL" as const, data: {} }];
+		const tasks = [{ type: "PAYMENT_FAILED_EMAIL" as const, data: {} }] as PostWebhookTask[];
 
 		const result = await executePostWebhookTasks(tasks);
 

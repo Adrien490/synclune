@@ -453,6 +453,7 @@ describe("ReviewRequestEmail", () => {
 			},
 		],
 		reviewUrl: "https://synclune.fr/mes-avis",
+		unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 	};
 
 	it("renders without error", async () => {
