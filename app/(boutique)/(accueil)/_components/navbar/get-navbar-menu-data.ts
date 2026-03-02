@@ -12,7 +12,7 @@ export function extractCollectionImages(products: Collection["products"]) {
 	return products
 		.slice(0, 4)
 		.map((p) => {
-			const image = p.product?.skus[0]?.images[0];
+			const image = p.product.skus[0]?.images[0];
 			return image ? { url: image.url, blurDataUrl: image.blurDataUrl, alt: image.altText } : null;
 		})
 		.filter(

@@ -105,12 +105,12 @@ export async function handleDisputeCreated(
 	}
 
 	// Create Dispute record and OrderNote atomically
-	const deadlineStr = dispute.evidence_details?.due_by
+	const deadlineStr = dispute.evidence_details.due_by
 		? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
 		: "N/A";
 	const noteContent = `[LITIGE OUVERT] Litige Stripe ${dispute.id}. Raison: ${DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason}. Montant contesté: ${dispute.amount} centimes. Deadline de réponse: ${deadlineStr}.`;
 
-	const dueBy = dispute.evidence_details?.due_by
+	const dueBy = dispute.evidence_details.due_by
 		? new Date(dispute.evidence_details.due_by * 1000)
 		: null;
 
@@ -120,7 +120,7 @@ export async function handleDisputeCreated(
 				stripeDisputeId: dispute.id,
 				orderId: order.id,
 				amount: dispute.amount,
-				fee: dispute.balance_transactions?.[0]?.fee ?? 0,
+				fee: dispute.balance_transactions[0]?.fee ?? 0,
 				reason: STRIPE_REASON_MAP[dispute.reason] ?? DisputeReason.GENERAL,
 				status: mapStripeDisputeStatus(dispute.status),
 				dueBy,
@@ -154,7 +154,7 @@ export async function handleDisputeCreated(
 					amount: dispute.amount,
 					reason: DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason,
 					disputeId: dispute.id,
-					deadline: dispute.evidence_details?.due_by
+					deadline: dispute.evidence_details.due_by
 						? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
 						: null,
 					dashboardUrl,

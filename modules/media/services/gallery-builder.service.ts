@@ -73,8 +73,6 @@ interface BuildGalleryOptions {
  * @returns Array of ProductMedia objects ordered by priority
  */
 export function buildGallery({ product, selectedVariants }: BuildGalleryOptions): ProductMedia[] {
-	if (!product) return [];
-
 	const { colorSlug, materialSlug, size } = selectedVariants;
 
 	// Find the SKU matching the selected variants

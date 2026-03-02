@@ -182,10 +182,7 @@ export async function downloadImage(
 		}
 
 		// Validate magic bytes via Sharp metadata (defense-in-depth beyond Content-Type header)
-		const metadata = await sharp(buffer).metadata();
-		if (!metadata.format) {
-			throw new Error("Buffer invalide: format d'image non reconnu par Sharp");
-		}
+		await sharp(buffer).metadata();
 
 		return buffer;
 	} finally {

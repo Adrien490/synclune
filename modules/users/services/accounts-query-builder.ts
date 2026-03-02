@@ -6,7 +6,6 @@ import type { AccountFilters, GetAccountsInput } from "../schemas/accounts.schem
 // ============================================================================
 
 export function buildAccountsFilterConditions(filters: AccountFilters): Prisma.AccountWhereInput[] {
-	if (!filters) return [];
 	const conditions: Prisma.AccountWhereInput[] = [];
 
 	if (filters.userId !== undefined) {

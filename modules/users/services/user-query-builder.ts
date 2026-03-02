@@ -7,7 +7,6 @@ import type { GetUsersParams, UserFilters } from "../types/user.types";
 // ============================================================================
 
 export function buildUserFilterConditions(filters: UserFilters): Prisma.UserWhereInput[] {
-	if (!filters) return [];
 	const conditions: Prisma.UserWhereInput[] = [];
 
 	if (filters.name !== undefined) {

@@ -67,7 +67,7 @@ export async function deleteUploadThingFilesFromUrls(
 				`[deleteUploadThingFilesFromUrls] Partial deletion: ${actualDeleted}/${fileKeys.length} fichier(s) supprime(s)`,
 			);
 		} else {
-			console.log(
+			console.warn(
 				`[deleteUploadThingFilesFromUrls] ${actualDeleted} fichier(s) supprime(s) avec succes`,
 			);
 		}
