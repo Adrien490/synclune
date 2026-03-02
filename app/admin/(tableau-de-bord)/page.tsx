@@ -26,8 +26,6 @@ export const metadata: Metadata = {
  * Dashboard simplifié - 6 KPIs + graphique + commandes récentes
  */
 export default async function AdminDashboardPage() {
-	await connection();
-
 	return (
 		<>
 			<PageHeader variant="compact" title="Tableau de bord" />

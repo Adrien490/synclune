@@ -4,7 +4,7 @@ import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
 import { EMAIL_CONTACT } from "@/shared/lib/email-config";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { Suspense } from "react";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
 
@@ -16,26 +16,28 @@ export const metadata: Metadata = {
 	robots: {
 		index: false,
 		follow: false,
-		nocache: true,
 	},
 };
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-	// Signal dynamic rendering - admin pages are inherently dynamic (useSearchParams in SelectionProvider)
-	await headers();
-
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<SidebarProvider>
-			<AdminSidebar />
+			<Suspense>
+				<AdminSidebar />
+			</Suspense>
 			<SidebarInset>
 				<DashboardHeaderWrapper />
 				<main id="main-content" tabIndex={-1} className="space-y-6 p-6 pb-20 md:pb-6">
-					<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
+					<Suspense>
+						<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
+					</Suspense>
 				</main>
 			</SidebarInset>
 			<AdminSpeedDial email={EMAIL_CONTACT} />
 			<footer className="md:hidden" aria-label="Navigation mobile">
-				<BottomNav />
+				<Suspense>
+					<BottomNav />
+				</Suspense>
 			</footer>
 		</SidebarProvider>
 	);

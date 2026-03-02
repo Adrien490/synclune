@@ -13,8 +13,20 @@ export async function generateMetadata({ params }: OrderPageProps) {
 	return { title: `Commande ${orderNumber}` };
 }
 
-export default async function OrderPage({ params }: OrderPageProps) {
-	const { orderNumber } = await params;
+export default function OrderPage({ params }: OrderPageProps) {
+	return (
+		<Suspense fallback={<OrderDetailSkeleton />}>
+			<OrderPageContent paramsPromise={params} />
+		</Suspense>
+	);
+}
+
+async function OrderPageContent({
+	paramsPromise,
+}: {
+	paramsPromise: Promise<{ orderNumber: string }>;
+}) {
+	const { orderNumber } = await paramsPromise;
 
 	return (
 		<>
