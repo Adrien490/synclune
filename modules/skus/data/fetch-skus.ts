@@ -2,6 +2,7 @@ import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { cacheLife, cacheTag } from "next/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	GET_PRODUCT_SKUS_DEFAULT_PER_PAGE,
@@ -23,7 +24,7 @@ export async function fetchProductSkus(
 
 	// Cache configuration for inventory list (used in admin dashboard)
 	cacheLife("dashboard");
-	cacheTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST, PRODUCTS_CACHE_TAGS.SKUS_LIST);
 
 	try {
 		const where = buildWhereClause(params);

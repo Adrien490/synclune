@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
@@ -31,7 +31,9 @@ export async function bulkDeleteSkus(
 			ids: safeFormGet(formData, "ids"),
 		};
 
-		const { ids } = bulkDeleteSkusSchema.parse(rawData);
+		const validation = validateInput(bulkDeleteSkusSchema, rawData);
+		if ("error" in validation) return validation.error;
+		const { ids } = validation.data;
 
 		if (ids.length === 0) {
 			return {
@@ -55,7 +57,18 @@ export async function bulkDeleteSkus(
 				sku: true,
 				productId: true,
 				isDefault: true,
-				product: { select: { slug: true } },
+				isActive: true,
+				product: {
+					select: {
+						slug: true,
+						status: true,
+						_count: { select: { skus: true } },
+						skus: {
+							where: { isActive: true },
+							select: { id: true },
+						},
+					},
+				},
 				images: { select: { url: true } },
 			},
 		});
@@ -67,6 +80,53 @@ export async function bulkDeleteSkus(
 				status: ActionStatus.ERROR,
 				message: "Impossible de supprimer une variante par defaut",
 			};
+		}
+
+		// CRITIQUE : Verifier qu'aucun produit ne se retrouve avec 0 SKU
+		const deletionsByProduct = new Map<
+			string,
+			{
+				total: number;
+				deleteCount: number;
+				activeDeleteCount: number;
+				activeTotal: number;
+				status: string;
+			}
+		>();
+		for (const sku of skusData) {
+			const existing = deletionsByProduct.get(sku.productId);
+			if (existing) {
+				existing.deleteCount++;
+				if (sku.isActive) existing.activeDeleteCount++;
+			} else {
+				deletionsByProduct.set(sku.productId, {
+					total: sku.product._count.skus,
+					deleteCount: 1,
+					activeDeleteCount: sku.isActive ? 1 : 0,
+					activeTotal: sku.product.skus.length,
+					status: sku.product.status,
+				});
+			}
+		}
+
+		for (const [, data] of deletionsByProduct) {
+			if (data.total - data.deleteCount < 1) {
+				return {
+					status: ActionStatus.ERROR,
+					message:
+						"Impossible de supprimer toutes les variantes d'un produit. Un produit doit avoir au moins une variante.",
+				};
+			}
+
+			// Pour les produits PUBLIC : au moins 1 SKU actif doit rester
+			if (data.status === "PUBLIC" && data.activeTotal - data.activeDeleteCount < 1) {
+				return {
+					status: ActionStatus.ERROR,
+					message:
+						"Impossible de supprimer toutes les variantes actives d'un produit PUBLIC. " +
+						"Veuillez creer une autre variante active ou mettre le produit en DRAFT.",
+				};
+			}
 		}
 
 		// CRITIQUE : Verifier que les SKUs ne sont pas dans des commandes

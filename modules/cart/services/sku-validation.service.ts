@@ -193,7 +193,6 @@ export async function validateCartItemsWithDb(input: {
 		skuId: string;
 		isValid: boolean;
 		error?: string;
-		availableStock?: number;
 	}>;
 }> {
 	try {
@@ -208,7 +207,6 @@ export async function validateCartItemsWithDb(input: {
 					skuId: item.skuId,
 					isValid: false,
 					error: CART_ERROR_MESSAGES.SKU_NOT_FOUND,
-					availableStock: 0,
 				};
 			}
 
@@ -217,7 +215,6 @@ export async function validateCartItemsWithDb(input: {
 					skuId: item.skuId,
 					isValid: false,
 					error: CART_ERROR_MESSAGES.SKU_INACTIVE,
-					availableStock: result.inventory,
 				};
 			}
 
@@ -226,7 +223,6 @@ export async function validateCartItemsWithDb(input: {
 					skuId: item.skuId,
 					isValid: false,
 					error: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
-					availableStock: result.inventory,
 				};
 			}
 
@@ -235,7 +231,6 @@ export async function validateCartItemsWithDb(input: {
 					skuId: item.skuId,
 					isValid: false,
 					error: CART_ERROR_MESSAGES.OUT_OF_STOCK,
-					availableStock: 0,
 				};
 			}
 
@@ -244,14 +239,12 @@ export async function validateCartItemsWithDb(input: {
 					skuId: item.skuId,
 					isValid: false,
 					error: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(result.inventory),
-					availableStock: result.inventory,
 				};
 			}
 
 			return {
 				skuId: item.skuId,
 				isValid: true,
-				availableStock: result.inventory,
 			};
 		});
 

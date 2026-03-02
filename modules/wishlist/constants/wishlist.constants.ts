@@ -73,6 +73,7 @@ export const GET_WISHLIST_SELECT = {
 								orderBy: {
 									position: "asc" as const,
 								},
+								take: 2, // Primary + hover only
 							},
 						},
 						orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],

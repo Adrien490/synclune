@@ -10,7 +10,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
-import { getColorInvalidationTags } from "../constants/cache";
+import { COLORS_CACHE_TAGS, getColorInvalidationTags } from "../constants/cache";
 import { bulkToggleColorStatusSchema } from "../schemas/color.schemas";
 
 export async function bulkToggleColorStatus(
@@ -42,6 +42,12 @@ export async function bulkToggleColorStatus(
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
+		// Fetch colors to get slugs for cache invalidation
+		const colors = await prisma.color.findMany({
+			where: { id: { in: validatedData.ids } },
+			select: { slug: true },
+		});
+
 		// Update colors status
 		const result = await prisma.color.updateMany({
 			where: {
@@ -63,9 +69,12 @@ export async function bulkToggleColorStatus(
 			metadata: { count: result.count, isActive: validatedData.isActive },
 		});
 
-		// Invalidate cache
-		const tags = getColorInvalidationTags();
-		tags.forEach((tag) => updateTag(tag));
+		// Invalidate cache (list + detail for each toggled color)
+		const tagSet = new Set(getColorInvalidationTags());
+		for (const color of colors) {
+			tagSet.add(COLORS_CACHE_TAGS.DETAIL(color.slug));
+		}
+		tagSet.forEach((tag) => updateTag(tag));
 
 		const statusText = validatedData.isActive ? "activée" : "désactivée";
 		return success(

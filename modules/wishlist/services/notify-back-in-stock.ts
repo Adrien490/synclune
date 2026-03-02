@@ -1,6 +1,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { sendBackInStockEmail } from "@/modules/emails/services/wishlist-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { logger } from "@/shared/lib/logger";
 
 /**
  * Notifies users who have a product in their wishlist when it comes back in stock.
@@ -44,6 +45,9 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 
 		if (wishlistItems.length === 0) return;
 
+		// Collect IDs of successfully notified items for batch update
+		const notifiedItemIds: string[] = [];
+
 		for (const item of wishlistItems) {
 			if (!item.wishlist.user || !item.product) continue;
 
@@ -60,16 +64,25 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 				});
 
 				if (result.success) {
-					await prisma.wishlistItem.update({
-						where: { id: item.id },
-						data: { backInStockNotifiedAt: new Date() },
-					});
+					notifiedItemIds.push(item.id);
 				}
-			} catch (error) {
-				console.error(`[BACK-IN-STOCK] Failed to notify for wishlist item ${item.id}:`, error);
+			} catch (emailError) {
+				logger.error(`Failed to notify for wishlist item ${item.id}`, emailError, {
+					service: "back-in-stock",
+				});
 			}
 		}
-	} catch (error) {
-		console.error("[BACK-IN-STOCK] Failed to process notifications:", error);
+
+		// Batch update all successfully notified items in a single query
+		if (notifiedItemIds.length > 0) {
+			await prisma.wishlistItem.updateMany({
+				where: { id: { in: notifiedItemIds } },
+				data: { backInStockNotifiedAt: new Date() },
+			});
+		}
+	} catch (outerError) {
+		logger.error("Failed to process back-in-stock notifications", outerError, {
+			service: "back-in-stock",
+		});
 	}
 }

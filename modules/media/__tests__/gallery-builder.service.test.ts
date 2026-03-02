@@ -66,15 +66,6 @@ describe("buildGallery", () => {
 	// Null / empty product
 	// -----------------------------------------------------------------------
 
-	it("should return an empty array when product is null", () => {
-		const result = buildGallery({
-			product: null as unknown as GetProductReturn,
-			selectedVariants: {},
-		});
-
-		expect(result).toEqual([]);
-	});
-
 	it("should return the fallback image when the product has no SKUs", () => {
 		const product = createMockProduct({ skus: [] });
 

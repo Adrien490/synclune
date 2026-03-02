@@ -102,4 +102,23 @@ describe("useBadgeCountsStore", () => {
 			expect(useBadgeCountsStore.getState().cartCount).toBe(4);
 		});
 	});
+
+	describe("reset", () => {
+		it("should reset both counts to 0", () => {
+			useBadgeCountsStore.getState().setWishlistCount(5);
+			useBadgeCountsStore.getState().setCartCount(3);
+			useBadgeCountsStore.getState().reset();
+			expect(useBadgeCountsStore.getState().wishlistCount).toBe(0);
+			expect(useBadgeCountsStore.getState().cartCount).toBe(0);
+		});
+
+		it("should reset counts that were adjusted via increment/adjust", () => {
+			useBadgeCountsStore.getState().incrementWishlist();
+			useBadgeCountsStore.getState().incrementWishlist();
+			useBadgeCountsStore.getState().adjustCart(7);
+			useBadgeCountsStore.getState().reset();
+			expect(useBadgeCountsStore.getState().wishlistCount).toBe(0);
+			expect(useBadgeCountsStore.getState().cartCount).toBe(0);
+		});
+	});
 });

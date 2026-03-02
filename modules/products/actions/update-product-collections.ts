@@ -29,27 +29,26 @@ export async function updateProductCollections(
 	prevState: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
-	// 1. Vérification admin
-	const auth = await requireAdminWithUser();
-	if ("error" in auth) return auth.error;
-	const { user: adminUser } = auth;
-
-	// 1.1 Rate limiting
-	const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT);
-	if ("error" in rateLimit) return rateLimit.error;
-
-	// 2. Parser les données du formulaire
-	const productId = safeFormGet(formData, "productId");
-	const collectionIds: string[] = safeFormGetJSON<string[]>(formData, "collectionIds") ?? [];
-
-	// 3. Validation avec Zod
-	const validation = validateInput(updateProductCollectionsSchema, {
-		productId,
-		collectionIds,
-	});
-	if ("error" in validation) return validation.error;
-
 	try {
+		// 1. Vérification admin
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
+
+		// 1.1 Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT);
+		if ("error" in rateLimit) return rateLimit.error;
+
+		// 2. Parser les données du formulaire
+		const productId = safeFormGet(formData, "productId");
+		const collectionIds: string[] = safeFormGetJSON<string[]>(formData, "collectionIds") ?? [];
+
+		// 3. Validation avec Zod
+		const validation = validateInput(updateProductCollectionsSchema, {
+			productId,
+			collectionIds,
+		});
+		if ("error" in validation) return validation.error;
 		// 4. Vérifier que le produit existe
 		const product = await prisma.product.findUnique({
 			where: { id: validation.data.productId },

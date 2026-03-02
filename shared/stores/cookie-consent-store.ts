@@ -1,7 +1,8 @@
 import { createStore } from "zustand/vanilla";
-import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 import type { CookieConsentState, CookieConsentStore } from "@/shared/types/store.types";
+import { noopStorage } from "./noop-storage";
 
 export type {
 	CookieConsentState,
@@ -17,13 +18,6 @@ function getMonthsDifference(later: Date, earlier: Date): number {
 		(later.getFullYear() - earlier.getFullYear()) * 12 + (later.getMonth() - earlier.getMonth())
 	);
 }
-
-// Noop storage pour le SSR (quand localStorage n'est pas disponible)
-const noopStorage: StateStorage = {
-	getItem: () => null,
-	setItem: () => {},
-	removeItem: () => {},
-};
 
 /**
  * Version actuelle de la politique de cookies
@@ -97,13 +91,20 @@ export const createCookieConsentStore = (initState: CookieConsentState = default
 				storage: createJSONStorage(() =>
 					typeof window !== "undefined" ? localStorage : noopStorage,
 				),
+				// Only persist consent-related data (not derived UI state)
+				partialize: (state) => ({
+					accepted: state.accepted,
+					consentDate: state.consentDate,
+					policyVersion: state.policyVersion,
+				}),
 				// Vérifier la version de la politique au chargement
 				onRehydrateStorage: () => (state) => {
 					if (state) {
+						let needsBanner = false;
+
 						// Vérifier version politique
 						if (state.policyVersion < CURRENT_POLICY_VERSION) {
-							// Politique mise à jour → forcer ré-affichage
-							state.bannerVisible = true;
+							needsBanner = true;
 						}
 
 						// Vérifier expiration du consentement (6 mois CNIL)
@@ -113,13 +114,16 @@ export const createCookieConsentStore = (initState: CookieConsentState = default
 							const monthsDiff = getMonthsDifference(now, consentDate);
 
 							if (monthsDiff >= CONSENT_EXPIRY_MONTHS) {
-								// Consentement expiré → réafficher banner et réinitialiser
-								state.bannerVisible = true;
+								// Consentement expiré → réinitialiser
+								needsBanner = true;
 								state.accepted = null;
 								state.consentDate = null;
 								state.policyVersion = 0;
 							}
 						}
+
+						// Derive bannerVisible: show if no valid consent exists
+						state.bannerVisible = needsBanner || state.accepted === null;
 
 						// Marquer comme hydraté
 						state._hasHydrated = true;

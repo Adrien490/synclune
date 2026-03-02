@@ -91,19 +91,9 @@ export async function updateProductSku(
 			position: number;
 		}> = [];
 		if (validatedData.primaryImage) {
-			// VALIDATION: Le media principal DOIT être une IMAGE (jamais une VIDEO)
-			const primaryMediaType =
-				validatedData.primaryImage.mediaType ?? detectMediaType(validatedData.primaryImage.url);
-			if (primaryMediaType === "VIDEO") {
-				return {
-					status: ActionStatus.VALIDATION_ERROR,
-					message:
-						"Le media principal ne peut pas être une vidéo. Veuillez sélectionner une image comme media principal.",
-				};
-			}
 			allMedia.push({
 				...validatedData.primaryImage,
-				mediaType: "IMAGE", // Force IMAGE type for primary media
+				mediaType: "IMAGE", // Force IMAGE type for primary media (validated by Zod schema)
 				isPrimary: true,
 				position: 0,
 			});

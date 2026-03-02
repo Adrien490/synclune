@@ -70,20 +70,6 @@ export async function addToCart(
 			return error("Impossible de creer une session panier. Veuillez reessayer.");
 		}
 
-		// 5b. Check distinct item count to prevent cart bloat
-		// Filter out expired guest carts (not yet cleaned by cron) to avoid false rejections
-		const existingCart = await prisma.cart.findFirst({
-			where: {
-				...(userId ? { userId } : { sessionId: sessionId! }),
-				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-			},
-			select: { _count: { select: { items: true } } },
-		});
-
-		if (existingCart && existingCart._count.items >= MAX_CART_ITEMS) {
-			return error(CART_ERROR_MESSAGES.CART_ITEMS_LIMIT(MAX_CART_ITEMS));
-		}
-
 		// 6. Transaction: Trouver ou créer le panier, ajouter/mettre à jour l'item
 		const transactionResult = await prisma.$transaction(async (tx) => {
 			// 6a. Verrouiller le SKU en PREMIER avec FOR UPDATE pour éviter les race conditions
@@ -146,7 +132,12 @@ export async function addToCart(
 				},
 			});
 
-			// 6c. Lire existingItem APRÈS le lock FOR UPDATE pour éviter les race conditions
+			// 6c. Check distinct item count inside the transaction to prevent concurrent bypass
+			const itemCount = await tx.cartItem.count({
+				where: { cartId: cart.id },
+			});
+
+			// 6d. Lire existingItem APRÈS le lock FOR UPDATE pour éviter les race conditions
 			const existingItem = await tx.cartItem.findUnique({
 				where: {
 					cartId_skuId: {
@@ -183,6 +174,11 @@ export async function addToCart(
 
 				isUpdate = true;
 			} else {
+				// Check cart item limit before adding a new distinct item
+				if (itemCount >= MAX_CART_ITEMS) {
+					throw new BusinessError(CART_ERROR_MESSAGES.CART_ITEMS_LIMIT(MAX_CART_ITEMS));
+				}
+
 				newQuantity = validatedData.quantity;
 
 				// Vérification du stock (message générique pour ne pas révéler le stock exact)

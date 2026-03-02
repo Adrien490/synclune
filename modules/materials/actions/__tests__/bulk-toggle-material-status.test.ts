@@ -192,7 +192,7 @@ describe("bulkToggleMaterialStatus", () => {
 			data: { isActive: true },
 		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("active");
+		expect(result.message).toContain("activé");
 	});
 
 	it("should deactivate materials and return success message", async () => {
@@ -206,7 +206,7 @@ describe("bulkToggleMaterialStatus", () => {
 			data: { isActive: false },
 		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("desactive");
+		expect(result.message).toContain("désactivé");
 	});
 
 	// --------------------------------------------------------------------------
@@ -239,8 +239,8 @@ describe("bulkToggleMaterialStatus", () => {
 		const result = await bulkToggleMaterialStatus(undefined, makeFormData([VALID_CUID]));
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("1 materiau");
-		expect(result.message).not.toContain("materiaux");
+		expect(result.message).toContain("1 matériau");
+		expect(result.message).not.toContain("matériaux");
 	});
 
 	it("should return plural message for multiple materials", async () => {
@@ -250,7 +250,7 @@ describe("bulkToggleMaterialStatus", () => {
 		const result = await bulkToggleMaterialStatus(undefined, makeFormData());
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("2 materiaux");
+		expect(result.message).toContain("2 matériaux");
 	});
 
 	// --------------------------------------------------------------------------

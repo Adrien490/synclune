@@ -141,7 +141,7 @@ describe("GET /api/cron/process-scheduled-discounts", () => {
 		it("includes the job name 'process-scheduled-discounts' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("process-scheduled-discounts");
 		});
 
@@ -150,7 +150,7 @@ describe("GET /api/cron/process-scheduled-discounts", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(6666);
 		});
 

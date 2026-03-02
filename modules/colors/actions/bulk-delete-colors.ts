@@ -18,7 +18,7 @@ export async function bulkDeleteColors(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Admin authorization check
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -27,7 +27,7 @@ export async function bulkDeleteColors(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extraire les IDs du FormData
+		// 3. Extract IDs from FormData
 		const idsString = formData.get("ids");
 		let ids: unknown = [];
 		try {
@@ -36,12 +36,12 @@ export async function bulkDeleteColors(
 			return error("Format d'IDs invalide");
 		}
 
-		// Valider les donnees
+		// Validate data
 		const validated = validateInput(bulkDeleteColorsSchema, { ids });
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Verifier les couleurs utilisees
+		// Check for colors used by SKUs
 		const colorsWithUsage = await prisma.color.findMany({
 			where: {
 				id: {
@@ -66,7 +66,7 @@ export async function bulkDeleteColors(
 			);
 		}
 
-		// Supprimer les couleurs
+		// Delete the colors
 		const result = await prisma.color.deleteMany({
 			where: {
 				id: {
@@ -84,7 +84,7 @@ export async function bulkDeleteColors(
 			metadata: { count: result.count },
 		});
 
-		// Invalider le cache (list + detail for each deleted color)
+		// Invalidate cache (list + detail for each deleted color)
 		const tagSet = new Set(getColorInvalidationTags());
 		for (const color of colorsWithUsage) {
 			tagSet.add(COLORS_CACHE_TAGS.DETAIL(color.slug));

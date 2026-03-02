@@ -40,6 +40,10 @@ vi.mock("@/shared/lib/pagination", () => ({
 	processCursorResults: mockProcessCursorResults,
 }));
 
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+}));
+
 vi.mock("@/modules/wishlist/constants/cache", () => ({
 	cacheWishlist: mockCacheWishlist,
 }));

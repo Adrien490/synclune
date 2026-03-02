@@ -38,5 +38,6 @@ export const WISHLIST_CACHE_TAGS = {
 export {
 	cacheWishlist,
 	cacheWishlistCount,
+	cacheWishlistProductIds,
 	getWishlistInvalidationTags,
 } from "../utils/cache.utils";

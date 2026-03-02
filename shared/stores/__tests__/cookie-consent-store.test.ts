@@ -152,6 +152,48 @@ describe("createCookieConsentStore", () => {
 		});
 	});
 
+	describe("consent expiration (6 months CNIL)", () => {
+		it("should reset consent after 6 months", async () => {
+			// Accept cookies at the current date (2026-02-25)
+			store.getState().acceptCookies();
+			expect(store.getState().accepted).toBe(true);
+
+			// Persist the state to localStorage
+			const persisted = localStorageMock.getItem("cookie-consent");
+			expect(persisted).not.toBeNull();
+
+			// Advance time by 7 months (past the 6-month expiry)
+			vi.setSystemTime(new Date("2026-09-25T12:00:00.000Z"));
+
+			// Re-import and create a fresh store to trigger onRehydrateStorage
+			const mod = await import("../cookie-consent-store");
+			const freshStore = mod.createCookieConsentStore();
+
+			// Consent should have been reset by onRehydrateStorage
+			expect(freshStore.getState().accepted).toBeNull();
+			expect(freshStore.getState().bannerVisible).toBe(true);
+			expect(freshStore.getState().consentDate).toBeNull();
+			expect(freshStore.getState().policyVersion).toBe(0);
+		});
+
+		it("should keep consent before 6 months", async () => {
+			// Accept cookies at the current date (2026-02-25)
+			store.getState().acceptCookies();
+			expect(store.getState().accepted).toBe(true);
+
+			// Advance time by 5 months (within the 6-month window)
+			vi.setSystemTime(new Date("2026-07-25T12:00:00.000Z"));
+
+			// Re-import and create a fresh store to trigger onRehydrateStorage
+			const mod = await import("../cookie-consent-store");
+			const freshStore = mod.createCookieConsentStore();
+
+			// Consent should still be valid
+			expect(freshStore.getState().accepted).toBe(true);
+			expect(freshStore.getState().bannerVisible).toBe(false);
+		});
+	});
+
 	describe("CURRENT_POLICY_VERSION", () => {
 		it("should be a positive integer", () => {
 			expect(CURRENT_POLICY_VERSION).toBeGreaterThanOrEqual(1);

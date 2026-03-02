@@ -36,7 +36,12 @@ vi.mock("next/cache", () => ({
 	cacheTag: mockCacheTag,
 }));
 
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+}));
+
 vi.mock("@/modules/wishlist/constants/cache", () => ({
+	cacheWishlistProductIds: vi.fn(),
 	WISHLIST_CACHE_TAGS: {
 		PRODUCT_IDS: (userId?: string, sessionId?: string) =>
 			userId

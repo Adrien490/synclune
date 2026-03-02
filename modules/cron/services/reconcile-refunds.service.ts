@@ -51,7 +51,9 @@ export async function reconcilePendingRefunds(): Promise<{
 		where: {
 			status: RefundStatus.APPROVED,
 			stripeRefundId: { not: null },
-			processedAt: { lt: minAge },
+			// Include both processed refunds older than minAge AND
+			// refunds with null processedAt (Stripe pending state) updated before minAge
+			OR: [{ processedAt: { lt: minAge } }, { processedAt: null, updatedAt: { lt: minAge } }],
 			...notDeleted,
 		},
 		select: {

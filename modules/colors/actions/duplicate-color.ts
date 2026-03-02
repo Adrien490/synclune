@@ -23,19 +23,19 @@ import { getColorInvalidationTags } from "../constants/cache";
 import { duplicateColorSchema } from "../schemas/color.schemas";
 
 /**
- * Server Action ADMIN pour dupliquer une couleur
+ * Admin server action to duplicate a color.
  *
- * Cree une copie de la couleur avec:
- * - Un nouveau nom (original + " (copie)" ou " (copie N)")
- * - Un nouveau slug genere automatiquement
- * - isActive a false (pour eviter activation accidentelle)
+ * Creates a copy with:
+ * - A new name (original + " (copie)" or " (copie N)")
+ * - A new automatically generated slug
+ * - isActive set to false (to prevent accidental activation)
  */
 export async function duplicateColor(
 	_prevState: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Verification admin
+		// 1. Admin authorization check
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -44,7 +44,7 @@ export async function duplicateColor(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.DUPLICATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Validation des donnees
+		// 3. Validate data
 		const rawData = {
 			colorId: safeFormGet(formData, "colorId"),
 		};
@@ -53,7 +53,7 @@ export async function duplicateColor(
 		if ("error" in validated) return validated.error;
 		const { colorId } = validated.data;
 
-		// 4. Recuperer la couleur originale
+		// 4. Fetch original color
 		const original = await prisma.color.findUnique({
 			where: { id: colorId },
 		});
@@ -62,7 +62,7 @@ export async function duplicateColor(
 			return notFound("Couleur");
 		}
 
-		// 5. Generer un nouveau nom unique via le service
+		// 5. Generate a unique name via the service
 		const nameResult = await generateUniqueReadableName(original.name, async (name) => {
 			const existing = await prisma.color.findFirst({ where: { name } });
 			return existing !== null;
@@ -74,16 +74,16 @@ export async function duplicateColor(
 
 		const newName = nameResult.name!;
 
-		// 6. Generer un slug unique
+		// 6. Generate a unique slug
 		const slug = await generateSlug(prisma, "color", newName);
 
-		// 7. Creer la copie
+		// 7. Create the copy
 		const duplicate = await prisma.color.create({
 			data: {
 				name: newName,
 				slug,
 				hex: original.hex,
-				isActive: false, // Desactive par defaut
+				isActive: false, // Disabled by default
 			},
 		});
 
@@ -96,7 +96,7 @@ export async function duplicateColor(
 			metadata: { originalId: colorId, name: duplicate.name },
 		});
 
-		// 8. Invalider le cache
+		// 8. Invalidate cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 

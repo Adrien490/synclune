@@ -1,6 +1,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 
 import { GET_CART_SUMMARY_SELECT } from "../constants/cart";
 import { cacheCartSummary } from "../constants/cache";
@@ -82,7 +83,7 @@ export async function fetchCartSummary(
 			hasItems: true,
 		};
 	} catch (error) {
-		console.error("[CART_SUMMARY] Failed to fetch cart summary:", error);
+		logger.error("[CART_SUMMARY] Failed to fetch cart summary:", error);
 		return {
 			itemCount: 0,
 			totalAmount: 0,

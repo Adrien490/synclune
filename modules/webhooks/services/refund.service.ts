@@ -183,10 +183,10 @@ export async function updateOrderPaymentStatus(
 }
 
 /**
- * Finds a refund by its Stripe ID or by metadata refund_id.
- * SIDE EFFECT: if found via metadataRefundId fallback, links the stripeRefundId to the record.
+ * Resolves a refund by its Stripe ID or by metadata refund_id.
+ * If found via metadataRefundId fallback, links the stripeRefundId to the record.
  */
-export async function findRefundByStripeId(
+export async function resolveRefundByStripeId(
 	stripeRefundId: string,
 	metadataRefundId?: string,
 ): Promise<RefundRecord | null> {

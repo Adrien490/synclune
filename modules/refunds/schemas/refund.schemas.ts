@@ -21,13 +21,26 @@ export const getRefundSchema = z.object({
 // FILTERS SCHEMA
 // ============================================================================
 
-export const refundFiltersSchema = z.object({
-	status: z.union([z.enum(RefundStatus), z.array(z.enum(RefundStatus))]).optional(),
-	reason: z.union([z.enum(RefundReason), z.array(z.enum(RefundReason))]).optional(),
-	orderId: z.cuid2().optional(),
-	createdAfter: stringOrDateSchema,
-	createdBefore: stringOrDateSchema,
-});
+export const refundFiltersSchema = z
+	.object({
+		status: z.union([z.enum(RefundStatus), z.array(z.enum(RefundStatus))]).optional(),
+		reason: z.union([z.enum(RefundReason), z.array(z.enum(RefundReason))]).optional(),
+		orderId: z.cuid2().optional(),
+		createdAfter: stringOrDateSchema,
+		createdBefore: stringOrDateSchema,
+	})
+	.refine(
+		(data) => {
+			if (data.createdAfter && data.createdBefore) {
+				return new Date(data.createdAfter) <= new Date(data.createdBefore);
+			}
+			return true;
+		},
+		{
+			message: "La date de début doit être antérieure à la date de fin",
+			path: ["createdAfter"],
+		},
+	);
 
 // ============================================================================
 // SORT SCHEMA

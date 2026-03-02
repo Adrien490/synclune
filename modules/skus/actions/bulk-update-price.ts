@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
 import { bulkUpdatePriceSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
@@ -33,7 +33,9 @@ export async function bulkUpdatePrice(
 			updateCompareAtPrice: safeFormGet(formData, "updateCompareAtPrice"),
 		};
 
-		const { ids, mode, value, updateCompareAtPrice } = bulkUpdatePriceSchema.parse(rawData);
+		const validation = validateInput(bulkUpdatePriceSchema, rawData);
+		if ("error" in validation) return validation.error;
+		const { ids, mode, value, updateCompareAtPrice } = validation.data;
 
 		if (ids.length === 0) {
 			return {

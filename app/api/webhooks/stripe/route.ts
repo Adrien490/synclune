@@ -7,7 +7,7 @@ import { WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { ANTI_REPLAY_WINDOW_SECONDS } from "@/modules/webhooks/constants/webhook.constants";
 import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/cron/constants/limits";
-import { dispatchEvent } from "@/modules/webhooks/utils/event-registry";
+import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
 import { logger } from "@/shared/lib/logger";
@@ -102,12 +102,29 @@ export async function POST(req: Request) {
 		});
 
 		try {
-			// 5. Dispatch au handler approprié
+			// 5. Skip unsupported event types (avoid TypeError + infinite Stripe retries)
+			if (!isEventSupported(event.type)) {
+				logger.info("Unsupported event type, skipping", {
+					correlationId,
+					eventId: event.id,
+					eventType: event.type,
+				});
+				await prisma.webhookEvent.update({
+					where: { id: webhookRecord.id },
+					data: {
+						status: WebhookEventStatus.SKIPPED,
+						processedAt: new Date(),
+					},
+				});
+				return NextResponse.json({ received: true, status: "skipped" });
+			}
+
+			// 6. Dispatch au handler approprié
 			const result = await Sentry.startSpan({ name: `webhook.${event.type}`, op: "webhook" }, () =>
 				dispatchEvent(event),
 			);
 
-			// 6. MARQUER COMME COMPLÉTÉ OU SKIPPED
+			// 7. MARQUER COMME COMPLÉTÉ OU SKIPPED
 			const finalStatus = result?.skipped
 				? WebhookEventStatus.SKIPPED
 				: WebhookEventStatus.COMPLETED;
@@ -119,7 +136,7 @@ export async function POST(req: Request) {
 				},
 			});
 
-			// 7. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
+			// 8. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
 			const response = NextResponse.json({ received: true, status: "processed" });
 
 			const tasks = result?.tasks;

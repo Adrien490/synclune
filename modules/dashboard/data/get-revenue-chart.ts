@@ -2,7 +2,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { buildRevenueMap, fillMissingDates } from "../services/revenue-chart-builder.service";
 
-import type { GetRevenueChartReturn } from "../types/dashboard.types";
+import type { GetRevenueChartReturn, RevenueRow } from "../types/dashboard.types";
 
 // Re-export pour compatibilité
 export type { RevenueDataPoint, GetRevenueChartReturn } from "../types/dashboard.types";
@@ -10,12 +10,6 @@ export type { RevenueDataPoint, GetRevenueChartReturn } from "../types/dashboard
 // ============================================================================
 // MAIN FUNCTION
 // ============================================================================
-
-// Type pour le résultat de la requête SQL
-type RevenueRow = {
-	date: string;
-	revenue: bigint;
-};
 
 /**
  * Récupère les données de revenus des 30 derniers jours depuis la DB avec cache

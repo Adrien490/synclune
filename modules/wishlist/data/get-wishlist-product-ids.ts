@@ -1,8 +1,8 @@
-import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
-import { WISHLIST_CACHE_TAGS } from "@/modules/wishlist/constants/cache";
+import { cacheWishlistProductIds } from "@/modules/wishlist/constants/cache";
 
 /**
  * Récupère tous les Product IDs présents dans la wishlist de l'utilisateur/visiteur
@@ -31,9 +31,7 @@ export async function getWishlistProductIds(): Promise<Set<string>> {
  */
 async function fetchWishlistProductIds(userId?: string, sessionId?: string): Promise<Set<string>> {
 	"use cache: private";
-	cacheLife("cart");
-
-	cacheTag(WISHLIST_CACHE_TAGS.PRODUCT_IDS(userId, sessionId));
+	cacheWishlistProductIds(userId, sessionId);
 
 	// Pas d'utilisateur ni de session = wishlist vide
 	if (!userId && !sessionId) return new Set();
@@ -55,7 +53,8 @@ async function fetchWishlistProductIds(userId?: string, sessionId?: string): Pro
 		return new Set(
 			wishlistItems.map((item) => item.productId).filter((id): id is string => id !== null),
 		);
-	} catch {
+	} catch (e) {
+		logger.error("Failed to fetch wishlist product IDs", e, { service: "wishlist" });
 		return new Set<string>();
 	}
 }

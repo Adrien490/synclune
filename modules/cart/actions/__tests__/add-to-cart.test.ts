@@ -136,6 +136,7 @@ function makeTx(skuRows: unknown[] = [makeSkuRow()], existingItem: unknown = nul
 	const mockCartItemFindUnique = vi.fn().mockResolvedValue(existingItem);
 	const mockCartItemCreate = vi.fn().mockResolvedValue({ id: "ci-new", quantity: 1 });
 	const mockCartItemUpdate = vi.fn().mockResolvedValue({ id: "ci-1", quantity: 2 });
+	const mockCartItemCount = vi.fn().mockResolvedValue(0);
 
 	return {
 		tx: {
@@ -145,6 +146,7 @@ function makeTx(skuRows: unknown[] = [makeSkuRow()], existingItem: unknown = nul
 				findUnique: mockCartItemFindUnique,
 				create: mockCartItemCreate,
 				update: mockCartItemUpdate,
+				count: mockCartItemCount,
 			},
 		},
 		mockQueryRaw,
@@ -152,6 +154,7 @@ function makeTx(skuRows: unknown[] = [makeSkuRow()], existingItem: unknown = nul
 		mockCartItemFindUnique,
 		mockCartItemCreate,
 		mockCartItemUpdate,
+		mockCartItemCount,
 	};
 }
 
@@ -238,10 +241,12 @@ describe("addToCart", () => {
 	});
 
 	it("returns error when cart exceeds MAX_CART_ITEMS", async () => {
-		mockPrisma.cart.findFirst.mockResolvedValue({ _count: { items: 50 } });
+		const { tx } = makeTx();
+		tx.cartItem.count.mockResolvedValue(50);
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => fn(tx));
 
 		await addToCart(undefined, makeFormData());
-		expect(mockError).toHaveBeenCalledWith("Max 50 articles");
+		expect(mockHandleActionError).toHaveBeenCalled();
 	});
 
 	it("throws BusinessError when SKU not found in transaction", async () => {

@@ -172,7 +172,7 @@ describe("GET /api/cron/reconcile-refunds", () => {
 		it("includes the job name 'reconcile-refunds' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("reconcile-refunds");
 		});
 
@@ -181,7 +181,7 @@ describe("GET /api/cron/reconcile-refunds", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(1357);
 		});
 

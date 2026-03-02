@@ -2,6 +2,7 @@ import "server-only";
 
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { traceContext } from "@prisma/sqlcommenter-trace-context";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl && process.env.NODE_ENV !== "test") {
@@ -31,6 +32,7 @@ const prisma =
 	new PrismaClient({
 		adapter,
 		log: process.env.NODE_ENV === "development" ? ["query", "warn", "error"] : ["error"],
+		comments: [traceContext()],
 	});
 
 if (process.env.NODE_ENV !== "production") {

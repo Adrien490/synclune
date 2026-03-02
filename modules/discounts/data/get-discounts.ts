@@ -3,6 +3,7 @@ import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagina
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { z } from "zod";
+import { logger } from "@/shared/lib/logger";
 
 import { cacheDiscounts } from "../constants/cache";
 
@@ -104,7 +105,7 @@ async function fetchDiscounts(params: GetDiscountsParams): Promise<GetDiscountsR
 		return { discounts: items, pagination };
 	} catch (error) {
 		if (error instanceof Error) {
-			console.error("[get-discounts]", error.message);
+			logger.error("[get-discounts] Failed to fetch discounts", error);
 		}
 
 		return {

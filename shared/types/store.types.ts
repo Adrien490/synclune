@@ -125,6 +125,26 @@ export interface CookieConsentActions {
 export type CookieConsentStore = CookieConsentState & CookieConsentActions;
 
 // =============================================================================
+// BADGE COUNTS STORE TYPES
+// =============================================================================
+
+export interface BadgeCountsState {
+	wishlistCount: number;
+	cartCount: number;
+}
+
+export interface BadgeCountsActions {
+	setWishlistCount: (count: number) => void;
+	setCartCount: (count: number) => void;
+	incrementWishlist: () => void;
+	decrementWishlist: () => void;
+	adjustCart: (delta: number) => void;
+	reset: () => void;
+}
+
+export type BadgeCountsStore = BadgeCountsState & BadgeCountsActions;
+
+// =============================================================================
 // PROVIDER TYPES
 // =============================================================================
 
@@ -141,6 +161,12 @@ export interface AlertDialogStoreProviderProps {
 }
 
 export interface CookieConsentStoreProviderProps {
+	children: ReactNode;
+}
+
+export interface BadgeCountsStoreProviderProps {
+	initialWishlistCount: number;
+	initialCartCount: number;
 	children: ReactNode;
 }
 

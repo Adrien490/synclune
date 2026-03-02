@@ -27,7 +27,7 @@ vi.mock("react", async (importOriginal) => {
 	};
 });
 
-import { useCursorPagination } from "./use-cursor-pagination";
+import { useCursorPagination } from "../use-cursor-pagination";
 
 // ─── Helpers ────────────────────────────────────────────────────────
 

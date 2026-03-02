@@ -81,7 +81,7 @@ vi.mock("@/shared/constants/urls", () => ({
 import {
 	syncStripeRefunds,
 	updateOrderPaymentStatus,
-	findRefundByStripeId,
+	resolveRefundByStripeId,
 	mapStripeRefundStatus,
 	updateRefundStatus,
 	markRefundAsFailed,
@@ -376,10 +376,10 @@ describe("updateOrderPaymentStatus", () => {
 });
 
 // ============================================================================
-// findRefundByStripeId
+// resolveRefundByStripeId
 // ============================================================================
 
-describe("findRefundByStripeId", () => {
+describe("resolveRefundByStripeId", () => {
 	const refundSelect = {
 		id: true,
 		status: true,
@@ -403,7 +403,7 @@ describe("findRefundByStripeId", () => {
 		const expectedRefund = makeRefundRecord();
 		mockPrisma.refund.findUnique.mockResolvedValueOnce(expectedRefund);
 
-		const result = await findRefundByStripeId("re_found_1");
+		const result = await resolveRefundByStripeId("re_found_1");
 
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith({
 			where: { stripeRefundId: "re_found_1" },
@@ -420,7 +420,7 @@ describe("findRefundByStripeId", () => {
 			.mockResolvedValueOnce(expectedRefund); // second call by metadata id
 		mockPrisma.refund.update.mockResolvedValue({});
 
-		const result = await findRefundByStripeId("re_new_stripe_1", "refund-1");
+		const result = await resolveRefundByStripeId("re_new_stripe_1", "refund-1");
 
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledTimes(2);
 		expect(mockPrisma.refund.findUnique).toHaveBeenNthCalledWith(1, {
@@ -441,7 +441,7 @@ describe("findRefundByStripeId", () => {
 	it("should return null when not found by stripeRefundId and no metadataRefundId", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValueOnce(null);
 
-		const result = await findRefundByStripeId("re_not_found_1");
+		const result = await resolveRefundByStripeId("re_not_found_1");
 
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledTimes(1);
 		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
@@ -451,7 +451,7 @@ describe("findRefundByStripeId", () => {
 	it("should return null when not found by stripeRefundId and not found by metadataRefundId either", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
-		const result = await findRefundByStripeId("re_not_found_1", "also-not-found");
+		const result = await resolveRefundByStripeId("re_not_found_1", "also-not-found");
 
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledTimes(2);
 		expect(mockPrisma.refund.update).not.toHaveBeenCalled();

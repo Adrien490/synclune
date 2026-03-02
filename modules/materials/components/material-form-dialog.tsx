@@ -114,7 +114,6 @@ export function MaterialFormDialog() {
 					{isUpdateMode && (
 						<>
 							<input type="hidden" name="id" value={material!.id} />
-							<input type="hidden" name="slug" value={material!.slug} />
 							<input type="hidden" name="isActive" value={String(material!.isActive)} />
 						</>
 					)}

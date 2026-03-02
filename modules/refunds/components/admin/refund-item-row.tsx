@@ -2,7 +2,7 @@
 
 import type { OrderItemForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import type { RefundItemValue } from "@/modules/refunds/types/refund.types";
-import { getAvailableQuantity } from "@/modules/refunds/hooks/use-create-refund-form";
+import { getAvailableQuantity } from "@/modules/refunds/services/refund-calculation.service";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";

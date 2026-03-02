@@ -48,7 +48,7 @@ export async function setDefaultAddress(
 				data: { isDefault: false },
 			});
 			await tx.address.update({
-				where: { id: addressId },
+				where: { id: addressId, userId: user.id },
 				data: { isDefault: true },
 			});
 		});

@@ -51,7 +51,7 @@ export async function deleteCollection(
 		}
 
 		// Note: On peut supprimer une collection meme si elle a des produits
-		// car la relation est onDelete: SetNull (les produits seront preserves)
+		// car la relation ProductCollection est onDelete: Cascade (les join entries sont supprimees, les produits preserves)
 		const productCount = existingCollection._count.products;
 
 		// Supprimer la collection

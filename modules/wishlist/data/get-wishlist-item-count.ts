@@ -1,8 +1,8 @@
-import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
-import { WISHLIST_CACHE_TAGS } from "../constants/cache";
+import { cacheWishlistCount } from "../constants/cache";
 
 import type { GetWishlistItemCountReturn } from "../types/wishlist.types";
 
@@ -42,8 +42,7 @@ export async function fetchWishlistItemCount(
 	sessionId?: string,
 ): Promise<GetWishlistItemCountReturn> {
 	"use cache: private";
-	cacheLife("cart");
-	cacheTag(WISHLIST_CACHE_TAGS.COUNT(userId, sessionId));
+	cacheWishlistCount(userId, sessionId);
 
 	try {
 		// Pas d'utilisateur ni de session = pas de wishlist
@@ -62,7 +61,8 @@ export async function fetchWishlistItemCount(
 		});
 
 		return count;
-	} catch {
+	} catch (e) {
+		logger.error("Failed to fetch wishlist item count", e, { service: "wishlist" });
 		return 0;
 	}
 }

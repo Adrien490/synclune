@@ -23,7 +23,7 @@ import { updateColorSchema } from "../schemas/color.schemas";
 
 export async function updateColor(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Admin authorization check
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -32,19 +32,19 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extraire les donnees du FormData
+		// 3. Extract data from FormData
 		const rawData = {
 			id: formData.get("id"),
 			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
 			hex: formData.get("hex"),
 		};
 
-		// Valider les donnees
+		// Validate data
 		const validated = validateInput(updateColorSchema, rawData);
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Verifier que la couleur existe
+		// Check that the color exists
 		const existingColor = await prisma.color.findUnique({
 			where: { id: validatedData.id },
 		});
@@ -53,7 +53,7 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			return error("Cette couleur n'existe pas");
 		}
 
-		// Verifier l'unicite du nom (sauf si c'est le meme)
+		// Check name uniqueness (skip if unchanged)
 		if (validatedData.name !== existingColor.name) {
 			const nameExists = await prisma.color.findFirst({
 				where: { name: validatedData.name },
@@ -64,13 +64,13 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			}
 		}
 
-		// Generer un nouveau slug si le nom a change
+		// Generate new slug if name changed
 		const slug =
 			validatedData.name !== existingColor.name
 				? await generateSlug(prisma, "color", validatedData.name)
 				: existingColor.slug;
 
-		// Mettre a jour la couleur
+		// Update the color
 		await prisma.color.update({
 			where: { id: validatedData.id },
 			data: {
@@ -89,7 +89,7 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			metadata: { name: validatedData.name, hex: validatedData.hex },
 		});
 
-		// Invalider le cache (ancien et nouveau slug si different)
+		// Invalidate cache (old and new slug if different)
 		const tags = getColorInvalidationTags(existingColor.slug);
 		if (slug !== existingColor.slug) {
 			tags.push(...getColorInvalidationTags(slug));

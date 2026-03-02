@@ -38,7 +38,8 @@ async function fetchCollectionOptions(): Promise<CollectionOption[]> {
 		});
 
 		return collections;
-	} catch {
+	} catch (err) {
+		console.error("[collections] Failed to fetch collection options:", err);
 		return [];
 	}
 }

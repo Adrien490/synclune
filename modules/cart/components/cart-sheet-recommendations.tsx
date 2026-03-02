@@ -30,7 +30,8 @@ export async function CartSheetRecommendations() {
 						<Link
 							key={product.id}
 							href={`/creations/${product.slug}`}
-							className="group/reco flex w-28 shrink-0 flex-col gap-1.5"
+							className="group/reco focus-visible:ring-ring flex w-28 shrink-0 flex-col gap-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+							aria-label={`Voir ${product.title}${price != null ? ` — ${formatEuro(price)}` : ""}`}
 						>
 							<div className="bg-muted relative aspect-square w-full overflow-hidden rounded-lg border">
 								{image ? (

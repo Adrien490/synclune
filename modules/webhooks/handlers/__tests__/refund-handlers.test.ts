@@ -8,7 +8,7 @@ const {
 	mockPrisma,
 	mockSyncStripeRefunds,
 	mockUpdateOrderPaymentStatus,
-	mockFindRefundByStripeId,
+	mockResolveRefundByStripeId,
 	mockMapStripeRefundStatus,
 	mockUpdateRefundStatus,
 	mockMarkRefundAsFailed,
@@ -19,7 +19,7 @@ const {
 	},
 	mockSyncStripeRefunds: vi.fn(),
 	mockUpdateOrderPaymentStatus: vi.fn(),
-	mockFindRefundByStripeId: vi.fn(),
+	mockResolveRefundByStripeId: vi.fn(),
 	mockMapStripeRefundStatus: vi.fn(),
 	mockUpdateRefundStatus: vi.fn(),
 	mockMarkRefundAsFailed: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 vi.mock("../../services/refund.service", () => ({
 	syncStripeRefunds: mockSyncStripeRefunds,
 	updateOrderPaymentStatus: mockUpdateOrderPaymentStatus,
-	findRefundByStripeId: mockFindRefundByStripeId,
+	resolveRefundByStripeId: mockResolveRefundByStripeId,
 	mapStripeRefundStatus: mockMapStripeRefundStatus,
 	updateRefundStatus: mockUpdateRefundStatus,
 	markRefundAsFailed: mockMarkRefundAsFailed,
@@ -295,7 +295,7 @@ describe("handleRefundUpdated", () => {
 	});
 
 	it("should skip when refund not found in DB", async () => {
-		mockFindRefundByStripeId.mockResolvedValue(null);
+		mockResolveRefundByStripeId.mockResolvedValue(null);
 
 		const result = await handleRefundUpdated(makeStripeRefund());
 
@@ -308,7 +308,7 @@ describe("handleRefundUpdated", () => {
 
 	it("should not update when status has not changed", async () => {
 		const refund = makeRefundRecord({ status: "COMPLETED" });
-		mockFindRefundByStripeId.mockResolvedValue(refund);
+		mockResolveRefundByStripeId.mockResolvedValue(refund);
 		mockMapStripeRefundStatus.mockReturnValue("COMPLETED");
 
 		const result = await handleRefundUpdated(makeStripeRefund({ status: "succeeded" }));
@@ -319,7 +319,7 @@ describe("handleRefundUpdated", () => {
 
 	it("should call updateRefundStatus when status changes", async () => {
 		const refund = makeRefundRecord({ status: "APPROVED" });
-		mockFindRefundByStripeId.mockResolvedValue(refund);
+		mockResolveRefundByStripeId.mockResolvedValue(refund);
 		mockMapStripeRefundStatus.mockReturnValue("COMPLETED");
 
 		const result = await handleRefundUpdated(makeStripeRefund({ status: "succeeded" }));
@@ -338,11 +338,11 @@ describe("handleRefundUpdated", () => {
 	});
 
 	it("should use metadata.refund_id for lookup", async () => {
-		mockFindRefundByStripeId.mockResolvedValue(null);
+		mockResolveRefundByStripeId.mockResolvedValue(null);
 
 		await handleRefundUpdated(makeStripeRefund({ metadata: { refund_id: "db-refund-99" } }));
 
-		expect(mockFindRefundByStripeId).toHaveBeenCalledWith("re_stripe_123", "db-refund-99");
+		expect(mockResolveRefundByStripeId).toHaveBeenCalledWith("re_stripe_123", "db-refund-99");
 	});
 });
 
@@ -357,7 +357,7 @@ describe("handleRefundFailed", () => {
 	});
 
 	it("should skip when refund not found in DB", async () => {
-		mockFindRefundByStripeId.mockResolvedValue(null);
+		mockResolveRefundByStripeId.mockResolvedValue(null);
 
 		const result = await handleRefundFailed(makeStripeRefund());
 
@@ -370,7 +370,7 @@ describe("handleRefundFailed", () => {
 
 	it("should call markRefundAsFailed with failure_reason", async () => {
 		const refund = makeRefundRecord();
-		mockFindRefundByStripeId.mockResolvedValue(refund);
+		mockResolveRefundByStripeId.mockResolvedValue(refund);
 		mockMarkRefundAsFailed.mockResolvedValue(undefined);
 
 		await handleRefundFailed(makeStripeRefund({ failure_reason: "expired_or_canceled_card" }));
@@ -380,7 +380,7 @@ describe("handleRefundFailed", () => {
 
 	it("should use 'unknown' when no failure_reason", async () => {
 		const refund = makeRefundRecord();
-		mockFindRefundByStripeId.mockResolvedValue(refund);
+		mockResolveRefundByStripeId.mockResolvedValue(refund);
 		mockMarkRefundAsFailed.mockResolvedValue(undefined);
 
 		await handleRefundFailed(makeStripeRefund({ failure_reason: null }));
@@ -390,7 +390,7 @@ describe("handleRefundFailed", () => {
 
 	it("should build admin alert task with correct data", async () => {
 		const refund = makeRefundRecord();
-		mockFindRefundByStripeId.mockResolvedValue(refund);
+		mockResolveRefundByStripeId.mockResolvedValue(refund);
 		mockMarkRefundAsFailed.mockResolvedValue(undefined);
 
 		const result = await handleRefundFailed(
@@ -409,7 +409,7 @@ describe("handleRefundFailed", () => {
 
 	it("should return cache invalidation tags", async () => {
 		const refund = makeRefundRecord();
-		mockFindRefundByStripeId.mockResolvedValue(refund);
+		mockResolveRefundByStripeId.mockResolvedValue(refund);
 		mockMarkRefundAsFailed.mockResolvedValue(undefined);
 
 		const result = await handleRefundFailed(makeStripeRefund());

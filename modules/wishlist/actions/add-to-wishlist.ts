@@ -56,25 +56,24 @@ export async function addToWishlist(
 			return error(WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 		}
 
-		// 2. Extraction des données du FormData
-		const rawData = {
-			productId: safeFormGet(formData, "productId"),
-		};
-
-		// 3. Validation avec Zod
-		const validated = validateInput(addToWishlistSchema, rawData);
-		if ("error" in validated) return validated.error;
-
-		const validatedData = validated.data;
-
-		// 4. Rate limiting (protection anti-spam)
+		// 2. Rate limiting (protection anti-spam) — before validation to prevent enumeration
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
 		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.ADD, ipAddress);
 		if ("error" in rateCheck) return rateCheck.error;
 
-		// 5. Valider le produit (existence et status)
+		// 3. Extraction des données du FormData + validation avec Zod
+		const rawData = {
+			productId: safeFormGet(formData, "productId"),
+		};
+
+		const validated = validateInput(addToWishlistSchema, rawData);
+		if ("error" in validated) return validated.error;
+
+		const validatedData = validated.data;
+
+		// 4. Valider le produit (existence et status)
 		const product = await prisma.product.findUnique({
 			where: { id: validatedData.productId },
 			select: {
@@ -87,9 +86,9 @@ export async function addToWishlist(
 			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 		}
 
-		// 6. Transaction: Récupérer/créer la wishlist et ajouter l'item
+		// 5. Transaction: Récupérer/créer la wishlist et ajouter l'item
 		const transactionResult = await prisma.$transaction(async (tx) => {
-			// 6a. Récupérer ou créer la wishlist
+			// 5a. Récupérer ou créer la wishlist
 			// Pour utilisateur connecté : upsert par userId
 			// Pour visiteur : upsert par sessionId
 			const wishlist = await tx.wishlist.upsert({
@@ -108,7 +107,7 @@ export async function addToWishlist(
 				},
 			});
 
-			// 6b. Check max items limit
+			// 5b. Check max items limit
 			const itemCount = await tx.wishlistItem.count({
 				where: { wishlistId: wishlist.id },
 			});
@@ -116,7 +115,7 @@ export async function addToWishlist(
 				throw new Error(WISHLIST_FULL_SENTINEL);
 			}
 
-			// 6c. Vérifier si ce produit est déjà dans la wishlist
+			// 5c. Vérifier si ce produit est déjà dans la wishlist
 			const existingItem = await tx.wishlistItem.findFirst({
 				where: {
 					wishlistId: wishlist.id,
@@ -132,7 +131,7 @@ export async function addToWishlist(
 				};
 			}
 
-			// 6d. Créer le wishlist item
+			// 5d. Créer le wishlist item
 			const wishlistItem = await tx.wishlistItem.create({
 				data: {
 					wishlistId: wishlist.id,
@@ -150,7 +149,7 @@ export async function addToWishlist(
 			};
 		});
 
-		// 7. Invalidation cache immédiate (read-your-own-writes)
+		// 6. Invalidation cache immédiate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 

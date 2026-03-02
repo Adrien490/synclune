@@ -165,7 +165,7 @@ describe("validateCart", () => {
 	});
 
 	it("should return isValid=false with issues when stock is insufficient", async () => {
-		const issue = createValidationIssue({ issueType: "INSUFFICIENT_STOCK", availableStock: 2 });
+		const issue = createValidationIssue({ issueType: "INSUFFICIENT_STOCK" });
 		mockValidateCartItems.mockReturnValue([issue]);
 
 		const result = await validateCart();
@@ -176,7 +176,7 @@ describe("validateCart", () => {
 	});
 
 	it("should return isValid=false with issues when item is out of stock", async () => {
-		const issue = createValidationIssue({ issueType: "OUT_OF_STOCK", availableStock: 0 });
+		const issue = createValidationIssue({ issueType: "OUT_OF_STOCK" });
 		mockValidateCartItems.mockReturnValue([issue]);
 
 		const result = await validateCart();

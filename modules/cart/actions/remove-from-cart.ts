@@ -47,11 +47,11 @@ export async function removeFromCart(
 		// 4. Récupérer l'item avec son panier et le productId du SKU
 		const cartItem = await prisma.cartItem.findUnique({
 			where: { id: validatedData.cartItemId },
-			include: {
-				cart: true,
-				sku: {
-					select: { productId: true },
-				},
+			select: {
+				id: true,
+				cartId: true,
+				cart: { select: { userId: true, sessionId: true } },
+				sku: { select: { productId: true } },
 			},
 		});
 

@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
-import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
+import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-provider";
 import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { ROUTES } from "@/shared/constants/urls";
 import dynamic from "next/dynamic";

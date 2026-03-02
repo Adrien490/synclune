@@ -110,20 +110,18 @@ export async function approveRefund(
 			const isPartialRefund = refund.amount < refund.order.total;
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
 
-			try {
-				await sendRefundApprovedEmail({
-					to: refund.order.user.email,
-					orderNumber: refund.order.orderNumber,
-					customerName: refund.order.user.name ?? "Client",
-					refundAmount: refund.amount,
-					originalOrderTotal: refund.order.total,
-					reason: refund.reason,
-					isPartialRefund,
-					orderDetailsUrl,
-				});
-			} catch (emailError) {
+			sendRefundApprovedEmail({
+				to: refund.order.user.email,
+				orderNumber: refund.order.orderNumber,
+				customerName: refund.order.user.name ?? "Client",
+				refundAmount: refund.amount,
+				originalOrderTotal: refund.order.total,
+				reason: refund.reason,
+				isPartialRefund,
+				orderDetailsUrl,
+			}).catch((emailError) => {
 				console.error("[APPROVE_REFUND] Échec envoi email:", emailError);
-			}
+			});
 		}
 
 		void logAudit({

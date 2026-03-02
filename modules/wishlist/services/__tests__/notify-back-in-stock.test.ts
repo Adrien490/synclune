@@ -4,11 +4,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrisma, mockSendBackInStockEmail } = vi.hoisted(() => ({
+const { mockPrisma, mockSendBackInStockEmail, mockLogger } = vi.hoisted(() => ({
 	mockPrisma: {
-		wishlistItem: { findMany: vi.fn(), update: vi.fn() },
+		wishlistItem: { findMany: vi.fn(), updateMany: vi.fn() },
 	},
 	mockSendBackInStockEmail: vi.fn(),
+	mockLogger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -23,6 +24,9 @@ vi.mock("@/shared/constants/urls", () => ({
 		SHOP: { PRODUCTS: "/produits" },
 		NOTIFICATIONS: { UNSUBSCRIBE: "/notifications/desinscription" },
 	},
+}));
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 import { notifyBackInStock } from "../notify-back-in-stock";
@@ -53,7 +57,7 @@ describe("notifyBackInStock", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		mockPrisma.wishlistItem.findMany.mockResolvedValue([]);
-		mockPrisma.wishlistItem.update.mockResolvedValue({});
+		mockPrisma.wishlistItem.updateMany.mockResolvedValue({ count: 0 });
 		mockSendBackInStockEmail.mockResolvedValue({ success: true });
 	});
 
@@ -100,14 +104,14 @@ describe("notifyBackInStock", () => {
 		);
 	});
 
-	it("marks item as notified after successful email", async () => {
+	it("batch-marks items as notified after successful emails", async () => {
 		mockPrisma.wishlistItem.findMany.mockResolvedValue([makeWishlistItem()]);
 
 		await notifyBackInStock("prod-1");
 
-		expect(mockPrisma.wishlistItem.update).toHaveBeenCalledWith(
+		expect(mockPrisma.wishlistItem.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: "wi-1" },
+				where: { id: { in: ["wi-1"] } },
 				data: { backInStockNotifiedAt: expect.any(Date) },
 			}),
 		);
@@ -119,7 +123,7 @@ describe("notifyBackInStock", () => {
 
 		await notifyBackInStock("prod-1");
 
-		expect(mockPrisma.wishlistItem.update).not.toHaveBeenCalled();
+		expect(mockPrisma.wishlistItem.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("skips items with no user", async () => {
@@ -171,10 +175,11 @@ describe("notifyBackInStock", () => {
 		await notifyBackInStock("prod-1");
 
 		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(2);
-		// Only second item should be marked as notified
-		expect(mockPrisma.wishlistItem.update).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.wishlistItem.update).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { id: "wi-2" } }),
+		// Only second item should be batch-marked as notified
+		expect(mockPrisma.wishlistItem.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { id: { in: ["wi-2"] } },
+			}),
 		);
 	});
 

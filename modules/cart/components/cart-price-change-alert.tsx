@@ -41,7 +41,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 
 	return (
 		<div
-			className="border-b border-blue-200 bg-blue-50 px-6 py-2.5 text-xs text-blue-700 sm:text-sm"
+			className="border-b border-blue-200 bg-blue-50 px-6 py-2.5 text-xs text-blue-900 sm:text-sm"
 			role="alert"
 			aria-live="polite"
 		>
@@ -51,7 +51,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 				</span>
 				<span className="sr-only">Information :</span> Prix mis à jour
 			</p>
-			<ul className="list-inside list-disc space-y-0.5 text-blue-600/90">
+			<ul className="list-inside list-disc space-y-0.5 text-blue-800">
 				{itemsWithPriceChange.map((item) => {
 					const priceIncreased = isPriceIncrease(item);
 					return (
@@ -60,27 +60,20 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 							<span className="line-through">{formatEuro(item.priceAtAdd)}</span> →{" "}
 							<span
 								className={
-									priceIncreased ? "font-semibold text-orange-600" : "font-semibold text-green-600"
+									priceIncreased ? "font-semibold text-orange-800" : "font-semibold text-green-800"
 								}
 							>
+								{priceIncreased ? "↑ " : "↓ "}
 								{formatEuro(item.sku.priceInclTax)}
 							</span>
-							{priceIncreased ? (
-								<span role="img" aria-label="prix en hausse">
-									{" "}
-									📈
-								</span>
-							) : (
-								<span role="img" aria-label="prix en baisse">
-									{" "}
-									📉
-								</span>
-							)}
+							<span className="sr-only">
+								{priceIncreased ? " (prix en hausse)" : " (prix en baisse)"}
+							</span>
 						</li>
 					);
 				})}
 			</ul>
-			<p className="mt-2 text-xs text-blue-600/80">
+			<p className="mt-2 text-xs text-blue-800/90">
 				Les prix ont changé depuis votre ajout au panier. Votre panier conserve les prix au moment
 				de l'ajout pour éviter toute surprise.
 			</p>
@@ -92,7 +85,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					disabled={isPending}
 					size="sm"
 					variant="outline"
-					className="w-full border-blue-300 text-blue-700 hover:bg-blue-100 sm:w-auto"
+					className="w-full border-blue-300 text-blue-900 hover:bg-blue-100 sm:w-auto"
 				>
 					{isPending ? (
 						<>
@@ -107,7 +100,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					)}
 				</Button>
 				{totalSavings > 0 && (
-					<p className="text-center text-xs font-medium text-green-600 sm:text-left">
+					<p className="text-center text-xs font-medium text-green-800 sm:text-left">
 						<span role="img" aria-hidden="true">
 							💚
 						</span>{" "}

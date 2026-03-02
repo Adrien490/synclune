@@ -13,10 +13,17 @@ export async function getPublicProductSlugs(): Promise<{ slug: string }[]> {
 	cacheLife("products");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
-	const products = await prisma.product.findMany({
-		where: { status: "PUBLIC", ...notDeleted },
-		select: { slug: true },
-	});
+	try {
+		const products = await prisma.product.findMany({
+			where: { status: "PUBLIC", ...notDeleted },
+			select: { slug: true },
+		});
 
-	return products;
+		return products;
+	} catch (error) {
+		if (process.env.NODE_ENV === "development") {
+			console.error("[getPublicProductSlugs]", error);
+		}
+		return [];
+	}
 }

@@ -40,11 +40,11 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 		return (
 			<TableEmptyState
 				icon={ReceiptText}
-				title="Aucun remboursement trouve"
-				description="Aucun remboursement ne correspond aux criteres de recherche."
+				title="Aucun remboursement trouvé"
+				description="Aucun remboursement ne correspond aux critères de recherche."
 				actionElement={
 					<Button variant="outline" asChild>
-						<Link href="/admin/ventes/remboursements">Reinitialiser les filtres</Link>
+						<Link href="/admin/ventes/remboursements">Réinitialiser les filtres</Link>
 					</Button>
 				}
 			/>

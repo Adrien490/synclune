@@ -54,20 +54,19 @@ export async function updateAddress(
 		const validated = validateInput(addressSchema, rawData);
 		if ("error" in validated) return validated.error;
 
-		const validatedData = validated.data;
-
 		// Sanitize text fields
-		validatedData.firstName = sanitizeText(validatedData.firstName);
-		validatedData.lastName = sanitizeText(validatedData.lastName);
-		validatedData.address1 = sanitizeText(validatedData.address1);
-		if (validatedData.address2) {
-			validatedData.address2 = sanitizeText(validatedData.address2);
-		}
-		validatedData.city = sanitizeText(validatedData.city);
+		const sanitizedData = {
+			...validated.data,
+			firstName: sanitizeText(validated.data.firstName),
+			lastName: sanitizeText(validated.data.lastName),
+			address1: sanitizeText(validated.data.address1),
+			address2: validated.data.address2 ? sanitizeText(validated.data.address2) : null,
+			city: sanitizeText(validated.data.city),
+		};
 
 		await prisma.address.updateMany({
 			where: { id: addressId, userId: user.id },
-			data: validatedData,
+			data: sanitizedData,
 		});
 
 		// Revalidation du cache avec tags

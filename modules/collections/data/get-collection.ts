@@ -54,7 +54,8 @@ async function fetchCollection(params: GetCollectionParams): Promise<GetCollecti
 		});
 
 		return collection;
-	} catch {
+	} catch (err) {
+		console.error("[collections] Failed to fetch collection:", err);
 		return null;
 	}
 }
@@ -93,7 +94,8 @@ async function fetchStorefrontCollection(
 		});
 
 		return collection;
-	} catch {
+	} catch (err) {
+		console.error("[collections] Failed to fetch storefront collection:", err);
 		return null;
 	}
 }

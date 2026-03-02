@@ -12,6 +12,7 @@ const {
 	mockAfter,
 	mockHeaders,
 	mockDispatchEvent,
+	mockIsEventSupported,
 	mockExecutePostWebhookTasks,
 	mockSendWebhookFailedAlert,
 	ANTI_REPLAY_WINDOW_SECONDS,
@@ -38,6 +39,7 @@ const {
 		mockAfter: vi.fn((fn: () => Promise<void>) => fn()),
 		mockHeaders: vi.fn(),
 		mockDispatchEvent: vi.fn(),
+		mockIsEventSupported: vi.fn(),
 		mockExecutePostWebhookTasks: vi.fn(),
 		mockSendWebhookFailedAlert: vi.fn(),
 		ANTI_REPLAY_WINDOW_SECONDS: 300,
@@ -61,6 +63,7 @@ vi.mock("next/server", () => ({
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/modules/webhooks/utils/event-registry", () => ({
 	dispatchEvent: mockDispatchEvent,
+	isEventSupported: mockIsEventSupported,
 }));
 vi.mock("@/modules/webhooks/utils/execute-post-tasks", () => ({
 	executePostWebhookTasks: mockExecutePostWebhookTasks,
@@ -138,6 +141,7 @@ describe("Webhook concurrency - duplicate event processing", () => {
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue(null);
 		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord());
 		mockPrisma.webhookEvent.update.mockResolvedValue({});
+		mockIsEventSupported.mockReturnValue(true);
 		mockDispatchEvent.mockResolvedValue({ success: true, tasks: [] });
 		mockAfter.mockImplementation((fn: () => Promise<void>) => fn());
 	});

@@ -78,9 +78,8 @@ export const createMaterialSchema = z.object({
 export const updateMaterialSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: materialNameSchema,
-	slug: materialSlugSchema,
 	description: materialDescriptionSchema,
-	isActive: z.boolean().optional(),
+	isActive: z.boolean(),
 });
 
 export const deleteMaterialSchema = z.object({

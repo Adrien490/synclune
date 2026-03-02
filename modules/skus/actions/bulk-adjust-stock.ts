@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { BusinessError, handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { BusinessError, handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
 import { bulkAdjustStockSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
@@ -32,7 +32,9 @@ export async function bulkAdjustStock(
 			value: safeFormGet(formData, "value"),
 		};
 
-		const { ids, mode, value } = bulkAdjustStockSchema.parse(rawData);
+		const validation = validateInput(bulkAdjustStockSchema, rawData);
+		if ("error" in validation) return validation.error;
+		const { ids, mode, value } = validation.data;
 
 		if (ids.length === 0) {
 			return {
@@ -122,10 +124,6 @@ export async function bulkAdjustStock(
 				message: "Aucune variante trouvee",
 			};
 		}
-
-		console.warn(
-			`[SKU:stock-bulk] ${mode} ${value} applied to ${skusData.length} SKU(s): ${skusData.map((s) => s.sku).join(", ")}`,
-		);
 
 		// Invalider le cache
 		const uniqueTags = collectBulkInvalidationTags(skusData);

@@ -215,7 +215,7 @@ export function getProductCardData(
 		// Couleurs (hex validated at display time to prevent style injection)
 		if (sku.color?.slug && sku.color.hex && HEX_PATTERN.test(sku.color.hex)) {
 			const existing = colorMap.get(sku.color.slug);
-			const inStock = existing?.inStock ?? sku.inventory > 0;
+			const inStock = existing?.inStock === true || sku.inventory > 0;
 			colorMap.set(sku.color.slug, {
 				slug: sku.color.slug,
 				hex: sku.color.hex,

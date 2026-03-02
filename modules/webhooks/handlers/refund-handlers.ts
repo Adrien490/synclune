@@ -3,7 +3,7 @@ import { prisma } from "@/shared/lib/prisma";
 import {
 	syncStripeRefunds,
 	updateOrderPaymentStatus,
-	findRefundByStripeId,
+	resolveRefundByStripeId,
 	mapStripeRefundStatus,
 	updateRefundStatus,
 	markRefundAsFailed,
@@ -132,7 +132,7 @@ export async function handleRefundUpdated(
 
 	try {
 		// 1. Trouver le remboursement local
-		const refund = await findRefundByStripeId(
+		const refund = await resolveRefundByStripeId(
 			stripeRefund.id,
 			stripeRefund.metadata?.refund_id ?? undefined,
 		);
@@ -183,7 +183,7 @@ export async function handleRefundFailed(
 
 	try {
 		// 1. Trouver le remboursement local
-		const refund = await findRefundByStripeId(
+		const refund = await resolveRefundByStripeId(
 			stripeRefund.id,
 			stripeRefund.metadata?.refund_id ?? undefined,
 		);

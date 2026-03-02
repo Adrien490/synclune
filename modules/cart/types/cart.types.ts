@@ -44,7 +44,6 @@ export interface CartValidationIssue {
 		| "DELETED"
 		| "UNKNOWN";
 	message: string;
-	availableStock?: number;
 }
 
 export interface ValidateCartResult {

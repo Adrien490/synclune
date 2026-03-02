@@ -11,7 +11,7 @@
  * that React's streaming runtime scripts ($RC, $RV, $RB) don't receive, breaking server actions.
  */
 
-import { getSessionCookie } from "better-auth/cookies";
+import { getCookieCache, getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
 // ===== CONFIGURATION DES ROUTES =====
@@ -125,8 +125,9 @@ export async function proxy(request: NextRequest) {
 	}
 
 	// ===== 4. ROUTES PROTÉGÉES ADMIN =====
-	// Note: On ne peut pas vérifier le rôle ADMIN ici car on ne valide pas la session complète.
-	// La page /admin DOIT valider la session et le rôle côté serveur avec auth.api.getSession()
+	// Vérification du rôle ADMIN via le cookie cache signé (HMAC, pas de DB call).
+	// Si le cookie cache a expiré (TTL 5 min), getCookieCache retourne null → redirection (sécurité par défaut).
+	// Les pages/actions admin DOIVENT toujours utiliser requireAdmin() pour la validation serveur définitive.
 	if (matchesAnyRoute(pathname, adminRoutes)) {
 		// Pas connecté -> redirection vers login
 		if (!isLoggedIn) {
@@ -135,8 +136,12 @@ export async function proxy(request: NextRequest) {
 			return NextResponse.redirect(redirectUrl);
 		}
 
-		// L'utilisateur a un cookie de session -> autoriser l'accès au middleware
-		// La page /admin effectuera la vérification du rôle ADMIN côté serveur
+		// Vérifier le rôle ADMIN depuis le cookie cache signé
+		const sessionData = await getCookieCache(request);
+		if (sessionData?.user.role !== "ADMIN") {
+			return NextResponse.redirect(new URL("/?error=access-denied", nextUrl.origin));
+		}
+
 		return NextResponse.next();
 	}
 

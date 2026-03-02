@@ -42,6 +42,9 @@ export const PRODUCTS_CACHE_TAGS = {
 	/** Détail d'un SKU spécifique */
 	SKU_DETAIL: (sku: string) => `sku-${sku}`,
 
+	/** Détail d'un SKU par ID (pour les lookups d'édition admin) */
+	SKU_DETAIL_BY_ID: (skuId: string) => `sku-id-${skuId}`,
+
 	/** Stock temps réel d'un SKU (invalidé après achat/mise à jour stock) */
 	SKU_STOCK: (skuId: string) => `sku-stock-${skuId}`,
 

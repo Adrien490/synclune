@@ -52,8 +52,12 @@ export async function updateCartItem(
 		// 4. Récupérer l'item avec son panier (no need to include sku — FOR UPDATE fetches fresh data)
 		const cartItem = await prisma.cartItem.findUnique({
 			where: { id: validatedData.cartItemId },
-			include: {
-				cart: true,
+			select: {
+				id: true,
+				skuId: true,
+				cartId: true,
+				quantity: true,
+				cart: { select: { userId: true, sessionId: true } },
 			},
 		});
 

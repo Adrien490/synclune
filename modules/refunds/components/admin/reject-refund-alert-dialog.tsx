@@ -10,6 +10,8 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRejectRefund } from "@/modules/refunds/hooks/use-reject-refund";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -61,6 +63,17 @@ export function RejectRefundAlertDialog() {
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
+					<div className="my-4 space-y-2">
+						<Label htmlFor="reject-reason">Raison du refus (optionnel)</Label>
+						<Textarea
+							id="reject-reason"
+							name="reason"
+							placeholder="Indiquez la raison du refus..."
+							rows={3}
+							maxLength={500}
+							disabled={isPending}
+						/>
+					</div>
 					{state?.status && state.status !== ActionStatus.SUCCESS && (
 						<p className="text-destructive mb-4 text-sm">{state.message}</p>
 					)}

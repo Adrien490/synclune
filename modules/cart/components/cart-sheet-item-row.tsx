@@ -4,6 +4,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
+import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
 import { CartItemMoveToWishlist } from "./cart-item-move-to-wishlist";
@@ -19,8 +20,6 @@ import {
 } from "../services/cart-item.service";
 import Image from "next/image";
 import Link from "next/link";
-
-const LOW_STOCK_THRESHOLD = 3;
 
 interface CartSheetItemRowProps {
 	item: CartItem;
@@ -70,8 +69,6 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							aria-describedby={`video-desc-${item.id}`}
 						>
 							<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
-							{/* Track vide pour WCAG - vidéos produits sans audio */}
-							<track kind="captions" srcLang="fr" label="Français" default />
 							<p id={`video-desc-${item.id}`} className="sr-only">
 								Video de presentation du bijou {item.sku.product.title}. La video est en lecture
 								automatique et sans son.
@@ -197,7 +194,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							</Badge>
 						)}
 					</div>
-				) : item.sku.inventory <= LOW_STOCK_THRESHOLD ? (
+				) : item.sku.inventory <= STOCK_THRESHOLDS.LOW ? (
 					<p className="text-xs text-orange-800">Plus que {item.sku.inventory} en stock</p>
 				) : null}
 			</div>

@@ -52,7 +52,7 @@ export async function duplicateMaterial(
 		if ("error" in validated) return validated.error;
 		const { materialId } = validated.data;
 
-		// 3. Recuperer le materiau original
+		// 4. Recuperer le materiau original
 		const original = await prisma.material.findUnique({
 			where: { id: materialId },
 		});
@@ -61,7 +61,7 @@ export async function duplicateMaterial(
 			return notFound("Materiau");
 		}
 
-		// 4. Generer un nouveau nom unique
+		// 5. Generer un nouveau nom unique
 		let newName = `${original.name} (copie)`;
 		let suffix = 1;
 
@@ -82,10 +82,10 @@ export async function duplicateMaterial(
 			}
 		}
 
-		// 5. Generer un slug unique
+		// 6. Generer un slug unique
 		const slug = await generateSlug(prisma, "material", newName);
 
-		// 6. Creer la copie
+		// 7. Creer la copie
 		const duplicate = await prisma.material.create({
 			data: {
 				name: newName,
@@ -104,7 +104,7 @@ export async function duplicateMaterial(
 			metadata: { originalId: materialId, name: duplicate.name },
 		});
 
-		// 7. Invalider le cache
+		// 8. Invalider le cache
 		const tags = getMaterialInvalidationTags(duplicate.slug);
 		tags.forEach((tag) => updateTag(tag));
 

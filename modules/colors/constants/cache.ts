@@ -1,7 +1,7 @@
 /**
- * Tags de cache pour le module Colors
+ * Cache tags for the Colors module
  *
- * Fonctions: voir utils/cache.utils.ts
+ * Functions: see utils/cache.utils.ts
  */
 
 // ============================================
@@ -9,11 +9,11 @@
 // ============================================
 
 export const COLORS_CACHE_TAGS = {
-	/** Liste des couleurs */
+	/** Colors list */
 	LIST: "colors-list",
-	/** Detail d'une couleur par slug */
+	/** Single color detail by slug */
 	DETAIL: (slug: string) => `color-${slug}` as const,
 } as const;
 
-// Re-exports pour retrocompatibilite
+// Re-exports for convenience
 export { cacheColors, cacheColorDetail, getColorInvalidationTags } from "../utils/cache.utils";

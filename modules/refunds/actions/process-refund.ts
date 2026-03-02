@@ -8,6 +8,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
+import { logger } from "@/shared/lib/logger";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
@@ -98,7 +99,7 @@ export async function processRefund(
 				INNER JOIN "Order" o ON r."orderId" = o.id
 				WHERE r.id = ${id}
 				AND r."deletedAt" IS NULL
-				FOR UPDATE OF r
+				FOR UPDATE OF r, o
 			`;
 
 			if (refundRows.length === 0) {
@@ -213,119 +214,149 @@ export async function processRefund(
 		}
 
 		// ========================================================================
+		// ÉTAPE 2.5: Persister le stripeRefundId AVANT la finalisation
+		// Si Step 3 échoue, le cron reconciler pourra retrouver ce refund via stripeRefundId
+		// ========================================================================
+		await prisma.refund.update({
+			where: { id },
+			data: { stripeRefundId: stripeResult.refundId },
+		});
+
+		// ========================================================================
 		// ÉTAPE 3: Finalisation (transaction atomique)
 		// Met à jour le statut, restaure le stock, et update la commande
 		// ========================================================================
-		await prisma.$transaction(async (tx) => {
-			// 1. Mettre à jour le remboursement
-			await tx.refund.update({
-				where: { id },
-				data: {
-					status: RefundStatus.COMPLETED,
+		try {
+			await prisma.$transaction(async (tx) => {
+				// 1. Mettre à jour le remboursement
+				await tx.refund.update({
+					where: { id },
+					data: {
+						status: RefundStatus.COMPLETED,
+						stripeRefundId: stripeResult.refundId,
+						processedAt: new Date(),
+					},
+				});
+
+				// 3. Restaurer le stock pour les articles avec restock=true
+				for (const item of refundData.items) {
+					if (item.restock) {
+						try {
+							await tx.productSku.update({
+								where: { id: item.sku_id },
+								data: {
+									inventory: { increment: item.quantity },
+								},
+							});
+						} catch {
+							// SKU may have been deleted between refund creation and processing
+							console.warn(`[PROCESS_REFUND] SKU ${item.sku_id} not found, skipping restock`);
+						}
+					}
+				}
+
+				// 4. Calculer si la commande est totalement ou partiellement remboursée
+				const totalRefundedAfter = refundData.totalRefundedBefore + refundData.refund.amount;
+
+				// Mettre à jour le paymentStatus selon le montant remboursé
+				if (totalRefundedAfter >= refundData.refund.order_total) {
+					await tx.order.update({
+						where: { id: refundData.refund.order_id },
+						data: { paymentStatus: PaymentStatus.REFUNDED },
+					});
+				} else if (totalRefundedAfter > 0) {
+					await tx.order.update({
+						where: { id: refundData.refund.order_id },
+						data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+					});
+				}
+			});
+
+			// Invalider le cache commandes et badges (paymentStatus a changé)
+			updateTag(ORDERS_CACHE_TAGS.LIST);
+			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+			updateTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
+
+			// Invalider le cache user (commandes, stats)
+			if (refundData.refund.order_user_id) {
+				updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refundData.refund.order_user_id));
+				updateTag(ORDERS_CACHE_TAGS.LAST_ORDER(refundData.refund.order_user_id));
+				updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(refundData.refund.order_user_id));
+			}
+
+			// Invalider le cache d'inventaire et vitrine si des articles ont été restockés
+			const restockedItems = refundData.items.filter((i) => i.restock);
+			const restockedCount = restockedItems.length;
+			if (restockedCount > 0) {
+				updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
+
+				// Invalidate storefront SKU stock and product caches
+				const restockedSkuIds = restockedItems.map((i) => i.sku_id);
+				for (const skuId of restockedSkuIds) {
+					updateTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+				}
+
+				// Fetch product info for restocked SKUs to invalidate product-level caches
+				const restockedSkus = await prisma.productSku.findMany({
+					where: { id: { in: restockedSkuIds } },
+					select: { productId: true, product: { select: { slug: true } } },
+				});
+				const uniqueProductIds = [...new Set(restockedSkus.map((s) => s.productId))];
+				const uniqueSlugs = [...new Set(restockedSkus.map((s) => s.product.slug))];
+				for (const productId of uniqueProductIds) {
+					updateTag(PRODUCTS_CACHE_TAGS.SKUS(productId));
+				}
+				for (const slug of uniqueSlugs) {
+					updateTag(PRODUCTS_CACHE_TAGS.DETAIL(slug));
+				}
+			}
+			// Audit log
+			void logAudit({
+				adminId: adminUser.id,
+				adminName: adminUser.name ?? adminUser.email,
+				action: "refund.process",
+				targetType: "refund",
+				targetId: id,
+				metadata: {
+					orderId: refundData.refund.order_id,
+					orderNumber: refundData.refund.order_number,
+					amount: refundData.refund.amount,
 					stripeRefundId: stripeResult.refundId,
-					processedAt: new Date(),
+					restockedItems: restockedCount,
 				},
 			});
 
-			// 3. Restaurer le stock pour les articles avec restock=true
-			for (const item of refundData.items) {
-				if (item.restock) {
-					try {
-						await tx.productSku.update({
-							where: { id: item.sku_id },
-							data: {
-								inventory: { increment: item.quantity },
-							},
-						});
-					} catch {
-						// SKU may have been deleted between refund creation and processing
-						console.warn(`[PROCESS_REFUND] SKU ${item.sku_id} not found, skipping restock`);
-					}
-				}
-			}
+			const restockMessage =
+				restockedCount > 0 ? ` Stock restauré pour ${restockedCount} article(s).` : "";
 
-			// 4. Calculer si la commande est totalement ou partiellement remboursée
-			const totalRefundedAfter = refundData.totalRefundedBefore + refundData.refund.amount;
-
-			// Mettre à jour le paymentStatus selon le montant remboursé
-			if (totalRefundedAfter >= refundData.refund.order_total) {
-				await tx.order.update({
-					where: { id: refundData.refund.order_id },
-					data: { paymentStatus: PaymentStatus.REFUNDED },
-				});
-			} else if (totalRefundedAfter > 0) {
-				await tx.order.update({
-					where: { id: refundData.refund.order_id },
-					data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
-				});
-			}
-		});
-
-		// Invalider le cache commandes et badges (paymentStatus a changé)
-		updateTag(ORDERS_CACHE_TAGS.LIST);
-		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-		updateTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
-		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
-
-		// Invalider le cache user (commandes, stats)
-		if (refundData.refund.order_user_id) {
-			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refundData.refund.order_user_id));
-			updateTag(ORDERS_CACHE_TAGS.LAST_ORDER(refundData.refund.order_user_id));
-			updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(refundData.refund.order_user_id));
+			return {
+				status: ActionStatus.SUCCESS,
+				message: `Remboursement de ${(refundData.refund.amount / 100).toFixed(2)} € traité avec succès.${restockMessage}`,
+				data: { stripeRefundId: stripeResult.refundId },
+			};
+		} catch (step3Error) {
+			// SAGA compensation: Stripe refund succeeded but DB finalization failed.
+			// The stripeRefundId was already persisted in Step 2.5, so the cron
+			// reconciler will pick this up and finalize it.
+			logger.error(
+				"SAGA Step 3 failed: Stripe refund succeeded but DB finalization failed",
+				step3Error,
+				{
+					refundId: id,
+					stripeRefundId: stripeResult.refundId,
+					orderId: refundData.refund.order_id,
+					amount: refundData.refund.amount,
+				},
+			);
+			return {
+				status: ActionStatus.ERROR,
+				message:
+					"Le remboursement Stripe a été effectué mais la finalisation a échoué. La réconciliation automatique corrigera cet état.",
+			};
 		}
-
-		// Invalider le cache d'inventaire et vitrine si des articles ont été restockés
-		const restockedItems = refundData.items.filter((i) => i.restock);
-		const restockedCount = restockedItems.length;
-		if (restockedCount > 0) {
-			updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
-
-			// Invalidate storefront SKU stock and product caches
-			const restockedSkuIds = restockedItems.map((i) => i.sku_id);
-			for (const skuId of restockedSkuIds) {
-				updateTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
-			}
-
-			// Fetch product info for restocked SKUs to invalidate product-level caches
-			const restockedSkus = await prisma.productSku.findMany({
-				where: { id: { in: restockedSkuIds } },
-				select: { productId: true, product: { select: { slug: true } } },
-			});
-			const uniqueProductIds = [...new Set(restockedSkus.map((s) => s.productId))];
-			const uniqueSlugs = [...new Set(restockedSkus.map((s) => s.product.slug))];
-			for (const productId of uniqueProductIds) {
-				updateTag(PRODUCTS_CACHE_TAGS.SKUS(productId));
-			}
-			for (const slug of uniqueSlugs) {
-				updateTag(PRODUCTS_CACHE_TAGS.DETAIL(slug));
-			}
-		}
-		// Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "refund.process",
-			targetType: "refund",
-			targetId: id,
-			metadata: {
-				orderId: refundData.refund.order_id,
-				orderNumber: refundData.refund.order_number,
-				amount: refundData.refund.amount,
-				stripeRefundId: stripeResult.refundId,
-				restockedItems: restockedCount,
-			},
-		});
-
-		const restockMessage =
-			restockedCount > 0 ? ` Stock restauré pour ${restockedCount} article(s).` : "";
-
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Remboursement de ${(refundData.refund.amount / 100).toFixed(2)} € traité avec succès.${restockMessage}`,
-			data: { stripeRefundId: stripeResult.refundId },
-		};
 	} catch (error) {
-		// Gestion des erreurs métier depuis la transaction de verrouillage
+		// Handle business errors from the Step 1 transaction
 		if (error instanceof Error) {
 			switch (error.message) {
 				case "NOT_FOUND":

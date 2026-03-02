@@ -1,5 +1,6 @@
 import { Euro, ShoppingBag, Receipt } from "lucide-react";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { KpiCard } from "./kpi-card";
 
 /**
@@ -11,19 +12,12 @@ import { KpiCard } from "./kpi-card";
 export async function DashboardKpis() {
 	const kpis = await fetchDashboardKpis();
 
-	const formatCurrency = (amount: number) =>
-		new Intl.NumberFormat("fr-FR", {
-			style: "currency",
-			currency: "EUR",
-			maximumFractionDigits: 0,
-		}).format(amount);
-
 	return (
 		<div className="grid gap-4 sm:grid-cols-3">
 			{/* CA du mois */}
 			<KpiCard
 				title="CA du mois"
-				value={formatCurrency(kpis.monthlyRevenue.amount)}
+				value={formatEuro(kpis.monthlyRevenue.amount, { compact: true })}
 				numericValue={kpis.monthlyRevenue.amount}
 				suffix=" €"
 				evolution={kpis.monthlyRevenue.evolution}
@@ -52,7 +46,7 @@ export async function DashboardKpis() {
 			{/* Panier moyen */}
 			<KpiCard
 				title="Panier moyen"
-				value={formatCurrency(kpis.averageOrderValue.amount)}
+				value={formatEuro(kpis.averageOrderValue.amount, { compact: true })}
 				numericValue={kpis.averageOrderValue.amount}
 				suffix=" €"
 				evolution={kpis.averageOrderValue.evolution}

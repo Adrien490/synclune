@@ -48,7 +48,8 @@ async function fetchRefund(params: GetRefundParams): Promise<GetRefundReturn> {
 		});
 
 		return refund;
-	} catch {
+	} catch (error) {
+		console.error("[GET_REFUND] Database error:", error);
 		return null;
 	}
 }

@@ -98,6 +98,7 @@ function makeDispute(overrides: Partial<Stripe.Dispute> = {}): Stripe.Dispute {
 		reason: "fraudulent",
 		status: "needs_response",
 		payment_intent: "pi_test_1",
+		balance_transactions: [],
 		evidence_details: {
 			due_by: 1740000000, // Unix timestamp
 			has_evidence: false,
@@ -244,7 +245,14 @@ describe("handleDisputeCreated", () => {
 	});
 
 	it("should show N/A for deadline when evidence_details.due_by is missing", async () => {
-		const dispute = makeDispute({ evidence_details: undefined });
+		const dispute = makeDispute({
+			evidence_details: {
+				due_by: null,
+				has_evidence: false,
+				past_due: false,
+				submission_count: 0,
+			} as Stripe.Dispute.EvidenceDetails,
+		});
 
 		await handleDisputeCreated(dispute);
 
@@ -253,7 +261,14 @@ describe("handleDisputeCreated", () => {
 	});
 
 	it("should set deadline to null in task data when evidence_details.due_by is missing", async () => {
-		const dispute = makeDispute({ evidence_details: undefined });
+		const dispute = makeDispute({
+			evidence_details: {
+				due_by: null,
+				has_evidence: false,
+				past_due: false,
+				submission_count: 0,
+			} as Stripe.Dispute.EvidenceDetails,
+		});
 
 		const result = await handleDisputeCreated(dispute);
 

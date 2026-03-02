@@ -96,7 +96,6 @@ function makeFormData(overrides: Record<string, string | null> = {}) {
 	return createMockFormData({
 		id: VALID_CUID,
 		name: "Argent 925",
-		slug: "argent-925",
 		description: "Argent de haute qualite",
 		isActive: "true",
 		...overrides,
@@ -134,7 +133,6 @@ describe("updateMaterial", () => {
 			data: data as {
 				id: string;
 				name: string;
-				slug: unknown;
 				description: string | null;
 				isActive: boolean;
 			},

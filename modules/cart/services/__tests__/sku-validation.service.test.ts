@@ -369,7 +369,6 @@ describe("validateCartItemsWithDb", () => {
 
 		expect(result.success).toBe(true);
 		expect(result.data?.[0]?.isValid).toBe(true);
-		expect(result.data?.[0]?.availableStock).toBe(10);
 	});
 
 	it("should return error for SKU not found in batch results", async () => {
@@ -420,7 +419,6 @@ describe("validateCartItemsWithDb", () => {
 		});
 
 		expect(result.data?.[0]?.error).toBe(CART_ERROR_MESSAGES.OUT_OF_STOCK);
-		expect(result.data?.[0]?.availableStock).toBe(0);
 	});
 
 	it("should return error for insufficient stock", async () => {
@@ -432,7 +430,6 @@ describe("validateCartItemsWithDb", () => {
 		});
 
 		expect(result.data?.[0]?.error).toBe(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(3));
-		expect(result.data?.[0]?.availableStock).toBe(3);
 	});
 
 	it("should return mixed results for multiple items", async () => {

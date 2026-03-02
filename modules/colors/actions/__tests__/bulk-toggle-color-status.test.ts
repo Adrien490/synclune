@@ -18,7 +18,7 @@ const {
 	mockGetColorInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		color: { updateMany: vi.fn() },
+		color: { findMany: vi.fn(), updateMany: vi.fn() },
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -51,6 +51,7 @@ vi.mock("@/shared/lib/actions", () => ({
 }));
 vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 vi.mock("../../constants/cache", () => ({
+	COLORS_CACHE_TAGS: { DETAIL: (slug: string) => `color-${slug}` },
 	getColorInvalidationTags: mockGetColorInvalidationTags,
 }));
 vi.mock("../../schemas/color.schemas", () => ({ bulkToggleColorStatusSchema: {} }));
@@ -72,6 +73,7 @@ describe("bulkToggleColorStatus", () => {
 		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { ids: COLOR_IDS, isActive: true } });
+		mockPrisma.color.findMany.mockResolvedValue([{ slug: "or" }, { slug: "argent" }]);
 		mockPrisma.color.updateMany.mockResolvedValue({ count: 2 });
 		mockGetColorInvalidationTags.mockReturnValue(["colors-list"]);
 
@@ -132,12 +134,14 @@ describe("bulkToggleColorStatus", () => {
 		);
 	});
 
-	it("invalidates cache after update", async () => {
+	it("invalidates list and detail cache tags after update", async () => {
 		await bulkToggleColorStatus(
 			undefined,
 			createMockFormData({ ids: JSON.stringify(COLOR_IDS), isActive: "true" }),
 		);
 		expect(mockUpdateTag).toHaveBeenCalledWith("colors-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("color-or");
+		expect(mockUpdateTag).toHaveBeenCalledWith("color-argent");
 	});
 
 	it("returns success with count", async () => {

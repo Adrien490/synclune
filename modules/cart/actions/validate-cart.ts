@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { validateCartItems } from "../services/item-availability.service";
@@ -98,7 +99,7 @@ export async function validateCart(): Promise<ValidateCartResult> {
 		};
 	} catch (error) {
 		// Return a structured result with a generic issue so the user gets feedback
-		console.error("[validateCart] Erreur inattendue:", error);
+		logger.error("[validateCart] Erreur inattendue:", error);
 		return {
 			isValid: false,
 			issues: [

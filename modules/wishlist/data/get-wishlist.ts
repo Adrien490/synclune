@@ -4,6 +4,7 @@ import { cacheWishlist } from "@/modules/wishlist/constants/cache";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 
+import { logger } from "@/shared/lib/logger";
 import {
 	GET_WISHLIST_SELECT,
 	GET_WISHLIST_ITEM_SELECT,
@@ -132,7 +133,8 @@ export async function fetchWishlist(
 			pagination,
 			totalCount,
 		};
-	} catch {
+	} catch (e) {
+		logger.error("Failed to fetch wishlist", e, { service: "wishlist" });
 		return {
 			items: [],
 			pagination: {

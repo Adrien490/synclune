@@ -144,8 +144,18 @@ describe("getMaterials", () => {
 
 	// --- Validation ---
 
-	it("throws an error when params are invalid", async () => {
-		await expect(getMaterials({ sortBy: "invalid-sort" as never } as never)).rejects.toThrow();
+	it("returns empty result when params are invalid", async () => {
+		const result = await getMaterials({ sortBy: "invalid-sort" as never } as never);
+
+		expect(result).toEqual({
+			materials: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		});
 	});
 
 	// --- Cache ---

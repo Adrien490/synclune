@@ -91,6 +91,7 @@ export async function removeUnavailableItems(
 		const [result] = await prisma.$transaction([
 			prisma.cartItem.deleteMany({
 				where: {
+					cartId: cart.id,
 					id: {
 						in: unavailableItems.map((item) => item.id),
 					},

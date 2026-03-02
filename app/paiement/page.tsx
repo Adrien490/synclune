@@ -75,12 +75,6 @@ export default async function CheckoutPage() {
 												<span className="font-medium">{issue.productTitle}</span>
 												<span className="text-muted-foreground"> - </span>
 												<span>{issue.message}</span>
-												{issue.availableStock !== undefined && issue.availableStock > 0 && (
-													<span className="text-muted-foreground text-xs">
-														{" "}
-														(Stock disponible: {issue.availableStock})
-													</span>
-												)}
 											</div>
 										</li>
 									))}

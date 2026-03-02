@@ -23,7 +23,7 @@ import { createColorSchema } from "../schemas/color.schemas";
 
 export async function createColor(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Admin authorization check
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -32,18 +32,18 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.CREATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extraire les donnees du FormData
+		// 3. Extract data from FormData
 		const rawData = {
 			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
 			hex: formData.get("hex"),
 		};
 
-		// Valider les donnees
+		// Validate data
 		const validated = validateInput(createColorSchema, rawData);
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Verifier l'unicite du nom
+		// Check name uniqueness
 		const existingName = await prisma.color.findFirst({
 			where: { name: validatedData.name },
 		});
@@ -52,10 +52,10 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 			return error("Ce nom de couleur existe deja. Veuillez en choisir un autre.");
 		}
 
-		// Generer un slug unique automatiquement
+		// Generate unique slug automatically
 		const slug = await generateSlug(prisma, "color", validatedData.name);
 
-		// Creer la couleur
+		// Create the color
 		const created = await prisma.color.create({
 			data: {
 				name: validatedData.name,
@@ -73,7 +73,7 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 			metadata: { name: validatedData.name, hex: validatedData.hex },
 		});
 
-		// Invalider le cache
+		// Invalidate cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 

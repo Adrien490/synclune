@@ -61,7 +61,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 import {
 	syncStripeRefunds,
 	updateOrderPaymentStatus,
-	findRefundByStripeId,
+	resolveRefundByStripeId,
 	mapStripeRefundStatus,
 	updateRefundStatus,
 	markRefundAsFailed,
@@ -406,10 +406,10 @@ describe("markRefundAsFailed", () => {
 });
 
 // ============================================================================
-// findRefundByStripeId
+// resolveRefundByStripeId
 // ============================================================================
 
-describe("findRefundByStripeId", () => {
+describe("resolveRefundByStripeId", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -429,7 +429,7 @@ describe("findRefundByStripeId", () => {
 		};
 		mockPrisma.refund.findUnique.mockResolvedValueOnce(refundRecord);
 
-		const result = await findRefundByStripeId("re_123");
+		const result = await resolveRefundByStripeId("re_123");
 
 		expect(result).toEqual(refundRecord);
 	});
@@ -453,7 +453,7 @@ describe("findRefundByStripeId", () => {
 		mockPrisma.refund.findUnique.mockResolvedValueOnce(refundRecord);
 		mockPrisma.refund.update.mockResolvedValue({});
 
-		const result = await findRefundByStripeId("re_new", "ref-from-metadata");
+		const result = await resolveRefundByStripeId("re_new", "ref-from-metadata");
 
 		expect(result).toEqual(refundRecord);
 		// Should link the stripeRefundId
@@ -466,7 +466,7 @@ describe("findRefundByStripeId", () => {
 	it("should return null when not found by either method", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(null);
 
-		const result = await findRefundByStripeId("re_nonexistent", "ref_nonexistent");
+		const result = await resolveRefundByStripeId("re_nonexistent", "ref_nonexistent");
 
 		expect(result).toBeNull();
 	});
@@ -474,7 +474,7 @@ describe("findRefundByStripeId", () => {
 	it("should return null when not found and no metadata provided", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(null);
 
-		const result = await findRefundByStripeId("re_nonexistent");
+		const result = await resolveRefundByStripeId("re_nonexistent");
 
 		expect(result).toBeNull();
 		// Should only call findUnique once (no fallback)

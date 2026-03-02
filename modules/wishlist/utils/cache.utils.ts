@@ -36,6 +36,17 @@ export function cacheWishlistCount(userId?: string, sessionId?: string) {
 	cacheTag(WISHLIST_CACHE_TAGS.COUNT(userId, sessionId));
 }
 
+/**
+ * Configure le cache pour les Product IDs de la wishlist
+ * - Durée : 5min fraîche, 1min revalidation, 1h expiration
+ *
+ * Note: Même profile "cart" que cacheWishlist() - voir documentation ci-dessus.
+ */
+export function cacheWishlistProductIds(userId?: string, sessionId?: string) {
+	cacheLife("cart");
+	cacheTag(WISHLIST_CACHE_TAGS.PRODUCT_IDS(userId, sessionId));
+}
+
 // ============================================
 // INVALIDATION HELPER
 // ============================================

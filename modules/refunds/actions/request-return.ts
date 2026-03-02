@@ -55,130 +55,160 @@ export async function requestReturn(
 		const { orderId, reason, message } = validated.data;
 		const sanitizedMessage = message ? sanitizeText(message) : null;
 
-		// 4. Fetch the order and verify ownership (IDOR protection)
-		const order = await prisma.order.findUnique({
-			where: { id: orderId, ...notDeleted },
-			select: {
-				id: true,
-				orderNumber: true,
-				userId: true,
-				paymentStatus: true,
-				fulfillmentStatus: true,
-				actualDelivery: true,
-				total: true,
-				items: {
-					select: {
-						id: true,
-						quantity: true,
-						price: true,
-						refundItems: {
-							where: {
-								refund: {
-									status: {
-										in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+		// 4. Transaction atomique: vérification + création (FOR UPDATE)
+		// Empêche les double-retours concurrents sur la même commande
+		const result = await prisma.$transaction(async (tx) => {
+			// Lock the order row to prevent concurrent return requests
+			const orderRows = await tx.$queryRaw<{ id: string }[]>`
+				SELECT id FROM "Order"
+				WHERE id = ${orderId} AND "deletedAt" IS NULL
+				FOR UPDATE
+			`;
+
+			if (orderRows.length === 0) {
+				throw new Error("ORDER_NOT_FOUND");
+			}
+
+			// Read order with items and refunds within the locked transaction
+			const order = await tx.order.findUnique({
+				where: { id: orderId, ...notDeleted },
+				select: {
+					id: true,
+					orderNumber: true,
+					userId: true,
+					paymentStatus: true,
+					fulfillmentStatus: true,
+					actualDelivery: true,
+					total: true,
+					items: {
+						select: {
+							id: true,
+							quantity: true,
+							price: true,
+							refundItems: {
+								where: {
+									refund: {
+										status: {
+											in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+										},
 									},
 								},
+								select: { quantity: true },
 							},
-							select: { quantity: true },
 						},
 					},
+					refunds: {
+						where: { status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] } },
+						select: { id: true },
+					},
 				},
-				refunds: {
-					where: { status: { in: ["PENDING", "APPROVED"] } },
-					select: { id: true },
-				},
-			},
-		});
-
-		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: REFUND_ERROR_MESSAGES.ORDER_NOT_FOUND,
-			};
-		}
-
-		// Verify the order belongs to the requesting user
-		if (order.userId !== user.id) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: REFUND_ERROR_MESSAGES.ORDER_NOT_FOUND,
-			};
-		}
-
-		// 5. Verify order is eligible for return
-		if (order.paymentStatus !== "PAID" && order.paymentStatus !== "PARTIALLY_REFUNDED") {
-			return error(REFUND_ERROR_MESSAGES.RETURN_NOT_ELIGIBLE);
-		}
-
-		if (order.fulfillmentStatus !== "DELIVERED") {
-			return error(REFUND_ERROR_MESSAGES.RETURN_NOT_ELIGIBLE);
-		}
-
-		// 6. Check 14-day withdrawal deadline
-		const deliveryDate = order.actualDelivery;
-		if (deliveryDate) {
-			const deadline = new Date(deliveryDate.getTime() + WITHDRAWAL_PERIOD_MS);
-			if (new Date() > deadline) {
-				return error(REFUND_ERROR_MESSAGES.RETURN_DEADLINE_EXCEEDED);
-			}
-		}
-
-		// 7. Check no existing PENDING or APPROVED refund for this order
-		if (order.refunds.length > 0) {
-			return error(REFUND_ERROR_MESSAGES.RETURN_ALREADY_REQUESTED);
-		}
-
-		// 8. Create refund for all items (full return request, admin decides final amount)
-		const refundItems = order.items
-			.filter((item) => {
-				const alreadyRefunded = item.refundItems.reduce((sum, ri) => sum + ri.quantity, 0);
-				return item.quantity - alreadyRefunded > 0;
-			})
-			.map((item) => {
-				const alreadyRefunded = item.refundItems.reduce((sum, ri) => sum + ri.quantity, 0);
-				const availableQuantity = item.quantity - alreadyRefunded;
-				return {
-					orderItemId: item.id,
-					quantity: availableQuantity,
-					amount: item.price * availableQuantity,
-					restock: true,
-				};
 			});
 
-		if (refundItems.length === 0) {
-			return error(REFUND_ERROR_MESSAGES.RETURN_NOT_ELIGIBLE);
-		}
+			if (!order) {
+				throw new Error("ORDER_NOT_FOUND");
+			}
 
-		const totalAmount = refundItems.reduce((sum, item) => sum + item.amount, 0);
+			// Verify the order belongs to the requesting user (IDOR protection)
+			if (order.userId !== user.id) {
+				throw new Error("ORDER_NOT_FOUND");
+			}
 
-		const refund = await prisma.refund.create({
-			data: {
-				orderId,
-				amount: totalAmount,
-				reason,
-				note: sanitizedMessage,
-				createdBy: user.id,
-				items: {
-					create: refundItems,
+			// 5. Verify order is eligible for return
+			if (order.paymentStatus !== "PAID" && order.paymentStatus !== "PARTIALLY_REFUNDED") {
+				throw new Error("RETURN_NOT_ELIGIBLE");
+			}
+
+			if (order.fulfillmentStatus !== "DELIVERED") {
+				throw new Error("RETURN_NOT_ELIGIBLE");
+			}
+
+			// 6. Check 14-day withdrawal deadline
+			// Reject if actualDelivery is null (cannot calculate deadline)
+			const deliveryDate = order.actualDelivery;
+			if (!deliveryDate) {
+				throw new Error("RETURN_NOT_ELIGIBLE");
+			}
+
+			const deadline = new Date(deliveryDate.getTime() + WITHDRAWAL_PERIOD_MS);
+			if (new Date() > deadline) {
+				throw new Error("RETURN_DEADLINE_EXCEEDED");
+			}
+
+			// 7. Check no existing PENDING or APPROVED refund for this order
+			if (order.refunds.length > 0) {
+				throw new Error("RETURN_ALREADY_REQUESTED");
+			}
+
+			// 8. Create refund for all items (full return request, admin decides final amount)
+			const refundItems = order.items
+				.filter((item) => {
+					const alreadyRefunded = item.refundItems.reduce((sum, ri) => sum + ri.quantity, 0);
+					return item.quantity - alreadyRefunded > 0;
+				})
+				.map((item) => {
+					const alreadyRefunded = item.refundItems.reduce((sum, ri) => sum + ri.quantity, 0);
+					const availableQuantity = item.quantity - alreadyRefunded;
+					return {
+						orderItemId: item.id,
+						quantity: availableQuantity,
+						amount: item.price * availableQuantity,
+						restock: true,
+					};
+				});
+
+			if (refundItems.length === 0) {
+				throw new Error("RETURN_NOT_ELIGIBLE");
+			}
+
+			const totalAmount = refundItems.reduce((sum, item) => sum + item.amount, 0);
+
+			const refund = await tx.refund.create({
+				data: {
+					orderId,
+					amount: totalAmount,
+					reason,
+					note: sanitizedMessage,
+					createdBy: user.id,
+					items: {
+						create: refundItems,
+					},
 				},
-			},
-			select: { id: true },
+				select: { id: true },
+			});
+
+			return { refund, userId: order.userId };
 		});
 
 		// 9. Invalidate caches
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
-		updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(user.id));
+		updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(result.userId!));
 		updateTag(DASHBOARD_CACHE_TAGS.KPIS);
 		updateTag(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 		updateTag(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
 
 		return success(
 			"Votre demande de retour a été enregistrée. Nous la traiterons dans les plus brefs délais.",
-			{ refundId: refund.id },
+			{ refundId: result.refund.id },
 		);
 	} catch (e) {
+		// Handle business errors from the transaction
+		if (e instanceof Error) {
+			switch (e.message) {
+				case "ORDER_NOT_FOUND":
+					return {
+						status: ActionStatus.NOT_FOUND,
+						message: REFUND_ERROR_MESSAGES.ORDER_NOT_FOUND,
+					};
+				case "RETURN_NOT_ELIGIBLE":
+					return error(REFUND_ERROR_MESSAGES.RETURN_NOT_ELIGIBLE);
+				case "RETURN_DEADLINE_EXCEEDED":
+					return error(REFUND_ERROR_MESSAGES.RETURN_DEADLINE_EXCEEDED);
+				case "RETURN_ALREADY_REQUESTED":
+					return error(REFUND_ERROR_MESSAGES.RETURN_ALREADY_REQUESTED);
+			}
+		}
 		return handleActionError(e, REFUND_ERROR_MESSAGES.RETURN_REQUEST_FAILED);
 	}
 }

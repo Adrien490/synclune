@@ -8,8 +8,6 @@ const nextConfig: NextConfig = {
 	experimental: {
 		optimizePackageImports: [
 			"motion/react",
-			"recharts",
-			"lucide-react",
 			"react-day-picker",
 			"@dnd-kit/core",
 			"@dnd-kit/sortable",
@@ -32,7 +30,7 @@ const nextConfig: NextConfig = {
 					},
 					{
 						key: "Permissions-Policy",
-						value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+						value: "camera=(), microphone=(), geolocation=()",
 					},
 					{
 						key: "Content-Security-Policy",
@@ -72,13 +70,11 @@ const nextConfig: NextConfig = {
 				protocol: "https",
 				hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com",
 				pathname: "/**",
-				search: "",
 			},
 			{
 				protocol: "https",
 				hostname: "avatars.githubusercontent.com",
 				pathname: "/**",
-				search: "",
 			},
 			{ protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
 		],

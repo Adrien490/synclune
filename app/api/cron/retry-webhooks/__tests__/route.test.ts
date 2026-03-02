@@ -176,7 +176,7 @@ describe("GET /api/cron/retry-webhooks", () => {
 		it("includes the job name 'retry-webhooks' in the success response data", async () => {
 			await GET();
 
-			const [data] = mockCronSuccess.mock.calls[0];
+			const [data] = mockCronSuccess.mock.calls[0]!;
 			expect(data.job).toBe("retry-webhooks");
 		});
 
@@ -185,7 +185,7 @@ describe("GET /api/cron/retry-webhooks", () => {
 
 			await GET();
 
-			const [, startTime] = mockCronSuccess.mock.calls[0];
+			const [, startTime] = mockCronSuccess.mock.calls[0]!;
 			expect(startTime).toBe(9876);
 		});
 

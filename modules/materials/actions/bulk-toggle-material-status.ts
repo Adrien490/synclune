@@ -78,9 +78,9 @@ export async function bulkToggleMaterialStatus(
 		const uniqueTags = [...new Set(tags)];
 		uniqueTags.forEach((tag) => updateTag(tag));
 
-		const statusText = validatedData.isActive ? "active" : "desactive";
+		const statusText = validatedData.isActive ? "activé" : "désactivé";
 		return success(
-			`${result.count} materiau${result.count > 1 ? "x" : ""} ${statusText}${result.count > 1 ? "s" : ""} avec succes`,
+			`${result.count} matériau${result.count > 1 ? "x" : ""} ${statusText}${result.count > 1 ? "s" : ""} avec succès`,
 		);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le statut des materiaux");

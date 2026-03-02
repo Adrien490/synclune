@@ -189,14 +189,12 @@ describe("checkCartItemAvailability", () => {
 		const result = checkCartItemAvailability(createItem({ inventory: 0 }));
 		expect(result.isAvailable).toBe(false);
 		expect(result.issue?.issueType).toBe("OUT_OF_STOCK");
-		expect(result.issue?.availableStock).toBe(0);
 	});
 
 	it("should detect insufficient stock", () => {
 		const result = checkCartItemAvailability(createItem({ inventory: 2, quantity: 5 }));
 		expect(result.isAvailable).toBe(false);
 		expect(result.issue?.issueType).toBe("INSUFFICIENT_STOCK");
-		expect(result.issue?.availableStock).toBe(2);
 	});
 
 	it("should include correct cartItemId and skuId in issue", () => {

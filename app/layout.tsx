@@ -14,12 +14,13 @@ import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
 import { SerwistProvider } from "@/shared/lib/serwist-client";
 import { RootProviders } from "@/shared/providers/root-providers";
 import { cormorantGaramond, inter, petitFormalScript } from "@/shared/styles/fonts";
+import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import "./globals.css";
 
-export const metadata = rootMetadata;
-export const viewport = rootViewport;
+export const metadata: Metadata = rootMetadata;
+export const viewport: Viewport = rootViewport;
 
 export default async function RootLayout({
 	children,
@@ -40,6 +41,7 @@ export default async function RootLayout({
 			</head>
 			<body
 				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}
+				suppressHydrationWarning
 			>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />
@@ -51,7 +53,7 @@ export default async function RootLayout({
 					</ErrorBoundary>
 					<RootProviders>
 						<ConditionalAnalytics />
-						<Suspense fallback={null}>{children}</Suspense>
+						{children}
 						<UnsavedChangesDialog />
 						<CookieBanner />
 						<InstallPromptBanner />

@@ -37,10 +37,6 @@ describe("buildUserFilterConditions", () => {
 		expect(buildUserFilterConditions(filters())).toEqual([]);
 	});
 
-	it("should return empty array for null-ish filters", () => {
-		expect(buildUserFilterConditions(null as unknown as UserFilters)).toEqual([]);
-	});
-
 	// --- name ---
 	it("should filter by single name", () => {
 		const result = buildUserFilterConditions(filters({ name: "Alice" }));

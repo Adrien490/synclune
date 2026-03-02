@@ -1,7 +1,7 @@
 /**
- * Helpers de cache pour le module Colors
+ * Cache helpers for the Colors module
  *
- * Constantes: voir constants/cache.ts
+ * Constants: see constants/cache.ts
  */
 
 import { cacheLife, cacheTag } from "next/cache";
@@ -13,9 +13,8 @@ import { COLORS_CACHE_TAGS } from "../constants/cache";
 // ============================================
 
 /**
- * Configure le cache pour les couleurs
- * - Utilisé pour : sélecteurs de filtres, formulaires admin
- * - Durée : 4h fraîche, 1h revalidation, 30j expiration
+ * Configure cache for the colors list
+ * - Used by: filter selectors, admin forms
  */
 export function cacheColors() {
 	cacheLife("reference");
@@ -23,9 +22,7 @@ export function cacheColors() {
 }
 
 /**
- * Configure le cache pour une couleur spécifique
- * - Utilisé pour : page détail couleur
- * - Durée : 4h fraîche, 1h revalidation, 30j expiration
+ * Configure cache for a specific color detail page
  */
 export function cacheColorDetail(slug: string) {
 	cacheLife("reference");
@@ -37,14 +34,14 @@ export function cacheColorDetail(slug: string) {
 // ============================================
 
 /**
- * Tags à invalider lors de la modification d'une couleur
+ * Tags to invalidate when a color is modified.
  *
- * Invalide automatiquement :
- * - La liste des couleurs
- * - Le détail de la couleur (si slug fourni)
- * - Les badges de la sidebar admin
+ * Automatically invalidates:
+ * - The colors list
+ * - The color detail (if slug provided)
+ * - The admin sidebar badges
  *
- * @param slug - Slug de la couleur modifiee (optionnel)
+ * @param slug - Slug of the modified color (optional)
  */
 export function getColorInvalidationTags(slug?: string): string[] {
 	const tags: string[] = [COLORS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];

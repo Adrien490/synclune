@@ -230,12 +230,12 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
-		const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
 		await deleteUploadThingFilesFromUrls(["https://utfs.io/f/key.jpg"]);
 
-		expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("1 fichier(s) supprime(s)"));
-		logSpy.mockRestore();
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("1 fichier(s) supprime(s)"));
+		warnSpy.mockRestore();
 	});
 });
 

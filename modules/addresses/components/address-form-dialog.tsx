@@ -18,13 +18,17 @@ import type { UserAddress } from "@/modules/addresses/types/user-addresses.types
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useStore } from "@tanstack/react-form";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useTransition } from "react";
 
-import { ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
+import {
+	ADDRESS_DIALOG_ID,
+	DISCARD_ADDRESS_CHANGES_DIALOG_ID,
+} from "../constants/dialog.constants";
 import { addressFormSchema, addressFormDefaultValues } from "../schemas/address-form.schema";
 
 interface AddressDialogData extends Record<string, unknown> {
@@ -41,16 +45,15 @@ export function AddressFormDialog({
 	addressSearchError = false,
 }: AddressFormDialogProps) {
 	const { isOpen, close, data } = useDialog<AddressDialogData>(ADDRESS_DIALOG_ID);
+	const discardDialog = useAlertDialog(DISCARD_ADDRESS_CHANGES_DIALOG_ID);
 	const address = data?.address;
 	const isDirtyRef = useRef(false);
 
 	const handleOpenChange = (open: boolean) => {
 		if (open) return;
 		if (isDirtyRef.current) {
-			const confirmed = window.confirm(
-				"Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer ?",
-			);
-			if (!confirmed) return;
+			discardDialog.open({ onConfirm: close });
+			return;
 		}
 		close();
 	};

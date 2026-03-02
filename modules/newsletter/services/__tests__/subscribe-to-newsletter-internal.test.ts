@@ -136,7 +136,10 @@ describe("subscribeToNewsletterInternal", () => {
 		);
 		expect(result.success).toBe(true);
 		expect(result.alreadySubscribed).toBeUndefined();
-		expect(result.message).toContain("renvoyé");
+		// Same generic message as CONFIRMED to prevent email enumeration
+		expect(result.message).toBe(
+			"Si cette adresse n'est pas encore inscrite, un email de confirmation vous a été envoyé.",
+		);
 	});
 
 	it("should invalidate cache for PENDING subscriber re-confirmation", async () => {
@@ -164,6 +167,7 @@ describe("subscribeToNewsletterInternal", () => {
 					confirmationToken: expect.stringMatching(UUID_V4_PATTERN),
 					status: "PENDING",
 					confirmationSentAt: expect.any(Date),
+					unsubscribeToken: expect.stringMatching(UUID_V4_PATTERN),
 				}),
 			}),
 		);

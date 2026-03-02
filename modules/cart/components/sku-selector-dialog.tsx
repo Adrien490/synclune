@@ -611,7 +611,9 @@ function QuantitySection({
 					<Minus className="h-4 w-4" />
 				</Button>
 				<input
-					type="number"
+					type="text"
+					inputMode="numeric"
+					pattern="[0-9]*"
 					min={1}
 					max={maxQuantity}
 					value={quantity}
@@ -620,7 +622,7 @@ function QuantitySection({
 						onQuantityChange(Math.max(1, Math.min(maxQuantity, val)));
 					}}
 					disabled={isPending}
-					className="focus-visible:ring-ring w-12 [appearance:textfield] rounded-md bg-transparent text-center text-lg font-semibold tabular-nums focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+					className="focus-visible:ring-ring w-12 rounded-md bg-transparent text-center text-lg font-semibold tabular-nums focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 					aria-label="Quantité à ajouter au panier"
 					aria-describedby={QUANTITY_BOUNDS_ID}
 				/>
@@ -1109,7 +1111,7 @@ function SkuSelectorFormContent({
 									duration: 2,
 									ease: "easeInOut",
 								}}
-								className="mt-1 text-xs font-medium text-amber-600"
+								className="mt-1 text-xs font-medium text-amber-800"
 							>
 								Plus que {selectedSku.inventory} en stock
 							</m.span>

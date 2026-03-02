@@ -251,6 +251,11 @@ export const updateSkuPriceSchema = z.object({
  */
 export const adjustSkuStockSchema = z.object({
 	skuId: z.cuid2({ message: "ID SKU invalide" }),
-	adjustment: z.number().int(), // Positif pour ajouter, négatif pour retirer
+	adjustment: z
+		.number()
+		.int({ error: "L'ajustement doit être un entier" })
+		.min(-99999, { error: "L'ajustement ne peut pas être inférieur à -99 999" })
+		.max(99999, { error: "L'ajustement ne peut pas dépasser 99 999" })
+		.refine((val) => val !== 0, { message: "L'ajustement ne peut pas être 0" }),
 	reason: z.string().optional(), // Raison de l'ajustement (pour traçabilité)
 });

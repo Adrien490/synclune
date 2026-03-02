@@ -24,11 +24,20 @@ export function cacheProductSkus(productId: string) {
 }
 
 /**
- * Configure le cache pour un SKU spécifique
+ * Configure le cache pour un SKU spécifique (par code SKU)
  */
 export function cacheSkuDetail(sku: string) {
 	cacheLife("productDetail");
 	cacheTag(PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku), PRODUCTS_CACHE_TAGS.SKUS_LIST);
+}
+
+/**
+ * Configure le cache pour un SKU spécifique (par ID)
+ * Utilisé pour les lookups d'édition admin où seul l'ID est disponible
+ */
+export function cacheSkuDetailById(skuId: string) {
+	cacheLife("productDetail");
+	cacheTag(PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId), PRODUCTS_CACHE_TAGS.SKUS_LIST);
 }
 
 // ============================================
@@ -63,9 +72,10 @@ export function getSkuInvalidationTags(
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
 
-	// Invalider le cache stock temps réel si skuId fourni
+	// Invalider le cache stock temps réel et le détail par ID si skuId fourni
 	if (skuId) {
 		tags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+		tags.push(PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
 	}
 
 	if (productId) {

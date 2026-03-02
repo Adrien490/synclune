@@ -11,7 +11,7 @@ import { headers } from "next/headers";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { z } from "zod";
 import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
-import { getNewsletterInvalidationTags } from "../utils/cache.utils";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 import { subscribeToNewsletterInternal } from "../services/subscribe-to-newsletter-internal";
 
 const TOGGLE_NEWSLETTER_LIMIT = {

@@ -42,12 +42,14 @@ export async function updateCartPrices(
 				...(userId ? { userId } : { sessionId: sessionId! }),
 				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
 			},
-			include: {
+			select: {
+				id: true,
 				items: {
-					include: {
+					select: {
+						id: true,
+						priceAtAdd: true,
 						sku: {
 							select: {
-								id: true,
 								priceInclTax: true,
 								isActive: true,
 								deletedAt: true,

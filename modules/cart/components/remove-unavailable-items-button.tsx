@@ -22,6 +22,7 @@ export function RemoveUnavailableItemsButton({ itemsCount }: RemoveUnavailableIt
 		<Button
 			onClick={handleRemoveUnavailable}
 			disabled={isPending}
+			aria-busy={isPending}
 			size="sm"
 			variant="destructive"
 			className="h-9 w-full text-xs"

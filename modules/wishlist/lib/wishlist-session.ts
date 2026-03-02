@@ -19,6 +19,11 @@ const WISHLIST_SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * WISHLIST_EXPIRATION_DAYS;
 // Regex UUID v4 pour validation
 const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+/** Validates that a string is a valid UUID v4 */
+export function isValidUuidV4(value: string): boolean {
+	return UUID_V4_REGEX.test(value);
+}
+
 /**
  * Récupère l'identifiant de session de la wishlist depuis les cookies
  * Valide que le sessionId est un UUID v4 valide (protection contre injection)

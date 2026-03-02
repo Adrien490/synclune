@@ -41,10 +41,9 @@ export async function bulkArchiveCollections(
 		const targetStatus = safeFormGet(formData, "targetStatus") ?? "ARCHIVED";
 
 		// Parse le JSON des IDs
-		let collectionIds: string[];
+		let collectionIds: unknown;
 		try {
-			const parsed: unknown = JSON.parse(collectionIdsRaw ?? "");
-			collectionIds = parsed as string[];
+			collectionIds = JSON.parse(collectionIdsRaw ?? "");
 		} catch {
 			return error("Format des IDs de collections invalide.");
 		}

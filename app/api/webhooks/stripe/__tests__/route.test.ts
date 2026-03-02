@@ -12,6 +12,7 @@ const {
 	mockAfter,
 	mockHeaders,
 	mockDispatchEvent,
+	mockIsEventSupported,
 	mockExecutePostWebhookTasks,
 	mockSendWebhookFailedAlert,
 	ANTI_REPLAY_WINDOW_SECONDS,
@@ -42,6 +43,7 @@ const {
 		mockAfter: vi.fn((fn: () => Promise<void>) => fn()),
 		mockHeaders: vi.fn(),
 		mockDispatchEvent: vi.fn(),
+		mockIsEventSupported: vi.fn(),
 		mockExecutePostWebhookTasks: vi.fn(),
 		mockSendWebhookFailedAlert: vi.fn(),
 		ANTI_REPLAY_WINDOW_SECONDS: 300,
@@ -81,6 +83,7 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/modules/webhooks/utils/event-registry", () => ({
 	dispatchEvent: mockDispatchEvent,
+	isEventSupported: mockIsEventSupported,
 }));
 
 vi.mock("@/modules/webhooks/utils/execute-post-tasks", () => ({
@@ -172,6 +175,9 @@ beforeEach(() => {
 
 	// Default: update resolves successfully
 	mockPrisma.webhookEvent.update.mockResolvedValue({});
+
+	// Default: event type is supported
+	mockIsEventSupported.mockReturnValue(true);
 
 	// Default: dispatchEvent returns a successful result with no tasks
 	mockDispatchEvent.mockResolvedValue({ success: true, tasks: [] });
@@ -546,6 +552,30 @@ describe("POST /api/webhooks/stripe - successful processing", () => {
 // ============================================================================
 
 describe("POST /api/webhooks/stripe - skipped events", () => {
+	it("should skip unsupported event types and return 200 with 'skipped'", async () => {
+		const unsupportedEvent = makeStripeEvent({ type: "customer.created" });
+		mockConstructEvent.mockReturnValue(unsupportedEvent);
+		mockIsEventSupported.mockReturnValue(false);
+		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord({ id: "wh_unsupported" }));
+
+		const req = makeRequest();
+		const response = await POST(req);
+
+		expect(mockNextResponseJson).toHaveBeenCalledWith({
+			received: true,
+			status: "skipped",
+		});
+		expect(response.status).toBe(200);
+		expect(mockDispatchEvent).not.toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.update).toHaveBeenCalledWith({
+			where: { id: "wh_unsupported" },
+			data: {
+				status: WebhookEventStatus.SKIPPED,
+				processedAt: expect.any(Date),
+			},
+		});
+	});
+
 	it("should update webhook record to SKIPPED when dispatch returns skipped=true", async () => {
 		mockDispatchEvent.mockResolvedValue({
 			success: true,

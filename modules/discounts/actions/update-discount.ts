@@ -74,10 +74,10 @@ export async function updateDiscount(
 			return notFound("Code promo");
 		}
 
-		// Vérifier l'unicité du code si modifié
+		// Vérifier l'unicité du code si modifié (includes soft-deleted, matches @unique constraint)
 		if (sanitizedCode !== existing.code) {
-			const codeExists = await prisma.discount.findFirst({
-				where: { code: sanitizedCode, ...notDeleted },
+			const codeExists = await prisma.discount.findUnique({
+				where: { code: sanitizedCode },
 				select: { id: true },
 			});
 			if (codeExists) {

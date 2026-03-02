@@ -1,4 +1,4 @@
-import type { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/enums";
 
 /** 14-day withdrawal period (directive 2011/83/EU, art. L221-18) */
 const WITHDRAWAL_PERIOD_DAYS = 14;
@@ -22,16 +22,17 @@ interface ReturnEligibilityOrder {
  */
 export function isReturnEligible(order: ReturnEligibilityOrder): boolean {
 	const validPaymentStatus =
-		order.paymentStatus === "PAID" || order.paymentStatus === "PARTIALLY_REFUNDED";
+		order.paymentStatus === PaymentStatus.PAID ||
+		order.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
 
-	const isDelivered = order.fulfillmentStatus === "DELIVERED";
+	const isDelivered = order.fulfillmentStatus === FulfillmentStatus.DELIVERED;
 
 	const withinDeadline =
 		!!order.actualDelivery &&
 		new Date(order.actualDelivery).getTime() + WITHDRAWAL_PERIOD_DAYS * MS_PER_DAY > Date.now();
 
 	const hasActiveRefund = order.refunds.some(
-		(r) => r.status === "PENDING" || r.status === "APPROVED",
+		(r) => r.status === RefundStatus.PENDING || r.status === RefundStatus.APPROVED,
 	);
 
 	return validPaymentStatus && isDelivered && withinDeadline && !hasActiveRefund;

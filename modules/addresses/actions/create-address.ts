@@ -54,16 +54,15 @@ export async function createAddress(
 		const validated = validateInput(addressSchema, rawData);
 		if ("error" in validated) return validated.error;
 
-		const validatedData = validated.data;
-
 		// 4. Sanitize text fields
-		validatedData.firstName = sanitizeText(validatedData.firstName);
-		validatedData.lastName = sanitizeText(validatedData.lastName);
-		validatedData.address1 = sanitizeText(validatedData.address1);
-		if (validatedData.address2) {
-			validatedData.address2 = sanitizeText(validatedData.address2);
-		}
-		validatedData.city = sanitizeText(validatedData.city);
+		const sanitizedData = {
+			...validated.data,
+			firstName: sanitizeText(validated.data.firstName),
+			lastName: sanitizeText(validated.data.lastName),
+			address1: sanitizeText(validated.data.address1),
+			address2: validated.data.address2 ? sanitizeText(validated.data.address2) : null,
+			city: sanitizeText(validated.data.city),
+		};
 
 		// 5. Count + create in transaction to prevent race conditions
 		const { isDefault } = await prisma.$transaction(async (tx) => {
@@ -79,7 +78,7 @@ export async function createAddress(
 
 			await tx.address.create({
 				data: {
-					...validatedData,
+					...sanitizedData,
 					userId: user.id,
 					isDefault: isFirst,
 				},

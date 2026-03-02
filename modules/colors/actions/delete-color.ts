@@ -15,7 +15,7 @@ import { deleteColorSchema } from "../schemas/color.schemas";
 
 export async function deleteColor(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
+		// 1. Admin authorization check
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -24,17 +24,17 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.DELETE);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Extraire les donnees du FormData
+		// 3. Extract data from FormData
 		const rawData = {
 			id: formData.get("id"),
 		};
 
-		// Valider les donnees
+		// Validate data
 		const validated = validateInput(deleteColorSchema, rawData);
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Verifier que la couleur existe
+		// Check that the color exists
 		const existingColor = await prisma.color.findUnique({
 			where: { id: validatedData.id },
 			include: {
@@ -50,7 +50,7 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 			return error("Cette couleur n'existe pas");
 		}
 
-		// Verifier si la couleur est utilisee
+		// Check if the color is used by SKUs
 		const skuCount = existingColor._count.skus;
 		if (skuCount > 0) {
 			return error(
@@ -58,7 +58,7 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 			);
 		}
 
-		// Supprimer la couleur
+		// Delete the color
 		await prisma.color.delete({
 			where: { id: validatedData.id },
 		});
@@ -72,7 +72,7 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 			metadata: { name: existingColor.name },
 		});
 
-		// Invalider le cache
+		// Invalidate cache
 		const tags = getColorInvalidationTags(existingColor.slug);
 		tags.forEach((tag) => updateTag(tag));
 

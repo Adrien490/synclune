@@ -138,13 +138,11 @@ describe("getAvailableColorsForList", () => {
 	it("should mark color as inStock=true if at least one sku of that color is in stock", () => {
 		const skuInStock = makeSku({ inventory: 5, color: makeColor("or", "#FFD700", "Or") });
 		const skuOutOfStock = makeSku({ inventory: 0, color: makeColor("or", "#FFD700", "Or") });
-		// The source uses `existing?.inStock ?? sku.inventory > 0` which locks in the
-		// first-seen inStock value. Since skuOutOfStock is processed first, inStock is
-		// set to false and not upgraded when skuInStock is encountered (false is not
-		// null/undefined, so `??` does not fall through to the right-hand side).
+		// Permissive logic: inStock = true if ANY SKU of this color has inventory > 0,
+		// regardless of processing order
 		const result = getAvailableColorsForList(makeProduct([skuOutOfStock, skuInStock]));
 		expect(result).toHaveLength(1);
-		expect(result[0]!.inStock).toBe(false);
+		expect(result[0]!.inStock).toBe(true);
 	});
 
 	it("should deduplicate colors by slug", () => {

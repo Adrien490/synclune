@@ -24,6 +24,8 @@ import { ArrowLeft, Package, RotateCcw } from "lucide-react";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { REFUND_REASON_LABELS } from "@/modules/refunds/constants/refund.constants";
+import { canSubmitRefund } from "@/modules/refunds/services/refund-calculation.service";
 import {
 	useCreateRefundForm,
 	getDefaultRestock,
@@ -38,16 +40,6 @@ import { RefundItemRow } from "./refund-item-row";
 interface CreateRefundFormProps {
 	order: OrderForRefund;
 }
-
-// Labels côté client (évite l'import de prisma/client)
-const REFUND_REASON_LABELS: Record<RefundReason, string> = {
-	CUSTOMER_REQUEST: "Rétractation client",
-	DEFECTIVE: "Produit défectueux",
-	WRONG_ITEM: "Erreur de préparation",
-	LOST_IN_TRANSIT: "Colis perdu",
-	FRAUD: "Fraude",
-	OTHER: "Autre",
-};
 
 // ============================================================================
 // COMPONENT
@@ -149,7 +141,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		);
 	};
 
-	const canSubmit = selectedItems.length > 0 && totalAmount > 0 && totalAmount <= maxRefundable;
+	const canSubmit = canSubmitRefund(selectedItems, totalAmount, maxRefundable);
 
 	return (
 		<div className="space-y-6">

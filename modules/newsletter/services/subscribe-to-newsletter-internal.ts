@@ -75,7 +75,7 @@ export async function subscribeToNewsletterInternal({
 				return {
 					success: true,
 					message:
-						"Un email de confirmation vous a été renvoyé ! Veuillez vérifier votre boîte de réception.",
+						"Si cette adresse n'est pas encore inscrite, un email de confirmation vous a été envoyé.",
 				};
 			}
 
@@ -89,6 +89,7 @@ export async function subscribeToNewsletterInternal({
 					confirmationToken,
 					confirmationSentAt: new Date(),
 					status: NewsletterStatus.PENDING, // Repasse en attente de confirmation
+					unsubscribeToken: randomUUID(), // Regenerate to invalidate old unsubscribe URLs
 				},
 			});
 

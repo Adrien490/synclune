@@ -64,7 +64,7 @@ export async function bulkDeleteCollections(
 		});
 
 		// Note: On peut supprimer les collections meme avec des produits
-		// car la relation est onDelete: SetNull (les produits seront preserves)
+		// car la relation ProductCollection est onDelete: Cascade (les join entries sont supprimees, les produits preserves)
 		const totalProducts = collectionsWithUsage.reduce((sum, col) => sum + col._count.products, 0);
 
 		// Supprimer les collections

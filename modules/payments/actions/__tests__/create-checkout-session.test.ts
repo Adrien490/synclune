@@ -1005,7 +1005,7 @@ describe("createCheckoutSession", () => {
 
 			// Verify discount rollback
 			expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
-				where: { code: "PROMO20" },
+				where: { code: "PROMO20", usageCount: { gt: 0 } },
 				data: { usageCount: { decrement: 1 } },
 			});
 			expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({

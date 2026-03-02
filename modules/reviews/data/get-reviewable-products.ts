@@ -112,6 +112,7 @@ async function fetchReviewableProducts(userId: string): Promise<ReviewableProduc
 		}
 
 		const productId = item.sku.product.id;
+		if (!productId) continue;
 
 		// Dedupliquer par productId
 		if (seenProductIds.has(productId)) {

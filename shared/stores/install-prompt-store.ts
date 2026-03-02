@@ -1,20 +1,14 @@
 import { createStore } from "zustand/vanilla";
-import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 import type { InstallPromptState, InstallPromptStore } from "@/shared/types/store.types";
+import { noopStorage } from "./noop-storage";
 
 export type {
 	InstallPromptState,
 	InstallPromptActions,
 	InstallPromptStore,
 } from "@/shared/types/store.types";
-
-// Noop storage for SSR (when localStorage is not available)
-const noopStorage: StateStorage = {
-	getItem: () => null,
-	setItem: () => {},
-	removeItem: () => {},
-};
 
 const MAX_DISMISS_COUNT = 3;
 

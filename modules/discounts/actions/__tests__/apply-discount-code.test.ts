@@ -5,25 +5,12 @@ import { ActionStatus } from "@/shared/types/server-action";
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockHeaders,
-	mockGetClientIp,
-	mockEnforceRateLimit,
-	mockValidateDiscountCode,
-	mockSuccess,
-	mockError,
-} = vi.hoisted(() => ({
-	mockHeaders: vi.fn(),
-	mockGetClientIp: vi.fn(),
-	mockEnforceRateLimit: vi.fn(),
+const { mockValidateDiscountCode, mockSuccess, mockError } = vi.hoisted(() => ({
 	mockValidateDiscountCode: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 }));
 
-vi.mock("next/headers", () => ({ headers: mockHeaders }));
-vi.mock("@/shared/lib/rate-limit", () => ({ getClientIp: mockGetClientIp }));
-vi.mock("@/shared/lib/actions/rate-limit", () => ({ enforceRateLimit: mockEnforceRateLimit }));
 vi.mock("../validate-discount-code", () => ({ validateDiscountCode: mockValidateDiscountCode }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
@@ -32,9 +19,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	},
 	success: mockSuccess,
 	error: mockError,
-}));
-vi.mock("@/shared/lib/rate-limit-config", () => ({
-	PAYMENT_LIMITS: { VALIDATE_DISCOUNT: "validate-discount" },
 }));
 
 import { applyDiscountCode } from "../apply-discount-code";
@@ -51,8 +35,6 @@ function createFormData(data: Record<string, string>): FormData {
 	return formData;
 }
 
-const mockHeadersList = { get: vi.fn() };
-
 const validDiscount = {
 	id: "disc-123",
 	code: "SUMMER20",
@@ -68,15 +50,6 @@ const validDiscount = {
 describe("applyDiscountCode", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
-
-		// Default: headers resolves
-		mockHeaders.mockResolvedValue(mockHeadersList);
-
-		// Default: IP resolves to a known address
-		mockGetClientIp.mockResolvedValue("1.2.3.4");
-
-		// Default: rate limit passes
-		mockEnforceRateLimit.mockResolvedValue({ success: true });
 
 		// Default: discount code is valid
 		mockValidateDiscountCode.mockResolvedValue({
@@ -97,48 +70,16 @@ describe("applyDiscountCode", () => {
 	});
 
 	// ──────────────────────────────────────────────────────────────
-	// Rate limiting
+	// Missing code
 	// ──────────────────────────────────────────────────────────────
 
-	it("should return rate limit error when rate limited", async () => {
-		const rateLimitError = {
-			status: ActionStatus.ERROR,
-			message: "Trop de requêtes",
-		};
-		mockEnforceRateLimit.mockResolvedValue({ error: rateLimitError });
-
-		const formData = createFormData({ code: "SUMMER20", subtotal: "5000" });
+	it("should return error when code is missing from formData", async () => {
+		const formData = createFormData({ subtotal: "5000" });
 		const result = await applyDiscountCode(undefined, formData);
 
-		expect(result).toEqual(rateLimitError);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockError).toHaveBeenCalledWith("Code promo requis");
 		expect(mockValidateDiscountCode).not.toHaveBeenCalled();
-	});
-
-	// ──────────────────────────────────────────────────────────────
-	// IP resolution
-	// ──────────────────────────────────────────────────────────────
-
-	it("should get client IP from headers and pass it to enforceRateLimit", async () => {
-		mockGetClientIp.mockResolvedValue("192.168.1.1");
-
-		const formData = createFormData({ code: "SUMMER20", subtotal: "5000" });
-		await applyDiscountCode(undefined, formData);
-
-		expect(mockGetClientIp).toHaveBeenCalledWith(mockHeadersList);
-		expect(mockEnforceRateLimit).toHaveBeenCalledWith(
-			"ip:192.168.1.1",
-			"validate-discount",
-			"192.168.1.1",
-		);
-	});
-
-	it('should use "unknown" IP when getClientIp returns null', async () => {
-		mockGetClientIp.mockResolvedValue(null);
-
-		const formData = createFormData({ code: "SUMMER20", subtotal: "5000" });
-		await applyDiscountCode(undefined, formData);
-
-		expect(mockEnforceRateLimit).toHaveBeenCalledWith("ip:unknown", "validate-discount", "unknown");
 	});
 
 	// ──────────────────────────────────────────────────────────────

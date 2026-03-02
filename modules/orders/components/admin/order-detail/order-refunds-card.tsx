@@ -1,6 +1,7 @@
-import { RefundStatus } from "@/app/generated/prisma/browser";
+import { type RefundStatus } from "@/app/generated/prisma/browser";
 import {
 	REFUND_STATUS_LABELS,
+	REFUND_STATUS_VARIANTS,
 	REFUND_REASON_LABELS,
 } from "@/modules/refunds/constants/refund.constants";
 import { Badge } from "@/shared/components/ui/badge";
@@ -11,26 +12,6 @@ import { RotateCcw, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderRefundsCardProps } from "./types";
-
-function getStatusVariant(
-	status: string,
-): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
-	switch (status) {
-		case RefundStatus.PENDING:
-			return "warning";
-		case RefundStatus.APPROVED:
-			return "default";
-		case RefundStatus.COMPLETED:
-			return "success";
-		case RefundStatus.REJECTED:
-		case RefundStatus.FAILED:
-			return "destructive";
-		case RefundStatus.CANCELLED:
-			return "secondary";
-		default:
-			return "outline";
-	}
-}
 
 export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCardProps) {
 	// Ne pas afficher si aucun remboursement et pas éligible
@@ -71,7 +52,7 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 							>
 								<div className="min-w-0 flex-1">
 									<div className="flex flex-wrap items-center gap-2">
-										<Badge variant={getStatusVariant(refund.status)}>
+										<Badge variant={REFUND_STATUS_VARIANTS[refund.status as RefundStatus]}>
 											{REFUND_STATUS_LABELS[refund.status as RefundStatus] || refund.status}
 										</Badge>
 										<span className="text-sm font-medium">{formatEuro(refund.amount)}</span>

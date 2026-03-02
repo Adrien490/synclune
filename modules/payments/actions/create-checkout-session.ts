@@ -19,12 +19,10 @@ import { parseFullName } from "@/modules/payments/utils/parse-full-name";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
-import { getDiscountUsageCounts } from "@/modules/discounts/data/get-discount-usage-counts";
 import {
 	calculateDiscountWithExclusion,
 	type CartItemForDiscount,
 } from "@/modules/discounts/services/discount-calculation.service";
-import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { stripe, CircuitBreakerError } from "@/shared/lib/stripe";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
@@ -191,7 +189,6 @@ export const createCheckoutSession = async (
 
 				// Generate order number and compute shipping
 				const orderNumber = generateOrderNumber();
-				getShippingZoneFromPostalCode(validatedData.shippingAddress.postalCode);
 				const shippingCost = calculateShipping(
 					validatedData.shippingAddress.country as ShippingCountry,
 					validatedData.shippingAddress.postalCode,
@@ -234,13 +231,26 @@ export const createCheckoutSession = async (
 
 					const discount = discountRows[0]!;
 
-					const usageCounts = discount.maxUsagePerUser
-						? await getDiscountUsageCounts({
-								discountId: discount.id,
-								userId: userId ?? undefined,
-								customerEmail: finalEmail ?? undefined,
-							})
-						: undefined;
+					// Read usage counts directly in transaction to prevent race conditions
+					// (cached getDiscountUsageCounts could serve stale data)
+					let usageCounts: { userCount: number; emailCount: number } | undefined;
+					if (discount.maxUsagePerUser) {
+						let userCount = 0;
+						let emailCount = 0;
+
+						if (userId) {
+							userCount = await tx.discountUsage.count({
+								where: { discountId: discount.id, userId },
+							});
+						}
+						if (finalEmail) {
+							emailCount = await tx.discountUsage.count({
+								where: { discountId: discount.id, order: { customerEmail: finalEmail } },
+							});
+						}
+
+						usageCounts = { userCount, emailCount };
+					}
 
 					const eligibility = checkDiscountEligibility(
 						{
@@ -424,7 +434,7 @@ export const createCheckoutSession = async (
 				});
 			} catch (stripeError) {
 				// Cleanup orphan order and discount usage on Stripe failure
-				await cleanupFailedCheckout(order.id, validatedData.discountCode, stripeCouponId);
+				await cleanupFailedCheckout(order.id, orderDiscountCode, stripeCouponId);
 
 				if (stripeError instanceof CircuitBreakerError) {
 					return error(
@@ -467,21 +477,22 @@ export const createCheckoutSession = async (
 
 /**
  * Cleans up an orphan order and associated discount usage when Stripe session creation fails.
+ * Order: discountUsage → discount → order (respects FK onDelete: Restrict on DiscountUsage.orderId)
  */
 async function cleanupFailedCheckout(
 	orderId: string,
-	discountCode: string | undefined,
+	orderDiscountCode: string | null,
 	stripeCouponId: string | undefined,
 ) {
-	await prisma.order.delete({ where: { id: orderId } });
-
-	if (discountCode) {
+	if (orderDiscountCode) {
+		await prisma.discountUsage.deleteMany({ where: { orderId } });
 		await prisma.discount.updateMany({
-			where: { code: discountCode.toUpperCase() },
+			where: { code: orderDiscountCode, usageCount: { gt: 0 } },
 			data: { usageCount: { decrement: 1 } },
 		});
-		await prisma.discountUsage.deleteMany({ where: { orderId } });
 	}
+
+	await prisma.order.delete({ where: { id: orderId } });
 
 	if (stripeCouponId) {
 		await stripe.coupons.del(stripeCouponId).catch(() => {});

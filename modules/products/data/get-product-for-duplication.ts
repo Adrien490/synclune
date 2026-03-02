@@ -33,45 +33,53 @@ async function fetchProductForDuplication(productId: string) {
 	// Le product n'a pas encore de slug connu, on cache par ID
 	cacheProductDetail(`product-id-${productId}`);
 
-	return prisma.product.findFirst({
-		where: { id: productId, ...notDeleted },
-		select: {
-			id: true,
-			title: true,
-			slug: true,
-			description: true,
-			typeId: true,
-			collections: {
-				select: {
-					collectionId: true,
-					collection: {
-						select: { slug: true },
+	try {
+		return await prisma.product.findFirst({
+			where: { id: productId, ...notDeleted },
+			select: {
+				id: true,
+				title: true,
+				slug: true,
+				description: true,
+				typeId: true,
+				collections: {
+					select: {
+						collectionId: true,
+						collection: {
+							select: { slug: true },
+						},
 					},
 				},
-			},
-			skus: {
-				select: {
-					sku: true,
-					priceInclTax: true,
-					compareAtPrice: true,
-					inventory: true,
-					isActive: true,
-					isDefault: true,
-					colorId: true,
-					materialId: true,
-					size: true,
-					images: {
-						select: {
-							url: true,
-							thumbnailUrl: true,
-							altText: true,
-							mediaType: true,
-							isPrimary: true,
-							position: true,
+				skus: {
+					select: {
+						sku: true,
+						priceInclTax: true,
+						compareAtPrice: true,
+						inventory: true,
+						isActive: true,
+						isDefault: true,
+						colorId: true,
+						materialId: true,
+						size: true,
+						images: {
+							select: {
+								url: true,
+								thumbnailUrl: true,
+								blurDataUrl: true,
+								altText: true,
+								mediaType: true,
+								isPrimary: true,
+								position: true,
+							},
 						},
 					},
 				},
 			},
-		},
-	});
+		});
+	} catch (error) {
+		if (process.env.NODE_ENV === "development") {
+			console.error("[getProductForDuplication]", error);
+		}
+		return null;
+	}
 }

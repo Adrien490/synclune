@@ -157,6 +157,7 @@ describe("addToCart - concurrency scenarios", () => {
 					findUnique: vi.fn().mockResolvedValue(null),
 					create: vi.fn().mockResolvedValue({ id: `ci-${callCount}`, quantity: 1 }),
 					update: vi.fn(),
+					count: vi.fn().mockResolvedValue(0),
 				},
 			};
 			return fn(tx);
@@ -188,6 +189,7 @@ describe("addToCart - concurrency scenarios", () => {
 					findUnique: vi.fn().mockResolvedValue(null),
 					create: vi.fn().mockResolvedValue({ id: `ci-${callCount}`, quantity: 1 }),
 					update: vi.fn(),
+					count: vi.fn().mockResolvedValue(0),
 				},
 			};
 			return fn(tx);
@@ -230,6 +232,7 @@ describe("addToCart - concurrency scenarios", () => {
 							: vi.fn().mockResolvedValue({ id: "ci-1", quantity: 1 }), // Second call: item exists
 					create: vi.fn().mockResolvedValue({ id: "ci-1", quantity: 1 }),
 					update: vi.fn().mockResolvedValue({ id: "ci-1", quantity: 2 }),
+					count: vi.fn().mockResolvedValue(0),
 				},
 			};
 			return fn(tx);
@@ -256,6 +259,7 @@ describe("addToCart - concurrency scenarios", () => {
 					findUnique: vi.fn().mockResolvedValue({ id: "ci-1", quantity: 9 }),
 					create: vi.fn(),
 					update: vi.fn(),
+					count: vi.fn().mockResolvedValue(1),
 				},
 			};
 			return fn(tx);
@@ -302,6 +306,7 @@ describe("addToCart - concurrency scenarios", () => {
 					findUnique: vi.fn().mockResolvedValue(null),
 					create: vi.fn().mockResolvedValue({ id: `ci-${callCount}`, quantity: 1 }),
 					update: vi.fn(),
+					count: vi.fn().mockResolvedValue(0),
 				},
 			};
 			return fn(tx);

@@ -197,7 +197,7 @@ describe("removeUnavailableItems", () => {
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.data).toEqual({ deletedCount: 1 });
 		expect(mockPrisma.cartItem.deleteMany).toHaveBeenCalledWith({
-			where: { id: { in: ["item-bad"] } },
+			where: { cartId: "cart_cm1234567890abcde", id: { in: ["item-bad"] } },
 		});
 	});
 

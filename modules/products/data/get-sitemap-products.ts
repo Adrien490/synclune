@@ -11,40 +11,47 @@ export async function getSitemapProducts() {
 	cacheLife("collections");
 	cacheTag(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
 
-	return prisma.product.findMany({
-		where: {
-			status: "PUBLIC",
-			...notDeleted,
-		},
-		select: {
-			slug: true,
-			title: true,
-			type: {
-				select: {
-					label: true,
-				},
+	try {
+		return await prisma.product.findMany({
+			where: {
+				status: "PUBLIC",
+				...notDeleted,
 			},
-			skus: {
-				where: {
-					isActive: true,
-					deletedAt: null,
+			select: {
+				slug: true,
+				title: true,
+				type: {
+					select: {
+						label: true,
+					},
 				},
-				select: {
-					images: {
-						where: {
-							mediaType: "IMAGE",
-						},
-						select: {
-							url: true,
-							altText: true,
-							isPrimary: true,
-						},
-						orderBy: {
-							position: "asc",
+				skus: {
+					where: {
+						isActive: true,
+						deletedAt: null,
+					},
+					select: {
+						images: {
+							where: {
+								mediaType: "IMAGE",
+							},
+							select: {
+								url: true,
+								altText: true,
+								isPrimary: true,
+							},
+							orderBy: {
+								position: "asc",
+							},
 						},
 					},
 				},
 			},
-		},
-	});
+		});
+	} catch (error) {
+		if (process.env.NODE_ENV === "development") {
+			console.error("[getSitemapProducts]", error);
+		}
+		return [];
+	}
 }

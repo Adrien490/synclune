@@ -278,15 +278,14 @@ describe("getProductCardData", () => {
 
 			const result = getProductCardData(product);
 
-			// The source uses `existing?.inStock ?? sku.inventory > 0` which locks in
-			// the first-seen inStock value. Since sku1 (inventory=0) is processed first,
-			// inStock is set to false and never upgraded by subsequent skus.
+			// Permissive logic: inStock = true if ANY SKU of this color has inventory > 0,
+			// regardless of processing order
 			expect(result.colors).toHaveLength(1);
 			expect(result.colors[0]).toEqual({
 				slug: "gold",
 				hex: "#FFD700",
 				name: "Or",
-				inStock: false,
+				inStock: true,
 			});
 		});
 

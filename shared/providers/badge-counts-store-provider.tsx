@@ -2,13 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-import { useBadgeCountsStore } from "./badge-counts-store";
-
-interface BadgeCountsStoreProviderProps {
-	initialWishlistCount: number;
-	initialCartCount: number;
-	children: React.ReactNode;
-}
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import type { BadgeCountsStoreProviderProps } from "@/shared/types/store.types";
 
 /**
  * Provider pour hydrater le store des badges avec les valeurs serveur.

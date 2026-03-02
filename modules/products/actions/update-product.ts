@@ -79,8 +79,11 @@ export async function updateProduct(
 			},
 		};
 
-		// Parse deleted image URLs for UTAPI deletion
-		const deletedImageUrls = parseJSON<string[]>(formData.get("deletedImageUrls"), []);
+		// Parse and validate deleted image URLs for UTAPI deletion
+		const rawDeletedImageUrls = parseJSON<unknown[]>(formData.get("deletedImageUrls"), []);
+		const deletedImageUrls = rawDeletedImageUrls.filter(
+			(url): url is string => typeof url === "string" && url.length > 0 && url.length <= 2048,
+		);
 
 		// 3. Validation avec Zod
 		const validation = validateInput(updateProductSchema, rawData);

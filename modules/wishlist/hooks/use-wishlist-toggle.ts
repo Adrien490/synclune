@@ -100,8 +100,8 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 						"status" in result &&
 						result.status === ActionStatus.UNAUTHORIZED
 					) {
-						const callbackUrl = encodeURIComponent(pathname);
-						router.push(`/connexion?callbackUrl=${callbackUrl}`);
+						const callbackURL = encodeURIComponent(pathname);
+						router.push(`/connexion?callbackURL=${callbackURL}`);
 					}
 				},
 			}),

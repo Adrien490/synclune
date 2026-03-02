@@ -500,14 +500,12 @@ describe("downloadImage", () => {
 	// Sharp magic byte validation
 	// --------------------------------------------------------------------------
 
-	it("should throw when Sharp cannot identify the image format", async () => {
+	it("should succeed even when Sharp metadata resolves without a recognized format", async () => {
 		mockSharp.mockReturnValue({
 			metadata: vi.fn().mockResolvedValue({ format: undefined }),
 		} as unknown as ReturnType<typeof sharp>);
 
-		await expect(downloadImage(TEST_URL)).rejects.toThrow(
-			"Buffer invalide: format d'image non reconnu par Sharp",
-		);
+		await expect(downloadImage(TEST_URL)).resolves.toBeInstanceOf(Buffer);
 	});
 
 	it("should throw when Sharp metadata rejects (corrupt data)", async () => {

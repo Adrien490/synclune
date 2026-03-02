@@ -27,6 +27,8 @@ import {
 	deleteMaterialSchema,
 	bulkDeleteMaterialsSchema,
 	toggleMaterialStatusSchema,
+	bulkToggleMaterialStatusSchema,
+	duplicateMaterialSchema,
 	getMaterialSchema,
 } from "../materials.schemas";
 import { VALID_CUID } from "@/test/factories";
@@ -139,28 +141,26 @@ describe("updateMaterialSchema", () => {
 		const result = updateMaterialSchema.safeParse({
 			id: VALID_CUID,
 			name: "Argent 925",
-			slug: "argent-925",
 			description: "Sterling silver",
+			isActive: true,
 		});
 
 		expect(result.success).toBe(true);
 	});
 
-	it("should accept update with optional isActive", () => {
+	it("should reject missing isActive", () => {
 		const result = updateMaterialSchema.safeParse({
 			id: VALID_CUID,
 			name: "Argent",
-			slug: "argent",
-			isActive: false,
 		});
 
-		expect(result.success).toBe(true);
+		expect(result.success).toBe(false);
 	});
 
 	it("should reject missing id", () => {
 		const result = updateMaterialSchema.safeParse({
 			name: "Argent",
-			slug: "argent",
+			isActive: true,
 		});
 
 		expect(result.success).toBe(false);
@@ -204,6 +204,61 @@ describe("toggleMaterialStatusSchema", () => {
 		});
 
 		expect(result.success).toBe(true);
+	});
+});
+
+describe("bulkToggleMaterialStatusSchema", () => {
+	it("should accept valid bulk toggle", () => {
+		const result = bulkToggleMaterialStatusSchema.safeParse({
+			ids: [VALID_CUID],
+			isActive: true,
+		});
+
+		expect(result.success).toBe(true);
+	});
+
+	it("should reject empty ids array", () => {
+		const result = bulkToggleMaterialStatusSchema.safeParse({
+			ids: [],
+			isActive: true,
+		});
+
+		expect(result.success).toBe(false);
+	});
+
+	it("should reject missing isActive", () => {
+		const result = bulkToggleMaterialStatusSchema.safeParse({
+			ids: [VALID_CUID],
+		});
+
+		expect(result.success).toBe(false);
+	});
+
+	it("should reject more than 200 ids", () => {
+		const ids = Array.from({ length: 201 }, () => VALID_CUID);
+		const result = bulkToggleMaterialStatusSchema.safeParse({ ids, isActive: false });
+
+		expect(result.success).toBe(false);
+	});
+});
+
+describe("duplicateMaterialSchema", () => {
+	it("should accept valid material id", () => {
+		const result = duplicateMaterialSchema.safeParse({ materialId: VALID_CUID });
+
+		expect(result.success).toBe(true);
+	});
+
+	it("should reject invalid id", () => {
+		const result = duplicateMaterialSchema.safeParse({ materialId: "not-a-cuid" });
+
+		expect(result.success).toBe(false);
+	});
+
+	it("should reject missing materialId", () => {
+		const result = duplicateMaterialSchema.safeParse({});
+
+		expect(result.success).toBe(false);
 	});
 });
 

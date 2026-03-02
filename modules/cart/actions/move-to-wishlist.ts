@@ -19,7 +19,6 @@ import {
 	getOrCreateWishlistSessionId,
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 
 /**
  * Server Action to move a cart item to the wishlist
@@ -45,8 +44,10 @@ export async function moveToWishlist(
 		// 3. Get cart item with product info
 		const cartItem = await prisma.cartItem.findUnique({
 			where: { id: validated.data.cartItemId },
-			include: {
-				cart: true,
+			select: {
+				id: true,
+				cartId: true,
+				cart: { select: { userId: true, sessionId: true } },
 				sku: { select: { productId: true } },
 			},
 		});
@@ -66,9 +67,8 @@ export async function moveToWishlist(
 
 		const productId = cartItem.sku.productId;
 
-		// 5. Get session and wishlist context
-		const session = await getSession();
-		const wishlistUserId = session?.user.id ?? null;
+		// 5. Get wishlist context (reuse userId from rate limit to avoid redundant getSession)
+		const wishlistUserId = userId ?? null;
 		const wishlistSessionId = wishlistUserId ? null : await getOrCreateWishlistSessionId();
 
 		// 6. Transaction: remove from cart + add to wishlist

@@ -39,7 +39,6 @@ export async function updateMaterial(
 		const rawData = {
 			id: formData.get("id"),
 			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
-			slug: formData.get("slug"),
 			description: safeFormGet(formData, "description")
 				? sanitizeText(safeFormGet(formData, "description")!)
 				: null,

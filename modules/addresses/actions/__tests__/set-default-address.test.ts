@@ -220,7 +220,7 @@ describe("setDefaultAddress", () => {
 		await setDefaultAddress(undefined, validFormData);
 
 		expect(mockPrisma.address.update).toHaveBeenCalledWith({
-			where: { id: "addr-abc123" },
+			where: { id: "addr-abc123", userId: "user-123" },
 			data: { isDefault: true },
 		});
 	});
@@ -272,7 +272,7 @@ describe("setDefaultAddress", () => {
 		await setDefaultAddress(undefined, validFormData);
 
 		expect(mockPrisma.address.update).toHaveBeenCalledWith({
-			where: { id: "addr-validated-789" },
+			where: { id: "addr-validated-789", userId: "user-123" },
 			data: { isDefault: true },
 		});
 	});

@@ -37,6 +37,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.4)
+      '@prisma/sqlcommenter-trace-context':
+        specifier: ^7.4.2
+        version: 7.4.2
       '@radix-ui/react-accordion':
         specifier: ^1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1934,6 +1937,9 @@ packages:
 
   '@prisma/query-plan-executor@7.2.0':
     resolution: {integrity: sha512-EOZmNzcV8uJ0mae3DhTsiHgoNCuu1J9mULQpGCh62zN3PxPTd+qI9tJvk5jOst8WHKQNwJWR3b39t0XvfBB0WQ==}
+
+  '@prisma/sqlcommenter-trace-context@7.4.2':
+    resolution: {integrity: sha512-p1Ts7ZtNH9gVJEUKV2mgd/2o0B1vabsdnLcKVa2yN7zUFy4mTQ9wR+rhsCP2wEJ60D0GkNIxakgvLb33mY4pkQ==}
 
   '@prisma/studio-core@0.13.1':
     resolution: {integrity: sha512-agdqaPEePRHcQ7CexEfkX1RvSH9uWDb6pXrZnhCRykhDFAV0/0P3d07WtfiY8hZWb7oRU4v+NkT4cGFHkQJIPg==}
@@ -9501,6 +9507,8 @@ snapshots:
       - supports-color
 
   '@prisma/query-plan-executor@7.2.0': {}
+
+  '@prisma/sqlcommenter-trace-context@7.4.2': {}
 
   '@prisma/studio-core@0.13.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:

@@ -4,7 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 import { getProductSkuSchema } from "../schemas/sku.schemas";
 import type { GetProductSkuParams, GetProductSkuReturn, SkuWithImages } from "../types/sku.types";
-import { cacheSkuDetail } from "../utils/cache.utils";
+import { cacheSkuDetail, cacheSkuDetailById } from "../utils/cache.utils";
 
 // Re-export pour compatibilité
 export type { GetProductSkuParams, GetProductSkuReturn, SkuWithImages } from "../types/sku.types";
@@ -77,7 +77,7 @@ export async function getSkuById(skuId: string): Promise<SkuWithImages | null> {
  */
 async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 	"use cache";
-	cacheSkuDetail(skuId);
+	cacheSkuDetailById(skuId);
 
 	try {
 		const sku = await prisma.productSku.findUnique({

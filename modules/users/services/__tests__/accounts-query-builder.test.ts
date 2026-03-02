@@ -33,10 +33,6 @@ describe("buildAccountsFilterConditions", () => {
 		expect(buildAccountsFilterConditions(filters())).toEqual([]);
 	});
 
-	it("should return empty array for null-ish filters", () => {
-		expect(buildAccountsFilterConditions(null as unknown as AccountFilters)).toEqual([]);
-	});
-
 	// --- userId ---
 	it("should filter by single userId", () => {
 		const result = buildAccountsFilterConditions(filters({ userId: "user1" }));

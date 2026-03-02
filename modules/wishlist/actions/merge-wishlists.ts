@@ -15,6 +15,7 @@ import {
 } from "@/modules/wishlist/constants/error-messages";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { getGuestWishlistForMerge, getUserWishlistForMerge } from "../data/get-wishlist-for-merge";
+import { isValidUuidV4 } from "@/modules/wishlist/lib/wishlist-session";
 
 /**
  * Fusionne la wishlist visiteur avec la wishlist utilisateur après connexion
@@ -43,21 +44,26 @@ export async function mergeWishlists(
 	sessionId: string,
 ): Promise<MergeWishlistsResult> {
 	try {
-		// 0a. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
+		// 0a. Validate sessionId format (prevent arbitrary session injection)
+		if (!isValidUuidV4(sessionId)) {
+			return error(WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
+		}
+
+		// 0b. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
 		// Empêche un attaquant de fusionner la wishlist d'un autre utilisateur
 		const currentSession = await getSession();
 		if (!currentSession?.user.id || currentSession.user.id !== userId) {
 			return error("Non autorise");
 		}
 
-		// 0b. Rate limiting uniforme avec les autres actions wishlist (avec IP fallback)
+		// 0c. Rate limiting uniforme avec les autres actions wishlist (avec IP fallback)
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
 		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE, ipAddress);
 		if ("error" in rateCheck) return rateCheck.error;
 
-		// 0c. Vérifier que l'utilisateur existe (protection contre appels directs)
+		// 0d. Vérifier que l'utilisateur existe (protection contre appels directs)
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: { id: true, deletedAt: true },

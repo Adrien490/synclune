@@ -58,12 +58,13 @@ export async function duplicateProduct(
 			return notFound("Le produit source");
 		}
 
-		// 5. Generer le nouveau titre et slug
+		// 5. Dupliquer le produit et ses SKUs dans une transaction
 		const newTitle = `Copie de ${sourceProduct.title}`;
-		const newSlug = await generateSlug(prisma, "product", newTitle);
 
-		// 6. Dupliquer le produit et ses SKUs dans une transaction
 		const duplicatedProduct = await prisma.$transaction(async (tx) => {
+			// Generate slug inside transaction to avoid race conditions
+			const newSlug = await generateSlug(tx, "product", newTitle);
+
 			// Creer le nouveau produit (toujours en DRAFT)
 			const createdProduct = await tx.product.create({
 				data: {
@@ -123,6 +124,7 @@ export async function duplicateProduct(
 							skuId: createdSku.id,
 							url: sourceImage.url,
 							thumbnailUrl: sourceImage.thumbnailUrl,
+							blurDataUrl: sourceImage.blurDataUrl,
 							altText: sourceImage.altText,
 							mediaType: sourceImage.mediaType,
 							isPrimary: sourceImage.isPrimary,

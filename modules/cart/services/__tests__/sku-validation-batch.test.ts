@@ -212,7 +212,6 @@ describe("validateCartItemsWithDb — merge edge cases", () => {
 		expect(result.success).toBe(false);
 		expect(result.data?.[0]!.isValid).toBe(true);
 		expect(result.data?.[1]!.isValid).toBe(false);
-		expect(result.data?.[1]!.availableStock).toBe(1);
 	});
 
 	it("should report out of stock for items with zero inventory", async () => {
@@ -225,7 +224,6 @@ describe("validateCartItemsWithDb — merge edge cases", () => {
 		expect(result.success).toBe(false);
 		expect(result.data?.[0]!.isValid).toBe(false);
 		expect(result.data?.[0]!.error).toBe("Cet article n'est plus en stock");
-		expect(result.data?.[0]!.availableStock).toBe(0);
 	});
 
 	it("should report inactive SKUs from guest cart", async () => {

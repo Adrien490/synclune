@@ -3,8 +3,9 @@
 // ============================================================================
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider      = "prisma-client"
+  output        = "../app/generated/prisma"
+  compilerBuild = "small" // Optimized bundle for Vercel serverless
 }
 
 datasource db {
@@ -383,6 +384,7 @@ model Cart {
   updatedAt DateTime @updatedAt
 
   @@index([expiresAt])
+  @@index([userId, abandonedEmailSentAt, updatedAt]) // abandoned-cart-emails cron
 }
 
 model CartItem {
@@ -449,6 +451,7 @@ model WishlistItem {
   // Note: Contrainte unique sur champ nullable - validation metier cote applicatif
   @@unique([wishlistId, productId])
   @@index([productId])
+  @@index([productId, backInStockNotifiedAt]) // For back-in-stock notification queries
 }
 
 // ============================================================================
@@ -596,9 +599,11 @@ model Order {
   @@index([customerEmail])
   @@index([stripeCustomerId])
   @@index([paymentStatus, createdAt]) // sync-async-payments cron
-  @@index([fulfillmentStatus, actualDelivery]) // review-request-emails cron
+  @@index([fulfillmentStatus, actualDelivery, reviewRequestSentAt, deletedAt]) // review-request-emails cron
   @@index([paidAt(sort: Desc)]) // Dashboard KPIs, revenue chart, recent orders, CSV export
   @@index([status, createdAt(sort: Desc)]) // Admin: filtrage commandes par statut
+  @@index([paymentStatus, deletedAt, paidAt(sort: Desc)]) // Dashboard: recent paid orders
+  @@index([fulfillmentStatus, actualDelivery, crossSellEmailSentAt]) // cross-sell-emails cron
 }
 
 /// Historique des actions sur les commandes (audit trail)
@@ -890,6 +895,8 @@ model Discount {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+
+  @@index([isActive, deletedAt, startsAt, endsAt]) // Cron: process-scheduled-discounts
 }
 
 model DiscountUsage {
@@ -1082,6 +1089,8 @@ model ProductReviewStats {
   // === TIMESTAMPS ===
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([averageRating]) // Dashboard: filter/sort products by rating
 }
 
 // ============================================================================
@@ -1110,6 +1119,7 @@ model WebhookEvent {
 
   @@index([status, processedAt]) // cleanup + retry queries filter by status then processedAt
   @@index([status, receivedAt]) // cleanup SKIPPED/stale webhook events by receivedAt
+  @@index([status, attempts, processedAt]) // retry-webhooks cron
 }
 
 // ============================================================================

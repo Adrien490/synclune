@@ -117,7 +117,6 @@ export function ProductCatalog({
 			<PageHeader
 				title={pageTitle}
 				description={searchTerm ? undefined : pageDescription}
-				descriptionClassName="hidden sm:block"
 				breadcrumbs={breadcrumbs}
 				actions={
 					<div className="flex items-center gap-2 md:hidden">

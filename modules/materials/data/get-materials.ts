@@ -2,7 +2,6 @@ import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
-import { z } from "zod";
 
 import { cacheMaterials } from "../constants/cache";
 
@@ -43,20 +42,21 @@ export type {
  * Récupère la liste des matériaux avec pagination
  */
 export async function getMaterials(params: GetMaterialsParamsInput): Promise<GetMaterialsReturn> {
-	try {
-		const validation = getMaterialsSchema.safeParse(params);
+	const validation = getMaterialsSchema.safeParse(params);
 
-		if (!validation.success) {
-			throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
-		}
-
-		return fetchMaterials(validation.data);
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			throw new Error("Invalid parameters");
-		}
-		throw error;
+	if (!validation.success) {
+		return {
+			materials: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		};
 	}
+
+	return fetchMaterials(validation.data);
 }
 
 /**
@@ -104,8 +104,8 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 		);
 
 		return { materials: items, pagination };
-	} catch (error) {
-		const baseReturn = {
+	} catch {
+		return {
 			materials: [],
 			pagination: {
 				nextCursor: null,
@@ -113,14 +113,6 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
-			error:
-				process.env.NODE_ENV === "development"
-					? error instanceof Error
-						? error.message
-						: "Unknown error"
-					: "Failed to fetch materials",
 		};
-
-		return baseReturn as GetMaterialsReturn & { error: string };
 	}
 }

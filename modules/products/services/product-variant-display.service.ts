@@ -64,7 +64,7 @@ export function getAvailableColorsForList(product: ProductFromList): ColorSwatch
 		const existing = colorMap.get(sku.color.slug);
 		// Logique permissive : inStock = true si au moins une variante de cette couleur a du stock
 		// Voir JSDoc ci-dessus pour la justification de ce comportement
-		const inStock = existing?.inStock ?? sku.inventory > 0;
+		const inStock = existing?.inStock === true || sku.inventory > 0;
 
 		colorMap.set(sku.color.slug, {
 			slug: sku.color.slug,

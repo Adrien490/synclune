@@ -55,20 +55,20 @@ export async function toggleWishlistItem(
 			return error(WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 		}
 
-		// 2. Validation avec Zod
+		// 2. Rate limiting (protection anti-spam) — before validation to prevent enumeration
+		const headersList = await headers();
+		const ipAddress = await getClientIp(headersList);
+		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
+		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.TOGGLE, ipAddress);
+		if ("error" in rateCheck) return rateCheck.error;
+
+		// 3. Validation avec Zod
 		const validated = validateInput(toggleWishlistItemSchema, {
 			productId: safeFormGet(formData, "productId"),
 		});
 		if ("error" in validated) return validated.error;
 
 		const validatedData = validated.data;
-
-		// 3. Rate limiting (protection anti-spam)
-		const headersList = await headers();
-		const ipAddress = await getClientIp(headersList);
-		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateCheck = await enforceRateLimit(rateLimitId, WISHLIST_LIMITS.TOGGLE, ipAddress);
-		if ("error" in rateCheck) return rateCheck.error;
 
 		// 4. Valider le produit (existence et status)
 		const product = await prisma.product.findUnique({

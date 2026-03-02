@@ -3,10 +3,6 @@
 import type { ActionState } from "@/shared/types/server-action";
 import { success, error, safeFormGet } from "@/shared/lib/actions";
 import { handleActionError } from "@/shared/lib/actions/errors";
-import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
-import { getClientIp } from "@/shared/lib/rate-limit";
-import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
-import { headers } from "next/headers";
 import { validateDiscountCode } from "./validate-discount-code";
 
 /**
@@ -16,19 +12,14 @@ import { validateDiscountCode } from "./validate-discount-code";
  * - Accepte FormData (compatible useActionState)
  * - Retourne ActionState (compatible withCallbacks)
  * - Recupere userId/email depuis la session serveur (jamais le client)
- * - Applique le rate limiting
+ *
+ * Note: Rate limiting is handled by validateDiscountCode internally.
  */
 export async function applyDiscountCode(
 	_prevState: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// Rate limiting based on IP (fallback to "unknown" to prevent bypass)
-		const headersList = await headers();
-		const ip = (await getClientIp(headersList)) ?? "unknown";
-		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
-		if ("error" in rateCheck) return rateCheck.error;
-
 		const code = safeFormGet(formData, "code");
 		const subtotal = Number(formData.get("subtotal"));
 

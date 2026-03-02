@@ -117,7 +117,6 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 				productTitle: item.sku.product.title,
 				issueType: "OUT_OF_STOCK",
 				message: CART_ERROR_MESSAGES.OUT_OF_STOCK,
-				availableStock: 0,
 			},
 		};
 	}
@@ -132,7 +131,6 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 				productTitle: item.sku.product.title,
 				issueType: "INSUFFICIENT_STOCK",
 				message: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(item.sku.inventory),
-				availableStock: item.sku.inventory,
 			},
 		};
 	}

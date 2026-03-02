@@ -66,6 +66,8 @@ vi.mock("@/modules/wishlist/lib/wishlist-session", () => ({
 	getWishlistSessionId: mockGetWishlistSessionId,
 	getOrCreateWishlistSessionId: mockGetOrCreateWishlistSessionId,
 	getWishlistExpirationDate: () => new Date("2026-03-19"),
+	isValidUuidV4: (value: string) =>
+		/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
 }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/shared/lib/rate-limit", () => ({

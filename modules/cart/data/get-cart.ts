@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 
 import { GET_CART_SELECT } from "../constants/cart";
 import { CART_CACHE_TAGS } from "../constants/cache";
@@ -34,7 +35,7 @@ export async function getCart(): Promise<GetCartReturn> {
 
 		return await fetchCart(userId, sessionId ?? undefined);
 	} catch (error) {
-		console.error("[getCart] Failed to fetch cart:", error);
+		logger.error("[getCart] Failed to fetch cart:", error);
 		return null;
 	}
 }

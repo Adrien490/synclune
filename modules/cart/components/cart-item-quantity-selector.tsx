@@ -79,7 +79,7 @@ export function CartItemQuantitySelector({
 	}
 
 	return (
-		<div aria-label="Modifier la quantité">
+		<div role="group" aria-label={`Quantité de l'article, actuellement ${optimisticQuantity}`}>
 			<ButtonGroup aria-label="Quantité">
 				<Button
 					type="button"
@@ -96,7 +96,6 @@ export function CartItemQuantitySelector({
 				</Button>
 
 				<Input
-					role="spinbutton"
 					type="text"
 					inputMode="numeric"
 					pattern="[0-9]*"
@@ -108,9 +107,7 @@ export function CartItemQuantitySelector({
 					disabled={isInactive || isLoading}
 					className="h-11 min-h-0 w-14 px-0 py-0 text-center text-base"
 					aria-label={`Quantité, entre 1 et ${maxQuantity}`}
-					aria-valuemin={1}
-					aria-valuemax={maxQuantity}
-					aria-valuenow={optimisticQuantity}
+					aria-live="polite"
 				/>
 
 				<Button

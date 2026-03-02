@@ -364,18 +364,25 @@ export const toggleProductStatusSchema = z.object({
 });
 
 export const bulkDeleteProductsSchema = z.object({
-	productIds: z.array(z.cuid2()).min(1, "Au moins un produit est requis"),
+	productIds: z
+		.array(z.cuid2())
+		.min(1, "Au moins un produit est requis")
+		.max(100, "Maximum 100 produits par opération"),
 });
 
 export const bulkArchiveProductsSchema = z.object({
-	productIds: z.array(z.cuid2()).min(1, "Au moins un produit est requis"),
+	productIds: z
+		.array(z.cuid2())
+		.min(1, "Au moins un produit est requis")
+		.max(100, "Maximum 100 produits par opération"),
 	targetStatus: z.enum(["ARCHIVED", "PUBLIC"]).default("ARCHIVED"),
 });
 
 export const bulkChangeProductStatusSchema = z.object({
 	productIds: z
 		.array(z.cuid2({ message: "ID produit invalide" }))
-		.min(1, "Au moins un produit doit être sélectionné"),
+		.min(1, "Au moins un produit doit être sélectionné")
+		.max(100, "Maximum 100 produits par opération"),
 	targetStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),
 });
 

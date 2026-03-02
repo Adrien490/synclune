@@ -331,7 +331,7 @@ describe("fetchDashboardKpis", () => {
 
 		const lastMonthAggregate = mockPrismaOrderAggregate.mock.calls[1]![0];
 		const expectedLastMonthStart = new Date(Date.UTC(2026, 0, 1)); // Jan 1 2026
-		const expectedLastMonthEnd = new Date(Date.UTC(2026, 1, 0, 23, 59, 59)); // Jan 31 2026
+		const expectedLastMonthEnd = new Date(Date.UTC(2026, 1, 0, 23, 59, 59, 999)); // Jan 31 2026
 		expect(lastMonthAggregate.where.paidAt.gte).toEqual(expectedLastMonthStart);
 		expect(lastMonthAggregate.where.paidAt.lte).toEqual(expectedLastMonthEnd);
 	});

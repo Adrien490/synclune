@@ -8,14 +8,27 @@ import type { GetKpisReturn } from "../types/dashboard.types";
 export type { GetKpisReturn } from "../types/dashboard.types";
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+function getMonthBoundaries() {
+	const now = new Date();
+	const year = now.getUTCFullYear();
+	const month = now.getUTCMonth();
+
+	return {
+		currentMonthStart: new Date(Date.UTC(year, month, 1)),
+		lastMonthStart: new Date(Date.UTC(year, month - 1, 1)),
+		lastMonthEnd: new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)),
+	};
+}
+
+// ============================================================================
 // INTERNAL FETCH FUNCTIONS
 // ============================================================================
 
 async function fetchMonthlyRevenue() {
-	const now = new Date();
-	const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-	const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-	const lastMonthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59));
+	const { currentMonthStart, lastMonthStart, lastMonthEnd } = getMonthBoundaries();
 
 	const [currentMonthOrders, lastMonthOrders] = await Promise.all([
 		prisma.order.aggregate({
@@ -44,10 +57,7 @@ async function fetchMonthlyRevenue() {
 }
 
 async function fetchMonthlyOrders() {
-	const now = new Date();
-	const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-	const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-	const lastMonthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59));
+	const { currentMonthStart, lastMonthStart, lastMonthEnd } = getMonthBoundaries();
 
 	const [currentMonthCount, lastMonthCount] = await Promise.all([
 		prisma.order.count({
@@ -73,10 +83,7 @@ async function fetchMonthlyOrders() {
 }
 
 async function fetchAverageOrderValue() {
-	const now = new Date();
-	const currentMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-	const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-	const lastMonthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59));
+	const { currentMonthStart, lastMonthStart, lastMonthEnd } = getMonthBoundaries();
 
 	const [currentMonth, lastMonth] = await Promise.all([
 		prisma.order.aggregate({

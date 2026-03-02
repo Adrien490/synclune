@@ -46,7 +46,7 @@ export async function updateCollection(
 			: null;
 
 		// 3. Transaction pour garantir l'atomicite
-		const slug = await prisma.$transaction(async (tx) => {
+		const { newSlug, oldSlug } = await prisma.$transaction(async (tx) => {
 			// Verifier que la collection existe
 			const existingCollection = await tx.collection.findUnique({
 				where: { id: validatedData.id },
@@ -68,27 +68,33 @@ export async function updateCollection(
 			}
 
 			// Generer un nouveau slug si le nom a change
-			const newSlug =
-				sanitizedName !== existingCollection.name
-					? await generateSlug(tx, "collection", sanitizedName)
-					: existingCollection.slug;
+			const slugChanged = sanitizedName !== existingCollection.name;
+			const generatedSlug = slugChanged
+				? await generateSlug(tx, "collection", sanitizedName)
+				: existingCollection.slug;
 
 			// Mettre a jour la collection
 			await tx.collection.update({
 				where: { id: validatedData.id },
 				data: {
 					name: sanitizedName,
-					slug: newSlug,
+					slug: generatedSlug,
 					description: sanitizedDescription,
 					status: validatedData.status,
 				},
 			});
 
-			return newSlug;
+			return {
+				newSlug: generatedSlug,
+				oldSlug: slugChanged ? existingCollection.slug : null,
+			};
 		});
 
-		// Invalider le cache
-		getCollectionInvalidationTags(slug).forEach((tag) => updateTag(tag));
+		// Invalider le cache (nouveau slug + ancien slug si rename)
+		getCollectionInvalidationTags(newSlug).forEach((tag) => updateTag(tag));
+		if (oldSlug) {
+			getCollectionInvalidationTags(oldSlug).forEach((tag) => updateTag(tag));
+		}
 		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		void logAudit({

@@ -55,36 +55,43 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 		return { products: [], suggestion: null, totalCount: 0 };
 	}
 
-	// Search for product IDs using fuzzy search
-	const { ids: productIds, totalCount } = await fuzzySearchProductIds(term, {
-		limit: QUICK_SEARCH_LIMIT,
-		status: ProductStatus.PUBLIC,
-	});
+	try {
+		// Search for product IDs using fuzzy search
+		const { ids: productIds, totalCount } = await fuzzySearchProductIds(term, {
+			limit: QUICK_SEARCH_LIMIT,
+			status: ProductStatus.PUBLIC,
+		});
 
-	// Fetch products and optionally spell suggestion in parallel
-	const shouldSuggest = productIds.length < SUGGESTION_THRESHOLD_RESULTS;
+		// Fetch products and optionally spell suggestion in parallel
+		const shouldSuggest = productIds.length < SUGGESTION_THRESHOLD_RESULTS;
 
-	const [products, spellResult] = await Promise.all([
-		productIds.length > 0
-			? prisma.product.findMany({
-					where: { id: { in: productIds } },
-					select: QUICK_SEARCH_SELECT,
-				})
-			: Promise.resolve([]),
-		shouldSuggest
-			? getSpellSuggestion(term, { status: ProductStatus.PUBLIC })
-			: Promise.resolve(null),
-	]);
+		const [products, spellResult] = await Promise.all([
+			productIds.length > 0
+				? prisma.product.findMany({
+						where: { id: { in: productIds } },
+						select: QUICK_SEARCH_SELECT,
+					})
+				: Promise.resolve([]),
+			shouldSuggest
+				? getSpellSuggestion(term, { status: ProductStatus.PUBLIC })
+				: Promise.resolve(null),
+		]);
 
-	// Preserve relevance ordering from fuzzy search
-	const productMap = new Map(products.map((p) => [p.id, p]));
-	const orderedProducts = productIds
-		.map((id) => productMap.get(id))
-		.filter((p): p is QuickSearchProduct => p !== undefined);
+		// Preserve relevance ordering from fuzzy search
+		const productMap = new Map(products.map((p) => [p.id, p]));
+		const orderedProducts = productIds
+			.map((id) => productMap.get(id))
+			.filter((p): p is QuickSearchProduct => p !== undefined);
 
-	return {
-		products: orderedProducts,
-		suggestion: spellResult?.term ?? null,
-		totalCount,
-	};
+		return {
+			products: orderedProducts,
+			suggestion: spellResult?.term ?? null,
+			totalCount,
+		};
+	} catch (error) {
+		if (process.env.NODE_ENV === "development") {
+			console.error("[quickSearchProducts]", error);
+		}
+		return { products: [], suggestion: null, totalCount: 0 };
+	}
 }
