@@ -6,7 +6,7 @@ import { FloatingImage } from "./floating-image";
 import { IMAGE_POSITIONS } from "./image-positions";
 import type { HeroFloatingImagesProps } from "./types";
 
-export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
+function HeroFloatingImagesInner({ images }: HeroFloatingImagesProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const shouldReduceMotion = useReducedMotion();
 	const isInView = useInView(containerRef, { margin: "0px 0px -100px 0px" });
@@ -16,10 +16,7 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 		offset: ["start start", "end start"],
 	});
 
-	// Single shared opacity transform instead of one per image
 	const parallaxOpacity = useTransform(scrollYProgress, [0, 0.4, 1], [1, 1, 0.2]);
-
-	if (images.length === 0) return null;
 
 	return (
 		<div
@@ -47,4 +44,9 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 			})}
 		</div>
 	);
+}
+
+export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
+	if (images.length === 0) return null;
+	return <HeroFloatingImagesInner images={images} />;
 }

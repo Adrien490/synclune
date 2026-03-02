@@ -18,35 +18,7 @@ const LERP_RESET_DURATION = 600;
 /** Upper bound for particle count to prevent excessive DOM nodes (desktop + mobile ≈ count * 3 spans) */
 const MAX_PARTICLES = 30;
 
-/**
- * Systeme de particules decoratives avec effet de profondeur
- *
- * Utilise CSS media queries pour la detection mobile (pas de flash d'hydratation).
- * Desktop: count particules, Mobile: count/2 particules.
- * CSS containment pour isoler les repaints.
- *
- * `count` is clamped to 30 max (both trees: count*2 desktop + ceil(count/2)*2 mobile ≈ count*3 spans).
- *
- * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4
- * **Animations** : float, drift, rise, orbit, breathe, sparkle
- *
- * @example
- * // Defaut (couleurs primary/secondary/pastel)
- * <ParticleBackground />
- *
- * @example
- * // Multi-formes : mix diamants et cercles
- * <ParticleBackground
- *   shape={["diamond", "circle"]}
- *   colors={["var(--secondary)", "oklch(0.9 0.1 80)"]}
- *   blur={[4, 15]}
- * />
- *
- * @example
- * // Animation plus lente (speed < 1)
- * <ParticleBackground speed={0.5} />
- */
-export function ParticleBackground({
+function ParticleBackgroundInner({
 	count = 6,
 	size = [8, 64],
 	opacity = [0.1, 0.4],
@@ -68,7 +40,6 @@ export function ParticleBackground({
 
 	const [tabVisible, setTabVisible] = useState(true);
 
-	// useSyncExternalStore: server snapshot = false, avoids hydration mismatch
 	const highContrast = useSyncExternalStore(
 		(cb) => {
 			const mql = window.matchMedia("(prefers-contrast: more)");
@@ -76,15 +47,6 @@ export function ParticleBackground({
 			return () => mql.removeEventListener("change", cb);
 		},
 		() => window.matchMedia("(prefers-contrast: more)").matches,
-		() => false,
-	);
-	const forcedColors = useSyncExternalStore(
-		(cb) => {
-			const mql = window.matchMedia("(forced-colors: active)");
-			mql.addEventListener("change", cb);
-			return () => mql.removeEventListener("change", cb);
-		},
-		() => window.matchMedia("(forced-colors: active)").matches,
 		() => false,
 	);
 
@@ -182,10 +144,6 @@ export function ParticleBackground({
 		};
 	}, [mouseX, mouseY, disableOnTouch, isTouchDevice]);
 
-	if ((disableOnTouch && isTouchDevice) || forcedColors) {
-		return null;
-	}
-
 	// Normalise shape en tableau
 	const shapes = Array.isArray(shape) ? shape : [shape];
 
@@ -250,4 +208,51 @@ export function ParticleBackground({
 			</div>
 		</div>
 	);
+}
+
+/**
+ * Systeme de particules decoratives avec effet de profondeur
+ *
+ * Utilise CSS media queries pour la detection mobile (pas de flash d'hydratation).
+ * Desktop: count particules, Mobile: count/2 particules.
+ * CSS containment pour isoler les repaints.
+ *
+ * `count` is clamped to 30 max (both trees: count*2 desktop + ceil(count/2)*2 mobile ≈ count*3 spans).
+ *
+ * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4
+ * **Animations** : float, drift, rise, orbit, breathe, sparkle
+ *
+ * @example
+ * // Defaut (couleurs primary/secondary/pastel)
+ * <ParticleBackground />
+ *
+ * @example
+ * // Multi-formes : mix diamants et cercles
+ * <ParticleBackground
+ *   shape={["diamond", "circle"]}
+ *   colors={["var(--secondary)", "oklch(0.9 0.1 80)"]}
+ *   blur={[4, 15]}
+ * />
+ *
+ * @example
+ * // Animation plus lente (speed < 1)
+ * <ParticleBackground speed={0.5} />
+ */
+export function ParticleBackground({ disableOnTouch = false, ...props }: ParticleBackgroundProps) {
+	const isTouchDevice = useIsTouchDevice();
+	const forcedColors = useSyncExternalStore(
+		(cb) => {
+			const mql = window.matchMedia("(forced-colors: active)");
+			mql.addEventListener("change", cb);
+			return () => mql.removeEventListener("change", cb);
+		},
+		() => window.matchMedia("(forced-colors: active)").matches,
+		() => false,
+	);
+
+	if ((disableOnTouch && isTouchDevice) || forcedColors) {
+		return null;
+	}
+
+	return <ParticleBackgroundInner disableOnTouch={disableOnTouch} {...props} />;
 }

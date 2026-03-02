@@ -16,7 +16,6 @@ import { CollectionStatusNavigation } from "@/modules/collections/components/adm
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
 import { RefreshCollectionsButton } from "@/modules/collections/components/admin/refresh-collections-button";
 import { parseFilters, parseStatus } from "./_utils/params";
-import { connection } from "next/server";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const CollectionFormDialog = dynamic(() =>

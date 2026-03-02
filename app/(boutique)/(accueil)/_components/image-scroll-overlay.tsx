@@ -1,21 +1,11 @@
 "use client";
 
-import { motion, useScroll, useTransform, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { useIsTouchDevice } from "@/shared/hooks";
 
-/**
- * Scroll-linked gradient overlay on the atelier image.
- * Transitions from primary/10 to secondary/10 as user scrolls through the steps,
- * reflecting the progression from inspiration to finished result.
- *
- * Desktop only - disabled on touch devices for performance.
- * Respects prefers-reduced-motion.
- */
-export function ImageScrollOverlay() {
+function ScrollOverlayInner() {
 	const ref = useRef<HTMLDivElement>(null);
-	const shouldReduceMotion = useReducedMotion();
-	const isTouchDevice = useIsTouchDevice();
 
 	const { scrollYProgress } = useScroll({
 		target: ref,
@@ -23,11 +13,6 @@ export function ImageScrollOverlay() {
 	});
 
 	const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 0.15, 0.15, 0]);
-
-	// Disabled on mobile/touch or reduced-motion
-	if (isTouchDevice || shouldReduceMotion) {
-		return null;
-	}
 
 	return (
 		<motion.div
@@ -40,4 +25,23 @@ export function ImageScrollOverlay() {
 			aria-hidden="true"
 		/>
 	);
+}
+
+/**
+ * Scroll-linked gradient overlay on the atelier image.
+ * Transitions from primary/10 to secondary/10 as user scrolls through the steps,
+ * reflecting the progression from inspiration to finished result.
+ *
+ * Desktop only - disabled on touch devices for performance.
+ * Respects prefers-reduced-motion.
+ */
+export function ImageScrollOverlay() {
+	const shouldReduceMotion = useReducedMotion();
+	const isTouchDevice = useIsTouchDevice();
+
+	if (isTouchDevice || shouldReduceMotion) {
+		return null;
+	}
+
+	return <ScrollOverlayInner />;
 }
