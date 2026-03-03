@@ -116,7 +116,7 @@ describe("addRecentProduct", () => {
 		expect(cookieStore.set).toHaveBeenCalledWith(
 			"recent-products",
 			expect.any(String),
-			expect.objectContaining({ httpOnly: true, sameSite: "lax" }),
+			expect.objectContaining({ httpOnly: true, sameSite: "strict" }),
 		);
 	});
 

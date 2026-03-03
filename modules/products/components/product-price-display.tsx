@@ -200,7 +200,7 @@ export function ProductPriceDisplay({
 				<div className="text-muted-foreground pt-1 text-sm">
 					<span>
 						Recevez d'ici le{" "}
-						<span className="text-foreground font-medium">
+						<span className="text-foreground font-medium" suppressHydrationWarning>
 							{format(minDelivery, "d", { locale: fr })}-
 							{format(maxDelivery, "d MMM", { locale: fr })}
 						</span>

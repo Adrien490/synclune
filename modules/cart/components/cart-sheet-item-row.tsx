@@ -7,7 +7,7 @@ import { cn } from "@/shared/utils/cn";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
-import { CartItemMoveToWishlist } from "./cart-item-move-to-wishlist";
+
 import type { CartItem } from "../types/cart.types";
 import {
 	getCartItemSubtotal,
@@ -221,18 +221,12 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					/>
 				)}
 
-				{/* Favoris + Supprimer - à droite */}
-				<div className="flex items-center">
-					<CartItemMoveToWishlist
-						productId={item.sku.product.id}
-						itemName={item.sku.product.title}
-					/>
-					<CartItemRemoveButton
-						cartItemId={item.id}
-						itemName={item.sku.product.title}
-						quantity={item.quantity}
-					/>
-				</div>
+				{/* Supprimer - à droite */}
+				<CartItemRemoveButton
+					cartItemId={item.id}
+					itemName={item.sku.product.title}
+					quantity={item.quantity}
+				/>
 			</div>
 		</article>
 	);

@@ -8,8 +8,12 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
-import { useActionState } from "react";
-import { getCheckoutFormOptions } from "../utils/checkout-form.utils";
+import { useActionState, useEffect } from "react";
+import {
+	DRAFT_VERSION,
+	getCheckoutFormOptions,
+	type CheckoutDraft,
+} from "../utils/checkout-form.utils";
 
 interface UseCheckoutFormOptions {
 	session: Session | null;
@@ -69,6 +73,44 @@ export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
 		// Merge server state with form state for validation errors
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
+
+	// Restore saved draft from localStorage after mount (avoids hydration mismatch)
+	useEffect(() => {
+		try {
+			const raw = localStorage.getItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
+			if (!raw) return;
+
+			const draft = JSON.parse(raw) as CheckoutDraft;
+
+			// Invalidate incompatible or expired drafts
+			if (draft.version !== DRAFT_VERSION) {
+				localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
+				return;
+			}
+			const ONE_HOUR = 60 * 60 * 1000;
+			if (Date.now() - (draft.timestamp ?? 0) > ONE_HOUR) {
+				localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
+				return;
+			}
+
+			// Apply draft values via setFieldValue (same pattern as address selection)
+			if (draft.email) form.setFieldValue("email", draft.email);
+			const s = draft.shipping;
+			if (s?.fullName) form.setFieldValue("shipping.fullName", s.fullName);
+			// Support legacy firstName/lastName drafts
+			if (!s?.fullName && (s?.firstName || s?.lastName)) {
+				form.setFieldValue("shipping.fullName", `${s.firstName ?? ""} ${s.lastName ?? ""}`.trim());
+			}
+			if (s?.addressLine1) form.setFieldValue("shipping.addressLine1", s.addressLine1);
+			if (s?.addressLine2) form.setFieldValue("shipping.addressLine2", s.addressLine2);
+			if (s?.city) form.setFieldValue("shipping.city", s.city);
+			if (s?.postalCode) form.setFieldValue("shipping.postalCode", s.postalCode);
+			if (s?.country) form.setFieldValue("shipping.country", s.country);
+			if (s?.phoneNumber) form.setFieldValue("shipping.phoneNumber", s.phoneNumber);
+		} catch {
+			localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
+		}
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps -- form ref is stable
 
 	// Subscribe to form errors for display
 	const formErrors = useStore(form.store, (formState) => formState.errors);

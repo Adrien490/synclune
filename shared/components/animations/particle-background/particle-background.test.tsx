@@ -76,9 +76,14 @@ vi.mock("@/shared/hooks/use-touch-device", () => ({
 	useIsTouchDevice: vi.fn(() => false),
 }));
 
+vi.mock("@/shared/hooks/use-mounted", () => ({
+	useMounted: vi.fn(() => true),
+}));
+
 // Now import the component after mocks are set up
 const { useReducedMotion, useInView, useMotionValue } = await import("motion/react");
 const { useIsTouchDevice } = await import("@/shared/hooks/use-touch-device");
+const { useMounted } = await import("@/shared/hooks/use-mounted");
 const { ParticleBackground } = await import("./particle-background");
 
 // Helper to mock matchMedia for high contrast / forced-colors tests
@@ -281,6 +286,19 @@ describe("ParticleBackground", () => {
 		});
 		const { container } = render(<ParticleBackground count={3} />);
 		expect(container.firstElementChild).toBeNull();
+	});
+
+	it("renders particles before mount even with forced-colors (avoids hydration mismatch)", () => {
+		vi.mocked(useMounted as ReturnType<typeof vi.fn>).mockReturnValue(false);
+		mockMatchMedia({
+			"(prefers-contrast: more)": false,
+			"(forced-colors: active)": true,
+		});
+		const { container } = render(<ParticleBackground count={3} />);
+		// Before mount, should render regardless of forced-colors
+		expect(container.firstElementChild).toBeTruthy();
+		expect(container.firstElementChild?.getAttribute("aria-hidden")).toBe("true");
+		vi.mocked(useMounted as ReturnType<typeof vi.fn>).mockReturnValue(true);
 	});
 
 	it("renders particles when prefers-contrast: more is active (with reduced visual impact)", () => {

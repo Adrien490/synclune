@@ -53,7 +53,7 @@ export function MenuSheetFooter({ isAdmin }: MenuSheetFooterProps) {
 			</div>
 
 			{/* Copyright */}
-			<p className="text-muted-foreground mt-3 text-center text-xs">
+			<p className="text-muted-foreground mt-3 text-center text-xs" suppressHydrationWarning>
 				© {new Date().getFullYear()} {BRAND.name}
 			</p>
 		</footer>

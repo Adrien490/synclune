@@ -294,7 +294,7 @@ export function buildClearFiltersURL(currentSearchParams: URLSearchParams): stri
  */
 export function countActiveFilters(searchParams: URLSearchParams): ActiveFiltersResult {
 	let count = 0;
-	let hasPriceFilter = false;
+	const hasPriceFilter = searchParams.has("priceMin") || searchParams.has("priceMax");
 
 	searchParams.forEach((value, key) => {
 		// Ignorer les paramètres non-filtre
@@ -310,10 +310,6 @@ export function countActiveFilters(searchParams: URLSearchParams): ActiveFilters
 			case "stockStatus":
 			case "onSale":
 				count += 1;
-				break;
-			case "priceMin":
-			case "priceMax":
-				hasPriceFilter = true;
 				break;
 		}
 	});

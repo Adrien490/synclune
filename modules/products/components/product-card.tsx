@@ -6,7 +6,6 @@ import {
 	PRODUCT_TEXTS,
 	MAX_COLOR_SWATCHES,
 	ABOVE_FOLD_THRESHOLD,
-	NEW_PRODUCT_DAYS,
 } from "@/modules/products/constants/product-texts.constants";
 import { ProductPrice } from "./product-price";
 import { Badge } from "@/shared/components/ui/badge";
@@ -203,13 +202,6 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 	// Stock badges take priority over promo badge (same position)
 	const showPromoBadge = hasDiscount && stockStatus !== "out_of_stock" && !showUrgencyBadge;
 
-	// "Nouveau" badge for recently created products (< NEW_PRODUCT_DAYS days)
-	const isNew =
-		product.createdAt &&
-		Date.now() - new Date(product.createdAt).getTime() < NEW_PRODUCT_DAYS * 24 * 60 * 60 * 1000;
-	const showNewBadge =
-		isNew && !showPromoBadge && stockStatus !== "out_of_stock" && !showUrgencyBadge;
-
 	const productUrl = `/creations/${slug}`;
 
 	const isAboveFold = index !== undefined && index < ABOVE_FOLD_THRESHOLD;
@@ -225,9 +217,6 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 	}
 	if (showPromoBadge) {
 		badgeDescriptions.push(`Promotion : -${discountPercent}%`);
-	}
-	if (showNewBadge) {
-		badgeDescriptions.push("Nouveau produit");
 	}
 	const badgeDescId =
 		badgeDescriptions.length > 0
@@ -271,7 +260,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 					"motion-safe:can-hover:group-hover:after:opacity-100 after:absolute after:inset-0 after:z-[5] after:bg-linear-to-t after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity after:duration-300",
 				)}
 			>
-				{/* Status badges — stock badges take priority over promo, then "Nouveau" */}
+				{/* Status badges — stock badges take priority over promo */}
 				{stockStatus === "out_of_stock" && (
 					<CardBadge
 						variant="secondary"
@@ -282,7 +271,6 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 				)}
 				{showUrgencyBadge && <CardBadge variant="warning">{stockMessage}</CardBadge>}
 				{showPromoBadge && <CardBadge variant="destructive">-{discountPercent}%</CardBadge>}
-				{showNewBadge && <CardBadge variant="default">Nouveau</CardBadge>}
 
 				{/* Wishlist button (client island) */}
 				<WishlistButton

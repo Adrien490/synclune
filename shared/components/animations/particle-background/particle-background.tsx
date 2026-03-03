@@ -1,6 +1,7 @@
 "use client";
 
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
 import { useInView, useMotionValue, useReducedMotion, useScroll, useTransform } from "motion/react";
@@ -259,8 +260,11 @@ function ParticleBackgroundInner({
 export function ParticleBackground({ disableOnTouch = false, ...props }: ParticleBackgroundProps) {
 	const isTouchDevice = useIsTouchDevice();
 	const forcedColors = useMediaQuery("(forced-colors: active)");
+	const mounted = useMounted();
 
-	if ((disableOnTouch && isTouchDevice) || forcedColors) {
+	// Gate on mounted to avoid hydration mismatch: server always renders
+	// <ParticleBackgroundInner>, client checks accessibility after mount.
+	if (mounted && ((disableOnTouch && isTouchDevice) || forcedColors)) {
 		return null;
 	}
 

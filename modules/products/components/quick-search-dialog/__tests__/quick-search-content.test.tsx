@@ -135,13 +135,13 @@ describe("QuickSearchContent", () => {
 		expect(container.querySelector('a[href="/creations/collier-etoile"]')).toBeInTheDocument();
 	});
 
-	it('shows "Voir les X resultats" button when totalCount > 1', () => {
+	it('shows "Voir les X résultats" button when totalCount > 1', () => {
 		render(<QuickSearchContent results={makeResults({ totalCount: 5 })} {...defaultProps} />);
 
-		expect(screen.getByRole("button", { name: /voir les 5 resultats/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /voir les 5 résultats/i })).toBeInTheDocument();
 	});
 
-	it('shows singular "Voir le resultat" when totalCount === 1', () => {
+	it('shows singular "Voir le résultat" when totalCount === 1', () => {
 		render(
 			<QuickSearchContent
 				results={makeResults({ totalCount: 1, products: [mockProduct] })}
@@ -149,7 +149,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		expect(screen.getByRole("button", { name: /voir le resultat/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /voir le résultat/i })).toBeInTheDocument();
 	});
 
 	it("shows empty state message when no products, no matched nav, no suggestion", () => {
@@ -163,7 +163,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		expect(screen.getByText(/aucun resultat pour/i)).toBeInTheDocument();
+		expect(screen.getByText(/aucun résultat pour/i)).toBeInTheDocument();
 	});
 
 	it("shows rate limited message", () => {
@@ -175,7 +175,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		expect(screen.getByText(/trop de requetes/i)).toBeInTheDocument();
+		expect(screen.getByText(/trop de requêtes/i)).toBeInTheDocument();
 	});
 
 	it("shows error message when error flag is set", () => {
@@ -190,7 +190,7 @@ describe("QuickSearchContent", () => {
 		);
 
 		expect(screen.getByText(/une erreur est survenue/i)).toBeInTheDocument();
-		expect(screen.queryByText(/aucun resultat pour/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/aucun résultat pour/i)).not.toBeInTheDocument();
 	});
 
 	it("does not show error message when rateLimited takes precedence", () => {
@@ -202,7 +202,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		expect(screen.getByText(/trop de requetes/i)).toBeInTheDocument();
+		expect(screen.getByText(/trop de requêtes/i)).toBeInTheDocument();
 		expect(screen.queryByText(/une erreur est survenue/i)).not.toBeInTheDocument();
 	});
 
@@ -251,17 +251,17 @@ describe("QuickSearchContent", () => {
 		render(<QuickSearchContent results={makeResults({ totalCount: 3 })} {...defaultProps} />);
 
 		const status = screen.getByRole("status");
-		expect(status).toHaveTextContent("3 resultats trouves.");
+		expect(status).toHaveTextContent("3 résultats trouvés.");
 	});
 
 	it("announces singular result for screen readers", () => {
 		render(<QuickSearchContent results={makeResults({ totalCount: 1 })} {...defaultProps} />);
 
 		const status = screen.getByRole("status");
-		expect(status).toHaveTextContent("1 resultat trouve.");
+		expect(status).toHaveTextContent("1 résultat trouvé.");
 	});
 
-	it('calls onViewAllResults when "Voir les resultats" button clicked', async () => {
+	it('calls onViewAllResults when "Voir les résultats" button clicked', async () => {
 		const onViewAllResults = vi.fn();
 		render(
 			<QuickSearchContent
@@ -271,7 +271,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		const button = screen.getByRole("button", { name: /voir les 2 resultats/i });
+		const button = screen.getByRole("button", { name: /voir les 2 résultats/i });
 		await userEvent.click(button);
 
 		expect(onViewAllResults).toHaveBeenCalledOnce();
