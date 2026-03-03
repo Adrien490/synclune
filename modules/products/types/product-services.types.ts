@@ -48,7 +48,6 @@ export type ProductImage = {
 	url: string;
 	alt: string;
 	mediaType: MediaType;
-	blurDataURL?: string;
 	source: "default" | "selected" | "sku";
 	skuId?: string;
 };

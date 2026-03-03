@@ -133,7 +133,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 						display: "flex",
 					}}
 				>
-					Créations artisanales faites main à Nantes
+					Créations artisanales faites main en France
 				</div>
 			</div>
 		</div>,

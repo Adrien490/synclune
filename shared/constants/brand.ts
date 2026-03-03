@@ -7,7 +7,7 @@ export const BRAND = {
 	name: "Synclune",
 	tagline: "Créations uniques faites avec amour",
 	description:
-		"Créatrice de bijoux artisanaux faits main à Nantes - Créations uniques pour occasions particulières",
+		"Créatrice de bijoux artisanaux faits main - Créations uniques pour occasions particulières",
 
 	logo: {
 		url: "/logo.webp",
@@ -28,8 +28,6 @@ export const BRAND = {
 	contact: {
 		email: process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr",
 		location: {
-			city: "Nantes",
-			region: "Loire-Atlantique",
 			country: "France",
 		},
 	},

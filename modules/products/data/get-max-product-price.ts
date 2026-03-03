@@ -1,5 +1,3 @@
-"use cache";
-
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -16,8 +14,8 @@ import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
  * Cache : 24h stale, 2h revalidate, 30j expire (profil reference)
  */
 export async function getMaxProductPrice(): Promise<number> {
-	// Cache reference : données quasi-statiques qui changent très rarement
-	cacheLife("reference"); // 24h stale, 2h revalidate, 30j expire
+	"use cache";
+	cacheLife("reference");
 	cacheTag(PRODUCTS_CACHE_TAGS.MAX_PRICE);
 
 	try {

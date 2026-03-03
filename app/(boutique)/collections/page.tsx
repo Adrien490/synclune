@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 		card: "summary_large_image",
 		title: "Les Collections | Synclune",
 		description:
-			"Collections de bijoux colorés faits main à Nantes. Univers Pokémon, Van Gogh et bien d'autres !",
+			"Collections de bijoux colorés faits main. Univers Pokémon, Van Gogh et bien d'autres !",
 	},
 };
 

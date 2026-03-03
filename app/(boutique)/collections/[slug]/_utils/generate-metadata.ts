@@ -72,8 +72,8 @@ export async function generateCollectionMetadata({
 		"bijoux artisanaux",
 		"collection bijoux",
 		"Synclune",
-		"bijoux Nantes",
-		"créatrice Nantes",
+		"créatrice bijoux",
+		"bijoux faits main",
 		"bijoux colorés",
 		"bijoux originaux",
 	];

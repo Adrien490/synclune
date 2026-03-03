@@ -21,20 +21,19 @@ import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
 export const metadata: Metadata = {
 	title: {
-		absolute: "Synclune | Bijoux artisanaux faits main à Nantes",
+		absolute: "Synclune | Bijoux artisanaux faits main",
 	},
 	description:
-		"Bijoux faits main uniques et colorés. Boucles d'oreilles, colliers, bracelets créés avec amour par Léane à Nantes. Éditions limitées, livraison rapide.",
+		"Bijoux faits main uniques et colorés. Boucles d'oreilles, colliers, bracelets créés avec amour par Léane. Éditions limitées, livraison rapide.",
 	keywords: [
-		"bijoux artisanaux Nantes",
-		"bijoux faits main Nantes",
-		"créatrice bijoux Nantes",
-		"bagues Nantes",
-		"colliers Nantes",
-		"boucles d'oreilles Nantes",
-		"bracelets Nantes",
-		"bijoux colorés Loire-Atlantique",
-		"atelier bijoux Nantes 44",
+		"bijoux artisanaux",
+		"bijoux faits main",
+		"créatrice bijoux",
+		"bijoux colorés",
+		"bijoux originaux",
+		"boucles d'oreilles artisanales",
+		"colliers faits main",
+		"bracelets artisanaux",
 	],
 	alternates: {
 		canonical: "/",
@@ -42,7 +41,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: "Synclune | Bijoux artisanaux faits main",
 		description:
-			"Bijoux colorés faits main dans mon atelier nantais. Boucles d'oreilles, colliers, bracelets. Loire-Atlantique.",
+			"Bijoux colorés faits main dans mon atelier. Boucles d'oreilles, colliers, bracelets. Pièces uniques.",
 		url: SITE_URL,
 		type: "website",
 		images: [
@@ -50,15 +49,15 @@ export const metadata: Metadata = {
 				url: "/opengraph-image",
 				width: 1200,
 				height: 630,
-				alt: "Synclune - Bijoux artisanaux faits main à Nantes (44)",
+				alt: "Synclune - Bijoux artisanaux faits main",
 			},
 		],
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Synclune | Bijoux artisanaux faits main Nantes (44)",
+		title: "Synclune | Bijoux artisanaux faits main",
 		description:
-			"Bijoux artisanaux colorés faits main à Nantes. Boucles d'oreilles, colliers, bracelets uniques. Créatrice Loire-Atlantique.",
+			"Bijoux artisanaux colorés faits main. Boucles d'oreilles, colliers, bracelets uniques. Créatrice indépendante.",
 	},
 };
 

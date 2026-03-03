@@ -1,6 +1,6 @@
 # Synclune - Boutique E-commerce Artisanale
 
-> Boutique en ligne de bijoux faits main par une creatrice independante basee a Nantes.
+> Boutique en ligne de bijoux faits main par une creatrice independante basee en France.
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)

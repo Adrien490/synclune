@@ -193,6 +193,19 @@ export const IMAGE_SIZES = {
 /**
  * Messages de validation pour les formulaires
  */
+// ============================================================================
+// PRODUCT CARD DISPLAY
+// ============================================================================
+
+/** Maximum number of color swatches to display on a product card */
+export const MAX_COLOR_SWATCHES = 5;
+
+/** Number of products considered above-fold for image preloading */
+export const ABOVE_FOLD_THRESHOLD = 4;
+
+/** Number of days a product is considered "new" after creation */
+export const NEW_PRODUCT_DAYS = 14;
+
 export const VALIDATION_MESSAGES = {
 	REQUIRED_FIELD: "Ce champ est obligatoire",
 	EMAIL_INVALID: "Adresse email invalide",

@@ -239,7 +239,7 @@ async function fetchContextualRelatedProducts(
 		const currentCollectionIds = currentProduct.collections.map((c) => c.collectionId);
 
 		// Lancer toutes les requêtes en parallèle pour optimiser les performances
-		const [sameCollectionProducts, sameTypeProducts, similarColorProducts, bestSellers] =
+		const [sameCollectionProducts, sameTypeProducts, similarColorProducts, newestProducts] =
 			await Promise.all([
 				// STRATÉGIE 1 : Même collection(s)
 				currentCollectionIds.length > 0
@@ -296,7 +296,7 @@ async function fetchContextualRelatedProducts(
 						})
 					: Promise.resolve([]),
 
-				// STRATÉGIE 4 : Best-sellers pour compléter
+				// STRATÉGIE 4 : Newest products to fill remaining slots
 				prisma.product.findMany({
 					where: baseWhere,
 					select: GET_PRODUCTS_SELECT,
@@ -309,7 +309,7 @@ async function fetchContextualRelatedProducts(
 		addProducts(sameCollectionProducts, RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION);
 		addProducts(sameTypeProducts, RELATED_PRODUCTS_STRATEGY.SAME_TYPE);
 		addProducts(similarColorProducts, RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS);
-		addProducts(bestSellers, limit - relatedProducts.length);
+		addProducts(newestProducts, limit - relatedProducts.length);
 
 		return serializeProducts(relatedProducts);
 	} catch {

@@ -1,7 +1,7 @@
 # Synclune - Bijoux artisanaux faits main
 
 ## A propos
-Synclune est une creatrice de bijoux artisanaux basee a Nantes (Loire-Atlantique, France).
+Synclune est une creatrice de bijoux artisanaux basee en France.
 Tous les bijoux sont faits main avec amour : boucles d'oreilles, colliers, bracelets.
 
 ## Creatrice
@@ -11,7 +11,7 @@ Leane Taddei - Artisan createur de bijoux
 - Email: synclune.bijoux@gmail.com
 - Instagram: @synclune.bijoux
 - TikTok: @synclune
-- Adresse: 77 Boulevard du Tertre, 44100 Nantes, France
+- Pays: France
 
 ## Site web
 https://synclune.fr

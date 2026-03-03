@@ -47,7 +47,7 @@ export async function RecentlyViewedProducts({
 			<Reveal y={20} amount={0.3}>
 				<div className="space-y-2">
 					<h2 id="recently-viewed-heading" className="text-2xl font-semibold tracking-tight">
-						Recemment vus
+						Récemment vus
 					</h2>
 				</div>
 			</Reveal>

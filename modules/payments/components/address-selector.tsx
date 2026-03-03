@@ -56,8 +56,12 @@ export function AddressSelector({
 								)}
 							/>
 							<div className="min-w-0 flex-1">
-								<p className="truncate font-medium">{fullName}</p>
-								<p className="text-muted-foreground truncate">{addressLine}</p>
+								<p className="truncate font-medium" title={fullName}>
+									{fullName}
+								</p>
+								<p className="text-muted-foreground truncate" title={addressLine}>
+									{addressLine}
+								</p>
 							</div>
 							{address.isDefault && (
 								<span className="text-muted-foreground mt-0.5 shrink-0 text-xs">Par défaut</span>

@@ -7,7 +7,7 @@ export default function BijouxHubLoading() {
 		<div className="min-h-screen">
 			<PageHeader
 				title="Les créations"
-				description="Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !"
+				description="Découvrez toutes mes créations colorées faites main dans mon atelier. Des pièces uniques inspirées de mes passions !"
 				breadcrumbs={[{ label: "Créations", href: "/produits" }]}
 			/>
 

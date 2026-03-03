@@ -11,7 +11,7 @@ export function RefreshButton() {
 	return (
 		<Button variant="outline" size="sm" onClick={() => router.refresh()} className="shrink-0">
 			<RefreshCw className="size-4" aria-hidden="true" />
-			Reessayer
+			Réessayer
 		</Button>
 	);
 }

@@ -114,10 +114,10 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 		return (
 			<TableEmptyState
 				icon={Package}
-				title="Aucun bijou trouve"
-				description="Aucun bijou ne correspond aux criteres de recherche."
+				title="Aucun bijou trouvé"
+				description="Aucun bijou ne correspond aux critères de recherche."
 				action={{
-					label: "Creer un produit",
+					label: "Créer un produit",
 					href: "/admin/catalogue/produits/nouveau",
 				}}
 			/>
@@ -169,7 +169,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 											<TableSelectionCell
 												type="row"
 												itemId={product.id}
-												ariaLabel={`Selectionner ${product.title}`}
+												ariaLabel={`Sélectionner ${product.title}`}
 											/>
 										</TableCell>
 										<TableCell className="hidden py-3 sm:table-cell">

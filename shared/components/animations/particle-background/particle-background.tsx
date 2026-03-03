@@ -1,9 +1,10 @@
 "use client";
 
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
 import { useInView, useMotionValue, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";
 import type { ParticleBackgroundProps } from "./types";
@@ -31,6 +32,8 @@ function ParticleBackgroundInner({
 	speed = 1,
 	disableOnTouch = false,
 	scrollFade = false,
+	scrollParallax = false,
+	interactive = false,
 }: ParticleBackgroundProps) {
 	const safeCount = Math.min(count, MAX_PARTICLES);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -39,16 +42,9 @@ function ParticleBackgroundInner({
 	const isTouchDevice = useIsTouchDevice();
 
 	const [tabVisible, setTabVisible] = useState(true);
+	const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
-	const highContrast = useSyncExternalStore(
-		(cb) => {
-			const mql = window.matchMedia("(prefers-contrast: more)");
-			mql.addEventListener("change", cb);
-			return () => mql.removeEventListener("change", cb);
-		},
-		() => window.matchMedia("(prefers-contrast: more)").matches,
-		() => false,
-	);
+	const highContrast = useMediaQuery("(prefers-contrast: more)");
 
 	useEffect(() => {
 		function onVisibilityChange() {
@@ -71,6 +67,10 @@ function ParticleBackgroundInner({
 	const mouseX = useMotionValue(0);
 	const mouseY = useMotionValue(0);
 
+	// Normalized cursor position (0-1) for repulsion calculations
+	const cursorX = useMotionValue(0.5);
+	const cursorY = useMotionValue(0.5);
+
 	useEffect(() => {
 		if (disableOnTouch && isTouchDevice) return;
 		const el = containerRef.current;
@@ -83,8 +83,12 @@ function ParticleBackgroundInner({
 		let rectStale = false;
 
 		// ResizeObserver replaces window.resize — catches container resizes including parent layout changes
-		const ro = new ResizeObserver(() => {
+		const ro = new ResizeObserver((entries) => {
 			rectStale = true;
+			if (interactive && entries[0]) {
+				const { width, height } = entries[0].contentRect;
+				setContainerSize({ width, height });
+			}
 		});
 		ro.observe(el);
 
@@ -107,8 +111,12 @@ function ParticleBackgroundInner({
 				rectStale = false;
 			}
 			cancelLerp();
-			mouseX.set(((e.clientX - cachedRect.left) / cachedRect.width - 0.5) * 2 * PARALLAX_STRENGTH);
-			mouseY.set(((e.clientY - cachedRect.top) / cachedRect.height - 0.5) * 2 * PARALLAX_STRENGTH);
+			const normX = (e.clientX - cachedRect.left) / cachedRect.width;
+			const normY = (e.clientY - cachedRect.top) / cachedRect.height;
+			mouseX.set((normX - 0.5) * 2 * PARALLAX_STRENGTH);
+			mouseY.set((normY - 0.5) * 2 * PARALLAX_STRENGTH);
+			cursorX.set(normX);
+			cursorY.set(normY);
 		};
 
 		// Progressively lerp parallax back to 0 when mouse leaves the container
@@ -116,6 +124,8 @@ function ParticleBackgroundInner({
 			cancelLerp();
 			const startX = mouseX.get();
 			const startY = mouseY.get();
+			const startCursorX = cursorX.get();
+			const startCursorY = cursorY.get();
 			const start = performance.now();
 
 			function step(now: number) {
@@ -123,6 +133,9 @@ function ParticleBackgroundInner({
 				const ease = 1 - (1 - t) * (1 - t); // easeOutQuad
 				mouseX.set(startX * (1 - ease));
 				mouseY.set(startY * (1 - ease));
+				// Lerp cursor back to center (0.5) for smooth repulsion release
+				cursorX.set(startCursorX + (0.5 - startCursorX) * ease);
+				cursorY.set(startCursorY + (0.5 - startCursorY) * ease);
 				if (t < 1) {
 					lerpRafId = requestAnimationFrame(step);
 				} else {
@@ -142,7 +155,7 @@ function ParticleBackgroundInner({
 			el.removeEventListener("mouseleave", onMouseLeave);
 			window.removeEventListener("scroll", markRectStale);
 		};
-	}, [mouseX, mouseY, disableOnTouch, isTouchDevice]);
+	}, [mouseX, mouseY, cursorX, cursorY, disableOnTouch, isTouchDevice, interactive]);
 
 	// Normalise shape en tableau
 	const shapes = Array.isArray(shape) ? shape : [shape];
@@ -179,12 +192,17 @@ function ParticleBackgroundInner({
 		mobileDuration,
 	);
 
+	// Desktop-only interactive mode: no hover on touch devices
+	const interactiveDesktop = interactive && !isTouchDevice;
+
 	const sharedProps = {
 		isInView,
 		reducedMotion,
 		animationStyle,
 		highContrast,
 		...(scrollFade ? { scrollOpacity } : {}),
+		...(scrollParallax ? { scrollYProgress } : {}),
+		...(interactiveDesktop ? { interactive: true, containerSize, cursorX, cursorY } : {}),
 	};
 
 	return (
@@ -193,7 +211,7 @@ function ParticleBackgroundInner({
 			aria-hidden="true"
 			data-testid="particle-background"
 			className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}
-			style={{ contain: "layout paint" }}
+			style={{ contain: "layout paint style" }}
 		>
 			<div className="hidden md:contents">
 				<ParticleSet
@@ -219,8 +237,8 @@ function ParticleBackgroundInner({
  *
  * `count` is clamped to 30 max (both trees: count*2 desktop + ceil(count/2)*2 mobile ≈ count*3 spans).
  *
- * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4
- * **Animations** : float, drift, rise, orbit, breathe, sparkle
+ * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4, star, hexagon
+ * **Animations** : float, drift, rise, orbit, breathe, sparkle, cascade
  *
  * @example
  * // Defaut (couleurs primary/secondary/pastel)
@@ -240,15 +258,7 @@ function ParticleBackgroundInner({
  */
 export function ParticleBackground({ disableOnTouch = false, ...props }: ParticleBackgroundProps) {
 	const isTouchDevice = useIsTouchDevice();
-	const forcedColors = useSyncExternalStore(
-		(cb) => {
-			const mql = window.matchMedia("(forced-colors: active)");
-			mql.addEventListener("change", cb);
-			return () => mql.removeEventListener("change", cb);
-		},
-		() => window.matchMedia("(forced-colors: active)").matches,
-		() => false,
-	);
+	const forcedColors = useMediaQuery("(forced-colors: active)");
 
 	if ((disableOnTouch && isTouchDevice) || forcedColors) {
 		return null;

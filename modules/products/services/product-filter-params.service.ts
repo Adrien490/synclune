@@ -294,6 +294,7 @@ export function buildClearFiltersURL(currentSearchParams: URLSearchParams): stri
  */
 export function countActiveFilters(searchParams: URLSearchParams): ActiveFiltersResult {
 	let count = 0;
+	let hasPriceFilter = false;
 
 	searchParams.forEach((value, key) => {
 		// Ignorer les paramètres non-filtre
@@ -311,14 +312,15 @@ export function countActiveFilters(searchParams: URLSearchParams): ActiveFilters
 				count += 1;
 				break;
 			case "priceMin":
-				// Compter une seule fois pour la plage de prix
-				count += 1;
-				break;
 			case "priceMax":
-				// Ne pas compter (déjà compté avec priceMin)
+				hasPriceFilter = true;
 				break;
 		}
 	});
+
+	if (hasPriceFilter) {
+		count += 1;
+	}
 
 	return {
 		hasActiveFilters: count > 0,

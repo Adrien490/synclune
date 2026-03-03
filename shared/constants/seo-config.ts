@@ -1,6 +1,6 @@
 /**
  * Configuration SEO et référencement local pour Synclune
- * Créatrice de bijoux faits main à Nantes
+ * Créatrice de bijoux faits main
  */
 
 import { BRAND } from "./brand";
@@ -13,7 +13,7 @@ export const BUSINESS_INFO = {
 	legalName: "TADDEI LEANE",
 	tradeName: "Synclune",
 	description:
-		"Créatrice de bijoux faits main avec amour à Nantes. Bijoux artisanaux colorés et originaux pour le quotidien et les occasions spéciales.",
+		"Créatrice de bijoux faits main avec amour en France. Bijoux artisanaux colorés et originaux pour le quotidien et les occasions spéciales.",
 	email: BRAND.contact.email,
 	// Informations légales
 	siren: "839 183 027",
@@ -21,7 +21,7 @@ export const BUSINESS_INFO = {
 	vat: "FR35839183027",
 	apeCode: "47.91B",
 	social: BRAND.social,
-	// Informations de localisation Nantes
+	// Informations de localisation
 	location: {
 		street: "77 Boulevard du Tertre",
 		city: "Nantes",
@@ -37,18 +37,12 @@ export const BUSINESS_INFO = {
 		addressLocality: "Nantes",
 		addressRegion: "Pays de la Loire",
 	},
-	// Mots-clés SEO local
+	// Mots-clés SEO
 	localKeywords: [
-		"bijoux Nantes",
-		"créatrice bijoux Nantes",
-		"bijoux faits main Nantes",
-		"artisan bijoutier Nantes",
-		"bijoux artisanaux Nantes",
-		"bijoux Loire-Atlantique",
-		"créatrice Nantes",
-		"atelier bijoux Nantes",
-		"bijoux originaux Nantes",
-		"bijoux colorés Nantes",
+		"bijoux faits main France",
+		"bijoux artisanaux France",
+		"bijoux colorés originaux",
+		"créatrice bijoux indépendante",
 	],
 } as const;
 
@@ -74,7 +68,7 @@ export type GlobalReviewStats = {
 };
 
 /**
- * Génère les données structurées LocalBusiness pour le référencement local Nantes
+ * Génère les données structurées LocalBusiness pour le référencement
  * @param reviewStats - Statistiques globales d'avis (optionnel)
  */
 export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
@@ -103,18 +97,6 @@ export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
 			longitude: BUSINESS_INFO.location.longitude,
 		},
 		areaServed: [
-			{
-				"@type": "City",
-				name: "Nantes",
-			},
-			{
-				"@type": "AdministrativeArea",
-				name: "Loire-Atlantique",
-			},
-			{
-				"@type": "AdministrativeArea",
-				name: "Pays de la Loire",
-			},
 			{
 				"@type": "Country",
 				name: "France",
@@ -222,7 +204,7 @@ export function getFounderSchema() {
 		name: "Léane Taddei",
 		jobTitle: "Créatrice de bijoux artisanaux",
 		description:
-			"Artisan créatrice de bijoux faits main à Nantes. Passionnée par les couleurs et les créations uniques, je conçois chaque pièce avec amour dans mon atelier nantais.",
+			"Artisan créatrice de bijoux faits main en France. Passionnée par les couleurs et les créations uniques, je conçois chaque pièce avec amour dans mon atelier.",
 		url: SITE_URL,
 		image: IMAGES.FOUNDER,
 		sameAs: [BUSINESS_INFO.social.instagram.url, BUSINESS_INFO.social.tiktok.url],

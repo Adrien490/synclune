@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 export const dynamic = "force-static";
 
 // Image metadata
-export const alt = "Synclune - Créatrice de bijoux faits main à Nantes";
+export const alt = "Synclune - Créatrice de bijoux faits main";
 export const size = {
 	width: 1200,
 	height: 630,
@@ -58,7 +58,7 @@ export default async function Image() {
 					display: "flex",
 				}}
 			>
-				Créatrice de bijoux faits main avec amour à Nantes
+				Créatrice de bijoux faits main avec amour
 			</div>
 
 			{/* Tagline */}

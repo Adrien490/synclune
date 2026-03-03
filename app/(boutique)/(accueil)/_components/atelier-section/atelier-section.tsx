@@ -95,7 +95,7 @@ export async function AtelierSection() {
 						duration={MOTION_CONFIG.section.subtitle.duration}
 					>
 						<p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal">
-							Depuis mon atelier à Nantes
+							Depuis mon atelier
 						</p>
 					</Fade>
 				</header>
@@ -124,13 +124,12 @@ export async function AtelierSection() {
 							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
 							<p>
 								<span className="sm:hidden">
-									Des amies ont voulu les mêmes, puis des amies d'amies… et me voilà dans mon
-									atelier à Nantes !
+									Des amies ont voulu les mêmes, puis des amies d'amies… et me voilà dans mon mon
+									atelier !
 								</span>
 								<span className="hidden sm:inline">
 									Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans
-									mon petit atelier à Nantes ! C'était pas prévu à la base{" "}
-									<span aria-hidden="true">😂</span>
+									mon petit atelier ! C'était pas prévu à la base <span aria-hidden="true">😂</span>
 								</span>
 							</p>
 							<p>

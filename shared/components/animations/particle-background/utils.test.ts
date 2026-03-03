@@ -221,6 +221,18 @@ describe("getShapeStyles", () => {
 		expect(styles).toHaveProperty("clipPath");
 	});
 
+	it("returns clipPath for star shape", () => {
+		const styles = getShapeStyles("star", 32, "gold");
+		expect(styles).toHaveProperty("backgroundColor", "gold");
+		expect(styles).toHaveProperty("clipPath");
+	});
+
+	it("returns clipPath for hexagon shape", () => {
+		const styles = getShapeStyles("hexagon", 32, "silver");
+		expect(styles).toHaveProperty("backgroundColor", "silver");
+		expect(styles).toHaveProperty("clipPath");
+	});
+
 	it("returns transparent background for SVG shapes", () => {
 		const styles = getShapeStyles("crescent", 32, "white");
 		expect(styles).toHaveProperty("backgroundColor", "transparent");
@@ -234,6 +246,25 @@ describe("getShapeStyles", () => {
 });
 
 // ─── isSvgShape / getSvgConfig ──────────────────────────────────────
+
+describe("SHAPE_CONFIGS", () => {
+	it("has a config for every ParticleShape", () => {
+		const expectedShapes: ParticleShape[] = [
+			"circle",
+			"diamond",
+			"heart",
+			"crescent",
+			"pearl",
+			"drop",
+			"sparkle-4",
+			"star",
+			"hexagon",
+		];
+		for (const shape of expectedShapes) {
+			expect(SHAPE_CONFIGS[shape]).toBeDefined();
+		}
+	});
+});
 
 describe("isSvgShape", () => {
 	it("returns true for SVG shapes", () => {
@@ -250,6 +281,8 @@ describe("isSvgShape", () => {
 		expect(isSvgShape("diamond")).toBe(false);
 		expect(isSvgShape("heart")).toBe(false);
 		expect(isSvgShape("pearl")).toBe(false);
+		expect(isSvgShape("star")).toBe(false);
+		expect(isSvgShape("hexagon")).toBe(false);
 	});
 });
 
@@ -293,10 +326,23 @@ describe("getTransition", () => {
 		expect(t.delay).toBe(3);
 	});
 
-	it("repeats infinitely with reverse", () => {
+	it("repeats infinitely with reverse by default", () => {
 		const t = getTransition(makeParticle());
 		expect(t.repeat).toBe(Infinity);
 		expect(t.repeatType).toBe("reverse");
+	});
+
+	it("uses loop repeatType for cascade animation", () => {
+		const t = getTransition(makeParticle(), "cascade");
+		expect(t.repeat).toBe(Infinity);
+		expect(t.repeatType).toBe("loop");
+	});
+
+	it("uses reverse repeatType for non-cascade animations", () => {
+		const t = getTransition(makeParticle(), "float");
+		expect(t.repeatType).toBe("reverse");
+		const t2 = getTransition(makeParticle(), "sparkle");
+		expect(t2.repeatType).toBe("reverse");
 	});
 
 	it("cycles easings based on particle id", () => {
@@ -465,6 +511,29 @@ describe("ANIMATION_PRESETS", () => {
 
 	it("breathe preset does not add rotation (pure scale animation)", () => {
 		const result = ANIMATION_PRESETS.breathe(makeParticle({ shape: "diamond" }));
+		expect(result.rotate).toBeUndefined();
+	});
+
+	// ─── cascade ──────────────────────────────────────────────────
+
+	it("cascade preset animates y from -10% to 110% (falling pattern)", () => {
+		const p = makeParticle({ opacity: 0.3 });
+		const result = ANIMATION_PRESETS.cascade(p);
+		expect(result.y).toEqual(["-10%", "110%"]);
+		expect(result.x).toBeDefined();
+		// Opacity fades in and out at extremes
+		const opacities = result.opacity as number[];
+		expect(opacities[0]).toBe(0);
+		expect(opacities[opacities.length - 1]).toBe(0);
+	});
+
+	it("cascade preset adds rotation for non-round shapes", () => {
+		const result = ANIMATION_PRESETS.cascade(makeParticle({ shape: "star" }));
+		expect(result.rotate).toBeDefined();
+	});
+
+	it("cascade preset omits rotation for round shapes", () => {
+		const result = ANIMATION_PRESETS.cascade(makeParticle({ shape: "circle" }));
 		expect(result.rotate).toBeUndefined();
 	});
 

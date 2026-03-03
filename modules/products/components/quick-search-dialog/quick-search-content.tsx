@@ -65,7 +65,7 @@ export function QuickSearchContent({
 		<div className="flex h-full flex-col">
 			{/* Screen reader announcement (replaces Suspense fallback "Recherche en cours...") */}
 			<div role="status" aria-live="polite" className="sr-only">
-				{totalCount} resultat{totalCount !== 1 ? "s" : ""} trouve{totalCount !== 1 ? "s" : ""}.
+				{totalCount} résultat{totalCount !== 1 ? "s" : ""} trouvé{totalCount !== 1 ? "s" : ""}.
 			</div>
 
 			<ScrollFade axis="vertical" hideScrollbar={false} className="min-h-0 flex-1">
@@ -129,14 +129,14 @@ export function QuickSearchContent({
 					{/* Rate limited */}
 					{isRateLimited && (
 						<p className="text-muted-foreground py-4 text-center text-sm">
-							Trop de requetes, veuillez patienter quelques instants.
+							Trop de requêtes, veuillez patienter quelques instants.
 						</p>
 					)}
 
 					{/* Server error */}
 					{isError && !isRateLimited && (
 						<p className="text-muted-foreground py-4 text-center text-sm">
-							Une erreur est survenue lors de la recherche. Veuillez reessayer.
+							Une erreur est survenue lors de la recherche. Veuillez réessayer.
 						</p>
 					)}
 
@@ -172,13 +172,13 @@ export function QuickSearchContent({
 									<Search className="size-5" aria-hidden="true" />
 								</EmptyMedia>
 								<EmptyTitle className="text-base">
-									Aucun resultat pour &ldquo;{query}&rdquo;
+									Aucun résultat pour &ldquo;{query}&rdquo;
 								</EmptyTitle>
 							</EmptyHeader>
 							<EmptyContent>
 								<p className="text-muted-foreground/70 flex items-center justify-center gap-1.5 text-xs">
 									<Lightbulb className="size-3.5" aria-hidden="true" />
-									Essayez avec moins de mots ou parcourez nos categories
+									Essayez avec moins de mots ou parcourez nos catégories
 								</p>
 								<QuickTagPills productTypes={productTypes} onSelect={onSearch} size="xs" centered />
 							</EmptyContent>
@@ -195,7 +195,7 @@ export function QuickSearchContent({
 						data-active={undefined}
 						className="data-[active=true]:ring-ring/50 w-full data-[active=true]:ring-[3px]"
 					>
-						{totalCount === 1 ? "Voir le resultat" : `Voir les ${totalCount} resultats`}
+						{totalCount === 1 ? "Voir le résultat" : `Voir les ${totalCount} résultats`}
 						<ChevronRight className="size-4" aria-hidden="true" />
 					</Button>
 				</div>

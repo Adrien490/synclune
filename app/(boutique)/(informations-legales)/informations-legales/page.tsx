@@ -15,9 +15,9 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
-	title: "Informations légales - Synclune | Bijoux artisanaux Nantes",
+	title: "Informations légales - Synclune | Bijoux artisanaux",
 	description:
-		"Informations légales du site Synclune - Créatrice de bijoux faits main à Nantes. Mentions légales et conditions d'utilisation.",
+		"Informations légales du site Synclune - Créatrice de bijoux faits main. Mentions légales et conditions d'utilisation.",
 	keywords: [
 		"informations légales",
 		"CGV",

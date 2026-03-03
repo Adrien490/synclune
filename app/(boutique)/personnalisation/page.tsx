@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
-	title: "Créons votre bijou ensemble - Synclune | Bijoux personnalisés à Nantes",
+	title: "Créons votre bijou ensemble - Synclune | Bijoux personnalisés",
 	description:
 		"Une idée de bijou en tête ? Racontez-moi tout ! On va créer quelque chose d'unique ensemble.",
 	alternates: {

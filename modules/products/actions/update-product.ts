@@ -11,6 +11,7 @@ import {
 	notFound,
 	validationError,
 	handleActionError,
+	safeFormGetJSON,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -43,28 +44,14 @@ export async function updateProduct(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
-		// Helper pour parser JSON de maniere safe
-		const parseJSON = <T>(value: FormDataEntryValue | null, fallback: T): T => {
-			if (value && typeof value === "string") {
-				try {
-					const parsed: unknown = JSON.parse(value);
-					return parsed as T;
-				} catch {
-					return fallback;
-				}
-			}
-			return fallback;
-		};
-
-		// Extraire les donnees (approche simple comme collection)
-		const media = parseJSON<unknown[]>(formData.get("defaultSku.galleryMedia"), []);
+		const media = safeFormGetJSON<unknown[]>(formData, "defaultSku.galleryMedia") ?? [];
 
 		const rawData = {
 			productId: formData.get("productId"),
 			title: formData.get("title"),
 			description: formData.get("description"),
 			typeId: formData.get("typeId") ?? "",
-			collectionIds: parseJSON<string[]>(formData.get("collectionIds"), []),
+			collectionIds: safeFormGetJSON<string[]>(formData, "collectionIds") ?? [],
 			status: formData.get("status"),
 			defaultSku: {
 				skuId: formData.get("defaultSku.skuId"),
@@ -80,7 +67,7 @@ export async function updateProduct(
 		};
 
 		// Parse and validate deleted image URLs for UTAPI deletion
-		const rawDeletedImageUrls = parseJSON<unknown[]>(formData.get("deletedImageUrls"), []);
+		const rawDeletedImageUrls = safeFormGetJSON<unknown[]>(formData, "deletedImageUrls") ?? [];
 		const deletedImageUrls = rawDeletedImageUrls.filter(
 			(url): url is string => typeof url === "string" && url.length > 0 && url.length <= 2048,
 		);

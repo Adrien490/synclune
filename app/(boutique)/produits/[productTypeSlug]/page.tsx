@@ -75,15 +75,15 @@ export async function generateMetadata({
 		(key) => !["cursor", "direction", "perPage", "sortBy", "search"].includes(key),
 	);
 
-	const title = `${productType.label} artisanaux faits main | Synclune - Nantes`;
+	const title = `${productType.label} artisanaux faits main | Synclune`;
 	const description =
 		productType.description ??
-		`Découvrez mes ${productType.label.toLowerCase()} colorés créés à la main dans mon atelier nantais. Pièces uniques et originales !`;
+		`Découvrez mes ${productType.label.toLowerCase()} colorés créés à la main dans mon atelier. Pièces uniques et originales !`;
 
 	return {
 		title,
 		description,
-		keywords: `${productType.label.toLowerCase()}, bijoux artisanaux, bijoux faits main, bijoutier Nantes, ${productType.label.toLowerCase()} colorés`,
+		keywords: `${productType.label.toLowerCase()}, bijoux artisanaux, bijoux faits main, créatrice bijoux, ${productType.label.toLowerCase()} colorés`,
 		alternates: {
 			canonical: `/produits/${productTypeSlug}`,
 		},

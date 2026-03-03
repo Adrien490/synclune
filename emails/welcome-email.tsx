@@ -22,7 +22,7 @@ export const WelcomeEmail = ({ userName, shopUrl, newsletterUrl }: WelcomeEmailP
 		<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
 			<Text style={{ ...EMAIL_STYLES.text.body, margin: 0 }}>
 				Chaque bijou Synclune est une pièce unique, dessinée et assemblée à la main dans notre
-				atelier à Nantes. Découvrez nos collections et trouvez la création qui vous ressemble.
+				atelier. Découvrez nos collections et trouvez la création qui vous ressemble.
 			</Text>
 		</Section>
 

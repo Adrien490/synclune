@@ -27,15 +27,15 @@ vi.mock("next/link", () => ({
 	default: ({
 		href,
 		children,
-		title,
 		className,
+		"aria-label": ariaLabel,
 	}: {
 		href: string;
 		children: React.ReactNode;
-		title?: string;
 		className?: string;
+		"aria-label"?: string;
 	}) => (
-		<a href={href} title={title} className={className}>
+		<a href={href} className={className} aria-label={ariaLabel}>
 			{children}
 		</a>
 	),
@@ -87,6 +87,11 @@ vi.mock("@/shared/components/ui/badge", () => ({
 	),
 }));
 
+// Mock StarIcon — simple span for testing
+vi.mock("@/shared/components/icons/star-icon", () => ({
+	StarIcon: () => <span data-testid="star-icon" />,
+}));
+
 // Mock cn
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -103,6 +108,9 @@ vi.mock("@/modules/products/constants/product-texts.constants", () => ({
 				productType ? `${productType} ${title}` : title,
 		},
 	},
+	MAX_COLOR_SWATCHES: 5,
+	ABOVE_FOLD_THRESHOLD: 4,
+	NEW_PRODUCT_DAYS: 14,
 }));
 
 import { ProductCard } from "../product-card";
@@ -117,10 +125,12 @@ function createProduct(overrides: Partial<Product> = {}): Product {
 		id: "prod-1",
 		slug: "bague-lune-argent",
 		title: "Bague Lune Argent",
-		status: "ACTIVE",
+		status: "PUBLIC",
 		type: { id: "type-1", label: "Bague", slug: "ring" },
 		skus: [],
 		collections: [],
+		reviewStats: null,
+		createdAt: new Date("2025-01-01"),
 		...overrides,
 	} as unknown as Product;
 }
@@ -284,6 +294,103 @@ describe("ProductCard", () => {
 		});
 	});
 
+	describe("new product badge", () => {
+		it("shows 'Nouveau' badge for recently created products", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
+			render(
+				<ProductCard product={createProduct({ createdAt: recentDate } as Partial<Product>)} />,
+			);
+			expect(screen.getByText("Nouveau")).toBeInTheDocument();
+		});
+
+		it("does not show 'Nouveau' badge for old products", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const oldDate = new Date("2024-01-01");
+			render(<ProductCard product={createProduct({ createdAt: oldDate } as Partial<Product>)} />);
+			expect(screen.queryByText("Nouveau")).toBeNull();
+		});
+
+		it("does not show 'Nouveau' badge when promo badge is shown", () => {
+			mockGetProductCardData.mockReturnValue(
+				createCardData({
+					price: 3600,
+					compareAtPrice: 4800,
+					stockInfo: {
+						status: "in_stock",
+						totalInventory: 5,
+						availableSkus: 1,
+						message: "En stock",
+					},
+				}),
+			);
+			const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+			render(
+				<ProductCard product={createProduct({ createdAt: recentDate } as Partial<Product>)} />,
+			);
+			// Promo badge takes priority
+			expect(screen.getByText("-25%")).toBeInTheDocument();
+			expect(screen.queryByText("Nouveau")).toBeNull();
+		});
+
+		it("does not show 'Nouveau' badge when product is out of stock", () => {
+			mockGetProductCardData.mockReturnValue(
+				createCardData({
+					stockInfo: {
+						status: "out_of_stock",
+						totalInventory: 0,
+						availableSkus: 0,
+						message: "Rupture de stock",
+					},
+				}),
+			);
+			const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+			render(
+				<ProductCard product={createProduct({ createdAt: recentDate } as Partial<Product>)} />,
+			);
+			expect(screen.queryByText("Nouveau")).toBeNull();
+		});
+	});
+
+	describe("rating display", () => {
+		it("renders star rating when product has reviews", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			render(
+				<ProductCard
+					product={createProduct({
+						reviewStats: { averageRating: 4.3, totalCount: 12 },
+					} as unknown as Partial<Product>)}
+				/>,
+			);
+			const meter = screen.getByRole("meter");
+			expect(meter).toBeInTheDocument();
+			expect(meter).toHaveAttribute("aria-valuenow", "4.3");
+			expect(screen.getByText("(12)")).toBeInTheDocument();
+		});
+
+		it("does not render rating when product has no reviews", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			render(
+				<ProductCard
+					product={createProduct({
+						reviewStats: { averageRating: 0, totalCount: 0 },
+					} as unknown as Partial<Product>)}
+				/>,
+			);
+			expect(screen.queryByRole("meter")).toBeNull();
+		});
+
+		it("does not render rating when reviewStats is null", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			render(
+				<ProductCard
+					product={createProduct({ reviewStats: null } as unknown as Partial<Product>)}
+				/>,
+			);
+			expect(screen.queryByRole("meter")).toBeNull();
+		});
+	});
+
 	describe("color swatches", () => {
 		it("renders color swatch list when multiple colors are available", () => {
 			mockGetProductCardData.mockReturnValue(
@@ -325,10 +432,10 @@ describe("ProductCard", () => {
 				}),
 			);
 			render(<ProductCard product={createProduct()} />);
-			// Color swatch links use title="<ColorName>" (aria-label is dropped by the link mock)
-			const argentLink = screen.getByTitle("Argent");
+			// Color swatch links use aria-label (title attribute removed per audit A1)
+			const argentLink = screen.getByLabelText(/Bague Lune Argent en Argent/);
 			expect(argentLink.getAttribute("href")).toBe("/creations/bague-lune-argent?color=argent");
-			const orLink = screen.getByTitle("Or");
+			const orLink = screen.getByLabelText(/Bague Lune Argent en Or/);
 			expect(orLink.getAttribute("href")).toBe("/creations/bague-lune-argent?color=or");
 		});
 	});

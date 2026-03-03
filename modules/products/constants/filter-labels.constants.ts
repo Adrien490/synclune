@@ -5,7 +5,7 @@
 export const FILTER_LABELS: Record<string, string> = {
 	type: "Type",
 	color: "Couleur",
-	material: "Materiau",
+	material: "Matériau",
 	priceMin: "Prix",
 	priceMax: "Prix max",
 	ratingMin: "Note min",

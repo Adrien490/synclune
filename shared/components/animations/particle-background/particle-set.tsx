@@ -59,11 +59,21 @@ function SvgShape({
  * and an inner m.span for the looping keyframe animation, avoiding conflicts.
  *
  * Opacity is controlled at two levels:
- * 1. **Animation preset** — keyframe opacity in ANIMATION_PRESETS (via adjustedP)
- * 2. **Scroll fade** — scrollOpacity MotionValue on the outer wrapper (optional, multiplicative)
- * The animation preset handles per-particle opacity variation; scrollOpacity handles
+ * 1. **Animation preset** — keyframe opacity in ANIMATION_PRESETS (via adjustedP) on the inner span
+ * 2. **Scroll fade** — scrollOpacity MotionValue on the outer wrapper (optional)
+ * CSS opacity cascades multiplicatively (parent × child), so both levels combine correctly:
+ * the inner preset handles per-particle opacity variation while scrollOpacity handles
  * the global fade-in/out as the container scrolls through the viewport.
  */
+/** Max vertical offset in pixels for scroll parallax (closest particles) */
+const SCROLL_PARALLAX_RANGE = 40;
+
+/** Max repulsion offset in pixels */
+const REPULSION_STRENGTH = 30;
+
+/** Repulsion radius as fraction of container diagonal (0-1) */
+const REPULSION_RADIUS = 0.15;
+
 function AnimatedParticle({
 	p,
 	animationStyle,
@@ -71,6 +81,10 @@ function AnimatedParticle({
 	mouseY,
 	highContrast,
 	scrollOpacity,
+	scrollYProgress,
+	interactive,
+	cursorX,
+	cursorY,
 }: {
 	p: Particle;
 	animationStyle: ParticleSetProps["animationStyle"];
@@ -78,6 +92,10 @@ function AnimatedParticle({
 	mouseY: MotionValue<number>;
 	highContrast: boolean;
 	scrollOpacity?: MotionValue<number>;
+	scrollYProgress?: MotionValue<number>;
+	interactive?: boolean;
+	cursorX?: MotionValue<number>;
+	cursorY?: MotionValue<number>;
 }) {
 	const { isSvg, svgConfig, shapeStyles } = resolveShape(p);
 	const style = particleStyle(p, highContrast);
@@ -90,13 +108,47 @@ function AnimatedParticle({
 	const px = useTransform(mouseX, (v) => v * strength);
 	const py = useTransform(mouseY, (v) => v * strength);
 
+	// Scroll parallax: vertical displacement proportional to depth (close particles move more)
+	const scrollFallback = useMotionValue(0);
+	const scrollParallaxY = useTransform(
+		scrollYProgress ?? scrollFallback,
+		(v) => (v - 0.5) * 2 * SCROLL_PARALLAX_RANGE * strength,
+	);
+
+	// Interactive repulsion: push particle away from cursor
+	const cursorFallback = useMotionValue(0.5);
+	const resolvedCursorX = cursorX ?? cursorFallback;
+	const resolvedCursorY = cursorY ?? cursorFallback;
+	const repulsionX = useTransform([resolvedCursorX, resolvedCursorY], ([cx, cy]) => {
+		if (!interactive) return 0;
+		const dx = p.x / 100 - (cx as number);
+		const dy = p.y / 100 - (cy as number);
+		const dist = Math.sqrt(dx * dx + dy * dy);
+		if (dist > REPULSION_RADIUS || dist < 0.001) return 0;
+		const factor = (1 - dist / REPULSION_RADIUS) ** 2; // quadratic falloff
+		return (dx / dist) * factor * REPULSION_STRENGTH;
+	});
+	const repulsionY = useTransform([resolvedCursorX, resolvedCursorY], ([cx, cy]) => {
+		if (!interactive) return 0;
+		const dx = p.x / 100 - (cx as number);
+		const dy = p.y / 100 - (cy as number);
+		const dist = Math.sqrt(dx * dx + dy * dy);
+		if (dist > REPULSION_RADIUS || dist < 0.001) return 0;
+		const factor = (1 - dist / REPULSION_RADIUS) ** 2;
+		return (dy / dist) * factor * REPULSION_STRENGTH;
+	});
+
+	// Staggered entrance: particles fade+scale in with their individual delay
+	const entrance = { opacity: 0, scale: 0.5 };
+
 	// Opacity is handled by the animation preset via adjustedP — no need for style.opacity
 	const content =
 		isSvg && svgConfig ? (
 			<m.span
 				className="block h-full w-full"
+				initial={entrance}
 				animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
-				transition={getTransition(p)}
+				transition={getTransition(p, animationStyle)}
 			>
 				<SvgShape config={svgConfig} color={p.color} />
 			</m.span>
@@ -104,13 +156,36 @@ function AnimatedParticle({
 			<m.span
 				className="block h-full w-full"
 				style={shapeStyles}
+				initial={entrance}
 				animate={ANIMATION_PRESETS[animationStyle](adjustedP)}
-				transition={getTransition(p)}
+				transition={getTransition(p, animationStyle)}
 			/>
 		);
 
+	// Combine all X offsets: mouse parallax + repulsion
+	const combinedX = useTransform([px, repulsionX], ([mouseOffset, repulse]) => {
+		return (mouseOffset as number) + (repulse as number);
+	});
+
+	// Combine all Y offsets: mouse parallax + scroll parallax + repulsion
+	const combinedY = useTransform(
+		[py, scrollParallaxY, repulsionY],
+		([mouseOffset, scrollOffset, repulse]) => {
+			return (mouseOffset as number) + (scrollOffset as number) + (repulse as number);
+		},
+	);
+
 	return (
-		<m.span className="absolute" style={{ ...style, x: px, y: py, opacity: scrollOpacity }}>
+		<m.span
+			className="absolute"
+			style={{
+				...style,
+				x: combinedX,
+				y: combinedY,
+				opacity: scrollOpacity,
+				willChange: "transform",
+			}}
+		>
 			{content}
 		</m.span>
 	);
@@ -167,6 +242,10 @@ export function ParticleSet({
 	mouseY,
 	highContrast = false,
 	scrollOpacity,
+	scrollYProgress,
+	interactive,
+	cursorX,
+	cursorY,
 }: ParticleSetProps) {
 	// Single fallback MotionValue shared by all particles when no mouse tracking (mobile)
 	const fallback = useMotionValue(0);
@@ -201,6 +280,10 @@ export function ParticleSet({
 					mouseY={resolvedY}
 					highContrast={highContrast}
 					scrollOpacity={scrollOpacity}
+					scrollYProgress={scrollYProgress}
+					interactive={interactive}
+					cursorX={cursorX}
+					cursorY={cursorY}
 				/>
 			))}
 		</>

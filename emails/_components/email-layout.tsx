@@ -97,7 +97,7 @@ export function EmailLayout({
 								marginTop: "4px",
 							}}
 						>
-							Nantes, France
+							France
 						</Text>
 						<Text
 							className="email-text-secondary"

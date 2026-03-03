@@ -65,7 +65,7 @@ export async function StructuredData({ includeHomepageSchemas }: StructuredDataP
 			about: {
 				"@type": "Brand",
 				name: "Synclune",
-				description: "Bijoux artisanaux faits main à Nantes",
+				description: "Bijoux artisanaux faits main en France",
 			},
 		});
 

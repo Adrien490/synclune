@@ -61,7 +61,7 @@ export async function addRecentProduct(
 			path: "/",
 			maxAge: RECENT_PRODUCTS_COOKIE_MAX_AGE,
 			httpOnly: true,
-			sameSite: "lax",
+			sameSite: "strict",
 			secure: process.env.NODE_ENV === "production",
 		});
 

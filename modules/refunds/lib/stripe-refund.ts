@@ -1,4 +1,5 @@
 import { stripe } from "@/shared/lib/stripe";
+import { stripeCircuitBreaker } from "@/shared/lib/circuit-breaker";
 import Stripe from "stripe";
 import type {
 	CreateStripeRefundParams,
@@ -57,7 +58,9 @@ export async function createStripeRefund(
 			requestOptions.idempotencyKey = params.idempotencyKey;
 		}
 
-		const refund = await stripe.refunds.create(refundParams, requestOptions);
+		const refund = await stripeCircuitBreaker.execute(() =>
+			stripe.refunds.create(refundParams, requestOptions),
+		);
 
 		// P0.1: Distinguer pending de succeeded
 		// - succeeded = remboursement confirmé immédiatement

@@ -6,7 +6,11 @@ import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-a
 import type { Session } from "@/modules/auth/lib/auth";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 
+/** Increment when the draft schema changes to invalidate old drafts */
+export const DRAFT_VERSION = 1;
+
 interface CheckoutDraft {
+	version?: number;
 	timestamp?: number;
 	email?: string;
 	shipping?: {
@@ -41,11 +45,18 @@ export function getCheckoutFormOptions(
 			if (draft) {
 				const parsed: unknown = JSON.parse(draft);
 				savedDraft = parsed as CheckoutDraft;
-				// Vérifier que le draft n'est pas trop vieux (1h max)
-				const ONE_HOUR = 60 * 60 * 1000;
-				if (Date.now() - (savedDraft.timestamp ?? 0) > ONE_HOUR) {
+				// Invalidate drafts from incompatible schema versions
+				if (savedDraft.version !== DRAFT_VERSION) {
 					localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
 					savedDraft = null;
+				}
+				// Vérifier que le draft n'est pas trop vieux (1h max)
+				if (savedDraft) {
+					const ONE_HOUR = 60 * 60 * 1000;
+					if (Date.now() - (savedDraft.timestamp ?? 0) > ONE_HOUR) {
+						localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
+						savedDraft = null;
+					}
 				}
 			}
 		} catch {

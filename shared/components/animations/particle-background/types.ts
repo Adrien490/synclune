@@ -8,10 +8,19 @@ export type ParticleShape =
 	| "crescent"
 	| "pearl"
 	| "drop"
-	| "sparkle-4";
+	| "sparkle-4"
+	| "star"
+	| "hexagon";
 
 /** Styles d'animation */
-export type AnimationStyle = "float" | "drift" | "rise" | "orbit" | "breathe" | "sparkle";
+export type AnimationStyle =
+	| "float"
+	| "drift"
+	| "rise"
+	| "orbit"
+	| "breathe"
+	| "sparkle"
+	| "cascade";
 
 /** Props du composant ParticleBackground */
 export interface ParticleBackgroundProps {
@@ -45,6 +54,10 @@ export interface ParticleBackgroundProps {
 	disableOnTouch?: boolean;
 	/** Fade progressif des particules au scroll au lieu du on/off binaire (défaut: false) */
 	scrollFade?: boolean;
+	/** Parallax scroll vertical proportionnel à la profondeur (défaut: false) */
+	scrollParallax?: boolean;
+	/** Repulsion magnetique des particules au curseur, desktop uniquement (défaut: false) */
+	interactive?: boolean;
 }
 
 /** Données d'une particule générée */
@@ -83,6 +96,16 @@ export interface ParticleSetProps {
 	highContrast?: boolean;
 	/** Scroll-linked opacity (0-1) for progressive fade. When provided, multiplies particle opacity. */
 	scrollOpacity?: MotionValue<number>;
+	/** Scroll progress (0-1) for depth-based scroll parallax */
+	scrollYProgress?: MotionValue<number>;
+	/** Enable magnetic repulsion from cursor */
+	interactive?: boolean;
+	/** Container dimensions for repulsion calculations (width, height in px) */
+	containerSize?: { width: number; height: number };
+	/** Normalized cursor X position (0-1) for repulsion */
+	cursorX?: MotionValue<number>;
+	/** Normalized cursor Y position (0-1) for repulsion */
+	cursorY?: MotionValue<number>;
 }
 
 /** Type pour les presets d'animation */

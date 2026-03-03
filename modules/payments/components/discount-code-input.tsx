@@ -12,7 +12,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
-import { ChevronRight, Loader2, Tag, X } from "lucide-react";
+import { Check, ChevronRight, Loader2, X } from "lucide-react";
 
 type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
 
@@ -65,7 +65,7 @@ export function DiscountCodeInput({
 		return (
 			<div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50/50 px-3 py-2.5">
 				<div className="flex min-w-0 items-center gap-2">
-					<Tag className="h-4 w-4 shrink-0 text-green-600" />
+					<Check className="h-4 w-4 shrink-0 text-green-600" aria-hidden="true" />
 					<span className="truncate text-sm font-medium text-green-700">
 						{appliedDiscount.code}
 					</span>

@@ -55,7 +55,7 @@ export function NoResultsFilters({ resetUrl = "/produits" }: NoResultsFiltersPro
 		// Cas special pour le prix (combine min/max avec formatage monetaire)
 		if (key === "priceMin") {
 			const maxPrice = searchParams.get("priceMax");
-			const minFormatted = formatPrice(String(value));
+			const minFormatted = formatPrice(Number(value));
 			const displayValue = maxPrice
 				? `${minFormatted} - ${formatPrice(maxPrice)}`
 				: `${minFormatted}+`;

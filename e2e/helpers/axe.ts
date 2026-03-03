@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
-const GLOBAL_EXCLUDES = [".particle-background"];
+const GLOBAL_EXCLUDES = ['[data-testid="particle-background"]'];
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 export async function expectNoA11yViolations(

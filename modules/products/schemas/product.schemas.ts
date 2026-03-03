@@ -56,7 +56,7 @@ export const productFiltersSchema = z
 		updatedBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).optional(),
 	})
 	.refine((data) => {
-		if (data.priceMin && data.priceMax) {
+		if (data.priceMin !== undefined && data.priceMax !== undefined) {
 			return data.priceMin <= data.priceMax;
 		}
 		return true;
@@ -129,7 +129,7 @@ const imageSchema = z.object({
 		})
 		.optional()
 		.nullable(),
-	blurDataUrl: z.string().optional(),
+	blurDataUrl: z.string().max(500).optional(),
 	altText: z.string().max(TEXT_LIMITS.MEDIA_ALT_TEXT.max).optional(),
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 });

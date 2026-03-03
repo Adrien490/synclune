@@ -999,7 +999,7 @@ describe("WelcomeEmail", () => {
 		const html = await render(<WelcomeEmail {...baseProps} />);
 		expect(html).toContain("Marie");
 		expect(html).toContain("https://synclune.fr/produits");
-		expect(html).toContain("Nantes");
+		expect(html).toContain("France");
 	});
 });
 

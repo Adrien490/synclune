@@ -4,7 +4,7 @@
  */
 
 export const IMAGES = {
-	/** Image de l'atelier de création à Nantes */
+	/** Image de l'atelier de création */
 	ATELIER: "https://x1ain1wpub.ufs.sh/f/nyHesfTydKuSeQyF8C1jtfJpdXPZs5OLTYnRUHcmrCx7wNWq",
 	/**
 	 * Blur placeholder SVG pour l'image atelier

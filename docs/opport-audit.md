@@ -6,7 +6,7 @@
 
 ## Résumé exécutif
 
-Synclune possède une base solide (structure homepage, storytelling artisan, positionnement "fait main à Nantes"). Cet audit identifie les opportunités d'amélioration basées sur les tendances 2025 du e-commerce bijoux féminin, notamment la philosophie **Feminine 2.0**: un design intentionnel où chaque gradient, animation et photo sert à la fois l'émotion ET la conversion.
+Synclune possède une base solide (structure homepage, storytelling artisan, positionnement "fait main en France"). Cet audit identifie les opportunités d'amélioration basées sur les tendances 2025 du e-commerce bijoux féminin, notamment la philosophie **Feminine 2.0**: un design intentionnel où chaque gradient, animation et photo sert à la fois l'émotion ET la conversion.
 
 ---
 
@@ -27,7 +27,7 @@ Synclune possède une base solide (structure homepage, storytelling artisan, pos
 
 - ✅ Structure homepage solide (Hero → Produits → Collections → Story → FAQ)
 - ✅ Storytelling artisan authentique avec Léane
-- ✅ Positionnement "fait main à Nantes" différenciant
+- ✅ Positionnement "fait main en France" différenciant
 - ✅ Typographie serif élégante (Crimson Pro)
 - ✅ Palette rose gold cohérente
 

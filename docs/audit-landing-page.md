@@ -11,7 +11,7 @@
 La page suit un arc narratif en 9 sections :
 
 1. **HeroSection** - Accroche avec texte rotatif + 2 CTA
-2. **ValuePropositionBar** - 4 piliers de marque (fait main, Nantes, colore, avec amour)
+2. **ValuePropositionBar** - 4 piliers de marque (fait main, France, colore, avec amour)
 3. **CuratedPicks** - 4 "coups de coeur" de Leane (produits manuellement selectionnes)
 4. **LatestCreations** - 4 dernieres creations (dynamique)
 5. **CollectionsSection** - Carrousel de collections thematiques
@@ -267,7 +267,7 @@ Des chiffres concrets rassurent : "200+ bijoux crees", "150+ clients satisfaits"
 
 ### P5 -- Section "Chiffres cles" (Impact: Moyen)
 
-**Quoi :** Bandeau avec compteurs animes : "X bijoux crees", "X clients satisfaits", "4.X/5 note moyenne", "Fait main a Nantes".
+**Quoi :** Bandeau avec compteurs animes : "X bijoux crees", "X clients satisfaits", "4.X/5 note moyenne", "Fait main en France".
 
 **Pourquoi :** Les metriques concretes transforment les promesses en preuves.
 

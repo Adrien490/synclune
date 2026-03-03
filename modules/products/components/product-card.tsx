@@ -1,11 +1,18 @@
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
-import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
+import {
+	IMAGE_SIZES,
+	PRODUCT_TEXTS,
+	MAX_COLOR_SWATCHES,
+	ABOVE_FOLD_THRESHOLD,
+	NEW_PRODUCT_DAYS,
+} from "@/modules/products/constants/product-texts.constants";
 import { ProductPrice } from "./product-price";
 import { Badge } from "@/shared/components/ui/badge";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
+import { StarIcon } from "@/shared/components/icons/star-icon";
 import type { Product } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
 import type { ComponentProps, ReactNode } from "react";
@@ -63,19 +70,18 @@ function ColorSwatchList({
 			className="relative z-30 m-0 flex list-none items-center gap-1.5 p-0"
 			aria-label={`${colors.length} couleurs disponibles pour ${title}`}
 		>
-			{colors.slice(0, 5).map((color) => (
+			{colors.slice(0, MAX_COLOR_SWATCHES).map((color) => (
 				<li key={color.slug}>
 					<Link
 						href={`${productUrl}?color=${color.slug}`}
 						className={cn(
-							"border-foreground/15 relative block size-6 shrink-0 rounded-full border sm:size-7",
+							"border-foreground/15 relative block size-7 shrink-0 rounded-full border sm:size-8",
 							"motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5 transition-transform duration-150",
 							"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
 							"after:absolute after:-inset-2 after:rounded-full after:content-['']",
 							!color.inStock && "opacity-50",
 						)}
 						style={{ backgroundColor: color.hex }}
-						title={color.name}
 						aria-label={`${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`}
 					>
 						{!color.inStock && (
@@ -89,14 +95,14 @@ function ColorSwatchList({
 					</Link>
 				</li>
 			))}
-			{colors.length > 5 && (
+			{colors.length > MAX_COLOR_SWATCHES && (
 				<li>
 					<Link
 						href={productUrl}
 						className="text-muted-foreground relative z-30 flex min-h-11 min-w-11 items-center justify-center text-xs"
 						aria-label={`Voir les ${colors.length} couleurs disponibles pour ${title}`}
 					>
-						+{colors.length - 5}
+						+{colors.length - MAX_COLOR_SWATCHES}
 					</Link>
 				</li>
 			)}
@@ -105,11 +111,56 @@ function ColorSwatchList({
 }
 
 /**
+ * Compact star rating display for product cards (server component compatible).
+ * Uses StarIcon directly to avoid the "use client" dependency of RatingStars.
+ */
+function ProductCardRating({
+	averageRating,
+	totalCount,
+	productId,
+}: {
+	averageRating: number;
+	totalCount: number;
+	productId: string;
+}) {
+	if (totalCount === 0) return null;
+
+	const formattedRating = averageRating.toFixed(1).replace(".", ",");
+
+	return (
+		<div
+			className="flex items-center gap-0.5"
+			role="meter"
+			aria-label={`Note : ${formattedRating} sur 5, ${totalCount} avis`}
+			aria-valuenow={averageRating}
+			aria-valuemin={0}
+			aria-valuemax={5}
+			style={
+				{
+					"--star-filled": "var(--secondary)",
+					"--star-empty": "var(--muted-foreground)",
+				} as React.CSSProperties
+			}
+		>
+			{Array.from({ length: 5 }, (_, i) => (
+				<StarIcon
+					key={i}
+					fillPercentage={Math.min(1, Math.max(0, averageRating - i))}
+					size="sm"
+					gradientId={`card-${productId}-star-${i}`}
+				/>
+			))}
+			<span className="text-muted-foreground ml-0.5 text-xs">({totalCount})</span>
+		</div>
+	);
+}
+
+/**
  * Carte produit pour l'affichage dans les grilles (catalogue, collections, recherche).
  *
  * @description
  * Server component optimise pour les Core Web Vitals avec:
- * - Preload des images above-fold (index < 4)
+ * - Preload des images above-fold (index < ABOVE_FOLD_THRESHOLD)
  * - Support responsive
  * - Animations respectant prefers-reduced-motion (WCAG 2.3.3)
  * - WishlistButton et AddToCartCardButton comme client islands
@@ -119,7 +170,7 @@ function ColorSwatchList({
  *
  * z-index stack (documented):
  * - z-10: Stretched link (title link ::after covers the entire card)
- * - z-20: Badges (stock, promo)
+ * - z-20: Badges (stock, promo, new)
  * - z-30: Interactive buttons (wishlist, add to cart, color swatches)
  *
  * @example
@@ -152,9 +203,16 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 	// Stock badges take priority over promo badge (same position)
 	const showPromoBadge = hasDiscount && stockStatus !== "out_of_stock" && !showUrgencyBadge;
 
+	// "Nouveau" badge for recently created products (< NEW_PRODUCT_DAYS days)
+	const isNew =
+		product.createdAt &&
+		Date.now() - new Date(product.createdAt).getTime() < NEW_PRODUCT_DAYS * 24 * 60 * 60 * 1000;
+	const showNewBadge =
+		isNew && !showPromoBadge && stockStatus !== "out_of_stock" && !showUrgencyBadge;
+
 	const productUrl = `/creations/${slug}`;
 
-	const isAboveFold = index !== undefined && index < 4;
+	const isAboveFold = index !== undefined && index < ABOVE_FOLD_THRESHOLD;
 
 	// Build sr-only description for screen readers (badges info)
 	const badgeDescriptions: string[] = [];
@@ -167,6 +225,9 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 	}
 	if (showPromoBadge) {
 		badgeDescriptions.push(`Promotion : -${discountPercent}%`);
+	}
+	if (showNewBadge) {
+		badgeDescriptions.push("Nouveau produit");
 	}
 	const badgeDescId =
 		badgeDescriptions.length > 0
@@ -191,7 +252,6 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 				"motion-safe:can-hover:hover:scale-[1.02]",
 				// Focus state for keyboard navigation
 				"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
-				"can-hover:group-hover:will-change-transform",
 			)}
 		>
 			{/* sr-only badge descriptions for screen readers */}
@@ -211,7 +271,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 					"motion-safe:can-hover:group-hover:after:opacity-100 after:absolute after:inset-0 after:z-[5] after:bg-linear-to-t after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity after:duration-300",
 				)}
 			>
-				{/* Status badges — stock badges take priority over promo (same position) */}
+				{/* Status badges — stock badges take priority over promo, then "Nouveau" */}
 				{stockStatus === "out_of_stock" && (
 					<CardBadge
 						variant="secondary"
@@ -222,6 +282,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 				)}
 				{showUrgencyBadge && <CardBadge variant="warning">{stockMessage}</CardBadge>}
 				{showPromoBadge && <CardBadge variant="destructive">-{discountPercent}%</CardBadge>}
+				{showNewBadge && <CardBadge variant="default">Nouveau</CardBadge>}
 
 				{/* Wishlist button (client island) */}
 				<WishlistButton
@@ -284,13 +345,22 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 					</h3>
 				</Link>
 
+				{/* Prix — placed before colors for scannability (Baymard guideline) */}
+				<ProductPrice price={price} compareAtPrice={compareAtPrice} />
+
+				{/* Average rating (server-compatible star display) */}
+				{product.reviewStats && product.reviewStats.totalCount > 0 && (
+					<ProductCardRating
+						averageRating={Number(product.reviewStats.averageRating)}
+						totalCount={product.reviewStats.totalCount}
+						productId={product.id}
+					/>
+				)}
+
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (
 					<ColorSwatchList colors={colors} productUrl={productUrl} title={title} />
 				)}
-
-				{/* Prix */}
-				<ProductPrice price={price} compareAtPrice={compareAtPrice} />
 
 				{/* Add to cart button - Mobile full-width (client island) */}
 				{defaultSku && stockStatus !== "out_of_stock" && (

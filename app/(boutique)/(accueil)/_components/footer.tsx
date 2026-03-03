@@ -128,8 +128,7 @@ export async function Footer() {
 								</a>
 
 								<p className="text-muted-foreground px-3 text-sm/6 antialiased">
-									Atelier basé à {BRAND.contact.location.city}, {BRAND.contact.location.region},{" "}
-									{BRAND.contact.location.country}
+									Atelier basé en {BRAND.contact.location.country}
 								</p>
 							</div>
 						</section>

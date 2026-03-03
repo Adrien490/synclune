@@ -20,11 +20,11 @@ import {
 // ============================================================================
 
 const DEFAULT_METADATA = {
-	title: "Tous mes bijoux colorés faits main | Synclune - Nantes",
+	title: "Tous mes bijoux colorés faits main | Synclune",
 	description:
-		"Découvrez tous mes bijoux colorés créés à la main dans mon atelier nantais. Inspirations Pokémon, Van Gogh, Twilight... Chaque pièce est unique !",
+		"Découvrez tous mes bijoux colorés créés à la main dans mon atelier. Inspirations Pokémon, Van Gogh, Twilight... Chaque pièce est unique !",
 	keywords:
-		"bijoux artisanaux, bijoux faits main, bijoutier Nantes, bagues colliers bracelets, acier inoxydable, perles, bijoux colorés, bijoux pokemon, bijoux van gogh",
+		"bijoux artisanaux, bijoux faits main, créatrice bijoux, bagues colliers bracelets, acier inoxydable, perles, bijoux colorés, bijoux pokemon, bijoux van gogh",
 };
 
 type BijouxPageProps = {
@@ -63,7 +63,7 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 		openGraph: {
 			title: "Tous mes bijoux colorés | Synclune",
 			description:
-				"Bijoux artisanaux faits main à Nantes. Inspirations Pokémon, Van Gogh, Twilight... Pièces uniques créées avec passion !",
+				"Bijoux artisanaux faits main. Inspirations Pokémon, Van Gogh, Twilight... Pièces uniques créées avec passion !",
 			url: `${SITE_URL}/produits`,
 			type: "website",
 			images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
@@ -72,7 +72,7 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 			card: "summary_large_image",
 			title: "Tous mes bijoux colorés | Synclune",
 			description:
-				"Bijoux artisanaux faits main à Nantes. Inspirations Pokémon, Van Gogh, Twilight... Pièces uniques !",
+				"Bijoux artisanaux faits main. Inspirations Pokémon, Van Gogh, Twilight... Pièces uniques !",
 		},
 	};
 }
@@ -124,7 +124,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	// JSON-LD
 	const jsonLd = buildCatalogJsonLd({
 		name: "Bijoux artisanaux faits main",
-		description: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes.",
+		description: "Découvrez toutes mes créations colorées faites main dans mon atelier.",
 		url: `${SITE_URL}/produits`,
 		breadcrumbs: [{ name: "Accueil", url: SITE_URL }, { name: "Bijoux" }],
 	});

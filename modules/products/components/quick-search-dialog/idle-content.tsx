@@ -53,7 +53,7 @@ export function IdleContent({
 								id="recently-viewed-heading"
 								className="font-display text-muted-foreground text-base font-medium tracking-wide"
 							>
-								Vus recemment
+								Vus récemment
 							</h2>
 						</div>
 						<ScrollFade axis="horizontal" className="-mx-4 px-4">
@@ -105,7 +105,7 @@ export function IdleContent({
 								id="recent-searches-heading"
 								className="font-display text-muted-foreground text-base font-medium tracking-wide"
 							>
-								Recherches recentes
+								Recherches récentes
 							</h2>
 							<Button
 								variant="ghost"
@@ -113,7 +113,7 @@ export function IdleContent({
 								onClick={onClearSearches}
 								disabled={isPending}
 								className="hover:text-destructive -mr-2 h-auto px-2.5 py-1.5 text-xs"
-								aria-label="Effacer toutes les recherches recentes"
+								aria-label="Effacer toutes les recherches récentes"
 							>
 								Effacer
 							</Button>

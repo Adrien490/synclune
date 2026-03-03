@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useSyncExternalStore } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
@@ -8,7 +8,7 @@ import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { AlertCircle, Info, Loader2, Lock, Mail } from "lucide-react";
+import { AlertCircle, Info, Loader2, Lock, Mail, WifiOff } from "lucide-react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
@@ -22,10 +22,36 @@ import Link from "next/link";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { ActionStatus } from "@/shared/types/server-action";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
+import { DRAFT_VERSION } from "../utils/checkout-form.utils";
 import dynamic from "next/dynamic";
 
-const EmbeddedCheckoutWrapper = dynamic(() =>
-	import("./embedded-checkout").then((mod) => mod.EmbeddedCheckoutWrapper),
+const EmbeddedCheckoutWrapper = dynamic(
+	() => import("./embedded-checkout").then((mod) => mod.EmbeddedCheckoutWrapper),
+	{
+		loading: () => (
+			<div className="animate-pulse space-y-6 p-6">
+				<div className="space-y-2">
+					<div className="bg-muted h-4 w-24 rounded" />
+					<div className="bg-muted h-10 w-full rounded" />
+				</div>
+				<div className="space-y-2">
+					<div className="bg-muted h-4 w-40 rounded" />
+					<div className="bg-muted h-10 w-full rounded" />
+				</div>
+				<div className="grid grid-cols-2 gap-4">
+					<div className="space-y-2">
+						<div className="bg-muted h-4 w-20 rounded" />
+						<div className="bg-muted h-10 w-full rounded" />
+					</div>
+					<div className="space-y-2">
+						<div className="bg-muted h-4 w-12 rounded" />
+						<div className="bg-muted h-10 w-full rounded" />
+					</div>
+				</div>
+				<div className="bg-muted h-12 w-full rounded" />
+			</div>
+		),
+	},
 );
 import { AddressSummary, type SubmittedAddress } from "./address-summary";
 import { CheckoutSummary } from "./checkout-summary";
@@ -36,6 +62,22 @@ import { ErrorBoundary } from "@/shared/components/error-boundary";
 import type { CreateCheckoutSessionResult } from "../types/checkout.types";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
+
+// Offline detection via useSyncExternalStore for SSR safety
+function subscribeOnline(callback: () => void) {
+	window.addEventListener("online", callback);
+	window.addEventListener("offline", callback);
+	return () => {
+		window.removeEventListener("online", callback);
+		window.removeEventListener("offline", callback);
+	};
+}
+function getOnlineSnapshot() {
+	return navigator.onLine;
+}
+function getServerSnapshot() {
+	return true;
+}
 
 // Options pour le select des pays
 const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
@@ -184,6 +226,8 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const discountAmount = appliedDiscount?.discountAmount ?? 0;
 	const total = subtotal - discountAmount + shipping;
 
+	const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, getServerSnapshot);
+
 	const shouldReduceMotion = useReducedMotion();
 
 	const fadeSlide = shouldReduceMotion
@@ -203,6 +247,19 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 				<h1 ref={headingRef} tabIndex={-1} className="sr-only">
 					Paiement sécurisé
 				</h1>
+
+				{/* Offline detection banner */}
+				{!isOnline && (
+					<Alert variant="destructive" role="alert" aria-live="assertive">
+						<WifiOff className="size-4" />
+						<AlertTitle>Connexion internet perdue</AlertTitle>
+						<AlertDescription>
+							Vérifiez votre connexion internet avant de continuer. Le paiement nécessite une
+							connexion active.
+						</AlertDescription>
+					</Alert>
+				)}
+
 				<ErrorBoundary
 					errorMessage="Impossible de charger le formulaire"
 					className="bg-muted/50 rounded-lg border p-8"
@@ -390,7 +447,11 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 																		className="underline hover:no-underline"
 																		onClick={(e) => {
 																			e.preventDefault();
-																			document.getElementById(name)?.focus();
+																			const el = document.getElementById(name);
+																			if (el) {
+																				el.scrollIntoView({ behavior: "smooth", block: "center" });
+																				el.focus({ preventScroll: true });
+																			}
 																		}}
 																	>
 																		{label}
@@ -449,6 +510,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 																			localStorage.setItem(
 																				STORAGE_KEYS.CHECKOUT_FORM_DRAFT,
 																				JSON.stringify({
+																					version: DRAFT_VERSION,
 																					email:
 																						(form.state.values.email as unknown as string) || "",
 																					shipping: {

@@ -6,6 +6,7 @@ import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-a
 import { createCheckoutSession } from "@/modules/payments/actions/create-checkout-session";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { getCheckoutFormOptions } from "../utils/checkout-form.utils";
@@ -42,7 +43,7 @@ export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
 					) {
 						// Nettoyer le draft après succès
 						if (typeof window !== "undefined") {
-							localStorage.removeItem("checkout-form-draft");
+							localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
 						}
 
 						// Appeler le callback pour afficher le formulaire Stripe Embedded

@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 
 interface CreateStripeCustomerParams {
 	email: string;
@@ -69,6 +70,10 @@ export async function getOrCreateStripeCustomer(
 			return { customerId: null, error: "Email invalide pour la creation du profil client." };
 		}
 		// Transient error: continue without a Stripe customer
+		logger.warn("[STRIPE_CUSTOMER] Transient error creating Stripe customer, continuing without", {
+			email: params.email,
+			error: e instanceof Error ? e.message : String(e),
+		});
 		return { customerId: null };
 	}
 }

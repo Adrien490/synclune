@@ -46,7 +46,7 @@ export function generateCollectionStructuredData(collection: Collection) {
 		name: `Collection ${collection.name} - Synclune`,
 		description:
 			collection.description ??
-			`Découvrez la collection ${collection.name} de bijoux artisanaux faits main par Synclune à Nantes`,
+			`Découvrez la collection ${collection.name} de bijoux artisanaux faits main par Synclune`,
 		inLanguage: "fr-FR",
 		isPartOf: {
 			"@type": "WebSite",

@@ -4,13 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Button } from "@/shared/components/ui/button";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
-import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { useBottomBarHeight } from "@/shared/hooks";
-import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
@@ -45,16 +43,6 @@ export function StickyCartCTA({
 	useBottomBarHeight(60, isVisible);
 
 	const { action, isPending } = useAddToCart();
-	const searchParams = useSearchParams();
-
-	const { validationErrors: _validationErrors } = useVariantValidation({
-		product,
-		selection: {
-			color: searchParams.get("color"),
-			material: searchParams.get("material"),
-			size: searchParams.get("size"),
-		},
-	});
 
 	// Verifier si le SKU est disponible
 	const isAvailable = currentSku.inventory > 0 && currentSku.isActive;

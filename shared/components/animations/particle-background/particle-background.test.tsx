@@ -31,12 +31,15 @@ vi.mock("motion/react", () => {
 			get: () => initial,
 			set: vi.fn(),
 		})),
-		useTransform: vi.fn((_mv: unknown, fnOrInput: unknown, _output?: unknown) => {
-			// Handle both signatures: useTransform(mv, fn) and useTransform(mv, input[], output[])
+		useTransform: vi.fn((mvOrArray: unknown, fnOrInput: unknown, _output?: unknown) => {
+			// Handle both signatures:
+			// useTransform(mv, fn), useTransform([mv1, mv2], fn), useTransform(mv, input[], output[])
 			if (typeof fnOrInput === "function") {
-				return { get: () => fnOrInput(0), set: vi.fn() };
+				// When first arg is an array of MotionValues, pass array of zeros to the function
+				const input = Array.isArray(mvOrArray) ? mvOrArray.map(() => 0) : 0;
+				return { get: () => fnOrInput(input), set: vi.fn() };
 			}
-			// Array form: return a MotionValue-like object
+			// Array mapping form: return a MotionValue-like object
 			return { get: () => 1, set: vi.fn() };
 		}),
 		useScroll: vi.fn(() => ({
@@ -175,7 +178,7 @@ describe("ParticleBackground", () => {
 	it("applies CSS containment", () => {
 		const { container } = render(<ParticleBackground />);
 		const root = container.firstElementChild as HTMLElement;
-		expect(root.style.contain).toBe("layout paint");
+		expect(root.style.contain).toBe("layout paint style");
 	});
 
 	it("renders nothing when not in view", () => {
@@ -226,7 +229,7 @@ describe("ParticleBackground", () => {
 	});
 
 	it("renders all animation styles without crashing", () => {
-		const styles = ["float", "drift", "rise", "orbit", "breathe", "sparkle"] as const;
+		const styles = ["float", "drift", "rise", "orbit", "breathe", "sparkle", "cascade"] as const;
 		for (const animationStyle of styles) {
 			expect(() =>
 				render(<ParticleBackground count={2} animationStyle={animationStyle} />),
@@ -302,6 +305,44 @@ describe("ParticleBackground", () => {
 		const { container } = render(<ParticleBackground count={3} animationStyle="sparkle" />);
 		const desktopWrapper = container.firstElementChild!.children[0]!;
 		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+	});
+
+	it("renders cascade animation style", () => {
+		const { container } = render(<ParticleBackground count={3} animationStyle="cascade" />);
+		const desktopWrapper = container.firstElementChild!.children[0]!;
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+	});
+
+	it("renders star shape without crashing", () => {
+		const { container } = render(<ParticleBackground count={3} shape="star" />);
+		const desktopWrapper = container.firstElementChild!.children[0]!;
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+	});
+
+	it("renders hexagon shape without crashing", () => {
+		const { container } = render(<ParticleBackground count={3} shape="hexagon" />);
+		const desktopWrapper = container.firstElementChild!.children[0]!;
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+	});
+
+	it("renders mixed shapes including star and hexagon", () => {
+		const { container } = render(
+			<ParticleBackground count={6} shape={["circle", "star", "hexagon"]} />,
+		);
+		const desktopWrapper = container.firstElementChild!.children[0]!;
+		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(6);
+	});
+
+	it("renders with scrollParallax prop without crashing", () => {
+		expect(() => render(<ParticleBackground count={3} scrollParallax />)).not.toThrow();
+	});
+
+	it("renders with interactive prop without crashing", () => {
+		expect(() => render(<ParticleBackground count={3} interactive />)).not.toThrow();
+	});
+
+	it("renders with combined scrollFade and scrollParallax props", () => {
+		expect(() => render(<ParticleBackground count={3} scrollFade scrollParallax />)).not.toThrow();
 	});
 });
 

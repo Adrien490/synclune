@@ -9,6 +9,7 @@ import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckoutForm } from "@/modules/payments/components/checkout-form";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -118,7 +119,12 @@ export default async function CheckoutPage() {
 							Paiement sécurisé et livraison soignée
 						</p>
 					</div>
-					<CheckoutForm cart={cart} session={session} addresses={addresses} />
+					<ErrorBoundary
+						errorMessage="Impossible de charger le formulaire de paiement"
+						className="bg-muted/50 rounded-lg border p-8"
+					>
+						<CheckoutForm cart={cart} session={session} addresses={addresses} />
+					</ErrorBoundary>
 				</div>
 			</section>
 		</div>

@@ -94,7 +94,7 @@ export function ProductCatalog({
 
 	const pageDescription =
 		activeProductType?.description ??
-		"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
+		"Découvrez toutes mes créations colorées faites main dans mon atelier. Des pièces uniques inspirées de mes passions !";
 
 	// Sort options for mobile drawer
 	const sortOptions = Object.values(PRODUCTS_SORT_OPTIONS).map((option) => ({

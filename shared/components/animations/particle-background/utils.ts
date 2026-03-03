@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Easing, Transition } from "motion/react";
 import { SHAPE_CONFIGS } from "./constants";
-import type { Particle, ParticleShape } from "./types";
+import type { AnimationStyle, Particle, ParticleShape } from "./types";
 import { seededRandom } from "@/shared/utils/seeded-random";
 
 /**
@@ -155,13 +155,13 @@ const PARTICLE_EASINGS: Easing[] = [
 ];
 
 /** Retourne la transition Framer Motion avec easing varié et repeatDelay */
-export function getTransition(particle: Particle): Transition {
+export function getTransition(particle: Particle, animationStyle?: AnimationStyle): Transition {
 	return {
 		duration: particle.duration,
 		delay: particle.delay,
 		ease: PARTICLE_EASINGS[particle.id % PARTICLE_EASINGS.length],
 		repeat: Infinity,
-		repeatType: "reverse" as const,
+		repeatType: animationStyle === "cascade" ? ("loop" as const) : ("reverse" as const),
 		repeatDelay: particle.delay * 0.2,
 	};
 }
