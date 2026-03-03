@@ -6,6 +6,8 @@ import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
+import { ErrorShake } from "@/shared/components/animations/error-shake";
+import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
 import { CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useResetPassword } from "@/modules/auth/hooks/use-reset-password";
@@ -20,16 +22,19 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 	const { action, isPending, state } = useResetPassword();
 	const errorRef = useRef<HTMLDivElement>(null);
 
-	// Focus sur l'erreur quand elle apparaît (ignore validation errors)
+	const isActionError =
+		!!state?.message &&
+		state.status !== ActionStatus.SUCCESS &&
+		state.status !== ActionStatus.VALIDATION_ERROR;
+
+	const { shake, onShakeComplete } = useFormErrorShake(isActionError, state?.message);
+
+	// Focus on error when it appears
 	useEffect(() => {
-		if (
-			state?.message &&
-			state.status !== ActionStatus.SUCCESS &&
-			state.status !== ActionStatus.VALIDATION_ERROR
-		) {
+		if (isActionError) {
 			errorRef.current?.focus();
 		}
-	}, [state?.message, state?.status]);
+	}, [state?.message, state?.status, isActionError]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -41,120 +46,125 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 	});
 
 	return (
-		<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
-			{/* Indication des champs obligatoires */}
-			<RequiredFieldsNote />
+		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
+			<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+				{/* Indication des champs obligatoires */}
+				<RequiredFieldsNote />
 
-			{/* Message de succès */}
-			{state?.status === ActionStatus.SUCCESS && state.message && (
-				<Alert role="status" aria-live="polite">
-					<CheckCircle2 aria-hidden="true" />
-					<AlertDescription>
-						<div className="space-y-2">
-							<p>{state.message}</p>
-							<Link href="/connexion" className="inline-block text-sm font-medium hover:underline">
-								Se connecter maintenant
-							</Link>
-						</div>
-					</AlertDescription>
-				</Alert>
-			)}
-
-			{/* Message d'erreur (ignore validation errors - handled by field validators) */}
-			{state?.status !== ActionStatus.SUCCESS &&
-				state?.status !== ActionStatus.VALIDATION_ERROR &&
-				state?.message && (
-					<Alert
-						ref={errorRef}
-						variant="destructive"
-						tabIndex={-1}
-						role="alert"
-						aria-live="assertive"
-					>
-						<XCircle aria-hidden="true" />
-						<AlertDescription>{state.message}</AlertDescription>
+				{/* Message de succès */}
+				{state?.status === ActionStatus.SUCCESS && state.message && (
+					<Alert role="status" aria-live="polite">
+						<CheckCircle2 aria-hidden="true" />
+						<AlertDescription>
+							<div className="space-y-2">
+								<p>{state.message}</p>
+								<Link
+									href="/connexion"
+									className="inline-block text-sm font-medium hover:underline"
+								>
+									Se connecter maintenant
+								</Link>
+							</div>
+						</AlertDescription>
 					</Alert>
 				)}
 
-			{/* Champ caché pour le token */}
-			<input type="hidden" name="token" value={token} />
+				{/* Message d'erreur (ignore validation errors - handled by field validators) */}
+				{state?.status !== ActionStatus.SUCCESS &&
+					state?.status !== ActionStatus.VALIDATION_ERROR &&
+					state?.message && (
+						<Alert
+							ref={errorRef}
+							variant="destructive"
+							tabIndex={-1}
+							role="alert"
+							aria-live="assertive"
+						>
+							<XCircle aria-hidden="true" />
+							<AlertDescription>{state.message}</AlertDescription>
+						</Alert>
+					)}
 
-			<FieldSet>
-				<FieldGroup>
-					<form.AppField
-						name="password"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) return "Le mot de passe est requis";
-								if (value.length < 8) {
-									return "Le mot de passe doit contenir au moins 8 caractères";
-								}
-								if (value.length > 128) {
-									return "Le mot de passe ne doit pas dépasser 128 caractères";
-								}
-								return undefined;
-							},
-						}}
-					>
-						{(field) => (
-							<div className="space-y-2">
+				{/* Champ caché pour le token */}
+				<input type="hidden" name="token" value={token} />
+
+				<FieldSet>
+					<FieldGroup>
+						<form.AppField
+							name="password"
+							validators={{
+								onChange: ({ value }: { value: string }) => {
+									if (!value) return "Le mot de passe est requis";
+									if (value.length < 8) {
+										return "Le mot de passe doit contenir au moins 8 caractères";
+									}
+									if (value.length > 128) {
+										return "Le mot de passe ne doit pas dépasser 128 caractères";
+									}
+									return undefined;
+								},
+							}}
+						>
+							{(field) => (
+								<div className="space-y-2">
+									<field.PasswordInputField
+										label="Nouveau mot de passe"
+										autoComplete="new-password"
+										disabled={isPending}
+										required
+									/>
+									<form.Subscribe selector={(state) => state.values.password}>
+										{(password) => <PasswordStrengthIndicator password={password} />}
+									</form.Subscribe>
+								</div>
+							)}
+						</form.AppField>
+
+						<form.AppField
+							name="confirmPassword"
+							validators={{
+								onChangeListenTo: ["password"],
+								onChange: ({ value, fieldApi }) => {
+									if (!value) return "La confirmation du mot de passe est requise";
+									if (value.length < 8) {
+										return "Le mot de passe doit contenir au moins 8 caractères";
+									}
+									if (value.length > 128) {
+										return "Le mot de passe ne doit pas dépasser 128 caractères";
+									}
+									if (value !== fieldApi.form.getFieldValue("password")) {
+										return "Les mots de passe ne correspondent pas";
+									}
+									return undefined;
+								},
+							}}
+						>
+							{(field) => (
 								<field.PasswordInputField
-									label="Nouveau mot de passe"
+									label="Confirmer le mot de passe"
 									autoComplete="new-password"
 									disabled={isPending}
 									required
 								/>
-								<form.Subscribe selector={(state) => state.values.password}>
-									{(password) => <PasswordStrengthIndicator password={password} />}
-								</form.Subscribe>
-							</div>
-						)}
-					</form.AppField>
+							)}
+						</form.AppField>
+					</FieldGroup>
+				</FieldSet>
 
-					<form.AppField
-						name="confirmPassword"
-						validators={{
-							onChangeListenTo: ["password"],
-							onChange: ({ value, fieldApi }) => {
-								if (!value) return "La confirmation du mot de passe est requise";
-								if (value.length < 8) {
-									return "Le mot de passe doit contenir au moins 8 caractères";
-								}
-								if (value.length > 128) {
-									return "Le mot de passe ne doit pas dépasser 128 caractères";
-								}
-								if (value !== fieldApi.form.getFieldValue("password")) {
-									return "Les mots de passe ne correspondent pas";
-								}
-								return undefined;
-							},
-						}}
-					>
-						{(field) => (
-							<field.PasswordInputField
-								label="Confirmer le mot de passe"
-								autoComplete="new-password"
-								disabled={isPending}
-								required
-							/>
-						)}
-					</form.AppField>
-				</FieldGroup>
-			</FieldSet>
-
-			<form.Subscribe selector={(state) => [state.canSubmit]}>
-				{([canSubmit]) => (
-					<Button
-						disabled={!canSubmit || isPending || state?.status === ActionStatus.SUCCESS}
-						className="w-full"
-						type="submit"
-					>
-						{state?.status === ActionStatus.SUCCESS
-							? "Mot de passe réinitialisé"
-							: "Réinitialiser mon mot de passe"}
-					</Button>
-				)}
-			</form.Subscribe>
-		</form>
+				<form.Subscribe selector={(state) => [state.canSubmit]}>
+					{([canSubmit]) => (
+						<Button
+							disabled={!canSubmit || isPending || state?.status === ActionStatus.SUCCESS}
+							className="w-full"
+							type="submit"
+						>
+							{state?.status === ActionStatus.SUCCESS
+								? "Mot de passe réinitialisé"
+								: "Réinitialiser mon mot de passe"}
+						</Button>
+					)}
+				</form.Subscribe>
+			</form>
+		</ErrorShake>
 	);
 }

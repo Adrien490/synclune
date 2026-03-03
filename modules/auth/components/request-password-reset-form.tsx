@@ -6,6 +6,8 @@ import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
+import { ErrorShake } from "@/shared/components/animations/error-shake";
+import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useRequestPasswordReset } from "@/modules/auth/hooks/use-request-password-reset";
 import { useEffect, useRef } from "react";
@@ -14,17 +16,20 @@ export function RequestPasswordResetForm() {
 	const { action, isPending, state } = useRequestPasswordReset();
 	const errorRef = useRef<HTMLDivElement>(null);
 
-	// Focus sur l'erreur quand elle apparaît (ignore validation errors)
+	const isActionError =
+		!!state?.message &&
+		state.status !== ActionStatus.SUCCESS &&
+		state.status !== ActionStatus.INITIAL &&
+		state.status !== ActionStatus.VALIDATION_ERROR;
+
+	const { shake, onShakeComplete } = useFormErrorShake(isActionError, state?.message);
+
+	// Focus on error when it appears
 	useEffect(() => {
-		if (
-			state?.message &&
-			state.status !== ActionStatus.SUCCESS &&
-			state.status !== ActionStatus.INITIAL &&
-			state.status !== ActionStatus.VALIDATION_ERROR
-		) {
+		if (isActionError) {
 			errorRef.current?.focus();
 		}
-	}, [state?.message, state?.status]);
+	}, [state?.message, state?.status, isActionError]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -34,84 +39,86 @@ export function RequestPasswordResetForm() {
 	});
 
 	return (
-		<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
-			{/* Indication des champs obligatoires */}
-			<RequiredFieldsNote />
+		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
+			<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+				{/* Indication des champs obligatoires */}
+				<RequiredFieldsNote />
 
-			{/* Message de succès */}
-			{state?.status === ActionStatus.SUCCESS && state.message && (
-				<Alert role="status" aria-live="polite">
-					<CheckCircle2 aria-hidden="true" />
-					<AlertDescription>{state.message}</AlertDescription>
-				</Alert>
-			)}
-
-			{/* Message d'erreur (ignore validation errors - handled by field validators) */}
-			{state?.status !== ActionStatus.SUCCESS &&
-				state?.status !== ActionStatus.INITIAL &&
-				state?.status !== ActionStatus.VALIDATION_ERROR &&
-				state?.message && (
-					<Alert
-						ref={errorRef}
-						variant="destructive"
-						tabIndex={-1}
-						role="alert"
-						aria-live="assertive"
-					>
-						<XCircle aria-hidden="true" />
+				{/* Message de succès */}
+				{state?.status === ActionStatus.SUCCESS && state.message && (
+					<Alert role="status" aria-live="polite">
+						<CheckCircle2 aria-hidden="true" />
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>
 				)}
 
-			<FieldSet>
-				<FieldGroup>
-					<form.AppField
-						name="email"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) return "L'email est requis";
-								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-									return "Format d'email invalide";
-								}
-								return undefined;
-							},
-						}}
-					>
-						{(field) => (
-							<field.InputField
-								label="Email"
-								type="email"
-								inputMode="email"
-								autoComplete="email"
-								spellCheck={false}
-								disabled={isPending || state?.status === ActionStatus.SUCCESS}
-								required
-							/>
-						)}
-					</form.AppField>
-				</FieldGroup>
-			</FieldSet>
+				{/* Message d'erreur (ignore validation errors - handled by field validators) */}
+				{state?.status !== ActionStatus.SUCCESS &&
+					state?.status !== ActionStatus.INITIAL &&
+					state?.status !== ActionStatus.VALIDATION_ERROR &&
+					state?.message && (
+						<Alert
+							ref={errorRef}
+							variant="destructive"
+							tabIndex={-1}
+							role="alert"
+							aria-live="assertive"
+						>
+							<XCircle aria-hidden="true" />
+							<AlertDescription>{state.message}</AlertDescription>
+						</Alert>
+					)}
 
-			<form.Subscribe selector={(state) => [state.canSubmit]}>
-				{([canSubmit]) => (
-					<Button
-						disabled={!canSubmit || isPending || state?.status === ActionStatus.SUCCESS}
-						className="w-full"
-						type="submit"
-					>
-						{state?.status === ActionStatus.SUCCESS ? (
-							"Email envoyé"
-						) : isPending ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
-								Envoi en cours...
-							</>
-						) : (
-							"Envoyer le lien de réinitialisation"
-						)}
-					</Button>
-				)}
-			</form.Subscribe>
-		</form>
+				<FieldSet>
+					<FieldGroup>
+						<form.AppField
+							name="email"
+							validators={{
+								onChange: ({ value }: { value: string }) => {
+									if (!value) return "L'email est requis";
+									if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+										return "Format d'email invalide";
+									}
+									return undefined;
+								},
+							}}
+						>
+							{(field) => (
+								<field.InputField
+									label="Email"
+									type="email"
+									inputMode="email"
+									autoComplete="email"
+									spellCheck={false}
+									disabled={isPending || state?.status === ActionStatus.SUCCESS}
+									required
+								/>
+							)}
+						</form.AppField>
+					</FieldGroup>
+				</FieldSet>
+
+				<form.Subscribe selector={(state) => [state.canSubmit]}>
+					{([canSubmit]) => (
+						<Button
+							disabled={!canSubmit || isPending || state?.status === ActionStatus.SUCCESS}
+							className="w-full"
+							type="submit"
+						>
+							{state?.status === ActionStatus.SUCCESS ? (
+								"Email envoyé"
+							) : isPending ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
+									Envoi en cours...
+								</>
+							) : (
+								"Envoyer le lien de réinitialisation"
+							)}
+						</Button>
+					)}
+				</form.Subscribe>
+			</form>
+		</ErrorShake>
 	);
 }

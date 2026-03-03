@@ -1,12 +1,12 @@
-import { LogoAnimated } from "@/shared/components/logo-animated";
-import { Button } from "@/shared/components/ui/button";
+import { AuthPageLayout } from "@/modules/auth/components/auth-page-layout";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
+import { Button } from "@/shared/components/ui/button";
 import { auth } from "@/modules/auth/lib/auth";
 import { ajAuth } from "@/shared/lib/arcjet";
 import { getBaseUrl } from "@/shared/constants/urls";
 import { cormorantGaramond } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
-import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Sparkles } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -66,23 +66,22 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 	let errorMessage = "";
 	let isSuccess = false;
 
-	// Vérifier si l'utilisateur est connecté
+	// Check if user is connected
 	const session = await getSession();
 	const isConnected = !!session?.user;
 
-	// Si l'utilisateur est connecté et n'a pas de token/error, c'est qu'il vient d'être vérifié
+	// If connected with no token/error, they've just been verified
 	if (isConnected && !token && !error) {
 		isSuccess = true;
 	}
-	// Si on a déjà une erreur dans l'URL
+	// URL error
 	else if (error === "INVALID_TOKEN") {
 		errorMessage = "Le lien de vérification est invalide ou a expiré.";
 	}
-	// Si on a un token, on tente la vérification
+	// Attempt verification with token
 	else if (token) {
 		const result = await verifyEmailToken(token);
 		if (result.success) {
-			// Marquer comme succès pour afficher le message
 			isSuccess = true;
 		} else if ("rateLimited" in result && result.rateLimited) {
 			errorMessage = "Trop de tentatives. Veuillez réessayer dans quelques minutes.";
@@ -90,116 +89,101 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 			errorMessage = "Le lien de vérification est invalide ou a expiré.";
 		}
 	}
-	// Si on n'a pas de token
+	// No token
 	else {
 		errorMessage = "Token de vérification manquant.";
 	}
 
-	return (
-		<div className="relative">
-			{/* Lien retour */}
-			<div className="absolute top-4 left-4 z-20 sm:top-6 sm:left-6">
-				<Link
-					href="/"
-					className="text-muted-foreground hover:text-foreground group -ml-2 inline-flex min-h-11 min-w-11 items-center gap-2 pl-2 text-sm transition-colors duration-200"
-				>
-					<ArrowLeft
-						size={16}
-						className="transition-transform duration-200 group-hover:-translate-x-1"
-						aria-hidden="true"
-					/>
-					<span className="font-medium">Retour au site</span>
-				</Link>
-			</div>
-
-			{/* Logo en haut à droite */}
-			<div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
-				<LogoAnimated size={44} preload href="/" />
-			</div>
-
-			{/* Contenu principal */}
-			<div className="relative z-10 flex min-h-screen items-center justify-center p-4">
-				<div className="w-full max-w-md space-y-8">
-					{/* Header */}
-					<div className="space-y-7 text-center">
-						<div className="space-y-3">
-							<h1
-								className={cn(
-									"text-foreground text-2xl font-semibold sm:text-3xl lg:text-4xl",
-									cormorantGaramond.className,
-								)}
+	if (isSuccess) {
+		return (
+			<AuthPageLayout
+				backHref="/"
+				backLabel="Retour au site"
+				title="Bienvenue"
+				icon={
+					<div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15">
+						<Sparkles className="h-8 w-8 text-green-600" aria-hidden="true" />
+					</div>
+				}
+			>
+				<div className="space-y-6">
+					<div
+						className="flex flex-col items-center gap-4 rounded-md border border-green-500/30 bg-green-500/15 p-6"
+						role="status"
+						aria-live="polite"
+					>
+						<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
+						<div className="space-y-2 text-center">
+							<p
+								className={cn("text-lg font-semibold text-green-700", cormorantGaramond.className)}
 							>
-								Vérification d'email
-							</h1>
+								Email vérifié avec succès
+							</p>
+							<p className="text-sm text-green-600/90">
+								{isConnected
+									? "Votre compte a été activé et vous êtes connecté."
+									: "Votre compte a été activé. Vous pouvez maintenant vous connecter."}
+							</p>
 						</div>
 					</div>
 
-					{/* État de la vérification */}
-					<div className="space-y-6">
-						{isSuccess ? (
-							/* Message de succès */
-							<div className="space-y-4">
-								<div
-									className="flex flex-col items-center gap-4 rounded-md border border-green-500/30 bg-green-500/15 p-6"
-									role="status"
-									aria-live="polite"
-								>
-									<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
-									<div className="space-y-2 text-center">
-										<p className="text-lg font-medium text-green-700">Email vérifié</p>
-										<p className="text-sm text-green-600/90">
-											{isConnected
-												? "Votre compte a été activé et vous êtes connecté."
-												: "Votre compte a été activé. Vous pouvez maintenant vous connecter."}
-										</p>
-									</div>
-								</div>
-
-								<div className="space-y-2 text-center">
-									<Button asChild className="w-full">
-										<Link href={isConnected ? "/" : "/connexion"}>
-											{isConnected ? "Retour au site" : "Se connecter"}
-										</Link>
-									</Button>
-								</div>
-							</div>
-						) : (
-							/* Message d'erreur */
-							<div className="space-y-4">
-								<div
-									className="bg-destructive/15 border-destructive/30 flex flex-col items-center gap-4 rounded-md border p-6"
-									role="alert"
-									aria-live="assertive"
-								>
-									<AlertCircle className="text-destructive h-12 w-12" aria-hidden="true" />
-									<div className="space-y-2 text-center">
-										<p className="text-destructive text-lg font-medium">
-											{!token && !error ? "Lien incomplet" : "Erreur de vérification"}
-										</p>
-										<p className="text-destructive/90 text-sm">{errorMessage}</p>
-									</div>
-								</div>
-
-								{/* Formulaire de renvoi d'email */}
-								<div className="space-y-3">
-									<div className="text-center">
-										<p className="text-muted-foreground text-sm">
-											Vous n'avez pas reçu l'email ou le lien a expiré ?
-										</p>
-									</div>
-									<ResendVerificationEmailForm />
-								</div>
-
-								<div className="space-y-2 pt-2 text-center">
-									<Button asChild variant="outline" className="w-full">
-										<Link href="/connexion">Retour à la connexion</Link>
-									</Button>
-								</div>
-							</div>
-						)}
+					<div className="flex flex-col gap-3">
+						<Button asChild className="w-full">
+							<Link href="/boutique">Découvrir nos collections</Link>
+						</Button>
+						<Button asChild variant="outline" className="w-full">
+							<Link href={isConnected ? "/" : "/connexion"}>
+								{isConnected ? "Retour au site" : "Se connecter"}
+							</Link>
+						</Button>
 					</div>
 				</div>
+			</AuthPageLayout>
+		);
+	}
+
+	return (
+		<AuthPageLayout
+			backHref="/"
+			backLabel="Retour au site"
+			title="Vérification d'email"
+			icon={
+				<div className="bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full">
+					<AlertCircle className="text-destructive h-8 w-8" aria-hidden="true" />
+				</div>
+			}
+		>
+			<div className="space-y-6">
+				<div
+					className="bg-destructive/15 border-destructive/30 flex flex-col items-center gap-4 rounded-md border p-6"
+					role="alert"
+					aria-live="assertive"
+				>
+					<AlertCircle className="text-destructive h-12 w-12" aria-hidden="true" />
+					<div className="space-y-2 text-center">
+						<p className="text-destructive text-lg font-medium">
+							{!token && !error ? "Lien incomplet" : "Erreur de vérification"}
+						</p>
+						<p className="text-destructive/90 text-sm">{errorMessage}</p>
+					</div>
+				</div>
+
+				{/* Resend form */}
+				<div className="space-y-3">
+					<div className="text-center">
+						<p className="text-muted-foreground text-sm">
+							Vous n'avez pas reçu l'email ou le lien a expiré ?
+						</p>
+					</div>
+					<ResendVerificationEmailForm />
+				</div>
+
+				<div className="space-y-2 pt-2 text-center">
+					<Button asChild variant="outline" className="w-full">
+						<Link href="/connexion">Retour à la connexion</Link>
+					</Button>
+				</div>
 			</div>
-		</div>
+		</AuthPageLayout>
 	);
 }

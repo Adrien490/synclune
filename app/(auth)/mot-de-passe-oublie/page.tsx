@@ -1,11 +1,8 @@
-import { LogoAnimated } from "@/shared/components/logo-animated";
+import { AuthPageLayout } from "@/modules/auth/components/auth-page-layout";
 import { RequestPasswordResetForm } from "@/modules/auth/components/request-password-reset-form";
-import { cormorantGaramond } from "@/shared/styles/fonts";
-import { cn } from "@/shared/utils/cn";
-import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Mot de passe oublié | Synclune",
@@ -20,66 +17,27 @@ export const metadata: Metadata = {
 
 export default function ForgotPasswordPage() {
 	return (
-		<div className="relative">
-			{/* Lien retour */}
-			<div className="absolute top-4 left-4 z-20 sm:top-6 sm:left-6">
-				<Link
-					href="/connexion"
-					className="text-muted-foreground hover:text-foreground group -ml-2 inline-flex min-h-11 min-w-11 items-center gap-2 pl-2 text-sm transition-colors duration-200"
-				>
-					<ArrowLeft
-						size={16}
-						className="transition-transform duration-200 group-hover:-translate-x-1"
-						aria-hidden="true"
-					/>
-					<span className="font-medium">Retour à la connexion</span>
-				</Link>
-			</div>
+		<AuthPageLayout
+			backHref="/connexion"
+			backLabel="Retour à la connexion"
+			title="Mot de passe oublié ?"
+			description="Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe."
+		>
+			<div className="space-y-6">
+				<Suspense>
+					<RequestPasswordResetForm />
+				</Suspense>
 
-			{/* Logo en haut à droite */}
-			<div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
-				<LogoAnimated size={44} preload href="/" />
-			</div>
-
-			{/* Contenu principal */}
-			<div className="relative z-10 flex min-h-screen justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
-				<div className="my-auto w-full max-w-md space-y-8">
-					{/* Header */}
-					<div className="space-y-7 text-center">
-						<div className="space-y-3">
-							<h1
-								className={cn(
-									"text-foreground text-2xl font-semibold sm:text-3xl lg:text-4xl",
-									cormorantGaramond.className,
-								)}
-							>
-								Mot de passe oublié ?
-							</h1>
-							<p className="text-muted-foreground">
-								Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre
-								mot de passe.
-							</p>
-						</div>
-					</div>
-
-					{/* Formulaire */}
-					<div className="space-y-6">
-						<Suspense>
-							<RequestPasswordResetForm />
-						</Suspense>
-
-						{/* Lien vers la connexion */}
-						<div className="border-t pt-4 text-center">
-							<div className="text-muted-foreground text-sm">
-								Vous vous souvenez de votre mot de passe ?{" "}
-								<Link href="/connexion" className="font-medium underline">
-									Connectez-vous
-								</Link>
-							</div>
-						</div>
+				{/* Login link */}
+				<div className="border-t pt-4 text-center">
+					<div className="text-muted-foreground text-sm">
+						Vous vous souvenez de votre mot de passe ?{" "}
+						<Link href="/connexion" className="font-medium underline">
+							Connectez-vous
+						</Link>
 					</div>
 				</div>
 			</div>
-		</div>
+		</AuthPageLayout>
 	);
 }
