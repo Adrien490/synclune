@@ -64,7 +64,7 @@ export function LayoutTextFlip({
 		"inline-flex items-center justify-center",
 		"rounded-xl px-4 py-2",
 		// Gradient subtil rose → gold (tendance 2026)
-		"bg-gradient-to-r from-primary/15 via-primary/10 to-secondary/20",
+		"bg-linear-to-r from-primary/15 via-primary/10 to-secondary/20",
 		// Bordure
 		"ring-1 ring-primary/25",
 		// Shadow colorée

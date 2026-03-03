@@ -6,6 +6,7 @@ import {
 	handleActionError,
 	success,
 	error,
+	forbidden,
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
@@ -66,7 +67,7 @@ export async function removeFromCart(
 			: cartItem.cart.sessionId === sessionId;
 
 		if (!isOwner) {
-			return error("Acces non autorise");
+			return forbidden();
 		}
 
 		// 6. Supprimer l'item du panier

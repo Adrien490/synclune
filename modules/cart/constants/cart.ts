@@ -93,6 +93,12 @@ export const GET_CART_SELECT = {
 
 export const GET_CART_SUMMARY_SELECT = {
 	items: {
+		where: {
+			sku: {
+				deletedAt: null,
+				product: { deletedAt: null },
+			},
+		},
 		select: {
 			quantity: true,
 			priceAtAdd: true,

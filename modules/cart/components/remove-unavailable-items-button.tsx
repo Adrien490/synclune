@@ -5,14 +5,18 @@ import { useRemoveUnavailableItems } from "@/modules/cart/hooks/use-remove-unava
 
 interface RemoveUnavailableItemsButtonProps {
 	itemsCount: number;
+	unavailableQuantity: number;
 }
 
 /**
  * Client Component pour le bouton de suppression des articles indisponibles
  * Utilisé dans le cart-summary quand des articles ont des problèmes de stock
  */
-export function RemoveUnavailableItemsButton({ itemsCount }: RemoveUnavailableItemsButtonProps) {
-	const { action, isPending } = useRemoveUnavailableItems();
+export function RemoveUnavailableItemsButton({
+	itemsCount,
+	unavailableQuantity,
+}: RemoveUnavailableItemsButtonProps) {
+	const { action, isPending } = useRemoveUnavailableItems({ unavailableQuantity });
 
 	const handleRemoveUnavailable = () => {
 		action(new FormData());

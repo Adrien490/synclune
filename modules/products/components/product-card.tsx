@@ -208,7 +208,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 					"product-card-media bg-muted relative overflow-hidden rounded-lg sm:rounded-xl",
 					"aspect-3/4 sm:aspect-4/5",
 					// Gradient overlay on hover
-					"motion-safe:can-hover:group-hover:after:opacity-100 after:absolute after:inset-0 after:z-[5] after:bg-gradient-to-t after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity after:duration-300",
+					"motion-safe:can-hover:group-hover:after:opacity-100 after:absolute after:inset-0 after:z-[5] after:bg-linear-to-t after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity after:duration-300",
 				)}
 			>
 				{/* Status badges — stock badges take priority over promo (same position) */}

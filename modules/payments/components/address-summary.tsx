@@ -28,11 +28,11 @@ export function AddressSummary({ address, onEdit }: AddressSummaryProps) {
 	const countryName = COUNTRY_NAMES[address.country] || address.country;
 
 	return (
-		<div className="border-primary/10 bg-primary/[0.02] space-y-3 rounded-xl border p-4">
+		<div className="border-primary/10 bg-primary/2 space-y-3 rounded-xl border p-4">
 			{/* En-tête avec statut validé */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<div className="text-primary-foreground from-primary to-primary/80 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br shadow-sm">
+					<div className="text-primary-foreground from-primary to-primary/80 flex h-6 w-6 items-center justify-center rounded-full bg-linear-to-br shadow-sm">
 						<Check className="h-3.5 w-3.5" />
 					</div>
 					<h3 className="text-sm font-medium">Adresse de livraison</h3>

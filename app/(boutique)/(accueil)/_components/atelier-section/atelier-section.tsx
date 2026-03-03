@@ -183,7 +183,7 @@ export async function AtelierSection() {
 							asChild
 							size="lg"
 							variant="outline"
-							className="shadow-md hover:shadow-xl active:scale-[0.98] motion-safe:transition-[transform,box-shadow] motion-safe:duration-300 motion-safe:hover:scale-[1.02]"
+							className="transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
 						>
 							<Link href="/personnalisation">Créer votre bijou sur-mesure</Link>
 						</Button>

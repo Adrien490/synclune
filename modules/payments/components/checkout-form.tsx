@@ -227,7 +227,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 								</div>
 
 								{/* Trust footer compact */}
-								<div className="border-primary/5 bg-primary/[0.02] rounded-xl border p-4">
+								<div className="border-primary/5 bg-primary/2 rounded-xl border p-4">
 									<div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
 										<span className="inline-flex items-center gap-1">
 											<Lock className="h-3 w-3" />
@@ -479,7 +479,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 									{/* Email affiché pour utilisateurs connectés */}
 									{!isGuest && session.user.email && (
-										<div className="border-primary/10 bg-primary/[0.03] flex items-center gap-2 rounded-xl border p-3.5 text-sm">
+										<div className="border-primary/10 bg-primary/3 flex items-center gap-2 rounded-xl border p-3.5 text-sm">
 											<Mail className="text-muted-foreground h-4 w-4" />
 											<span className="text-muted-foreground">Email :</span>
 											<span className="font-medium">{session.user.email}</span>

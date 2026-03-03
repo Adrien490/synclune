@@ -36,6 +36,7 @@ export function CartItemMoveToWishlist({ productId, itemName }: CartItemMoveToWi
 				variant="ghost"
 				size="icon"
 				disabled={isPending}
+				aria-busy={isPending}
 				className="text-muted-foreground size-8 hover:text-pink-600"
 				aria-label={`Ajouter ${itemName} aux favoris`}
 				title="Ajouter aux favoris"

@@ -276,15 +276,16 @@ Ces reads sont atomiques avec la mutation et ne beneficieraient pas du cache (do
 
 Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce sont des services transactionnels appeles depuis plusieurs contextes (cron, webhooks, server components) ou la logique doit rester atomique:
 
-| Fichier                                                   | Raison                                           |
-| --------------------------------------------------------- | ------------------------------------------------ |
-| `reviews/services/send-review-request-email.service.ts`   | Partage entre cron + webhooks + actions          |
-| `payments/services/stripe-customer.service.ts`            | Paire atomique Stripe + DB pour checkout         |
-| `wishlist/services/notify-back-in-stock.ts`               | Notification atomique apres restock              |
-| `newsletter/services/subscribe-to-newsletter-internal.ts` | Partage entre subscribe + toggle actions         |
-| `newsletter/services/confirm-newsletter-subscription.ts`  | Appele depuis server component (sans formulaire) |
-| `newsletter/services/unsubscribe-newsletter.ts`           | Appele depuis server component (sans formulaire) |
-| `newsletter/services/create-newsletter-promo-code.ts`     | Appele depuis confirm-newsletter-subscription    |
+| Fichier                                                   | Raison                                                     |
+| --------------------------------------------------------- | ---------------------------------------------------------- |
+| `reviews/services/send-review-request-email.service.ts`   | Partage entre cron + webhooks + actions                    |
+| `payments/services/stripe-customer.service.ts`            | Paire atomique Stripe + DB pour checkout                   |
+| `wishlist/services/notify-back-in-stock.ts`               | Notification atomique apres restock                        |
+| `newsletter/services/subscribe-to-newsletter-internal.ts` | Partage entre subscribe + toggle actions                   |
+| `newsletter/services/confirm-newsletter-subscription.ts`  | Appele depuis server component (sans formulaire)           |
+| `newsletter/services/unsubscribe-newsletter.ts`           | Appele depuis server component (sans formulaire)           |
+| `newsletter/services/create-newsletter-promo-code.ts`     | Appele depuis confirm-newsletter-subscription              |
+| `cart/services/sku-validation.service.ts`                 | Validation DB reads partagees entre actions + SKU selector |
 
 ## API Routes
 

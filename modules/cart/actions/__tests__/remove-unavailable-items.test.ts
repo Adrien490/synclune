@@ -311,7 +311,9 @@ describe("removeUnavailableItems", () => {
 		const result = await removeUnavailableItems();
 
 		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { sessionId: "sess-abc123" } }),
+			expect.objectContaining({
+				where: expect.objectContaining({ sessionId: "sess-abc123" }),
+			}),
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});

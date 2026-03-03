@@ -45,18 +45,26 @@ async function fetchGuestCartForMerge(sessionId: string) {
 			sessionId,
 			OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
 		},
-		include: {
+		select: {
+			id: true,
+			sessionId: true,
 			items: {
-				include: {
+				select: {
+					id: true,
+					skuId: true,
+					quantity: true,
+					priceAtAdd: true,
 					sku: {
 						select: {
 							id: true,
 							inventory: true,
 							isActive: true,
+							deletedAt: true,
 							product: {
 								select: {
 									id: true,
 									status: true,
+									deletedAt: true,
 								},
 							},
 						},

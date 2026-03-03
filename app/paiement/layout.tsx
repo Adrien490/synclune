@@ -17,7 +17,7 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 			{/* Header minimal */}
 			<header className="bg-background/80 border-primary/10 border-b backdrop-blur-lg">
 				{/* Decorative top line */}
-				<div className="via-primary/30 h-0.5 bg-gradient-to-r from-transparent to-transparent" />
+				<div className="via-primary/30 h-0.5 bg-linear-to-r from-transparent to-transparent" />
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					<div className="flex h-16 items-center justify-between sm:h-18">
 						<Logo href="/" size={40} showText />

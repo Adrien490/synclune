@@ -29,7 +29,7 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 				"transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
 				"border-b",
 				isScrolled
-					? "bg-background/95 border-border shadow-lg shadow-black/[0.08] backdrop-blur-md"
+					? "bg-background/95 border-border shadow-lg shadow-black/8 backdrop-blur-md"
 					: "border-transparent bg-transparent",
 			)}
 		>

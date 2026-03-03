@@ -10,6 +10,7 @@ const {
 	mockHandleActionError,
 	mockSuccess,
 	mockError,
+	mockForbidden,
 	mockPrisma,
 	mockUpdateTag,
 	mockGetCartInvalidationTags,
@@ -19,6 +20,7 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
+	mockForbidden: vi.fn(),
 	mockPrisma: {
 		cartItem: { findUnique: vi.fn() },
 		$transaction: vi.fn(),
@@ -44,6 +46,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+	forbidden: mockForbidden,
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -140,16 +143,16 @@ describe("removeFromCart", () => {
 		expect(mockError).toHaveBeenCalledWith("Article introuvable dans le panier");
 	});
 
-	it("returns error when userId does not match owner", async () => {
+	it("returns forbidden when userId does not match owner", async () => {
 		mockPrisma.cartItem.findUnique.mockResolvedValue(
 			makeCartItem({ cart: { userId: "other-user", sessionId: null } }),
 		);
 
 		await removeFromCart(undefined, makeFormData());
-		expect(mockError).toHaveBeenCalledWith("Acces non autorise");
+		expect(mockForbidden).toHaveBeenCalled();
 	});
 
-	it("returns error when sessionId does not match owner", async () => {
+	it("returns forbidden when sessionId does not match owner", async () => {
 		mockCheckCartRateLimit.mockResolvedValue({
 			success: true,
 			context: { userId: undefined, sessionId: "sess-1" },
@@ -159,7 +162,7 @@ describe("removeFromCart", () => {
 		);
 
 		await removeFromCart(undefined, makeFormData());
-		expect(mockError).toHaveBeenCalledWith("Acces non autorise");
+		expect(mockForbidden).toHaveBeenCalled();
 	});
 
 	it("allows access when userId matches", async () => {

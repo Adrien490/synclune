@@ -128,7 +128,7 @@ export function NewsletterForm() {
 												type="submit"
 												size="lg"
 												disabled={!canSubmit || isPending || isSuccess}
-												className="h-12 px-6 shadow-lg transition-all duration-300 hover:shadow-xl sm:px-8"
+												className="h-12 px-6 transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98] sm:px-8"
 											>
 												{isSuccess ? (
 													<>

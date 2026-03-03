@@ -2,13 +2,14 @@
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import {
 	validateInput,
 	handleActionError,
 	success,
 	error,
+	forbidden,
 	BusinessError,
 	safeFormGet,
 } from "@/shared/lib/actions";
@@ -58,6 +59,7 @@ export async function updateCartItem(
 				cartId: true,
 				quantity: true,
 				cart: { select: { userId: true, sessionId: true } },
+				sku: { select: { productId: true } },
 			},
 		});
 
@@ -71,7 +73,7 @@ export async function updateCartItem(
 			: cartItem.cart.sessionId === sessionId;
 
 		if (!isOwner) {
-			return error("Acces non autorise");
+			return forbidden();
 		}
 
 		// 6. Si la quantité n'a pas changé, ne rien faire
@@ -137,6 +139,9 @@ export async function updateCartItem(
 		// 8. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
+
+		// 8b. Invalider le cache du compteur de paniers pour ce produit (FOMO "dans X paniers")
+		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(cartItem.sku.productId));
 
 		// 9. Success - Return ActionState format
 		return success(`Quantité mise à jour (${validatedData.quantity})`);

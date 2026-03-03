@@ -10,6 +10,7 @@ const {
 	mockHandleActionError,
 	mockSuccess,
 	mockError,
+	mockForbidden,
 	mockBusinessError,
 	mockPrisma,
 	mockUpdateTag,
@@ -28,6 +29,7 @@ const {
 		mockHandleActionError: vi.fn(),
 		mockSuccess: vi.fn(),
 		mockError: vi.fn(),
+		mockForbidden: vi.fn(),
 		mockBusinessError: MockBusinessError,
 		mockPrisma: {
 			cartItem: { findUnique: vi.fn(), update: vi.fn() },
@@ -57,6 +59,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+	forbidden: mockForbidden,
 	BusinessError: mockBusinessError,
 }));
 
@@ -70,6 +73,9 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/modules/cart/constants/cache", () => ({
 	getCartInvalidationTags: mockGetCartInvalidationTags,
+	CART_CACHE_TAGS: {
+		PRODUCT_CARTS: (id: string) => `product-carts-${id}`,
+	},
 }));
 
 vi.mock("@/modules/cart/lib/cart-session", () => ({
@@ -113,6 +119,7 @@ function makeCartItem(overrides: Record<string, unknown> = {}) {
 		skuId: "sku-1",
 		quantity: 1,
 		cart: { userId: "user-1", sessionId: null },
+		sku: { productId: "prod-1" },
 		...overrides,
 	};
 }
@@ -197,16 +204,16 @@ describe("updateCartItem", () => {
 		expect(mockError).toHaveBeenCalledWith("Article introuvable dans le panier");
 	});
 
-	it("returns error when userId does not match", async () => {
+	it("returns forbidden when userId does not match", async () => {
 		mockPrisma.cartItem.findUnique.mockResolvedValue(
 			makeCartItem({ cart: { userId: "other-user", sessionId: null } }),
 		);
 
 		await updateCartItem(undefined, makeFormData());
-		expect(mockError).toHaveBeenCalledWith("Acces non autorise");
+		expect(mockForbidden).toHaveBeenCalled();
 	});
 
-	it("returns error when sessionId does not match", async () => {
+	it("returns forbidden when sessionId does not match", async () => {
 		mockCheckCartRateLimit.mockResolvedValue({
 			success: true,
 			context: { userId: undefined, sessionId: "sess-1" },
@@ -216,7 +223,7 @@ describe("updateCartItem", () => {
 		);
 
 		await updateCartItem(undefined, makeFormData());
-		expect(mockError).toHaveBeenCalledWith("Acces non autorise");
+		expect(mockForbidden).toHaveBeenCalled();
 	});
 
 	it("returns success (no-op) when quantity unchanged", async () => {

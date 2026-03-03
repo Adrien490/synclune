@@ -46,7 +46,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 	return (
 		<div className="relative min-h-screen">
 			{/* Decorative background */}
-			<div className="from-primary/[0.02] to-secondary/[0.03] fixed inset-0 -z-10 bg-gradient-to-br via-transparent" />
+			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					<Card className="border-primary/10 rounded-2xl shadow-md">

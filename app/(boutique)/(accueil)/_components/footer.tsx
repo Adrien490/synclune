@@ -36,7 +36,7 @@ export async function Footer() {
 	cacheTag("footer");
 	return (
 		<footer
-			className="pwa-footer from-muted/20 via-background to-background relative overflow-hidden bg-gradient-to-b"
+			className="pwa-footer from-muted/20 via-background to-background relative overflow-hidden bg-linear-to-b"
 			aria-labelledby="footer-heading"
 		>
 			{/* Titre sr-only pour hiérarchie des headings */}

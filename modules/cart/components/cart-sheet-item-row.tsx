@@ -39,6 +39,14 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 	const discountPercent = getCartItemDiscountPercent(item);
 	const primaryImage = getCartItemPrimaryImage(item);
 
+	const ariaLabelParts = [
+		item.sku.product.title,
+		item.sku.color?.name,
+		item.sku.material?.name,
+		`quantité ${item.quantity}`,
+		`${formatEuro(getCartItemSubtotal(item))}`,
+	].filter(Boolean);
+
 	return (
 		<article
 			className={cn(
@@ -46,7 +54,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				"grid grid-cols-[5rem_1fr] gap-3.5 sm:grid-cols-[6rem_1fr]",
 				hasIssue ? "border-destructive/50 bg-destructive/5" : "border-border",
 			)}
-			aria-label={`${item.sku.product.title}, quantité ${item.quantity}`}
+			aria-label={ariaLabelParts.join(", ")}
 		>
 			{/* Image - row-span-2 sur mobile pour occuper les 2 lignes */}
 			<Link

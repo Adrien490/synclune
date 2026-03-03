@@ -138,7 +138,9 @@ describe("validateCart", () => {
 		await validateCart();
 
 		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: VALID_USER_ID } }),
+			expect.objectContaining({
+				where: expect.objectContaining({ userId: VALID_USER_ID }),
+			}),
 		);
 	});
 
@@ -151,7 +153,9 @@ describe("validateCart", () => {
 		await validateCart();
 
 		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { sessionId: VALID_SESSION_ID } }),
+			expect.objectContaining({
+				where: expect.objectContaining({ sessionId: VALID_SESSION_ID }),
+			}),
 		);
 	});
 

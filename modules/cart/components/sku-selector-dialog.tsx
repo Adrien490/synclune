@@ -1202,6 +1202,7 @@ function SkuSelectorFormContent({
 					disabled={!canAddToCart || isPending}
 					className="w-full"
 					size="lg"
+					aria-describedby={hasVisibleErrors ? VALIDATION_ERROR_ID : undefined}
 					onClick={() => {
 						if (validationErrors.length > 0) setShowErrors(true);
 					}}

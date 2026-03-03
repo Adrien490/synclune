@@ -188,7 +188,7 @@ export function CheckoutSummary({
 
 			{/* Total */}
 			<div
-				className="bg-primary/[0.03] -mx-1 space-y-2 rounded-xl p-3"
+				className="bg-primary/3 -mx-1 space-y-2 rounded-xl p-3"
 				aria-live="polite"
 				aria-atomic="true"
 			>

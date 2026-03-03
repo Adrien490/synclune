@@ -147,7 +147,7 @@ export function AnnouncementBar({
 				>
 					{/* Shimmer sweep effect */}
 					<div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-						<div className="absolute inset-0 animate-[announcement-shimmer_3s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent motion-reduce:hidden" />
+						<div className="absolute inset-0 animate-[announcement-shimmer_3s_ease-in-out_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent motion-reduce:hidden" />
 					</div>
 
 					<div

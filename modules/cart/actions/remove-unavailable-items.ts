@@ -39,7 +39,10 @@ export async function removeUnavailableItems(
 		// 2. Récupérer le panier avec tous ses items et relations
 		// ⚠️ AUDIT FIX: Utiliser select explicite au lieu d'include + filtre deletedAt
 		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId },
+			where: {
+				...(userId ? { userId } : { sessionId }),
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+			},
 			select: {
 				id: true,
 				items: {

@@ -1,3 +1,4 @@
+import "server-only";
 import { prisma } from "@/shared/lib/prisma";
 
 // ============================================================================
@@ -20,7 +21,16 @@ export type BatchSkuRow = NonNullable<
 export async function fetchSkuForValidation(skuId: string) {
 	return prisma.productSku.findUnique({
 		where: { id: skuId },
-		include: {
+		select: {
+			id: true,
+			sku: true,
+			priceInclTax: true,
+			compareAtPrice: true,
+			inventory: true,
+			isActive: true,
+			colorId: true,
+			size: true,
+			deletedAt: true,
 			product: {
 				select: {
 					id: true,
@@ -33,6 +43,11 @@ export async function fetchSkuForValidation(skuId: string) {
 			},
 			images: {
 				orderBy: { createdAt: "asc" },
+				select: {
+					url: true,
+					altText: true,
+					isPrimary: true,
+				},
 			},
 			color: {
 				select: {

@@ -97,7 +97,7 @@ export function FilterSheetWrapper({
 				title={title}
 			>
 				<SheetHeader
-					className="border-primary/10 from-background via-primary/[0.02] to-background relative shrink-0 border-b bg-linear-to-r px-6 py-5"
+					className="border-primary/10 from-background via-primary/2 to-background relative shrink-0 border-b bg-linear-to-r px-6 py-5"
 					aria-labelledby="filter-sheet-title"
 				>
 					<div className="flex items-center justify-between gap-4">
