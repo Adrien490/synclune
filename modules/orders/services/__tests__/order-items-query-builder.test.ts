@@ -139,8 +139,8 @@ describe("buildOrderItemsFilterConditions", () => {
 });
 
 describe("buildOrderItemsWhereClause", () => {
-	it("should return empty object with no filters", () => {
-		const result = buildOrderItemsWhereClause({} as never);
+	it("should return empty object with empty filters", () => {
+		const result = buildOrderItemsWhereClause({ filters: {} } as never);
 
 		expect(result).toEqual({});
 	});

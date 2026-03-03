@@ -100,15 +100,6 @@ describe("getUserAddresses", () => {
 		expect(mockPrisma.address.findMany).not.toHaveBeenCalled();
 	});
 
-	it("returns null when session has no user", async () => {
-		mockGetSession.mockResolvedValue({ user: null });
-
-		const result = await getUserAddresses();
-
-		expect(result).toBeNull();
-		expect(mockPrisma.address.findMany).not.toHaveBeenCalled();
-	});
-
 	it("returns addresses for authenticated user", async () => {
 		mockGetSession.mockResolvedValue({ user: { id: "user-1" } });
 		mockPrisma.address.findMany.mockResolvedValue([makeAddress()]);

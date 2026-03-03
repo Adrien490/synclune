@@ -85,7 +85,7 @@ async function fetchReviewableProducts(userId: string): Promise<ReviewableProduc
 	// Collecter les productIds uniques (dedupliques)
 	const uniqueProductIds = new Set<string>();
 	for (const item of orderItems) {
-		if (item.sku?.product?.id && !item.sku.product.deletedAt) {
+		if (item.sku.product.id && !item.sku.product.deletedAt) {
 			uniqueProductIds.add(item.sku.product.id);
 		}
 	}
@@ -106,9 +106,6 @@ async function fetchReviewableProducts(userId: string): Promise<ReviewableProduc
 	const reviewableProducts: ReviewableProduct[] = [];
 
 	for (const item of orderItems) {
-		// Skip items with missing sku or product
-		if (!item.sku?.product) continue;
-
 		// Verifier que le produit n'est pas soft-deleted
 		if (item.sku.product.deletedAt) {
 			continue;

@@ -141,18 +141,6 @@ describe("getReviewableProducts", () => {
 		expect(result).toHaveLength(0);
 	});
 
-	it("should handle items with null sku.product", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-		mockPrisma.orderItem.findMany.mockResolvedValue([
-			{ id: "item-1", order: { createdAt: new Date(), actualDelivery: null }, sku: null },
-		]);
-		mockPrisma.productReview.findMany.mockResolvedValue([]);
-
-		const result = await getReviewableProducts();
-
-		expect(result).toHaveLength(0);
-	});
-
 	it("should return null productImage when no default sku images", async () => {
 		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
 		mockPrisma.orderItem.findMany.mockResolvedValue([

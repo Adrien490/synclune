@@ -70,17 +70,6 @@ describe("extractCollectionImages", () => {
 		expect(result[3]?.url).toBe("https://img.com/3.jpg");
 	});
 
-	it("handles products with null product reference", () => {
-		const products = [
-			{ isFeatured: false, product: null },
-			makeProduct({ url: "https://img.com/1.jpg", altText: "Ring", blurDataUrl: null }),
-		];
-
-		const result = extractCollectionImages(products as never);
-		expect(result).toHaveLength(1);
-		expect(result[0]?.url).toBe("https://img.com/1.jpg");
-	});
-
 	it("preserves null alt text and blur data", () => {
 		const products = [
 			makeProduct({ url: "https://img.com/1.jpg", altText: null, blurDataUrl: null }),

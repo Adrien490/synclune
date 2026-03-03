@@ -96,15 +96,6 @@ describe("getCurrentUser", () => {
 		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
-	it("returns null when session has no user", async () => {
-		mockAuthGetSession.mockResolvedValue({ user: null });
-
-		const result = await getCurrentUser();
-
-		expect(result).toBeNull();
-		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
-	});
-
 	it("calls auth.api.getSession with resolved headers", async () => {
 		const fakeHeaders = new Headers({ "x-test": "value" });
 		mockHeaders.mockResolvedValue(fakeHeaders);

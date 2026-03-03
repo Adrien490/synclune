@@ -55,7 +55,6 @@ export function buildOrderItemsWhereClause(
 	params: z.infer<typeof getOrderItemsSchema>,
 ): Prisma.OrderItemWhereInput {
 	const whereClause: Prisma.OrderItemWhereInput = {};
-	if (!params.filters) return whereClause;
 	const filterConditions = buildOrderItemsFilterConditions(params.filters);
 
 	if (filterConditions.length > 0) {

@@ -156,7 +156,7 @@ describe("addRecentProduct", () => {
 
 		await addRecentProduct(undefined, validFormData);
 
-		const [, encodedValue] = cookieStore.set.mock.calls[0];
+		const [, encodedValue] = cookieStore.set.mock.calls[0]!;
 		const saved = JSON.parse(decodeURIComponent(encodedValue));
 		expect(saved).toHaveLength(10);
 		expect(saved[0]).toBe("bracelet-lune");

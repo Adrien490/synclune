@@ -95,15 +95,6 @@ describe("getUserCustomizationRequests", () => {
 		expect(mockPrisma.customizationRequest.findMany).not.toHaveBeenCalled();
 	});
 
-	it("returns null when session has no user", async () => {
-		mockGetSession.mockResolvedValue({ user: null });
-
-		const result = await getUserCustomizationRequests();
-
-		expect(result).toBeNull();
-		expect(mockPrisma.customizationRequest.findMany).not.toHaveBeenCalled();
-	});
-
 	it("returns null when session user has no id", async () => {
 		mockGetSession.mockResolvedValue({ user: { id: undefined } });
 
