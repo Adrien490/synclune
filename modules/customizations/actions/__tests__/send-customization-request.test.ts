@@ -144,6 +144,7 @@ const VALIDATED_DATA = {
 	phone: "+33612345678",
 	productTypeLabel: "Bague",
 	details: "Je souhaite une bague gravée avec le prénom de ma fille",
+	inspirationMedias: [] as Array<{ url: string; blurDataUrl?: string; altText?: string }>,
 	rgpdConsent: true,
 	website: "",
 };
