@@ -301,8 +301,11 @@ export const ourFileRouter = {
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
+			const blurDataUrl = await generateBlurSafe(file.ufsUrl);
+
 			return {
 				url: file.ufsUrl,
+				blurDataUrl,
 				uploadedBy: metadata.userId,
 			};
 		}),

@@ -58,7 +58,11 @@ export async function sendCustomizationRequest(
 			phone: safeFormGet(formData, "phone") ?? "",
 			productTypeLabel: safeFormGet(formData, "productTypeLabel") ?? "",
 			details: safeFormGet(formData, "details") ?? "",
-			inspirationImageUrls: safeFormGetJSON<string[]>(formData, "inspirationImageUrls") ?? [],
+			inspirationMedias:
+				safeFormGetJSON<{ url: string; blurDataUrl?: string; altText?: string }[]>(
+					formData,
+					"inspirationMedias",
+				) ?? [],
 			rgpdConsent: formData.get("rgpdConsent") === "true",
 			website: safeFormGet(formData, "website") ?? "",
 		};
@@ -108,18 +112,33 @@ export async function sendCustomizationRequest(
 			select: { id: true },
 		});
 
-		// 8. Créer la demande en base de données
-		const customizationRequest = await prisma.customizationRequest.create({
-			data: {
-				firstName: validatedData.firstName,
-				email: validatedData.email,
-				phone: validatedData.phone ?? null,
-				productTypeLabel: validatedData.productTypeLabel,
-				productTypeId: productType?.id ?? null,
-				details: validatedData.details,
-				inspirationImageUrls: validatedData.inspirationImageUrls,
-				userId,
-			},
+		// 8. Créer la demande en base de données (avec médias dans une transaction)
+		const customizationRequest = await prisma.$transaction(async (tx) => {
+			const request = await tx.customizationRequest.create({
+				data: {
+					firstName: validatedData.firstName,
+					email: validatedData.email,
+					phone: validatedData.phone ?? null,
+					productTypeLabel: validatedData.productTypeLabel,
+					productTypeId: productType?.id ?? null,
+					details: validatedData.details,
+					userId,
+				},
+			});
+
+			if (validatedData.inspirationMedias.length > 0) {
+				await tx.customizationMedia.createMany({
+					data: validatedData.inspirationMedias.map((media, index) => ({
+						customizationRequestId: request.id,
+						url: media.url,
+						blurDataUrl: media.blurDataUrl ?? null,
+						altText: media.altText ?? null,
+						position: index,
+					})),
+				});
+			}
+
+			return request;
 		});
 
 		// 9. Sanitize PII for email injection prevention (defense-in-depth)

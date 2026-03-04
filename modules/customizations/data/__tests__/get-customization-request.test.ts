@@ -55,6 +55,7 @@ function makeDetailRequest(overrides: Record<string, unknown> = {}) {
 		status: "PENDING",
 		adminNotes: null,
 		respondedAt: null,
+		inspirationMedias: [],
 		inspirationProducts: [],
 		...overrides,
 	};
@@ -154,6 +155,21 @@ describe("getCustomizationRequest", () => {
 				select: expect.objectContaining({
 					productType: {
 						select: { id: true, label: true, slug: true },
+					},
+				}),
+			}),
+		);
+	});
+
+	it("selects inspirationMedias ordered by position", async () => {
+		await getCustomizationRequest("req-1");
+
+		expect(mockPrisma.customizationRequest.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				select: expect.objectContaining({
+					inspirationMedias: {
+						select: { id: true, url: true, blurDataUrl: true, altText: true },
+						orderBy: { position: "asc" },
 					},
 				}),
 			}),

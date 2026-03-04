@@ -25,6 +25,8 @@ const {
 	mockPrisma: {
 		productType: { findFirst: vi.fn() },
 		customizationRequest: { create: vi.fn() },
+		customizationMedia: { createMany: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockGetSession: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
@@ -175,8 +177,16 @@ describe("sendCustomizationRequest", () => {
 		// Default: no matching product type
 		mockPrisma.productType.findFirst.mockResolvedValue(null);
 
+		// Default: $transaction executes the callback with mockPrisma as tx
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
+
 		// Default: DB creates request successfully
 		mockPrisma.customizationRequest.create.mockResolvedValue(MOCK_REQUEST);
+
+		// Default: media createMany succeeds
+		mockPrisma.customizationMedia.createMany.mockResolvedValue({ count: 0 });
 
 		// Default: sanitize passes through
 		mockSanitizeForEmail.mockImplementation((str: string) => str);
@@ -472,7 +482,7 @@ describe("sendCustomizationRequest", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should call handleActionError when DB create throws", async () => {
-		mockPrisma.customizationRequest.create.mockRejectedValue(new Error("DB connection failed"));
+		mockPrisma.$transaction.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await sendCustomizationRequest(undefined, VALID_FORM_DATA);
 

@@ -13,7 +13,7 @@ import {
 	CUSTOMIZATION_STATUS_COLORS,
 } from "@/modules/customizations/constants/status.constants";
 import { formatDateTime } from "@/shared/utils/dates";
-import { ArrowLeft, Mail, Phone, User, Package, Sparkles, FileText } from "lucide-react";
+import { ArrowLeft, Mail, Phone, User, Package, Sparkles, FileText, ImageIcon } from "lucide-react";
 import { UpdateStatusForm } from "@/modules/customizations/components/admin/update-status-form";
 
 export const metadata: Metadata = {
@@ -108,6 +108,41 @@ export default async function CustomizationDetailPage({ params }: CustomizationD
 							<p className="text-sm leading-relaxed whitespace-pre-wrap">{request.details}</p>
 						</CardContent>
 					</Card>
+
+					{/* Images d'inspiration */}
+					{request.inspirationMedias.length > 0 && (
+						<Card>
+							<CardHeader>
+								<CardTitle className="flex items-center gap-2 text-lg">
+									<ImageIcon className="h-5 w-5" />
+									Images d&apos;inspiration ({request.inspirationMedias.length})
+								</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+									{request.inspirationMedias.map((media) => (
+										<a
+											key={media.id}
+											href={media.url}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="group bg-muted hover:border-primary relative aspect-square overflow-hidden rounded-lg border transition-colors"
+										>
+											<Image
+												src={media.url}
+												alt={media.altText ?? "Image d'inspiration"}
+												fill
+												sizes="(max-width: 640px) 50vw, 33vw"
+												className="object-cover"
+												placeholder={media.blurDataUrl ? "blur" : undefined}
+												blurDataURL={media.blurDataUrl ?? undefined}
+											/>
+										</a>
+									))}
+								</div>
+							</CardContent>
+						</Card>
+					)}
 
 					{/* Inspirations */}
 					{request.inspirationProducts.length > 0 && (

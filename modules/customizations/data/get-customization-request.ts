@@ -54,6 +54,10 @@ async function fetchCustomizationRequest(id: string): Promise<CustomizationReque
 				status: true,
 				adminNotes: true,
 				respondedAt: true,
+				inspirationMedias: {
+					select: { id: true, url: true, blurDataUrl: true, altText: true },
+					orderBy: { position: "asc" as const },
+				},
 				inspirationProducts: {
 					select: {
 						id: true,

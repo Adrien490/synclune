@@ -142,8 +142,8 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 			</form.AppField>
 
 			{/* Images d'inspiration (optionnel) */}
-			<form.Subscribe selector={(state) => state.values.inspirationImageUrls}>
-				{(urls) => (
+			<form.Subscribe selector={(state) => state.values.inspirationMedias}>
+				{(medias) => (
 					<div className="space-y-2">
 						<FieldLabel htmlFor="inspirationImages" optional>
 							Images d&apos;inspiration
@@ -152,22 +152,24 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 							Ajoutez jusqu&apos;à 5 images pour illustrer votre idée
 						</p>
 
-						{urls.length > 0 && (
+						{medias.length > 0 && (
 							<div className="flex flex-wrap gap-2">
-								{urls.map((url, index) => (
-									<div key={url} className="group relative">
+								{medias.map((media, index) => (
+									<div key={media.url} className="group relative">
 										<Image
-											src={url}
-											alt={`Inspiration ${index + 1}`}
+											src={media.url}
+											alt={media.altText ?? `Inspiration ${index + 1}`}
 											width={80}
 											height={80}
+											placeholder={media.blurDataUrl ? "blur" : undefined}
+											blurDataURL={media.blurDataUrl}
 											className="h-20 w-20 rounded-md border object-cover"
 										/>
 										<button
 											type="button"
 											onClick={() => {
-												const newUrls = urls.filter((_, i) => i !== index);
-												form.setFieldValue("inspirationImageUrls", newUrls);
+												const newMedias = medias.filter((_, i) => i !== index);
+												form.setFieldValue("inspirationMedias", newMedias);
 											}}
 											className="bg-destructive text-destructive-foreground absolute -top-1.5 -right-1.5 rounded-full p-0.5 opacity-0 transition-opacity group-hover:opacity-100"
 											aria-label={`Supprimer l'image ${index + 1}`}
@@ -179,12 +181,18 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 							</div>
 						)}
 
-						{urls.length < 5 && (
+						{medias.length < 5 && (
 							<UploadDropzone
 								endpoint="customizationMedia"
 								onClientUploadComplete={(res) => {
-									const newUrls = [...urls, ...res.map((f) => f.ufsUrl)].slice(0, 5);
-									form.setFieldValue("inspirationImageUrls", newUrls);
+									const newMedias = [
+										...medias,
+										...res.map((f) => ({
+											url: f.ufsUrl,
+											blurDataUrl: f.serverData?.blurDataUrl,
+										})),
+									].slice(0, 5);
+									form.setFieldValue("inspirationMedias", newMedias);
 								}}
 								onUploadError={(error) => {
 									toast.error(error.message || "Erreur lors de l'upload");
@@ -223,7 +231,7 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 									},
 									allowedContent: ({ isUploading }) => {
 										if (isUploading) return null;
-										const remaining = 5 - urls.length;
+										const remaining = 5 - medias.length;
 										return `${remaining} image${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} — JPEG, PNG, WebP — 4 Mo max`;
 									},
 								}}
@@ -231,7 +239,7 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 							/>
 						)}
 
-						<input type="hidden" name="inspirationImageUrls" value={JSON.stringify(urls)} />
+						<input type="hidden" name="inspirationMedias" value={JSON.stringify(medias)} />
 					</div>
 				)}
 			</form.Subscribe>

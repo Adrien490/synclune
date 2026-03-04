@@ -127,9 +127,10 @@ export async function cleanupOrphanMedia(): Promise<{
  * as unreferenced after 24h.
  *
  * Currently tracked:
- * - catalogMedia    → SkuMedia (url, thumbnailUrl)
- * - reviewMedia     → ReviewMedia (url)
- * - (user avatars)  → User.image
+ * - catalogMedia        → SkuMedia (url, thumbnailUrl)
+ * - reviewMedia         → ReviewMedia (url)
+ * - customizationMedia  → CustomizationMedia (url)
+ * - (user avatars)      → User.image
  *
  * ⚠️ UNTRACKED ROUTES - Files from these routes will be deleted as orphans after 24h:
  * - testimonialMedia → No DB table yet. BEFORE enabling testimonials in production,
@@ -193,7 +194,31 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		reviewCursor = batch[batch.length - 1]!.id;
 	}
 
-	// 3. User avatars (only those with non-null image) - paginated
+	// 3. CustomizationMedia - paginated
+	let customizationCursor: string | undefined;
+
+	for (;;) {
+		if (Date.now() > deadline) {
+			logger.warn("Deadline reached during DB key scan, aborting safely", {
+				cronJob: "cleanup-orphan-media",
+			});
+			throw new Error("Deadline exceeded during DB key scan");
+		}
+		const batch = await prisma.customizationMedia.findMany({
+			select: { id: true, url: true },
+			take: DB_QUERY_BATCH_SIZE,
+			...(customizationCursor && { skip: 1, cursor: { id: customizationCursor } }),
+			orderBy: { id: "asc" },
+		});
+		for (const media of batch) {
+			const key = extractFileKeyFromUrl(media.url);
+			if (key) keys.add(key);
+		}
+		if (batch.length < DB_QUERY_BATCH_SIZE) break;
+		customizationCursor = batch[batch.length - 1]!.id;
+	}
+
+	// 4. User avatars (only those with non-null image) - paginated
 	let userCursor: string | undefined;
 
 	for (;;) {

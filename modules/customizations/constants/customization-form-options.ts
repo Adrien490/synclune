@@ -14,7 +14,7 @@ export const CUSTOMIZATION_DEFAULT_VALUES = {
 	details: "",
 
 	// Images d'inspiration
-	inspirationImageUrls: [] as string[],
+	inspirationMedias: [] as Array<{ url: string; blurDataUrl?: string; altText?: string }>,
 
 	// Consentements
 	rgpdConsent: false,

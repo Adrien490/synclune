@@ -58,6 +58,12 @@ export interface CustomizationRequestDetail {
 	status: CustomizationRequestStatus;
 	adminNotes: string | null;
 	respondedAt: Date | null;
+	inspirationMedias: {
+		id: string;
+		url: string;
+		blurDataUrl: string | null;
+		altText: string | null;
+	}[];
 	inspirationProducts: {
 		id: string;
 		title: string;

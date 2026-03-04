@@ -14,6 +14,17 @@ vi.mock("libphonenumber-js", () => ({
 	isValidPhoneNumber: (val: string) => val.startsWith("+33"),
 }));
 
+vi.mock("@/shared/lib/media-validation", () => ({
+	isAllowedMediaDomain: (url: string) => {
+		try {
+			const hostname = new URL(url).hostname;
+			return hostname === "utfs.io" || hostname === "ufs.sh";
+		} catch {
+			return false;
+		}
+	},
+}));
+
 import { customizationSchema } from "../customization.schema";
 import { updateStatusSchema } from "../update-status.schema";
 import { bulkUpdateStatusSchema } from "../bulk-update-status.schema";
@@ -149,6 +160,58 @@ describe("customizationSchema", () => {
 			});
 
 			expect(result.success).toBe(false);
+		});
+	});
+
+	describe("inspirationMedias", () => {
+		it("should accept empty array", () => {
+			const result = customizationSchema.safeParse({
+				...validData,
+				inspirationMedias: [],
+			});
+
+			expect(result.success).toBe(true);
+		});
+
+		it("should accept valid media objects", () => {
+			const result = customizationSchema.safeParse({
+				...validData,
+				inspirationMedias: [
+					{ url: "https://utfs.io/f/abc123" },
+					{ url: "https://ufs.sh/f/def456", blurDataUrl: "data:image/png;base64,abc" },
+				],
+			});
+
+			expect(result.success).toBe(true);
+		});
+
+		it("should reject more than 5 medias", () => {
+			const result = customizationSchema.safeParse({
+				...validData,
+				inspirationMedias: Array.from({ length: 6 }, (_, i) => ({
+					url: `https://utfs.io/f/file${i}`,
+				})),
+			});
+
+			expect(result.success).toBe(false);
+		});
+
+		it("should reject media from unauthorized domains", () => {
+			const result = customizationSchema.safeParse({
+				...validData,
+				inspirationMedias: [{ url: "https://evil.com/malware.jpg" }],
+			});
+
+			expect(result.success).toBe(false);
+		});
+
+		it("should default to empty array when not provided", () => {
+			const result = customizationSchema.safeParse(validData);
+
+			expect(result.success).toBe(true);
+			if (result.success) {
+				expect(result.data.inspirationMedias).toEqual([]);
+			}
 		});
 	});
 

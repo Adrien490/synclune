@@ -1,5 +1,6 @@
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
+import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
 
 // ============================================================================
 // CUSTOMIZATION FORM SCHEMA
@@ -46,11 +47,17 @@ export const customizationSchema = z.object({
 		.max(2000, { message: "Les détails ne peuvent pas dépasser 2000 caractères" })
 		.trim(),
 
-	// Images d'inspiration (URLs uploadées via UploadThing)
-	inspirationImageUrls: z
-		.string()
-		.url()
-		.array()
+	// Images d'inspiration (objets média uploadés via UploadThing)
+	inspirationMedias: z
+		.array(
+			z.object({
+				url: z.string().url().refine(isAllowedMediaDomain, {
+					message: "L'URL de l'image provient d'un domaine non autorisé",
+				}),
+				blurDataUrl: z.string().startsWith("data:image/").max(5000).optional(),
+				altText: z.string().max(255).optional(),
+			}),
+		)
 		.max(5, { message: "Maximum 5 images d'inspiration" })
 		.optional()
 		.default([]),

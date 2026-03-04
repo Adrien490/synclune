@@ -342,7 +342,7 @@ export function createMockCustomizationRequest(overrides: Record<string, unknown
 		productTypeLabel: "Bague",
 		productTypeId: "type_123",
 		details: "Bague personnalisee avec gravure initiales",
-		inspirationImageUrls: [],
+		inspirationMedias: [],
 		status: "PENDING",
 		createdAt: new Date("2026-01-15"),
 		updatedAt: new Date("2026-01-15"),
