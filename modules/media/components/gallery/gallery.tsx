@@ -70,10 +70,26 @@ function GalleryThumbnailList({
 	variant,
 }: GalleryThumbnailListProps) {
 	const isDesktop = variant === "desktop";
+	const prefersReduced = useReducedMotion();
+	const tablistRef = useRef<HTMLDivElement>(null);
+
+	// Scroll active thumbnail into view when current changes
+	useEffect(() => {
+		const tablist = tablistRef.current;
+		if (!tablist) return;
+
+		const activeButton = tablist.querySelectorAll<HTMLButtonElement>('[role="tab"]')[current];
+		activeButton?.scrollIntoView({
+			block: "nearest",
+			inline: "nearest",
+			behavior: prefersReduced ? "instant" : "smooth",
+		});
+	}, [current, prefersReduced]);
 
 	return (
 		<div className={isDesktop ? "order-1 hidden md:block" : "order-3 mt-3 md:hidden"}>
 			<div
+				ref={tablistRef}
 				className={isDesktop ? "flex flex-col gap-2" : "flex flex-wrap gap-2"}
 				role="tablist"
 				aria-label="Vignettes"

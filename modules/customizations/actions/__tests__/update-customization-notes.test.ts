@@ -215,7 +215,7 @@ describe("updateCustomizationNotes", () => {
 		const result = await updateCustomizationNotes(undefined, VALID_FORM_DATA);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("non trouvee");
+		expect(result.message).toContain("non trouvée");
 		expect(mockPrisma.customizationRequest.update).not.toHaveBeenCalled();
 	});
 
@@ -282,14 +282,14 @@ describe("updateCustomizationNotes", () => {
 	// Success messages
 	// ──────────────────────────────────────────────────────────────
 
-	it("should return 'Notes mises a jour' when notes are set", async () => {
+	it("should return 'Notes mises à jour' when notes are set", async () => {
 		const result = await updateCustomizationNotes(undefined, VALID_FORM_DATA);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSuccess).toHaveBeenCalledWith("Notes mises a jour");
+		expect(mockSuccess).toHaveBeenCalledWith("Notes mises à jour");
 	});
 
-	it("should return 'Notes supprimees' when notes are cleared (null)", async () => {
+	it("should return 'Notes supprimées' when notes are cleared (null)", async () => {
 		mockValidateInput.mockReturnValue({
 			data: {
 				requestId: "cm1234567890abcdefghijklm",
@@ -300,7 +300,7 @@ describe("updateCustomizationNotes", () => {
 		const result = await updateCustomizationNotes(undefined, VALID_FORM_DATA);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSuccess).toHaveBeenCalledWith("Notes supprimees");
+		expect(mockSuccess).toHaveBeenCalledWith("Notes supprimées");
 	});
 
 	// ──────────────────────────────────────────────────────────────

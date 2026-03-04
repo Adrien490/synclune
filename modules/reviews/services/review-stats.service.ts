@@ -22,31 +22,6 @@ interface RatingCounts {
 	rating5Count: number;
 }
 
-/**
- * Transforme la distribution des notes en objet de compteurs
- *
- * @param distribution - Résultat du groupBy par rating
- * @returns Objet avec les compteurs par note
- */
-export function buildRatingCounts(
-	distribution: Array<{ rating: number; _count: number }>,
-): RatingCounts {
-	const ratingCounts: RatingCounts = {
-		rating1Count: 0,
-		rating2Count: 0,
-		rating3Count: 0,
-		rating4Count: 0,
-		rating5Count: 0,
-	};
-
-	for (const item of distribution) {
-		const key = `rating${item.rating}Count` as keyof RatingCounts;
-		ratingCounts[key] = item._count;
-	}
-
-	return ratingCounts;
-}
-
 /** Raw query result shape for review stats computation */
 interface ReviewStatsRow {
 	total_count: bigint;

@@ -104,7 +104,7 @@ export function FilterSheetWrapper({
 						<div className="space-y-0.5">
 							<h2
 								id="filter-sheet-title"
-								className="font-serif text-lg font-semibold tracking-tight"
+								className="font-display text-lg font-medium tracking-tight"
 							>
 								{title}
 							</h2>

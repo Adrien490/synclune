@@ -202,7 +202,6 @@ export async function markAsShipped(
 						city: order.shippingCity || "",
 						country: order.shippingCountry || "France",
 					},
-					estimatedDelivery: "3-5 jours ouvrés",
 				});
 				emailSent = true;
 			} catch (emailError) {

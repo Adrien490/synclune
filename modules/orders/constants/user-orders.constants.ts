@@ -17,7 +17,6 @@ export const GET_USER_ORDERS_SELECT = {
 	trackingNumber: true,
 	trackingUrl: true,
 	shippedAt: true,
-	estimatedDelivery: true,
 	actualDelivery: true,
 	paymentMethod: true,
 	paidAt: true,

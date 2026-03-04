@@ -150,7 +150,6 @@ describe("ShippingConfirmationEmail", () => {
 		trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
 		carrierLabel: "Colissimo",
 		shippingAddress: baseShippingAddress,
-		estimatedDelivery: "3-5 jours ouvrés",
 	};
 
 	it("renders without crashing", async () => {
@@ -207,18 +206,6 @@ describe("ShippingConfirmationEmail", () => {
 		expect(html).toContain("Marie");
 		expect(html).toContain("votre commande");
 		expect(html).toContain("est en route");
-	});
-
-	it("shows estimated delivery when provided", async () => {
-		const html = await render(<ShippingConfirmationEmail {...baseProps} />);
-		expect(html).toContain("3-5 jours ouvrés");
-	});
-
-	it("does not show estimated delivery section when not provided", async () => {
-		const { estimatedDelivery: _, ...propsWithoutDelivery } = baseProps;
-		const html = await render(<ShippingConfirmationEmail {...propsWithoutDelivery} />);
-		expect(html).not.toContain("3-5 jours ouvrés");
-		expect(html).not.toContain("Livraison estimée");
 	});
 });
 

@@ -13,7 +13,6 @@ interface UseUpdateTrackingFormOptions {
 	initialTrackingNumber?: string;
 	initialTrackingUrl?: string;
 	initialCarrier?: Carrier;
-	initialEstimatedDelivery?: Date;
 	onSuccess?: (message: string) => void;
 }
 
@@ -50,9 +49,6 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 			trackingNumber: options.initialTrackingNumber ?? "",
 			trackingUrl: options.initialTrackingUrl ?? "",
 			carrier: options.initialCarrier ?? ("colissimo" as Carrier),
-			estimatedDelivery: options.initialEstimatedDelivery
-				? options.initialEstimatedDelivery.toISOString().split("T")[0]
-				: "",
 			sendEmail: true,
 			customUrlMode: false,
 		},

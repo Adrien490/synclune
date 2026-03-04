@@ -138,7 +138,6 @@ describe("sendShippingConfirmationEmail", () => {
 			trackingUrl: "https://tracking.test.com/TRACK123",
 			carrierLabel: "Colissimo",
 			shippingAddress: mockShippingAddress,
-			estimatedDelivery: "2026-02-28",
 		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
@@ -151,7 +150,6 @@ describe("sendShippingConfirmationEmail", () => {
 					trackingUrl: "https://tracking.test.com/TRACK123",
 					carrierLabel: "Colissimo",
 					shippingAddress: mockShippingAddress,
-					estimatedDelivery: "2026-02-28",
 				}),
 			}),
 			expect.objectContaining({
@@ -211,7 +209,6 @@ describe("sendTrackingUpdateEmail", () => {
 			trackingNumber: "TRACK123",
 			trackingUrl: "https://tracking.test.com/TRACK123",
 			carrierLabel: "Chronopost",
-			estimatedDelivery: "2026-02-27",
 		});
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
@@ -223,7 +220,6 @@ describe("sendTrackingUpdateEmail", () => {
 					trackingNumber: "TRACK123",
 					trackingUrl: "https://tracking.test.com/TRACK123",
 					carrierLabel: "Chronopost",
-					estimatedDelivery: "2026-02-27",
 				}),
 			}),
 			expect.objectContaining({

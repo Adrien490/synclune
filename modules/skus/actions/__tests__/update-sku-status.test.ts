@@ -19,6 +19,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		productSku: { findUnique: vi.fn(), update: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -96,6 +97,9 @@ describe("updateProductSkuStatus", () => {
 
 		mockPrisma.productSku.findUnique.mockResolvedValue(createMockExistingSku());
 		mockPrisma.productSku.update.mockResolvedValue(createMockUpdatedSku(false));
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+			fn(mockPrisma),
+		);
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
@@ -106,9 +110,9 @@ describe("updateProductSkuStatus", () => {
 			status: ActionStatus.ERROR,
 			message: msg,
 		}));
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof Error ? e.message : fallback,
 		}));
 	});
 
@@ -183,7 +187,7 @@ describe("updateProductSkuStatus", () => {
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.productSku.findUnique.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 		const result = await updateProductSkuStatus(undefined, deactivateFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);

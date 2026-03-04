@@ -1,38 +1,13 @@
 import { type Prisma } from "@/app/generated/prisma/client";
-import { type z } from "zod";
 import { type GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
-import {
-	type getProductSkuSchema,
-	type createProductSkuSchema,
-	type updateProductSkuSchema,
-	type deleteProductSkuSchema,
-	type updateProductSkuStatusSchema,
-	type bulkActivateSkusSchema,
-	type bulkDeactivateSkusSchema,
-	type bulkDeleteSkusSchema,
-} from "../schemas/sku.schemas";
 
 // ============================================================================
 // FUNCTION TYPES
 // ============================================================================
 
-export type GetProductSkuParams = z.infer<typeof getProductSkuSchema>;
-
 export type GetProductSkuReturn = Prisma.ProductSkuGetPayload<{
 	select: typeof GET_PRODUCT_SKU_SELECT;
 }>;
-
-// ============================================================================
-// MUTATION TYPES
-// ============================================================================
-
-export type CreateProductSkuFormData = z.infer<typeof createProductSkuSchema>;
-export type UpdateProductSkuFormData = z.infer<typeof updateProductSkuSchema>;
-export type DeleteProductSkuInput = z.infer<typeof deleteProductSkuSchema>;
-export type UpdateProductSkuStatusInput = z.infer<typeof updateProductSkuStatusSchema>;
-export type BulkActivateSkusInput = z.infer<typeof bulkActivateSkusSchema>;
-export type BulkDeactivateSkusInput = z.infer<typeof bulkDeactivateSkusSchema>;
-export type BulkDeleteSkusInput = z.infer<typeof bulkDeleteSkusSchema>;
 
 // ============================================================================
 // SKU WITH IMAGES (for edit forms)
@@ -57,24 +32,6 @@ export type SkuWithImages = GetProductSkuReturn & {
 	compareAtPrice: number | null;
 	materialId: string | null;
 };
-
-// ============================================================================
-// INVENTORY TYPES
-// ============================================================================
-
-import type { ProductSkuFilters } from "../schemas/sku-filters-schema";
-
-/**
- * Paramètres pour la récupération de l'inventaire global
- */
-export interface GetInventoryParams {
-	cursor?: string;
-	direction?: "forward" | "backward";
-	perPage?: number;
-	sortBy?: string;
-	search?: string;
-	filters?: Partial<ProductSkuFilters>;
-}
 
 // ============================================================================
 // PARSED MEDIA TYPES

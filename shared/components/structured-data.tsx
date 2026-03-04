@@ -7,6 +7,7 @@ import {
 } from "@/shared/constants/seo-config";
 import { cacheLife, cacheTag } from "next/cache";
 
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 
@@ -21,7 +22,7 @@ interface StructuredDataProps {
 export async function StructuredData({ includeHomepageSchemas }: StructuredDataProps = {}) {
 	"use cache";
 	cacheLife("products");
-	cacheTag("homepage-structured-data");
+	cacheTag(SHARED_CACHE_TAGS.HOMEPAGE_STRUCTURED_DATA);
 
 	const reviewStats = await getGlobalReviewStats();
 

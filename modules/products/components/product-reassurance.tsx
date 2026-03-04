@@ -25,13 +25,9 @@ export function ProductReassurance() {
 				<Truck className="text-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
 				<div>
 					<span className="text-foreground font-medium">
-						France : {formatShippingPrice(SHIPPING_RATES.FR.amount)} · {SHIPPING_RATES.FR.minDays}-
-						{SHIPPING_RATES.FR.maxDays}j
+						France : {formatShippingPrice(SHIPPING_RATES.FR.amount)}
 					</span>
-					<span className="block">
-						UE : {formatShippingPrice(SHIPPING_RATES.EU.amount)} · {SHIPPING_RATES.EU.minDays}-
-						{SHIPPING_RATES.EU.maxDays}j
-					</span>
+					<span className="block">UE : {formatShippingPrice(SHIPPING_RATES.EU.amount)}</span>
 				</div>
 			</li>
 			<li className="flex items-center gap-2.5">

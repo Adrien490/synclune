@@ -3,7 +3,8 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { logAudit } from "@/shared/lib/audit-log";
 import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { auth } from "@/modules/auth/lib/auth";
@@ -21,8 +22,9 @@ export async function sendPasswordResetAdmin(userId: string): Promise<ActionStat
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Vérification admin
-		const adminCheck = await requireAdmin();
+		const adminCheck = await requireAdminWithUser();
 		if ("error" in adminCheck) return adminCheck.error;
+		const { user: adminUser } = adminCheck;
 
 		// 2b. Validation du userId
 		const validation = validateInput(adminUserIdSchema, { userId });
@@ -71,6 +73,16 @@ export async function sendPasswordResetAdmin(userId: string): Promise<ActionStat
 		});
 
 		const displayName = user.name ?? user.email;
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name ?? adminUser.email,
+			action: "user.sendPasswordReset",
+			targetType: "user",
+			targetId: userId,
+			metadata: { userEmail: user.email },
+		});
+
 		return success(`Email de réinitialisation envoyé à ${displayName}`);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de l'envoi de l'email");

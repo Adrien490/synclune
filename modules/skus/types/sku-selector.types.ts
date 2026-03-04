@@ -19,8 +19,3 @@ export interface Size {
 	size: string;
 	availableSkus?: number;
 }
-
-export interface VariantSelectionProps {
-	isPending: boolean;
-	isOptionAvailable: (type: string, value: string) => boolean;
-}

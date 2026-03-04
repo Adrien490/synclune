@@ -46,7 +46,7 @@ export async function bulkSuspendUsers(
 			return error("Vous ne pouvez pas suspendre votre propre compte.");
 		}
 
-		// 4. Filtrer les utilisateurs eligibles (non supprimes, non deja suspendus)
+		// 5. Filtrer les utilisateurs eligibles (non supprimes, non deja suspendus)
 		const eligibleUsers = await prisma.user.findMany({
 			where: {
 				id: { in: validatedData.ids },

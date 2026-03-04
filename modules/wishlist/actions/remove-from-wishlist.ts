@@ -28,6 +28,9 @@ import {
  * Compatible avec useActionState de React 19
  *
  * Supporte les utilisateurs connectes ET les visiteurs (sessions invite)
+ *
+ * Note: intentionally does NOT validate product status (PUBLIC/ARCHIVED).
+ * Users must be able to remove archived or private products from their wishlist.
  */
 export async function removeFromWishlist(
 	_: ActionState | undefined,

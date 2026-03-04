@@ -49,7 +49,7 @@ export async function bulkChangeUserRole(
 			return error("Vous ne pouvez pas changer votre propre role.");
 		}
 
-		// 4. Filtrer les utilisateurs eligibles (non supprimes, avec role different)
+		// 5. Filtrer les utilisateurs eligibles (non supprimes, avec role different)
 		const eligibleUsers = await prisma.user.findMany({
 			where: {
 				id: { in: validatedData.ids },
@@ -63,7 +63,7 @@ export async function bulkChangeUserRole(
 			return error("Aucun utilisateur eligible pour le changement de role.");
 		}
 
-		// 5. Si on retire le role admin, verifier qu'il reste au moins un admin
+		// 6. Si on retire le role admin, verifier qu'il reste au moins un admin
 		if (validatedData.role === Role.USER) {
 			const adminsToDowngrade = eligibleUsers.filter((u) => u.role === Role.ADMIN);
 
@@ -85,13 +85,13 @@ export async function bulkChangeUserRole(
 
 		const eligibleIds = eligibleUsers.map((u) => u.id);
 
-		// 8. Changer les roles
+		// 7. Changer les roles
 		const result = await prisma.user.updateMany({
 			where: { id: { in: eligibleIds } },
 			data: { role: validatedData.role },
 		});
 
-		// 9. Revalider le cache
+		// 8. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		for (const id of eligibleIds) {

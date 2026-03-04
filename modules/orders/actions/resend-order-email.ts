@@ -154,7 +154,6 @@ export async function resendOrderEmail(
 						city: order.shippingCity || "",
 						country: order.shippingCountry || "France",
 					},
-					estimatedDelivery: "3-5 jours ouvres",
 				});
 
 				if (!result.success) {

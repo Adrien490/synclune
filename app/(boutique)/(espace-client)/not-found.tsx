@@ -1,27 +1,40 @@
 import { Button } from "@/shared/components/ui/button";
+import {
+	Empty,
+	EmptyActions,
+	EmptyContent,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/shared/components/ui/empty";
+import { ROUTES } from "@/shared/constants/urls";
+import { Search } from "lucide-react";
 import Link from "next/link";
 
 export default function EspaceClientNotFound() {
 	return (
-		<div className="space-y-6 py-12 text-center">
-			<div className="space-y-3">
-				<p className="text-6xl" aria-hidden="true">
-					🔍
-				</p>
-				<h1 className="font-display text-foreground text-2xl font-semibold">Page introuvable</h1>
-				<p className="text-muted-foreground mx-auto max-w-md">
-					L'élément que vous recherchez n'existe pas ou a été supprimé.
-				</p>
-			</div>
-
-			<div className="flex flex-col justify-center gap-3 sm:flex-row">
-				<Button asChild>
-					<Link href="/compte">Retour au tableau de bord</Link>
-				</Button>
-				<Button asChild variant="secondary">
-					<Link href="/commandes">Voir mes commandes</Link>
-				</Button>
-			</div>
+		<div className="py-12">
+			<Empty variant="borderless" size="lg">
+				<EmptyHeader>
+					<EmptyMedia variant="default">
+						<Search className="text-muted-foreground size-6" />
+					</EmptyMedia>
+					<EmptyTitle>Page introuvable</EmptyTitle>
+				</EmptyHeader>
+				<EmptyContent>
+					<p className="text-muted-foreground max-w-md">
+						L'element que vous recherchez n'existe pas ou a ete supprime.
+					</p>
+					<EmptyActions>
+						<Button asChild size="lg">
+							<Link href={ROUTES.ACCOUNT.ROOT}>Retour au tableau de bord</Link>
+						</Button>
+						<Button asChild variant="outline" size="lg">
+							<Link href={ROUTES.ACCOUNT.ORDERS}>Voir mes commandes</Link>
+						</Button>
+					</EmptyActions>
+				</EmptyContent>
+			</Empty>
 		</div>
 	);
 }

@@ -45,46 +45,6 @@ export const GET_PRODUCT_SKU_SELECT = {
 // ============================================================================
 
 /**
- * SELECT léger pour les listes - sans images
- * Utilisé pour les endpoints qui n'ont pas besoin des médias (performance)
- */
-export const GET_PRODUCT_SKUS_LIGHT_SELECT = {
-	id: true,
-	sku: true,
-	productId: true,
-	priceInclTax: true,
-	compareAtPrice: true,
-	inventory: true,
-	isActive: true,
-	isDefault: true,
-	size: true,
-	createdAt: true,
-	updatedAt: true,
-	product: {
-		select: {
-			id: true,
-			slug: true,
-			title: true,
-			status: true,
-		},
-	},
-	color: {
-		select: {
-			id: true,
-			name: true,
-			hex: true,
-			slug: true,
-		},
-	},
-	material: {
-		select: {
-			id: true,
-			name: true,
-		},
-	},
-} as const satisfies Prisma.ProductSkuSelect;
-
-/**
  * SELECT complet avec images - pour les détails et édition
  */
 export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {

@@ -21,6 +21,10 @@ import { sendCustomizationStatusEmail } from "@/modules/emails/services/customiz
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
 import { canTransitionTo } from "../services/customization-status.service";
 import { updateStatusSchema } from "../schemas/update-status.schema";
+import {
+	CUSTOMIZATION_ERROR_MESSAGES,
+	CUSTOMIZATION_SUCCESS_MESSAGES,
+} from "../constants/error-messages";
 
 // ============================================================================
 // ACTION
@@ -68,26 +72,30 @@ export async function updateCustomizationStatus(
 		});
 
 		if (!existing) {
-			return error("Demande non trouvee");
+			return error(CUSTOMIZATION_ERROR_MESSAGES.REQUEST_NOT_FOUND);
 		}
 
 		// 4. Validate status transition
 		if (!canTransitionTo(existing.status, status)) {
-			return error("Transition de statut non autorisee");
+			return error(CUSTOMIZATION_ERROR_MESSAGES.INVALID_TRANSITION);
 		}
 
-		// 5. Update status
+		// 5. Update status (optimistic lock: verify status hasn't changed since read)
 		const isFirstResponse =
 			existing.status === CustomizationRequestStatus.PENDING &&
 			status !== CustomizationRequestStatus.PENDING;
 
-		await prisma.customizationRequest.update({
-			where: { id: requestId },
+		const updated = await prisma.customizationRequest.updateMany({
+			where: { id: requestId, status: existing.status },
 			data: {
 				status,
 				...(isFirstResponse && { respondedAt: new Date() }),
 			},
 		});
+
+		if (updated.count === 0) {
+			return error(CUSTOMIZATION_ERROR_MESSAGES.CONCURRENT_MODIFICATION);
+		}
 
 		void logAudit({
 			adminId: adminUser.id,
@@ -128,8 +136,8 @@ export async function updateCustomizationStatus(
 			});
 		}
 
-		return success("Statut mis a jour");
+		return success(CUSTOMIZATION_SUCCESS_MESSAGES.STATUS_UPDATED);
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la mise à jour du statut");
+		return handleActionError(e, CUSTOMIZATION_ERROR_MESSAGES.UPDATE_STATUS_ERROR);
 	}
 }

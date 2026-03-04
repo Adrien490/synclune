@@ -35,7 +35,7 @@ import { extractCustomerFirstName } from "../utils/customer-name";
  *
  * Règles métier :
  * - La commande doit être expédiée (SHIPPED) ou livrée (DELIVERED)
- * - Met à jour le numéro de suivi, l'URL, le transporteur et la date de livraison estimée
+ * - Met à jour le numéro de suivi, l'URL et le transporteur
  * - Envoie un email de mise à jour au client si sendEmail = true
  */
 export async function updateTracking(
@@ -54,7 +54,6 @@ export async function updateTracking(
 		const trackingNumber = safeFormGet(formData, "trackingNumber");
 		const trackingUrl = safeFormGet(formData, "trackingUrl");
 		const carrier = safeFormGet(formData, "carrier");
-		const estimatedDelivery = safeFormGet(formData, "estimatedDelivery");
 		const sendEmail = safeFormGet(formData, "sendEmail");
 
 		const validated = validateInput(updateTrackingSchema, {
@@ -62,7 +61,6 @@ export async function updateTracking(
 			trackingNumber,
 			trackingUrl: trackingUrl ?? undefined,
 			carrier: carrier ?? undefined,
-			estimatedDelivery: estimatedDelivery ?? undefined,
 			sendEmail: sendEmail ?? "true",
 		});
 		if ("error" in validated) return validated.error;
@@ -109,7 +107,6 @@ export async function updateTracking(
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					shippingCarrier: validated.data.carrier ?? null,
-					estimatedDelivery: validated.data.estimatedDelivery,
 				},
 			});
 
@@ -154,16 +151,6 @@ export async function updateTracking(
 				order.shippingFirstName,
 			);
 
-			// Formater la date de livraison estimée
-			const estimatedDeliveryStr = validated.data.estimatedDelivery
-				? validated.data.estimatedDelivery.toLocaleDateString("fr-FR", {
-						weekday: "long",
-						year: "numeric",
-						month: "long",
-						day: "numeric",
-					})
-				: "3-5 jours ouvres";
-
 			try {
 				await sendTrackingUpdateEmail({
 					to: order.customerEmail,
@@ -172,7 +159,6 @@ export async function updateTracking(
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					carrierLabel,
-					estimatedDelivery: estimatedDeliveryStr,
 				});
 				emailSent = true;
 			} catch (emailError) {

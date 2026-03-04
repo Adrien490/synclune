@@ -76,10 +76,6 @@ export interface ShippingRate {
 	displayName: string;
 	/** Code du transporteur */
 	carrier: ShippingCarrier;
-	/** Délai minimum en jours ouvrés */
-	minDays: number;
-	/** Délai maximum en jours ouvrés */
-	maxDays: number;
 	/** Pays couverts par ce tarif */
 	countries: readonly string[];
 }

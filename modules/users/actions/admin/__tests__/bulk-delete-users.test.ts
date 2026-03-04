@@ -83,6 +83,12 @@ vi.mock("../../../constants/cache", () => ({
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	Role: { ADMIN: "ADMIN", USER: "USER" },
+	AccountStatus: {
+		ACTIVE: "ACTIVE",
+		INACTIVE: "INACTIVE",
+		PENDING_DELETION: "PENDING_DELETION",
+		ANONYMIZED: "ANONYMIZED",
+	},
 }));
 
 import { bulkDeleteUsers } from "../bulk-delete-users";

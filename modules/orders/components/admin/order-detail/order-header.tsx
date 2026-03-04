@@ -92,7 +92,6 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 			trackingNumber: order.trackingNumber ?? undefined,
 			trackingUrl: order.trackingUrl ?? undefined,
 			carrier: order.shippingCarrier as Carrier,
-			estimatedDelivery: order.estimatedDelivery ?? undefined,
 		});
 	};
 

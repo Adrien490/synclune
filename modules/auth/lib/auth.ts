@@ -126,23 +126,19 @@ export const auth = betterAuth({
 	plugins: [
 		customSession(async ({ user, session }) => {
 			// Récupérer les informations utilisateur complètes depuis la base de données
-			// Filter out soft-deleted users to prevent deleted accounts from retaining their role
+			// Filter out soft-deleted AND suspended users to prevent access
 			const userData = await prisma.user.findUnique({
-				where: { id: session.userId, ...notDeleted },
+				where: { id: session.userId, ...notDeleted, suspendedAt: null },
 				select: { role: true },
 			});
 
-			// Si l'utilisateur n'existe plus en base (compte supprimé), permettre quand même
-			// le logout en retournant une session avec un rôle par défaut
-			// Bonne pratique : Ne JAMAIS bloquer le logout, même pour une session orpheline
+			// Si l'utilisateur n'existe plus en base (supprimé ou suspendu),
+			// permettre quand même le logout en retournant une session avec un rôle par défaut
 			if (!userData) {
-				// Retourner la session avec un rôle par défaut pour permettre le logout
-				// L'utilisateur sera automatiquement redirigé vers la page de connexion
-				// lors de sa prochaine tentative d'accès à une page protégée
 				return {
 					user: {
 						...user,
-						role: "USER" as const, // Rôle par défaut pour session orpheline
+						role: "USER" as const,
 					},
 					session,
 				};

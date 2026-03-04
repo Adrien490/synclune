@@ -15,6 +15,7 @@ const {
 	mockNotFound,
 	mockHandleActionError,
 	mockUpdateTag,
+	mockGetUserFullInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findUnique: vi.fn(), update: vi.fn() },
@@ -27,6 +28,7 @@ const {
 	mockNotFound: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockUpdateTag: vi.fn(),
+	mockGetUserFullInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -78,6 +80,15 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	AccountStatus: { ACTIVE: "ACTIVE", INACTIVE: "INACTIVE" },
 }));
 
+vi.mock("../../../constants/cache", () => ({
+	USERS_CACHE_TAGS: { ACCOUNTS_LIST: "accounts-list" },
+	getUserFullInvalidationTags: mockGetUserFullInvalidationTags,
+}));
+
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+}));
+
 import { restoreUser } from "../restore-user";
 
 // ============================================================================
@@ -118,6 +129,7 @@ describe("restoreUser", () => {
 		mockValidateInput.mockReturnValue({ data: { id: "user-456" } });
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser());
 		mockPrisma.user.update.mockResolvedValue({});
+		mockGetUserFullInvalidationTags.mockReturnValue([]);
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,

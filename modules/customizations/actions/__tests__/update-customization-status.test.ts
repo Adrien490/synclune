@@ -22,7 +22,7 @@ const {
 	mockPrisma: {
 		customizationRequest: {
 			findFirst: vi.fn(),
-			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 	},
 	mockRequireAdmin: vi.fn(),
@@ -164,8 +164,8 @@ describe("updateCustomizationStatus", () => {
 		// Default: transition is valid
 		mockCanTransitionTo.mockReturnValue(true);
 
-		// Default: update succeeds
-		mockPrisma.customizationRequest.update.mockResolvedValue({});
+		// Default: update succeeds (optimistic lock returns count)
+		mockPrisma.customizationRequest.updateMany.mockResolvedValue({ count: 1 });
 
 		// Default: sanitize passes through
 		mockSanitizeForEmail.mockImplementation((str: string) => str);
@@ -206,7 +206,7 @@ describe("updateCustomizationStatus", () => {
 		const result = await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
 		expect(result).toEqual(authError);
-		expect(mockPrisma.customizationRequest.update).not.toHaveBeenCalled();
+		expect(mockPrisma.customizationRequest.updateMany).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -220,7 +220,7 @@ describe("updateCustomizationStatus", () => {
 		const result = await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockPrisma.customizationRequest.update).not.toHaveBeenCalled();
+		expect(mockPrisma.customizationRequest.updateMany).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -237,7 +237,7 @@ describe("updateCustomizationStatus", () => {
 		const result = await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
 		expect(result).toEqual(validationError);
-		expect(mockPrisma.customizationRequest.update).not.toHaveBeenCalled();
+		expect(mockPrisma.customizationRequest.updateMany).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -250,8 +250,8 @@ describe("updateCustomizationStatus", () => {
 		const result = await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("non trouvee");
-		expect(mockPrisma.customizationRequest.update).not.toHaveBeenCalled();
+		expect(result.message).toContain("non trouvée");
+		expect(mockPrisma.customizationRequest.updateMany).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -265,7 +265,7 @@ describe("updateCustomizationStatus", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Transition");
-		expect(mockPrisma.customizationRequest.update).not.toHaveBeenCalled();
+		expect(mockPrisma.customizationRequest.updateMany).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -283,8 +283,8 @@ describe("updateCustomizationStatus", () => {
 
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
-		expect(mockPrisma.customizationRequest.update).toHaveBeenCalledWith({
-			where: { id: "cm1234567890abcdefghijklm" },
+		expect(mockPrisma.customizationRequest.updateMany).toHaveBeenCalledWith({
+			where: { id: "cm1234567890abcdefghijklm", status: "PENDING" },
 			data: expect.objectContaining({
 				status: "IN_PROGRESS",
 				respondedAt: expect.any(Date),
@@ -303,7 +303,7 @@ describe("updateCustomizationStatus", () => {
 
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
-		const updateCall = mockPrisma.customizationRequest.update.mock.calls[0]![0];
+		const updateCall = mockPrisma.customizationRequest.updateMany.mock.calls[0]![0];
 		expect(updateCall.data).not.toHaveProperty("respondedAt");
 	});
 
@@ -311,13 +311,22 @@ describe("updateCustomizationStatus", () => {
 	// DB update
 	// ──────────────────────────────────────────────────────────────
 
-	it("should update the status in DB", async () => {
+	it("should update the status in DB with optimistic lock", async () => {
 		await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 
-		expect(mockPrisma.customizationRequest.update).toHaveBeenCalledWith({
-			where: { id: "cm1234567890abcdefghijklm" },
+		expect(mockPrisma.customizationRequest.updateMany).toHaveBeenCalledWith({
+			where: { id: "cm1234567890abcdefghijklm", status: "PENDING" },
 			data: expect.objectContaining({ status: "IN_PROGRESS" }),
 		});
+	});
+
+	it("should return error when concurrent modification detected (optimistic lock)", async () => {
+		mockPrisma.customizationRequest.updateMany.mockResolvedValue({ count: 0 });
+
+		const result = await updateCustomizationStatus(undefined, VALID_FORM_DATA);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("modifié par un autre administrateur");
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -467,7 +476,7 @@ describe("updateCustomizationStatus", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should call handleActionError when DB update throws", async () => {
-		mockPrisma.customizationRequest.update.mockRejectedValue(new Error("DB connection failed"));
+		mockPrisma.customizationRequest.updateMany.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await updateCustomizationStatus(undefined, VALID_FORM_DATA);
 

@@ -7,7 +7,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 
 const {
 	mockPrisma,
-	mockRequireAdmin,
+	mockRequireAdminWithUser,
 	mockEnforceRateLimit,
 	mockValidateInput,
 	mockSuccess,
@@ -15,11 +15,12 @@ const {
 	mockNotFound,
 	mockHandleActionError,
 	mockAuth,
+	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findUnique: vi.fn() },
 	},
-	mockRequireAdmin: vi.fn(),
+	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
@@ -29,6 +30,7 @@ const {
 	mockAuth: {
 		api: { requestPasswordReset: vi.fn() },
 	},
+	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -36,7 +38,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
-	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -61,6 +63,10 @@ vi.mock("@/shared/lib/actions", () => ({
 
 vi.mock("@/modules/auth/lib/auth", () => ({
 	auth: mockAuth,
+}));
+
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: mockLogAudit,
 }));
 
 vi.mock("../../../schemas/user-admin.schemas", () => ({
@@ -93,7 +99,9 @@ describe("sendPasswordResetAdmin", () => {
 		vi.resetAllMocks();
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-123" } });
+		mockRequireAdminWithUser.mockResolvedValue({
+			user: { id: "admin-123", name: "Admin", email: "admin@example.com" },
+		});
 		mockValidateInput.mockReturnValue({ data: { userId: "user-456" } });
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser());
 		mockAuth.api.requestPasswordReset.mockResolvedValue({});
@@ -128,7 +136,7 @@ describe("sendPasswordResetAdmin", () => {
 		const result = await sendPasswordResetAdmin("user-456");
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockRequireAdmin).not.toHaveBeenCalled();
+		expect(mockRequireAdminWithUser).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -137,7 +145,7 @@ describe("sendPasswordResetAdmin", () => {
 
 	it("should return auth error when not admin", async () => {
 		const authError = { status: ActionStatus.UNAUTHORIZED, message: "Non autorisé" };
-		mockRequireAdmin.mockResolvedValue({ error: authError });
+		mockRequireAdminWithUser.mockResolvedValue({ error: authError });
 
 		const result = await sendPasswordResetAdmin("user-456");
 

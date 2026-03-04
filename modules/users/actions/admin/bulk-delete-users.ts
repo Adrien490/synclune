@@ -3,7 +3,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 
 import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { Role } from "@/app/generated/prisma/client";
+import { AccountStatus, Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
@@ -78,7 +78,7 @@ export async function bulkDeleteUsers(
 		const [result] = await prisma.$transaction([
 			prisma.user.updateMany({
 				where: { id: { in: eligibleIds } },
-				data: { deletedAt: new Date() },
+				data: { deletedAt: new Date(), accountStatus: AccountStatus.INACTIVE },
 			}),
 			prisma.session.deleteMany({
 				where: { userId: { in: eligibleIds } },

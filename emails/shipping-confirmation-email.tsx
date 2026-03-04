@@ -18,7 +18,6 @@ interface ShippingConfirmationEmailProps {
 		city: string;
 		country: string;
 	};
-	estimatedDelivery?: string;
 }
 
 export const ShippingConfirmationEmail = ({
@@ -28,7 +27,6 @@ export const ShippingConfirmationEmail = ({
 	trackingUrl,
 	carrierLabel,
 	shippingAddress,
-	estimatedDelivery,
 }: ShippingConfirmationEmailProps) => {
 	return (
 		<EmailLayout preview={`Commande ${orderNumber} expédiée`}>
@@ -42,11 +40,7 @@ export const ShippingConfirmationEmail = ({
 
 			{/* Suivi */}
 			<Section style={{ marginBottom: "24px" }}>
-				<TrackingInfo
-					carrierLabel={carrierLabel}
-					trackingNumber={trackingNumber}
-					estimatedDelivery={estimatedDelivery}
-				/>
+				<TrackingInfo carrierLabel={carrierLabel} trackingNumber={trackingNumber} />
 			</Section>
 
 			{/* Adresse */}
@@ -95,7 +89,6 @@ ShippingConfirmationEmail.PreviewProps = {
 		city: "Paris",
 		country: "France",
 	},
-	estimatedDelivery: "3-5 jours ouvrés",
 } as ShippingConfirmationEmailProps;
 
 export default ShippingConfirmationEmail;

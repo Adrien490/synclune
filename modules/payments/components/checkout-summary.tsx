@@ -14,9 +14,6 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { ChevronDown, Pencil, Shield, ShoppingBag, Tag, TruckIcon } from "lucide-react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
-import { addBusinessDays, format } from "date-fns";
-import { fr } from "date-fns/locale";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import Image from "next/image";
 import Link from "next/link";
@@ -56,12 +53,6 @@ export function CheckoutSummary({
 	const shippingRaw = calculateShipping(selectedCountry, postalCode);
 	const shippingUnavailable = shippingRaw === null;
 	const shipping = shippingRaw ?? 0;
-
-	// Delivery date estimation based on selected country/zone
-	const shippingRate = selectedCountry === "FR" ? SHIPPING_RATES.FR : SHIPPING_RATES.EU;
-	const minDelivery = addBusinessDays(new Date(), shippingRate.minDays);
-	const maxDelivery = addBusinessDays(new Date(), shippingRate.maxDays);
-	const deliveryEstimate = `${format(minDelivery, "d", { locale: fr })}-${format(maxDelivery, "d MMM", { locale: fr })}`;
 
 	// Discount
 	const discountAmount = appliedDiscount?.discountAmount ?? 0;
@@ -172,14 +163,9 @@ export function CheckoutSummary({
 						{shippingUnavailable ? "Indisponible" : formatEuro(shipping)}
 					</span>
 				</div>
-				{shippingUnavailable ? (
+				{shippingUnavailable && (
 					<p className="text-destructive pl-5.5 text-xs">
 						Nous ne livrons pas encore dans cette zone. Contactez-nous pour trouver une solution.
-					</p>
-				) : (
-					<p className="text-muted-foreground pl-5.5 text-xs">
-						Livraison estimée le{" "}
-						<span className="text-foreground font-medium">{deliveryEstimate}</span>
 					</p>
 				)}
 			</div>

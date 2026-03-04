@@ -186,20 +186,29 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 	};
 
 	// Calculate active filters from URL
+	// Count unique filter keys present in the URL to stay in sync with filterKeys
 	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
 
-		searchParams.forEach((value, key) => {
-			if (["page", "perPage", "sortBy", "search"].includes(key)) {
-				return;
-			}
+		// Multi-value filters: count each individual value
+		const multiValueKeys = ["filter_status", "filter_paymentStatus"];
+		// Paired filters: count the pair as one filter (use the first key as representative)
+		const pairedFilters: Record<string, string[]> = {
+			filter_totalMin: ["filter_totalMin", "filter_totalMax"],
+			filter_createdAfter: ["filter_createdAfter", "filter_createdBefore"],
+		};
+		// Single-value filters: count if present and non-default
+		const singleValueDefaults: Record<string, string> = {
+			filter_showDeleted: "active",
+		};
 
-			if (key === "filter_status" || key === "filter_paymentStatus") {
+		searchParams.forEach((value, key) => {
+			if (multiValueKeys.includes(key)) {
 				count += 1;
-			} else if (key === "filter_totalMin" || key === "filter_totalMax") {
-				if (key === "filter_totalMin") count += 1;
-			} else if (key === "filter_createdAfter" || key === "filter_createdBefore") {
-				if (key === "filter_createdAfter") count += 1;
+			} else if (key in pairedFilters) {
+				count += 1;
+			} else if (key in singleValueDefaults && value !== singleValueDefaults[key]) {
+				count += 1;
 			}
 		});
 

@@ -14,6 +14,7 @@ export const WISHLIST_ERROR_MESSAGES = {
 	ITEM_NOT_FOUND: "Cet article n'est pas dans votre wishlist",
 	WISHLIST_FULL: "Votre wishlist est pleine (500 articles max)",
 	PRODUCT_NOT_PUBLIC: "Ce produit n'est pas disponible",
+	UNAUTHORIZED: "Non autorise",
 	GENERAL_ERROR: "Une erreur est survenue",
 } as const;
 

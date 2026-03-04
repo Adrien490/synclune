@@ -35,7 +35,7 @@ export async function updateProductSku(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_UPDATE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 2. Extraction des données du FormData
+		// 3. Extraction des données du FormData
 		// Parse images from JSON strings (sent as hidden inputs)
 		const primaryImage = parsePrimaryImageFromForm(formData);
 		const galleryMedia = parseGalleryMediaFromForm(formData);
@@ -56,7 +56,7 @@ export async function updateProductSku(
 			galleryMedia: galleryMedia,
 		};
 
-		// 3. Validation avec Zod
+		// 4. Validation avec Zod
 		const result = updateProductSkuSchema.safeParse(rawData);
 		if (!result.success) {
 			const firstError = result.error.issues[0];
@@ -69,18 +69,18 @@ export async function updateProductSku(
 
 		const validatedData = result.data;
 
-		// 4. Normalize empty strings to null for optional foreign keys
+		// 5. Normalize empty strings to null for optional foreign keys
 		const normalizedColorId = validatedData.colorId?.trim() ?? null;
 		const normalizedMaterialId = validatedData.materialId?.trim() ?? null;
 		const normalizedSize = validatedData.size?.trim() ?? null;
 
-		// 5. Convert priceInclTaxEuros to cents for database
+		// 6. Convert priceInclTaxEuros to cents for database
 		const priceInclTaxCents = Math.round(validatedData.priceInclTaxEuros * 100);
 		const compareAtPriceCents = validatedData.compareAtPriceEuros
 			? Math.round(validatedData.compareAtPriceEuros * 100)
 			: null;
 
-		// 6. Combine primary media and gallery media
+		// 7. Combine primary media and gallery media
 		const allMedia: Array<{
 			url: string;
 			thumbnailUrl?: string | null;
@@ -106,7 +106,7 @@ export async function updateProductSku(
 			})),
 		);
 
-		// 7. Update product SKU in transaction
+		// 8. Update product SKU in transaction
 		const { productSku } = await prisma.$transaction(async (tx) => {
 			// Validate SKU exists and get product info
 			const existingSku = await tx.productSku.findUnique({
@@ -254,7 +254,7 @@ export async function updateProductSku(
 			return { productSku: updatedSku };
 		});
 
-		// 8. Build success message
+		// 9. Build success message
 		const variantDetails = [productSku.color?.name, productSku.material?.name, productSku.size]
 			.filter(Boolean)
 			.join(" - ");
@@ -263,7 +263,7 @@ export async function updateProductSku(
 			? `Variante "${variantDetails}" mise à jour avec succès.`
 			: `Variante mise à jour avec succès.`;
 
-		// 9. Invalidate cache (immediate visibility for admin)
+		// 10. Invalidate cache (immediate visibility for admin)
 		const tags = getSkuInvalidationTags(
 			productSku.sku,
 			productSku.productId,
@@ -272,7 +272,7 @@ export async function updateProductSku(
 		);
 		tags.forEach((tag) => updateTag(tag));
 
-		// 10. Audit log
+		// 11. Audit log
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
@@ -282,7 +282,7 @@ export async function updateProductSku(
 			metadata: { sku: productSku.sku, productTitle: productSku.product.title, priceInclTaxCents },
 		});
 
-		// 11. Success - Return ActionState format
+		// 12. Success - Return ActionState format
 		return {
 			status: ActionStatus.SUCCESS,
 			message: successMessage,

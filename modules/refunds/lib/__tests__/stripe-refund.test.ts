@@ -35,6 +35,12 @@ vi.mock("stripe", () => ({
 	},
 }));
 
+vi.mock("@/shared/lib/circuit-breaker", () => ({
+	stripeCircuitBreaker: {
+		execute: <T>(fn: () => Promise<T>) => fn(),
+	},
+}));
+
 import { createStripeRefund, getStripeRefundStatus } from "../stripe-refund";
 
 // ============================================================================

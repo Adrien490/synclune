@@ -10,10 +10,7 @@ import {
 	hasActiveDiscount,
 } from "@/modules/products/services/product-pricing.service";
 import { m, useReducedMotion } from "motion/react";
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { NotifyBackInStockButton } from "@/modules/wishlist/components/notify-back-in-stock-button";
-import { addBusinessDays, format } from "date-fns";
-import { fr } from "date-fns/locale";
 
 interface ProductPriceProps {
 	selectedSku: ProductSku | null;
@@ -61,10 +58,6 @@ export function ProductPriceDisplay({
 	// Calculer le stock status (en stock, stock limité, ou rupture)
 	const inventory = selectedSku?.inventory ?? 0;
 	const stockStatus = determineStockStatus(inventory, selectedSku?.isActive);
-
-	// Pre-compute delivery dates to avoid creating Date objects in JSX
-	const minDelivery = addBusinessDays(new Date(), SHIPPING_RATES.FR.minDays);
-	const maxDelivery = addBusinessDays(new Date(), SHIPPING_RATES.FR.maxDays);
 
 	if (!selectedSku) {
 		return (
@@ -193,19 +186,6 @@ export function ProductPriceDisplay({
 					Dans <span className="font-bold">{cartsCount}</span>{" "}
 					{cartsCount === 1 ? "panier" : "paniers"}
 				</Badge>
-			)}
-
-			{/* Date de livraison estimée */}
-			{stockStatus !== "out_of_stock" && (
-				<div className="text-muted-foreground pt-1 text-sm">
-					<span>
-						Recevez d'ici le{" "}
-						<span className="text-foreground font-medium" suppressHydrationWarning>
-							{format(minDelivery, "d", { locale: fr })}-
-							{format(maxDelivery, "d MMM", { locale: fr })}
-						</span>
-					</span>
-				</div>
 			)}
 
 			{/* Message d'économie */}

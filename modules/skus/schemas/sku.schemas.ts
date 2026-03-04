@@ -35,7 +35,7 @@ const imageSchema = z
 			})
 			.optional()
 			.nullable(),
-		blurDataUrl: z.string().optional().nullable(), // Base64 blur placeholder pour les images
+		blurDataUrl: z.string().max(255).optional().nullable(), // Base64 blur placeholder pour les images
 		altText: z.string().max(TEXT_LIMITS.MEDIA_ALT_TEXT.max).optional().nullable(),
 		mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 	})

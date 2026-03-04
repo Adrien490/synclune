@@ -9,7 +9,6 @@ interface TrackingUpdateEmailProps {
 	trackingNumber: string;
 	trackingUrl: string | null;
 	carrierLabel: string;
-	estimatedDelivery?: string;
 }
 
 export const TrackingUpdateEmail = ({
@@ -18,7 +17,6 @@ export const TrackingUpdateEmail = ({
 	trackingNumber,
 	trackingUrl,
 	carrierLabel,
-	estimatedDelivery,
 }: TrackingUpdateEmailProps) => {
 	return (
 		<EmailLayout preview={`Suivi mis à jour - ${orderNumber}`}>
@@ -33,11 +31,7 @@ export const TrackingUpdateEmail = ({
 
 			{/* Suivi */}
 			<Section style={{ marginBottom: "24px" }}>
-				<TrackingInfo
-					carrierLabel={carrierLabel}
-					trackingNumber={trackingNumber}
-					estimatedDelivery={estimatedDelivery}
-				/>
+				<TrackingInfo carrierLabel={carrierLabel} trackingNumber={trackingNumber} />
 			</Section>
 
 			{/* CTA */}
@@ -58,7 +52,6 @@ TrackingUpdateEmail.PreviewProps = {
 	trackingNumber: "8N00234567890",
 	trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
 	carrierLabel: "Colissimo",
-	estimatedDelivery: "3-5 jours ouvrés",
 } as TrackingUpdateEmailProps;
 
 export default TrackingUpdateEmail;

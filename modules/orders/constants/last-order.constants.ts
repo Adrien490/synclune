@@ -15,7 +15,6 @@ export const GET_LAST_ORDER_DEFAULT_SELECT = {
 	trackingNumber: true,
 	trackingUrl: true,
 	shippedAt: true,
-	estimatedDelivery: true,
 	paymentMethod: true,
 	paidAt: true,
 	createdAt: true,

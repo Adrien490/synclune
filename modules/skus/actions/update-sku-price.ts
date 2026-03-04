@@ -54,42 +54,47 @@ export async function updateSkuPrice(
 
 		const { skuId } = validation.data;
 
-		// 4. Vérifier que le SKU existe
-		const sku = await prisma.productSku.findUnique({
-			where: { id: skuId },
-			select: {
-				id: true,
-				sku: true,
-				priceInclTax: true,
-				productId: true,
-				product: { select: { slug: true } },
-			},
+		// 4. Convertir euros → centimes
+		const priceInclTaxCents = Math.round(validation.data.priceInclTaxEuros * 100);
+		const compareAtPriceCents = validation.data.compareAtPriceEuros
+			? Math.round(validation.data.compareAtPriceEuros * 100)
+			: null;
+
+		// 5. Vérifier existence + mettre à jour le prix dans une transaction
+		const sku = await prisma.$transaction(async (tx) => {
+			const existing = await tx.productSku.findUnique({
+				where: { id: skuId },
+				select: {
+					id: true,
+					sku: true,
+					priceInclTax: true,
+					productId: true,
+					product: { select: { slug: true } },
+				},
+			});
+
+			if (!existing) return null;
+
+			await tx.productSku.update({
+				where: { id: skuId },
+				data: {
+					priceInclTax: priceInclTaxCents,
+					compareAtPrice: compareAtPriceCents,
+				},
+			});
+
+			return existing;
 		});
 
 		if (!sku) {
 			return error("Variante non trouvée");
 		}
 
-		// 5. Convertir euros → centimes
-		const priceInclTaxCents = Math.round(validation.data.priceInclTaxEuros * 100);
-		const compareAtPriceCents = validation.data.compareAtPriceEuros
-			? Math.round(validation.data.compareAtPriceEuros * 100)
-			: null;
-
-		// 6. Mettre à jour le prix
-		await prisma.productSku.update({
-			where: { id: skuId },
-			data: {
-				priceInclTax: priceInclTaxCents,
-				compareAtPrice: compareAtPriceCents,
-			},
-		});
-
-		// 7. Invalider le cache avec les tags appropriés
+		// 6. Invalider le cache avec les tags appropriés
 		const tags = getSkuInvalidationTags(sku.sku, sku.productId, sku.product.slug, sku.id);
 		tags.forEach((tag) => updateTag(tag));
 
-		// 8. Audit log
+		// 7. Audit log
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,

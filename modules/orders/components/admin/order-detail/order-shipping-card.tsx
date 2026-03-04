@@ -21,7 +21,6 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 			trackingNumber: order.trackingNumber ?? undefined,
 			trackingUrl: order.trackingUrl ?? undefined,
 			carrier: order.shippingCarrier as Carrier,
-			estimatedDelivery: order.estimatedDelivery ?? undefined,
 		});
 	};
 
@@ -73,16 +72,6 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 						<p className="text-muted-foreground text-sm">Date d'expédition</p>
 						<p>
 							{format(order.shippedAt, "d MMMM yyyy 'à' HH'h'mm", {
-								locale: fr,
-							})}
-						</p>
-					</div>
-				)}
-				{order.estimatedDelivery && (
-					<div>
-						<p className="text-muted-foreground text-sm">Livraison estimée</p>
-						<p>
-							{format(order.estimatedDelivery, "d MMMM yyyy", {
 								locale: fr,
 							})}
 						</p>

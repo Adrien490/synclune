@@ -6,7 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
-import { validateInput, success, notFound, handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
@@ -32,7 +32,12 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 		const validation = validateInput(adminUserIdSchema, { userId });
 		if ("error" in validation) return validation.error;
 
-		// 3. Vérifier que l'utilisateur existe
+		// 3. Self-protection: prevent admin from invalidating their own sessions
+		if (userId === adminUser.id) {
+			return error("Vous ne pouvez pas invalider vos propres sessions.");
+		}
+
+		// 4. Vérifier que l'utilisateur existe
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: { id: true, email: true, name: true },
@@ -42,12 +47,12 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 			return notFound("Utilisateur");
 		}
 
-		// 4. Supprimer toutes les sessions de l'utilisateur
+		// 5. Supprimer toutes les sessions de l'utilisateur
 		const result = await prisma.session.deleteMany({
 			where: { userId },
 		});
 
-		// 5. Revalider le cache
+		// 6. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 

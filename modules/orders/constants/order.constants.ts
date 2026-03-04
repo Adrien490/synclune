@@ -78,7 +78,6 @@ export const GET_ORDER_SELECT = {
 	shippingRateId: true,
 	trackingNumber: true,
 	trackingUrl: true,
-	estimatedDelivery: true,
 	actualDelivery: true,
 	shippedAt: true,
 	status: true,

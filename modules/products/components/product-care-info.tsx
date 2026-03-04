@@ -38,19 +38,13 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 					{/* France */}
 					<div>
 						<p className="text-foreground font-medium">France métropolitaine</p>
-						<p>
-							{formatShippingPrice(SHIPPING_RATES.FR.amount)} · {SHIPPING_RATES.FR.minDays}-
-							{SHIPPING_RATES.FR.maxDays} jours ouvrés
-						</p>
+						<p>{formatShippingPrice(SHIPPING_RATES.FR.amount)}</p>
 					</div>
 
 					{/* Europe */}
 					<div>
 						<p className="text-foreground font-medium">Union Européenne</p>
-						<p>
-							{formatShippingPrice(SHIPPING_RATES.EU.amount)} · {SHIPPING_RATES.EU.minDays}-
-							{SHIPPING_RATES.EU.maxDays} jours ouvrés
-						</p>
+						<p>{formatShippingPrice(SHIPPING_RATES.EU.amount)}</p>
 					</div>
 				</AccordionContent>
 			</AccordionItem>

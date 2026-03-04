@@ -18,7 +18,7 @@ export async function refreshUsers(_prevState: unknown, _formData: FormData): Pr
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Revalidation du cache
+		// 3. Revalidation du cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 

@@ -1726,20 +1726,12 @@ async function main(): Promise<void> {
 			const shippedAt = new Date(orderDate);
 			shippedAt.setDate(shippedAt.getDate() + faker.number.int({ min: 1, max: 3 }));
 
-			const deliveryDays =
-				shippingData.shippingCountry === "FR"
-					? faker.number.int({ min: 2, max: 3 })
-					: faker.number.int({ min: 4, max: 7 });
-			const estimatedDelivery = new Date(shippedAt);
-			estimatedDelivery.setDate(estimatedDelivery.getDate() + deliveryDays);
-
 			trackingData = {
 				shippingMethod,
 				shippingCarrier: "colissimo",
 				trackingNumber: faker.string.alphanumeric({ length: 13, casing: "upper" }),
 				trackingUrl: `https://www.laposte.fr/outils/suivre-vos-envois?code=${faker.string.alphanumeric({ length: 13, casing: "upper" })}`,
 				shippedAt,
-				estimatedDelivery,
 			};
 
 			if (status === OrderStatus.DELIVERED) {

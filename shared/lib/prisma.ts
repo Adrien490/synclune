@@ -1,6 +1,6 @@
 import "server-only";
 
-import { PrismaClient } from "@/app/generated/prisma/client";
+import { AccountStatus, PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { traceContext } from "@prisma/sqlcommenter-trace-context";
 
@@ -90,7 +90,11 @@ export const notDeleted = { deletedAt: null } as const;
  */
 export const softDelete = {
 	order: (id: string) => prisma.order.update({ where: { id }, data: { deletedAt: new Date() } }),
-	user: (id: string) => prisma.user.update({ where: { id }, data: { deletedAt: new Date() } }),
+	user: (id: string) =>
+		prisma.user.update({
+			where: { id },
+			data: { deletedAt: new Date(), accountStatus: AccountStatus.INACTIVE },
+		}),
 	refund: (id: string) => prisma.refund.update({ where: { id }, data: { deletedAt: new Date() } }),
 	orderNote: (id: string) =>
 		prisma.orderNote.update({ where: { id }, data: { deletedAt: new Date() } }),

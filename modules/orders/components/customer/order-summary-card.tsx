@@ -15,7 +15,6 @@ interface OrderSummaryCardProps {
 		total: number;
 		currency: string;
 		paymentMethod?: string | null;
-		estimatedDelivery?: Date | null;
 	};
 }
 
@@ -41,12 +40,6 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Paiement</span>
 							<span className="capitalize">{order.paymentMethod}</span>
-						</div>
-					)}
-					{order.estimatedDelivery && (
-						<div className="flex justify-between">
-							<span className="text-muted-foreground">Livraison estimée</span>
-							<span>{format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })}</span>
 						</div>
 					)}
 				</div>

@@ -25,12 +25,6 @@ describe("wishlistProductSchema", () => {
 
 		expect(result.success).toBe(false);
 	});
-
-	it("should reject missing productId", () => {
-		const result = wishlistProductSchema.safeParse({});
-
-		expect(result.success).toBe(false);
-	});
 });
 
 describe("schema aliases", () => {

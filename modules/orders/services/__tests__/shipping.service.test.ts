@@ -10,18 +10,14 @@ vi.mock("@/modules/orders/constants/shipping-rates", () => ({
 	SHIPPING_RATES: {
 		FR: {
 			amount: 499,
-			displayName: "Livraison France (2-3 jours)",
+			displayName: "Livraison France",
 			carrier: "standard",
-			minDays: 2,
-			maxDays: 3,
 			countries: ["FR"],
 		},
 		EU: {
 			amount: 950,
-			displayName: "Livraison Europe (4-7 jours)",
+			displayName: "Livraison Europe",
 			carrier: "standard",
-			minDays: 4,
-			maxDays: 7,
 			countries: ["DE", "BE", "LU", "NL", "IT", "ES", "PT", "AT", "IE", "MC", "CH"],
 		},
 	},

@@ -111,8 +111,6 @@ export default function ProductDetailLoading() {
 										</div>
 										{/* Badge disponibilité */}
 										<Skeleton className="bg-muted/30 h-6 w-24 rounded-full" />
-										{/* Livraison estimée */}
-										<Skeleton className="bg-muted/30 h-5 w-44" />
 									</div>
 
 									{/* ===== 3. VariantSelector - Card ===== */}

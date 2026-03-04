@@ -111,7 +111,7 @@ export const createCheckoutSession = async (
 					return error("L'email est requis pour une commande invite.");
 				}
 
-				span.setAttribute("checkout.country", validatedData.shippingAddress.country ?? "FR");
+				span.setAttribute("checkout.country", validatedData.shippingAddress.country);
 				span.setAttribute("checkout.has_discount", !!validatedData.discountCode);
 
 				const { firstName, lastName } = parseFullName(validatedData.shippingAddress.fullName);

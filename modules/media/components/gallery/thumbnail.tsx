@@ -61,7 +61,11 @@ export function GalleryThumbnail({
 					: "border-border hover:border-primary/50",
 				className,
 			)}
-			aria-label={`Voir ${isVideo ? "vidéo" : "photo"} ${index + 1}${isActive ? " (sélectionnée)" : ""}`}
+			aria-label={
+				hasError
+					? `${isVideo ? "Vidéo" : "Photo"} ${index + 1} — erreur de chargement`
+					: `Voir ${isVideo ? "vidéo" : "photo"} ${index + 1}${isActive ? " (sélectionnée)" : ""}`
+			}
 			aria-selected={isActive}
 		>
 			{hasError ? (

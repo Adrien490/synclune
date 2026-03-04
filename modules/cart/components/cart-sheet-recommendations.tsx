@@ -19,14 +19,14 @@ export async function CartSheetRecommendations() {
 	}
 
 	return (
-		<section className="shrink-0 border-t px-4 py-3" aria-labelledby="cart-recommendations-heading">
+		<section className="shrink-0 border-t py-3" aria-labelledby="cart-recommendations-heading">
 			<h3
 				id="cart-recommendations-heading"
-				className="mb-2 text-xs font-semibold tracking-wide uppercase"
+				className="mb-2 px-4 text-xs font-semibold tracking-wide uppercase"
 			>
 				Vous pourriez aimer
 			</h3>
-			<ScrollFade axis="horizontal" className="-mx-4 px-4" data-vaul-no-drag>
+			<ScrollFade axis="horizontal" className="px-4" data-vaul-no-drag>
 				<div className="flex gap-3 pb-1">
 					{recommendations.map((product) => {
 						const primarySku = product.skus[0];

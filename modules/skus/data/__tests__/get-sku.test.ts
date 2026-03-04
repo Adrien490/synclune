@@ -4,23 +4,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockPrisma,
-	mockIsAdmin,
-	mockCacheLife,
-	mockCacheTag,
-	mockCacheSkuDetail,
-	mockCacheSkuDetailById,
-} = vi.hoisted(() => ({
-	mockPrisma: {
-		productSku: { findUnique: vi.fn() },
-	},
-	mockIsAdmin: vi.fn(),
-	mockCacheLife: vi.fn(),
-	mockCacheTag: vi.fn(),
-	mockCacheSkuDetail: vi.fn(),
-	mockCacheSkuDetailById: vi.fn(),
-}));
+const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag, mockCacheSkuDetailById } = vi.hoisted(
+	() => ({
+		mockPrisma: {
+			productSku: { findUnique: vi.fn() },
+		},
+		mockIsAdmin: vi.fn(),
+		mockCacheLife: vi.fn(),
+		mockCacheTag: vi.fn(),
+		mockCacheSkuDetailById: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -37,7 +31,6 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("../../utils/cache.utils", () => ({
-	cacheSkuDetail: mockCacheSkuDetail,
 	cacheSkuDetailById: mockCacheSkuDetailById,
 }));
 
@@ -45,19 +38,7 @@ vi.mock("../../constants/sku.constants", () => ({
 	GET_PRODUCT_SKU_SELECT: { id: true, sku: true, inventory: true, isActive: true },
 }));
 
-vi.mock("../../schemas/sku.schemas", () => ({
-	getProductSkuSchema: {
-		safeParse: (data: unknown) => {
-			const input = data as Record<string, unknown>;
-			if (typeof input.sku === "string" && input.sku.trim().length > 0) {
-				return { success: true, data: { sku: input.sku } };
-			}
-			return { success: false, error: { errors: [{ message: "sku required" }] } };
-		},
-	},
-}));
-
-import { getSkuByCode, getSkuById } from "../get-sku";
+import { getSkuById } from "../get-sku";
 
 // ============================================================================
 // Factories
@@ -81,92 +62,6 @@ function makeSkuWithImages(overrides: Record<string, unknown> = {}) {
 		...overrides,
 	};
 }
-
-// ============================================================================
-// Tests: getSkuByCode
-// ============================================================================
-
-describe("getSkuByCode", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockIsAdmin.mockResolvedValue(true);
-		mockPrisma.productSku.findUnique.mockResolvedValue(null);
-	});
-
-	it("returns null when params fail schema validation (missing sku)", async () => {
-		const result = await getSkuByCode({});
-
-		expect(result).toBeNull();
-		expect(mockIsAdmin).not.toHaveBeenCalled();
-	});
-
-	it("returns null when params fail schema validation (empty sku)", async () => {
-		const result = await getSkuByCode({ sku: "" });
-
-		expect(result).toBeNull();
-		expect(mockIsAdmin).not.toHaveBeenCalled();
-	});
-
-	it("returns null when user is not admin", async () => {
-		mockIsAdmin.mockResolvedValue(false);
-
-		const result = await getSkuByCode({ sku: "SKU-001" });
-
-		expect(result).toBeNull();
-		expect(mockPrisma.productSku.findUnique).not.toHaveBeenCalled();
-	});
-
-	it("calls isAdmin before hitting the DB", async () => {
-		await getSkuByCode({ sku: "SKU-001" });
-
-		expect(mockIsAdmin).toHaveBeenCalledOnce();
-	});
-
-	it("returns null when SKU does not exist in DB", async () => {
-		mockPrisma.productSku.findUnique.mockResolvedValue(null);
-
-		const result = await getSkuByCode({ sku: "SKU-MISSING" });
-
-		expect(result).toBeNull();
-	});
-
-	it("queries DB by sku code with correct where clause", async () => {
-		mockPrisma.productSku.findUnique.mockResolvedValue(makeSkuRecord());
-
-		await getSkuByCode({ sku: "SKU-001" });
-
-		expect(mockPrisma.productSku.findUnique).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: { sku: "SKU-001" },
-			}),
-		);
-	});
-
-	it("returns the SKU record when found", async () => {
-		const sku = makeSkuRecord();
-		mockPrisma.productSku.findUnique.mockResolvedValue(sku);
-
-		const result = await getSkuByCode({ sku: "SKU-001" });
-
-		expect(result).toEqual(sku);
-	});
-
-	it("calls cacheSkuDetail with the sku code", async () => {
-		mockPrisma.productSku.findUnique.mockResolvedValue(makeSkuRecord());
-
-		await getSkuByCode({ sku: "SKU-001" });
-
-		expect(mockCacheSkuDetail).toHaveBeenCalledWith("SKU-001");
-	});
-
-	it("returns null when Prisma throws", async () => {
-		mockPrisma.productSku.findUnique.mockRejectedValue(new Error("DB error"));
-
-		const result = await getSkuByCode({ sku: "SKU-001" });
-
-		expect(result).toBeNull();
-	});
-});
 
 // ============================================================================
 // Tests: getSkuById

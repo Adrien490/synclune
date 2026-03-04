@@ -64,7 +64,6 @@ export async function sendShippingConfirmationEmail({
 	trackingUrl,
 	carrierLabel,
 	shippingAddress,
-	estimatedDelivery,
 }: {
 	to: string;
 	orderNumber: string;
@@ -73,7 +72,6 @@ export async function sendShippingConfirmationEmail({
 	trackingUrl: string | null;
 	carrierLabel: string;
 	shippingAddress: ShippingAddress;
-	estimatedDelivery?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		ShippingConfirmationEmail({
@@ -83,7 +81,6 @@ export async function sendShippingConfirmationEmail({
 			trackingUrl,
 			carrierLabel,
 			shippingAddress,
-			estimatedDelivery,
 		}),
 		{
 			to,
@@ -104,7 +101,6 @@ export async function sendTrackingUpdateEmail({
 	trackingNumber,
 	trackingUrl,
 	carrierLabel,
-	estimatedDelivery,
 }: {
 	to: string;
 	orderNumber: string;
@@ -112,7 +108,6 @@ export async function sendTrackingUpdateEmail({
 	trackingNumber: string;
 	trackingUrl: string | null;
 	carrierLabel: string;
-	estimatedDelivery?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		TrackingUpdateEmail({
@@ -121,7 +116,6 @@ export async function sendTrackingUpdateEmail({
 			trackingNumber,
 			trackingUrl,
 			carrierLabel,
-			estimatedDelivery,
 		}),
 		{
 			to,

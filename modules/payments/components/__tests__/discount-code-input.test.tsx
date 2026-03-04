@@ -116,6 +116,9 @@ vi.mock("lucide-react", () => ({
 	),
 	Tag: () => <svg data-testid="tag-icon" />,
 	X: () => <svg data-testid="x-icon" />,
+	Check: ({ className }: { className?: string }) => (
+		<svg data-testid="check-icon" className={className} />
+	),
 }));
 
 // ─── Import under test ───────────────────────────────────────────────────────

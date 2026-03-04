@@ -21,6 +21,10 @@ import { sendCustomizationStatusEmail } from "@/modules/emails/services/customiz
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
 import { canTransitionTo } from "../services/customization-status.service";
 import { bulkUpdateStatusSchema } from "../schemas/bulk-update-status.schema";
+import {
+	CUSTOMIZATION_ERROR_MESSAGES,
+	CUSTOMIZATION_SUCCESS_MESSAGES,
+} from "../constants/error-messages";
 
 // ============================================================================
 // ACTION
@@ -71,14 +75,14 @@ export async function bulkUpdateCustomizationStatus(
 		});
 
 		if (existingRequests.length === 0) {
-			return error("Aucune demande trouvee");
+			return error(CUSTOMIZATION_ERROR_MESSAGES.NO_REQUESTS_FOUND);
 		}
 
 		// 4. Filter out requests with invalid transitions
 		const validRequests = existingRequests.filter((r) => canTransitionTo(r.status, status));
 
 		if (validRequests.length === 0) {
-			return error("Aucune transition de statut valide");
+			return error(CUSTOMIZATION_ERROR_MESSAGES.NO_VALID_TRANSITIONS);
 		}
 
 		// 5. Separate requests that need respondedAt update
@@ -124,24 +128,8 @@ export async function bulkUpdateCustomizationStatus(
 			metadata: { count: validRequests.length, status },
 		});
 
-		// 7. Invalidate cache (LIST, STATS, DETAIL per request, USER_REQUESTS per user)
-		const tags = getCustomizationInvalidationTags();
-		for (const request of validRequests) {
-			tags.push(CUSTOMIZATION_CACHE_TAGS.DETAIL(request.id));
-		}
-		// Collect unique userIds for cache invalidation
-		const userIds = new Set<string>();
-		for (const request of validRequests) {
-			if (request.userId) {
-				userIds.add(request.userId);
-			}
-		}
-		for (const uid of userIds) {
-			tags.push(CUSTOMIZATION_CACHE_TAGS.USER_REQUESTS(uid));
-		}
-		tags.forEach((tag) => updateTag(tag));
-
-		// 8. Send status emails if applicable
+		// 7. Send status emails if applicable (before cache invalidation to avoid
+		// crash-between-the-two leaving emails unsent with stale cache already invalidated)
 		if (status === "IN_PROGRESS" || status === "COMPLETED" || status === "CANCELLED") {
 			for (const request of validRequests) {
 				if (request.email) {
@@ -162,11 +150,25 @@ export async function bulkUpdateCustomizationStatus(
 			}
 		}
 
+		// 8. Invalidate cache (LIST, STATS, DETAIL per request, USER_REQUESTS per user)
+		const tags = getCustomizationInvalidationTags();
+		for (const request of validRequests) {
+			tags.push(CUSTOMIZATION_CACHE_TAGS.DETAIL(request.id));
+		}
+		const userIds = new Set<string>();
+		for (const request of validRequests) {
+			if (request.userId) {
+				userIds.add(request.userId);
+			}
+		}
+		for (const uid of userIds) {
+			tags.push(CUSTOMIZATION_CACHE_TAGS.USER_REQUESTS(uid));
+		}
+		tags.forEach((tag) => updateTag(tag));
+
 		const count = validRequests.length;
-		return success(`${count} demande${count > 1 ? "s" : ""} mise${count > 1 ? "s" : ""} a jour`, {
-			count,
-		});
+		return success(CUSTOMIZATION_SUCCESS_MESSAGES.BULK_UPDATED(count), { count });
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la mise à jour en masse");
+		return handleActionError(e, CUSTOMIZATION_ERROR_MESSAGES.BULK_UPDATE_ERROR);
 	}
 }

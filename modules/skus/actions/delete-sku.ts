@@ -40,12 +40,12 @@ export async function deleteProductSku(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_DELETE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 2. Extraction des donnees du FormData
+		// 3. Extraction des donnees du FormData
 		const rawData = {
 			skuId: safeFormGet(formData, "skuId"),
 		};
 
-		// 3. Validation avec Zod
+		// 4. Validation avec Zod
 		const result = deleteProductSkuSchema.safeParse(rawData);
 
 		if (!result.success) {
@@ -54,7 +54,7 @@ export async function deleteProductSku(
 
 		const { skuId: validatedSkuId } = result.data;
 
-		// 4. Verifier que le SKU existe et recuperer toutes les infos necessaires en UNE requete
+		// 5. Verifier que le SKU existe et recuperer toutes les infos necessaires en UNE requete
 		// Optimisation: Consolider les counts pour eviter les N+1 queries
 		const existingSku = await prisma.productSku.findUnique({
 			where: { id: validatedSkuId },
@@ -99,14 +99,14 @@ export async function deleteProductSku(
 			return notFound("Variante de produit");
 		}
 
-		// 5. Verifier qu'il y a au moins 2 SKUs pour le produit
+		// 6. Verifier qu'il y a au moins 2 SKUs pour le produit
 		if (existingSku.product._count.skus <= 1) {
 			return error(
 				"Impossible de supprimer la derniere variante d'un produit. Un produit doit avoir au moins une variante.",
 			);
 		}
 
-		// 6. CRITIQUE : Verifier que le SKU n'est pas associe a des commandes
+		// 7. CRITIQUE : Verifier que le SKU n'est pas associe a des commandes
 		// Prisma a onDelete: Restrict sur OrderItem.sku, mais on affiche un message explicite
 		const orderItemsCount = existingSku._count.orderItems;
 
@@ -117,7 +117,7 @@ export async function deleteProductSku(
 			);
 		}
 
-		// 6b. CRITIQUE : Verifier que le SKU n'est pas dans des paniers
+		// 8. CRITIQUE : Verifier que le SKU n'est pas dans des paniers
 		// Prisma a onDelete: Restrict sur CartItem.sku
 		const cartItemsCount = existingSku._count.cartItems;
 
@@ -128,7 +128,7 @@ export async function deleteProductSku(
 			);
 		}
 
-		// 7. Pour les produits PUBLIC : verifier qu'il reste au moins 1 SKU actif apres suppression
+		// 9. Pour les produits PUBLIC : verifier qu'il reste au moins 1 SKU actif apres suppression
 		// activeSkusCount deja charge dans la requete initiale
 		if (existingSku.product.status === "PUBLIC" && existingSku.isActive) {
 			const activeSkusCount = existingSku.product.skus.length;
@@ -140,7 +140,7 @@ export async function deleteProductSku(
 			}
 		}
 
-		// 9. Promote fallback SKU + delete in a single transaction for atomicity
+		// 10. Promote fallback SKU + delete in a single transaction for atomicity
 		const imageUrls = existingSku.images.map((img) => img.url);
 
 		const promotedSkuSku = await prisma.$transaction(async (tx) => {

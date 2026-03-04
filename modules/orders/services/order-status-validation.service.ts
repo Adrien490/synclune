@@ -8,7 +8,7 @@
  * - Calculer les permissions disponibles selon l'état
  */
 
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 
 import type {
 	OrderForShipValidation,

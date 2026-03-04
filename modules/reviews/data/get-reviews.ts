@@ -25,22 +25,6 @@ import {
 } from "../services/review-query-builder";
 import { stripDeletedResponses } from "../utils/strip-deleted-response";
 
-// Re-export pour compatibilité
-export {
-	GET_REVIEWS_DEFAULT_PER_PAGE,
-	GET_REVIEWS_DEFAULT_SORT_BY,
-	GET_REVIEWS_MAX_PER_PAGE,
-	GET_REVIEWS_SORT_FIELDS,
-	REVIEW_SORT_FIELD_LABELS,
-} from "../constants/review.constants";
-export type {
-	GetReviewsParams,
-	GetReviewsReturn,
-	ReviewAdmin,
-	ReviewPublic,
-	ReviewSortField,
-} from "../types/review.types";
-
 // ============================================================================
 // TYPES INTERNES
 // ============================================================================
@@ -155,12 +139,15 @@ async function fetchReviews(
 }
 
 // ============================================================================
-// LEGACY COMPATIBILITY
+// SIMPLE PRODUCT REVIEWS (no cursor pagination)
 // ============================================================================
 
 /**
- * Récupère tous les avis publiés d'un produit (sans pagination)
- * Conservé pour compatibilité
+ * Récupère les avis publiés d'un produit, triés par date décroissante
+ * Utilisé par la page produit pour afficher les premiers avis
+ *
+ * @param productId - ID du produit
+ * @param limit - Nombre max d'avis à retourner (optionnel)
  */
 export async function getAllProductReviews(
 	productId: string,

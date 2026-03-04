@@ -23,6 +23,10 @@ import {
 import type { ActionState } from "@/shared/types/server-action";
 import { customizationSchema } from "../schemas/customization.schema";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
+import {
+	CUSTOMIZATION_ERROR_MESSAGES,
+	CUSTOMIZATION_SUCCESS_MESSAGES,
+} from "../constants/error-messages";
 
 /**
  * Server Action pour envoyer une demande de personnalisation
@@ -88,7 +92,7 @@ export async function sendCustomizationRequest(
 		);
 
 		if (!emailRateLimit.success) {
-			return error("Trop de demandes pour cette adresse email. Réessaie demain.");
+			return error(CUSTOMIZATION_ERROR_MESSAGES.EMAIL_RATE_LIMITED);
 		}
 
 		// 6. Retrieve optional session for userId linkage
@@ -168,11 +172,10 @@ export async function sendCustomizationRequest(
 		tags.forEach((tag) => updateTag(tag));
 
 		// 13. Success
-		return success(
-			"Votre demande de personnalisation a bien été envoyée. Nous vous répondrons dans les plus brefs délais.",
-			{ id: customizationRequest.id },
-		);
+		return success(CUSTOMIZATION_SUCCESS_MESSAGES.REQUEST_SENT, {
+			id: customizationRequest.id,
+		});
 	} catch (e) {
-		return handleActionError(e, "Une erreur est survenue lors de l'envoi de votre demande.");
+		return handleActionError(e, CUSTOMIZATION_ERROR_MESSAGES.CREATE_ERROR);
 	}
 }

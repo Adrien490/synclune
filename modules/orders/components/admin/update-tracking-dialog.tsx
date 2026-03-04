@@ -23,7 +23,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { CARRIERS, detectCarrierAndUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { useStore } from "@tanstack/react-form";
-import { Calendar, Link2, Mail, Truck } from "lucide-react";
+import { Link2, Mail, Truck } from "lucide-react";
 import { useUpdateTrackingForm } from "@/modules/orders/hooks/use-update-tracking-form";
 
 export const UPDATE_TRACKING_DIALOG_ID = "update-tracking";
@@ -34,7 +34,6 @@ interface UpdateTrackingData {
 	trackingNumber?: string;
 	trackingUrl?: string;
 	carrier?: Carrier;
-	estimatedDelivery?: Date;
 	[key: string]: unknown;
 }
 
@@ -44,7 +43,6 @@ function UpdateTrackingFormContent({
 	initialTrackingNumber,
 	initialTrackingUrl,
 	initialCarrier,
-	initialEstimatedDelivery,
 	onClose,
 }: {
 	orderId: string;
@@ -52,7 +50,6 @@ function UpdateTrackingFormContent({
 	initialTrackingNumber?: string;
 	initialTrackingUrl?: string;
 	initialCarrier?: Carrier;
-	initialEstimatedDelivery?: Date;
 	onClose: () => void;
 }) {
 	const { form, action, isPending } = useUpdateTrackingForm({
@@ -60,7 +57,6 @@ function UpdateTrackingFormContent({
 		initialTrackingNumber,
 		initialTrackingUrl,
 		initialCarrier,
-		initialEstimatedDelivery,
 		onSuccess: () => {
 			onClose();
 		},
@@ -70,7 +66,6 @@ function UpdateTrackingFormContent({
 	const trackingNumber = useStore(form.store, (state) => state.values.trackingNumber);
 	const carrier = useStore(form.store, (state) => state.values.carrier);
 	const trackingUrl = useStore(form.store, (state) => state.values.trackingUrl);
-	const estimatedDelivery = useStore(form.store, (state) => state.values.estimatedDelivery);
 	const sendEmail = useStore(form.store, (state) => state.values.sendEmail);
 	const customUrlMode = useStore(form.store, (state) => state.values.customUrlMode);
 
@@ -220,25 +215,6 @@ function UpdateTrackingFormContent({
 						</div>
 					</div>
 
-					{/* Estimated Delivery Date */}
-					<div className="space-y-2">
-						<Label htmlFor="estimatedDelivery" className="flex items-center gap-2">
-							<Calendar className="h-4 w-4" />
-							Date de livraison estimée
-						</Label>
-						<Input
-							id="estimatedDelivery"
-							name="estimatedDelivery"
-							type="date"
-							value={estimatedDelivery}
-							onChange={(e) => form.setFieldValue("estimatedDelivery", e.target.value)}
-							disabled={isPending}
-						/>
-						<p className="text-muted-foreground text-xs">
-							Optionnel - Affichée dans l'email et sur le suivi client
-						</p>
-					</div>
-
 					{/* Send Email Checkbox */}
 					<div className="bg-muted/30 flex items-start space-x-3 rounded-lg border p-4">
 						<Checkbox
@@ -292,7 +268,6 @@ export function UpdateTrackingDialog() {
 						initialTrackingNumber={dialog.data.trackingNumber}
 						initialTrackingUrl={dialog.data.trackingUrl}
 						initialCarrier={dialog.data.carrier}
-						initialEstimatedDelivery={dialog.data.estimatedDelivery}
 						onClose={dialog.close}
 					/>
 				)}

@@ -17,7 +17,12 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 		try {
 			const response = await fetch(`/api/orders/${orderNumber}/invoice`);
 			if (!response.ok) {
-				throw new Error("Erreur lors du téléchargement");
+				if (response.status === 404) {
+					toast.error("La facture n'est pas encore disponible");
+				} else {
+					toast.error("Erreur lors du téléchargement de la facture");
+				}
+				return;
 			}
 			const blob = await response.blob();
 			const url = URL.createObjectURL(blob);

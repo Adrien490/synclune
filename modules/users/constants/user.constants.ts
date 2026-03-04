@@ -76,13 +76,3 @@ export const USERS_SORT_LABELS = {
 	[USERS_SORT_OPTIONS.EMAIL_ASC]: "Email (A-Z)",
 	[USERS_SORT_OPTIONS.EMAIL_DESC]: "Email (Z-A)",
 } as const;
-
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_USERS_DEFAULT_CACHE = {
-	revalidate: 60 * 10,
-	stale: 60 * 15,
-	expire: 60 * 30,
-} as const;

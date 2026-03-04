@@ -24,14 +24,6 @@ export function cacheProductSkus(productId: string) {
 }
 
 /**
- * Configure le cache pour un SKU spécifique (par code SKU)
- */
-export function cacheSkuDetail(sku: string) {
-	cacheLife("productDetail");
-	cacheTag(PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku), PRODUCTS_CACHE_TAGS.SKUS_LIST);
-}
-
-/**
  * Configure le cache pour un SKU spécifique (par ID)
  * Utilisé pour les lookups d'édition admin où seul l'ID est disponible
  */

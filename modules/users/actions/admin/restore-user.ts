@@ -18,6 +18,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { restoreUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function restoreUser(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
@@ -64,6 +65,10 @@ export async function restoreUser(_prevState: unknown, formData: FormData): Prom
 		// 6. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
+		for (const tag of getUserFullInvalidationTags(userId)) {
+			updateTag(tag);
+		}
 
 		void logAudit({
 			adminId: adminUser.id,

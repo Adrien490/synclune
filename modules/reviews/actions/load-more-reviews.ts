@@ -1,17 +1,19 @@
 "use server";
 
+import { z } from "zod";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REVIEW_LOAD_MORE_LIMIT } from "@/shared/lib/rate-limit-config";
 
+import { GET_REVIEWS_SORT_FIELDS } from "../constants/review.constants";
 import { getReviews } from "../data/get-reviews";
 import type { ReviewPublic, ReviewSortField } from "../types/review.types";
 
-interface LoadMoreReviewsParams {
-	productId: string;
-	cursor: string;
-	filterRating?: number;
-	sortBy?: ReviewSortField;
-}
+const loadMoreReviewsSchema = z.object({
+	productId: z.cuid2(),
+	cursor: z.cuid2(),
+	filterRating: z.number().int().min(1).max(5).optional(),
+	sortBy: z.enum(GET_REVIEWS_SORT_FIELDS).optional(),
+});
 
 interface LoadMoreReviewsResult {
 	reviews: ReviewPublic[];
@@ -27,20 +29,25 @@ const EMPTY: LoadMoreReviewsResult = { reviews: [], nextCursor: null, hasMore: f
  * Used by the "Voir plus d'avis" button
  */
 export async function loadMoreReviews(
-	params: LoadMoreReviewsParams,
+	params: z.input<typeof loadMoreReviewsSchema>,
 ): Promise<LoadMoreReviewsResult> {
 	try {
+		const validation = loadMoreReviewsSchema.safeParse(params);
+		if (!validation.success) return EMPTY;
+
 		const rateCheck = await enforceRateLimitForCurrentUser(REVIEW_LOAD_MORE_LIMIT);
 		if ("error" in rateCheck) return EMPTY;
 
+		const { productId, cursor, filterRating, sortBy } = validation.data;
+
 		const data = await getReviews(
 			{
-				productId: params.productId,
-				cursor: params.cursor,
+				productId,
+				cursor,
 				perPage: 10,
 				direction: "forward",
-				filterRating: params.filterRating,
-				sortBy: params.sortBy,
+				filterRating,
+				sortBy: sortBy as ReviewSortField | undefined,
 			},
 			{ isAdmin: false },
 		);

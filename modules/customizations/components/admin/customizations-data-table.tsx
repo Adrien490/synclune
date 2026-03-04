@@ -45,11 +45,11 @@ export function CustomizationsDataTable({
 		return (
 			<TableEmptyState
 				icon={Sparkles}
-				title="Aucune demande trouvee"
-				description="Aucune demande de personnalisation ne correspond aux criteres de recherche."
+				title="Aucune demande trouvée"
+				description="Aucune demande de personnalisation ne correspond aux critères de recherche."
 				actionElement={
 					<Button variant="outline" asChild>
-						<Link href="/admin/marketing/personnalisations">Reinitialiser les filtres</Link>
+						<Link href="/admin/marketing/personnalisations">Réinitialiser les filtres</Link>
 					</Button>
 				}
 			/>

@@ -10,7 +10,6 @@ interface OrderTrackingProps {
 		trackingUrl: string | null;
 		shippingCarrier: string | null;
 		shippedAt: Date | null;
-		estimatedDelivery: Date | null;
 		actualDelivery: Date | null;
 	};
 }
@@ -52,14 +51,6 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 							<span className="text-muted-foreground">Expédié le : </span>
 							<span className="font-medium">
 								{format(order.shippedAt, "d MMMM yyyy", { locale: fr })}
-							</span>
-						</div>
-					)}
-					{order.estimatedDelivery && !order.actualDelivery && (
-						<div>
-							<span className="text-muted-foreground">Livraison prévue : </span>
-							<span className="font-medium">
-								{format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })}
 							</span>
 						</div>
 					)}

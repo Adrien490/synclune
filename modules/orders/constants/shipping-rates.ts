@@ -29,23 +29,19 @@ export const SHIPPING_CARRIERS = {
  * Note : La Corse n'est pas livrée (détection via shipping-zone.service.ts)
  */
 export const SHIPPING_RATES = {
-	/** France Métropolitaine (hors Corse) - Livraison en 2-3 jours ouvrés */
+	/** France Métropolitaine (hors Corse) */
 	FR: {
 		amount: 499, // 4.99€
-		displayName: "Livraison France (2-3 jours)",
+		displayName: "Livraison France",
 		carrier: SHIPPING_CARRIERS.STANDARD,
-		minDays: 2,
-		maxDays: 3,
 		countries: ["FR"] as const,
 	},
 
-	/** Union Européenne (dont Monaco) - Livraison en 4-7 jours ouvrés */
+	/** Union Européenne (dont Monaco) */
 	EU: {
 		amount: 950, // 9.50€
-		displayName: "Livraison Europe (4-7 jours)",
+		displayName: "Livraison Europe",
 		carrier: SHIPPING_CARRIERS.STANDARD,
-		minDays: 4,
-		maxDays: 7,
 		countries: SHIPPING_COUNTRIES.filter((c) => c !== "FR") as readonly Exclude<
 			ShippingCountry,
 			"FR"

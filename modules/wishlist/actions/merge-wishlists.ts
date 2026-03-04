@@ -53,7 +53,7 @@ export async function mergeWishlists(
 		// Empêche un attaquant de fusionner la wishlist d'un autre utilisateur
 		const currentSession = await getSession();
 		if (!currentSession?.user.id || currentSession.user.id !== userId) {
-			return error("Non autorise");
+			return error(WISHLIST_ERROR_MESSAGES.UNAUTHORIZED);
 		}
 
 		// 0c. Rate limiting uniforme avec les autres actions wishlist (avec IP fallback)

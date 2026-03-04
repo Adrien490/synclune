@@ -18,6 +18,10 @@ import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
 import { updateNotesSchema } from "../schemas/update-notes.schema";
+import {
+	CUSTOMIZATION_ERROR_MESSAGES,
+	CUSTOMIZATION_SUCCESS_MESSAGES,
+} from "../constants/error-messages";
 
 // ============================================================================
 // ACTION
@@ -59,7 +63,7 @@ export async function updateCustomizationNotes(
 		});
 
 		if (!existing) {
-			return error("Demande non trouvee");
+			return error(CUSTOMIZATION_ERROR_MESSAGES.REQUEST_NOT_FOUND);
 		}
 
 		// 4. Update notes
@@ -84,8 +88,12 @@ export async function updateCustomizationNotes(
 		];
 		tags.forEach((tag) => updateTag(tag));
 
-		return success(sanitizedNotes ? "Notes mises a jour" : "Notes supprimees");
+		return success(
+			sanitizedNotes
+				? CUSTOMIZATION_SUCCESS_MESSAGES.NOTES_UPDATED
+				: CUSTOMIZATION_SUCCESS_MESSAGES.NOTES_DELETED,
+		);
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la mise à jour des notes");
+		return handleActionError(e, CUSTOMIZATION_ERROR_MESSAGES.UPDATE_NOTES_ERROR);
 	}
 }

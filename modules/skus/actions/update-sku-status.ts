@@ -9,9 +9,9 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	validateInput,
+	BusinessError,
 	handleActionError,
 	success,
-	error,
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { updateProductSkuStatusSchema } from "../schemas/sku.schemas";
@@ -47,46 +47,49 @@ export async function updateProductSkuStatus(
 
 		const { skuId: validatedSkuId, isActive: validatedIsActive } = validated.data;
 
-		// 5. Verifier que le SKU existe et recuperer les infos pour invalidation
-		const existingSku = await prisma.productSku.findUnique({
-			where: { id: validatedSkuId },
-			select: {
-				id: true,
-				sku: true,
-				isActive: true,
-				isDefault: true,
-				productId: true,
-				product: {
-					select: {
-						slug: true,
+		// 5. Vérifier existence, règles métier, et mettre à jour dans une transaction
+		const { existingSku, updatedSku } = await prisma.$transaction(async (tx) => {
+			const existing = await tx.productSku.findUnique({
+				where: { id: validatedSkuId },
+				select: {
+					id: true,
+					sku: true,
+					isActive: true,
+					isDefault: true,
+					productId: true,
+					product: {
+						select: {
+							slug: true,
+						},
 					},
 				},
-			},
+			});
+
+			if (!existing) {
+				throw new BusinessError("La variante de produit n'existe pas.");
+			}
+
+			// Verifier qu'on ne desactive pas la variante principale
+			if (existing.isDefault && !validatedIsActive) {
+				throw new BusinessError(
+					"Impossible de désactiver la variante principale d'un produit. Veuillez d'abord définir une autre variante comme principale.",
+				);
+			}
+
+			const updated = await tx.productSku.update({
+				where: { id: validatedSkuId },
+				data: { isActive: validatedIsActive },
+				select: {
+					id: true,
+					sku: true,
+					isActive: true,
+				},
+			});
+
+			return { existingSku: existing, updatedSku: updated };
 		});
 
-		if (!existingSku) {
-			return error("La variante de produit n'existe pas.");
-		}
-
-		// 6. Verifier qu'on ne desactive pas la variante principale
-		if (existingSku.isDefault && !validatedIsActive) {
-			return error(
-				"Impossible de désactiver la variante principale d'un produit. Veuillez d'abord définir une autre variante comme principale.",
-			);
-		}
-
-		// 7. Mettre a jour le statut
-		const updatedSku = await prisma.productSku.update({
-			where: { id: validatedSkuId },
-			data: { isActive: validatedIsActive },
-			select: {
-				id: true,
-				sku: true,
-				isActive: true,
-			},
-		});
-
-		// 8. Invalider les cache tags concernes
+		// 6. Invalider les cache tags concernes
 		const tags = getSkuInvalidationTags(
 			updatedSku.sku,
 			existingSku.productId,
@@ -95,7 +98,7 @@ export async function updateProductSkuStatus(
 		);
 		tags.forEach((tag) => updateTag(tag));
 
-		// 9. Audit log
+		// 7. Audit log
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
@@ -105,7 +108,7 @@ export async function updateProductSkuStatus(
 			metadata: { sku: updatedSku.sku, isActive: validatedIsActive },
 		});
 
-		// 10. Success
+		// 8. Success
 		return success(
 			`Variante ${updatedSku.sku} ${validatedIsActive ? "activée" : "désactivée"} avec succès.`,
 			updatedSku,
