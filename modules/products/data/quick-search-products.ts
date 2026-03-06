@@ -27,13 +27,14 @@ export type QuickSearchProduct = {
 	}>;
 };
 
-export type QuickSearchResult = {
+export type QuickSearchSuccess = {
+	kind: "success";
 	products: QuickSearchProduct[];
 	suggestion: string | null;
 	totalCount: number;
-	rateLimited?: boolean;
-	error?: boolean;
 };
+
+export type QuickSearchResult = QuickSearchSuccess | { kind: "rate-limited" } | { kind: "error" };
 
 // ============================================================================
 // DATA FUNCTION
@@ -53,7 +54,7 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 
 	const term = searchTerm.trim();
 	if (!term || term.length < 2) {
-		return { products: [], suggestion: null, totalCount: 0 };
+		return { kind: "success", products: [], suggestion: null, totalCount: 0 };
 	}
 
 	try {
@@ -85,6 +86,7 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 			.filter((p): p is QuickSearchProduct => p !== undefined);
 
 		return {
+			kind: "success",
 			products: orderedProducts,
 			suggestion: spellResult?.term ?? null,
 			totalCount,
@@ -93,6 +95,6 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 		if (process.env.NODE_ENV === "development") {
 			console.error("[quickSearchProducts]", error);
 		}
-		return { products: [], suggestion: null, totalCount: 0, error: true };
+		return { kind: "error" };
 	}
 }

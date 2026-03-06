@@ -39,12 +39,10 @@ export function useKeyboardNavigation() {
 		const prev = container.querySelector('[data-active="true"]');
 		if (prev) {
 			prev.removeAttribute("data-active");
-			prev.removeAttribute("aria-current");
 		}
 		const el = focusablesRef.current[activeIndex];
 		if (el) {
 			el.setAttribute("data-active", "true");
-			el.setAttribute("aria-current", "true");
 		}
 	}, [activeIndex]);
 

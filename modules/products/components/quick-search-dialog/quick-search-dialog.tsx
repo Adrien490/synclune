@@ -88,7 +88,7 @@ export function QuickSearchDialog({
 		return () => clearInterval(id);
 	}, [inputValue.length, productTypes.length]);
 
-	const currentType = productTypes[placeholderIndex % (productTypes.length || 1)];
+	const currentType = productTypes[placeholderIndex];
 	const placeholder = currentType
 		? `Rechercher : ${currentType.label}...`
 		: "Rechercher un bijou...";

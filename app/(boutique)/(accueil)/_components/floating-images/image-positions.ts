@@ -1,5 +1,26 @@
+type IdleAnimation =
+	| "hero-idle-float-1"
+	| "hero-idle-float-2"
+	| "hero-idle-float-3"
+	| "hero-idle-float-4";
+type VisibilityClass = "hidden md:block" | "hidden lg:block";
+
 // Diamond layout: 4 images around central content with varied sizes
-export const IMAGE_POSITIONS = [
+export const IMAGE_POSITIONS: ReadonlyArray<{
+	className: string;
+	width: number;
+	height: number;
+	widthClasses: string;
+	sizes: string;
+	delay: number;
+	glowColor: string;
+	parallaxSpeed: number;
+	parallaxDirection: 1 | -1;
+	idleAnimation: IdleAnimation;
+	idleDuration: number;
+	idleDelay: number;
+	visibilityClass: VisibilityClass;
+}> = [
 	// Top-left — large anchor
 	{
 		className: "left-[2%] xl:left-[4%] top-[12%]",
@@ -14,7 +35,7 @@ export const IMAGE_POSITIONS = [
 		idleAnimation: "hero-idle-float-1",
 		idleDuration: 20,
 		idleDelay: 0,
-		tabletVisible: true,
+		visibilityClass: "hidden md:block",
 	},
 	// Top-right — medium balance
 	{
@@ -30,7 +51,7 @@ export const IMAGE_POSITIONS = [
 		idleAnimation: "hero-idle-float-2",
 		idleDuration: 22,
 		idleDelay: 2,
-		tabletVisible: false,
+		visibilityClass: "hidden lg:block",
 	},
 	// Bottom-left — small depth
 	{
@@ -46,7 +67,7 @@ export const IMAGE_POSITIONS = [
 		idleAnimation: "hero-idle-float-3",
 		idleDuration: 18,
 		idleDelay: 4,
-		tabletVisible: false,
+		visibilityClass: "hidden lg:block",
 	},
 	// Bottom-right — medium balance
 	{
@@ -62,6 +83,6 @@ export const IMAGE_POSITIONS = [
 		idleAnimation: "hero-idle-float-4",
 		idleDuration: 24,
 		idleDelay: 6,
-		tabletVisible: true,
+		visibilityClass: "hidden md:block",
 	},
-] as const;
+];

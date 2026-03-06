@@ -14,7 +14,6 @@ export const FLOAT_VARIANTS = {
 		full: {
 			scale: 1.08,
 			y: -6,
-			rotate: 0,
 			transition: MOTION_CONFIG.spring.hover,
 		},
 	},

@@ -73,7 +73,7 @@ export function CreativeProcessTimeline() {
 			<div className="relative lg:hidden">
 				{/* Static vertical line */}
 				<div
-					className="bg-secondary/50 absolute top-8 bottom-8 left-6 w-px sm:hidden"
+					className="bg-secondary/50 absolute top-8 bottom-8 left-6 w-px lg:hidden"
 					aria-hidden="true"
 				/>
 
@@ -81,7 +81,7 @@ export function CreativeProcessTimeline() {
 					{processSteps.map((step, index) => (
 						<li
 							key={step.id}
-							id={`creative-step-${step.id}-mobile`}
+							id={`creative-step-${step.id}`}
 							className="group motion-safe:hover:bg-muted/30 active:bg-muted/40 relative -m-2 flex items-start gap-4 rounded-xl p-2 active:scale-[0.99] motion-safe:transition-[background-color,transform] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5"
 						>
 							<span className="sr-only">Étape {index + 1} :</span>

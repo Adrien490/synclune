@@ -18,8 +18,15 @@ export function usePulseOnChange<T>(value: T, duration = 600): boolean {
 	const [prevValue, setPrevValue] = useState(value);
 	if (prevValue !== value) {
 		setPrevValue(value);
-		setShouldPulse(true);
-		setPulseKey(pulseKey + 1);
+		// Skip animation if the user prefers reduced motion
+		const prefersReduced =
+			typeof window !== "undefined" &&
+			typeof window.matchMedia === "function" &&
+			window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		if (!prefersReduced) {
+			setShouldPulse(true);
+			setPulseKey(pulseKey + 1);
+		}
 	}
 
 	// Reset pulse after duration (pulseKey restarts the timer on mid-pulse changes)

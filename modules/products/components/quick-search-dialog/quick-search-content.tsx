@@ -43,7 +43,11 @@ export function QuickSearchContent({
 	onSelectResult,
 	onViewAllResults,
 }: QuickSearchContentProps) {
-	const { products, suggestion, totalCount } = results;
+	const isRateLimited = results.kind === "rate-limited";
+	const isError = results.kind === "error";
+	const products = results.kind === "success" ? results.products : [];
+	const suggestion = results.kind === "success" ? results.suggestion : null;
+	const totalCount = results.kind === "success" ? results.totalCount : 0;
 
 	// Client-side filtering of collections/categories (word-start match)
 	const lowerQuery = query.toLowerCase();
@@ -56,8 +60,6 @@ export function QuickSearchContent({
 
 	const hasSearchResults = products.length > 0;
 	const hasMatchedNav = matchedCollections.length > 0 || matchedTypes.length > 0;
-	const isRateLimited = results.rateLimited === true;
-	const isError = results.error === true;
 	const showEmptyState =
 		!hasSearchResults && !hasMatchedNav && !suggestion && !isRateLimited && !isError;
 

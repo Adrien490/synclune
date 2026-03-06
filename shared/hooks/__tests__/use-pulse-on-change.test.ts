@@ -129,6 +129,54 @@ describe("usePulseOnChange", () => {
 	});
 
 	// -------------------------------------------------------------------------
+	// prefers-reduced-motion
+	// -------------------------------------------------------------------------
+
+	describe("prefers-reduced-motion", () => {
+		it("does not pulse when prefers-reduced-motion is reduce", () => {
+			vi.stubGlobal("matchMedia", (query: string) => ({
+				matches: query === "(prefers-reduced-motion: reduce)",
+				media: query,
+				onchange: null,
+				addEventListener: vi.fn(),
+				removeEventListener: vi.fn(),
+				dispatchEvent: vi.fn(),
+			}));
+
+			let value = "a";
+			const { result, rerender } = renderHook(() => usePulseOnChange(value));
+
+			value = "b";
+			rerender();
+
+			expect(result.current).toBe(false);
+
+			vi.unstubAllGlobals();
+		});
+
+		it("pulses normally when prefers-reduced-motion is not set", () => {
+			vi.stubGlobal("matchMedia", (query: string) => ({
+				matches: false,
+				media: query,
+				onchange: null,
+				addEventListener: vi.fn(),
+				removeEventListener: vi.fn(),
+				dispatchEvent: vi.fn(),
+			}));
+
+			let value = "a";
+			const { result, rerender } = renderHook(() => usePulseOnChange(value));
+
+			value = "b";
+			rerender();
+
+			expect(result.current).toBe(true);
+
+			vi.unstubAllGlobals();
+		});
+	});
+
+	// -------------------------------------------------------------------------
 	// Cleanup on unmount
 	// -------------------------------------------------------------------------
 

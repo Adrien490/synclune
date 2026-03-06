@@ -113,7 +113,7 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 			const values = form.state.values;
 			saveDraft(values);
 		});
-		return unsubscribe;
+		return () => unsubscribe();
 	}, [form]);
 
 	return {

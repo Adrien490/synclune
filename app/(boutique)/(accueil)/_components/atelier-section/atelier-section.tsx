@@ -79,7 +79,7 @@ export async function AtelierSection() {
 				href="#atelier-cta"
 				className="focus:bg-secondary focus:text-secondary-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:shadow-md"
 			>
-				Aller au bouton de contact
+				Aller au bouton sur-mesure
 			</a>
 
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -124,7 +124,7 @@ export async function AtelierSection() {
 							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
 							<p>
 								<span className="sm:hidden">
-									Des amies ont voulu les mêmes, puis des amies d'amies… et me voilà dans mon mon
+									Des amies ont voulu les mêmes, puis des amies d'amies… et me voilà dans mon
 									atelier !
 								</span>
 								<span className="hidden sm:inline">

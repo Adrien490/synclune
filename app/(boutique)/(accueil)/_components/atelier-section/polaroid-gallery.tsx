@@ -14,6 +14,7 @@ import { PolaroidDoodles } from "./polaroid-doodles";
 type GlowColor = "pink" | "lavender" | "mint" | "yellow";
 
 interface PolaroidConfig {
+	id: string;
 	caption: string;
 	label: string;
 	tiltDegree: number;
@@ -36,6 +37,7 @@ const GLOW_CLASSES: Record<GlowColor, string> = {
 
 const POLAROIDS: PolaroidConfig[] = [
 	{
+		id: "hands",
 		caption: "Les mains dans les perles !",
 		label: "Mains de Léane assemblant un bijou",
 		tiltDegree: -3,
@@ -48,6 +50,7 @@ const POLAROIDS: PolaroidConfig[] = [
 		scatterClass: "lg:-translate-y-2 lg:translate-x-1",
 	},
 	{
+		id: "materials",
 		caption: "Mes petits trésors",
 		label: "Perles et matériaux colorés Synclune",
 		tiltDegree: 1.5,
@@ -60,6 +63,7 @@ const POLAROIDS: PolaroidConfig[] = [
 		scatterClass: "lg:translate-y-3 lg:-translate-x-1",
 	},
 	{
+		id: "inspiration",
 		caption: "L'inspiration du jour",
 		label: "Carnet d'inspiration de Léane, créatrice Synclune",
 		tiltDegree: -1,
@@ -73,6 +77,7 @@ const POLAROIDS: PolaroidConfig[] = [
 		className: "hidden lg:block",
 	},
 	{
+		id: "workspace",
 		caption: "Mon coin créatif",
 		label: "Vue de l'atelier Synclune",
 		tiltDegree: 2.5,
@@ -109,7 +114,7 @@ export function PolaroidGallery() {
 					>
 						{POLAROIDS.map((p) => (
 							<PolaroidFrame
-								key={p.caption}
+								key={p.id}
 								tiltDegree={p.tiltDegree}
 								caption={p.caption}
 								captionColor={p.captionColor}

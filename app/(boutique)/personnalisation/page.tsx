@@ -76,7 +76,7 @@ export default async function CustomizationPage() {
 			{/* Section principale avec formulaire */}
 			<section className={`bg-background ${SECTION_SPACING.compact} relative z-10`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="flex flex-col-reverse lg:grid lg:grid-cols-[1fr_380px] lg:gap-12">
+					<div className="flex flex-col lg:grid lg:grid-cols-[1fr_380px] lg:gap-12">
 						<div className="max-w-xl">
 							<CustomizationForm productTypes={productTypes} userInfo={userInfo} />
 						</div>

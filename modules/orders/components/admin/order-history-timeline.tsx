@@ -94,6 +94,42 @@ const ACTION_CONFIG: Record<
 		label: "Facture générée",
 		symbol: "📄",
 	},
+	REFUND_CREATED: {
+		icon: RotateCcw,
+		color: "text-orange-500",
+		label: "Remboursement créé",
+		symbol: "↩",
+	},
+	REFUND_COMPLETED: {
+		icon: CheckCircle2,
+		color: "text-green-500",
+		label: "Remboursement confirmé",
+		symbol: "✓",
+	},
+	REFUND_FAILED: {
+		icon: XCircle,
+		color: "text-red-500",
+		label: "Remboursement échoué",
+		symbol: "✗",
+	},
+	DISPUTE_OPENED: {
+		icon: XCircle,
+		color: "text-red-600",
+		label: "Litige ouvert",
+		symbol: "⚠",
+	},
+	DISPUTE_RESOLVED: {
+		icon: CheckCircle2,
+		color: "text-green-600",
+		label: "Litige résolu",
+		symbol: "✓",
+	},
+	INVOICE_VOIDED: {
+		icon: FileText,
+		color: "text-gray-500",
+		label: "Facture annulée",
+		symbol: "✗",
+	},
 };
 
 // Labels traduits pour les statuts

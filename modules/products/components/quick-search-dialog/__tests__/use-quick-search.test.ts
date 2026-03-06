@@ -28,8 +28,11 @@ function createSearchInputRef() {
 	return { current: { setValue: mockSetValue } };
 }
 
-function makeResult(overrides: Partial<QuickSearchResult> = {}): QuickSearchResult {
+function makeResult(
+	overrides: { totalCount?: number; suggestion?: string | null } = {},
+): QuickSearchResult {
 	return {
+		kind: "success",
 		products: [
 			{
 				id: "1",
@@ -47,9 +50,8 @@ function makeResult(overrides: Partial<QuickSearchResult> = {}): QuickSearchResu
 				],
 			},
 		],
-		suggestion: null,
-		totalCount: 1,
-		...overrides,
+		suggestion: overrides.suggestion ?? null,
+		totalCount: overrides.totalCount ?? 1,
 	};
 }
 

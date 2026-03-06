@@ -92,12 +92,22 @@ const mockProduct2 = {
 	],
 };
 
-function makeResults(overrides: Partial<QuickSearchResult> = {}): QuickSearchResult {
+function makeResults(
+	overrides: Partial<{
+		products: (typeof mockProduct)[];
+		suggestion: string | null;
+		totalCount: number;
+		rateLimited: boolean;
+		error: boolean;
+	}> = {},
+): QuickSearchResult {
+	if (overrides.rateLimited) return { kind: "rate-limited" };
+	if (overrides.error) return { kind: "error" };
 	return {
-		products: [mockProduct, mockProduct2],
-		suggestion: null,
-		totalCount: 2,
-		...overrides,
+		kind: "success",
+		products: overrides.products ?? [mockProduct, mockProduct2],
+		suggestion: overrides.suggestion ?? null,
+		totalCount: overrides.totalCount ?? 2,
 	};
 }
 

@@ -28,7 +28,7 @@ export function FloatingImage({
 	return (
 		// Layer 1: parallax scroll (y + opacity)
 		<motion.div
-			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto ${position.tabletVisible ? "hidden md:block" : "hidden lg:block"}`}
+			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto ${position.visibilityClass}`}
 			style={
 				shouldReduceMotion
 					? undefined

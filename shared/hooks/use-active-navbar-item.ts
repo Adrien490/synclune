@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
+import { ROUTES } from "@/shared/constants/urls";
 
 /**
  * Hook pour déterminer si un item de navigation est actif
@@ -57,8 +58,11 @@ export function useActiveNavbarItem() {
 			}
 		}
 
-		// Cas spécial: les pages /creations/* sont liées à /produits
-		if (itemPath === "/produits" && pathname.startsWith("/creations/")) {
+		// Cas spécial: les pages de détail produit (/creations/*) sont liées à /produits
+		if (
+			itemPath === ROUTES.SHOP.PRODUCTS &&
+			pathname.startsWith(ROUTES.SHOP.PRODUCT_DETAIL_PREFIX + "/")
+		) {
 			return true;
 		}
 
@@ -71,8 +75,11 @@ export function useActiveNavbarItem() {
 	 */
 	const getCurrentScope = (): { label: string; href: string } | null => {
 		// Pages produits et créations
-		if (pathname.startsWith("/produits") || pathname.startsWith("/creations/")) {
-			return { label: "Les créations", href: "/produits" };
+		if (
+			pathname.startsWith(ROUTES.SHOP.PRODUCTS) ||
+			pathname.startsWith(ROUTES.SHOP.PRODUCT_DETAIL_PREFIX + "/")
+		) {
+			return { label: "Les créations", href: ROUTES.SHOP.PRODUCTS };
 		}
 
 		// Pages collections

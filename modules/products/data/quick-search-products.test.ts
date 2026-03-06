@@ -63,18 +63,18 @@ describe("quickSearchProducts", () => {
 
 	it("returns empty result for empty string", async () => {
 		const result = await quickSearchProducts("");
-		expect(result).toEqual({ products: [], suggestion: null, totalCount: 0 });
+		expect(result).toEqual({ kind: "success", products: [], suggestion: null, totalCount: 0 });
 		expect(mockFuzzySearchProductIds).not.toHaveBeenCalled();
 	});
 
 	it("returns empty result for whitespace-only string", async () => {
 		const result = await quickSearchProducts("   ");
-		expect(result).toEqual({ products: [], suggestion: null, totalCount: 0 });
+		expect(result).toEqual({ kind: "success", products: [], suggestion: null, totalCount: 0 });
 	});
 
 	it("returns empty result for single character", async () => {
 		const result = await quickSearchProducts("a");
-		expect(result).toEqual({ products: [], suggestion: null, totalCount: 0 });
+		expect(result).toEqual({ kind: "success", products: [], suggestion: null, totalCount: 0 });
 	});
 
 	// ─── Fuzzy search integration ──────────────────────────────

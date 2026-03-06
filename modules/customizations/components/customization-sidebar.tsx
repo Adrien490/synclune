@@ -37,16 +37,6 @@ export function CustomizationSidebar() {
 						))}
 					</ol>
 				</div>
-
-				{/* Price range */}
-				<div className="border-border bg-card space-y-2 rounded-xl border p-6">
-					<h2 className="text-base font-semibold">Tarifs indicatifs</h2>
-					<p className="text-muted-foreground text-sm leading-relaxed">
-						Les créations sur mesure démarrent à partir de{" "}
-						<strong className="text-foreground">30 €</strong>. Le prix final dépend des matériaux et
-						de la complexité. Vous recevrez un devis détaillé avant toute validation.
-					</p>
-				</div>
 			</div>
 		</aside>
 	);

@@ -23,9 +23,10 @@ import { quickSearch } from "../quick-search";
 // HELPERS
 // ============================================================================
 
-const EMPTY_RESULT = { products: [], suggestion: null, totalCount: 0 };
+const EMPTY_RESULT = { kind: "success", products: [], suggestion: null, totalCount: 0 };
 
 const mockSearchResult = {
+	kind: "success",
 	products: [
 		{
 			id: "prod_1",
@@ -50,10 +51,10 @@ describe("quickSearch", () => {
 		mockQuickSearchProducts.mockResolvedValue(mockSearchResult);
 	});
 
-	it("should return EMPTY_RESULT with rateLimited flag when rate limited", async () => {
+	it("should return rate-limited result when rate limited", async () => {
 		mockEnforceRateLimit.mockResolvedValue({ error: { status: "error", message: "Rate limit" } });
 		const result = await quickSearch("bracelet");
-		expect(result).toEqual({ ...EMPTY_RESULT, rateLimited: true });
+		expect(result).toEqual({ kind: "rate-limited" });
 	});
 
 	it("should return EMPTY_RESULT when query exceeds 100 characters", async () => {
@@ -76,7 +77,12 @@ describe("quickSearch", () => {
 
 	it("should log zero results with console.log", async () => {
 		const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-		mockQuickSearchProducts.mockResolvedValue({ products: [], suggestion: "bague", totalCount: 0 });
+		mockQuickSearchProducts.mockResolvedValue({
+			kind: "success",
+			products: [],
+			suggestion: "bague",
+			totalCount: 0,
+		});
 
 		await quickSearch("bracelt");
 
@@ -91,15 +97,15 @@ describe("quickSearch", () => {
 		consoleSpy.mockRestore();
 	});
 
-	it("should return EMPTY_RESULT with error flag on unexpected exception from quickSearchProducts", async () => {
+	it("should return error result on unexpected exception from quickSearchProducts", async () => {
 		mockQuickSearchProducts.mockRejectedValue(new Error("DB crash"));
 		const result = await quickSearch("bracelet");
-		expect(result).toEqual({ ...EMPTY_RESULT, error: true });
+		expect(result).toEqual({ kind: "error" });
 	});
 
-	it("should return EMPTY_RESULT with error flag on unexpected exception from rate limit service", async () => {
+	it("should return error result on unexpected exception from rate limit service", async () => {
 		mockEnforceRateLimit.mockRejectedValue(new Error("rate limit service down"));
 		const result = await quickSearch("bracelet");
-		expect(result).toEqual({ ...EMPTY_RESULT, error: true });
+		expect(result).toEqual({ kind: "error" });
 	});
 });

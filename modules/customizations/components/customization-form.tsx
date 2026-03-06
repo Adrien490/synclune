@@ -189,7 +189,7 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 										...medias,
 										...res.map((f) => ({
 											url: f.ufsUrl,
-											blurDataUrl: f.serverData?.blurDataUrl,
+											blurDataUrl: f.serverData.blurDataUrl,
 										})),
 									].slice(0, 5);
 									form.setFieldValue("inspirationMedias", newMedias);

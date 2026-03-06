@@ -56,6 +56,8 @@ export const ROUTES = {
 	SHOP: {
 		HOME: "/",
 		PRODUCTS: "/produits",
+		// Base path for product detail pages — used by useActiveNavbarItem to map /creations/* → /produits
+		PRODUCT_DETAIL_PREFIX: "/creations",
 		PRODUCT: (slug: string) => `/creations/${slug}`,
 		COLLECTIONS: "/collections",
 		PRODUCT_TYPE: (slug: string) => `/produits/${slug}`,

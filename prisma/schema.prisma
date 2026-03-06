@@ -350,7 +350,7 @@ model SkuMedia {
 
   url          String    @db.VarChar(2048)
   thumbnailUrl String?   @db.VarChar(2048) // Thumbnail pour videos (poster)
-  blurDataUrl  String?   @db.VarChar(255) // ThumbHash base64 placeholder (~35-50 chars)
+  blurDataUrl  String?   @db.Text // ThumbHash base64 placeholder (~35-50 chars)
   altText      String?   @db.VarChar(255)
   mediaType    MediaType @default(IMAGE)
   isPrimary    Boolean   @default(false)
@@ -498,6 +498,12 @@ enum OrderAction {
   TRACKING_UPDATED // Mise a jour du suivi
   ADDRESS_UPDATED // Mise a jour de l'adresse de livraison
   INVOICE_GENERATED // Facture generee
+  REFUND_CREATED    // Remboursement cree
+  REFUND_COMPLETED  // Remboursement confirme (Stripe)
+  REFUND_FAILED     // Echec du remboursement
+  DISPUTE_OPENED    // Litige ouvert
+  DISPUTE_RESOLVED  // Litige resolu
+  INVOICE_VOIDED    // Facture annulee (commande annulee apres facturation)
 }
 
 /// Statut de la facture associée à une commande
@@ -645,6 +651,7 @@ model OrderHistory {
 
   // === INDEXES ===
   @@index([orderId, createdAt(sort: Desc)])
+  @@index([authorId])
 }
 
 model OrderItem {
@@ -689,6 +696,7 @@ model OrderItem {
 
   @@index([orderId])
   @@index([skuId])
+  @@index([productId])
 }
 
 /// Notes internes sur les commandes (visibles uniquement par les admins)
@@ -775,6 +783,7 @@ model Refund {
   @@index([orderId])
   @@index([status, processedAt]) // reconcile-refunds cron
   @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
+  @@index([createdBy])             // Admin: remboursements par admin
 }
 
 model RefundItem {
@@ -1140,7 +1149,7 @@ model AuditLog {
   // Action performed
   action     String @db.VarChar(50) // e.g. "product.create", "order.cancel", "refund.process"
   targetType String @db.VarChar(30) // e.g. "product", "order", "refund", "sku", "discount"
-  targetId   String @db.VarChar(30) // ID of the affected resource
+  targetId   String @db.VarChar(36) // ID of the affected resource (UUIDs = 36 chars)
 
   // Additional context
   metadata Json? // Flexible JSON for action-specific data (e.g. previous values, reason)

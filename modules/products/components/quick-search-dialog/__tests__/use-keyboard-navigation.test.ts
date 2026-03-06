@@ -202,14 +202,14 @@ describe("useKeyboardNavigation", () => {
 		});
 	});
 
-	it("sets data-active and aria-current on active element", () => {
+	it("sets data-active on active element (no aria-current)", () => {
 		const { container } = setup();
 
 		act(() => hookResultRef.current!.focusFirst());
 
 		const first = container.querySelector('[data-qs-nav-id="0"]');
 		expect(first?.getAttribute("data-active")).toBe("true");
-		expect(first?.getAttribute("aria-current")).toBe("true");
+		expect(first?.hasAttribute("aria-current")).toBe(false);
 	});
 
 	it("clears data-active from previous element when index changes", () => {
@@ -223,7 +223,6 @@ describe("useKeyboardNavigation", () => {
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 
 		expect(first?.hasAttribute("data-active")).toBe(false);
-		expect(first?.hasAttribute("aria-current")).toBe(false);
 
 		const second = container.querySelector('[data-qs-nav-id="1"]');
 		expect(second?.getAttribute("data-active")).toBe("true");
