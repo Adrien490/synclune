@@ -12,6 +12,7 @@ export function buildMaterialSearchConditions(search: string): Prisma.MaterialWh
 	return {
 		OR: [
 			{ name: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
+			{ slug: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
 			{ description: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
 		],
 	};

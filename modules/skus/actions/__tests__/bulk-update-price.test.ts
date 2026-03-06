@@ -143,9 +143,12 @@ describe("bulkUpdatePrice", () => {
 
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData());
 		mockPrisma.productSku.update.mockResolvedValue({});
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
-		);
+		mockPrisma.$transaction.mockImplementation(async (ops: unknown) => {
+			if (typeof ops === "function") {
+				return (ops as (tx: typeof mockPrisma) => Promise<unknown>)(mockPrisma);
+			}
+			return Promise.all(ops as Promise<unknown>[]);
+		});
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,

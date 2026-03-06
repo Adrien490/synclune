@@ -155,8 +155,8 @@ describe("useCustomizationForm", () => {
 			rgpdConsent: false,
 			website: "",
 		};
-		// Default: subscribe returns an unsubscribe function
-		mockStoreSubscribe.mockReturnValue(vi.fn());
+		// Default: subscribe returns a Subscription object (TanStack Store 0.9.1 API)
+		mockStoreSubscribe.mockReturnValue({ unsubscribe: vi.fn() });
 	});
 
 	// ──────────── Basic return shape ────────────
@@ -300,7 +300,7 @@ describe("useCustomizationForm", () => {
 
 	it("unsubscribes from store on unmount", () => {
 		const mockUnsubscribe = vi.fn();
-		mockStoreSubscribe.mockReturnValue(mockUnsubscribe);
+		mockStoreSubscribe.mockReturnValue({ unsubscribe: mockUnsubscribe });
 
 		const { unmount } = renderHook(() => useCustomizationForm());
 		unmount();
@@ -312,7 +312,7 @@ describe("useCustomizationForm", () => {
 		let storeCallback: (() => void) | undefined;
 		mockStoreSubscribe.mockImplementation((cb: () => void) => {
 			storeCallback = cb;
-			return vi.fn();
+			return { unsubscribe: vi.fn() };
 		});
 		mockFormState.values = {
 			firstName: "Marie",
@@ -342,7 +342,7 @@ describe("useCustomizationForm", () => {
 		let storeCallback: (() => void) | undefined;
 		mockStoreSubscribe.mockImplementation((cb: () => void) => {
 			storeCallback = cb;
-			return vi.fn();
+			return { unsubscribe: vi.fn() };
 		});
 		mockFormState.values = {
 			firstName: "Test",
@@ -374,7 +374,7 @@ describe("useCustomizationForm", () => {
 		let storeCallback: (() => void) | undefined;
 		mockStoreSubscribe.mockImplementation((cb: () => void) => {
 			storeCallback = cb;
-			return vi.fn();
+			return { unsubscribe: vi.fn() };
 		});
 		// All fields are empty
 		mockFormState.values = {

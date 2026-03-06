@@ -38,7 +38,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
-	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -118,7 +118,9 @@ describe("resendOrderEmail", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ session: { user: { id: "admin-1", role: "ADMIN" } } });
+		mockRequireAdmin.mockResolvedValue({
+			user: { id: "admin-1", name: "Admin", email: "admin@test.com" },
+		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSendOrderConfirmationEmail.mockResolvedValue({ success: true });
 		mockSendShippingConfirmationEmail.mockResolvedValue({ success: true });
@@ -155,7 +157,7 @@ describe("resendOrderEmail", () => {
 
 		const result = await resendOrderEmail(VALID_CUID, "confirmation");
 
-		expect(result).toEqual(rateLimitError);
+		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockPrisma.order.findUnique).not.toHaveBeenCalled();
 	});
 

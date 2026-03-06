@@ -20,6 +20,7 @@ const {
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -131,6 +132,9 @@ describe("bulkArchiveCollections", () => {
 		];
 		mockPrisma.collection.findMany.mockResolvedValue(collections);
 		mockPrisma.collection.updateMany.mockResolvedValue({ count: 2 });
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 	});
 
 	// --------------------------------------------------------------------------

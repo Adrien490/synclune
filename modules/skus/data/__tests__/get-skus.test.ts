@@ -130,19 +130,20 @@ describe("getProductSkus – validation", () => {
 		setupDefaults();
 	});
 
-	it("throws 'Invalid parameters' when schema validation fails", async () => {
+	it("returns empty productSkus when schema validation fails", async () => {
 		mockGetProductSkusSchema.safeParse.mockReturnValue({
 			success: false,
 			error: { errors: [{ message: "invalid" }] },
 		});
 
-		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("Invalid parameters");
+		const result = await getProductSkus(makeDefaultInput());
+		expect(result).toEqual({ productSkus: [], pagination: EMPTY_PAGINATION });
 	});
 
 	it("does not call fetchProductSkus when validation fails", async () => {
 		mockGetProductSkusSchema.safeParse.mockReturnValue({ success: false, error: {} });
 
-		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow();
+		await getProductSkus(makeDefaultInput());
 		expect(mockFetchProductSkus).not.toHaveBeenCalled();
 	});
 

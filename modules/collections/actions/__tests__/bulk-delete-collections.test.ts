@@ -20,6 +20,7 @@ const {
 			findMany: vi.fn(),
 			deleteMany: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -125,6 +126,9 @@ describe("bulkDeleteCollections", () => {
 		];
 		mockPrisma.collection.findMany.mockResolvedValue(collections);
 		mockPrisma.collection.deleteMany.mockResolvedValue({ count: 2 });
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 	});
 
 	// --------------------------------------------------------------------------

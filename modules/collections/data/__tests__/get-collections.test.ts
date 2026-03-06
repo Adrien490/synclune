@@ -116,13 +116,14 @@ describe("getCollections", () => {
 	});
 
 	describe("validation", () => {
-		it("throws on invalid params", async () => {
+		it("returns empty collections on invalid params", async () => {
 			mockSafeParse.mockReturnValue({
 				success: false,
 				error: { issues: [{ message: "bad" }] },
 			});
 
-			await expect(getCollections({} as never)).rejects.toThrow("Invalid parameters");
+			const result = await getCollections({} as never);
+			expect(result).toEqual({ collections: [], pagination: EMPTY_PAGINATION });
 		});
 
 		it("calls fetchCollections with validated data", async () => {
@@ -386,13 +387,14 @@ describe("getCollections", () => {
 			});
 		});
 
-		it("rethrows validation errors from getCollections wrapper", async () => {
+		it("returns empty collections when validation fails in getCollections wrapper", async () => {
 			mockSafeParse.mockReturnValue({
 				success: false,
 				error: { issues: [{ message: "invalid perPage" }] },
 			});
 
-			await expect(getCollections({} as never)).rejects.toThrow("Invalid parameters");
+			const result = await getCollections({} as never);
+			expect(result).toEqual({ collections: [], pagination: EMPTY_PAGINATION });
 		});
 	});
 });
