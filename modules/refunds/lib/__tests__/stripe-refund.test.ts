@@ -15,6 +15,9 @@ const { mockStripe, MockStripeError } = vi.hoisted(() => {
 
 	return {
 		mockStripe: {
+			paymentIntents: {
+				retrieve: vi.fn(),
+			},
 			refunds: {
 				create: vi.fn(),
 				list: vi.fn(),
@@ -60,6 +63,7 @@ function makeStripeError(code: string, message: string) {
 describe("createStripeRefund", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({ currency: "eur" });
 	});
 
 	it("should return success when Stripe returns succeeded", async () => {

@@ -28,7 +28,7 @@ function resolveShape(p: Particle) {
 	return {
 		isSvg,
 		svgConfig: isSvg ? getSvgConfig(p.shape) : null,
-		shapeStyles: isSvg ? undefined : getShapeStyles(p.shape, p.size, p.color),
+		shapeStyles: isSvg ? undefined : getShapeStyles(p.shape, p.color),
 	};
 }
 
@@ -92,10 +92,10 @@ function AnimatedParticle({
 	mouseY: MotionValue<number>;
 	highContrast: boolean;
 	scrollOpacity?: MotionValue<number>;
-	scrollYProgress?: MotionValue<number>;
+	scrollYProgress: MotionValue<number>;
 	interactive?: boolean;
-	cursorX?: MotionValue<number>;
-	cursorY?: MotionValue<number>;
+	cursorX: MotionValue<number>;
+	cursorY: MotionValue<number>;
 }) {
 	const { isSvg, svgConfig, shapeStyles } = resolveShape(p);
 	const style = particleStyle(p, highContrast);
@@ -109,34 +109,26 @@ function AnimatedParticle({
 	const py = useTransform(mouseY, (v) => v * strength);
 
 	// Scroll parallax: vertical displacement proportional to depth (close particles move more)
-	const scrollFallback = useMotionValue(0);
 	const scrollParallaxY = useTransform(
-		scrollYProgress ?? scrollFallback,
+		scrollYProgress,
 		(v) => (v - 0.5) * 2 * SCROLL_PARALLAX_RANGE * strength,
 	);
 
-	// Interactive repulsion: push particle away from cursor
-	const cursorFallback = useMotionValue(0.5);
-	const resolvedCursorX = cursorX ?? cursorFallback;
-	const resolvedCursorY = cursorY ?? cursorFallback;
-	const repulsionX = useTransform([resolvedCursorX, resolvedCursorY], ([cx, cy]) => {
-		if (!interactive) return 0;
+	// Interactive repulsion: push particle away from cursor (dx/dy/dist computed once for both axes)
+	const repulsion = useTransform([cursorX, cursorY], ([cx, cy]) => {
+		if (!interactive) return { x: 0, y: 0 };
 		const dx = p.x / 100 - (cx as number);
 		const dy = p.y / 100 - (cy as number);
 		const dist = Math.sqrt(dx * dx + dy * dy);
-		if (dist > REPULSION_RADIUS || dist < 0.001) return 0;
+		if (dist > REPULSION_RADIUS || dist < 0.001) return { x: 0, y: 0 };
 		const factor = (1 - dist / REPULSION_RADIUS) ** 2; // quadratic falloff
-		return (dx / dist) * factor * REPULSION_STRENGTH;
+		return {
+			x: (dx / dist) * factor * REPULSION_STRENGTH,
+			y: (dy / dist) * factor * REPULSION_STRENGTH,
+		};
 	});
-	const repulsionY = useTransform([resolvedCursorX, resolvedCursorY], ([cx, cy]) => {
-		if (!interactive) return 0;
-		const dx = p.x / 100 - (cx as number);
-		const dy = p.y / 100 - (cy as number);
-		const dist = Math.sqrt(dx * dx + dy * dy);
-		if (dist > REPULSION_RADIUS || dist < 0.001) return 0;
-		const factor = (1 - dist / REPULSION_RADIUS) ** 2;
-		return (dy / dist) * factor * REPULSION_STRENGTH;
-	});
+	const repulsionX = useTransform(repulsion, (v) => v.x);
+	const repulsionY = useTransform(repulsion, (v) => v.y);
 
 	// Staggered entrance: particles fade+scale in with their individual delay
 	const entrance = { opacity: 0, scale: 0.5 };
@@ -230,8 +222,8 @@ function StaticParticle({
 }
 
 /**
- * Composant interne pour rendre un ensemble de particules
- * Gere le rendu statique (reduced motion) et anime
+ * Internal component for rendering a set of particles.
+ * Handles both static (reduced motion) and animated rendering.
  */
 export function ParticleSet({
 	particles,
@@ -247,10 +239,15 @@ export function ParticleSet({
 	cursorX,
 	cursorY,
 }: ParticleSetProps) {
-	// Single fallback MotionValue shared by all particles when no mouse tracking (mobile)
+	// Shared fallback MotionValues — created once per set, not per particle
 	const fallback = useMotionValue(0);
+	const scrollFallback = useMotionValue(0);
+	const cursorFallback = useMotionValue(0.5);
 	const resolvedX = mouseX ?? fallback;
 	const resolvedY = mouseY ?? fallback;
+	const resolvedScrollYProgress = scrollYProgress ?? scrollFallback;
+	const resolvedCursorX = cursorX ?? cursorFallback;
+	const resolvedCursorY = cursorY ?? cursorFallback;
 
 	if (!isInView) return null;
 
@@ -280,10 +277,10 @@ export function ParticleSet({
 					mouseY={resolvedY}
 					highContrast={highContrast}
 					scrollOpacity={scrollOpacity}
-					scrollYProgress={scrollYProgress}
+					scrollYProgress={resolvedScrollYProgress}
 					interactive={interactive}
-					cursorX={cursorX}
-					cursorY={cursorY}
+					cursorX={resolvedCursorX}
+					cursorY={resolvedCursorY}
 				/>
 			))}
 		</>

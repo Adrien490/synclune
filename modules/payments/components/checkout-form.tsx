@@ -2,66 +2,25 @@
 
 import { useState, useRef, useSyncExternalStore } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
-import { Button } from "@/shared/components/ui/button";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
-import { formatEuro } from "@/shared/utils/format-euro";
-import { AlertCircle, Info, Loader2, Lock, Mail, WifiOff } from "lucide-react";
+import { WifiOff } from "lucide-react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
-import { StripeWordmark } from "./stripe-wordmark";
-import {
-	SORTED_SHIPPING_COUNTRIES,
-	COUNTRY_NAMES,
-	type ShippingCountry,
-} from "@/shared/constants/countries";
-import Link from "next/link";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import { type ShippingCountry } from "@/shared/constants/countries";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
-import { ActionStatus } from "@/shared/types/server-action";
-import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
-import { DRAFT_VERSION } from "../utils/checkout-form.utils";
-import dynamic from "next/dynamic";
-
-const EmbeddedCheckoutWrapper = dynamic(
-	() => import("./embedded-checkout").then((mod) => mod.EmbeddedCheckoutWrapper),
-	{
-		loading: () => (
-			<div className="animate-pulse space-y-6 p-6">
-				<div className="space-y-2">
-					<div className="bg-muted h-4 w-24 rounded" />
-					<div className="bg-muted h-10 w-full rounded" />
-				</div>
-				<div className="space-y-2">
-					<div className="bg-muted h-4 w-40 rounded" />
-					<div className="bg-muted h-10 w-full rounded" />
-				</div>
-				<div className="grid grid-cols-2 gap-4">
-					<div className="space-y-2">
-						<div className="bg-muted h-4 w-20 rounded" />
-						<div className="bg-muted h-10 w-full rounded" />
-					</div>
-					<div className="space-y-2">
-						<div className="bg-muted h-4 w-12 rounded" />
-						<div className="bg-muted h-10 w-full rounded" />
-					</div>
-				</div>
-				<div className="bg-muted h-12 w-full rounded" />
-			</div>
-		),
-	},
-);
-import { AddressSummary, type SubmittedAddress } from "./address-summary";
-import { CheckoutSummary } from "./checkout-summary";
-import { CheckoutStepIndicator } from "./checkout-step-indicator";
-import { DiscountCodeInput } from "./discount-code-input";
-import { AddressSelector } from "./address-selector";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
-import type { CreateCheckoutSessionResult } from "../types/checkout.types";
+import type {
+	CreateCheckoutSessionResult,
+	CheckoutFormValuesSnapshot,
+} from "../types/checkout.types";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
-import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
+import { CheckoutSummary } from "./checkout-summary";
+import { AddressStep } from "./address-step";
+import { PaymentStep } from "./payment-step";
+import type { SubmittedAddress } from "./address-summary";
 
 // Offline detection via useSyncExternalStore for SSR safety
 function subscribeOnline(callback: () => void) {
@@ -79,24 +38,6 @@ function getServerSnapshot() {
 	return true;
 }
 
-// Options pour le select des pays
-const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
-	value: code,
-	label: COUNTRY_NAMES[code],
-}));
-
-// Field name to label mapping for error summary
-const CHECKOUT_FIELD_LABELS: Record<string, string> = {
-	email: "Adresse email",
-	"shipping.fullName": "Nom complet",
-	"shipping.addressLine1": "Adresse",
-	"shipping.postalCode": "Code postal",
-	"shipping.city": "Ville",
-	"shipping.country": "Pays",
-	"shipping.phoneNumber": "Téléphone",
-	termsAccepted: "Conditions générales de vente",
-};
-
 interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
 	session: Session | null;
@@ -104,122 +45,36 @@ interface CheckoutFormProps {
 }
 
 /**
- * Formulaire de checkout complet
- * Gère le state partagé via TanStack Form entre le formulaire et le récapitulatif
- * Élimine le besoin de callbacks onCountryChange/onPostalCodeChange
+ * Checkout orchestration component.
+ *
+ * Manages shared state (discount, payment step, submitted address) and
+ * delegates rendering to AddressStep (step 1) and PaymentStep (step 2).
  */
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
 
-	// State pour le paiement Stripe
 	const [clientSecret, setClientSecret] = useState<string | null>(null);
-	const [orderInfo, setOrderInfo] = useState<{
-		orderId: string;
-		orderNumber: string;
-	} | null>(null);
+	const [orderInfo, setOrderInfo] = useState<{ orderId: string; orderNumber: string } | null>(null);
 	const [submittedAddress, setSubmittedAddress] = useState<SubmittedAddress | null>(null);
-
-	// State for discount code
 	const [appliedDiscount, setAppliedDiscount] = useState<NonNullable<
 		ValidateDiscountCodeReturn["discount"]
 	> | null>(null);
 
-	// State for address selector
-	const defaultAddress = addresses?.find((a) => a.isDefault) ?? addresses?.[0] ?? null;
-	const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
-		defaultAddress?.id ?? null,
-	);
-
-	// Ref for focus management
+	const formValuesRef = useRef<CheckoutFormValuesSnapshot | null>(null);
 	const headingRef = useRef<HTMLHeadingElement>(null);
 
-	// Référence pour capturer les valeurs du formulaire avant soumission
-	const formValuesRef = useRef<{
-		email?: string;
-		shipping?: {
-			fullName: string;
-			addressLine1: string;
-			addressLine2?: string;
-			city: string;
-			postalCode: string;
-			country: string;
-			phoneNumber: string;
-		};
-	} | null>(null);
-
-	const handleSuccess = (data: CreateCheckoutSessionResult) => {
-		setClientSecret(data.clientSecret);
-		setOrderInfo({ orderId: data.orderId, orderNumber: data.orderNumber });
-
-		// Capturer l'adresse soumise pour l'afficher dans le résumé
-		if (formValuesRef.current?.shipping) {
-			const shipping = formValuesRef.current.shipping;
-			setSubmittedAddress({
-				fullName: shipping.fullName,
-				addressLine1: shipping.addressLine1,
-				addressLine2: shipping.addressLine2 ?? undefined,
-				city: shipping.city,
-				postalCode: shipping.postalCode,
-				country: (shipping.country || "FR") as ShippingCountry,
-				phoneNumber: shipping.phoneNumber,
-				email: isGuest ? formValuesRef.current.email : undefined,
-			});
-		}
-
-		// Scroll to top and focus the heading for screen readers
-		window.scrollTo({ top: 0, behavior: "smooth" });
-		requestAnimationFrame(() => headingRef.current?.focus());
-	};
-
-	const handleEdit = () => {
-		setClientSecret(null);
-		// Focus first form field after transition
-		requestAnimationFrame(() => {
-			const firstInput = document.querySelector<HTMLInputElement>(
-				'input[name="email"], input[name="shipping.fullName"]',
-			);
-			firstInput?.focus();
-		});
-	};
-
-	const handleSelectAddress = (address: UserAddress) => {
-		setSelectedAddressId(address.id);
-		const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ");
-		form.setFieldValue("shipping.fullName", fullName);
-		form.setFieldValue("shipping.addressLine1", address.address1);
-		form.setFieldValue("shipping.addressLine2", address.address2 ?? "");
-		form.setFieldValue("shipping.city", address.city);
-		form.setFieldValue("shipping.postalCode", address.postalCode);
-		form.setFieldValue("shipping.country", address.country);
-		form.setFieldValue("shipping.phoneNumber", address.phone);
-		// Show progressive disclosure fields if needed
-		if (address.country && address.country !== "FR") setShowCountrySelect(true);
-		if (address.address2) setShowAddressLine2(true);
-	};
-
-	// Form hook
 	const { form, action, isPending, state } = useCheckoutForm({
 		session,
 		addresses,
 		onSuccess: handleSuccess,
 	});
 
-	// Lecture directe depuis TanStack Form - plus besoin de callbacks
+	// Read shipping values from form state for total computation and CheckoutSummary
 	const shippingValues = form.state.values.shipping as unknown as Record<string, string>;
 	const country = (shippingValues.country ?? "FR") as ShippingCountry;
 	const postalCode = shippingValues.postalCode ?? "";
 
-	// Progressive disclosure states
-	const initialCountry = shippingValues.country ?? "";
-	const [showCountrySelect, setShowCountrySelect] = useState(initialCountry !== "FR");
-	const [showAddressLine2, setShowAddressLine2] = useState(
-		!!form.state.values.shipping.addressLine2,
-	);
-
-	// Calculer le total
-	const subtotal = cart.items.reduce((sum, item) => {
-		return sum + item.priceAtAdd * item.quantity;
-	}, 0);
+	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
 	const shippingRaw = calculateShipping(country, postalCode);
 	const shippingUnavailable = shippingRaw === null;
 	const shipping = shippingRaw ?? 0;
@@ -227,9 +82,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const total = subtotal - discountAmount + shipping;
 
 	const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, getServerSnapshot);
-
 	const shouldReduceMotion = useReducedMotion();
-
 	const fadeSlide = shouldReduceMotion
 		? {}
 		: {
@@ -239,16 +92,47 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 				transition: { duration: MOTION_CONFIG.duration.normal },
 			};
 
+	function handleSuccess(data: CreateCheckoutSessionResult) {
+		setClientSecret(data.clientSecret);
+		setOrderInfo({ orderId: data.orderId, orderNumber: data.orderNumber });
+
+		if (formValuesRef.current?.shipping) {
+			const s = formValuesRef.current.shipping;
+			setSubmittedAddress({
+				fullName: s.fullName,
+				addressLine1: s.addressLine1,
+				addressLine2: s.addressLine2 ?? undefined,
+				city: s.city,
+				postalCode: s.postalCode,
+				country: (s.country || "FR") as ShippingCountry,
+				phoneNumber: s.phoneNumber,
+				email: isGuest ? (formValuesRef.current.email ?? undefined) : undefined,
+			});
+		}
+
+		window.scrollTo({ top: 0, behavior: "smooth" });
+		requestAnimationFrame(() => headingRef.current?.focus());
+	}
+
+	function handleEdit() {
+		setClientSecret(null);
+		requestAnimationFrame(() => {
+			const firstInput = document.querySelector<HTMLInputElement>(
+				'input[name="email"], input[name="shipping.fullName"]',
+			);
+			firstInput?.focus();
+		});
+	}
+
+	const defaultAddress = addresses?.find((a) => a.isDefault) ?? addresses?.[0] ?? null;
+
 	return (
 		<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
-			{/* Formulaire / Paiement */}
 			<div className="space-y-6">
-				{/* Accessible heading for focus management */}
 				<h1 ref={headingRef} tabIndex={-1} className="sr-only">
 					Paiement sécurisé
 				</h1>
 
-				{/* Offline detection banner */}
 				{!isOnline && (
 					<Alert variant="destructive" role="alert" aria-live="assertive">
 						<WifiOff className="size-4" />
@@ -266,556 +150,40 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 				>
 					<AnimatePresence mode="wait">
 						{clientSecret && submittedAddress ? (
-							<m.div key="payment" className="space-y-6" {...fadeSlide}>
-								{/* Step indicator */}
-								<CheckoutStepIndicator currentStep={2} />
-
-								{/* Résumé de l'adresse de livraison (Baymard: toujours visible) */}
-								<AddressSummary address={submittedAddress} onEdit={handleEdit} />
-
-								{/* En-tête paiement */}
-								<h2 className="font-display text-lg font-medium tracking-wide sm:text-xl">
-									Paiement sécurisé
-								</h2>
-
-								{/* Stripe embed */}
-								<div className="bg-card border-primary/10 overflow-hidden rounded-2xl border shadow-sm">
-									<EmbeddedCheckoutWrapper clientSecret={clientSecret} />
-								</div>
-
-								{/* Trust footer compact */}
-								<div className="border-primary/5 bg-primary/2 rounded-xl border p-4">
-									<div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
-										<span className="inline-flex items-center gap-1">
-											<Lock className="h-3 w-3" />
-											Paiement sécurisé
-										</span>
-										<span aria-hidden="true" className="text-border hidden sm:inline">
-											|
-										</span>
-										<span className="inline-flex items-center gap-1.5">
-											<VisaIcon className="h-4 w-auto" />
-											<MastercardIcon className="h-4 w-auto" />
-											<CBIcon className="h-4 w-auto" />
-										</span>
-										<span aria-hidden="true" className="text-border hidden sm:inline">
-											|
-										</span>
-										<span className="inline-flex items-center gap-1">
-											Propulsé par <StripeWordmark className="h-4 w-auto opacity-50" />
-										</span>
-									</div>
-								</div>
-
-								{/* Info commande */}
-								{orderInfo && (
-									<p className="text-muted-foreground text-center text-xs">
-										Commande n°{orderInfo.orderNumber}
-									</p>
-								)}
-							</m.div>
+							<PaymentStep
+								key="payment"
+								submittedAddress={submittedAddress}
+								onEdit={handleEdit}
+								clientSecret={clientSecret}
+								orderNumber={orderInfo?.orderNumber ?? null}
+								fadeSlide={fadeSlide}
+							/>
 						) : (
-							<m.form
+							<AddressStep
 								key="address"
-								{...fadeSlide}
+								form={form}
 								action={action}
-								className="space-y-6"
-								onSubmit={() => {
-									// Capturer les valeurs avant soumission pour le résumé
-									formValuesRef.current = {
-										email: form.state.values.email as unknown as string | undefined,
-										shipping: form.state.values.shipping as unknown as {
-											fullName: string;
-											addressLine1: string;
-											addressLine2?: string;
-											city: string;
-											postalCode: string;
-											country: string;
-											phoneNumber: string;
-										},
-									};
-									void form.handleSubmit();
-								}}
-							>
-								{/* Hidden inputs */}
-								<input
-									type="hidden"
-									name="cartItems"
-									value={JSON.stringify(
-										cart.items.map((item) => ({
-											skuId: item.sku.id,
-											quantity: item.quantity,
-											priceAtAdd: item.priceAtAdd,
-										})),
-									)}
-								/>
-
-								<form.Subscribe selector={(state) => [state.values]}>
-									{([values]) => {
-										const v = values as Record<string, unknown>;
-										const shippingValues = v.shipping as Record<string, string> | undefined;
-										return (
-											<>
-												<input
-													type="hidden"
-													name="shippingAddress"
-													value={JSON.stringify({
-														fullName: shippingValues?.fullName ?? "",
-														addressLine1: shippingValues?.addressLine1 ?? "",
-														addressLine2: shippingValues?.addressLine2 ?? "",
-														city: shippingValues?.city ?? "",
-														postalCode: shippingValues?.postalCode ?? "",
-														country: shippingValues?.country ?? "FR",
-														phoneNumber: shippingValues?.phoneNumber ?? "",
-													})}
-												/>
-												{isGuest && (
-													<input type="hidden" name="email" value={(v.email as string) || ""} />
-												)}
-												<input
-													type="hidden"
-													name="discountCode"
-													value={appliedDiscount?.code ?? ""}
-												/>
-											</>
-										);
-									}}
-								</form.Subscribe>
-
-								{/* All visible fields wrapped in fieldset for disabled state during submission */}
-								<fieldset disabled={isPending} className="space-y-5 disabled:opacity-60">
-									{/* Step indicator */}
-									<CheckoutStepIndicator currentStep={1} />
-
-									{/* Step 1 heading */}
-									<h2 className="font-display text-lg font-medium tracking-wide sm:text-xl">
-										Adresse de livraison
-									</h2>
-
-									{/* Légende champs obligatoires (Baymard: 94% des sites échouent à clarifier) */}
-									<p className="text-muted-foreground text-sm">
-										Les champs marqués d'un <span className="text-destructive">*</span> sont
-										obligatoires.
-									</p>
-
-									{/* Message d'erreur (ignore validation errors - handled by field validators) */}
-									{state?.status !== ActionStatus.SUCCESS &&
-										state?.status !== ActionStatus.VALIDATION_ERROR &&
-										state?.message && (
-											<Alert variant="destructive" role="alert" aria-live="assertive">
-												<AlertDescription>{state.message}</AlertDescription>
-											</Alert>
-										)}
-
-									{/* Error summary for screen readers */}
-									<form.Subscribe
-										selector={(s) => ({
-											submissionAttempts: s.submissionAttempts,
-											canSubmit: s.canSubmit,
-											fieldMeta: s.fieldMeta,
-										})}
-									>
-										{({ submissionAttempts, canSubmit, fieldMeta }) => {
-											if (submissionAttempts === 0 || canSubmit) return null;
-
-											const fieldErrors = Object.entries(
-												fieldMeta as Record<string, { errors: string[] }>,
-											)
-												.filter(([, meta]) => meta.errors.length > 0)
-												.map(([name, meta]) => ({
-													name,
-													label: CHECKOUT_FIELD_LABELS[name] ?? name,
-													message: meta.errors[0] as string,
-												}));
-
-											if (fieldErrors.length === 0) return null;
-
-											return (
-												<Alert variant="destructive" role="alert" aria-live="assertive">
-													<AlertCircle className="size-4" />
-													<AlertTitle>
-														{fieldErrors.length === 1
-															? "1 erreur trouvée"
-															: `${fieldErrors.length} erreurs trouvées`}
-													</AlertTitle>
-													<AlertDescription>
-														<ul className="mt-1 space-y-1">
-															{fieldErrors.map(({ name, label, message }) => (
-																<li key={name}>
-																	<a
-																		href={`#${name}`}
-																		className="underline hover:no-underline"
-																		onClick={(e) => {
-																			e.preventDefault();
-																			const el = document.getElementById(name);
-																			if (el) {
-																				el.scrollIntoView({ behavior: "smooth", block: "center" });
-																				el.focus({ preventScroll: true });
-																			}
-																		}}
-																	>
-																		{label}
-																	</a>{" "}
-																	: {message}
-																</li>
-															))}
-														</ul>
-													</AlertDescription>
-												</Alert>
-											);
-										}}
-									</form.Subscribe>
-
-									{/* Email (guests uniquement) */}
-									{isGuest && (
-										<>
-											<form.AppField
-												name="email"
-												validators={{
-													onChange: ({ value }: { value: string }) => {
-														if (!value) return "L'adresse email est requise";
-														if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-															return "Entrez une adresse email valide";
-														}
-													},
-												}}
-											>
-												{(field) => (
-													<div className="space-y-2">
-														<field.InputField
-															label="Adresse email"
-															type="email"
-															required
-															inputMode="email"
-															autoComplete="email"
-															enterKeyHint="next"
-															spellCheck={false}
-															autoCorrect="off"
-															// eslint-disable-next-line jsx-a11y/no-autofocus
-															autoFocus
-															placeholder="votre@email.com"
-														/>
-														<div className="text-muted-foreground flex items-start gap-1.5 text-sm">
-															<Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-															<span>
-																Vous avez déjà un compte ?{" "}
-																<Link
-																	href="/connexion?callbackURL=/paiement"
-																	className="text-foreground font-medium underline hover:no-underline"
-																	onClick={() => {
-																		if (typeof window !== "undefined") {
-																			const shipping = form.state.values.shipping as unknown as
-																				| Record<string, string>
-																				| undefined;
-																			localStorage.setItem(
-																				STORAGE_KEYS.CHECKOUT_FORM_DRAFT,
-																				JSON.stringify({
-																					version: DRAFT_VERSION,
-																					email:
-																						(form.state.values.email as unknown as string) || "",
-																					shipping: {
-																						fullName: shipping?.fullName ?? "",
-																						addressLine1: shipping?.addressLine1 ?? "",
-																						addressLine2: shipping?.addressLine2 ?? "",
-																						city: shipping?.city ?? "",
-																						postalCode: shipping?.postalCode ?? "",
-																						country: shipping?.country ?? "FR",
-																						phoneNumber: shipping?.phoneNumber ?? "",
-																					},
-																					timestamp: Date.now(),
-																				}),
-																			);
-																		}
-																	}}
-																>
-																	Connectez-vous
-																</Link>{" "}
-																pour accéder à vos adresses enregistrées
-															</span>
-														</div>
-													</div>
-												)}
-											</form.AppField>
-										</>
-									)}
-
-									{/* Email affiché pour utilisateurs connectés */}
-									{!isGuest && session.user.email && (
-										<div className="border-primary/10 bg-primary/3 flex items-center gap-2 rounded-xl border p-3.5 text-sm">
-											<Mail className="text-muted-foreground h-4 w-4" />
-											<span className="text-muted-foreground">Email :</span>
-											<span className="font-medium">{session.user.email}</span>
-										</div>
-									)}
-
-									{/* Address selector for logged-in users with multiple addresses */}
-									{!isGuest && addresses && addresses.length > 1 && (
-										<AddressSelector
-											addresses={addresses}
-											selectedAddressId={selectedAddressId}
-											onSelectAddress={handleSelectAddress}
-										/>
-									)}
-
-									{/* Nom complet (Baymard: champ unique réduit friction) */}
-									<form.AppField
-										name="shipping.fullName"
-										validators={{
-											onChange: ({ value }: { value: string }) => {
-												if (!value || value.trim().length < 2) {
-													return "Le nom complet doit contenir au moins 2 caractères";
-												}
-											},
-										}}
-									>
-										{(field) => (
-											<field.InputField
-												label="Nom complet"
-												required
-												autoComplete="name"
-												autoCapitalize="words"
-												autoCorrect="off"
-												enterKeyHint="next"
-												placeholder="Jean Dupont"
-											/>
-										)}
-									</form.AppField>
-
-									<form.AppField
-										name="shipping.addressLine1"
-										validators={{
-											onChange: ({ value }: { value: string }) => {
-												if (!value || value.trim().length < 5) {
-													return "L'adresse doit contenir au moins 5 caractères";
-												}
-											},
-										}}
-									>
-										{(field) => (
-											<field.InputField
-												label="Adresse"
-												required
-												autoComplete="address-line1"
-												enterKeyHint="next"
-												placeholder="12 rue des Fleurs"
-											/>
-										)}
-									</form.AppField>
-
-									{showAddressLine2 ? (
-										<form.AppField name="shipping.addressLine2">
-											{(field) => (
-												<field.InputField
-													label="Complément d'adresse"
-													optional
-													placeholder="Appartement, bâtiment, etc."
-													autoComplete="address-line2"
-													enterKeyHint="next"
-												/>
-											)}
-										</form.AppField>
-									) : (
-										<button
-											type="button"
-											aria-expanded={showAddressLine2}
-											className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mx-3 min-h-11 rounded-md px-3 text-left text-sm underline transition-colors hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-											onClick={() => setShowAddressLine2(true)}
-										>
-											+ Ajouter un complément d'adresse
-										</button>
-									)}
-
-									<div className="grid grid-cols-2 gap-3 sm:gap-6">
-										<form.AppField
-											name="shipping.postalCode"
-											validators={{
-												onChange: ({ value }: { value: string }) => {
-													if (!value) return "Le code postal est requis";
-													if (value.length < 3 || value.length > 10) {
-														return "Code postal invalide";
-													}
-												},
-											}}
-										>
-											{(field) => (
-												<field.InputField
-													label="Code postal"
-													required
-													inputMode="numeric"
-													pattern="[0-9]*"
-													autoComplete="postal-code"
-													autoCorrect="off"
-													enterKeyHint="next"
-													placeholder="75001"
-												/>
-											)}
-										</form.AppField>
-
-										<form.AppField
-											name="shipping.city"
-											validators={{
-												onChange: ({ value }: { value: string }) => {
-													if (!value || value.trim().length < 2) {
-														return "La ville est requise";
-													}
-												},
-											}}
-										>
-											{(field) => (
-												<field.InputField
-													label="Ville"
-													required
-													autoComplete="address-level2"
-													enterKeyHint="next"
-													placeholder="Paris"
-												/>
-											)}
-										</form.AppField>
-									</div>
-
-									{showCountrySelect ? (
-										<form.AppField
-											name="shipping.country"
-											validators={{
-												onChange: ({ value }: { value: string }) => {
-													if (!value) return "Le pays est requis";
-												},
-											}}
-										>
-											{(field) => (
-												<field.SelectField
-													label="Pays"
-													required
-													placeholder="Sélectionner un pays"
-													options={countryOptions}
-													autoComplete="country-name"
-												/>
-											)}
-										</form.AppField>
-									) : (
-										<div className="flex min-h-11 items-center justify-between">
-											<span className="text-sm">
-												Pays : <strong>France</strong>
-												<span className="text-muted-foreground ml-1">
-													(Livraison UE disponible)
-												</span>
-											</span>
-											<button
-												type="button"
-												aria-expanded={showCountrySelect}
-												className="text-muted-foreground hover:text-foreground focus-visible:ring-ring min-h-11 rounded-md px-3 text-sm underline transition-colors hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-												onClick={() => setShowCountrySelect(true)}
-											>
-												Modifier
-											</button>
-										</div>
-									)}
-
-									<form.AppField name="shipping.phoneNumber">
-										{(field) => (
-											<div className="space-y-2">
-												<field.PhoneField
-													label="Téléphone"
-													required
-													defaultCountry={country}
-													placeholder="06 12 34 56 78"
-													enterKeyHint="done"
-												/>
-												<p className="text-muted-foreground text-sm">
-													Utilisé uniquement par le transporteur en cas de problème de livraison.
-												</p>
-											</div>
-										)}
-									</form.AppField>
-
-									{/* Code promo */}
-									<DiscountCodeInput
-										subtotal={subtotal}
-										appliedDiscount={appliedDiscount}
-										onDiscountApplied={setAppliedDiscount}
-									/>
-
-									{/* CGV */}
-									<form.AppField
-										name="termsAccepted"
-										validators={{
-											onChange: ({ value }: { value: boolean }) => {
-												if (!value) {
-													return "Vous devez accepter les conditions générales de vente";
-												}
-											},
-										}}
-									>
-										{(field) => (
-											<div className="space-y-2">
-												<field.CheckboxField
-													label="J'accepte les conditions générales de vente"
-													required
-												/>
-												<div className="text-muted-foreground ml-8 text-sm">
-													Consultez nos{" "}
-													<Link
-														href="/cgv"
-														className="text-foreground underline hover:no-underline"
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														conditions générales de vente
-													</Link>{" "}
-													et notre{" "}
-													<Link
-														href="/confidentialite"
-														className="text-foreground underline hover:no-underline"
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														politique de confidentialité
-													</Link>
-												</div>
-											</div>
-										)}
-									</form.AppField>
-								</fieldset>
-
-								{/* Baymard: Cadenas sur CTA renforce la sécurité perçue pour achats premium */}
-								<form.Subscribe selector={(s) => [s.canSubmit]}>
-									{([canSubmit]) => (
-										<>
-											<Button
-												type="submit"
-												size="lg"
-												className="w-full text-base shadow-md transition-shadow hover:shadow-lg"
-												disabled={!canSubmit || isPending || shippingUnavailable}
-												aria-busy={isPending}
-											>
-												{isPending ? (
-													<>
-														<Loader2 className="size-4 animate-spin" aria-hidden="true" />
-														<span>Validation...</span>
-													</>
-												) : (
-													<>
-														<Lock className="size-4" aria-hidden="true" />
-														<span>Paiement sécurisé · {formatEuro(total)}</span>
-													</>
-												)}
-											</Button>
-											{shippingUnavailable && (
-												<p className="text-destructive text-center text-sm" role="alert">
-													Nous ne livrons pas encore dans cette zone. Contactez-nous pour trouver
-													une solution.
-												</p>
-											)}
-										</>
-									)}
-								</form.Subscribe>
-							</m.form>
+								isPending={isPending}
+								state={state}
+								isGuest={isGuest}
+								session={session}
+								addresses={addresses}
+								defaultAddressId={defaultAddress?.id ?? null}
+								appliedDiscount={appliedDiscount}
+								onDiscountApplied={setAppliedDiscount}
+								subtotal={subtotal}
+								shippingUnavailable={shippingUnavailable}
+								total={total}
+								country={country}
+								cart={cart}
+								formValuesRef={formValuesRef}
+								fadeSlide={fadeSlide}
+							/>
 						)}
 					</AnimatePresence>
 				</ErrorBoundary>
 			</div>
 
-			{/* Récapitulatif - mobile-first order */}
 			<div className="order-first lg:order-none">
 				<CheckoutSummary
 					cart={cart}

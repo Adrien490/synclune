@@ -100,8 +100,6 @@ export interface ParticleSetProps {
 	scrollYProgress?: MotionValue<number>;
 	/** Enable magnetic repulsion from cursor */
 	interactive?: boolean;
-	/** Container dimensions for repulsion calculations (width, height in px) */
-	containerSize?: { width: number; height: number };
 	/** Normalized cursor X position (0-1) for repulsion */
 	cursorX?: MotionValue<number>;
 	/** Normalized cursor Y position (0-1) for repulsion */

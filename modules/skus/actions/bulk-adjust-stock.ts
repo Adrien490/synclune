@@ -65,16 +65,23 @@ export async function bulkAdjustStock(
 			};
 		}
 
-		// Appliquer les modifications avec atomic conditional update
+		// Appliquer les modifications dans une transaction pour garantir l'atomicité
+		// (all-or-nothing: si certains IDs n'existent pas, toute l'opération est annulée)
 		if (mode === "absolute") {
-			await prisma.productSku.updateMany({
-				where: { id: { in: ids } },
-				data: { inventory: value },
+			await prisma.$transaction(async (tx) => {
+				const result = await tx.productSku.updateMany({
+					where: { id: { in: ids } },
+					data: { inventory: value },
+				});
+				if (result.count !== ids.length) {
+					throw new BusinessError(
+						`${ids.length - result.count} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s). Opération annulée.`,
+					);
+				}
 			});
 		} else if (value < 0) {
 			// Atomic conditional update to prevent TOCTOU race condition:
 			// only decrements rows where stock won't go negative.
-			// Transaction auto-rollbacks on throw.
 			await prisma.$transaction(async (tx) => {
 				const count = await tx.$executeRaw`
 					UPDATE "ProductSku"
@@ -100,11 +107,18 @@ export async function bulkAdjustStock(
 			});
 		} else {
 			// Positive relative adjustment - no risk of negative stock
-			await prisma.$executeRaw`
-				UPDATE "ProductSku"
-				SET "inventory" = "inventory" + ${value}, "updatedAt" = NOW()
-				WHERE "id" = ANY(${ids}::text[])
-			`;
+			await prisma.$transaction(async (tx) => {
+				const count = await tx.$executeRaw`
+					UPDATE "ProductSku"
+					SET "inventory" = "inventory" + ${value}, "updatedAt" = NOW()
+					WHERE "id" = ANY(${ids}::text[])
+				`;
+				if (Number(count) !== ids.length) {
+					throw new BusinessError(
+						`${ids.length - Number(count)} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s). Opération annulée.`,
+					);
+				}
+			});
 		}
 
 		// Recuperer les infos des SKUs pour invalidation du cache
@@ -122,14 +136,6 @@ export async function bulkAdjustStock(
 			return {
 				status: ActionStatus.ERROR,
 				message: "Aucune variante trouvée",
-			};
-		}
-
-		if (skusData.length !== ids.length) {
-			const missing = ids.length - skusData.length;
-			return {
-				status: ActionStatus.ERROR,
-				message: `${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s). Le stock a été ajusté uniquement pour les variantes existantes.`,
 			};
 		}
 

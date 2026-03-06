@@ -12,10 +12,10 @@ const { mockPrisma, mockTx } = vi.hoisted(() => {
 			update: vi.fn(),
 		},
 		productSku: {
-			findMany: vi.fn(),
 			update: vi.fn(),
 			updateMany: vi.fn(),
 		},
+		$queryRaw: vi.fn(),
 		cartItem: {
 			deleteMany: vi.fn(),
 		},
@@ -150,20 +150,22 @@ describe("processOrderTransaction — multi-item transactions", () => {
 		mockTx.productSku.update.mockResolvedValue({});
 		mockTx.productSku.updateMany.mockResolvedValue({ count: 0 });
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 			{
 				id: "sku-2",
 				inventory: 5,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 
@@ -190,20 +192,22 @@ describe("processOrderTransaction — multi-item transactions", () => {
 		mockTx.order.findUnique.mockResolvedValue(order);
 
 		// Item 1 has stock, item 2 does NOT
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 			{
 				id: "sku-2",
 				inventory: 0,
 				isActive: false,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 
@@ -222,20 +226,22 @@ describe("processOrderTransaction — multi-item transactions", () => {
 		const order = makeMultiItemOrder();
 		mockTx.order.findUnique.mockResolvedValue(order);
 
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 			{
 				id: "sku-2",
 				inventory: 5,
 				isActive: true,
 				deletedAt: new Date(),
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 
@@ -251,20 +257,22 @@ describe("processOrderTransaction — multi-item transactions", () => {
 		const order = makeMultiItemOrder();
 		mockTx.order.findUnique.mockResolvedValue(order);
 
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 			{
 				id: "sku-2",
 				inventory: 5,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "DRAFT", deletedAt: null },
+				productStatus: "DRAFT",
+				productDeletedAt: null,
 			},
 		]);
 
@@ -282,20 +290,22 @@ describe("processOrderTransaction — multi-item transactions", () => {
 		mockTx.productSku.update.mockResolvedValue({});
 		mockTx.productSku.updateMany.mockResolvedValue({ count: 0 });
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 			{
 				id: "sku-2",
 				inventory: 5,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 
@@ -314,7 +324,7 @@ describe("processOrderTransaction — multi-item transactions", () => {
 		const result = await processOrderTransaction("order-multi", session, 600, "shr_fr");
 
 		// No stock changes, no order update
-		expect(mockTx.productSku.findMany).not.toHaveBeenCalled();
+		expect(mockTx.$queryRaw).not.toHaveBeenCalled();
 		expect(mockTx.productSku.update).not.toHaveBeenCalled();
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 		expect(result.id).toBe("order-multi");
@@ -334,20 +344,22 @@ describe("processOrderTransaction — multi-item transactions", () => {
 					mockTx.productSku.update.mockResolvedValue({});
 					mockTx.productSku.updateMany.mockResolvedValue({ count: 0 });
 					mockTx.cartItem.deleteMany.mockResolvedValue({});
-					mockTx.productSku.findMany.mockResolvedValue([
+					mockTx.$queryRaw.mockResolvedValue([
 						{
 							id: "sku-1",
 							inventory: 10,
 							isActive: true,
 							deletedAt: null,
-							product: { status: "PUBLIC", deletedAt: null },
+							productStatus: "PUBLIC",
+							productDeletedAt: null,
 						},
 						{
 							id: "sku-2",
 							inventory: 5,
 							isActive: true,
 							deletedAt: null,
-							product: { status: "PUBLIC", deletedAt: null },
+							productStatus: "PUBLIC",
+							productDeletedAt: null,
 						},
 					]);
 				} else {
@@ -376,20 +388,22 @@ describe("processOrderTransaction — multi-item transactions", () => {
 		mockTx.productSku.update.mockResolvedValue({});
 		mockTx.productSku.updateMany.mockResolvedValue({ count: 2 });
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 			{
 				id: "sku-2",
 				inventory: 5,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 

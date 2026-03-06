@@ -178,7 +178,8 @@ describe("requestReturn", () => {
 	});
 
 	it("should return not found when order belongs to different user (IDOR)", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(createDeliveredOrder({ userId: "other-user" }));
+		// $queryRaw check includes userId in WHERE clause — returns [] for a different user's order
+		mockPrisma.$queryRaw.mockResolvedValue([]);
 		const result = await requestReturn(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 	});

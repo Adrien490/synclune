@@ -28,6 +28,9 @@ const {
 			findUnique: vi.fn(),
 			update: vi.fn(),
 		},
+		orderNote: {
+			create: vi.fn(),
+		},
 	},
 	mockUpdateTag: vi.fn(),
 	mockSanitizeText: vi.fn(),

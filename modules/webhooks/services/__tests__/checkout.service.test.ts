@@ -23,10 +23,10 @@ const {
 			update: vi.fn(),
 		},
 		productSku: {
-			findMany: vi.fn(),
 			update: vi.fn(),
 			updateMany: vi.fn(),
 		},
+		$queryRaw: vi.fn(),
 		cartItem: {
 			deleteMany: vi.fn(),
 		},
@@ -324,13 +324,14 @@ describe("processOrderTransaction", () => {
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
 
 		// Stock validation now happens inside the transaction via tx.productSku.findMany
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 
@@ -338,15 +339,7 @@ describe("processOrderTransaction", () => {
 		const result = await processOrderTransaction("order-1", session, 600, "shr_france_123");
 
 		// Stock validation query inside transaction
-		expect(mockTx.productSku.findMany).toHaveBeenCalledWith({
-			where: { id: { in: ["sku-1"] } },
-			select: expect.objectContaining({
-				id: true,
-				inventory: true,
-				isActive: true,
-				deletedAt: true,
-			}),
-		});
+		expect(mockTx.$queryRaw).toHaveBeenCalled();
 
 		// Stock decremented for each item
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
@@ -385,13 +378,14 @@ describe("processOrderTransaction", () => {
 		mockTx.productSku.updateMany.mockResolvedValue({ count: 0 });
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
 
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 
@@ -419,7 +413,7 @@ describe("processOrderTransaction", () => {
 		const result = await processOrderTransaction("order-1", session, 600, "shr_france_123");
 
 		// SKU validation, stock decrement and order update must NOT be called
-		expect(mockTx.productSku.findMany).not.toHaveBeenCalled();
+		expect(mockTx.$queryRaw).not.toHaveBeenCalled();
 		expect(mockTx.productSku.update).not.toHaveBeenCalled();
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 		expect(mockTx.cartItem.deleteMany).not.toHaveBeenCalled();
@@ -442,7 +436,7 @@ describe("processOrderTransaction", () => {
 		mockTx.order.findUnique.mockResolvedValue(order);
 
 		// SKU not found in validation query
-		mockTx.productSku.findMany.mockResolvedValue([]);
+		mockTx.$queryRaw.mockResolvedValue([]);
 
 		const session = makeStripeSession();
 		await expect(
@@ -454,13 +448,14 @@ describe("processOrderTransaction", () => {
 		const order = makeOrderRow();
 		mockTx.order.findUnique.mockResolvedValue(order);
 
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 0,
 				isActive: false,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 
@@ -478,13 +473,14 @@ describe("processOrderTransaction", () => {
 		mockTx.productSku.updateMany.mockResolvedValue({ count: 1 });
 		mockTx.cartItem.deleteMany.mockResolvedValue({});
 
-		mockTx.productSku.findMany.mockResolvedValue([
+		mockTx.$queryRaw.mockResolvedValue([
 			{
 				id: "sku-1",
 				inventory: 10,
 				isActive: true,
 				deletedAt: null,
-				product: { status: "PUBLIC", deletedAt: null },
+				productStatus: "PUBLIC",
+				productDeletedAt: null,
 			},
 		]);
 

@@ -87,10 +87,11 @@ describe("reconcilePendingRefunds", () => {
 		expect(call.where.OR[0].processedAt.lt.getTime()).toBe(minAge.getTime());
 		expect(call.take).toBe(25);
 
-		// Phase 2: stale PENDING/APPROVED refunds without stripeRefundId
+		// Phase 2: stale PENDING/APPROVED refunds without stripeRefundId (via OR conditions)
 		const call2 = mockPrisma.refund.findMany.mock.calls[1]![0];
-		expect(call2.where.status).toEqual({ in: ["PENDING", "APPROVED"] });
 		expect(call2.where.stripeRefundId).toBeNull();
+		expect(call2.where.OR).toBeDefined();
+		expect(call2.where.OR).toHaveLength(2);
 	});
 
 	it("should update refund to COMPLETED when Stripe shows succeeded", async () => {
@@ -264,7 +265,7 @@ describe("reconcilePendingRefunds", () => {
 		expect(mockPrisma.orderNote.findFirst).toHaveBeenCalledWith({
 			where: {
 				orderId: "order-1",
-				content: { startsWith: "[REMBOURSEMENT ORPHELIN] Le remboursement stale-1" },
+				content: { startsWith: "[REMBOURSEMENT BLOQUÉ] Le remboursement stale-1" },
 			},
 			select: { id: true },
 		});
@@ -294,7 +295,7 @@ describe("reconcilePendingRefunds", () => {
 		expect(mockPrisma.orderNote.findFirst).toHaveBeenCalledWith({
 			where: {
 				orderId: "order-1",
-				content: { startsWith: "[REMBOURSEMENT ORPHELIN] Le remboursement stale-1" },
+				content: { startsWith: "[REMBOURSEMENT BLOQUÉ] Le remboursement stale-1" },
 			},
 			select: { id: true },
 		});
@@ -302,7 +303,7 @@ describe("reconcilePendingRefunds", () => {
 			expect.objectContaining({
 				data: expect.objectContaining({
 					orderId: "order-1",
-					content: expect.stringContaining("[REMBOURSEMENT ORPHELIN] Le remboursement stale-1"),
+					content: expect.stringContaining("[REMBOURSEMENT BLOQUÉ] Le remboursement stale-1"),
 					authorId: "system",
 				}),
 			}),

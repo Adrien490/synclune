@@ -361,6 +361,9 @@ function setupDefaults() {
 
 	// Admin alert (fire-and-forget)
 	mockSendAdminCheckoutFailedAlert.mockResolvedValue({ success: true });
+
+	// Required by createStripeCheckoutSession for return URL construction
+	vi.stubEnv("BETTER_AUTH_URL", "https://test.synclune.fr");
 }
 
 // ============================================================================
@@ -834,6 +837,7 @@ describe("createCheckoutSession", () => {
 					currency: "eur",
 					duration: "once",
 				}),
+				expect.objectContaining({ idempotencyKey: expect.stringContaining("coupon-") }),
 			);
 			expect(mockStripe.checkout.sessions.create).toHaveBeenCalledWith(
 				expect.objectContaining({

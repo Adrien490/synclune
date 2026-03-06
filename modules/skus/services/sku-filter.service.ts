@@ -39,8 +39,10 @@ export function matchColor(
 	}
 
 	// Priorité 2: Hex code (legacy pour rétrocompatibilité)
+	// Normaliser avant comparaison pour éviter les mismatches "#FF00FF" vs "ff00ff"
 	if (colorHex) {
-		return sku.color?.hex === colorHex;
+		const normalize = (hex: string) => hex.toLowerCase().replace(/^#/, "");
+		return sku.color?.hex ? normalize(sku.color.hex) === normalize(colorHex) : false;
 	}
 
 	// Priorité 3: ID (legacy)

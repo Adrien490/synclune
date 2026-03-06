@@ -18,6 +18,7 @@ import {
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
+import { CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 
 /**
  * Server Action pour supprimer une variante de produit
@@ -198,6 +199,9 @@ export async function deleteProductSku(
 			validatedSkuId, // Invalide aussi le cache stock temps réel
 		);
 		tags.forEach((tag) => updateTag(tag));
+
+		// Invalider le compteur FOMO "X paniers contenant ce produit"
+		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(existingSku.productId));
 
 		// 13. Audit log
 		void logAudit({

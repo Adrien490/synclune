@@ -12,10 +12,13 @@ import {
 	success,
 	error,
 	safeFormGet,
+	BusinessError,
 } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
+
+type AffectedRow = { inventory: number };
 
 /**
  * Server Action ADMIN pour ajuster le stock d'un SKU
@@ -52,46 +55,57 @@ export async function adjustSkuStock(
 
 		const { skuId } = validation.data;
 
-		// 4. Atomic conditional update to prevent TOCTOU race condition
-		// A single UPDATE with a WHERE clause ensures stock never goes negative,
-		// even under concurrent requests.
+		// 4. Atomic conditional update using RETURNING to capture the new inventory value
+		// in the same statement — eliminates the race condition between the update and
+		// a subsequent read used for the error/success message.
+		let newInventory: number;
+
 		if (adjustment < 0) {
-			const result = await prisma.$executeRaw`
-				UPDATE "ProductSku"
-				SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
-				WHERE "id" = ${skuId}
-				AND "inventory" + ${adjustment} >= 0
-			`;
+			newInventory = await prisma.$transaction(async (tx) => {
+				const updated = await tx.$queryRaw<AffectedRow[]>`
+					UPDATE "ProductSku"
+					SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
+					WHERE "id" = ${skuId}
+					AND "inventory" + ${adjustment} >= 0
+					RETURNING "inventory"
+				`;
 
-			if (result === 0) {
-				const sku = await prisma.productSku.findUnique({
-					where: { id: skuId },
-					select: { inventory: true },
-				});
-				if (!sku) return error("Variante non trouvée");
-				return error(
-					`Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demandé: ${adjustment}`,
-				);
-			}
+				if (updated.length === 0) {
+					// Distinguish "not found" from "insufficient stock" inside the transaction
+					// so the error message reflects the stock at the moment the UPDATE ran
+					const existing = await tx.$queryRaw<AffectedRow[]>`
+						SELECT "inventory" FROM "ProductSku" WHERE "id" = ${skuId}
+					`;
+					if (existing.length === 0) throw new BusinessError("Variante non trouvée");
+					throw new BusinessError(
+						`Stock insuffisant. Stock actuel: ${existing[0]!.inventory}, ajustement demandé: ${adjustment}`,
+					);
+				}
+
+				return updated[0]!.inventory;
+			});
 		} else {
-			const result = await prisma.$executeRaw`
+			const updated = await prisma.$queryRaw<AffectedRow[]>`
 				UPDATE "ProductSku"
 				SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
 				WHERE "id" = ${skuId}
+				RETURNING "inventory"
 			`;
 
-			if (result === 0) {
+			if (updated.length === 0) {
 				return error("Variante non trouvée");
 			}
+
+			newInventory = updated[0]!.inventory;
 		}
 
-		// 5. Fetch updated SKU info for cache invalidation and response
+		// 5. Fetch SKU metadata for cache invalidation and response
+		// inventory is sourced from RETURNING above for accuracy
 		const sku = await prisma.productSku.findUnique({
 			where: { id: skuId },
 			select: {
 				id: true,
 				sku: true,
-				inventory: true,
 				productId: true,
 				product: { select: { slug: true } },
 			},
@@ -103,7 +117,7 @@ export async function adjustSkuStock(
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
 		tags.forEach((tag) => updateTag(tag));
 
-		const previousInventory = sku.inventory - adjustment;
+		const previousInventory = newInventory - adjustment;
 
 		// 7. Audit log
 		void logAudit({
@@ -112,16 +126,16 @@ export async function adjustSkuStock(
 			action: "sku.adjustStock",
 			targetType: "sku",
 			targetId: skuId,
-			metadata: { sku: sku.sku, adjustment, previousInventory, newInventory: sku.inventory },
+			metadata: { sku: sku.sku, adjustment, previousInventory, newInventory },
 		});
 
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
 		return success(
-			`Stock de ${sku.sku} ajuste (${adjustmentText}). Nouveau stock: ${sku.inventory}`,
+			`Stock de ${sku.sku} ajuste (${adjustmentText}). Nouveau stock: ${newInventory}`,
 			{
 				skuId: sku.id,
-				previousInventory: sku.inventory - adjustment,
-				newInventory: sku.inventory,
+				previousInventory,
+				newInventory,
 				adjustment,
 			},
 		);

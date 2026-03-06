@@ -20,6 +20,7 @@ const {
 		refund: {
 			findMany: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 		$transaction: vi.fn(),
 	},
@@ -187,6 +188,7 @@ describe("bulkApproveRefunds", () => {
 		const refunds = [createMockRefund({ id: VALID_CUID }), createMockRefund({ id: VALID_CUID_2 })];
 		mockPrisma.refund.findMany.mockResolvedValue(refunds);
 		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 2 });
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
@@ -259,40 +261,34 @@ describe("bulkApproveRefunds", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("éligible");
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	// --------------------------------------------------------------------------
 	// Approval transaction
 	// --------------------------------------------------------------------------
 
-	it("should approve refunds within a transaction and return SUCCESS", async () => {
+	it("should call updateMany for stock approval and return SUCCESS", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: [VALID_CUID] } });
 		mockPrisma.refund.findMany.mockResolvedValue([createMockRefund({ id: VALID_CUID })]);
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
-		);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		const result = await bulkApproveRefunds(undefined, makeFormData([VALID_CUID]));
 
-		expect(mockPrisma.$transaction).toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
-	it("should set status to APPROVED for each refund in transaction", async () => {
-		const mockTxRefund = { update: vi.fn().mockResolvedValue({}) };
-		const mockTx = { refund: mockTxRefund };
+	it("should call updateMany with PENDING status filter and APPROVED data", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: [VALID_CUID] } });
 		mockPrisma.refund.findMany.mockResolvedValue([createMockRefund({ id: VALID_CUID })]);
-		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
-			fn(mockTx),
-		);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await bulkApproveRefunds(undefined, makeFormData([VALID_CUID]));
 
-		expect(mockTxRefund.update).toHaveBeenCalledWith(
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: expect.objectContaining({ id: VALID_CUID, status: "PENDING" }),
+				where: expect.objectContaining({ status: "PENDING" }),
 				data: { status: "APPROVED" },
 			}),
 		);
@@ -325,6 +321,7 @@ describe("bulkApproveRefunds", () => {
 	it("should invalidate orders list, admin badges and dashboard tags", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: VALID_IDS } });
 		mockPrisma.refund.findMany.mockResolvedValue([createMockRefund()]);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await bulkApproveRefunds(undefined, makeFormData());
 
@@ -413,6 +410,7 @@ describe("bulkApproveRefunds", () => {
 				},
 			}),
 		]);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await bulkApproveRefunds(undefined, makeFormData([VALID_CUID]));
 
@@ -434,6 +432,7 @@ describe("bulkApproveRefunds", () => {
 				},
 			}),
 		]);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await bulkApproveRefunds(undefined, makeFormData([VALID_CUID]));
 
@@ -455,6 +454,7 @@ describe("bulkApproveRefunds", () => {
 				},
 			}),
 		]);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await bulkApproveRefunds(undefined, makeFormData([VALID_CUID]));
 
@@ -486,6 +486,7 @@ describe("bulkApproveRefunds", () => {
 			createMockRefund({ id: VALID_CUID, amount: 2500 }),
 			createMockRefund({ id: VALID_CUID_2, amount: 5000 }),
 		]);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 2 });
 
 		const result = await bulkApproveRefunds(undefined, makeFormData());
 
@@ -500,6 +501,7 @@ describe("bulkApproveRefunds", () => {
 		mockPrisma.refund.findMany.mockResolvedValue([
 			createMockRefund({ id: VALID_CUID, amount: 2500 }),
 		]);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		const result = await bulkApproveRefunds(undefined, makeFormData());
 
@@ -509,6 +511,7 @@ describe("bulkApproveRefunds", () => {
 	it("should use singular form for one refund approved", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: [VALID_CUID] } });
 		mockPrisma.refund.findMany.mockResolvedValue([createMockRefund({ amount: 1000 })]);
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		const result = await bulkApproveRefunds(undefined, makeFormData([VALID_CUID]));
 

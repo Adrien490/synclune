@@ -168,6 +168,9 @@ describe("addToWishlist", () => {
 	it("should return error when product not found", async () => {
 		setupAuthenticatedUser();
 		mockPrisma.product.findUnique.mockResolvedValue(null);
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 
 		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
@@ -395,7 +398,7 @@ describe("removeFromWishlist", () => {
 			createFormData({ productId: VALID_PRODUCT_ID }),
 		);
 
-		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("n'est pas dans");
 	});
 

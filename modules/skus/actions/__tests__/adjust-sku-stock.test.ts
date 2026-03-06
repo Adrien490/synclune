@@ -19,7 +19,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		productSku: { findUnique: vi.fn() },
-		$executeRaw: vi.fn(),
+		$queryRaw: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -78,7 +78,7 @@ describe("adjustSkuStock", () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, adjustment: 5 } });
 		mockGetInventoryInvalidationTags.mockReturnValue(["sku-stock"]);
 		// Use mockImplementation for tagged template literal compatibility
-		mockPrisma.$executeRaw.mockImplementation(() => Promise.resolve(1));
+		mockPrisma.$queryRaw.mockImplementation(() => Promise.resolve([{ inventory: 15 }]));
 		mockPrisma.productSku.findUnique.mockResolvedValue({
 			id: VALID_CUID,
 			sku: "BRC-01",
@@ -126,22 +126,25 @@ describe("adjustSkuStock", () => {
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});
 
-	it("should call $executeRaw for stock adjustment", async () => {
+	it("should call $queryRaw for stock adjustment", async () => {
 		const result = await adjustSkuStock(undefined, validFormData);
-		expect(mockPrisma.$executeRaw).toHaveBeenCalled();
+		expect(mockPrisma.$queryRaw).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
 	it("should return error when SKU not found after update", async () => {
-		mockPrisma.$executeRaw.mockImplementation(() => Promise.resolve(0));
+		mockPrisma.$queryRaw.mockImplementation(() => Promise.resolve([]));
 		const result = await adjustSkuStock(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
 	it("should prevent negative stock on decrement", async () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, adjustment: -20 } });
-		mockPrisma.$executeRaw.mockImplementation(() => Promise.resolve(0));
-		mockPrisma.productSku.findUnique.mockResolvedValueOnce({ inventory: 5 });
+		// First $queryRaw: conditional update returns [] (insufficient stock)
+		// Second $queryRaw: SELECT to get current stock
+		mockPrisma.$queryRaw
+			.mockImplementationOnce(() => Promise.resolve([]))
+			.mockImplementationOnce(() => Promise.resolve([{ inventory: 5 }]));
 		const fd = createMockFormData({ skuId: VALID_CUID, adjustment: "-20" });
 
 		const result = await adjustSkuStock(undefined, fd);
@@ -156,7 +159,7 @@ describe("adjustSkuStock", () => {
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.$executeRaw.mockImplementation(() => Promise.reject(new Error("DB crash")));
+		mockPrisma.$queryRaw.mockImplementation(() => Promise.reject(new Error("DB crash")));
 		const result = await adjustSkuStock(undefined, validFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);

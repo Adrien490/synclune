@@ -181,10 +181,7 @@ describe("getRefunds", () => {
 	it("returns empty result when user is not admin", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 
-		const result = await getRefunds(makeValidParams() as never);
-
-		expect(result.refunds).toEqual([]);
-		expect(result.pagination).toEqual(emptyPagination);
+		await expect(getRefunds(makeValidParams() as never)).rejects.toThrow("UNAUTHORIZED");
 		expect(mockPrisma.refund.findMany).not.toHaveBeenCalled();
 	});
 

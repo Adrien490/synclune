@@ -11,6 +11,7 @@ export type GetProductSkusReturn = {
 		}>
 	>;
 	pagination: PaginationInfo;
+	error?: string;
 };
 
 export type GetProductSkusParams = z.infer<typeof getProductSkusSchema>;

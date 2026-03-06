@@ -103,7 +103,7 @@ export function generateParticles(
 }
 
 /** Retourne les styles CSS pour une forme de particule */
-export function getShapeStyles(shape: ParticleShape, size: number, color: string): CSSProperties {
+export function getShapeStyles(shape: ParticleShape, color: string): CSSProperties {
 	const config = SHAPE_CONFIGS[shape];
 
 	if (config.type === "css") {

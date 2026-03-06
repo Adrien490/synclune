@@ -80,7 +80,7 @@ export async function fetchProductSkus(
 			pagination,
 		};
 	} catch (error) {
-		const baseReturn = {
+		return {
 			productSkus: [],
 			pagination: {
 				nextCursor: null,
@@ -95,7 +95,5 @@ export async function fetchProductSkus(
 						: "Unknown error"
 					: "Failed to fetch product SKUs",
 		};
-
-		return baseReturn as GetProductSkusReturn & { error: string };
 	}
 }

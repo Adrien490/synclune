@@ -43,7 +43,6 @@ function ParticleBackgroundInner({
 	const isTouchDevice = useIsTouchDevice();
 
 	const [tabVisible, setTabVisible] = useState(true);
-	const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
 	const highContrast = useMediaQuery("(prefers-contrast: more)");
 
@@ -84,12 +83,8 @@ function ParticleBackgroundInner({
 		let rectStale = false;
 
 		// ResizeObserver replaces window.resize — catches container resizes including parent layout changes
-		const ro = new ResizeObserver((entries) => {
+		const ro = new ResizeObserver(() => {
 			rectStale = true;
-			if (interactive && entries[0]) {
-				const { width, height } = entries[0].contentRect;
-				setContainerSize({ width, height });
-			}
 		});
 		ro.observe(el);
 
@@ -156,12 +151,12 @@ function ParticleBackgroundInner({
 			el.removeEventListener("mouseleave", onMouseLeave);
 			window.removeEventListener("scroll", markRectStale);
 		};
-	}, [mouseX, mouseY, cursorX, cursorY, disableOnTouch, isTouchDevice, interactive]);
+	}, [mouseX, mouseY, cursorX, cursorY, disableOnTouch, isTouchDevice]);
 
-	// Normalise shape en tableau
+	// Normalize shape to array
 	const shapes = Array.isArray(shape) ? shape : [shape];
 
-	// Blur reduit de 30% sur mobile
+	// Reduce blur by 30% on mobile
 	const mobileBlur: [number, number] = Array.isArray(blur)
 		? [blur[0] * 0.7, blur[1] * 0.7]
 		: [blur * 0.7, blur * 0.7];
@@ -171,7 +166,7 @@ function ParticleBackgroundInner({
 	const desktopDuration = 20 / safeSpeed;
 	const mobileDuration = 12 / safeSpeed;
 
-	// Desktop: duree 20s, Mobile: duree 12s (economie batterie)
+	// Desktop: 20s duration, Mobile: 12s (battery saving)
 	const desktopParticles = generateParticles(
 		safeCount,
 		size,
@@ -203,7 +198,7 @@ function ParticleBackgroundInner({
 		highContrast,
 		...(scrollFade ? { scrollOpacity } : {}),
 		...(scrollParallax ? { scrollYProgress } : {}),
-		...(interactiveDesktop ? { interactive: true, containerSize, cursorX, cursorY } : {}),
+		...(interactiveDesktop ? { interactive: true, cursorX, cursorY } : {}),
 	};
 
 	return (

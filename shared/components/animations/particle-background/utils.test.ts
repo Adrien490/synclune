@@ -192,13 +192,13 @@ describe("generateParticles", () => {
 
 describe("getShapeStyles", () => {
 	it("returns borderRadius for circle shape", () => {
-		const styles = getShapeStyles("circle", 32, "red");
+		const styles = getShapeStyles("circle", "red");
 		expect(styles).toHaveProperty("backgroundColor", "red");
 		expect(styles).toHaveProperty("borderRadius", "50%");
 	});
 
 	it("returns special gradient background for pearl shape", () => {
-		const styles = getShapeStyles("pearl", 32, "pink");
+		const styles = getShapeStyles("pearl", "pink");
 		expect(styles).toHaveProperty("background");
 		expect(styles).not.toHaveProperty("backgroundColor");
 		expect((styles as { background: string }).background).toContain("radial-gradient");
@@ -206,40 +206,40 @@ describe("getShapeStyles", () => {
 	});
 
 	it("returns clipPath for heart shape", () => {
-		const styles = getShapeStyles("heart", 32, "red");
+		const styles = getShapeStyles("heart", "red");
 		expect(styles).toHaveProperty("backgroundColor", "red");
 		expect(styles).toHaveProperty("clipPath");
 	});
 
 	it("returns clipPath for drop shape", () => {
-		const styles = getShapeStyles("drop", 32, "blue");
+		const styles = getShapeStyles("drop", "blue");
 		expect(styles).toHaveProperty("clipPath");
 	});
 
 	it("returns clipPath for sparkle-4 shape", () => {
-		const styles = getShapeStyles("sparkle-4", 32, "gold");
+		const styles = getShapeStyles("sparkle-4", "gold");
 		expect(styles).toHaveProperty("clipPath");
 	});
 
 	it("returns clipPath for star shape", () => {
-		const styles = getShapeStyles("star", 32, "gold");
+		const styles = getShapeStyles("star", "gold");
 		expect(styles).toHaveProperty("backgroundColor", "gold");
 		expect(styles).toHaveProperty("clipPath");
 	});
 
 	it("returns clipPath for hexagon shape", () => {
-		const styles = getShapeStyles("hexagon", 32, "silver");
+		const styles = getShapeStyles("hexagon", "silver");
 		expect(styles).toHaveProperty("backgroundColor", "silver");
 		expect(styles).toHaveProperty("clipPath");
 	});
 
 	it("returns transparent background for SVG shapes", () => {
-		const styles = getShapeStyles("crescent", 32, "white");
+		const styles = getShapeStyles("crescent", "white");
 		expect(styles).toHaveProperty("backgroundColor", "transparent");
 	});
 
 	it("returns rotate style for diamond shape", () => {
-		const styles = getShapeStyles("diamond", 32, "blue");
+		const styles = getShapeStyles("diamond", "blue");
 		expect(styles).toHaveProperty("backgroundColor", "blue");
 		expect(styles).toHaveProperty("rotate", "45deg");
 	});

@@ -167,16 +167,23 @@ export async function processOrderTransaction(
 			});
 
 			const skuIds = order.items.map((item) => item.skuId);
-			const skus = await tx.productSku.findMany({
-				where: { id: { in: skuIds } },
-				select: {
-					id: true,
-					inventory: true,
-					isActive: true,
-					deletedAt: true,
-					product: { select: { status: true, deletedAt: true } },
-				},
-			});
+			const skus = await tx.$queryRaw<
+				Array<{
+					id: string;
+					inventory: number;
+					isActive: boolean;
+					deletedAt: Date | null;
+					productStatus: string;
+					productDeletedAt: Date | null;
+				}>
+			>`
+				SELECT ps.id, ps.inventory, ps."isActive", ps."deletedAt",
+				       p.status as "productStatus", p."deletedAt" as "productDeletedAt"
+				FROM "ProductSku" ps
+				INNER JOIN "Product" p ON ps."productId" = p.id
+				WHERE ps.id = ANY(${skuIds}::text[])
+				FOR UPDATE
+			`;
 			const skuMap = new Map(skus.map((s) => [s.id, s]));
 
 			for (const item of order.items) {
@@ -184,9 +191,9 @@ export async function processOrderTransaction(
 				const isValid =
 					sku &&
 					!sku.deletedAt &&
-					!sku.product.deletedAt &&
+					!sku.productDeletedAt &&
 					sku.isActive &&
-					sku.product.status === "PUBLIC" &&
+					sku.productStatus === "PUBLIC" &&
 					sku.inventory >= item.quantity;
 
 				if (!isValid) {
