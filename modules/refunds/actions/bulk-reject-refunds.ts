@@ -84,7 +84,10 @@ export async function bulkRejectRefunds(
 		// Sanitiser la raison avant stockage
 		const sanitizedReason = validated.data.reason ? sanitizeText(validated.data.reason) : null;
 
-		// Rejeter tous les remboursements
+		// Rejeter tous les remboursements.
+		// Comptage des changements réels via try/catch par enregistrement pour éviter
+		// qu'une mise à jour concurrente ne bloque toute la transaction.
+		let actualCount = 0;
 		await prisma.$transaction(async (tx) => {
 			for (const refund of refunds) {
 				const updatedNote = sanitizedReason
@@ -93,13 +96,18 @@ export async function bulkRejectRefunds(
 						: `[REFUSÉ] ${sanitizedReason}`
 					: refund.note;
 
-				await tx.refund.update({
-					where: { id: refund.id, status: RefundStatus.PENDING },
-					data: {
-						status: RefundStatus.REJECTED,
-						note: updatedNote,
-					},
-				});
+				try {
+					await tx.refund.update({
+						where: { id: refund.id, status: RefundStatus.PENDING },
+						data: {
+							status: RefundStatus.REJECTED,
+							note: updatedNote,
+						},
+					});
+					actualCount++;
+				} catch {
+					// Record no longer PENDING (concurrent update), skip silently
+				}
 			}
 		});
 
@@ -132,18 +140,24 @@ export async function bulkRejectRefunds(
 					reason: sanitizedReason ?? undefined,
 					orderDetailsUrl,
 				}).catch((emailError) => {
-					console.error(
-						`[BULK_REJECT_REFUNDS] Échec envoi email pour ${refund.order.orderNumber}:`,
-						emailError,
-					);
+					prisma.orderNote
+						.create({
+							data: {
+								orderId: refund.order.id,
+								content: `[EMAIL] Échec notification rejet groupé (commande ${refund.order.orderNumber}) : ${emailError instanceof Error ? emailError.message : String(emailError)}`,
+								authorId: "system",
+								authorName: "Système (bulk-reject-refunds)",
+							},
+						})
+						.catch(() => {});
 				});
 			}
 		}
 
 		const totalAmount = refunds.reduce((sum, r) => sum + r.amount, 0);
-		const skipped = validated.data.ids.length - refunds.length;
+		const skipped = validated.data.ids.length - actualCount;
 
-		let message = `${refunds.length} remboursement${refunds.length > 1 ? "s" : ""} refusé${refunds.length > 1 ? "s" : ""} (${(totalAmount / 100).toFixed(2)} €)`;
+		let message = `${actualCount} remboursement${actualCount > 1 ? "s" : ""} refusé${actualCount > 1 ? "s" : ""} (${(totalAmount / 100).toFixed(2)} €)`;
 		if (skipped > 0) {
 			message += ` - ${skipped} ignoré${skipped > 1 ? "s" : ""} (déjà traité${skipped > 1 ? "s" : ""})`;
 		}
@@ -155,7 +169,7 @@ export async function bulkRejectRefunds(
 			targetType: "refund",
 			targetId: refunds.map((r) => r.id).join(","),
 			metadata: {
-				count: refunds.length,
+				count: actualCount,
 				totalAmount: totalAmount,
 				reason: sanitizedReason,
 			},

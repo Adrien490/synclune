@@ -54,15 +54,7 @@ export async function getRefunds(params: GetRefundsParams): Promise<GetRefundsRe
 
 	const admin = await isAdmin();
 	if (!admin) {
-		return {
-			refunds: [],
-			pagination: {
-				nextCursor: null,
-				prevCursor: null,
-				hasNextPage: false,
-				hasPreviousPage: false,
-			},
-		};
+		throw new Error("UNAUTHORIZED");
 	}
 
 	return fetchRefunds(validation.data);

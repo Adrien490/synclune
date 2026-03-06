@@ -14,6 +14,9 @@ type PrismaTransaction = Omit<
 // TRANSACTION HELPERS
 // ============================================================================
 
+/** Maximum allowed statement timeout (30 seconds) */
+const MAX_STATEMENT_TIMEOUT_MS = 30_000;
+
 /**
  * Set a statement timeout for the current transaction.
  *
@@ -25,10 +28,13 @@ type PrismaTransaction = Omit<
  * is interpolated into the SET LOCAL command.
  *
  * @param tx - Prisma transaction
- * @param timeoutMs - Timeout in milliseconds
+ * @param timeoutMs - Timeout in milliseconds (capped at 30 000ms)
  */
 export async function setStatementTimeout(tx: PrismaTransaction, timeoutMs: number): Promise<void> {
-	const safeTimeout = Math.max(0, Math.round(Number(timeoutMs)));
+	const safeTimeout = Math.min(
+		MAX_STATEMENT_TIMEOUT_MS,
+		Math.max(0, Math.round(Number(timeoutMs))),
+	);
 	if (!Number.isFinite(safeTimeout)) {
 		throw new Error("Invalid statement timeout value");
 	}

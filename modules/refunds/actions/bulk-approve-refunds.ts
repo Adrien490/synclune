@@ -79,15 +79,17 @@ export async function bulkApproveRefunds(
 			);
 		}
 
-		// Approuver tous les remboursements
-		await prisma.$transaction(async (tx) => {
-			for (const refund of refunds) {
-				await tx.refund.update({
-					where: { id: refund.id, status: RefundStatus.PENDING },
-					data: { status: RefundStatus.APPROVED },
-				});
-			}
+		// Approuver tous les remboursements (updateMany pour compter les changements réels
+		// et éviter qu'une mise à jour concurrente ne bloque toute la transaction)
+		const updateResult = await prisma.refund.updateMany({
+			where: {
+				id: { in: refunds.map((r) => r.id) },
+				status: RefundStatus.PENDING,
+				...notDeleted,
+			},
+			data: { status: RefundStatus.APPROVED },
 		});
+		const actualCount = updateResult.count;
 
 		// Invalidate admin caches
 		updateTag(ORDERS_CACHE_TAGS.LIST);
@@ -122,18 +124,24 @@ export async function bulkApproveRefunds(
 					isPartialRefund,
 					orderDetailsUrl,
 				}).catch((emailError) => {
-					console.error(
-						`[BULK_APPROVE_REFUNDS] Échec envoi email pour ${refund.order.orderNumber}:`,
-						emailError,
-					);
+					prisma.orderNote
+						.create({
+							data: {
+								orderId: refund.order.id,
+								content: `[EMAIL] Échec notification approbation groupée (commande ${refund.order.orderNumber}) : ${emailError instanceof Error ? emailError.message : String(emailError)}`,
+								authorId: "system",
+								authorName: "Système (bulk-approve-refunds)",
+							},
+						})
+						.catch(() => {});
 				});
 			}
 		}
 
 		const totalAmount = refunds.reduce((sum, r) => sum + r.amount, 0);
-		const skipped = validated.data.ids.length - refunds.length;
+		const skipped = validated.data.ids.length - actualCount;
 
-		let message = `${refunds.length} remboursement${refunds.length > 1 ? "s" : ""} approuvé${refunds.length > 1 ? "s" : ""} (${(totalAmount / 100).toFixed(2)} €)`;
+		let message = `${actualCount} remboursement${actualCount > 1 ? "s" : ""} approuvé${actualCount > 1 ? "s" : ""} (${(totalAmount / 100).toFixed(2)} €)`;
 		if (skipped > 0) {
 			message += ` - ${skipped} ignoré${skipped > 1 ? "s" : ""} (déjà traité${skipped > 1 ? "s" : ""})`;
 		}
@@ -145,7 +153,7 @@ export async function bulkApproveRefunds(
 			targetType: "refund",
 			targetId: refunds.map((r) => r.id).join(","),
 			metadata: {
-				count: refunds.length,
+				count: actualCount,
 				totalAmount: totalAmount,
 			},
 		});

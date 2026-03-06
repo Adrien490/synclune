@@ -4,7 +4,7 @@
 export function formatPrice(value: string | number): string {
 	const numValue = typeof value === "string" ? Number(value) : value;
 
-	if (Number.isNaN(numValue)) {
+	if (!Number.isFinite(numValue)) {
 		return `${value}`;
 	}
 

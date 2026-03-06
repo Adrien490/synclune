@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
 import { success, error, handleActionError, enforceRateLimit } from "@/shared/lib/actions";
+import { Prisma } from "@/app/generated/prisma/client";
 import { getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
@@ -88,21 +89,29 @@ export async function mergeWishlists(
 		}
 
 		// 3. Créer la wishlist utilisateur si elle n'existe pas
+		// Guard against P2002: two concurrent logins for the same userId could both
+		// attempt the create simultaneously. Fall back to findUnique on conflict.
 		let targetWishlist = userWishlist;
-		targetWishlist ??= await prisma.wishlist.create({
-			data: {
-				userId,
-				expiresAt: null,
-			},
-			select: {
-				id: true,
-				items: {
-					select: {
-						productId: true,
-					},
-				},
-			},
-		});
+		if (!targetWishlist) {
+			const itemsSelect = { select: { productId: true } } as const;
+			try {
+				targetWishlist = await prisma.wishlist.create({
+					data: { userId, expiresAt: null },
+					select: { id: true, items: itemsSelect },
+				});
+			} catch (e) {
+				if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+					// Parallel request already created the wishlist — fetch it
+					targetWishlist = await prisma.wishlist.findUnique({
+						where: { userId },
+						select: { id: true, items: itemsSelect },
+					});
+					if (!targetWishlist) return error(WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
+				} else {
+					throw e;
+				}
+			}
+		}
 
 		// 4. Preparer les items a fusionner (strategie UNION)
 		const userProductIds = new Set(targetWishlist.items.map((item) => item.productId));

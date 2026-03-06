@@ -1,5 +1,6 @@
 import { stripe } from "@/shared/lib/stripe";
 import { stripeCircuitBreaker } from "@/shared/lib/circuit-breaker";
+import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import Stripe from "stripe";
 import type {
 	CreateStripeRefundParams,
@@ -9,7 +10,12 @@ import type {
 
 export type { CreateStripeRefundParams, StripeRefundStatus, StripeRefundResult };
 
-// Map internal RefundReason to Stripe's reason parameter
+// Map internal RefundReason to Stripe's reason parameter.
+// Stripe only accepts: "duplicate", "fraudulent", "requested_by_customer".
+// Only FRAUD maps to "fraudulent" (unlocks Stripe's automated dispute handling).
+// All other reasons (DEFECTIVE, WRONG_ITEM, LOST_IN_TRANSIT, OTHER) are legitimate
+// merchant-side issues that map to "requested_by_customer" — the closest Stripe
+// equivalent for non-fraud voluntary refunds.
 const STRIPE_REASON_MAP: Record<string, Stripe.RefundCreateParams.Reason> = {
 	FRAUD: "fraudulent",
 	CUSTOMER_REQUEST: "requested_by_customer",
@@ -35,6 +41,21 @@ export async function createStripeRefund(
 				success: false,
 				error: "Un PaymentIntent ID ou Charge ID est requis pour le remboursement",
 			};
+		}
+
+		// Validate PaymentIntent currency before creating the refund.
+		// Guards against accidental cross-currency refunds if the PI was created
+		// in a different currency (e.g. during Stripe account misconfiguration).
+		if (params.paymentIntentId) {
+			const pi = await stripeCircuitBreaker.execute(() =>
+				stripe.paymentIntents.retrieve(params.paymentIntentId!),
+			);
+			if (pi.currency !== DEFAULT_CURRENCY.toLowerCase()) {
+				return {
+					success: false,
+					error: `Devise incompatible : le PaymentIntent est en ${pi.currency.toUpperCase()}, attendu ${DEFAULT_CURRENCY}`,
+				};
+			}
 		}
 
 		// Construire les paramètres du remboursement

@@ -132,7 +132,16 @@ export async function rejectRefund(
 					orderDetailsUrl,
 				});
 			} catch (emailError) {
-				console.error("[REJECT_REFUND] Échec envoi email:", emailError);
+				prisma.orderNote
+					.create({
+						data: {
+							orderId: refund.order.id,
+							content: `[EMAIL] Échec notification rejet remboursement (commande ${refund.order.orderNumber}) : ${emailError instanceof Error ? emailError.message : String(emailError)}`,
+							authorId: "system",
+							authorName: "Système (reject-refund)",
+						},
+					})
+					.catch(() => {});
 			}
 		}
 

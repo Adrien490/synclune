@@ -12,6 +12,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { RatingStars } from "@/shared/components/rating-stars";
 import { formatRating } from "@/shared/utils/rating-utils";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 
@@ -112,14 +113,18 @@ export function ProductDetails({
 					exit="exit"
 					transition={{ duration: prefersReducedMotion ? 0 : 0.15, delay: 0.05 }}
 				>
-					<ProductCharacteristics selectedSku={currentSku} />
+					<ErrorBoundary className="py-2" errorMessage="Impossible de charger les caractéristiques">
+						<ProductCharacteristics selectedSku={currentSku} />
+					</ErrorBoundary>
 				</m.div>
 			</AnimatePresence>
 
 			<Separator className="bg-border" />
 
 			{/* 6. Highlights produit (après CTA - pattern Etsy) */}
-			<ProductHighlights product={product} />
+			<ErrorBoundary className="py-2" errorMessage="Impossible de charger les points forts">
+				<ProductHighlights product={product} />
+			</ErrorBoundary>
 
 			{/* 7. Description produit (après CTA - pattern Etsy) */}
 			{product.description && (

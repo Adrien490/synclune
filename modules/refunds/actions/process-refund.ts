@@ -208,7 +208,7 @@ export async function processRefund(
 
 			return {
 				status: ActionStatus.SUCCESS,
-				message: `Remboursement de ${(refundData.refund.amount / 100).toFixed(2)} € envoyé à Stripe. En attente de confirmation.`,
+				message: `Remboursement de ${(refundData.refund.amount / 100).toFixed(2)} € soumis à Stripe (statut : EN ATTENTE). Le virement client sera finalisé automatiquement à réception de la confirmation Stripe.`,
 				data: { stripeRefundId: stripeResult.refundId, pending: true },
 			};
 		}
@@ -350,9 +350,10 @@ export async function processRefund(
 				},
 			);
 			return {
-				status: ActionStatus.ERROR,
+				status: ActionStatus.WARNING,
 				message:
-					"Le remboursement Stripe a été effectué mais la finalisation a échoué. La réconciliation automatique corrigera cet état.",
+					"Remboursement Stripe confirmé, finalisation en base échouée. La réconciliation automatique synchronisera l'état dans les prochaines heures.",
+				data: { stripeRefundId: stripeResult.refundId, pendingReconciliation: true },
 			};
 		}
 	} catch (error) {

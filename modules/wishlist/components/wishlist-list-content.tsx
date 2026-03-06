@@ -132,11 +132,12 @@ export function WishlistListContent({
 											}
 								}
 							>
-								{/* WishlistItem.product is a subset of Product (missing description,
-									reviewStats, _count, collections) but includes all fields that
-									ProductCard and getProductCardData actually access at runtime */}
+								{/* WishlistItem.product satisfies all fields accessed by ProductCard and
+									its children at runtime (id, slug, title, type, reviewStats, skus).
+									Fields present in Product but absent here (description, _count,
+									collections) are never accessed. The double cast is intentional. */}
 								<ProductCard
-									product={item.product as Product}
+									product={item.product as unknown as Product}
 									index={index}
 									isInWishlist={wishlistProductIds.has(item.productId)}
 									sectionId="wishlist"

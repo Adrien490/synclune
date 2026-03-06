@@ -110,7 +110,7 @@ export async function createProduct(
 		}));
 
 		// 7. Create product in transaction
-		const product = await prisma.$transaction(async (tx) => {
+		const { product, collectionSlugs } = await prisma.$transaction(async (tx) => {
 			// Generate unique slug INSIDE transaction to prevent race conditions
 			const finalSlug = await generateSlug(tx, "product", validatedData.title);
 
@@ -125,15 +125,19 @@ export async function createProduct(
 				}
 			}
 
-			// Validate all collections exist
+			// Validate all collections exist and capture slugs inside the transaction
+			// to avoid a race condition where a collection is deleted between the
+			// transaction commit and the post-transaction fetch.
+			let fetchedCollectionSlugs: string[] = [];
 			if (normalizedCollectionIds.length > 0) {
 				const collections = await tx.collection.findMany({
 					where: { id: { in: normalizedCollectionIds } },
-					select: { id: true },
+					select: { id: true, slug: true },
 				});
 				if (collections.length !== normalizedCollectionIds.length) {
 					throw new Error("Une ou plusieurs collections spécifiées n'existent pas.");
 				}
+				fetchedCollectionSlugs = collections.map((c) => c.slug);
 			}
 
 			if (normalizedColorId) {
@@ -235,7 +239,7 @@ export async function createProduct(
 				}
 			}
 
-			return createdProduct;
+			return { product: createdProduct, collectionSlugs: fetchedCollectionSlugs };
 		});
 
 		// 8. Invalidate cache tags
@@ -243,16 +247,10 @@ export async function createProduct(
 		const productTags = getProductInvalidationTags(product.slug, product.id);
 		productTags.forEach((tag) => updateTag(tag));
 
-		// Si le produit appartient a des collections, invalider aussi les collections
-		if (normalizedCollectionIds.length > 0) {
-			const collections = await prisma.collection.findMany({
-				where: { id: { in: normalizedCollectionIds } },
-				select: { slug: true },
-			});
-			for (const collection of collections) {
-				const collectionTags = getCollectionInvalidationTags(collection.slug);
-				collectionTags.forEach((tag) => updateTag(tag));
-			}
+		// Invalider les caches des collections (slugs captures dans la transaction)
+		for (const slug of collectionSlugs) {
+			const collectionTags = getCollectionInvalidationTags(slug);
+			collectionTags.forEach((tag) => updateTag(tag));
 		}
 
 		// 9. Audit log

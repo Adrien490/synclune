@@ -16,6 +16,7 @@ import {
 import {
 	WISHLIST_ERROR_MESSAGES,
 	WISHLIST_FULL_SENTINEL,
+	PRODUCT_NOT_PUBLIC_SENTINEL,
 } from "@/modules/wishlist/constants/error-messages";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -70,18 +71,19 @@ export async function toggleWishlistItem(
 
 		const validatedData = validated.data;
 
-		// 4. Valider le produit (existence et status)
-		const product = await prisma.product.findUnique({
-			where: { id: validatedData.productId },
-			select: { id: true, status: true },
-		});
-
-		if (!product || product.status !== "PUBLIC") {
-			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
-		}
-
-		// 5. Transaction: Recuperer la wishlist, verifier existence, ajouter ou retirer
+		// 4. Transaction: Recuperer la wishlist, verifier existence, ajouter ou retirer
+		// Note: product status validation is done inside the transaction (avoids TOCTOU
+		// where product could be archived between the check and the insert).
 		const transactionResult = await prisma.$transaction(async (tx) => {
+			// Valider le produit (existence et status) — inside tx to prevent TOCTOU
+			const product = await tx.product.findUnique({
+				where: { id: validatedData.productId },
+				select: { id: true, status: true },
+			});
+			if (!product || product.status !== "PUBLIC") {
+				throw new Error(PRODUCT_NOT_PUBLIC_SENTINEL);
+			}
+
 			// Recuperer ou creer la wishlist
 			const wishlist = await tx.wishlist.upsert({
 				where: userId ? { userId } : { sessionId: sessionId! },
@@ -150,7 +152,7 @@ export async function toggleWishlistItem(
 			}
 		});
 
-		// 6. Invalidation cache immediate (read-your-own-writes)
+		// 5. Invalidation cache immediate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
@@ -163,6 +165,9 @@ export async function toggleWishlistItem(
 			},
 		);
 	} catch (e) {
+		if (e instanceof Error && e.message === PRODUCT_NOT_PUBLIC_SENTINEL) {
+			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
+		}
 		if (e instanceof Error && e.message === WISHLIST_FULL_SENTINEL) {
 			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
 		}

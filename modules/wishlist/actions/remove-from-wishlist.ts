@@ -95,13 +95,14 @@ export async function removeFromWishlist(
 		const tags = getWishlistInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
-		return success(
-			deleteResult.count > 0 ? "Retire de votre wishlist" : WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND,
-			{
-				wishlistId: wishlist.id,
-				removed: deleteResult.count > 0,
-			},
-		);
+		if (deleteResult.count === 0) {
+			return error(WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND);
+		}
+
+		return success("Retire de votre wishlist", {
+			wishlistId: wishlist.id,
+			removed: true,
+		});
 	} catch (e) {
 		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}

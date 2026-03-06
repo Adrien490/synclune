@@ -58,10 +58,11 @@ export async function requestReturn(
 		// 4. Transaction atomique: vérification + création (FOR UPDATE)
 		// Empêche les double-retours concurrents sur la même commande
 		const result = await prisma.$transaction(async (tx) => {
-			// Lock the order row to prevent concurrent return requests
+			// Lock the order row to prevent concurrent return requests.
+			// Including userId in the WHERE clause enforces IDOR protection at lock level.
 			const orderRows = await tx.$queryRaw<{ id: string }[]>`
 				SELECT id FROM "Order"
-				WHERE id = ${orderId} AND "deletedAt" IS NULL
+				WHERE id = ${orderId} AND "userId" = ${user.id} AND "deletedAt" IS NULL
 				FOR UPDATE
 			`;
 
@@ -105,11 +106,6 @@ export async function requestReturn(
 			});
 
 			if (!order) {
-				throw new Error("ORDER_NOT_FOUND");
-			}
-
-			// Verify the order belongs to the requesting user (IDOR protection)
-			if (order.userId !== user.id) {
 				throw new Error("ORDER_NOT_FOUND");
 			}
 

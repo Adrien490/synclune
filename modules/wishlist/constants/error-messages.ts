@@ -5,6 +5,12 @@
 export const WISHLIST_FULL_SENTINEL = "WISHLIST_FULL";
 
 /**
+ * Sentinel string for PRODUCT_NOT_PUBLIC errors thrown inside transactions.
+ * Using a constant prevents silent breakage from typos.
+ */
+export const PRODUCT_NOT_PUBLIC_SENTINEL = "PRODUCT_NOT_PUBLIC";
+
+/**
  * Dictionnaire centralisé des messages d'erreur pour le système de wishlist
  * Tous les messages sont en français pour une expérience utilisateur cohérente
  */

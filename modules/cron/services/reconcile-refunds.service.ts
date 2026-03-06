@@ -25,8 +25,8 @@ import {
  *
  * Phase 1: APPROVED refunds with a stripeRefundId - poll Stripe for final status.
  * Phase 2: Stale PENDING/APPROVED refunds without stripeRefundId - alert admin.
- *   These are "phantom refunds" created in DB but never processed through Stripe
- *   (e.g. crash between createRefund and processRefund).
+ *   - PENDING >48h: created but never approved+processed (phantom refunds)
+ *   - APPROVED >1h: admin approved but processRefund crashed before Stripe call
  */
 export async function reconcilePendingRefunds(): Promise<{
 	checked: number;
@@ -140,16 +140,22 @@ export async function reconcilePendingRefunds(): Promise<{
 	}
 
 	// ========================================================================
-	// Phase 2: Detect stale refunds without stripeRefundId (phantom refunds)
-	// These were created in DB but never processed through Stripe
+	// Phase 2: Detect refunds without stripeRefundId (never transmitted to Stripe)
+	// - PENDING >48h: created but never approved+processed (phantom refunds)
+	// - APPROVED >1h: admin approved but processRefund crashed before Stripe call
 	// ========================================================================
-	const staleAge = new Date(Date.now() - THRESHOLDS.REFUND_STALE_PENDING_MS);
+	const stalePendingAge = new Date(Date.now() - THRESHOLDS.REFUND_STALE_PENDING_MS);
+	const blockedApprovedAge = new Date(Date.now() - THRESHOLDS.REFUND_RECONCILE_MIN_AGE_MS);
 
 	const staleRefunds = await prisma.refund.findMany({
 		where: {
-			status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] },
 			stripeRefundId: null,
-			createdAt: { lt: staleAge },
+			OR: [
+				// PENDING without Stripe ID for >48h
+				{ status: RefundStatus.PENDING, createdAt: { lt: stalePendingAge } },
+				// APPROVED without Stripe ID for >1h (more urgent — needs immediate admin action)
+				{ status: RefundStatus.APPROVED, createdAt: { lt: blockedApprovedAge } },
+			],
 			...notDeleted,
 		},
 		select: {
@@ -189,10 +195,11 @@ export async function reconcilePendingRefunds(): Promise<{
 
 			// Create an admin OrderNote to flag the stale refund (deduplicated)
 			try {
+				const notePrefix = `[REMBOURSEMENT BLOQUÉ] Le remboursement ${stale.id}`;
 				const existingNote = await prisma.orderNote.findFirst({
 					where: {
 						orderId: stale.orderId,
-						content: { startsWith: `[REMBOURSEMENT ORPHELIN] Le remboursement ${stale.id}` },
+						content: { startsWith: notePrefix },
 					},
 					select: { id: true },
 				});
@@ -205,13 +212,18 @@ export async function reconcilePendingRefunds(): Promise<{
 					continue;
 				}
 
+				const requiredAction =
+					stale.status === RefundStatus.APPROVED
+						? "Action requise : declencher le traitement Stripe via l'interface admin."
+						: "Action requise : approuver et traiter le remboursement, ou le rejeter/annuler.";
+
 				await prisma.orderNote.create({
 					data: {
 						orderId: stale.orderId,
 						content:
-							`[REMBOURSEMENT ORPHELIN] Le remboursement ${stale.id} (${stale.amount / 100} EUR, statut: ${stale.status}) ` +
+							`${notePrefix} (${stale.amount / 100} EUR, statut: ${stale.status}) ` +
 							`est en attente depuis ${ageHours}h sans avoir ete transmis a Stripe. ` +
-							`Action requise: approuver et traiter le remboursement, ou le rejeter/annuler.`,
+							requiredAction,
 						authorId: "system",
 						authorName: "Systeme (cron reconcile-refunds)",
 					},

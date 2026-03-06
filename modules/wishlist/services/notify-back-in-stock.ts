@@ -8,6 +8,11 @@ import { logger } from "@/shared/lib/logger";
  * Called after SKU stock update when inventory goes from 0 to >0.
  *
  * Non-blocking: errors are logged but don't propagate.
+ *
+ * Limitation: processes at most 50 users per restock event to bound email sending
+ * latency and Resend API usage. Users beyond this batch will not be notified
+ * (backInStockNotifiedAt stays null but won't be re-queried once stock is positive).
+ * Acceptable trade-off for typical catalog sizes; increase take or paginate if needed.
  */
 export async function notifyBackInStock(productId: string): Promise<void> {
 	try {
