@@ -15,7 +15,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDeleteAccount } from "@/modules/users/hooks/use-delete-account";
-import { USER_CONSTANTS } from "@/modules/users/constants/profile.constants";
+import { USER_CONSTANTS } from "@/modules/users/constants/user.constants";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 

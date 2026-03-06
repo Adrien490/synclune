@@ -9,6 +9,7 @@ const USER_DATA_EXPORT_INCLUDE = {
 		orderBy: { createdAt: "desc" as const },
 	},
 	orders: {
+		take: 500,
 		include: {
 			items: {
 				select: {
@@ -33,6 +34,7 @@ const USER_DATA_EXPORT_INCLUDE = {
 		},
 	},
 	discountUsages: {
+		take: 200,
 		include: {
 			discount: { select: { code: true } },
 		},
@@ -40,6 +42,7 @@ const USER_DATA_EXPORT_INCLUDE = {
 	},
 	newsletterSubscription: true,
 	reviews: {
+		take: 200,
 		include: {
 			product: { select: { title: true } },
 		},
@@ -47,9 +50,11 @@ const USER_DATA_EXPORT_INCLUDE = {
 		orderBy: { createdAt: "desc" as const },
 	},
 	sessions: {
+		take: 50,
 		orderBy: { createdAt: "desc" as const },
 	},
 	customizationRequests: {
+		take: 500,
 		where: { deletedAt: null },
 		orderBy: { createdAt: "desc" as const },
 		select: {

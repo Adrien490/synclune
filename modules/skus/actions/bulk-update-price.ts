@@ -118,30 +118,23 @@ export async function bulkUpdatePrice(
 		}
 
 		// Appliquer les modifications
-		await prisma.$transaction(async (tx) => {
-			for (const update of updatesWithNewPrice) {
+		const multiplier = 1 + value / 100;
+		await prisma.$transaction(
+			updatesWithNewPrice.map((update) => {
 				const data: { priceInclTax: number; compareAtPrice?: number | null } = {
 					priceInclTax: update.newPrice,
 				};
 
-				// Si on met a jour le compareAtPrice, appliquer le meme ratio
 				if (updateCompareAtPrice && update.compareAtPrice) {
-					if (mode === "absolute") {
-						// En mode absolu, mettre le meme prix
-						data.compareAtPrice = update.newPrice;
-					} else {
-						// En mode pourcentage, appliquer le meme ratio
-						const multiplier = 1 + value / 100;
-						data.compareAtPrice = Math.max(1, Math.round(update.compareAtPrice * multiplier));
-					}
+					data.compareAtPrice =
+						mode === "absolute"
+							? update.newPrice
+							: Math.max(1, Math.round(update.compareAtPrice * multiplier));
 				}
 
-				await tx.productSku.update({
-					where: { id: update.id },
-					data,
-				});
-			}
-		});
+				return prisma.productSku.update({ where: { id: update.id }, data });
+			}),
+		);
 
 		// Invalider le cache
 		const uniqueTags = collectBulkInvalidationTags(skusData);

@@ -20,7 +20,7 @@ export async function GET() {
 			return cronError("STRIPE_SECRET_KEY not configured");
 		}
 
-		if (result.errors > 0) {
+		if (result.errors > 0 || result.staleAlerted > 0) {
 			sendAdminCronFailedAlert({
 				job: "reconcile-refunds",
 				errors: result.errors,

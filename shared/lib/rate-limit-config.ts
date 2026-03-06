@@ -626,6 +626,16 @@ export const USER_EXPORT_DATA_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour la demande de changement d'email
+ *
+ * STRICT : Protège contre le spam d'emails de confirmation
+ */
+export const USER_EMAIL_CHANGE_LIMIT: RateLimitConfig = {
+	limit: 3, // 3 demandes maximum
+	windowMs: hours(1), // par heure
+};
+
+/**
  * Limite pour la mise à jour du profil
  *
  * Modérée car action fréquente et légitime
@@ -653,6 +663,7 @@ export const USER_LIMITS = {
 	CANCEL_DELETION: USER_CANCEL_DELETION_LIMIT,
 	EXPORT_DATA: USER_EXPORT_DATA_LIMIT,
 	UPDATE_PROFILE: USER_UPDATE_PROFILE_LIMIT,
+	CHANGE_EMAIL: USER_EMAIL_CHANGE_LIMIT,
 } as const;
 
 // ========================================
@@ -694,11 +705,11 @@ export const ADMIN_USER_DELETE_LIMIT: RateLimitConfig = {
 /**
  * Limite pour l'export de données utilisateur (admin)
  *
- * Modérée car action intensive mais nécessaire
+ * Réduite car buildUserDataExport est une requête lourde multi-tables
  */
 export const ADMIN_USER_EXPORT_DATA_LIMIT: RateLimitConfig = {
-	limit: 10, // 10 exports maximum
-	windowMs: minutes(1), // par minute
+	limit: 3, // 3 exports maximum
+	windowMs: minutes(5), // par 5 minutes
 };
 
 /**

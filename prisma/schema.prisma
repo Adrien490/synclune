@@ -897,7 +897,8 @@ model Discount {
   usageCount Int @default(0) // Compteur d'utilisations
 
   // Etat
-  isActive Boolean @default(true)
+  isActive           Boolean @default(true)
+  manuallyDeactivated Boolean @default(false) // Set by admin toggle; prevents cron auto-reactivation
 
   // Relations
   usages DiscountUsage[]
@@ -1235,4 +1236,34 @@ model CustomizationMedia {
 
   // === INDEXES ===
   @@index([customizationRequestId, position])
+}
+
+model Testimonial {
+  id          String    @id @default(cuid())
+  imageUrl    String?   @db.VarChar(2048)
+  blurDataUrl String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+}
+
+// ============================================================================
+// DEAD-LETTER EMAILS
+// ============================================================================
+
+/// Email task qui a echoue lors du traitement post-webhook
+/// Persiste pour retry automatique via cron retry-failed-emails (toutes les heures)
+model FailedEmail {
+  id          String    @id @default(cuid())
+  taskType    String    @db.VarChar(100) // ex: ORDER_CONFIRMATION_EMAIL
+  payload     Json      // Donnees necessaires pour relancer l'email
+  attempts    Int       @default(1)
+  lastError   String    @db.Text
+  nextRetryAt DateTime  @default(now())
+  resolvedAt  DateTime? // null = toujours en erreur, set = resolu ou abandonne apres MAX_ATTEMPTS
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resolvedAt, nextRetryAt]) // retry cron: resolvedAt IS NULL AND nextRetryAt <= now()
 }

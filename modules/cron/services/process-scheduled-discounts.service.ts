@@ -7,11 +7,9 @@ import { BATCH_DEADLINE_MS, CLEANUP_DELETE_LIMIT } from "@/modules/cron/constant
 /**
  * Activates and deactivates scheduled promotions.
  *
- * Activates promotions whose startsAt has passed and endsAt is not exceeded.
+ * Activates promotions whose startsAt has passed, endsAt is not exceeded,
+ * and manuallyDeactivated is false (set by admin toggle).
  * Deactivates promotions whose endsAt has passed.
- *
- * Discounts where updatedAt > startsAt are skipped for activation to avoid
- * reactivating promotions that were manually deactivated by an admin.
  */
 export async function processScheduledDiscounts(): Promise<{
 	activated: number;
@@ -25,32 +23,31 @@ export async function processScheduledDiscounts(): Promise<{
 	const now = new Date();
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 
-	// 1. Find activation candidates (Prisma can't compare columns, so two-step)
+	// 1. Find activation candidates — exclude discounts manually deactivated by an admin
 	const candidates = await prisma.discount.findMany({
 		where: {
 			isActive: false,
+			manuallyDeactivated: false,
 			...notDeleted,
 			startsAt: { lte: now },
 			OR: [{ endsAt: null }, { endsAt: { gte: now } }],
 		},
-		select: { id: true, startsAt: true, updatedAt: true },
+		select: { id: true },
 		take: CLEANUP_DELETE_LIMIT,
 	});
 
-	// Filter out discounts manually deactivated by admin (updatedAt > startsAt)
-	const toActivate = candidates.filter((d) => d.updatedAt <= d.startsAt);
+	const toActivate = candidates;
 
 	let activatedCount = 0;
 	if (toActivate.length > 0) {
 		const activated = await prisma.discount.updateMany({
 			where: { id: { in: toActivate.map((d) => d.id) } },
-			data: { isActive: true },
+			data: { isActive: true, manuallyDeactivated: false },
 		});
 		activatedCount = activated.count;
 		logger.info("Activated discounts", {
 			cronJob: "process-scheduled-discounts",
 			activatedCount,
-			skipped: candidates.length - toActivate.length,
 		});
 	}
 

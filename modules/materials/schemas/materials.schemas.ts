@@ -25,24 +25,6 @@ export const materialSortBySchema = z
 	.default(GET_MATERIALS_DEFAULT_SORT_BY);
 
 // ============================================================================
-// MAIN SCHEMAS
-// ============================================================================
-
-export const getMaterialsSchema = z.object({
-	cursor: cursorSchema,
-	direction: directionSchema,
-	perPage: createPerPageSchema(GET_MATERIALS_DEFAULT_PER_PAGE, GET_MATERIALS_MAX_RESULTS_PER_PAGE),
-	sortBy: materialSortBySchema.optional().default(GET_MATERIALS_DEFAULT_SORT_BY),
-	search: z.string().max(100).optional(),
-	filters: materialFiltersSchema.optional().default({}),
-});
-
-export const getMaterialSchema = z.object({
-	slug: z.string().trim().min(1),
-	includeInactive: z.boolean().optional(),
-});
-
-// ============================================================================
 // FIELD SCHEMAS
 // ============================================================================
 
@@ -65,6 +47,24 @@ export const materialDescriptionSchema = z
 	.max(1000, "La description ne peut pas depasser 1000 caracteres")
 	.optional()
 	.nullable();
+
+// ============================================================================
+// MAIN SCHEMAS
+// ============================================================================
+
+export const getMaterialsSchema = z.object({
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_MATERIALS_DEFAULT_PER_PAGE, GET_MATERIALS_MAX_RESULTS_PER_PAGE),
+	sortBy: materialSortBySchema.optional().default(GET_MATERIALS_DEFAULT_SORT_BY),
+	search: z.string().max(100).optional(),
+	filters: materialFiltersSchema.optional().default({}),
+});
+
+export const getMaterialSchema = z.object({
+	slug: materialSlugSchema,
+	includeInactive: z.boolean().optional(),
+});
 
 // ============================================================================
 // MUTATION SCHEMAS

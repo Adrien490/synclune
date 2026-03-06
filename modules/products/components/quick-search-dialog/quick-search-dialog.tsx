@@ -3,7 +3,7 @@
 import { AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Fade } from "@/shared/components/animations/fade";
@@ -51,6 +51,13 @@ export function QuickSearchDialog({
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const searchInputRef = useRef<SearchInputHandle>(null);
+	// Capture the trigger element before Radix steals focus (useLayoutEffect fires before useEffect)
+	const triggerRef = useRef<HTMLElement | null>(null);
+	useLayoutEffect(() => {
+		if (isOpen) {
+			triggerRef.current = document.activeElement as HTMLElement | null;
+		}
+	}, [isOpen]);
 
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),
@@ -140,7 +147,10 @@ export function QuickSearchDialog({
 		>
 			<DialogContent
 				showCloseButton={false}
-				onCloseAutoFocus={(e) => e.preventDefault()}
+				onCloseAutoFocus={(e) => {
+					e.preventDefault();
+					triggerRef.current?.focus();
+				}}
 				aria-busy={isPending}
 				className={cn(
 					"group/search",

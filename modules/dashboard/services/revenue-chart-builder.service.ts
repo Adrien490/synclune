@@ -1,3 +1,4 @@
+import { addDays } from "date-fns";
 import type { RevenueDataPoint } from "../types/dashboard.types";
 
 // ============================================================================
@@ -10,7 +11,7 @@ import type { RevenueDataPoint } from "../types/dashboard.types";
  * Transforme les données brutes en série temporelle continue
  *
  * @param revenueMap - Map des revenus par date (format: YYYY-MM-DD)
- * @param startDate - Date de début de la période
+ * @param startDate - Date de début de la période (minuit UTC)
  * @param days - Nombre de jours à générer
  * @returns Tableau de points de données avec tous les jours
  */
@@ -22,7 +23,7 @@ export function fillMissingDates(
 	const data: RevenueDataPoint[] = [];
 
 	for (let i = 0; i < days; i++) {
-		const date = new Date(startDate.getTime() + i * 86_400_000);
+		const date = addDays(startDate, i);
 		const dateKey = date.toISOString().split("T")[0]!;
 		data.push({
 			date: dateKey,

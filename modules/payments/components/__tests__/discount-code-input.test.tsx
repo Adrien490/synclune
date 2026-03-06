@@ -139,6 +139,7 @@ function createDiscount(overrides: Partial<AppliedDiscount> = {}): AppliedDiscou
 		type: "PERCENTAGE" as AppliedDiscount["type"],
 		value: 10,
 		discountAmount: 500,
+		excludeSaleItems: false,
 		...overrides,
 	};
 }

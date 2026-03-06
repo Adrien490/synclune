@@ -1,6 +1,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { sendAbandonedCartEmail } from "@/modules/emails/services/cart-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { logger } from "@/shared/lib/logger";
 import {
 	BATCH_DEADLINE_MS,
 	BATCH_SIZE_MEDIUM,
@@ -23,7 +24,7 @@ export async function sendAbandonedCartEmails(): Promise<{
 	errors: number;
 	hasMore: boolean;
 }> {
-	console.log("[CRON:abandoned-cart-emails] Starting abandoned cart recovery...");
+	logger.info("Starting abandoned cart recovery", { cronJob: "abandoned-cart-emails" });
 
 	const abandonmentThreshold = new Date(Date.now() - ABANDONMENT_DELAY_MS);
 
@@ -63,7 +64,9 @@ export async function sendAbandonedCartEmails(): Promise<{
 		take: BATCH_SIZE_MEDIUM,
 	});
 
-	console.log(`[CRON:abandoned-cart-emails] Found ${abandonedCarts.length} abandoned carts`);
+	logger.info(`Found ${abandonedCarts.length} abandoned carts`, {
+		cronJob: "abandoned-cart-emails",
+	});
 
 	const startTime = Date.now();
 	let sent = 0;
@@ -73,7 +76,7 @@ export async function sendAbandonedCartEmails(): Promise<{
 
 	for (const cart of abandonedCarts) {
 		if (Date.now() - startTime > BATCH_DEADLINE_MS) {
-			console.log("[CRON:abandoned-cart-emails] Deadline reached, stopping early");
+			logger.info("Deadline reached, stopping early", { cronJob: "abandoned-cart-emails" });
 			break;
 		}
 
@@ -120,18 +123,21 @@ export async function sendAbandonedCartEmails(): Promise<{
 					data: { abandonedEmailSentAt: new Date() },
 				});
 				sent++;
-				console.log(`[CRON:abandoned-cart-emails] Sent to ${cart.user!.email}`);
+				logger.info("Email sent", { cronJob: "abandoned-cart-emails", cartId: cart.id });
 			} else {
 				errors++;
-				console.warn(`[CRON:abandoned-cart-emails] Failed for ${cart.user!.email}:`, result.error);
+				logger.warn("Email failed", { cronJob: "abandoned-cart-emails", cartId: cart.id });
 			}
 		} catch (error) {
 			errors++;
-			console.error(`[CRON:abandoned-cart-emails] Error for cart ${cart.id}:`, error);
+			logger.error("Error processing cart", error, {
+				cronJob: "abandoned-cart-emails",
+				cartId: cart.id,
+			});
 		}
 	}
 
-	console.log(`[CRON:abandoned-cart-emails] Completed: ${sent} sent, ${errors} errors`);
+	logger.info(`Completed: ${sent} sent, ${errors} errors`, { cronJob: "abandoned-cart-emails" });
 
 	return {
 		found: abandonedCarts.length,

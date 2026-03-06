@@ -36,7 +36,12 @@ vi.mock("../constants/product.constants", () => ({
 	QUICK_SEARCH_SELECT: { id: true, slug: true, title: true },
 }));
 
-import { quickSearchProducts } from "./quick-search-products";
+import { quickSearchProducts, type QuickSearchSuccess } from "./quick-search-products";
+
+function asSuccess(result: Awaited<ReturnType<typeof quickSearchProducts>>): QuickSearchSuccess {
+	if (result.kind !== "success") throw new Error(`Expected success result, got: ${result.kind}`);
+	return result;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
@@ -104,8 +109,8 @@ describe("quickSearchProducts", () => {
 			where: { id: { in: ["id-1", "id-2"] } },
 			select: expect.any(Object),
 		});
-		expect(result.products).toHaveLength(2);
-		expect(result.totalCount).toBe(2);
+		expect(asSuccess(result).products).toHaveLength(2);
+		expect(asSuccess(result).totalCount).toBe(2);
 	});
 
 	it("preserves relevance ordering from fuzzy search", async () => {
@@ -122,7 +127,7 @@ describe("quickSearchProducts", () => {
 
 		const result = await quickSearchProducts("collier");
 
-		expect(result.products.map((p) => p.id)).toEqual(["id-2", "id-1", "id-3"]);
+		expect(asSuccess(result).products.map((p) => p.id)).toEqual(["id-2", "id-1", "id-3"]);
 	});
 
 	it("does not call prisma.findMany when no IDs found", async () => {
@@ -150,7 +155,7 @@ describe("quickSearchProducts", () => {
 		const result = await quickSearchProducts("colier");
 
 		expect(mockGetSpellSuggestion).toHaveBeenCalledWith("colier", { status: "PUBLIC" });
-		expect(result.suggestion).toBe("collier");
+		expect(asSuccess(result).suggestion).toBe("collier");
 	});
 
 	it("does not trigger spell suggestion when enough results", async () => {
@@ -167,7 +172,7 @@ describe("quickSearchProducts", () => {
 		const result = await quickSearchProducts("collier");
 
 		expect(mockGetSpellSuggestion).not.toHaveBeenCalled();
-		expect(result.suggestion).toBeNull();
+		expect(asSuccess(result).suggestion).toBeNull();
 	});
 
 	it("returns null suggestion when spell check finds nothing", async () => {
@@ -176,7 +181,7 @@ describe("quickSearchProducts", () => {
 
 		const result = await quickSearchProducts("xyzxyz");
 
-		expect(result.suggestion).toBeNull();
+		expect(asSuccess(result).suggestion).toBeNull();
 	});
 
 	// ─── Parallel execution ──────────────────────────────────
@@ -224,7 +229,7 @@ describe("quickSearchProducts", () => {
 
 		const result = await quickSearchProducts("collier");
 
-		expect(result.products.map((p) => p.id)).toEqual(["id-1", "id-2"]);
+		expect(asSuccess(result).products.map((p) => p.id)).toEqual(["id-1", "id-2"]);
 	});
 
 	it("trims input before processing", async () => {

@@ -234,7 +234,7 @@ describe("toggleDiscountStatus", () => {
 
 		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
 			where: { id: "disc-123" },
-			data: { isActive: false },
+			data: { isActive: false, manuallyDeactivated: true },
 		});
 	});
 
@@ -245,7 +245,7 @@ describe("toggleDiscountStatus", () => {
 
 		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
 			where: { id: "disc-123" },
-			data: { isActive: true },
+			data: { isActive: true, manuallyDeactivated: false },
 		});
 	});
 

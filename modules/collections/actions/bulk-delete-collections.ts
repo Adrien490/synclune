@@ -47,34 +47,37 @@ export async function bulkDeleteCollections(
 
 		const validatedData = validated.data;
 
-		// Verifier les collections et leur utilisation
-		const collectionsWithUsage = await prisma.collection.findMany({
-			where: {
-				id: {
-					in: validatedData.ids,
-				},
-			},
-			include: {
-				_count: {
-					select: {
-						products: true,
-					},
-				},
-			},
-		});
-
+		// Verifier les collections et les supprimer de facon atomique
 		// Note: On peut supprimer les collections meme avec des produits
 		// car la relation ProductCollection est onDelete: Cascade (les join entries sont supprimees, les produits preserves)
-		const totalProducts = collectionsWithUsage.reduce((sum, col) => sum + col._count.products, 0);
-
-		// Supprimer les collections
-		const result = await prisma.collection.deleteMany({
-			where: {
-				id: {
-					in: validatedData.ids,
+		const { collectionsWithUsage, result } = await prisma.$transaction(async (tx) => {
+			const collections = await tx.collection.findMany({
+				where: {
+					id: {
+						in: validatedData.ids,
+					},
 				},
-			},
+				include: {
+					_count: {
+						select: {
+							products: true,
+						},
+					},
+				},
+			});
+
+			const deleteResult = await tx.collection.deleteMany({
+				where: {
+					id: {
+						in: validatedData.ids,
+					},
+				},
+			});
+
+			return { collectionsWithUsage: collections, result: deleteResult };
 		});
+
+		const totalProducts = collectionsWithUsage.reduce((sum, col) => sum + col._count.products, 0);
 
 		// Invalider le cache pour chaque collection supprimee
 		for (const collection of collectionsWithUsage) {

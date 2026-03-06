@@ -25,7 +25,7 @@ const { mockTx, mockPrisma, mockGetBaseUrl, mockROUTES } = vi.hoisted(() => {
 		mockPrisma: {
 			$transaction: vi.fn(),
 			order: {
-				findUnique: vi.fn(),
+				findFirst: vi.fn(),
 				update: vi.fn(),
 			},
 			orderNote: {
@@ -44,6 +44,7 @@ const { mockTx, mockPrisma, mockGetBaseUrl, mockROUTES } = vi.hoisted(() => {
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("@/shared/constants/urls", () => ({
@@ -134,7 +135,7 @@ describe("handleDisputeCreated", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
-		mockPrisma.order.findUnique.mockResolvedValue(makeOrder());
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
 			cb(mockTx),
@@ -198,11 +199,11 @@ describe("handleDisputeCreated", () => {
 			"Dispute dp_test_1 has no payment_intent",
 		);
 
-		expect(mockPrisma.order.findUnique).not.toHaveBeenCalled();
+		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 	});
 
 	it("should throw an error when no order is found for the payment intent", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockPrisma.order.findFirst.mockResolvedValue(null);
 		const dispute = makeDispute();
 
 		await expect(handleDisputeCreated(dispute)).rejects.toThrow(
@@ -283,15 +284,15 @@ describe("handleDisputeCreated", () => {
 
 		await handleDisputeCreated(dispute);
 
-		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith(
+		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { stripePaymentIntentId: "pi_object_1" },
+				where: expect.objectContaining({ stripePaymentIntentId: "pi_object_1" }),
 			}),
 		);
 	});
 
 	it("should use fallback email when customerEmail is null", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(makeOrder({ customerEmail: null }));
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ customerEmail: null }));
 		const dispute = makeDispute();
 
 		const result = await handleDisputeCreated(dispute);
@@ -309,7 +310,7 @@ describe("handleDisputeClosed", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
-		mockPrisma.order.findUnique.mockResolvedValue(makeOrder());
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
 			cb(mockTx),
@@ -385,7 +386,7 @@ describe("handleDisputeClosed", () => {
 	});
 
 	it("should create note but NOT update paymentStatus when dispute is lost and order is already REFUNDED", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(makeOrder({ paymentStatus: "REFUNDED" }));
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ paymentStatus: "REFUNDED" }));
 		const dispute = makeDispute({ status: "lost" });
 
 		await handleDisputeClosed(dispute);
@@ -402,11 +403,11 @@ describe("handleDisputeClosed", () => {
 			"Dispute dp_test_1 closed has no payment_intent",
 		);
 
-		expect(mockPrisma.order.findUnique).not.toHaveBeenCalled();
+		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 	});
 
 	it("should throw an error when no order is found for the payment intent", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockPrisma.order.findFirst.mockResolvedValue(null);
 		const dispute = makeDispute({ status: "won" });
 
 		await expect(handleDisputeClosed(dispute)).rejects.toThrow(
@@ -462,9 +463,9 @@ describe("handleDisputeClosed", () => {
 
 		await handleDisputeClosed(dispute);
 
-		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith(
+		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { stripePaymentIntentId: "pi_object_2" },
+				where: expect.objectContaining({ stripePaymentIntentId: "pi_object_2" }),
 			}),
 		);
 	});

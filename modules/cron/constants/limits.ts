@@ -36,6 +36,18 @@ export const BATCH_SIZE_LARGE = 50;
 export const MAX_WEBHOOK_RETRY_ATTEMPTS = 3;
 
 /**
+ * Maximum retry attempts for failed email tasks (dead-letter queue)
+ * After this many attempts the record stays unresolved for manual review
+ */
+export const MAX_EMAIL_RETRY_ATTEMPTS = 3;
+
+/**
+ * Exponential backoff delays between email retry attempts (minutes)
+ * attempt 1 → 60 min, attempt 2 → 240 min, attempt 3+ → 960 min
+ */
+export const EMAIL_RETRY_BACKOFF_MINUTES = [60, 240, 960] as const;
+
+/**
  * Retention periods in days
  */
 export const RETENTION = {

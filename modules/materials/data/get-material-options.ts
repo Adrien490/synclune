@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheMaterials } from "../constants/cache";
 import type { MaterialOption } from "../types/materials.types";
@@ -42,7 +43,10 @@ async function fetchMaterialOptions(): Promise<MaterialOption[]> {
 		});
 
 		return materials;
-	} catch {
+	} catch (e) {
+		Sentry.captureException(e, {
+			tags: { module: "materials", operation: "fetchMaterialOptions" },
+		});
 		return [];
 	}
 }

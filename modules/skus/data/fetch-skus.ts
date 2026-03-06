@@ -31,17 +31,19 @@ export async function fetchProductSkus(
 		const direction = getSortDirection(params.sortBy);
 
 		// Toujours trier le SKU par défaut en premier, puis appliquer le tri sélectionné
-		const userSortConfig: Prisma.ProductSkuOrderByWithRelationInput[] = params.sortBy.startsWith(
-			"sku-",
-		)
-			? [{ sku: direction }, { id: "asc" }]
-			: params.sortBy.startsWith("price-")
-				? [{ priceInclTax: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("stock-")
-					? [{ inventory: direction }, { id: "asc" }]
-					: params.sortBy.startsWith("created-")
-						? [{ createdAt: direction }, { id: "asc" }]
-						: [{ createdAt: "desc" }, { id: "asc" }];
+		const sortFieldMap: Record<string, Prisma.ProductSkuOrderByWithRelationInput[]> = {
+			"sku-ascending": [{ sku: direction }, { id: "asc" }],
+			"sku-descending": [{ sku: direction }, { id: "asc" }],
+			"price-ascending": [{ priceInclTax: direction }, { id: "asc" }],
+			"price-descending": [{ priceInclTax: direction }, { id: "asc" }],
+			"stock-ascending": [{ inventory: direction }, { id: "asc" }],
+			"stock-descending": [{ inventory: direction }, { id: "asc" }],
+			"created-ascending": [{ createdAt: direction }, { id: "asc" }],
+			"created-descending": [{ createdAt: direction }, { id: "asc" }],
+		};
+		const userSortConfig: Prisma.ProductSkuOrderByWithRelationInput[] = sortFieldMap[
+			params.sortBy
+		] ?? [{ createdAt: "desc" }, { id: "asc" }];
 
 		const orderBy: Prisma.ProductSkuOrderByWithRelationInput[] = [
 			{ isDefault: "desc" }, // SKU par défaut toujours en premier

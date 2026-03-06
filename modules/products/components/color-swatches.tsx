@@ -235,7 +235,11 @@ export function ColorSwatches({
 		>
 			{visibleColors.map((color, index) =>
 				isTouchDevice ? (
-					<span key={color.slug} className={interactive ? "shrink-0 snap-start" : undefined}>
+					<span
+						key={color.slug}
+						className={interactive ? "shrink-0 snap-start" : undefined}
+						title={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
+					>
 						{renderSwatch(color, index)}
 					</span>
 				) : (
@@ -286,7 +290,12 @@ export function ColorSwatches({
 						<div className="flex flex-wrap gap-3">
 							{hiddenColors.map((color, index) =>
 								isTouchDevice ? (
-									<span key={color.slug}>{renderSwatch(color, maxVisible + index, true)}</span>
+									<span
+										key={color.slug}
+										title={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
+									>
+										{renderSwatch(color, maxVisible + index, true)}
+									</span>
 								) : (
 									<Tooltip key={color.slug}>
 										<TooltipTrigger asChild>

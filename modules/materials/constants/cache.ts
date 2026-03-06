@@ -24,7 +24,7 @@ export const MATERIALS_CACHE_TAGS = {
 /**
  * Configure le cache pour la liste des matériaux
  * - Utilisé pour : sélecteurs de filtres, formulaires admin
- * - Durée : 4h fraîche, 1h revalidation, 30j expiration
+ * - Durée : 7j stale, 24h revalidation
  */
 export function cacheMaterials() {
 	cacheLife("reference");
@@ -34,7 +34,7 @@ export function cacheMaterials() {
 /**
  * Configure le cache pour un matériau spécifique
  * - Utilisé pour : page détail matériau
- * - Durée : 4h fraîche, 1h revalidation, 30j expiration
+ * - Durée : 7j stale, 24h revalidation
  */
 export function cacheMaterialDetail(slug: string) {
 	cacheLife("reference");

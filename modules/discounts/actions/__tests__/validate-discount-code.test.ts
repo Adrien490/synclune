@@ -326,6 +326,7 @@ describe("validateDiscountCode", () => {
 			type: "PERCENTAGE",
 			value: 20,
 			discountAmount: 1000,
+			excludeSaleItems: false,
 		});
 	});
 

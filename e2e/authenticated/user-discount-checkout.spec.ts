@@ -42,6 +42,25 @@ test.describe("Checkout - Codes promo", { tag: ["@regression"] }, () => {
 		await expect(errorFeedback.first()).toBeVisible({ timeout: 5000 });
 	});
 
+	test("appliquer un code promo valide affiche la remise sur le total", async ({
+		checkoutPage,
+		page,
+	}) => {
+		await checkoutPage.openDiscountSection();
+
+		// BIENVENUE10 is seeded as an active 10% discount
+		await checkoutPage.applyDiscountCode("BIENVENUE10");
+
+		// Should show success: discount line or remove button appears
+		const discountLine = page
+			.getByText(/Réduction|remise|code promo/i)
+			.or(checkoutPage.discountRemoveButton);
+		await expect(discountLine.first()).toBeVisible({ timeout: 5000 });
+
+		// Discount remove button should be present (confirms code was accepted)
+		await expect(checkoutPage.discountRemoveButton).toBeVisible();
+	});
+
 	test("le bouton appliquer est desactive quand le champ est vide", async ({ checkoutPage }) => {
 		await checkoutPage.openDiscountSection();
 

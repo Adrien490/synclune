@@ -13,7 +13,7 @@ import { Input } from "@/shared/components/ui/input";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useEffectEvent, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState, useTransition } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
 import { RatingStars } from "@/shared/components/rating-stars";
@@ -126,6 +126,13 @@ export function ProductFilterSheet({
 	activeProductTypeSlug,
 }: FilterSheetProps) {
 	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+	// Capture the trigger element before the sheet steals focus (WCAG 2.4.3)
+	const triggerRef = useRef<HTMLElement | null>(null);
+	useLayoutEffect(() => {
+		if (isOpen) {
+			triggerRef.current = document.activeElement as HTMLElement | null;
+		}
+	}, [isOpen]);
 	const DEFAULT_PRICE_RANGE: [number, number] = [0, maxPriceInEuros];
 	const pathname = usePathname();
 	const router = useRouter();
@@ -243,7 +250,14 @@ export function ProductFilterSheet({
 	return (
 		<FilterSheetWrapper
 			open={isOpen}
-			onOpenChange={(newOpen) => (newOpen ? open() : close())}
+			onOpenChange={(newOpen) => {
+				if (newOpen) {
+					open();
+				} else {
+					close();
+					triggerRef.current?.focus();
+				}
+			}}
 			hideTrigger
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}

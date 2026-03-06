@@ -1,24 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { useCancelAccountDeletion } from "@/modules/users/hooks/use-cancel-account-deletion";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface CancelDeletionBannerProps {
-	deletionRequestedAt: Date;
+	daysRemaining: number;
 }
 
-export function CancelDeletionBanner({ deletionRequestedAt }: CancelDeletionBannerProps) {
+export function CancelDeletionBanner({ daysRemaining }: CancelDeletionBannerProps) {
 	const { action, isPending } = useCancelAccountDeletion();
-	const [now] = useState(() => Date.now());
-
-	const deletionDate = new Date(new Date(deletionRequestedAt).getTime() + 30 * 24 * 60 * 60 * 1000);
-	const daysRemaining = Math.max(
-		0,
-		Math.ceil((deletionDate.getTime() - now) / (24 * 60 * 60 * 1000)),
-	);
 
 	return (
 		<Alert variant="destructive">

@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import { DisputeReason, DisputeStatus } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -80,8 +80,8 @@ export async function handleDisputeCreated(
 		throw new Error(`Dispute ${dispute.id} has no payment_intent`);
 	}
 
-	const order = await prisma.order.findUnique({
-		where: { stripePaymentIntentId: paymentIntentId },
+	const order = await prisma.order.findFirst({
+		where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
 		select: {
 			id: true,
 			orderNumber: true,
@@ -208,8 +208,8 @@ export async function handleDisputeClosed(
 		throw new Error(`Dispute ${dispute.id} closed has no payment_intent`);
 	}
 
-	const order = await prisma.order.findUnique({
-		where: { stripePaymentIntentId: paymentIntentId },
+	const order = await prisma.order.findFirst({
+		where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
 		select: {
 			id: true,
 			orderNumber: true,

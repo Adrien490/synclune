@@ -45,6 +45,19 @@ export async function handleAsyncPaymentSucceeded(
 	}
 }
 
+type AsyncPaymentFailedTxResult =
+	| { skipped: true; status: string }
+	| {
+			skipped: false;
+			order: {
+				id: string;
+				orderNumber: string;
+				customerEmail: string;
+				customerName: string;
+			};
+			releasedDiscountIds: string[];
+	  };
+
 /**
  * Gère les paiements asynchrones échoués
  * Annule la commande et notifie le client
@@ -64,36 +77,29 @@ export async function handleAsyncPaymentFailed(
 			throw new Error("No order ID found in failed async payment session metadata");
 		}
 
-		// Idempotence: if async_payment_succeeded arrived first, don't overwrite PAID
-		const existingOrder = await prisma.order.findUnique({
-			where: { id: orderId },
-			select: { paymentStatus: true },
-		});
+		// Cancel order + release discount usages in a single transaction.
+		// Idempotence check is done INSIDE the transaction to prevent TOCTOU race condition
+		// when async_payment_succeeded and async_payment_failed arrive concurrently.
+		const txResult = await prisma.$transaction(
+			async (tx): Promise<AsyncPaymentFailedTxResult> => {
+				const existingOrder = await tx.order.findUnique({
+					where: { id: orderId },
+					select: { paymentStatus: true },
+				});
 
-		if (!existingOrder) {
-			throw new Error(`Order not found: ${orderId}`);
-		}
+				if (!existingOrder) {
+					throw new Error(`Order not found: ${orderId}`);
+				}
 
-		if (
-			existingOrder.paymentStatus === "PAID" ||
-			existingOrder.paymentStatus === "REFUNDED" ||
-			existingOrder.paymentStatus === "PARTIALLY_REFUNDED" ||
-			existingOrder.paymentStatus === "EXPIRED"
-		) {
-			logger.info(
-				`⏭️ [WEBHOOK] Order ${orderId} already ${existingOrder.paymentStatus}, skipping async payment failure`,
-				{ service: "webhook" },
-			);
-			return {
-				success: true,
-				skipped: true,
-				reason: `Order already ${existingOrder.paymentStatus}`,
-			};
-		}
+				if (
+					existingOrder.paymentStatus === "PAID" ||
+					existingOrder.paymentStatus === "REFUNDED" ||
+					existingOrder.paymentStatus === "PARTIALLY_REFUNDED" ||
+					existingOrder.paymentStatus === "EXPIRED"
+				) {
+					return { skipped: true, status: existingOrder.paymentStatus };
+				}
 
-		// Cancel order + release discount usages in a single transaction
-		const { order, releasedDiscountIds } = await prisma.$transaction(
-			async (tx) => {
 				// Release discount usages
 				const discountUsages = await tx.discountUsage.findMany({
 					where: { orderId },
@@ -130,12 +136,27 @@ export async function handleAsyncPaymentFailed(
 				});
 
 				return {
+					skipped: false,
 					order: updatedOrder,
 					releasedDiscountIds: discountUsages.map((u) => u.discountId),
 				};
 			},
 			{ timeout: 10000 },
 		);
+
+		if (txResult.skipped) {
+			logger.info(
+				`⏭️ [WEBHOOK] Order ${orderId} already ${txResult.status}, skipping async payment failure`,
+				{ service: "webhook" },
+			);
+			return {
+				success: true,
+				skipped: true,
+				reason: `Order already ${txResult.status}`,
+			};
+		}
+
+		const { order, releasedDiscountIds } = txResult;
 
 		logger.info(
 			`⚠️ [WEBHOOK] Order ${order.orderNumber} marked as FAILED due to async payment failure`,

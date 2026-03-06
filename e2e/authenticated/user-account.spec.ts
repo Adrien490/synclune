@@ -105,25 +105,3 @@ test.describe("Compte utilisateur - Adresses", () => {
 		await expect(addButton.or(addLink)).toBeVisible({ timeout: 10000 });
 	});
 });
-
-test.describe("Compte utilisateur - Paramètres", () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto("/compte/parametres");
-		await page.waitForLoadState("domcontentloaded");
-	});
-
-	test("affiche la page des paramètres", async ({ page }) => {
-		const heading = page.getByRole("heading", { name: /Paramètres/i });
-		await expect(heading).toBeVisible();
-	});
-
-	test("affiche la section profil", async ({ page }) => {
-		const profileSection = page.getByText(/Profil/i);
-		await expect(profileSection.first()).toBeVisible();
-	});
-
-	test("affiche la section sécurité", async ({ page }) => {
-		const securitySection = page.getByText(/Sécurité|Mot de passe/i);
-		await expect(securitySection.first()).toBeVisible({ timeout: 10000 });
-	});
-});

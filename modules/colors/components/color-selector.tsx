@@ -103,7 +103,13 @@ export function ColorSelector({
 		onSelect: (color) => updateColor(color.slug ?? color.id),
 	});
 
-	if (colors.length === 0) return null;
+	if (colors.length === 0) {
+		return (
+			<div role="status" className="sr-only">
+				Aucune couleur disponible
+			</div>
+		);
+	}
 
 	return (
 		<fieldset

@@ -66,6 +66,9 @@ export async function bulkDeleteColors(
 			);
 		}
 
+		// Store slugs BEFORE delete — records no longer exist after deleteMany
+		const slugsToInvalidate = colorsWithUsage.map((c) => c.slug);
+
 		// Delete the colors
 		const result = await prisma.color.deleteMany({
 			where: {
@@ -86,8 +89,8 @@ export async function bulkDeleteColors(
 
 		// Invalidate cache (list + detail for each deleted color)
 		const tagSet = new Set(getColorInvalidationTags());
-		for (const color of colorsWithUsage) {
-			tagSet.add(COLORS_CACHE_TAGS.DETAIL(color.slug));
+		for (const slug of slugsToInvalidate) {
+			tagSet.add(COLORS_CACHE_TAGS.DETAIL(slug));
 		}
 		tagSet.forEach((tag) => updateTag(tag));
 

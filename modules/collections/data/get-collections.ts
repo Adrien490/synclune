@@ -46,7 +46,15 @@ export async function getCollections(params: GetCollectionsParams): Promise<GetC
 	const validation = getCollectionsSchema.safeParse(params);
 
 	if (!validation.success) {
-		throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
+		return {
+			collections: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		};
 	}
 
 	return fetchCollections(validation.data);

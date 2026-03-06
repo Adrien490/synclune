@@ -89,12 +89,12 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			metadata: { name: validatedData.name, hex: validatedData.hex },
 		});
 
-		// Invalidate cache (old and new slug if different)
-		const tags = getColorInvalidationTags(existingColor.slug);
+		// Invalidate cache — use Set to avoid duplicate list/badges tags when slug changes
+		const tagSet = new Set(getColorInvalidationTags(existingColor.slug));
 		if (slug !== existingColor.slug) {
-			tags.push(...getColorInvalidationTags(slug));
+			getColorInvalidationTags(slug).forEach((t) => tagSet.add(t));
 		}
-		tags.forEach((tag) => updateTag(tag));
+		tagSet.forEach((tag) => updateTag(tag));
 
 		return success("Couleur modifiée avec succès");
 	} catch (e) {

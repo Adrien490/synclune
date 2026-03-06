@@ -93,6 +93,30 @@ test.describe("Admin - Gestion des commandes", { tag: ["@regression"] }, () => {
 		if ((await statusControls.count()) > 0) {
 			// Status transition control exists — verify it's interactive
 			await expect(statusControls.first()).toBeEnabled();
+
+			// Click to trigger the status change
+			await statusControls.first().click();
+
+			// Handle confirmation dialog if it appears
+			const alertDialog = page.getByRole("alertdialog");
+			if (await alertDialog.isVisible({ timeout: 2000 }).catch(() => false)) {
+				const confirmButton = alertDialog.getByRole("button", { name: /Confirmer|Oui/i });
+				if ((await confirmButton.count()) > 0) {
+					await confirmButton.click();
+				}
+			}
+
+			// Wait for feedback: toast, alert, or status change
+			const feedback = page
+				.locator('[role="status"], [role="alert"]')
+				.or(page.getByText(/mis à jour|modifié|confirmé|expédié/i));
+			await expect(feedback.first()).toBeVisible({ timeout: 7000 });
+
+			// New status badge should be visible
+			const statusBadge = page.getByText(
+				/En attente|Confirmée|En préparation|Expédiée|Livrée|Annulée|Remboursée/i,
+			);
+			await expect(statusBadge.first()).toBeVisible();
 		} else {
 			// Order may not be eligible for transition (e.g., already delivered or cancelled)
 			const status = page.getByText(/Livrée|Annulée|Remboursée/i);

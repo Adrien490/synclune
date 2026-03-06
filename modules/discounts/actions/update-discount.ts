@@ -99,14 +99,10 @@ export async function updateDiscount(
 			},
 		});
 
-		// Invalidate cache for: list, id-based detail, and code-based detail
+		// Invalidate list, admin badges, id-based detail, and code-based detail
 		getDiscountInvalidationTags(id).forEach((tag) => updateTag(tag));
-		// Always invalidate the old code's cache (used by get-discount-by-code)
+		// Invalidate old code's cache (get-discount-by-code uses code as cache key)
 		updateTag(DISCOUNT_CACHE_TAGS.DETAIL(existing.code));
-		if (sanitizedCode !== existing.code) {
-			// Also invalidate the new code if it changed
-			getDiscountInvalidationTags(sanitizedCode).forEach((tag) => updateTag(tag));
-		}
 
 		void logAudit({
 			adminId: adminUser.id,

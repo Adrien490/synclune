@@ -159,6 +159,9 @@ export function ColorFormDialog() {
 											</div>
 										</div>
 									</ColorPicker>
+									<div aria-live="polite" className="sr-only">
+										Couleur sélectionnée : {field.state.value}
+									</div>
 									<input type="hidden" name="hex" value={field.state.value} />
 								</div>
 							)}

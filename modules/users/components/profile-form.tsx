@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useUpdateProfile } from "@/modules/users/hooks/use-update-profile";
+import { EmailChangeForm } from "@/modules/users/components/email-change-form";
 import type { GetCurrentUserReturn } from "@/modules/users/types/current-user.types";
 import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useRouter } from "next/navigation";
@@ -62,7 +63,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 			</form.AppField>
 
 			<div className="space-y-2">
-				<Label htmlFor="email">Email</Label>
+				<Label htmlFor="email">Email actuel</Label>
 				<Input
 					id="email"
 					type="email"
@@ -70,9 +71,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 					disabled
 					className="bg-muted cursor-not-allowed"
 				/>
-				<p className="text-muted-foreground text-sm">
-					L&apos;adresse email ne peut pas être modifiée
-				</p>
+				<EmailChangeForm />
 			</div>
 
 			<form.Subscribe selector={(s) => [s.canSubmit]}>

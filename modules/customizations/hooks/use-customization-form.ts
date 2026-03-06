@@ -109,11 +109,11 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 
 	// Save draft to localStorage on form value changes
 	useEffect(() => {
-		const unsubscribe = form.store.subscribe(() => {
+		const subscription = form.store.subscribe(() => {
 			const values = form.state.values;
 			saveDraft(values);
 		});
-		return () => unsubscribe();
+		return () => subscription.unsubscribe();
 	}, [form]);
 
 	return {

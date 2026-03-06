@@ -41,7 +41,11 @@ export async function bulkToggleDiscountStatus(
 
 		await prisma.discount.updateMany({
 			where: { id: { in: ids }, ...notDeleted },
-			data: { isActive },
+			data: {
+				isActive,
+				// Track explicit deactivation so the cron won't auto-reactivate it
+				manuallyDeactivated: !isActive,
+			},
 		});
 
 		// Fetch affected codes for detail cache invalidation

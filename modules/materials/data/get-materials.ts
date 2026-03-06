@@ -1,4 +1,5 @@
 import { type Prisma } from "@/app/generated/prisma/client";
+import * as Sentry from "@sentry/nextjs";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
@@ -104,7 +105,10 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 		);
 
 		return { materials: items, pagination };
-	} catch {
+	} catch (e) {
+		Sentry.captureException(e, {
+			tags: { module: "materials", operation: "fetchMaterials" },
+		});
 		return {
 			materials: [],
 			pagination: {

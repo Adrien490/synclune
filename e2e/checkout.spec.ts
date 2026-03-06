@@ -74,11 +74,11 @@ test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 			const errorMessage = page.getByText(/erreur/i);
 
 			await expect(async () => {
-				const hasMessage =
-					(await emptyCartMessage.isVisible()) ||
-					(await errorMessage.isVisible()) ||
-					response?.status() === 404;
-				expect(hasMessage).toBe(true);
+				const hasMessage = (await emptyCartMessage.isVisible()) || (await errorMessage.isVisible());
+				expect(
+					hasMessage,
+					"La page /paiement sans panier devrait afficher un message vide ou erreur",
+				).toBe(true);
 			}).toPass({ timeout: 5000 });
 		});
 	});

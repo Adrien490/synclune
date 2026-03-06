@@ -10,7 +10,7 @@ const {
 } = vi.hoisted(() => {
 	const mockTx = {
 		order: {
-			findUnique: vi.fn(),
+			findFirst: vi.fn(),
 			update: vi.fn(),
 		},
 		productSku: {
@@ -24,7 +24,7 @@ const {
 		mockPrisma: {
 			$transaction: vi.fn(),
 			order: {
-				findUnique: vi.fn(),
+				findFirst: vi.fn(),
 				update: vi.fn(),
 			},
 			productSku: {
@@ -88,13 +88,13 @@ describe("markOrderAsPaid", () => {
 	});
 
 	it("should update order to PAID and PROCESSING on happy path", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsPaid("order-1", "pi_abc123");
 
-		expect(mockTx.order.findUnique).toHaveBeenCalledWith({
-			where: { id: "order-1" },
+		expect(mockTx.order.findFirst).toHaveBeenCalledWith({
+			where: { id: "order-1", deletedAt: null },
 			select: { paymentStatus: true },
 		});
 		expect(mockTx.order.update).toHaveBeenCalledWith({
@@ -109,7 +109,7 @@ describe("markOrderAsPaid", () => {
 	});
 
 	it("should skip update when order is already PAID (idempotent)", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PAID" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PAID" });
 
 		await markOrderAsPaid("order-1", "pi_abc123");
 
@@ -117,7 +117,7 @@ describe("markOrderAsPaid", () => {
 	});
 
 	it("should handle order not found gracefully without throwing", async () => {
-		mockTx.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findFirst.mockResolvedValue(null);
 
 		await expect(markOrderAsPaid("nonexistent-order", "pi_abc123")).resolves.toBeUndefined();
 
@@ -184,7 +184,7 @@ describe("restoreStockForOrder", () => {
 				{ skuId: "sku-b", quantity: 1 },
 			],
 		};
-		mockTx.order.findUnique.mockResolvedValue(order);
+		mockTx.order.findFirst.mockResolvedValue(order);
 		mockTx.productSku.findMany.mockResolvedValue([
 			{ id: "sku-a", inventory: 0, isActive: false },
 			{ id: "sku-b", inventory: 3, isActive: true },
@@ -208,7 +208,7 @@ describe("restoreStockForOrder", () => {
 			paymentStatus: "PENDING",
 			items: [{ skuId: "sku-a", quantity: 3 }],
 		};
-		mockTx.order.findUnique.mockResolvedValue(order);
+		mockTx.order.findFirst.mockResolvedValue(order);
 
 		const result = await restoreStockForOrder("order-2");
 
@@ -219,7 +219,7 @@ describe("restoreStockForOrder", () => {
 	});
 
 	it("should handle order not found gracefully", async () => {
-		mockTx.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findFirst.mockResolvedValue(null);
 
 		const result = await restoreStockForOrder("nonexistent-order");
 
@@ -238,7 +238,7 @@ describe("restoreStockForOrder", () => {
 				{ skuId: "sku-b", quantity: 1 },
 			],
 		};
-		mockTx.order.findUnique.mockResolvedValue(order);
+		mockTx.order.findFirst.mockResolvedValue(order);
 		mockTx.productSku.findMany.mockResolvedValue([
 			{ id: "sku-a", inventory: 0, isActive: false },
 			{ id: "sku-b", inventory: 5, isActive: true },
@@ -285,7 +285,7 @@ describe("restoreStockForOrder", () => {
 				{ skuId: "sku-manually-deactivated", quantity: 1 },
 			],
 		};
-		mockTx.order.findUnique.mockResolvedValue(order);
+		mockTx.order.findFirst.mockResolvedValue(order);
 		mockTx.productSku.findMany.mockResolvedValue([
 			// Auto-deactivated: inventory=0 and inactive → should reactivate
 			{ id: "sku-auto-deactivated", inventory: 0, isActive: false },
@@ -321,7 +321,7 @@ describe("markOrderAsFailed", () => {
 	});
 
 	it("should update order with FAILED payment status, CANCELLED status and failure details", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		const failureDetails: PaymentFailureDetails = {
@@ -346,7 +346,7 @@ describe("markOrderAsFailed", () => {
 	});
 
 	it("should skip update when order is already FAILED (idempotent)", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "FAILED" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "FAILED" });
 
 		const failureDetails: PaymentFailureDetails = {
 			code: "card_declined",
@@ -360,7 +360,7 @@ describe("markOrderAsFailed", () => {
 	});
 
 	it("should handle order not found gracefully without throwing", async () => {
-		mockTx.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findFirst.mockResolvedValue(null);
 
 		const failureDetails: PaymentFailureDetails = {
 			code: null,
@@ -386,13 +386,13 @@ describe("markOrderAsCancelled", () => {
 	});
 
 	it("should update order to CANCELLED status with FAILED payment status", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsCancelled("order-1", "pi_cancelled123");
 
-		expect(mockTx.order.findUnique).toHaveBeenCalledWith({
-			where: { id: "order-1" },
+		expect(mockTx.order.findFirst).toHaveBeenCalledWith({
+			where: { id: "order-1", deletedAt: null },
 			select: { status: true, paymentStatus: true },
 		});
 		expect(mockTx.order.update).toHaveBeenCalledWith({
@@ -406,7 +406,7 @@ describe("markOrderAsCancelled", () => {
 	});
 
 	it("should skip update when order is already CANCELLED with FAILED payment (idempotent)", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ status: "CANCELLED", paymentStatus: "FAILED" });
+		mockTx.order.findFirst.mockResolvedValue({ status: "CANCELLED", paymentStatus: "FAILED" });
 
 		await markOrderAsCancelled("order-1", "pi_cancelled123");
 
@@ -414,7 +414,7 @@ describe("markOrderAsCancelled", () => {
 	});
 
 	it("should handle order not found gracefully without throwing", async () => {
-		mockTx.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findFirst.mockResolvedValue(null);
 
 		await expect(
 			markOrderAsCancelled("nonexistent-order", "pi_cancelled123"),
@@ -457,7 +457,8 @@ describe("initiateAutomaticRefund", () => {
 
 		await initiateAutomaticRefund("pi_stable123", "order-1", "some reason text");
 
-		const [, options] = mockStripeRefunds.create.mock.calls[0];
+		const call = mockStripeRefunds.create.mock.calls[0] as [unknown, { idempotencyKey: string }];
+		const [, options] = call;
 		expect(options.idempotencyKey).toBe("auto-refund-pi_stable123");
 		// Key must NOT include the reason string
 		expect(options.idempotencyKey).not.toContain("some reason text");
@@ -492,13 +493,13 @@ describe("sendRefundFailureAlert", () => {
 			total: 9900,
 			user: { email: "client@example.com" },
 		};
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSendAdminRefundFailedAlert.mockResolvedValue(undefined);
 
 		await sendRefundFailureAlert("order-42", "pi_xyz", "payment_failed", "Insufficient funds");
 
-		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith({
-			where: { id: "order-42" },
+		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith({
+			where: { id: "order-42", deletedAt: null },
 			select: expect.objectContaining({
 				orderNumber: true,
 				total: true,
@@ -519,7 +520,7 @@ describe("sendRefundFailureAlert", () => {
 	});
 
 	it("should handle missing order gracefully without throwing", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockPrisma.order.findFirst.mockResolvedValue(null);
 
 		await expect(
 			sendRefundFailureAlert("nonexistent-order", "pi_xyz", "other", "Unknown error"),

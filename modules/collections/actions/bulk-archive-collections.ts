@@ -57,36 +57,43 @@ export async function bulkArchiveCollections(
 
 		const validatedData = validated.data;
 
-		// 4. Verifier que toutes les collections existent
-		const existingCollections = await prisma.collection.findMany({
-			where: {
-				id: {
-					in: validatedData.collectionIds,
+		// 4. Verifier que toutes les collections existent + mettre a jour le statut (atomique)
+		const existingCollections = await prisma.$transaction(async (tx) => {
+			const collections = await tx.collection.findMany({
+				where: {
+					id: {
+						in: validatedData.collectionIds,
+					},
 				},
-			},
-			select: {
-				id: true,
-				name: true,
-				slug: true,
-				status: true,
-			},
+				select: {
+					id: true,
+					name: true,
+					slug: true,
+					status: true,
+				},
+			});
+
+			if (collections.length !== validatedData.collectionIds.length) {
+				return null;
+			}
+
+			await tx.collection.updateMany({
+				where: {
+					id: {
+						in: validatedData.collectionIds,
+					},
+				},
+				data: {
+					status: validatedData.targetStatus,
+				},
+			});
+
+			return collections;
 		});
 
-		if (existingCollections.length !== validatedData.collectionIds.length) {
+		if (!existingCollections) {
 			return notFound("Collection");
 		}
-
-		// 5. Mettre a jour le statut
-		await prisma.collection.updateMany({
-			where: {
-				id: {
-					in: validatedData.collectionIds,
-				},
-			},
-			data: {
-				status: validatedData.targetStatus,
-			},
-		});
 
 		// 6. Invalidate cache tags pour toutes les collections
 		for (const collection of existingCollections) {

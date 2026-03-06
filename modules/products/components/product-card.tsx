@@ -134,6 +134,7 @@ function ProductCardRating({
 			aria-valuenow={averageRating}
 			aria-valuemin={0}
 			aria-valuemax={5}
+			aria-valuetext={`${formattedRating} étoiles sur 5`}
 			style={
 				{
 					"--star-filled": "var(--secondary)",
@@ -204,7 +205,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 
 	const productUrl = `/creations/${slug}`;
 
-	const isAboveFold = index !== undefined && index < ABOVE_FOLD_THRESHOLD;
+	const isAboveFold = (index ?? 0) < ABOVE_FOLD_THRESHOLD;
 
 	// Build sr-only description for screen readers (badges info)
 	const badgeDescriptions: string[] = [];

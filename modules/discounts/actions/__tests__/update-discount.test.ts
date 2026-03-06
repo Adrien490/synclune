@@ -347,7 +347,7 @@ describe("updateDiscount", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("discount-PROMO20");
 	});
 
-	it("should also invalidate new code tags when code changed", async () => {
+	it("should invalidate id tags and old code tag when code changed", async () => {
 		mockSanitizeText.mockReturnValue("UPDATED-CODE");
 		mockPrisma.discount.findUnique
 			.mockResolvedValueOnce({ id: "disc-123", code: "OLD-CODE" })
@@ -356,9 +356,10 @@ describe("updateDiscount", () => {
 
 		await updateDiscount(undefined, validFormData);
 
-		// Called for id and then for new code
+		// Called once for id-based invalidation
 		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("UPDATED-CODE");
+		// New code tag is not pre-emptively invalidated (it's not yet in cache)
+		expect(mockGetDiscountInvalidationTags).not.toHaveBeenCalledWith("UPDATED-CODE");
 	});
 
 	it("should not call getDiscountInvalidationTags for new code when code is unchanged", async () => {

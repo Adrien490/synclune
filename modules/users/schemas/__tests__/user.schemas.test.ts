@@ -27,7 +27,12 @@ vi.mock("@/shared/constants/validation-limits", () => ({
 	TEXT_LIMITS: { USER_SEARCH: { max: 100 } },
 }));
 
-vi.mock("@/modules/users/constants/profile.constants", () => ({
+vi.mock("../../constants/user.constants", () => ({
+	GET_USERS_DEFAULT_PER_PAGE: 50,
+	GET_USERS_MAX_RESULTS_PER_PAGE: 200,
+	GET_USERS_DEFAULT_SORT_BY: "createdAt",
+	GET_USERS_DEFAULT_SORT_ORDER: "desc",
+	GET_USERS_SORT_FIELDS: ["createdAt", "updatedAt", "name", "email", "role"],
 	USER_CONSTANTS: {
 		MIN_NAME_LENGTH: 2,
 		MAX_NAME_LENGTH: 50,
@@ -37,14 +42,6 @@ vi.mock("@/modules/users/constants/profile.constants", () => ({
 		NAME_TOO_SHORT: "Name too short",
 		NAME_TOO_LONG: "Name too long",
 	},
-}));
-
-vi.mock("../../constants/user.constants", () => ({
-	GET_USERS_DEFAULT_PER_PAGE: 50,
-	GET_USERS_MAX_RESULTS_PER_PAGE: 200,
-	GET_USERS_DEFAULT_SORT_BY: "createdAt",
-	GET_USERS_DEFAULT_SORT_ORDER: "desc",
-	GET_USERS_SORT_FIELDS: ["createdAt", "updatedAt", "name", "email", "role"],
 }));
 
 import {

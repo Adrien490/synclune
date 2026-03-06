@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures";
+import { TIMEOUTS } from "../constants";
 
 test.describe("Admin - Tableau de bord (authentifié)", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ page }) => {
@@ -95,6 +96,36 @@ test.describe("Admin - Page produits (authentifié)", { tag: ["@critical"] }, ()
 		const table = page.locator("table");
 		const emptyState = page.getByText(/Aucun produit/i);
 		await expect(table.or(emptyState)).toBeVisible({ timeout: 10000 });
+	});
+});
+
+test.describe("Admin - Dashboard widgets smoke test", { tag: ["@regression"] }, () => {
+	test("les 3 widgets principaux sont visibles au chargement", async ({ page, adminPage }) => {
+		await adminPage.goto();
+		await expect(adminPage.heading).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+
+		// KPIs : les 3 titres de cartes sont présents
+		await expect(page.getByRole("heading", { name: /CA du mois/i })).toBeVisible({
+			timeout: TIMEOUTS.DATA_LOAD,
+		});
+		await expect(page.getByRole("heading", { name: /^Commandes$/i })).toBeVisible({
+			timeout: TIMEOUTS.DATA_LOAD,
+		});
+		await expect(page.getByRole("heading", { name: /Panier moyen/i })).toBeVisible({
+			timeout: TIMEOUTS.DATA_LOAD,
+		});
+
+		// Graphique revenus : figure ou état vide
+		const revenueWidget = page
+			.locator('[role="figure"][aria-label*="Graphique"]')
+			.or(page.getByText(/Aucun revenu/i));
+		await expect(revenueWidget.first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+
+		// Commandes récentes : liste ou état vide
+		const recentOrdersWidget = page
+			.getByRole("list")
+			.or(page.getByText(/Aucune commande récente|Aucune commande/i));
+		await expect(recentOrdersWidget.first()).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
 	});
 });
 

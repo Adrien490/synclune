@@ -61,6 +61,10 @@ export function ProductList({
 
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
 
+	// Escape <, > and & to prevent XSS in JSON-LD script injection
+	const sanitizeJsonLd = (json: string) =>
+		json.replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+
 	// ItemList JSON-LD for rich snippets (carousel-style SERPs)
 	const itemListJsonLd = {
 		"@context": "https://schema.org",
@@ -81,7 +85,7 @@ export function ProductList({
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c"),
+					__html: sanitizeJsonLd(JSON.stringify(itemListJsonLd)),
 				}}
 			/>
 

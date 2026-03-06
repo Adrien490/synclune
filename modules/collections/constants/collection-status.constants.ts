@@ -1,8 +1,9 @@
+import { CollectionStatus } from "@/app/generated/prisma/enums";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // ============================================================================
 // STATUS LABELS, COLORS & VARIANTS
-// Client-safe constants - no Prisma imports
+// Client-safe constants - enum-only Prisma import (no DB client)
 // ============================================================================
 
 export const COLLECTION_STATUS_LABELS = {
@@ -17,10 +18,10 @@ export const COLLECTION_STATUS_COLORS = {
 	ARCHIVED: "#6b7280", // gray
 } as const;
 
-export const COLLECTION_STATUS_VARIANTS: Record<string, BadgeVariant> = {
-	DRAFT: "warning",
-	PUBLIC: "success",
-	ARCHIVED: "secondary",
+export const COLLECTION_STATUS_VARIANTS: Record<CollectionStatus, BadgeVariant> = {
+	[CollectionStatus.DRAFT]: "warning",
+	[CollectionStatus.PUBLIC]: "success",
+	[CollectionStatus.ARCHIVED]: "secondary",
 } as const;
 
 export type { CollectionStatusKey } from "../types/collection-status.types";

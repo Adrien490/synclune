@@ -14,6 +14,7 @@ const {
 	mockSendAdminDisputeAlert,
 	mockSendAdminInvoiceFailedAlert,
 	mockSendWebhookFailedAlertEmail,
+	mockPrisma,
 } = vi.hoisted(() => ({
 	mockUpdateTag: vi.fn(),
 	mockSendOrderConfirmationEmail: vi.fn(),
@@ -24,10 +25,18 @@ const {
 	mockSendAdminDisputeAlert: vi.fn(),
 	mockSendAdminInvoiceFailedAlert: vi.fn(),
 	mockSendWebhookFailedAlertEmail: vi.fn(),
+	mockPrisma: {
+		failedEmail: {
+			create: vi.fn(),
+		},
+	},
 }));
 
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
+}));
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: mockPrisma,
 }));
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendOrderConfirmationEmail: mockSendOrderConfirmationEmail,
@@ -64,6 +73,7 @@ describe("executePostWebhookTasks", () => {
 		mockSendAdminDisputeAlert.mockResolvedValue({ success: true });
 		mockSendAdminInvoiceFailedAlert.mockResolvedValue({ success: true });
 		mockSendWebhookFailedAlertEmail.mockResolvedValue({ success: true });
+		mockPrisma.failedEmail.create.mockResolvedValue({});
 	});
 
 	it("returns zero counts for empty task list", async () => {
@@ -144,6 +154,53 @@ describe("executePostWebhookTasks", () => {
 			type: "ORDER_CONFIRMATION_EMAIL",
 			error: "SMTP down",
 		});
+	});
+
+	it("persists failed email task to dead-letter table", async () => {
+		mockSendOrderConfirmationEmail.mockRejectedValue(new Error("SMTP down"));
+
+		const taskData = { to: "user@example.com", orderNumber: "SYN-001" };
+		const tasks = [
+			{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: taskData },
+		] as PostWebhookTask[];
+
+		await executePostWebhookTasks(tasks);
+
+		expect(mockPrisma.failedEmail.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({
+				taskType: "ORDER_CONFIRMATION_EMAIL",
+				payload: taskData,
+				attempts: 1,
+				lastError: "SMTP down",
+			}),
+		});
+	});
+
+	it("does NOT persist INVALIDATE_CACHE failures to dead-letter table", async () => {
+		// INVALIDATE_CACHE cannot realistically fail (updateTag is sync), but if it did:
+		mockUpdateTag.mockImplementation(() => {
+			throw new Error("cache error");
+		});
+
+		const tasks = [
+			{ type: "INVALIDATE_CACHE" as const, tags: ["orders-list"] },
+		] as PostWebhookTask[];
+
+		await executePostWebhookTasks(tasks);
+
+		expect(mockPrisma.failedEmail.create).not.toHaveBeenCalled();
+	});
+
+	it("does not throw when dead-letter persistence fails", async () => {
+		mockSendOrderConfirmationEmail.mockRejectedValue(new Error("SMTP down"));
+		mockPrisma.failedEmail.create.mockRejectedValue(new Error("DB connection lost"));
+
+		const tasks = [{ type: "ORDER_CONFIRMATION_EMAIL" as const, data: {} }] as PostWebhookTask[];
+
+		// Should not throw despite DB error
+		const result = await executePostWebhookTasks(tasks);
+
+		expect(result.failed).toBe(1);
 	});
 
 	it("sends admin alert when critical customer-facing email fails", async () => {

@@ -73,6 +73,7 @@ async function lookupAndValidate(
 			type: discount.type,
 			value: discount.value,
 			discountAmount,
+			excludeSaleItems: false, // calculateDiscountAmount applies to full subtotal
 		},
 	};
 }

@@ -89,6 +89,7 @@ export type ValidateDiscountCodeReturn = {
 		type: DiscountType;
 		value: number;
 		discountAmount: number; // Montant calculé en centimes
+		excludeSaleItems: boolean; // Si true, les articles soldés sont exclus du calcul
 	};
 	error?: string;
 };

@@ -153,8 +153,8 @@ describe("checkDiscountEligibility — complex scenarios", () => {
 		expect(result).toEqual({ eligible: true });
 	});
 
-	it("should accept discount with null startsAt (immediately valid)", () => {
-		const discount = makeDiscount({ startsAt: null as unknown as undefined });
+	it("should accept discount with a far-past startsAt (immediately valid)", () => {
+		const discount = makeDiscount({ startsAt: new Date("2020-01-01T00:00:00Z") });
 
 		const result = checkDiscountEligibility(discount, makeContext());
 

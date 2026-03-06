@@ -3,6 +3,7 @@ import {
 	sendPasswordResetEmail,
 	sendVerificationEmail,
 	sendWelcomeEmail,
+	sendEmailChangeConfirmationEmail,
 } from "@/modules/emails/services/auth-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -47,6 +48,28 @@ export const auth = betterAuth({
 				type: "string",
 				required: false, // Optionnel pour permettre Google OAuth
 				input: true,
+			},
+		},
+		changeEmail: {
+			enabled: true,
+			sendChangeEmailConfirmation: async ({
+				user,
+				newEmail,
+				url,
+			}: {
+				user: { email: string };
+				newEmail: string;
+				url: string;
+			}) => {
+				try {
+					await sendEmailChangeConfirmationEmail({
+						to: newEmail,
+						url,
+						currentEmail: user.email,
+					});
+				} catch (error) {
+					console.error("[AUTH] Failed to send email change confirmation:", error);
+				}
 			},
 		},
 	},

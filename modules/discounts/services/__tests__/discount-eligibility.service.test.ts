@@ -129,7 +129,7 @@ describe("checkDiscountEligibility", () => {
 
 		it("should return eligible when only endsAt is set and is in the future", () => {
 			const discount = makeDiscount({
-				startsAt: null,
+				startsAt: new Date("2020-01-01T00:00:00Z"),
 				endsAt: new Date("2026-12-31T23:59:59Z"),
 			});
 			const result = checkDiscountEligibility(discount, makeContext());

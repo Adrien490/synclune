@@ -25,6 +25,7 @@ export async function fetchAddresses(
 		headers: {
 			Accept: "application/json",
 		},
+		signal: AbortSignal.timeout(3000),
 	});
 
 	if (!response.ok) {

@@ -168,9 +168,6 @@ test.describe("Accessibilité composants - Tooltip", { tag: ["@slow"] }, () => {
 			await btn.focus();
 			await expect(btn).toBeFocused();
 
-			// Wait for tooltip to potentially appear
-			await page.waitForTimeout(300);
-
 			// Tab away — tooltip should disappear
 			await page.keyboard.press("Tab");
 			return;
@@ -180,11 +177,14 @@ test.describe("Accessibilité composants - Tooltip", { tag: ["@slow"] }, () => {
 		await trigger.focus();
 		await expect(trigger).toBeFocused();
 
-		// Tooltip should appear after delay
-		await page.waitForTimeout(300);
+		// Wait for tooltip to appear on focus
 		const tooltip = page.getByRole("tooltip");
-		if ((await tooltip.count()) > 0) {
-			await expect(tooltip).toBeVisible();
+		await tooltip
+			.first()
+			.waitFor({ state: "visible", timeout: 1500 })
+			.catch(() => {});
+		if ((await tooltip.count()) > 0 && (await tooltip.first().isVisible())) {
+			await expect(tooltip.first()).toBeVisible();
 		}
 
 		// Tab away — tooltip should disappear
@@ -261,10 +261,13 @@ test.describe("Accessibilité composants - Autocomplete", { tag: ["@slow"] }, ()
 
 		await autocompleteInput.focus();
 		await autocompleteInput.fill("Paris");
-		await page.waitForTimeout(500);
 
-		// Check if listbox appears with results
+		// Wait for listbox to appear with results
 		const listbox = dialog.locator('[role="listbox"]');
+		await listbox
+			.first()
+			.waitFor({ state: "visible", timeout: 3000 })
+			.catch(() => {});
 		if ((await listbox.count()) === 0) return;
 
 		const options = listbox.locator('[role="option"]');
@@ -325,10 +328,10 @@ test.describe("Accessibilité composants - MultiSelect", { tag: ["@slow"] }, () 
 
 		// Enter opens the popover
 		await page.keyboard.press("Enter");
-		await page.waitForTimeout(200);
 
 		// Check for Command/Popover content
 		const popoverContent = page.locator("[data-radix-popover-content]").first();
+		await popoverContent.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
 		if ((await popoverContent.count()) === 0) return;
 		await expect(popoverContent).toBeVisible();
 
@@ -336,7 +339,12 @@ test.describe("Accessibilité composants - MultiSelect", { tag: ["@slow"] }, () 
 		const searchInput = popoverContent.locator('input[type="text"]').first();
 		if ((await searchInput.count()) > 0) {
 			await searchInput.fill("a");
-			await page.waitForTimeout(200);
+			// Wait for cmdk to filter options
+			await page
+				.locator("[cmdk-item]")
+				.first()
+				.waitFor({ state: "visible", timeout: 2000 })
+				.catch(() => {});
 		}
 
 		// Navigate options with ArrowDown

@@ -94,16 +94,11 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 		// Press ArrowRight to go to next slide
 		await page.keyboard.press("ArrowRight");
 
-		// Allow carousel animation to settle
-		await page.waitForTimeout(500);
-
-		// Verify the second tab is now selected
+		// Verify the second tab is now selected (assertion acts as wait)
 		await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
 
 		// Press ArrowLeft to go back
 		await page.keyboard.press("ArrowLeft");
-		await page.waitForTimeout(500);
-
 		await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
 	});
 
@@ -132,12 +127,10 @@ test.describe("Galerie produit", { tag: ["@critical"] }, () => {
 
 		// Press End to go to last slide
 		await page.keyboard.press("End");
-		await page.waitForTimeout(500);
 		await expect(tabs.last()).toHaveAttribute("aria-selected", "true");
 
 		// Press Home to go to first slide
 		await page.keyboard.press("Home");
-		await page.waitForTimeout(500);
 		await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
 	});
 });

@@ -55,7 +55,11 @@ export async function toggleDiscountStatus(
 
 		await prisma.discount.update({
 			where: { id },
-			data: { isActive: newStatus },
+			data: {
+				isActive: newStatus,
+				// Track explicit deactivation so the cron won't auto-reactivate it
+				manuallyDeactivated: !newStatus,
+			},
 		});
 
 		getDiscountInvalidationTags(discount.code).forEach((tag) => updateTag(tag));

@@ -44,6 +44,9 @@ test.describe("Scenarios d'erreur avances", { tag: ["@regression"] }, () => {
 			// Navigation failure is expected
 		}
 
+		// URL should still be the homepage (navigation blocked)
+		expect(page.url()).not.toContain("/produits");
+
 		// Clean up
 		await page.unroute("**/*");
 	});

@@ -17,14 +17,12 @@ const { mockPrisma, mockTx, mockHandleCheckoutSessionCompleted, mockGetBaseUrl }
 				update: vi.fn(),
 			},
 			order: {
+				findUnique: vi.fn(),
 				update: vi.fn(),
 			},
 		};
 
 		const mockPrisma = {
-			order: {
-				findUnique: vi.fn(),
-			},
 			$transaction: vi.fn(),
 			_mockTx: mockTx,
 		};
@@ -193,7 +191,7 @@ describe("handleAsyncPaymentFailed", () => {
 		];
 		const updatedOrder = makeOrder();
 
-		mockPrisma.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
 		mockTx.discountUsage.findMany.mockResolvedValue(discountUsages);
 		mockTx.discount.update.mockResolvedValue({});
 		mockTx.discountUsage.deleteMany.mockResolvedValue({});
@@ -260,58 +258,58 @@ describe("handleAsyncPaymentFailed", () => {
 		await expect(handleAsyncPaymentFailed(session)).rejects.toThrow(
 			"No order ID found in failed async payment session metadata",
 		);
-		expect(mockPrisma.order.findUnique).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("should throw an error when order is not found in the database", async () => {
 		const session = makeSession();
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findUnique.mockResolvedValue(null);
 
 		await expect(handleAsyncPaymentFailed(session)).rejects.toThrow("Order not found: order-1");
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
 	});
 
 	it("should skip and return idempotent result when order is already PAID", async () => {
 		const session = makeSession();
-		mockPrisma.order.findUnique.mockResolvedValue({ paymentStatus: "PAID" });
+		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PAID" });
 
 		const result = await handleAsyncPaymentFailed(session);
 
 		expect(result.success).toBe(true);
 		expect(result.skipped).toBe(true);
 		expect(result.reason).toBe("Order already PAID");
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
 	});
 
 	it("should skip and return idempotent result when order is already REFUNDED", async () => {
 		const session = makeSession();
-		mockPrisma.order.findUnique.mockResolvedValue({ paymentStatus: "REFUNDED" });
+		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "REFUNDED" });
 
 		const result = await handleAsyncPaymentFailed(session);
 
 		expect(result.success).toBe(true);
 		expect(result.skipped).toBe(true);
 		expect(result.reason).toBe("Order already REFUNDED");
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
 	});
 
 	it("should skip and return idempotent result when order is already PARTIALLY_REFUNDED", async () => {
 		const session = makeSession();
-		mockPrisma.order.findUnique.mockResolvedValue({ paymentStatus: "PARTIALLY_REFUNDED" });
+		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PARTIALLY_REFUNDED" });
 
 		const result = await handleAsyncPaymentFailed(session);
 
 		expect(result.success).toBe(true);
 		expect(result.skipped).toBe(true);
 		expect(result.reason).toBe("Order already PARTIALLY_REFUNDED");
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
 	});
 
 	it("should cancel order without calling discount operations when no discount usages exist", async () => {
 		const session = makeSession();
 		const updatedOrder = makeOrder();
 
-		mockPrisma.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
 		mockTx.discountUsage.findMany.mockResolvedValue([]);
 		mockTx.order.update.mockResolvedValue(updatedOrder);
 
@@ -338,7 +336,7 @@ describe("handleAsyncPaymentFailed", () => {
 		const discountUsages = [{ id: "du-1", discountId: "disc-1" }];
 		const updatedOrder = makeOrder();
 
-		mockPrisma.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
 		mockTx.discountUsage.findMany.mockResolvedValue(discountUsages);
 		mockTx.discount.update.mockResolvedValue({});
 		mockTx.discountUsage.deleteMany.mockResolvedValue({});
@@ -350,6 +348,7 @@ describe("handleAsyncPaymentFailed", () => {
 		expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
 
 		// All mutating calls went to mockTx (the transaction proxy), not mockPrisma directly
+		expect(mockTx.order.findUnique).toHaveBeenCalled();
 		expect(mockTx.discountUsage.findMany).toHaveBeenCalled();
 		expect(mockTx.discount.update).toHaveBeenCalled();
 		expect(mockTx.discountUsage.deleteMany).toHaveBeenCalled();

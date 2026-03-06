@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } = vi.hoisted(() => {
 	const mockTx = {
 		order: {
-			findUnique: vi.fn(),
+			findFirst: vi.fn(),
 			update: vi.fn(),
 		},
 		productSku: {
@@ -21,7 +21,7 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 		mockPrisma: {
 			$transaction: vi.fn(),
 			order: {
-				findUnique: vi.fn(),
+				findFirst: vi.fn(),
 				update: vi.fn(),
 			},
 		},
@@ -34,6 +34,7 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("@/shared/lib/stripe", () => ({
@@ -75,7 +76,7 @@ describe("markOrderAsPaid — idempotency", () => {
 	});
 
 	it("should mark order as PAID and set paidAt timestamp", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsPaid("order-1", "pi_abc123");
@@ -92,7 +93,7 @@ describe("markOrderAsPaid — idempotency", () => {
 	});
 
 	it("should be idempotent — already PAID order returns early without DB update", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PAID" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PAID" });
 
 		await markOrderAsPaid("order-1", "pi_abc123");
 
@@ -100,7 +101,7 @@ describe("markOrderAsPaid — idempotency", () => {
 	});
 
 	it("should not throw when order is not found", async () => {
-		mockTx.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findFirst.mockResolvedValue(null);
 
 		await expect(markOrderAsPaid("missing", "pi_abc123")).resolves.toBeUndefined();
 
@@ -112,9 +113,9 @@ describe("markOrderAsPaid — idempotency", () => {
 		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockTx) => Promise<void>) => {
 			callCount++;
 			if (callCount === 1) {
-				mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+				mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
 			} else {
-				mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PAID" });
+				mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PAID" });
 			}
 			mockTx.order.update.mockResolvedValue({});
 			return cb(mockTx);
@@ -143,7 +144,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 	});
 
 	it("should restore stock for all order items on PROCESSING order", async () => {
-		mockTx.order.findUnique.mockResolvedValue({
+		mockTx.order.findFirst.mockResolvedValue({
 			id: "order-1",
 			orderNumber: "SYN-001",
 			status: "PROCESSING",
@@ -167,7 +168,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 	});
 
 	it("should aggregate quantities when same SKU appears in multiple order items", async () => {
-		mockTx.order.findUnique.mockResolvedValue({
+		mockTx.order.findFirst.mockResolvedValue({
 			id: "order-1",
 			orderNumber: "SYN-001",
 			status: "PROCESSING",
@@ -193,7 +194,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 	});
 
 	it("should NOT restore stock if order is still PENDING (stock not yet decremented)", async () => {
-		mockTx.order.findUnique.mockResolvedValue({
+		mockTx.order.findFirst.mockResolvedValue({
 			id: "order-1",
 			orderNumber: "SYN-001",
 			status: "PENDING",
@@ -209,7 +210,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 	});
 
 	it("should NOT restore stock if order has no items", async () => {
-		mockTx.order.findUnique.mockResolvedValue({
+		mockTx.order.findFirst.mockResolvedValue({
 			id: "order-1",
 			orderNumber: "SYN-001",
 			status: "PROCESSING",
@@ -224,7 +225,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 	});
 
 	it("should reactivate auto-deactivated SKU (inventory=0, isActive=false)", async () => {
-		mockTx.order.findUnique.mockResolvedValue({
+		mockTx.order.findFirst.mockResolvedValue({
 			id: "order-1",
 			orderNumber: "SYN-001",
 			status: "PROCESSING",
@@ -246,7 +247,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 	});
 
 	it("should NOT reactivate manually deactivated SKU (inventory>0, isActive=false)", async () => {
-		mockTx.order.findUnique.mockResolvedValue({
+		mockTx.order.findFirst.mockResolvedValue({
 			id: "order-1",
 			orderNumber: "SYN-001",
 			status: "PROCESSING",
@@ -268,7 +269,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 	});
 
 	it("should return empty result when order not found", async () => {
-		mockTx.order.findUnique.mockResolvedValue(null);
+		mockTx.order.findFirst.mockResolvedValue(null);
 
 		const result = await restoreStockForOrder("missing");
 
@@ -289,7 +290,7 @@ describe("markOrderAsFailed — idempotency", () => {
 	});
 
 	it("should store failure details on first call", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsFailed("order-1", "pi_abc123", {
@@ -311,7 +312,7 @@ describe("markOrderAsFailed — idempotency", () => {
 	});
 
 	it("should be idempotent — already FAILED order returns early", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "FAILED" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "FAILED" });
 
 		await markOrderAsFailed("order-1", "pi_abc123", {
 			code: null,
@@ -323,7 +324,7 @@ describe("markOrderAsFailed — idempotency", () => {
 	});
 
 	it("should handle null failure details gracefully", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsFailed("order-1", "pi_abc123", {
@@ -357,7 +358,7 @@ describe("markOrderAsCancelled — idempotency", () => {
 	});
 
 	it("should cancel order on first call", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsCancelled("order-1", "pi_abc123");
@@ -373,7 +374,7 @@ describe("markOrderAsCancelled — idempotency", () => {
 	});
 
 	it("should be idempotent — already CANCELLED with FAILED payment returns early", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ status: "CANCELLED", paymentStatus: "FAILED" });
+		mockTx.order.findFirst.mockResolvedValue({ status: "CANCELLED", paymentStatus: "FAILED" });
 
 		await markOrderAsCancelled("order-1", "pi_abc123");
 
@@ -381,7 +382,7 @@ describe("markOrderAsCancelled — idempotency", () => {
 	});
 
 	it("should still update if only status is CANCELLED but paymentStatus is not FAILED", async () => {
-		mockTx.order.findUnique.mockResolvedValue({ status: "CANCELLED", paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ status: "CANCELLED", paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsCancelled("order-1", "pi_abc123");
@@ -447,7 +448,7 @@ describe("sendRefundFailureAlert", () => {
 	});
 
 	it("should send admin alert with order details", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue({
+		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-001",
 			total: 4999,
 			user: { email: "client@example.com" },
@@ -468,7 +469,7 @@ describe("sendRefundFailureAlert", () => {
 	});
 
 	it("should use fallback email when user has no email", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue({
+		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-002",
 			total: 2500,
 			user: null,
@@ -485,7 +486,7 @@ describe("sendRefundFailureAlert", () => {
 	});
 
 	it("should not throw when order is not found", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockPrisma.order.findFirst.mockResolvedValue(null);
 
 		await expect(
 			sendRefundFailureAlert("missing", "pi_abc", "other", "Error"),
@@ -495,7 +496,7 @@ describe("sendRefundFailureAlert", () => {
 	});
 
 	it("should not throw when email service fails", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue({
+		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-003",
 			total: 1000,
 			user: { email: "test@example.com" },

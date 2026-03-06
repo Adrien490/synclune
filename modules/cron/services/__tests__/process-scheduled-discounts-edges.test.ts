@@ -46,18 +46,9 @@ describe("processScheduledDiscounts — edge cases", () => {
 	});
 
 	it("should activate discount whose startsAt is in the past and endsAt is future", async () => {
-		const candidate = {
-			id: "disc-1",
-			startsAt: new Date("2026-06-01"),
-			// updatedAt <= startsAt means NOT manually deactivated
-			updatedAt: new Date("2026-05-30"),
-		};
-
-		// First findMany: activation candidates
-		mockPrisma.discount.findMany.mockResolvedValueOnce([candidate]);
-		// updateMany for activation
+		// DB already filters manuallyDeactivated: false; returns only eligible candidates
+		mockPrisma.discount.findMany.mockResolvedValueOnce([{ id: "disc-1" }]);
 		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1 });
-		// Second findMany: deactivation candidates
 		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
 
 		const result = await processScheduledDiscounts();
@@ -66,7 +57,7 @@ describe("processScheduledDiscounts — edge cases", () => {
 		expect(result.deactivated).toBe(0);
 		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
 			where: { id: { in: ["disc-1"] } },
-			data: { isActive: true },
+			data: { isActive: true, manuallyDeactivated: false },
 		});
 	});
 
@@ -99,42 +90,29 @@ describe("processScheduledDiscounts — edge cases", () => {
 		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
-	it("should NOT reactivate manually deactivated discounts (updatedAt > startsAt)", async () => {
-		const manuallyDeactivated = {
-			id: "disc-manual",
-			startsAt: new Date("2026-06-01"),
-			// updatedAt > startsAt = admin manually deactivated this after startsAt
-			updatedAt: new Date("2026-06-10"),
-		};
-
-		const autoCandidate = {
-			id: "disc-auto",
-			startsAt: new Date("2026-06-14"),
-			updatedAt: new Date("2026-06-13"),
-		};
-
-		mockPrisma.discount.findMany.mockResolvedValueOnce([manuallyDeactivated, autoCandidate]);
+	it("should NOT reactivate manually deactivated discounts (filtered via manuallyDeactivated: false)", async () => {
+		// The DB WHERE clause filters out manuallyDeactivated=true entries.
+		// Only disc-auto (manuallyDeactivated=false) is returned by the DB.
+		mockPrisma.discount.findMany.mockResolvedValueOnce([{ id: "disc-auto" }]);
 		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1 });
 		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
 
 		const result = await processScheduledDiscounts();
 
-		// Only autoCandidate should be activated; manuallyDeactivated is filtered out
+		// Verify the WHERE clause includes manuallyDeactivated: false
+		const findCall = mockPrisma.discount.findMany.mock.calls[0]![0];
+		expect(findCall.where.manuallyDeactivated).toBe(false);
+
+		// Only disc-auto activated; disc-manual excluded at DB level
 		expect(result.activated).toBe(1);
 		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
 			where: { id: { in: ["disc-auto"] } },
-			data: { isActive: true },
+			data: { isActive: true, manuallyDeactivated: false },
 		});
 	});
 
 	it("should activate and deactivate discounts in the same run", async () => {
-		const toActivate = {
-			id: "disc-activate",
-			startsAt: new Date("2026-06-10"),
-			updatedAt: new Date("2026-06-09"),
-		};
-
-		mockPrisma.discount.findMany.mockResolvedValueOnce([toActivate]);
+		mockPrisma.discount.findMany.mockResolvedValueOnce([{ id: "disc-activate" }]);
 		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1 });
 		mockPrisma.discount.findMany.mockResolvedValueOnce([{ id: "disc-deactivate" }]);
 		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1 });
@@ -155,11 +133,7 @@ describe("processScheduledDiscounts — edge cases", () => {
 	});
 
 	it("should report hasMore=true when activation candidates hit batch limit", async () => {
-		const candidates = Array.from({ length: 1000 }, (_, i) => ({
-			id: `disc-${i}`,
-			startsAt: new Date("2026-06-10"),
-			updatedAt: new Date("2026-06-09"),
-		}));
+		const candidates = Array.from({ length: 1000 }, (_, i) => ({ id: `disc-${i}` }));
 
 		mockPrisma.discount.findMany.mockResolvedValueOnce(candidates);
 		mockPrisma.discount.updateMany.mockResolvedValueOnce({ count: 1000 });
@@ -182,20 +156,8 @@ describe("processScheduledDiscounts — edge cases", () => {
 	});
 
 	it("should skip all candidates if all are manually deactivated", async () => {
-		const allManual = [
-			{
-				id: "disc-1",
-				startsAt: new Date("2026-06-01"),
-				updatedAt: new Date("2026-06-05"),
-			},
-			{
-				id: "disc-2",
-				startsAt: new Date("2026-06-01"),
-				updatedAt: new Date("2026-06-10"),
-			},
-		];
-
-		mockPrisma.discount.findMany.mockResolvedValueOnce(allManual);
+		// DB returns empty because all discounts have manuallyDeactivated=true
+		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
 		mockPrisma.discount.findMany.mockResolvedValueOnce([]);
 
 		const result = await processScheduledDiscounts();

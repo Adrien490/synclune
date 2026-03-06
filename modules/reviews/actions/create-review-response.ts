@@ -130,7 +130,7 @@ export async function createReviewResponse(
 		if (review.user.email) {
 			sendReviewResponseEmail({
 				to: review.user.email,
-				customerName: review.user.name?.split(" ")[0] ?? "Cliente",
+				customerName: review.user.name?.trim().split(" ")[0] ?? "Cliente",
 				productTitle: review.product.title,
 				reviewContent: review.content,
 				responseContent: sanitizedContent,

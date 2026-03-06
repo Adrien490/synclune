@@ -63,6 +63,19 @@ test.describe("Securite admin - Protection inter-roles", { tag: ["@critical"] },
 		await context.close();
 	});
 
+	test("la page de connexion affiche le formulaire apres la redirection depuis /admin", async ({
+		page,
+		authPage,
+	}) => {
+		await page.goto("/admin");
+		await page.waitForLoadState("domcontentloaded");
+
+		await expect(page).toHaveURL(/\/connexion/);
+		await expect(page).toHaveTitle(/Connexion.*Synclune|Synclune.*Connexion/i);
+
+		await expect(authPage.emailInput).toBeVisible();
+	});
+
 	test("utilisateur non-admin → /admin/catalogue/produits bloque l'acces", async ({ browser }) => {
 		const context = await browser.newContext({
 			storageState: "e2e/.auth/user.json",

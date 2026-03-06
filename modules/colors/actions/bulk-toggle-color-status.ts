@@ -48,6 +48,9 @@ export async function bulkToggleColorStatus(
 			select: { slug: true },
 		});
 
+		// Store slugs BEFORE update — captured from the current DB state
+		const slugsToInvalidate = colors.map((c) => c.slug);
+
 		// Update colors status
 		const result = await prisma.color.updateMany({
 			where: {
@@ -71,8 +74,8 @@ export async function bulkToggleColorStatus(
 
 		// Invalidate cache (list + detail for each toggled color)
 		const tagSet = new Set(getColorInvalidationTags());
-		for (const color of colors) {
-			tagSet.add(COLORS_CACHE_TAGS.DETAIL(color.slug));
+		for (const slug of slugsToInvalidate) {
+			tagSet.add(COLORS_CACHE_TAGS.DETAIL(slug));
 		}
 		tagSet.forEach((tag) => updateTag(tag));
 

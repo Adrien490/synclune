@@ -13,6 +13,18 @@ interface GdprSectionProps {
 export function GdprSection({ accountStatus, deletionRequestedAt }: GdprSectionProps) {
 	const isPendingDeletion = accountStatus === "PENDING_DELETION";
 
+	/* eslint-disable react-hooks/purity -- server component, Date.now() is safe here */
+	const daysRemaining = deletionRequestedAt
+		? Math.max(
+				0,
+				Math.ceil(
+					(new Date(deletionRequestedAt).getTime() + 30 * 24 * 60 * 60 * 1000 - Date.now()) /
+						(24 * 60 * 60 * 1000),
+				),
+			)
+		: 0;
+	/* eslint-enable react-hooks/purity */
+
 	return (
 		<section className="space-y-4" aria-labelledby="gdpr-heading">
 			<div>
@@ -26,7 +38,7 @@ export function GdprSection({ accountStatus, deletionRequestedAt }: GdprSectionP
 			</div>
 			<div className="border-border/60 space-y-6 border-t pt-4">
 				{isPendingDeletion && deletionRequestedAt && (
-					<CancelDeletionBanner deletionRequestedAt={deletionRequestedAt} />
+					<CancelDeletionBanner daysRemaining={daysRemaining} />
 				)}
 
 				{/* Export */}

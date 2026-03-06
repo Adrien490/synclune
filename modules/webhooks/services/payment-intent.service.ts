@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import { type Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { PaymentFailureDetails } from "../types/webhook.types";
@@ -18,8 +18,8 @@ export async function markOrderAsPaid(orderId: string, paymentIntentId: string):
 	await prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			// Vérification d'idempotence
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
+			const order = await tx.order.findFirst({
+				where: { id: orderId, ...notDeleted },
 				select: { paymentStatus: true },
 			});
 
@@ -78,8 +78,8 @@ export async function restoreStockForOrder(
 	// All reads and writes inside the transaction to prevent double restoration on concurrent retries
 	return prisma.$transaction(
 		async (tx) => {
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
+			const order = await tx.order.findFirst({
+				where: { id: orderId, ...notDeleted },
 				select: {
 					id: true,
 					orderNumber: true,
@@ -161,8 +161,8 @@ export async function markOrderAsFailed(
 ): Promise<void> {
 	await prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
+			const order = await tx.order.findFirst({
+				where: { id: orderId, ...notDeleted },
 				select: { paymentStatus: true },
 			});
 
@@ -208,8 +208,8 @@ export async function markOrderAsCancelled(
 ): Promise<void> {
 	await prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
+			const order = await tx.order.findFirst({
+				where: { id: orderId, ...notDeleted },
 				select: { status: true, paymentStatus: true },
 			});
 
@@ -290,8 +290,8 @@ export async function sendRefundFailureAlert(
 	errorMessage: string,
 ): Promise<void> {
 	try {
-		const order = await prisma.order.findUnique({
-			where: { id: orderId },
+		const order = await prisma.order.findFirst({
+			where: { id: orderId, ...notDeleted },
 			select: {
 				orderNumber: true,
 				total: true,

@@ -18,7 +18,15 @@ export async function getProductSkus(params: GetProductSkusParams): Promise<GetP
 	const validation = getProductSkusSchema.safeParse(params);
 
 	if (!validation.success) {
-		throw new Error("Invalid parameters");
+		return {
+			productSkus: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		};
 	}
 
 	return fetchProductSkus(validation.data);

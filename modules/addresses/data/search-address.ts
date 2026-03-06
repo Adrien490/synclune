@@ -3,6 +3,7 @@
 import { searchAddressSchema } from "../schemas/search-address.schema";
 import type { SearchAddressParams, SearchAddressReturn } from "../types/search-address.types";
 import { fetchAddresses } from "./fetch-addresses";
+import { SEARCH_ADDRESS_DEFAULT_LIMIT } from "../constants/ban-api.constants";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADDRESS_LIMITS } from "@/shared/lib/rate-limit-config";
 
@@ -29,7 +30,11 @@ export async function searchAddress(params: SearchAddressParams): Promise<Search
 	// Rate limiting (user or IP-based)
 	const rateCheck = await enforceRateLimitForCurrentUser(ADDRESS_LIMITS.SEARCH);
 	if ("error" in rateCheck) {
-		return { addresses: [], query: params.text, limit: 5 };
+		return {
+			addresses: [],
+			query: params.text,
+			limit: params.maximumResponses ?? SEARCH_ADDRESS_DEFAULT_LIMIT,
+		};
 	}
 
 	// Valider et appliquer les valeurs par défaut

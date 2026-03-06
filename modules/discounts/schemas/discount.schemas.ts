@@ -120,6 +120,22 @@ const discountRefinements = <T extends typeof baseDiscountSchema>(schema: T) =>
 				return true;
 			},
 			{ message: "La date de fin doit être postérieure à la date de début", path: ["endsAt"] },
+		)
+		.refine(
+			(data) => {
+				if (
+					data.maxUsagePerUser != null &&
+					data.maxUsageCount != null &&
+					data.maxUsagePerUser > data.maxUsageCount
+				) {
+					return false;
+				}
+				return true;
+			},
+			{
+				message: "Le nombre max par utilisateur ne peut pas dépasser le nombre max total",
+				path: ["maxUsagePerUser"],
+			},
 		);
 
 // ============================================================================

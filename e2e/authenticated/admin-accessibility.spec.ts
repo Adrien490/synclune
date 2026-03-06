@@ -161,7 +161,8 @@ test.describe("Accessibilité admin - États interactifs axe-core", { tag: ["@sl
 		const menuTrigger = page.locator("[data-radix-dropdown-menu-trigger]").first();
 		if ((await menuTrigger.count()) > 0) {
 			await menuTrigger.click();
-			await page.waitForTimeout(200);
+			const dropdownMenu = page.getByRole("menu");
+			await expect(dropdownMenu).toBeVisible();
 			await expectNoA11yViolations(page, { context: "Admin (dropdown ouvert)" });
 		}
 	});
@@ -348,9 +349,9 @@ test.describe("Accessibilité admin - Navigation clavier", { tag: ["@slow"] }, (
 
 		// Enter opens the speed dial menu
 		await page.keyboard.press("Enter");
-		await page.waitForTimeout(200);
 
 		const menu = page.getByRole("menu");
+		await menu.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
 		if ((await menu.count()) > 0) {
 			await expect(menu).toBeVisible();
 

@@ -1,8 +1,9 @@
 "use server";
 
 import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logAudit } from "@/shared/lib/audit-log";
 import {
 	sendOrderConfirmationEmail,
 	sendShippingConfirmationEmail,
@@ -32,8 +33,9 @@ export async function resendOrderEmail(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.RESEND_EMAIL);
@@ -93,7 +95,8 @@ export async function resendOrderEmail(
 			return error("Commande non trouvee");
 		}
 
-		// 3. Vérifier que l'email peut être envoyé selon le type
+		// 5. Vérifier que l'email peut être envoyé selon le type et l'envoyer
+		let actionResult: ActionState;
 
 		switch (emailType) {
 			case "confirmation": {
@@ -119,11 +122,10 @@ export async function resendOrderEmail(
 					trackingUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
 				});
 
-				if (!result.success) {
-					return error("Erreur lors de l'envoi de l'email de confirmation");
-				}
-
-				return success("Email de confirmation renvoye");
+				actionResult = result.success
+					? success("Email de confirmation renvoye")
+					: error("Erreur lors de l'envoi de l'email de confirmation");
+				break;
 			}
 
 			case "shipping": {
@@ -156,11 +158,10 @@ export async function resendOrderEmail(
 					},
 				});
 
-				if (!result.success) {
-					return error("Erreur lors de l'envoi de l'email d'expedition");
-				}
-
-				return success("Email d'expedition renvoye");
+				actionResult = result.success
+					? success("Email d'expedition renvoye")
+					: error("Erreur lors de l'envoi de l'email d'expedition");
+				break;
 			}
 
 			case "delivery": {
@@ -192,11 +193,10 @@ export async function resendOrderEmail(
 					orderDetailsUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
 				});
 
-				if (!result.success) {
-					return error("Erreur lors de l'envoi de l'email de livraison");
-				}
-
-				return success("Email de livraison renvoye");
+				actionResult = result.success
+					? success("Email de livraison renvoye")
+					: error("Erreur lors de l'envoi de l'email de livraison");
+				break;
 			}
 
 			case "review-request": {
@@ -210,18 +210,29 @@ export async function resendOrderEmail(
 
 				const reviewResult = await sendReviewRequestEmailInternal(orderId);
 
-				if (reviewResult.status !== ActionStatus.SUCCESS) {
-					return error(
-						reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis",
-					);
-				}
-
-				return success("Email de demande d'avis renvoye");
+				actionResult =
+					reviewResult.status === ActionStatus.SUCCESS
+						? success("Email de demande d'avis renvoye")
+						: error(reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis");
+				break;
 			}
 
 			default:
 				return error("Type d'email invalide");
 		}
+
+		if (actionResult.status === ActionStatus.SUCCESS) {
+			void logAudit({
+				adminId: adminUser.id,
+				adminName: adminUser.name ?? adminUser.email,
+				action: "order.resendEmail",
+				targetType: "order",
+				targetId: orderId,
+				metadata: { emailType, orderNumber: order.orderNumber },
+			});
+		}
+
+		return actionResult;
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de l'envoi");
 	}

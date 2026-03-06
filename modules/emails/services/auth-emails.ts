@@ -3,6 +3,7 @@ import { PasswordResetEmail } from "@/emails/password-reset-email";
 import { PasswordChangedEmail } from "@/emails/password-changed-email";
 import { AccountDeletionEmail } from "@/emails/account-deletion-email";
 import { WelcomeEmail } from "@/emails/welcome-email";
+import { EmailChangeConfirmationEmail } from "@/emails/email-change-confirmation-email";
 import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
 import { renderAndSend } from "./send-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -80,6 +81,26 @@ export async function sendWelcomeEmail({
 	return renderAndSend(WelcomeEmail({ userName, shopUrl, newsletterUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.WELCOME,
+		replyTo: EMAIL_CONTACT,
+		tags: [{ name: "category", value: "auth" }],
+	});
+}
+
+/**
+ * Envoie un email de confirmation de changement d'adresse email
+ */
+export async function sendEmailChangeConfirmationEmail({
+	to,
+	url,
+	currentEmail: _currentEmail,
+}: {
+	to: string;
+	url: string;
+	currentEmail: string;
+}): Promise<EmailResult> {
+	return renderAndSend(EmailChangeConfirmationEmail({ confirmationUrl: url, newEmail: to }), {
+		to,
+		subject: EMAIL_SUBJECTS.EMAIL_CHANGE_CONFIRMATION,
 		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "auth" }],
 	});

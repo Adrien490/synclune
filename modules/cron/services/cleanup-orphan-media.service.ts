@@ -15,7 +15,9 @@ import {
  * Safety net for files that lost their DB reference:
  * - SkuMedia (url, thumbnailUrl)
  * - ReviewMedia (url)
+ * - CustomizationMedia (url)
  * - User.image (avatars)
+ * - Testimonial.imageUrl
  *
  * Runs monthly to limit orphan file accumulation.
  */
@@ -35,9 +37,6 @@ export async function cleanupOrphanMedia(): Promise<{
 
 	try {
 		// 1. Load all referenced file keys from DB (paginated to control memory)
-		// WARNING: testimonialMedia and contactAttachment routes are NOT tracked.
-		// Files uploaded via these routes will be deleted after 24h.
-		// See getAllReferencedFileKeys() for details.
 		const referencedKeys = await getAllReferencedFileKeys(deadline);
 		logger.info("Found referenced keys in DB", {
 			cronJob: "cleanup-orphan-media",
@@ -131,13 +130,9 @@ export async function cleanupOrphanMedia(): Promise<{
  * - reviewMedia         → ReviewMedia (url)
  * - customizationMedia  → CustomizationMedia (url)
  * - (user avatars)      → User.image
+ * - testimonialMedia    → Testimonial (imageUrl)
  *
- * ⚠️ UNTRACKED ROUTES - Files from these routes will be deleted as orphans after 24h:
- * - testimonialMedia → No DB table yet. BEFORE enabling testimonials in production,
- *   create a Testimonial model with an imageUrl field and add a query below.
- * - contactAttachment → Ephemeral files sent with contact form.
- *   BEFORE enabling the contact form, either track attachments in DB or exclude
- *   from cleanup. Contact attachments should be forwarded via email then deleted.
+ * Note: contactAttachment is ephemeral by design (forwarded via email). 24h guard sufficient.
  */
 async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> {
 	const keys = new Set<string>();
@@ -218,7 +213,34 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		customizationCursor = batch[batch.length - 1]!.id;
 	}
 
-	// 4. User avatars (only those with non-null image) - paginated
+	// 4. Testimonial images - paginated
+	let testimonialCursor: string | undefined;
+
+	for (;;) {
+		if (Date.now() > deadline) {
+			logger.warn("Deadline reached during DB key scan, aborting safely", {
+				cronJob: "cleanup-orphan-media",
+			});
+			throw new Error("Deadline exceeded during DB key scan");
+		}
+		const batch = await prisma.testimonial.findMany({
+			where: { imageUrl: { not: null } },
+			select: { id: true, imageUrl: true },
+			take: DB_QUERY_BATCH_SIZE,
+			...(testimonialCursor && { skip: 1, cursor: { id: testimonialCursor } }),
+			orderBy: { id: "asc" },
+		});
+		for (const t of batch) {
+			if (t.imageUrl) {
+				const key = extractFileKeyFromUrl(t.imageUrl);
+				if (key) keys.add(key);
+			}
+		}
+		if (batch.length < DB_QUERY_BATCH_SIZE) break;
+		testimonialCursor = batch[batch.length - 1]!.id;
+	}
+
+	// 5. User avatars (only those with non-null image) - paginated
 	let userCursor: string | undefined;
 
 	for (;;) {

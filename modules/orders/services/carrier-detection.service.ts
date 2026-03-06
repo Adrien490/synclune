@@ -112,7 +112,10 @@ export function detectCarrierAndUrl(trackingNumber: string): DetectionResult {
 		};
 	}
 
-	// 6. PAR DÉFAUT (Format inconnu)
+	// 6. PAR DÉFAUT (Format inconnu) — log format info (sans PII) pour améliorer les patterns regex
+	console.warn(
+		`[CARRIER_DETECTION] Unrecognized tracking format: length=${cleanNumber.length}, prefix=${cleanNumber.slice(0, 2)}`,
+	);
 	return {
 		carrier: "autre",
 		label: "Autre transporteur",

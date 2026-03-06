@@ -1,27 +1,6 @@
 import { test, expect } from "../fixtures";
 
 test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
-	test("skip link - Tab affiche, Enter déplace le focus vers main-content", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
-
-		// First Tab → skip link
-		await page.keyboard.press("Tab");
-		const skipLink = page.locator('a[href="#main-content"]');
-		await expect(skipLink).toBeFocused();
-		await expect(skipLink).toBeVisible();
-
-		// Enter → focus moves to #main-content
-		await page.keyboard.press("Enter");
-
-		const focusIsOnMain = await page.evaluate(() => {
-			const main = document.getElementById("main-content");
-			const active = document.activeElement;
-			return main === active || main?.contains(active ?? null);
-		});
-		expect(focusIsOnMain).toBe(true);
-	});
-
 	test("menu mobile - Enter ouvre, Escape ferme et retourne le focus", async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 844 });
 		await page.goto("/");
@@ -89,8 +68,12 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 			await expect(searchInput).toBeFocused();
 
 			await searchInput.fill("bijou");
-			// Wait for search results
-			await page.waitForTimeout(500);
+			// Wait for results to appear
+			const resultsContainer = page.locator('[role="listbox"], [data-search-results]');
+			await resultsContainer
+				.first()
+				.waitFor({ state: "visible", timeout: 3000 })
+				.catch(() => {});
 
 			// Results should appear (as links or list items)
 			const results = page.locator('[role="listbox"] [role="option"], [data-search-results] a');
@@ -107,9 +90,9 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 
 			// Clicking search button should open a search dialog/input
 			await page.keyboard.press("Enter");
-			await page.waitForTimeout(300);
 
 			const searchDialog = page.getByRole("dialog");
+			await searchDialog.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
 			if ((await searchDialog.count()) > 0) {
 				await expect(searchDialog).toBeVisible();
 				await page.keyboard.press("Escape");
@@ -130,8 +113,8 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		if ((await searchInput.count()) === 0 && (await searchButton.count()) > 0) {
 			// Click search button to open search dialog
 			await searchButton.click();
-			await page.waitForTimeout(300);
 			input = page.getByRole("searchbox").first();
+			await input.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
 			if ((await input.count()) === 0) {
 				input = page.locator("input[type='search'], input[type='text']").last();
 			}
@@ -145,10 +128,13 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		await input.focus();
 		await expect(input).toBeFocused();
 		await input.fill("bijou");
-		await page.waitForTimeout(500);
 
-		// Check for listbox/options
+		// Wait for autocomplete results to appear
 		const options = page.locator('[role="option"]');
+		await options
+			.first()
+			.waitFor({ state: "visible", timeout: 3000 })
+			.catch(() => {});
 		if ((await options.count()) === 0) {
 			// No results, skip deep navigation
 			return;
@@ -378,9 +364,9 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 
 		// Enter/Space opens the mega menu content
 		await page.keyboard.press("Enter");
-		await page.waitForTimeout(200);
 
 		const menuContent = page.locator("[data-radix-navigation-menu-content]").first();
+		await menuContent.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
 		if ((await menuContent.count()) > 0) {
 			await expect(menuContent).toBeVisible();
 

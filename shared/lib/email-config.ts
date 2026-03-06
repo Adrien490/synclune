@@ -67,4 +67,5 @@ export const EMAIL_SUBJECTS = {
 	ABANDONED_CART: "Vous avez oublié quelque chose... - Synclune",
 	BACK_IN_STOCK: "Bonne nouvelle ! Un article de votre liste est de retour - Synclune",
 	CROSS_SELL: "Complétez votre collection - Synclune",
+	EMAIL_CHANGE_CONFIRMATION: "Confirmez votre nouvelle adresse email - Synclune",
 } as const;

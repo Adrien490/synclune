@@ -200,7 +200,7 @@ describe("bulkToggleDiscountStatus", () => {
 
 		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
 			where: { id: { in: VALID_IDS }, deletedAt: null },
-			data: { isActive: true },
+			data: { isActive: true, manuallyDeactivated: false },
 		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("activé");
@@ -212,7 +212,7 @@ describe("bulkToggleDiscountStatus", () => {
 		const result = await bulkToggleDiscountStatus(undefined, makeFormData(VALID_IDS, "false"));
 
 		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith(
-			expect.objectContaining({ data: { isActive: false } }),
+			expect.objectContaining({ data: { isActive: false, manuallyDeactivated: true } }),
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("désactivé");

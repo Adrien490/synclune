@@ -100,7 +100,7 @@ export const getUsersSchema = z.object({
 // UPDATE PROFILE SCHEMA
 // ============================================================================
 
-import { USER_CONSTANTS, USER_ERROR_MESSAGES } from "@/modules/users/constants/profile.constants";
+import { USER_CONSTANTS, USER_ERROR_MESSAGES } from "../constants/user.constants";
 
 /**
  * Schéma de validation pour la mise à jour du profil utilisateur
@@ -112,6 +112,14 @@ export const updateProfileSchema = z.object({
 		.min(USER_CONSTANTS.MIN_NAME_LENGTH, USER_ERROR_MESSAGES.NAME_TOO_SHORT)
 		.max(USER_CONSTANTS.MAX_NAME_LENGTH, USER_ERROR_MESSAGES.NAME_TOO_LONG)
 		.trim(),
+});
+
+// ============================================================================
+// CHANGE EMAIL SCHEMA
+// ============================================================================
+
+export const changeEmailSchema = z.object({
+	newEmail: z.string().email("Adresse email invalide").toLowerCase().trim(),
 });
 
 // ============================================================================

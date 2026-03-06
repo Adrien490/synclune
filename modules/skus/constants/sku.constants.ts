@@ -25,6 +25,7 @@ export const GET_PRODUCT_SKU_SELECT = {
 		select: {
 			id: true,
 			name: true,
+			slug: true,
 		},
 	},
 	size: true,

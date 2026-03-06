@@ -2,6 +2,7 @@ import { FulfillmentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendCrossSellEmail } from "@/modules/emails/services/cross-sell-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { logger } from "@/shared/lib/logger";
 import {
 	BATCH_DEADLINE_MS,
 	BATCH_SIZE_MEDIUM,
@@ -25,7 +26,7 @@ export async function sendCrossSellEmails(): Promise<{
 	errors: number;
 	hasMore: boolean;
 }> {
-	console.log("[CRON:cross-sell-emails] Starting cross-sell emails...");
+	logger.info("Starting cross-sell emails", { cronJob: "cross-sell-emails" });
 
 	const deliveryThreshold = new Date(Date.now() - DAYS_AFTER_DELIVERY * 24 * 60 * 60 * 1000);
 
@@ -74,7 +75,9 @@ export async function sendCrossSellEmails(): Promise<{
 		take: BATCH_SIZE_MEDIUM,
 	});
 
-	console.log(`[CRON:cross-sell-emails] Found ${ordersToProcess.length} orders for cross-sell`);
+	logger.info(`Found ${ordersToProcess.length} orders for cross-sell`, {
+		cronJob: "cross-sell-emails",
+	});
 
 	const startTime = Date.now();
 	let sent = 0;
@@ -85,7 +88,7 @@ export async function sendCrossSellEmails(): Promise<{
 
 	for (const order of ordersToProcess) {
 		if (Date.now() - startTime > BATCH_DEADLINE_MS) {
-			console.log("[CRON:cross-sell-emails] Deadline reached, stopping early");
+			logger.info("Deadline reached, stopping early", { cronJob: "cross-sell-emails" });
 			break;
 		}
 
@@ -188,7 +191,7 @@ export async function sendCrossSellEmails(): Promise<{
 
 			if (result.success) {
 				sent++;
-				console.log(`[CRON:cross-sell-emails] Sent to ${order.user.email}`);
+				logger.info("Email sent", { cronJob: "cross-sell-emails", orderId: order.id });
 			} else {
 				// Rollback on failure
 				await prisma.order.update({
@@ -198,14 +201,17 @@ export async function sendCrossSellEmails(): Promise<{
 				errors++;
 			}
 		} catch (error) {
-			console.error(`[CRON:cross-sell-emails] Error for order ${order.orderNumber}:`, error);
+			logger.error("Error processing order", error, {
+				cronJob: "cross-sell-emails",
+				orderId: order.id,
+			});
 			errors++;
 		}
 	}
 
-	console.log(
-		`[CRON:cross-sell-emails] Completed: ${sent} sent, ${skipped} skipped, ${errors} errors`,
-	);
+	logger.info(`Completed: ${sent} sent, ${skipped} skipped, ${errors} errors`, {
+		cronJob: "cross-sell-emails",
+	});
 
 	return {
 		found: ordersToProcess.length,

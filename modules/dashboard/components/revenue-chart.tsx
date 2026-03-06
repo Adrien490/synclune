@@ -56,6 +56,13 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 	// Verifier s'il y a des donnees avec du revenu
 	const hasRevenue = formattedData.some((item) => item.revenue > 0);
 
+	// Résumé textuel pour lecteurs d'écran sans support SVG
+	const totalRevenue = formattedData.reduce((sum, item) => sum + item.revenue, 0);
+	const peakEntry = formattedData.reduce(
+		(max, item) => (item.revenue > max.revenue ? item : max),
+		formattedData[0] ?? { date: "—", revenue: 0 },
+	);
+
 	return (
 		<Card
 			className={cn(CHART_STYLES.card, "can-hover:hover:shadow-lg transition-all duration-300")}
@@ -71,10 +78,16 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 					<ChartEmpty type="noRevenue" minHeight={300} />
 				) : (
 					<div role="figure" aria-label="Graphique des revenus sur 30 jours">
-						<span className="sr-only">
-							Graphique en ligne montrant l'evolution du chiffre d'affaires quotidien sur les 30
-							derniers jours
-						</span>
+						<div className="sr-only">
+							<p>
+								Graphique en ligne montrant l&apos;evolution du chiffre d&apos;affaires quotidien
+								sur les 30 derniers jours.
+							</p>
+							<p>Total sur la période : {totalRevenue.toFixed(2)} €.</p>
+							<p>
+								Pic : {peakEntry.revenue.toFixed(2)} € le {peakEntry.date}.
+							</p>
+						</div>
 						<ChartScrollContainer>
 							<ChartContainer
 								config={chartConfig}

@@ -7,20 +7,22 @@ import { createMockFormData, VALID_CUID } from "@/test/factories";
 // ============================================================================
 
 const {
-	mockRequireAdmin,
+	mockRequireAdminWithUser,
 	mockEnforceRateLimit,
 	mockHandleActionError,
 	mockSuccess,
 	mockUpdateTag,
 } = vi.hoisted(() => ({
-	mockRequireAdmin: vi.fn(),
+	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockUpdateTag: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdminWithUser: mockRequireAdminWithUser,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -56,6 +58,9 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 		ADMIN_INVENTORY_LIST: "admin-inventory-list",
 	},
 }));
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { refreshSkus } from "../refresh-skus";
 
@@ -67,7 +72,9 @@ describe("refreshSkus", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockRequireAdminWithUser.mockResolvedValue({
+			user: { id: "admin-id", name: "Admin", email: "admin@test.com" },
+		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSuccess.mockReturnValue({ status: ActionStatus.SUCCESS, message: "Variantes rafraichies" });
 
@@ -78,7 +85,7 @@ describe("refreshSkus", () => {
 	});
 
 	it("should return auth error when not admin", async () => {
-		mockRequireAdmin.mockResolvedValue({
+		mockRequireAdminWithUser.mockResolvedValue({
 			error: { status: ActionStatus.UNAUTHORIZED, message: "No" },
 		});
 		const result = await refreshSkus(undefined, createMockFormData({}));
