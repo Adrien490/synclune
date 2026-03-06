@@ -1,13 +1,13 @@
-import { Fade, HandDrawnUnderline, Stagger } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { CursorGlow } from "@/modules/products/components/cursor-glow";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
 import Link from "next/link";
-import { Suspense, use } from "react";
-import { LatestCreationsSkeleton } from "./latest-creations-skeleton";
+import { use } from "react";
 
 interface LatestCreationsProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -16,22 +16,10 @@ interface LatestCreationsProps {
 /**
  * Latest Creations section - Grid of most recent jewelry.
  *
- * Entire section (header + grid) is inside Suspense so it only renders
- * when products are available. Returns null if the DB is empty.
+ * Suspense boundary is in page.tsx — this component calls use() directly
+ * to unwrap the products promise. Returns null if the DB is empty.
  */
 export function LatestCreations({ productsPromise }: LatestCreationsProps) {
-	return (
-		<Suspense fallback={<LatestCreationsSkeleton />}>
-			<LatestCreationsGrid productsPromise={productsPromise} />
-		</Suspense>
-	);
-}
-
-/**
- * Inner grid component — calls use() to unwrap the products promise.
- * Owns the full section markup so nothing renders when products are empty.
- */
-function LatestCreationsGrid({ productsPromise }: LatestCreationsProps) {
 	const { products } = use(productsPromise);
 
 	if (products.length === 0) {
@@ -59,17 +47,15 @@ function LatestCreationsGrid({ productsPromise }: LatestCreationsProps) {
 						Tout juste sorties de l'atelier et réalisées avec amour !
 					</p>
 				</header>
-				<Stagger
-					className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8"
-					stagger={MOTION_CONFIG.section.grid.stagger}
-					y={MOTION_CONFIG.section.grid.y}
-					inView
-					once={true}
-				>
+				<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8">
 					{products.map((product, index) => (
-						<ProductCard key={product.id} product={product} index={index} sectionId="latest" />
+						<CursorGlow key={product.id}>
+							<div className="scroll-reveal-card">
+								<ProductCard product={product} index={index} sectionId="latest" />
+							</div>
+						</CursorGlow>
 					))}
-				</Stagger>
+				</div>
 				<Fade
 					y={MOTION_CONFIG.section.cta.y}
 					delay={MOTION_CONFIG.section.cta.delay}

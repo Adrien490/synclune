@@ -10,7 +10,7 @@ export const NewsletterConfirmationEmail = ({
 	confirmationUrl,
 }: NewsletterConfirmationEmailProps) => {
 	return (
-		<EmailLayout preview="Confirmez votre inscription">
+		<EmailLayout preview="Confirmez votre inscription à la newsletter Synclune pour recevoir nos nouveautés">
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Confirmation</Text>

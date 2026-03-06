@@ -29,6 +29,9 @@ export const EMAIL_COLORS = {
 	/** Bordures */
 	border: "#E8E8E8",
 
+	/** Error/danger red */
+	error: "#dc2626",
+
 	/** Stripe brand color for dashboard links */
 	stripe: "#635bff",
 } as const;

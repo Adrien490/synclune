@@ -36,7 +36,7 @@ import { pipeline } from "node:stream/promises";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../app/generated/prisma/client";
 import { UTApi } from "uploadthing/server";
-import { VIDEO_MIGRATION_CONFIG } from "../modules/media/constants/media.constants";
+import { VIDEO_MIGRATION_CONFIG } from "../modules/media/constants/thumbnail.constants";
 import { isValidCuid, isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
 import type { MediaItem, ProcessResult } from "../modules/media/types/script.types";
 import { requireScriptEnvVars } from "../shared/utils/script-env";

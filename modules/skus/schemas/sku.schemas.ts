@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
-import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants";
+import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media-limits.constants";
 import { TEXT_LIMITS, ARRAY_LIMITS, PRICE_LIMITS } from "@/shared/constants/validation-limits";
 
 // ============================================================================

@@ -30,7 +30,7 @@ import { toast } from "sonner";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import dynamic from "next/dynamic";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
-import { UI_DELAYS } from "@/modules/media/constants/media.constants";
+import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 
 // Lazy loading - lightbox loaded only on open
 const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {

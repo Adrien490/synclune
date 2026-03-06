@@ -2,7 +2,7 @@
  * Utilities for detecting media type based on URL or extension
  */
 
-import { VIDEO_EXTENSIONS, IMAGE_EXTENSIONS } from "../constants/media.constants";
+import { VIDEO_EXTENSIONS, IMAGE_EXTENSIONS } from "../constants/media-limits.constants";
 
 /**
  * Checks if a URL points to a video based on its extension

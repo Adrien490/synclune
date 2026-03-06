@@ -21,7 +21,7 @@ import {
 	withRetry,
 	downloadImage,
 } from "../services/image-downloader.service";
-import { IMAGE_DOWNLOADER_CONFIG } from "../constants/media.constants";
+import { IMAGE_DOWNLOADER_CONFIG } from "../constants/image-downloader.constants";
 
 const mockDelay = vi.mocked(delay);
 

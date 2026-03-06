@@ -1,5 +1,5 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Button, Section, Text } from "@react-email/components";
+import { Button, Link, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES, REFUND_REASON_LABELS } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
@@ -58,11 +58,21 @@ export const RefundRejectedEmail = ({
 				</Text>
 			</Section>
 
-			{/* CTA */}
+			{/* CTAs */}
 			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
-					Voir ma commande
-				</Button>
+				<div style={{ marginBottom: "12px" }}>
+					<Button href="https://synclune.fr/contact" style={EMAIL_STYLES.button.primary}>
+						Nous contacter
+					</Button>
+				</div>
+				<div>
+					<Link
+						href={orderDetailsUrl}
+						style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
+					>
+						Voir ma commande
+					</Link>
+				</div>
 			</Section>
 		</EmailLayout>
 	);

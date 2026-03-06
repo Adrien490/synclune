@@ -20,7 +20,7 @@ export const CustomizationConfirmationEmail = ({
 	const hasInspirations = inspirationProducts && inspirationProducts.length > 0;
 
 	return (
-		<EmailLayout preview="Demande de personnalisation reçue">
+		<EmailLayout preview={`Votre demande de ${productTypeLabel} personnalisé est bien enregistrée`}>
 			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Demande reçue</Text>
@@ -56,8 +56,8 @@ export const CustomizationConfirmationEmail = ({
 				<Section style={{ marginBottom: "24px" }}>
 					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Inspirations</Text>
 					<Section style={EMAIL_STYLES.section.card}>
-						{inspirationProducts.map((product, index) => (
-							<Text key={index} style={EMAIL_STYLES.text.small}>
+						{inspirationProducts.map((product) => (
+							<Text key={product.title} style={EMAIL_STYLES.text.small}>
 								• {product.title}
 							</Text>
 						))}

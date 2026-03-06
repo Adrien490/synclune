@@ -27,7 +27,7 @@
 
 import { prisma } from "../shared/lib/prisma";
 import { generateThumbHashWithRetry } from "../modules/media/services/generate-thumbhash";
-import { THUMBHASH_CONFIG } from "../modules/media/constants/media.constants";
+import { THUMBHASH_CONFIG } from "../modules/media/constants/image-downloader.constants";
 import { isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
 import { delay } from "../shared/utils/delay";
 import type {

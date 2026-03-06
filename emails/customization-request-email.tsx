@@ -103,8 +103,8 @@ export const CustomizationRequestEmail = ({
 				<Section style={{ marginBottom: "24px" }}>
 					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Inspirations</Text>
 					<Section style={EMAIL_STYLES.section.card}>
-						{inspirationProducts.map((product, index) => (
-							<Text key={index} style={EMAIL_STYLES.text.small}>
+						{inspirationProducts.map((product) => (
+							<Text key={product.title} style={EMAIL_STYLES.text.small}>
 								• {product.title}
 							</Text>
 						))}

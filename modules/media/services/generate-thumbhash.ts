@@ -13,7 +13,7 @@
 
 import sharp from "sharp";
 import { rgbaToThumbHash, thumbHashToDataURL } from "thumbhash";
-import { THUMBHASH_CONFIG } from "../constants/media.constants";
+import { THUMBHASH_CONFIG } from "../constants/image-downloader.constants";
 import type {
 	GenerateThumbHashOptions,
 	ThumbHashLogFn,

@@ -15,4 +15,6 @@ export type ProductMedia = {
 	source?: "default" | "selected" | "sku";
 	skuId?: string;
 	mediaType: "IMAGE" | "VIDEO";
+	/** Internal flag used by gallery-builder to track DB-defined alt texts during second pass */
+	_hasCustomAlt?: boolean;
 };

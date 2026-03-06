@@ -112,7 +112,7 @@ export const AdminDisputeAlertEmail = ({
 										margin: 0,
 										fontSize: "14px",
 										fontWeight: "bold",
-										color: "#dc2626",
+										color: EMAIL_COLORS.error,
 									}}
 								>
 									{deadline}

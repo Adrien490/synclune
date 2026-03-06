@@ -1,4 +1,4 @@
-import { Button, Section, Text } from "@react-email/components";
+import { Button, Link, Section, Text } from "@react-email/components";
 import { EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
@@ -20,9 +20,9 @@ export const BackInStockEmail = ({
 			preview={`${productTitle} est de retour en stock !`}
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+					<Link href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
 						Se désinscrire des emails commerciaux
-					</a>
+					</Link>
 				</Text>
 			}
 		>

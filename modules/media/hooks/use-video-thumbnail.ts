@@ -5,8 +5,8 @@ import {
 	THUMBNAIL_CONFIG,
 	VIDEO_EVENT_TIMEOUTS,
 	FRAME_VALIDATION,
-	UI_DELAYS,
-} from "../constants/media.constants";
+} from "../constants/thumbnail.constants";
+import { UI_DELAYS } from "../constants/ui-interactions.constants";
 import type { VideoThumbnailOptions, VideoThumbnailResult } from "../types/hooks.types";
 
 // Re-export types for backwards compatibility
@@ -93,7 +93,7 @@ function generateBlurFromCanvas(
 	const { canvas: blurCanvas, ctx: blurCtx } = createCanvas(size, size);
 
 	// Draw the resized source image
-	blurCtx.drawImage(sourceCanvas as HTMLCanvasElement, 0, 0, size, size);
+	blurCtx.drawImage(sourceCanvas as CanvasImageSource, 0, 0, size, size);
 
 	// For OffscreenCanvas, we need to convert differently
 	if (blurCanvas instanceof OffscreenCanvas) {
@@ -103,12 +103,16 @@ function generateBlurFromCanvas(
 		tempCanvas.height = size;
 		const tempCtx = tempCanvas.getContext("2d");
 		if (tempCtx) {
-			tempCtx.drawImage(sourceCanvas as HTMLCanvasElement, 0, 0, size, size);
+			tempCtx.drawImage(sourceCanvas as CanvasImageSource, 0, 0, size, size);
 			return tempCanvas.toDataURL("image/jpeg", 0.5);
 		}
 	}
 
-	return (blurCanvas as HTMLCanvasElement).toDataURL("image/jpeg", 0.5);
+	if (!(blurCanvas instanceof HTMLCanvasElement)) {
+		throw new Error("Expected HTMLCanvasElement for toDataURL");
+	}
+
+	return blurCanvas.toDataURL("image/jpeg", 0.5);
 }
 
 /**

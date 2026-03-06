@@ -1,5 +1,5 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Button, Hr, Section, Text } from "@react-email/components";
+import { Button, Hr, Link, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
@@ -31,9 +31,9 @@ export const AbandonedCartEmail = ({
 			preview="Vous avez oublié quelque chose..."
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+					<Link href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
 						Se désinscrire des emails commerciaux
-					</a>
+					</Link>
 				</Text>
 			}
 		>

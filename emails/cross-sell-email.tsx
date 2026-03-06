@@ -1,5 +1,5 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Button, Column, Hr, Img, Row, Section, Text } from "@react-email/components";
+import { Button, Column, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
@@ -28,9 +28,9 @@ export const CrossSellEmail = ({
 			preview="Des créations qui pourraient vous plaire"
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+					<Link href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
 						Se désinscrire des emails commerciaux
-					</a>
+					</Link>
 				</Text>
 			}
 		>
@@ -51,7 +51,7 @@ export const CrossSellEmail = ({
 						<Row>
 							{product.imageUrl && (
 								<Column style={{ width: "100px", verticalAlign: "middle" }}>
-									<a href={product.productUrl}>
+									<Link href={product.productUrl}>
 										<Img
 											src={product.imageUrl}
 											alt={product.title}
@@ -59,7 +59,7 @@ export const CrossSellEmail = ({
 											height={100}
 											style={{ borderRadius: "8px" }}
 										/>
-									</a>
+									</Link>
 								</Column>
 							)}
 							<Column
@@ -76,12 +76,12 @@ export const CrossSellEmail = ({
 										color: EMAIL_COLORS.text.primary,
 									}}
 								>
-									<a
+									<Link
 										href={product.productUrl}
 										style={{ ...EMAIL_STYLES.link, textDecoration: "none" }}
 									>
 										{product.title}
-									</a>
+									</Link>
 								</Text>
 								<Text
 									style={{

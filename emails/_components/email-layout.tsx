@@ -97,7 +97,7 @@ export function EmailLayout({
 								marginTop: "4px",
 							}}
 						>
-							France
+							33600 Pessac, France
 						</Text>
 						<Text
 							className="email-text-secondary"

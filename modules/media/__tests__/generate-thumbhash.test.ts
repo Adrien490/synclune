@@ -41,7 +41,7 @@ import {
 	generateThumbHashWithRetry,
 	generateThumbHashFromBuffer,
 } from "../services/generate-thumbhash";
-import { THUMBHASH_CONFIG } from "../constants/media.constants";
+import { THUMBHASH_CONFIG } from "../constants/image-downloader.constants";
 
 const mockSharp = vi.mocked(sharp) as unknown as ReturnType<typeof vi.fn> & Record<string, unknown>;
 const mockRgbaToThumbHash = vi.mocked(rgbaToThumbHash);

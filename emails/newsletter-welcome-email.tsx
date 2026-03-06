@@ -1,4 +1,4 @@
-import { Button, Section, Text } from "@react-email/components";
+import { Button, Link, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
@@ -22,9 +22,12 @@ export const NewsletterWelcomeEmail = ({
 				<>
 					<Text style={EMAIL_STYLES.text.tiny}>Synclune - Bijoux artisanaux</Text>
 					<Text style={EMAIL_STYLES.text.tiny}>
-						<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+						<Link
+							href={unsubscribeUrl}
+							style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
+						>
 							Se désinscrire
-						</a>
+						</Link>
 					</Text>
 				</>
 			}

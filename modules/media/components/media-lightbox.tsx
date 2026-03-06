@@ -10,7 +10,7 @@ import "yet-another-react-lightbox/plugins/counter.css";
 
 import type { Slide } from "yet-another-react-lightbox";
 import { useReducedMotion } from "motion/react";
-import { LIGHTBOX_CONFIG, UI_DELAYS } from "@/modules/media/constants/media.constants";
+import { LIGHTBOX_CONFIG, UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 
 interface MediaLightboxProps {
 	open: boolean;

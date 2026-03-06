@@ -10,7 +10,7 @@ import {
 	GET_PRODUCTS_SORT_FIELDS,
 } from "../constants/product.constants";
 import { isAllowedMediaDomain, ALLOWED_MEDIA_DOMAINS } from "@/shared/lib/media-validation";
-import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants";
+import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media-limits.constants";
 import {
 	TEXT_LIMITS,
 	ARRAY_LIMITS,

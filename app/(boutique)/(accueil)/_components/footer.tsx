@@ -15,13 +15,14 @@ import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { CONTAINER_CLASS, FOOTER_PADDING } from "@/shared/constants/spacing";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
+import { Gift, RotateCcw, ShieldCheck, Truck, type LucideIcon } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 
-const REASSURANCE_ITEMS: { title: string; description: string }[] = [
-	{ title: "Livraison France : 6€", description: "Expédition sous 2-3 jours" },
-	{ title: "Retours sous 14 jours", description: "Échange ou remboursement" },
-	{ title: "Paiement sécurisé", description: "CB, PayPal, Apple Pay" },
+const REASSURANCE_ITEMS: { icon: LucideIcon; title: string; description: string }[] = [
+	{ icon: Truck, title: "Livraison France : 6€", description: "Expédition sous 2-3 jours" },
+	{ icon: RotateCcw, title: "Retours sous 14 jours", description: "Échange ou remboursement" },
+	{ icon: ShieldCheck, title: "Paiement sécurisé", description: "CB, PayPal, Apple Pay" },
 ];
 
 /**
@@ -188,8 +189,9 @@ export async function Footer() {
 							{REASSURANCE_ITEMS.map((item) => (
 								<li
 									key={item.title}
-									className="bg-card/50 border-border/60 flex items-center rounded-xl border px-5 py-4 shadow-sm"
+									className="bg-card/50 border-border/60 flex items-center gap-4 rounded-xl border px-5 py-4 shadow-sm"
 								>
+									<item.icon className="text-primary h-5 w-5 shrink-0" aria-hidden="true" />
 									<div className="text-sm">
 										<p className="text-foreground font-medium">{item.title}</p>
 										<p className="text-muted-foreground">{item.description}</p>

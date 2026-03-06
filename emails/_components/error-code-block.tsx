@@ -1,3 +1,4 @@
+import { Section } from "@react-email/components";
 import { EMAIL_STYLES } from "../email-colors";
 
 interface ErrorCodeBlockProps {
@@ -6,8 +7,8 @@ interface ErrorCodeBlockProps {
 
 export const ErrorCodeBlock = ({ error }: ErrorCodeBlockProps) => {
 	return (
-		<div className="email-code-block" style={EMAIL_STYLES.codeBlock.container}>
+		<Section className="email-code-block" style={EMAIL_STYLES.codeBlock.container}>
 			<code style={EMAIL_STYLES.codeBlock.code}>{error}</code>
-		</div>
+		</Section>
 	);
 };

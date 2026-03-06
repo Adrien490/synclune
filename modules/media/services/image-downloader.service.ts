@@ -12,7 +12,7 @@
 import sharp from "sharp";
 import { withRetry as withRetryBase } from "@/shared/utils/with-retry";
 import type { DownloadImageOptions, RetryOptions } from "../types/image-processing.types";
-import { IMAGE_DOWNLOADER_CONFIG } from "../constants/media.constants";
+import { IMAGE_DOWNLOADER_CONFIG } from "../constants/image-downloader.constants";
 
 export type { DownloadImageOptions, RetryOptions, LogFn } from "../types/image-processing.types";
 

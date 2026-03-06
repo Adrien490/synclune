@@ -1,5 +1,5 @@
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
-import { MAX_GALLERY_IMAGES } from "@/modules/media/constants/media.constants";
+import { MAX_GALLERY_IMAGES } from "@/modules/media/constants/media-limits.constants";
 import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
@@ -115,16 +115,16 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 		if (seenUrls.has(skuImage.url)) return false;
 		seenUrls.add(skuImage.url);
 
-		// Generate descriptive ALT text (index will be updated after full gallery construction)
 		const generatedAlt = buildAltText(
 			product.title,
 			{
 				productType,
 				...variantInfo,
 			},
-			gallery.length, // Current index in the gallery
+			gallery.length,
 		);
 
+		const hasCustomAlt = !!skuImage.altText;
 		gallery.push({
 			id: skuImage.id,
 			url: skuImage.url,
@@ -134,6 +134,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 			mediaType: skuImage.mediaType,
 			source,
 			skuId,
+			_hasCustomAlt: hasCustomAlt,
 		});
 		return true;
 	};
@@ -196,14 +197,25 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 		});
 	}
 
-	// Update ALTs with total image count for "Vue X sur Y" format
+	// Second pass: regenerate ALTs with total image count for "Vue X sur Y" format
 	const totalImages = gallery.length;
 	if (totalImages > 1) {
-		for (let i = 0; i < gallery.length; i++) {
-			const media = gallery[i];
+		for (const media of gallery) {
 			// Only update generated ALTs (not manually defined ones from DB)
-			if (media && !media.alt.includes(" sur ") && media.alt.includes("Photo ")) {
-				media.alt = media.alt.replace(/Photo (\d+)$/, `Vue $1 sur ${totalImages}`);
+			if (media && !media._hasCustomAlt) {
+				const index = gallery.indexOf(media);
+				const sku = product.skus.find((s) => s.id === media.skuId);
+				media.alt = buildAltText(
+					product.title,
+					{
+						productType,
+						materialName: sku?.material?.name,
+						colorName: sku?.color?.name,
+						size: sku?.size,
+					},
+					index,
+					totalImages,
+				);
 			}
 		}
 	}

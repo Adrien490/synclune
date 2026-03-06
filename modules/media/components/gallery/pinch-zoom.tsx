@@ -17,23 +17,25 @@ interface GalleryPinchZoomProps {
 	isActive: boolean;
 	onTap?: () => void;
 	preload?: boolean;
+	/** View Transition name for cross-page morphing */
+	viewTransitionName?: string;
 }
 
 /**
- * Composant mobile avec support pinch-to-zoom natif
+ * Mobile component with native pinch-to-zoom support
  *
- * Fonctionnalités:
- * - Pinch pour zoomer (1x → 3x)
- * - Double-tap pour toggle zoom 2x / reset
- * - Pan quand zoomé
- * - Tap simple ouvre la lightbox
+ * Features:
+ * - Pinch to zoom (1x → 3x)
+ * - Double-tap to toggle 2x zoom / reset
+ * - Pan when zoomed
+ * - Single tap opens lightbox
  *
- * Accessibilité:
- * - Support clavier complet (+/-/flèches/Escape)
- * - ARIA labels dynamiques
+ * Accessibility:
+ * - Full keyboard support (+/-/arrows/Escape)
+ * - Dynamic ARIA labels
  * - Focus visible
- * - Annonces screen reader
- * - Respect prefers-reduced-motion
+ * - Screen reader announcements
+ * - Respects prefers-reduced-motion
  */
 export function GalleryPinchZoom({
 	src,
@@ -42,6 +44,7 @@ export function GalleryPinchZoom({
 	isActive,
 	onTap,
 	preload = false,
+	viewTransitionName,
 }: GalleryPinchZoomProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReduced = useReducedMotion();
@@ -55,7 +58,7 @@ export function GalleryPinchZoom({
 
 	const transitionClass = prefersReduced ? "" : "transition-transform duration-200 ease-out";
 
-	// ARIA label dynamique selon l'état
+	// Dynamic ARIA label based on state
 	const ariaLabel = isZoomed
 		? `${alt}. Zoom ${Math.round(scale * 100)}%. Utilisez les flèches pour déplacer, Échap pour réinitialiser.`
 		: `${alt}. Double-tapez ou appuyez sur + pour zoomer. Entrée pour ouvrir en plein écran.`;
@@ -73,16 +76,16 @@ export function GalleryPinchZoom({
 				"relative h-full w-full overflow-hidden",
 				"outline-none",
 				"focus-visible:ring-primary focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2",
-				"transition-transform active:scale-[0.99]", // Feedback tactile
+				"transition-transform active:scale-[0.99]", // Touch feedback
 				isZoomed ? "cursor-grab touch-none" : "cursor-zoom-in touch-manipulation",
 			)}
 			style={{ touchAction: isZoomed ? "none" : "manipulation" }}
 		>
-			{/* Container image transformable */}
+			{/* Transformable image container */}
 			<div
 				className={cn(
 					"relative h-full w-full",
-					transitionClass, // Toujours appliqué pour smooth double-tap
+					transitionClass, // Always applied for smooth double-tap
 				)}
 				style={{
 					transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
@@ -92,9 +95,10 @@ export function GalleryPinchZoom({
 			>
 				<Image
 					src={src}
-					alt="" // Alt vide car géré par le container parent
+					alt="" // Empty alt since managed by the parent container
 					fill
 					className="pointer-events-none object-cover select-none"
+					style={viewTransitionName ? { viewTransitionName } : undefined}
 					preload={preload}
 					quality={MAIN_IMAGE_QUALITY}
 					sizes={GALLERY_MAIN_SIZES}
@@ -104,7 +108,7 @@ export function GalleryPinchZoom({
 				/>
 			</div>
 
-			{/* Indicateur zoom visuel */}
+			{/* Visual zoom indicator */}
 			{isZoomed && (
 				<div
 					className={cn(
@@ -120,14 +124,14 @@ export function GalleryPinchZoom({
 				</div>
 			)}
 
-			{/* Annonce pour screen readers (WCAG 4.1.3) */}
+			{/* Screen reader announcement (WCAG 4.1.3) */}
 			{isZoomed && (
 				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
 					Zoom {Math.round(scale * 100)} pourcent
 				</div>
 			)}
 
-			{/* Instructions au focus (mobile/desktop) */}
+			{/* Focus instructions (mobile/desktop) */}
 			<div
 				className={cn(
 					"absolute bottom-3 left-1/2 z-10 -translate-x-1/2",
@@ -135,7 +139,7 @@ export function GalleryPinchZoom({
 					"rounded-full px-3 py-1.5 text-xs font-medium",
 					"pointer-events-none select-none",
 					"opacity-0 focus-within:opacity-100",
-					"hidden sm:block", // Visible uniquement au focus clavier (desktop)
+					"hidden sm:block", // Only visible on keyboard focus (desktop)
 					!prefersReduced && "transition-opacity duration-200",
 				)}
 				aria-hidden="true"

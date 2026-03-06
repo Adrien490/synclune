@@ -1,4 +1,4 @@
-import { Button, Column, Hr, Img, Row, Section, Text } from "@react-email/components";
+import { Button, Column, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
@@ -36,9 +36,12 @@ export const ReviewRequestEmail = ({
 				<>
 					<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>
 					<Text style={EMAIL_STYLES.text.tiny}>
-						<a href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+						<Link
+							href={unsubscribeUrl}
+							style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
+						>
 							Se désinscrire des emails commerciaux
-						</a>
+						</Link>
 					</Text>
 				</>
 			}
