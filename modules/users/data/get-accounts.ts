@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { type Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
@@ -66,7 +66,7 @@ export async function getAccounts(params: GetAccountsParams): Promise<GetAccount
  * Admin uniquement avec sécurité renforcée
  */
 async function fetchAccounts(params: GetAccountsParams): Promise<GetAccountsReturn> {
-	"use cache";
+	"use cache: private";
 	cacheLife("dashboard");
 	cacheTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 
@@ -96,40 +96,34 @@ async function fetchAccounts(params: GetAccountsParams): Promise<GetAccountsRetu
 
 		const accountsRaw = await prisma.account.findMany({
 			where,
-			select: {
-				...GET_ACCOUNTS_DEFAULT_SELECT,
-				accessToken: true,
-				refreshToken: true,
-			},
+			select: GET_ACCOUNTS_DEFAULT_SELECT,
 			orderBy,
 			...cursorConfig,
 		});
 
-		const now = new Date();
-		const accountsWithSecurityFields = accountsRaw.map(
-			(
-				account: Prisma.AccountGetPayload<{
-					select: typeof GET_ACCOUNTS_DEFAULT_SELECT & {
-						accessToken: true;
-						refreshToken: true;
-					};
-				}>,
-			) => {
-				const { accessToken, refreshToken, ...accountWithoutTokens } = account;
-
-				return {
-					...accountWithoutTokens,
-					hasAccessToken: !!accessToken,
-					hasRefreshToken: !!refreshToken,
-					isAccessTokenExpired: account.accessTokenExpiresAt
-						? account.accessTokenExpiresAt < now
-						: false,
-					isRefreshTokenExpired: account.refreshTokenExpiresAt
-						? account.refreshTokenExpiresAt < now
-						: false,
-				};
-			},
+		const accountIds = accountsRaw.map((a) => a.id);
+		const tokenPresence = await prisma.$queryRaw<
+			Array<{ id: string; hasAccessToken: boolean; hasRefreshToken: boolean }>
+		>(
+			Prisma.sql`SELECT "id", ("accessToken" IS NOT NULL) AS "hasAccessToken", ("refreshToken" IS NOT NULL) AS "hasRefreshToken" FROM "Account" WHERE "id" = ANY(${accountIds})`,
 		);
+		const tokenMap = new Map(tokenPresence.map((t) => [t.id, t]));
+
+		const now = new Date();
+		const accountsWithSecurityFields = accountsRaw.map((account) => {
+			const tokens = tokenMap.get(account.id);
+			return {
+				...account,
+				hasAccessToken: tokens?.hasAccessToken ?? false,
+				hasRefreshToken: tokens?.hasRefreshToken ?? false,
+				isAccessTokenExpired: account.accessTokenExpiresAt
+					? account.accessTokenExpiresAt < now
+					: false,
+				isRefreshTokenExpired: account.refreshTokenExpiresAt
+					? account.refreshTokenExpiresAt < now
+					: false,
+			};
+		});
 
 		const { items: accounts, pagination } = processCursorResults(
 			accountsWithSecurityFields,

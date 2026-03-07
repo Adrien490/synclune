@@ -198,7 +198,7 @@ describe("POST /api/webhooks/stripe - env var validation", () => {
 		const response = await POST(req);
 
 		expect(mockNextResponseJson).toHaveBeenCalledWith(
-			{ error: "Stripe configuration missing" },
+			{ error: "Internal server error" },
 			{ status: 500 },
 		);
 		expect(response.status).toBe(500);
@@ -211,7 +211,7 @@ describe("POST /api/webhooks/stripe - env var validation", () => {
 		const response = await POST(req);
 
 		expect(mockNextResponseJson).toHaveBeenCalledWith(
-			{ error: "Stripe configuration missing" },
+			{ error: "Internal server error" },
 			{ status: 500 },
 		);
 		expect(response.status).toBe(500);
@@ -447,7 +447,7 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 		expect(response.status).toBe(200);
 	});
 
-	it("should continue processing when event status is PROCESSING (retry eligible)", async () => {
+	it("should skip when event status is PROCESSING (concurrent webhook)", async () => {
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
 			id: "wh_1",
 			status: WebhookEventStatus.PROCESSING,
@@ -456,8 +456,9 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 		const req = makeRequest();
 		const response = await POST(req);
 
-		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
 		expect(response.status).toBe(200);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
 	});
 });
 

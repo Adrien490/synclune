@@ -34,6 +34,7 @@ export async function getReviewById(reviewId: string): Promise<ReviewPublic | nu
  * Récupère un avis par son ID (version admin)
  * Retourne tous les avis, y compris masqués
  *
+ * @internal Admin-only - must be called from admin-gated context
  * @param reviewId - ID de l'avis
  * @returns L'avis ou null si introuvable
  */

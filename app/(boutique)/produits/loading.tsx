@@ -6,12 +6,13 @@ export default function BijouxHubLoading() {
 	return (
 		<div className="min-h-screen">
 			<PageHeader
+				className="hidden sm:block"
 				title="Les créations"
 				description="Découvrez toutes mes créations colorées faites main dans mon atelier. Des pièces uniques inspirées de mes passions !"
 				breadcrumbs={[{ label: "Créations", href: "/produits" }]}
 			/>
 
-			<section className="bg-background relative z-10 pt-4 pb-12 lg:pt-6 lg:pb-16">
+			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
 				<div className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
 					{/* Toolbar skeleton - Desktop only */}
 					<div className="md:bg-card md:border-border/60 hidden min-w-0 p-0 md:flex md:rounded-lg md:border md:p-4 md:shadow-sm">

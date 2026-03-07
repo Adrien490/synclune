@@ -21,7 +21,7 @@ const roleSchema = z
 // ============================================================================
 
 export const getUserSchema = z.object({
-	userId: z.string().optional(),
+	userId: z.cuid2("ID utilisateur invalide").optional(),
 });
 
 // ============================================================================

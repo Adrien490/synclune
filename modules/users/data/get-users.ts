@@ -69,7 +69,7 @@ async function fetchUsers(
 	params: GetUsersParams,
 	fuzzyIds?: string[] | null,
 ): Promise<GetUsersReturn> {
-	"use cache";
+	"use cache: private";
 	cacheLife("dashboard");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 

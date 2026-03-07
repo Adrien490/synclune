@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 		// 1. Validation des variables d'environnement
 		if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
 			logger.error("Stripe configuration missing", undefined, { correlationId });
-			return NextResponse.json({ error: "Stripe configuration missing" }, { status: 500 });
+			return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 		}
 
 		const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -78,7 +78,8 @@ export async function POST(req: Request) {
 
 		if (
 			existingEvent?.status === WebhookEventStatus.COMPLETED ||
-			existingEvent?.status === WebhookEventStatus.SKIPPED
+			existingEvent?.status === WebhookEventStatus.SKIPPED ||
+			existingEvent?.status === WebhookEventStatus.PROCESSING
 		) {
 			logger.info("Event already processed, skipping", {
 				correlationId,

@@ -91,17 +91,20 @@ import { createOrderInTransaction } from "../order-creation.service";
 function makeSku(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "sku_1",
+		sku: "SKU-001",
 		priceInclTax: 2990,
 		compareAtPrice: null,
-		color: { name: "Or" },
+		isActive: true,
+		colorId: "color_1",
+		color: { id: "color_1", name: "Or", hex: "#FFD700" },
 		material: "Argent",
-		size: null,
+		size: undefined,
 		images: [{ url: "https://example.com/image.jpg", isPrimary: true }],
 		product: {
 			id: "prod_1",
 			title: "Bague Étoile",
+			slug: "bague-etoile",
 			description: "Description produit",
-			status: "PUBLIC",
 		},
 		...overrides,
 	};

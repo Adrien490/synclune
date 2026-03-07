@@ -69,14 +69,12 @@ export type GetWishlistItemCountReturn = number;
  */
 export type AddToWishlistData = {
 	wishlistItemId: string;
-	wishlistId: string;
 };
 
 /**
  * Données retournées par removeFromWishlist en cas de succès
  */
 export type RemoveFromWishlistData = {
-	wishlistId: string;
 	removed: boolean;
 };
 
@@ -84,7 +82,6 @@ export type RemoveFromWishlistData = {
  * Données retournées par toggleWishlistItem en cas de succès
  */
 export type ToggleWishlistItemData = {
-	wishlistId: string;
 	action: "added" | "removed";
 	wishlistItemId?: string;
 };

@@ -100,7 +100,6 @@ export async function removeFromWishlist(
 		}
 
 		return success("Retire de votre wishlist", {
-			wishlistId: wishlist.id,
 			removed: true,
 		});
 	} catch (e) {

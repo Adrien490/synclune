@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
-import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { REVIEW_CONFIG } from "../constants/review.constants";
 
 // ============================================================================
@@ -148,7 +147,10 @@ export type ModerateReviewInput = z.infer<typeof moderateReviewSchema>;
  * Schéma pour masquer plusieurs avis en masse
  */
 export const bulkHideReviewsSchema = z.object({
-	ids: z.array(z.cuid2("ID d'avis invalide")).min(1, "Sélectionnez au moins un avis"),
+	ids: z
+		.array(z.cuid2("ID d'avis invalide"))
+		.min(1, "Sélectionnez au moins un avis")
+		.max(100, "Maximum 100 avis par opération"),
 });
 
 export type BulkHideReviewsInput = z.infer<typeof bulkHideReviewsSchema>;
@@ -157,7 +159,10 @@ export type BulkHideReviewsInput = z.infer<typeof bulkHideReviewsSchema>;
  * Schéma pour publier plusieurs avis en masse
  */
 export const bulkPublishReviewsSchema = z.object({
-	ids: z.array(z.cuid2("ID d'avis invalide")).min(1, "Sélectionnez au moins un avis"),
+	ids: z
+		.array(z.cuid2("ID d'avis invalide"))
+		.min(1, "Sélectionnez au moins un avis")
+		.max(100, "Maximum 100 avis par opération"),
 });
 
 export type BulkPublishReviewsInput = z.infer<typeof bulkPublishReviewsSchema>;
@@ -166,7 +171,10 @@ export type BulkPublishReviewsInput = z.infer<typeof bulkPublishReviewsSchema>;
  * Schéma pour supprimer plusieurs avis en masse (soft delete admin)
  */
 export const bulkDeleteReviewsSchema = z.object({
-	ids: z.array(z.cuid2("ID d'avis invalide")).min(1, "Sélectionnez au moins un avis"),
+	ids: z
+		.array(z.cuid2("ID d'avis invalide"))
+		.min(1, "Sélectionnez au moins un avis")
+		.max(100, "Maximum 100 avis par opération"),
 });
 
 export type BulkDeleteReviewsInput = z.infer<typeof bulkDeleteReviewsSchema>;
@@ -234,43 +242,6 @@ export const sendReviewRequestEmailSchema = z.object({
 });
 
 export type SendReviewRequestEmailInput = z.infer<typeof sendReviewRequestEmailSchema>;
-
-// ============================================================================
-// FILTERS SCHEMA (Admin)
-// ============================================================================
-
-/**
- * Schéma de validation pour les filtres de la liste admin
- */
-export const reviewFiltersSchema = z.object({
-	status: z.enum(["PUBLISHED", "HIDDEN"]).optional(),
-	rating: z.coerce.number().int().min(1).max(5).optional(),
-	productId: z.cuid2().optional(),
-	userId: z.cuid2().optional(),
-	hasResponse: z.coerce.boolean().optional(),
-	dateFrom: stringOrDateSchema,
-	dateTo: stringOrDateSchema,
-});
-
-export type ReviewFilters = z.infer<typeof reviewFiltersSchema>;
-
-/**
- * Schéma de validation pour les paramètres de requête admin
- */
-export const getReviewsAdminSchema = z.object({
-	page: z.coerce.number().min(1, "La page doit être >= 1").default(1),
-	perPage: z.coerce
-		.number()
-		.min(1, "Minimum 1 élément par page")
-		.max(REVIEW_CONFIG.MAX_PER_PAGE, `Maximum ${REVIEW_CONFIG.MAX_PER_PAGE} éléments par page`)
-		.default(REVIEW_CONFIG.DEFAULT_PER_PAGE),
-	sortBy: z.enum(["createdAt", "rating", "updatedAt"]).default("createdAt"),
-	sortOrder: z.enum(["asc", "desc"]).default("desc"),
-	search: z.string().max(255, "Recherche trop longue").optional(),
-	filters: reviewFiltersSchema.optional(),
-});
-
-export type GetReviewsAdminInput = z.infer<typeof getReviewsAdminSchema>;
 
 // ============================================================================
 // STOREFRONT PARAMS SCHEMA

@@ -17,7 +17,6 @@ import { Heart } from "lucide-react";
 import Link from "next/link";
 
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
-import type { Product } from "@/modules/products/types/product.types";
 import {
 	WishlistListOptimisticContext,
 	type WishlistListOptimisticContextValue,
@@ -132,12 +131,8 @@ export function WishlistListContent({
 											}
 								}
 							>
-								{/* WishlistItem.product satisfies all fields accessed by ProductCard and
-									its children at runtime (id, slug, title, type, reviewStats, skus).
-									Fields present in Product but absent here (description, _count,
-									collections) are never accessed. The double cast is intentional. */}
 								<ProductCard
-									product={item.product as unknown as Product}
+									product={item.product!}
 									index={index}
 									isInWishlist={wishlistProductIds.has(item.productId)}
 									sectionId="wishlist"

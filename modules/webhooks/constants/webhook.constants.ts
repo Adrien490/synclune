@@ -5,6 +5,12 @@
 export const ANTI_REPLAY_WINDOW_SECONDS = 300;
 
 /**
+ * Reserved UUID for system-generated OrderNotes (webhooks, cron)
+ * Uses UUID v4 nil-like format to avoid collision with real user IDs
+ */
+export const SYSTEM_AUTHOR_ID = "00000000-0000-0000-0000-000000000000";
+
+/**
  * Labels pour les types d'événements (UI admin)
  */
 export const WEBHOOK_EVENT_LABELS: Record<string, string> = {

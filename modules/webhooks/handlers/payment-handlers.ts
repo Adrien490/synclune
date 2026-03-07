@@ -56,12 +56,10 @@ export async function handlePaymentFailure(
 		// 1. Extraire les détails d'échec
 		const failureDetails = extractPaymentFailureDetails(paymentIntent);
 
-		logger.info(`[AUDIT] Payment failure details`, {
+		logger.info(`[AUDIT] Payment failure detected`, {
 			service: "webhook",
 			orderId,
 			failureCode: failureDetails.code,
-			declineCode: failureDetails.declineCode,
-			message: failureDetails.message,
 		});
 
 		// 2. Restaurer le stock si nécessaire

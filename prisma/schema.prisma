@@ -1032,6 +1032,7 @@ model ProductReview {
   // La validation metier est faite cote applicatif pour les avis actifs
   @@unique([userId, productId])
   @@index([productId])
+  @@index([productId, status, deletedAt])
 }
 
 /// Photo jointe a un avis produit

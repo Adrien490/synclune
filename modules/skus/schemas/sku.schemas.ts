@@ -141,7 +141,7 @@ export const createProductSkuSchema = baseSkuFieldsSchema
 		productId: z.cuid2({ message: "ID produit invalide" }),
 
 		// SKU - optional, sera auto-genere si non fourni
-		sku: z.string().optional().or(z.literal("")),
+		sku: z.string().max(50).optional().or(z.literal("")),
 	})
 	.refine(refinePrimaryImageNotVideo, PRIMARY_IMAGE_ERROR)
 	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
@@ -258,5 +258,5 @@ export const adjustSkuStockSchema = z.object({
 		.min(-99999, { error: "L'ajustement ne peut pas être inférieur à -99 999" })
 		.max(99999, { error: "L'ajustement ne peut pas dépasser 99 999" })
 		.refine((val) => val !== 0, { message: "L'ajustement ne peut pas être 0" }),
-	reason: z.string().optional(), // Raison de l'ajustement (pour traçabilité)
+	reason: z.string().max(500).optional(),
 });

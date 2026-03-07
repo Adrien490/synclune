@@ -10,6 +10,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
+import { CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
 
@@ -176,6 +177,11 @@ export async function bulkDeleteSkus(
 
 		// Invalider le cache (deduplique automatiquement les tags)
 		const uniqueTags = collectBulkInvalidationTags(skusData);
+		// Invalider les caches FOMO "dans X paniers" pour chaque produit affecté
+		const productIds = new Set(skusData.map((s) => s.productId));
+		for (const productId of productIds) {
+			uniqueTags.add(CART_CACHE_TAGS.PRODUCT_CARTS(productId));
+		}
 		invalidateTags(uniqueTags);
 
 		// Audit log

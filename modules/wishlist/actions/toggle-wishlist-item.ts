@@ -159,7 +159,6 @@ export async function toggleWishlistItem(
 		return success(
 			transactionResult.action === "added" ? "Ajoute a votre wishlist" : "Retire de votre wishlist",
 			{
-				wishlistId: transactionResult.wishlist.id,
 				action: transactionResult.action,
 				wishlistItemId: transactionResult.wishlistItemId,
 			},

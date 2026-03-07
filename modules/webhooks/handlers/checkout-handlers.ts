@@ -12,6 +12,7 @@ import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 
 /**
  * Gère la complétion d'une session checkout
@@ -67,10 +68,9 @@ export async function handleCheckoutSessionCompleted(
 				dbOrder?.customerEmail &&
 				stripeEmail.toLowerCase() !== dbOrder.customerEmail.toLowerCase()
 			) {
-				logger.warn(
-					`[WEBHOOK] Email mismatch for order ${orderId}: Stripe=${stripeEmail}, Order=${dbOrder.customerEmail}`,
-					{ service: "webhook" },
-				);
+				logger.warn(`[WEBHOOK] Email mismatch detected for order ${orderId}`, {
+					service: "webhook",
+				});
 				// Create an admin OrderNote for visibility
 				await prisma.orderNote.create({
 					data: {
@@ -78,7 +78,7 @@ export async function handleCheckoutSessionCompleted(
 						content:
 							`[ALERTE EMAIL] Email Stripe (${stripeEmail}) ne correspond pas a l'email commande (${dbOrder.customerEmail}). ` +
 							`Verifier la legitimite de cette commande.`,
-						authorId: "system",
+						authorId: SYSTEM_AUTHOR_ID,
 						authorName: "Systeme (webhook Stripe)",
 					},
 				});

@@ -177,14 +177,14 @@ describe("Webhook concurrency - duplicate event processing", () => {
 		expect(result.status).toBe(200);
 	});
 
-	it("should retry PROCESSING events (previous attempt may have crashed)", async () => {
+	it("should skip PROCESSING events (concurrent webhook protection)", async () => {
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue(
 			makeWebhookRecord({ status: "PROCESSING", attempts: 1 }),
 		);
 
 		const result = await POST(makeRequest());
 
-		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
 		expect(result.status).toBe(200);
 	});
 
@@ -193,7 +193,7 @@ describe("Webhook concurrency - duplicate event processing", () => {
 		mockConstructEvent.mockReturnValue(event);
 
 		// First call: no existing record → processes normally
-		// Second call: sees PROCESSING status from first → retries (which is OK)
+		// Second call: sees PROCESSING status from first → skips (duplicate)
 		mockPrisma.webhookEvent.findUnique
 			.mockResolvedValueOnce(null)
 			.mockResolvedValueOnce(makeWebhookRecord({ status: "PROCESSING" }));

@@ -63,12 +63,18 @@ describe("getUserSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("accepts an object with a string userId", () => {
-		const result = getUserSchema.safeParse({ userId: "user-123" });
+	it("accepts an object with a valid cuid2 userId", () => {
+		const validCuid2 = "ckopqwooh000001l27rf8b8h3";
+		const result = getUserSchema.safeParse({ userId: validCuid2 });
 		expect(result.success).toBe(true);
 		if (result.success) {
-			expect(result.data.userId).toBe("user-123");
+			expect(result.data.userId).toBe(validCuid2);
 		}
+	});
+
+	it("rejects an object with an invalid userId", () => {
+		const result = getUserSchema.safeParse({ userId: "not-a-cuid2" });
+		expect(result.success).toBe(false);
 	});
 
 	it("accepts an object with undefined userId", () => {

@@ -155,7 +155,6 @@ export async function addToWishlist(
 			transactionResult.alreadyExists ? "Deja dans votre wishlist" : "Ajoute a votre wishlist",
 			{
 				wishlistItemId: transactionResult.wishlistItem.id,
-				wishlistId: transactionResult.wishlist.id,
 			},
 		);
 	} catch (e) {

@@ -235,20 +235,18 @@ export async function updateProductSku(
 
 			// Create new SKU media (images and videos)
 			if (allMedia.length > 0) {
-				for (const media of allMedia) {
-					await tx.skuMedia.create({
-						data: {
-							skuId: updatedSku.id,
-							url: media.url,
-							thumbnailUrl: media.thumbnailUrl ?? null,
-							blurDataUrl: media.blurDataUrl ?? null,
-							altText: media.altText ?? null,
-							mediaType: media.mediaType ?? detectMediaType(media.url),
-							isPrimary: media.isPrimary,
-							position: media.position,
-						},
-					});
-				}
+				await tx.skuMedia.createMany({
+					data: allMedia.map((media) => ({
+						skuId: updatedSku.id,
+						url: media.url,
+						thumbnailUrl: media.thumbnailUrl ?? null,
+						blurDataUrl: media.blurDataUrl ?? null,
+						altText: media.altText ?? null,
+						mediaType: media.mediaType ?? detectMediaType(media.url),
+						isPrimary: media.isPrimary,
+						position: media.position,
+					})),
+				});
 			}
 
 			return { productSku: updatedSku };

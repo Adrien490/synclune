@@ -165,7 +165,7 @@ describe("handleDisputeCreated", () => {
 			data: {
 				orderId: "order-1",
 				content: expect.stringContaining("[LITIGE OUVERT] Litige Stripe dp_test_1"),
-				authorId: "system",
+				authorId: "00000000-0000-0000-0000-000000000000",
 				authorName: "Système (webhook Stripe)",
 			},
 		});

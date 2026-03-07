@@ -15,6 +15,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		account: { findMany: vi.fn() },
+		$queryRaw: vi.fn(),
 	},
 	mockIsAdmin: vi.fn(),
 	mockCacheLife: vi.fn(),
@@ -107,13 +108,20 @@ function makeAccount(overrides: Record<string, unknown> = {}) {
 		accountId: "ext-id-1",
 		providerId: "google",
 		userId: "user-1",
-		accessToken: "tok_access",
-		refreshToken: "tok_refresh",
 		accessTokenExpiresAt: null,
 		refreshTokenExpiresAt: null,
 		scope: "email",
 		createdAt: new Date("2024-01-01"),
 		updatedAt: new Date("2024-01-01"),
+		...overrides,
+	};
+}
+
+function makeTokenPresence(overrides: Record<string, unknown> = {}) {
+	return {
+		id: "acc-1",
+		hasAccessToken: true,
+		hasRefreshToken: true,
 		...overrides,
 	};
 }
@@ -147,6 +155,7 @@ function setupDefaults() {
 	mockBuildAccountsWhereClause.mockReturnValue({});
 	mockBuildCursorPagination.mockReturnValue({ take: 51 });
 	mockPrisma.account.findMany.mockResolvedValue([makeAccount()]);
+	mockPrisma.$queryRaw.mockResolvedValue([makeTokenPresence()]);
 	mockProcessCursorResults.mockReturnValue({
 		items: [
 			{
@@ -207,25 +216,28 @@ describe("getAccounts", () => {
 		});
 	});
 
-	it("fetches accounts with accessToken and refreshToken fields", async () => {
+	it("does not select raw tokens from the database", async () => {
 		await getAccounts(makeValidParams());
 
-		expect(mockPrisma.account.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({
-				select: expect.objectContaining({
-					accessToken: true,
-					refreshToken: true,
-				}),
-			}),
-		);
+		const call = mockPrisma.account.findMany.mock.calls[0]![0] as {
+			select: Record<string, unknown>;
+		};
+		expect(call.select).not.toHaveProperty("accessToken");
+		expect(call.select).not.toHaveProperty("refreshToken");
 	});
 
-	it("strips raw tokens and replaces with boolean flags", async () => {
-		mockPrisma.account.findMany.mockResolvedValue([
-			makeAccount({ accessToken: "tok_access", refreshToken: "tok_refresh" }),
+	it("queries token presence via $queryRaw", async () => {
+		await getAccounts(makeValidParams());
+
+		expect(mockPrisma.$queryRaw).toHaveBeenCalled();
+	});
+
+	it("maps token presence booleans from $queryRaw", async () => {
+		mockPrisma.account.findMany.mockResolvedValue([makeAccount()]);
+		mockPrisma.$queryRaw.mockResolvedValue([
+			makeTokenPresence({ hasAccessToken: true, hasRefreshToken: true }),
 		]);
 
-		// processCursorResults just returns items as-is for this test
 		mockProcessCursorResults.mockImplementation(
 			(items: Record<string, unknown>[], _take: number, _direction: string, _cursor: string) => ({
 				items,
@@ -236,15 +248,14 @@ describe("getAccounts", () => {
 		const result = await getAccounts(makeValidParams());
 		const account = result.accounts[0] as Record<string, unknown>;
 
-		expect(account).not.toHaveProperty("accessToken");
-		expect(account).not.toHaveProperty("refreshToken");
 		expect(account.hasAccessToken).toBe(true);
 		expect(account.hasRefreshToken).toBe(true);
 	});
 
 	it("marks hasAccessToken as false when token is null", async () => {
-		mockPrisma.account.findMany.mockResolvedValue([
-			makeAccount({ accessToken: null, refreshToken: null }),
+		mockPrisma.account.findMany.mockResolvedValue([makeAccount()]);
+		mockPrisma.$queryRaw.mockResolvedValue([
+			makeTokenPresence({ hasAccessToken: false, hasRefreshToken: false }),
 		]);
 
 		mockProcessCursorResults.mockImplementation((items: Record<string, unknown>[]) => ({
@@ -262,13 +273,9 @@ describe("getAccounts", () => {
 	it("marks isAccessTokenExpired true when token has past expiry date", async () => {
 		const pastDate = new Date(Date.now() - 1000 * 60 * 60);
 		mockPrisma.account.findMany.mockResolvedValue([
-			makeAccount({
-				accessToken: "tok",
-				accessTokenExpiresAt: pastDate,
-				refreshToken: null,
-				refreshTokenExpiresAt: null,
-			}),
+			makeAccount({ accessTokenExpiresAt: pastDate }),
 		]);
+		mockPrisma.$queryRaw.mockResolvedValue([makeTokenPresence()]);
 
 		mockProcessCursorResults.mockImplementation((items: Record<string, unknown>[]) => ({
 			items,
@@ -284,13 +291,9 @@ describe("getAccounts", () => {
 	it("marks isAccessTokenExpired false when expiry date is in the future", async () => {
 		const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
 		mockPrisma.account.findMany.mockResolvedValue([
-			makeAccount({
-				accessToken: "tok",
-				accessTokenExpiresAt: futureDate,
-				refreshToken: null,
-				refreshTokenExpiresAt: null,
-			}),
+			makeAccount({ accessTokenExpiresAt: futureDate }),
 		]);
+		mockPrisma.$queryRaw.mockResolvedValue([makeTokenPresence()]);
 
 		mockProcessCursorResults.mockImplementation((items: Record<string, unknown>[]) => ({
 			items,
@@ -304,14 +307,8 @@ describe("getAccounts", () => {
 	});
 
 	it("marks isAccessTokenExpired false when accessTokenExpiresAt is null", async () => {
-		mockPrisma.account.findMany.mockResolvedValue([
-			makeAccount({
-				accessToken: "tok",
-				accessTokenExpiresAt: null,
-				refreshToken: null,
-				refreshTokenExpiresAt: null,
-			}),
-		]);
+		mockPrisma.account.findMany.mockResolvedValue([makeAccount({ accessTokenExpiresAt: null })]);
+		mockPrisma.$queryRaw.mockResolvedValue([makeTokenPresence()]);
 
 		mockProcessCursorResults.mockImplementation((items: Record<string, unknown>[]) => ({
 			items,

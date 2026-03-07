@@ -82,7 +82,10 @@ export async function fetchAccountStats(userId: string): Promise<AccountStats> {
 			cartItemsCount: cart?._count.items ?? 0,
 		};
 	} catch (error) {
-		console.error("[FETCH_ACCOUNT_STATS] Error:", error);
+		console.error(
+			"[FETCH_ACCOUNT_STATS] Error:",
+			error instanceof Error ? error.message : "Unknown error",
+		);
 		return {
 			totalOrders: 0,
 			pendingOrders: 0,

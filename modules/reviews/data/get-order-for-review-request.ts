@@ -1,5 +1,4 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { cacheReviewsAdmin } from "../constants/cache";
 
 // ============================================================================
 // TYPES
@@ -24,14 +23,10 @@ export async function getOrderForReviewRequest(orderId: string): Promise<OrderFo
 }
 
 // ============================================================================
-// FETCH FUNCTION (CACHED)
+// FETCH FUNCTION
 // ============================================================================
 
 async function fetchOrderForReviewRequest(orderId: string) {
-	"use cache";
-
-	cacheReviewsAdmin();
-
 	try {
 		return await prisma.order.findUnique({
 			where: { id: orderId, ...notDeleted },

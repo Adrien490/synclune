@@ -10,7 +10,7 @@ export const deleteUserSchema = z.object({
 });
 
 export const bulkDeleteUsersSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne").max(200),
 });
 
 // ============================================================================
@@ -22,7 +22,7 @@ export const suspendUserSchema = z.object({
 });
 
 export const bulkSuspendUsersSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne").max(200),
 });
 
 // ============================================================================
@@ -34,7 +34,7 @@ export const restoreUserSchema = z.object({
 });
 
 export const bulkRestoreUsersSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne").max(200),
 });
 
 // ============================================================================
@@ -47,7 +47,7 @@ export const changeUserRoleSchema = z.object({
 });
 
 export const bulkChangeUserRoleSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne").max(200),
 	role: z.enum([Role.USER, Role.ADMIN]),
 });
 

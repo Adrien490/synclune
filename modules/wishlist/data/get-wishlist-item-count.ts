@@ -33,6 +33,7 @@ export async function getWishlistItemCount(): Promise<GetWishlistItemCountReturn
 /**
  * Récupère le nombre d'items dans la wishlist d'un utilisateur ou visiteur
  *
+ * @internal Only called by getWishlistItemCount wrapper. Do not call directly with arbitrary userId.
  * @param userId - ID de l'utilisateur connecté (optionnel)
  * @param sessionId - ID de session visiteur (optionnel)
  * @returns Nombre d'items dans la wishlist

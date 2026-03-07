@@ -93,7 +93,7 @@ export async function executeReviewRequestEmail(orderId: string): Promise<Action
 		return error(REVIEW_ERROR_MESSAGES.EMAIL_FAILED);
 	}
 
-	return success(`Email de demande d'avis envoye a ${order.user.email}`);
+	return success("Email de demande d'avis envoye avec succes");
 }
 
 /**

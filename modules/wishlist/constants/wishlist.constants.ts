@@ -6,7 +6,8 @@ import { type Prisma } from "@/app/generated/prisma/client";
 
 /**
  * Select pour les items de wishlist avec produit complet
- * Compatible avec ProductCard pour réutilisation directe
+ * Aligned with GET_PRODUCTS_SELECT so WishlistItem.product satisfies the Product type
+ * used by ProductCard (eliminates the need for unsafe double cast).
  *
  * Inclut :
  * - productId : ID du produit ajouté en wishlist
@@ -27,12 +28,16 @@ export const GET_WISHLIST_SELECT = {
 					id: true,
 					slug: true,
 					title: true,
+					description: true,
 					status: true,
+					createdAt: true,
+					updatedAt: true,
 					type: {
 						select: {
 							id: true,
 							slug: true,
 							label: true,
+							isActive: true,
 						},
 					},
 					reviewStats: {
@@ -79,10 +84,35 @@ export const GET_WISHLIST_SELECT = {
 								orderBy: {
 									position: "asc" as const,
 								},
-								take: 2, // Primary + hover only
 							},
 						},
 						orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+					},
+					_count: {
+						select: {
+							skus: {
+								where: { isActive: true },
+							},
+						},
+					},
+					collections: {
+						select: {
+							id: true,
+							addedAt: true,
+							isFeatured: true,
+							collection: {
+								select: {
+									id: true,
+									name: true,
+									slug: true,
+									description: true,
+									status: true,
+								},
+							},
+						},
+						orderBy: {
+							addedAt: "desc" as const,
+						},
 					},
 				},
 			},

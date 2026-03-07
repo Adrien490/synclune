@@ -11,6 +11,7 @@ import { BusinessError, handleActionError, safeFormGet, validateInput } from "@/
 import { bulkAdjustStockSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
+import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 
 export async function bulkAdjustStock(
 	prevState: ActionState | undefined,
@@ -65,6 +66,15 @@ export async function bulkAdjustStock(
 			};
 		}
 
+		// Snapshot SKUs that are currently out-of-stock (for back-in-stock notifications)
+		const outOfStockSkus =
+			(mode === "absolute" && value > 0) || (mode === "relative" && value > 0)
+				? await prisma.productSku.findMany({
+						where: { id: { in: ids }, inventory: 0 },
+						select: { id: true, productId: true },
+					})
+				: [];
+
 		// Appliquer les modifications dans une transaction pour garantir l'atomicité
 		// (all-or-nothing: si certains IDs n'existent pas, toute l'opération est annulée)
 		if (mode === "absolute") {
@@ -90,7 +100,7 @@ export async function bulkAdjustStock(
 					AND "inventory" + ${value} >= 0
 				`;
 
-				if (count !== ids.length) {
+				if (Number(count) !== ids.length) {
 					// Fetch current state for error message before rollback
 					const insufficientSkus = await tx.productSku.findMany({
 						where: { id: { in: ids }, inventory: { lt: Math.abs(value) } },
@@ -142,6 +152,14 @@ export async function bulkAdjustStock(
 		// Invalider le cache
 		const uniqueTags = collectBulkInvalidationTags(skusData);
 		invalidateTags(uniqueTags);
+
+		// Back-in-stock notifications for SKUs that went from 0 to >0
+		if (outOfStockSkus.length > 0) {
+			const restockedProductIds = new Set(outOfStockSkus.map((s) => s.productId));
+			for (const productId of restockedProductIds) {
+				void notifyBackInStock(productId);
+			}
+		}
 
 		// Audit log
 		void logAudit({

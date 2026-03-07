@@ -17,6 +17,7 @@ import {
 import { updateTag } from "next/cache";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
+import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 
 type AffectedRow = { inventory: number };
 
@@ -29,13 +30,6 @@ export async function adjustSkuStock(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// Extraire les données du FormData
-		const rawSkuId = safeFormGet(formData, "skuId");
-		const adjustmentRaw = safeFormGet(formData, "adjustment");
-		const reason = formData.get("reason") as string | null;
-
-		const adjustment = parseInt(adjustmentRaw ?? "", 10);
-
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
@@ -45,7 +39,14 @@ export async function adjustSkuStock(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_ADJUST_STOCK_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 3. Validation
+		// 3. Extraire les données du FormData
+		const rawSkuId = safeFormGet(formData, "skuId");
+		const adjustmentRaw = safeFormGet(formData, "adjustment");
+		const reason = formData.get("reason") as string | null;
+
+		const adjustment = parseInt(adjustmentRaw ?? "", 10);
+
+		// 4. Validation
 		const validation = validateInput(adjustSkuStockSchema, {
 			skuId: rawSkuId,
 			adjustment,
@@ -55,7 +56,7 @@ export async function adjustSkuStock(
 
 		const { skuId } = validation.data;
 
-		// 4. Atomic conditional update using RETURNING to capture the new inventory value
+		// 5. Atomic conditional update using RETURNING to capture the new inventory value
 		// in the same statement — eliminates the race condition between the update and
 		// a subsequent read used for the error/success message.
 		let newInventory: number;
@@ -99,7 +100,7 @@ export async function adjustSkuStock(
 			newInventory = updated[0]!.inventory;
 		}
 
-		// 5. Fetch SKU metadata for cache invalidation and response
+		// 6. Fetch SKU metadata for cache invalidation and response
 		// inventory is sourced from RETURNING above for accuracy
 		const sku = await prisma.productSku.findUnique({
 			where: { id: skuId },
@@ -113,13 +114,18 @@ export async function adjustSkuStock(
 
 		if (!sku) return error("Variante non trouvée");
 
-		// 6. Invalider le cache avec les tags appropriés
+		// 7. Invalider le cache avec les tags appropriés
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
 		tags.forEach((tag) => updateTag(tag));
 
 		const previousInventory = newInventory - adjustment;
 
-		// 7. Audit log
+		// 8. Back-in-stock notifications (fire-and-forget)
+		if (previousInventory === 0 && newInventory > 0) {
+			void notifyBackInStock(sku.productId);
+		}
+
+		// 9. Audit log
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,

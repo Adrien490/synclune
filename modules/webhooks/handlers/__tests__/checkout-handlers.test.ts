@@ -187,7 +187,7 @@ describe("handleCheckoutSessionCompleted", () => {
 			data: expect.objectContaining({
 				orderId: "order-1",
 				content: expect.stringContaining("ALERTE EMAIL"),
-				authorId: "system",
+				authorId: "00000000-0000-0000-0000-000000000000",
 			}),
 		});
 	});

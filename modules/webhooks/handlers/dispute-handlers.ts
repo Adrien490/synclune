@@ -6,6 +6,7 @@ import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { WebhookHandlerResult } from "../types/webhook.types";
+import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 
 /**
  * Dispute reason labels for admin notification
@@ -55,7 +56,6 @@ function mapStripeDisputeStatus(stripeStatus: string): DisputeStatus {
 	}
 }
 
-const SYSTEM_AUTHOR_ID = "system";
 const SYSTEM_AUTHOR_NAME = "Système (webhook Stripe)";
 
 /**
