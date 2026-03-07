@@ -410,49 +410,77 @@ function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
 
 	if (scrollSnaps.length <= 1) return null;
 
+	const total = scrollSnaps.length;
+	const DOT_SIZE = 44; // w-11 = 44px touch target
+	const MAX_VISIBLE = 5;
+	const needsOverflow = total > MAX_VISIBLE;
+
+	// Center the active dot in the visible window
+	let translateX = 0;
+	if (needsOverflow) {
+		const centerOffset = Math.floor(MAX_VISIBLE / 2);
+		translateX =
+			Math.min(Math.max(selectedIndex - centerOffset, 0), total - MAX_VISIBLE) * DOT_SIZE;
+	}
+
 	return (
 		<div
 			data-slot="carousel-dots"
-			className={cn("flex flex-col items-center gap-1 pt-4", className)}
+			className={cn("flex items-center justify-center pt-4", className)}
 			{...props}
 		>
-			<div className="flex justify-center" role="group" aria-label="Navigation du carousel">
-				{scrollSnaps.map((_, index) => (
-					<button
-						key={index}
-						type="button"
-						aria-pressed={index === selectedIndex}
-						aria-label={`Aller à la diapositive ${index + 1}`}
-						onClick={() => api?.scrollTo(index)}
-						className={cn(
-							// Touch target 44px (WCAG 2.5.5)
-							"relative flex h-11 w-11 items-center justify-center",
-							// Shape for visual feedback
-							"rounded-full",
-							// Visual feedback on clickable area
-							"hover:bg-muted/20 active:bg-muted/30",
-							// Animation with reduced motion respect
-							"motion-safe:transition-all motion-safe:duration-100 motion-safe:active:scale-95",
-							// Focus visible
-							"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
-						)}
-					>
-						<span
-							className={cn(
-								"h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3",
-								// Compositor-only: scaleX instead of width change
-								"ease-out motion-safe:transition-[transform,background-color,box-shadow] motion-safe:duration-150",
-								index === selectedIndex
-									? "bg-primary scale-x-[3.2] shadow-md sm:scale-x-[3.33]"
-									: "bg-muted-foreground/70 hover:bg-muted-foreground/90 scale-x-100",
-							)}
-						/>
-					</button>
-				))}
+			<div
+				className={cn(needsOverflow && "overflow-hidden")}
+				style={needsOverflow ? { width: MAX_VISIBLE * DOT_SIZE } : undefined}
+			>
+				<div
+					className={cn(
+						"flex justify-center",
+						"ease-out motion-safe:transition-transform motion-safe:duration-200",
+					)}
+					role="group"
+					aria-label="Navigation du carousel"
+					style={needsOverflow ? { transform: `translateX(-${translateX}px)` } : undefined}
+				>
+					{scrollSnaps.map((_, index) => {
+						const distance = Math.abs(index - selectedIndex);
+
+						return (
+							<button
+								key={index}
+								type="button"
+								aria-pressed={index === selectedIndex}
+								aria-label={`Aller à la diapositive ${index + 1}`}
+								onClick={() => api?.scrollTo(index)}
+								className={cn(
+									// Touch target 44px (WCAG 2.5.5)
+									"relative flex h-11 w-11 shrink-0 items-center justify-center",
+									// Shape for visual feedback
+									"rounded-full",
+									// Visual feedback on clickable area
+									"hover:bg-muted/20 active:bg-muted/30",
+									// Animation with reduced motion respect
+									"motion-safe:transition-all motion-safe:duration-100 motion-safe:active:scale-95",
+									// Focus visible
+									"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
+								)}
+							>
+								<span
+									className={cn(
+										"h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3",
+										"ease-out motion-safe:transition-[transform,opacity,background-color] motion-safe:duration-200",
+										index === selectedIndex
+											? "bg-primary ring-primary/30 scale-100 ring-2"
+											: distance === 1
+												? "bg-muted-foreground/60 scale-[0.85]"
+												: "bg-muted-foreground/40 scale-[0.6]",
+									)}
+								/>
+							</button>
+						);
+					})}
+				</div>
 			</div>
-			<span className="text-muted-foreground/70 text-xs">
-				{selectedIndex + 1} sur {scrollSnaps.length}
-			</span>
 		</div>
 	);
 }

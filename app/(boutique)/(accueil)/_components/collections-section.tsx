@@ -87,6 +87,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 							opts={{
 								align: "center",
 								containScroll: "trimSnaps",
+								loop: true,
 							}}
 							className="group/carousel w-full"
 							aria-label="Carrousel de collections"

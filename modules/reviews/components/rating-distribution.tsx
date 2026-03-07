@@ -124,10 +124,10 @@ export function RatingDistribution({ distribution, className }: RatingDistributi
 								/>
 							</div>
 
-							{/* Pourcentage */}
+							{/* Pourcentage (desktop only) */}
 							<span
 								className={cn(
-									"w-10 text-right text-sm tabular-nums",
+									"hidden w-10 text-right text-sm tabular-nums sm:inline",
 									isActive ? "text-primary font-medium" : "text-muted-foreground",
 								)}
 							>
@@ -137,7 +137,7 @@ export function RatingDistribution({ distribution, className }: RatingDistributi
 							{/* Nombre d'avis */}
 							<span
 								className={cn(
-									"hidden w-12 text-right text-xs tabular-nums sm:inline",
+									"w-10 text-right text-xs tabular-nums sm:w-12",
 									isActive ? "text-primary" : "text-muted-foreground",
 								)}
 							>

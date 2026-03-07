@@ -12,8 +12,8 @@ interface GalleryDotsProps {
 export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 	const prefersReduced = useReducedMotion();
 
-	// >4 images = fraction counter (ultra compact)
-	if (total > 4) {
+	// >5 images = fraction counter (ultra compact)
+	if (total > 5) {
 		return (
 			<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 sm:hidden">
 				<div
@@ -51,7 +51,7 @@ export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 							className={cn(
 								"rounded-full",
 								!prefersReduced && "transition-all duration-200",
-								i === current ? "h-2.5 w-2.5 bg-white" : "h-2 w-2 bg-white/80",
+								i === current ? "h-2.5 w-2.5 bg-white ring-1 ring-white/50" : "h-2 w-2 bg-white/80",
 							)}
 						/>
 					</button>

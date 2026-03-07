@@ -76,27 +76,33 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 				Photos clients ({allPhotos.length})
 			</h3>
 
-			<div className="scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent -mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
-				{allPhotos.map((photo, index) => (
-					<button
-						key={photo.id}
-						type="button"
-						onClick={() => openAtIndex(index)}
-						aria-label={`Photo ${index + 1} de l'avis de ${photo.userName ?? "Anonyme"}`}
-						className="group focus-visible:ring-ring relative size-20 flex-shrink-0 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
-					>
-						<Image
-							src={photo.url}
-							alt={photo.altText ?? `Photo ${index + 1}`}
-							fill
-							placeholder={photo.blurDataUrl ? "blur" : "empty"}
-							blurDataURL={photo.blurDataUrl ?? undefined}
-							className="object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-105"
-							sizes="80px"
-							quality={75}
-						/>
-					</button>
-				))}
+			<div className="relative">
+				<div className="scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent -mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
+					{allPhotos.map((photo, index) => (
+						<button
+							key={photo.id}
+							type="button"
+							onClick={() => openAtIndex(index)}
+							aria-label={`Photo ${index + 1} de l'avis de ${photo.userName ?? "Anonyme"}`}
+							className="group focus-visible:ring-ring relative size-20 flex-shrink-0 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
+						>
+							<Image
+								src={photo.url}
+								alt={photo.altText ?? `Photo ${index + 1}`}
+								fill
+								placeholder={photo.blurDataUrl ? "blur" : "empty"}
+								blurDataURL={photo.blurDataUrl ?? undefined}
+								className="object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-105"
+								sizes="80px"
+								quality={75}
+							/>
+						</button>
+					))}
+				</div>
+				<div
+					aria-hidden
+					className="from-background pointer-events-none absolute top-0 right-0 z-10 h-full w-6 bg-gradient-to-l to-transparent"
+				/>
 			</div>
 
 			<MediaLightbox

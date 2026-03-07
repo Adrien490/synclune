@@ -53,7 +53,10 @@ export function ReviewSortSelect() {
 
 	return (
 		<Select value={currentSort} onValueChange={handleSortChange} disabled={isPending}>
-			<SelectTrigger className="h-9 w-[180px] text-sm" aria-label="Trier les avis">
+			<SelectTrigger
+				className="h-9 w-auto min-w-36 text-sm sm:w-[180px]"
+				aria-label="Trier les avis"
+			>
 				<SelectValue placeholder="Trier par" />
 			</SelectTrigger>
 			<SelectContent>
