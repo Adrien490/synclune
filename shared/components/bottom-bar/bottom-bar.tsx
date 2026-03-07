@@ -33,18 +33,6 @@ export const bottomBarIconClass = "size-5";
 /** Label text class. */
 export const bottomBarLabelClass = "text-xs font-medium truncate max-w-full";
 
-/** Wrapper for icon + optional badge. */
-export const bottomBarIconWrapperClass = "relative inline-flex";
-
-/** Badge displayed over an icon. */
-export const bottomBarBadgeClass = cn(
-	"absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1",
-	"flex items-center justify-center",
-	"text-[10px] font-bold leading-none",
-	"bg-primary text-primary-foreground rounded-full",
-	"animate-in zoom-in-75 duration-200",
-);
-
 // ---------------------------------------------------------------------------
 // ActiveDot
 // ---------------------------------------------------------------------------

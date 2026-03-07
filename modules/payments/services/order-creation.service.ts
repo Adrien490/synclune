@@ -264,7 +264,7 @@ export async function createOrderInTransaction(
 					shippingPostalCode: shippingAddress.postalCode,
 					shippingCity: shippingAddress.city,
 					shippingCountry: shippingAddress.country as ShippingCountry,
-					shippingPhone: shippingAddress.phoneNumber || "",
+					shippingPhone: shippingAddress.phoneNumber ?? "",
 					shippingMethod: "STANDARD",
 					status: "PENDING",
 					paymentStatus: "PENDING",

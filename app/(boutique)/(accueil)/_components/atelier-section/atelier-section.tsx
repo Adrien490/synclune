@@ -179,7 +179,7 @@ export async function AtelierSection() {
 							asChild
 							size="lg"
 							variant="outline"
-							className="transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+							className="transition-[scale,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
 						>
 							<Link href="/personnalisation">Créer votre bijou sur-mesure</Link>
 						</Button>

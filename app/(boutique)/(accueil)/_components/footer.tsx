@@ -3,7 +3,6 @@ import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accen
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import {
-	ApplePayIcon,
 	CBIcon,
 	MastercardIcon,
 	PayPalIcon,
@@ -21,7 +20,7 @@ import Link from "next/link";
 const REASSURANCE_ITEMS: { title: string; description: string }[] = [
 	{ title: "Livraison France : 4,99€", description: "Livraison UE : 9,50€" },
 	{ title: "Retours sous 14 jours", description: "Échange ou remboursement" },
-	{ title: "Paiement sécurisé", description: "CB, PayPal, Apple Pay" },
+	{ title: "Paiement sécurisé", description: "CB, PayPal" },
 ];
 
 /**
@@ -223,9 +222,6 @@ export async function Footer() {
 							</li>
 							<li>
 								<PayPalIcon aria-label="PayPal accepté" className="text-muted-foreground" />
-							</li>
-							<li>
-								<ApplePayIcon aria-label="Apple Pay accepté" className="text-muted-foreground" />
 							</li>
 						</ul>
 					</section>

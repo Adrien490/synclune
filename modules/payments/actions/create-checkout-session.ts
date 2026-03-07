@@ -231,7 +231,7 @@ export const createCheckoutSession = async (
 
 					sendAdminCheckoutFailedAlert({
 						orderNumber: order.orderNumber,
-						customerEmail: finalEmail ?? "unknown",
+						customerEmail: finalEmail,
 						total: order.total,
 						errorMessage: stripeError instanceof Error ? stripeError.message : String(stripeError),
 					}).catch(() => {});

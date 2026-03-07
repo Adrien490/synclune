@@ -52,7 +52,7 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 			<TooltipContent>
 				<span className="flex items-center gap-1.5">
 					Rechercher
-					<kbd className="text-muted-foreground/60 hidden rounded border px-1 py-0.5 text-xs md:inline-block">
+					<kbd className="text-background/60 border-background/30 hidden rounded border px-1 py-0.5 text-xs md:inline-block">
 						{isMac ? "⌘" : "Ctrl+"}K
 					</kbd>
 				</span>

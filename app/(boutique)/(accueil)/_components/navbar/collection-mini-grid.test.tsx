@@ -37,7 +37,7 @@ describe("CollectionMiniGrid", () => {
 
 			const imgContainer = container.querySelector("[role='img']");
 			expect(imgContainer).toBeInTheDocument();
-			expect(imgContainer?.getAttribute("aria-label")).toBe("1 photo de la collection Mariage");
+			expect(imgContainer?.getAttribute("aria-label")).toBe("Aperçu");
 		});
 
 		it("renders blur placeholder when blurDataUrl is provided", () => {
@@ -60,13 +60,13 @@ describe("CollectionMiniGrid", () => {
 			expect(imgs).toHaveLength(2);
 		});
 
-		it("uses plural 'photos' in aria-label", () => {
+		it("uses 'Aperçu' as aria-label", () => {
 			const { container } = render(
 				<CollectionMiniGrid images={makeImages(2)} collectionName="Bohème" />,
 			);
 
 			const imgContainer = container.querySelector("[role='img']");
-			expect(imgContainer?.getAttribute("aria-label")).toBe("2 photos de la collection Bohème");
+			expect(imgContainer?.getAttribute("aria-label")).toBe("Aperçu");
 		});
 	});
 
@@ -80,7 +80,7 @@ describe("CollectionMiniGrid", () => {
 			expect(imgs).toHaveLength(3);
 
 			const imgContainer = container.querySelector("[role='img']");
-			expect(imgContainer?.getAttribute("aria-label")).toBe("3 photos de la collection Minimale");
+			expect(imgContainer?.getAttribute("aria-label")).toBe("Aperçu");
 		});
 
 		it("renders max 4 images even when more are provided", () => {

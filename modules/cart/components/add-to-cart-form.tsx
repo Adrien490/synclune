@@ -21,7 +21,7 @@ interface AddToCartFormProps {
  * La quantité est toujours 1, modifiable ensuite dans le panier.
  */
 export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
-	const { action, isPending } = useAddToCart();
+	const { action, isPending, state } = useAddToCart();
 	const searchParams = useSearchParams();
 
 	// Validation des variantes pour message explicite
@@ -114,6 +114,13 @@ export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
 					<span>Ajouter au panier</span>
 				)}
 			</Button>
+
+			{/* Inline error message after failed add-to-cart */}
+			{state && state.status !== "success" && state.status !== "initial" && !isPending && (
+				<p className="text-destructive text-center text-sm" role="alert">
+					{state.message}
+				</p>
+			)}
 		</form>
 	);
 }

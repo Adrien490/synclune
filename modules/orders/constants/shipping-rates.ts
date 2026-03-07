@@ -33,6 +33,7 @@ export const SHIPPING_RATES = {
 	FR: {
 		amount: 499, // 4.99€
 		displayName: "Livraison France",
+		estimatedDays: "2-4 jours ouvrés",
 		carrier: SHIPPING_CARRIERS.STANDARD,
 		countries: ["FR"] as const,
 	},
@@ -41,6 +42,7 @@ export const SHIPPING_RATES = {
 	EU: {
 		amount: 950, // 9.50€
 		displayName: "Livraison Europe",
+		estimatedDays: "5-8 jours ouvrés",
 		carrier: SHIPPING_CARRIERS.STANDARD,
 		countries: SHIPPING_COUNTRIES.filter((c) => c !== "FR") as readonly Exclude<
 			ShippingCountry,

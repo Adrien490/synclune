@@ -82,6 +82,11 @@ vi.mock("@/shared/components/scroll-fade", () => ({
 	default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+// Mock LogoutAlertDialog to avoid transitive font imports
+vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
+	LogoutAlertDialog: () => null,
+}));
+
 // Mock sub-components
 vi.mock("./menu-sheet-nav", () => ({
 	MenuSheetNav: () => <div data-testid="menu-sheet-nav" />,

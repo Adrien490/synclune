@@ -78,6 +78,20 @@ vi.mock("@/shared/constants/urls", () => ({
 	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
 }));
 
+vi.mock("next/cache", () => ({
+	updateTag: vi.fn(),
+}));
+
+vi.mock("@/modules/orders/constants/cache", () => ({
+	ORDERS_CACHE_TAGS: {
+		HISTORY: (id: string) => `order-history-${id}`,
+	},
+}));
+
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { resendOrderEmail } from "../resend-order-email";
 import type { ResendEmailType } from "../../types/email.types";
 

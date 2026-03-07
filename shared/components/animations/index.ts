@@ -30,6 +30,7 @@ export { SplitText } from "./split-text";
 export { ScrollIndicator } from "./scroll-indicator";
 
 // Background Animations (effets décoratifs)
+export { AuroraBackground } from "./aurora-background/index";
 export { BubbleDream } from "./bubble-dream";
 export { HandDrawnAccent, HandDrawnCircle, HandDrawnUnderline } from "./hand-drawn-accent";
 export { ParticleBackground } from "./particle-background/index";
@@ -49,6 +50,12 @@ export type { SplitTextProps } from "./split-text";
 export type { TapProps } from "./tap";
 
 // Background Animation Types
+export type {
+	AuroraBackgroundProps,
+	AuroraBlendMode,
+	AuroraIntensity,
+	AuroraPalette,
+} from "./aurora-background/index";
 export type { BubbleDreamProps } from "./bubble-dream";
 export type { HandDrawnAccentProps } from "./hand-drawn-accent";
 export type {

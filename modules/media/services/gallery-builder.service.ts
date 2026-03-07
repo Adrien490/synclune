@@ -202,7 +202,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	if (totalImages > 1) {
 		for (const media of gallery) {
 			// Only update generated ALTs (not manually defined ones from DB)
-			if (media && !media._hasCustomAlt) {
+			if (!media._hasCustomAlt) {
 				const index = gallery.indexOf(media);
 				const sku = product.skus.find((s) => s.id === media.skuId);
 				media.alt = buildAltText(

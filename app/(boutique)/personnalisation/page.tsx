@@ -10,16 +10,16 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
 export const metadata: Metadata = {
-	title: "Créons votre bijou ensemble - Synclune | Bijoux personnalisés",
+	title: "Créons votre bijou - Synclune | Bijoux personnalisés",
 	description:
-		"Une idée de bijou en tête ? Racontez-moi tout ! On va créer quelque chose d'unique ensemble.",
+		"Une idée de bijou en tête ? Racontez-moi tout ! On va créer quelque chose d'unique.",
 	alternates: {
 		canonical: "/personnalisation",
 	},
 	openGraph: {
-		title: "Créons votre bijou ensemble - Synclune",
+		title: "Créons votre bijou - Synclune",
 		description:
-			"Vous avez une idée de bijou personnalisé ? N'hésitez pas à me raconter votre projet, même si c'est pas encore clair. On affinera ensemble !",
+			"Vous avez une idée de bijou personnalisé ? N'hésitez pas à me raconter votre projet, même si c'est pas encore clair.",
 		url: `${SITE_URL}/personnalisation`,
 		type: "website",
 		images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
@@ -68,7 +68,7 @@ export default async function CustomizationPage() {
 
 			{/* Header standard avec breadcrumbs */}
 			<PageHeader
-				title="Créons votre bijou ensemble"
+				title="Créons votre bijou"
 				description="Vous avez une idée de bijou en tête ? Dites-moi tout !"
 				breadcrumbs={[{ label: "Personnalisation", href: "/personnalisation" }]}
 			/>

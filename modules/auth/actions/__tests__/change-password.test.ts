@@ -49,6 +49,10 @@ vi.mock("../schemas/auth.schemas", () => ({ changePasswordSchema: {} }));
 vi.mock("../../services/hibp.service", () => ({
 	checkPasswordBreached: vi.fn().mockResolvedValue(0),
 }));
+vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
+vi.mock("@/shared/constants/cache-tags", () => ({
+	SESSION_CACHE_TAGS: { SESSION: (id: string) => `session-${id}` },
+}));
 
 import { changePassword } from "../change-password";
 

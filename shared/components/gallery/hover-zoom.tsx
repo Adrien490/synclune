@@ -38,7 +38,7 @@ export function GalleryHoverZoom({
 	const prefersReduced = useReducedMotion();
 
 	const rectRef = useRef<DOMRect | null>(null);
-	const rafRef = useRef<number>(0);
+	const rafRef = useRef<number | null>(null);
 	const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// Debounced resize listener pour éviter le jank (seulement si enabled)
@@ -77,7 +77,7 @@ export function GalleryHoverZoom({
 		if (rafRef.current) return;
 
 		rafRef.current = requestAnimationFrame(() => {
-			rafRef.current = 0;
+			rafRef.current = null;
 			if (!rectRef.current || !imageRef.current) return;
 
 			const x = ((e.clientX - rectRef.current.left) / rectRef.current.width) * 100;
@@ -96,16 +96,16 @@ export function GalleryHoverZoom({
 
 	const handleMouseLeave = () => {
 		setIsZooming(false);
-		if (rafRef.current) {
+		if (rafRef.current !== null) {
 			cancelAnimationFrame(rafRef.current);
-			rafRef.current = 0;
+			rafRef.current = null;
 		}
 	};
 
 	// Cleanup RAF au unmount
 	useEffect(() => {
 		return () => {
-			if (rafRef.current) {
+			if (rafRef.current !== null) {
 				cancelAnimationFrame(rafRef.current);
 			}
 		};

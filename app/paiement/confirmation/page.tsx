@@ -5,8 +5,20 @@ import { Fade } from "@/shared/components/animations/fade";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { SuccessIcon } from "./_components/success-icon";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
+import { getShippingInfo } from "@/modules/orders/services/shipping.service";
+import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Clock, Heart, Package, Sparkles, UserPlus } from "lucide-react";
+import { stripe } from "@/shared/lib/stripe";
+import {
+	Clock,
+	ExternalLink,
+	Heart,
+	Package,
+	Receipt,
+	Sparkles,
+	TruckIcon,
+	UserPlus,
+} from "lucide-react";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -58,6 +70,28 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 	// but the webhook may not have processed yet (race condition)
 	if (!order) {
 		redirect("/");
+	}
+
+	// Delivery estimate based on shipping country
+	const shippingInfo = getShippingInfo(
+		((order.shippingCountry as ShippingCountry | null) ?? "FR") as ShippingCountry,
+		order.shippingPostalCode,
+	);
+
+	// Fetch Stripe receipt URL (best-effort, non-blocking)
+	let receiptUrl: string | null = null;
+	if (order.stripePaymentIntentId && !isPending) {
+		try {
+			const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, {
+				expand: ["latest_charge"],
+			});
+			const charge = pi.latest_charge;
+			if (charge && typeof charge !== "string") {
+				receiptUrl = charge.receipt_url ?? null;
+			}
+		} catch {
+			// Non-critical: receipt link is optional
+		}
 	}
 
 	return (
@@ -158,9 +192,17 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 											<span>-{formatEuro(order.discountAmount)}</span>
 										</div>
 									)}
-									<div className="flex justify-between">
-										<span className="text-muted-foreground">Livraison</span>
-										<span>{formatEuro(order.shippingCost)}</span>
+									<div className="space-y-1">
+										<div className="flex justify-between">
+											<span className="text-muted-foreground">Livraison</span>
+											<span>{formatEuro(order.shippingCost)}</span>
+										</div>
+										{shippingInfo && (
+											<div className="text-muted-foreground flex items-center gap-1 pl-0.5 text-xs">
+												<TruckIcon className="h-3 w-3" />
+												Délai estimé : {shippingInfo.estimatedDays}
+											</div>
+										)}
 									</div>
 									<div className="flex justify-between border-t pt-2 text-base font-semibold">
 										<span>Total</span>
@@ -183,6 +225,22 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									</p>
 								</div>
 							</div>
+
+							{/* Receipt link */}
+							{receiptUrl && (
+								<div className="flex justify-center">
+									<a
+										href={receiptUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-sm text-sm underline transition-colors hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+									>
+										<Receipt className="h-4 w-4" />
+										Télécharger mon reçu
+										<ExternalLink className="h-3 w-3" />
+									</a>
+								</div>
+							)}
 
 							{/* Message personnalisé */}
 							<Alert>

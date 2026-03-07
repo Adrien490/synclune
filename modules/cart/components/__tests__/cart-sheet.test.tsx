@@ -92,7 +92,9 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 // Mock Empty
 vi.mock("@/shared/components/ui/empty", () => ({
 	Empty: ({ children }: { children: React.ReactNode }) => <div data-testid="empty">{children}</div>,
+	EmptyActions: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	EmptyContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	EmptyDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 	EmptyHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	EmptyMedia: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	EmptyTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,

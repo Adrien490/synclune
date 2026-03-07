@@ -48,7 +48,11 @@ export async function ProductReviewsSection({
 	const filteredCount = reviewsData.totalCount;
 
 	return (
-		<section id="reviews" className="scroll-mt-20" aria-labelledby="reviews-title">
+		<section
+			id="reviews"
+			className="scroll-mt-[calc(var(--navbar-height)+1rem)]"
+			aria-labelledby="reviews-title"
+		>
 			{/* En-tête de section */}
 			<div className="mb-6 flex items-center justify-between">
 				<div className="flex items-center gap-3">

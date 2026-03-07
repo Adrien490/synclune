@@ -114,7 +114,7 @@ export function ReviewsList({
 			{/* Résumé avec distribution cliquable */}
 			<ReviewSummary stats={stats} />
 
-			{/* Toolbar: filtre actif + tri */}
+			{/* Toolbar: filtre actif + tri + CTA avis */}
 			<div className="flex items-center justify-between gap-4">
 				{/* Indicateur de filtre actif */}
 				{isFiltered ? (

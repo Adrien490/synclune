@@ -43,11 +43,13 @@ export default function ScrollFade({
 	const showLeft = (axis === "horizontal" || axis === "both") && scrollInfo.scrollLeft > 0;
 	const showRight =
 		(axis === "horizontal" || axis === "both") &&
+		// -1 compensates for sub-pixel rounding differences between scrollWidth and clientWidth + scrollLeft
 		Math.ceil(scrollInfo.scrollLeft + scrollInfo.clientWidth) <
 			Math.floor(scrollInfo.scrollWidth - 1);
 	const showTop = (axis === "vertical" || axis === "both") && scrollInfo.scrollTop > 0;
 	const showBottom =
 		(axis === "vertical" || axis === "both") &&
+		// -1 compensates for sub-pixel rounding differences between scrollHeight and clientHeight + scrollTop
 		Math.ceil(scrollInfo.scrollTop + scrollInfo.clientHeight) <
 			Math.floor(scrollInfo.scrollHeight - 1);
 
@@ -82,7 +84,7 @@ export default function ScrollFade({
 		if (contentRef.current) ro.observe(contentRef.current);
 		ro.observe(container);
 
-		window.addEventListener("resize", updateScrollInfo);
+		window.addEventListener("resize", updateScrollInfo, { passive: true });
 
 		const raf = requestAnimationFrame(updateScrollInfo);
 
@@ -97,14 +99,15 @@ export default function ScrollFade({
 	const hasOverflow = showLeft || showRight || showTop || showBottom;
 
 	return (
-		<div className="relative h-full">
+		<div className="relative h-full" data-testid="scroll-fade-root">
 			{hasOverflow && (
-				<span className="sr-only" role="status">
+				<span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
 					Faites défiler pour voir plus de contenu
 				</span>
 			)}
 			<div
 				ref={containerRef}
+				data-testid="scroll-fade-container"
 				className={cn(
 					hideScrollbar &&
 						"[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",

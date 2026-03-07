@@ -126,12 +126,21 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 	const defaultAddress = addresses?.find((a) => a.isDefault) ?? addresses?.[0] ?? null;
 
+	const currentStepLabel = clientSecret
+		? "Étape 2 sur 2 : Paiement"
+		: "Étape 1 sur 2 : Adresse de livraison";
+
 	return (
 		<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
 			<div className="space-y-6">
 				<h1 ref={headingRef} tabIndex={-1} className="sr-only">
 					Paiement sécurisé
 				</h1>
+
+				{/* Screen reader announcement for step changes */}
+				<div className="sr-only" aria-live="polite" aria-atomic="true" role="status">
+					{currentStepLabel}
+				</div>
 
 				{!isOnline && (
 					<Alert variant="destructive" role="alert" aria-live="assertive">

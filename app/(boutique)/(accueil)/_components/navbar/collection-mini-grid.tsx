@@ -11,7 +11,7 @@ import Image from "next/image";
  */
 export function CollectionMiniGrid({
 	images,
-	collectionName,
+	collectionName: _collectionName,
 }: {
 	images: CollectionImage[];
 	collectionName: string;

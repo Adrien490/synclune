@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Lightbulb, Search } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -178,8 +178,7 @@ export function QuickSearchContent({
 								</EmptyTitle>
 							</EmptyHeader>
 							<EmptyContent>
-								<p className="text-muted-foreground/70 flex items-center justify-center gap-1.5 text-xs">
-									<Lightbulb className="size-3.5" aria-hidden="true" />
+								<p className="text-muted-foreground/70 text-center text-xs">
 									Essayez avec moins de mots ou parcourez nos catégories
 								</p>
 								<QuickTagPills productTypes={productTypes} onSelect={onSearch} size="xs" centered />

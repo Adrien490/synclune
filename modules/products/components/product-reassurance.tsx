@@ -6,7 +6,6 @@ import {
 	MastercardIcon,
 	CBIcon,
 	PayPalIcon,
-	ApplePayIcon,
 } from "@/shared/components/icons/payment-icons";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
 
@@ -43,7 +42,6 @@ export function ProductReassurance() {
 						<MastercardIcon className="h-5 w-auto" aria-label="Mastercard" />
 						<CBIcon className="h-5 w-auto" aria-label="CB" />
 						<PayPalIcon className="h-5 w-auto" aria-label="PayPal" />
-						<ApplePayIcon className="h-5 w-auto" aria-label="Apple Pay" />
 					</div>
 					<div className="flex items-center gap-1.5 text-xs">
 						<span>Propulsé par</span>

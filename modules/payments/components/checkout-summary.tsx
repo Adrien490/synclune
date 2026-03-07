@@ -7,7 +7,7 @@ import {
 	CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible";
 import { Separator } from "@/shared/components/ui/separator";
-import { calculateShipping } from "@/modules/orders/services/shipping.service";
+import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -53,6 +53,9 @@ export function CheckoutSummary({
 	const shippingRaw = calculateShipping(selectedCountry, postalCode);
 	const shippingUnavailable = shippingRaw === null;
 	const shipping = shippingRaw ?? 0;
+
+	// Delivery estimate
+	const shippingInfo = getShippingInfo(selectedCountry, postalCode);
 
 	// Discount
 	const discountAmount = appliedDiscount?.discountAmount ?? 0;
@@ -168,6 +171,11 @@ export function CheckoutSummary({
 						Nous ne livrons pas encore dans cette zone. Contactez-nous pour trouver une solution.
 					</p>
 				)}
+				{shippingInfo && (
+					<p className="text-muted-foreground pl-5.5 text-xs">
+						Délai estimé : {shippingInfo.estimatedDays}
+					</p>
+				)}
 			</div>
 
 			<Separator />
@@ -219,8 +227,8 @@ export function CheckoutSummary({
 
 	return (
 		<>
-			{/* Mobile: collapsible summary */}
-			<Collapsible className="md:hidden">
+			{/* Mobile: collapsible summary (open by default so users see their cart) */}
+			<Collapsible defaultOpen className="md:hidden">
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 				<Card className="border-primary/10 rounded-2xl shadow-md">

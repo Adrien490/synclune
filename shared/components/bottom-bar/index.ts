@@ -6,6 +6,4 @@ export {
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
-	bottomBarIconWrapperClass,
-	bottomBarBadgeClass,
 } from "./bottom-bar";

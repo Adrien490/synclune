@@ -33,7 +33,7 @@ const itemVariants: Variants = {
 // Common link styles (module scope - pure values)
 const linkClassName = cn(
 	"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3.5 rounded-lg",
-	"transition-[transform,color,background-color] duration-300 ease-out",
+	"transition-[transform,color,background-color,padding] duration-300 ease-out",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 	"text-foreground/85 hover:text-foreground hover:bg-primary/5 hover:pl-5",
 	"motion-safe:active:scale-[0.97]",

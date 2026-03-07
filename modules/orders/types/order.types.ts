@@ -74,6 +74,8 @@ export interface ShippingRate {
 	amount: number;
 	/** Nom affiché au client */
 	displayName: string;
+	/** Délai de livraison estimé (ex: "2-4 jours ouvrés") */
+	estimatedDays: string;
 	/** Code du transporteur */
 	carrier: ShippingCarrier;
 	/** Pays couverts par ce tarif */

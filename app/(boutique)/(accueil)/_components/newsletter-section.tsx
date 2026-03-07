@@ -69,7 +69,7 @@ export async function NewsletterSection() {
 					duration={MOTION_CONFIG.section.subtitle.duration}
 				>
 					<p className="text-muted-foreground mt-6 text-center text-sm">
-						1 à 2 emails par mois maximum. Désinscription en un clic.
+						Pas de spam, promis ! Désinscription en un clic.
 					</p>
 				</Fade>
 			</div>

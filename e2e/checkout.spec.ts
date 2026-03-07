@@ -58,7 +58,7 @@ test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 
 	test.describe("Page de paiement", () => {
 		test("accéder à /paiement sans panier redirige ou affiche un message", async ({ page }) => {
-			const response = await page.goto("/paiement");
+			const _response = await page.goto("/paiement");
 			await page.waitForLoadState("domcontentloaded");
 
 			const url = page.url();

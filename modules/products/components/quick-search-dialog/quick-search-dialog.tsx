@@ -1,12 +1,13 @@
 "use client";
 
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Fade } from "@/shared/components/animations/fade";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { SearchInput, type SearchInputHandle } from "@/shared/components/search-input";
 import { Button } from "@/shared/components/ui/button";
@@ -95,10 +96,13 @@ export function QuickSearchDialog({
 		return () => clearInterval(id);
 	}, [inputValue.length, productTypes.length]);
 
+	const shouldReduceMotion = useReducedMotion();
+
 	const currentType = productTypes[placeholderIndex];
 	const placeholder = currentType
 		? `Rechercher : ${currentType.label}...`
 		: "Rechercher un bijou...";
+	const showAnimatedPlaceholder = inputValue.length === 0 && productTypes.length > 0;
 
 	const navigateToSearch = (term: string, { saveToRecent = true } = {}) => {
 		if (isPending) return;
@@ -215,31 +219,59 @@ export function QuickSearchDialog({
 					role="search"
 					data-pending={isPending ? "" : undefined}
 				>
-					<SearchInput
-						ref={searchInputRef}
-						paramName="qs"
-						mode="live"
-						debounceMs={SEARCH_DEBOUNCE_MS}
-						size="md"
-						placeholder={placeholder}
-						// eslint-disable-next-line jsx-a11y/no-autofocus
-						autoFocus
-						preventMobileBlur
-						isPending={isSearching}
-						onLiveSearch={handleLiveSearch}
-						onEscape={handleClose}
-						onValueChange={handleInputValueChange}
-						onSubmit={handleEnterKey}
-						activeDescendantId={activeDescendantId}
-						ariaExpanded={isSearchMode}
-						ariaControls={RESULTS_CONTAINER_ID}
-						onKeyDown={(e) => {
-							if (e.key === "ArrowDown") {
-								e.preventDefault();
-								focusFirst();
-							}
-						}}
-					/>
+					<div className="relative">
+						<SearchInput
+							ref={searchInputRef}
+							paramName="qs"
+							mode="live"
+							debounceMs={SEARCH_DEBOUNCE_MS}
+							size="md"
+							placeholder={showAnimatedPlaceholder ? " " : placeholder}
+							aria-label={placeholder}
+							// eslint-disable-next-line jsx-a11y/no-autofocus
+							autoFocus
+							preventMobileBlur
+							isPending={isSearching}
+							onLiveSearch={handleLiveSearch}
+							onEscape={handleClose}
+							onValueChange={handleInputValueChange}
+							onSubmit={handleEnterKey}
+							activeDescendantId={activeDescendantId}
+							ariaExpanded={isSearchMode}
+							ariaControls={RESULTS_CONTAINER_ID}
+							onKeyDown={(e) => {
+								if (e.key === "ArrowDown") {
+									e.preventDefault();
+									focusFirst();
+								}
+							}}
+						/>
+						{showAnimatedPlaceholder && (
+							<div
+								className="pointer-events-none absolute inset-y-0 left-12 flex items-center"
+								aria-hidden="true"
+							>
+								<span className="text-muted-foreground text-sm">
+									Rechercher :{" "}
+									<AnimatePresence mode="wait" initial={false}>
+										<m.span
+											key={placeholderIndex}
+											className="inline-block"
+											initial={{ y: 6, opacity: 0 }}
+											animate={{ y: 0, opacity: 1 }}
+											exit={{ y: -6, opacity: 0 }}
+											transition={{
+												duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.medium,
+												ease: MOTION_CONFIG.easing.easeOut,
+											}}
+										>
+											{currentType?.label}...
+										</m.span>
+									</AnimatePresence>
+								</span>
+							</div>
+						)}
+					</div>
 				</div>
 
 				{/* Quick suggestion tags (idle only) */}

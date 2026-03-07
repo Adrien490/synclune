@@ -118,8 +118,8 @@ describe("CreateReviewForm", () => {
 		const productInput = document.querySelector('input[name="productId"]') as HTMLInputElement;
 		const orderItemInput = document.querySelector('input[name="orderItemId"]') as HTMLInputElement;
 
-		expect(productInput?.value).toBe("prod-42");
-		expect(orderItemInput?.value).toBe("item-99");
+		expect(productInput.value).toBe("prod-42");
+		expect(orderItemInput.value).toBe("item-99");
 	});
 
 	it("renders product title when provided", () => {

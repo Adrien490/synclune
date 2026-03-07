@@ -41,9 +41,6 @@ export function CartSheetFooter({
 					Sous-total : {formatEuro(subtotal)}
 				</div>
 
-				{/* Shipping estimate */}
-				<p className="text-muted-foreground text-xs">Livraison à partir de 6,00 €</p>
-
 				{/* Primary CTA */}
 				{hasStockIssues ? (
 					<Button

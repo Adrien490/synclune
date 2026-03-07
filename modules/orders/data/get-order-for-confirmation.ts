@@ -10,12 +10,14 @@ const CONFIRMATION_ORDER_SELECT = {
 	discountAmount: true,
 	total: true,
 	paymentStatus: true,
+	stripePaymentIntentId: true,
 	shippingFirstName: true,
 	shippingLastName: true,
 	shippingAddress1: true,
 	shippingAddress2: true,
 	shippingPostalCode: true,
 	shippingCity: true,
+	shippingCountry: true,
 	items: {
 		select: {
 			id: true,

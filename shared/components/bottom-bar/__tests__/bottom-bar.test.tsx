@@ -49,8 +49,6 @@ import {
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
-	bottomBarIconWrapperClass,
-	bottomBarBadgeClass,
 } from "../bottom-bar";
 
 afterEach(() => {
@@ -248,16 +246,6 @@ describe("Exported class constants", () => {
 	it("bottomBarLabelClass defines text size and truncation", () => {
 		expect(bottomBarLabelClass).toContain("text-xs");
 		expect(bottomBarLabelClass).toContain("truncate");
-	});
-
-	it("bottomBarIconWrapperClass contains relative inline-flex", () => {
-		expect(bottomBarIconWrapperClass).toContain("relative");
-		expect(bottomBarIconWrapperClass).toContain("inline-flex");
-	});
-
-	it("bottomBarBadgeClass contains badge styles", () => {
-		expect(bottomBarBadgeClass).toContain("rounded-full");
-		expect(bottomBarBadgeClass).toContain("bg-primary");
 	});
 });
 

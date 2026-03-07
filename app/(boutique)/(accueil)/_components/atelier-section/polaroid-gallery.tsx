@@ -125,7 +125,7 @@ export function PolaroidGallery() {
 					<PolaroidDoodles />
 
 					{/* Mobile < 400px: horizontal carousel */}
-					<div className="scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 min-[400px]:hidden">
+					<div className="mask-carousel-edges scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 min-[400px]:hidden">
 						{POLAROIDS.map((p) => (
 							<div key={p.id} className="w-[75vw] shrink-0 snap-center">
 								<PolaroidFrame

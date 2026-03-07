@@ -91,7 +91,7 @@ export function AddressStep({
 	const [selectedAddressId, setSelectedAddressId] = useState<string | null>(defaultAddressId);
 	const [showCountrySelect, setShowCountrySelect] = useState(() => {
 		const shippingValues = form.state.values.shipping as unknown as Record<string, string>;
-		return (shippingValues?.country ?? "") !== "FR" && (shippingValues?.country ?? "") !== "";
+		return (shippingValues.country ?? "") !== "FR" && (shippingValues.country ?? "") !== "";
 	});
 	const [showAddressLine2, setShowAddressLine2] = useState(
 		!!form.state.values.shipping.addressLine2,

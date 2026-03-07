@@ -37,7 +37,7 @@ export default function ProductDetailLoading() {
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 						<article className="space-y-12">
 							{/* Product Content Grid - Gallery sticky on desktop */}
-							<div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12">
+							<div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
 								{/* Gallery Section - Left (sticky on desktop) */}
 								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
 									{/* Grid layout matching gallery.tsx */}

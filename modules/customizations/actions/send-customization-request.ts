@@ -118,7 +118,7 @@ export async function sendCustomizationRequest(
 				data: {
 					firstName: validatedData.firstName,
 					email: validatedData.email,
-					phone: validatedData.phone ?? null,
+					phone: validatedData.phone || null,
 					productTypeLabel: validatedData.productTypeLabel,
 					productTypeId: productType?.id ?? null,
 					details: validatedData.details,

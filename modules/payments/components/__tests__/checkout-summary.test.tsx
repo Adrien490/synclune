@@ -3,16 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Hoisted mocks ──────────────────────────────────────────────────────────
 
-const { mockCalculateShipping, mockFormatEuro, mockOpenCart } = vi.hoisted(() => ({
-	mockCalculateShipping: vi.fn(),
-	mockFormatEuro: vi.fn((n: number) => `${(n / 100).toFixed(2)} €`),
-	mockOpenCart: vi.fn(),
-}));
+const { mockCalculateShipping, mockGetShippingInfo, mockFormatEuro, mockOpenCart } = vi.hoisted(
+	() => ({
+		mockCalculateShipping: vi.fn(),
+		mockGetShippingInfo: vi.fn(() => null),
+		mockFormatEuro: vi.fn((n: number) => `${(n / 100).toFixed(2)} €`),
+		mockOpenCart: vi.fn(),
+	}),
+);
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
 vi.mock("@/modules/orders/services/shipping.service", () => ({
 	calculateShipping: mockCalculateShipping,
+	getShippingInfo: mockGetShippingInfo,
 }));
 
 vi.mock("@/shared/utils/format-euro", () => ({
