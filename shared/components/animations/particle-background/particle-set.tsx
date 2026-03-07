@@ -53,18 +53,6 @@ function SvgShape({
 	);
 }
 
-/**
- * Animated particle with mouse parallax.
- * Uses an outer m.span for the mouse offset (transforms driven by MotionValues)
- * and an inner m.span for the looping keyframe animation, avoiding conflicts.
- *
- * Opacity is controlled at two levels:
- * 1. **Animation preset** — keyframe opacity in ANIMATION_PRESETS (via adjustedP) on the inner span
- * 2. **Scroll fade** — scrollOpacity MotionValue on the outer wrapper (optional)
- * CSS opacity cascades multiplicatively (parent × child), so both levels combine correctly:
- * the inner preset handles per-particle opacity variation while scrollOpacity handles
- * the global fade-in/out as the container scrolls through the viewport.
- */
 /** Max vertical offset in pixels for scroll parallax (closest particles) */
 const SCROLL_PARALLAX_RANGE = 40;
 
@@ -74,6 +62,15 @@ const REPULSION_STRENGTH = 30;
 /** Repulsion radius as fraction of container diagonal (0-1) */
 const REPULSION_RADIUS = 0.15;
 
+/**
+ * Animated particle with mouse parallax.
+ * Uses an outer m.span for the mouse offset (transforms driven by MotionValues)
+ * and an inner m.span for the looping keyframe animation, avoiding conflicts.
+ *
+ * P4/P5/P7: All transform offsets (mouse parallax, scroll parallax, repulsion) are
+ * computed in 2 combined useTransform hooks instead of 8 chained ones.
+ * Features are gated by boolean props — unused features add zero overhead.
+ */
 function AnimatedParticle({
 	p,
 	animationStyle,
@@ -82,6 +79,7 @@ function AnimatedParticle({
 	highContrast,
 	scrollOpacity,
 	scrollYProgress,
+	scrollParallax,
 	interactive,
 	cursorX,
 	cursorY,
@@ -93,6 +91,7 @@ function AnimatedParticle({
 	highContrast: boolean;
 	scrollOpacity?: MotionValue<number>;
 	scrollYProgress: MotionValue<number>;
+	scrollParallax?: boolean;
 	interactive?: boolean;
 	cursorX: MotionValue<number>;
 	cursorY: MotionValue<number>;
@@ -105,30 +104,42 @@ function AnimatedParticle({
 
 	// Close particles (low depthFactor) move more, far ones move less
 	const strength = 1 - p.depthFactor;
-	const px = useTransform(mouseX, (v) => v * strength);
-	const py = useTransform(mouseY, (v) => v * strength);
 
-	// Scroll parallax: vertical displacement proportional to depth (close particles move more)
-	const scrollParallaxY = useTransform(
-		scrollYProgress,
-		(v) => (v - 0.5) * 2 * SCROLL_PARALLAX_RANGE * strength,
-	);
-
-	// Interactive repulsion: push particle away from cursor (dx/dy/dist computed once for both axes)
-	const repulsion = useTransform([cursorX, cursorY], ([cx, cy]) => {
-		if (!interactive) return { x: 0, y: 0 };
-		const dx = p.x / 100 - (cx as number);
-		const dy = p.y / 100 - (cy as number);
-		const dist = Math.sqrt(dx * dx + dy * dy);
-		if (dist > REPULSION_RADIUS || dist < 0.001) return { x: 0, y: 0 };
-		const factor = (1 - dist / REPULSION_RADIUS) ** 2; // quadratic falloff
-		return {
-			x: (dx / dist) * factor * REPULSION_STRENGTH,
-			y: (dy / dist) * factor * REPULSION_STRENGTH,
-		};
+	// Combined X offset: mouse parallax + repulsion (when interactive)
+	const combinedX = useTransform([mouseX, cursorX, cursorY], ([mx, cx, cy]) => {
+		let x = (mx as number) * strength;
+		if (interactive) {
+			const dx = p.x / 100 - (cx as number);
+			const dy = p.y / 100 - (cy as number);
+			const dist = Math.sqrt(dx * dx + dy * dy);
+			if (dist > 0.001 && dist <= REPULSION_RADIUS) {
+				const factor = (1 - dist / REPULSION_RADIUS) ** 2;
+				x += (dx / dist) * factor * REPULSION_STRENGTH;
+			}
+		}
+		return x;
 	});
-	const repulsionX = useTransform(repulsion, (v) => v.x);
-	const repulsionY = useTransform(repulsion, (v) => v.y);
+
+	// Combined Y offset: mouse parallax + scroll parallax + repulsion (when active)
+	const combinedY = useTransform(
+		[mouseY, scrollYProgress, cursorX, cursorY],
+		([my, sy, cx, cy]) => {
+			let y = (my as number) * strength;
+			if (scrollParallax) {
+				y += ((sy as number) - 0.5) * 2 * SCROLL_PARALLAX_RANGE * strength;
+			}
+			if (interactive) {
+				const dx = p.x / 100 - (cx as number);
+				const dy = p.y / 100 - (cy as number);
+				const dist = Math.sqrt(dx * dx + dy * dy);
+				if (dist > 0.001 && dist <= REPULSION_RADIUS) {
+					const factor = (1 - dist / REPULSION_RADIUS) ** 2;
+					y += (dy / dist) * factor * REPULSION_STRENGTH;
+				}
+			}
+			return y;
+		},
+	);
 
 	// Staggered entrance: particles fade+scale in with their individual delay
 	const entrance = { opacity: 0, scale: 0.5 };
@@ -153,19 +164,6 @@ function AnimatedParticle({
 				transition={getTransition(p, animationStyle)}
 			/>
 		);
-
-	// Combine all X offsets: mouse parallax + repulsion
-	const combinedX = useTransform([px, repulsionX], ([mouseOffset, repulse]) => {
-		return (mouseOffset as number) + (repulse as number);
-	});
-
-	// Combine all Y offsets: mouse parallax + scroll parallax + repulsion
-	const combinedY = useTransform(
-		[py, scrollParallaxY, repulsionY],
-		([mouseOffset, scrollOffset, repulse]) => {
-			return (mouseOffset as number) + (scrollOffset as number) + (repulse as number);
-		},
-	);
 
 	return (
 		<m.span
@@ -235,6 +233,7 @@ export function ParticleSet({
 	highContrast = false,
 	scrollOpacity,
 	scrollYProgress,
+	scrollParallax,
 	interactive,
 	cursorX,
 	cursorY,
@@ -278,6 +277,7 @@ export function ParticleSet({
 					highContrast={highContrast}
 					scrollOpacity={scrollOpacity}
 					scrollYProgress={resolvedScrollYProgress}
+					scrollParallax={scrollParallax}
 					interactive={interactive}
 					cursorX={resolvedCursorX}
 					cursorY={resolvedCursorY}

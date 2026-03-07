@@ -3,7 +3,6 @@
 import { updateTag } from "next/cache";
 
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -19,7 +18,7 @@ import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
-import { canTransitionTo } from "../services/customization-status.service";
+import { canTransitionTo, isFirstResponse } from "../services/customization-status.service";
 import { updateStatusSchema } from "../schemas/update-status.schema";
 import {
 	CUSTOMIZATION_ERROR_MESSAGES,
@@ -81,15 +80,11 @@ export async function updateCustomizationStatus(
 		}
 
 		// 5. Update status (optimistic lock: verify status hasn't changed since read)
-		const isFirstResponse =
-			existing.status === CustomizationRequestStatus.PENDING &&
-			status !== CustomizationRequestStatus.PENDING;
-
 		const updated = await prisma.customizationRequest.updateMany({
 			where: { id: requestId, status: existing.status },
 			data: {
 				status,
-				...(isFirstResponse && { respondedAt: new Date() }),
+				...(isFirstResponse(existing.status, status) && { respondedAt: new Date() }),
 			},
 		});
 

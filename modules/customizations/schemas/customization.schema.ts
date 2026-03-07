@@ -31,7 +31,7 @@ export const customizationSchema = z.object({
 			message: "Numéro de téléphone invalide",
 		})
 		.optional()
-		.or(z.literal("")),
+		.default(""),
 
 	// Type de produit (optionnel)
 	productTypeLabel: z
@@ -54,7 +54,13 @@ export const customizationSchema = z.object({
 				url: z.string().url().refine(isAllowedMediaDomain, {
 					message: "L'URL de l'image provient d'un domaine non autorisé",
 				}),
-				blurDataUrl: z.string().startsWith("data:image/").max(5000).optional(),
+				blurDataUrl: z
+					.string()
+					.regex(/^data:image\/(png|jpeg|webp|gif);/, {
+						message: "Format d'image non autorise (PNG, JPEG, WebP, GIF uniquement)",
+					})
+					.max(5000)
+					.optional(),
 				altText: z.string().max(255).optional(),
 			}),
 		)

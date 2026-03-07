@@ -27,6 +27,7 @@ interface PolaroidFrameProps {
 	/** Subtle vintage photo filter */
 	vintage?: boolean;
 	className?: string;
+	style?: React.CSSProperties;
 }
 
 const tiltClasses: Record<TiltDirection, string> = {
@@ -84,6 +85,7 @@ export function PolaroidFrame({
 	washiPosition = "top-left",
 	vintage = false,
 	className,
+	style: externalStyle,
 }: PolaroidFrameProps) {
 	const hasCustomDegree = tiltDegree !== undefined;
 	const rotateDeg = hasCustomDegree ? tiltDegree : { left: -2, right: 2, none: 0 }[tilt];
@@ -98,8 +100,8 @@ export function PolaroidFrame({
 	return (
 		<figure
 			className={cn(
-				"polaroid-paper polaroid-hover group/polaroid",
-				"relative rounded-sm bg-white p-2.5 pb-8 sm:p-3.5 sm:pb-11",
+				"polaroid-paper polaroid-hover group/polaroid @container",
+				"relative rounded-sm bg-white p-2.5 pb-8 @sm:p-3.5 @sm:pb-11",
 				!hasCustomDegree && tiltClasses[tilt],
 				className,
 			)}
@@ -108,6 +110,7 @@ export function PolaroidFrame({
 					boxShadow: tiltShadows[shadowDirection],
 					...(hasCustomDegree ? { transform: `rotate(${tiltDegree}deg)` } : {}),
 					"--polaroid-rotate": `${rotateDeg}deg`,
+					...externalStyle,
 				} as React.CSSProperties
 			}
 		>
@@ -115,7 +118,7 @@ export function PolaroidFrame({
 			{washiTape && (washiPosition === "top-left" || washiPosition === "both") && (
 				<div
 					className={cn(
-						"absolute -top-2 -left-3 z-10 h-4 w-12 -rotate-12 sm:h-5 sm:w-16",
+						"absolute -top-2 -left-3 z-10 h-4 w-12 -rotate-12 @sm:h-5 @sm:w-16",
 						washiColors[washiColor],
 						"opacity-90 shadow-[inset_0_0_4px_rgba(255,255,255,0.3)]",
 					)}
@@ -128,7 +131,7 @@ export function PolaroidFrame({
 			{washiTape && (washiPosition === "top-right" || washiPosition === "both") && (
 				<div
 					className={cn(
-						"absolute -top-2 -right-3 z-10 h-4 w-12 rotate-12 sm:h-5 sm:w-16",
+						"absolute -top-2 -right-3 z-10 h-4 w-12 rotate-12 @sm:h-5 @sm:w-16",
 						washiColors[washiColor === "pink" ? "lavender" : "pink"],
 						"opacity-90 shadow-[inset_0_0_4px_rgba(255,255,255,0.3)]",
 					)}
@@ -161,7 +164,7 @@ export function PolaroidFrame({
 			{caption && (
 				<figcaption
 					className={cn(
-						"absolute right-0 bottom-2 left-0 text-center text-xs italic sm:bottom-3 sm:text-sm",
+						"absolute right-0 bottom-2 left-0 text-center text-xs italic @sm:bottom-3 @sm:text-sm",
 						captionColor ? undefined : "text-gray-600",
 						petitFormalScript.className,
 					)}

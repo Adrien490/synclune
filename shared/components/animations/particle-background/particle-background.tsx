@@ -17,7 +17,7 @@ const PARALLAX_STRENGTH = 20;
 /** Duration in ms for the parallax lerp-to-zero reset */
 const LERP_RESET_DURATION = 600;
 
-/** Upper bound for particle count to prevent excessive DOM nodes (desktop + mobile ≈ count * 3 spans) */
+/** Upper bound for particle count to prevent excessive DOM nodes */
 const MAX_PARTICLES = 30;
 
 function ParticleBackgroundInner({
@@ -31,7 +31,6 @@ function ParticleBackgroundInner({
 	animationStyle = "float",
 	depthParallax = true,
 	speed = 1,
-	disableOnTouch = false,
 	scrollFade = false,
 	scrollParallax = false,
 	interactive = false,
@@ -41,6 +40,7 @@ function ParticleBackgroundInner({
 	const reducedMotion = useReducedMotion();
 	const viewportInView = useInView(containerRef, { margin: "-100px" });
 	const isTouchDevice = useIsTouchDevice();
+	const isDesktop = useMediaQuery("(min-width: 768px)");
 
 	const [tabVisible, setTabVisible] = useState(true);
 
@@ -71,8 +71,9 @@ function ParticleBackgroundInner({
 	const cursorX = useMotionValue(0.5);
 	const cursorY = useMotionValue(0.5);
 
+	// P3: Skip mouse listeners entirely on touch devices (no mouse events fire)
 	useEffect(() => {
-		if (disableOnTouch && isTouchDevice) return;
+		if (isTouchDevice) return;
 		const el = containerRef.current;
 		if (!el) return;
 
@@ -151,42 +152,43 @@ function ParticleBackgroundInner({
 			el.removeEventListener("mouseleave", onMouseLeave);
 			window.removeEventListener("scroll", markRectStale);
 		};
-	}, [mouseX, mouseY, cursorX, cursorY, disableOnTouch, isTouchDevice]);
+	}, [mouseX, mouseY, cursorX, cursorY, isTouchDevice]);
 
 	// Normalize shape to array
 	const shapes = Array.isArray(shape) ? shape : [shape];
-
-	// Reduce blur by 30% on mobile
-	const mobileBlur: [number, number] = Array.isArray(blur)
-		? [blur[0] * 0.7, blur[1] * 0.7]
-		: [blur * 0.7, blur * 0.7];
 
 	// Speed multiplier: higher speed = lower duration (clamp to avoid Infinity)
 	const safeSpeed = Math.max(speed, 0.01);
 	const desktopDuration = 20 / safeSpeed;
 	const mobileDuration = 12 / safeSpeed;
 
-	// Desktop: 20s duration, Mobile: 12s (battery saving)
-	const desktopParticles = generateParticles(
-		safeCount,
-		size,
-		opacity,
-		colors,
-		blur,
-		depthParallax,
-		shapes,
-		desktopDuration,
-	);
-	const mobileParticles = generateParticles(
-		Math.ceil(safeCount / 2),
-		size,
-		opacity,
-		colors,
-		mobileBlur,
-		depthParallax,
-		shapes,
-		mobileDuration,
-	);
+	// Reduce blur by 30% on mobile
+	const mobileBlur: [number, number] = Array.isArray(blur)
+		? [blur[0] * 0.7, blur[1] * 0.7]
+		: [blur * 0.7, blur * 0.7];
+
+	// P1: Generate particles only for the active breakpoint (not both)
+	const particles = isDesktop
+		? generateParticles(
+				safeCount,
+				size,
+				opacity,
+				colors,
+				blur,
+				depthParallax,
+				shapes,
+				desktopDuration,
+			)
+		: generateParticles(
+				Math.ceil(safeCount / 2),
+				size,
+				opacity,
+				colors,
+				mobileBlur,
+				depthParallax,
+				shapes,
+				mobileDuration,
+			);
 
 	// Desktop-only interactive mode: no hover on touch devices
 	const interactiveDesktop = interactive && !isTouchDevice;
@@ -197,7 +199,7 @@ function ParticleBackgroundInner({
 		animationStyle,
 		highContrast,
 		...(scrollFade ? { scrollOpacity } : {}),
-		...(scrollParallax ? { scrollYProgress } : {}),
+		...(scrollParallax ? { scrollYProgress, scrollParallax: true } : {}),
 		...(interactiveDesktop ? { interactive: true, cursorX, cursorY } : {}),
 	};
 
@@ -209,17 +211,12 @@ function ParticleBackgroundInner({
 			className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}
 			style={{ contain: "layout paint style" }}
 		>
-			<div className="hidden md:contents">
-				<ParticleSet
-					particles={desktopParticles}
-					mouseX={mouseX}
-					mouseY={mouseY}
-					{...sharedProps}
-				/>
-			</div>
-			<div className="contents md:hidden">
-				<ParticleSet particles={mobileParticles} {...sharedProps} />
-			</div>
+			{/* P1: Single ParticleSet — JS media query replaces CSS dual rendering */}
+			<ParticleSet
+				particles={particles}
+				{...(isDesktop ? { mouseX, mouseY } : {})}
+				{...sharedProps}
+			/>
 		</div>
 	);
 }
@@ -227,11 +224,11 @@ function ParticleBackgroundInner({
 /**
  * Systeme de particules decoratives avec effet de profondeur
  *
- * Utilise CSS media queries pour la detection mobile (pas de flash d'hydratation).
+ * Utilise JS media queries pour la detection mobile (ssr: false, pas de flash d'hydratation).
  * Desktop: count particules, Mobile: count/2 particules.
  * CSS containment pour isoler les repaints.
  *
- * `count` is clamped to 30 max (both trees: count*2 desktop + ceil(count/2)*2 mobile ≈ count*3 spans).
+ * `count` is clamped to 30 max.
  *
  * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4, star, hexagon
  * **Animations** : float, drift, rise, orbit, breathe, sparkle, cascade
@@ -263,5 +260,5 @@ export function ParticleBackground({ disableOnTouch = false, ...props }: Particl
 		return null;
 	}
 
-	return <ParticleBackgroundInner disableOnTouch={disableOnTouch} {...props} />;
+	return <ParticleBackgroundInner {...props} />;
 }

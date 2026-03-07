@@ -47,7 +47,7 @@ function Doodle({ variant, color, width, height, delay, className }: DoodleProps
 				strokeLinejoin="round"
 				fill={config.fill ? color : "none"}
 				fillOpacity={config.fill ? 0.15 : 0}
-				className="doodle-draw"
+				className="doodle-draw doodle-draw-scroll"
 				style={
 					{
 						"--path-length": "200",

@@ -4,13 +4,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrismaOrderFindMany, mockCacheDashboard, mockTransformRecentOrders } = vi.hoisted(
-	() => ({
-		mockPrismaOrderFindMany: vi.fn(),
-		mockCacheDashboard: vi.fn(),
-		mockTransformRecentOrders: vi.fn(),
-	}),
-);
+const { mockPrismaOrderFindMany, mockCacheDefault, mockTransformRecentOrders } = vi.hoisted(() => ({
+	mockPrismaOrderFindMany: vi.fn(),
+	mockCacheDefault: vi.fn(),
+	mockTransformRecentOrders: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
@@ -27,8 +25,11 @@ vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
 }));
 
+vi.mock("@/shared/lib/cache", () => ({
+	cacheDefault: mockCacheDefault,
+}));
+
 vi.mock("@/modules/dashboard/constants/cache", () => ({
-	cacheDashboard: mockCacheDashboard,
 	DASHBOARD_CACHE_TAGS: {
 		KPIS: "dashboard-kpis",
 		REVENUE_CHART: "dashboard-revenue-chart",
@@ -243,9 +244,9 @@ describe("fetchDashboardRecentOrders", () => {
 	// Cache
 	// -------------------------------------------------------------------------
 
-	it("should call cacheDashboard with the RECENT_ORDERS tag", async () => {
+	it("should call cacheDefault with the RECENT_ORDERS tag", async () => {
 		await fetchDashboardRecentOrders();
 
-		expect(mockCacheDashboard).toHaveBeenCalledWith("dashboard-recent-orders");
+		expect(mockCacheDefault).toHaveBeenCalledWith("dashboard-recent-orders");
 	});
 });

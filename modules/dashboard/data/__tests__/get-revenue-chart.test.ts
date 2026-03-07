@@ -4,10 +4,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrismaQueryRaw, mockCacheDashboard, mockBuildRevenueMap, mockFillMissingDates } =
+const { mockPrismaQueryRaw, mockCacheDefault, mockBuildRevenueMap, mockFillMissingDates } =
 	vi.hoisted(() => ({
 		mockPrismaQueryRaw: vi.fn(),
-		mockCacheDashboard: vi.fn(),
+		mockCacheDefault: vi.fn(),
 		mockBuildRevenueMap: vi.fn(),
 		mockFillMissingDates: vi.fn(),
 	}));
@@ -24,8 +24,11 @@ vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
 }));
 
+vi.mock("@/shared/lib/cache", () => ({
+	cacheDefault: mockCacheDefault,
+}));
+
 vi.mock("@/modules/dashboard/constants/cache", () => ({
-	cacheDashboard: mockCacheDashboard,
 	DASHBOARD_CACHE_TAGS: {
 		KPIS: "dashboard-kpis",
 		REVENUE_CHART: "dashboard-revenue-chart",
@@ -223,15 +226,15 @@ describe("fetchDashboardRevenueChart", () => {
 	// Cache
 	// -------------------------------------------------------------------------
 
-	it("should call cacheDashboard with the REVENUE_CHART tag", async () => {
+	it("should call cacheDefault with the REVENUE_CHART tag", async () => {
 		await fetchDashboardRevenueChart();
 
-		expect(mockCacheDashboard).toHaveBeenCalledWith("dashboard-revenue-chart");
+		expect(mockCacheDefault).toHaveBeenCalledWith("dashboard-revenue-chart");
 	});
 
-	it("should call cacheDashboard exactly once", async () => {
+	it("should call cacheDefault exactly once", async () => {
 		await fetchDashboardRevenueChart();
 
-		expect(mockCacheDashboard).toHaveBeenCalledTimes(1);
+		expect(mockCacheDefault).toHaveBeenCalledTimes(1);
 	});
 });

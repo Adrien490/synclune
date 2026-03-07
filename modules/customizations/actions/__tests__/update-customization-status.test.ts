@@ -82,6 +82,8 @@ vi.mock("@/modules/emails/services/customization-emails", () => ({
 
 vi.mock("../../services/customization-status.service", () => ({
 	canTransitionTo: mockCanTransitionTo,
+	isFirstResponse: (current: string, target: string) =>
+		current === "PENDING" && target !== "PENDING",
 }));
 
 vi.mock("../../constants/cache", () => ({

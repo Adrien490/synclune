@@ -4,11 +4,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
+const { mockPrisma, mockRequireAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		customizationRequest: { findFirst: vi.fn() },
 	},
-	mockIsAdmin: vi.fn(),
+	mockRequireAdmin: vi.fn(),
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
 }));
@@ -18,8 +18,8 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
-	isAdmin: mockIsAdmin,
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 }));
 
 vi.mock("next/cache", () => ({
@@ -62,7 +62,7 @@ function makeDetailRequest(overrides: Record<string, unknown> = {}) {
 }
 
 function setupDefaults() {
-	mockIsAdmin.mockResolvedValue(true);
+	mockRequireAdmin.mockResolvedValue({ admin: true });
 	mockPrisma.customizationRequest.findFirst.mockResolvedValue(null);
 }
 
@@ -79,7 +79,7 @@ describe("getCustomizationRequest", () => {
 	// ──────────── Auth guard ────────────
 
 	it("returns null when user is not admin", async () => {
-		mockIsAdmin.mockResolvedValue(false);
+		mockRequireAdmin.mockResolvedValue({ error: { status: "FORBIDDEN", message: "Non autorisé" } });
 
 		const result = await getCustomizationRequest("req-1");
 
@@ -88,7 +88,7 @@ describe("getCustomizationRequest", () => {
 	});
 
 	it("does not call cache functions when user is not admin", async () => {
-		mockIsAdmin.mockResolvedValue(false);
+		mockRequireAdmin.mockResolvedValue({ error: { status: "FORBIDDEN", message: "Non autorisé" } });
 
 		await getCustomizationRequest("req-1");
 

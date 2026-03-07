@@ -116,11 +116,12 @@ afterEach(() => {
 	resizeObserverInstances.length = 0;
 });
 
-// Ensure matchMedia is always available with default values
+// Ensure matchMedia is always available with default values (desktop breakpoint active)
 beforeEach(() => {
 	mockMatchMedia({
 		"(prefers-contrast: more)": false,
 		"(forced-colors: active)": false,
+		"(min-width: 768px)": true,
 	});
 });
 
@@ -132,37 +133,43 @@ describe("ParticleBackground", () => {
 		expect(root?.getAttribute("aria-hidden")).toBe("true");
 	});
 
-	it("renders desktop and mobile wrappers", () => {
+	it("renders particles directly in container (no wrapper divs)", () => {
 		const { container } = render(<ParticleBackground count={3} />);
 		const root = container.firstElementChild!;
-		const children = Array.from(root.children);
-		expect(children).toHaveLength(2);
-		// Desktop: hidden md:contents
-		expect(children[0]!.className).toContain("hidden");
-		expect(children[0]!.className).toContain("md:contents");
-		// Mobile: contents md:hidden
-		expect(children[1]!.className).toContain("contents");
-		expect(children[1]!.className).toContain("md:hidden");
+		// Particles are direct children (no intermediate wrapper divs)
+		const spans = root.querySelectorAll("span.absolute");
+		expect(spans.length).toBe(3);
 	});
 
-	it("renders particles as spans", () => {
+	it("renders desktop particle count on desktop", () => {
+		mockMatchMedia({
+			"(prefers-contrast: more)": false,
+			"(forced-colors: active)": false,
+			"(min-width: 768px)": true,
+		});
 		const { container } = render(<ParticleBackground count={4} />);
-		// Desktop wrapper has 4 particles, mobile has 2 (ceil(4/2))
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		const mobileWrapper = container.firstElementChild!.children[1]!;
-		// Each particle is a span with absolute positioning
-		const desktopSpans = desktopWrapper.querySelectorAll("span.absolute");
-		const mobileSpans = mobileWrapper.querySelectorAll("span.absolute");
-		expect(desktopSpans.length).toBe(4);
-		expect(mobileSpans.length).toBe(2);
+		const root = container.firstElementChild!;
+		const spans = root.querySelectorAll("span.absolute");
+		expect(spans.length).toBe(4);
+	});
+
+	it("renders mobile particle count (ceil(count/2)) on mobile", () => {
+		mockMatchMedia({
+			"(prefers-contrast: more)": false,
+			"(forced-colors: active)": false,
+			"(min-width: 768px)": false,
+		});
+		const { container } = render(<ParticleBackground count={4} />);
+		const root = container.firstElementChild!;
+		const spans = root.querySelectorAll("span.absolute");
+		expect(spans.length).toBe(2); // ceil(4/2)
 	});
 
 	it("renders static spans when reduced motion is preferred", () => {
 		vi.mocked(useReducedMotion).mockReturnValue(true);
 		const { container } = render(<ParticleBackground count={3} />);
-		// Static particles use plain <span> instead of <motion.span>
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		const spans = desktopWrapper.querySelectorAll("span");
+		const root = container.firstElementChild!;
+		const spans = root.querySelectorAll("span");
 		expect(spans.length).toBeGreaterThan(0);
 		vi.mocked(useReducedMotion).mockReturnValue(false);
 	});
@@ -189,11 +196,8 @@ describe("ParticleBackground", () => {
 	it("renders nothing when not in view", () => {
 		vi.mocked(useInView).mockReturnValue(false);
 		const { container } = render(<ParticleBackground count={4} />);
-		// Desktop and mobile wrappers exist but should be empty (ParticleSet returns null)
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		const mobileWrapper = container.firstElementChild!.children[1]!;
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(0);
-		expect(mobileWrapper.querySelectorAll("span.absolute").length).toBe(0);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(0);
 		vi.mocked(useInView).mockReturnValue(true);
 	});
 
@@ -202,8 +206,8 @@ describe("ParticleBackground", () => {
 		const { container: fast } = render(<ParticleBackground count={3} speed={2} />);
 		const { container: slow } = render(<ParticleBackground count={3} speed={0.5} />);
 		// Both should render the same number of particles
-		const fastSpans = fast.firstElementChild!.children[0]!.querySelectorAll("span.absolute");
-		const slowSpans = slow.firstElementChild!.children[0]!.querySelectorAll("span.absolute");
+		const fastSpans = fast.firstElementChild!.querySelectorAll("span.absolute");
+		const slowSpans = slow.firstElementChild!.querySelectorAll("span.absolute");
 		expect(fastSpans.length).toBe(3);
 		expect(slowSpans.length).toBe(3);
 	});
@@ -216,21 +220,21 @@ describe("ParticleBackground", () => {
 
 	it("renders mixed shapes when shape is an array", () => {
 		const { container } = render(<ParticleBackground count={4} shape={["circle", "crescent"]} />);
-		const desktopWrapper = container.firstElementChild!.children[0]!;
+		const root = container.firstElementChild!;
 		// crescent is SVG, so we should find SVG elements
-		const svgs = desktopWrapper.querySelectorAll("svg");
+		const svgs = root.querySelectorAll("svg");
 		expect(svgs.length).toBeGreaterThan(0);
 		// Also regular spans (circle shapes)
-		const spans = desktopWrapper.querySelectorAll("span.absolute");
+		const spans = root.querySelectorAll("span.absolute");
 		expect(spans.length).toBe(4);
 	});
 
 	it("clamps count to MAX_PARTICLES (30)", () => {
 		const { container } = render(<ParticleBackground count={100} />);
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		const desktopSpans = desktopWrapper.querySelectorAll("span.absolute");
+		const root = container.firstElementChild!;
+		const spans = root.querySelectorAll("span.absolute");
 		// Should be clamped to 30, not 100
-		expect(desktopSpans.length).toBe(30);
+		expect(spans.length).toBe(30);
 	});
 
 	it("renders all animation styles without crashing", () => {
@@ -248,9 +252,9 @@ describe("ParticleBackground", () => {
 		vi.mocked(useInView).mockReturnValue(true);
 		const { container } = render(<ParticleBackground count={3} />);
 
+		const root = container.firstElementChild!;
 		// Particles should be rendered initially
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+		expect(root.querySelectorAll("span.absolute").length).toBe(3);
 
 		// Simulate tab going hidden
 		act(() => {
@@ -263,7 +267,7 @@ describe("ParticleBackground", () => {
 		});
 
 		// Particles should be hidden (isInView becomes false because tabVisible=false)
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(0);
+		expect(root.querySelectorAll("span.absolute").length).toBe(0);
 
 		// Simulate tab becoming visible again
 		act(() => {
@@ -276,13 +280,14 @@ describe("ParticleBackground", () => {
 		});
 
 		// Particles should be visible again
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+		expect(root.querySelectorAll("span.absolute").length).toBe(3);
 	});
 
 	it("renders null when forced-colors mode is active", () => {
 		mockMatchMedia({
 			"(prefers-contrast: more)": false,
 			"(forced-colors: active)": true,
+			"(min-width: 768px)": true,
 		});
 		const { container } = render(<ParticleBackground count={3} />);
 		expect(container.firstElementChild).toBeNull();
@@ -293,6 +298,7 @@ describe("ParticleBackground", () => {
 		mockMatchMedia({
 			"(prefers-contrast: more)": false,
 			"(forced-colors: active)": true,
+			"(min-width: 768px)": true,
 		});
 		const { container } = render(<ParticleBackground count={3} />);
 		// Before mount, should render regardless of forced-colors
@@ -305,13 +311,13 @@ describe("ParticleBackground", () => {
 		mockMatchMedia({
 			"(prefers-contrast: more)": true,
 			"(forced-colors: active)": false,
+			"(min-width: 768px)": true,
 		});
 		const { container } = render(<ParticleBackground count={3} />);
 		// Should still render particles, but with adjusted opacity/blur
-		const root = container.firstElementChild;
+		const root = container.firstElementChild!;
 		expect(root).toBeTruthy();
-		const desktopWrapper = root!.children[0]!;
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+		expect(root.querySelectorAll("span.absolute").length).toBe(3);
 	});
 
 	it("renders with scrollFade prop without crashing", () => {
@@ -321,34 +327,34 @@ describe("ParticleBackground", () => {
 
 	it("renders sparkle animation style", () => {
 		const { container } = render(<ParticleBackground count={3} animationStyle="sparkle" />);
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(3);
 	});
 
 	it("renders cascade animation style", () => {
 		const { container } = render(<ParticleBackground count={3} animationStyle="cascade" />);
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(3);
 	});
 
 	it("renders star shape without crashing", () => {
 		const { container } = render(<ParticleBackground count={3} shape="star" />);
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(3);
 	});
 
 	it("renders hexagon shape without crashing", () => {
 		const { container } = render(<ParticleBackground count={3} shape="hexagon" />);
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(3);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(3);
 	});
 
 	it("renders mixed shapes including star and hexagon", () => {
 		const { container } = render(
 			<ParticleBackground count={6} shape={["circle", "star", "hexagon"]} />,
 		);
-		const desktopWrapper = container.firstElementChild!.children[0]!;
-		expect(desktopWrapper.querySelectorAll("span.absolute").length).toBe(6);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(6);
 	});
 
 	it("renders with scrollParallax prop without crashing", () => {
@@ -373,6 +379,7 @@ describe("ParticleBackground parallax", () => {
 		mockMatchMedia({
 			"(prefers-contrast: more)": false,
 			"(forced-colors: active)": false,
+			"(min-width: 768px)": true,
 		});
 
 		// Track all useMotionValue instances to capture mouseX/mouseY
@@ -573,6 +580,27 @@ describe("ParticleBackground parallax", () => {
 
 		// No motion values should have been created (component returned null before hooks)
 		expect(motionValues).toHaveLength(0);
+
+		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(false);
+	});
+
+	it("skips mouse listeners on touch devices even without disableOnTouch", () => {
+		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(true);
+
+		const { container } = render(<ParticleBackground count={2} />);
+		const root = container.firstElementChild as HTMLElement;
+
+		// Component renders but mouse listeners should not be attached
+		expect(root).toBeTruthy();
+
+		// mouseX/mouseY should stay at 0 after mousemove (no listener attached)
+		const mouseXMv = motionValues[0]!;
+		act(() => {
+			root.dispatchEvent(
+				new MouseEvent("mousemove", { clientX: 100, clientY: 100, bubbles: true }),
+			);
+		});
+		expect(mouseXMv.value).toBe(0);
 
 		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(false);
 	});

@@ -33,6 +33,7 @@ vi.mock("next/link", () => ({
 vi.mock("@/shared/components/animations", () => ({
 	Fade: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	HandDrawnUnderline: () => <div data-testid="underline" />,
+	SplitText: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 	Stagger: ({ children, className }: { children: React.ReactNode; className?: string }) => (
 		<div className={className}>{children}</div>
 	),
@@ -93,6 +94,10 @@ vi.mock("@/shared/styles/fonts", () => ({
 
 vi.mock("../creative-process-timeline", () => ({
 	CreativeProcessTimeline: () => <div data-testid="timeline" />,
+}));
+
+vi.mock("../signature-reveal", () => ({
+	SignatureReveal: () => <div data-testid="signature-reveal" />,
 }));
 
 vi.mock("../polaroid-gallery", () => ({

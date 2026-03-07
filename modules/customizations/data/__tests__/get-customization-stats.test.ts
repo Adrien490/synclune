@@ -4,11 +4,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
+const { mockPrisma, mockRequireAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockPrisma: {
 		customizationRequest: { count: vi.fn() },
 	},
-	mockIsAdmin: vi.fn(),
+	mockRequireAdmin: vi.fn(),
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
 }));
@@ -18,8 +18,8 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
-	isAdmin: mockIsAdmin,
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 }));
 
 vi.mock("next/cache", () => ({
@@ -79,7 +79,7 @@ function setupCountMocks(values: {
 }
 
 function setupDefaults() {
-	mockIsAdmin.mockResolvedValue(true);
+	mockRequireAdmin.mockResolvedValue({ admin: true });
 	// Use mockResolvedValue (not Once) so it returns 0 as a stable default
 	mockPrisma.customizationRequest.count.mockResolvedValue(0);
 }
@@ -95,7 +95,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("returns empty stats when user is not admin", async () => {
-		mockIsAdmin.mockResolvedValue(false);
+		mockRequireAdmin.mockResolvedValue({ error: { status: "FORBIDDEN", message: "Non autorisé" } });
 
 		const result = await getCustomizationStats();
 
@@ -104,7 +104,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("returns populated stats for admin user", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 50,
 			pending: 10,
@@ -129,7 +129,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("excludes soft-deleted records from total count", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 10,
 			pending: 0,
@@ -148,7 +148,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("filters pending count by PENDING status", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 10,
 			pending: 3,
@@ -167,7 +167,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("filters inProgress count by IN_PROGRESS status", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 10,
 			pending: 0,
@@ -186,7 +186,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("filters completed count by COMPLETED status", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 10,
 			pending: 0,
@@ -205,7 +205,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("filters open count using OPEN_STATUSES array", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 10,
 			pending: 0,
@@ -227,7 +227,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("filters closed count using CLOSED_STATUSES array", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 10,
 			pending: 0,
@@ -249,7 +249,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("filters thisMonth count using a start-of-month date", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 10,
 			pending: 0,
@@ -276,7 +276,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("runs all 7 counts in a single Promise.all call", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 5,
 			pending: 1,
@@ -293,7 +293,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("returns empty stats on DB error without throwing", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		mockPrisma.customizationRequest.count.mockRejectedValue(new Error("DB unavailable"));
 
 		const result = await getCustomizationStats();
@@ -302,7 +302,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("calls cacheLife with dashboard profile", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 0,
 			pending: 0,
@@ -319,7 +319,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("calls cacheTag with stats tag", async () => {
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		setupCountMocks({
 			total: 0,
 			pending: 0,
@@ -336,7 +336,7 @@ describe("getCustomizationStats", () => {
 	});
 
 	it("does not call cache functions when user is not admin", async () => {
-		mockIsAdmin.mockResolvedValue(false);
+		mockRequireAdmin.mockResolvedValue({ error: { status: "FORBIDDEN", message: "Non autorisé" } });
 
 		await getCustomizationStats();
 

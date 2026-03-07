@@ -122,6 +122,7 @@ export async function sendCustomizationRequest(
 					productTypeLabel: validatedData.productTypeLabel,
 					productTypeId: productType?.id ?? null,
 					details: validatedData.details,
+					consentGivenAt: new Date(),
 					userId,
 				},
 			});
@@ -132,7 +133,7 @@ export async function sendCustomizationRequest(
 						customizationRequestId: request.id,
 						url: media.url,
 						blurDataUrl: media.blurDataUrl ?? null,
-						altText: media.altText ?? null,
+						altText: media.altText ? sanitizeForEmail(media.altText) : null,
 						position: index,
 					})),
 				});

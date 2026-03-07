@@ -1,5 +1,5 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 
 import { cacheCustomizationStats } from "../constants/cache";
 import { OPEN_STATUSES, CLOSED_STATUSES } from "../constants/status.constants";
@@ -20,8 +20,8 @@ const EMPTY_STATS: CustomizationStats = {
 // ============================================================================
 
 export async function getCustomizationStats(): Promise<CustomizationStats> {
-	const admin = await isAdmin();
-	if (!admin) return EMPTY_STATS;
+	const adminCheck = await requireAdmin();
+	if ("error" in adminCheck) return EMPTY_STATS;
 
 	return fetchCustomizationStats();
 }

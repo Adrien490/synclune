@@ -15,10 +15,8 @@ import {
 	ChartTooltipContent,
 	type ChartConfig,
 } from "@/shared/components/ui/chart";
-import type {
-	GetRevenueChartReturn,
-	RevenueDataPoint,
-} from "@/modules/dashboard/data/get-revenue-chart";
+import type { GetRevenueChartReturn } from "@/modules/dashboard/data/get-revenue-chart";
+import { formatChartData } from "@/modules/dashboard/services/revenue-chart-builder.service";
 
 import { cn } from "@/shared/utils/cn";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
@@ -44,14 +42,7 @@ const chartConfig = {
 export function RevenueChart({ chartData }: RevenueChartProps) {
 	const { data } = chartData;
 
-	// Formater les données pour le chart
-	const formattedData = data.map((item: RevenueDataPoint) => ({
-		date: new Date(item.date).toLocaleDateString("fr-FR", {
-			day: "2-digit",
-			month: "short",
-		}),
-		revenue: item.revenue,
-	}));
+	const formattedData = formatChartData(data);
 
 	// Verifier s'il y a des donnees avec du revenu
 	const hasRevenue = formattedData.some((item) => item.revenue > 0);

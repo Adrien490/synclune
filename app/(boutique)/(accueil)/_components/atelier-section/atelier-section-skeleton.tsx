@@ -1,5 +1,6 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { processSteps } from "./process-steps";
 
 /**
  * Skeleton for the merged AtelierSection.
@@ -54,7 +55,7 @@ export function AtelierSectionSkeleton() {
 				<div className="mt-8 sm:mt-12">
 					{/* Desktop: horizontal 4 columns */}
 					<div className="hidden lg:grid lg:grid-cols-4 lg:gap-6">
-						{Array.from({ length: 4 }).map((_, i) => (
+						{Array.from({ length: processSteps.length }).map((_, i) => (
 							<div key={i} className="text-center">
 								<Skeleton className="bg-muted/40 mx-auto h-12 w-12 rounded-full" />
 								<Skeleton className="bg-muted/50 mx-auto mt-4 h-5 w-32" />
@@ -66,7 +67,7 @@ export function AtelierSectionSkeleton() {
 
 					{/* Mobile: vertical */}
 					<div className="space-y-8 sm:space-y-12 lg:hidden">
-						{Array.from({ length: 4 }).map((_, i) => (
+						{Array.from({ length: processSteps.length }).map((_, i) => (
 							<div key={i} className="flex items-start gap-4">
 								<Skeleton className="bg-muted/40 h-12 w-12 shrink-0 rounded-full" />
 								<div className="flex-1 space-y-2 pb-8">

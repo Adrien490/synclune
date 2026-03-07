@@ -69,7 +69,7 @@ export default async function CustomizationDetailPage({ params }: CustomizationD
 								<div>
 									<p className="text-muted-foreground text-sm">Email</p>
 									<a
-										href={`mailto:${request.email}`}
+										href={`mailto:${encodeURIComponent(request.email)}`}
 										className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
 									>
 										<Mail className="h-4 w-4" />
@@ -246,7 +246,7 @@ export default async function CustomizationDetailPage({ params }: CustomizationD
 						<CardContent className="space-y-2">
 							<Button variant="outline" className="w-full justify-start" asChild>
 								<a
-									href={`mailto:${request.email}?subject=RE: Demande de personnalisation - Synclune`}
+									href={`mailto:${encodeURIComponent(request.email)}?subject=${encodeURIComponent("RE: Demande de personnalisation - Synclune")}`}
 								>
 									<Mail className="mr-2 h-4 w-4" />
 									Répondre par email

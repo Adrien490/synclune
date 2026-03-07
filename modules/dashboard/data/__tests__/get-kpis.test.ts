@@ -4,17 +4,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrismaOrderAggregate, mockPrismaOrderCount, mockCacheDashboard } = vi.hoisted(() => ({
+const { mockPrismaOrderAggregate, mockCacheDefault } = vi.hoisted(() => ({
 	mockPrismaOrderAggregate: vi.fn(),
-	mockPrismaOrderCount: vi.fn(),
-	mockCacheDashboard: vi.fn(),
+	mockCacheDefault: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
 		order: {
 			aggregate: mockPrismaOrderAggregate,
-			count: mockPrismaOrderCount,
 		},
 	},
 	notDeleted: { deletedAt: null },
@@ -26,8 +24,11 @@ vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
 }));
 
+vi.mock("@/shared/lib/cache", () => ({
+	cacheDefault: mockCacheDefault,
+}));
+
 vi.mock("@/modules/dashboard/constants/cache", () => ({
-	cacheDashboard: mockCacheDashboard,
 	DASHBOARD_CACHE_TAGS: {
 		KPIS: "dashboard-kpis",
 		REVENUE_CHART: "dashboard-revenue-chart",
@@ -56,39 +57,20 @@ function makeAggregateResult(total: number | null, count = 0) {
 }
 
 function setupDefaultMocks({
-	currentRevenue = 10000,
-	lastRevenue = 8000,
-	currentOrderCount = 12,
-	lastOrderCount = 10,
-	currentAovTotal = 10000,
-	currentAovCount = 4,
-	lastAovTotal = 8000,
-	lastAovCount = 4,
+	currentTotal = 10000,
+	currentCount = 4,
+	lastTotal = 8000,
+	lastCount = 4,
 }: {
-	currentRevenue?: number | null;
-	lastRevenue?: number | null;
-	currentOrderCount?: number;
-	lastOrderCount?: number;
-	currentAovTotal?: number | null;
-	currentAovCount?: number;
-	lastAovTotal?: number | null;
-	lastAovCount?: number;
+	currentTotal?: number | null;
+	currentCount?: number;
+	lastTotal?: number | null;
+	lastCount?: number;
 } = {}) {
-	// aggregate is called 4 times: 2 for revenue, 2 for AOV
+	// 2 aggregate calls: current month, last month
 	mockPrismaOrderAggregate
-		// fetchMonthlyRevenue: current month
-		.mockResolvedValueOnce(makeAggregateResult(currentRevenue))
-		// fetchMonthlyRevenue: last month
-		.mockResolvedValueOnce(makeAggregateResult(lastRevenue))
-		// fetchAverageOrderValue: current month
-		.mockResolvedValueOnce(makeAggregateResult(currentAovTotal, currentAovCount))
-		// fetchAverageOrderValue: last month
-		.mockResolvedValueOnce(makeAggregateResult(lastAovTotal, lastAovCount));
-
-	// count is called 2 times for fetchMonthlyOrders
-	mockPrismaOrderCount
-		.mockResolvedValueOnce(currentOrderCount)
-		.mockResolvedValueOnce(lastOrderCount);
+		.mockResolvedValueOnce(makeAggregateResult(currentTotal, currentCount))
+		.mockResolvedValueOnce(makeAggregateResult(lastTotal, lastCount));
 }
 
 // ============================================================================
@@ -128,11 +110,23 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	// -------------------------------------------------------------------------
+	// Only 2 aggregate queries
+	// -------------------------------------------------------------------------
+
+	it("should make exactly 2 aggregate queries (consolidated)", async () => {
+		setupDefaultMocks();
+
+		await fetchDashboardKpis();
+
+		expect(mockPrismaOrderAggregate).toHaveBeenCalledTimes(2);
+	});
+
+	// -------------------------------------------------------------------------
 	// Monthly revenue
 	// -------------------------------------------------------------------------
 
 	it("should compute positive evolution when current revenue exceeds last month", async () => {
-		setupDefaultMocks({ currentRevenue: 12000, lastRevenue: 8000 });
+		setupDefaultMocks({ currentTotal: 12000, currentCount: 4, lastTotal: 8000, lastCount: 4 });
 
 		const result = await fetchDashboardKpis();
 
@@ -142,7 +136,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should compute negative evolution when current revenue is below last month", async () => {
-		setupDefaultMocks({ currentRevenue: 4000, lastRevenue: 8000 });
+		setupDefaultMocks({ currentTotal: 4000, currentCount: 2, lastTotal: 8000, lastCount: 4 });
 
 		const result = await fetchDashboardKpis();
 
@@ -152,7 +146,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should return evolution of 0 when last month revenue is 0", async () => {
-		setupDefaultMocks({ currentRevenue: 5000, lastRevenue: 0 });
+		setupDefaultMocks({ currentTotal: 5000, currentCount: 2, lastTotal: 0, lastCount: 0 });
 
 		const result = await fetchDashboardKpis();
 
@@ -161,7 +155,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should default amounts to 0 when aggregate returns null sums", async () => {
-		setupDefaultMocks({ currentRevenue: null, lastRevenue: null });
+		setupDefaultMocks({ currentTotal: null, currentCount: 0, lastTotal: null, lastCount: 0 });
 
 		const result = await fetchDashboardKpis();
 
@@ -169,25 +163,12 @@ describe("fetchDashboardKpis", () => {
 		expect(result.monthlyRevenue.evolution).toBe(0);
 	});
 
-	it("should return amount of 0 when both revenue sums are null", async () => {
-		setupDefaultMocks({
-			currentRevenue: null,
-			lastRevenue: null,
-			currentAovTotal: null,
-			lastAovTotal: null,
-		});
-
-		const result = await fetchDashboardKpis();
-
-		expect(result.monthlyRevenue.amount).toBe(0);
-	});
-
 	// -------------------------------------------------------------------------
 	// Monthly orders
 	// -------------------------------------------------------------------------
 
 	it("should return correct order count", async () => {
-		setupDefaultMocks({ currentOrderCount: 15, lastOrderCount: 10 });
+		setupDefaultMocks({ currentTotal: 15000, currentCount: 15, lastTotal: 10000, lastCount: 10 });
 
 		const result = await fetchDashboardKpis();
 
@@ -195,7 +176,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should compute positive order evolution", async () => {
-		setupDefaultMocks({ currentOrderCount: 15, lastOrderCount: 10 });
+		setupDefaultMocks({ currentTotal: 15000, currentCount: 15, lastTotal: 10000, lastCount: 10 });
 
 		const result = await fetchDashboardKpis();
 
@@ -204,7 +185,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should compute negative order evolution when fewer orders this month", async () => {
-		setupDefaultMocks({ currentOrderCount: 5, lastOrderCount: 10 });
+		setupDefaultMocks({ currentTotal: 5000, currentCount: 5, lastTotal: 10000, lastCount: 10 });
 
 		const result = await fetchDashboardKpis();
 
@@ -213,7 +194,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should return order evolution of 0 when last month had no orders", async () => {
-		setupDefaultMocks({ currentOrderCount: 8, lastOrderCount: 0 });
+		setupDefaultMocks({ currentTotal: 8000, currentCount: 8, lastTotal: 0, lastCount: 0 });
 
 		const result = await fetchDashboardKpis();
 
@@ -226,12 +207,7 @@ describe("fetchDashboardKpis", () => {
 
 	it("should compute average order value as sum divided by count", async () => {
 		// Current: 9000 / 3 = 3000, Last: 8000 / 4 = 2000
-		setupDefaultMocks({
-			currentAovTotal: 9000,
-			currentAovCount: 3,
-			lastAovTotal: 8000,
-			lastAovCount: 4,
-		});
+		setupDefaultMocks({ currentTotal: 9000, currentCount: 3, lastTotal: 8000, lastCount: 4 });
 
 		const result = await fetchDashboardKpis();
 
@@ -241,12 +217,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should return amount of 0 when current month count is 0", async () => {
-		setupDefaultMocks({
-			currentAovTotal: 0,
-			currentAovCount: 0,
-			lastAovTotal: 8000,
-			lastAovCount: 4,
-		});
+		setupDefaultMocks({ currentTotal: 0, currentCount: 0, lastTotal: 8000, lastCount: 4 });
 
 		const result = await fetchDashboardKpis();
 
@@ -254,12 +225,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should return AOV evolution of 0 when last month count is 0", async () => {
-		setupDefaultMocks({
-			currentAovTotal: 6000,
-			currentAovCount: 2,
-			lastAovTotal: 0,
-			lastAovCount: 0,
-		});
+		setupDefaultMocks({ currentTotal: 6000, currentCount: 2, lastTotal: 0, lastCount: 0 });
 
 		const result = await fetchDashboardKpis();
 
@@ -267,12 +233,7 @@ describe("fetchDashboardKpis", () => {
 	});
 
 	it("should handle null AOV sums by defaulting to 0", async () => {
-		setupDefaultMocks({
-			currentAovTotal: null,
-			currentAovCount: 3,
-			lastAovTotal: null,
-			lastAovCount: 2,
-		});
+		setupDefaultMocks({ currentTotal: null, currentCount: 3, lastTotal: null, lastCount: 2 });
 
 		const result = await fetchDashboardKpis();
 
@@ -289,7 +250,6 @@ describe("fetchDashboardKpis", () => {
 
 		await fetchDashboardKpis();
 
-		// All aggregate calls must include paymentStatus: "PAID"
 		const aggregateCalls = mockPrismaOrderAggregate.mock.calls;
 		for (const [args] of aggregateCalls) {
 			expect(args.where.paymentStatus).toBe("PAID");
@@ -305,10 +265,17 @@ describe("fetchDashboardKpis", () => {
 		for (const [args] of aggregateCalls) {
 			expect(args.where.deletedAt).toBeNull();
 		}
+	});
 
-		const countCalls = mockPrismaOrderCount.mock.calls;
-		for (const [args] of countCalls) {
-			expect(args.where.deletedAt).toBeNull();
+	it("should request _sum and _count in both aggregate calls", async () => {
+		setupDefaultMocks();
+
+		await fetchDashboardKpis();
+
+		const aggregateCalls = mockPrismaOrderAggregate.mock.calls;
+		for (const [args] of aggregateCalls) {
+			expect(args._sum).toEqual({ total: true });
+			expect(args._count).toBe(true);
 		}
 	});
 
@@ -340,11 +307,11 @@ describe("fetchDashboardKpis", () => {
 	// Cache
 	// -------------------------------------------------------------------------
 
-	it("should call cacheDashboard with the KPIS tag", async () => {
+	it("should call cacheDefault with the KPIS tag", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
-		expect(mockCacheDashboard).toHaveBeenCalledWith("dashboard-kpis");
+		expect(mockCacheDefault).toHaveBeenCalledWith("dashboard-kpis");
 	});
 });

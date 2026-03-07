@@ -25,7 +25,7 @@ interface PolaroidConfig {
 	vintage: boolean;
 	glowColor: GlowColor;
 	scatterClass: string;
-	className?: string;
+	scatterVars: React.CSSProperties;
 }
 
 const GLOW_CLASSES: Record<GlowColor, string> = {
@@ -48,6 +48,11 @@ const POLAROIDS: PolaroidConfig[] = [
 		vintage: true,
 		glowColor: "pink",
 		scatterClass: "lg:-translate-y-2 lg:translate-x-1",
+		scatterVars: {
+			"--scatter-x": "40px",
+			"--scatter-y": "-60px",
+			"--scatter-rotate": "-8deg",
+		} as React.CSSProperties,
 	},
 	{
 		id: "materials",
@@ -61,6 +66,11 @@ const POLAROIDS: PolaroidConfig[] = [
 		vintage: true,
 		glowColor: "lavender",
 		scatterClass: "lg:translate-y-3 lg:-translate-x-1",
+		scatterVars: {
+			"--scatter-x": "-30px",
+			"--scatter-y": "50px",
+			"--scatter-rotate": "6deg",
+		} as React.CSSProperties,
 	},
 	{
 		id: "inspiration",
@@ -74,7 +84,11 @@ const POLAROIDS: PolaroidConfig[] = [
 		vintage: true,
 		glowColor: "mint",
 		scatterClass: "lg:translate-y-1 lg:translate-x-2",
-		className: "hidden lg:block",
+		scatterVars: {
+			"--scatter-x": "50px",
+			"--scatter-y": "40px",
+			"--scatter-rotate": "10deg",
+		} as React.CSSProperties,
 	},
 	{
 		id: "workspace",
@@ -88,7 +102,11 @@ const POLAROIDS: PolaroidConfig[] = [
 		vintage: true,
 		glowColor: "yellow",
 		scatterClass: "lg:-translate-y-3 lg:-translate-x-1",
-		className: "hidden lg:block",
+		scatterVars: {
+			"--scatter-x": "-40px",
+			"--scatter-y": "-50px",
+			"--scatter-rotate": "-12deg",
+		} as React.CSSProperties,
 	},
 ];
 
@@ -105,12 +123,46 @@ export function PolaroidGallery() {
 			<div className="mt-12 sm:mt-16">
 				<div role="region" aria-label="Galerie photos de l'atelier Synclune" className="relative">
 					<PolaroidDoodles />
+
+					{/* Mobile < 400px: horizontal carousel */}
+					<div className="scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 min-[400px]:hidden">
+						{POLAROIDS.map((p) => (
+							<div key={p.id} className="w-[75vw] shrink-0 snap-center">
+								<PolaroidFrame
+									tiltDegree={p.tiltDegree}
+									caption={p.caption}
+									captionColor={p.captionColor}
+									captionRotate={p.captionRotate}
+									washiTape
+									washiColor={p.washiColor}
+									washiPosition={p.washiPosition}
+									vintage={p.vintage}
+									className={cn(
+										"motion-safe:transition-shadow motion-safe:duration-300",
+										GLOW_CLASSES[p.glowColor],
+									)}
+								>
+									<PlaceholderImage className="h-full w-full" label={p.label} />
+								</PolaroidFrame>
+							</div>
+						))}
+
+						{/* Scroll progress bar */}
+						<div
+							className="bg-secondary/20 pointer-events-none absolute right-4 bottom-0 left-4 h-0.5 rounded-full"
+							aria-hidden="true"
+						>
+							<div className="carousel-progress bg-secondary/60 h-full w-1/4 rounded-full" />
+						</div>
+					</div>
+
+					{/* 400px+: grid layout with Stagger */}
 					<Stagger
 						stagger={MOTION_CONFIG.stagger.slow}
 						y={MOTION_CONFIG.section.grid.y}
 						inView
 						once
-						className="mx-auto grid max-w-5xl grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-2"
+						className="mx-auto hidden max-w-5xl grid-cols-2 gap-4 min-[400px]:grid sm:gap-6 lg:grid-cols-4 lg:gap-2"
 					>
 						{POLAROIDS.map((p) => (
 							<PolaroidFrame
@@ -124,11 +176,12 @@ export function PolaroidGallery() {
 								washiPosition={p.washiPosition}
 								vintage={p.vintage}
 								className={cn(
-									p.className,
 									p.scatterClass,
+									"polaroid-scatter",
 									"motion-safe:transition-shadow motion-safe:duration-300",
 									GLOW_CLASSES[p.glowColor],
 								)}
+								style={p.scatterVars}
 							>
 								<PlaceholderImage className="h-full w-full" label={p.label} />
 							</PolaroidFrame>

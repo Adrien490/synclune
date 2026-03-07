@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { buildRevenueMap, fillMissingDates } from "../revenue-chart-builder.service";
+import {
+	buildRevenueMap,
+	fillMissingDates,
+	formatChartData,
+} from "../revenue-chart-builder.service";
 
 // ---------------------------------------------------------------------------
 // buildRevenueMap
@@ -140,5 +144,41 @@ describe("fillMissingDates", () => {
 			{ date: "2026-01-02", revenue: 0 },
 			{ date: "2026-01-03", revenue: 25000 },
 		]);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// formatChartData
+// ---------------------------------------------------------------------------
+
+describe("formatChartData", () => {
+	it("should format ISO dates to French day+month labels", () => {
+		const data = [
+			{ date: "2026-01-15", revenue: 1000 },
+			{ date: "2026-02-03", revenue: 2000 },
+		];
+
+		const result = formatChartData(data);
+
+		expect(result[0]!.date).toBe("15 janv.");
+		expect(result[1]!.date).toBe("03 févr.");
+	});
+
+	it("should preserve revenue values", () => {
+		const data = [
+			{ date: "2026-01-01", revenue: 5000 },
+			{ date: "2026-01-02", revenue: 0 },
+		];
+
+		const result = formatChartData(data);
+
+		expect(result[0]!.revenue).toBe(5000);
+		expect(result[1]!.revenue).toBe(0);
+	});
+
+	it("should return empty array for empty input", () => {
+		const result = formatChartData([]);
+
+		expect(result).toEqual([]);
 	});
 });

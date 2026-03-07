@@ -41,6 +41,19 @@ export function getAvailableTransitions(
 }
 
 /**
+ * Checks if the transition represents the first response to a pending request
+ */
+export function isFirstResponse(
+	currentStatus: CustomizationRequestStatus,
+	targetStatus: CustomizationRequestStatus,
+): boolean {
+	return (
+		currentStatus === CustomizationRequestStatus.PENDING &&
+		targetStatus !== CustomizationRequestStatus.PENDING
+	);
+}
+
+/**
  * Checks if a status is a final state (no further transitions possible)
  */
 export function isFinalStatus(status: CustomizationRequestStatus): boolean {

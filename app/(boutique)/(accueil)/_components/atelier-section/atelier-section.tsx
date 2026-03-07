@@ -1,4 +1,4 @@
-import { Fade, HandDrawnUnderline, Stagger } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline, SplitText, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SparklesDivider } from "@/shared/components/section-divider";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -6,12 +6,12 @@ import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { petitFormalScript } from "@/shared/styles/fonts";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
 import { PolaroidGallery } from "./polaroid-gallery";
 import { processSteps } from "./process-steps";
+import { SignatureReveal } from "./signature-reveal";
 
 // ─── HowTo JSON-LD ──────────────────────────────────────────────────────────
 
@@ -108,9 +108,9 @@ export async function AtelierSection() {
 					inView
 					once
 				>
-					<div className="mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
+					<div className="confession-glow mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
 						<p className="text-foreground text-2xl font-light tracking-tight sm:text-3xl md:text-4xl">
-							Je vais vous faire une confidence.
+							<SplitText stagger={0.08}>Je vais vous faire une confidence.</SplitText>
 						</p>
 
 						<Stagger
@@ -144,12 +144,8 @@ export async function AtelierSection() {
 							</p>
 						</Stagger>
 
-						{/* Signature */}
-						<p
-							className={`${petitFormalScript.className} text-foreground text-shadow-glow pt-4 text-center text-base italic md:text-lg`}
-						>
-							— Léane
-						</p>
+						{/* Signature with ink-flow reveal */}
+						<SignatureReveal />
 						<HandDrawnUnderline color="var(--secondary)" delay={0.2} className="mx-auto mt-2" />
 					</div>
 				</Fade>

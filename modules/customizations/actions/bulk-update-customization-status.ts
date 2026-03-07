@@ -3,7 +3,6 @@
 import { updateTag } from "next/cache";
 
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -19,7 +18,7 @@ import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
 import { sendCustomizationStatusEmail } from "@/modules/emails/services/customization-emails";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
-import { canTransitionTo } from "../services/customization-status.service";
+import { canTransitionTo, isFirstResponse } from "../services/customization-status.service";
 import { bulkUpdateStatusSchema } from "../schemas/bulk-update-status.schema";
 import {
 	CUSTOMIZATION_ERROR_MESSAGES,
@@ -87,11 +86,7 @@ export async function bulkUpdateCustomizationStatus(
 
 		// 5. Separate requests that need respondedAt update
 		const needsRespondedAt = validRequests
-			.filter(
-				(r) =>
-					r.status === CustomizationRequestStatus.PENDING &&
-					status !== CustomizationRequestStatus.PENDING,
-			)
+			.filter((r) => isFirstResponse(r.status, status))
 			.map((r) => r.id);
 
 		// 6. Update all requests atomically

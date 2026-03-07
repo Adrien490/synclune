@@ -1,5 +1,6 @@
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { cacheDefault } from "@/shared/lib/cache";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { buildRevenueMap, fillMissingDates } from "../services/revenue-chart-builder.service";
 
 import type { GetRevenueChartReturn, RevenueRow } from "../types/dashboard.types";
@@ -18,7 +19,7 @@ export type { RevenueDataPoint, GetRevenueChartReturn } from "../types/dashboard
 export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartReturn> {
 	"use cache: remote";
 
-	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
+	cacheDefault(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 
 	const now = new Date();
 	const thirtyDaysAgo = new Date(

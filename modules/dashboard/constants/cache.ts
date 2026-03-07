@@ -2,8 +2,6 @@
  * Cache configuration for Dashboard module
  */
 
-import { cacheDefault } from "@/shared/lib/cache";
-
 // ============================================
 // CACHE TAGS
 // ============================================
@@ -18,18 +16,3 @@ export const DASHBOARD_CACHE_TAGS = {
 	REVENUE_CHART: "dashboard-revenue-chart",
 	RECENT_ORDERS: "dashboard-recent-orders",
 } as const;
-
-// ============================================
-// CACHE CONFIGURATION HELPER
-// ============================================
-
-/**
- * Configure cache for dashboard data.
- * Uses the "dashboard" profile (1min stale, 30s revalidate, 5min expire).
- * @param tag - Cache tag for targeted invalidation (use DASHBOARD_CACHE_TAGS)
- */
-export function cacheDashboard(
-	tag: (typeof DASHBOARD_CACHE_TAGS)[keyof typeof DASHBOARD_CACHE_TAGS],
-) {
-	cacheDefault(tag);
-}

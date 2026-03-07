@@ -5,7 +5,7 @@ import {
 	DEFAULT_PER_PAGE,
 } from "@/shared/lib/pagination";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 
 import { cacheCustomizationList } from "../constants/cache";
 import { SORT_OPTIONS } from "../constants/sort.constants";
@@ -27,8 +27,8 @@ const MAX_RESULTS_PER_PAGE = 200;
 export async function getCustomizationRequests(
 	params: GetCustomizationRequestsParams = {},
 ): Promise<GetCustomizationRequestsResult> {
-	const admin = await isAdmin();
-	if (!admin)
+	const adminCheck = await requireAdmin();
+	if ("error" in adminCheck)
 		return {
 			items: [],
 			pagination: {

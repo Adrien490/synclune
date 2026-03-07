@@ -1,7 +1,6 @@
+import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles, type LucideIcon } from "lucide-react";
-import { CreativeProcessGlitter } from "./creative-process-glitter";
-import { MobileStepCircle } from "./mobile-step-circle";
 import { processSteps } from "./process-steps";
 
 const STEP_ICONS: LucideIcon[] = [Lightbulb, Pencil, Hammer, CheckCircle];
@@ -23,15 +22,24 @@ export function CreativeProcessTimeline() {
 			<div className="relative hidden lg:block">
 				{/* Decorative horizontal line connecting the circles */}
 				<div
-					className="bg-secondary/30 absolute top-6 right-[calc(12.5%-12px)] left-[calc(12.5%-12px)] z-0 h-px"
+					className="timeline-line-desktop bg-secondary/30 absolute top-6 right-[12.5%] left-[12.5%] z-0 h-px"
 					aria-hidden="true"
 				/>
-				<ol className="relative z-10 grid list-none grid-cols-4 gap-6">
+				<ol
+					className="relative z-10 grid list-none grid-cols-4 gap-6"
+					aria-label="Processus de création en 4 étapes"
+				>
 					{processSteps.map((step, index) => (
 						<li
 							key={step.id}
 							id={`creative-step-${step.id}`}
-							className="group motion-safe:hover:bg-muted/30 active:bg-muted/40 relative rounded-xl p-3 text-center active:scale-[0.99] motion-safe:transition-[background-color,transform] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5"
+							className={cn(
+								"group timeline-step-scroll relative rounded-xl p-3 text-center",
+								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,transform] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5",
+								"focus-visible:ring-secondary/50 focus-visible:ring-2 focus-visible:outline-none",
+							)}
+							tabIndex={0}
+							aria-describedby={`creative-step-${step.id}-desc`}
 						>
 							<span className="sr-only">Étape {index + 1} :</span>
 
@@ -48,7 +56,7 @@ export function CreativeProcessTimeline() {
 								)}
 							>
 								<StepIcon index={index} />
-								{isLast(index) && <CreativeProcessGlitter />}
+								{isLast(index) && <GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />}
 							</div>
 
 							{/* Title + description */}
@@ -61,7 +69,10 @@ export function CreativeProcessTimeline() {
 									/>
 								)}
 							</h3>
-							<p className="text-muted-foreground mt-2 text-sm/6 tracking-normal antialiased">
+							<p
+								id={`creative-step-${step.id}-desc`}
+								className="text-muted-foreground mt-2 text-sm/6 tracking-normal antialiased"
+							>
 								{step.description}
 							</p>
 						</li>
@@ -71,18 +82,27 @@ export function CreativeProcessTimeline() {
 
 			{/* Mobile: vertical timeline */}
 			<div className="relative lg:hidden">
-				{/* Static vertical line */}
+				{/* Vertical line - scroll-driven on supported browsers */}
 				<div
-					className="bg-secondary/50 absolute top-8 bottom-8 left-6 w-px lg:hidden"
+					className="timeline-line-mobile bg-secondary/50 absolute top-8 bottom-8 left-6 w-px lg:hidden"
 					aria-hidden="true"
 				/>
 
-				<ol className="list-none space-y-8 sm:space-y-12">
+				<ol
+					className="list-none space-y-8 sm:space-y-12"
+					aria-label="Processus de création en 4 étapes"
+				>
 					{processSteps.map((step, index) => (
 						<li
 							key={step.id}
 							id={`creative-step-${step.id}`}
-							className="group motion-safe:hover:bg-muted/30 active:bg-muted/40 relative -m-2 flex items-start gap-4 rounded-xl p-2 active:scale-[0.99] motion-safe:transition-[background-color,transform] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5"
+							className={cn(
+								"group relative -m-2 flex items-start gap-4 rounded-xl p-2",
+								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,transform] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5",
+								"focus-visible:ring-secondary/50 focus-visible:ring-2 focus-visible:outline-none",
+							)}
+							tabIndex={0}
+							aria-describedby={`creative-step-${step.id}-desc`}
 						>
 							<span className="sr-only">Étape {index + 1} :</span>
 
@@ -101,13 +121,23 @@ export function CreativeProcessTimeline() {
 								<StepIcon index={index} />
 								{isLast(index) && (
 									<div className="hidden sm:block">
-										<CreativeProcessGlitter />
+										<GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />
 									</div>
 								)}
 							</div>
 
-							{/* Mobile: animated number circles */}
-							<MobileStepCircle index={index} color={step.color} intensity={step.intensity} />
+							{/* Mobile: number circles - CSS scroll-driven animation */}
+							<div
+								aria-hidden="true"
+								className={cn(
+									"mobile-step-scroll flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold sm:hidden",
+									step.color,
+									step.intensity.ring,
+									step.intensity.shadow,
+								)}
+							>
+								{index + 1}
+							</div>
 
 							<div className="flex-1 pb-8">
 								<h3 className="text-foreground mb-2 text-xl/7 font-semibold tracking-tight antialiased">
@@ -122,7 +152,10 @@ export function CreativeProcessTimeline() {
 										/>
 									)}
 								</h3>
-								<p className="text-muted-foreground text-base/7 tracking-normal antialiased">
+								<p
+									id={`creative-step-${step.id}-desc`}
+									className="text-muted-foreground text-base/7 tracking-normal antialiased"
+								>
 									{step.description}
 								</p>
 							</div>

@@ -15,6 +15,7 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { updateCustomizationStatus } from "@/modules/customizations/actions/update-customization-status";
 import { CUSTOMIZATION_STATUS_LABELS } from "@/modules/customizations/constants/status.constants";
+import { getAvailableTransitions } from "@/modules/customizations/services/customization-status.service";
 
 interface UpdateStatusFormProps {
 	requestId: string;
@@ -43,9 +44,10 @@ export function UpdateStatusForm({ requestId, currentStatus }: UpdateStatusFormP
 		action(formData);
 	};
 
-	const statusOptions = Object.entries(CUSTOMIZATION_STATUS_LABELS).map(([value, label]) => ({
-		value: value as CustomizationRequestStatus,
-		label,
+	const availableTransitions = getAvailableTransitions(currentStatus);
+	const statusOptions = availableTransitions.map((status) => ({
+		value: status,
+		label: CUSTOMIZATION_STATUS_LABELS[status],
 	}));
 
 	return (

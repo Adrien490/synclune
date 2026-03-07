@@ -98,6 +98,8 @@ export interface ParticleSetProps {
 	scrollOpacity?: MotionValue<number>;
 	/** Scroll progress (0-1) for depth-based scroll parallax */
 	scrollYProgress?: MotionValue<number>;
+	/** Whether scroll parallax is active (controls computation, not just MotionValue presence) */
+	scrollParallax?: boolean;
 	/** Enable magnetic repulsion from cursor */
 	interactive?: boolean;
 	/** Normalized cursor X position (0-1) for repulsion */

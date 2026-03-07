@@ -93,7 +93,7 @@ export function CustomizationRowActions({ request }: CustomizationRowActionsProp
 
 	const handleReplyEmail = () => {
 		window.open(
-			`mailto:${request.email}?subject=RE: Demande de personnalisation - Synclune`,
+			`mailto:${encodeURIComponent(request.email)}?subject=${encodeURIComponent("RE: Demande de personnalisation - Synclune")}`,
 			"_blank",
 		);
 	};

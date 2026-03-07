@@ -1,4 +1,5 @@
-import { addDays } from "date-fns";
+import { addDays, format } from "date-fns";
+import { fr } from "date-fns/locale";
 import type { RevenueDataPoint } from "../types/dashboard.types";
 
 // ============================================================================
@@ -32,6 +33,19 @@ export function fillMissingDates(
 	}
 
 	return data;
+}
+
+/**
+ * Formate les données de revenus avec des labels de dates lisibles
+ * Pre-calcule les labels côté serveur pour éviter 30x new Date() côté client
+ */
+export function formatChartData(
+	data: RevenueDataPoint[],
+): Array<{ date: string; revenue: number }> {
+	return data.map((item) => ({
+		date: format(new Date(item.date), "dd MMM", { locale: fr }),
+		revenue: item.revenue,
+	}));
 }
 
 /**

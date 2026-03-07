@@ -1,5 +1,5 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 
 import { cacheCustomizationDetail } from "../constants/cache";
 import type { CustomizationRequestDetail } from "../types/customization.types";
@@ -15,8 +15,8 @@ import type { CustomizationRequestDetail } from "../types/customization.types";
 export async function getCustomizationRequest(
 	id: string,
 ): Promise<CustomizationRequestDetail | null> {
-	const admin = await isAdmin();
-	if (!admin) return null;
+	const adminCheck = await requireAdmin();
+	if ("error" in adminCheck) return null;
 
 	return fetchCustomizationRequest(id);
 }

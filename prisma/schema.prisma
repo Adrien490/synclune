@@ -1205,6 +1205,9 @@ model CustomizationRequest {
   // === IMAGES D'INSPIRATION ===
   inspirationMedias CustomizationMedia[]
 
+  // === CONSENTEMENT RGPD ===
+  consentGivenAt DateTime? // Timestamp du consentement RGPD
+
   // === STATUT ET SUIVI ===
   status      CustomizationRequestStatus @default(PENDING)
   adminNotes  String?                    @db.Text // Notes internes admin
