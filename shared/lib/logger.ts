@@ -2,12 +2,10 @@ import * as Sentry from "@sentry/nextjs";
 import pino from "pino";
 
 export interface LogContext {
-	requestId?: string;
 	userId?: string;
 	action?: string;
 	route?: string;
 	orderId?: string;
-	correlationId?: string;
 	cronJob?: string;
 	service?: string;
 	[key: string]: unknown;

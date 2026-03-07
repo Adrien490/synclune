@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { stripeCircuitBreaker, CircuitBreakerError } from "./circuit-breaker";
+import { logger } from "./logger";
 
 /**
  * Instance Stripe centralisée pour toute l'application
@@ -46,7 +47,9 @@ export async function withStripeCircuitBreaker<T>(fn: () => Promise<T>): Promise
 export function getStripeClient(): Stripe | null {
 	const secretKey = process.env.STRIPE_SECRET_KEY;
 	if (!secretKey) {
-		console.error("[Stripe] STRIPE_SECRET_KEY environment variable is not set");
+		logger.error("STRIPE_SECRET_KEY environment variable is not set", undefined, {
+			service: "stripe",
+		});
 		return null;
 	}
 	return new Stripe(secretKey, {

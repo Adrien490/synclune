@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
+import { logger } from "@/shared/lib/logger";
 import { headers } from "next/headers";
 
 /**
@@ -25,22 +26,17 @@ export async function POST(request: Request) {
 
 		const body = (await request.json()) as Record<string, unknown>;
 
-		if (process.env.NODE_ENV === "development") {
-			console.warn("[CSP Violation]", JSON.stringify(body, null, 2));
-		} else {
-			const report = (body["csp-report"] ?? body) as Record<string, unknown>;
-			const blockedUri = report["blocked-uri"] as string | undefined;
-			const violatedDirective = report["violated-directive"] as string | undefined;
-			const documentUri = report["document-uri"] as string | undefined;
-			console.warn(
-				"[CSP Violation]",
-				JSON.stringify({
-					blockedUri,
-					violatedDirective,
-					documentUri,
-				}),
-			);
-		}
+		const report = (body["csp-report"] ?? body) as Record<string, unknown>;
+		const blockedUri = report["blocked-uri"] as string | undefined;
+		const violatedDirective = report["violated-directive"] as string | undefined;
+		const documentUri = report["document-uri"] as string | undefined;
+
+		logger.warn("CSP violation detected", {
+			service: "csp",
+			blockedUri,
+			violatedDirective,
+			documentUri,
+		});
 
 		return NextResponse.json({ status: "ok" }, { status: 204 });
 	} catch {
