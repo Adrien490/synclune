@@ -61,32 +61,30 @@ export async function bulkMarkAsDelivered(
 
 		const validatedData = validated.data;
 
-		// Filtrer les commandes éligibles (SHIPPED uniquement)
-		const eligibleOrders = await prisma.order.findMany({
-			where: {
-				id: { in: validatedData.ids },
-				status: OrderStatus.SHIPPED,
-				...notDeleted,
-			},
-			select: {
-				id: true,
-				orderNumber: true,
-				userId: true,
-				customerEmail: true,
-				customerName: true,
-				shippingFirstName: true,
-			},
-		});
-
-		if (eligibleOrders.length === 0) {
-			return error("Aucune commande eligible (doivent etre au statut SHIPPED).");
-		}
-
-		const eligibleIds = eligibleOrders.map((o) => o.id);
 		const deliveryDate = new Date();
 
-		// Mettre à jour toutes les commandes + audit trail atomique
-		await prisma.$transaction(async (tx) => {
+		// Filtrer les commandes éligibles + mettre à jour + audit trail atomique
+		const eligibleOrders = await prisma.$transaction(async (tx) => {
+			const eligible = await tx.order.findMany({
+				where: {
+					id: { in: validatedData.ids },
+					status: OrderStatus.SHIPPED,
+					...notDeleted,
+				},
+				select: {
+					id: true,
+					orderNumber: true,
+					userId: true,
+					customerEmail: true,
+					customerName: true,
+					shippingFirstName: true,
+				},
+			});
+
+			if (eligible.length === 0) return [];
+
+			const eligibleIds = eligible.map((o) => o.id);
+
 			await tx.order.updateMany({
 				where: { id: { in: eligibleIds } },
 				data: {
@@ -97,7 +95,7 @@ export async function bulkMarkAsDelivered(
 			});
 
 			await Promise.all(
-				eligibleOrders.map((order) =>
+				eligible.map((order) =>
 					createOrderAuditTx(tx, {
 						orderId: order.id,
 						action: "DELIVERED",
@@ -115,7 +113,15 @@ export async function bulkMarkAsDelivered(
 					}),
 				),
 			);
+
+			return eligible;
 		});
+
+		if (eligibleOrders.length === 0) {
+			return error("Aucune commande eligible (doivent etre au statut SHIPPED).");
+		}
+
+		const eligibleIds = eligibleOrders.map((o) => o.id);
 
 		// Send delivery confirmation emails if requested
 		if (validatedData.sendEmail) {

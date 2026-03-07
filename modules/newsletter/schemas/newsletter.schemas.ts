@@ -42,6 +42,7 @@ const COMMON_TYPO_CORRECTIONS: Record<string, string> = {
 export const subscribeToNewsletterSchema = z.object({
 	email: z
 		.email("Vérifiez le format de votre email (ex: nom@domaine.com)")
+		.max(254, "L'adresse email est trop longue")
 		.transform((email) => {
 			// Auto-correction des typos courantes
 			const [localPart, domain] = email.split("@");

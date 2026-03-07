@@ -14,7 +14,7 @@ import {
 import type { OrderFilters, GetOrdersParams } from "../../types/order.types";
 
 function filters(overrides: Partial<OrderFilters> = {}): OrderFilters {
-	return { showDeleted: undefined, ...overrides } as OrderFilters;
+	return { showDeleted: "active", ...overrides } as OrderFilters;
 }
 
 function params(overrides: Partial<GetOrdersParams> = {}): GetOrdersParams {
@@ -196,9 +196,23 @@ describe("buildOrderFilterConditions", () => {
 // ============================================================================
 
 describe("buildOrderWhereClause", () => {
-	it("should always set deletedAt to null", () => {
+	it("should set deletedAt to null by default (active only)", () => {
 		const result = buildOrderWhereClause(params({}));
 		expect(result.deletedAt).toBeNull();
+	});
+
+	it("should show only deleted orders when showDeleted is 'deleted'", () => {
+		const result = buildOrderWhereClause(
+			params({ filters: { showDeleted: "deleted" } as OrderFilters }),
+		);
+		expect(result.deletedAt).toEqual({ not: null });
+	});
+
+	it("should not filter by deletedAt when showDeleted is 'all'", () => {
+		const result = buildOrderWhereClause(
+			params({ filters: { showDeleted: "all" } as OrderFilters }),
+		);
+		expect(result.deletedAt).toBeUndefined();
 	});
 
 	it("should include default filter conditions (exclude PENDING)", () => {

@@ -10,7 +10,6 @@ import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { z } from "zod";
-import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 import { subscribeToNewsletterInternal } from "../services/subscribe-to-newsletter-internal";
 
@@ -63,9 +62,8 @@ export async function toggleNewsletter(
 
 			if (!result.success) return error(result.message);
 
-			// Invalidate user-specific cache
-			updateTag(NEWSLETTER_CACHE_TAGS.USER_STATUS(user.id));
-			getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
+			// Invalidate caches
+			getNewsletterInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
 			return success(result.message);
 		}
@@ -88,8 +86,7 @@ export async function toggleNewsletter(
 				},
 			});
 
-			updateTag(NEWSLETTER_CACHE_TAGS.USER_STATUS(user.id));
-			getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
+			getNewsletterInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
 			return success("Vous avez été désinscrit(e) de la newsletter.");
 		}

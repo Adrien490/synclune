@@ -35,12 +35,15 @@ import { unsubscribeByToken } from "../unsubscribe-by-token";
 // HELPERS
 // ============================================================================
 
+const VALID_TOKEN = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
+const VALID_TOKEN_2 = "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e";
+
 function makeSubscriber(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "sub-1",
 		userId: "user-1",
 		status: NewsletterStatus.CONFIRMED,
-		unsubscribeToken: "valid-token",
+		unsubscribeToken: VALID_TOKEN,
 		deletedAt: null,
 		...overrides,
 	};
@@ -62,20 +65,27 @@ describe("unsubscribeByToken", () => {
 		]);
 	});
 
-	it("returns false when no subscriber is found for the token", async () => {
+	it("returns false for an invalid UUID token without querying the database", async () => {
+		const result = await unsubscribeByToken("not-a-uuid");
+
+		expect(result).toBe(false);
+		expect(mockPrisma.newsletterSubscriber.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("returns false when no subscriber is found for a valid token", async () => {
 		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(null);
 
-		const result = await unsubscribeByToken("unknown-token");
+		const result = await unsubscribeByToken(VALID_TOKEN);
 
 		expect(result).toBe(false);
 	});
 
 	it("queries by token with notDeleted filter", async () => {
-		await unsubscribeByToken("some-token");
+		await unsubscribeByToken(VALID_TOKEN_2);
 
 		expect(mockPrisma.newsletterSubscriber.findFirst).toHaveBeenCalledWith({
 			where: {
-				unsubscribeToken: "some-token",
+				unsubscribeToken: VALID_TOKEN_2,
 				deletedAt: null,
 			},
 		});
@@ -86,7 +96,7 @@ describe("unsubscribeByToken", () => {
 			makeSubscriber({ status: NewsletterStatus.UNSUBSCRIBED }),
 		);
 
-		const result = await unsubscribeByToken("valid-token");
+		const result = await unsubscribeByToken(VALID_TOKEN);
 
 		expect(result).toBe(true);
 	});
@@ -96,7 +106,7 @@ describe("unsubscribeByToken", () => {
 			makeSubscriber({ status: NewsletterStatus.UNSUBSCRIBED }),
 		);
 
-		await unsubscribeByToken("valid-token");
+		await unsubscribeByToken(VALID_TOKEN);
 
 		expect(mockPrisma.newsletterSubscriber.update).not.toHaveBeenCalled();
 	});
@@ -106,7 +116,7 @@ describe("unsubscribeByToken", () => {
 			makeSubscriber({ status: NewsletterStatus.UNSUBSCRIBED }),
 		);
 
-		await unsubscribeByToken("valid-token");
+		await unsubscribeByToken(VALID_TOKEN);
 
 		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
@@ -116,7 +126,7 @@ describe("unsubscribeByToken", () => {
 			makeSubscriber({ status: NewsletterStatus.CONFIRMED }),
 		);
 
-		const result = await unsubscribeByToken("valid-token");
+		const result = await unsubscribeByToken(VALID_TOKEN);
 
 		expect(result).toBe(true);
 	});
@@ -124,7 +134,7 @@ describe("unsubscribeByToken", () => {
 	it("updates subscriber status to UNSUBSCRIBED", async () => {
 		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber());
 
-		await unsubscribeByToken("valid-token");
+		await unsubscribeByToken(VALID_TOKEN);
 
 		expect(mockPrisma.newsletterSubscriber.update).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -142,7 +152,7 @@ describe("unsubscribeByToken", () => {
 
 		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber());
 
-		await unsubscribeByToken("valid-token");
+		await unsubscribeByToken(VALID_TOKEN);
 
 		const call = mockPrisma.newsletterSubscriber.update.mock.calls[0]![0];
 		expect(call.data.unsubscribedAt).toBeInstanceOf(Date);
@@ -158,7 +168,7 @@ describe("unsubscribeByToken", () => {
 			makeSubscriber({ userId: "user-42" }),
 		);
 
-		await unsubscribeByToken("valid-token");
+		await unsubscribeByToken(VALID_TOKEN);
 
 		expect(mockGetNewsletterInvalidationTags).toHaveBeenCalledWith("user-42");
 	});
@@ -166,7 +176,7 @@ describe("unsubscribeByToken", () => {
 	it("calls getNewsletterInvalidationTags with undefined when userId is null", async () => {
 		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber({ userId: null }));
 
-		await unsubscribeByToken("valid-token");
+		await unsubscribeByToken(VALID_TOKEN);
 
 		expect(mockGetNewsletterInvalidationTags).toHaveBeenCalledWith(undefined);
 	});
@@ -179,7 +189,7 @@ describe("unsubscribeByToken", () => {
 			"newsletter-user-user-1",
 		]);
 
-		await unsubscribeByToken("valid-token");
+		await unsubscribeByToken(VALID_TOKEN);
 
 		expect(mockUpdateTag).toHaveBeenCalledTimes(3);
 		expect(mockUpdateTag).toHaveBeenCalledWith("newsletter-subscribers-list");
@@ -190,13 +200,13 @@ describe("unsubscribeByToken", () => {
 	it("propagates errors thrown by prisma.newsletterSubscriber.findFirst", async () => {
 		mockPrisma.newsletterSubscriber.findFirst.mockRejectedValue(new Error("DB read error"));
 
-		await expect(unsubscribeByToken("some-token")).rejects.toThrow("DB read error");
+		await expect(unsubscribeByToken(VALID_TOKEN)).rejects.toThrow("DB read error");
 	});
 
 	it("propagates errors thrown by prisma.newsletterSubscriber.update", async () => {
 		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber());
 		mockPrisma.newsletterSubscriber.update.mockRejectedValue(new Error("DB update error"));
 
-		await expect(unsubscribeByToken("valid-token")).rejects.toThrow("DB update error");
+		await expect(unsubscribeByToken(VALID_TOKEN)).rejects.toThrow("DB update error");
 	});
 });

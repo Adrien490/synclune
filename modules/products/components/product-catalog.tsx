@@ -115,6 +115,7 @@ export function ProductCatalog({
 			/>
 
 			<PageHeader
+				className="hidden sm:block"
 				title={pageTitle}
 				description={searchTerm ? undefined : pageDescription}
 				breadcrumbs={breadcrumbs}
@@ -127,7 +128,7 @@ export function ProductCatalog({
 
 			{/* Section principale avec catalogue */}
 			<section
-				className="bg-background relative z-10 pt-4 pb-12 lg:pt-6 lg:pb-16"
+				className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16"
 				aria-label="Catalogue des créations"
 			>
 				<div

@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { z } from "zod";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -6,6 +7,8 @@ import type { OrderRefundItem } from "../types/order-refunds.types";
 
 // Re-export du type pour compatibilité
 export type { OrderRefundItem } from "../types/order-refunds.types";
+
+const orderIdSchema = z.cuid2();
 
 /**
  * Récupère les remboursements d'une commande (ADMIN)
@@ -22,8 +25,14 @@ export async function getOrderRefunds(
 			return { error: adminCheck.error.message };
 		}
 
-		// 2. Récupérer les remboursements via fonction cachée
-		const refunds = await fetchOrderRefunds(orderId);
+		// 2. Validate orderId
+		const parsed = orderIdSchema.safeParse(orderId);
+		if (!parsed.success) {
+			return { error: "ID commande invalide" };
+		}
+
+		// 3. Récupérer les remboursements via fonction cachée
+		const refunds = await fetchOrderRefunds(parsed.data);
 		return { refunds };
 	} catch (error) {
 		console.error("[GET_ORDER_REFUNDS] Erreur:", error);

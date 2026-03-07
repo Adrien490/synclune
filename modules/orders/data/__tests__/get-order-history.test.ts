@@ -15,6 +15,7 @@ const { mockPrisma, mockRequireAdmin, mockCacheLife, mockCacheTag } = vi.hoisted
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -125,12 +126,15 @@ describe("getOrderHistory", () => {
 		);
 	});
 
-	it("filters by orderId in where clause", async () => {
+	it("filters by orderId in where clause and excludes soft-deleted orders", async () => {
 		await getOrderHistory(VALID_ORDER_ID);
 
 		expect(mockPrisma.orderHistory.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { orderId: VALID_ORDER_ID },
+				where: {
+					orderId: VALID_ORDER_ID,
+					order: { deletedAt: null },
+				},
 			}),
 		);
 	});

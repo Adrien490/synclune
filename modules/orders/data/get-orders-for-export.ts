@@ -1,4 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/client";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 
 const EXPORT_MAX_ROWS = 50_000;
@@ -9,6 +10,9 @@ const EXPORT_MAX_ROWS = 50_000;
  * Limited to 50,000 rows to prevent Vercel timeout on large datasets.
  */
 export async function getOrdersForExport(where: Prisma.OrderWhereInput) {
+	const admin = await requireAdmin();
+	if ("error" in admin) return [];
+
 	return prisma.order.findMany({
 		where,
 		orderBy: { paidAt: "asc" },

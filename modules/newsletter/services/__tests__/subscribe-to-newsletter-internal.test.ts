@@ -178,7 +178,9 @@ describe("subscribeToNewsletterInternal", () => {
 			}),
 		);
 		expect(result.success).toBe(true);
-		expect(result.message).toContain("Bienvenue à nouveau");
+		expect(result.message).toBe(
+			"Si cette adresse n'est pas encore inscrite, un email de confirmation vous a été envoyé.",
+		);
 	});
 
 	it("should create a new subscriber with all RGPD fields", async () => {

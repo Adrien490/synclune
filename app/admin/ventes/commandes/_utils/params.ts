@@ -11,7 +11,7 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 	let totalMax: number | undefined = undefined;
 	let createdAfter: Date | undefined = undefined;
 	let createdBefore: Date | undefined = undefined;
-	let showDeleted: boolean | undefined = undefined;
+	let showDeleted: "all" | "active" | "deleted" | undefined = undefined;
 
 	Object.entries(params).forEach(([key, value]) => {
 		if (key.startsWith("filter_")) {
@@ -39,7 +39,9 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 						createdBefore = new Date(filterValue);
 						break;
 					case "showDeleted":
-						showDeleted = filterValue === "true";
+						if (filterValue === "all" || filterValue === "active" || filterValue === "deleted") {
+							showDeleted = filterValue;
+						}
 						break;
 				}
 			}
@@ -53,6 +55,6 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 		totalMax,
 		createdAfter,
 		createdBefore,
-		showDeleted,
+		showDeleted: showDeleted ?? "active",
 	};
 };

@@ -6,27 +6,9 @@ import { randomBytes } from "crypto";
  * Creates a unique -10% promo code for a new newsletter subscriber.
  * Code format: BIENVENUE-XXXXXX (6 random alphanumeric chars).
  * Valid for 30 days, single use per user.
- *
- * Guards:
- * - Skips creation if an active, unexpired BIENVENUE-* code already exists (abuse prevention)
- * - Retries once on unique constraint collision (P2002)
+ * Retries once on unique constraint collision (P2002).
  */
-export async function createNewsletterPromoCode(): Promise<string | undefined> {
-	// Guard: skip if an active, unexpired BIENVENUE-* code already exists
-	const existingActiveCode = await prisma.discount.findFirst({
-		where: {
-			code: { startsWith: "BIENVENUE-" },
-			isActive: true,
-			usageCount: 0,
-			endsAt: { gt: new Date() },
-		},
-		select: { code: true },
-	});
-
-	if (existingActiveCode) {
-		return existingActiveCode.code;
-	}
-
+export async function createNewsletterPromoCode(): Promise<string> {
 	return createCodeWithRetry();
 }
 

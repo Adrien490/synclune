@@ -3,12 +3,15 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /**
  * Core unsubscribe logic by token.
  * Shared between the RFC 8058 one-click API route and the server component flow.
  * Returns true if the subscriber was found and unsubscribed (or already unsubscribed).
  */
 export async function unsubscribeByToken(token: string): Promise<boolean> {
+	if (!UUID_V4_REGEX.test(token)) return false;
 	const subscriber = await prisma.newsletterSubscriber.findFirst({
 		where: {
 			unsubscribeToken: token,

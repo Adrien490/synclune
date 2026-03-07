@@ -44,15 +44,7 @@ export const orderFiltersSchema = z
 		totalMax: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		createdAfter: stringOrDateSchema,
 		createdBefore: stringOrDateSchema,
-		showDeleted: z
-			.union([z.boolean(), z.enum(["true", "false"])])
-			.optional()
-			.transform((val) => {
-				if (typeof val === "boolean") return val;
-				if (val === "true") return true;
-				if (val === "false") return false;
-				return undefined;
-			}),
+		showDeleted: z.enum(["all", "active", "deleted"]).optional().default("active"),
 	})
 	.refine((data) => {
 		if (data.totalMin && data.totalMax) {

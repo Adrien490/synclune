@@ -1,4 +1,4 @@
-import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
+import type { CustomizationRequestStatus } from "../types/customization.types";
 
 // ============================================================================
 // CUSTOMIZATION STATUS TRANSITION SERVICE
@@ -10,12 +10,8 @@ import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
  * Defines which statuses can transition to which other statuses.
  */
 const ALLOWED_TRANSITIONS: Record<CustomizationRequestStatus, CustomizationRequestStatus[]> = {
-	PENDING: [
-		CustomizationRequestStatus.IN_PROGRESS,
-		CustomizationRequestStatus.COMPLETED,
-		CustomizationRequestStatus.CANCELLED,
-	],
-	IN_PROGRESS: [CustomizationRequestStatus.COMPLETED, CustomizationRequestStatus.CANCELLED],
+	PENDING: ["IN_PROGRESS", "COMPLETED", "CANCELLED"],
+	IN_PROGRESS: ["COMPLETED", "CANCELLED"],
 	COMPLETED: [],
 	CANCELLED: [],
 };
@@ -47,10 +43,7 @@ export function isFirstResponse(
 	currentStatus: CustomizationRequestStatus,
 	targetStatus: CustomizationRequestStatus,
 ): boolean {
-	return (
-		currentStatus === CustomizationRequestStatus.PENDING &&
-		targetStatus !== CustomizationRequestStatus.PENDING
-	);
+	return currentStatus === "PENDING" && targetStatus !== "PENDING";
 }
 
 /**

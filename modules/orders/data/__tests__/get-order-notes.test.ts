@@ -41,6 +41,11 @@ import { getOrderNotes } from "../get-order-notes";
 // Factories
 // ============================================================================
 
+// Valid CUID2 strings for tests
+const VALID_ORDER_ID = "clzk2x8p40000abcd1234efgh";
+const VALID_ORDER_ID_2 = "clzk2x8p40000abcd1234ijkl";
+const VALID_ORDER_ID_3 = "clzk2x8p40000abcd1234mnop";
+
 function makeNote(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "note-1",
@@ -79,7 +84,7 @@ describe("getOrderNotes", () => {
 	it("returns error object when requireAdmin fails", async () => {
 		setupAdminFailure();
 
-		const result = await getOrderNotes("order-1");
+		const result = await getOrderNotes(VALID_ORDER_ID);
 
 		expect(result).toHaveProperty("error");
 		expect(mockPrisma.orderNote.findMany).not.toHaveBeenCalled();
@@ -93,18 +98,25 @@ describe("getOrderNotes", () => {
 			},
 		});
 
-		const result = await getOrderNotes("order-1");
+		const result = await getOrderNotes(VALID_ORDER_ID);
 
 		expect(result).toEqual({
 			error: "Accès non autorisé. Droits administrateur requis.",
 		});
 	});
 
+	it("returns error for invalid orderId (not CUID2)", async () => {
+		const result = await getOrderNotes("not-a-valid-cuid2");
+
+		expect(result).toEqual({ error: "ID commande invalide" });
+		expect(mockPrisma.orderNote.findMany).not.toHaveBeenCalled();
+	});
+
 	it("returns notes array for admin", async () => {
 		const notes = [makeNote(), makeNote({ id: "note-2", content: "Second note" })];
 		mockPrisma.orderNote.findMany.mockResolvedValue(notes);
 
-		const result = await getOrderNotes("order-1");
+		const result = await getOrderNotes(VALID_ORDER_ID);
 
 		expect(result).toEqual({ notes });
 	});
@@ -112,7 +124,7 @@ describe("getOrderNotes", () => {
 	it("returns empty notes array when no notes exist", async () => {
 		mockPrisma.orderNote.findMany.mockResolvedValue([]);
 
-		const result = await getOrderNotes("order-1");
+		const result = await getOrderNotes(VALID_ORDER_ID);
 
 		expect(result).toEqual({ notes: [] });
 	});
@@ -120,7 +132,7 @@ describe("getOrderNotes", () => {
 	it("returns generic error message on unexpected exception", async () => {
 		mockRequireAdmin.mockRejectedValue(new Error("Unexpected failure"));
 
-		const result = await getOrderNotes("order-1");
+		const result = await getOrderNotes(VALID_ORDER_ID);
 
 		expect(result).toEqual({ error: "Une erreur est survenue" });
 	});
@@ -128,41 +140,41 @@ describe("getOrderNotes", () => {
 	it("returns generic error when DB throws", async () => {
 		mockPrisma.orderNote.findMany.mockRejectedValue(new Error("DB error"));
 
-		const result = await getOrderNotes("order-1");
+		const result = await getOrderNotes(VALID_ORDER_ID);
 
 		expect(result).toEqual({ error: "Une erreur est survenue" });
 	});
 
 	it("calls cacheLife with dashboard profile", async () => {
-		await getOrderNotes("order-1");
+		await getOrderNotes(VALID_ORDER_ID);
 
 		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
 	});
 
 	it("calls cacheTag with NOTES tag for the given orderId", async () => {
-		await getOrderNotes("order-abc");
+		await getOrderNotes(VALID_ORDER_ID_2);
 
-		expect(mockCacheTag).toHaveBeenCalledWith("order-notes-order-abc");
+		expect(mockCacheTag).toHaveBeenCalledWith(`order-notes-${VALID_ORDER_ID_2}`);
 	});
 
 	it("uses a different cache tag per orderId", async () => {
-		await getOrderNotes("order-xyz");
+		await getOrderNotes(VALID_ORDER_ID_3);
 
-		expect(mockCacheTag).toHaveBeenCalledWith("order-notes-order-xyz");
+		expect(mockCacheTag).toHaveBeenCalledWith(`order-notes-${VALID_ORDER_ID_3}`);
 	});
 
 	it("filters by orderId in the where clause", async () => {
-		await getOrderNotes("order-123");
+		await getOrderNotes(VALID_ORDER_ID);
 
 		expect(mockPrisma.orderNote.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: expect.objectContaining({ orderId: "order-123" }),
+				where: expect.objectContaining({ orderId: VALID_ORDER_ID }),
 			}),
 		);
 	});
 
 	it("includes notDeleted filter (deletedAt: null) in where clause", async () => {
-		await getOrderNotes("order-1");
+		await getOrderNotes(VALID_ORDER_ID);
 
 		expect(mockPrisma.orderNote.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -172,7 +184,7 @@ describe("getOrderNotes", () => {
 	});
 
 	it("orders results by createdAt descending", async () => {
-		await getOrderNotes("order-1");
+		await getOrderNotes(VALID_ORDER_ID);
 
 		expect(mockPrisma.orderNote.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -182,7 +194,7 @@ describe("getOrderNotes", () => {
 	});
 
 	it("selects the expected note fields", async () => {
-		await getOrderNotes("order-1");
+		await getOrderNotes(VALID_ORDER_ID);
 
 		expect(mockPrisma.orderNote.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({

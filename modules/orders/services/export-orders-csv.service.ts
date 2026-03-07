@@ -108,8 +108,14 @@ function formatEuroCsv(cents: number): string {
 }
 
 function escapeCsv(value: string): string {
-	if (value.includes(";") || value.includes('"') || value.includes("\n")) {
-		return `"${value.replace(/"/g, '""')}"`;
+	// Protect against CSV injection (formula prefixes)
+	const formulaPrefixes = ["=", "+", "-", "@", "\t", "\r"];
+	let safe = value;
+	if (formulaPrefixes.some((prefix) => safe.startsWith(prefix))) {
+		safe = `'${safe}`;
 	}
-	return value;
+	if (safe.includes(";") || safe.includes('"') || safe.includes("\n")) {
+		return `"${safe.replace(/"/g, '""')}"`;
+	}
+	return safe;
 }

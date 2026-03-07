@@ -108,14 +108,19 @@ export function buildOrderWhereClause(
 	params: GetOrdersParams,
 	fuzzyIds?: string[] | null,
 ): Prisma.OrderWhereInput {
+	const showDeleted = params.filters?.showDeleted ?? "active";
 	const whereClause: Prisma.OrderWhereInput = {
-		// Soft delete: exclure les commandes supprimées par défaut
-		deletedAt: null,
+		// Soft delete: filter based on showDeleted option
+		...(showDeleted === "active"
+			? { deletedAt: null }
+			: showDeleted === "deleted"
+				? { deletedAt: { not: null } }
+				: {}),
 	};
 	const andConditions: Prisma.OrderWhereInput[] = [];
 
 	// Toujours appliquer les filtres (inclut l'exclusion par défaut des PENDING)
-	const filterConditions = buildOrderFilterConditions(params.filters ?? { showDeleted: undefined });
+	const filterConditions = buildOrderFilterConditions(params.filters ?? { showDeleted: "active" });
 	andConditions.push(filterConditions);
 
 	if (params.search) {

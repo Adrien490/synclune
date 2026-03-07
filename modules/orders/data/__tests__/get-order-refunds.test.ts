@@ -41,6 +41,14 @@ import { getOrderRefunds } from "../get-order-refunds";
 // Factories
 // ============================================================================
 
+// Valid CUID2 strings for tests
+const VALID_ORDER_ID = "clzk2x8p40000abcd1234efgh";
+const VALID_ORDER_ID_2 = "clzk2x8p40000abcd1234ijkl";
+const VALID_ORDER_ID_3 = "clzk2x8p40000abcd1234mnop";
+
+// Re-export du type pour compatibilité
+export type { OrderRefundItem } from "../../types/order-refunds.types";
+
 function makeRefund(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "refund-1",
@@ -79,7 +87,7 @@ describe("getOrderRefunds", () => {
 	it("returns error object when requireAdmin fails", async () => {
 		setupAdminFailure();
 
-		const result = await getOrderRefunds("order-1");
+		const result = await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(result).toHaveProperty("error");
 		expect(mockPrisma.refund.findMany).not.toHaveBeenCalled();
@@ -93,18 +101,25 @@ describe("getOrderRefunds", () => {
 			},
 		});
 
-		const result = await getOrderRefunds("order-1");
+		const result = await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(result).toEqual({
 			error: "Accès non autorisé. Droits administrateur requis.",
 		});
 	});
 
+	it("returns error for invalid orderId (not CUID2)", async () => {
+		const result = await getOrderRefunds("not-a-valid-cuid2");
+
+		expect(result).toEqual({ error: "ID commande invalide" });
+		expect(mockPrisma.refund.findMany).not.toHaveBeenCalled();
+	});
+
 	it("returns refunds array for admin", async () => {
 		const refunds = [makeRefund(), makeRefund({ id: "refund-2", amount: 2500 })];
 		mockPrisma.refund.findMany.mockResolvedValue(refunds);
 
-		const result = await getOrderRefunds("order-1");
+		const result = await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(result).toEqual({ refunds });
 	});
@@ -112,7 +127,7 @@ describe("getOrderRefunds", () => {
 	it("returns empty refunds array when no refunds exist", async () => {
 		mockPrisma.refund.findMany.mockResolvedValue([]);
 
-		const result = await getOrderRefunds("order-1");
+		const result = await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(result).toEqual({ refunds: [] });
 	});
@@ -120,7 +135,7 @@ describe("getOrderRefunds", () => {
 	it("returns generic error message on unexpected exception", async () => {
 		mockRequireAdmin.mockRejectedValue(new Error("Unexpected failure"));
 
-		const result = await getOrderRefunds("order-1");
+		const result = await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(result).toEqual({ error: "Une erreur est survenue" });
 	});
@@ -128,41 +143,41 @@ describe("getOrderRefunds", () => {
 	it("returns generic error when DB throws", async () => {
 		mockPrisma.refund.findMany.mockRejectedValue(new Error("DB error"));
 
-		const result = await getOrderRefunds("order-1");
+		const result = await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(result).toEqual({ error: "Une erreur est survenue" });
 	});
 
 	it("calls cacheLife with dashboard profile", async () => {
-		await getOrderRefunds("order-1");
+		await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
 	});
 
 	it("calls cacheTag with REFUNDS tag for the given orderId", async () => {
-		await getOrderRefunds("order-abc");
+		await getOrderRefunds(VALID_ORDER_ID_2);
 
-		expect(mockCacheTag).toHaveBeenCalledWith("order-refunds-order-abc");
+		expect(mockCacheTag).toHaveBeenCalledWith(`order-refunds-${VALID_ORDER_ID_2}`);
 	});
 
 	it("uses a different cache tag per orderId", async () => {
-		await getOrderRefunds("order-xyz");
+		await getOrderRefunds(VALID_ORDER_ID_3);
 
-		expect(mockCacheTag).toHaveBeenCalledWith("order-refunds-order-xyz");
+		expect(mockCacheTag).toHaveBeenCalledWith(`order-refunds-${VALID_ORDER_ID_3}`);
 	});
 
 	it("filters by orderId in the where clause", async () => {
-		await getOrderRefunds("order-123");
+		await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: expect.objectContaining({ orderId: "order-123" }),
+				where: expect.objectContaining({ orderId: VALID_ORDER_ID }),
 			}),
 		);
 	});
 
 	it("includes notDeleted filter (deletedAt: null) in where clause", async () => {
-		await getOrderRefunds("order-1");
+		await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -172,7 +187,7 @@ describe("getOrderRefunds", () => {
 	});
 
 	it("orders results by createdAt descending", async () => {
-		await getOrderRefunds("order-1");
+		await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -182,7 +197,7 @@ describe("getOrderRefunds", () => {
 	});
 
 	it("selects the expected refund fields", async () => {
-		await getOrderRefunds("order-1");
+		await getOrderRefunds(VALID_ORDER_ID);
 
 		expect(mockPrisma.refund.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({

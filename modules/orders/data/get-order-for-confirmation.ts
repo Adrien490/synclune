@@ -16,7 +16,6 @@ const CONFIRMATION_ORDER_SELECT = {
 	shippingAddress2: true,
 	shippingPostalCode: true,
 	shippingCity: true,
-	shippingPhone: true,
 	items: {
 		select: {
 			id: true,

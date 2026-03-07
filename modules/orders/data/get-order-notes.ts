@@ -1,10 +1,13 @@
 "use server";
 
 import { cacheLife, cacheTag } from "next/cache";
+import { z } from "zod";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import type { OrderNoteItem } from "../types/order-notes.types";
+
+const orderIdSchema = z.cuid2();
 
 /**
  * Récupère les notes d'une commande (ADMIN)
@@ -21,8 +24,14 @@ export async function getOrderNotes(
 			return { error: adminCheck.error.message };
 		}
 
-		// 2. Récupérer les notes via fonction cachée
-		const notes = await fetchOrderNotes(orderId);
+		// 2. Validate orderId
+		const parsed = orderIdSchema.safeParse(orderId);
+		if (!parsed.success) {
+			return { error: "ID commande invalide" };
+		}
+
+		// 3. Récupérer les notes via fonction cachée
+		const notes = await fetchOrderNotes(parsed.data);
 		return { notes };
 	} catch (error) {
 		console.error("[GET_ORDER_NOTES] Erreur:", error);

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DiscountType } from "@/app/generated/prisma/client";
+import { DiscountType, Prisma } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -8,7 +8,6 @@ import { DiscountType } from "@/app/generated/prisma/client";
 const { mockPrisma } = vi.hoisted(() => ({
 	mockPrisma: {
 		discount: {
-			findFirst: vi.fn(),
 			create: vi.fn(),
 		},
 	},
@@ -30,7 +29,6 @@ describe("createNewsletterPromoCode", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-03-02T10:00:00Z"));
 
-		mockPrisma.discount.findFirst.mockResolvedValue(null);
 		mockPrisma.discount.create.mockResolvedValue({});
 	});
 
@@ -97,14 +95,37 @@ describe("createNewsletterPromoCode", () => {
 		expect(startsAt.getTime()).toBe(new Date("2026-03-02T10:00:00Z").getTime());
 	});
 
-	it("generates a unique code on each call", async () => {
+	it("always creates a new code (no guard reusing existing codes)", async () => {
 		const code1 = await createNewsletterPromoCode();
 		const code2 = await createNewsletterPromoCode();
 
-		// Two consecutive calls almost certainly produce different suffixes
-		// This also validates the random suffix comes from actual randomBytes
+		expect(mockPrisma.discount.create).toHaveBeenCalledTimes(2);
 		expect(code1).toMatch(/^BIENVENUE-[0-9A-F]{6}$/);
 		expect(code2).toMatch(/^BIENVENUE-[0-9A-F]{6}$/);
+	});
+
+	it("retries once on unique constraint collision (P2002)", async () => {
+		const p2002Error = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+			code: "P2002",
+			clientVersion: "7.0.0",
+		});
+		mockPrisma.discount.create.mockRejectedValueOnce(p2002Error).mockResolvedValueOnce({});
+
+		const code = await createNewsletterPromoCode();
+
+		expect(mockPrisma.discount.create).toHaveBeenCalledTimes(2);
+		expect(code).toMatch(/^BIENVENUE-[0-9A-F]{6}$/);
+	});
+
+	it("throws on second P2002 collision (no infinite retry)", async () => {
+		const p2002Error = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+			code: "P2002",
+			clientVersion: "7.0.0",
+		});
+		mockPrisma.discount.create.mockRejectedValue(p2002Error);
+
+		await expect(createNewsletterPromoCode()).rejects.toThrow();
+		expect(mockPrisma.discount.create).toHaveBeenCalledTimes(2);
 	});
 
 	it("propagates errors thrown by prisma.discount.create", async () => {

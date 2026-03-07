@@ -234,12 +234,17 @@ describe("bulkMarkAsDelivered", () => {
 
 	it("should return error when no eligible SHIPPED orders found", async () => {
 		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				return fn(mockPrisma);
+			},
+		);
 
 		const result = await bulkMarkAsDelivered(undefined, makeFormData());
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("SHIPPED");
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	// --------------------------------------------------------------------------

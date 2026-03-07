@@ -21,7 +21,15 @@ export const metadata: Metadata = {
 	},
 };
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+	return (
+		<Suspense>
+			<AdminLayoutContent>{children}</AdminLayoutContent>
+		</Suspense>
+	);
+}
+
+async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 	const admin = await requireAdmin();
 	if ("error" in admin) redirect("/connexion");
 

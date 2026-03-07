@@ -99,24 +99,51 @@ type ProductsAdminPageProps = {
 	searchParams: Promise<ProductsSearchParams>;
 };
 
-export default async function ProductsAdminPage({ searchParams }: ProductsAdminPageProps) {
+export default function ProductsAdminPage({ searchParams }: ProductsAdminPageProps) {
+	return (
+		<>
+			<PageHeader
+				variant="compact"
+				title="Produits"
+				actions={
+					<Button asChild>
+						<Link href="/admin/catalogue/produits/nouveau">Nouveau produit</Link>
+					</Button>
+				}
+			/>
+
+			<Suspense fallback={<ProductsDataTableSkeleton />}>
+				<ProductsContent searchParams={searchParams} />
+			</Suspense>
+
+			{/* Alert Dialogs globaux */}
+			<ArchiveProductAlertDialog />
+			<BulkArchiveProductsAlertDialog />
+			<BulkDeleteProductsAlertDialog />
+			<ChangeProductStatusAlertDialog />
+			<DeleteProductAlertDialog />
+			<DuplicateProductAlertDialog />
+			<ManageCollectionsDialog />
+		</>
+	);
+}
+
+async function ProductsContent({ searchParams }: { searchParams: Promise<ProductsSearchParams> }) {
 	const params = await searchParams;
 
 	// Parse and validate all search parameters safely
 	const { cursor, direction, perPage, sortBy, search, status } = parseProductParams(params);
 
-	const productsPromise = getProducts({
-		cursor,
-		direction,
-		perPage,
-		sortBy,
-		search,
-		filters: parseFilters(params),
-		status,
-	});
-
-	// Load filter options data in parallel
-	const [productTypesData, collectionsData] = await Promise.all([
+	const [productsData, productTypesData, collectionsData] = await Promise.all([
+		getProducts({
+			cursor,
+			direction,
+			perPage,
+			sortBy,
+			search,
+			filters: parseFilters(params),
+			status,
+		}),
 		getProductTypes({
 			perPage: 100,
 			sortBy: "label-ascending",
@@ -142,66 +169,43 @@ export default async function ProductsAdminPage({ searchParams }: ProductsAdminP
 	}));
 
 	return (
-		<>
-			<PageHeader
-				variant="compact"
-				title="Produits"
-				actions={
-					<Button asChild>
-						<Link href="/admin/catalogue/produits/nouveau">Nouveau produit</Link>
-					</Button>
-				}
-			/>
+		<div className="space-y-6">
+			{/* Onglets de statut */}
+			<ProductStatusNavigation currentStatus={status} searchParams={params} />
 
-			<div className="space-y-6">
-				{/* Onglets de statut */}
-				<ProductStatusNavigation currentStatus={status} searchParams={params} />
-
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des produits"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par titre, type..."
-							ariaLabel="Rechercher un produit par titre ou type"
-							className="w-full"
-						/>
-					}
-				>
-					<ProductsQuickFilters />
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={GET_PRODUCTS_SORT_FIELDS.map((field) => ({
-							value: field,
-							label: ADMIN_PRODUCTS_SORT_LABELS[field] ?? field,
-						}))}
-						placeholder="Plus récents"
-						className="w-full sm:min-w-45"
-						noPrefix
+			<Toolbar
+				ariaLabel="Barre d'outils de gestion des produits"
+				search={
+					<SearchInput
+						mode="live"
+						size="sm"
+						paramName="search"
+						placeholder="Rechercher par titre, type..."
+						ariaLabel="Rechercher un produit par titre ou type"
+						className="w-full"
 					/>
-					<ProductsFilterSheet productTypes={productTypes} collections={collections} />
-					<RefreshProductsButton />
-				</Toolbar>
+				}
+			>
+				<ProductsQuickFilters />
+				<SelectFilter
+					filterKey="sortBy"
+					label="Trier par"
+					options={GET_PRODUCTS_SORT_FIELDS.map((field) => ({
+						value: field,
+						label: ADMIN_PRODUCTS_SORT_LABELS[field] ?? field,
+					}))}
+					placeholder="Plus récents"
+					className="w-full sm:min-w-45"
+					noPrefix
+				/>
+				<ProductsFilterSheet productTypes={productTypes} collections={collections} />
+				<RefreshProductsButton />
+			</Toolbar>
 
-				{/* Badges de filtres actifs */}
-				<ProductsFilterBadges productTypes={productTypes} collections={collections} />
+			{/* Badges de filtres actifs */}
+			<ProductsFilterBadges productTypes={productTypes} collections={collections} />
 
-				<Suspense fallback={<ProductsDataTableSkeleton />}>
-					<ProductsDataTable productsPromise={productsPromise} perPage={perPage} />
-				</Suspense>
-			</div>
-
-			{/* Alert Dialogs globaux */}
-			<ArchiveProductAlertDialog />
-			<BulkArchiveProductsAlertDialog />
-			<BulkDeleteProductsAlertDialog />
-			<ChangeProductStatusAlertDialog />
-			<DeleteProductAlertDialog />
-			<DuplicateProductAlertDialog />
-			<ManageCollectionsDialog />
-		</>
+			<ProductsDataTable productsPromise={Promise.resolve(productsData)} perPage={perPage} />
+		</div>
 	);
 }

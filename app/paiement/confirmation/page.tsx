@@ -6,7 +6,7 @@ import { Stagger } from "@/shared/components/animations/stagger";
 import { SuccessIcon } from "./_components/success-icon";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Clock, Heart, Package, Phone, Sparkles, UserPlus } from "lucide-react";
+import { Clock, Heart, Package, Sparkles, UserPlus } from "lucide-react";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -180,10 +180,6 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									{order.shippingAddress2 && <p>{order.shippingAddress2}</p>}
 									<p>
 										{order.shippingPostalCode} {order.shippingCity}
-									</p>
-									<p className="mt-1 text-xs">
-										<Phone className="inline h-3.5 w-3.5" aria-hidden="true" />{" "}
-										{order.shippingPhone}
 									</p>
 								</div>
 							</div>

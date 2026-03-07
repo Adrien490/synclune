@@ -108,7 +108,7 @@ export async function subscribeToNewsletterInternal({
 			return {
 				success: true,
 				message:
-					"Bienvenue à nouveau ! Un email de confirmation vous a été envoyé pour réactiver votre inscription.",
+					"Si cette adresse n'est pas encore inscrite, un email de confirmation vous a été envoyé.",
 			};
 		}
 
@@ -145,7 +145,7 @@ export async function subscribeToNewsletterInternal({
 				"Merci ! Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception 📧",
 		};
 	} catch (error) {
-		console.error("[SUBSCRIBE_INTERNAL]", error);
+		console.error("[SUBSCRIBE_INTERNAL]", error instanceof Error ? error.message : "Unknown error");
 		return {
 			success: false,
 			message:

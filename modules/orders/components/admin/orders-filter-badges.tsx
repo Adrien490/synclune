@@ -69,9 +69,10 @@ function formatOrderFilter(
 
 	// Gestion de l'affichage des supprimées
 	if (filterKey === "showDeleted") {
+		if (value === "active") return null;
 		return {
 			label: "Affichage",
-			displayValue: value === "true" ? "Supprimées uniquement" : "Non supprimées uniquement",
+			displayValue: value === "deleted" ? "Supprimées uniquement" : "Toutes",
 		};
 	}
 

@@ -4,14 +4,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma } = vi.hoisted(() => ({
+const { mockPrisma, mockRequireAdmin } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn() },
 	},
+	mockRequireAdmin: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+}));
+
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 }));
 
 // Must be imported after mocks
@@ -47,7 +52,19 @@ function makeExportOrder(overrides: Record<string, unknown> = {}) {
 describe("getOrdersForExport", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		mockPrisma.order.findMany.mockResolvedValue([makeExportOrder()]);
+	});
+
+	it("returns empty array when not admin", async () => {
+		mockRequireAdmin.mockResolvedValue({
+			error: { status: "FORBIDDEN", message: "Non autorise" },
+		});
+
+		const result = await getOrdersForExport({});
+
+		expect(result).toEqual([]);
+		expect(mockPrisma.order.findMany).not.toHaveBeenCalled();
 	});
 
 	it("returns orders with correct select fields", async () => {

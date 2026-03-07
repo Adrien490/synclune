@@ -31,7 +31,7 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 
 		// 4. Vérifier que la commande existe
 		const order = await prisma.order.findUnique({
-			where: { id: orderId, ...notDeleted },
+			where: { id: validated.data.orderId, ...notDeleted },
 			select: { id: true },
 		});
 
@@ -40,10 +40,10 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 		}
 
 		// 5. Sanitize and create the note
-		const sanitizedContent = sanitizeText(content.trim());
+		const sanitizedContent = sanitizeText(validated.data.content.trim());
 		await prisma.orderNote.create({
 			data: {
-				orderId,
+				orderId: validated.data.orderId,
 				content: sanitizedContent,
 				authorId: auth.user.id,
 				authorName: auth.user.name ?? auth.user.email,
@@ -51,14 +51,14 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 		});
 
 		// 6. Invalider le cache
-		updateTag(ORDERS_CACHE_TAGS.NOTES(orderId));
+		updateTag(ORDERS_CACHE_TAGS.NOTES(validated.data.orderId));
 
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
 			action: "order.addNote",
 			targetType: "order",
-			targetId: orderId,
+			targetId: validated.data.orderId,
 			metadata: {},
 		});
 

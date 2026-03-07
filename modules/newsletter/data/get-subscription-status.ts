@@ -6,10 +6,6 @@ import { GET_NEWSLETTER_STATUS_DEFAULT_SELECT } from "../constants/subscriber.co
 import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
 import type { GetSubscriptionStatusReturn } from "../types/subscriber.types";
 
-// Re-export pour compatibilité
-export { GET_NEWSLETTER_STATUS_DEFAULT_SELECT } from "../constants/subscriber.constants";
-export type { GetSubscriptionStatusReturn } from "../types/subscriber.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
@@ -51,7 +47,7 @@ export async function fetchSubscriptionStatus(
 	userId: string,
 ): Promise<{ status: string } | null> {
 	"use cache: private";
-	cacheLife("cart");
+	cacheLife("session");
 	cacheTag(NEWSLETTER_CACHE_TAGS.USER_STATUS(userId));
 
 	try {

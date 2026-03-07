@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
 const orderIdSchema = z.cuid2();
@@ -26,7 +26,10 @@ async function fetchOrderHistory(orderId: string) {
 	cacheTag(ORDERS_CACHE_TAGS.HISTORY(orderId));
 
 	return prisma.orderHistory.findMany({
-		where: { orderId },
+		where: {
+			orderId,
+			order: { ...notDeleted },
+		},
 		orderBy: { createdAt: "desc" },
 		take: 100,
 	});
