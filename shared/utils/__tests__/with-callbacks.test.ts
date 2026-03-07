@@ -122,4 +122,45 @@ describe("withCallbacks", () => {
 
 		expect(fn).toHaveBeenCalledWith(prevState, formData);
 	});
+
+	it("does not call onEnd when onStart returns undefined", async () => {
+		const onStart = vi.fn().mockReturnValue(undefined);
+		const onEnd = vi.fn();
+		const fn = vi.fn().mockResolvedValue({ status: ActionStatus.SUCCESS, message: "OK" });
+		const wrapped = withCallbacks(fn, { onStart, onEnd });
+
+		await wrapped(undefined, formData);
+
+		expect(onStart).toHaveBeenCalledTimes(1);
+		expect(onEnd).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		["UNAUTHORIZED", ActionStatus.UNAUTHORIZED],
+		["VALIDATION_ERROR", ActionStatus.VALIDATION_ERROR],
+		["NOT_FOUND", ActionStatus.NOT_FOUND],
+	])("calls onError when action returns %s status", async (_label, status) => {
+		const onError = vi.fn();
+		const result = { status, message: "some error" };
+		const fn = vi.fn().mockResolvedValue(result);
+		const wrapped = withCallbacks(fn, { onError });
+
+		await wrapped(undefined, formData);
+
+		expect(onError).toHaveBeenCalledWith(result);
+	});
+
+	it("does not call any status callback when result has no status property", async () => {
+		const onSuccess = vi.fn();
+		const onError = vi.fn();
+		const onWarning = vi.fn();
+		const fn = vi.fn().mockResolvedValue({ data: "raw" });
+		const wrapped = withCallbacks(fn, { onSuccess, onError, onWarning });
+
+		await wrapped(undefined, formData);
+
+		expect(onSuccess).not.toHaveBeenCalled();
+		expect(onError).not.toHaveBeenCalled();
+		expect(onWarning).not.toHaveBeenCalled();
+	});
 });

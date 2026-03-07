@@ -175,10 +175,10 @@ describe("getOrderForRefund", () => {
 		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
 	});
 
-	it("calls cacheTag with orders-list tag", async () => {
+	it("calls cacheTag with per-order refunds tag", async () => {
 		await getOrderForRefund({ orderId: "order-cuid-001" });
 
-		expect(mockCacheTag).toHaveBeenCalledWith("orders-list");
+		expect(mockCacheTag).toHaveBeenCalledWith("order-refunds-order-cuid-001");
 	});
 
 	it("returns null on DB error", async () => {

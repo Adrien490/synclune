@@ -480,4 +480,85 @@ describe("handleDisputeClosed", () => {
 		// Note should still be created
 		expect(mockTx.orderNote.create).toHaveBeenCalledTimes(1);
 	});
+
+	it("should use fallback email when customerEmail is empty string", async () => {
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ customerEmail: "" }));
+		const dispute = makeDispute({ status: "won" });
+
+		const result = await handleDisputeClosed(dispute);
+
+		const alertTask = result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT");
+		expect(alertTask?.data).toMatchObject({ customerEmail: "Email non disponible" });
+	});
+});
+
+// ============================================================================
+// Dispute reason and fee mapping
+// ============================================================================
+
+describe("handleDisputeCreated - reason and fee mapping", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
+		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
+			cb(mockTx),
+		);
+		mockTx.dispute.create.mockResolvedValue({});
+		mockTx.orderNote.create.mockResolvedValue({});
+	});
+
+	it("should store balance_transactions[0].fee when present", async () => {
+		const dispute = makeDispute({
+			balance_transactions: [{ fee: 1500 }] as unknown as Stripe.Dispute["balance_transactions"],
+		});
+
+		await handleDisputeCreated(dispute);
+
+		expect(mockTx.dispute.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({ fee: 1500 }),
+		});
+	});
+
+	it("should default fee to 0 when balance_transactions is empty", async () => {
+		const dispute = makeDispute({ balance_transactions: [] });
+
+		await handleDisputeCreated(dispute);
+
+		expect(mockTx.dispute.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({ fee: 0 }),
+		});
+	});
+
+	it.each([
+		["duplicate", "DUPLICATE"],
+		["fraudulent", "FRAUDULENT"],
+		["subscription_canceled", "SUBSCRIPTION_CANCELED"],
+		["product_unacceptable", "PRODUCT_UNACCEPTABLE"],
+		["product_not_received", "PRODUCT_NOT_RECEIVED"],
+		["unrecognized", "UNRECOGNIZED"],
+		["credit_not_processed", "CREDIT_NOT_PROCESSED"],
+		["general", "GENERAL"],
+	])("should map Stripe reason '%s' to DisputeReason.%s", async (stripeReason, expectedEnum) => {
+		const dispute = makeDispute({ reason: stripeReason as Stripe.Dispute["reason"] });
+
+		await handleDisputeCreated(dispute);
+
+		expect(mockTx.dispute.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({ reason: expectedEnum }),
+		});
+	});
+
+	it("should default unknown reason to GENERAL", async () => {
+		const dispute = makeDispute({
+			reason: "bank_cannot_process" as Stripe.Dispute["reason"],
+		});
+
+		await handleDisputeCreated(dispute);
+
+		expect(mockTx.dispute.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({ reason: "GENERAL" }),
+		});
+	});
 });

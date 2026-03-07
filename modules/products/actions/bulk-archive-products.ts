@@ -50,6 +50,10 @@ export async function bulkArchiveProducts(
 			return validationError("Format des IDs de produits invalide.");
 		}
 
+		if (!Array.isArray(productIds)) {
+			return validationError("La liste des produits est invalide.");
+		}
+
 		// 3. Validation avec Zod
 		const validation = validateInput(bulkArchiveProductsSchema, {
 			productIds,

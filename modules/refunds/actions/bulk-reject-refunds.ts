@@ -87,7 +87,7 @@ export async function bulkRejectRefunds(
 		// Rejeter tous les remboursements.
 		// Comptage des changements réels via try/catch par enregistrement pour éviter
 		// qu'une mise à jour concurrente ne bloque toute la transaction.
-		let actualCount = 0;
+		const updatedIds = new Set<string>();
 		await prisma.$transaction(async (tx) => {
 			for (const refund of refunds) {
 				const updatedNote = sanitizedReason
@@ -104,12 +104,13 @@ export async function bulkRejectRefunds(
 							note: updatedNote,
 						},
 					});
-					actualCount++;
+					updatedIds.add(refund.id);
 				} catch {
 					// Record no longer PENDING (concurrent update), skip silently
 				}
 			}
 		});
+		const actualCount = updatedIds.size;
 
 		// Invalidate admin caches
 		updateTag(ORDERS_CACHE_TAGS.LIST);
@@ -128,8 +129,8 @@ export async function bulkRejectRefunds(
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId));
 		}
 
-		// Send rejection emails to customers (non-blocking)
-		for (const refund of refunds) {
+		// Send rejection emails only for refunds that were actually rejected
+		for (const refund of refunds.filter((r) => updatedIds.has(r.id))) {
 			if (refund.order.user?.email) {
 				const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
 				sendRefundRejectedEmail({

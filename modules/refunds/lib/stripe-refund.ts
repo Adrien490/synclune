@@ -1,6 +1,7 @@
 import { stripe } from "@/shared/lib/stripe";
 import { stripeCircuitBreaker } from "@/shared/lib/circuit-breaker";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
+import { logger } from "@/shared/lib/logger";
 import Stripe from "stripe";
 import type {
 	CreateStripeRefundParams,
@@ -93,14 +94,16 @@ export async function createStripeRefund(
 			status: (refund.status ?? undefined) as StripeRefundStatus | undefined,
 		};
 	} catch (error) {
-		console.error("[STRIPE_REFUND_ERROR]", error);
+		logger.error("Stripe refund creation failed", error, { service: "stripe-refund" });
 
 		// Gérer les erreurs Stripe spécifiques
 		if (error instanceof Stripe.errors.StripeError) {
 			// P0.3: Idempotence - si déjà remboursé, c'est un succès
 			// Peut arriver si retry webhook ou hash collision idempotency key
 			if (error.code === "charge_already_refunded") {
-				console.warn("[STRIPE_REFUND] Charge already refunded, treating as success (idempotence)");
+				logger.warn("Charge already refunded, treating as success (idempotence)", {
+					service: "stripe-refund",
+				});
 
 				// Recover the existing refund ID from Stripe
 				// Fetch multiple refunds and match by metadata or amount to avoid
@@ -125,6 +128,21 @@ export async function createStripeRefund(
 					);
 					const byAmount = existingRefunds.data.find((r) => r.amount === params.amount);
 
+					// Fail hard if no metadata match and multiple candidates by amount exist
+					const amountCandidates = existingRefunds.data.filter((r) => r.amount === params.amount);
+					if (!byMetadata && amountCandidates.length > 1) {
+						logger.warn(
+							`Multiple refunds match amount ${params.amount}, cannot safely determine which one. Manual verification required.`,
+							{ service: "stripe-refund" },
+						);
+						// Still return success (charge IS refunded) but without a specific refundId
+						return {
+							success: true,
+							pending: false,
+							refundId: undefined,
+						};
+					}
+
 					const matched = byMetadata ?? byAmountAndTime ?? byAmount ?? existingRefunds.data[0];
 					existingRefundId = matched?.id;
 
@@ -135,13 +153,13 @@ export async function createStripeRefund(
 							: byAmount
 								? "amount-only"
 								: "first-refund";
-						console.warn(
-							`[STRIPE_REFUND] Recovered refund via fallback (${matchType}): ${existingRefundId}. ` +
-								`No metadata match available. Verify manually if multiple partial refunds exist.`,
+						logger.warn(
+							`Recovered refund via fallback (${matchType}): ${existingRefundId}. No metadata match available.`,
+							{ service: "stripe-refund" },
 						);
 					}
 				} catch {
-					console.warn("[STRIPE_REFUND] Could not recover existing refund ID");
+					logger.warn("Could not recover existing refund ID", { service: "stripe-refund" });
 				}
 
 				return {
@@ -175,7 +193,7 @@ export async function getStripeRefundStatus(refundId: string): Promise<StripeRef
 		const refund = await stripe.refunds.retrieve(refundId);
 		return refund.status as StripeRefundStatus | null;
 	} catch (error) {
-		console.error("[STRIPE_REFUND_STATUS_ERROR]", error);
+		logger.error("Failed to retrieve Stripe refund status", error, { service: "stripe-refund" });
 		return null;
 	}
 }

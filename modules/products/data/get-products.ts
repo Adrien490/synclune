@@ -67,6 +67,11 @@ export async function getProducts(
 		let validatedParams = validation.data as GetProductsParams;
 		const admin = options?.isAdmin ?? (await isAdmin());
 
+		// Security: only admins can see soft-deleted products
+		if (validatedParams.includeDeleted && !admin) {
+			validatedParams = { ...validatedParams, includeDeleted: false };
+		}
+
 		// Admin: use admin default sort if no explicit sort provided
 		if (admin && !hasSortByInput(validatedParams.sortBy)) {
 			validatedParams = { ...validatedParams, sortBy: GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY };

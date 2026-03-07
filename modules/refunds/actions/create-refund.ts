@@ -15,6 +15,7 @@ import {
 	safeFormGetJSON,
 } from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
+import { logger } from "@/shared/lib/logger";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -134,12 +135,10 @@ export async function createRefund(
 			}
 
 			// Vérifier que la commande est payée (ou partiellement remboursée)
-			if (
-				order.paymentStatus !== "PAID" &&
-				order.paymentStatus !== "PARTIALLY_REFUNDED" &&
-				order.paymentStatus !== "REFUNDED"
-			) {
-				throw new Error("ORDER_NOT_PAID");
+			if (order.paymentStatus !== "PAID" && order.paymentStatus !== "PARTIALLY_REFUNDED") {
+				throw new Error(
+					order.paymentStatus === "REFUNDED" ? "ORDER_ALREADY_REFUNDED" : "ORDER_NOT_PAID",
+				);
 			}
 
 			// Calculer le montant déjà remboursé (PENDING + APPROVED + COMPLETED)
@@ -179,8 +178,8 @@ export async function createRefund(
 				const itemAmount = Math.min(item.amount, maxItemAmount);
 
 				if (item.amount > maxItemAmount) {
-					console.warn(
-						`[CREATE_REFUND] Amount capped for item ${item.orderItemId}: ${item.amount} → ${maxItemAmount} (order ${orderId})`,
+					logger.warn(
+						`Amount capped for item ${item.orderItemId}: ${item.amount} → ${maxItemAmount} (order ${orderId})`,
 					);
 				}
 
@@ -264,6 +263,8 @@ export async function createRefund(
 					return error(REFUND_ERROR_MESSAGES.ORDER_NOT_FOUND);
 				case "ORDER_NOT_PAID":
 					return error("Cette commande n'a pas été payée et ne peut pas être remboursée.");
+				case "ORDER_ALREADY_REFUNDED":
+					return error("Cette commande est déjà totalement remboursée.");
 				case "INVALID_ITEMS":
 					return error(REFUND_ERROR_MESSAGES.INVALID_ITEMS);
 				case "AMOUNT_ZERO":

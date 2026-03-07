@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockStripe, MockStripeError } = vi.hoisted(() => {
+const { mockStripe, MockStripeError, mockLogger } = vi.hoisted(() => {
 	class MockStripeError extends Error {
 		code?: string;
 		constructor(message: string) {
@@ -25,6 +25,12 @@ const { mockStripe, MockStripeError } = vi.hoisted(() => {
 			},
 		},
 		MockStripeError,
+		mockLogger: {
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: vi.fn(),
+			debug: vi.fn(),
+		},
 	};
 });
 
@@ -42,6 +48,10 @@ vi.mock("@/shared/lib/circuit-breaker", () => ({
 	stripeCircuitBreaker: {
 		execute: <T>(fn: () => Promise<T>) => fn(),
 	},
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 import { createStripeRefund, getStripeRefundStatus } from "../stripe-refund";
@@ -253,11 +263,12 @@ describe("createStripeRefund", () => {
 				amount: 5000,
 			});
 
+			// Multiple candidates by amount → fail hard, no refundId
 			expect(result.success).toBe(true);
-			expect(result.refundId).toBe("re_recent");
+			expect(result.refundId).toBeUndefined();
 		});
 
-		it("should match by amount only (low priority)", async () => {
+		it("should match by amount only when single candidate", async () => {
 			mockStripe.refunds.create.mockRejectedValue(
 				makeStripeError("charge_already_refunded", "Charge already refunded"),
 			);
@@ -303,7 +314,6 @@ describe("createStripeRefund", () => {
 		});
 
 		it("should warn when matching via fallback (no metadata)", async () => {
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 			mockStripe.refunds.create.mockRejectedValue(
 				makeStripeError("charge_already_refunded", "Charge already refunded"),
 			);
@@ -317,14 +327,13 @@ describe("createStripeRefund", () => {
 				amount: 5000,
 			});
 
-			expect(warnSpy).toHaveBeenCalledWith(
-				expect.stringContaining("[STRIPE_REFUND] Recovered refund via fallback"),
+			expect(mockLogger.warn).toHaveBeenCalledWith(
+				expect.stringContaining("Recovered refund via fallback"),
+				expect.any(Object),
 			);
-			warnSpy.mockRestore();
 		});
 
 		it("should handle stripe.refunds.list failure in recovery", async () => {
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 			mockStripe.refunds.create.mockRejectedValue(
 				makeStripeError("charge_already_refunded", "Charge already refunded"),
 			);
@@ -336,8 +345,35 @@ describe("createStripeRefund", () => {
 			});
 
 			expect(result).toEqual({ success: true, pending: false, refundId: undefined });
-			expect(warnSpy).toHaveBeenCalledWith("[STRIPE_REFUND] Could not recover existing refund ID");
-			warnSpy.mockRestore();
+			expect(mockLogger.warn).toHaveBeenCalledWith(
+				"Could not recover existing refund ID",
+				expect.any(Object),
+			);
+		});
+
+		it("should fail hard when multiple candidates match by amount without metadata", async () => {
+			mockStripe.refunds.create.mockRejectedValue(
+				makeStripeError("charge_already_refunded", "Charge already refunded"),
+			);
+			const now = Math.floor(Date.now() / 1000);
+			mockStripe.refunds.list.mockResolvedValue({
+				data: [
+					{ id: "re_1", amount: 5000, created: now - 100, metadata: {} },
+					{ id: "re_2", amount: 5000, created: now - 200, metadata: {} },
+				],
+			});
+
+			const result = await createStripeRefund({
+				paymentIntentId: "pi_123",
+				amount: 5000,
+			});
+
+			expect(result.success).toBe(true);
+			expect(result.refundId).toBeUndefined();
+			expect(mockLogger.warn).toHaveBeenCalledWith(
+				expect.stringContaining("Multiple refunds match amount"),
+				expect.any(Object),
+			);
 		});
 	});
 

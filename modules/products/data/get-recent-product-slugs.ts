@@ -24,9 +24,14 @@ export async function getRecentProductSlugs(): Promise<string[]> {
 	try {
 		const parsed: unknown = JSON.parse(decodeURIComponent(cookie.value));
 		if (Array.isArray(parsed)) {
+			const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+			const MAX_SLUG_LENGTH = 100;
 			const items = parsed as unknown as unknown[];
 			return items
-				.filter((s): s is string => typeof s === "string")
+				.filter(
+					(s): s is string =>
+						typeof s === "string" && s.length <= MAX_SLUG_LENGTH && SLUG_PATTERN.test(s),
+				)
 				.slice(0, RECENT_PRODUCTS_MAX_ITEMS);
 		}
 	} catch (e) {

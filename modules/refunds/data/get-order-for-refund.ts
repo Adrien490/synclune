@@ -1,5 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { cacheLife, cacheTag } from "next/cache";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { GET_ORDER_FOR_REFUND_SELECT } from "../constants/refund.constants";
@@ -46,7 +47,7 @@ export async function getOrderForRefund(
 async function fetchOrderForRefund(orderId: string): Promise<OrderForRefund | null> {
 	"use cache";
 	cacheLife("dashboard");
-	cacheTag(ORDERS_CACHE_TAGS.LIST);
+	cacheTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 
 	try {
 		// Exclure les commandes soft-deleted
@@ -57,7 +58,7 @@ async function fetchOrderForRefund(orderId: string): Promise<OrderForRefund | nu
 
 		return order;
 	} catch (error) {
-		console.error("[GET_ORDER_FOR_REFUND]", error);
+		logger.error("Failed to fetch order for refund", error, { orderId });
 		return null;
 	}
 }

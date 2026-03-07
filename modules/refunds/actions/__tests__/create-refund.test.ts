@@ -22,7 +22,7 @@ const {
 		order: { findUnique: vi.fn() },
 		refund: { create: vi.fn() },
 		$transaction: vi.fn(),
-		$queryRawUnsafe: vi.fn(),
+		$queryRaw: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -143,7 +143,7 @@ describe("createRefund", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
-		mockPrisma.$queryRawUnsafe.mockResolvedValue([createPaidOrder()]);
+		mockPrisma.$queryRaw.mockResolvedValue([createPaidOrder()]);
 		mockPrisma.order.findUnique.mockResolvedValue(createPaidOrder());
 		mockPrisma.refund.create.mockResolvedValue({ id: "refund-1" });
 

@@ -250,7 +250,7 @@ export async function processRefund(
 							});
 						} catch {
 							// SKU may have been deleted between refund creation and processing
-							console.warn(`[PROCESS_REFUND] SKU ${item.sku_id} not found, skipping restock`);
+							logger.warn(`SKU ${item.sku_id} not found, skipping restock`);
 						}
 					}
 				}
