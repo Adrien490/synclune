@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -12,7 +12,10 @@ import {
 	PRODUCT_FILTER_DIALOG_ID,
 	PRODUCTS_SORT_LABELS,
 } from "@/modules/products/constants/product.constants";
-import { countActiveFilters } from "@/modules/products/services/product-filter-params.service";
+import {
+	countActiveFilters,
+	isProductCategoryPage,
+} from "@/modules/products/services/product-filter-params.service";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
 	BottomBar,
@@ -80,7 +83,12 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
 	const sortByValue = searchParams.get("sortBy");
 	const hasActiveSort = !!sortByValue;
-	const { activeFiltersCount, hasActiveFilters } = countActiveFilters(searchParams);
+	const pathname = usePathname();
+	const isOnCategoryPage = isProductCategoryPage(pathname);
+	const { activeFiltersCount: urlFiltersCount, hasActiveFilters: urlHasActiveFilters } =
+		countActiveFilters(searchParams);
+	const activeFiltersCount = urlFiltersCount + (isOnCategoryPage ? 1 : 0);
+	const hasActiveFilters = urlHasActiveFilters || isOnCategoryPage;
 
 	// Live region for screen reader announcements
 	const announcementRef = useRef<HTMLSpanElement>(null);

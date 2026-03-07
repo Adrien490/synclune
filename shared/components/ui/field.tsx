@@ -217,23 +217,27 @@ function FieldError({
 		);
 	})();
 
-	if (!content) {
-		return null;
-	}
+	const hasError = !!content;
 
 	return (
 		<div
-			role="alert"
-			aria-atomic="true"
 			data-slot="field-error"
 			className={cn(
-				"text-destructive text-sm font-normal",
-				"animate-in fade-in-0 slide-in-from-top-1 duration-200",
+				"grid motion-safe:[transition:grid-template-rows_200ms_ease-out]",
+				hasError ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
 				className,
 			)}
-			{...props}
 		>
-			{content}
+			<div className="min-h-0 overflow-hidden">
+				<div
+					role="alert"
+					aria-atomic="true"
+					className="text-destructive text-sm font-normal"
+					{...props}
+				>
+					{content}
+				</div>
+			</div>
 		</div>
 	);
 }

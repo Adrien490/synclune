@@ -74,7 +74,6 @@ export function MenuSheetNav({
 	// Separate items into zones
 	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
 	const personalizationItem = navItems.find((item) => item.href === ROUTES.SHOP.CUSTOMIZATION);
-	const atelierItem = navItems.find((item) => item.href === ROUTES.SHOP.ABOUT);
 	const accountItem = navItems.find(
 		(item) => item.href === ROUTES.ACCOUNT.ROOT || item.href === ROUTES.AUTH.SIGN_IN,
 	);
@@ -143,19 +142,6 @@ export function MenuSheetNav({
 											aria-current={isMenuItemActive(homeItem.href) ? "page" : undefined}
 										>
 											{homeItem.label}
-										</Link>
-									</SheetClose>
-								</motion.li>
-							)}
-							{atelierItem && (
-								<motion.li variants={itemVariants} custom={delay(70, 1)}>
-									<SheetClose asChild>
-										<Link
-											href={atelierItem.href}
-											className={getLinkClass(atelierItem.href)}
-											aria-current={isMenuItemActive(atelierItem.href) ? "page" : undefined}
-										>
-											{atelierItem.label}
 										</Link>
 									</SheetClose>
 								</motion.li>

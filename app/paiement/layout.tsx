@@ -6,7 +6,6 @@ import Link from "next/link";
  * Layout minimaliste pour le checkout
  *
  * Inspiré des best practices checkout 2026 :
- * - Logo centré (pattern Amazon/Shopify)
  * - Retour boutique à gauche
  * - Logo à droite (comme auth, sans texte)
  * - Pas de navbar complète (évite les distractions)
@@ -31,11 +30,6 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 							<ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
 							<span className="hidden sm:inline">Boutique</span>
 						</Link>
-
-						{/* Logo - centered absolutely */}
-						<div className="absolute left-1/2 -translate-x-1/2">
-							<Logo href="/" size={36} showText />
-						</div>
 
 						{/* Logo - right */}
 						<div className="ml-auto">
