@@ -336,6 +336,7 @@ function ColorSelector({
 					<div
 						ref={containerRef}
 						role="radiogroup"
+						aria-required="true"
 						aria-labelledby={COLOR_LEGEND_ID}
 						aria-describedby={
 							hasValidationErrors && !selectedValue ? VALIDATION_ERROR_ID : undefined
@@ -349,6 +350,7 @@ function ColorSelector({
 				<div
 					ref={containerRef}
 					role="radiogroup"
+					aria-required="true"
 					aria-labelledby={COLOR_LEGEND_ID}
 					aria-describedby={hasValidationErrors && !selectedValue ? VALIDATION_ERROR_ID : undefined}
 					className="flex flex-wrap gap-2"
@@ -400,6 +402,7 @@ function MaterialSelector({
 			<div
 				ref={containerRef}
 				role="radiogroup"
+				aria-required="true"
 				aria-labelledby={MATERIAL_LEGEND_ID}
 				aria-describedby={hasValidationErrors && !selectedValue ? VALIDATION_ERROR_ID : undefined}
 				className="grid grid-cols-1 gap-2 sm:grid-cols-2"
@@ -513,6 +516,7 @@ function SizeSelectorGroup({
 			<div
 				ref={containerRef}
 				role="radiogroup"
+				aria-required="true"
 				aria-labelledby={SIZE_LEGEND_ID}
 				aria-describedby={hasValidationErrors && !selectedValue ? VALIDATION_ERROR_ID : undefined}
 				className="grid grid-cols-3 gap-2 sm:grid-cols-4"
@@ -822,6 +826,9 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 						Choisissez vos options pour ajouter au panier
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
+				<p className="text-muted-foreground text-xs" aria-hidden="true">
+					* Champs obligatoires
+				</p>
 
 				{/* Unavailable product message */}
 				{(noActiveSkus || allOutOfStock) && (

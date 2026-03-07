@@ -124,45 +124,13 @@ export function PolaroidGallery() {
 				<div role="region" aria-label="Galerie photos de l'atelier Synclune" className="relative">
 					<PolaroidDoodles />
 
-					{/* Mobile < 400px: horizontal carousel */}
-					<div className="mask-carousel-edges scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 min-[400px]:hidden">
-						{POLAROIDS.map((p) => (
-							<div key={p.id} className="w-[75vw] shrink-0 snap-center">
-								<PolaroidFrame
-									tiltDegree={p.tiltDegree}
-									caption={p.caption}
-									captionColor={p.captionColor}
-									captionRotate={p.captionRotate}
-									washiTape
-									washiColor={p.washiColor}
-									washiPosition={p.washiPosition}
-									vintage={p.vintage}
-									className={cn(
-										"motion-safe:transition-shadow motion-safe:duration-300",
-										GLOW_CLASSES[p.glowColor],
-									)}
-								>
-									<PlaceholderImage className="h-full w-full" label={p.label} />
-								</PolaroidFrame>
-							</div>
-						))}
-
-						{/* Scroll progress bar */}
-						<div
-							className="bg-secondary/20 pointer-events-none absolute right-4 bottom-0 left-4 h-0.5 rounded-full"
-							aria-hidden="true"
-						>
-							<div className="carousel-progress bg-secondary/60 h-full w-1/4 rounded-full" />
-						</div>
-					</div>
-
-					{/* 400px+: grid layout with Stagger */}
+					{/* Grid layout with Stagger */}
 					<Stagger
 						stagger={MOTION_CONFIG.stagger.slow}
 						y={MOTION_CONFIG.section.grid.y}
 						inView
 						once
-						className="mx-auto hidden max-w-5xl grid-cols-2 gap-4 min-[400px]:grid sm:gap-6 lg:grid-cols-4 lg:gap-2"
+						className="mx-auto grid max-w-5xl grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-2"
 					>
 						{POLAROIDS.map((p) => (
 							<PolaroidFrame
