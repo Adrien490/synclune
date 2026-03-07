@@ -18,8 +18,17 @@
  * isLightColor("#FFFACD", 0.85) // true (jaune pale, besoin bordure)
  */
 export function isLightColor(hex: string, threshold = 0.5): boolean {
-	// Retirer le # si présent
-	const color = hex.replace("#", "");
+	// Retirer le # si présent et normaliser 3-char hex en 6-char
+	let color = hex.replace("#", "");
+	if (color.length === 3) {
+		color =
+			color.charAt(0) +
+			color.charAt(0) +
+			color.charAt(1) +
+			color.charAt(1) +
+			color.charAt(2) +
+			color.charAt(2);
+	}
 	if (color.length !== 6) return false;
 
 	// Convertir en RGB

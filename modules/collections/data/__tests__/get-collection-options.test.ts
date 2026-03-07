@@ -4,9 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockFindMany, mockCacheCollections } = vi.hoisted(() => ({
+const { mockFindMany, mockCacheCollections, mockIsAdmin } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
 	mockCacheCollections: vi.fn(),
+	mockIsAdmin: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -17,6 +18,10 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("../../utils/cache.utils", () => ({
 	cacheCollections: mockCacheCollections,
+}));
+
+vi.mock("@/modules/auth/utils/guards", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
@@ -50,7 +55,17 @@ function makeCollectionOption(overrides: Record<string, unknown> = {}) {
 describe("getCollectionOptions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockIsAdmin.mockResolvedValue(true);
 		mockFindMany.mockResolvedValue([]);
+	});
+
+	it("returns empty array when user is not admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		const result = await getCollectionOptions();
+
+		expect(result).toEqual([]);
+		expect(mockFindMany).not.toHaveBeenCalled();
 	});
 
 	it("returns collections list", async () => {

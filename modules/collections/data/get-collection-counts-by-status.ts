@@ -1,5 +1,5 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -23,12 +23,16 @@ export type {
  * Récupère le nombre de collections par statut
  * Optimisé avec une seule requête groupBy
  *
- * Protection: Nécessite un compte ADMIN
+ * Protection: Nécessite un compte ADMIN (vérifié en DB via requireAdmin)
  */
 export async function getCollectionCountsByStatus(): Promise<GetCollectionCountsByStatusReturn> {
-	const admin = await isAdmin();
-	if (!admin) {
-		throw new Error("Accès non autorisé. Droits administrateur requis.");
+	const admin = await requireAdmin();
+	if ("error" in admin) {
+		return {
+			[CollectionStatus.PUBLIC]: 0,
+			[CollectionStatus.DRAFT]: 0,
+			[CollectionStatus.ARCHIVED]: 0,
+		};
 	}
 
 	return fetchCollectionCountsByStatus();

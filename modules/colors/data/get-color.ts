@@ -1,4 +1,5 @@
 import { type Prisma } from "@/app/generated/prisma/client";
+import * as Sentry from "@sentry/nextjs";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -60,9 +61,9 @@ async function fetchColor(slug: string, includeInactive: boolean): Promise<GetCo
 
 		return color;
 	} catch (error) {
-		if (error instanceof Error) {
-			console.error(`[getColorBySlug] ${error.name}: ${error.message}`);
-		}
+		Sentry.captureException(error, {
+			tags: { module: "colors", operation: "fetchColorBySlug" },
+		});
 		return null;
 	}
 }

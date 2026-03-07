@@ -4,7 +4,14 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	BusinessError,
+	safeFormGetJSON,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -28,54 +35,50 @@ export async function bulkDeleteColors(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Extract IDs from FormData
-		const idsString = formData.get("ids");
-		let ids: unknown = [];
-		try {
-			ids = idsString ? JSON.parse(idsString as string) : [];
-		} catch {
-			return error("Format d'IDs invalide");
-		}
+		const ids: unknown = safeFormGetJSON<unknown>(formData, "ids") ?? [];
 
 		// Validate data
 		const validated = validateInput(bulkDeleteColorsSchema, { ids });
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Check for colors used by SKUs
-		const colorsWithUsage = await prisma.color.findMany({
-			where: {
-				id: {
-					in: validatedData.ids,
-				},
-			},
-			include: {
-				_count: {
-					select: {
-						skus: true,
+		// Check SKU usage and delete atomically
+		const { slugsToInvalidate, result } = await prisma.$transaction(async (tx) => {
+			const colorsWithUsage = await tx.color.findMany({
+				where: {
+					id: {
+						in: validatedData.ids,
 					},
 				},
-			},
-		});
-
-		const usedColors = colorsWithUsage.filter((color) => color._count.skus > 0);
-
-		if (usedColors.length > 0) {
-			const colorNames = usedColors.map((c) => c.name).join(", ");
-			return error(
-				`${usedColors.length} couleur${usedColors.length > 1 ? "s" : ""} (${colorNames}) ${usedColors.length > 1 ? "sont utilisees" : "est utilisee"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`,
-			);
-		}
-
-		// Store slugs BEFORE delete — records no longer exist after deleteMany
-		const slugsToInvalidate = colorsWithUsage.map((c) => c.slug);
-
-		// Delete the colors
-		const result = await prisma.color.deleteMany({
-			where: {
-				id: {
-					in: validatedData.ids,
+				include: {
+					_count: {
+						select: {
+							skus: true,
+						},
+					},
 				},
-			},
+			});
+
+			const usedColors = colorsWithUsage.filter((color) => color._count.skus > 0);
+
+			if (usedColors.length > 0) {
+				const colorNames = usedColors.map((c) => c.name).join(", ");
+				throw new BusinessError(
+					`${usedColors.length} couleur${usedColors.length > 1 ? "s" : ""} (${colorNames}) ${usedColors.length > 1 ? "sont utilisees" : "est utilisee"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`,
+				);
+			}
+
+			const slugs = colorsWithUsage.map((c) => c.slug);
+
+			const deleteResult = await tx.color.deleteMany({
+				where: {
+					id: {
+						in: validatedData.ids,
+					},
+				},
+			});
+
+			return { slugsToInvalidate: slugs, result: deleteResult };
 		});
 
 		void logAudit({

@@ -65,6 +65,7 @@ vi.mock("../../constants/color.constants", () => ({
 		updatedAt: true,
 		_count: { select: { skus: true } },
 	},
+	COLOR_SEARCH_MAX_LENGTH: 100,
 	GET_COLORS_DEFAULT_PER_PAGE: 20,
 	GET_COLORS_MAX_RESULTS_PER_PAGE: 200,
 	GET_COLORS_DEFAULT_SORT_BY: "name-ascending",

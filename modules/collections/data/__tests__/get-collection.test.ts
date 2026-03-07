@@ -28,6 +28,10 @@ vi.mock("../../utils/cache.utils", () => ({
 	cacheCollectionDetail: mockCacheCollectionDetail,
 }));
 
+vi.mock("@/app/generated/prisma/client", () => ({
+	CollectionStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
+}));
+
 vi.mock("../../constants/collection.constants", () => ({
 	GET_COLLECTION_SELECT: mockGetCollectionSelect,
 	GET_COLLECTION_STOREFRONT_SELECT: mockGetCollectionStorefrontSelect,
@@ -243,5 +247,21 @@ describe("getStorefrontCollectionBySlug", () => {
 
 		// Assert
 		expect(result).toBeNull();
+	});
+
+	it("filters by PUBLIC status in the DB query", async () => {
+		// Arrange
+		mockSafeParse.mockReturnValue({ success: true, data: { slug: "draft-collection" } });
+		mockFindUnique.mockResolvedValue(null);
+
+		// Act
+		await getStorefrontCollectionBySlug({ slug: "draft-collection" });
+
+		// Assert
+		expect(mockFindUnique).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { slug: "draft-collection", status: "PUBLIC" },
+			}),
+		);
 	});
 });

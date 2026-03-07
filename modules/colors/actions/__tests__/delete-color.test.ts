@@ -22,6 +22,7 @@ const {
 			findUnique: vi.fn(),
 			delete: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -52,6 +53,12 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+	BusinessError: class BusinessError extends Error {
+		constructor(message: string) {
+			super(message);
+			this.name = "BusinessError";
+		}
+	},
 }));
 vi.mock("../../schemas/color.schemas", () => ({ deleteColorSchema: {} }));
 vi.mock("../../constants/cache", () => ({
@@ -91,15 +98,18 @@ describe("deleteColor", () => {
 		mockGetColorInvalidationTags.mockReturnValue(["colors-list", "color-or-rose"]);
 		mockPrisma.color.findUnique.mockResolvedValue(makeColor());
 		mockPrisma.color.delete.mockResolvedValue({ id: "color-1" });
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+			fn(mockPrisma),
+		);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof Error && e.name === "BusinessError" ? e.message : fallback,
 		}));
 	});
 

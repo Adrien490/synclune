@@ -36,7 +36,6 @@ export function EditCollectionForm({
 	const form = useAppForm({
 		defaultValues: {
 			id: collection.id,
-			slug: collection.slug,
 			name: collection.name,
 			description: collection.description ?? "",
 			status: collection.status,
@@ -71,7 +70,6 @@ export function EditCollectionForm({
 		>
 			{/* Hidden fields */}
 			<input type="hidden" name="id" value={collection.id} />
-			<input type="hidden" name="slug" value={collection.slug} />
 			<form.Subscribe selector={(state) => [state.values.status]}>
 				{([status]) => <input type="hidden" name="status" value={status as string} />}
 			</form.Subscribe>

@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheColors } from "../constants/cache";
 import type { ColorOption } from "../types/color.types";
@@ -37,9 +38,9 @@ async function fetchColorOptions(): Promise<ColorOption[]> {
 
 		return colors;
 	} catch (error) {
-		if (error instanceof Error) {
-			console.error(`[getColorOptions] ${error.name}: ${error.message}`);
-		}
+		Sentry.captureException(error, {
+			tags: { module: "colors", operation: "fetchColorOptions" },
+		});
 		return [];
 	}
 }

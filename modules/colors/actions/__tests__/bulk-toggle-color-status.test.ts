@@ -44,6 +44,15 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	safeFormGetJSON: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		if (typeof v !== "string") return null;
+		try {
+			return JSON.parse(v);
+		} catch {
+			return null;
+		}
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
@@ -99,12 +108,15 @@ describe("bulkToggleColorStatus", () => {
 		expect(result.status).toBe(ActionStatus.FORBIDDEN);
 	});
 
-	it("returns error on invalid JSON format", async () => {
-		const _result = await bulkToggleColorStatus(
+	it("returns validation error on invalid JSON format", async () => {
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "Aucune couleur selectionnee" },
+		});
+		const result = await bulkToggleColorStatus(
 			undefined,
 			createMockFormData({ ids: "not-json", isActive: "true" }),
 		);
-		expect(mockError).toHaveBeenCalledWith("Format d'IDs invalide");
+		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});
 
 	it("updates all colors to active status", async () => {

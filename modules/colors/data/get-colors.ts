@@ -1,4 +1,5 @@
 import { type Prisma } from "@/app/generated/prisma/client";
+import * as Sentry from "@sentry/nextjs";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
@@ -103,9 +104,9 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 
 		return { colors: items, pagination };
 	} catch (error) {
-		if (error instanceof Error) {
-			console.error(`[getColors] ${error.name}: ${error.message}`);
-		}
+		Sentry.captureException(error, {
+			tags: { module: "colors", operation: "fetchColors" },
+		});
 
 		return {
 			colors: [],

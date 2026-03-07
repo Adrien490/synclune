@@ -424,12 +424,12 @@ describe("bulkArchiveCollectionsSchema", () => {
 			expect(result.success).toBe(true);
 		});
 
-		it("accepts DRAFT as targetStatus", () => {
+		it("rejects DRAFT as targetStatus", () => {
 			const result = bulkArchiveCollectionsSchema.safeParse({
 				...baseValid,
 				targetStatus: "DRAFT",
 			});
-			expect(result.success).toBe(true);
+			expect(result.success).toBe(false);
 		});
 
 		it("rejects an invalid targetStatus value", () => {

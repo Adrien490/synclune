@@ -1,4 +1,5 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheCollections } from "../utils/cache.utils";
 import type { CollectionOption } from "../types/collection.types";
@@ -15,8 +16,13 @@ const COLLECTION_ACTIVE_STATUSES = [CollectionStatus.DRAFT, CollectionStatus.PUB
 /**
  * Récupère toutes les collections actives (non archivées) pour les selects/filtres
  * Version simplifiée sans pagination
+ *
+ * Protection: Nécessite un compte ADMIN (session-only via isAdmin)
  */
 export async function getCollectionOptions(): Promise<CollectionOption[]> {
+	const admin = await isAdmin();
+	if (!admin) return [];
+
 	return fetchCollectionOptions();
 }
 

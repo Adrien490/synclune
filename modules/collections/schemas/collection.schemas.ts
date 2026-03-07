@@ -123,11 +123,7 @@ export const bulkArchiveCollectionsSchema = z.object({
 		.array(z.cuid2({ message: "ID de collection invalide" }))
 		.min(1, "Au moins une collection doit être sélectionnée")
 		.max(GET_COLLECTIONS_MAX_RESULTS_PER_PAGE, "Trop de collections sélectionnées"),
-	targetStatus: z.enum([
-		CollectionStatus.ARCHIVED,
-		CollectionStatus.PUBLIC,
-		CollectionStatus.DRAFT,
-	]),
+	targetStatus: z.enum([CollectionStatus.ARCHIVED, CollectionStatus.PUBLIC]),
 });
 
 export const setFeaturedProductSchema = z.object({

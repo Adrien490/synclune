@@ -1,3 +1,4 @@
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
 import { cacheCollectionDetail } from "../utils/cache.utils";
@@ -89,7 +90,7 @@ async function fetchStorefrontCollection(
 
 	try {
 		const collection = await prisma.collection.findUnique({
-			where: { slug: params.slug },
+			where: { slug: params.slug, status: CollectionStatus.PUBLIC },
 			select: GET_COLLECTION_STOREFRONT_SELECT,
 		});
 

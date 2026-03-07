@@ -4,9 +4,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockGroupBy, mockIsAdmin } = vi.hoisted(() => ({
+const { mockGroupBy, mockRequireAdmin } = vi.hoisted(() => ({
 	mockGroupBy: vi.fn(),
-	mockIsAdmin: vi.fn(),
+	mockRequireAdmin: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -15,8 +15,8 @@ vi.mock("@/shared/lib/prisma", () => ({
 	},
 }));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
-	isAdmin: mockIsAdmin,
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
@@ -61,7 +61,7 @@ const EMPTY_COUNTS = {
 describe("getCollectionCountsByStatus", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockIsAdmin.mockResolvedValue(true);
+		mockRequireAdmin.mockResolvedValue({ admin: true });
 		mockGroupBy.mockResolvedValue([]);
 	});
 
@@ -70,24 +70,28 @@ describe("getCollectionCountsByStatus", () => {
 	// ============================================================================
 
 	describe("auth", () => {
-		it("throws when user is not admin", async () => {
-			mockIsAdmin.mockResolvedValue(false);
+		it("returns empty counts when user is not admin", async () => {
+			mockRequireAdmin.mockResolvedValue({
+				error: { status: "FORBIDDEN", message: "Non autorise" },
+			});
 
-			await expect(getCollectionCountsByStatus()).rejects.toThrow(
-				"Accès non autorisé. Droits administrateur requis.",
-			);
+			const result = await getCollectionCountsByStatus();
+
+			expect(result).toEqual(EMPTY_COUNTS);
 		});
 
 		it("succeeds when user is admin", async () => {
-			mockIsAdmin.mockResolvedValue(true);
+			mockRequireAdmin.mockResolvedValue({ admin: true });
 
 			await expect(getCollectionCountsByStatus()).resolves.toBeDefined();
 		});
 
 		it("does not query DB when not admin", async () => {
-			mockIsAdmin.mockResolvedValue(false);
+			mockRequireAdmin.mockResolvedValue({
+				error: { status: "FORBIDDEN", message: "Non autorise" },
+			});
 
-			await expect(getCollectionCountsByStatus()).rejects.toThrow();
+			await getCollectionCountsByStatus();
 			expect(mockGroupBy).not.toHaveBeenCalled();
 		});
 	});

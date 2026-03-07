@@ -22,8 +22,9 @@ describe("isLightColor", () => {
 		expect(isLightColor("FFFFFF")).toBe(true);
 	});
 
-	it("should return false for invalid 3-char hex (non-expanded)", () => {
-		expect(isLightColor("#FFF")).toBe(false);
+	it("should expand 3-char hex and compute correctly", () => {
+		expect(isLightColor("#FFF")).toBe(true); // #FFF -> #FFFFFF (white)
+		expect(isLightColor("#000")).toBe(false); // #000 -> #000000 (black)
 	});
 
 	it("should respect custom threshold", () => {

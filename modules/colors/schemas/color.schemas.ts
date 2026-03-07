@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
+	COLOR_SEARCH_MAX_LENGTH,
 	GET_COLORS_DEFAULT_PER_PAGE,
 	GET_COLORS_DEFAULT_SORT_BY,
 	GET_COLORS_MAX_RESULTS_PER_PAGE,
@@ -32,7 +33,7 @@ export const getColorsSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_COLORS_DEFAULT_PER_PAGE, GET_COLORS_MAX_RESULTS_PER_PAGE),
 	sortBy: colorSortBySchema.optional().default(GET_COLORS_DEFAULT_SORT_BY),
-	search: z.string().max(100).optional(),
+	search: z.string().max(COLOR_SEARCH_MAX_LENGTH).optional(),
 	filters: colorFiltersSchema.optional().default({}),
 });
 

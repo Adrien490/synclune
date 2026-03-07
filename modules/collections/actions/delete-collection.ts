@@ -50,8 +50,8 @@ export async function deleteCollection(
 			return error("Cette collection n'existe pas");
 		}
 
-		// Note: On peut supprimer une collection meme si elle a des produits
-		// car la relation ProductCollection est onDelete: Cascade (les join entries sont supprimees, les produits preserves)
+		// Hard delete: collections have no legal retention obligation (unlike orders, payments).
+		// ProductCollection join entries are cascade-deleted; products themselves are preserved.
 		const productCount = existingCollection._count.products;
 
 		// Supprimer la collection

@@ -12,6 +12,7 @@ vi.mock("@/shared/utils/pagination", () => ({
 }));
 
 vi.mock("../../constants/color.constants", () => ({
+	COLOR_SEARCH_MAX_LENGTH: 100,
 	GET_COLORS_DEFAULT_PER_PAGE: 20,
 	GET_COLORS_DEFAULT_SORT_BY: "name-ascending",
 	GET_COLORS_MAX_RESULTS_PER_PAGE: 100,

@@ -47,9 +47,8 @@ export async function bulkDeleteCollections(
 
 		const validatedData = validated.data;
 
-		// Verifier les collections et les supprimer de facon atomique
-		// Note: On peut supprimer les collections meme avec des produits
-		// car la relation ProductCollection est onDelete: Cascade (les join entries sont supprimees, les produits preserves)
+		// Hard delete: collections have no legal retention obligation (unlike orders, payments).
+		// ProductCollection join entries are cascade-deleted; products themselves are preserved.
 		const { collectionsWithUsage, result } = await prisma.$transaction(async (tx) => {
 			const collections = await tx.collection.findMany({
 				where: {
@@ -66,6 +65,10 @@ export async function bulkDeleteCollections(
 				},
 			});
 
+			if (collections.length !== validatedData.ids.length) {
+				return { collectionsWithUsage: collections, result: { count: 0 } };
+			}
+
 			const deleteResult = await tx.collection.deleteMany({
 				where: {
 					id: {
@@ -76,6 +79,10 @@ export async function bulkDeleteCollections(
 
 			return { collectionsWithUsage: collections, result: deleteResult };
 		});
+
+		if (result.count === 0) {
+			return error("Certaines collections n'ont pas été trouvées");
+		}
 
 		const totalProducts = collectionsWithUsage.reduce((sum, col) => sum + col._count.products, 0);
 

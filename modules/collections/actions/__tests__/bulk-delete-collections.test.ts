@@ -201,6 +201,20 @@ describe("bulkDeleteCollections", () => {
 	// Deletion
 	// --------------------------------------------------------------------------
 
+	it("should return error when some IDs are not found", async () => {
+		mockValidateInput.mockReturnValue({ data: { ids: VALID_IDS } });
+		// Only 1 collection found for 2 requested IDs
+		mockPrisma.collection.findMany.mockResolvedValue([
+			createMockCollection({ id: VALID_CUID, slug: "col-1" }),
+		]);
+
+		const result = await bulkDeleteCollections(undefined, makeFormData());
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("trouvées");
+		expect(mockPrisma.collection.deleteMany).not.toHaveBeenCalled();
+	});
+
 	it("should delete collections that have no products", async () => {
 		const collections = [
 			createMockCollection({ id: VALID_CUID, slug: "col-1", _count: { products: 0 } }),

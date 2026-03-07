@@ -61,6 +61,7 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 				name: validatedData.name,
 				slug,
 				hex: validatedData.hex,
+				isActive: true,
 			},
 		});
 

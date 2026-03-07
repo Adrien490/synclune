@@ -19,6 +19,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		color: { findMany: vi.fn(), deleteMany: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -44,10 +45,25 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	safeFormGetJSON: (formData: FormData, key: string) => {
+		const v = formData.get(key);
+		if (typeof v !== "string") return null;
+		try {
+			return JSON.parse(v);
+		} catch {
+			return null;
+		}
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+	BusinessError: class BusinessError extends Error {
+		constructor(message: string) {
+			super(message);
+			this.name = "BusinessError";
+		}
+	},
 }));
 vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 vi.mock("../../constants/cache", () => ({
@@ -78,6 +94,9 @@ describe("bulkDeleteColors", () => {
 			{ id: "col-2", name: "Argent", slug: "argent", _count: { skus: 0 } },
 		]);
 		mockPrisma.color.deleteMany.mockResolvedValue({ count: 2 });
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+			fn(mockPrisma),
+		);
 		mockGetColorInvalidationTags.mockReturnValue(["colors-list"]);
 
 		mockSuccess.mockImplementation((msg: string) => ({
@@ -85,9 +104,9 @@ describe("bulkDeleteColors", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockHandleActionError.mockImplementation((_e: unknown, f: string) => ({
+		mockHandleActionError.mockImplementation((e: unknown, f: string) => ({
 			status: ActionStatus.ERROR,
-			message: f,
+			message: e instanceof Error && e.name === "BusinessError" ? e.message : f,
 		}));
 	});
 
@@ -107,12 +126,13 @@ describe("bulkDeleteColors", () => {
 			{ id: "col-1", name: "Or", slug: "or", _count: { skus: 3 } },
 		]);
 
-		const _result = await bulkDeleteColors(
+		const result = await bulkDeleteColors(
 			undefined,
 			createMockFormData({ ids: JSON.stringify(COLOR_IDS) }),
 		);
 
-		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("utilisee"));
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("utilisee");
 		expect(mockPrisma.color.deleteMany).not.toHaveBeenCalled();
 	});
 
@@ -124,9 +144,12 @@ describe("bulkDeleteColors", () => {
 		);
 	});
 
-	it("returns error on invalid JSON format", async () => {
-		const _result = await bulkDeleteColors(undefined, createMockFormData({ ids: "not-json" }));
-		expect(mockError).toHaveBeenCalledWith("Format d'IDs invalide");
+	it("returns validation error on invalid JSON format", async () => {
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "Aucune couleur sélectionnée" },
+		});
+		const result = await bulkDeleteColors(undefined, createMockFormData({ ids: "not-json" }));
+		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});
 
 	it("invalidates cache after deletion", async () => {

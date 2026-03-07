@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+	safeFormGetJSON,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -28,13 +34,7 @@ export async function bulkToggleColorStatus(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Extract data from FormData
-		const idsString = formData.get("ids");
-		let ids: unknown = [];
-		try {
-			ids = idsString ? JSON.parse(idsString as string) : [];
-		} catch {
-			return error("Format d'IDs invalide");
-		}
+		const ids: unknown = safeFormGetJSON<unknown>(formData, "ids") ?? [];
 		const isActive = formData.get("isActive") === "true";
 
 		// Validate data
