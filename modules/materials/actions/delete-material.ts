@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import {
+	handleActionError,
+	success,
+	error,
+	validateInput,
+	BusinessError,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -37,34 +43,38 @@ export async function deleteMaterial(
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Verifier que le materiau existe
-		const existingMaterial = await prisma.material.findUnique({
-			where: { id: validatedData.id },
-			include: {
-				_count: {
-					select: {
-						skus: true,
+		// Check existence + SKU usage and delete atomically
+		const existingMaterial = await prisma.$transaction(async (tx) => {
+			const material = await tx.material.findUnique({
+				where: { id: validatedData.id },
+				include: {
+					_count: {
+						select: {
+							skus: true,
+						},
 					},
 				},
-			},
+			});
+
+			if (!material) return null;
+
+			const skuCount = material._count.skus;
+			if (skuCount > 0) {
+				throw new BusinessError(
+					`Ce materiau est utilise par ${skuCount} variante${skuCount > 1 ? "s" : ""}. Veuillez modifier ces variantes avant de supprimer le materiau.`,
+				);
+			}
+
+			await tx.material.delete({
+				where: { id: validatedData.id },
+			});
+
+			return material;
 		});
 
 		if (!existingMaterial) {
 			return error("Ce materiau n'existe pas");
 		}
-
-		// Verifier si le materiau est utilise
-		const skuCount = existingMaterial._count.skus;
-		if (skuCount > 0) {
-			return error(
-				`Ce materiau est utilise par ${skuCount} variante${skuCount > 1 ? "s" : ""}. Veuillez modifier ces variantes avant de supprimer le materiau.`,
-			);
-		}
-
-		// Supprimer le materiau
-		await prisma.material.delete({
-			where: { id: validatedData.id },
-		});
 
 		void logAudit({
 			adminId: adminUser.id,

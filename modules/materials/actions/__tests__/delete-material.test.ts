@@ -22,6 +22,7 @@ const {
 			findUnique: vi.fn(),
 			delete: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -52,6 +53,12 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+	BusinessError: class BusinessError extends Error {
+		constructor(message: string) {
+			super(message);
+			this.name = "BusinessError";
+		}
+	},
 }));
 vi.mock("../../schemas/materials.schemas", () => ({ deleteMaterialSchema: {} }));
 vi.mock("../../constants/cache", () => ({
@@ -91,15 +98,18 @@ describe("deleteMaterial", () => {
 		mockGetMaterialInvalidationTags.mockReturnValue(["materials-list", "material-argent-925"]);
 		mockPrisma.material.findUnique.mockResolvedValue(makeMaterial());
 		mockPrisma.material.delete.mockResolvedValue({ id: "mat-1" });
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+			fn(mockPrisma),
+		);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof Error && e.name === "BusinessError" ? e.message : fallback,
 		}));
 	});
 
@@ -148,8 +158,9 @@ describe("deleteMaterial", () => {
 		expect(result.message).toContain("6 variantes");
 	});
 
-	it("should delete the material and return success", async () => {
+	it("should delete the material atomically in a transaction and return success", async () => {
 		const result = await deleteMaterial(undefined, validFormData);
+		expect(mockPrisma.$transaction).toHaveBeenCalled();
 		expect(mockPrisma.material.delete).toHaveBeenCalledWith({ where: { id: "mat-1" } });
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});

@@ -94,6 +94,13 @@ export async function duplicateDiscount(
 
 		const sanitizedCode = sanitizeText(newCode);
 
+		// Validate generated code against schema constraints (e.g. 30 chars max from DB VarChar)
+		if (sanitizedCode.length > 30) {
+			return error(
+				"Le code genere est trop long. Raccourcissez le code original avant de dupliquer.",
+			);
+		}
+
 		const duplicate = await prisma.discount.create({
 			data: {
 				code: sanitizedCode,

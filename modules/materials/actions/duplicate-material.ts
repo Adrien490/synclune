@@ -62,23 +62,30 @@ export async function duplicateMaterial(
 		}
 
 		// 5. Generer un nouveau nom unique
-		let newName = `${original.name} (copie)`;
-		let suffix = 1;
+		const baseCopyName = `${original.name} (copie`;
+		const existingCopies = await prisma.material.findMany({
+			where: { name: { startsWith: baseCopyName } },
+			select: { name: true },
+		});
 
-		// Verifier si le nom existe deja et incrementer le suffixe si necessaire
-		for (;;) {
-			const existing = await prisma.material.findFirst({
-				where: { name: newName },
-			});
-
-			if (!existing) break;
-
-			suffix++;
-			newName = `${original.name} (copie ${suffix})`;
-
-			// Securite: eviter boucle infinie
-			if (suffix > 100) {
-				return error("Impossible de generer un nom unique. Supprimez certaines copies.");
+		let newName: string;
+		if (existingCopies.length === 0) {
+			newName = `${original.name} (copie)`;
+		} else {
+			const existingNames = new Set(existingCopies.map((m) => m.name));
+			// Check if "(copie)" is available
+			if (!existingNames.has(`${original.name} (copie)`)) {
+				newName = `${original.name} (copie)`;
+			} else {
+				// Find the next available suffix
+				let suffix = 2;
+				while (existingNames.has(`${original.name} (copie ${suffix})`) && suffix <= 100) {
+					suffix++;
+				}
+				if (suffix > 100) {
+					return error("Impossible de generer un nom unique. Supprimez certaines copies.");
+				}
+				newName = `${original.name} (copie ${suffix})`;
 			}
 		}
 

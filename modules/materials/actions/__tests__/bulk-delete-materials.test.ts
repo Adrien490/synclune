@@ -20,6 +20,7 @@ const {
 			findMany: vi.fn(),
 			deleteMany: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -58,6 +59,12 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: (message: string) => ({ status: ActionStatus.SUCCESS, message }),
 	error: (message: string) => ({ status: ActionStatus.ERROR, message }),
+	BusinessError: class BusinessError extends Error {
+		constructor(message: string) {
+			super(message);
+			this.name = "BusinessError";
+		}
+	},
 }));
 
 vi.mock("@/shared/lib/audit-log", () => ({
@@ -107,9 +114,9 @@ describe("bulkDeleteMaterials", () => {
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockGetMaterialInvalidationTags.mockReturnValue(["materials-list", "admin-badges"]);
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof Error && e.name === "BusinessError" ? e.message : fallback,
 		}));
 		mockValidateInput.mockImplementation((_schema: unknown, data: unknown) => ({
 			data: data as { ids: string[] },
@@ -121,6 +128,9 @@ describe("bulkDeleteMaterials", () => {
 		];
 		mockPrisma.material.findMany.mockResolvedValue(materials);
 		mockPrisma.material.deleteMany.mockResolvedValue({ count: 2 });
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+			fn(mockPrisma),
+		);
 	});
 
 	// --------------------------------------------------------------------------
@@ -134,7 +144,7 @@ describe("bulkDeleteMaterials", () => {
 		const result = await bulkDeleteMaterials(undefined, makeFormData());
 
 		expect(result).toEqual(authError);
-		expect(mockPrisma.material.findMany).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	// --------------------------------------------------------------------------
@@ -148,7 +158,7 @@ describe("bulkDeleteMaterials", () => {
 		const result = await bulkDeleteMaterials(undefined, makeFormData());
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockPrisma.material.findMany).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	// --------------------------------------------------------------------------
@@ -186,7 +196,7 @@ describe("bulkDeleteMaterials", () => {
 		const result = await bulkDeleteMaterials(undefined, makeFormData());
 
 		expect(result).toEqual(validationError);
-		expect(mockPrisma.material.findMany).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	// --------------------------------------------------------------------------
@@ -224,7 +234,7 @@ describe("bulkDeleteMaterials", () => {
 	// Deletion
 	// --------------------------------------------------------------------------
 
-	it("should delete materials with no SKU usages", async () => {
+	it("should delete materials atomically in a transaction", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: VALID_IDS } });
 		mockPrisma.material.findMany.mockResolvedValue([
 			createMockMaterial({ id: VALID_CUID, slug: "argent-925", _count: { skus: 0 } }),
@@ -234,6 +244,7 @@ describe("bulkDeleteMaterials", () => {
 
 		const result = await bulkDeleteMaterials(undefined, makeFormData());
 
+		expect(mockPrisma.$transaction).toHaveBeenCalled();
 		expect(mockPrisma.material.deleteMany).toHaveBeenCalledWith({
 			where: { id: { in: VALID_IDS } },
 		});
@@ -268,7 +279,7 @@ describe("bulkDeleteMaterials", () => {
 
 	it("should call handleActionError on unexpected exception", async () => {
 		mockValidateInput.mockReturnValue({ data: { ids: VALID_IDS } });
-		mockPrisma.material.findMany.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 
 		const result = await bulkDeleteMaterials(undefined, makeFormData());
 

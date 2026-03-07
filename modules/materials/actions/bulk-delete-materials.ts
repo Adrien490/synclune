@@ -4,7 +4,13 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import {
+	handleActionError,
+	success,
+	error,
+	validateInput,
+	BusinessError,
+} from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -41,41 +47,43 @@ export async function bulkDeleteMaterials(
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Verifier les materiaux utilises
-		const materialsWithUsage = await prisma.material.findMany({
-			where: {
-				id: {
-					in: validatedData.ids,
-				},
-			},
-			include: {
-				_count: {
-					select: {
-						skus: true,
+		// Check SKU usage and delete atomically
+		const { slugsToInvalidate, result } = await prisma.$transaction(async (tx) => {
+			const materialsWithUsage = await tx.material.findMany({
+				where: {
+					id: {
+						in: validatedData.ids,
 					},
 				},
-			},
-		});
-
-		const usedMaterials = materialsWithUsage.filter((material) => material._count.skus > 0);
-
-		if (usedMaterials.length > 0) {
-			const materialNames = usedMaterials.map((m) => m.name).join(", ");
-			return error(
-				`${usedMaterials.length} materiau${usedMaterials.length > 1 ? "x" : ""} (${materialNames}) ${usedMaterials.length > 1 ? "sont utilises" : "est utilise"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`,
-			);
-		}
-
-		// Recuperer les slugs avant suppression pour invalidation cache
-		const slugs = materialsWithUsage.map((m) => m.slug);
-
-		// Supprimer les materiaux
-		const result = await prisma.material.deleteMany({
-			where: {
-				id: {
-					in: validatedData.ids,
+				include: {
+					_count: {
+						select: {
+							skus: true,
+						},
+					},
 				},
-			},
+			});
+
+			const usedMaterials = materialsWithUsage.filter((material) => material._count.skus > 0);
+
+			if (usedMaterials.length > 0) {
+				const materialNames = usedMaterials.map((m) => m.name).join(", ");
+				throw new BusinessError(
+					`${usedMaterials.length} materiau${usedMaterials.length > 1 ? "x" : ""} (${materialNames}) ${usedMaterials.length > 1 ? "sont utilises" : "est utilise"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`,
+				);
+			}
+
+			const slugs = materialsWithUsage.map((m) => m.slug);
+
+			const deleteResult = await tx.material.deleteMany({
+				where: {
+					id: {
+						in: validatedData.ids,
+					},
+				},
+			});
+
+			return { slugsToInvalidate: slugs, result: deleteResult };
 		});
 
 		void logAudit({
@@ -89,7 +97,7 @@ export async function bulkDeleteMaterials(
 
 		// Invalider le cache (list + detail de chaque materiau)
 		const tags = getMaterialInvalidationTags();
-		for (const slug of slugs) {
+		for (const slug of slugsToInvalidate) {
 			tags.push(...getMaterialInvalidationTags(slug));
 		}
 		// Deduplicate tags

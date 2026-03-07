@@ -122,6 +122,37 @@ export const ajNewsletterUnsubscribe = arcjet({
 });
 
 /**
+ * Instance Arcjet pour la validation de codes promo
+ *
+ * Protection contre le brute-force de codes promo :
+ * - Rate limiting : 10 tentatives par 15 minutes par IP
+ * - Shield contre les attaques
+ * - Bot detection stricte
+ */
+export const ajDiscountValidation = arcjet({
+	key: process.env.ARCJET_KEY!,
+	rules: [
+		// Shield contre les attaques
+		shield({ mode: "LIVE" }),
+
+		// Bot detection stricte - Aucun bot autorise
+		detectBot({
+			mode: "LIVE",
+			allow: [],
+		}),
+
+		// Rate limiting : 10 tentatives par 15 minutes par IP
+		tokenBucket({
+			mode: "LIVE",
+			characteristics: ["ip.src"],
+			refillRate: 10, // 10 tokens par intervalle
+			interval: 900, // Intervalle de 15 minutes (900 secondes)
+			capacity: 10, // Capacite max de 10 tokens
+		}),
+	],
+});
+
+/**
  * Instance Arcjet pour l'authentification (générique)
  *
  * 🔐 Protection pour les endpoints d'authentification critiques :
