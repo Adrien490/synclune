@@ -11,7 +11,7 @@ import { ROUTES } from "@/shared/constants/urls";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
-import { Gem, Heart, LogIn } from "lucide-react";
+import { Gem, Heart } from "lucide-react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import Link from "next/link";
@@ -265,10 +265,9 @@ export function MenuSheetNav({
 									<SheetClose asChild>
 										<Link
 											href={accountItem.href}
-											className={getLinkClass(accountItem.href, !isLoggedIn ? "gap-2" : undefined)}
+											className={getLinkClass(accountItem.href)}
 											aria-current={isMenuItemActive(accountItem.href) ? "page" : undefined}
 										>
-											{!isLoggedIn && <LogIn className="size-4" aria-hidden="true" />}
 											{accountItem.label}
 										</Link>
 									</SheetClose>

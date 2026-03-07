@@ -19,6 +19,7 @@ import {
 	ReviewStatus,
 	HistorySource,
 	WebhookEventStatus,
+	AccountStatus,
 } from "../app/generated/prisma/client";
 
 // ============================================
@@ -40,7 +41,12 @@ const CONFIG = {
 	orderPrefix: process.env.SEED_ORDER_PREFIX ?? "DEV",
 };
 
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+if (!process.env.DATABASE_URL) {
+	console.error("❌ DATABASE_URL is not set. Please set it in your .env file.");
+	process.exit(1);
+}
+
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 const faker = fakerFR;
 faker.seed(42);
@@ -66,11 +72,11 @@ function buildOrderNumber(index: number): string {
 
 // EU country data for realistic multi-country addresses
 const EU_COUNTRIES = [
-	{ code: "FR", weight: 70, phonePrefix: "+33", zipFormat: "#####" },
-	{ code: "BE", weight: 10, phonePrefix: "+32", zipFormat: "####" },
-	{ code: "DE", weight: 10, phonePrefix: "+49", zipFormat: "#####" },
-	{ code: "ES", weight: 5, phonePrefix: "+34", zipFormat: "#####" },
-	{ code: "IT", weight: 5, phonePrefix: "+39", zipFormat: "#####" },
+	{ code: "FR", weight: 70, phonePrefixes: ["+33 6", "+33 7"], zipFormat: "#####" },
+	{ code: "BE", weight: 10, phonePrefixes: ["+32 4"], zipFormat: "####" },
+	{ code: "DE", weight: 10, phonePrefixes: ["+49 1"], zipFormat: "#####" },
+	{ code: "ES", weight: 5, phonePrefixes: ["+34 6"], zipFormat: "#####" },
+	{ code: "IT", weight: 5, phonePrefixes: ["+39 3"], zipFormat: "#####" },
 ] as const;
 
 function generateShippingAddress() {
@@ -80,7 +86,8 @@ function generateShippingAddress() {
 	const country = faker.helpers.weightedArrayElement(
 		EU_COUNTRIES.map((c) => ({ weight: c.weight, value: c })),
 	);
-	const phone = faker.helpers.replaceSymbols(`${country.phonePrefix} # ## ## ## ##`);
+	const phonePrefix = faker.helpers.arrayElement(country.phonePrefixes);
+	const phone = faker.helpers.replaceSymbols(`${phonePrefix} ## ## ## ##`);
 
 	return {
 		customerEmail: faker.internet.email({ firstName, lastName }).toLowerCase(),
@@ -136,6 +143,9 @@ async function cleanup(): Promise<void> {
 
 	await prisma.auditLog.deleteMany();
 	await prisma.dispute.deleteMany();
+	await prisma.failedEmail.deleteMany();
+	await prisma.testimonial.deleteMany();
+	await prisma.customizationMedia.deleteMany();
 
 	await prisma.reviewMedia.deleteMany();
 	await prisma.reviewResponse.deleteMany();
@@ -1426,7 +1436,8 @@ async function main(): Promise<void> {
 	// ============================================
 	const productMap = new Map<string, string>(); // slug → id
 
-	for (const productData of productsData) {
+	for (let pIdx = 0; pIdx < productsData.length; pIdx++) {
+		const productData = productsData[pIdx]!;
 		const typeId = productTypeMap.get(productData.typeSlug);
 		const images = jewelryImages[productData.imageCategory];
 
@@ -1436,17 +1447,14 @@ async function main(): Promise<void> {
 				title: productData.title,
 				description: productData.description,
 				// Last 2 products are DRAFT (M1: workflow brouillon→publication)
-				status:
-					productsData.indexOf(productData) >= productsData.length - 2
-						? ProductStatus.DRAFT
-						: ProductStatus.PUBLIC,
+				status: pIdx >= productsData.length - 2 ? ProductStatus.DRAFT : ProductStatus.PUBLIC,
 				typeId,
 				skus: {
 					create: productData.skus.map((skuData, index) => {
 						// Short SKU code: first 3 chars of type + first 2 of color + index
 						const typePrefix = productData.typeSlug.slice(0, 3).toUpperCase();
 						const colorPrefix = skuData.colorSlug.replace(/-/g, "").slice(0, 2).toUpperCase();
-						const productIndex = productsData.indexOf(productData) + 1;
+						const productIndex = pIdx + 1;
 						const skuCode = `${typePrefix}-${colorPrefix}-${productIndex.toString().padStart(2, "0")}${index + 1}`;
 						const imageUrl = images[index % images.length]!;
 
@@ -1493,23 +1501,43 @@ async function main(): Promise<void> {
 
 	console.log(`✅ ${productsData.length} produits créés`);
 
+	// Set 2 SKUs to inventory 0 (out-of-stock edge case)
+	const skusToDeplete = await prisma.productSku.findMany({
+		where: { isActive: true, inventory: { gt: 0 } },
+		select: { id: true },
+		take: 2,
+		orderBy: { inventory: "asc" },
+	});
+	for (const sku of skusToDeplete) {
+		await prisma.productSku.update({
+			where: { id: sku.id },
+			data: { inventory: 0 },
+		});
+	}
+	console.log(`✅ ${skusToDeplete.length} SKUs mis à inventory 0 (rupture de stock)`);
+
 	// ============================================
 	// LIENS PRODUIT-COLLECTION (batch)
 	// ============================================
 	const productCollectionLinks: Prisma.ProductCollectionCreateManyInput[] = [];
+	const featuredCollections = new Set<string>(); // Track which collections already have a featured product
 
 	for (const productData of productsData) {
 		const productId = productMap.get(productData.slug);
 		if (!productId) continue;
 
-		for (let i = 0; i < productData.collections.length; i++) {
-			const collectionId = collectionMap.get(productData.collections[i]!);
+		for (const collectionSlug of productData.collections) {
+			const collectionId = collectionMap.get(collectionSlug);
 			if (!collectionId) continue;
+
+			// Only first product linked to each collection gets isFeatured
+			const isFeatured = !featuredCollections.has(collectionId);
+			if (isFeatured) featuredCollections.add(collectionId);
 
 			productCollectionLinks.push({
 				productId,
 				collectionId,
-				isFeatured: i === 0,
+				isFeatured,
 			});
 		}
 	}
@@ -1616,11 +1644,16 @@ async function main(): Promise<void> {
 		const customerId = customer?.id ?? null;
 		const orderItemsCount = faker.number.int({ min: 1, max: 3 });
 		const itemsData: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] = [];
+		const usedSkuIds = new Set<string>();
 		let subtotal = 0;
 
 		for (let itemIndex = 0; itemIndex < orderItemsCount; itemIndex += 1) {
 			const product = faker.helpers.arrayElement(existingProducts);
 			const sku = faker.helpers.arrayElement(product.skus);
+
+			// Prevent duplicate SKUs in the same order
+			if (usedSkuIds.has(sku.id)) continue;
+			usedSkuIds.add(sku.id);
 
 			const quantity = faker.number.int({ min: 1, max: 2 });
 			const lineAmount = sku.priceInclTax * quantity;
@@ -1681,6 +1714,13 @@ async function main(): Promise<void> {
 							"insufficient_funds",
 							"processing_error",
 						]),
+						paymentDeclineCode: faker.helpers.arrayElement([
+							"generic_decline",
+							"insufficient_funds",
+							"lost_card",
+							"stolen_card",
+							null,
+						]),
 						paymentFailureMessage: faker.helpers.arrayElement([
 							"Your card was declined.",
 							"Your card has expired.",
@@ -1710,10 +1750,31 @@ async function main(): Promise<void> {
 						stripeCheckoutSessionId: `cs_test_${faker.string.alphanumeric(24)}`,
 						stripePaymentIntentId: `pi_${faker.string.alphanumeric(24)}`,
 						stripeCustomerId: customerId ? userStripeCustomerMap.get(customerId)! : null,
+						stripeInvoiceId: sampleBoolean(0.3) ? `in_${faker.string.alphanumeric(24)}` : null,
 					}
 				: paymentStatus === PaymentStatus.PENDING
 					? { stripeCheckoutSessionId: `cs_test_${faker.string.alphanumeric(24)}` }
 					: {};
+
+		// Post-delivery email tracking for delivered orders
+		const emailTrackingData: Partial<Prisma.OrderCreateInput> = {};
+		if (status === OrderStatus.DELIVERED) {
+			if (sampleBoolean(0.6)) {
+				emailTrackingData.reviewRequestSentAt = new Date(
+					orderDate.getTime() + 14 * 24 * 60 * 60 * 1000,
+				);
+			}
+			if (sampleBoolean(0.3)) {
+				emailTrackingData.reviewReminderSentAt = new Date(
+					orderDate.getTime() + 21 * 24 * 60 * 60 * 1000,
+				);
+			}
+			if (sampleBoolean(0.4)) {
+				emailTrackingData.crossSellEmailSentAt = new Date(
+					orderDate.getTime() + 30 * 24 * 60 * 60 * 1000,
+				);
+			}
+		}
 
 		let trackingData: Partial<Prisma.OrderCreateInput> = {};
 		if (status === OrderStatus.SHIPPED || status === OrderStatus.DELIVERED) {
@@ -1723,15 +1784,40 @@ async function main(): Promise<void> {
 				{ weight: 1, value: "POINT_RELAIS" },
 			]);
 
+			const carrier = faker.helpers.weightedArrayElement([
+				{ weight: 6, value: "colissimo" },
+				{ weight: 2, value: "chronopost" },
+				{ weight: 1, value: "mondial_relay" },
+				{ weight: 1, value: "dpd" },
+			]);
+
 			const shippedAt = new Date(orderDate);
 			shippedAt.setDate(shippedAt.getDate() + faker.number.int({ min: 1, max: 3 }));
 
+			const estimatedDelivery = new Date(shippedAt);
+			estimatedDelivery.setDate(
+				estimatedDelivery.getDate() +
+					(shippingMethod === "EXPRESS"
+						? faker.number.int({ min: 1, max: 2 })
+						: faker.number.int({ min: 3, max: 7 })),
+			);
+
+			const trackingNum = faker.string.alphanumeric({ length: 13, casing: "upper" });
+			const trackingUrls: Record<string, string> = {
+				colissimo: `https://www.laposte.fr/outils/suivre-vos-envois?code=${trackingNum}`,
+				chronopost: `https://www.chronopost.fr/tracking-no-powerful/tracking-search/${trackingNum}`,
+				mondial_relay: `https://www.mondialrelay.fr/suivi-de-colis?numero=${trackingNum}`,
+				dpd: `https://trace.dpd.fr/fr/trace/${trackingNum}`,
+			};
+
 			trackingData = {
 				shippingMethod,
-				shippingCarrier: "colissimo",
-				trackingNumber: faker.string.alphanumeric({ length: 13, casing: "upper" }),
-				trackingUrl: `https://www.laposte.fr/outils/suivre-vos-envois?code=${faker.string.alphanumeric({ length: 13, casing: "upper" })}`,
+				shippingCarrier: carrier,
+				shippingRateId: sampleBoolean(0.5) ? `shr_${faker.string.alphanumeric(24)}` : null,
+				trackingNumber: trackingNum,
+				trackingUrl: trackingUrls[carrier],
 				shippedAt,
+				estimatedDelivery,
 			};
 
 			if (status === OrderStatus.DELIVERED) {
@@ -1759,6 +1845,7 @@ async function main(): Promise<void> {
 				createdAt: orderDate,
 				updatedAt: orderDate,
 				...trackingData,
+				...emailTrackingData,
 				items: {
 					create: itemsData,
 				},
@@ -1818,10 +1905,12 @@ async function main(): Promise<void> {
 		orderBy: { createdAt: "asc" },
 	});
 
-	let invoiceSeq = 1;
+	const invoiceSeqByYear = new Map<number, number>();
 	for (const order of invoiceableOrders) {
 		const year = order.createdAt.getFullYear();
-		const invoiceNumber = `F-${year}-${invoiceSeq.toString().padStart(5, "0")}`;
+		const seq = (invoiceSeqByYear.get(year) ?? 0) + 1;
+		invoiceSeqByYear.set(year, seq);
+		const invoiceNumber = `F-${year}-${seq.toString().padStart(5, "0")}`;
 		await prisma.order.update({
 			where: { id: order.id },
 			data: {
@@ -1830,7 +1919,6 @@ async function main(): Promise<void> {
 				invoiceGeneratedAt: order.createdAt,
 			},
 		});
-		invoiceSeq++;
 	}
 	console.log(`✅ ${invoiceableOrders.length} numéros de facture assignés`);
 
@@ -1959,6 +2047,10 @@ async function main(): Promise<void> {
 
 			const reviewDate = new Date(order.createdAt);
 			reviewDate.setDate(reviewDate.getDate() + faker.number.int({ min: 1, max: 14 }));
+			// Clamp to now to avoid future-dated reviews
+			const now = new Date();
+			if (reviewDate > now)
+				reviewDate.setTime(now.getTime() - faker.number.int({ min: 1, max: 24 }) * 60 * 60 * 1000);
 
 			const reviewStatus = sampleBoolean(0.95) ? ReviewStatus.PUBLISHED : ReviewStatus.HIDDEN;
 
@@ -2125,7 +2217,9 @@ async function main(): Promise<void> {
 			postalCode: faker.location.zipCode(defaultCountry.zipFormat),
 			city: faker.location.city(),
 			country: defaultCountry.code,
-			phone: faker.helpers.replaceSymbols(`${defaultCountry.phonePrefix} # ## ## ## ##`),
+			phone: faker.helpers.replaceSymbols(
+				`${faker.helpers.arrayElement(defaultCountry.phonePrefixes)} ## ## ## ##`,
+			),
 			isDefault: true,
 		});
 
@@ -2143,7 +2237,9 @@ async function main(): Promise<void> {
 				postalCode: faker.location.zipCode(secondCountry.zipFormat),
 				city: faker.location.city(),
 				country: secondCountry.code,
-				phone: faker.helpers.replaceSymbols(`${secondCountry.phonePrefix} # ## ## ## ##`),
+				phone: faker.helpers.replaceSymbols(
+					`${faker.helpers.arrayElement(secondCountry.phonePrefixes)} ## ## ## ##`,
+				),
 				isDefault: false,
 			});
 		}
@@ -2331,10 +2427,18 @@ async function main(): Promise<void> {
 		const itemCount = faker.number.int({ min: 1, max: 4 });
 		const selectedSKUs = faker.helpers.arrayElements(activeSKUs, itemCount);
 
+		// Abandoned carts get expiresAt and some get abandonedEmailSentAt
+		const expiresAt = new Date(cartDate);
+		expiresAt.setDate(expiresAt.getDate() + 30);
+		const abandonedEmailSentAt =
+			isAbandoned && sampleBoolean(0.6) ? new Date(cartDate.getTime() + 2 * 60 * 60 * 1000) : null;
+
 		try {
 			await prisma.cart.create({
 				data: {
 					userId: user.id,
+					expiresAt,
+					abandonedEmailSentAt,
 					createdAt: cartDate,
 					updatedAt: cartDate,
 					items: {
@@ -2392,6 +2496,8 @@ async function main(): Promise<void> {
 		RefundStatus.COMPLETED,
 		RefundStatus.COMPLETED,
 		RefundStatus.REJECTED,
+		RefundStatus.FAILED,
+		RefundStatus.CANCELLED,
 	];
 
 	const refundReasons: RefundReason[] = [
@@ -2402,15 +2508,20 @@ async function main(): Promise<void> {
 	];
 
 	let refundsCreated = 0;
-	for (let i = 0; i < Math.min(refundableOrders.length, 5); i++) {
+	for (let i = 0; i < Math.min(refundableOrders.length, 7); i++) {
 		const order = refundableOrders[i]!;
 		if (order.items.length === 0) continue;
 
-		const refundStatus = refundStatuses[i]!;
+		const refundStatus = refundStatuses[i % refundStatuses.length]!;
 		const reason = faker.helpers.arrayElement(refundReasons);
 		const isPartial = sampleBoolean(0.3);
 		const itemsToRefund = isPartial ? [order.items[0]!] : order.items;
-		const refundAmount = itemsToRefund.reduce((sum, item) => sum + item.price * item.quantity, 0);
+		// Cap refund amount to order total to avoid refund > total after discounts
+		const rawRefundAmount = itemsToRefund.reduce(
+			(sum, item) => sum + item.price * item.quantity,
+			0,
+		);
+		const refundAmount = Math.min(rawRefundAmount, order.total);
 
 		const refundDate = new Date(order.createdAt);
 		refundDate.setDate(refundDate.getDate() + faker.number.int({ min: 3, max: 14 }));
@@ -2425,24 +2536,40 @@ async function main(): Promise<void> {
 					stripeRefundId:
 						refundStatus === RefundStatus.COMPLETED ? `re_${faker.string.alphanumeric(24)}` : null,
 					failureReason:
-						refundStatus === RefundStatus.REJECTED ? "Délai de rétractation dépassé" : null,
+						refundStatus === RefundStatus.REJECTED
+							? "Délai de rétractation dépassé"
+							: refundStatus === RefundStatus.FAILED
+								? "Stripe refund failed: card_not_found"
+								: null,
 					note:
 						reason === RefundReason.DEFECTIVE
 							? "Fermoir cassé à la réception - photos reçues par email"
 							: null,
 					createdBy: adminUser.id,
-					processedAt: refundStatus === RefundStatus.COMPLETED ? refundDate : null,
+					processedAt:
+						refundStatus === RefundStatus.COMPLETED || refundStatus === RefundStatus.FAILED
+							? refundDate
+							: null,
 					createdAt: refundDate,
 					items: {
 						create: itemsToRefund.map((item) => ({
 							orderItemId: item.id,
 							quantity: item.quantity,
-							amount: item.price * item.quantity,
+							amount: Math.min(item.price * item.quantity, refundAmount),
 							restock: reason !== RefundReason.DEFECTIVE,
 						})),
 					},
 				},
 			});
+
+			// Set PARTIALLY_REFUNDED for partial completed refunds
+			if (refundStatus === RefundStatus.COMPLETED && isPartial) {
+				await prisma.order.update({
+					where: { id: order.id },
+					data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+				});
+			}
+
 			refundsCreated++;
 		} catch (error) {
 			logError("refund", error);
@@ -2459,7 +2586,8 @@ async function main(): Promise<void> {
 
 	for (const order of cancelledRefundedOrders) {
 		if (order.items.length === 0) continue;
-		const refundAmount = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+		// Use order.total to avoid refund > total after discounts
+		const refundAmount = order.total;
 		const refundDate = new Date(order.createdAt);
 		refundDate.setHours(refundDate.getHours() + faker.number.int({ min: 1, max: 48 }));
 
@@ -2525,8 +2653,12 @@ async function main(): Promise<void> {
 			createdAt: currentDate,
 		});
 
-		// 2. Payment
-		if (order.paymentStatus !== PaymentStatus.PENDING) {
+		// 2. Payment (only for orders that actually got paid, not FAILED/EXPIRED)
+		if (
+			order.paymentStatus === PaymentStatus.PAID ||
+			order.paymentStatus === PaymentStatus.REFUNDED ||
+			order.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED
+		) {
 			currentDate = new Date(currentDate);
 			currentDate.setMinutes(currentDate.getMinutes() + faker.number.int({ min: 5, max: 30 }));
 			allHistoryEntries.push({
@@ -2767,6 +2899,7 @@ async function main(): Promise<void> {
 				confirmedAt,
 				unsubscribedAt,
 				ipAddress: faker.internet.ipv4(),
+				confirmationIpAddress: confirmedAt ? faker.internet.ipv4() : null,
 				userAgent: faker.internet.userAgent(),
 				consentSource: "newsletter_form",
 			};
@@ -2836,6 +2969,24 @@ async function main(): Promise<void> {
 		attempts: 1,
 		receivedAt: faker.date.recent({ days: 15 }),
 		processedAt: faker.date.recent({ days: 15 }),
+	});
+
+	// Add PENDING events for retry-webhooks cron
+	webhookEventsData.push({
+		stripeEventId: `evt_${faker.string.alphanumeric(24)}`,
+		eventType: "payment_intent.succeeded",
+		status: WebhookEventStatus.PENDING,
+		attempts: 0,
+		receivedAt: new Date(),
+	});
+
+	// Add PROCESSING event (stuck mid-processing)
+	webhookEventsData.push({
+		stripeEventId: `evt_${faker.string.alphanumeric(24)}`,
+		eventType: "checkout.session.completed",
+		status: WebhookEventStatus.PROCESSING,
+		attempts: 1,
+		receivedAt: faker.date.recent({ days: 1 }),
 	});
 
 	await prisma.webhookEvent.createMany({ data: webhookEventsData });
@@ -2915,12 +3066,17 @@ async function main(): Promise<void> {
 			data: {
 				firstName: linkedUser?.name.split(" ")[0] ?? faker.person.firstName(),
 				email: linkedUser?.email ?? faker.internet.email().toLowerCase(),
-				phone: sampleBoolean(0.6) ? faker.helpers.replaceSymbols("+33 # ## ## ## ##") : null,
+				phone: sampleBoolean(0.6)
+					? faker.helpers.replaceSymbols(
+							`+33 ${faker.helpers.arrayElement(["6", "7"])} ## ## ## ##`,
+						)
+					: null,
 				userId: linkedUser?.id ?? null,
 				productTypeId: productType.id,
 				productTypeLabel: productType.label,
 				details,
 				status: cStatus,
+				consentGivenAt: new Date(),
 				adminNotes:
 					cStatus === CustomizationRequestStatus.IN_PROGRESS
 						? "Devis envoyé, en attente de validation client"
@@ -3020,6 +3176,185 @@ async function main(): Promise<void> {
 
 	await prisma.auditLog.createMany({ data: auditLogData });
 	console.log(`✅ ${auditLogData.length} entrées d'audit log créées`);
+
+	// ============================================
+	// TESTIMONIALS (missing model)
+	// ============================================
+	const testimonialData: Prisma.TestimonialCreateManyInput[] = [
+		{
+			imageUrl:
+				"https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
+			blurDataUrl:
+				"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAADklEQVQI12P4z8BQDwAEgAF/QualzQAAAABJRU5ErkJggg==",
+		},
+		{
+			imageUrl:
+				"https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=200&h=200&fit=crop&crop=face",
+		},
+		{
+			imageUrl: null,
+		},
+	];
+	await prisma.testimonial.createMany({ data: testimonialData });
+	console.log(`✅ ${testimonialData.length} témoignages créés`);
+
+	// ============================================
+	// FAILED EMAILS (missing model - for retry-failed-emails cron)
+	// ============================================
+	const failedEmailData: Prisma.FailedEmailCreateManyInput[] = [
+		{
+			taskType: "ORDER_CONFIRMATION_EMAIL",
+			payload: { orderId: "fake-order-id-1", email: "test@example.com" },
+			attempts: 2,
+			lastError: "Resend API rate limit exceeded",
+			nextRetryAt: new Date(),
+		},
+		{
+			taskType: "SHIPPING_NOTIFICATION_EMAIL",
+			payload: { orderId: "fake-order-id-2", email: "test2@example.com", trackingNumber: "ABC123" },
+			attempts: 1,
+			lastError: "Connection timeout to Resend API",
+			nextRetryAt: new Date(Date.now() + 30 * 60 * 1000),
+		},
+		{
+			taskType: "REVIEW_REQUEST_EMAIL",
+			payload: { orderId: "fake-order-id-3", email: "test3@example.com" },
+			attempts: 5,
+			lastError: "Max attempts reached",
+			nextRetryAt: new Date(),
+			resolvedAt: new Date(),
+		},
+	];
+	await prisma.failedEmail.createMany({ data: failedEmailData });
+	console.log(`✅ ${failedEmailData.length} failed emails créés`);
+
+	// ============================================
+	// CUSTOMIZATION MEDIA (missing model)
+	// ============================================
+	const customizationRequests = await prisma.customizationRequest.findMany({
+		select: { id: true },
+		take: 2,
+	});
+
+	const customizationMediaData: Prisma.CustomizationMediaCreateManyInput[] = [];
+	for (const req of customizationRequests) {
+		customizationMediaData.push({
+			customizationRequestId: req.id,
+			url: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop",
+			altText: "Photo inspiration client",
+			position: 0,
+		});
+	}
+	if (customizationMediaData.length > 0) {
+		await prisma.customizationMedia.createMany({ data: customizationMediaData });
+		console.log(`✅ ${customizationMediaData.length} médias de personnalisation créés`);
+	}
+
+	// ============================================
+	// VERIFICATION TOKENS (missing model)
+	// ============================================
+	const verificationData: Prisma.VerificationCreateManyInput[] = [
+		{
+			id: faker.string.nanoid(12),
+			identifier: "email-verification",
+			value: faker.string.alphanumeric(64),
+			expiresAt: faker.date.future({ years: 0.01 }),
+		},
+		{
+			id: faker.string.nanoid(12),
+			identifier: "password-reset",
+			value: faker.string.alphanumeric(64),
+			expiresAt: faker.date.future({ years: 0.01 }),
+		},
+		{
+			id: faker.string.nanoid(12),
+			identifier: "expired-token",
+			value: faker.string.alphanumeric(64),
+			expiresAt: faker.date.past({ years: 0.01 }),
+		},
+	];
+	await prisma.verification.createMany({ data: verificationData });
+	console.log(`✅ ${verificationData.length} tokens de vérification créés`);
+
+	// ============================================
+	// EDGE CASE USERS (suspended, pending deletion, anonymized)
+	// ============================================
+	const edgeCaseUsers = verifiedUsers.slice(-3);
+	if (edgeCaseUsers.length >= 3) {
+		// Suspended user
+		await prisma.user.update({
+			where: { id: edgeCaseUsers[0]!.id },
+			data: { suspendedAt: faker.date.recent({ days: 7 }) },
+		});
+
+		// Pending deletion user
+		await prisma.user.update({
+			where: { id: edgeCaseUsers[1]!.id },
+			data: {
+				accountStatus: AccountStatus.PENDING_DELETION,
+				deletionRequestedAt: faker.date.recent({ days: 14 }),
+			},
+		});
+
+		// Anonymized user
+		await prisma.user.update({
+			where: { id: edgeCaseUsers[2]!.id },
+			data: {
+				accountStatus: AccountStatus.ANONYMIZED,
+				anonymizedAt: faker.date.recent({ days: 30 }),
+				name: "Utilisateur anonymisé",
+				email: `anonymized-${faker.string.alphanumeric(8)}@anon.synclune.fr`,
+			},
+		});
+
+		console.log("✅ 3 utilisateurs edge-case créés (suspendu, suppression en attente, anonymisé)");
+	}
+
+	// ============================================
+	// EDGE CASE DISCOUNTS (maxed usage, manually deactivated)
+	// ============================================
+	const edgeCaseDiscounts: Prisma.DiscountCreateManyInput[] = [
+		{
+			code: "MAXED_OUT",
+			type: DiscountType.PERCENTAGE,
+			value: 15,
+			isActive: true,
+			maxUsageCount: 10,
+			usageCount: 10,
+			startsAt: new Date(),
+			endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+		},
+		{
+			code: "ADMIN_DISABLED",
+			type: DiscountType.PERCENTAGE,
+			value: 20,
+			isActive: true,
+			manuallyDeactivated: true,
+			startsAt: new Date(),
+			endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+		},
+	];
+	await prisma.discount.createMany({ data: edgeCaseDiscounts });
+	console.log(`✅ ${edgeCaseDiscounts.length} codes promo edge-case créés`);
+
+	// ============================================
+	// WISHLIST backInStockNotifiedAt (edge case)
+	// ============================================
+	const wishlistItemsForNotification = await prisma.wishlistItem.findMany({
+		select: { id: true },
+		take: 2,
+	});
+	for (const item of wishlistItemsForNotification) {
+		await prisma.wishlistItem.update({
+			where: { id: item.id },
+			data: { backInStockNotifiedAt: faker.date.recent({ days: 7 }) },
+		});
+	}
+	if (wishlistItemsForNotification.length > 0) {
+		console.log(
+			`✅ ${wishlistItemsForNotification.length} wishlist items avec backInStockNotifiedAt`,
+		);
+	}
 
 	// ============================================
 	// SOFT-DELETED RECORDS (for testing filters)

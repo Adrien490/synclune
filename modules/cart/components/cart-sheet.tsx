@@ -204,18 +204,6 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 									</div>
 								</ScrollFade>
 							</div>
-
-							{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-							<div
-								onClick={(e) => {
-									if ((e.target as HTMLElement).closest("a")) {
-										close();
-									}
-								}}
-							>
-								{recommendations}
-							</div>
-
 							<CartSheetFooter
 								totalItems={totalItems}
 								subtotal={subtotal}
@@ -225,6 +213,17 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 							/>
 						</>
 					)}
+
+					{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
+					<div
+						onClick={(e) => {
+							if ((e.target as HTMLElement).closest("a")) {
+								close();
+							}
+						}}
+					>
+						{recommendations}
+					</div>
 				</SheetContent>
 			</Sheet>
 

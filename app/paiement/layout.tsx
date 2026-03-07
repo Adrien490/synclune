@@ -1,5 +1,5 @@
 import { Logo } from "@/shared/components/logo";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 /**
@@ -8,7 +8,7 @@ import Link from "next/link";
  * Inspiré des best practices checkout 2026 :
  * - Logo centré (pattern Amazon/Shopify)
  * - Retour boutique à gauche
- * - Badge sécurité à droite (visible sur tous les écrans)
+ * - Logo à droite (comme auth, sans texte)
  * - Pas de navbar complète (évite les distractions)
  * - Pas de footer (focus sur la conversion)
  */
@@ -37,12 +37,9 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 							<Logo href="/" size={36} showText />
 						</div>
 
-						{/* Security badge - right, visible on all sizes */}
-						<div className="ml-auto flex items-center gap-1.5">
-							<ShieldCheck className="text-primary/70 size-4 shrink-0" />
-							<span className="text-muted-foreground hidden text-sm sm:inline">
-								Paiement sécurisé
-							</span>
+						{/* Logo - right */}
+						<div className="ml-auto">
+							<Logo href="/" size={28} />
 						</div>
 					</div>
 				</div>
