@@ -8,7 +8,7 @@ import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
 export const CART_ERROR_MESSAGES = {
 	// Erreurs liées au stock
 	// Note: On ne divulgue pas le stock exact pour eviter les fuites d'information business
-	INSUFFICIENT_STOCK: (_available: number) => "Ce produit n'est plus disponible pour le moment",
+	INSUFFICIENT_STOCK: "Ce produit n'est plus disponible pour le moment",
 	OUT_OF_STOCK: "Cet article n'est plus en stock",
 
 	// Erreurs liées au produit/SKU

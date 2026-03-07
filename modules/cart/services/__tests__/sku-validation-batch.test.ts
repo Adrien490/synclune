@@ -29,7 +29,7 @@ vi.mock("@/modules/cart/constants/error-messages", () => ({
 		SKU_INACTIVE: "Ce produit n'est plus disponible",
 		PRODUCT_NOT_PUBLIC: "Ce produit n'est pas disponible à la vente",
 		OUT_OF_STOCK: "Cet article n'est plus en stock",
-		INSUFFICIENT_STOCK: (_available: number) => "Ce produit n'est plus disponible pour le moment",
+		INSUFFICIENT_STOCK: "Ce produit n'est plus disponible pour le moment",
 		VALIDATION_FAILED: "Certains articles de votre panier ne sont plus disponibles",
 		GENERAL_ERROR: "Une erreur est survenue lors de l'opération",
 		INVALID_DATA: "Données invalides",

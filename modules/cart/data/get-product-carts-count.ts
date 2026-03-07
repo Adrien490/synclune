@@ -27,7 +27,7 @@ export type GetProductCartsCountReturn = number;
  */
 export async function getProductCartsCount(productId: string): Promise<GetProductCartsCountReturn> {
 	"use cache";
-	cacheLife("products");
+	cacheLife("skuStock");
 	cacheTag(CART_CACHE_TAGS.PRODUCT_CARTS(productId));
 
 	const count = await prisma.cart.count({

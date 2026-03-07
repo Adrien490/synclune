@@ -14,8 +14,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		cart: { findFirst: vi.fn() },
-		cartItem: { update: vi.fn() },
-		$transaction: vi.fn(),
+		$executeRaw: vi.fn(),
 	},
 	mockCheckCartRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
@@ -87,7 +86,7 @@ describe("updateCartPrices", () => {
 			context: { userId: "user-1", sessionId: null },
 		});
 		mockPrisma.cart.findFirst.mockResolvedValue(makeCart());
-		mockPrisma.$transaction.mockResolvedValue([]);
+		mockPrisma.$executeRaw.mockResolvedValue(0);
 		mockGetCartInvalidationTags.mockReturnValue(["cart-user-1"]);
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -144,7 +143,7 @@ describe("updateCartPrices", () => {
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.data).toEqual({ updatedCount: 0 });
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
 	});
 
 	it("only updates items where price has changed", async () => {
@@ -168,7 +167,7 @@ describe("updateCartPrices", () => {
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.data).toEqual({ updatedCount: 1 });
-		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
 	});
 
 	it("excludes soft-deleted SKUs from updates", async () => {
@@ -191,7 +190,7 @@ describe("updateCartPrices", () => {
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.data).toEqual({ updatedCount: 0 });
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
 	});
 
 	it("excludes inactive SKUs from updates", async () => {

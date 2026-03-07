@@ -1,3 +1,5 @@
+"use client";
+
 import { SheetFooter } from "@/shared/components/ui/sheet";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";

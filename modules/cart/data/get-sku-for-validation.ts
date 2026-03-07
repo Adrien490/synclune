@@ -6,7 +6,8 @@ import { prisma } from "@/shared/lib/prisma";
 // ============================================================================
 
 export type SkuForValidation = Awaited<ReturnType<typeof fetchSkuForValidation>>;
-export type SkuForDetails = Awaited<ReturnType<typeof fetchSkuForDetails>>;
+/** @deprecated Use SkuForValidation instead (identical query) */
+export type SkuForDetails = SkuForValidation;
 export type BatchSkuRow = NonNullable<
 	Awaited<ReturnType<typeof fetchSkusForBatchValidation>>
 >[number];
@@ -67,55 +68,9 @@ export async function fetchSkuForValidation(skuId: string) {
 }
 
 /**
- * Fetches a SKU with full relations for display details
+ * @deprecated Use fetchSkuForValidation instead (identical query)
  */
-export async function fetchSkuForDetails(skuId: string) {
-	return prisma.productSku.findUnique({
-		where: { id: skuId },
-		select: {
-			id: true,
-			sku: true,
-			priceInclTax: true,
-			compareAtPrice: true,
-			inventory: true,
-			isActive: true,
-			size: true,
-			colorId: true,
-			deletedAt: true,
-			product: {
-				select: {
-					id: true,
-					title: true,
-					slug: true,
-					status: true,
-					description: true,
-					deletedAt: true,
-				},
-			},
-			images: {
-				orderBy: { createdAt: "asc" },
-				select: {
-					url: true,
-					altText: true,
-					isPrimary: true,
-				},
-			},
-			color: {
-				select: {
-					id: true,
-					name: true,
-					hex: true,
-				},
-			},
-			material: {
-				select: {
-					id: true,
-					name: true,
-				},
-			},
-		},
-	});
-}
+export const fetchSkuForDetails = fetchSkuForValidation;
 
 // ============================================================================
 // BATCH SKU QUERY

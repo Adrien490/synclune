@@ -197,6 +197,7 @@ describe("rejectRefund", () => {
 		}));
 		mockSanitizeText.mockImplementation((text: string) => text);
 		mockBuildUrl.mockImplementation((path: string) => `https://synclune.fr${path}`);
+		mockPrisma.orderNote.create.mockResolvedValue({});
 		mockSendRefundRejectedEmail.mockResolvedValue(undefined);
 	});
 

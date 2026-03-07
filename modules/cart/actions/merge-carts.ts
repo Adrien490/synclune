@@ -180,7 +180,9 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 							cartId: targetCart.id,
 							skuId: guestItem.skuId,
 							quantity: guestItem.quantity,
-							priceAtAdd: guestItem.priceAtAdd, // Conserver le prix snapshot lors du merge
+							// Trade-off: priceAtAdd comes from a cached read (up to 5min stale).
+							// Acceptable because checkout final re-validates all prices.
+							priceAtAdd: guestItem.priceAtAdd,
 						},
 					});
 					mergedCount++;

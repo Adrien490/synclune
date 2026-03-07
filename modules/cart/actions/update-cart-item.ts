@@ -117,7 +117,7 @@ export async function updateCartItem(
 
 			// 7c. Si augmentation de quantité, vérifier le stock disponible
 			if (validatedData.quantity > sku.inventory) {
-				throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
+				throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK);
 			}
 
 			// 7d. Mettre à jour le CartItem

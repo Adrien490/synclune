@@ -130,7 +130,7 @@ export function checkCartItemAvailability(item: CartItemForValidation): Availabi
 				skuId: item.skuId,
 				productTitle: item.sku.product.title,
 				issueType: "INSUFFICIENT_STOCK",
-				message: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(item.sku.inventory),
+				message: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK,
 			},
 		};
 	}

@@ -93,9 +93,9 @@ describe("getCart", () => {
 
 		const result = await getCart();
 
-		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-1" } }),
-		);
+		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
+		expect(call.where.userId).toBe("user-1");
+		expect(call.where.OR).toBeDefined();
 		expect(result).toEqual(makeCart());
 	});
 
@@ -106,9 +106,9 @@ describe("getCart", () => {
 
 		const result = await getCart();
 
-		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { sessionId: "session-abc" } }),
-		);
+		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
+		expect(call.where.sessionId).toBe("session-abc");
+		expect(call.where.OR).toBeDefined();
 		expect(result).toEqual(makeCart({ id: "guest-cart" }));
 	});
 
@@ -171,9 +171,9 @@ describe("fetchCart", () => {
 
 		await fetchCart("user-1", undefined);
 
-		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { userId: "user-1" } }),
-		);
+		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
+		expect(call.where.userId).toBe("user-1");
+		expect(call.where.OR).toBeDefined();
 	});
 
 	it("queries by sessionId when no userId is provided", async () => {
@@ -181,18 +181,20 @@ describe("fetchCart", () => {
 
 		await fetchCart(undefined, "session-xyz");
 
-		expect(mockPrisma.cart.findFirst).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { sessionId: "session-xyz" } }),
-		);
+		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
+		expect(call.where.sessionId).toBe("session-xyz");
+		expect(call.where.OR).toBeDefined();
 	});
 
-	it("returns null for expired cart", async () => {
-		const pastDate = new Date(Date.now() - 1000 * 60 * 60);
-		mockPrisma.cart.findFirst.mockResolvedValue(makeCart({ expiresAt: pastDate }));
+	it("filters expired carts via WHERE clause", async () => {
+		// Expired carts are now filtered at DB level (OR: expiresAt null or gt now)
+		mockPrisma.cart.findFirst.mockResolvedValue(null);
 
 		const result = await fetchCart("user-1", undefined);
 
 		expect(result).toBeNull();
+		const call = mockPrisma.cart.findFirst.mock.calls[0]![0];
+		expect(call.where.OR).toEqual([{ expiresAt: null }, { expiresAt: { gt: expect.any(Date) } }]);
 	});
 
 	it("returns cart when expiresAt is null (no expiration)", async () => {

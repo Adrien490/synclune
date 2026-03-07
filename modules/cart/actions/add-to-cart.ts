@@ -161,7 +161,7 @@ export async function addToCart(
 
 				// Vérification du stock (message générique pour ne pas révéler le stock exact)
 				if (sku.inventory < newQuantity) {
-					throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
+					throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK);
 				}
 
 				// Mettre à jour le CartItem
@@ -187,7 +187,7 @@ export async function addToCart(
 				}
 
 				if (sku.inventory < validatedData.quantity) {
-					throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
+					throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK);
 				}
 
 				// Créer le CartItem avec le prix récupéré dans la transaction (atomique)

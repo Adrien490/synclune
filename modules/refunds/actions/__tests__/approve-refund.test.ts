@@ -27,6 +27,9 @@ const {
 			findUnique: vi.fn(),
 			update: vi.fn(),
 		},
+		orderNote: {
+			create: vi.fn(),
+		},
 	},
 	mockUpdateTag: vi.fn(),
 	mockSendRefundApprovedEmail: vi.fn(),
@@ -185,6 +188,7 @@ describe("approveRefund", () => {
 			message: msg,
 		}));
 		mockBuildUrl.mockImplementation((path: string) => `https://synclune.fr${path}`);
+		mockPrisma.orderNote.create.mockResolvedValue({});
 	});
 
 	it("should return auth error when not admin", async () => {

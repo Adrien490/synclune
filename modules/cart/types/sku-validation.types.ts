@@ -10,7 +10,6 @@ export interface SkuData {
 	sku: string;
 	priceInclTax: number;
 	compareAtPrice: number | null; // Prix barre (null si pas en solde)
-	inventory: number;
 	isActive: boolean;
 	material?: string;
 	colorId?: string;

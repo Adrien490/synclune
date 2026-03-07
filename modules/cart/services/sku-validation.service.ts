@@ -62,7 +62,7 @@ export async function validateSkuAndStock(input: {
 		if (sku.inventory < validatedInput.quantity) {
 			return {
 				success: false,
-				error: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory),
+				error: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK,
 			};
 		}
 
@@ -74,7 +74,6 @@ export async function validateSkuAndStock(input: {
 					sku: sku.sku,
 					priceInclTax: sku.priceInclTax,
 					compareAtPrice: sku.compareAtPrice,
-					inventory: sku.inventory,
 					isActive: sku.isActive,
 					material: sku.material?.name ?? undefined,
 					colorId: sku.colorId ?? undefined,
@@ -130,6 +129,28 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 			};
 		}
 
+		// Verify soft-delete and status guards
+		if (sku.deletedAt || sku.product.deletedAt) {
+			return {
+				success: false,
+				error: CART_ERROR_MESSAGES.PRODUCT_DELETED,
+			};
+		}
+
+		if (!sku.isActive) {
+			return {
+				success: false,
+				error: CART_ERROR_MESSAGES.SKU_INACTIVE,
+			};
+		}
+
+		if (sku.product.status !== "PUBLIC") {
+			return {
+				success: false,
+				error: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
+			};
+		}
+
 		return {
 			success: true,
 			data: {
@@ -138,7 +159,6 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 					sku: sku.sku,
 					priceInclTax: sku.priceInclTax,
 					compareAtPrice: sku.compareAtPrice,
-					inventory: sku.inventory,
 					isActive: sku.isActive,
 					material: sku.material?.name ?? undefined,
 					colorId: sku.colorId ?? undefined,
@@ -238,7 +258,7 @@ export async function validateCartItemsWithDb(input: {
 				return {
 					skuId: item.skuId,
 					isValid: false,
-					error: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(result.inventory),
+					error: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK,
 				};
 			}
 

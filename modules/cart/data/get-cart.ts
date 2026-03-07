@@ -52,17 +52,11 @@ export async function fetchCart(userId?: string, sessionId?: string): Promise<Ge
 		return null;
 	}
 
-	const cart = await prisma.cart.findFirst({
-		where: userId ? { userId } : { sessionId },
+	return prisma.cart.findFirst({
+		where: {
+			...(userId ? { userId } : { sessionId }),
+			OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+		},
 		select: GET_CART_SELECT,
 	});
-
-	// Si le panier est expiré, retourner null
-	// Note: La suppression physique est gérée par le cron job quotidien
-	// Voir: scripts/cleanup-expired-carts.ts (configurable via vercel.json)
-	if (cart && cart.expiresAt && cart.expiresAt < new Date()) {
-		return null;
-	}
-
-	return cart;
 }

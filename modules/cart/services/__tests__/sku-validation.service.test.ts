@@ -167,7 +167,7 @@ describe("validateSkuAndStock", () => {
 		const result = await validateSkuAndStock({ skuId: SKU_ID, quantity: 5 });
 
 		expect(result.success).toBe(false);
-		expect(result.error).toBe(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(2));
+		expect(result.error).toBe(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK);
 	});
 
 	it("should return Zod error on invalid skuId format", async () => {
@@ -429,7 +429,7 @@ describe("validateCartItemsWithDb", () => {
 			items: [{ skuId: SKU_ID, quantity: 5 }],
 		});
 
-		expect(result.data?.[0]?.error).toBe(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(3));
+		expect(result.data?.[0]?.error).toBe(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK);
 	});
 
 	it("should return mixed results for multiple items", async () => {

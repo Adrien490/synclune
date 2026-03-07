@@ -24,6 +24,7 @@ interface GallerySlideProps {
 	isActive: boolean;
 	onOpen: () => void;
 	id?: string;
+	viewTransitionName?: string;
 }
 
 function VideoLoadingSpinner() {
@@ -97,6 +98,7 @@ export function GallerySlide({
 	isActive,
 	onOpen,
 	id,
+	viewTransitionName,
 }: GallerySlideProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [videoState, setVideoState] = useState<VideoState>("loading");
@@ -151,7 +153,7 @@ export function GallerySlide({
 	// Vidéo : même rendu mobile/desktop
 	if (media.mediaType === "VIDEO") {
 		return (
-			<div id={id} role="tabpanel">
+			<div id={id} role="tabpanel" style={{ viewTransitionName }}>
 				<button
 					type="button"
 					className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
@@ -209,6 +211,7 @@ export function GallerySlide({
 				type="button"
 				id={id}
 				className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
+				style={{ viewTransitionName }}
 				onClick={onOpen}
 				aria-label="Ouvrir l'image en plein écran"
 			>
@@ -226,7 +229,12 @@ export function GallerySlide({
 
 	// Mobile : Pinch-zoom natif (gère son propre onClick via onTap)
 	return (
-		<div id={id} role="tabpanel" className="relative h-full min-w-0 flex-[0_0_100%]">
+		<div
+			id={id}
+			role="tabpanel"
+			className="relative h-full min-w-0 flex-[0_0_100%]"
+			style={{ viewTransitionName }}
+		>
 			<GalleryPinchZoom
 				src={media.url}
 				alt={alt}

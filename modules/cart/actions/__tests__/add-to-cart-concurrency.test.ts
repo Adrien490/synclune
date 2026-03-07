@@ -77,7 +77,7 @@ vi.mock("../../constants/error-messages", () => ({
 		SKU_INACTIVE: "Ce produit n'est plus disponible",
 		PRODUCT_NOT_PUBLIC: "Ce produit n'est pas disponible à la vente",
 		QUANTITY_MAX: "Quantité maximale dépassée",
-		INSUFFICIENT_STOCK: (n: number) => `Stock insuffisant (${n})`,
+		INSUFFICIENT_STOCK: "Stock insuffisant",
 		OUT_OF_STOCK: "Cet article n'est plus en stock",
 		CART_ITEMS_LIMIT: (n: number) => `Max ${n} articles`,
 	},

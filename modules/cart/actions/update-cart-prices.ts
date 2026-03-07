@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
@@ -91,17 +92,12 @@ export async function updateCartPrices(
 			};
 		}
 
-		// 4. Mettre à jour les prix dans une transaction
-		await prisma.$transaction(
-			itemsToUpdate.map((item) =>
-				prisma.cartItem.update({
-					where: { id: item.id },
-					data: {
-						priceAtAdd: item.sku.priceInclTax,
-					},
-				}),
-			),
+		// 4. Batch update prices in a single query (CASE/WHEN)
+		const caseFragments = itemsToUpdate.map(
+			(item) => Prisma.sql`WHEN id = ${item.id} THEN ${item.sku.priceInclTax}`,
 		);
+		const idFragments = itemsToUpdate.map((item) => Prisma.sql`${item.id}`);
+		await prisma.$executeRaw`UPDATE "CartItem" SET "priceAtAdd" = CASE ${Prisma.join(caseFragments, " ")} END, "updatedAt" = NOW() WHERE id IN (${Prisma.join(idFragments)})`;
 
 		// 5. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
