@@ -13,10 +13,12 @@ import { sendReviewRequestEmailInternal } from "@/modules/reviews/services/send-
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError, success, error } from "@/shared/lib/actions";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { updateTag } from "next/cache";
 import { z } from "zod";
 import type { ResendEmailType } from "../types/email.types";
 import { extractCustomerFirstName } from "../utils/customer-name";
@@ -222,6 +224,8 @@ export async function resendOrderEmail(
 		}
 
 		if (actionResult.status === ActionStatus.SUCCESS) {
+			updateTag(ORDERS_CACHE_TAGS.HISTORY(orderId));
+
 			void logAudit({
 				adminId: adminUser.id,
 				adminName: adminUser.name ?? adminUser.email,

@@ -5,7 +5,9 @@ import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { sendPasswordChangedEmail } from "@/modules/emails/services/auth-emails";
 import { prisma } from "@/shared/lib/prisma";
+import { SESSION_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { ActionState } from "@/shared/types/server-action";
+import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { changePasswordSchema } from "../schemas/auth.schemas";
 import { checkArcjetProtection } from "../utils/arcjet-protection";
@@ -85,6 +87,9 @@ export const changePassword = async (
 				body: { currentPassword, newPassword, revokeOtherSessions },
 				headers: headersList,
 			});
+
+			// Invalidate session cache so revoked sessions don't persist in cache
+			updateTag(SESSION_CACHE_TAGS.SESSION(user.id));
 
 			// Send notification email (security)
 			try {
