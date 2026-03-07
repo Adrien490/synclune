@@ -1,10 +1,21 @@
 import * as Sentry from "@sentry/nextjs";
+import { registerOTel } from "@vercel/otel";
 import type { Instrumentation } from "next";
 
 export async function register() {
 	const runtime =
 		typeof (globalThis as Record<string, unknown>).EdgeRuntime === "string" ? "edge" : "nodejs";
 	console.log(`[instrumentation] Server started | runtime=${runtime} env=${process.env.NODE_ENV}`);
+
+	// OpenTelemetry distributed tracing
+	registerOTel({
+		serviceName: "synclune",
+		instrumentationConfig: {
+			fetch: {
+				ignoreUrls: [/eu\.i\.posthog\.com/, /eu-assets\.i\.posthog\.com/],
+			},
+		},
+	});
 
 	if (runtime === "edge") {
 		await import("./sentry.edge.config");

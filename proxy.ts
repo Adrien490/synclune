@@ -37,6 +37,7 @@ const publicRoutes = [
 	"/favoris",
 	"/~offline",
 	"/monitoring",
+	"/ingest",
 	"/serwist",
 	// Checkout (guest checkout supporté)
 	"/paiement",

@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import pino from "pino";
 
 export interface LogContext {
 	requestId?: string;
@@ -26,23 +27,40 @@ function redactPii(message: string): string {
 	return result;
 }
 
-function formatEntry(level: string, message: string, context?: LogContext) {
-	return JSON.stringify({
-		level,
-		message: redactPii(message),
-		timestamp: new Date().toISOString(),
-		...(context && { context }),
-	});
-}
+const pinoLogger = pino({
+	level: process.env.NODE_ENV === "development" ? "debug" : "info",
+	redact: {
+		paths: ["context.email", "context.phone"],
+		censor: "[REDACTED]",
+	},
+	...(process.env.NODE_ENV === "development"
+		? {
+				transport: {
+					target: "pino-pretty",
+					options: {
+						colorize: true,
+						translateTime: "HH:MM:ss",
+						ignore: "pid,hostname",
+					},
+				},
+			}
+		: {
+				formatters: {
+					level(label) {
+						return { level: label };
+					},
+				},
+				timestamp: pino.stdTimeFunctions.isoTime,
+			}),
+});
 
 export const logger = {
 	info(message: string, context?: LogContext) {
-		// eslint-disable-next-line no-console -- logger utility: structured info output
-		console.log(formatEntry("info", message, context));
+		pinoLogger.info({ context }, redactPii(message));
 	},
 
 	warn(message: string, context?: LogContext) {
-		console.warn(formatEntry("warn", message, context));
+		pinoLogger.warn({ context }, redactPii(message));
 
 		Sentry.addBreadcrumb({
 			level: "warning",
@@ -54,7 +72,7 @@ export const logger = {
 	error(message: string, error?: unknown, context?: LogContext) {
 		const errorObj = error instanceof Error ? error : error ? new Error(String(error)) : undefined;
 
-		console.error(formatEntry("error", message, context), ...(errorObj ? [errorObj.message] : []));
+		pinoLogger.error({ err: errorObj, context }, redactPii(message));
 
 		if (errorObj) {
 			Sentry.captureException(errorObj, {
@@ -80,8 +98,6 @@ export const logger = {
 	},
 
 	debug(message: string, context?: LogContext) {
-		if (process.env.NODE_ENV !== "development") return;
-		// eslint-disable-next-line no-console -- logger utility: structured debug output
-		console.debug(formatEntry("debug", message, context));
+		pinoLogger.debug({ context }, redactPii(message));
 	},
 };

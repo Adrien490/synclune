@@ -7,6 +7,7 @@ import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
 import { InstallPromptStoreProvider } from "@/shared/providers/install-prompt-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
+import { PostHogProvider } from "@/shared/providers/posthog-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import type { ReactNode } from "react";
@@ -30,18 +31,20 @@ export function RootProviders({ children }: RootProvidersProps) {
 				}}
 			>
 				<CookieConsentStoreProvider>
-					<InstallPromptStoreProvider>
-						<NavigationGuardProvider>
-							<DialogStoreProvider>
-								<SheetStoreProvider>
-									<AlertDialogStoreProvider>
-										{children}
-										<FlyToCartOverlay />
-									</AlertDialogStoreProvider>
-								</SheetStoreProvider>
-							</DialogStoreProvider>
-						</NavigationGuardProvider>
-					</InstallPromptStoreProvider>
+					<PostHogProvider>
+						<InstallPromptStoreProvider>
+							<NavigationGuardProvider>
+								<DialogStoreProvider>
+									<SheetStoreProvider>
+										<AlertDialogStoreProvider>
+											{children}
+											<FlyToCartOverlay />
+										</AlertDialogStoreProvider>
+									</SheetStoreProvider>
+								</DialogStoreProvider>
+							</NavigationGuardProvider>
+						</InstallPromptStoreProvider>
+					</PostHogProvider>
 				</CookieConsentStoreProvider>
 			</MotionConfig>
 		</LazyMotion>

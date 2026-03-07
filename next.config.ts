@@ -17,6 +17,20 @@ const nextConfig: NextConfig = {
 		],
 	},
 
+	async rewrites() {
+		return [
+			// PostHog reverse proxy to avoid ad blockers
+			{
+				source: "/ingest/static/:path*",
+				destination: "https://eu-assets.i.posthog.com/static/:path*",
+			},
+			{
+				source: "/ingest/:path*",
+				destination: "https://eu.i.posthog.com/:path*",
+			},
+		];
+	},
+
 	async headers() {
 		return [
 			{
@@ -56,7 +70,13 @@ const nextConfig: NextConfig = {
 		];
 	},
 
-	serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild"],
+	serverExternalPackages: [
+		"@prisma/client",
+		"@prisma/adapter-neon",
+		"esbuild",
+		"pino",
+		"pino-pretty",
+	],
 
 	images: {
 		qualities: [65, 70, 75, 80, 85, 90],
