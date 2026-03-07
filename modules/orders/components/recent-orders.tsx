@@ -60,7 +60,7 @@ export function RecentOrders({ ordersPromise, limit = 5, showViewAll = false }: 
 						<EmptyDescription>Vous n'avez pas encore passé de commande</EmptyDescription>
 					</EmptyHeader>
 					<EmptyContent>
-						<Button asChild>
+						<Button asChild size="lg">
 							<Link href="/produits">Découvrir nos bijoux</Link>
 						</Button>
 					</EmptyContent>

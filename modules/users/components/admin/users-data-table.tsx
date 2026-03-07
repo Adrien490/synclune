@@ -41,7 +41,7 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 		return (
 			<TableEmptyState
 				icon={Users}
-				title="Aucun client trouve"
+				title="Aucun client trouvé"
 				description="Aucun client ne correspond aux criteres de recherche."
 				action={resetHref ? { label: "Réinitialiser les filtres", href: resetHref } : undefined}
 			/>

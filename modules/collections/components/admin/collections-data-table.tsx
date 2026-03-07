@@ -60,7 +60,7 @@ export async function CollectionsDataTable({
 		return (
 			<TableEmptyState
 				icon={FolderOpen}
-				title="Aucune collection trouvee"
+				title="Aucune collection trouvée"
 				description="Aucune collection ne correspond aux criteres de recherche."
 				actionElement={<CreateCollectionButton />}
 			/>

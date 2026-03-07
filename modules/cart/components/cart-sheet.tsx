@@ -15,7 +15,8 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag } from "lucide-react";
 import {
 	Empty,
-	EmptyContent,
+	EmptyActions,
+	EmptyDescription,
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
@@ -124,15 +125,15 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 									</EmptyMedia>
 									<EmptyTitle>Votre panier est vide !</EmptyTitle>
 								</EmptyHeader>
-								<EmptyContent>
-									<p className="text-muted-foreground max-w-70">
-										Chaque bijou est une pièce unique, fabriquée à la main avec amour. Trouvez celui
-										qui vous correspond !
-									</p>
+								<EmptyDescription>
+									Chaque bijou est une pièce unique, fabriquée à la main avec amour. Trouvez celui
+									qui vous correspond !
+								</EmptyDescription>
+								<EmptyActions>
 									<Button
 										asChild
 										size="lg"
-										className="w-full max-w-xs group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+										className="group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 									>
 										<Link href="/produits" onClick={close}>
 											Découvrir la boutique
@@ -147,7 +148,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 											Voir les collections
 										</Link>
 									</Button>
-								</EmptyContent>
+								</EmptyActions>
 							</Empty>
 						</div>
 					) : (
@@ -204,6 +205,16 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 									</div>
 								</ScrollFade>
 							</div>
+							{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
+							<div
+								onClick={(e) => {
+									if ((e.target as HTMLElement).closest("a")) {
+										close();
+									}
+								}}
+							>
+								{recommendations}
+							</div>
 							<CartSheetFooter
 								totalItems={totalItems}
 								subtotal={subtotal}
@@ -213,17 +224,6 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 							/>
 						</>
 					)}
-
-					{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-					<div
-						onClick={(e) => {
-							if ((e.target as HTMLElement).closest("a")) {
-								close();
-							}
-						}}
-					>
-						{recommendations}
-					</div>
 				</SheetContent>
 			</Sheet>
 

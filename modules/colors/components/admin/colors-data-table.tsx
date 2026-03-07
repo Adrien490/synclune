@@ -32,7 +32,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 		return (
 			<TableEmptyState
 				icon={Palette}
-				title="Aucune couleur trouvee"
+				title="Aucune couleur trouvée"
 				description="Aucune couleur ne correspond aux criteres de recherche."
 				actionElement={<CreateColorButton />}
 			/>

@@ -8,6 +8,7 @@ import {
 import { cacheLife, cacheTag } from "next/cache";
 
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 
@@ -108,7 +109,7 @@ export async function StructuredData({ includeHomepageSchemas }: StructuredDataP
 		<script
 			type="application/ld+json"
 			dangerouslySetInnerHTML={{
-				__html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+				__html: safeJsonLd(jsonLd),
 			}}
 		/>
 	);

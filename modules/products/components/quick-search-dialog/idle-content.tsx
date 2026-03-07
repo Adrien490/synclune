@@ -209,6 +209,13 @@ export function IdleContent({
 					<Stagger className="py-8 text-center" role="status" stagger={0.03} delay={0.05} y={10}>
 						<Search className="text-muted-foreground/20 mx-auto mb-4 size-10" aria-hidden="true" />
 						<p className="text-muted-foreground text-sm">Trouvez votre prochain bijou</p>
+						<div className="mt-4">
+							<Button asChild variant="outline" size="sm">
+								<Link href="/produits" onClick={handleNavigateClose}>
+									Voir tous les produits
+								</Link>
+							</Button>
+						</div>
 					</Stagger>
 				)}
 			</div>

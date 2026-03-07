@@ -94,8 +94,15 @@ export default function ScrollFade({
 		};
 	}, [axis]);
 
+	const hasOverflow = showLeft || showRight || showTop || showBottom;
+
 	return (
 		<div className="relative h-full">
+			{hasOverflow && (
+				<span className="sr-only" role="status">
+					Faites défiler pour voir plus de contenu
+				</span>
+			)}
 			<div
 				ref={containerRef}
 				className={cn(

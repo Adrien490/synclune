@@ -1,6 +1,5 @@
 "use client";
 
-import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { NavbarSessionData } from "@/shared/types/session.types";
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { Badge } from "@/shared/components/ui/badge";
@@ -15,6 +14,7 @@ import { Gem, Heart } from "lucide-react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { CollectionMiniGrid } from "./collection-mini-grid";
 import { SectionHeader } from "./section-header";
 import { UserHeader } from "./user-header";
@@ -32,7 +32,7 @@ const itemVariants: Variants = {
 
 // Common link styles (module scope - pure values)
 const linkClassName = cn(
-	"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3 rounded-lg",
+	"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3.5 rounded-lg",
 	"transition-[transform,color,background-color] duration-300 ease-out",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 	"text-foreground/85 hover:text-foreground hover:bg-primary/5 hover:pl-5",
@@ -55,6 +55,7 @@ interface MenuSheetNavProps {
 	}>;
 	session?: NavbarSessionData | null;
 	isOpen: boolean;
+	onLogoutClick?: () => void;
 }
 
 export function MenuSheetNav({
@@ -63,6 +64,7 @@ export function MenuSheetNav({
 	collections,
 	session,
 	isOpen,
+	onLogoutClick,
 }: MenuSheetNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const wishlistCount = useBadgeCountsStore((s) => s.wishlistCount);
@@ -72,13 +74,33 @@ export function MenuSheetNav({
 	// Separate items into zones
 	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
 	const personalizationItem = navItems.find((item) => item.href === ROUTES.SHOP.CUSTOMIZATION);
+	const atelierItem = navItems.find((item) => item.href === ROUTES.SHOP.ABOUT);
 	const accountItem = navItems.find(
 		(item) => item.href === ROUTES.ACCOUNT.ROOT || item.href === ROUTES.AUTH.SIGN_IN,
 	);
 	const favoritesItem = navItems.find((item) => item.href === ROUTES.ACCOUNT.FAVORITES);
 	const isLoggedIn = !!session?.user;
 
+	const navRef = useRef<HTMLElement>(null);
 	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
+
+	// Scroll-to-active + focus management after open animation
+	useEffect(() => {
+		if (!isOpen) return;
+		const focusDelay = shouldReduceMotion ? 0 : 350;
+		const timer = setTimeout(() => {
+			const nav = navRef.current;
+			if (!nav) return;
+
+			// Scroll to active page link
+			const activePage = nav.querySelector<HTMLElement>('[aria-current="page"]');
+			activePage?.scrollIntoView({ block: "center", behavior: "smooth" });
+
+			// Always focus first link for WCAG 2.4.3 focus order
+			nav.querySelector<HTMLAnchorElement>("a")?.focus();
+		}, focusDelay);
+		return () => clearTimeout(timer);
+	}, [isOpen, shouldReduceMotion]);
 
 	function getLinkClass(href: string, extra?: string) {
 		return cn(isMenuItemActive(href) ? activeLinkClassName : linkClassName, extra);
@@ -93,9 +115,10 @@ export function MenuSheetNav({
 		<AnimatePresence>
 			{isOpen && (
 				<motion.nav
+					ref={navRef}
 					key="menu-nav"
 					aria-label="Menu principal mobile"
-					className="relative z-10 px-6 pt-14 pb-4"
+					className="relative z-10 px-6 pt-[max(3.5rem,calc(env(safe-area-inset-top)+2.5rem))] pb-4"
 					initial="hidden"
 					animate="visible"
 					exit="exit"
@@ -120,6 +143,19 @@ export function MenuSheetNav({
 											aria-current={isMenuItemActive(homeItem.href) ? "page" : undefined}
 										>
 											{homeItem.label}
+										</Link>
+									</SheetClose>
+								</motion.li>
+							)}
+							{atelierItem && (
+								<motion.li variants={itemVariants} custom={delay(70, 1)}>
+									<SheetClose asChild>
+										<Link
+											href={atelierItem.href}
+											className={getLinkClass(atelierItem.href)}
+											aria-current={isMenuItemActive(atelierItem.href) ? "page" : undefined}
+										>
+											{atelierItem.label}
 										</Link>
 									</SheetClose>
 								</motion.li>
@@ -159,6 +195,21 @@ export function MenuSheetNav({
 										</SheetClose>
 									</motion.li>
 								))}
+								{personalizationItem && (
+									<motion.li variants={itemVariants} custom={delay(90, productTypes.length + 1)}>
+										<SheetClose asChild>
+											<Link
+												href={personalizationItem.href}
+												className={getLinkClass(personalizationItem.href)}
+												aria-current={
+													isMenuItemActive(personalizationItem.href) ? "page" : undefined
+												}
+											>
+												{personalizationItem.label}
+											</Link>
+										</SheetClose>
+									</motion.li>
+								)}
 							</ul>
 						</section>
 					)}
@@ -218,26 +269,6 @@ export function MenuSheetNav({
 						</section>
 					)}
 
-					{/* Section Sur mesure */}
-					{personalizationItem && (
-						<section aria-labelledby="section-custom" className="mb-4">
-							<SectionHeader id="section-custom">Sur mesure</SectionHeader>
-							<ul>
-								<motion.li variants={itemVariants} custom={delay(130, 0)}>
-									<SheetClose asChild>
-										<Link
-											href={personalizationItem.href}
-											className={getLinkClass(personalizationItem.href)}
-											aria-current={isMenuItemActive(personalizationItem.href) ? "page" : undefined}
-										>
-											{personalizationItem.label}
-										</Link>
-									</SheetClose>
-								</motion.li>
-							</ul>
-						</section>
-					)}
-
 					{/* Decorative separator */}
 					<motion.div
 						className="relative my-6 flex items-center justify-center"
@@ -282,11 +313,13 @@ export function MenuSheetNav({
 											href={favoritesItem.href}
 											className={getLinkClass(favoritesItem.href, "justify-between")}
 											aria-current={isMenuItemActive(favoritesItem.href) ? "page" : undefined}
-											aria-label={wishlistCount > 0 ? `Favoris (${wishlistCount})` : undefined}
+											aria-label={
+												wishlistCount > 0 ? `${favoritesItem.label} (${wishlistCount})` : undefined
+											}
 										>
 											{favoritesItem.label}
 											{wishlistCount > 0 && (
-												<Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+												<Badge variant="secondary" className="px-1.5 py-0 text-xs">
 													{wishlistCount}
 												</Badge>
 											)}
@@ -310,20 +343,19 @@ export function MenuSheetNav({
 								</motion.li>
 							)}
 
-							{/* Logout (logged in only) */}
+							{/* Logout (logged in only) — closes menu before opening dialog */}
 							{isLoggedIn && (
 								<motion.li variants={itemVariants} custom={delay(150, 3)}>
-									<LogoutAlertDialog>
-										<button
-											type="button"
-											className={cn(
-												linkClassName,
-												"text-muted-foreground hover:text-foreground w-full text-left",
-											)}
-										>
-											Déconnexion
-										</button>
-									</LogoutAlertDialog>
+									<button
+										type="button"
+										className={cn(
+											linkClassName,
+											"text-muted-foreground hover:text-foreground w-full text-left",
+										)}
+										onClick={onLogoutClick}
+									>
+										Déconnexion
+									</button>
 								</motion.li>
 							)}
 

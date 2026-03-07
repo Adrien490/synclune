@@ -32,7 +32,7 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 		return (
 			<Empty role="status" aria-live="polite" className="mt-4 mb-12 sm:my-12">
 				<EmptyHeader>
-					<EmptyMedia>
+					<EmptyMedia variant="icon">
 						<Gem className="size-6" />
 					</EmptyMedia>
 					<EmptyTitle>Aucune collection disponible</EmptyTitle>

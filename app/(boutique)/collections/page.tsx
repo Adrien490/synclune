@@ -9,6 +9,7 @@ import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 export const metadata: Metadata = {
 	title: "Collections de bijoux artisanaux | Synclune",
@@ -92,7 +93,7 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
+					__html: safeJsonLd(breadcrumbJsonLd),
 				}}
 			/>
 

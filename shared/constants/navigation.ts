@@ -124,6 +124,9 @@ export function getMobileNavItems(
 		// ✨ PERSONNALISER - Service différenciateur
 		{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
 
+		// 🏡 L'ATELIER - Page à propos
+		{ href: ROUTES.SHOP.ABOUT, label: "L'atelier", icon: "info" },
+
 		// 👤 COMPTE - Gestion utilisateur
 		session
 			? { href: ROUTES.ACCOUNT.ROOT, label: "Mon compte", icon: "user" }

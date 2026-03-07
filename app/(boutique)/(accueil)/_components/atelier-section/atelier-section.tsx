@@ -12,6 +12,7 @@ import { CreativeProcessTimeline } from "./creative-process-timeline";
 import { PolaroidGallery } from "./polaroid-gallery";
 import { processSteps } from "./process-steps";
 import { SignatureReveal } from "./signature-reveal";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 // ─── HowTo JSON-LD ──────────────────────────────────────────────────────────
 
@@ -70,7 +71,7 @@ export async function AtelierSection() {
 				id="howto-schema"
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(howToSchema).replace(/</g, "\\u003c"),
+					__html: safeJsonLd(howToSchema),
 				}}
 			/>
 

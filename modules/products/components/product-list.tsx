@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
 import { RefreshButton } from "./refresh-button";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 import {
 	SearchFallbackSuggestions,
@@ -61,10 +62,6 @@ export function ProductList({
 
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
 
-	// Escape <, > and & to prevent XSS in JSON-LD script injection
-	const sanitizeJsonLd = (json: string) =>
-		json.replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
-
 	// ItemList JSON-LD for rich snippets (carousel-style SERPs)
 	const itemListJsonLd = {
 		"@context": "https://schema.org",
@@ -85,7 +82,7 @@ export function ProductList({
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: sanitizeJsonLd(JSON.stringify(itemListJsonLd)),
+					__html: safeJsonLd(itemListJsonLd),
 				}}
 			/>
 

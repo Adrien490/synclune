@@ -121,7 +121,7 @@ function SheetContent({
 				{showCloseButton && (
 					<SheetPrimitive.Close
 						aria-label="Fermer le panneau"
-						className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 rounded-md p-3 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none"
+						className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 inline-flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none"
 					>
 						<XIcon className="size-5" aria-hidden="true" />
 						<span className="sr-only">Fermer</span>

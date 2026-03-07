@@ -207,7 +207,7 @@ export function ProductFilterSheet({
 	const { hasActiveFilters, activeFiltersCount } = countActiveFilters(searchParams);
 
 	// Sort colors and materials by count (descending)
-	const sortedColors = [...colors].sort((a, b) => b._count.skus - a._count.skus);
+	const sortedColors = [...colors].sort((a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0));
 	const sortedMaterials = [...materials].sort(
 		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0),
 	);

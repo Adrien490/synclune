@@ -1,13 +1,16 @@
 "use client";
 
 import { Filter } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { cn } from "@/shared/utils/cn";
-import { countActiveFilters } from "@/modules/products/services/product-filter-params.service";
+import {
+	countActiveFilters,
+	isProductCategoryPage,
+} from "@/modules/products/services/product-filter-params.service";
 
 interface ProductFilterTriggerProps {
 	className?: string;
@@ -37,8 +40,15 @@ interface ProductFilterTriggerProps {
 export function ProductFilterTrigger({ className, variant = "full" }: ProductFilterTriggerProps) {
 	const { open } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const searchParams = useSearchParams();
+	const pathname = usePathname();
 
-	const { activeFiltersCount, hasActiveFilters } = countActiveFilters(searchParams);
+	const { activeFiltersCount: urlFiltersCount, hasActiveFilters: urlHasActiveFilters } =
+		countActiveFilters(searchParams);
+
+	// Add 1 if on a category page (type is in the path, not in query params)
+	const isOnCategoryPage = isProductCategoryPage(pathname);
+	const activeFiltersCount = urlFiltersCount + (isOnCategoryPage ? 1 : 0);
+	const hasActiveFilters = urlHasActiveFilters || isOnCategoryPage;
 
 	// Variante icon (mobile) - meme style que SortDrawerTrigger
 	if (variant === "icon") {

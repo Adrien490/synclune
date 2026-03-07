@@ -1,6 +1,7 @@
 import {
 	Empty,
 	EmptyContent,
+	EmptyDescription,
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
@@ -29,6 +30,9 @@ export function CustomizationRequestList({ requestsPromise }: CustomizationReque
 						<Sparkles className="size-6" />
 					</EmptyMedia>
 					<EmptyTitle>Aucune demande de personnalisation</EmptyTitle>
+					<EmptyDescription>
+						Créez un bijou unique qui vous ressemble grâce à notre service de personnalisation.
+					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
 					<Button asChild>

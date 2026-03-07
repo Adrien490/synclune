@@ -14,6 +14,7 @@ import { FaqAccordion } from "./faq-accordion";
 import { FaqDoodles } from "./faq-doodles";
 import type { AnswerSegment, FaqItemData } from "./faq-utils";
 import { generateFaqSchema, parseAnswerSegments, validateFaqPlaceholders } from "./faq-utils";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 function renderSegments(segments: AnswerSegment[]): ReactNode {
 	const first = segments[0];
@@ -125,7 +126,7 @@ export async function FaqSection() {
 				id="faq-schema"
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(faqSchema).replace(/</g, "\\u003c"),
+					__html: safeJsonLd(faqSchema),
 				}}
 			/>
 

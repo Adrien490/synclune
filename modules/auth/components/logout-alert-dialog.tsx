@@ -18,18 +18,26 @@ import { useLogout } from "../hooks/use-logout";
 export const LOGOUT_DIALOG_ID = "logout";
 
 interface LogoutAlertDialogProps {
-	children: React.ReactNode;
+	children?: React.ReactNode;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
-export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
-	const [open, setOpen] = useState(false);
+export function LogoutAlertDialog({
+	children,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+}: LogoutAlertDialogProps) {
+	const [internalOpen, setInternalOpen] = useState(false);
+	const open = controlledOpen ?? internalOpen;
+	const setOpen = controlledOnOpenChange ?? setInternalOpen;
 	const { action, isPending, isLoggedOut } = useLogout({
 		onSuccess: () => setOpen(false),
 	});
 
 	return (
 		<AlertDialog open={open} onOpenChange={setOpen}>
-			<AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+			{children && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
 			<AlertDialogContent>
 				<form
 					action={action}

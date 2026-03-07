@@ -57,7 +57,7 @@ export function parsePaginationParams(searchParamsData: ProductSearchParams) {
 	const perPage = Number(getFirstParam(searchParamsData.perPage)) || GET_PRODUCTS_DEFAULT_PER_PAGE;
 	const sortBy = getFirstParam(searchParamsData.sortBy) ?? "created-descending";
 	const searchTerm =
-		typeof searchParamsData.search === "string" ? searchParamsData.search : undefined;
+		typeof searchParamsData.search === "string" ? searchParamsData.search.slice(0, 200) : undefined;
 
 	return { cursor, direction, perPage, sortBy, searchTerm };
 }

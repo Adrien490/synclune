@@ -1,6 +1,7 @@
 import {
 	Empty,
 	EmptyContent,
+	EmptyDescription,
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
@@ -41,6 +42,9 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 							<MapPin className="size-6" />
 						</EmptyMedia>
 						<EmptyTitle>Aucune adresse enregistrée</EmptyTitle>
+						<EmptyDescription>
+							Ajoutez une adresse de livraison pour accélérer vos prochaines commandes.
+						</EmptyDescription>
 					</EmptyHeader>
 					<EmptyContent>
 						<CreateAddressButton>Ajouter une adresse</CreateAddressButton>

@@ -8,7 +8,8 @@ import { ProductCard } from "@/modules/products/components/product-card";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Empty,
-	EmptyContent,
+	EmptyActions,
+	EmptyDescription,
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
@@ -79,20 +80,18 @@ export function WishlistListContent({
 						</EmptyMedia>
 						<EmptyTitle>Votre wishlist est vide</EmptyTitle>
 					</EmptyHeader>
-					<EmptyContent>
-						<p className="text-muted-foreground mb-6 max-w-md">
-							Découvrez nos créations artisanales et ajoutez vos coups de cœur à votre wishlist pour
-							les retrouver facilement.
-						</p>
-						<div className="flex flex-col gap-3 sm:flex-row">
-							<Button asChild variant="primary" size="lg">
-								<Link href="/produits">Découvrir nos créations</Link>
-							</Button>
-							<Button asChild variant="outline" size="lg">
-								<Link href="/collections">Voir les collections</Link>
-							</Button>
-						</div>
-					</EmptyContent>
+					<EmptyDescription>
+						Découvrez nos créations artisanales et ajoutez vos coups de cœur à votre wishlist pour
+						les retrouver facilement.
+					</EmptyDescription>
+					<EmptyActions>
+						<Button asChild variant="primary" size="lg">
+							<Link href="/produits">Découvrir nos créations</Link>
+						</Button>
+						<Button asChild variant="outline" size="lg">
+							<Link href="/collections">Voir les collections</Link>
+						</Button>
+					</EmptyActions>
 				</Empty>
 
 				{/* Annonce pour screen readers */}

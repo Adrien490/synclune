@@ -14,6 +14,7 @@ import { Suspense } from "react";
 import { parseFilters } from "../_utils/params";
 import { generateCollectionMetadata } from "./_utils/generate-metadata";
 import { generateCollectionStructuredData } from "./_utils/generate-structured-data";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 /**
  * Collection page search params (pagination only, no search or sort filters)
@@ -97,7 +98,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+					__html: safeJsonLd(structuredData),
 				}}
 			/>
 

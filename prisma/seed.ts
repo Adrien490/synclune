@@ -1759,19 +1759,20 @@ async function main(): Promise<void> {
 		// Post-delivery email tracking for delivered orders
 		const emailTrackingData: Partial<Prisma.OrderCreateInput> = {};
 		if (status === OrderStatus.DELIVERED) {
+			const clampToNow = (date: Date) => new Date(Math.min(date.getTime(), Date.now()));
 			if (sampleBoolean(0.6)) {
-				emailTrackingData.reviewRequestSentAt = new Date(
-					orderDate.getTime() + 14 * 24 * 60 * 60 * 1000,
+				emailTrackingData.reviewRequestSentAt = clampToNow(
+					new Date(orderDate.getTime() + 14 * 24 * 60 * 60 * 1000),
 				);
 			}
 			if (sampleBoolean(0.3)) {
-				emailTrackingData.reviewReminderSentAt = new Date(
-					orderDate.getTime() + 21 * 24 * 60 * 60 * 1000,
+				emailTrackingData.reviewReminderSentAt = clampToNow(
+					new Date(orderDate.getTime() + 21 * 24 * 60 * 60 * 1000),
 				);
 			}
 			if (sampleBoolean(0.4)) {
-				emailTrackingData.crossSellEmailSentAt = new Date(
-					orderDate.getTime() + 30 * 24 * 60 * 60 * 1000,
+				emailTrackingData.crossSellEmailSentAt = clampToNow(
+					new Date(orderDate.getTime() + 30 * 24 * 60 * 60 * 1000),
 				);
 			}
 		}
@@ -2129,6 +2130,10 @@ async function main(): Promise<void> {
 
 		const responseDate = new Date(review.createdAt);
 		responseDate.setDate(responseDate.getDate() + faker.number.int({ min: 1, max: 7 }));
+		// Clamp to now to avoid future-dated responses
+		const now = new Date();
+		if (responseDate > now)
+			responseDate.setTime(now.getTime() - faker.number.int({ min: 1, max: 24 }) * 60 * 60 * 1000);
 
 		responsesData.push({
 			reviewId: review.id,
@@ -2338,7 +2343,7 @@ async function main(): Promise<void> {
 	// UTILISATIONS CODES PROMO (batch)
 	// ============================================
 	const paidOrders = await prisma.order.findMany({
-		where: { paymentStatus: PaymentStatus.PAID },
+		where: { paymentStatus: PaymentStatus.PAID, userId: { not: null } },
 		select: { id: true, userId: true, subtotal: true },
 		take: 25,
 	});
@@ -2505,6 +2510,8 @@ async function main(): Promise<void> {
 		RefundReason.DEFECTIVE,
 		RefundReason.WRONG_ITEM,
 		RefundReason.LOST_IN_TRANSIT,
+		RefundReason.FRAUD,
+		RefundReason.OTHER,
 	];
 
 	let refundsCreated = 0;
@@ -2552,12 +2559,28 @@ async function main(): Promise<void> {
 							: null,
 					createdAt: refundDate,
 					items: {
-						create: itemsToRefund.map((item) => ({
-							orderItemId: item.id,
-							quantity: item.quantity,
-							amount: Math.min(item.price * item.quantity, refundAmount),
-							restock: reason !== RefundReason.DEFECTIVE,
-						})),
+						create: (() => {
+							// Distribute refund amount proportionally across items
+							const totalItemsValue = itemsToRefund.reduce(
+								(sum, item) => sum + item.price * item.quantity,
+								0,
+							);
+							let remaining = refundAmount;
+							return itemsToRefund.map((item, idx) => {
+								const itemValue = item.price * item.quantity;
+								const amount =
+									idx === itemsToRefund.length - 1
+										? remaining
+										: Math.round((itemValue / totalItemsValue) * refundAmount);
+								remaining -= amount;
+								return {
+									orderItemId: item.id,
+									quantity: item.quantity,
+									amount,
+									restock: reason !== RefundReason.DEFECTIVE,
+								};
+							});
+						})(),
 					},
 				},
 			});
@@ -2604,12 +2627,27 @@ async function main(): Promise<void> {
 					processedAt: refundDate,
 					createdAt: refundDate,
 					items: {
-						create: order.items.map((item) => ({
-							orderItemId: item.id,
-							quantity: item.quantity,
-							amount: item.price * item.quantity,
-							restock: true,
-						})),
+						create: (() => {
+							const totalItemsValue = order.items.reduce(
+								(sum, item) => sum + item.price * item.quantity,
+								0,
+							);
+							let remaining = refundAmount;
+							return order.items.map((item, idx) => {
+								const itemValue = item.price * item.quantity;
+								const amount =
+									idx === order.items.length - 1
+										? remaining
+										: Math.round((itemValue / totalItemsValue) * refundAmount);
+								remaining -= amount;
+								return {
+									orderItemId: item.id,
+									quantity: item.quantity,
+									amount,
+									restock: true,
+								};
+							});
+						})(),
 					},
 				},
 			});
@@ -2639,6 +2677,7 @@ async function main(): Promise<void> {
 	});
 
 	const allHistoryEntries: Prisma.OrderHistoryCreateManyInput[] = [];
+	const clampToNow = (date: Date) => new Date(Math.min(date.getTime(), Date.now()));
 
 	for (const order of allOrders) {
 		let currentDate = new Date(order.createdAt);
@@ -2659,8 +2698,9 @@ async function main(): Promise<void> {
 			order.paymentStatus === PaymentStatus.REFUNDED ||
 			order.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED
 		) {
-			currentDate = new Date(currentDate);
+			currentDate = clampToNow(new Date(currentDate));
 			currentDate.setMinutes(currentDate.getMinutes() + faker.number.int({ min: 5, max: 30 }));
+			currentDate = clampToNow(currentDate);
 			allHistoryEntries.push({
 				orderId: order.id,
 				action: OrderAction.PAID,
@@ -2677,8 +2717,9 @@ async function main(): Promise<void> {
 				[OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED] as OrderStatus[]
 			).includes(order.status)
 		) {
-			currentDate = new Date(currentDate);
+			currentDate = clampToNow(new Date(currentDate));
 			currentDate.setHours(currentDate.getHours() + faker.number.int({ min: 1, max: 24 }));
+			currentDate = clampToNow(currentDate);
 			allHistoryEntries.push({
 				orderId: order.id,
 				action: OrderAction.PROCESSING,
@@ -2692,8 +2733,9 @@ async function main(): Promise<void> {
 
 		// 4. Shipped
 		if (([OrderStatus.SHIPPED, OrderStatus.DELIVERED] as OrderStatus[]).includes(order.status)) {
-			currentDate = new Date(currentDate);
+			currentDate = clampToNow(new Date(currentDate));
 			currentDate.setDate(currentDate.getDate() + faker.number.int({ min: 1, max: 3 }));
+			currentDate = clampToNow(currentDate);
 			allHistoryEntries.push({
 				orderId: order.id,
 				action: OrderAction.SHIPPED,
@@ -2707,8 +2749,9 @@ async function main(): Promise<void> {
 
 		// 5. Delivered
 		if (order.status === OrderStatus.DELIVERED) {
-			currentDate = new Date(currentDate);
+			currentDate = clampToNow(new Date(currentDate));
 			currentDate.setDate(currentDate.getDate() + faker.number.int({ min: 2, max: 5 }));
+			currentDate = clampToNow(currentDate);
 			allHistoryEntries.push({
 				orderId: order.id,
 				action: OrderAction.DELIVERED,
@@ -2721,8 +2764,9 @@ async function main(): Promise<void> {
 
 		// 6. Cancelled
 		if (order.status === OrderStatus.CANCELLED) {
-			currentDate = new Date(currentDate);
+			currentDate = clampToNow(new Date(currentDate));
 			currentDate.setHours(currentDate.getHours() + faker.number.int({ min: 1, max: 48 }));
+			currentDate = clampToNow(currentDate);
 			allHistoryEntries.push({
 				orderId: order.id,
 				action: OrderAction.CANCELLED,
@@ -2734,6 +2778,151 @@ async function main(): Promise<void> {
 				createdAt: currentDate,
 			});
 		}
+	}
+
+	// Additional history entries for missing OrderAction coverage
+	const deliveredForHistory = allOrders.filter((o) => o.status === OrderStatus.DELIVERED);
+	const shippedForHistory = allOrders.filter((o) => o.status === OrderStatus.SHIPPED);
+
+	// RETURNED - a delivered order returned by customer
+	if (deliveredForHistory[0]) {
+		const returnDate = new Date(deliveredForHistory[0].createdAt);
+		returnDate.setDate(returnDate.getDate() + 20);
+		allHistoryEntries.push({
+			orderId: deliveredForHistory[0].id,
+			action: OrderAction.RETURNED,
+			previousFulfillmentStatus: FulfillmentStatus.DELIVERED,
+			newFulfillmentStatus: FulfillmentStatus.RETURNED,
+			note: "Retour client - produit non conforme aux attentes",
+			source: HistorySource.CUSTOMER,
+			createdAt: returnDate,
+		});
+	}
+
+	// TRACKING_UPDATED - tracking number changed
+	if (shippedForHistory[0]) {
+		const trackDate = new Date(shippedForHistory[0].createdAt);
+		trackDate.setDate(trackDate.getDate() + 3);
+		allHistoryEntries.push({
+			orderId: shippedForHistory[0].id,
+			action: OrderAction.TRACKING_UPDATED,
+			note: "Numéro de suivi mis à jour : 6A12345678901",
+			authorName: faker.helpers.arrayElement(adminUsers).name,
+			source: HistorySource.ADMIN,
+			createdAt: trackDate,
+		});
+	}
+
+	// ADDRESS_UPDATED - shipping address changed before shipment
+	if (deliveredForHistory[1]) {
+		const addrDate = new Date(deliveredForHistory[1].createdAt);
+		addrDate.setDate(addrDate.getDate() + 1);
+		allHistoryEntries.push({
+			orderId: deliveredForHistory[1].id,
+			action: OrderAction.ADDRESS_UPDATED,
+			note: "Adresse de livraison modifiée par le client",
+			source: HistorySource.CUSTOMER,
+			createdAt: addrDate,
+		});
+	}
+
+	// INVOICE_GENERATED
+	if (deliveredForHistory[2]) {
+		const invDate = new Date(deliveredForHistory[2].createdAt);
+		invDate.setDate(invDate.getDate() + 2);
+		allHistoryEntries.push({
+			orderId: deliveredForHistory[2].id,
+			action: OrderAction.INVOICE_GENERATED,
+			note: "Facture générée automatiquement",
+			source: HistorySource.SYSTEM,
+			createdAt: invDate,
+		});
+	}
+
+	// REFUND_CREATED, REFUND_COMPLETED, REFUND_FAILED
+	if (deliveredForHistory[3]) {
+		const refDate = new Date(deliveredForHistory[3].createdAt);
+		refDate.setDate(refDate.getDate() + 10);
+		allHistoryEntries.push({
+			orderId: deliveredForHistory[3].id,
+			action: OrderAction.REFUND_CREATED,
+			note: "Remboursement demandé par le client",
+			authorName: faker.helpers.arrayElement(adminUsers).name,
+			source: HistorySource.ADMIN,
+			createdAt: refDate,
+		});
+		const completedDate = new Date(refDate);
+		completedDate.setDate(completedDate.getDate() + 2);
+		allHistoryEntries.push({
+			orderId: deliveredForHistory[3].id,
+			action: OrderAction.REFUND_COMPLETED,
+			note: "Remboursement confirmé par Stripe",
+			source: HistorySource.WEBHOOK,
+			createdAt: completedDate,
+		});
+	}
+	if (deliveredForHistory[4]) {
+		const failDate = new Date(deliveredForHistory[4].createdAt);
+		failDate.setDate(failDate.getDate() + 12);
+		allHistoryEntries.push({
+			orderId: deliveredForHistory[4].id,
+			action: OrderAction.REFUND_FAILED,
+			note: "Échec du remboursement Stripe : carte expirée",
+			source: HistorySource.WEBHOOK,
+			createdAt: failDate,
+		});
+	}
+
+	// DISPUTE_OPENED, DISPUTE_RESOLVED
+	if (deliveredForHistory[5]) {
+		const dispDate = new Date(deliveredForHistory[5].createdAt);
+		dispDate.setDate(dispDate.getDate() + 15);
+		allHistoryEntries.push({
+			orderId: deliveredForHistory[5].id,
+			action: OrderAction.DISPUTE_OPENED,
+			note: "Litige ouvert par le titulaire de la carte",
+			source: HistorySource.WEBHOOK,
+			createdAt: dispDate,
+		});
+		const resolvedDate = new Date(dispDate);
+		resolvedDate.setDate(resolvedDate.getDate() + 30);
+		allHistoryEntries.push({
+			orderId: deliveredForHistory[5].id,
+			action: OrderAction.DISPUTE_RESOLVED,
+			note: "Litige résolu en faveur du marchand",
+			source: HistorySource.WEBHOOK,
+			createdAt: resolvedDate,
+		});
+	}
+
+	// STATUS_REVERTED - an order status was reverted
+	if (shippedForHistory[1]) {
+		const revertDate = new Date(shippedForHistory[1].createdAt);
+		revertDate.setDate(revertDate.getDate() + 2);
+		allHistoryEntries.push({
+			orderId: shippedForHistory[1].id,
+			action: OrderAction.STATUS_REVERTED,
+			previousStatus: OrderStatus.SHIPPED,
+			newStatus: OrderStatus.PROCESSING,
+			note: "Statut rétabli - erreur d'expédition",
+			authorName: faker.helpers.arrayElement(adminUsers).name,
+			source: HistorySource.ADMIN,
+			createdAt: revertDate,
+		});
+	}
+
+	// INVOICE_VOIDED - invoice voided after cancellation
+	const cancelledOrders = allOrders.filter((o) => o.status === OrderStatus.CANCELLED);
+	if (cancelledOrders[0]) {
+		const voidDate = new Date(cancelledOrders[0].createdAt);
+		voidDate.setDate(voidDate.getDate() + 3);
+		allHistoryEntries.push({
+			orderId: cancelledOrders[0].id,
+			action: OrderAction.INVOICE_VOIDED,
+			note: "Facture annulée suite à l'annulation de la commande",
+			source: HistorySource.SYSTEM,
+			createdAt: voidDate,
+		});
 	}
 
 	await prisma.orderHistory.createMany({ data: allHistoryEntries });
@@ -3106,20 +3295,38 @@ async function main(): Promise<void> {
 			status: { in: [OrderStatus.DELIVERED, OrderStatus.SHIPPED] },
 		},
 		select: { id: true, total: true, createdAt: true },
-		take: 3,
+		take: 5,
 		orderBy: { createdAt: "desc" },
 	});
 
-	const disputeReasons = ["FRAUDULENT", "PRODUCT_NOT_RECEIVED", "PRODUCT_UNACCEPTABLE"] as const;
-	const disputeStatuses = ["NEEDS_RESPONSE", "UNDER_REVIEW", "LOST"] as const;
+	const disputeReasons = [
+		"FRAUDULENT",
+		"PRODUCT_NOT_RECEIVED",
+		"PRODUCT_UNACCEPTABLE",
+		"DUPLICATE",
+		"CREDIT_NOT_PROCESSED",
+	] as const;
+	const disputeStatuses = [
+		"NEEDS_RESPONSE",
+		"UNDER_REVIEW",
+		"LOST",
+		"WON",
+		"CHARGE_REFUNDED",
+	] as const;
 
-	for (let i = 0; i < ordersForDisputes.length; i++) {
+	for (let i = 0; i < Math.min(ordersForDisputes.length, disputeStatuses.length); i++) {
 		const order = ordersForDisputes[i]!;
+		const status = disputeStatuses[i]!;
 		const disputeDate = new Date(order.createdAt);
 		disputeDate.setDate(disputeDate.getDate() + faker.number.int({ min: 5, max: 30 }));
 
 		const dueBy = new Date(disputeDate);
 		dueBy.setDate(dueBy.getDate() + 21);
+
+		const isResolved = status === "LOST" || status === "WON" || status === "CHARGE_REFUNDED";
+		const resolvedDate = isResolved ? new Date(disputeDate) : null;
+		if (resolvedDate)
+			resolvedDate.setDate(resolvedDate.getDate() + faker.number.int({ min: 7, max: 30 }));
 
 		await prisma.dispute.create({
 			data: {
@@ -3128,14 +3335,14 @@ async function main(): Promise<void> {
 				amount: order.total,
 				fee: 1500,
 				reason: disputeReasons[i]!,
-				status: disputeStatuses[i]!,
-				dueBy: disputeStatuses[i] === "NEEDS_RESPONSE" ? dueBy : null,
-				resolvedAt: disputeStatuses[i] === "LOST" ? disputeDate : null,
+				status,
+				dueBy: status === "NEEDS_RESPONSE" ? dueBy : null,
+				resolvedAt: resolvedDate,
 				createdAt: disputeDate,
 			},
 		});
 	}
-	console.log(`✅ ${ordersForDisputes.length} disputes créées`);
+	console.log(`✅ ${Math.min(ordersForDisputes.length, disputeStatuses.length)} disputes créées`);
 
 	// ============================================
 	// AUDIT LOG (M5)
@@ -3199,26 +3406,40 @@ async function main(): Promise<void> {
 	console.log(`✅ ${testimonialData.length} témoignages créés`);
 
 	// ============================================
-	// FAILED EMAILS (missing model - for retry-failed-emails cron)
+	// FAILED EMAILS (for retry-failed-emails cron)
 	// ============================================
+	const ordersForFailedEmails = await prisma.order.findMany({
+		select: { id: true, customerEmail: true, trackingNumber: true },
+		take: 3,
+	});
 	const failedEmailData: Prisma.FailedEmailCreateManyInput[] = [
 		{
 			taskType: "ORDER_CONFIRMATION_EMAIL",
-			payload: { orderId: "fake-order-id-1", email: "test@example.com" },
+			payload: {
+				orderId: ordersForFailedEmails[0]?.id ?? "unknown",
+				email: ordersForFailedEmails[0]?.customerEmail ?? "test@example.com",
+			},
 			attempts: 2,
 			lastError: "Resend API rate limit exceeded",
 			nextRetryAt: new Date(),
 		},
 		{
 			taskType: "SHIPPING_NOTIFICATION_EMAIL",
-			payload: { orderId: "fake-order-id-2", email: "test2@example.com", trackingNumber: "ABC123" },
+			payload: {
+				orderId: ordersForFailedEmails[1]?.id ?? "unknown",
+				email: ordersForFailedEmails[1]?.customerEmail ?? "test2@example.com",
+				trackingNumber: ordersForFailedEmails[1]?.trackingNumber ?? "ABC123",
+			},
 			attempts: 1,
 			lastError: "Connection timeout to Resend API",
 			nextRetryAt: new Date(Date.now() + 30 * 60 * 1000),
 		},
 		{
 			taskType: "REVIEW_REQUEST_EMAIL",
-			payload: { orderId: "fake-order-id-3", email: "test3@example.com" },
+			payload: {
+				orderId: ordersForFailedEmails[2]?.id ?? "unknown",
+				email: ordersForFailedEmails[2]?.customerEmail ?? "test3@example.com",
+			},
 			attempts: 5,
 			lastError: "Max attempts reached",
 			nextRetryAt: new Date(),

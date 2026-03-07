@@ -1,6 +1,7 @@
 "use client";
 
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
+import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { NavbarSessionData } from "@/shared/types/session.types";
 import ScrollFade from "@/shared/components/scroll-fade";
 import {
@@ -14,7 +15,7 @@ import {
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
@@ -26,7 +27,7 @@ const triggerClassName = cn(
 	"transition-[transform,color,background-color] duration-300 ease-out",
 	"motion-safe:hover:scale-105 motion-safe:active:scale-95",
 	"cursor-pointer group",
-	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+	"focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 );
 
 /**
@@ -55,52 +56,65 @@ export function MenuSheet({
 	session,
 }: MenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("menu-sheet");
+	const [showLogout, setShowLogout] = useState(false);
 	useEdgeSwipe(openMenu, isOpen);
 
+	function handleLogoutClick() {
+		closeMenu();
+		// Small delay to let sheet close before opening the alert dialog
+		setTimeout(() => setShowLogout(true), 150);
+	}
+
 	return (
-		<Sheet
-			direction="left"
-			open={isOpen}
-			onOpenChange={(open) => (open ? openMenu() : closeMenu())}
-			preventScrollRestoration
-		>
-			<SheetTrigger asChild>
-				<button
-					type="button"
-					className={triggerClassName}
-					aria-label={isOpen ? "Fermer le menu de navigation" : "Ouvrir le menu de navigation"}
-					aria-haspopup="dialog"
-					aria-expanded={isOpen}
-				>
-					<HamburgerIcon isOpen={isOpen} />
-				</button>
-			</SheetTrigger>
+		<>
+			<Sheet
+				direction="left"
+				open={isOpen}
+				onOpenChange={(open) => (open ? openMenu() : closeMenu())}
+				preventScrollRestoration
+			>
+				<SheetTrigger asChild>
+					<button
+						type="button"
+						className={triggerClassName}
+						aria-label={isOpen ? "Fermer le menu de navigation" : "Ouvrir le menu de navigation"}
+						aria-haspopup="dialog"
+						aria-expanded={isOpen}
+					>
+						<HamburgerIcon isOpen={isOpen} />
+					</button>
+				</SheetTrigger>
 
-			<SheetContent className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md">
-				{/* Header sr-only */}
-				<SheetHeader className="sr-only p-0!">
-					<SheetTitle>Menu de navigation</SheetTitle>
-					<SheetDescription>
-						Menu de navigation de Synclune - Découvrez nos bijoux et collections
-					</SheetDescription>
-				</SheetHeader>
+				<SheetContent className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md">
+					{/* Header sr-only */}
+					<SheetHeader className="sr-only p-0!">
+						<SheetTitle>Menu de navigation</SheetTitle>
+						<SheetDescription>
+							Menu de navigation de Synclune - Découvrez nos bijoux et collections
+						</SheetDescription>
+					</SheetHeader>
 
-				{/* Scrollable content */}
-				<div className="min-h-0 flex-1">
-					<ScrollFade axis="vertical" className="h-full" hideScrollbar={false}>
-						<MenuSheetNav
-							navItems={navItems}
-							productTypes={productTypes}
-							collections={collections}
-							session={session}
-							isOpen={isOpen}
-						/>
-					</ScrollFade>
-				</div>
+					{/* Scrollable content */}
+					<div className="min-h-0 flex-1">
+						<ScrollFade axis="vertical" className="h-full" hideScrollbar={false}>
+							<MenuSheetNav
+								navItems={navItems}
+								productTypes={productTypes}
+								collections={collections}
+								session={session}
+								isOpen={isOpen}
+								onLogoutClick={handleLogoutClick}
+							/>
+						</ScrollFade>
+					</div>
 
-				<MenuSheetFooter isAdmin={isAdmin} />
-			</SheetContent>
-		</Sheet>
+					<MenuSheetFooter isAdmin={isAdmin} />
+				</SheetContent>
+			</Sheet>
+
+			{/* Logout dialog rendered outside sheet to avoid stacked modals (M2) */}
+			<LogoutAlertDialog open={showLogout} onOpenChange={setShowLogout} />
+		</>
 	);
 }
 

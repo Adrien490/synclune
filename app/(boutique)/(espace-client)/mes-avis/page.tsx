@@ -7,7 +7,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Empty,
-	EmptyActions,
+	EmptyContent,
 	EmptyDescription,
 	EmptyHeader,
 	EmptyMedia,
@@ -94,14 +94,14 @@ async function ReviewsEmptyState({
 				</EmptyMedia>
 				<EmptyTitle>Aucun avis</EmptyTitle>
 				<EmptyDescription>
-					Vous n'avez pas encore de produits a evaluer. Commandez pour pouvoir laisser votre avis !
+					Vous n'avez pas encore de produits à évaluer. Commandez pour pouvoir laisser votre avis !
 				</EmptyDescription>
 			</EmptyHeader>
-			<EmptyActions>
-				<Button asChild>
-					<Link href="/creations">Decouvrir nos creations</Link>
+			<EmptyContent>
+				<Button asChild size="lg">
+					<Link href="/produits">Découvrir nos créations</Link>
 				</Button>
-			</EmptyActions>
+			</EmptyContent>
 		</Empty>
 	);
 }

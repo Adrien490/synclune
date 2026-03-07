@@ -42,7 +42,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 		return (
 			<TableEmptyState
 				icon={ShoppingBag}
-				title="Aucune commande trouvee"
+				title="Aucune commande trouvée"
 				description="Aucune commande ne correspond aux criteres de recherche."
 				actionElement={
 					<Button variant="outline" asChild>

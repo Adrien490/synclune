@@ -701,7 +701,11 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 	useEffect(() => {
 		if (isOpen && product) {
 			const activeSkus = product.skus.filter((sku) => sku.isActive);
-			const defaultSku = activeSkus.find((sku) => sku.isDefault) ?? activeSkus[0];
+			const defaultSku =
+				activeSkus.find((sku) => sku.isDefault && sku.inventory > 0) ??
+				activeSkus.find((sku) => sku.inventory > 0) ??
+				activeSkus.find((sku) => sku.isDefault) ??
+				activeSkus[0];
 			const { colors, materials, sizes } = extractVariantOptions(activeSkus);
 
 			// m5: Validate preselectedColor exists in active colors

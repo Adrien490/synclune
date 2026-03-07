@@ -8,7 +8,15 @@ export const FLOAT_VARIANTS = {
 	},
 	animate: {
 		reduced: { opacity: 1 },
-		full: { opacity: 1, scale: 1 },
+		full: {
+			opacity: 1,
+			scale: 1,
+			y: 0,
+			transition: {
+				scale: MOTION_CONFIG.spring.hover,
+				y: MOTION_CONFIG.spring.hover,
+			},
+		},
 	},
 	whileHover: {
 		full: {

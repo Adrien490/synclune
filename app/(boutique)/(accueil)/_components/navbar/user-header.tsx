@@ -26,21 +26,31 @@ export function UserHeader({
 					className="group block"
 					aria-label={`Mon compte - ${firstName}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
 				>
-					<p className="text-foreground text-base font-semibold">Bonjour {firstName}</p>
-					<p className="text-muted-foreground mt-0.5 text-sm">
-						{wishlistCount > 0 && (
-							<span>
-								{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
-							</span>
-						)}
-						{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
-						{cartCount > 0 && (
-							<span>
-								{cartCount} article{cartCount > 1 ? "s" : ""}
-							</span>
-						)}
-						{wishlistCount === 0 && cartCount === 0 && <span>Mon espace personnel</span>}
-					</p>
+					<div className="flex items-center gap-3">
+						<div
+							className="bg-primary/15 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+							aria-hidden="true"
+						>
+							{firstName[0]?.toUpperCase()}
+						</div>
+						<div>
+							<p className="text-foreground text-base font-semibold">Bonjour {firstName}</p>
+							<p className="text-muted-foreground mt-0.5 text-sm">
+								{wishlistCount > 0 && (
+									<span>
+										{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
+									</span>
+								)}
+								{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
+								{cartCount > 0 && (
+									<span>
+										{cartCount} article{cartCount > 1 ? "s" : ""}
+									</span>
+								)}
+								{wishlistCount === 0 && cartCount === 0 && <span>Mon espace personnel</span>}
+							</p>
+						</div>
+					</div>
 				</Link>
 			</SheetClose>
 		</div>

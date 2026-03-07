@@ -32,7 +32,7 @@ export async function SubscribersDataTable({
 		return (
 			<TableEmptyState
 				icon={Mail}
-				title="Aucun abonne trouve"
+				title="Aucun abonné trouvé"
 				description="Aucun abonne ne correspond aux criteres de recherche."
 				actionElement={
 					<Button variant="outline" asChild>

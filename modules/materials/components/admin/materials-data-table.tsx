@@ -32,7 +32,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 		return (
 			<TableEmptyState
 				icon={Gem}
-				title="Aucun materiau trouve"
+				title="Aucun matériau trouvé"
 				description="Aucun materiau ne correspond aux criteres de recherche."
 				actionElement={<CreateMaterialButton />}
 			/>

@@ -22,6 +22,8 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { ClearSearchButton } from "@/shared/components/clear-search-button";
 import { SearchInput } from "@/shared/components/search-input";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 // Lazy loading - filter sheet charge uniquement a l'ouverture
 const ProductFilterSheet = dynamic(() =>
@@ -109,15 +111,7 @@ export function ProductCatalog({
 	return (
 		<div className="min-h-screen">
 			{/* JSON-LD Structured Data */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(jsonLd)
-						.replace(/</g, "\\u003c")
-						.replace(/>/g, "\\u003e")
-						.replace(/&/g, "\\u0026"),
-				}}
-			/>
+			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
 
 			<PageHeader
 				className="hidden sm:block"
@@ -174,14 +168,19 @@ export function ProductCatalog({
 						/>
 					)}
 
-					<Suspense fallback={<ProductListSkeleton />}>
-						<ProductList
-							productsPromise={productsPromise}
-							perPage={perPage}
-							searchTerm={searchTerm}
-							wishlistProductIdsPromise={wishlistProductIdsPromise}
-						/>
-					</Suspense>
+					<ErrorBoundary
+						errorMessage="Impossible de charger les produits"
+						className="flex min-h-[200px] items-center justify-center rounded-xl"
+					>
+						<Suspense fallback={<ProductListSkeleton />}>
+							<ProductList
+								productsPromise={productsPromise}
+								perPage={perPage}
+								searchTerm={searchTerm}
+								wishlistProductIdsPromise={wishlistProductIdsPromise}
+							/>
+						</Suspense>
+					</ErrorBoundary>
 				</div>
 			</section>
 

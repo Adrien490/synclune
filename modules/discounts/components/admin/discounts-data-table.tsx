@@ -68,7 +68,7 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 		return (
 			<TableEmptyState
 				icon={Ticket}
-				title="Aucun code promo trouve"
+				title="Aucun code promo trouvé"
 				description="Aucun code promo ne correspond aux criteres de recherche."
 				actionElement={<CreateDiscountButton />}
 			/>

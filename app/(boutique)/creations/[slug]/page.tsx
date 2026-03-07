@@ -15,6 +15,7 @@ import { getAllProductReviews } from "@/modules/reviews/data/get-reviews";
 import { getProductCartsCount } from "@/modules/cart/data/get-product-carts-count";
 
 import { PageHeader } from "@/shared/components/page-header";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { ProductDetails } from "@/modules/products/components/product-details";
 import { Gallery } from "@/modules/media/components/gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
@@ -164,7 +165,7 @@ export default async function ProductPage({
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+					__html: safeJsonLd(structuredData),
 				}}
 			/>
 
