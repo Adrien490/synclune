@@ -4,9 +4,11 @@ import { useAppForm } from "@/shared/components/forms";
 import type { Session } from "@/modules/auth/lib/auth";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import { createCheckoutSession } from "@/modules/payments/actions/create-checkout-session";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { createToastCallbacks, hasMessage } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
+import { ActionStatus } from "@/shared/types/server-action";
+import { toast } from "sonner";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState, useEffect } from "react";
 import {
@@ -35,6 +37,18 @@ export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
 		withCallbacks(
 			createCheckoutSession,
 			createToastCallbacks({
+				showErrorToast: false,
+				onError: (result: unknown) => {
+					// Only show toast for non-validation errors (rate limit, server errors, etc.)
+					// Validation errors are already displayed inline under the relevant fields
+					if (
+						hasMessage(result) &&
+						"status" in result &&
+						result.status !== ActionStatus.VALIDATION_ERROR
+					) {
+						toast.error(result.message);
+					}
+				},
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

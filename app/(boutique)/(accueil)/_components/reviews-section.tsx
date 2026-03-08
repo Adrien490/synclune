@@ -106,10 +106,10 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 								containScroll: "trimSnaps",
 							}}
 							className="w-full"
-							aria-label={`Carrousel de ${reviews.length} avis clients`}
+							aria-label={`Carrousel de ${Math.min(reviews.length, 4)} avis clients`}
 						>
 							<CarouselContent className="-ml-4 py-4" showFade>
-								{reviews.map((review, index) => (
+								{reviews.slice(0, 4).map((review, index) => (
 									<CarouselItem
 										key={review.id}
 										index={index}

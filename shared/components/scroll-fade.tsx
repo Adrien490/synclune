@@ -8,6 +8,7 @@ type ScrollAxis = "horizontal" | "vertical" | "both";
 interface ScrollFadeProps {
 	children: React.ReactNode;
 	className?: string;
+	rootClassName?: string;
 	hideScrollbar?: boolean;
 	axis?: ScrollAxis;
 }
@@ -24,6 +25,7 @@ interface ScrollInfo {
 export default function ScrollFade({
 	children,
 	className,
+	rootClassName,
 	hideScrollbar = true,
 	axis = "horizontal",
 }: ScrollFadeProps) {
@@ -99,7 +101,7 @@ export default function ScrollFade({
 	const hasOverflow = showLeft || showRight || showTop || showBottom;
 
 	return (
-		<div className="relative h-full" data-testid="scroll-fade-root">
+		<div className={cn("relative h-full", rootClassName)} data-testid="scroll-fade-root">
 			{hasOverflow && (
 				<span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
 					Faites défiler pour voir plus de contenu

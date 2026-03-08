@@ -325,6 +325,19 @@ describe("ScrollFade", () => {
 		});
 	});
 
+	describe("rootClassName prop", () => {
+		it("applies rootClassName to the root element", () => {
+			render(
+				<ScrollFade rootClassName="-mx-4">
+					<p>Content</p>
+				</ScrollFade>,
+			);
+
+			const root = screen.getByTestId("scroll-fade-root");
+			expect(root.className).toContain("-mx-4");
+		});
+	});
+
 	describe("hideScrollbar prop", () => {
 		it("applies scrollbar-hiding classes by default", () => {
 			render(

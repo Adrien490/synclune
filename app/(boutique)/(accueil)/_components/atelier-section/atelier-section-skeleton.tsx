@@ -9,7 +9,7 @@ import { processSteps } from "./process-steps";
 export function AtelierSectionSkeleton() {
 	return (
 		<section
-			className={`bg-muted/20 relative overflow-hidden mask-t-from-90% mask-t-to-100% mask-b-from-85% mask-b-to-100% ${SECTION_SPACING.spacious}`}
+			className={`bg-muted/20 relative overflow-hidden mask-t-from-97% mask-t-to-100% mask-b-from-97% mask-b-to-100% ${SECTION_SPACING.spacious}`}
 			aria-label="Chargement de la section atelier"
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

@@ -232,7 +232,7 @@ function FieldError({
 				<div
 					role="alert"
 					aria-atomic="true"
-					className="text-destructive text-sm font-normal"
+					className="text-destructive wrap-break-words text-sm font-normal"
 					{...props}
 				>
 					{content}
