@@ -1,4 +1,5 @@
 import { Badge } from "@/shared/components/ui/badge";
+import { ShareButton } from "@/shared/components/share-button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
@@ -14,7 +15,7 @@ interface ProductInfoProps {
  * ProductInfo - Affiche les informations de base du produit
  *
  * Responsabilités :
- * - Titre du produit avec bouton wishlist
+ * - Titre du produit avec bouton wishlist + partage
  * - Badge type (catégorie)
  * - Note avis cliquable
  * - Bouton wishlist
@@ -22,7 +23,7 @@ interface ProductInfoProps {
 export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoProps) {
 	return (
 		<div className="space-y-4">
-			{/* Titre avec bouton wishlist */}
+			{/* Titre avec boutons share + wishlist */}
 			<div className="flex items-start justify-between gap-4">
 				<div className="flex-1 space-y-2">
 					<p
@@ -38,7 +39,13 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 						</div>
 					)}
 				</div>
-				<div className="shrink-0 sm:hidden">
+				<div className="flex shrink-0 items-center gap-1 sm:hidden">
+					<ShareButton
+						title={product.title}
+						text={`Découvrez ${product.title} sur Synclune`}
+						url={`/creations/${product.slug}`}
+						size="lg"
+					/>
 					<WishlistButton
 						productTitle={product.title}
 						productId={product.id}
@@ -48,7 +55,7 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 				</div>
 			</div>
 
-			{/* Labels et badges + bouton wishlist sur desktop */}
+			{/* Labels et badges + boutons share/wishlist sur desktop */}
 			<div className="flex flex-wrap items-center gap-2">
 				{product.type && (
 					<Badge
@@ -66,8 +73,14 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 					</div>
 				)}
 
-				{/* Bouton wishlist visible uniquement sur desktop - a droite du badge type */}
-				<div className="ml-auto hidden sm:block">
+				{/* Boutons share + wishlist sur desktop */}
+				<div className="ml-auto hidden items-center gap-1 sm:flex">
+					<ShareButton
+						title={product.title}
+						text={`Découvrez ${product.title} sur Synclune`}
+						url={`/creations/${product.slug}`}
+						size="lg"
+					/>
 					<WishlistButton
 						productTitle={product.title}
 						productId={product.id}

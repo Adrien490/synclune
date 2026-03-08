@@ -54,6 +54,7 @@ type AsyncPaymentFailedTxResult =
 				orderNumber: string;
 				customerEmail: string;
 				customerName: string;
+				userId: string | null;
 			};
 			releasedDiscountIds: string[];
 	  };
@@ -132,6 +133,7 @@ export async function handleAsyncPaymentFailed(
 						orderNumber: true,
 						customerEmail: true,
 						customerName: true,
+						userId: true,
 					},
 				});
 

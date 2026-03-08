@@ -13,6 +13,7 @@ import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-provider";
 import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { ROUTES } from "@/shared/constants/urls";
+import { AppBadgeSync } from "@/shared/components/app-badge-sync";
 import dynamic from "next/dynamic";
 
 const QuickSearchDialog = dynamic(() =>
@@ -228,6 +229,7 @@ export async function Navbar() {
 					</div>
 				</nav>
 			</NavbarWrapper>
+			<AppBadgeSync />
 		</BadgeCountsStoreProvider>
 	);
 }
