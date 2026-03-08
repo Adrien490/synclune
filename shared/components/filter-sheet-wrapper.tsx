@@ -10,6 +10,7 @@ import {
 	SheetContent,
 	SheetFooter,
 	SheetHeader,
+	SheetDescription,
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import { cn } from "@/shared/utils/cn";
@@ -95,6 +96,7 @@ export function FilterSheetWrapper({
 				className="flex h-full w-full flex-col p-0 sm:w-100 md:w-110"
 				onKeyDown={handleKeyDown}
 				title={title}
+				showCloseButton={false}
 			>
 				<SheetHeader
 					className="border-primary/10 from-background via-primary/2 to-background relative shrink-0 border-b bg-linear-to-r px-6 py-5"
@@ -108,21 +110,37 @@ export function FilterSheetWrapper({
 							>
 								{title}
 							</h2>
-							{description && <p className="text-muted-foreground text-sm">{description}</p>}
+							{description && (
+								<SheetDescription className="text-muted-foreground text-sm">
+									{description}
+								</SheetDescription>
+							)}
 						</div>
-						{hasActiveFilters && onClearAll && (
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={onClearAll}
-								className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive min-h-9 shrink-0 text-xs transition-colors"
-								aria-label="Effacer tous les filtres"
-							>
-								<X className="mr-1 h-3 w-3" aria-hidden="true" />
-								<span className="hidden sm:inline">Tout effacer</span>
-								<span className="sm:hidden">Effacer</span>
-							</Button>
-						)}
+						<div className="flex shrink-0 items-center gap-1">
+							{hasActiveFilters && onClearAll && (
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={onClearAll}
+									className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive min-h-9 shrink-0 text-xs transition-colors"
+									aria-label="Effacer tous les filtres"
+								>
+									<X className="mr-1 h-3 w-3" aria-hidden="true" />
+									<span className="hidden sm:inline">Tout effacer</span>
+									<span className="sm:hidden">Effacer</span>
+								</Button>
+							)}
+							<SheetClose asChild>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="text-muted-foreground hover:text-foreground size-9 shrink-0"
+									aria-label="Fermer"
+								>
+									<X className="size-4" />
+								</Button>
+							</SheetClose>
+						</div>
 					</div>
 
 					{/* Indeterminate progress bar */}
