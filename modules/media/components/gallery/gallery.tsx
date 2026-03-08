@@ -135,14 +135,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 		setThumbnailErrors((prev) => new Set(prev).add(mediaId));
 	};
 
-	// Embla carousel
-	const [emblaRef, emblaApi] = useEmblaCarousel({
-		loop: true,
-		align: "center",
-		dragFree: false,
-		watchDrag: images.length > 1,
-	});
-
 	// Product type for descriptive ALT texts
 	const productType = product.type?.label;
 
@@ -164,6 +156,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 	});
 
 	const slides = buildLightboxSlides(images, prefersReduced);
+
+	// Embla carousel
+	const [emblaRef, emblaApi] = useEmblaCarousel({
+		loop: true,
+		align: "center",
+		dragFree: false,
+		watchDrag: images.length > 1,
+	});
 
 	// Connection-aware prefetch range with intelligent fallback
 	// Safari/Firefox don't support navigator.connection
