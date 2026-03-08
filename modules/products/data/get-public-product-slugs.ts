@@ -1,5 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
@@ -21,9 +22,9 @@ export async function getPublicProductSlugs(): Promise<{ slug: string }[]> {
 
 		return products;
 	} catch (error) {
-		if (process.env.NODE_ENV === "development") {
-			console.error("[getPublicProductSlugs]", error);
-		}
+		logger.error("Failed to fetch public product slugs", error, {
+			service: "getPublicProductSlugs",
+		});
 		return [];
 	}
 }

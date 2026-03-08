@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_NEWSLETTER_LIMITS } from "@/shared/lib/rate-limit-config";
+import { logger } from "@/shared/lib/logger";
 import { handleActionError, success } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
@@ -20,7 +21,7 @@ export async function refreshNewsletter(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_NEWSLETTER_LIMITS.REFRESH);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		console.warn("[REFRESH_NEWSLETTER] Cache refreshed by admin:", admin.user.id);
+		logger.warn("Cache refreshed by admin", { action: "refreshNewsletter" });
 
 		updateTag(NEWSLETTER_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);

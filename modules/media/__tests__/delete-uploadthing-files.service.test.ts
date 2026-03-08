@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Shared deleteFiles mock — declared outside vi.mock so tests can control it per-test
-const mockDeleteFiles = vi.fn();
+// ============================================================================
+// Hoisted mocks
+// ============================================================================
+
+const { mockDeleteFiles, mockLogger } = vi.hoisted(() => ({
+	mockDeleteFiles: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 // Mock UTApi as a proper constructable class.
 // A regular function (not arrow) is required so `new UTApi()` works correctly.
@@ -119,19 +127,16 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-
 		const result = await deleteUploadThingFilesFromUrls([
 			"https://utfs.io/f/good-key.jpg",
 			"https://utfs.io/f/",
 		]);
 
-		expect(warnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("1 URL(s)"),
-			expect.arrayContaining(["https://utfs.io/f/"]),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("1 URL(s) could not be extracted"),
+			{ service: "delete-uploadthing-files" },
 		);
 		expect(result).toEqual({ deleted: 1, failed: 1 });
-		warnSpy.mockRestore();
 	});
 
 	it("should return { deleted: 0, failed: 1 } when all valid URLs fail key extraction", async () => {
@@ -140,8 +145,6 @@ describe("deleteUploadThingFilesFromUrls", () => {
 			keys: [],
 			failedUrls: ["https://utfs.io/f/"],
 		});
-
-		vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
 		const result = await deleteUploadThingFilesFromUrls(["https://utfs.io/f/"]);
 
@@ -158,8 +161,6 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockRejectedValue(new Error("Network failure"));
 
-		vi.spyOn(console, "error").mockImplementation(() => undefined);
-
 		const urls = ["https://utfs.io/f/key-one.jpg", "https://utfs.io/f/key-two.png"];
 		const result = await deleteUploadThingFilesFromUrls(urls);
 
@@ -173,14 +174,14 @@ describe("deleteUploadThingFilesFromUrls", () => {
 			keys: ["key.jpg"],
 			failedUrls: [],
 		});
-		mockDeleteFiles.mockRejectedValue(new Error("Service unavailable"));
-
-		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+		const thrownError = new Error("Service unavailable");
+		mockDeleteFiles.mockRejectedValue(thrownError);
 
 		await deleteUploadThingFilesFromUrls(["https://utfs.io/f/key.jpg"]);
 
-		expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Erreur"), "Service unavailable");
-		errorSpy.mockRestore();
+		expect(mockLogger.error).toHaveBeenCalledWith("Failed to delete files", thrownError, {
+			service: "delete-uploadthing-files",
+		});
 	});
 
 	it("should return { deleted: 0, failed: urls.length } when UTApi returns success=false", async () => {
@@ -191,14 +192,13 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: false, deletedCount: 0 });
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-
 		const urls = ["https://utfs.io/f/key-one.jpg", "https://utfs.io/f/key-two.png"];
 		const result = await deleteUploadThingFilesFromUrls(urls);
 
 		expect(result).toEqual({ deleted: 0, failed: urls.length });
-		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("success=false"));
-		warnSpy.mockRestore();
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("success=false"), {
+			service: "delete-uploadthing-files",
+		});
 	});
 
 	it("should report partial deletion when UTApi deletedCount < requested keys", async () => {
@@ -209,8 +209,6 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 2 });
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-
 		const result = await deleteUploadThingFilesFromUrls([
 			"https://utfs.io/f/key-one.jpg",
 			"https://utfs.io/f/key-two.png",
@@ -218,8 +216,9 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		]);
 
 		expect(result).toEqual({ deleted: 2, failed: 1 });
-		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Partial deletion"));
-		warnSpy.mockRestore();
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("Partial deletion"), {
+			service: "delete-uploadthing-files",
+		});
 	});
 });
 
@@ -276,8 +275,6 @@ describe("deleteUploadThingFileFromUrl", () => {
 		});
 		mockDeleteFiles.mockRejectedValue(new Error("Deletion failed"));
 
-		vi.spyOn(console, "error").mockImplementation(() => undefined);
-
 		const result = await deleteUploadThingFileFromUrl("https://utfs.io/f/abc123.jpg");
 
 		expect(result).toBe(false);
@@ -289,8 +286,6 @@ describe("deleteUploadThingFileFromUrl", () => {
 			keys: [],
 			failedUrls: ["https://utfs.io/f/"],
 		});
-
-		vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
 		const result = await deleteUploadThingFileFromUrl("https://utfs.io/f/");
 
@@ -304,8 +299,6 @@ describe("deleteUploadThingFileFromUrl", () => {
 			failedUrls: [],
 		});
 		mockDeleteFiles.mockResolvedValue({ success: false, deletedCount: 0 });
-
-		vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
 		const result = await deleteUploadThingFileFromUrl("https://utfs.io/f/abc123.jpg");
 

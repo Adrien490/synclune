@@ -1,5 +1,6 @@
 "use server";
 
+import { logger } from "@/shared/lib/logger";
 import { searchAddressSchema } from "../schemas/search-address.schema";
 import type { SearchAddressParams, SearchAddressReturn } from "../types/search-address.types";
 import { fetchAddresses } from "./fetch-addresses";
@@ -43,8 +44,7 @@ export async function searchAddress(params: SearchAddressParams): Promise<Search
 	try {
 		return await fetchAddresses(validatedParams);
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Erreur inconnue";
-		console.error(`[ADDRESS-SEARCH] ${message}`);
+		logger.error("Address search failed", error, { service: "searchAddress" });
 
 		return {
 			addresses: [],

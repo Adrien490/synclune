@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cacheLife, cacheTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { GET_PRODUCTS_SELECT } from "../constants/product.constants";
 import type { Product } from "../types/product.types";
@@ -83,10 +84,7 @@ async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
 
 		return serializeProducts(orderedProducts);
 	} catch (e) {
-		// Log en dev, silencieux en prod
-		if (process.env.NODE_ENV === "development") {
-			console.error("[RecentProducts] Erreur DB:", e);
-		}
+		logger.error("Failed to fetch recent products from DB", e, { service: "fetchProductsBySlugs" });
 		return [];
 	}
 }

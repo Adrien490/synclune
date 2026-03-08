@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
@@ -45,7 +46,7 @@ async function fetchCollectionOptions(): Promise<CollectionOption[]> {
 
 		return collections;
 	} catch (err) {
-		console.error("[collections] Failed to fetch collection options:", err);
+		logger.error("Failed to fetch collection options", err, { service: "fetchCollectionOptions" });
 		return [];
 	}
 }

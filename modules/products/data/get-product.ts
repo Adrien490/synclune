@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_PRODUCT_SELECT } from "../constants/product.constants";
@@ -49,9 +50,7 @@ async function fetchProduct(params: GetProductParams): Promise<GetProductReturn 
 
 		return product;
 	} catch (error) {
-		if (process.env.NODE_ENV === "development") {
-			console.error("[GET_PRODUCT]", error);
-		}
+		logger.error("Failed to fetch product", error, { service: "fetchProduct" });
 		return null;
 	}
 }

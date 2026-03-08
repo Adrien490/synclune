@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { processAccountDeletions } from "@/modules/cron/services/process-account-deletions.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60; // 1 minute max
 
@@ -24,7 +25,9 @@ export async function GET() {
 				errors: result.errors,
 				details: { processed: result.processed, hasMore: result.hasMore },
 			}).catch((e) =>
-				console.error("[CRON:process-account-deletions] Failed to send admin alert", e),
+				logger.error("Cron process-account-deletions failed to send admin alert", e, {
+					cronJob: "process-account-deletions",
+				}),
 			);
 		}
 

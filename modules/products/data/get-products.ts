@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getRateLimitId } from "@/modules/auth/lib/rate-limit-helpers";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { getProductsSchema } from "../schemas/product.schemas";
@@ -95,10 +96,7 @@ export async function getProducts(
 				const rateLimitResult = await checkRateLimit(`search:${rateLimitId}`, limits, ipAddress);
 				if (!rateLimitResult.success) {
 					// Fallback: use exact search only
-					console.warn("[search] Rate limit exceeded:", {
-						identifier: rateLimitId,
-						retryAfter: rateLimitResult.retryAfter,
-					});
+					logger.warn("Search rate limit exceeded", { service: "getProducts" });
 					useExactOnly = true;
 					rateLimited = true;
 				}
@@ -216,7 +214,7 @@ async function fetchProducts(
 			totalCount: sortedProducts.length,
 		};
 	} catch (error) {
-		console.warn("[fetchProducts] Error:", error instanceof Error ? error.message : error);
+		logger.warn("Failed to fetch products", { service: "fetchProducts" });
 		const baseReturn = {
 			products: [],
 			pagination: {

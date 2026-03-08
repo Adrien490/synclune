@@ -5,6 +5,7 @@
  * Sufficient for single-instance deployments; Arcjet handles distributed rate limiting.
  */
 
+import { logger } from "@/shared/lib/logger";
 import type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types";
 import type { ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 
@@ -52,15 +53,10 @@ function logRateLimitBlock(params: {
 	windowMs: number;
 	retryAfterSeconds: number;
 }): void {
-	console.warn("[RATE_LIMIT] Blocked:", {
-		type: params.type,
-		identifier: params.identifier.startsWith("user:") ? "user:***" : params.identifier,
-		ip: params.ip,
-		limit: params.limit,
-		windowMs: params.windowMs,
-		retryAfter: params.retryAfterSeconds,
-		timestamp: new Date().toISOString(),
-	});
+	logger.warn(
+		`Blocked: type=${params.type} identifier=${params.identifier.startsWith("user:") ? "user:***" : params.identifier} ip=${params.ip} limit=${params.limit} windowMs=${params.windowMs} retryAfter=${params.retryAfterSeconds}`,
+		{ service: "rate-limit" },
+	);
 }
 
 function formatRetryAfter(seconds: number): string {

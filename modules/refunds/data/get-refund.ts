@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
@@ -49,7 +50,7 @@ async function fetchRefund(params: GetRefundParams): Promise<GetRefundReturn> {
 
 		return refund;
 	} catch (error) {
-		console.error("[GET_REFUND] Database error:", error);
+		logger.error("Failed to fetch refund", error, { service: "fetchRefund" });
 		return null;
 	}
 }

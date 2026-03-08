@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma } = vi.hoisted(() => ({
+const { mockPrisma, mockLogger } = vi.hoisted(() => ({
 	mockPrisma: {
 		wishlist: {
 			findMany: vi.fn(),
@@ -8,10 +8,20 @@ const { mockPrisma } = vi.hoisted(() => ({
 		},
 		$executeRaw: vi.fn(),
 	},
+	mockLogger: {
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+		debug: vi.fn(),
+	},
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 import { cleanupExpiredWishlists } from "../cleanup-wishlists.service";
@@ -21,9 +31,6 @@ describe("cleanupExpiredWishlists", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-16T10:00:00Z"));
-		// Suppress console.log for cleaner test output
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		// Default: findMany returns some wishlist IDs
 		mockPrisma.wishlist.findMany.mockResolvedValue([
@@ -160,8 +167,7 @@ describe("cleanupExpiredWishlists", () => {
 		expect(whereClause.expiresAt.lt).toEqual(mockDate);
 	});
 
-	it("should log cleanup progress to console", async () => {
-		const consoleLogSpy = vi.spyOn(console, "log");
+	it("should log cleanup progress via logger", async () => {
 		const wishlistIds = Array.from({ length: 8 }, (_, i) => ({
 			id: `wishlist-${i}`,
 		}));
@@ -171,30 +177,36 @@ describe("cleanupExpiredWishlists", () => {
 
 		await cleanupExpiredWishlists();
 
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Starting expired wishlists cleanup"),
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Starting expired wishlists cleanup",
+			expect.objectContaining({ cronJob: "cleanup-wishlists" }),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Deleted expired wishlists"),
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Deleted expired wishlists",
+			expect.objectContaining({ cronJob: "cleanup-wishlists", deletedCount: 8 }),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Cleaned up orphaned wishlist items"),
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Cleaned up orphaned wishlist items",
+			expect.objectContaining({ cronJob: "cleanup-wishlists", orphanedItemsCount: 4 }),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cleanup completed"));
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Cleanup completed",
+			expect.objectContaining({ cronJob: "cleanup-wishlists" }),
+		);
 	});
 
 	it("should not log orphaned items message when count is zero", async () => {
-		const consoleLogSpy = vi.spyOn(console, "log");
 		mockPrisma.$executeRaw.mockResolvedValue(0);
 
 		await cleanupExpiredWishlists();
 
-		const logCalls = consoleLogSpy.mock.calls.map((call) => call[0]);
-		expect(logCalls).not.toContain(expect.stringContaining("Cleaned up 0 orphaned wishlist items"));
+		expect(mockLogger.info).not.toHaveBeenCalledWith(
+			"Cleaned up orphaned wishlist items",
+			expect.anything(),
+		);
 	});
 
 	it("should log warning when delete limit is reached", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		// Return exactly CLEANUP_DELETE_LIMIT (1000) items to trigger the warning
 		const wishlistIds = Array.from({ length: 1000 }, (_, i) => ({
 			id: `wishlist-${i}`,
@@ -204,15 +216,13 @@ describe("cleanupExpiredWishlists", () => {
 
 		await cleanupExpiredWishlists();
 
-		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			expect.stringContaining(
-				"Delete limit reached, remaining wishlists will be cleaned on next run",
-			),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			"Delete limit reached, remaining wishlists will be cleaned on next run",
+			expect.objectContaining({ cronJob: "cleanup-wishlists" }),
 		);
 	});
 
 	it("should not log warning when under delete limit", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const wishlistIds = Array.from({ length: 999 }, (_, i) => ({
 			id: `wishlist-${i}`,
 		}));
@@ -221,7 +231,7 @@ describe("cleanupExpiredWishlists", () => {
 
 		await cleanupExpiredWishlists();
 
-		expect(consoleWarnSpy).not.toHaveBeenCalled();
+		expect(mockLogger.warn).not.toHaveBeenCalled();
 	});
 
 	it("should pass found IDs to deleteMany", async () => {

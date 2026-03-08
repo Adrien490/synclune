@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 
@@ -84,7 +85,9 @@ async function fetchCustomizationRequest(id: string): Promise<CustomizationReque
 
 		return request;
 	} catch (error) {
-		console.error("[GET_CUSTOMIZATION_REQUEST]", error);
+		logger.error("Failed to fetch customization request", error, {
+			service: "fetchCustomizationRequest",
+		});
 		return null;
 	}
 }

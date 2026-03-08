@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -82,10 +83,7 @@ export async function fetchAccountStats(userId: string): Promise<AccountStats> {
 			cartItemsCount: cart?._count.items ?? 0,
 		};
 	} catch (error) {
-		console.error(
-			"[FETCH_ACCOUNT_STATS] Error:",
-			error instanceof Error ? error.message : "Unknown error",
-		);
+		logger.error("Failed to fetch account stats", error, { service: "fetchAccountStats" });
 		return {
 			totalOrders: 0,
 			pendingOrders: 0,

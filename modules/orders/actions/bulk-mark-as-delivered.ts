@@ -17,6 +17,7 @@ import {
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 
 import { logAudit } from "@/shared/lib/audit-log";
 import { bulkMarkAsDeliveredSchema } from "../schemas/order.schemas";
@@ -141,10 +142,9 @@ export async function bulkMarkAsDelivered(
 						deliveryDate: formattedDeliveryDate,
 						orderDetailsUrl,
 					}).catch((emailError) => {
-						console.error(
-							`[BULK_MARK_AS_DELIVERED] Échec envoi email pour ${order.orderNumber}:`,
-							emailError,
-						);
+						logger.error(`Échec envoi email pour ${order.orderNumber}`, emailError, {
+							action: "bulk-mark-as-delivered",
+						});
 					});
 				}
 			}

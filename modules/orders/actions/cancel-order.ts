@@ -11,6 +11,7 @@ import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -201,7 +202,7 @@ export async function cancelOrder(
 				wasRefunded: order._newPaymentStatus === PaymentStatus.REFUNDED,
 				orderDetailsUrl,
 			}).catch((emailError) => {
-				console.error("[CANCEL_ORDER] Échec envoi email:", emailError);
+				logger.error("Échec envoi email", emailError, { action: "cancel-order" });
 			});
 		}
 

@@ -2,6 +2,7 @@ import { render } from "@react-email/components";
 import { Resend } from "resend";
 import { withRetry } from "@/shared/utils/with-retry";
 import { resendCircuitBreaker, CircuitBreakerError } from "@/shared/lib/circuit-breaker";
+import { logger } from "@/shared/lib/logger";
 import { EMAIL_FROM } from "../constants/email.constants";
 import type { EmailResult } from "../types/email.types";
 
@@ -40,17 +41,16 @@ export async function sendEmail(params: {
 	tags?: Array<{ name: string; value: string }>;
 }): Promise<EmailResult> {
 	if (!params.to || (Array.isArray(params.to) && params.to.length === 0)) {
-		console.error("[EMAIL] Missing recipient");
+		logger.error("Missing recipient", undefined, { service: "send-email" });
 		return { success: false, error: "Missing recipient" };
 	}
 
 	const resend = getResendClient();
 	if (!resend) {
-		console.error("[EMAIL] RESEND_API_KEY not configured");
+		logger.error("RESEND_API_KEY not configured", undefined, { service: "send-email" });
 		return { success: false, error: "RESEND_API_KEY not configured" };
 	}
 
-	const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to;
 	try {
 		const { data, error } = await resendCircuitBreaker.execute(() =>
 			withRetry(
@@ -72,17 +72,23 @@ export async function sendEmail(params: {
 			),
 		);
 		if (error) {
-			console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error);
+			logger.error("Failed to send email", error, {
+				service: "send-email",
+				subject: params.subject,
+			});
 			return { success: false, error };
 		}
-		console.warn(`[EMAIL] Sent "${params.subject}" to ${recipient}`);
+		logger.info("Email sent successfully", { service: "send-email", subject: params.subject });
 		return { success: true, data: data! };
 	} catch (error) {
 		if (error instanceof CircuitBreakerError) {
-			console.warn(`[EMAIL] Circuit breaker OPEN, skipping "${params.subject}" to ${recipient}`);
+			logger.warn("Circuit breaker OPEN, skipping email", {
+				service: "send-email",
+				subject: params.subject,
+			});
 			return { success: false, error: "Email service temporarily unavailable" };
 		}
-		console.error(`[EMAIL] Failed to send "${params.subject}" to ${recipient}:`, error);
+		logger.error("Failed to send email", error, { service: "send-email", subject: params.subject });
 		return { success: false, error };
 	}
 }
@@ -95,7 +101,7 @@ export async function renderAndSend(
 	params: Omit<Parameters<typeof sendEmail>[0], "html" | "text">,
 ): Promise<EmailResult> {
 	if (!params.to || (Array.isArray(params.to) && params.to.length === 0)) {
-		console.error("[EMAIL] Missing recipient");
+		logger.error("Missing recipient", undefined, { service: "send-email" });
 		return { success: false, error: "Missing recipient" };
 	}
 
@@ -105,11 +111,10 @@ export async function renderAndSend(
 		html = await render(component);
 		text = await render(component, { plainText: true });
 	} catch (renderError) {
-		const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to;
-		console.error(
-			`[EMAIL] Failed to render template for "${params.subject}" to ${recipient}:`,
-			renderError,
-		);
+		logger.error("Failed to render email template", renderError, {
+			service: "send-email",
+			subject: params.subject,
+		});
 		return { success: false, error: renderError };
 	}
 	return sendEmail({ ...params, html, text });

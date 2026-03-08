@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { retryFailedEmails } from "@/modules/cron/services/retry-failed-emails.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60;
 
@@ -26,7 +27,11 @@ export async function GET() {
 					retried: result.retried,
 					resolved: result.resolved,
 				},
-			}).catch((e) => console.error("[CRON:retry-failed-emails] Failed to send admin alert", e));
+			}).catch((e) =>
+				logger.error("Cron retry-failed-emails failed to send admin alert", e, {
+					cronJob: "retry-failed-emails",
+				}),
+			);
 		}
 
 		return cronSuccess(

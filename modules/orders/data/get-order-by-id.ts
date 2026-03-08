@@ -1,5 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard } from "../constants/cache";
 import { type z } from "zod";
@@ -54,9 +55,7 @@ async function fetchOrderById(id: string): Promise<GetOrderReturn | null> {
 
 		return order;
 	} catch (error) {
-		if (process.env.NODE_ENV !== "production") {
-			console.error("fetchOrderById error:", error);
-		}
+		logger.error("Failed to fetch order by ID", error, { service: "fetchOrderById" });
 		return null;
 	}
 }

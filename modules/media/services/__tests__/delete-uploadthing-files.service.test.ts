@@ -4,9 +4,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mocks
 // ============================================================================
 
-const { mockDeleteFiles } = vi.hoisted(() => ({
+const { mockDeleteFiles, mockLogger } = vi.hoisted(() => ({
 	mockDeleteFiles: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("uploadthing/server", () => ({
 	UTApi: class MockUTApi {
@@ -103,16 +106,15 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
-		const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const result = await deleteUploadThingFilesFromUrls([
 			"https://utfs.io/f/abc123.jpg",
 			"https://utfs.io/f/bad-url",
 		]);
 
 		expect(result).toEqual({ deleted: 1, failed: 1 });
-		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining("n'ont pas pu etre extraites"),
-			["https://utfs.io/f/bad-url"],
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("1 URL(s) could not be extracted"),
+			{ service: "delete-uploadthing-files" },
 		);
 	});
 
@@ -140,11 +142,12 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: false, deletedCount: 0 });
 
-		const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const result = await deleteUploadThingFilesFromUrls(["https://utfs.io/f/abc123.jpg"]);
 
 		expect(result).toEqual({ deleted: 0, failed: 1 });
-		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("success=false"));
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("success=false"), {
+			service: "delete-uploadthing-files",
+		});
 	});
 
 	it("handles partial deletion", async () => {
@@ -155,7 +158,6 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 2 });
 
-		const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const result = await deleteUploadThingFilesFromUrls([
 			"https://utfs.io/f/abc.jpg",
 			"https://utfs.io/f/def.jpg",
@@ -163,7 +165,9 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		]);
 
 		expect(result).toEqual({ deleted: 2, failed: 1 });
-		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Partial deletion: 2/3"));
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("Partial deletion: 2/3"), {
+			service: "delete-uploadthing-files",
+		});
 	});
 
 	it("handles UTApi exception gracefully", async () => {
@@ -172,16 +176,15 @@ describe("deleteUploadThingFilesFromUrls", () => {
 			keys: ["abc.jpg"],
 			failedUrls: [],
 		});
-		mockDeleteFiles.mockRejectedValue(new Error("Network error"));
+		const thrownError = new Error("Network error");
+		mockDeleteFiles.mockRejectedValue(thrownError);
 
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		const result = await deleteUploadThingFilesFromUrls(["https://utfs.io/f/abc.jpg"]);
 
 		expect(result).toEqual({ deleted: 0, failed: 1 });
-		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Erreur lors de la suppression"),
-			"Network error",
-		);
+		expect(mockLogger.error).toHaveBeenCalledWith("Failed to delete files", thrownError, {
+			service: "delete-uploadthing-files",
+		});
 	});
 
 	it("handles non-Error exception", async () => {
@@ -192,11 +195,12 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 		mockDeleteFiles.mockRejectedValue("string error");
 
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		const result = await deleteUploadThingFilesFromUrls(["https://utfs.io/f/abc.jpg"]);
 
 		expect(result).toEqual({ deleted: 0, failed: 1 });
-		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Erreur"), "string error");
+		expect(mockLogger.error).toHaveBeenCalledWith("Failed to delete files", "string error", {
+			service: "delete-uploadthing-files",
+		});
 	});
 });
 

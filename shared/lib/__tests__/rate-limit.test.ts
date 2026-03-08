@@ -1,4 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+
+const { mockLogger } = vi.hoisted(() => ({
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
+
 import {
 	checkRateLimit,
 	getRateLimitIdentifier,
@@ -260,8 +267,11 @@ describe("getRateLimitStatus", () => {
 });
 
 describe("checkRateLimit - structured logging", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
 	it("logs when per-action rate limit is triggered", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const config = { limit: 1, windowMs: 60000 };
 		const id = "ip:10.0.0.80";
 
@@ -269,38 +279,30 @@ describe("checkRateLimit - structured logging", () => {
 		const blocked = await checkRateLimit(id, config);
 
 		expect(blocked.success).toBe(false);
-		expect(warnSpy).toHaveBeenCalledWith(
-			"[RATE_LIMIT] Blocked:",
-			expect.objectContaining({
-				type: "per-action",
-				identifier: id,
-				ip: "10.0.0.80",
-			}),
-		);
-
-		warnSpy.mockRestore();
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("Blocked:"), {
+			service: "rate-limit",
+		});
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("type=per-action"), {
+			service: "rate-limit",
+		});
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("ip=10.0.0.80"), {
+			service: "rate-limit",
+		});
 	});
 
 	it("redacts user identifiers in logs", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const config = { limit: 1, windowMs: 60000 };
 
 		await checkRateLimit("user:secret-id", config, "10.0.0.81");
 		const blocked = await checkRateLimit("user:secret-id", config, "10.0.0.81");
 
 		expect(blocked.success).toBe(false);
-		expect(warnSpy).toHaveBeenCalledWith(
-			"[RATE_LIMIT] Blocked:",
-			expect.objectContaining({
-				identifier: "user:***",
-			}),
-		);
-
-		warnSpy.mockRestore();
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("identifier=user:***"), {
+			service: "rate-limit",
+		});
 	});
 
 	it("logs when global IP limit is triggered", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const config = { limit: 200, windowMs: 60000 };
 		const ip = "10.0.0.82";
 
@@ -310,14 +312,11 @@ describe("checkRateLimit - structured logging", () => {
 		}
 		await checkRateLimit(`ip:${ip}`, config);
 
-		expect(warnSpy).toHaveBeenCalledWith(
-			"[RATE_LIMIT] Blocked:",
-			expect.objectContaining({
-				type: "global-ip",
-				ip,
-			}),
-		);
-
-		warnSpy.mockRestore();
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("type=global-ip"), {
+			service: "rate-limit",
+		});
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining(`ip=${ip}`), {
+			service: "rate-limit",
+		});
 	});
 });

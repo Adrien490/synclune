@@ -1,5 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { setStatementTimeout, setTrigramThreshold } from "@/modules/products/utils/trigram-helpers";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 /**
@@ -112,16 +113,18 @@ export async function fuzzySearchIds(
 		const durationMs = Math.round(performance.now() - startTime);
 
 		if (durationMs > 500) {
-			console.warn(
-				`[SEARCH] slow-admin-fuzzy | term="${logTerm}" | table="${columns[0]!.table}" | results=${results.length} | duration=${durationMs}ms`,
+			logger.warn(
+				`slow-admin-fuzzy | term="${logTerm}" | table="${columns[0]!.table}" | results=${results.length} | duration=${durationMs}ms`,
+				{ service: "fuzzy-search" },
 			);
 		}
 
 		return results.map((r) => r.id);
 	} catch (error) {
 		const durationMs = Math.round(performance.now() - startTime);
-		console.warn(
-			`[SEARCH] admin-fuzzy-error | term="${logTerm}" | table="${columns[0]!.table}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`,
+		logger.warn(
+			`admin-fuzzy-error | term="${logTerm}" | table="${columns[0]!.table}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`,
+			{ service: "fuzzy-search" },
 		);
 		return null;
 	}

@@ -5,6 +5,8 @@
  * pour permettre une maintenance plus facile.
  */
 
+import { logger } from "@/shared/lib/logger";
+
 // ============================================
 // CONFIGURATION MOT DE PASSE
 // ============================================
@@ -83,6 +85,6 @@ export function validateAuthEnvironment(): void {
 		}
 
 		// Warning en dev/test pour detecter les problemes tot
-		console.warn(`[AUTH] ${message}`);
+		logger.warn(message, { service: "auth-env" });
 	}
 }

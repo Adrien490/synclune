@@ -1,6 +1,7 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { validateInput } from "@/shared/lib/actions";
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
@@ -40,7 +41,7 @@ export async function unsubscribeNewsletter(token: string | undefined): Promise<
 			}
 
 			if (decision.reason.isShield()) {
-				console.warn("[UNSUBSCRIBE_NEWSLETTER] Shield blocked suspicious request");
+				logger.warn("Shield blocked suspicious request", { service: "unsubscribe-newsletter" });
 				return {
 					success: false,
 					message: "Votre requête a été bloquée pour des raisons de sécurité.",
@@ -107,7 +108,9 @@ export async function unsubscribeNewsletter(token: string | undefined): Promise<
 				"Vous avez été désinscrit(e) de la newsletter. Nous sommes désolés de vous voir partir.",
 		};
 	} catch (e) {
-		console.error("[UNSUBSCRIBE_NEWSLETTER] Unexpected error:", e);
+		logger.error("Unexpected error during newsletter unsubscribe", e, {
+			service: "unsubscribe-newsletter",
+		});
 		return {
 			success: false,
 			message: "Une erreur est survenue. Veuillez réessayer plus tard.",

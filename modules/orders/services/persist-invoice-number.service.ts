@@ -1,4 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
 import { generateInvoiceNumber } from "./invoice-number.service";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -40,7 +41,7 @@ export async function persistInvoiceNumber(
 	} catch (e) {
 		// If invoice number generation fails (e.g. unique constraint race),
 		// caller will still serve the PDF with orderNumber as reference
-		console.error("[INVOICE] Failed to persist invoice number:", e);
+		logger.error("Failed to persist invoice number", e, { service: "persist-invoice-number" });
 		return null;
 	}
 }

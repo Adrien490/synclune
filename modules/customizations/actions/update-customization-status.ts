@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
@@ -124,10 +125,7 @@ export async function updateCustomizationStatus(
 				adminNotes: existing.adminNotes ? sanitizeForEmail(existing.adminNotes) : null,
 				details: sanitizeForEmail(existing.details),
 			}).catch((emailError: unknown) => {
-				console.error("[EMAIL] Status email failed", {
-					requestId,
-					error: emailError,
-				});
+				logger.error("Status email failed", emailError, { action: "updateCustomizationStatus" });
 			});
 		}
 

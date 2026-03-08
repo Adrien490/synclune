@@ -2,6 +2,7 @@
 
 import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -34,7 +35,7 @@ export async function getOrderNotes(
 		const notes = await fetchOrderNotes(parsed.data);
 		return { notes };
 	} catch (error) {
-		console.error("[GET_ORDER_NOTES] Erreur:", error);
+		logger.error("Failed to fetch order notes", error, { service: "getOrderNotes" });
 		return { error: "Une erreur est survenue" };
 	}
 }

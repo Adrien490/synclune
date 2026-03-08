@@ -1,6 +1,7 @@
 import { UTApi } from "uploadthing/server";
 import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key";
 import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
+import { logger } from "@/shared/lib/logger";
 
 /**
  * Shared service for deleting UploadThing files from URLs.
@@ -38,10 +39,9 @@ export async function deleteUploadThingFilesFromUrls(
 	const { keys: fileKeys, failedUrls } = extractFileKeysFromUrls(uploadThingUrls);
 
 	if (failedUrls.length > 0) {
-		console.warn(
-			`[deleteUploadThingFilesFromUrls] ${failedUrls.length} URL(s) n'ont pas pu etre extraites:`,
-			failedUrls,
-		);
+		logger.warn(`${failedUrls.length} URL(s) could not be extracted: ${failedUrls.join(", ")}`, {
+			service: "delete-uploadthing-files",
+		});
 	}
 
 	if (fileKeys.length === 0) {
@@ -53,9 +53,9 @@ export async function deleteUploadThingFilesFromUrls(
 		const result = await utapi.deleteFiles(fileKeys);
 
 		if (!result.success) {
-			console.warn(
-				`[deleteUploadThingFilesFromUrls] UTApi.deleteFiles returned success=false for ${fileKeys.length} key(s)`,
-			);
+			logger.warn(`UTApi.deleteFiles returned success=false for ${fileKeys.length} key(s)`, {
+				service: "delete-uploadthing-files",
+			});
 			return { deleted: 0, failed: urls.length };
 		}
 
@@ -63,18 +63,15 @@ export async function deleteUploadThingFilesFromUrls(
 		const utFailures = fileKeys.length - actualDeleted;
 
 		if (utFailures > 0) {
-			console.warn(
-				`[deleteUploadThingFilesFromUrls] Partial deletion: ${actualDeleted}/${fileKeys.length} fichier(s) supprime(s)`,
-			);
+			logger.warn(`Partial deletion: ${actualDeleted}/${fileKeys.length} file(s) deleted`, {
+				service: "delete-uploadthing-files",
+			});
 		}
 
 		return { deleted: actualDeleted, failed: failedUrls.length + utFailures };
 	} catch (error) {
 		// Log error but don't block the main operation
-		console.error(
-			"[deleteUploadThingFilesFromUrls] Erreur lors de la suppression des fichiers:",
-			error instanceof Error ? error.message : String(error),
-		);
+		logger.error("Failed to delete files", error, { service: "delete-uploadthing-files" });
 
 		return { deleted: 0, failed: urls.length };
 	}

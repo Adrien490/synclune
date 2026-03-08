@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -107,7 +108,7 @@ export async function deleteReview(
 		const mediaUrls = existingReview.medias.map((m) => m.url);
 		if (mediaUrls.length > 0) {
 			deleteUploadThingFilesFromUrls(mediaUrls).catch((err) => {
-				console.error("[deleteReview] Erreur suppression fichiers UploadThing:", err);
+				logger.error("Failed to delete UploadThing files", err, { action: "deleteReview" });
 			});
 		}
 

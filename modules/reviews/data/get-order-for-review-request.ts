@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 // ============================================================================
@@ -81,7 +82,9 @@ async function fetchOrderForReviewRequest(orderId: string) {
 			},
 		});
 	} catch (error) {
-		console.error("[getOrderForReviewRequest]", error);
+		logger.error("Failed to fetch order for review request", error, {
+			service: "getOrderForReviewRequest",
+		});
 		return null;
 	}
 }

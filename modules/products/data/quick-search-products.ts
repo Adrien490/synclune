@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import { ProductStatus } from "@/app/generated/prisma/client";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -92,9 +93,7 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 			totalCount,
 		};
 	} catch (error) {
-		if (process.env.NODE_ENV === "development") {
-			console.error("[quickSearchProducts]", error);
-		}
+		logger.error("Quick search failed", error, { service: "quickSearchProducts" });
 		return { kind: "error" };
 	}
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma } = vi.hoisted(() => ({
+const { mockPrisma, mockLogger } = vi.hoisted(() => ({
 	mockPrisma: {
 		cart: {
 			findMany: vi.fn(),
@@ -8,10 +8,20 @@ const { mockPrisma } = vi.hoisted(() => ({
 		},
 		$executeRaw: vi.fn(),
 	},
+	mockLogger: {
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+		debug: vi.fn(),
+	},
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 import { cleanupExpiredCarts } from "../cleanup-carts.service";
@@ -21,9 +31,6 @@ describe("cleanupExpiredCarts", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2036-03-01T08:00:00Z"));
-		// Suppress console.log for cleaner test output
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		// Default: findMany returns some cart IDs
 		mockPrisma.cart.findMany.mockResolvedValue([
@@ -152,8 +159,7 @@ describe("cleanupExpiredCarts", () => {
 		expect(whereClause.expiresAt.lt).toEqual(mockDate);
 	});
 
-	it("should log cleanup progress to console", async () => {
-		const consoleLogSpy = vi.spyOn(console, "log");
+	it("should log cleanup progress via logger", async () => {
 		const cartIds = Array.from({ length: 8 }, (_, i) => ({ id: `cart-${i}` }));
 		mockPrisma.cart.findMany.mockResolvedValue(cartIds);
 		mockPrisma.cart.deleteMany.mockResolvedValue({ count: 8 });
@@ -161,28 +167,36 @@ describe("cleanupExpiredCarts", () => {
 
 		await cleanupExpiredCarts();
 
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Starting expired carts cleanup"),
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Starting expired carts cleanup",
+			expect.objectContaining({ cronJob: "cleanup-carts" }),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Deleted expired carts"));
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Cleaned up orphaned cart items"),
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Deleted expired carts",
+			expect.objectContaining({ cronJob: "cleanup-carts", deletedCount: 8 }),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cleanup completed"));
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Cleaned up orphaned cart items",
+			expect.objectContaining({ cronJob: "cleanup-carts", orphanedItemsCount: 4 }),
+		);
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Cleanup completed",
+			expect.objectContaining({ cronJob: "cleanup-carts" }),
+		);
 	});
 
 	it("should not log orphaned items message when count is zero", async () => {
-		const consoleLogSpy = vi.spyOn(console, "log");
 		mockPrisma.$executeRaw.mockResolvedValue(0);
 
 		await cleanupExpiredCarts();
 
-		const logCalls = consoleLogSpy.mock.calls.map((call) => call[0]);
-		expect(logCalls).not.toContain(expect.stringContaining("Cleaned up 0 orphaned cart items"));
+		expect(mockLogger.info).not.toHaveBeenCalledWith(
+			"Cleaned up orphaned cart items",
+			expect.anything(),
+		);
 	});
 
 	it("should log warning when delete limit is reached", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		// Return exactly CLEANUP_DELETE_LIMIT (1000) items to trigger the warning
 		const cartIds = Array.from({ length: 1000 }, (_, i) => ({ id: `cart-${i}` }));
 		mockPrisma.cart.findMany.mockResolvedValue(cartIds);
@@ -190,20 +204,20 @@ describe("cleanupExpiredCarts", () => {
 
 		await cleanupExpiredCarts();
 
-		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Delete limit reached, remaining carts will be cleaned on next run"),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			"Delete limit reached, remaining carts will be cleaned on next run",
+			expect.objectContaining({ cronJob: "cleanup-carts" }),
 		);
 	});
 
 	it("should not log warning when under delete limit", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const cartIds = Array.from({ length: 999 }, (_, i) => ({ id: `cart-${i}` }));
 		mockPrisma.cart.findMany.mockResolvedValue(cartIds);
 		mockPrisma.cart.deleteMany.mockResolvedValue({ count: 999 });
 
 		await cleanupExpiredCarts();
 
-		expect(consoleWarnSpy).not.toHaveBeenCalled();
+		expect(mockLogger.warn).not.toHaveBeenCalled();
 	});
 
 	it("should pass found IDs to deleteMany", async () => {

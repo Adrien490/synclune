@@ -3,6 +3,7 @@ import "server-only";
 import { AccountStatus, PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { traceContext } from "@prisma/sqlcommenter-trace-context";
+import { logger } from "@/shared/lib/logger";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl && process.env.NODE_ENV !== "test") {
@@ -55,10 +56,12 @@ async function verifyPgTrgmExtension() {
 			SELECT extname::text FROM pg_extension WHERE extname = 'pg_trgm'
 		`;
 		if (result.length === 0) {
-			console.warn("[Prisma] Extension pg_trgm non installée - recherche fuzzy désactivée");
+			logger.warn("Extension pg_trgm non installée - recherche fuzzy désactivée", {
+				service: "prisma",
+			});
 		}
 	} catch (error) {
-		console.error("[Prisma] Erreur vérification pg_trgm:", error);
+		logger.error("Erreur vérification pg_trgm", error, { service: "prisma" });
 	}
 }
 

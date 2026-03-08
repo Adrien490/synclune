@@ -2,6 +2,7 @@
  * Types et utilitaires pour parser les medias depuis FormData
  */
 
+import { logger } from "@/shared/lib/logger";
 import type { ParsedMedia } from "../types/sku.types";
 
 export type { ParsedMedia } from "../types/sku.types";
@@ -35,10 +36,10 @@ export function parsePrimaryImageFromForm(
 		) {
 			return parsed as ParsedMedia;
 		}
-		console.warn(`[parse-media] primaryImage invalide: structure incorrecte`);
+		logger.warn("Invalid primaryImage: incorrect structure", { service: "parse-media-from-form" });
 		return undefined;
 	} catch (error) {
-		console.error(`[parse-media] Erreur parsing primaryImage:`, error);
+		logger.error("Error parsing primaryImage", error, { service: "parse-media-from-form" });
 		return undefined;
 	}
 }
@@ -65,7 +66,7 @@ export function parseGalleryMediaFromForm(
 		const parsed: unknown = JSON.parse(raw);
 		// Validation basique: doit etre un tableau
 		if (!Array.isArray(parsed)) {
-			console.warn(`[parse-media] galleryMedia invalide: n'est pas un tableau`);
+			logger.warn("Invalid galleryMedia: not an array", { service: "parse-media-from-form" });
 			return [];
 		}
 		// Filtrer les elements invalides
@@ -78,7 +79,7 @@ export function parseGalleryMediaFromForm(
 				typeof (item as Record<string, unknown>).url === "string",
 		);
 	} catch (error) {
-		console.error(`[parse-media] Erreur parsing galleryMedia:`, error);
+		logger.error("Error parsing galleryMedia", error, { service: "parse-media-from-form" });
 		return [];
 	}
 }

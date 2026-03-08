@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { reconcilePendingRefunds } from "@/modules/cron/services/reconcile-refunds.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60; // 1 minute max
 
@@ -29,7 +30,11 @@ export async function GET() {
 					updated: result.updated,
 					staleAlerted: result.staleAlerted,
 				},
-			}).catch((e) => console.error("[CRON:reconcile-refunds] Failed to send admin alert", e));
+			}).catch((e) =>
+				logger.error("Cron reconcile-refunds failed to send admin alert", e, {
+					cronJob: "reconcile-refunds",
+				}),
+			);
 		}
 
 		return cronSuccess(

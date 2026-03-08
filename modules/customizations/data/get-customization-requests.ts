@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	buildCursorPagination,
@@ -99,7 +100,9 @@ async function fetchCustomizationRequests({
 		// Process results using shared helper
 		return processCursorResults(items, take, direction, cursor);
 	} catch (error) {
-		console.error("[GET_CUSTOMIZATION_REQUESTS]", error);
+		logger.error("Failed to fetch customization requests", error, {
+			service: "fetchCustomizationRequests",
+		});
 		return {
 			items: [],
 			pagination: {

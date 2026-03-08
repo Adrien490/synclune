@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { logger } from "@/shared/lib/logger";
 import {
 	RECENT_PRODUCTS_COOKIE_NAME,
 	RECENT_PRODUCTS_MAX_ITEMS,
@@ -35,10 +36,7 @@ export async function getRecentProductSlugs(): Promise<string[]> {
 				.slice(0, RECENT_PRODUCTS_MAX_ITEMS);
 		}
 	} catch (e) {
-		// Log en dev, silencieux en prod (cookie corrompu = ignore)
-		if (process.env.NODE_ENV === "development") {
-			console.error("[RecentProducts] Erreur parsing cookie:", e);
-		}
+		logger.error("Failed to parse recent products cookie", e, { service: "getRecentProductSlugs" });
 	}
 
 	return [];

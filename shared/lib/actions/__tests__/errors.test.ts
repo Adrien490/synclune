@@ -2,13 +2,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { type ZodError, z } from "zod";
 import { ActionStatus } from "@/shared/types/server-action";
 
-const { mockIsRedirectError } = vi.hoisted(() => ({
+const { mockIsRedirectError, mockLogger } = vi.hoisted(() => ({
 	mockIsRedirectError: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("next/dist/client/components/redirect-error", () => ({
 	isRedirectError: mockIsRedirectError,
 }));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("@sentry/nextjs", () => ({
 	captureException: vi.fn(),
@@ -72,28 +75,23 @@ describe("handleActionError", () => {
 	});
 
 	it("hides technical error details and uses defaultMessage", () => {
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		const result = handleActionError(new Error("P2002: Unique constraint"), "Échec de création");
 		expect(result.message).toBe("Échec de création");
 		expect(result.message).not.toContain("P2002");
-		consoleSpy.mockRestore();
 	});
 
-	it("logs technical errors to console.error", () => {
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+	it("logs technical errors via logger.error", () => {
 		handleActionError(new TypeError("Cannot read property"));
-		expect(consoleSpy).toHaveBeenCalledWith(
+		expect(mockLogger.error).toHaveBeenCalledWith(
 			expect.stringContaining("TypeError: Cannot read property"),
-			"Cannot read property",
+			expect.any(TypeError),
+			undefined,
 		);
-		consoleSpy.mockRestore();
 	});
 
 	it("uses fallback message when no defaultMessage provided", () => {
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		const result = handleActionError(new Error("some internal error"));
 		expect(result.message).toBe("Une erreur est survenue");
-		consoleSpy.mockRestore();
 	});
 
 	it("handles non-Error values gracefully", () => {

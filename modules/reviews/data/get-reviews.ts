@@ -1,4 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { logger } from "@/shared/lib/logger";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
@@ -124,7 +125,7 @@ async function fetchReviews(
 			totalCount,
 		};
 	} catch (error) {
-		console.error("[GET_REVIEWS]", error);
+		logger.error("Failed to fetch reviews", error, { service: "fetchReviews" });
 		return {
 			reviews: [],
 			pagination: {

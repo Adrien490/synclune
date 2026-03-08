@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mocks
 // ============================================================================
 
-const { mockPrisma, mockUpdateTag, mockGenerateInvoiceNumber } = vi.hoisted(() => ({
+const { mockPrisma, mockUpdateTag, mockGenerateInvoiceNumber, mockLogger } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: {
 			update: vi.fn(),
@@ -12,11 +12,14 @@ const { mockPrisma, mockUpdateTag, mockGenerateInvoiceNumber } = vi.hoisted(() =
 	},
 	mockUpdateTag: vi.fn(),
 	mockGenerateInvoiceNumber: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 }));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
@@ -90,13 +93,13 @@ describe("persistInvoiceNumber", () => {
 	it("returns null when generateInvoiceNumber fails", async () => {
 		mockGenerateInvoiceNumber.mockRejectedValue(new Error("unique constraint"));
 
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		const result = await persistInvoiceNumber("order-1", "user-1");
 
 		expect(result).toBeNull();
-		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Failed to persist invoice number"),
+		expect(mockLogger.error).toHaveBeenCalledWith(
+			"Failed to persist invoice number",
 			expect.any(Error),
+			{ service: "persist-invoice-number" },
 		);
 	});
 
@@ -104,7 +107,6 @@ describe("persistInvoiceNumber", () => {
 		mockGenerateInvoiceNumber.mockResolvedValue("F-2026-003");
 		mockPrisma.order.update.mockRejectedValue(new Error("DB error"));
 
-		vi.spyOn(console, "error").mockImplementation(() => {});
 		const result = await persistInvoiceNumber("order-1", "user-1");
 
 		expect(result).toBeNull();

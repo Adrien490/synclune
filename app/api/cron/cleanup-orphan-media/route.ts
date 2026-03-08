@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { cleanupOrphanMedia } from "@/modules/cron/services/cleanup-orphan-media.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60; // Plus long car scan UploadThing
 
@@ -28,7 +29,11 @@ export async function GET() {
 			job: "cleanup-orphan-media",
 			errors: 1,
 			details: { error: error instanceof Error ? error.message : String(error) },
-		}).catch((e) => console.error("[CRON:cleanup-orphan-media] Failed to send admin alert", e));
+		}).catch((e) =>
+			logger.error("Cron cleanup-orphan-media failed to send admin alert", e, {
+				cronJob: "cleanup-orphan-media",
+			}),
+		);
 
 		return cronError(error instanceof Error ? error.message : "Failed to cleanup orphan media");
 	}

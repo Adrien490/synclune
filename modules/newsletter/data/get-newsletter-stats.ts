@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { NewsletterStatus } from "@/app/generated/prisma/client";
@@ -36,7 +37,7 @@ export async function getNewsletterStats(): Promise<NewsletterStats> {
 			inactiveSubscribers: totalSubscribers - activeSubscribers,
 		};
 	} catch (error) {
-		console.error("[GET_NEWSLETTER_STATS]", error);
+		logger.error("Failed to fetch newsletter stats", error, { service: "getNewsletterStats" });
 		return {
 			totalSubscribers: 0,
 			activeSubscribers: 0,

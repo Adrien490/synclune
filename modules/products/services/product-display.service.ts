@@ -12,6 +12,7 @@
  */
 
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
+import { logger } from "@/shared/lib/logger";
 import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 import type {
 	ProductFromList,
@@ -122,9 +123,9 @@ export function getPrimaryPriceForList(product: ProductFromList): {
 
 	// Pas de SKU actif - log warning en dev pour détecter les données manquantes
 	if (process.env.NODE_ENV === "development") {
-		console.warn(
-			`[getPrimaryPriceForList] Produit "${product.slug}" n'a aucun SKU actif. Prix retourné: 0`,
-		);
+		logger.warn(`Product "${product.slug}" has no active SKU. Returning price: 0`, {
+			service: "product-display",
+		});
 	}
 
 	return {
@@ -233,7 +234,7 @@ export function getProductCardData(
 
 	// Warning en dev si pas de SKU
 	if (!defaultSku && process.env.NODE_ENV === "development") {
-		console.warn(`[getProductCardData] Produit "${product.slug}" n'a aucun SKU actif.`);
+		logger.warn(`Product "${product.slug}" has no active SKU`, { service: "product-display" });
 	}
 
 	// Stock info avec support low_stock

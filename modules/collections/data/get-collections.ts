@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
@@ -106,7 +107,7 @@ async function fetchCollections(params: GetCollectionsParams): Promise<GetCollec
 
 		return { collections: items, pagination };
 	} catch (err) {
-		console.error("[collections] Failed to fetch collections:", err);
+		logger.error("Failed to fetch collections", err, { service: "fetchCollections" });
 
 		return {
 			collections: [],

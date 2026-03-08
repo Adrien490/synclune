@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { retryFailedWebhooks } from "@/modules/cron/services/retry-webhooks.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60; // 1 minute max
 
@@ -31,7 +32,11 @@ export async function GET() {
 					permanentlyFailed: result.permanentlyFailed,
 					orphansRecovered: result.orphansRecovered,
 				},
-			}).catch((e) => console.error("[CRON:retry-webhooks] Failed to send admin alert", e));
+			}).catch((e) =>
+				logger.error("Cron retry-webhooks failed to send admin alert", e, {
+					cronJob: "retry-webhooks",
+				}),
+			);
 		}
 
 		return cronSuccess(

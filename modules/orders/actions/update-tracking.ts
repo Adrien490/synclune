@@ -21,6 +21,7 @@ import {
 	type Carrier,
 } from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 
 import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -162,7 +163,7 @@ export async function updateTracking(
 				});
 				emailSent = true;
 			} catch (emailError) {
-				console.error("[UPDATE_TRACKING] Echec envoi email:", emailError);
+				logger.error("Echec envoi email", emailError, { action: "update-tracking" });
 			}
 		}
 

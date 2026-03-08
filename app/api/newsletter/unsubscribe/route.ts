@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
+import { logger } from "@/shared/lib/logger";
 import { unsubscribeTokenSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { unsubscribeByToken } from "@/modules/newsletter/services/unsubscribe-by-token";
 
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
 
 		return new NextResponse(null, { status: 200 });
 	} catch (e) {
-		console.error("[NEWSLETTER_UNSUBSCRIBE_API]", e);
+		logger.error("Newsletter unsubscribe failed", e, { route: "newsletter-unsubscribe" });
 		// RFC 8058: always return 200 to prevent mail providers from retrying
 		return new NextResponse(null, { status: 200 });
 	}

@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheProductDetail } from "@/modules/products/utils/cache.utils";
 
@@ -77,9 +78,9 @@ async function fetchProductForDuplication(productId: string) {
 			},
 		});
 	} catch (error) {
-		if (process.env.NODE_ENV === "development") {
-			console.error("[getProductForDuplication]", error);
-		}
+		logger.error("Failed to fetch product for duplication", error, {
+			service: "fetchProductForDuplication",
+		});
 		return null;
 	}
 }

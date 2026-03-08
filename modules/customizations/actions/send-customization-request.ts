@@ -3,6 +3,7 @@
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	sendCustomizationRequestEmail,
@@ -76,10 +77,7 @@ export async function sendCustomizationRequest(
 		// 4. Vérification honeypot (anti-spam)
 		if (validatedData.website && validatedData.website.trim() !== "") {
 			// Log pour monitoring (sans exposer au client, sans PII)
-			console.warn("[SECURITY] Honeypot triggered", {
-				ip: ipAddress,
-				timestamp: new Date().toISOString(),
-			});
+			logger.warn("Honeypot triggered", { action: "sendCustomizationRequest" });
 			// On retourne un succès pour ne pas alerter le bot
 			return success("Votre demande a bien été envoyée.");
 		}
@@ -160,15 +158,13 @@ export async function sendCustomizationRequest(
 			});
 
 			if (!emailResult.success) {
-				console.error("[EMAIL] Admin notification failed", {
-					requestId: customizationRequest.id,
-					error: emailResult.error,
+				logger.error("Admin notification failed", emailResult.error, {
+					action: "sendCustomizationRequest",
 				});
 			}
 		} catch (emailError) {
-			console.error("[EMAIL] Admin notification exception", {
-				requestId: customizationRequest.id,
-				error: emailError,
+			logger.error("Admin notification exception", emailError, {
+				action: "sendCustomizationRequest",
 			});
 		}
 

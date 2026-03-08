@@ -8,6 +8,7 @@
 import type { Prisma } from "@/app/generated/prisma/client";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 /**
@@ -100,10 +101,10 @@ export async function requireAdmin(): Promise<{ admin: true } | { error: ActionS
 	const session = await getSession();
 
 	if (session?.user.role !== "ADMIN" || !session.user.id) {
-		console.warn("[SECURITY] Unauthorized admin access attempt", {
+		logger.warn("Unauthorized admin access attempt", {
+			service: "require-auth",
 			userId: session?.user.id ?? "unauthenticated",
 			role: session?.user.role ?? "none",
-			timestamp: new Date().toISOString(),
 		});
 		return {
 			error: {
@@ -117,11 +118,11 @@ export async function requireAdmin(): Promise<{ admin: true } | { error: ActionS
 	const user = await fetchUserForAuth(session.user.id);
 
 	if (!user || user.role !== "ADMIN") {
-		console.warn("[SECURITY] Admin access denied - stale session (demoted or deleted)", {
+		logger.warn("Admin access denied - stale session (demoted or deleted)", {
+			service: "require-auth",
 			userId: session.user.id,
 			sessionRole: session.user.role,
 			dbRole: user?.role ?? "user_not_found",
-			timestamp: new Date().toISOString(),
 		});
 		return {
 			error: {
@@ -181,7 +182,8 @@ export async function requireAdminApiRoute(): Promise<
 	const user = await fetchUserForAuth(session.user.id);
 
 	if (!user || user.role !== "ADMIN") {
-		console.warn("[AUTH] Admin API route access denied - stale session", {
+		logger.warn("Admin API route access denied - stale session", {
+			service: "require-auth",
 			userId: session.user.id,
 			sessionRole: session.user.role,
 			dbRole: user?.role ?? "user_not_found",
@@ -209,10 +211,10 @@ export async function requireAdminWithUser(): Promise<
 	}
 
 	if (session.user.role !== "ADMIN") {
-		console.warn("[SECURITY] Unauthorized admin access attempt", {
+		logger.warn("Unauthorized admin access attempt", {
+			service: "require-auth",
 			userId: session.user.id,
 			role: session.user.role,
-			timestamp: new Date().toISOString(),
 		});
 		return {
 			error: {
@@ -235,11 +237,11 @@ export async function requireAdminWithUser(): Promise<
 
 	// Re-verify admin role from DB (session may be stale after demotion)
 	if (user.role !== "ADMIN") {
-		console.warn("[SECURITY] Admin access denied - stale session (demoted or deleted)", {
+		logger.warn("Admin access denied - stale session (demoted or deleted)", {
+			service: "require-auth",
 			userId: session.user.id,
 			sessionRole: session.user.role,
 			dbRole: user.role,
-			timestamp: new Date().toISOString(),
 		});
 		return {
 			error: {

@@ -12,6 +12,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -221,7 +222,7 @@ export async function markAsPaid(
 				});
 				emailSent = true;
 			} catch (emailError) {
-				console.error("[MARK_AS_PAID] Échec envoi email:", emailError);
+				logger.error("Échec envoi email", emailError, { action: "mark-as-paid" });
 			}
 		}
 

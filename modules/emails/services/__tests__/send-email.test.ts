@@ -4,10 +4,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockResendEmailsSend, mockRender } = vi.hoisted(() => ({
+const { mockResendEmailsSend, mockRender, mockLogger } = vi.hoisted(() => ({
 	mockResendEmailsSend: vi.fn(),
 	mockRender: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("resend", () => ({
 	Resend: class MockResend {
@@ -50,8 +53,6 @@ describe("sendEmail", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		vi.stubEnv("RESEND_API_KEY", "re_test_123");
-		vi.spyOn(console, "error").mockImplementation(() => {});
-		vi.spyOn(console, "log").mockImplementation(() => {});
 	});
 
 	it("should return error for missing recipient (empty string)", async () => {
@@ -77,11 +78,11 @@ describe("sendEmail", () => {
 	});
 
 	it("should log error when recipient is missing", async () => {
-		const consoleSpy = vi.spyOn(console, "error");
-
 		await sendEmail({ to: "", subject: "Test", html: "<p>Hello</p>" });
 
-		expect(consoleSpy).toHaveBeenCalledWith("[EMAIL] Missing recipient");
+		expect(mockLogger.error).toHaveBeenCalledWith("Missing recipient", undefined, {
+			service: "send-email",
+		});
 	});
 
 	it("should call resend.emails.send with EMAIL_FROM and all provided params", async () => {
@@ -123,7 +124,6 @@ describe("sendEmail", () => {
 
 	it("should log success message on successful send", async () => {
 		mockResendEmailsSend.mockResolvedValue({ data: { id: "msg_abc" }, error: null });
-		const consoleSpy = vi.spyOn(console, "warn");
 
 		await sendEmail({
 			to: "user@example.com",
@@ -131,7 +131,10 @@ describe("sendEmail", () => {
 			html: "<p>Welcome!</p>",
 		});
 
-		expect(consoleSpy).toHaveBeenCalledWith('[EMAIL] Sent "Welcome" to user@example.com');
+		expect(mockLogger.info).toHaveBeenCalledWith("Email sent successfully", {
+			service: "send-email",
+			subject: "Welcome",
+		});
 	});
 
 	it("should return error when Resend returns an error object", async () => {
@@ -150,7 +153,6 @@ describe("sendEmail", () => {
 	it("should log error when Resend returns an error object", async () => {
 		const resendError = { message: "Invalid API key", name: "validation_error" };
 		mockResendEmailsSend.mockResolvedValue({ data: null, error: resendError });
-		const consoleSpy = vi.spyOn(console, "error");
 
 		await sendEmail({
 			to: "user@example.com",
@@ -158,10 +160,10 @@ describe("sendEmail", () => {
 			html: "<p>Test</p>",
 		});
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			'[EMAIL] Failed to send "Test" to user@example.com:',
-			resendError,
-		);
+		expect(mockLogger.error).toHaveBeenCalledWith("Failed to send email", resendError, {
+			service: "send-email",
+			subject: "Test",
+		});
 	});
 
 	it("should return error when Resend throws an exception", async () => {
@@ -180,7 +182,6 @@ describe("sendEmail", () => {
 	it("should log error when Resend throws an exception", async () => {
 		const thrownError = new Error("Network timeout");
 		mockResendEmailsSend.mockRejectedValue(thrownError);
-		const consoleSpy = vi.spyOn(console, "error");
 
 		await sendEmail({
 			to: "user@example.com",
@@ -188,16 +189,15 @@ describe("sendEmail", () => {
 			html: "<p>Test</p>",
 		});
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			'[EMAIL] Failed to send "Failing email" to user@example.com:',
-			thrownError,
-		);
+		expect(mockLogger.error).toHaveBeenCalledWith("Failed to send email", thrownError, {
+			service: "send-email",
+			subject: "Failing email",
+		});
 	});
 
-	it("should join array recipients with ', ' in log messages", async () => {
+	it("should log error with subject for array recipients", async () => {
 		const thrownError = new Error("Network error");
 		mockResendEmailsSend.mockRejectedValue(thrownError);
-		const consoleSpy = vi.spyOn(console, "error");
 
 		await sendEmail({
 			to: ["alice@example.com", "bob@example.com"],
@@ -205,10 +205,10 @@ describe("sendEmail", () => {
 			html: "<p>Hello everyone</p>",
 		});
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			'[EMAIL] Failed to send "Batch email" to alice@example.com, bob@example.com:',
-			thrownError,
-		);
+		expect(mockLogger.error).toHaveBeenCalledWith("Failed to send email", thrownError, {
+			service: "send-email",
+			subject: "Batch email",
+		});
 	});
 
 	it("should pass array recipients directly to resend.emails.send", async () => {
@@ -263,8 +263,6 @@ describe("renderAndSend", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		vi.stubEnv("RESEND_API_KEY", "re_test_123");
-		vi.spyOn(console, "error").mockImplementation(() => {});
-		vi.spyOn(console, "log").mockImplementation(() => {});
 	});
 
 	it("should return error for missing recipient without calling render", async () => {
@@ -288,11 +286,11 @@ describe("renderAndSend", () => {
 	});
 
 	it("should log error when recipient is missing before rendering", async () => {
-		const consoleSpy = vi.spyOn(console, "error");
-
 		await renderAndSend(mockComponent, { to: "", subject: "Test" });
 
-		expect(consoleSpy).toHaveBeenCalledWith("[EMAIL] Missing recipient");
+		expect(mockLogger.error).toHaveBeenCalledWith("Missing recipient", undefined, {
+			service: "send-email",
+		});
 	});
 
 	it("should render component to HTML and plain text then call sendEmail", async () => {
@@ -358,33 +356,31 @@ describe("renderAndSend", () => {
 	it("should log error with subject and recipient when render throws", async () => {
 		const renderError = new Error("JSX rendering failed");
 		mockRender.mockRejectedValue(renderError);
-		const consoleSpy = vi.spyOn(console, "error");
 
 		await renderAndSend(mockComponent, {
 			to: "user@example.com",
 			subject: "Broken template",
 		});
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			'[EMAIL] Failed to render template for "Broken template" to user@example.com:',
-			renderError,
-		);
+		expect(mockLogger.error).toHaveBeenCalledWith("Failed to render email template", renderError, {
+			service: "send-email",
+			subject: "Broken template",
+		});
 	});
 
-	it("should log render error with joined recipients when to is an array", async () => {
+	it("should log render error with subject when to is an array", async () => {
 		const renderError = new Error("Template crash");
 		mockRender.mockRejectedValue(renderError);
-		const consoleSpy = vi.spyOn(console, "error");
 
 		await renderAndSend(mockComponent, {
 			to: ["alice@example.com", "bob@example.com"],
 			subject: "Array recipient template",
 		});
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			'[EMAIL] Failed to render template for "Array recipient template" to alice@example.com, bob@example.com:',
-			renderError,
-		);
+		expect(mockLogger.error).toHaveBeenCalledWith("Failed to render email template", renderError, {
+			service: "send-email",
+			subject: "Array recipient template",
+		});
 	});
 
 	it("should pass through replyTo, headers and tags to resend.emails.send", async () => {

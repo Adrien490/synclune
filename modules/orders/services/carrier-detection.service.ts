@@ -5,6 +5,7 @@
 
 import type { Carrier, DetectionResult } from "../types/carrier.types";
 import { CARRIER_TRACKING_URLS, CARRIER_PATTERNS } from "../constants/carrier-urls";
+import { logger } from "@/shared/lib/logger";
 
 // ============================================================================
 // CARRIER DETECTION SERVICE
@@ -113,8 +114,9 @@ export function detectCarrierAndUrl(trackingNumber: string): DetectionResult {
 	}
 
 	// 6. PAR DÉFAUT (Format inconnu) — log format info (sans PII) pour améliorer les patterns regex
-	console.warn(
-		`[CARRIER_DETECTION] Unrecognized tracking format: length=${cleanNumber.length}, prefix=${cleanNumber.slice(0, 2)}`,
+	logger.warn(
+		`Unrecognized tracking format: length=${cleanNumber.length}, prefix=${cleanNumber.slice(0, 2)}`,
+		{ service: "carrier-detection" },
 	);
 	return {
 		carrier: "autre",

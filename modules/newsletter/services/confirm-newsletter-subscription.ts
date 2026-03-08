@@ -2,6 +2,7 @@ import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterConfirm } from "@/shared/lib/arcjet";
 import { sendNewsletterWelcomeEmail } from "@/modules/emails/services/newsletter-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { validateInput } from "@/shared/lib/actions";
 import { headers } from "next/headers";
@@ -45,7 +46,9 @@ export async function confirmNewsletterSubscription(
 			}
 
 			if (decision.reason.isShield()) {
-				console.warn("[CONFIRM_SUBSCRIPTION] Shield blocked suspicious request");
+				logger.warn("Shield blocked suspicious request", {
+					service: "confirm-newsletter-subscription",
+				});
 				return {
 					success: false,
 					message: "Votre requête a été bloquée pour des raisons de sécurité.",
@@ -136,7 +139,9 @@ export async function confirmNewsletterSubscription(
 		try {
 			promoCode = await createNewsletterPromoCode();
 		} catch (promoError) {
-			console.error("[CONFIRM_SUBSCRIPTION] Erreur création code promo:", promoError);
+			logger.error("Failed to create promo code", promoError, {
+				service: "confirm-newsletter-subscription",
+			});
 		}
 
 		// Send welcome email (non-blocking: don't fail confirmation if email fails)
@@ -148,7 +153,9 @@ export async function confirmNewsletterSubscription(
 				promoCode,
 			});
 		} catch (emailError) {
-			console.error("[CONFIRM_SUBSCRIPTION] Erreur envoi email bienvenue:", emailError);
+			logger.error("Failed to send welcome email", emailError, {
+				service: "confirm-newsletter-subscription",
+			});
 		}
 
 		return {
@@ -157,7 +164,9 @@ export async function confirmNewsletterSubscription(
 				"Merci ! Votre inscription est confirmée. Vous recevrez bientôt notre prochaine newsletter.",
 		};
 	} catch (e) {
-		console.error("[CONFIRM_SUBSCRIPTION] Unexpected error:", e);
+		logger.error("Unexpected error during newsletter confirmation", e, {
+			service: "confirm-newsletter-subscription",
+		});
 		return {
 			success: false,
 			message: "Une erreur est survenue. Veuillez réessayer plus tard.",

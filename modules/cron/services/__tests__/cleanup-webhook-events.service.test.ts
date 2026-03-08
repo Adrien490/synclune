@@ -1,17 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 
-const { mockPrisma } = vi.hoisted(() => ({
+const { mockPrisma, mockLogger } = vi.hoisted(() => ({
 	mockPrisma: {
 		webhookEvent: {
 			findMany: vi.fn(),
 			deleteMany: vi.fn(),
 		},
 	},
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 import { cleanupOldWebhookEvents } from "../cleanup-webhook-events.service";
@@ -22,8 +27,6 @@ describe("cleanupOldWebhookEvents", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-16T10:00:00Z"));
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		// Default: all findMany return empty, all deleteMany return 0
 		mockPrisma.webhookEvent.findMany.mockResolvedValue([]);
@@ -318,7 +321,6 @@ describe("cleanupOldWebhookEvents", () => {
 	});
 
 	it("should log warning when completed events delete limit is reached", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const completedIds = Array.from({ length: 1000 }, (_, i) => ({ id: `c-${i}` }));
 		mockPrisma.webhookEvent.findMany
 			.mockResolvedValueOnce(completedIds)
@@ -333,15 +335,13 @@ describe("cleanupOldWebhookEvents", () => {
 
 		await cleanupOldWebhookEvents();
 
-		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			expect.stringContaining(
-				"Completed events delete limit reached, remaining will be cleaned on next run",
-			),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			"Completed events delete limit reached, remaining will be cleaned on next run",
+			expect.objectContaining({ cronJob: "cleanup-webhook-events" }),
 		);
 	});
 
 	it("should not log limit warning when under delete limit", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const completedIds = Array.from({ length: 999 }, (_, i) => ({ id: `c-${i}` }));
 		mockPrisma.webhookEvent.findMany
 			.mockResolvedValueOnce(completedIds)
@@ -356,13 +356,13 @@ describe("cleanupOldWebhookEvents", () => {
 
 		await cleanupOldWebhookEvents();
 
-		expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+		expect(mockLogger.warn).not.toHaveBeenCalledWith(
 			expect.stringContaining("delete limit reached"),
+			expect.anything(),
 		);
 	});
 
 	it("should log stale warning when stale events are deleted", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const staleIds = Array.from({ length: 5 }, (_, i) => ({ id: `st-${i}` }));
 		mockPrisma.webhookEvent.findMany
 			.mockResolvedValueOnce([])
@@ -377,8 +377,9 @@ describe("cleanupOldWebhookEvents", () => {
 
 		await cleanupOldWebhookEvents();
 
-		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Deleted stale PROCESSING/PENDING events"),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			"Deleted stale PROCESSING/PENDING events",
+			expect.objectContaining({ cronJob: "cleanup-webhook-events" }),
 		);
 	});
 

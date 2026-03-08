@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 
@@ -78,7 +79,9 @@ async function fetchCustomizationStats(): Promise<CustomizationStats> {
 			thisMonth,
 		};
 	} catch (error) {
-		console.error("[GET_CUSTOMIZATION_STATS]", error);
+		logger.error("Failed to fetch customization stats", error, {
+			service: "fetchCustomizationStats",
+		});
 		return EMPTY_STATS;
 	}
 }

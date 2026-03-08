@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { sendAbandonedCartEmails } from "@/modules/cron/services/abandoned-cart-emails.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60;
 
@@ -22,7 +23,11 @@ export async function GET() {
 				job: "abandoned-cart-emails",
 				errors: result.errors,
 				details: { found: result.found, sent: result.sent },
-			}).catch((e) => console.error("[CRON:abandoned-cart-emails] Failed to send admin alert", e));
+			}).catch((e) =>
+				logger.error("Cron abandoned-cart-emails failed to send admin alert", e, {
+					cronJob: "abandoned-cart-emails",
+				}),
+			);
 		}
 
 		return cronSuccess(

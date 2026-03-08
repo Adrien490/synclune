@@ -3,6 +3,7 @@
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
+import { logger } from "@/shared/lib/logger";
 import type { ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { deleteUploadThingFilesSchema } from "@/modules/media/schemas/uploadthing.schemas";
@@ -37,10 +38,9 @@ export async function deleteUploadThingFiles(
 		try {
 			parsedFileUrls = JSON.parse(fileUrlsRaw);
 		} catch (parseError) {
-			console.error(
-				"[deleteUploadThingFiles] JSON parse failed:",
-				parseError instanceof Error ? parseError.message : String(parseError),
-			);
+			logger.error("JSON parse failed for file URLs", parseError, {
+				action: "delete-uploadthing-files",
+			});
 			return error("Format JSON invalide pour les URLs de fichiers");
 		}
 
@@ -58,10 +58,9 @@ export async function deleteUploadThingFiles(
 		}
 
 		if (failedUrls.length > 0) {
-			console.warn(
-				`[deleteUploadThingFiles] ${failedUrls.length} URL(s) n'ont pas pu etre extraites:`,
-				failedUrls,
-			);
+			logger.warn(`${failedUrls.length} URL(s) could not be extracted: ${failedUrls.join(", ")}`, {
+				action: "delete-uploadthing-files",
+			});
 		}
 
 		// 6. Delete files via UTApi (per-request instantiation)

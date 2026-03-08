@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 
-const { mockPrisma } = vi.hoisted(() => ({
+const { mockPrisma, mockLogger } = vi.hoisted(() => ({
 	mockPrisma: {
 		newsletterSubscriber: {
 			findMany: vi.fn(),
@@ -9,10 +9,15 @@ const { mockPrisma } = vi.hoisted(() => ({
 			updateMany: vi.fn(),
 		},
 	},
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 import {
@@ -26,8 +31,6 @@ describe("cleanupUnconfirmedNewsletterSubscriptions", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-16T10:00:00Z"));
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
 		mockPrisma.newsletterSubscriber.deleteMany.mockResolvedValue({ count: 0 });
@@ -94,15 +97,15 @@ describe("cleanupUnconfirmedNewsletterSubscriptions", () => {
 	});
 
 	it("should log warning when delete limit is reached", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const ids = Array.from({ length: 1000 }, (_, i) => ({ id: `s-${i}` }));
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue(ids);
 		mockPrisma.newsletterSubscriber.deleteMany.mockResolvedValue({ count: 1000 });
 
 		await cleanupUnconfirmedNewsletterSubscriptions();
 
-		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Delete limit reached, remaining will be cleaned on next run"),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			"Delete limit reached, remaining will be cleaned on next run",
+			expect.objectContaining({ cronJob: "cleanup-newsletter" }),
 		);
 	});
 
@@ -122,8 +125,6 @@ describe("unsubscribeInactiveNewsletterSubscribers", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-16T10:00:00Z"));
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
 		mockPrisma.newsletterSubscriber.updateMany.mockResolvedValue({ count: 0 });
@@ -208,15 +209,15 @@ describe("unsubscribeInactiveNewsletterSubscribers", () => {
 	});
 
 	it("should log warning when batch limit is reached", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const ids = Array.from({ length: BATCH_SIZE_LARGE }, (_, i) => ({ id: `s-${i}` }));
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue(ids);
 		mockPrisma.newsletterSubscriber.updateMany.mockResolvedValue({ count: BATCH_SIZE_LARGE });
 
 		await unsubscribeInactiveNewsletterSubscribers();
 
-		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Batch limit reached for inactive subscribers"),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			"Batch limit reached for inactive subscribers, remaining will be processed on next run",
+			expect.objectContaining({ cronJob: "cleanup-newsletter" }),
 		);
 	});
 

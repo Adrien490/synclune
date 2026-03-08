@@ -6,6 +6,7 @@ import {
 	sendEmailChangeConfirmationEmail,
 } from "@/modules/emails/services/auth-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { ActionStatus } from "@/shared/types/server-action";
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
@@ -68,7 +69,7 @@ export const auth = betterAuth({
 						currentEmail: user.email,
 					});
 				} catch (error) {
-					console.error("[AUTH] Failed to send email change confirmation:", error);
+					logger.error("Failed to send email change confirmation", error, { service: "auth" });
 				}
 			},
 		},
@@ -97,7 +98,7 @@ export const auth = betterAuth({
 					url,
 				});
 			} catch (error) {
-				console.error("[AUTH] Failed to send password reset email:", error);
+				logger.error("Failed to send password reset email", error, { service: "auth" });
 			}
 		},
 		onPasswordReset: async ({ user }) => {
@@ -134,7 +135,7 @@ export const auth = betterAuth({
 					url: verificationUrl,
 				});
 			} catch (error) {
-				console.error("[AUTH] Failed to send verification email:", error);
+				logger.error("Failed to send verification email", error, { service: "auth" });
 			}
 		},
 		sendOnSignUp: true, // Envoi automatique à l'inscription
@@ -201,7 +202,10 @@ export const auth = betterAuth({
 					});
 				} catch (error) {
 					// Don't block signup if cart/wishlist creation fails - they'll be created on first use (via upsert)
-					console.error("[AUTH] Cart/wishlist creation failed on signup:", error);
+					logger.error("Cart/wishlist creation failed on signup", error, {
+						service: "auth",
+						userId: user.id,
+					});
 				}
 
 				// TODO: Optionnel - Logger dans un système de monitoring (Sentry, Datadog, etc.)
@@ -272,10 +276,10 @@ export const auth = betterAuth({
 					ctx.headers?.get("x-forwarded-for")?.split(",")[0]?.trim() ??
 					ctx.headers?.get("x-real-ip") ??
 					"unknown";
-				console.warn("[SECURITY] Auth attempt", {
-					path,
+				logger.warn("Auth attempt detected", {
+					service: "auth",
+					route: path,
 					ip,
-					timestamp: new Date().toISOString(),
 				});
 			}
 		}),
@@ -337,7 +341,10 @@ export const auth = betterAuth({
 					}
 				} catch (error) {
 					// Log l'erreur pour debugging mais continue (cookie preserved for retry)
-					console.error("[AUTH] Wishlist merge failed:", error);
+					logger.error("Wishlist merge failed", error, {
+						service: "auth",
+						userId: newSession.user.id,
+					});
 				}
 			}
 
@@ -365,7 +372,10 @@ export const auth = betterAuth({
 						updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(newSession.user.id));
 					}
 				} catch (error) {
-					console.error("[AUTH] Guest order linking failed:", error);
+					logger.error("Guest order linking failed", error, {
+						service: "auth",
+						userId: newSession.user.id,
+					});
 				}
 			}
 		}),

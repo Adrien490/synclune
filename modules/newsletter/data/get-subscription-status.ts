@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { cacheLife, cacheTag } from "next/cache";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -59,10 +60,8 @@ export async function fetchSubscriptionStatus(
 		return subscriber;
 	} catch (error) {
 		// Logging structuré pour debug production
-		console.error("[GET_SUBSCRIPTION_STATUS]", {
-			email: email.substring(0, 3) + "***", // Masquer partiellement l'email
-			userId,
-			error: error instanceof Error ? error.message : "Unknown error",
+		logger.error("Failed to fetch subscription status", error, {
+			service: "fetchSubscriptionStatus",
 		});
 		return null;
 	}

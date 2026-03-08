@@ -1,6 +1,7 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { sendNewsletterConfirmationEmail } from "@/modules/emails/services/newsletter-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { randomUUID } from "crypto";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
@@ -145,7 +146,9 @@ export async function subscribeToNewsletterInternal({
 				"Merci ! Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception 📧",
 		};
 	} catch (error) {
-		console.error("[SUBSCRIBE_INTERNAL]", error instanceof Error ? error.message : "Unknown error");
+		logger.error("Newsletter subscription failed", error, {
+			service: "subscribe-to-newsletter-internal",
+		});
 		return {
 			success: false,
 			message:

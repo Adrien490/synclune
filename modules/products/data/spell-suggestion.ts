@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -226,7 +227,7 @@ export async function getSpellSuggestion(
 			source: bestMatch.match!.source as SpellSuggestion["source"],
 		};
 	} catch (error) {
-		console.warn("[spellSuggestion] Failed:", error instanceof Error ? error.message : error);
+		logger.warn("Spell suggestion failed", { service: "getSpellSuggestion" });
 		return null;
 	}
 }

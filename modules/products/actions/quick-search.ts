@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { logger } from "@/shared/lib/logger";
 import { PRODUCT_SEARCH_LIMIT } from "@/shared/lib/rate-limit-config";
 
 import { quickSearchProducts, type QuickSearchResult } from "../data/quick-search-products";
@@ -30,8 +31,9 @@ export async function quickSearch(query: string): Promise<QuickSearchResult> {
 
 		// Structured logging for search analytics (picked up by log aggregator)
 		if (result.kind === "success" && result.totalCount === 0) {
-			console.warn(
-				`[SEARCH] zero-result | term="${sanitizeForLog(sanitizedQuery)}" | suggestion="${result.suggestion ?? "none"}"`,
+			logger.warn(
+				`Zero-result search | term="${sanitizeForLog(sanitizedQuery)}" | suggestion="${result.suggestion ?? "none"}"`,
+				{ action: "quick-search" },
 			);
 		}
 

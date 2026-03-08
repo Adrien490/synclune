@@ -4,8 +4,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockTransaction } = vi.hoisted(() => ({
+const { mockTransaction, mockLogger } = vi.hoisted(() => ({
 	mockTransaction: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -13,6 +14,8 @@ vi.mock("@/shared/lib/prisma", () => ({
 		$transaction: mockTransaction,
 	},
 }));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("@/modules/products/utils/trigram-helpers", () => ({
 	setTrigramThreshold: vi.fn(),
@@ -221,7 +224,6 @@ describe("fuzzySearchIds — error handling", () => {
 	});
 
 	it("returns null on database error (silent catch)", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		mockTransaction.mockRejectedValue(new Error("connection refused"));
 
 		const result = await fuzzySearchIds("query", {
@@ -229,24 +231,21 @@ describe("fuzzySearchIds — error handling", () => {
 		});
 
 		expect(result).toBeNull();
-		warnSpy.mockRestore();
 	});
 
 	it("logs a warning on database error", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		mockTransaction.mockRejectedValue(new Error("connection refused"));
 
 		await fuzzySearchIds("query", {
 			columns: [{ table: "Order", column: "customerName" }],
 		});
 
-		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("[SEARCH] admin-fuzzy-error"));
-		warnSpy.mockRestore();
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("admin-fuzzy-error"), {
+			service: "fuzzy-search",
+		});
 	});
 
 	it("logs a warning for slow queries (>500ms)", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
 		// Simulate a slow query by delaying the transaction resolution
 		mockTransaction.mockImplementation(
 			() => new Promise((resolve) => setTimeout(() => resolve([{ id: "1" }]), 600)),
@@ -257,8 +256,9 @@ describe("fuzzySearchIds — error handling", () => {
 		});
 
 		expect(result).toEqual(["1"]);
-		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("[SEARCH] slow-admin-fuzzy"));
-		warnSpy.mockRestore();
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("slow-admin-fuzzy"), {
+			service: "fuzzy-search",
+		});
 	});
 });
 

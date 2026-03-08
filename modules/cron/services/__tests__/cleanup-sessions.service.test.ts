@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma } = vi.hoisted(() => ({
+const { mockPrisma, mockLogger } = vi.hoisted(() => ({
 	mockPrisma: {
 		session: {
 			findMany: vi.fn(),
@@ -15,10 +15,15 @@ const { mockPrisma } = vi.hoisted(() => ({
 			updateMany: vi.fn(),
 		},
 	},
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 import { cleanupExpiredSessions } from "../cleanup-sessions.service";
@@ -28,8 +33,6 @@ describe("cleanupExpiredSessions", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-16T10:00:00Z"));
-		vi.spyOn(console, "log").mockImplementation(() => {});
-		vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		// Default: all findMany return empty, all mutations return 0
 		mockPrisma.session.findMany.mockResolvedValue([]);
@@ -212,33 +215,29 @@ describe("cleanupExpiredSessions", () => {
 	});
 
 	it("should log warning when session delete limit is reached", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const sessionIds = Array.from({ length: 1000 }, (_, i) => ({ id: `s-${i}` }));
 		mockPrisma.session.findMany.mockResolvedValue(sessionIds);
 		mockPrisma.session.deleteMany.mockResolvedValue({ count: 1000 });
 
 		await cleanupExpiredSessions();
 
-		expect(consoleWarnSpy).toHaveBeenCalledWith(
-			expect.stringContaining(
-				"Session delete limit reached, remaining will be cleaned on next run",
-			),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			"Session delete limit reached, remaining will be cleaned on next run",
+			expect.objectContaining({ cronJob: "cleanup-sessions" }),
 		);
 	});
 
 	it("should not log warning when under delete limit", async () => {
-		const consoleWarnSpy = vi.spyOn(console, "warn");
 		const sessionIds = Array.from({ length: 999 }, (_, i) => ({ id: `s-${i}` }));
 		mockPrisma.session.findMany.mockResolvedValue(sessionIds);
 		mockPrisma.session.deleteMany.mockResolvedValue({ count: 999 });
 
 		await cleanupExpiredSessions();
 
-		expect(consoleWarnSpy).not.toHaveBeenCalled();
+		expect(mockLogger.warn).not.toHaveBeenCalled();
 	});
 
-	it("should log cleanup progress to console", async () => {
-		const consoleLogSpy = vi.spyOn(console, "log");
+	it("should log cleanup progress", async () => {
 		const sessionIds = Array.from({ length: 8 }, (_, i) => ({ id: `s-${i}` }));
 		const verificationIds = Array.from({ length: 3 }, (_, i) => ({ id: `v-${i}` }));
 		const accessIds = Array.from({ length: 2 }, (_, i) => ({ id: `at-${i}` }));
@@ -255,15 +254,26 @@ describe("cleanupExpiredSessions", () => {
 
 		await cleanupExpiredSessions();
 
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Starting expired sessions cleanup"),
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Starting expired sessions cleanup",
+			expect.objectContaining({ cronJob: "cleanup-sessions" }),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Deleted expired sessions"));
-		expect(consoleLogSpy).toHaveBeenCalledWith(
-			expect.stringContaining("Deleted expired verifications"),
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Deleted expired sessions",
+			expect.objectContaining({ cronJob: "cleanup-sessions" }),
 		);
-		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cleared expired tokens"));
-		expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining("Cleanup completed"));
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Deleted expired verifications",
+			expect.objectContaining({ cronJob: "cleanup-sessions" }),
+		);
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Cleared expired tokens",
+			expect.objectContaining({ cronJob: "cleanup-sessions" }),
+		);
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			"Cleanup completed",
+			expect.objectContaining({ cronJob: "cleanup-sessions" }),
+		);
 	});
 
 	it("should use current timestamp for expiresAt comparison", async () => {

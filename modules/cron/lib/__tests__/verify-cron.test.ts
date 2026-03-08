@@ -4,12 +4,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockHeaders } = vi.hoisted(() => ({
+const { mockHeaders, mockLogger } = vi.hoisted(() => ({
 	mockHeaders: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("next/headers", () => ({
 	headers: mockHeaders,
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 import { verifyCronRequest, cronTimer, cronSuccess, cronError } from "../verify-cron";
@@ -29,8 +34,6 @@ function makeHeadersList(authorization: string | null) {
 describe("verifyCronRequest", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.spyOn(console, "error").mockImplementation(() => {});
-		vi.spyOn(console, "warn").mockImplementation(() => {});
 	});
 
 	afterEach(() => {
@@ -91,8 +94,10 @@ describe("verifyCronRequest", () => {
 			it("logs an error about missing secret", async () => {
 				await verifyCronRequest();
 
-				expect(console.error).toHaveBeenCalledWith(
-					expect.stringContaining("CRON_SECRET environment variable is not set"),
+				expect(mockLogger.error).toHaveBeenCalledWith(
+					"CRON_SECRET environment variable is not set",
+					undefined,
+					{ cronJob: "verify" },
 				);
 			});
 
@@ -186,8 +191,9 @@ describe("verifyCronRequest", () => {
 
 				await verifyCronRequest();
 
-				expect(console.warn).toHaveBeenCalledWith(
-					expect.stringContaining("Unauthorized cron request attempt"),
+				expect(mockLogger.warn).toHaveBeenCalledWith(
+					"Unauthorized cron request attempt",
+					expect.objectContaining({ cronJob: "verify" }),
 				);
 			});
 
@@ -326,7 +332,7 @@ describe("cronError", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-24T10:00:00.000Z"));
-		vi.spyOn(console, "error").mockImplementation(() => {});
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
@@ -369,7 +375,9 @@ describe("cronError", () => {
 	it("logs the error message to console", () => {
 		cronError("Database unreachable");
 
-		expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Database unreachable"));
+		expect(mockLogger.error).toHaveBeenCalledWith("Cron error: Database unreachable", undefined, {
+			cronJob: "unknown",
+		});
 	});
 
 	it("response body does not include a success field set to true", async () => {

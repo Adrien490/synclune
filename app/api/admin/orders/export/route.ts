@@ -5,6 +5,7 @@ import {
 	buildExportWhereClause,
 	generateOrdersCsv,
 } from "@/modules/orders/services/export-orders-csv.service";
+import { logger } from "@/shared/lib/logger";
 
 export async function GET(request: Request) {
 	const admin = await requireAdminApiRoute();
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
 			},
 		});
 	} catch (error) {
-		console.error("[EXPORT] Failed to export orders:", error);
+		logger.error("Failed to export orders", error, { route: "admin-orders-export" });
 		return new Response(JSON.stringify({ error: "Erreur lors de l'export" }), {
 			status: 500,
 			headers: { "Content-Type": "application/json" },

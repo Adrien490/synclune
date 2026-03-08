@@ -9,6 +9,7 @@ import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/stat
 import type { ActionState } from "@/shared/types/server-action";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 import { z } from "zod";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -162,7 +163,7 @@ export async function cancelOrderCustomer(
 					orderDetailsUrl,
 				});
 			} catch (emailError) {
-				console.error("[CANCEL_ORDER_CUSTOMER] Email send failed:", emailError);
+				logger.error("Email send failed", emailError, { action: "cancel-order-customer" });
 			}
 		}
 

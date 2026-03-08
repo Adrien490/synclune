@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
@@ -49,9 +50,7 @@ export async function getSitemapProducts() {
 			},
 		});
 	} catch (error) {
-		if (process.env.NODE_ENV === "development") {
-			console.error("[getSitemapProducts]", error);
-		}
+		logger.error("Failed to fetch sitemap products", error, { service: "getSitemapProducts" });
 		return [];
 	}
 }

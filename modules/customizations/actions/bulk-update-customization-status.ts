@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
@@ -136,9 +137,8 @@ export async function bulkUpdateCustomizationStatus(
 						adminNotes: request.adminNotes ? sanitizeForEmail(request.adminNotes) : null,
 						details: sanitizeForEmail(request.details),
 					}).catch((emailError: unknown) => {
-						console.error("[EMAIL] Bulk status email failed", {
-							requestId: request.id,
-							error: emailError,
+						logger.error("Bulk status email failed", emailError, {
+							action: "bulkUpdateCustomizationStatus",
 						});
 					});
 				}

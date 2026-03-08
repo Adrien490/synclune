@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { sendDelayedReviewRequestEmails } from "@/modules/cron/services/review-request-emails.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60; // 1 minute max
 
@@ -28,7 +29,11 @@ export async function GET() {
 					remindersFound: result.remindersFound,
 					remindersSent: result.remindersSent,
 				},
-			}).catch((e) => console.error("[CRON:review-request-emails] Failed to send admin alert", e));
+			}).catch((e) =>
+				logger.error("Cron review-request-emails failed to send admin alert", e, {
+					cronJob: "review-request-emails",
+				}),
+			);
 		}
 
 		return cronSuccess(

@@ -1,5 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -35,7 +36,7 @@ export async function getOrderRefunds(
 		const refunds = await fetchOrderRefunds(parsed.data);
 		return { refunds };
 	} catch (error) {
-		console.error("[GET_ORDER_REFUNDS] Erreur:", error);
+		logger.error("Failed to fetch order refunds", error, { service: "getOrderRefunds" });
 		return { error: "Une erreur est survenue" };
 	}
 }

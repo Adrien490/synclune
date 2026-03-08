@@ -22,6 +22,7 @@ import {
 	type Carrier,
 } from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 
 import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -205,7 +206,7 @@ export async function markAsShipped(
 				});
 				emailSent = true;
 			} catch (emailError) {
-				console.error("[MARK_AS_SHIPPED] Échec envoi email:", emailError);
+				logger.error("Échec envoi email", emailError, { action: "mark-as-shipped" });
 			}
 		}
 

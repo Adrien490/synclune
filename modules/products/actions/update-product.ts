@@ -14,6 +14,7 @@ import {
 	safeFormGetJSON,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
@@ -312,11 +313,7 @@ export async function updateProduct(
 			} catch (e) {
 				// DB update already succeeded, orphaned files will be cleaned by monthly cron
 				if (process.env.NODE_ENV === "development") {
-					console.error(
-						"[update-product] Failed to delete UploadThing files:",
-						deletedImageUrls,
-						e,
-					);
+					logger.error("Failed to delete UploadThing files", e, { action: "update-product" });
 				}
 			}
 		}

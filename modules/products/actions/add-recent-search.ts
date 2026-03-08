@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { success, handleActionError, validateInput } from "@/shared/lib/actions";
+import { logger } from "@/shared/lib/logger";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	RECENT_SEARCHES_COOKIE_NAME,
@@ -51,7 +52,7 @@ export async function addRecentSearch(
 			} catch (parseError) {
 				// Cookie corrompu - reset silencieux mais loggé
 				if (process.env.NODE_ENV === "development") {
-					console.error("[addRecentSearch] Cookie corrompu, reset:", parseError);
+					logger.error("Corrupted cookie, resetting", parseError, { action: "add-recent-search" });
 				}
 			}
 		}

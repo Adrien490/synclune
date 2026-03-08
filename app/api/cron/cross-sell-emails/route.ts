@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { sendCrossSellEmails } from "@/modules/cron/services/cross-sell-emails.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60;
 
@@ -22,7 +23,11 @@ export async function GET() {
 				job: "cross-sell-emails",
 				errors: result.errors,
 				details: { found: result.found, sent: result.sent, skipped: result.skipped },
-			}).catch((e) => console.error("[CRON:cross-sell-emails] Failed to send admin alert", e));
+			}).catch((e) =>
+				logger.error("Cron cross-sell-emails failed to send admin alert", e, {
+					cronJob: "cross-sell-emails",
+				}),
+			);
 		}
 
 		return cronSuccess(

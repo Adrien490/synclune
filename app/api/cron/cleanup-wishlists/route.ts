@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { cleanupExpiredWishlists } from "@/modules/cron/services/cleanup-wishlists.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 30;
 
@@ -28,7 +29,11 @@ export async function GET() {
 			job: "cleanup-wishlists",
 			errors: 1,
 			details: { error: error instanceof Error ? error.message : String(error) },
-		}).catch((e) => console.error("[CRON:cleanup-wishlists] Failed to send admin alert", e));
+		}).catch((e) =>
+			logger.error("Cron cleanup-wishlists failed to send admin alert", e, {
+				cronJob: "cleanup-wishlists",
+			}),
+		);
 
 		return cronError(error instanceof Error ? error.message : "Failed to cleanup wishlists");
 	}

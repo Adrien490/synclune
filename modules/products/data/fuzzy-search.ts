@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -197,8 +198,9 @@ export async function fuzzySearchProductIds(
 		const totalCount = results.length > 0 ? Number(results[0]!.totalCount) : 0;
 
 		if (durationMs > 500) {
-			console.warn(
-				`[SEARCH] slow-fuzzy | term="${sanitizeForLog(searchTerm)}" | results=${totalCount} | duration=${durationMs}ms`,
+			logger.warn(
+				`Slow fuzzy search | term="${sanitizeForLog(searchTerm)}" | results=${totalCount} | duration=${durationMs}ms`,
+				{ service: "fuzzySearchProductIds" },
 			);
 		}
 
@@ -208,8 +210,9 @@ export async function fuzzySearchProductIds(
 		};
 	} catch (error) {
 		const durationMs = Math.round(performance.now() - startTime);
-		console.warn(
-			`[SEARCH] fuzzy-error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`,
+		logger.warn(
+			`Fuzzy search error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`,
+			{ service: "fuzzySearchProductIds" },
 		);
 		return { ids: [], totalCount: 0 };
 	}

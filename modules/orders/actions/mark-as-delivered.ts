@@ -11,6 +11,7 @@ import { handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 
 import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -167,7 +168,7 @@ export async function markAsDelivered(
 				});
 				emailSent = true;
 			} catch (emailError) {
-				console.error("[MARK_AS_DELIVERED] Échec envoi email livraison:", emailError);
+				logger.error("Échec envoi email livraison", emailError, { action: "mark-as-delivered" });
 			}
 		}
 
@@ -176,7 +177,9 @@ export async function markAsDelivered(
 		try {
 			await scheduleReviewRequestEmail(id);
 		} catch (reviewEmailError) {
-			console.error("[MARK_AS_DELIVERED] Échec planification email avis:", reviewEmailError);
+			logger.error("Échec planification email avis", reviewEmailError, {
+				action: "mark-as-delivered",
+			});
 		}
 
 		void logAudit({

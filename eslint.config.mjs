@@ -87,13 +87,10 @@ const eslintConfig = [
 	},
 	{
 		files: [
-			"modules/cron/**/*.ts",
-			"modules/webhooks/**/*.ts",
-			"app/api/**/*.ts",
 			"prisma/**/*.ts",
 			"instrumentation.ts",
 			"instrumentation-client.ts",
-			"shared/lib/circuit-breaker.ts",
+			"shared/lib/env.ts",
 		],
 		rules: {
 			"no-console": "off",

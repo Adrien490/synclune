@@ -12,7 +12,7 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
-import { ChevronDown, Pencil, Shield, ShoppingBag, Tag, TruckIcon } from "lucide-react";
+import { ChevronDown, Shield } from "lucide-react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import Image from "next/image";
@@ -127,7 +127,6 @@ export function CheckoutSummary({
 					aria-label="Modifier mon panier"
 					className="text-foreground focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm text-xs underline hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 				>
-					<Pencil className="h-3 w-3" />
 					Modifier mon panier
 				</button>
 			</div>
@@ -146,10 +145,7 @@ export function CheckoutSummary({
 				{/* Discount line */}
 				{appliedDiscount && discountAmount > 0 && (
 					<div className="flex items-center justify-between">
-						<span className="flex items-center gap-1.5 text-green-600">
-							<Tag className="h-4 w-4" />
-							Réduction ({appliedDiscount.code})
-						</span>
+						<span className="text-green-600">Réduction ({appliedDiscount.code})</span>
 						<span className="text-base/6 font-medium text-green-600 tabular-nums">
 							-{formatEuro(discountAmount)}
 						</span>
@@ -158,10 +154,7 @@ export function CheckoutSummary({
 
 				{/* Frais de port */}
 				<div className="flex items-center justify-between">
-					<span className="text-muted-foreground flex items-center gap-1.5">
-						<TruckIcon className="h-4 w-4" />
-						Livraison
-					</span>
+					<span className="text-muted-foreground">Livraison</span>
 					<span className="text-base/6 font-medium tabular-nums">
 						{shippingUnavailable ? "Indisponible" : formatEuro(shipping)}
 					</span>
@@ -235,8 +228,7 @@ export function CheckoutSummary({
 					<CollapsibleTrigger className="w-full text-left">
 						<CardHeader className="pb-0">
 							<div className="flex items-center justify-between">
-								<CardTitle className="flex items-center gap-2 text-base">
-									<ShoppingBag className="h-4 w-4" />
+								<CardTitle className="text-base">
 									{totalItems} article{totalItems > 1 ? "s" : ""}
 								</CardTitle>
 								<div className="flex items-center gap-2">
@@ -257,8 +249,7 @@ export function CheckoutSummary({
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 				<CardHeader className="pb-4">
-					<CardTitle className="font-display flex items-center gap-2 text-lg/7 tracking-wide antialiased">
-						<ShoppingBag className="text-primary/70 h-5 w-5" />
+					<CardTitle className="font-display text-lg/7 tracking-wide antialiased">
 						Votre commande
 					</CardTitle>
 				</CardHeader>

@@ -4,11 +4,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockEnforceRateLimit, mockQuickSearchProducts } = vi.hoisted(() => ({
+const { mockEnforceRateLimit, mockQuickSearchProducts, mockLogger } = vi.hoisted(() => ({
 	mockEnforceRateLimit: vi.fn(),
 	mockQuickSearchProducts: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -75,8 +77,7 @@ describe("quickSearch", () => {
 		expect(mockQuickSearchProducts).toHaveBeenCalledWith("bracelet");
 	});
 
-	it("should log zero results with console.log", async () => {
-		const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+	it("should log zero results via logger.warn", async () => {
 		mockQuickSearchProducts.mockResolvedValue({
 			kind: "success",
 			products: [],
@@ -86,15 +87,15 @@ describe("quickSearch", () => {
 
 		await quickSearch("bracelt");
 
-		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("zero-result"));
-		consoleSpy.mockRestore();
+		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("Zero-result search"), {
+			action: "quick-search",
+		});
 	});
 
 	it("should not log when results are found", async () => {
-		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+		mockLogger.warn.mockClear();
 		await quickSearch("bracelet");
-		expect(consoleSpy).not.toHaveBeenCalled();
-		consoleSpy.mockRestore();
+		expect(mockLogger.warn).not.toHaveBeenCalled();
 	});
 
 	it("should return error result on unexpected exception from quickSearchProducts", async () => {

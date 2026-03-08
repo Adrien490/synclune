@@ -6,6 +6,7 @@ import {
 } from "@/modules/cron/lib/verify-cron";
 import { syncAsyncPayments } from "@/modules/cron/services/sync-async-payments.service";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 60; // 1 minute max
 
@@ -26,7 +27,11 @@ export async function GET() {
 				job: "sync-async-payments",
 				errors: result.errors,
 				details: { checked: result.checked, updated: result.updated },
-			}).catch((e) => console.error("[CRON:sync-async-payments] Failed to send admin alert", e));
+			}).catch((e) =>
+				logger.error("Cron sync-async-payments failed to send admin alert", e, {
+					cronJob: "sync-async-payments",
+				}),
+			);
 		}
 
 		return cronSuccess(

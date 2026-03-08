@@ -1,5 +1,6 @@
 "use server";
 
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { COLLECTIONS_CACHE_TAGS } from "@/modules/collections/constants/cache";
@@ -40,9 +41,9 @@ async function fetchProductCollections(productId: string): Promise<{ id: string;
 			name: pc.collection.name,
 		}));
 	} catch (error) {
-		if (process.env.NODE_ENV === "development") {
-			console.error("[getProductCollections]", error);
-		}
+		logger.error("Failed to fetch product collections", error, {
+			service: "fetchProductCollections",
+		});
 		return [];
 	}
 }
@@ -60,9 +61,7 @@ async function fetchAllCollections(): Promise<{ id: string; name: string }[]> {
 
 		return collections;
 	} catch (error) {
-		if (process.env.NODE_ENV === "development") {
-			console.error("[getAllCollections]", error);
-		}
+		logger.error("Failed to fetch all collections", error, { service: "fetchAllCollections" });
 		return [];
 	}
 }

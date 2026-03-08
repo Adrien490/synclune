@@ -1,3 +1,4 @@
+import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import { Logo } from "@/shared/components/logo";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -33,11 +34,18 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 
 						{/* Logo - right */}
 						<div className="ml-auto">
-							<Logo href="/" size={28} />
+							<div className="md:hidden">
+								<Logo href="/" size={28} />
+							</div>
+							<div className="hidden md:block">
+								<Logo href="/" size={36} />
+							</div>
 						</div>
 					</div>
 				</div>
 			</header>
+
+			<CartAndSkuWrapper />
 
 			{/* Contenu */}
 			<main id="main-content" tabIndex={-1} className="flex-1">

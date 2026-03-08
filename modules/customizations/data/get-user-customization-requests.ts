@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -53,7 +54,9 @@ async function fetchUserCustomizationRequests(userId: string) {
 			orderBy: { createdAt: "desc" },
 		});
 	} catch (error) {
-		console.error("[GET_USER_CUSTOMIZATION_REQUESTS]", error);
+		logger.error("Failed to fetch user customization requests", error, {
+			service: "fetchUserCustomizationRequests",
+		});
 		return [];
 	}
 }

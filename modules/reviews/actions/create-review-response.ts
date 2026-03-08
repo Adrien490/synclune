@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
@@ -137,7 +138,9 @@ export async function createReviewResponse(
 				responseAuthorName: user.name ?? "Synclune",
 				productUrl: buildUrl(ROUTES.SHOP.PRODUCT(review.product.slug)),
 			}).catch((emailError) => {
-				console.error("[REVIEW_RESPONSE] Failed to send notification email:", emailError);
+				logger.error("Failed to send review response notification email", emailError, {
+					action: "createReviewResponse",
+				});
 			});
 		}
 

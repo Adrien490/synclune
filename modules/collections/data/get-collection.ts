@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -56,7 +57,7 @@ async function fetchCollection(params: GetCollectionParams): Promise<GetCollecti
 
 		return collection;
 	} catch (err) {
-		console.error("[collections] Failed to fetch collection:", err);
+		logger.error("Failed to fetch collection", err, { service: "fetchCollection" });
 		return null;
 	}
 }
@@ -96,7 +97,9 @@ async function fetchStorefrontCollection(
 
 		return collection;
 	} catch (err) {
-		console.error("[collections] Failed to fetch storefront collection:", err);
+		logger.error("Failed to fetch storefront collection", err, {
+			service: "fetchStorefrontCollection",
+		});
 		return null;
 	}
 }

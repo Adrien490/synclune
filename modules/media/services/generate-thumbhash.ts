@@ -21,6 +21,7 @@ import type {
 } from "../types/image-processing.types";
 import { isValidUploadThingUrl } from "../utils/validate-media-file";
 import { downloadImage, truncateUrl, withRetry } from "./image-downloader.service";
+import { logger } from "@/shared/lib/logger";
 
 // Re-export types for backwards compatibility
 export type { GenerateThumbHashOptions, ThumbHashLogFn, ThumbHashResult };
@@ -29,7 +30,8 @@ export type { GenerateThumbHashOptions, ThumbHashLogFn, ThumbHashResult };
 // HELPERS
 // ============================================================================
 
-const defaultLogger: ThumbHashLogFn = (message) => console.warn(message);
+const defaultLogger: ThumbHashLogFn = (message) =>
+	logger.warn(message, { service: "generate-thumbhash" });
 
 /**
  * Validates that a ThumbHash data URL has the expected format
