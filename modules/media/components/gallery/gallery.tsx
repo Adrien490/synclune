@@ -140,6 +140,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 		loop: true,
 		align: "center",
 		dragFree: false,
+		watchDrag: images.length > 1,
 	});
 
 	// Product type for descriptive ALT texts

@@ -236,8 +236,8 @@ export default async function ProductPage({
 							<Separator className="bg-border" />
 
 							{/* 9. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
-							<Suspense fallback={<RelatedProductsSkeleton limit={8} />}>
-								<RelatedProducts currentProductSlug={product.slug} limit={8} />
+							<Suspense fallback={<RelatedProductsSkeleton limit={4} />}>
+								<RelatedProducts currentProductSlug={product.slug} limit={4} />
 							</Suspense>
 						</article>
 					</div>
