@@ -70,123 +70,130 @@ export function QuickSearchContent({
 				{totalCount} résultat{totalCount !== 1 ? "s" : ""} trouvé{totalCount !== 1 ? "s" : ""}.
 			</div>
 
-			<ScrollFade axis="vertical" hideScrollbar={false} className="min-h-0 flex-1">
-				<div className="space-y-4 px-4 py-4">
-					{/* Spell suggestion */}
-					{suggestion && (
-						<p className="text-muted-foreground text-sm">
-							Vouliez-vous dire{" "}
-							<button
-								type="button"
-								aria-label={`Rechercher ${suggestion}`}
-								onClick={() => onSearch(suggestion)}
-								className="text-foreground decoration-primary/40 hover:decoration-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-							>
-								{suggestion}
-							</button>
-							{" ?"}
-						</p>
-					)}
+			<div className="min-h-0 flex-1">
+				<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
+					<div className="space-y-4 px-4 py-4">
+						{/* Spell suggestion */}
+						{suggestion && (
+							<p className="text-muted-foreground text-sm">
+								Vouliez-vous dire{" "}
+								<button
+									type="button"
+									aria-label={`Rechercher ${suggestion}`}
+									onClick={() => onSearch(suggestion)}
+									className="text-foreground decoration-primary/40 hover:decoration-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								>
+									{suggestion}
+								</button>
+								{" ?"}
+							</p>
+						)}
 
-					{/* Matched collections */}
-					{matchedCollections.length > 0 && (
-						<section aria-label="Collections correspondantes">
-							<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-								Collections
-							</h3>
-							<div className="space-y-1">
-								{matchedCollections.map((collection) => (
-									<CollectionCard
-										key={collection.slug}
-										collection={collection}
-										onSelect={onClose}
-										variant="compact"
-										query={query}
+						{/* Matched collections */}
+						{matchedCollections.length > 0 && (
+							<section aria-label="Collections correspondantes">
+								<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+									Collections
+								</h3>
+								<div className="space-y-1">
+									{matchedCollections.map((collection) => (
+										<CollectionCard
+											key={collection.slug}
+											collection={collection}
+											onSelect={onClose}
+											variant="compact"
+											query={query}
+										/>
+									))}
+								</div>
+							</section>
+						)}
+
+						{/* Matched product types */}
+						{matchedTypes.length > 0 && (
+							<section aria-label="Categories correspondantes">
+								<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+									Categories
+								</h3>
+								<div className="space-y-1">
+									{matchedTypes.map((type) => (
+										<CategoryCard
+											key={type.slug}
+											type={type}
+											onSelect={onClose}
+											variant="compact"
+											query={query}
+										/>
+									))}
+								</div>
+							</section>
+						)}
+
+						{/* Rate limited */}
+						{isRateLimited && (
+							<p className="text-muted-foreground py-4 text-center text-sm">
+								Trop de requêtes, veuillez patienter quelques instants.
+							</p>
+						)}
+
+						{/* Server error */}
+						{isError && !isRateLimited && (
+							<p className="text-muted-foreground py-4 text-center text-sm">
+								Une erreur est survenue lors de la recherche. Veuillez réessayer.
+							</p>
+						)}
+
+						{/* Product results */}
+						{hasSearchResults && (
+							<section aria-label="Produits">
+								<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+									Produits
+								</h3>
+								{products.length < totalCount && (
+									<p className="text-muted-foreground/60 mb-2 text-xs">
+										{products.length} sur {totalCount}
+									</p>
+								)}
+								<Stagger className="space-y-0.5" stagger={0.02} delay={0.03} y={4}>
+									{products.map((product) => (
+										<SearchResultItem
+											key={product.id}
+											product={product}
+											query={query}
+											onSelect={onSelectResult}
+										/>
+									))}
+								</Stagger>
+							</section>
+						)}
+
+						{/* Empty state */}
+						{showEmptyState && (
+							<Empty variant="borderless" size="sm">
+								<EmptyHeader>
+									<EmptyMedia variant="icon">
+										<Search className="size-5" aria-hidden="true" />
+									</EmptyMedia>
+									<EmptyTitle className="text-base">
+										Aucun résultat pour &ldquo;{query}&rdquo;
+									</EmptyTitle>
+								</EmptyHeader>
+								<EmptyContent>
+									<p className="text-muted-foreground/70 text-center text-xs">
+										Essayez avec moins de mots ou parcourez nos catégories
+									</p>
+									<QuickTagPills
+										productTypes={productTypes}
+										onSelect={onSearch}
+										size="xs"
+										centered
 									/>
-								))}
-							</div>
-						</section>
-					)}
-
-					{/* Matched product types */}
-					{matchedTypes.length > 0 && (
-						<section aria-label="Categories correspondantes">
-							<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-								Categories
-							</h3>
-							<div className="space-y-1">
-								{matchedTypes.map((type) => (
-									<CategoryCard
-										key={type.slug}
-										type={type}
-										onSelect={onClose}
-										variant="compact"
-										query={query}
-									/>
-								))}
-							</div>
-						</section>
-					)}
-
-					{/* Rate limited */}
-					{isRateLimited && (
-						<p className="text-muted-foreground py-4 text-center text-sm">
-							Trop de requêtes, veuillez patienter quelques instants.
-						</p>
-					)}
-
-					{/* Server error */}
-					{isError && !isRateLimited && (
-						<p className="text-muted-foreground py-4 text-center text-sm">
-							Une erreur est survenue lors de la recherche. Veuillez réessayer.
-						</p>
-					)}
-
-					{/* Product results */}
-					{hasSearchResults && (
-						<section aria-label="Produits">
-							<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-								Produits
-							</h3>
-							{products.length < totalCount && (
-								<p className="text-muted-foreground/60 mb-2 text-xs">
-									{products.length} sur {totalCount}
-								</p>
-							)}
-							<Stagger className="space-y-0.5" stagger={0.02} delay={0.03} y={4}>
-								{products.map((product) => (
-									<SearchResultItem
-										key={product.id}
-										product={product}
-										query={query}
-										onSelect={onSelectResult}
-									/>
-								))}
-							</Stagger>
-						</section>
-					)}
-
-					{/* Empty state */}
-					{showEmptyState && (
-						<Empty variant="borderless" size="sm">
-							<EmptyHeader>
-								<EmptyMedia variant="icon">
-									<Search className="size-5" aria-hidden="true" />
-								</EmptyMedia>
-								<EmptyTitle className="text-base">
-									Aucun résultat pour &ldquo;{query}&rdquo;
-								</EmptyTitle>
-							</EmptyHeader>
-							<EmptyContent>
-								<p className="text-muted-foreground/70 text-center text-xs">
-									Essayez avec moins de mots ou parcourez nos catégories
-								</p>
-								<QuickTagPills productTypes={productTypes} onSelect={onSearch} size="xs" centered />
-							</EmptyContent>
-						</Empty>
-					)}
-				</div>
-			</ScrollFade>
+								</EmptyContent>
+							</Empty>
+						)}
+					</div>
+				</ScrollFade>
+			</div>
 
 			{/* Footer: View all results */}
 			{totalCount > 0 && (

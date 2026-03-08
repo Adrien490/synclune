@@ -245,7 +245,6 @@ describe("deleteUploadThingFileFromUrl", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: false, deletedCount: 0 });
 
-		vi.spyOn(console, "warn").mockImplementation(() => {});
 		const result = await deleteUploadThingFileFromUrl("https://utfs.io/f/abc123.jpg");
 		expect(result).toBe(false);
 	});

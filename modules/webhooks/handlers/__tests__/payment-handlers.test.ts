@@ -14,6 +14,7 @@ const {
 	mockInitiateAutomaticRefund,
 	mockSendRefundFailureAlert,
 	mockBuildUrl,
+	mockLogger,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findFirst: vi.fn() },
@@ -26,11 +27,16 @@ const {
 	mockInitiateAutomaticRefund: vi.fn(),
 	mockSendRefundFailureAlert: vi.fn(),
 	mockBuildUrl: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: mockLogger,
 }));
 
 vi.mock("../../services/payment-intent.service", () => ({
@@ -138,15 +144,13 @@ describe("handlePaymentSuccess", () => {
 	});
 
 	it("should not call markOrderAsPaid when no order_id in metadata (warn only)", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
 		await handlePaymentSuccess(makePaymentIntent({ metadata: {} }));
 
 		expect(mockMarkOrderAsPaid).not.toHaveBeenCalled();
-		expect(warnSpy).toHaveBeenCalledWith(
+		expect(mockLogger.warn).toHaveBeenCalledWith(
 			expect.stringContaining("payment_intent.succeeded without order_id"),
+			expect.objectContaining({ service: "webhook" }),
 		);
-		warnSpy.mockRestore();
 	});
 });
 

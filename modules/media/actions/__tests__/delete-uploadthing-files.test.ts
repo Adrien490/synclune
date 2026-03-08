@@ -14,6 +14,7 @@ const {
 	mockError,
 	mockDeleteFiles,
 	mockExtractFileKeysFromUrls,
+	mockLogger,
 } = vi.hoisted(() => ({
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -23,7 +24,10 @@ const {
 	mockError: vi.fn(),
 	mockDeleteFiles: vi.fn(),
 	mockExtractFileKeysFromUrls: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdmin: mockRequireAdmin,
@@ -167,15 +171,16 @@ describe("deleteUploadThingFiles", () => {
 	it("should return error when fileUrls is not valid JSON", async () => {
 		const badFormData = createFormData({ fileUrls: "not-json{{{" });
 
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-
 		const result = await deleteUploadThingFiles(undefined, badFormData);
 
+		expect(mockLogger.error).toHaveBeenCalledWith(
+			"JSON parse failed for file URLs",
+			expect.any(SyntaxError),
+			{ action: "delete-uploadthing-files" },
+		);
 		expect(mockError).toHaveBeenCalledWith("Format JSON invalide pour les URLs de fichiers");
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockDeleteFiles).not.toHaveBeenCalled();
-
-		consoleSpy.mockRestore();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -218,17 +223,13 @@ describe("deleteUploadThingFiles", () => {
 		});
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-
 		await deleteUploadThingFiles(undefined, validFormData);
 
-		expect(warnSpy).toHaveBeenCalledWith(
-			expect.stringContaining("1 URL(s)"),
-			expect.arrayContaining(["https://utfs.io/f/"]),
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("1 URL(s) could not be extracted"),
+			{ action: "delete-uploadthing-files" },
 		);
 		expect(mockDeleteFiles).toHaveBeenCalled();
-
-		warnSpy.mockRestore();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -274,8 +275,6 @@ describe("deleteUploadThingFiles", () => {
 			failedUrls: ["https://utfs.io/f/bad"],
 		});
 		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
-
-		vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
 		const result = await deleteUploadThingFiles(undefined, validFormData);
 

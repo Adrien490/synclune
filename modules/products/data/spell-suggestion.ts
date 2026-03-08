@@ -226,7 +226,7 @@ export async function getSpellSuggestion(
 			similarity: Number(bestMatch.match!.similarity),
 			source: bestMatch.match!.source as SpellSuggestion["source"],
 		};
-	} catch (error) {
+	} catch (_error) {
 		logger.warn("Spell suggestion failed", { service: "getSpellSuggestion" });
 		return null;
 	}
