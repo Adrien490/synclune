@@ -109,6 +109,7 @@ export default function ScrollFade({
 			)}
 			<div
 				ref={containerRef}
+				data-slot="scroll-fade-container"
 				data-testid="scroll-fade-container"
 				className={cn(
 					hideScrollbar &&

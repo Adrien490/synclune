@@ -389,9 +389,11 @@ textarea {
 	touch-action: pan-y pinch-zoom;
 }
 
-/* Permettre le swipe horizontal pour fermer dans les ScrollArea des sheets latéraux */
+/* Permettre le swipe horizontal dans les ScrollArea et ScrollFade des sheets latéraux */
 [data-vaul-drawer-direction="right"] [data-slot="scroll-area-viewport"],
-[data-vaul-drawer-direction="left"] [data-slot="scroll-area-viewport"] {
+[data-vaul-drawer-direction="left"] [data-slot="scroll-area-viewport"],
+[data-vaul-drawer-direction="right"] [data-slot="scroll-fade-container"],
+[data-vaul-drawer-direction="left"] [data-slot="scroll-fade-container"] {
 	touch-action: pan-y pan-x;
 }
 
