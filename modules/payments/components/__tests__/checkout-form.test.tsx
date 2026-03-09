@@ -16,18 +16,22 @@ vi.mock("@/modules/payments/components/checkout-summary", () => ({
 	CheckoutSummary: () => <div data-testid="checkout-summary" />,
 }));
 
-vi.mock("@/modules/payments/components/address-step", () => ({
-	AddressStep: ({ isGuest, userEmail }: { isGuest: boolean; userEmail: string | null }) => (
-		<div data-testid="address-step" data-is-guest={String(isGuest)}>
-			{!isGuest && !!userEmail && <span data-testid="logged-in-indicator">connecté</span>}
-		</div>
-	),
-}));
-
 vi.mock("@/modules/payments/components/payment-step", () => ({
 	PaymentStep: ({ orderNumber }: { orderNumber: string | null }) => (
 		<div data-testid="payment-step" data-order-number={orderNumber ?? ""} />
 	),
+}));
+
+vi.mock("@/modules/payments/components/checkout-step-indicator", () => ({
+	CheckoutStepIndicator: () => <div data-testid="checkout-step-indicator" />,
+}));
+
+vi.mock("@/modules/payments/components/address-selector", () => ({
+	AddressSelector: () => <div data-testid="address-selector" />,
+}));
+
+vi.mock("@/modules/discounts/actions/validate-discount-code", () => ({
+	validateDiscountCode: vi.fn(),
 }));
 
 vi.mock("@/shared/components/error-boundary", () => ({
@@ -40,6 +44,9 @@ vi.mock("motion/react", () => ({
 	m: {
 		div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
 			<div {...props}>{children}</div>
+		),
+		form: ({ children, ...props }: React.HTMLAttributes<HTMLFormElement>) => (
+			<form {...props}>{children}</form>
 		),
 	},
 }));
@@ -65,6 +72,13 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 					country: "FR",
 					phoneNumber: "",
 				},
+				_appliedDiscount: null,
+				_selectedAddressId: null,
+				_showAddressLine2: false,
+				_showCountrySelect: false,
+				_discountOpen: false,
+				termsAccepted: false,
+				discountCode: "",
 			},
 		},
 		setFieldValue: vi.fn(),
@@ -89,13 +103,28 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 							country: "FR",
 							phoneNumber: "",
 						},
+						_appliedDiscount: null,
+						_selectedAddressId: null,
+						_showAddressLine2: false,
+						_showCountrySelect: false,
+						_discountOpen: false,
+						termsAccepted: false,
+						discountCode: "",
 					},
 					canSubmit: true,
 					submissionAttempts: 0,
 					fieldMeta: {},
 				}),
 			),
-		AppField: ({ children }: { children: (field: unknown) => React.ReactNode }) => children({}),
+		AppField: ({ children }: { children: (field: unknown) => React.ReactNode }) =>
+			children({
+				InputField: () => null,
+				CheckboxField: () => null,
+				SelectField: () => null,
+				PhoneField: () => null,
+				state: { value: "", meta: { errors: [], isValidating: false } },
+				handleBlur: vi.fn(),
+			}),
 		...overrides,
 	};
 }
@@ -142,7 +171,7 @@ describe("CheckoutForm", () => {
 		it("shows address step by default", () => {
 			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
 
-			expect(screen.getByTestId("address-step")).toBeInTheDocument();
+			expect(screen.getByText("Adresse de livraison")).toBeInTheDocument();
 			expect(screen.queryByTestId("payment-step")).toBeNull();
 		});
 
@@ -161,33 +190,13 @@ describe("CheckoutForm", () => {
 		});
 	});
 
-	describe("guest vs authenticated", () => {
-		it("passes isGuest=true when no session", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
-
-			expect(screen.getByTestId("address-step").dataset.isGuest).toBe("true");
-		});
-
-		it("passes isGuest=false when session exists", () => {
-			render(
-				<CheckoutForm
-					cart={createMockCart() as never}
-					session={createMockSession() as never}
-					addresses={null}
-				/>,
-			);
-
-			expect(screen.getByTestId("address-step").dataset.isGuest).toBe("false");
-		});
-	});
-
 	describe("offline detection", () => {
 		it("does not show offline banner when online", () => {
 			vi.stubGlobal("navigator", { onLine: true });
 
 			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
 
-			expect(screen.queryByRole("alert")).toBeNull();
+			expect(screen.queryByText("Connexion internet perdue")).toBeNull();
 
 			vi.unstubAllGlobals();
 		});
@@ -200,24 +209,6 @@ describe("CheckoutForm", () => {
 			expect(screen.getByText("Connexion internet perdue")).toBeInTheDocument();
 
 			vi.unstubAllGlobals();
-		});
-	});
-
-	describe("subtotal computation", () => {
-		it("passes correct subtotal from cart items to AddressStep", () => {
-			const cart = {
-				id: "cart-1",
-				items: [
-					{ id: "item-1", sku: { id: "sku-1" }, quantity: 2, priceAtAdd: 3000 },
-					{ id: "item-2", sku: { id: "sku-2" }, quantity: 1, priceAtAdd: 1500 },
-				],
-			};
-
-			// Subtotal = 2*3000 + 1*1500 = 7500
-			// We verify AddressStep is rendered (it receives subtotal as prop)
-			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
-
-			expect(screen.getByTestId("address-step")).toBeInTheDocument();
 		});
 	});
 

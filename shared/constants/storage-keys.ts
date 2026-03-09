@@ -15,13 +15,6 @@ export const STORAGE_KEYS = {
 	MEDIA_UPLOAD_HINT_SEEN: "media-upload-hint-seen",
 
 	/**
-	 * Stores checkout form draft for recovery
-	 * Used in: modules/payments/components/checkout-form.tsx
-	 *          modules/payments/utils/checkout-form.utils.ts
-	 */
-	CHECKOUT_FORM_DRAFT: "checkout-form-draft",
-
-	/**
 	 * Prefix for cooldown expiry timestamp for resend verification email
 	 * Full key format: `${RESEND_VERIFICATION_COOLDOWN_PREFIX}${email}`
 	 * Used in: modules/users/components/resend-verification-button.tsx

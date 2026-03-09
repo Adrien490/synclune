@@ -4,26 +4,7 @@
 
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
-
-/** Increment when the draft schema changes to invalidate old drafts */
-export const DRAFT_VERSION = 1;
-
-export interface CheckoutDraft {
-	version?: number;
-	timestamp?: number;
-	email?: string;
-	shipping?: {
-		fullName?: string;
-		firstName?: string;
-		lastName?: string;
-		addressLine1?: string;
-		addressLine2?: string;
-		city?: string;
-		postalCode?: string;
-		country?: string;
-		phoneNumber?: string;
-	};
-}
+import type { AppliedDiscount } from "@/modules/discounts/types/discount.types";
 
 /**
  * Génère les options du formulaire de checkout avec pré-remplissage dynamique
@@ -71,6 +52,16 @@ export function getCheckoutFormOptions(
 			},
 
 			termsAccepted: false,
+
+			// Discount (replaces DiscountCodeInput state)
+			discountCode: "",
+			_appliedDiscount: null as AppliedDiscount | null,
+			_discountOpen: false,
+
+			// UI state (replaces useState in AddressStep)
+			_selectedAddressId: (defaultAddress?.id ?? null) as string | null,
+			_showCountrySelect: (defaultAddress?.country ?? "FR") !== "FR",
+			_showAddressLine2: !!defaultAddress?.address2,
 		},
 	};
 }
