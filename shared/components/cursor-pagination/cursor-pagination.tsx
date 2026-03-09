@@ -151,7 +151,6 @@ export function CursorPagination({
 			{/* Contrôles de pagination */}
 			{canNavigate && (
 				<nav
-					role="navigation"
 					aria-label="Pagination"
 					aria-describedby="pagination-shortcuts"
 					className="flex items-center gap-2"

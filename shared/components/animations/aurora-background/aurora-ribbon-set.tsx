@@ -96,7 +96,6 @@ function AnimatedRibbon({
 				x: combinedX,
 				y: combinedY,
 				opacity: scrollOpacity,
-				willChange: "transform",
 			}}
 		>
 			<m.div

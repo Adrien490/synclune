@@ -105,7 +105,7 @@ export default async function CheckoutPage() {
 
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-					<div className="mb-6 sm:mb-8">
+					<div className="mb-6 hidden sm:mb-8 sm:block">
 						<h1 className="font-display text-2xl font-medium tracking-wide sm:text-3xl">
 							Finaliser ma commande
 						</h1>

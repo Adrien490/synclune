@@ -396,9 +396,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 																	enterKeyHint="next"
 																	spellCheck={false}
 																	autoCorrect="off"
-																	// eslint-disable-next-line jsx-a11y/no-autofocus
-																	autoFocus
-																	placeholder="votre@email.com"
 																/>
 																<div className="text-muted-foreground flex items-start gap-1.5 text-sm">
 																	<Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />

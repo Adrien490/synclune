@@ -173,7 +173,6 @@ function AnimatedParticle({
 				x: combinedX,
 				y: combinedY,
 				opacity: scrollOpacity,
-				willChange: "transform",
 			}}
 		>
 			{content}

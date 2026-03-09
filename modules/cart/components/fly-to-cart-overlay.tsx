@@ -8,7 +8,7 @@ import {
 } from "@/modules/cart/lib/fly-to-cart";
 import { m, AnimatePresence, useReducedMotion } from "motion/react";
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMounted } from "@/shared/hooks/use-mounted";
 
 interface FlyDot {
@@ -16,8 +16,6 @@ interface FlyDot {
 	from: { x: number; y: number };
 	to: { x: number; y: number };
 }
-
-let dotId = 0;
 
 /**
  * Global overlay that listens for fly-to-cart events and renders
@@ -29,6 +27,7 @@ export function FlyToCartOverlay() {
 	const [dots, setDots] = useState<FlyDot[]>([]);
 	const prefersReducedMotion = useReducedMotion();
 	const mounted = useMounted();
+	const dotIdRef = useRef(0);
 
 	useEffect(() => {
 		function handleFlyToCart(e: Event) {
@@ -38,7 +37,8 @@ export function FlyToCartOverlay() {
 			if (!target) return;
 			const targetRect = target.getBoundingClientRect();
 
-			const id = ++dotId;
+			dotIdRef.current += 1;
+			const id = dotIdRef.current;
 			setDots((prev) => [
 				...prev,
 				{

@@ -38,6 +38,8 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 
 	const { session_id: sessionId, order_id: orderId } = validation.data;
 
+	let redirectUrl: string;
+
 	try {
 		// Récupérer le statut de la session Stripe
 		const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -48,26 +50,25 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 		// Vérifier le statut de paiement (critère principal pour Embedded Checkout)
 		if (session.payment_status === "paid") {
 			// Paiement réussi - redirection vers la confirmation
-			redirect(`/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}`);
+			redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}`;
 		} else if (session.status === "open") {
 			// Session encore ouverte - paiement non finalisé ou échoué
 			// Retour au checkout pour réessayer
-			redirect(`/paiement?retry=true&order_id=${orderId}`);
+			redirectUrl = `/paiement?retry=true&order_id=${orderId}`;
 		} else if (session.payment_status === "unpaid" && session.status === "complete") {
 			// Async payment in progress (SEPA, Klarna, etc.)
-			redirect(
-				`/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}&pending=true`,
-			);
+			redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}&pending=true`;
 		} else if (session.status === "expired") {
 			// Session expirée
-			redirect(`/paiement/annulation?order_id=${orderId}&reason=expired`);
+			redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=expired`;
 		} else {
 			// Autre statut (processing, etc.)
-			redirect(`/paiement/annulation?order_id=${orderId}&reason=processing_error`);
+			redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=processing_error`;
 		}
-	} catch (_error) {
+	} catch {
 		// Erreur lors de la récupération de la session
-		// console.error("[CHECKOUT_RETURN_ERROR]", error)
-		redirect(`/paiement/annulation?order_id=${orderId}&reason=processing_error`);
+		redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=processing_error`;
 	}
+
+	redirect(redirectUrl);
 }

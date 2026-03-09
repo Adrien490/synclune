@@ -58,7 +58,7 @@ export function LogoSparkles({ children, className }: LogoSparklesProps) {
 		const maxFrames = 40;
 
 		const animate = () => {
-			frame++;
+			frame += 1;
 			if (frame >= maxFrames) {
 				setSparkles([]);
 				return;

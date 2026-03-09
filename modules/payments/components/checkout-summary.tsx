@@ -207,7 +207,7 @@ export function CheckoutSummary({
 	return (
 		<>
 			{/* Mobile: collapsible summary (open by default so users see their cart) */}
-			<Collapsible defaultOpen className="md:hidden">
+			<Collapsible className="md:hidden">
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 				<Card className="border-primary/10 rounded-2xl shadow-md">

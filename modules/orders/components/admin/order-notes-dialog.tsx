@@ -30,7 +30,7 @@ export function OrderNotesDialog() {
 	const {
 		notes,
 		fetchError,
-		fetch,
+		loadNotes,
 		reset,
 		add,
 		remove,
@@ -42,27 +42,27 @@ export function OrderNotesDialog() {
 	useEffect(() => {
 		if (isOpen && data?.orderId) {
 			queueMicrotask(() => {
-				fetch(data.orderId);
+				loadNotes(data.orderId);
 				setNewNote("");
 			});
 		}
 		if (!isOpen) {
 			queueMicrotask(() => reset());
 		}
-	}, [isOpen, data?.orderId, fetch, reset]);
+	}, [isOpen, data?.orderId, loadNotes, reset]);
 
 	const handleAddNote = () => {
 		if (!data?.orderId || !newNote.trim()) return;
 
 		add(data.orderId, newNote.trim(), () => {
 			setNewNote("");
-			fetch(data.orderId);
+			loadNotes(data.orderId);
 		});
 	};
 
 	const handleDeleteNote = (noteId: string) => {
 		if (!data?.orderId) return;
-		remove(noteId, () => fetch(data.orderId));
+		remove(noteId, () => loadNotes(data.orderId));
 	};
 
 	return (

@@ -65,7 +65,7 @@ export function useOrderNotes() {
 		});
 	};
 
-	const fetch = (orderId: string) => {
+	const loadNotes = (orderId: string) => {
 		setFetchError(null);
 		startFetchTransition(async () => {
 			const result = await getOrderNotes(orderId);
@@ -85,7 +85,7 @@ export function useOrderNotes() {
 	return {
 		notes,
 		fetchError,
-		fetch,
+		loadNotes,
 		reset,
 		add,
 		remove,

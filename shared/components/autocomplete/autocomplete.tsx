@@ -83,7 +83,7 @@ export function Autocomplete<T>({
 	// Delai de blur adapte mobile/desktop
 	const effectiveBlurDelay = isMobile ? AUTOCOMPLETE_DEFAULTS.blurDelayMobile : blurDelay;
 
-	// Sync valeur externe → locale
+	// Sync valeur externe → locale (valid pattern: external prop drives debounced local state)
 	useEffect(() => {
 		setLocalValue(value);
 	}, [value]);
@@ -437,6 +437,7 @@ export function Autocomplete<T>({
 						className={cn("cursor-pointer", inputClassName)}
 						aria-haspopup="listbox"
 						aria-expanded={isOpen}
+						aria-controls={isOpen ? listboxId : undefined}
 						aria-invalid={ariaInvalid}
 						aria-describedby={ariaDescribedBy}
 						aria-required={ariaRequired}

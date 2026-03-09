@@ -202,7 +202,6 @@ function Sidebar({
 
 	return (
 		<nav
-			role="navigation"
 			aria-label="Navigation principale du tableau de bord"
 			className="group peer text-sidebar-foreground hidden md:block"
 			data-state={state}
