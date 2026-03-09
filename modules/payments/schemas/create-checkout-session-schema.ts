@@ -37,4 +37,7 @@ export const createCheckoutSessionSchema = z.object({
 	shippingAddress: addressSchema,
 	email: emailOptionalSchema, // Requis si guest
 	discountCode: discountCodeSchema.optional(), // Code promo optionnel (trim + uppercase + regex validated)
+	termsAccepted: z.literal("true", {
+		error: "Vous devez accepter les conditions générales de vente",
+	}),
 });

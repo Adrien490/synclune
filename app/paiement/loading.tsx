@@ -13,6 +13,7 @@ import { Separator } from "@/shared/components/ui/separator";
 export default function CheckoutLoading() {
 	return (
 		<div className="relative min-h-screen">
+			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					{/* Heading skeleton */}
@@ -27,7 +28,7 @@ export default function CheckoutLoading() {
 						{/* Formulaire skeleton */}
 						<div className="space-y-6">
 							{/* Step indicator skeleton */}
-							<div className="mx-auto mb-2 w-full max-w-sm">
+							<div className="mx-auto mb-6 w-full max-w-sm sm:mb-8">
 								<div className="flex w-full items-center">
 									<div className="flex items-center gap-2">
 										<Skeleton className="h-9 w-9 rounded-full" />
@@ -93,8 +94,10 @@ export default function CheckoutLoading() {
 								<Skeleton className="h-4 w-80" />
 							</div>
 
-							{/* Code promo */}
-							<Skeleton className="h-10 w-full rounded-lg" />
+							{/* Code promo — collapsed link state */}
+							<div className="-mx-3 px-3">
+								<Skeleton className="h-4 w-44" />
+							</div>
 
 							{/* CGV */}
 							<div className="flex items-start gap-3">
@@ -112,7 +115,7 @@ export default function CheckoutLoading() {
 						</div>
 
 						{/* Récapitulatif skeleton - order-first sur mobile */}
-						<div className="order-first lg:order-none">
+						<div className="order-first lg:order-0">
 							{/* Mobile : header collapsible uniquement */}
 							<Card className="border-primary/10 rounded-2xl shadow-md md:hidden">
 								<CardHeader className="pb-4">

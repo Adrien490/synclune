@@ -496,11 +496,6 @@ export function AddressStep({
 				<form.AppField
 					name="termsAccepted"
 					validators={{
-						onSubmit: ({ value }: { value: boolean }) => {
-							if (!value) {
-								return "Vous devez accepter les conditions générales de vente";
-							}
-						},
 						onChange: ({ value }: { value: boolean }) => {
 							if (!value) {
 								return "Vous devez accepter les conditions générales de vente";
@@ -537,14 +532,14 @@ export function AddressStep({
 			</fieldset>
 
 			{/* Baymard: lock icon on CTA reinforces perceived security for premium purchases */}
-			<form.Subscribe selector={(s) => [s.canSubmit]}>
-				{([canSubmit]) => (
+			<form.Subscribe selector={(s) => [s.canSubmit, s.values.termsAccepted]}>
+				{([canSubmit, termsAccepted]) => (
 					<>
 						<Button
 							type="submit"
 							size="lg"
 							className="w-full text-base shadow-md transition-shadow hover:shadow-lg"
-							disabled={!canSubmit || isPending || shippingUnavailable}
+							disabled={!canSubmit || !termsAccepted || isPending || shippingUnavailable}
 							aria-busy={isPending}
 						>
 							{isPending ? (
