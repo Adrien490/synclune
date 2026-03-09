@@ -56,7 +56,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
 
 			{/* Liste des critères */}
 			<ul className="space-y-1 text-xs" aria-label="Critères du mot de passe">
-				{PASSWORD_RULES.map((rule, index) => {
+				{PASSWORD_RULES.map((rule) => {
 					const isValid = rule.test(password);
 					return (
 						<li

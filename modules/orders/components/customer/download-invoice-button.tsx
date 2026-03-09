@@ -30,6 +30,7 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 				} else {
 					toast.error("Erreur lors du téléchargement de la facture");
 				}
+				setIsDownloading(false);
 				return;
 			}
 			const blob = await response.blob();
@@ -39,9 +40,9 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 			link.download = `facture-${orderNumber}.pdf`;
 			link.click();
 			URL.revokeObjectURL(url);
+			setIsDownloading(false);
 		} catch {
 			toast.error("Erreur lors du téléchargement de la facture");
-		} finally {
 			setIsDownloading(false);
 		}
 	}

@@ -20,10 +20,48 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Download, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useReducer } from "react";
 import { toast } from "sonner";
 
 type PeriodType = "all" | "year" | "month" | "custom";
+
+type ExportState = {
+	open: boolean;
+	isExporting: boolean;
+	periodType: PeriodType;
+	year: string;
+	month: string;
+	dateFrom: string;
+	dateTo: string;
+};
+
+type ExportAction =
+	| { type: "SET_OPEN"; open: boolean }
+	| { type: "SET_EXPORTING"; isExporting: boolean }
+	| { type: "SET_PERIOD_TYPE"; periodType: PeriodType }
+	| { type: "SET_YEAR"; year: string }
+	| { type: "SET_MONTH"; month: string }
+	| { type: "SET_DATE_FROM"; dateFrom: string }
+	| { type: "SET_DATE_TO"; dateTo: string };
+
+function exportReducer(state: ExportState, action: ExportAction): ExportState {
+	switch (action.type) {
+		case "SET_OPEN":
+			return { ...state, open: action.open };
+		case "SET_EXPORTING":
+			return { ...state, isExporting: action.isExporting };
+		case "SET_PERIOD_TYPE":
+			return { ...state, periodType: action.periodType };
+		case "SET_YEAR":
+			return { ...state, year: action.year };
+		case "SET_MONTH":
+			return { ...state, month: action.month };
+		case "SET_DATE_FROM":
+			return { ...state, dateFrom: action.dateFrom };
+		case "SET_DATE_TO":
+			return { ...state, dateTo: action.dateTo };
+	}
+}
 
 function parseExportFilename(response: Response): string {
 	const disposition = response.headers.get("Content-Disposition");
@@ -31,31 +69,34 @@ function parseExportFilename(response: Response): string {
 }
 
 export function ExportOrdersButton() {
-	const [open, setOpen] = useState(false);
-	const [isExporting, setIsExporting] = useState(false);
-	const [periodType, setPeriodType] = useState<PeriodType>("all");
-	const [year, setYear] = useState(String(new Date().getFullYear()));
-	const [month, setMonth] = useState(String(new Date().getMonth() + 1));
-	const [dateFrom, setDateFrom] = useState("");
-	const [dateTo, setDateTo] = useState("");
+	const [state, dispatch] = useReducer(exportReducer, {
+		open: false,
+		isExporting: false,
+		periodType: "all" as PeriodType,
+		year: String(new Date().getFullYear()),
+		month: String(new Date().getMonth() + 1),
+		dateFrom: "",
+		dateTo: "",
+	});
 
 	async function handleExport() {
-		setIsExporting(true);
-		const params = new URLSearchParams({ periodType });
+		dispatch({ type: "SET_EXPORTING", isExporting: true });
+		const params = new URLSearchParams({ periodType: state.periodType });
 
-		if (periodType === "year" || periodType === "month") {
-			params.set("year", year);
+		if (state.periodType === "year" || state.periodType === "month") {
+			params.set("year", state.year);
 		}
-		if (periodType === "month") {
-			params.set("month", month);
+		if (state.periodType === "month") {
+			params.set("month", state.month);
 		}
-		if (periodType === "custom") {
-			if (!dateFrom || !dateTo) {
+		if (state.periodType === "custom") {
+			if (!state.dateFrom || !state.dateTo) {
 				toast.error("Veuillez renseigner les dates de début et de fin");
+				dispatch({ type: "SET_EXPORTING", isExporting: false });
 				return;
 			}
-			params.set("dateFrom", dateFrom);
-			params.set("dateTo", dateTo);
+			params.set("dateFrom", state.dateFrom);
+			params.set("dateTo", state.dateTo);
 		}
 
 		try {
@@ -75,11 +116,11 @@ export function ExportOrdersButton() {
 			URL.revokeObjectURL(url);
 
 			toast.success("Export téléchargé");
-			setOpen(false);
+			dispatch({ type: "SET_OPEN", open: false });
+			dispatch({ type: "SET_EXPORTING", isExporting: false });
 		} catch (e) {
 			toast.error(e instanceof Error ? e.message : "Erreur lors de l'export");
-		} finally {
-			setIsExporting(false);
+			dispatch({ type: "SET_EXPORTING", isExporting: false });
 		}
 	}
 
@@ -87,7 +128,7 @@ export function ExportOrdersButton() {
 	const years = Array.from({ length: currentYear - 2023 }, (_, i) => String(currentYear - i));
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={state.open} onOpenChange={(open) => dispatch({ type: "SET_OPEN", open })}>
 			<DialogTrigger asChild>
 				<Button variant="outline" size="sm">
 					<Download className="mr-2 h-4 w-4" />
@@ -103,7 +144,12 @@ export function ExportOrdersButton() {
 				<div className="space-y-4 py-4">
 					<div className="space-y-2">
 						<Label>Période</Label>
-						<Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
+						<Select
+							value={state.periodType}
+							onValueChange={(v) =>
+								dispatch({ type: "SET_PERIOD_TYPE", periodType: v as PeriodType })
+							}
+						>
 							<SelectTrigger>
 								<SelectValue />
 							</SelectTrigger>
@@ -116,10 +162,13 @@ export function ExportOrdersButton() {
 						</Select>
 					</div>
 
-					{(periodType === "year" || periodType === "month") && (
+					{(state.periodType === "year" || state.periodType === "month") && (
 						<div className="space-y-2">
 							<Label>Année</Label>
-							<Select value={year} onValueChange={setYear}>
+							<Select
+								value={state.year}
+								onValueChange={(y) => dispatch({ type: "SET_YEAR", year: y })}
+							>
 								<SelectTrigger>
 									<SelectValue />
 								</SelectTrigger>
@@ -134,10 +183,13 @@ export function ExportOrdersButton() {
 						</div>
 					)}
 
-					{periodType === "month" && (
+					{state.periodType === "month" && (
 						<div className="space-y-2">
 							<Label>Mois</Label>
-							<Select value={month} onValueChange={setMonth}>
+							<Select
+								value={state.month}
+								onValueChange={(m) => dispatch({ type: "SET_MONTH", month: m })}
+							>
 								<SelectTrigger>
 									<SelectValue />
 								</SelectTrigger>
@@ -158,31 +210,39 @@ export function ExportOrdersButton() {
 						</div>
 					)}
 
-					{periodType === "custom" && (
+					{state.periodType === "custom" && (
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
 								<Label>Du</Label>
-								<Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+								<Input
+									type="date"
+									value={state.dateFrom}
+									onChange={(e) => dispatch({ type: "SET_DATE_FROM", dateFrom: e.target.value })}
+								/>
 							</div>
 							<div className="space-y-2">
 								<Label>Au</Label>
-								<Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+								<Input
+									type="date"
+									value={state.dateTo}
+									onChange={(e) => dispatch({ type: "SET_DATE_TO", dateTo: e.target.value })}
+								/>
 							</div>
 						</div>
 					)}
 				</div>
 
 				<DialogFooter>
-					<Button variant="outline" onClick={() => setOpen(false)}>
+					<Button variant="outline" onClick={() => dispatch({ type: "SET_OPEN", open: false })}>
 						Annuler
 					</Button>
-					<Button onClick={handleExport} disabled={isExporting}>
-						{isExporting ? (
+					<Button onClick={handleExport} disabled={state.isExporting}>
+						{state.isExporting ? (
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 						) : (
 							<Download className="mr-2 h-4 w-4" />
 						)}
-						{isExporting ? "Export en cours..." : "Télécharger CSV"}
+						{state.isExporting ? "Export en cours..." : "Télécharger CSV"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

@@ -184,17 +184,19 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				if (thumbUploadResult?.[0]?.serverData.url) {
 					thumbnailUrl = thumbUploadResult[0].serverData.url;
 				}
+
+				if (thumbnailResult?.previewUrl) {
+					URL.revokeObjectURL(thumbnailResult.previewUrl);
+				}
 			} catch (error) {
+				if (thumbnailResult?.previewUrl) {
+					URL.revokeObjectURL(thumbnailResult.previewUrl);
+				}
 				// Log but continue without thumbnail
 				if (!(error instanceof DOMException && error.name === "AbortError")) {
 					console.warn("[useMediaUpload] Echec generation/upload thumbnail:", error);
 				} else {
 					throw error; // Re-throw abort errors
-				}
-			} finally {
-				// Cleanup preview URL
-				if (thumbnailResult?.previewUrl) {
-					URL.revokeObjectURL(thumbnailResult.previewUrl);
 				}
 			}
 		}
@@ -353,6 +355,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			updateProgress({ phase: "done", completed: uploadResults.length });
 			onSuccess?.(uploadResults);
 
+			setTimeout(() => setProgress(null), 1000);
 			return uploadResults;
 		} catch (error) {
 			// Handle cancellation silently
@@ -368,10 +371,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				description: err.message,
 			});
 
-			return uploadResults; // Return what was uploaded despite the error
-		} finally {
-			// Reset progress after a delay
 			setTimeout(() => setProgress(null), 1000);
+			return uploadResults; // Return what was uploaded despite the error
 		}
 	};
 

@@ -57,11 +57,10 @@ export function DiscountUsagesDialog() {
 						setUsages(result.usages);
 						setTotalAmount(result.totalAmount);
 					}
+					setIsLoading(false);
 				})
 				.catch(() => {
 					setError("Erreur lors du chargement");
-				})
-				.finally(() => {
 					setIsLoading(false);
 				});
 		}

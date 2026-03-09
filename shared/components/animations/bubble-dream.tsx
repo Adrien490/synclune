@@ -163,7 +163,7 @@ const BubbleSet = ({ bubbles, speed, isInView, reducedMotion }: BubbleSetProps) 
 				return (
 					<m.div
 						key={bubble.id}
-						className="absolute rounded-full will-change-transform"
+						className="absolute rounded-full"
 						style={{
 							left: `${bubble.left}%`,
 							bottom: "-10%",

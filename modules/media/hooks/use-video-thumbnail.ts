@@ -342,6 +342,12 @@ export async function generateVideoThumbnail(
 
 	const { video, objectUrl } = await loadVideo(videoFile, signal);
 
+	function cleanupVideo() {
+		URL.revokeObjectURL(objectUrl);
+		video.src = "";
+		video.load();
+	}
+
 	try {
 		// Try multiple positions until a valid frame is found
 		let capturedFrame: {
@@ -418,18 +424,16 @@ export async function generateVideoThumbnail(
 		// Create the preview URL
 		const previewUrl = URL.createObjectURL(blob);
 
+		cleanupVideo();
+
 		return {
 			thumbnailFile,
 			previewUrl,
 			blurDataUrl,
 			capturedAt: capturedPosition,
 		};
-	} finally {
-		// Cleanup: always revoke the video URL
-		URL.revokeObjectURL(objectUrl);
-
-		// Release video resources
-		video.src = "";
-		video.load();
+	} catch (error) {
+		cleanupVideo();
+		throw error;
 	}
 }
