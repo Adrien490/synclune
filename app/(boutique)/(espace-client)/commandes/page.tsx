@@ -78,10 +78,12 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 				variant="compact"
 			/>
 
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-				<CustomerOrdersFilters />
-				<SortSelect label="Trier par" options={sortOptions} />
-			</div>
+			<Suspense fallback={null}>
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<CustomerOrdersFilters />
+					<SortSelect label="Trier par" options={sortOptions} />
+				</div>
+			</Suspense>
 
 			<Suspense fallback={<CustomerOrdersTableSkeleton />}>
 				<CustomerOrdersTable ordersPromise={ordersPromise} perPage={perPage} />

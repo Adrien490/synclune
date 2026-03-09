@@ -144,7 +144,7 @@ export default async function AccessibilityPage() {
 											"Les animations sont désactivées automatiquement si vous avez activé « prefers-reduced-motion » dans votre système.",
 									},
 								].map((item, index) => (
-									<div key={index} className="bg-muted/20 flex gap-3 rounded-lg border p-4">
+									<div key={item.title} className="bg-muted/20 flex gap-3 rounded-lg border p-4">
 										<Check className="text-secondary mt-0.5 h-5 w-5 shrink-0" />
 										<div>
 											<p className="text-foreground font-medium">{item.title}</p>
@@ -245,7 +245,7 @@ export default async function AccessibilityPage() {
 									"Agrandisseurs d'écran",
 									"Navigation au clavier uniquement",
 								].map((tech, index) => (
-									<li key={index} className="flex gap-2">
+									<li key={tech} className="flex gap-2">
 										<Check className="text-secondary h-5 w-5 shrink-0" />
 										<span>{tech}</span>
 									</li>

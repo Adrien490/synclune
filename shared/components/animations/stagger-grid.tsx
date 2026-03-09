@@ -89,7 +89,7 @@ export function StaggerGrid({
 				{...rest}
 			>
 				{childrenArray.map((child, index) => (
-					<m.div key={index} variants={itemVariants}>
+					<m.div key={`stagger-${index}`} variants={itemVariants}>
 						{child}
 					</m.div>
 				))}
@@ -107,7 +107,7 @@ export function StaggerGrid({
 			{...rest}
 		>
 			{childrenArray.map((child, index) => (
-				<m.div key={index} variants={itemVariants}>
+				<m.div key={`stagger-${index}`} variants={itemVariants}>
 					{child}
 				</m.div>
 			))}

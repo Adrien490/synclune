@@ -68,36 +68,38 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 			<PageHeader variant="compact" title="Couleurs" actions={<CreateColorButton />} />
 
 			<div className="space-y-6">
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des couleurs"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par nom, slug ou hex..."
-							ariaLabel="Rechercher une couleur par nom, slug ou code hex"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des couleurs"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher par nom, slug ou hex..."
+								ariaLabel="Rechercher une couleur par nom, slug ou code hex"
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Position"
+							className="w-full sm:min-w-45"
+							noPrefix
 						/>
-					}
-				>
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-							value,
-							label,
-						}))}
-						placeholder="Position"
-						className="w-full sm:min-w-45"
-						noPrefix
-					/>
-					<ColorsFilterSheet />
-					<RefreshColorsButton />
-				</Toolbar>
+						<ColorsFilterSheet />
+						<RefreshColorsButton />
+					</Toolbar>
 
-				{/* Badges de filtres actifs */}
-				<ColorsFilterBadges />
+					{/* Badges de filtres actifs */}
+					<ColorsFilterBadges />
+				</Suspense>
 
 				<Suspense fallback={<ColorsDataTableSkeleton />}>
 					<ColorsDataTable colorsPromise={colorsPromise} perPage={perPage} />

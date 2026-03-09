@@ -22,6 +22,8 @@ export default async function SettingsPage() {
 	const user = await getCurrentUser();
 	if (!user) notFound();
 
+	const daysRemaining = computeDaysRemaining(user.deletionRequestedAt);
+
 	return (
 		<>
 			<PageHeader title="Paramètres" variant="compact" />
@@ -47,10 +49,7 @@ export default async function SettingsPage() {
 						<SecuritySectionWrapper emailVerified={user.emailVerified} email={user.email} />
 					</Suspense>
 
-					<GdprSection
-						accountStatus={user.accountStatus}
-						deletionRequestedAt={user.deletionRequestedAt}
-					/>
+					<GdprSection accountStatus={user.accountStatus} daysRemaining={daysRemaining} />
 				</div>
 
 				<div className="space-y-6">
@@ -160,5 +159,15 @@ function SessionsSkeleton() {
 				</div>
 			</section>
 		</SkeletonGroup>
+	);
+}
+
+function computeDaysRemaining(deletionRequestedAt: Date | null): number {
+	if (!deletionRequestedAt) return 0;
+	const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+	const oneDayMs = 24 * 60 * 60 * 1000;
+	return Math.max(
+		0,
+		Math.ceil((new Date(deletionRequestedAt).getTime() + thirtyDaysMs - Date.now()) / oneDayMs),
 	);
 }

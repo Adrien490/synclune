@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight, Search, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { Stagger } from "@/shared/components/animations/stagger";
@@ -121,7 +121,7 @@ export function IdleContent({
 						<div role="list" className="space-y-1">
 							<AnimatePresence mode="popLayout">
 								{searches.map((term) => (
-									<motion.div
+									<m.div
 										key={term}
 										role="listitem"
 										layout
@@ -160,7 +160,7 @@ export function IdleContent({
 										>
 											<X className="size-4" />
 										</button>
-									</motion.div>
+									</m.div>
 								))}
 							</AnimatePresence>
 						</div>

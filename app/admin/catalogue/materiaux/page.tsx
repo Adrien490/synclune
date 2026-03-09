@@ -69,36 +69,38 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 			<PageHeader variant="compact" title="Matériaux" actions={<CreateMaterialButton />} />
 
 			<div className="space-y-6">
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des matériaux"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par nom, slug ou description..."
-							ariaLabel="Rechercher un matériau par nom, slug ou description"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des matériaux"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher par nom, slug ou description..."
+								ariaLabel="Rechercher un matériau par nom, slug ou description"
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(MATERIALS_SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Position"
+							className="w-full sm:min-w-45"
+							noPrefix
 						/>
-					}
-				>
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={Object.entries(MATERIALS_SORT_LABELS).map(([value, label]) => ({
-							value,
-							label,
-						}))}
-						placeholder="Position"
-						className="w-full sm:min-w-45"
-						noPrefix
-					/>
-					<MaterialsFilterSheet />
-					<RefreshMaterialsButton />
-				</Toolbar>
+						<MaterialsFilterSheet />
+						<RefreshMaterialsButton />
+					</Toolbar>
 
-				{/* Badges de filtres actifs */}
-				<MaterialsFilterBadges />
+					{/* Badges de filtres actifs */}
+					<MaterialsFilterBadges />
+				</Suspense>
 
 				<Suspense fallback={<MaterialsDataTableSkeleton />}>
 					<MaterialsDataTable materialsPromise={materialsPromise} perPage={perPage} />

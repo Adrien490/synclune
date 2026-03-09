@@ -201,7 +201,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 					{/* Dots - utilise les variables thème */}
 					<div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1">
 						{products.map((product, index) => (
-							<Tooltip key={index}>
+							<Tooltip key={product.id}>
 								<TooltipTrigger asChild>
 									<Button
 										onClick={() => scrollTo(index)}

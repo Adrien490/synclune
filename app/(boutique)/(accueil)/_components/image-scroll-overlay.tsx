@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { m, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 import { useIsTouchDevice } from "@/shared/hooks";
 
@@ -15,7 +15,7 @@ function ScrollOverlayInner() {
 	const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 0.15, 0.15, 0]);
 
 	return (
-		<motion.div
+		<m.div
 			ref={ref}
 			className="pointer-events-none absolute inset-0 z-[1] hidden lg:block"
 			style={{

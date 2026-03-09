@@ -88,7 +88,7 @@ export function DataTableSkeleton({
 							<TableRow>
 								{columns.map((col, i) => (
 									<TableHead
-										key={i}
+										key={`skeleton-col-${i}`}
 										className={cn(
 											col.width && `w-[${col.width}]`,
 											col.hiddenBelow && hiddenClasses[col.hiddenBelow],

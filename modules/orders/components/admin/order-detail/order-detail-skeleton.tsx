@@ -19,7 +19,7 @@ export function OrderDetailSkeleton() {
 			{/* Stepper */}
 			<div className="flex items-center justify-between px-4">
 				{[1, 2, 3, 4].map((i) => (
-					<div key={i} className="flex flex-col items-center gap-2">
+					<div key={`skeleton-stepper-${i}`} className="flex flex-col items-center gap-2">
 						<Skeleton className="h-10 w-10 rounded-full" />
 						<Skeleton className="h-3 w-16" />
 					</div>
@@ -44,7 +44,10 @@ export function OrderDetailSkeleton() {
 						</CardHeader>
 						<CardContent className="space-y-4">
 							{[1, 2, 3].map((i) => (
-								<div key={i} className="flex items-start gap-4 border-b py-3 last:border-0">
+								<div
+									key={`skeleton-item-${i}`}
+									className="flex items-start gap-4 border-b py-3 last:border-0"
+								>
 									<Skeleton className="h-16 w-16 rounded-md" />
 									<div className="flex-1 space-y-2">
 										<Skeleton className="h-4 w-48" />
@@ -144,7 +147,7 @@ export function OrderDetailSkeleton() {
 						</CardHeader>
 						<CardContent className="space-y-4">
 							{[1, 2, 3].map((i) => (
-								<div key={i} className="flex gap-3">
+								<div key={`skeleton-timeline-${i}`} className="flex gap-3">
 									<Skeleton className="h-8 w-8 shrink-0 rounded-full" />
 									<div className="flex-1 space-y-2">
 										<Skeleton className="h-4 w-32" />

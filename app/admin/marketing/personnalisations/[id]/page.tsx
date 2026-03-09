@@ -25,8 +25,7 @@ interface CustomizationDetailPageProps {
 }
 
 export default async function CustomizationDetailPage({ params }: CustomizationDetailPageProps) {
-	await connection();
-	const { id } = await params;
+	const [, { id }] = await Promise.all([connection(), params]);
 
 	const request = await getCustomizationRequest(id);
 

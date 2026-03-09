@@ -217,35 +217,37 @@ export default async function ProductVariantsPage({
 			/>
 
 			<div className="space-y-6">
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des variantes"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher une variante..."
-							ariaLabel="Rechercher une variante"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des variantes"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher une variante..."
+								ariaLabel="Rechercher une variante"
+								className="w-full"
+							/>
+						}
+					>
+						<SkusFilterSheet colorOptions={colorOptions} materialOptions={materialOptions} />
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Plus recents"
+							className="w-full sm:min-w-45"
+							noPrefix
 						/>
-					}
-				>
-					<SkusFilterSheet colorOptions={colorOptions} materialOptions={materialOptions} />
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-							value,
-							label,
-						}))}
-						placeholder="Plus recents"
-						className="w-full sm:min-w-45"
-						noPrefix
-					/>
-					<RefreshSkusButton productId={product.id} />
-				</Toolbar>
+						<RefreshSkusButton productId={product.id} />
+					</Toolbar>
 
-				<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
+					<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
+				</Suspense>
 
 				<Suspense fallback={<SkusDataTableSkeleton />}>
 					<ProductVariantsDataTable

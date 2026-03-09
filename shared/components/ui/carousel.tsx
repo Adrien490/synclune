@@ -447,7 +447,7 @@ function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
 
 						return (
 							<button
-								key={index}
+								key={`dot-${index}`}
 								type="button"
 								aria-pressed={index === selectedIndex}
 								aria-label={`Aller à la diapositive ${index + 1}`}

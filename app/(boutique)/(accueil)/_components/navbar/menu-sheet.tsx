@@ -14,7 +14,7 @@ import {
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { MenuSheetFooter } from "./menu-sheet-footer";
@@ -200,7 +200,7 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 			className="text-current"
 		>
 			{/* Top bar → top-left to bottom-right diagonal */}
-			<motion.line
+			<m.line
 				x1="3"
 				x2="17"
 				y1="5"
@@ -217,7 +217,7 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 				transition={transition}
 			/>
 			{/* Middle bar → fades out */}
-			<motion.line
+			<m.line
 				x1="3"
 				x2="17"
 				y1="10"
@@ -230,7 +230,7 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 				transition={transition}
 			/>
 			{/* Bottom bar → bottom-left to top-right diagonal */}
-			<motion.line
+			<m.line
 				x1="3"
 				x2="17"
 				y1="15"

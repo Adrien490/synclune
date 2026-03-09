@@ -171,7 +171,7 @@ export function DecorativeHaloGroup({
 		<div className={cn("relative", className)} aria-hidden="true">
 			{halos.map((halo, index) => (
 				<DecorativeHalo
-					key={index}
+					key={halo.position}
 					position={halo.position}
 					variant={variant === "mixed" ? halo.variant : variant}
 					size={size}

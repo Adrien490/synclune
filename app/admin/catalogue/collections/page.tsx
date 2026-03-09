@@ -116,36 +116,38 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 				{/* Onglets de statut */}
 				<CollectionStatusNavigation currentStatus={status} searchParams={params} />
 
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des collections"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par nom, slug, description..."
-							ariaLabel="Rechercher une collection par nom, slug ou description"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des collections"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher par nom, slug, description..."
+								ariaLabel="Rechercher une collection par nom, slug ou description"
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Position"
+							className="w-full sm:min-w-45"
+							noPrefix
 						/>
-					}
-				>
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-							value,
-							label,
-						}))}
-						placeholder="Position"
-						className="w-full sm:min-w-45"
-						noPrefix
-					/>
-					<CollectionsFilterSheet />
-					<RefreshCollectionsButton />
-				</Toolbar>
+						<CollectionsFilterSheet />
+						<RefreshCollectionsButton />
+					</Toolbar>
 
-				{/* Badges de filtres actifs */}
-				<CollectionsFilterBadges />
+					{/* Badges de filtres actifs */}
+					<CollectionsFilterBadges />
+				</Suspense>
 
 				<Suspense fallback={<CollectionsDataTableSkeleton />}>
 					<CollectionsDataTable collectionsPromise={collectionsPromise} perPage={perPage} />

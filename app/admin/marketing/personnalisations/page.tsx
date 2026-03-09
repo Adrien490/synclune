@@ -96,38 +96,40 @@ export default async function CustomizationsPage({ searchParams }: Customization
 			</div>
 
 			<div className="space-y-6">
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des personnalisations"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par nom, email..."
-							ariaLabel="Rechercher une demande"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des personnalisations"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher par nom, email..."
+								ariaLabel="Rechercher une demande"
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="status"
+							label="Statut"
+							options={STATUS_FILTER_OPTIONS.map((opt) => ({
+								value: opt.value,
+								label: opt.label,
+							}))}
+							placeholder="Tous les statuts"
+							className="w-full sm:min-w-40"
 						/>
-					}
-				>
-					<SelectFilter
-						filterKey="status"
-						label="Statut"
-						options={STATUS_FILTER_OPTIONS.map((opt) => ({
-							value: opt.value,
-							label: opt.label,
-						}))}
-						placeholder="Tous les statuts"
-						className="w-full sm:min-w-40"
-					/>
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={sortOptions}
-						placeholder="Plus récentes"
-						className="w-full sm:min-w-40"
-						noPrefix
-					/>
-				</Toolbar>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={sortOptions}
+							placeholder="Plus récentes"
+							className="w-full sm:min-w-40"
+							noPrefix
+						/>
+					</Toolbar>
+				</Suspense>
 
 				<Suspense fallback={<TableSkeleton />}>
 					<CustomizationsDataTable requestsPromise={requestsPromise} perPage={perPage} />

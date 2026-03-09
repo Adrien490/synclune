@@ -99,7 +99,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 								const isFailed = step.failed;
 
 								return (
-									<div key={index} className="relative flex gap-4">
+									<div key={step.label} className="relative flex gap-4">
 										{/* Icon */}
 										<div
 											className={cn(

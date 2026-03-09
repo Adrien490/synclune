@@ -134,44 +134,46 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			</div>
 
 			{/* Toolbar */}
-			<Toolbar
-				ariaLabel="Barre d'outils de gestion des avis"
-				search={
-					<SearchInput
-						mode="live"
-						size="sm"
-						paramName="search"
-						placeholder="Rechercher par client, produit..."
-						ariaLabel="Rechercher un avis"
-						className="w-full"
+			<Suspense fallback={null}>
+				<Toolbar
+					ariaLabel="Barre d'outils de gestion des avis"
+					search={
+						<SearchInput
+							mode="live"
+							size="sm"
+							paramName="search"
+							placeholder="Rechercher par client, produit..."
+							ariaLabel="Rechercher un avis"
+							className="w-full"
+						/>
+					}
+				>
+					<SelectFilter
+						filterKey="status"
+						label="Statut"
+						options={statusOptions}
+						placeholder="Tous les statuts"
+						className="w-full sm:min-w-[150px]"
+						noPrefix
 					/>
-				}
-			>
-				<SelectFilter
-					filterKey="status"
-					label="Statut"
-					options={statusOptions}
-					placeholder="Tous les statuts"
-					className="w-full sm:min-w-[150px]"
-					noPrefix
-				/>
-				<SelectFilter
-					filterKey="rating"
-					label="Note"
-					options={ratingOptions}
-					placeholder="Toutes les notes"
-					className="w-full sm:min-w-[150px]"
-					noPrefix
-				/>
-				<SelectFilter
-					filterKey="sortBy"
-					label="Trier par"
-					options={sortOptions}
-					placeholder="Plus récents"
-					className="w-full sm:min-w-45"
-					noPrefix
-				/>
-			</Toolbar>
+					<SelectFilter
+						filterKey="rating"
+						label="Note"
+						options={ratingOptions}
+						placeholder="Toutes les notes"
+						className="w-full sm:min-w-[150px]"
+						noPrefix
+					/>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={sortOptions}
+						placeholder="Plus récents"
+						className="w-full sm:min-w-45"
+						noPrefix
+					/>
+				</Toolbar>
+			</Suspense>
 
 			{/* DataTable */}
 			<Suspense fallback={<ReviewsDataTableSkeleton />}>

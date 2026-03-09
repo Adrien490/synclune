@@ -29,7 +29,7 @@ function renderSegments(segments: AnswerSegment[]): ReactNode {
 					segment.value
 				) : (
 					<Link
-						key={i}
+						key={`segment-${i}`}
 						href={segment.href}
 						className="hover:text-primary underline underline-offset-2 transition-colors"
 					>

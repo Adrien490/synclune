@@ -187,11 +187,14 @@ export function HighlightMatch({
 		<>
 			{parts.map((part, i) =>
 				i % 2 === 1 ? (
-					<mark key={i} className="bg-primary/15 text-foreground rounded-sm font-medium">
+					<mark
+						key={`highlight-${i}`}
+						className="bg-primary/15 text-foreground rounded-sm font-medium"
+					>
 						{part}
 					</mark>
 				) : (
-					<span key={i}>{part}</span>
+					<span key={`part-${i}`}>{part}</span>
 				),
 			)}
 		</>

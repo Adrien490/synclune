@@ -180,33 +180,35 @@ export default async function ProductPage({
 						<article id="product-main" className="space-y-12">
 							{/* Section principale - Galerie fixe et Informations scrollables */}
 							{/* group/product-details permet aux enfants de réagir au data-pending des sélecteurs */}
-							<div className="group/product-details grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
-								{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
-								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
-									<Gallery product={product} title={product.title} />
-								</section>
+							<Suspense fallback={null}>
+								<div className="group/product-details grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
+									{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
+									<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
+										<Gallery product={product} title={product.title} />
+									</section>
 
-								{/* Informations et configurateur scrollables */}
-								<section className="space-y-6 lg:min-h-screen">
-									{/* 1. ProductInfo - Badges, note, wishlist (pattern Etsy : contexte rapide) */}
-									<ProductInfo
-										product={product}
-										isInWishlist={isInWishlist}
-										reviewStats={reviewStats}
-									/>
+									{/* Informations et configurateur scrollables */}
+									<section className="space-y-6 lg:min-h-screen">
+										{/* 1. ProductInfo - Badges, note, wishlist (pattern Etsy : contexte rapide) */}
+										<ProductInfo
+											product={product}
+											isInWishlist={isInWishlist}
+											reviewStats={reviewStats}
+										/>
 
-									<Separator className="bg-border" />
+										<Separator className="bg-border" />
 
-									{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
-									{/* Composant client qui synchronise le SKU avec les paramètres URL */}
-									<ProductDetails
-										product={product}
-										defaultSku={selectedSku}
-										cartsCount={cartsCount}
-										isInWishlist={isInWishlist}
-									/>
-								</section>
-							</div>
+										{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
+										{/* Composant client qui synchronise le SKU avec les paramètres URL */}
+										<ProductDetails
+											product={product}
+											defaultSku={selectedSku}
+											cartsCount={cartsCount}
+											isInWishlist={isInWishlist}
+										/>
+									</section>
+								</div>
+							</Suspense>
 
 							{/* Separator avant avis clients */}
 							<Separator className="bg-border" />
@@ -243,7 +245,9 @@ export default async function ProductPage({
 			</div>
 
 			{/* Sticky CTA mobile - apparait quand le bouton principal sort du viewport */}
-			<StickyCartCTA product={product} defaultSku={selectedSku} />
+			<Suspense fallback={null}>
+				<StickyCartCTA product={product} defaultSku={selectedSku} />
+			</Suspense>
 		</div>
 	);
 }

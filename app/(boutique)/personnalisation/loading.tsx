@@ -89,7 +89,7 @@ export default function CustomizationLoading() {
 								{/* 3 steps */}
 								<div className="space-y-5">
 									{[0, 1, 2].map((i) => (
-										<div key={i} className="flex gap-4">
+										<div key={`skeleton-step-${i}`} className="flex gap-4">
 											<Skeleton className="bg-muted/40 size-9 shrink-0 rounded-full" />
 											<div className="flex-1 space-y-1.5">
 												<Skeleton className="bg-muted/40 h-4 w-32" />

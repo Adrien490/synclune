@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform, useReducedMotion } from "motion/react";
+import { m, useScroll, useTransform, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import type { RefObject } from "react";
 import { useRef } from "react";
@@ -49,7 +49,7 @@ function ParallaxInner({ containerRef, safeIntensity, imageElement }: ParallaxIn
 	const y = useTransform(scrollYProgress, [0, 1], [`-${safeIntensity}%`, `${safeIntensity}%`]);
 
 	return (
-		<motion.div
+		<m.div
 			role="presentation"
 			className="absolute inset-x-0 w-full"
 			style={{
@@ -61,7 +61,7 @@ function ParallaxInner({ containerRef, safeIntensity, imageElement }: ParallaxIn
 			}}
 		>
 			{imageElement}
-		</motion.div>
+		</m.div>
 	);
 }
 

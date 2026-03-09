@@ -91,36 +91,38 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 			<PageHeader variant="compact" title="Types de bijoux" actions={<CreateProductTypeButton />} />
 
 			<div className="space-y-6">
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des types de bijoux"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par label, slug..."
-							ariaLabel="Rechercher un type de bijou par label ou slug"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des types de bijoux"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher par label, slug..."
+								ariaLabel="Rechercher un type de bijou par label ou slug"
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Label (A-Z)"
+							className="w-full sm:min-w-45"
+							noPrefix
 						/>
-					}
-				>
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-							value,
-							label,
-						}))}
-						placeholder="Label (A-Z)"
-						className="w-full sm:min-w-45"
-						noPrefix
-					/>
-					<ProductTypesFilterSheet />
-					<RefreshProductTypesButton />
-				</Toolbar>
+						<ProductTypesFilterSheet />
+						<RefreshProductTypesButton />
+					</Toolbar>
 
-				{/* Badges de filtres actifs */}
-				<ProductTypesFilterBadges />
+					{/* Badges de filtres actifs */}
+					<ProductTypesFilterBadges />
+				</Suspense>
 
 				<Suspense fallback={<ProductTypesDataTableSkeleton />}>
 					<ProductTypesDataTable productTypesPromise={productTypesPromise} perPage={perPage} />

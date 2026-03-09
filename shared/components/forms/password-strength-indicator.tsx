@@ -60,7 +60,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
 					const isValid = rule.test(password);
 					return (
 						<li
-							key={index}
+							key={rule.label}
 							className={cn(
 								"flex items-center gap-1.5 transition-colors",
 								isValid ? "text-success" : "text-muted-foreground",

@@ -23,7 +23,7 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
 			<Stagger stagger={MOTION_CONFIG.stagger.normal} y={20} inView once className="space-y-3">
 				{items.map((item, idx) => (
 					<AccordionItem
-						key={idx}
+						key={`faq-${idx}`}
 						value={`faq-${idx}`}
 						className="bg-muted/30 can-hover:hover:bg-muted/50 can-hover:hover:shadow-md can-hover:hover:-translate-y-0.5 data-[state=open]:border-l-primary/50 data-[state=open]:bg-muted/50 rounded-xl border px-5 shadow-sm active:scale-[0.99] data-[state=open]:border-l-2 data-[state=open]:shadow-md motion-safe:transition-all motion-safe:duration-300"
 					>

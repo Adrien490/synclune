@@ -144,7 +144,7 @@ function ProductCardRating({
 		>
 			{Array.from({ length: 5 }, (_, i) => (
 				<StarIcon
-					key={i}
+					key={`star-${i}`}
 					fillPercentage={Math.min(1, Math.max(0, averageRating - i))}
 					size="sm"
 					gradientId={`card-${productId}-star-${i}`}

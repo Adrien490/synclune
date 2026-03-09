@@ -100,35 +100,37 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 			<PageHeader variant="compact" title="Codes promo" actions={<CreateDiscountButton />} />
 
 			<div className="space-y-6">
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des codes promo"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par code..."
-							ariaLabel="Rechercher un code promo"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des codes promo"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher par code..."
+								ariaLabel="Rechercher un code promo"
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Plus récents"
+							className="w-full sm:min-w-45"
+							noPrefix
 						/>
-					}
-				>
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-							value,
-							label,
-						}))}
-						placeholder="Plus récents"
-						className="w-full sm:min-w-45"
-						noPrefix
-					/>
-					<DiscountsFilterSheet />
-				</Toolbar>
+						<DiscountsFilterSheet />
+					</Toolbar>
 
-				{/* Badges de filtres actifs */}
-				<DiscountsFilterBadges />
+					{/* Badges de filtres actifs */}
+					<DiscountsFilterBadges />
+				</Suspense>
 
 				<Suspense fallback={<DiscountsDataTableSkeleton />}>
 					<DiscountsDataTable discountsPromise={discountsPromise} perPage={perPage} />

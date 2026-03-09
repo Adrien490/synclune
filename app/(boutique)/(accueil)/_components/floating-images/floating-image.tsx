@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useTransform } from "motion/react";
+import { m, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
@@ -27,7 +27,7 @@ export function FloatingImage({
 
 	return (
 		// Layer 1: parallax scroll (y + opacity)
-		<motion.div
+		<m.div
 			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto ${position.visibilityClass}`}
 			style={
 				shouldReduceMotion
@@ -55,7 +55,7 @@ export function FloatingImage({
 				}
 			>
 				{/* Layer 3: Framer Motion entrance + whileHover + whileTap */}
-				<motion.div
+				<m.div
 					initial={FLOAT_VARIANTS.initial[mode]}
 					animate={FLOAT_VARIANTS.animate[mode]}
 					transition={
@@ -108,8 +108,8 @@ export function FloatingImage({
 							blurDataURL={image.blurDataUrl}
 						/>
 					</Link>
-				</motion.div>
+				</m.div>
 			</div>
-		</motion.div>
+		</m.div>
 	);
 }

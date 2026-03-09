@@ -12,7 +12,7 @@ import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
 import { Gem, Heart } from "lucide-react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
+import { AnimatePresence, m, useReducedMotion, type Variants } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { CollectionMiniGrid } from "./collection-mini-grid";
@@ -113,7 +113,7 @@ export function MenuSheetNav({
 	return (
 		<AnimatePresence>
 			{isOpen && (
-				<motion.nav
+				<m.nav
 					ref={navRef}
 					key="menu-nav"
 					aria-label="Menu principal mobile"
@@ -124,9 +124,9 @@ export function MenuSheetNav({
 				>
 					{/* User header (if logged in) */}
 					{session?.user && (
-						<motion.div variants={itemVariants} custom={delay(30, 0)}>
+						<m.div variants={itemVariants} custom={delay(30, 0)}>
 							<UserHeader session={session} wishlistCount={wishlistCount} cartCount={cartCount} />
-						</motion.div>
+						</m.div>
 					)}
 
 					{/* Section Decouvrir - Home + Best sellers */}
@@ -134,7 +134,7 @@ export function MenuSheetNav({
 						<SectionHeader id="section-discover">Découvrir</SectionHeader>
 						<ul className="space-y-1">
 							{homeItem && (
-								<motion.li variants={itemVariants} custom={delay(70, 0)}>
+								<m.li variants={itemVariants} custom={delay(70, 0)}>
 									<SheetClose asChild>
 										<Link
 											href={homeItem.href}
@@ -144,7 +144,7 @@ export function MenuSheetNav({
 											{homeItem.label}
 										</Link>
 									</SheetClose>
-								</motion.li>
+								</m.li>
 							)}
 						</ul>
 					</section>
@@ -155,7 +155,7 @@ export function MenuSheetNav({
 							<SectionHeader id="section-creations">Nos créations</SectionHeader>
 							<ul className="space-y-1">
 								{/* "All jewelry" link prominent first (Baymard UX) */}
-								<motion.li variants={itemVariants} custom={delay(90, 0)}>
+								<m.li variants={itemVariants} custom={delay(90, 0)}>
 									<SheetClose asChild>
 										<Link
 											href={ROUTES.SHOP.PRODUCTS}
@@ -165,9 +165,9 @@ export function MenuSheetNav({
 											Tous les bijoux
 										</Link>
 									</SheetClose>
-								</motion.li>
+								</m.li>
 								{productTypes.map((type, i) => (
-									<motion.li key={type.slug} variants={itemVariants} custom={delay(90, i + 1)}>
+									<m.li key={type.slug} variants={itemVariants} custom={delay(90, i + 1)}>
 										<SheetClose asChild>
 											<Link
 												href={ROUTES.SHOP.PRODUCT_TYPE(type.slug)}
@@ -179,10 +179,10 @@ export function MenuSheetNav({
 												{type.label}
 											</Link>
 										</SheetClose>
-									</motion.li>
+									</m.li>
 								))}
 								{personalizationItem && (
-									<motion.li variants={itemVariants} custom={delay(90, productTypes.length + 1)}>
+									<m.li variants={itemVariants} custom={delay(90, productTypes.length + 1)}>
 										<SheetClose asChild>
 											<Link
 												href={personalizationItem.href}
@@ -194,7 +194,7 @@ export function MenuSheetNav({
 												{personalizationItem.label}
 											</Link>
 										</SheetClose>
-									</motion.li>
+									</m.li>
 								)}
 							</ul>
 						</section>
@@ -206,7 +206,7 @@ export function MenuSheetNav({
 							<SectionHeader id="section-collections">Collections</SectionHeader>
 							<ul className="space-y-1">
 								{/* "All collections" link prominent first */}
-								<motion.li variants={itemVariants} custom={delay(110, 0)}>
+								<m.li variants={itemVariants} custom={delay(110, 0)}>
 									<SheetClose asChild>
 										<Link
 											href={ROUTES.SHOP.COLLECTIONS}
@@ -216,13 +216,9 @@ export function MenuSheetNav({
 											Toutes les collections
 										</Link>
 									</SheetClose>
-								</motion.li>
+								</m.li>
 								{displayedCollections.map((collection, i) => (
-									<motion.li
-										key={collection.slug}
-										variants={itemVariants}
-										custom={delay(110, i + 1)}
-									>
+									<m.li key={collection.slug} variants={itemVariants} custom={delay(110, i + 1)}>
 										<SheetClose asChild>
 											<Link
 												href={ROUTES.SHOP.COLLECTION(collection.slug)}
@@ -249,14 +245,14 @@ export function MenuSheetNav({
 												<span className="flex-1">{collection.label}</span>
 											</Link>
 										</SheetClose>
-									</motion.li>
+									</m.li>
 								))}
 							</ul>
 						</section>
 					)}
 
 					{/* Decorative separator */}
-					<motion.div
+					<m.div
 						className="relative my-6 flex items-center justify-center"
 						aria-hidden="true"
 						variants={itemVariants}
@@ -268,7 +264,7 @@ export function MenuSheetNav({
 						<div className="bg-background/95 relative rounded-full px-3">
 							<Heart className="text-muted-foreground fill-muted-foreground/20 h-4 w-4" />
 						</div>
-					</motion.div>
+					</m.div>
 
 					{/* Section Account */}
 					<section aria-labelledby="section-account">
@@ -278,7 +274,7 @@ export function MenuSheetNav({
 						<ul className="space-y-1">
 							{/* Account link - adapts to session state */}
 							{accountItem && (
-								<motion.li variants={itemVariants} custom={delay(150, 0)}>
+								<m.li variants={itemVariants} custom={delay(150, 0)}>
 									<SheetClose asChild>
 										<Link
 											href={accountItem.href}
@@ -288,12 +284,12 @@ export function MenuSheetNav({
 											{accountItem.label}
 										</Link>
 									</SheetClose>
-								</motion.li>
+								</m.li>
 							)}
 
 							{/* Favorites with badge count */}
 							{favoritesItem && isLoggedIn && (
-								<motion.li variants={itemVariants} custom={delay(150, 1)}>
+								<m.li variants={itemVariants} custom={delay(150, 1)}>
 									<SheetClose asChild>
 										<Link
 											href={favoritesItem.href}
@@ -311,12 +307,12 @@ export function MenuSheetNav({
 											)}
 										</Link>
 									</SheetClose>
-								</motion.li>
+								</m.li>
 							)}
 
 							{/* Orders (logged in only) */}
 							{isLoggedIn && (
-								<motion.li variants={itemVariants} custom={delay(150, 2)}>
+								<m.li variants={itemVariants} custom={delay(150, 2)}>
 									<SheetClose asChild>
 										<Link
 											href={ROUTES.ACCOUNT.ORDERS}
@@ -326,12 +322,12 @@ export function MenuSheetNav({
 											Mes commandes
 										</Link>
 									</SheetClose>
-								</motion.li>
+								</m.li>
 							)}
 
 							{/* Logout (logged in only) — closes menu before opening dialog */}
 							{isLoggedIn && (
-								<motion.li variants={itemVariants} custom={delay(150, 3)}>
+								<m.li variants={itemVariants} custom={delay(150, 3)}>
 									<button
 										type="button"
 										className={cn(
@@ -342,12 +338,12 @@ export function MenuSheetNav({
 									>
 										Déconnexion
 									</button>
-								</motion.li>
+								</m.li>
 							)}
 
 							{/* Sign up link for non-logged-in users */}
 							{!isLoggedIn && (
-								<motion.li variants={itemVariants} custom={delay(150, 1)}>
+								<m.li variants={itemVariants} custom={delay(150, 1)}>
 									<SheetClose asChild>
 										<Link
 											href={ROUTES.AUTH.SIGN_UP}
@@ -360,11 +356,11 @@ export function MenuSheetNav({
 											Créer un compte
 										</Link>
 									</SheetClose>
-								</motion.li>
+								</m.li>
 							)}
 						</ul>
 					</section>
-				</motion.nav>
+				</m.nav>
 			)}
 		</AnimatePresence>
 	);

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { type Metadata } from "next";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
-import { RevenueChart } from "@/modules/dashboard/components/revenue-chart";
+import { LazyRevenueChart } from "@/modules/dashboard/components/revenue-chart-lazy";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
@@ -93,7 +93,7 @@ export default async function AdminDashboardPage() {
  */
 async function RevenueChartWrapper() {
 	const chartData = await fetchDashboardRevenueChart();
-	return <RevenueChart chartData={chartData} />;
+	return <LazyRevenueChart chartData={chartData} />;
 }
 
 /**

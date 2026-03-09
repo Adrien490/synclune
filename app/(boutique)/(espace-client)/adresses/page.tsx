@@ -28,7 +28,9 @@ export default function AddressesPage() {
 				<AddressList addressesPromise={addressesPromise} />
 			</Suspense>
 
-			<AddressFormDialog />
+			<Suspense fallback={null}>
+				<AddressFormDialog />
+			</Suspense>
 			<DeleteAddressAlertDialog />
 			<DiscardAddressChangesAlertDialog />
 		</>

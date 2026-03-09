@@ -120,37 +120,39 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 			<PageHeader variant="compact" title="Commandes" />
 
 			<div className="space-y-6">
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des commandes"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par numéro, email, nom client, Payment Intent..."
-							ariaLabel="Rechercher une commande par numéro, email client ou Payment Intent"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des commandes"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher par numéro, email, nom client, Payment Intent..."
+								ariaLabel="Rechercher une commande par numéro, email client ou Payment Intent"
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(ORDERS_SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Plus récentes"
+							className="w-full sm:min-w-45"
+							noPrefix
 						/>
-					}
-				>
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={Object.entries(ORDERS_SORT_LABELS).map(([value, label]) => ({
-							value,
-							label,
-						}))}
-						placeholder="Plus récentes"
-						className="w-full sm:min-w-45"
-						noPrefix
-					/>
-					<OrdersFilterSheet />
-					<ExportOrdersButton />
-					<RefreshOrdersButton />
-				</Toolbar>
+						<OrdersFilterSheet />
+						<ExportOrdersButton />
+						<RefreshOrdersButton />
+					</Toolbar>
 
-				{/* Badges de filtres actifs */}
-				<OrdersFilterBadges />
+					{/* Badges de filtres actifs */}
+					<OrdersFilterBadges />
+				</Suspense>
 
 				<Suspense fallback={<OrdersDataTableSkeleton />}>
 					<OrdersDataTable ordersPromise={ordersPromise} perPage={perPage} />

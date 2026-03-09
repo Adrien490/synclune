@@ -7,22 +7,11 @@ import { Shield } from "lucide-react";
 
 interface GdprSectionProps {
 	accountStatus: AccountStatus;
-	deletionRequestedAt: Date | null;
+	daysRemaining: number;
 }
 
-export function GdprSection({ accountStatus, deletionRequestedAt }: GdprSectionProps) {
+export function GdprSection({ accountStatus, daysRemaining }: GdprSectionProps) {
 	const isPendingDeletion = accountStatus === "PENDING_DELETION";
-
-	const daysRemaining = deletionRequestedAt
-		? Math.max(
-				0,
-				Math.ceil(
-					// eslint-disable-next-line react-hooks/purity -- Server component: Date.now() is safe (rendered once per request)
-					(new Date(deletionRequestedAt).getTime() + 30 * 24 * 60 * 60 * 1000 - Date.now()) /
-						(24 * 60 * 60 * 1000),
-				),
-			)
-		: 0;
 
 	return (
 		<section className="space-y-4" aria-labelledby="gdpr-heading">
@@ -36,7 +25,7 @@ export function GdprSection({ accountStatus, deletionRequestedAt }: GdprSectionP
 				</p>
 			</div>
 			<div className="border-border/60 space-y-6 border-t pt-4">
-				{isPendingDeletion && deletionRequestedAt && (
+				{isPendingDeletion && daysRemaining > 0 && (
 					<CancelDeletionBanner daysRemaining={daysRemaining} />
 				)}
 

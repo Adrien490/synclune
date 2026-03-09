@@ -120,7 +120,9 @@ export function ProductCatalog({
 				breadcrumbs={breadcrumbs}
 				actions={
 					<div className="flex items-center gap-2 md:hidden">
-						<ClearSearchButton />
+						<Suspense fallback={null}>
+							<ClearSearchButton />
+						</Suspense>
 					</div>
 				}
 			/>
@@ -135,38 +137,40 @@ export function ProductCatalog({
 					className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8"
 				>
 					{/* Desktop Toolbar - hidden on mobile */}
-					<Toolbar
-						className="hidden md:flex"
-						search={
-							<SearchInput
-								mode="live"
-								size="sm"
-								paramName="search"
-								placeholder={searchPlaceholder}
-								className="w-full"
+					<Suspense fallback={null}>
+						<Toolbar
+							className="hidden md:flex"
+							search={
+								<SearchInput
+									mode="live"
+									size="sm"
+									paramName="search"
+									placeholder={searchPlaceholder}
+									className="w-full"
+								/>
+							}
+						>
+							<SelectFilter
+								filterKey="sortBy"
+								label="Trier par"
+								options={Object.values(PRODUCTS_SORT_OPTIONS).map((option) => ({
+									value: option,
+									label: PRODUCTS_SORT_LABELS[option as keyof typeof PRODUCTS_SORT_LABELS],
+								}))}
+								placeholder="Trier par"
+								noPrefix
 							/>
-						}
-					>
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.values(PRODUCTS_SORT_OPTIONS).map((option) => ({
-								value: option,
-								label: PRODUCTS_SORT_LABELS[option as keyof typeof PRODUCTS_SORT_LABELS],
-							}))}
-							placeholder="Trier par"
-							noPrefix
-						/>
-						<ProductFilterTrigger />
-					</Toolbar>
+							<ProductFilterTrigger />
+						</Toolbar>
 
-					{hasActiveFilters && (
-						<ProductFilterBadges
-							colors={colors}
-							materials={materials}
-							productTypes={productTypes}
-						/>
-					)}
+						{hasActiveFilters && (
+							<ProductFilterBadges
+								colors={colors}
+								materials={materials}
+								productTypes={productTypes}
+							/>
+						)}
+					</Suspense>
 
 					<ErrorBoundary
 						errorMessage="Impossible de charger les produits"
@@ -184,20 +188,22 @@ export function ProductCatalog({
 				</div>
 			</section>
 
-			<ProductFilterSheet
-				colors={colors}
-				materials={materials}
-				productTypes={productTypes.map((t) => ({
-					slug: t.slug,
-					label: t.label,
-					_count: t._count,
-				}))}
-				maxPriceInEuros={maxPriceInEuros}
-				activeProductTypeSlug={activeProductType?.slug}
-			/>
+			<Suspense fallback={null}>
+				<ProductFilterSheet
+					colors={colors}
+					materials={materials}
+					productTypes={productTypes.map((t) => ({
+						slug: t.slug,
+						label: t.label,
+						_count: t._count,
+					}))}
+					maxPriceInEuros={maxPriceInEuros}
+					activeProductTypeSlug={activeProductType?.slug}
+				/>
 
-			{/* Bottom Action Bar Mobile */}
-			<ProductSortBar sortOptions={sortOptions} />
+				{/* Bottom Action Bar Mobile */}
+				<ProductSortBar sortOptions={sortOptions} />
+			</Suspense>
 		</div>
 	);
 }

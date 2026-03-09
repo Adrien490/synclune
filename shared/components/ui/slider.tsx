@@ -76,7 +76,7 @@ function Slider({
 			{Array.from({ length: _values.length }, (_, index) => (
 				<SliderPrimitive.Thumb
 					data-slot="slider-thumb"
-					key={index}
+					key={`thumb-${index}`}
 					aria-label={getThumbLabel(index)}
 					aria-valuetext={getThumbAriaValueText(index)}
 					className={cn(

@@ -80,32 +80,34 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 			<PageHeader variant="compact" title="Remboursements" />
 
 			<div className="space-y-6">
-				<Toolbar
-					ariaLabel="Barre d'outils de gestion des remboursements"
-					search={
-						<SearchInput
-							mode="live"
-							size="sm"
-							paramName="search"
-							placeholder="Rechercher par numéro de commande, email client..."
-							ariaLabel="Rechercher un remboursement"
-							className="w-full"
+				<Suspense fallback={null}>
+					<Toolbar
+						ariaLabel="Barre d'outils de gestion des remboursements"
+						search={
+							<SearchInput
+								mode="live"
+								size="sm"
+								paramName="search"
+								placeholder="Rechercher par numéro de commande, email client..."
+								ariaLabel="Rechercher un remboursement"
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Plus récents"
+							className="w-full sm:min-w-45"
+							noPrefix
 						/>
-					}
-				>
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-							value,
-							label,
-						}))}
-						placeholder="Plus récents"
-						className="w-full sm:min-w-45"
-						noPrefix
-					/>
-					<RefreshRefundsButton />
-				</Toolbar>
+						<RefreshRefundsButton />
+					</Toolbar>
+				</Suspense>
 
 				<Suspense fallback={<RefundsDataTableSkeleton />}>
 					<RefundsDataTable refundsPromise={refundsPromise} perPage={perPage} />

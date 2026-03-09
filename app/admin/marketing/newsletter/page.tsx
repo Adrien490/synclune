@@ -108,29 +108,31 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 				</div>
 			</div>
 
-			<Toolbar
-				ariaLabel="Barre d'outils de gestion des abonnés"
-				search={
-					<SearchInput
-						mode="live"
-						size="sm"
-						paramName="search"
-						placeholder="Rechercher un email..."
-						ariaLabel="Rechercher un abonné par email"
-						className="w-full"
+			<Suspense fallback={null}>
+				<Toolbar
+					ariaLabel="Barre d'outils de gestion des abonnés"
+					search={
+						<SearchInput
+							mode="live"
+							size="sm"
+							paramName="search"
+							placeholder="Rechercher un email..."
+							ariaLabel="Rechercher un abonné par email"
+							className="w-full"
+						/>
+					}
+				>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={sortOptions}
+						placeholder="Plus récents"
+						className="w-full sm:min-w-45"
+						noPrefix
 					/>
-				}
-			>
-				<SelectFilter
-					filterKey="sortBy"
-					label="Trier par"
-					options={sortOptions}
-					placeholder="Plus récents"
-					className="w-full sm:min-w-45"
-					noPrefix
-				/>
-				<RefreshNewsletterButton />
-			</Toolbar>
+					<RefreshNewsletterButton />
+				</Toolbar>
+			</Suspense>
 
 			<Suspense fallback={<SubscribersDataTableSkeleton />}>
 				<SubscribersDataTable subscribersPromise={subscribersPromise} perPage={perPage} />
