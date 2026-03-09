@@ -103,38 +103,34 @@ function EmbeddedCheckoutSkeleton() {
  * Displays the Stripe payment form embedded directly on the site
  * with skeleton loading, timeout detection, and error recovery without page reload
  */
+type CheckoutStatus = "loading" | "ready" | "timeout";
+
 export function EmbeddedCheckoutWrapper({ clientSecret }: EmbeddedCheckoutWrapperProps) {
 	const [stripeKey, setStripeKey] = useState(0);
-	const [isReady, setIsReady] = useState(false);
-	const [loadTimedOut, setLoadTimedOut] = useState(false);
+	const [status, setStatus] = useState<CheckoutStatus>("loading");
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	// Observe the container for Stripe iframe injection to detect readiness
 	useEffect(() => {
-		queueMicrotask(() => setIsReady(false));
-		queueMicrotask(() => setLoadTimedOut(false));
 		const container = containerRef.current;
 		if (!container) return;
 
-		const timeoutId = setTimeout(() => {
-			queueMicrotask(() => setLoadTimedOut(true));
-		}, 15_000);
+		const timeoutId = setTimeout(() => setStatus("timeout"), 15_000);
 
 		const observer = new MutationObserver(() => {
-			const iframe = container.querySelector("iframe");
-			if (iframe) {
+			if (container.querySelector("iframe")) {
 				clearTimeout(timeoutId);
-				queueMicrotask(() => setIsReady(true));
+				setStatus("ready");
 				observer.disconnect();
 			}
 		});
 
 		observer.observe(container, { childList: true, subtree: true });
 
-		// Check if iframe already exists
+		// Check if iframe already exists (queueMicrotask to avoid synchronous setState in effect)
 		if (container.querySelector("iframe")) {
 			clearTimeout(timeoutId);
-			queueMicrotask(() => setIsReady(true));
+			queueMicrotask(() => setStatus("ready"));
 			observer.disconnect();
 		}
 
@@ -145,14 +141,15 @@ export function EmbeddedCheckoutWrapper({ clientSecret }: EmbeddedCheckoutWrappe
 	}, [stripeKey]);
 
 	const handleRetry = () => {
+		setStatus("loading");
 		setStripeKey((k) => k + 1);
 	};
 
 	return (
 		<EmbeddedCheckoutErrorBoundary key={stripeKey} onRetry={handleRetry}>
 			<div role="region" aria-label="Formulaire de paiement securise">
-				{!isReady && <EmbeddedCheckoutSkeleton />}
-				{loadTimedOut && !isReady && (
+				{status !== "ready" && <EmbeddedCheckoutSkeleton />}
+				{status === "timeout" && (
 					<div className="space-y-3 p-4 text-center">
 						<p className="text-muted-foreground text-sm">
 							Le formulaire de paiement prend plus de temps que prévu. Si vous utilisez un bloqueur
@@ -163,7 +160,7 @@ export function EmbeddedCheckoutWrapper({ clientSecret }: EmbeddedCheckoutWrappe
 						</Button>
 					</div>
 				)}
-				<div ref={containerRef} className={isReady ? "" : "hidden"}>
+				<div ref={containerRef} className={status === "ready" ? "" : "hidden"}>
 					<EmbeddedCheckoutProvider stripe={getStripe()} options={{ clientSecret }}>
 						<EmbeddedCheckout />
 					</EmbeddedCheckoutProvider>
