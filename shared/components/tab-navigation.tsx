@@ -140,7 +140,7 @@ export function TabNavigation({
 								<DrawerHeader>
 									<DrawerTitle>{panelTitle ?? "Parcourir par type"}</DrawerTitle>
 								</DrawerHeader>
-								<DrawerBody>
+								<DrawerBody className="overflow-y-visible">
 									{/* Grid de catégories - TOUS les items */}
 									<div
 										className={cn(
