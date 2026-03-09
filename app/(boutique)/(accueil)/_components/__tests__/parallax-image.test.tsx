@@ -39,6 +39,7 @@ vi.mock("motion/react", () => ({
 	useTransform: vi.fn(() => 0),
 	useInView: vi.fn(() => false),
 	motion: { div: "div" },
+	m: { div: "div" },
 }));
 
 // Mock next/image as a plain <img> element

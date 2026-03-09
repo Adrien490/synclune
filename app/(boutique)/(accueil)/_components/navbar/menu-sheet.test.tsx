@@ -57,6 +57,7 @@ vi.mock("motion/react", () => {
 	};
 	return {
 		motion: new Proxy({} as Record<string, unknown>, handler),
+		m: new Proxy({} as Record<string, unknown>, handler),
 		useReducedMotion: () => false,
 		AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 	};
