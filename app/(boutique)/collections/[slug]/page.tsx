@@ -46,8 +46,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 	// Note: Pas de "use cache" ici car la page utilise searchParams (filtres dynamiques)
 	// Le cache est géré au niveau de getStorefrontCollectionBySlug() et getProducts()
 
-	const { slug } = await params;
-	const searchParamsData = await searchParams;
+	const [{ slug }, searchParamsData] = await Promise.all([params, searchParams]);
 
 	// Récupérer la collection (select léger pour le storefront)
 	const collection = await getStorefrontCollectionBySlug({ slug });

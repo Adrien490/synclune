@@ -35,6 +35,9 @@ import { SearchResultsSkeleton } from "./search-result-item";
 import { useKeyboardNavigation } from "./use-keyboard-navigation";
 import { isSearchError, useQuickSearch } from "./use-quick-search";
 
+const EMPTY_RECENT_SEARCHES: string[] = [];
+const EMPTY_RECENTLY_VIEWED: RecentlyViewedProduct[] = [];
+
 interface QuickSearchDialogProps {
 	recentSearches?: string[];
 	collections: QuickSearchCollection[];
@@ -43,10 +46,10 @@ interface QuickSearchDialogProps {
 }
 
 export function QuickSearchDialog({
-	recentSearches: initialSearches = [],
+	recentSearches: initialSearches = EMPTY_RECENT_SEARCHES,
 	collections,
 	productTypes,
-	recentlyViewed = [],
+	recentlyViewed = EMPTY_RECENTLY_VIEWED,
 }: QuickSearchDialogProps) {
 	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const router = useRouter();

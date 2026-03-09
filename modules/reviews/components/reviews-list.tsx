@@ -18,6 +18,8 @@ import { ReviewSummary } from "./review-summary";
 import { ReviewSortSelect } from "./review-sort-select";
 import { ReviewsLoadMore } from "./reviews-load-more";
 
+const EMPTY_REVIEWS: ReviewPublic[] = [];
+
 interface ReviewsListProps {
 	/** Avis initiaux (déjà résolus) */
 	initialReviews: ReviewPublic[];
@@ -44,7 +46,7 @@ interface ReviewsListProps {
  * Server component qui affiche les avis pré-chargés
  */
 export function ReviewsList({
-	initialReviews = [],
+	initialReviews = EMPTY_REVIEWS,
 	stats,
 	totalCount,
 	productId,

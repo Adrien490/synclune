@@ -12,6 +12,8 @@ interface ProductTypeOption {
 	label: string;
 }
 
+const EMPTY_PRODUCT_TYPES: ProductTypeOption[] = [];
+
 interface ProductFilterBadgesProps {
 	colors: GetColorsReturn["colors"];
 	materials: MaterialOption[];
@@ -26,7 +28,7 @@ interface ProductFilterBadgesProps {
 export function ProductFilterBadges({
 	colors,
 	materials,
-	productTypes = [],
+	productTypes = EMPTY_PRODUCT_TYPES,
 	className,
 }: ProductFilterBadgesProps) {
 	const searchParams = useSearchParams();

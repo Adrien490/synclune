@@ -1,6 +1,8 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 
+const EMPTY_SEARCH_PARAMS: Record<string, string | string[] | undefined> = {};
+
 interface CollectionStatusNavigationProps {
 	currentStatus: CollectionStatus | undefined;
 	pathname?: string;
@@ -20,7 +22,7 @@ const STATUS_LABELS: Record<CollectionStatus, string> = {
 export function CollectionStatusNavigation({
 	currentStatus,
 	pathname = "/admin/catalogue/collections",
-	searchParams = {},
+	searchParams = EMPTY_SEARCH_PARAMS,
 }: CollectionStatusNavigationProps) {
 	// Construire les URLs avec les query params existants
 	const buildHref = (status: CollectionStatus | "all") => {

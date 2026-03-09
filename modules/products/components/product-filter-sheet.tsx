@@ -44,6 +44,10 @@ interface ProductTypeOption {
 	_count?: { products: number };
 }
 
+const EMPTY_COLORS: GetColorsReturn["colors"] = [];
+const EMPTY_MATERIALS: MaterialOption[] = [];
+const EMPTY_PRODUCT_TYPES: ProductTypeOption[] = [];
+
 interface FilterSheetProps {
 	colors: GetColorsReturn["colors"];
 	materials: MaterialOption[];
@@ -119,9 +123,9 @@ function SectionSearch({ value, onChange }: { value: string; onChange: (value: s
 // ============================================================================
 
 export function ProductFilterSheet({
-	colors = [],
-	materials = [],
-	productTypes = [],
+	colors = EMPTY_COLORS,
+	materials = EMPTY_MATERIALS,
+	productTypes = EMPTY_PRODUCT_TYPES,
 	maxPriceInEuros,
 	activeProductTypeSlug,
 }: FilterSheetProps) {

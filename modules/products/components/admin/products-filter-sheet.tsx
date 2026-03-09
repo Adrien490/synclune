@@ -9,6 +9,9 @@ import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+const EMPTY_PRODUCT_TYPES: Array<{ id: string; label: string }> = [];
+const EMPTY_COLLECTIONS: Array<{ id: string; name: string }> = [];
+
 interface ProductsFilterSheetProps {
 	className?: string;
 	productTypes?: Array<{ id: string; label: string }>;
@@ -25,8 +28,8 @@ const MAX_PRICE = 50000; // 500€ in cents
 
 export function ProductsFilterSheet({
 	className,
-	productTypes = [],
-	collections = [],
+	productTypes = EMPTY_PRODUCT_TYPES,
+	collections = EMPTY_COLLECTIONS,
 }: ProductsFilterSheetProps) {
 	const DEFAULT_PRICE_RANGE: [number, number] = [0, MAX_PRICE];
 	const router = useRouter();

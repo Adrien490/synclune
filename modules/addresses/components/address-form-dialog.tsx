@@ -35,13 +35,15 @@ interface AddressDialogData extends Record<string, unknown> {
 	address?: UserAddress;
 }
 
+const EMPTY_SUGGESTIONS: SearchAddressResult[] = [];
+
 interface AddressFormDialogProps {
 	addressSuggestions?: SearchAddressResult[];
 	addressSearchError?: boolean;
 }
 
 export function AddressFormDialog({
-	addressSuggestions = [],
+	addressSuggestions = EMPTY_SUGGESTIONS,
 	addressSearchError = false,
 }: AddressFormDialogProps) {
 	const { isOpen, close, data } = useDialog<AddressDialogData>(ADDRESS_DIALOG_ID);

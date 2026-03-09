@@ -1,6 +1,8 @@
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 
+const EMPTY_SEARCH_PARAMS: Record<string, string | string[] | undefined> = {};
+
 interface ProductStatusNavigationProps {
 	currentStatus: ProductStatus | undefined;
 	pathname?: string;
@@ -20,7 +22,7 @@ const STATUS_LABELS: Record<ProductStatus, string> = {
 export function ProductStatusNavigation({
 	currentStatus,
 	pathname = "/admin/catalogue/produits",
-	searchParams = {},
+	searchParams = EMPTY_SEARCH_PARAMS,
 }: ProductStatusNavigationProps) {
 	// Construire les URLs avec les query params existants
 	const buildHref = (status: ProductStatus | "all") => {

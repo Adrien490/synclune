@@ -9,6 +9,8 @@ interface BreadcrumbItem {
 	href: string;
 }
 
+const EMPTY_BREADCRUMBS: BreadcrumbItem[] = [];
+
 interface PageHeaderProps {
 	/** Titre principal de la page (h1) */
 	title: string;
@@ -61,7 +63,7 @@ interface PageHeaderProps {
 export function PageHeader({
 	title,
 	description,
-	breadcrumbs = [],
+	breadcrumbs = EMPTY_BREADCRUMBS,
 	actions,
 	descriptionClassName,
 	className,

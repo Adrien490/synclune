@@ -60,8 +60,7 @@ export default async function ProductPage({
 	params: ProductPageParams;
 	searchParams: ProductSearchParams;
 }) {
-	const { slug } = await params;
-	const urlParams = await searchParams;
+	const [{ slug }, urlParams] = await Promise.all([params, searchParams]);
 
 	// Paralléliser toutes les requêtes pour optimiser le TTFB
 	const [admin, productData, wishlistProductIds] = await Promise.all([

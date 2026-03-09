@@ -60,8 +60,7 @@ export async function generateMetadata({
 	params,
 	searchParams,
 }: ProductTypeCategoryPageProps): Promise<Metadata> {
-	const { productTypeSlug } = await params;
-	const searchParamsData = await searchParams;
+	const [{ productTypeSlug }, searchParamsData] = await Promise.all([params, searchParams]);
 
 	// Récupérer le type de produit
 	const productType = await getProductTypeBySlug({ slug: productTypeSlug });
@@ -112,8 +111,7 @@ export default async function ProductTypeCategoryPage({
 	params,
 	searchParams,
 }: ProductTypeCategoryPageProps) {
-	const { productTypeSlug } = await params;
-	const searchParamsData = await searchParams;
+	const [{ productTypeSlug }, searchParamsData] = await Promise.all([params, searchParams]);
 
 	// Récupérer le type de produit et les données du catalogue en parallèle
 	const [productType, catalogData] = await Promise.all([

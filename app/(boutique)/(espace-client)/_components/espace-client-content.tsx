@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/modules/auth/lib/auth";
@@ -28,9 +29,9 @@ export async function EspaceClientContent({ children }: { children: React.ReactN
 					<TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
 					<p>
 						Votre compte est en cours de suppression. Vous pouvez annuler cette demande depuis vos{" "}
-						<a href="/parametres" className="font-medium underline">
+						<Link href="/parametres" className="font-medium underline">
 							paramètres
-						</a>
+						</Link>
 						.
 					</p>
 				</div>
