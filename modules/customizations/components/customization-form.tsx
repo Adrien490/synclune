@@ -12,6 +12,7 @@ import { UploadProgress } from "@/modules/media/components/admin/upload-progress
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
@@ -324,7 +325,7 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 						<field.CheckboxField label="J'accepte la politique de confidentialité" required />
 						<p className="text-muted-foreground ml-7 text-sm leading-relaxed">
 							Consultez notre{" "}
-							<a
+							<Link
 								href="/confidentialite"
 								className="text-foreground underline hover:no-underline"
 								target="_blank"
@@ -332,7 +333,7 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 							>
 								Politique de confidentialité
 								<span className="sr-only"> (ouvre dans un nouvel onglet)</span>
-							</a>
+							</Link>
 						</p>
 					</div>
 				)}

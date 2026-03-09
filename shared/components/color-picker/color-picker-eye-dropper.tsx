@@ -7,6 +7,12 @@ import { PipetteIcon } from "lucide-react";
 import { useColorPicker } from "./color-picker";
 import type { ColorPickerEyeDropperProps } from "./types";
 
+function parseHslFromHex(hex: string) {
+	const color = Color(hex);
+	const [h, s, l] = color.hsl().array();
+	return { h: h ?? 0, s: s ?? 0, l: l ?? 0 };
+}
+
 export const ColorPickerEyeDropper = ({ className, ...props }: ColorPickerEyeDropperProps) => {
 	const { setHue, setSaturation, setLightness, setAlpha } = useColorPicker();
 
@@ -18,19 +24,21 @@ export const ColorPickerEyeDropper = ({ className, ...props }: ColorPickerEyeDro
 			return;
 		}
 
+		let hex: string;
 		try {
 			const eyeDropper = new EyeDropper();
 			const result = await eyeDropper.open();
-			const color = Color(result.sRGBHex);
-			const [h, s, l] = color.hsl().array();
-
-			setHue(h ?? 0);
-			setSaturation(s ?? 0);
-			setLightness(l ?? 0);
-			setAlpha(100);
+			hex = result.sRGBHex;
 		} catch {
 			// L'utilisateur a annulé la sélection
+			return;
 		}
+
+		const { h, s, l } = parseHslFromHex(hex);
+		setHue(h);
+		setSaturation(s);
+		setLightness(l);
+		setAlpha(100);
 	};
 
 	// Ne pas afficher le bouton si l'API n'est pas supportée

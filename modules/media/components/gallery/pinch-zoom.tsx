@@ -90,7 +90,7 @@ export function GalleryPinchZoom({
 				style={{
 					transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,
 					transformOrigin: "center center",
-					willChange: isInteracting ? "transform" : "auto",
+					willChange: isInteracting ? "transform" : undefined,
 				}}
 			>
 				<Image

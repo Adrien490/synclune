@@ -83,7 +83,9 @@ export function Autocomplete<T>({
 	// Delai de blur adapte mobile/desktop
 	const effectiveBlurDelay = isMobile ? AUTOCOMPLETE_DEFAULTS.blurDelayMobile : blurDelay;
 
-	// Sync valeur externe → locale (valid pattern: external prop drives debounced local state)
+	// Sync external value → local state for debounce input display.
+	// NOT derived state: localValue is user-typed (instant), value is debounced (delayed).
+	// Without this sync, external resets (e.g. onSelect clearing value) would not reflect.
 	useEffect(() => {
 		setLocalValue(value);
 	}, [value]);

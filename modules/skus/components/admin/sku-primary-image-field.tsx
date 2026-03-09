@@ -65,20 +65,23 @@ export function SkuPrimaryImageField({
 									return;
 								}
 
+								let res: Awaited<ReturnType<typeof startUpload>>;
 								try {
-									const res = await startUpload(files);
-									const serverData = res?.[0]?.serverData;
-									if (serverData?.url) {
-										onChange({
-											url: serverData.url,
-											thumbnailUrl: undefined,
-											blurDataUrl: serverData.blurDataUrl ?? undefined,
-											altText: productName,
-											mediaType: "IMAGE",
-										});
-									}
+									res = await startUpload(files);
 								} catch {
 									toast.error("Échec de l'upload");
+									return;
+								}
+
+								const serverData = res?.[0]?.serverData;
+								if (serverData?.url) {
+									onChange({
+										url: serverData.url,
+										thumbnailUrl: undefined,
+										blurDataUrl: serverData.blurDataUrl ?? undefined,
+										altText: productName,
+										mediaType: "IMAGE",
+									});
 								}
 							}}
 							onUploadError={(error) => {

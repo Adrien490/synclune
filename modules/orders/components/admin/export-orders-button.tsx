@@ -25,6 +25,11 @@ import { toast } from "sonner";
 
 type PeriodType = "all" | "year" | "month" | "custom";
 
+function parseExportFilename(response: Response): string {
+	const disposition = response.headers.get("Content-Disposition");
+	return disposition?.match(/filename="(.+)"/)?.[1] ?? "export.csv";
+}
+
 export function ExportOrdersButton() {
 	const [open, setOpen] = useState(false);
 	const [isExporting, setIsExporting] = useState(false);
@@ -36,24 +41,24 @@ export function ExportOrdersButton() {
 
 	async function handleExport() {
 		setIsExporting(true);
+		const params = new URLSearchParams({ periodType });
+
+		if (periodType === "year" || periodType === "month") {
+			params.set("year", year);
+		}
+		if (periodType === "month") {
+			params.set("month", month);
+		}
+		if (periodType === "custom") {
+			if (!dateFrom || !dateTo) {
+				toast.error("Veuillez renseigner les dates de début et de fin");
+				return;
+			}
+			params.set("dateFrom", dateFrom);
+			params.set("dateTo", dateTo);
+		}
+
 		try {
-			const params = new URLSearchParams({ periodType });
-
-			if (periodType === "year" || periodType === "month") {
-				params.set("year", year);
-			}
-			if (periodType === "month") {
-				params.set("month", month);
-			}
-			if (periodType === "custom") {
-				if (!dateFrom || !dateTo) {
-					toast.error("Veuillez renseigner les dates de début et de fin");
-					return;
-				}
-				params.set("dateFrom", dateFrom);
-				params.set("dateTo", dateTo);
-			}
-
 			const response = await fetch(`/api/admin/orders/export?${params}`);
 
 			if (!response.ok) {
@@ -65,9 +70,7 @@ export function ExportOrdersButton() {
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement("a");
 			link.href = url;
-			const disposition = response.headers.get("Content-Disposition");
-			const filename = disposition?.match(/filename="(.+)"/)?.[1] ?? "export.csv";
-			link.download = filename;
+			link.download = parseExportFilename(response);
 			link.click();
 			URL.revokeObjectURL(url);
 

@@ -437,7 +437,7 @@ function MaterialSelector({
 							<span className="text-sm">{material.name}</span>
 							{isSelected && (
 								<m.div
-									initial={{ scale: 0, opacity: 0 }}
+									initial={{ scale: 0.85, opacity: 0 }}
 									animate={{ scale: 1, opacity: 1 }}
 									transition={{
 										type: "spring",
@@ -551,7 +551,7 @@ function SizeSelectorGroup({
 							<span className="truncate text-sm font-medium">{size}</span>
 							{isSelected && (
 								<m.div
-									initial={{ scale: 0, opacity: 0 }}
+									initial={{ scale: 0.85, opacity: 0 }}
 									animate={{ scale: 1, opacity: 1 }}
 									transition={{
 										type: "spring",

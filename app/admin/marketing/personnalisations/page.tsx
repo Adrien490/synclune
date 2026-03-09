@@ -30,8 +30,7 @@ interface CustomizationsPageProps {
 export default async function CustomizationsPage({ searchParams }: CustomizationsPageProps) {
 	await connection();
 
-	const params = await searchParams;
-	const stats = await getCustomizationStats();
+	const [params, stats] = await Promise.all([searchParams, getCustomizationStats()]);
 
 	const cursor = getFirstParam(params.cursor);
 	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";

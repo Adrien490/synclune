@@ -10,6 +10,24 @@ interface CachedProduct {
 	image: string | null;
 }
 
+/** Extracts product data (title, og:image) from cached HTML page. */
+function parseCachedProductFromHtml(html: string, requestUrl: string): CachedProduct | null {
+	const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+	const rawTitle = titleMatch?.[1] ?? "";
+	const title = rawTitle.replace(/\s*[|–—-]\s*Synclune.*$/i, "").trim();
+
+	const ogImageMatch = html.match(
+		/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+	);
+	const image = ogImageMatch?.[1] ?? null;
+
+	if (title) {
+		const pathname = new URL(requestUrl).pathname;
+		return { url: pathname, title, image };
+	}
+	return null;
+}
+
 /**
  * Displays product pages cached by the service worker.
  * Reads from the "product-pages" cache and extracts title + og:image from HTML.
@@ -34,26 +52,8 @@ export function CachedProducts() {
 						try {
 							const response = await cache.match(request);
 							if (!response) return null;
-
 							const html = await response.text();
-
-							// Extract title from <title> tag
-							const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-							const rawTitle = titleMatch?.[1] ?? "";
-							// Remove " | Synclune" or similar suffix
-							const title = rawTitle.replace(/\s*[|–—-]\s*Synclune.*$/i, "").trim();
-
-							// Extract og:image from meta tag
-							const ogImageMatch = html.match(
-								/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
-							);
-							const image = ogImageMatch?.[1] ?? null;
-
-							if (title) {
-								const pathname = new URL(request.url).pathname;
-								return { url: pathname, title, image };
-							}
-							return null;
+							return parseCachedProductFromHtml(html, request.url);
 						} catch {
 							return null;
 						}

@@ -24,6 +24,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type Stripe from "stripe";
+
+function extractReceiptUrl(charge: Stripe.PaymentIntent["latest_charge"]): string | null {
+	if (charge && typeof charge !== "string") {
+		return charge.receipt_url ?? null;
+	}
+	return null;
+}
 
 export const metadata: Metadata = {
 	title: "Commande confirmée | Synclune",
@@ -85,10 +93,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 			const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, {
 				expand: ["latest_charge"],
 			});
-			const charge = pi.latest_charge;
-			if (charge && typeof charge !== "string") {
-				receiptUrl = charge.receipt_url ?? null;
-			}
+			receiptUrl = extractReceiptUrl(pi.latest_charge);
 		} catch {
 			// Non-critical: receipt link is optional
 		}

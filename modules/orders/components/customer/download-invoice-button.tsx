@@ -14,8 +14,16 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 
 	async function handleDownload() {
 		setIsDownloading(true);
+		let response: Response;
 		try {
-			const response = await fetch(`/api/orders/${orderNumber}/invoice`);
+			response = await fetch(`/api/orders/${orderNumber}/invoice`);
+		} catch {
+			toast.error("Impossible de télécharger la facture");
+			setIsDownloading(false);
+			return;
+		}
+
+		try {
 			if (!response.ok) {
 				if (response.status === 404) {
 					toast.error("La facture n'est pas encore disponible");
@@ -31,8 +39,6 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 			link.download = `facture-${orderNumber}.pdf`;
 			link.click();
 			URL.revokeObjectURL(url);
-		} catch {
-			toast.error("Impossible de télécharger la facture");
 		} finally {
 			setIsDownloading(false);
 		}
