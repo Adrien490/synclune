@@ -4,7 +4,7 @@ import { useState, useRef, useSyncExternalStore } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
-import { calculateShipping } from "@/modules/orders/services/shipping.service";
+import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { WifiOff } from "lucide-react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
@@ -59,8 +59,8 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const [appliedDiscount, setAppliedDiscount] = useState<NonNullable<
 		ValidateDiscountCodeReturn["discount"]
 	> | null>(null);
+	const [formSnapshot, setFormSnapshot] = useState<CheckoutFormValuesSnapshot | null>(null);
 
-	const formValuesRef = useRef<CheckoutFormValuesSnapshot | null>(null);
 	const headingRef = useRef<HTMLHeadingElement>(null);
 
 	const { form, action, isPending, state } = useCheckoutForm({
@@ -69,17 +69,8 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		onSuccess: handleSuccess,
 	});
 
-	// Read shipping values from form state for total computation and CheckoutSummary
-	const shippingValues = form.state.values.shipping as unknown as Record<string, string>;
-	const country = (shippingValues.country ?? "FR") as ShippingCountry;
-	const postalCode = shippingValues.postalCode ?? "";
-
 	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
-	const shippingRaw = calculateShipping(country, postalCode);
-	const shippingUnavailable = shippingRaw === null;
-	const shipping = shippingRaw ?? 0;
 	const discountAmount = appliedDiscount?.discountAmount ?? 0;
-	const total = subtotal - discountAmount + shipping;
 
 	const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, getServerSnapshot);
 	const shouldReduceMotion = useReducedMotion();
@@ -96,8 +87,8 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		setClientSecret(data.clientSecret);
 		setOrderInfo({ orderId: data.orderId, orderNumber: data.orderNumber });
 
-		if (formValuesRef.current?.shipping) {
-			const s = formValuesRef.current.shipping;
+		if (formSnapshot?.shipping) {
+			const s = formSnapshot.shipping;
 			setSubmittedAddress({
 				fullName: s.fullName,
 				addressLine1: s.addressLine1,
@@ -106,7 +97,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 				postalCode: s.postalCode,
 				country: (s.country || "FR") as ShippingCountry,
 				phoneNumber: s.phoneNumber,
-				email: isGuest ? (formValuesRef.current.email ?? undefined) : undefined,
+				email: isGuest ? (formSnapshot.email ?? undefined) : undefined,
 			});
 		}
 
@@ -131,76 +122,97 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		: "Étape 1 sur 2 : Adresse de livraison";
 
 	return (
-		<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
-			<div className="space-y-6">
-				<h1 ref={headingRef} tabIndex={-1} className="sr-only">
-					Paiement sécurisé
-				</h1>
+		<form.Subscribe
+			selector={(s) => ({
+				country: s.values.shipping.country,
+				postalCode: s.values.shipping.postalCode,
+			})}
+		>
+			{({ country: rawCountry, postalCode }) => {
+				const country = ((rawCountry as string) || "FR") as ShippingCountry;
+				const shippingRaw = calculateShipping(country, postalCode as string);
+				const shippingUnavailable = shippingRaw === null;
+				const shipping = shippingRaw ?? 0;
+				const total = subtotal - discountAmount + shipping;
+				const shippingInfo = getShippingInfo(country, postalCode as string);
 
-				{/* Screen reader announcement for step changes */}
-				<div className="sr-only" aria-live="polite" aria-atomic="true" role="status">
-					{currentStepLabel}
-				</div>
+				return (
+					<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
+						<div className="space-y-6">
+							<h1 ref={headingRef} tabIndex={-1} className="sr-only">
+								Paiement sécurisé
+							</h1>
 
-				{!isOnline && (
-					<Alert variant="destructive" role="alert" aria-live="assertive">
-						<WifiOff className="size-4" />
-						<AlertTitle>Connexion internet perdue</AlertTitle>
-						<AlertDescription>
-							Vérifiez votre connexion internet avant de continuer. Le paiement nécessite une
-							connexion active.
-						</AlertDescription>
-					</Alert>
-				)}
+							{/* Screen reader announcement for step changes */}
+							<div className="sr-only" aria-live="polite" aria-atomic="true" role="status">
+								{currentStepLabel}
+							</div>
 
-				<ErrorBoundary
-					errorMessage="Impossible de charger le formulaire"
-					className="bg-muted/50 rounded-lg border p-8"
-				>
-					<AnimatePresence mode="wait">
-						{clientSecret && submittedAddress ? (
-							<PaymentStep
-								key="payment"
-								submittedAddress={submittedAddress}
-								onEdit={handleEdit}
-								clientSecret={clientSecret}
-								orderNumber={orderInfo?.orderNumber ?? null}
-								fadeSlide={fadeSlide}
-							/>
-						) : (
-							<AddressStep
-								key="address"
-								form={form}
-								action={action}
-								isPending={isPending}
-								state={state}
-								isGuest={isGuest}
-								session={session}
-								addresses={addresses}
-								defaultAddressId={defaultAddress?.id ?? null}
-								appliedDiscount={appliedDiscount}
-								onDiscountApplied={setAppliedDiscount}
-								subtotal={subtotal}
-								shippingUnavailable={shippingUnavailable}
-								total={total}
-								country={country}
+							{!isOnline && (
+								<Alert variant="destructive" role="alert" aria-live="assertive">
+									<WifiOff className="size-4" />
+									<AlertTitle>Connexion internet perdue</AlertTitle>
+									<AlertDescription>
+										Vérifiez votre connexion internet avant de continuer. Le paiement nécessite une
+										connexion active.
+									</AlertDescription>
+								</Alert>
+							)}
+
+							<ErrorBoundary
+								errorMessage="Impossible de charger le formulaire"
+								className="bg-muted/50 rounded-lg border p-8"
+							>
+								<AnimatePresence mode="wait">
+									{clientSecret && submittedAddress ? (
+										<PaymentStep
+											key="payment"
+											submittedAddress={submittedAddress}
+											onEdit={handleEdit}
+											clientSecret={clientSecret}
+											orderNumber={orderInfo?.orderNumber ?? null}
+											fadeSlide={fadeSlide}
+										/>
+									) : (
+										<AddressStep
+											key="address"
+											form={form}
+											action={action}
+											isPending={isPending}
+											state={state}
+											isGuest={isGuest}
+											userEmail={session?.user.email ?? null}
+											addresses={addresses}
+											defaultAddressId={defaultAddress?.id ?? null}
+											appliedDiscount={appliedDiscount}
+											onDiscountApplied={setAppliedDiscount}
+											onBeforeSubmit={setFormSnapshot}
+											shippingUnavailable={shippingUnavailable}
+											total={total}
+											country={country}
+											cart={cart}
+											fadeSlide={fadeSlide}
+										/>
+									)}
+								</AnimatePresence>
+							</ErrorBoundary>
+						</div>
+
+						<div className="order-first lg:order-0">
+							<CheckoutSummary
 								cart={cart}
-								formValuesRef={formValuesRef}
-								fadeSlide={fadeSlide}
+								subtotal={subtotal}
+								shipping={shipping}
+								shippingUnavailable={shippingUnavailable}
+								shippingInfo={shippingInfo}
+								total={total}
+								discountAmount={discountAmount}
+								appliedDiscount={appliedDiscount}
 							/>
-						)}
-					</AnimatePresence>
-				</ErrorBoundary>
-			</div>
-
-			<div className="order-first lg:order-none">
-				<CheckoutSummary
-					cart={cart}
-					selectedCountry={country}
-					postalCode={postalCode}
-					appliedDiscount={appliedDiscount}
-				/>
-			</div>
-		</div>
+						</div>
+					</div>
+				);
+			}}
+		</form.Subscribe>
 	);
 }

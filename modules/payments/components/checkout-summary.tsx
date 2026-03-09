@@ -7,9 +7,8 @@ import {
 	CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible";
 import { Separator } from "@/shared/components/ui/separator";
-import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
+import type { ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
-import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { ChevronDown, Shield } from "lucide-react";
@@ -22,46 +21,33 @@ type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
 
 interface CheckoutSummaryProps {
 	cart: NonNullable<GetCartReturn>;
-	selectedCountry?: ShippingCountry;
-	postalCode?: string;
+	subtotal: number;
+	shipping: number;
+	shippingUnavailable: boolean;
+	shippingInfo: ShippingRate | null;
+	total: number;
+	discountAmount: number;
 	appliedDiscount?: AppliedDiscount | null;
 }
 
 /**
  * Composant résumé de la commande pour la page checkout
  * Affiche le récapitulatif des articles, frais de port et total
- * Détecte automatiquement la Corse via le code postal pour afficher les bons frais
  * Mobile: collapsible summary. Desktop: sticky sidebar.
  */
 export function CheckoutSummary({
 	cart,
-	selectedCountry = "FR",
-	postalCode,
+	subtotal,
+	shipping,
+	shippingUnavailable,
+	shippingInfo,
+	total,
+	discountAmount,
 	appliedDiscount,
 }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
 
-	// Calculer le nombre total d'articles
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-
-	// Calculer le sous-total (somme des prix snapshot * quantités)
-	const subtotal = cart.items.reduce((sum, item) => {
-		return sum + item.priceAtAdd * item.quantity;
-	}, 0);
-
-	// Frais de port (dynamique selon le pays et code postal pour la Corse)
-	const shippingRaw = calculateShipping(selectedCountry, postalCode);
-	const shippingUnavailable = shippingRaw === null;
-	const shipping = shippingRaw ?? 0;
-
-	// Delivery estimate
-	const shippingInfo = getShippingInfo(selectedCountry, postalCode);
-
-	// Discount
-	const discountAmount = appliedDiscount?.discountAmount ?? 0;
-
-	// Total
-	const total = subtotal - discountAmount + shipping;
 
 	const summaryContent = (
 		<>

@@ -204,7 +204,6 @@ export default async function ProductPage({
 										product={product}
 										defaultSku={selectedSku}
 										cartsCount={cartsCount}
-										reviewStats={reviewStats}
 										isInWishlist={isInWishlist}
 									/>
 								</section>

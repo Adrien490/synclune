@@ -9,7 +9,7 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "sonner";
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState, useEffect } from "react";
 import {
 	DRAFT_VERSION,
@@ -126,14 +126,10 @@ export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
 		}
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps -- form ref is stable
 
-	// Subscribe to form errors for display
-	const formErrors = useStore(form.store, (formState) => formState.errors);
-
 	return {
 		form,
 		state,
 		action,
 		isPending,
-		formErrors,
 	};
 };

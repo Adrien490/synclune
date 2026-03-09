@@ -125,7 +125,7 @@ describe("useCheckoutForm", () => {
 		localStorage.clear();
 	});
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action, and isPending", () => {
 		setupDefaults();
 
 		const { result } = renderHook(() => useCheckoutForm({ session: null, addresses: null }));
@@ -134,7 +134,6 @@ describe("useCheckoutForm", () => {
 		expect(result.current).toHaveProperty("state");
 		expect(result.current).toHaveProperty("action");
 		expect(result.current).toHaveProperty("isPending");
-		expect(result.current).toHaveProperty("formErrors");
 	});
 
 	it("calls useActionState with the action", () => {

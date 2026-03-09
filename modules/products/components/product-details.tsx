@@ -10,19 +10,14 @@ import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
 import { Separator } from "@/shared/components/ui/separator";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { RatingStars } from "@/shared/components/rating-stars";
-import { formatRating } from "@/shared/utils/rating-utils";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
-import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 
 interface ProductDetailsProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
 	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
 	cartsCount?: number;
-	/** Review stats for micro-summary near CTA */
-	reviewStats?: ProductReviewStatistics;
 	/** Whether this product is in the user's wishlist */
 	isInWishlist?: boolean;
 }
@@ -43,7 +38,6 @@ export function ProductDetails({
 	product,
 	defaultSku,
 	cartsCount,
-	reviewStats,
 	isInWishlist,
 }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
@@ -79,22 +73,7 @@ export function ProductDetails({
 				</m.div>
 			</AnimatePresence>
 
-			{/* 2. Review micro-summary near decision zone (Baymard: social proof near CTA) */}
-			{reviewStats && reviewStats.totalCount > 0 && (
-				<a
-					href="#reviews"
-					className="text-muted-foreground hover:text-foreground flex w-fit items-center gap-2 text-sm transition-colors"
-					aria-label={`Note moyenne: ${formatRating(reviewStats.averageRating)} sur 5, basée sur ${reviewStats.totalCount} avis. Voir les avis`}
-				>
-					<RatingStars rating={reviewStats.averageRating} maxRating={5} size="sm" />
-					<span className="text-foreground font-medium">
-						{formatRating(reviewStats.averageRating)}
-					</span>
-					<span>({reviewStats.totalCount} avis)</span>
-				</a>
-			)}
-
-			{/* 3. Sélection des variantes */}
+			{/* 2. Sélection des variantes */}
 			<VariantSelector product={product} defaultSku={defaultSku} />
 
 			{/* 4. CTA principal (monté pour réduire la distance au fold - Baymard) */}

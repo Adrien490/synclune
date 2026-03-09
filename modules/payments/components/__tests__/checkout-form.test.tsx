@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/modules/orders/services/shipping.service", () => ({
 	calculateShipping: vi.fn().mockReturnValue(490),
+	getShippingInfo: vi.fn().mockReturnValue(null),
 }));
 
 vi.mock("@/modules/payments/hooks/use-checkout-form", () => ({
@@ -16,9 +17,9 @@ vi.mock("@/modules/payments/components/checkout-summary", () => ({
 }));
 
 vi.mock("@/modules/payments/components/address-step", () => ({
-	AddressStep: ({ isGuest, session }: { isGuest: boolean; session: unknown }) => (
+	AddressStep: ({ isGuest, userEmail }: { isGuest: boolean; userEmail: string | null }) => (
 		<div data-testid="address-step" data-is-guest={String(isGuest)}>
-			{!isGuest && !!session && <span data-testid="logged-in-indicator">connecté</span>}
+			{!isGuest && !!userEmail && <span data-testid="logged-in-indicator">connecté</span>}
 		</div>
 	),
 }));
@@ -74,7 +75,26 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 		}: {
 			children: (state: unknown) => React.ReactNode;
 			selector: (s: unknown) => unknown;
-		}) => children(selector({ values: {}, canSubmit: true, submissionAttempts: 0, fieldMeta: {} })),
+		}) =>
+			children(
+				selector({
+					values: {
+						email: "",
+						shipping: {
+							fullName: "",
+							addressLine1: "",
+							addressLine2: "",
+							city: "",
+							postalCode: "",
+							country: "FR",
+							phoneNumber: "",
+						},
+					},
+					canSubmit: true,
+					submissionAttempts: 0,
+					fieldMeta: {},
+				}),
+			),
 		AppField: ({ children }: { children: (field: unknown) => React.ReactNode }) => children({}),
 		...overrides,
 	};
@@ -112,7 +132,6 @@ beforeEach(() => {
 		action: vi.fn() as ReturnType<typeof useCheckoutForm>["action"],
 		isPending: false,
 		state: undefined,
-		formErrors: [],
 	});
 });
 

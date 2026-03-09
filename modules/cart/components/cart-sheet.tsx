@@ -209,6 +209,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 					)}
 					{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
 					<div
+						className="hidden sm:block"
 						onClick={(e) => {
 							if ((e.target as HTMLElement).closest("a")) {
 								close();

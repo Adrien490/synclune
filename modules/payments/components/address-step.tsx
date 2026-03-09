@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
-import type { Session } from "@/modules/auth/lib/auth";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { AlertCircle, Info, Loader2, Lock, Mail } from "lucide-react";
@@ -25,7 +24,6 @@ import type { UserAddress } from "@/modules/addresses/types/user-addresses.types
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import type { useCheckoutForm } from "@/modules/payments/hooks/use-checkout-form";
 import type { CheckoutFormValuesSnapshot } from "@/modules/payments/types/checkout.types";
-import type { RefObject, MutableRefObject } from "react";
 
 type CheckoutFormApi = ReturnType<typeof useCheckoutForm>["form"];
 type CheckoutAction = ReturnType<typeof useCheckoutForm>["action"];
@@ -53,19 +51,16 @@ interface AddressStepProps {
 	isPending: boolean;
 	state: CheckoutFormState;
 	isGuest: boolean;
-	session: Session | null;
+	userEmail: string | null;
 	addresses: GetUserAddressesReturn | null;
 	defaultAddressId: string | null;
 	appliedDiscount: NonNullable<ValidateDiscountCodeReturn["discount"]> | null;
 	onDiscountApplied: (discount: NonNullable<ValidateDiscountCodeReturn["discount"]> | null) => void;
-	subtotal: number;
+	onBeforeSubmit: (snapshot: CheckoutFormValuesSnapshot) => void;
 	shippingUnavailable: boolean;
 	total: number;
 	country: ShippingCountry;
 	cart: NonNullable<GetCartReturn>;
-	formValuesRef:
-		| RefObject<CheckoutFormValuesSnapshot | null>
-		| MutableRefObject<CheckoutFormValuesSnapshot | null>;
 	fadeSlide: Record<string, unknown>;
 }
 
@@ -75,17 +70,16 @@ export function AddressStep({
 	isPending,
 	state,
 	isGuest,
-	session,
+	userEmail,
 	addresses,
 	defaultAddressId,
 	appliedDiscount,
 	onDiscountApplied,
-	subtotal,
+	onBeforeSubmit,
 	shippingUnavailable,
 	total,
 	country,
 	cart,
-	formValuesRef,
 	fadeSlide,
 }: AddressStepProps) {
 	const [selectedAddressId, setSelectedAddressId] = useState<string | null>(defaultAddressId);
@@ -96,6 +90,8 @@ export function AddressStep({
 	const [showAddressLine2, setShowAddressLine2] = useState(
 		!!form.state.values.shipping.addressLine2,
 	);
+
+	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
 
 	const handleSelectAddress = (address: UserAddress) => {
 		setSelectedAddressId(address.id);
@@ -118,10 +114,10 @@ export function AddressStep({
 			action={action}
 			className="space-y-6"
 			onSubmit={() => {
-				formValuesRef.current = {
+				onBeforeSubmit({
 					email: form.state.values.email as unknown as string | undefined,
 					shipping: form.state.values.shipping as unknown as CheckoutFormValuesSnapshot["shipping"],
-				};
+				});
 				void form.handleSubmit();
 			}}
 		>
@@ -312,11 +308,11 @@ export function AddressStep({
 				)}
 
 				{/* Email display for logged-in users */}
-				{!isGuest && session?.user.email && (
+				{!isGuest && userEmail && (
 					<div className="border-primary/10 bg-primary/3 flex items-center gap-2 rounded-xl border p-3.5 text-sm">
 						<Mail className="text-muted-foreground h-4 w-4" />
 						<span className="text-muted-foreground">Email :</span>
-						<span className="font-medium">{session.user.email}</span>
+						<span className="font-medium">{userEmail}</span>
 					</div>
 				)}
 
@@ -507,6 +503,11 @@ export function AddressStep({
 				<form.AppField
 					name="termsAccepted"
 					validators={{
+						onSubmit: ({ value }: { value: boolean }) => {
+							if (!value) {
+								return "Vous devez accepter les conditions générales de vente";
+							}
+						},
 						onChange: ({ value }: { value: boolean }) => {
 							if (!value) {
 								return "Vous devez accepter les conditions générales de vente";

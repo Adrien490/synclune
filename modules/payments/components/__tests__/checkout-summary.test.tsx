@@ -1,23 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ─── Hoisted mocks ──────────────────────────────────────────────────────────
 
-const { mockCalculateShipping, mockGetShippingInfo, mockFormatEuro, mockOpenCart } = vi.hoisted(
-	() => ({
-		mockCalculateShipping: vi.fn(),
-		mockGetShippingInfo: vi.fn(() => null),
-		mockFormatEuro: vi.fn((n: number) => `${(n / 100).toFixed(2)} €`),
-		mockOpenCart: vi.fn(),
-	}),
-);
+const { mockFormatEuro, mockOpenCart } = vi.hoisted(() => ({
+	mockFormatEuro: vi.fn((n: number) => `${(n / 100).toFixed(2)} €`),
+	mockOpenCart: vi.fn(),
+}));
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
-
-vi.mock("@/modules/orders/services/shipping.service", () => ({
-	calculateShipping: mockCalculateShipping,
-	getShippingInfo: mockGetShippingInfo,
-}));
 
 vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: mockFormatEuro,
@@ -156,13 +147,18 @@ function createDiscount(overrides: Partial<AppliedDiscount> = {}): AppliedDiscou
 	};
 }
 
+const defaultProps = {
+	subtotal: 2500,
+	shipping: 600,
+	shippingUnavailable: false,
+	shippingInfo: null,
+	total: 3100,
+	discountAmount: 0,
+};
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("CheckoutSummary", () => {
-	beforeEach(() => {
-		mockCalculateShipping.mockReturnValue(600);
-	});
-
 	describe("item rendering", () => {
 		it("renders all cart item titles", () => {
 			const cart = createCart([
@@ -189,7 +185,7 @@ describe("CheckoutSummary", () => {
 				}),
 			]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText("Bague Lune").length).toBeGreaterThanOrEqual(1);
 			expect(screen.getAllByText("Collier Etoile").length).toBeGreaterThanOrEqual(1);
@@ -208,7 +204,7 @@ describe("CheckoutSummary", () => {
 			});
 			const cart = createCart([item]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			const img = screen.getAllByRole("img")[0]!;
 			expect(img.getAttribute("src")).toBe("/img/ring.jpg");
@@ -218,7 +214,7 @@ describe("CheckoutSummary", () => {
 		it("renders N/A placeholder when sku has no images", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText("N/A").length).toBeGreaterThanOrEqual(1);
 		});
@@ -226,7 +222,7 @@ describe("CheckoutSummary", () => {
 		it("shows quantity for each item", () => {
 			const cart = createCart([createCartItem({ quantity: 3 })]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText("Qté: 3").length).toBeGreaterThanOrEqual(1);
 		});
@@ -244,7 +240,7 @@ describe("CheckoutSummary", () => {
 			});
 			const cart = createCart([item]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText("Taille: M").length).toBeGreaterThanOrEqual(1);
 		});
@@ -262,7 +258,7 @@ describe("CheckoutSummary", () => {
 			});
 			const cart = createCart([item]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText("Couleur: Or").length).toBeGreaterThanOrEqual(1);
 		});
@@ -280,7 +276,7 @@ describe("CheckoutSummary", () => {
 			});
 			const cart = createCart([item]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText("Matière: Argent 925").length).toBeGreaterThanOrEqual(1);
 		});
@@ -288,7 +284,7 @@ describe("CheckoutSummary", () => {
 		it("does not render size line when size is null", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.queryAllByText(/Taille:/)).toHaveLength(0);
 		});
@@ -296,7 +292,7 @@ describe("CheckoutSummary", () => {
 		it("does not render color line when color is null", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.queryAllByText(/Couleur:/)).toHaveLength(0);
 		});
@@ -304,29 +300,25 @@ describe("CheckoutSummary", () => {
 		it("does not render material line when material is null", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.queryAllByText(/Matière:/)).toHaveLength(0);
 		});
 	});
 
-	describe("totals calculation", () => {
-		it("calculates subtotal as sum of priceAtAdd * quantity for each item", () => {
-			const cart = createCart([
-				createCartItem({ id: "item-1", priceAtAdd: 2500, quantity: 2 }),
-				createCartItem({ id: "item-2", priceAtAdd: 1000, quantity: 1 }),
-			]);
+	describe("totals display", () => {
+		it("formats and displays the passed subtotal", () => {
+			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} subtotal={6000} />);
 
-			// subtotal = 2500*2 + 1000*1 = 6000
 			expect(mockFormatEuro).toHaveBeenCalledWith(6000);
 		});
 
 		it("shows total items count in singular for one item", () => {
 			const cart = createCart([createCartItem({ quantity: 1 })]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText(/Sous-total \(1 article\)/).length).toBeGreaterThanOrEqual(1);
 		});
@@ -337,56 +329,53 @@ describe("CheckoutSummary", () => {
 				createCartItem({ id: "item-2", quantity: 3 }),
 			]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			// totalItems = 2 + 3 = 5
 			expect(screen.getAllByText(/Sous-total \(5 articles\)/).length).toBeGreaterThanOrEqual(1);
 		});
 
-		it("calls calculateShipping with selectedCountry and postalCode", () => {
+		it("displays the passed shipping cost", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} selectedCountry="BE" postalCode="1000" />);
-
-			expect(mockCalculateShipping).toHaveBeenCalledWith("BE", "1000");
-		});
-
-		it("calls calculateShipping with default FR country when not provided", () => {
-			const cart = createCart([createCartItem()]);
-
-			render(<CheckoutSummary cart={cart} />);
-
-			expect(mockCalculateShipping).toHaveBeenCalledWith("FR", undefined);
-		});
-
-		it("displays shipping cost from calculateShipping", () => {
-			mockCalculateShipping.mockReturnValue(600);
-			const cart = createCart([createCartItem()]);
-
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} shipping={600} />);
 
 			expect(mockFormatEuro).toHaveBeenCalledWith(600);
 		});
 
-		it("calculates total as subtotal - discountAmount + shipping", () => {
-			mockCalculateShipping.mockReturnValue(600);
-			const cart = createCart([createCartItem({ priceAtAdd: 5000, quantity: 1 })]);
-			const discount = createDiscount({ discountAmount: 500 });
+		it("displays the passed total", () => {
+			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} total={5100} />);
 
-			// total = 5000 - 500 + 600 = 5100
 			expect(mockFormatEuro).toHaveBeenCalledWith(5100);
 		});
+	});
 
-		it("calculates total without discount when no discount applied", () => {
-			mockCalculateShipping.mockReturnValue(600);
-			const cart = createCart([createCartItem({ priceAtAdd: 5000, quantity: 1 })]);
+	describe("shipping unavailable", () => {
+		it("shows 'Indisponible' when shippingUnavailable is true", () => {
+			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} shippingUnavailable={true} />);
 
-			// total = 5000 - 0 + 600 = 5600
-			expect(mockFormatEuro).toHaveBeenCalledWith(5600);
+			expect(screen.getAllByText("Indisponible").length).toBeGreaterThanOrEqual(1);
+		});
+
+		it("shows shipping info when provided", () => {
+			const cart = createCart([createCartItem()]);
+			const shippingInfo = {
+				estimatedDays: "2-3 jours ouvrés",
+				amount: 600,
+				displayName: "France",
+			};
+
+			render(
+				<CheckoutSummary cart={cart} {...defaultProps} shippingInfo={shippingInfo as never} />,
+			);
+
+			expect(screen.getAllByText(/Délai estimé : 2-3 jours ouvrés/).length).toBeGreaterThanOrEqual(
+				1,
+			);
 		});
 	});
 
@@ -395,7 +384,14 @@ describe("CheckoutSummary", () => {
 			const cart = createCart([createCartItem()]);
 			const discount = createDiscount({ code: "SAVE10", discountAmount: 500 });
 
-			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
+			render(
+				<CheckoutSummary
+					cart={cart}
+					{...defaultProps}
+					discountAmount={500}
+					appliedDiscount={discount}
+				/>,
+			);
 
 			expect(screen.getAllByText(/Réduction \(SAVE10\)/).length).toBeGreaterThanOrEqual(1);
 		});
@@ -405,7 +401,14 @@ describe("CheckoutSummary", () => {
 			const cart = createCart([createCartItem()]);
 			const discount = createDiscount({ discountAmount: 500 });
 
-			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
+			render(
+				<CheckoutSummary
+					cart={cart}
+					{...defaultProps}
+					discountAmount={500}
+					appliedDiscount={discount}
+				/>,
+			);
 
 			expect(screen.getAllByText(/-5\.00 €/).length).toBeGreaterThanOrEqual(1);
 		});
@@ -413,7 +416,7 @@ describe("CheckoutSummary", () => {
 		it("hides discount line when appliedDiscount is null", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} appliedDiscount={null} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} appliedDiscount={null} />);
 
 			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
 		});
@@ -421,7 +424,7 @@ describe("CheckoutSummary", () => {
 		it("hides discount line when appliedDiscount is undefined", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
 		});
@@ -430,7 +433,14 @@ describe("CheckoutSummary", () => {
 			const cart = createCart([createCartItem()]);
 			const discount = createDiscount({ discountAmount: 0 });
 
-			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
+			render(
+				<CheckoutSummary
+					cart={cart}
+					{...defaultProps}
+					discountAmount={0}
+					appliedDiscount={discount}
+				/>,
+			);
 
 			expect(screen.queryAllByText(/Réduction/)).toHaveLength(0);
 		});
@@ -439,7 +449,14 @@ describe("CheckoutSummary", () => {
 			const cart = createCart([createCartItem()]);
 			const discount = createDiscount({ code: "SUMMER20", discountAmount: 1000 });
 
-			render(<CheckoutSummary cart={cart} appliedDiscount={discount} />);
+			render(
+				<CheckoutSummary
+					cart={cart}
+					{...defaultProps}
+					discountAmount={1000}
+					appliedDiscount={discount}
+				/>,
+			);
 
 			expect(screen.getAllByText(/SUMMER20/).length).toBeGreaterThanOrEqual(1);
 		});
@@ -449,7 +466,7 @@ describe("CheckoutSummary", () => {
 		it("renders a sticky card on desktop", () => {
 			const cart = createCart([createCartItem()]);
 
-			const { container } = render(<CheckoutSummary cart={cart} />);
+			const { container } = render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			const stickyCard = container.querySelector('[class*="sticky"]');
 			expect(stickyCard).not.toBeNull();
@@ -458,7 +475,7 @@ describe("CheckoutSummary", () => {
 		it("renders the 'Votre commande' heading on desktop", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getByText("Votre commande")).toBeInTheDocument();
 		});
@@ -468,7 +485,7 @@ describe("CheckoutSummary", () => {
 		it("renders a collapsible for mobile", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getByTestId("collapsible")).toBeInTheDocument();
 		});
@@ -479,7 +496,7 @@ describe("CheckoutSummary", () => {
 				createCartItem({ id: "item-2", quantity: 1 }),
 			]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getByTestId("collapsible-trigger").textContent).toContain("3 articles");
 		});
@@ -489,7 +506,7 @@ describe("CheckoutSummary", () => {
 		it("renders payment icons", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByTestId("visa-icon").length).toBeGreaterThanOrEqual(1);
 			expect(screen.getAllByTestId("mastercard-icon").length).toBeGreaterThanOrEqual(1);
@@ -499,7 +516,7 @@ describe("CheckoutSummary", () => {
 		it("renders secure payment message", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText("Paiement 100% sécurisé").length).toBeGreaterThanOrEqual(1);
 		});
@@ -507,7 +524,7 @@ describe("CheckoutSummary", () => {
 		it("renders return policy and CGV links", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(screen.getAllByText("Politique de retour").length).toBeGreaterThanOrEqual(1);
 			expect(screen.getAllByText("CGV").length).toBeGreaterThanOrEqual(1);
@@ -516,7 +533,7 @@ describe("CheckoutSummary", () => {
 		it("renders the TVA notice", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(
 				screen.getAllByText("TVA non applicable, art. 293 B du CGI").length,
@@ -528,7 +545,7 @@ describe("CheckoutSummary", () => {
 		it("renders the edit cart button", () => {
 			const cart = createCart([createCartItem()]);
 
-			render(<CheckoutSummary cart={cart} />);
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
 			expect(
 				screen.getAllByRole("button", { name: "Modifier mon panier" }).length,
