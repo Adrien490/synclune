@@ -60,9 +60,8 @@ function InputGroupAddon({
 	...props
 }: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
 	return (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- click focuses adjacent input
 		<div
-			role="group"
+			role="presentation"
 			data-slot="input-group-addon"
 			data-align={align}
 			className={cn(inputGroupAddonVariants({ align }), className)}
@@ -71,6 +70,14 @@ function InputGroupAddon({
 					return;
 				}
 				e.currentTarget.parentElement?.querySelector("input")?.focus();
+			}}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					if ((e.target as HTMLElement).closest("button")) {
+						return;
+					}
+					e.currentTarget.parentElement?.querySelector("input")?.focus();
+				}
 			}}
 			{...props}
 		/>

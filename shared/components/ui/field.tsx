@@ -210,8 +210,8 @@ function FieldError({
 
 		return (
 			<ul className="ml-4 flex list-disc flex-col gap-1">
-				{errorMessages.map((message, index) => (
-					<li key={`error-${index}`}>{message}</li>
+				{errorMessages.map((message) => (
+					<li key={message}>{message}</li>
 				))}
 			</ul>
 		);

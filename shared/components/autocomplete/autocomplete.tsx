@@ -64,11 +64,6 @@ export function Autocomplete<T>({
 	// Etats
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(-1);
-	const [prevItemsLength, setPrevItemsLength] = useState(items.length);
-	if (prevItemsLength !== items.length) {
-		setPrevItemsLength(items.length);
-		setActiveIndex(-1);
-	}
 
 	// Etat local pour le debounce (affichage immediat)
 	const [localValue, setLocalValue] = useState(value);
@@ -88,14 +83,17 @@ export function Autocomplete<T>({
 	// Delai de blur adapte mobile/desktop
 	const effectiveBlurDelay = isMobile ? AUTOCOMPLETE_DEFAULTS.blurDelayMobile : blurDelay;
 
+	// Reset active index when items change
+	useEffect(() => {
+		setActiveIndex(-1);
+	}, [items.length]);
+
 	// Sync external value → local state for debounce input display.
 	// NOT derived state: localValue is user-typed (instant), value is debounced (delayed).
 	// Without this sync, external resets (e.g. onSelect clearing value) would not reflect.
-	const [prevValue, setPrevValue] = useState(value);
-	if (prevValue !== value) {
-		setPrevValue(value);
+	useEffect(() => {
 		setLocalValue(value);
-	}
+	}, [value]);
 
 	// Scroll automatique vers l'item actif
 	useEffect(() => {
@@ -247,7 +245,7 @@ export function Autocomplete<T>({
 
 		return (
 			<m.div
-				key={index}
+				key={getItemLabel(item)}
 				id={getItemId(index)}
 				role="option"
 				aria-selected={isActive}

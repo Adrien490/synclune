@@ -257,8 +257,8 @@ export function CreateProductForm({
 										)}
 										{field.state.meta.errors.length > 0 && (
 											<div role="alert" className="text-destructive space-y-1 text-center text-sm">
-												{field.state.meta.errors.map((error, index) => (
-													<p key={`error-${index}`}>{String(error)}</p>
+												{field.state.meta.errors.map((error) => (
+													<p key={String(error)}>{String(error)}</p>
 												))}
 											</div>
 										)}

@@ -209,8 +209,8 @@ export function EditProductMediaSection({
 			/>
 			{field.state.meta.errors.length > 0 && (
 				<ul className="text-destructive mt-2 list-none space-y-1 text-sm" role="alert">
-					{(field.state.meta.errors as string[]).map((error, i) => (
-						<li key={`error-${i}`}>{error}</li>
+					{(field.state.meta.errors as string[]).map((error) => (
+						<li key={error}>{error}</li>
 					))}
 				</ul>
 			)}

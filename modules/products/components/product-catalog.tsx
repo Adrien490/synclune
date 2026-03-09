@@ -85,7 +85,7 @@ export function ProductCatalog({
 	jsonLd,
 	breadcrumbs,
 }: ProductCatalogProps) {
-	const hasActiveFilters = activeFiltersCount > 0;
+	const hasActiveFilters = activeFiltersCount > 0 || !!activeProductType;
 
 	// Configuration de la page
 	const pageTitle = searchTerm
@@ -168,6 +168,7 @@ export function ProductCatalog({
 								colors={colors}
 								materials={materials}
 								productTypes={productTypes}
+								activeProductType={activeProductType}
 							/>
 						)}
 					</Suspense>

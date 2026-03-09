@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useReducer, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
 	ResponsiveDialog,
@@ -35,33 +35,65 @@ type DiscountUsagesDialogData = {
 	[key: string]: unknown;
 };
 
+type UsagesState = {
+	usages: DiscountUsageItem[];
+	totalAmount: number;
+	isLoading: boolean;
+	error: string | null;
+};
+
+type UsagesAction =
+	| { type: "FETCH_START" }
+	| { type: "FETCH_SUCCESS"; usages: DiscountUsageItem[]; totalAmount: number }
+	| { type: "FETCH_ERROR"; error: string };
+
+function usagesReducer(state: UsagesState, action: UsagesAction): UsagesState {
+	switch (action.type) {
+		case "FETCH_START":
+			return { ...state, isLoading: true, error: null };
+		case "FETCH_SUCCESS":
+			return {
+				usages: action.usages,
+				totalAmount: action.totalAmount,
+				isLoading: false,
+				error: null,
+			};
+		case "FETCH_ERROR":
+			return { ...state, isLoading: false, error: action.error };
+	}
+}
+
 export function DiscountUsagesDialog() {
 	const { isOpen, data, close } = useDialog<DiscountUsagesDialogData>(DISCOUNT_USAGES_DIALOG_ID);
-	const [usages, setUsages] = useState<DiscountUsageItem[]>([]);
-	const [totalAmount, setTotalAmount] = useState(0);
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const [state, dispatch] = useReducer(usagesReducer, {
+		usages: [],
+		totalAmount: 0,
+		isLoading: false,
+		error: null,
+	});
+
+	const { usages, totalAmount, isLoading, error } = state;
 
 	useEffect(() => {
 		if (isOpen && data) {
 			queueMicrotask(() => {
-				setIsLoading(true);
-				setError(null);
+				dispatch({ type: "FETCH_START" });
 			});
 
 			getDiscountUsages(data.discountId)
 				.then((result) => {
 					if ("error" in result) {
-						setError(result.error);
+						dispatch({ type: "FETCH_ERROR", error: result.error });
 					} else {
-						setUsages(result.usages);
-						setTotalAmount(result.totalAmount);
+						dispatch({
+							type: "FETCH_SUCCESS",
+							usages: result.usages,
+							totalAmount: result.totalAmount,
+						});
 					}
-					setIsLoading(false);
 				})
 				.catch(() => {
-					setError("Erreur lors du chargement");
-					setIsLoading(false);
+					dispatch({ type: "FETCH_ERROR", error: "Erreur lors du chargement" });
 				});
 		}
 	}, [isOpen, data]);

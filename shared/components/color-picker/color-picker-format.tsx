@@ -79,7 +79,7 @@ export function ColorPickerFormat({ className, ...props }: ColorPickerFormatProp
 							"bg-secondary min-h-11 rounded-r-none px-2 text-sm shadow-none md:h-8 md:text-xs",
 							index && "rounded-l-none",
 						)}
-						key={index}
+						key={labels[index]}
 						readOnly
 						aria-readonly="true"
 						aria-label={labels[index]}
@@ -135,7 +135,7 @@ export function ColorPickerFormat({ className, ...props }: ColorPickerFormatProp
 							"bg-secondary min-h-11 rounded-r-none px-2 text-sm shadow-none md:h-8 md:text-xs",
 							index && "rounded-l-none",
 						)}
-						key={index}
+						key={labels[index]}
 						readOnly
 						aria-readonly="true"
 						aria-label={labels[index]}

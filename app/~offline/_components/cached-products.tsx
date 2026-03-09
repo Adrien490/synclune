@@ -57,9 +57,9 @@ export function CachedProducts() {
 				);
 
 				setProducts(results.filter((p): p is CachedProduct => p !== null));
+				setLoading(false);
 			} catch {
 				// Cache API not available or failed
-			} finally {
 				setLoading(false);
 			}
 		}

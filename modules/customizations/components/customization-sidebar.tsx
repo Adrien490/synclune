@@ -23,7 +23,7 @@ export function CustomizationSidebar() {
 
 					<ol className="space-y-5" aria-label="Étapes du processus">
 						{steps.map((step, index) => (
-							<li key={index} className="flex gap-4">
+							<li key={step.title} className="flex gap-4">
 								<div className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
 									{index + 1}
 								</div>

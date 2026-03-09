@@ -207,8 +207,8 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 							</div>
 						</>
 					)}
-					{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- event delegation: closes sheet when any child <a> is clicked/activated */}
 					<div
+						role="presentation"
 						className="hidden sm:block"
 						onClick={(e) => {
 							if ((e.target as HTMLElement).closest("a")) {

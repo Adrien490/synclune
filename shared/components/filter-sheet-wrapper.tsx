@@ -177,17 +177,17 @@ export function FilterSheetWrapper({
 				<SheetFooter className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
 					{showCancelButton ? (
 						<>
-							{/* Mobile: boutons empilés */}
-							<div className="flex flex-col gap-2 sm:hidden">
-								<Button type="button" onClick={handleApply} disabled={isPending} className="w-full">
+							{/* Mobile: bouton unique */}
+							<div className="sm:hidden">
+								<Button
+									type="button"
+									onClick={handleApply}
+									disabled={isPending}
+									className="h-11 w-full text-base"
+								>
 									{isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
 									{applyButtonText}
 								</Button>
-								<SheetClose asChild>
-									<Button variant="secondary" className="w-full">
-										{cancelButtonText}
-									</Button>
-								</SheetClose>
 							</div>
 							{/* Desktop: groupe de boutons */}
 							<ButtonGroup className="hidden w-full sm:flex" aria-label="Actions de filtrage">

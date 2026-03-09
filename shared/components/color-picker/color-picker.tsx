@@ -2,8 +2,47 @@
 
 import { cn } from "@/shared/utils/cn";
 import Color from "color";
-import { createContext, useContext, useEffect, useEffectEvent, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useEffectEvent, useReducer, useRef } from "react";
 import type { ColorPickerContextValue, ColorPickerProps } from "./types";
+
+type ColorState = {
+	hue: number;
+	saturation: number;
+	lightness: number;
+	alpha: number;
+	mode: string;
+};
+
+type ColorAction =
+	| { type: "SET_HUE"; hue: number }
+	| { type: "SET_SATURATION"; saturation: number }
+	| { type: "SET_LIGHTNESS"; lightness: number }
+	| { type: "SET_ALPHA"; alpha: number }
+	| { type: "SET_MODE"; mode: string }
+	| { type: "SET_FROM_VALUE"; hue: number; saturation: number; lightness: number; alpha: number };
+
+function colorReducer(state: ColorState, action: ColorAction): ColorState {
+	switch (action.type) {
+		case "SET_HUE":
+			return { ...state, hue: action.hue };
+		case "SET_SATURATION":
+			return { ...state, saturation: action.saturation };
+		case "SET_LIGHTNESS":
+			return { ...state, lightness: action.lightness };
+		case "SET_ALPHA":
+			return { ...state, alpha: action.alpha };
+		case "SET_MODE":
+			return { ...state, mode: action.mode };
+		case "SET_FROM_VALUE":
+			return {
+				...state,
+				hue: action.hue,
+				saturation: action.saturation,
+				lightness: action.lightness,
+				alpha: action.alpha,
+			};
+	}
+}
 
 const ColorPickerContext = createContext<ColorPickerContextValue | undefined>(undefined);
 
@@ -27,20 +66,20 @@ export const ColorPicker = ({
 	const selectedColor = Color(value);
 	const defaultColor = Color(defaultValue);
 
-	const [hue, setHue] = useState(selectedColor.hue() || defaultColor.hue() || 0);
-	const [saturation, setSaturation] = useState(
-		selectedColor.saturationl() || defaultColor.saturationl() || 100,
-	);
-	const [lightness, setLightness] = useState(
-		selectedColor.lightness() || defaultColor.lightness() || 50,
-	);
-	const [alpha, setAlpha] = useState(() => {
-		const normalizeAlpha = (v: number) => (isNaN(v) ? 1 : v);
-		const selectedAlpha = normalizeAlpha(selectedColor.alpha()) * 100;
-		const defaultAlpha = normalizeAlpha(defaultColor.alpha()) * 100;
-		return selectedAlpha || defaultAlpha || 100;
+	const normalizeAlpha = (v: number) => (isNaN(v) ? 1 : v);
+
+	const [state, dispatch] = useReducer(colorReducer, {
+		hue: selectedColor.hue() || defaultColor.hue() || 0,
+		saturation: selectedColor.saturationl() || defaultColor.saturationl() || 100,
+		lightness: selectedColor.lightness() || defaultColor.lightness() || 50,
+		alpha:
+			normalizeAlpha(selectedColor.alpha()) * 100 ||
+			normalizeAlpha(defaultColor.alpha()) * 100 ||
+			100,
+		mode: "hex",
 	});
-	const [mode, setMode] = useState("hex");
+
+	const { hue, saturation, lightness, alpha } = state;
 
 	// Refs pour éviter les boucles infinies
 	const isUpdatingFromValue = useRef(false);
@@ -62,12 +101,15 @@ export const ColorPicker = ({
 			isUpdatingFromValue.current = true;
 			const color = Color(value);
 			const hslValues = color.hsl().array();
-
-			setHue(hslValues[0] ?? 0);
-			setSaturation(hslValues[1] ?? 100);
-			setLightness(hslValues[2] ?? 50);
 			const normalizedAlpha = isNaN(color.alpha()) ? 1 : color.alpha();
-			setAlpha(normalizedAlpha * 100 || 100);
+
+			dispatch({
+				type: "SET_FROM_VALUE",
+				hue: hslValues[0] ?? 0,
+				saturation: hslValues[1] ?? 100,
+				lightness: hslValues[2] ?? 50,
+				alpha: normalizedAlpha * 100 || 100,
+			});
 		}
 	}, [value]);
 
@@ -87,12 +129,12 @@ export const ColorPicker = ({
 				saturation,
 				lightness,
 				alpha,
-				mode,
-				setHue,
-				setSaturation,
-				setLightness,
-				setAlpha,
-				setMode,
+				mode: state.mode,
+				setHue: (h: number) => dispatch({ type: "SET_HUE", hue: h }),
+				setSaturation: (s: number) => dispatch({ type: "SET_SATURATION", saturation: s }),
+				setLightness: (l: number) => dispatch({ type: "SET_LIGHTNESS", lightness: l }),
+				setAlpha: (a: number) => dispatch({ type: "SET_ALPHA", alpha: a }),
+				setMode: (m: string) => dispatch({ type: "SET_MODE", mode: m }),
 			}}
 		>
 			<div

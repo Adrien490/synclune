@@ -63,6 +63,15 @@ function exportReducer(state: ExportState, action: ExportAction): ExportState {
 	}
 }
 
+async function parseErrorResponse(response: Response): Promise<string | null> {
+	try {
+		const data = (await response.json()) as { error?: string } | null;
+		return data?.error ?? null;
+	} catch {
+		return null;
+	}
+}
+
 function parseExportFilename(response: Response): string {
 	const disposition = response.headers.get("Content-Disposition");
 	return disposition?.match(/filename="(.+)"/)?.[1] ?? "export.csv";
@@ -103,8 +112,8 @@ export function ExportOrdersButton() {
 			const response = await fetch(`/api/admin/orders/export?${params}`);
 
 			if (!response.ok) {
-				const data = (await response.json().catch(() => null)) as { error?: string } | null;
-				toast.error(data?.error ?? "Erreur lors de l'export");
+				const errorMessage = await parseErrorResponse(response);
+				toast.error(errorMessage ?? "Erreur lors de l'export");
 				dispatch({ type: "SET_EXPORTING", isExporting: false });
 				return;
 			}

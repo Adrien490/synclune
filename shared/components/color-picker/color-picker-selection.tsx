@@ -92,7 +92,7 @@ export function ColorPickerSelection({ className, ...props }: ColorPickerSelecti
 			window.addEventListener("pointerup", handlePointerUp);
 			// passive: false is required to call preventDefault() during drag and prevent page scroll
 			window.addEventListener("touchmove", onPointerMove, { passive: false });
-			window.addEventListener("touchend", handlePointerUp);
+			window.addEventListener("touchend", handlePointerUp, { passive: true });
 		}
 
 		return () => {
