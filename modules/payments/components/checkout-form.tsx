@@ -12,10 +12,7 @@ import { AnimatePresence, useReducedMotion } from "motion/react";
 import { type ShippingCountry } from "@/shared/constants/countries";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
-import type {
-	CreateCheckoutSessionResult,
-	CheckoutFormValuesSnapshot,
-} from "../types/checkout.types";
+import type { CreateCheckoutSessionResult } from "../types/checkout.types";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import { CheckoutSummary } from "./checkout-summary";
 import { AddressStep } from "./address-step";
@@ -53,13 +50,15 @@ interface CheckoutFormProps {
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
 
-	const [clientSecret, setClientSecret] = useState<string | null>(null);
-	const [orderInfo, setOrderInfo] = useState<{ orderId: string; orderNumber: string } | null>(null);
-	const [submittedAddress, setSubmittedAddress] = useState<SubmittedAddress | null>(null);
+	const [checkoutResult, setCheckoutResult] = useState<{
+		clientSecret: string;
+		orderId: string;
+		orderNumber: string;
+		address: SubmittedAddress;
+	} | null>(null);
 	const [appliedDiscount, setAppliedDiscount] = useState<NonNullable<
 		ValidateDiscountCodeReturn["discount"]
 	> | null>(null);
-	const [formSnapshot, setFormSnapshot] = useState<CheckoutFormValuesSnapshot | null>(null);
 
 	const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -84,29 +83,29 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 			};
 
 	function handleSuccess(data: CreateCheckoutSessionResult) {
-		setClientSecret(data.clientSecret);
-		setOrderInfo({ orderId: data.orderId, orderNumber: data.orderNumber });
-
-		if (formSnapshot?.shipping) {
-			const s = formSnapshot.shipping;
-			setSubmittedAddress({
+		const s = form.state.values.shipping;
+		setCheckoutResult({
+			clientSecret: data.clientSecret,
+			orderId: data.orderId,
+			orderNumber: data.orderNumber,
+			address: {
 				fullName: s.fullName,
 				addressLine1: s.addressLine1,
-				addressLine2: s.addressLine2 ?? undefined,
+				addressLine2: s.addressLine2 || undefined,
 				city: s.city,
 				postalCode: s.postalCode,
-				country: (s.country || "FR") as ShippingCountry,
+				country: ((s.country as string) || "FR") as ShippingCountry,
 				phoneNumber: s.phoneNumber,
-				email: isGuest ? (formSnapshot.email ?? undefined) : undefined,
-			});
-		}
+				email: isGuest ? (form.state.values.email as unknown as string) || undefined : undefined,
+			},
+		});
 
 		window.scrollTo({ top: 0, behavior: "smooth" });
 		requestAnimationFrame(() => headingRef.current?.focus());
 	}
 
 	function handleEdit() {
-		setClientSecret(null);
+		setCheckoutResult(null);
 		requestAnimationFrame(() => {
 			const firstInput = document.querySelector<HTMLInputElement>(
 				'input[name="email"], input[name="shipping.fullName"]',
@@ -117,7 +116,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 	const defaultAddress = addresses?.find((a) => a.isDefault) ?? addresses?.[0] ?? null;
 
-	const currentStepLabel = clientSecret
+	const currentStepLabel = checkoutResult
 		? "Étape 2 sur 2 : Paiement"
 		: "Étape 1 sur 2 : Adresse de livraison";
 
@@ -164,13 +163,13 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 								className="bg-muted/50 rounded-lg border p-8"
 							>
 								<AnimatePresence mode="wait">
-									{clientSecret && submittedAddress ? (
+									{checkoutResult ? (
 										<PaymentStep
 											key="payment"
-											submittedAddress={submittedAddress}
+											submittedAddress={checkoutResult.address}
 											onEdit={handleEdit}
-											clientSecret={clientSecret}
-											orderNumber={orderInfo?.orderNumber ?? null}
+											clientSecret={checkoutResult.clientSecret}
+											orderNumber={checkoutResult.orderNumber}
 											fadeSlide={fadeSlide}
 										/>
 									) : (
@@ -186,7 +185,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 											defaultAddressId={defaultAddress?.id ?? null}
 											appliedDiscount={appliedDiscount}
 											onDiscountApplied={setAppliedDiscount}
-											onBeforeSubmit={setFormSnapshot}
 											shippingUnavailable={shippingUnavailable}
 											total={total}
 											country={country}

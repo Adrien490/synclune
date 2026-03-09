@@ -8,16 +8,3 @@ export type CreateCheckoutSessionResult = {
 	orderId: string;
 	orderNumber: string;
 };
-
-export interface CheckoutFormValuesSnapshot {
-	email?: string;
-	shipping?: {
-		fullName: string;
-		addressLine1: string;
-		addressLine2?: string;
-		city: string;
-		postalCode: string;
-		country: string;
-		phoneNumber: string;
-	};
-}

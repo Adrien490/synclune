@@ -23,7 +23,6 @@ import { CheckoutStepIndicator } from "./checkout-step-indicator";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import type { useCheckoutForm } from "@/modules/payments/hooks/use-checkout-form";
-import type { CheckoutFormValuesSnapshot } from "@/modules/payments/types/checkout.types";
 
 type CheckoutFormApi = ReturnType<typeof useCheckoutForm>["form"];
 type CheckoutAction = ReturnType<typeof useCheckoutForm>["action"];
@@ -56,7 +55,6 @@ interface AddressStepProps {
 	defaultAddressId: string | null;
 	appliedDiscount: NonNullable<ValidateDiscountCodeReturn["discount"]> | null;
 	onDiscountApplied: (discount: NonNullable<ValidateDiscountCodeReturn["discount"]> | null) => void;
-	onBeforeSubmit: (snapshot: CheckoutFormValuesSnapshot) => void;
 	shippingUnavailable: boolean;
 	total: number;
 	country: ShippingCountry;
@@ -75,7 +73,6 @@ export function AddressStep({
 	defaultAddressId,
 	appliedDiscount,
 	onDiscountApplied,
-	onBeforeSubmit,
 	shippingUnavailable,
 	total,
 	country,
@@ -114,10 +111,6 @@ export function AddressStep({
 			action={action}
 			className="space-y-6"
 			onSubmit={() => {
-				onBeforeSubmit({
-					email: form.state.values.email as unknown as string | undefined,
-					shipping: form.state.values.shipping as unknown as CheckoutFormValuesSnapshot["shipping"],
-				});
 				void form.handleSubmit();
 			}}
 		>
