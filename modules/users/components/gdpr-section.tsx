@@ -23,7 +23,7 @@ export function GdprSection({ accountStatus, deletionRequestedAt }: GdprSectionP
 				),
 			)
 		: 0;
-	/* eslint-enable react-hooks/purity */
+	/* eslint-enable react-hooks/purity -- end Date.now() override */
 
 	return (
 		<section className="space-y-4" aria-labelledby="gdpr-heading">
