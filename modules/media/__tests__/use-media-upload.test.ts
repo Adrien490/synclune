@@ -190,6 +190,26 @@ describe("useMediaUpload", () => {
 			);
 		});
 
+		it("should reject non-image/video files with a warning toast", () => {
+			const { result } = renderHook(() => useMediaUpload());
+
+			const files = [
+				createImageFile("ok.jpg"),
+				createFile("doc.pdf", 1024, "application/pdf"),
+				createFile("script.exe", 1024, "application/x-executable"),
+			];
+			const valid = result.current.validateFiles(files);
+
+			expect(valid).toHaveLength(1);
+			expect(valid[0]!.name).toBe("ok.jpg");
+			expect(toast.warning).toHaveBeenCalledWith(
+				"2 fichier(s) ignore(s)",
+				expect.objectContaining({
+					description: "Seuls les images et videos sont acceptes",
+				}),
+			);
+		});
+
 		it("should return all files when within limits", () => {
 			const { result } = renderHook(() => useMediaUpload());
 			const files = [createImageFile("a.jpg"), createImageFile("b.jpg")];
@@ -423,6 +443,37 @@ describe("useMediaUpload", () => {
 			expect(result.current.progress).toBeNull();
 		});
 
+		it("should abort in-progress uploads when cancel is called", async () => {
+			// Make withRetry hang until aborted
+			mockWithRetry.mockImplementation((_fn: () => unknown, opts: { signal?: AbortSignal }) => {
+				return new Promise((_, reject) => {
+					opts.signal?.addEventListener("abort", () => {
+						reject(new DOMException("Operation annulee", "AbortError"));
+					});
+				});
+			});
+
+			const { result } = renderHook(() => useMediaUpload());
+
+			let uploadPromise: Promise<unknown>;
+			act(() => {
+				uploadPromise = result.current.upload([createImageFile("slow.jpg")]);
+			});
+
+			// Cancel while upload is in progress
+			act(() => {
+				result.current.cancel();
+			});
+
+			let results: unknown;
+			await act(async () => {
+				results = await uploadPromise!;
+			});
+
+			expect(result.current.progress).toBeNull();
+			expect(results).toEqual([]);
+		});
+
 		it("should cleanup on unmount without errors", () => {
 			const { unmount } = renderHook(() => useMediaUpload());
 			expect(() => unmount()).not.toThrow();
@@ -541,6 +592,13 @@ describe("useMediaUpload", () => {
 			expect(phases).toContain("done");
 		});
 
+		it("should report isUploading when uploadthing is uploading", () => {
+			mockIsUploadThingUploading.mockReturnValue(true);
+			const { result } = renderHook(() => useMediaUpload());
+
+			expect(result.current.isUploading).toBe(true);
+		});
+
 		it("should reset progress after upload completes", async () => {
 			mockStartUpload.mockResolvedValue([{ serverData: { url: "https://utfs.io/f/img.jpg" } }]);
 
@@ -557,6 +615,36 @@ describe("useMediaUpload", () => {
 				},
 				{ timeout: 2000 },
 			);
+		});
+	});
+
+	// ========================================================================
+	// VIDEO CONCURRENCY
+	// ========================================================================
+
+	describe("video concurrency", () => {
+		it("should respect custom videoConcurrency for batch processing", async () => {
+			mockIsThumbnailGenerationSupported.mockReturnValue(false);
+
+			const uploadOrder: string[] = [];
+			mockStartUpload.mockImplementation((files: File[]) => {
+				uploadOrder.push(files[0]!.name);
+				return Promise.resolve([{ serverData: { url: `https://utfs.io/f/${files[0]!.name}` } }]);
+			});
+
+			const { result } = renderHook(() => useMediaUpload({ videoConcurrency: 1 }));
+
+			await act(async () => {
+				await result.current.upload([
+					createVideoFile("vid1.mp4"),
+					createVideoFile("vid2.mp4"),
+					createVideoFile("vid3.mp4"),
+				]);
+			});
+
+			// With concurrency 1, videos are uploaded sequentially
+			expect(uploadOrder).toEqual(["vid1.mp4", "vid2.mp4", "vid3.mp4"]);
+			expect(mockStartUpload).toHaveBeenCalledTimes(3);
 		});
 	});
 });

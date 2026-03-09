@@ -104,7 +104,9 @@ export function ExportOrdersButton() {
 
 			if (!response.ok) {
 				const data = (await response.json().catch(() => null)) as { error?: string } | null;
-				throw new Error(data?.error ?? "Erreur lors de l'export");
+				toast.error(data?.error ?? "Erreur lors de l'export");
+				dispatch({ type: "SET_EXPORTING", isExporting: false });
+				return;
 			}
 
 			const blob = await response.blob();
@@ -118,8 +120,8 @@ export function ExportOrdersButton() {
 			toast.success("Export téléchargé");
 			dispatch({ type: "SET_OPEN", open: false });
 			dispatch({ type: "SET_EXPORTING", isExporting: false });
-		} catch (e) {
-			toast.error(e instanceof Error ? e.message : "Erreur lors de l'export");
+		} catch {
+			toast.error("Erreur lors de l'export");
 			dispatch({ type: "SET_EXPORTING", isExporting: false });
 		}
 	}

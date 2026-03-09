@@ -2,11 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { Lock } from "lucide-react";
-import { m } from "motion/react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import { StripeWordmark } from "./stripe-wordmark";
 import { AddressSummary, type SubmittedAddress } from "./address-summary";
-import { CheckoutStepIndicator } from "./checkout-step-indicator";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 
 const EmbeddedCheckoutWrapper = dynamic(
@@ -43,7 +41,6 @@ interface PaymentStepProps {
 	onEdit: () => void;
 	clientSecret: string;
 	orderNumber: string | null;
-	fadeSlide: Record<string, unknown>;
 }
 
 export function PaymentStep({
@@ -51,12 +48,9 @@ export function PaymentStep({
 	onEdit,
 	clientSecret,
 	orderNumber,
-	fadeSlide,
 }: PaymentStepProps) {
 	return (
-		<m.div key="payment" className="space-y-6" {...fadeSlide}>
-			<CheckoutStepIndicator currentStep={2} />
-
+		<div className="space-y-6">
 			<AddressSummary address={submittedAddress} onEdit={onEdit} />
 
 			<h2 className="font-display text-lg font-medium tracking-wide sm:text-xl">
@@ -98,6 +92,6 @@ export function PaymentStep({
 			{orderNumber && (
 				<p className="text-muted-foreground text-center text-xs">Commande n°{orderNumber}</p>
 			)}
-		</m.div>
+		</div>
 	);
 }

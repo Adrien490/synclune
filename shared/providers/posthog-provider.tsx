@@ -16,9 +16,9 @@ function PostHogPageview() {
 	const ph = usePostHog();
 
 	useEffect(() => {
-		if (pathname && ph) {
+		if (pathname) {
 			let url = window.origin + pathname;
-			const search = searchParams?.toString();
+			const search = searchParams.toString();
 			if (search) {
 				url += `?${search}`;
 			}
@@ -37,8 +37,6 @@ function PostHogConsentSync() {
 	const ph = usePostHog();
 
 	useEffect(() => {
-		if (!ph) return;
-
 		if (accepted === true) {
 			ph.opt_in_capturing();
 		} else {

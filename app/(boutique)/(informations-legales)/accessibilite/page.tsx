@@ -143,7 +143,7 @@ export default async function AccessibilityPage() {
 										description:
 											"Les animations sont désactivées automatiquement si vous avez activé « prefers-reduced-motion » dans votre système.",
 									},
-								].map((item, index) => (
+								].map((item) => (
 									<div key={item.title} className="bg-muted/20 flex gap-3 rounded-lg border p-4">
 										<Check className="text-secondary mt-0.5 h-5 w-5 shrink-0" />
 										<div>
@@ -244,7 +244,7 @@ export default async function AccessibilityPage() {
 									"TalkBack (lecteur d'écran Android)",
 									"Agrandisseurs d'écran",
 									"Navigation au clavier uniquement",
-								].map((tech, index) => (
+								].map((tech) => (
 									<li key={tech} className="flex gap-2">
 										<Check className="text-secondary h-5 w-5 shrink-0" />
 										<span>{tech}</span>

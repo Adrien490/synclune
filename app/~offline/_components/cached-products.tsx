@@ -49,14 +49,10 @@ export function CachedProducts() {
 
 				const results = await Promise.all(
 					keys.map(async (request): Promise<CachedProduct | null> => {
-						try {
-							const response = await cache.match(request);
-							if (!response) return null;
-							const html = await response.text();
-							return parseCachedProductFromHtml(html, request.url);
-						} catch {
-							return null;
-						}
+						const response = await cache.match(request);
+						if (!response) return null;
+						const html = await response.text();
+						return parseCachedProductFromHtml(html, request.url);
 					}),
 				);
 

@@ -22,10 +22,6 @@ vi.mock("@/modules/payments/components/payment-step", () => ({
 	),
 }));
 
-vi.mock("@/modules/payments/components/checkout-step-indicator", () => ({
-	CheckoutStepIndicator: () => <div data-testid="checkout-step-indicator" />,
-}));
-
 vi.mock("@/modules/payments/components/address-selector", () => ({
 	AddressSelector: () => <div data-testid="address-selector" />,
 }));
@@ -36,19 +32,6 @@ vi.mock("@/modules/discounts/actions/validate-discount-code", () => ({
 
 vi.mock("@/shared/components/error-boundary", () => ({
 	ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
-vi.mock("motion/react", () => ({
-	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	useReducedMotion: vi.fn().mockReturnValue(false),
-	m: {
-		div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-			<div {...props}>{children}</div>
-		),
-		form: ({ children, ...props }: React.HTMLAttributes<HTMLFormElement>) => (
-			<form {...props}>{children}</form>
-		),
-	},
 }));
 
 // ─── Import under test ────────────────────────────────────────────────────────
@@ -75,7 +58,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 				_appliedDiscount: null,
 				_selectedAddressId: null,
 				_showAddressLine2: false,
-				_showCountrySelect: false,
 				_discountOpen: false,
 				termsAccepted: false,
 				discountCode: "",
@@ -106,7 +88,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 						_appliedDiscount: null,
 						_selectedAddressId: null,
 						_showAddressLine2: false,
-						_showCountrySelect: false,
 						_discountOpen: false,
 						termsAccepted: false,
 						discountCode: "",

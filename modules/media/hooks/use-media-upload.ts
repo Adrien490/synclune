@@ -14,9 +14,6 @@ import type {
 import { generateVideoThumbnail, isThumbnailGenerationSupported } from "./use-video-thumbnail";
 import { deleteUploadThingFilesFromUrls } from "../services/delete-uploadthing-files.service";
 
-// Re-export types for backwards compatibility
-export type { UseMediaUploadOptions, MediaUploadResult, UploadProgress, UseMediaUploadReturn };
-
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -46,6 +43,13 @@ function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
 	return file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
 }
 
+/**
+ * Checks if a file has a valid media MIME type (image/* or video/*)
+ */
+function isValidMediaType(file: File): boolean {
+	return file.type.startsWith("image/") || file.type.startsWith("video/");
+}
+
 // ============================================================================
 // HOOK
 // ============================================================================
@@ -59,7 +63,7 @@ function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
  * - Retry with exponential backoff
  * - Cancellation via AbortController
  * - Real-time progress tracking
- * - File validation (size, type, count)
+ * - File validation (MIME type, size, count)
  *
  * @example
  * ```tsx
@@ -102,10 +106,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	// UTILITIES
 	// ========================================================================
 
-	const getMediaType = (file: File): "IMAGE" | "VIDEO" => getMediaTypeFromFile(file);
-
 	const isOversized = (file: File): boolean => {
-		const maxSize = getMediaType(file) === "VIDEO" ? maxSizeVideo : maxSizeImage;
+		const maxSize = getMediaTypeFromFile(file) === "VIDEO" ? maxSizeVideo : maxSizeImage;
 		return file.size > maxSize;
 	};
 
@@ -129,8 +131,26 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	// ========================================================================
 
 	const validateFiles = (files: File[]): File[] => {
-		const oversized = files.filter(isOversized);
-		const validSizeFiles = files.filter((f) => !isOversized(f));
+		// Filter out non-image/video files
+		const mediaFiles = files.filter(isValidMediaType);
+
+		if (mediaFiles.length < files.length) {
+			const rejected = files.length - mediaFiles.length;
+			toast.warning(`${rejected} fichier(s) ignore(s)`, {
+				description: "Seuls les images et videos sont acceptes",
+			});
+		}
+
+		// Partition into valid and oversized in a single pass
+		const oversized: File[] = [];
+		const validSizeFiles: File[] = [];
+		for (const f of mediaFiles) {
+			if (isOversized(f)) {
+				oversized.push(f);
+			} else {
+				validSizeFiles.push(f);
+			}
+		}
 
 		if (oversized.length > 0) {
 			const details = oversized
@@ -185,7 +205,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 					thumbnailUrl = thumbUploadResult[0].serverData.url;
 				}
 
-				if (thumbnailResult?.previewUrl) {
+				if (thumbnailResult.previewUrl) {
 					URL.revokeObjectURL(thumbnailResult.previewUrl);
 				}
 			} catch (error) {
@@ -327,8 +347,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		}
 
 		// Separate images and videos
-		const images = validFiles.filter((f) => getMediaType(f) === "IMAGE");
-		const videos = validFiles.filter((f) => getMediaType(f) === "VIDEO");
+		const images = validFiles.filter((f) => getMediaTypeFromFile(f) === "IMAGE");
+		const videos = validFiles.filter((f) => getMediaTypeFromFile(f) === "VIDEO");
 		const totalFiles = images.length + videos.length;
 
 		updateProgress({ total: totalFiles, completed: 0, phase: "uploading" });
@@ -398,7 +418,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		cancel,
 		isUploading: isUploadThingUploading || progress !== null,
 		progress,
-		getMediaType,
+		getMediaType: getMediaTypeFromFile,
 		isOversized,
 	};
 }

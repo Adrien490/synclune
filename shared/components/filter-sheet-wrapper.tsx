@@ -93,7 +93,7 @@ export function FilterSheetWrapper({
 			{!hideTrigger && <SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>}
 
 			<SheetContent
-				className="flex h-full w-full flex-col p-0 sm:w-100 md:w-110"
+				className="flex h-full w-full flex-col overflow-hidden p-0 sm:w-100 md:w-110"
 				onKeyDown={handleKeyDown}
 				title={title}
 				showCloseButton={false}

@@ -60,7 +60,6 @@ export function getCheckoutFormOptions(
 
 			// UI state (replaces useState in AddressStep)
 			_selectedAddressId: (defaultAddress?.id ?? null) as string | null,
-			_showCountrySelect: (defaultAddress?.country ?? "FR") !== "FR",
 			_showAddressLine2: !!defaultAddress?.address2,
 		},
 	};

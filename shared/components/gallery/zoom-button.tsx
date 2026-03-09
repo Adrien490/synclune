@@ -3,7 +3,13 @@
 import { ZoomIn } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "@/shared/hooks";
-import { useRef } from "react";
+
+let lightboxPrefetched = false;
+function prefetchLightbox() {
+	if (lightboxPrefetched) return;
+	lightboxPrefetched = true;
+	void import("@/modules/media/components/media-lightbox");
+}
 
 interface GalleryZoomButtonProps {
 	onOpen: () => void;
@@ -11,13 +17,6 @@ interface GalleryZoomButtonProps {
 
 export function GalleryZoomButton({ onOpen }: GalleryZoomButtonProps) {
 	const prefersReduced = useReducedMotion();
-	const prefetchedRef = useRef(false);
-
-	const prefetchLightbox = () => {
-		if (prefetchedRef.current) return;
-		prefetchedRef.current = true;
-		void import("@/modules/media/components/media-lightbox");
-	};
 
 	return (
 		<button

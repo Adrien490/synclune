@@ -64,6 +64,11 @@ export function Autocomplete<T>({
 	// Etats
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(-1);
+	const [prevItemsLength, setPrevItemsLength] = useState(items.length);
+	if (prevItemsLength !== items.length) {
+		setPrevItemsLength(items.length);
+		setActiveIndex(-1);
+	}
 
 	// Etat local pour le debounce (affichage immediat)
 	const [localValue, setLocalValue] = useState(value);
@@ -86,14 +91,11 @@ export function Autocomplete<T>({
 	// Sync external value → local state for debounce input display.
 	// NOT derived state: localValue is user-typed (instant), value is debounced (delayed).
 	// Without this sync, external resets (e.g. onSelect clearing value) would not reflect.
-	useEffect(() => {
+	const [prevValue, setPrevValue] = useState(value);
+	if (prevValue !== value) {
+		setPrevValue(value);
 		setLocalValue(value);
-	}, [value]);
-
-	// Reset activeIndex quand les items changent
-	useEffect(() => {
-		setActiveIndex(-1);
-	}, [items.length]);
+	}
 
 	// Scroll automatique vers l'item actif
 	useEffect(() => {

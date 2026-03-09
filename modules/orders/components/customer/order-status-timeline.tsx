@@ -92,7 +92,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 						<div className="bg-border absolute top-6 bottom-6 left-4 w-0.5" />
 
 						<div className="space-y-6">
-							{steps.map((step, index) => {
+							{steps.map((step) => {
 								const Icon = step.icon;
 								const isCompleted = step.completed;
 								const isActive = step.active;

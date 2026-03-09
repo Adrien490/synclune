@@ -8,7 +8,7 @@ interface ShareData {
 	url: string;
 }
 
-function subscribeNoop(callback: () => void) {
+function subscribeNoop(_callback: () => void) {
 	return () => {};
 }
 
