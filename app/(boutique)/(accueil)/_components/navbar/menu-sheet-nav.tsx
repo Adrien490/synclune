@@ -101,8 +101,8 @@ export function MenuSheetNav({
 		return () => clearTimeout(timer);
 	}, [isOpen, shouldReduceMotion]);
 
-	function getLinkClass(href: string, extra?: string) {
-		return cn(isMenuItemActive(href) ? activeLinkClassName : linkClassName, extra);
+	function getLinkClass(href: string, extra?: string, options?: { exact?: boolean }) {
+		return cn(isMenuItemActive(href, options) ? activeLinkClassName : linkClassName, extra);
 	}
 
 	// Compute stagger delay in seconds (mirrors previous CSS timing)
@@ -159,8 +159,10 @@ export function MenuSheetNav({
 									<SheetClose asChild>
 										<Link
 											href={ROUTES.SHOP.PRODUCTS}
-											className={getLinkClass(ROUTES.SHOP.PRODUCTS)}
-											aria-current={isMenuItemActive(ROUTES.SHOP.PRODUCTS) ? "page" : undefined}
+											className={getLinkClass(ROUTES.SHOP.PRODUCTS, undefined, { exact: true })}
+											aria-current={
+												isMenuItemActive(ROUTES.SHOP.PRODUCTS, { exact: true }) ? "page" : undefined
+											}
 										>
 											Tous les bijoux
 										</Link>
@@ -210,8 +212,12 @@ export function MenuSheetNav({
 									<SheetClose asChild>
 										<Link
 											href={ROUTES.SHOP.COLLECTIONS}
-											className={getLinkClass(ROUTES.SHOP.COLLECTIONS)}
-											aria-current={isMenuItemActive(ROUTES.SHOP.COLLECTIONS) ? "page" : undefined}
+											className={getLinkClass(ROUTES.SHOP.COLLECTIONS, undefined, { exact: true })}
+											aria-current={
+												isMenuItemActive(ROUTES.SHOP.COLLECTIONS, { exact: true })
+													? "page"
+													: undefined
+											}
 										>
 											Toutes les collections
 										</Link>

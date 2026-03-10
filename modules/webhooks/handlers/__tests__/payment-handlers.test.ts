@@ -15,6 +15,8 @@ const {
 	mockSendRefundFailureAlert,
 	mockBuildUrl,
 	mockLogger,
+	mockProcessOrderFromPaymentIntent,
+	mockBuildPostCheckoutTasksFromPI,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findFirst: vi.fn() },
@@ -28,6 +30,8 @@ const {
 	mockSendRefundFailureAlert: vi.fn(),
 	mockBuildUrl: vi.fn(),
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+	mockProcessOrderFromPaymentIntent: vi.fn(),
+	mockBuildPostCheckoutTasksFromPI: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -47,6 +51,11 @@ vi.mock("../../services/payment-intent.service", () => ({
 	markOrderAsCancelled: mockMarkOrderAsCancelled,
 	initiateAutomaticRefund: mockInitiateAutomaticRefund,
 	sendRefundFailureAlert: mockSendRefundFailureAlert,
+}));
+
+vi.mock("../../services/checkout.service", () => ({
+	processOrderFromPaymentIntent: mockProcessOrderFromPaymentIntent,
+	buildPostCheckoutTasksFromPI: mockBuildPostCheckoutTasksFromPI,
 }));
 
 vi.mock("@/modules/orders/constants/cache", () => ({
@@ -135,20 +144,23 @@ describe("handlePaymentSuccess", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should call markOrderAsPaid with orderId and paymentIntentId", async () => {
+	it("should call markOrderAsPaid with orderId and paymentIntentId (old checkout session flow)", async () => {
 		mockMarkOrderAsPaid.mockResolvedValue(undefined);
 
-		await handlePaymentSuccess(makePaymentIntent());
+		// Old flow: checkoutSessionId present means this PI came from a Checkout Session
+		await handlePaymentSuccess(
+			makePaymentIntent({ metadata: { order_id: "order-1", checkoutSessionId: "cs_123" } }),
+		);
 
 		expect(mockMarkOrderAsPaid).toHaveBeenCalledWith("order-1", "pi_123");
 	});
 
-	it("should not call markOrderAsPaid when no order_id in metadata (warn only)", async () => {
+	it("should not call markOrderAsPaid when no orderId in metadata (warn only)", async () => {
 		await handlePaymentSuccess(makePaymentIntent({ metadata: {} }));
 
 		expect(mockMarkOrderAsPaid).not.toHaveBeenCalled();
 		expect(mockLogger.warn).toHaveBeenCalledWith(
-			expect.stringContaining("payment_intent.succeeded without order_id"),
+			expect.stringContaining("payment_intent.succeeded without orderId"),
 			expect.objectContaining({ service: "webhook" }),
 		);
 	});
@@ -172,7 +184,7 @@ describe("handlePaymentFailure", () => {
 
 	it("should throw when no order_id in metadata", async () => {
 		await expect(handlePaymentFailure(makePaymentIntent({ metadata: {} }))).rejects.toThrow(
-			"No order_id in payment intent metadata",
+			"No orderId in payment intent metadata",
 		);
 	});
 
@@ -248,7 +260,7 @@ describe("handlePaymentCanceled", () => {
 
 	it("should throw when no order_id in metadata", async () => {
 		await expect(handlePaymentCanceled(makePaymentIntent({ metadata: {} }))).rejects.toThrow(
-			"No order_id in payment intent metadata",
+			"No orderId in payment intent metadata",
 		);
 	});
 

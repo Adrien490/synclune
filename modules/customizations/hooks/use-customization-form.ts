@@ -11,6 +11,7 @@ import {
 	CUSTOMIZATION_FORM_OPTIONS,
 } from "../constants/customization-form-options";
 import { sendCustomizationRequest } from "../actions/send-customization-request";
+import { customizationDraftSchema } from "../schemas/customization.schema";
 
 const DRAFT_STORAGE_KEY = "synclune-customization-draft";
 
@@ -24,7 +25,12 @@ function loadDraft(): Partial<typeof CUSTOMIZATION_DEFAULT_VALUES> | null {
 		const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
 		if (!saved) return null;
 		const parsed: unknown = JSON.parse(saved);
-		return parsed as Partial<typeof CUSTOMIZATION_DEFAULT_VALUES>;
+		const result = customizationDraftSchema.safeParse(parsed);
+		if (!result.success) {
+			localStorage.removeItem(DRAFT_STORAGE_KEY);
+			return null;
+		}
+		return result.data;
 	} catch {
 		return null;
 	}

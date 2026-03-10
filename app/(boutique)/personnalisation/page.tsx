@@ -8,6 +8,7 @@ import { CustomizationForm } from "@/modules/customizations/components/customiza
 import { CustomizationSidebar } from "@/modules/customizations/components/customization-sidebar";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 export const metadata: Metadata = {
 	title: "Créons votre bijou - Synclune | Bijoux personnalisés",
@@ -43,8 +44,35 @@ export default async function CustomizationPage() {
 			}
 		: undefined;
 
+	const jsonLd = {
+		"@context": "https://schema.org",
+		"@type": "Service",
+		name: "Bijoux personnalisés sur mesure - Synclune",
+		description:
+			"Service de création de bijoux artisanaux personnalisés. Bagues, colliers, bracelets et boucles d'oreilles faits main sur mesure en France.",
+		url: `${SITE_URL}/personnalisation`,
+		provider: {
+			"@type": "LocalBusiness",
+			"@id": `${SITE_URL}/#organization`,
+			name: "Synclune",
+		},
+		areaServed: {
+			"@type": "Country",
+			name: "France",
+		},
+		serviceType: "Création de bijoux sur mesure",
+		offers: {
+			"@type": "Offer",
+			availability: "https://schema.org/InStock",
+			priceCurrency: "EUR",
+			url: `${SITE_URL}/personnalisation`,
+		},
+	};
+
 	return (
 		<div className="relative min-h-screen">
+			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+
 			{/* Background décoratif - Effet précieux pour page personnalisation */}
 			<GlitterSparkles count={25} sizeRange={[2, 5]} glowIntensity={0.7} />
 			<DecorativeHalo

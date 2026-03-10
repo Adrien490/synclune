@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
@@ -85,6 +86,7 @@ async function fetchCustomizationRequest(id: string): Promise<CustomizationReque
 
 		return request;
 	} catch (error) {
+		Sentry.captureException(error);
 		logger.error("Failed to fetch customization request", error, {
 			service: "fetchCustomizationRequest",
 		});

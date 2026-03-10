@@ -152,12 +152,12 @@ describe("Desktop nav accessibility", () => {
 		expect(inactiveLink.getAttribute("aria-current")).toBeNull();
 	});
 
-	it("renders icons with aria-hidden on all nav items", () => {
+	it("renders no icons in the desktop sidebar (text-only nav items)", () => {
 		render(<AccountNav variant="desktop-only" />);
 
+		// Desktop sidebar renders text labels only, no icons
 		const hiddenIcons = document.querySelectorAll('[aria-hidden="true"]');
-		// 6 nav items + 1 logout icon = 7
-		expect(hiddenIcons.length).toBeGreaterThanOrEqual(7);
+		expect(hiddenIcons.length).toBe(0);
 	});
 
 	it("has a logout button with type=button", () => {

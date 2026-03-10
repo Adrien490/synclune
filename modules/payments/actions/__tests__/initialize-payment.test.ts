@@ -91,6 +91,7 @@ vi.mock("@/modules/payments/services/stripe-customer.service", () => ({
 
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: mockStripe,
+	withStripeCircuitBreaker: (fn: () => Promise<unknown>) => fn(),
 	CircuitBreakerError: MockCircuitBreakerError,
 }));
 

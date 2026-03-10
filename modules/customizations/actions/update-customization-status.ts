@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -131,6 +132,7 @@ export async function updateCustomizationStatus(
 
 		return success(CUSTOMIZATION_SUCCESS_MESSAGES.STATUS_UPDATED);
 	} catch (e) {
+		Sentry.captureException(e);
 		return handleActionError(e, CUSTOMIZATION_ERROR_MESSAGES.UPDATE_STATUS_ERROR);
 	}
 }

@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
@@ -54,6 +55,7 @@ async function fetchUserCustomizationRequests(userId: string) {
 			orderBy: { createdAt: "desc" },
 		});
 	} catch (error) {
+		Sentry.captureException(error);
 		logger.error("Failed to fetch user customization requests", error, {
 			service: "fetchUserCustomizationRequests",
 		});

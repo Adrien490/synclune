@@ -280,6 +280,7 @@ Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce so
 | --------------------------------------------------------- | ---------------------------------------------------------- |
 | `reviews/services/send-review-request-email.service.ts`   | Partage entre cron + webhooks + actions                    |
 | `payments/services/stripe-customer.service.ts`            | Paire atomique Stripe + DB pour checkout                   |
+| `payments/services/order-creation.service.ts`             | Transaction atomique stock lock + order + discount usage   |
 | `wishlist/services/notify-back-in-stock.ts`               | Notification atomique apres restock                        |
 | `newsletter/services/subscribe-to-newsletter-internal.ts` | Partage entre subscribe + toggle actions                   |
 | `newsletter/services/confirm-newsletter-subscription.ts`  | Appele depuis server component (sans formulaire)           |

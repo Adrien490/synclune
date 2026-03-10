@@ -71,6 +71,20 @@ test.describe("Personnalisation - Demande sur mesure", { tag: ["@regression"] },
 		await expect(errorMessage.first()).toBeVisible({ timeout: 3000 });
 	});
 
+	test("la page contient le structured data JSON-LD Service", async ({ page }) => {
+		await page.goto("/personnalisation");
+		await page.waitForLoadState("domcontentloaded");
+
+		const jsonLdScript = page.locator('script[type="application/ld+json"]');
+		const scriptContent = await jsonLdScript.first().textContent();
+		expect(scriptContent).toBeTruthy();
+
+		const jsonLd = JSON.parse(scriptContent!);
+		expect(jsonLd["@type"]).toBe("Service");
+		expect(jsonLd["@context"]).toBe("https://schema.org");
+		expect(jsonLd.serviceType).toContain("bijoux");
+	});
+
 	test("soumettre le formulaire avec des donnees valides affiche une confirmation", async ({
 		page,
 	}) => {

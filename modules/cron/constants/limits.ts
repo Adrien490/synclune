@@ -124,6 +124,13 @@ export const DB_QUERY_BATCH_SIZE = 500;
 export const EMAIL_THROTTLE_MS = 100;
 
 /**
+ * Age threshold for pending orders to be eligible for cleanup (ms)
+ * Orders older than this with a non-terminal PI status will be cancelled.
+ * 30 minutes gives enough time for 3DS challenges and slow connections.
+ */
+export const PENDING_ORDER_MAX_AGE_MS = 30 * 60 * 1000;
+
+/**
  * Time thresholds in milliseconds
  */
 export const THRESHOLDS = {

@@ -46,6 +46,10 @@
 			"schedule": "0 9 1 * *"
 		},
 		{
+			"path": "/api/cron/cleanup-pending-orders",
+			"schedule": "*/15 * * * *"
+		},
+		{
 			"path": "/api/cron/retry-webhooks",
 			"schedule": "*/30 * * * *"
 		},

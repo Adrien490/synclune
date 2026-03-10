@@ -80,3 +80,17 @@ export const customizationSchema = z.object({
 });
 
 export type CustomizationFormData = z.infer<typeof customizationSchema>;
+
+/**
+ * Partial schema for validating localStorage draft data
+ * Only validates the saveable fields (excludes rgpdConsent, website, inspirationMedias)
+ */
+export const customizationDraftSchema = z
+	.object({
+		firstName: z.string().max(50).optional(),
+		email: z.string().max(100).optional(),
+		phone: z.string().optional(),
+		productTypeLabel: z.string().max(100).optional(),
+		details: z.string().max(2000).optional(),
+	})
+	.passthrough();

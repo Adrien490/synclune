@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -164,6 +165,7 @@ export async function bulkUpdateCustomizationStatus(
 		const count = validRequests.length;
 		return success(CUSTOMIZATION_SUCCESS_MESSAGES.BULK_UPDATED(count), { count });
 	} catch (e) {
+		Sentry.captureException(e);
 		return handleActionError(e, CUSTOMIZATION_ERROR_MESSAGES.BULK_UPDATE_ERROR);
 	}
 }

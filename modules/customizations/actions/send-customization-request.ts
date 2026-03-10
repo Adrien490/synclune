@@ -3,6 +3,7 @@
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import {
@@ -192,6 +193,7 @@ export async function sendCustomizationRequest(
 			id: customizationRequest.id,
 		});
 	} catch (e) {
+		Sentry.captureException(e);
 		return handleActionError(e, CUSTOMIZATION_ERROR_MESSAGES.CREATE_ERROR);
 	}
 }

@@ -21,7 +21,7 @@ export function useActiveNavbarItem() {
 	 * @param href - Le href de l'item (peut contenir des query params)
 	 * @returns true si l'item est actif
 	 */
-	const isMenuItemActive = (href: string): boolean => {
+	const isMenuItemActive = (href: string, options?: { exact?: boolean }): boolean => {
 		// Séparer le path des query params
 		const [itemPath, itemQuery] = href.split("?");
 
@@ -53,7 +53,7 @@ export function useActiveNavbarItem() {
 				return true;
 			}
 			// Match si pathname commence par itemPath/ (avec le slash pour éviter les faux positifs)
-			if (pathname.startsWith(itemPath + "/")) {
+			if (!options?.exact && pathname.startsWith(itemPath + "/")) {
 				return true;
 			}
 		}

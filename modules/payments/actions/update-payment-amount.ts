@@ -5,7 +5,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
-import { stripe, CircuitBreakerError } from "@/shared/lib/stripe";
+import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 import { headers } from "next/headers";
@@ -77,7 +77,9 @@ export async function updatePaymentAmount(
 		}
 
 		// 5. Verify PI ownership via metadata
-		const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+		const pi = await withStripeCircuitBreaker(() =>
+			stripe.paymentIntents.retrieve(paymentIntentId),
+		);
 		const piUserId = pi.metadata.userId;
 		const piSessionId = pi.metadata.guestSessionId;
 
@@ -97,9 +99,11 @@ export async function updatePaymentAmount(
 		const newTotal = Math.max(0, subtotal - discountAmount + shipping);
 
 		if (!shippingUnavailable) {
-			await stripe.paymentIntents.update(paymentIntentId, {
-				amount: newTotal,
-			});
+			await withStripeCircuitBreaker(() =>
+				stripe.paymentIntents.update(paymentIntentId, {
+					amount: newTotal,
+				}),
+			);
 		}
 
 		return {

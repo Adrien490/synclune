@@ -44,7 +44,11 @@ export async function withStripeCircuitBreaker<T>(fn: () => Promise<T>): Promise
  * }
  * ```
  */
+let _stripeClient: Stripe | null = null;
+
 export function getStripeClient(): Stripe | null {
+	if (_stripeClient) return _stripeClient;
+
 	const secretKey = process.env.STRIPE_SECRET_KEY;
 	if (!secretKey) {
 		logger.error("STRIPE_SECRET_KEY environment variable is not set", undefined, {
@@ -52,10 +56,11 @@ export function getStripeClient(): Stripe | null {
 		});
 		return null;
 	}
-	return new Stripe(secretKey, {
+	_stripeClient = new Stripe(secretKey, {
 		apiVersion: "2026-02-25.clover",
 		maxNetworkRetries: 2,
 	});
+	return _stripeClient;
 }
 
 /**

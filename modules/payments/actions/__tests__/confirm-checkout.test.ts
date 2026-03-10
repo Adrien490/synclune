@@ -137,6 +137,7 @@ vi.mock("@/modules/newsletter/services/subscribe-to-newsletter-internal", () => 
 
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: mockStripe,
+	withStripeCircuitBreaker: (fn: () => Promise<unknown>) => fn(),
 	CircuitBreakerError: mockCircuitBreakerErrorClass,
 }));
 
@@ -166,24 +167,30 @@ vi.mock("@/shared/constants/countries", () => ({
 	COUNTRY_ERROR_MESSAGE: "Pays non supporté",
 }));
 
-vi.mock("@/shared/schemas/email.schemas", () => ({
-	emailOptionalSchema: {
-		_def: {},
-		optional: () => ({ _def: {} }),
-	},
-}));
+vi.mock("@/shared/schemas/email.schemas", async () => {
+	const { z } = await import("zod");
+	return {
+		emailOptionalSchema: z.string().email().optional(),
+	};
+});
 
-vi.mock("@/shared/schemas/phone.schemas", () => ({
-	phoneSchema: { _def: {} },
-}));
+vi.mock("@/shared/schemas/phone.schemas", async () => {
+	const { z } = await import("zod");
+	return {
+		phoneSchema: z.string().min(1),
+	};
+});
 
 vi.mock("@/modules/cart/constants/cart", () => ({
 	MAX_QUANTITY_PER_ORDER: 10,
 }));
 
-vi.mock("@/modules/discounts/schemas/discount.schemas", () => ({
-	discountCodeSchema: { optional: () => ({ _def: {} }) },
-}));
+vi.mock("@/modules/discounts/schemas/discount.schemas", async () => {
+	const { z } = await import("zod");
+	return {
+		discountCodeSchema: z.string().min(1),
+	};
+});
 
 vi.mock("@/modules/payments/utils/parse-full-name", () => ({
 	parseFullName: (fullName: string) => {
@@ -655,10 +662,7 @@ describe("confirmCheckout", () => {
 		});
 
 		it("should return validation error for missing paymentIntentId", async () => {
-			const result = await confirmCheckout(
-				// @ts-expect-error — intentionally passing invalid data
-				createValidData({ paymentIntentId: "" }),
-			);
+			const result = await confirmCheckout(createValidData({ paymentIntentId: "" }));
 
 			expect(result.success).toBe(false);
 		});

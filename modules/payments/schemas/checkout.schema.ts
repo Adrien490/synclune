@@ -32,7 +32,7 @@ export const confirmCheckoutSchema = z.object({
 	shippingAddress: addressSchema,
 	email: emailOptionalSchema,
 	discountCode: discountCodeSchema.optional(),
-	paymentIntentId: z.string().min(1, "Payment Intent ID requis"),
+	paymentIntentId: z.string().startsWith("pi_", "Payment Intent ID invalide"),
 	newsletterOptIn: z.boolean(),
 	smsOptIn: z.boolean(),
 	saveInfo: z.boolean(),

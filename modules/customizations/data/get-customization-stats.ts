@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
@@ -35,32 +36,14 @@ async function fetchCustomizationStats(): Promise<CustomizationStats> {
 		const now = new Date();
 		const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-		const [total, pending, inProgress, completed, open, closed, thisMonth] = await Promise.all([
-			// Total
-			prisma.customizationRequest.count({
+		const [statusGroups, thisMonth] = await Promise.all([
+			// Single groupBy query for all status-based counts
+			prisma.customizationRequest.groupBy({
+				by: ["status"],
 				where: notDeleted,
+				_count: true,
 			}),
-			// Pending
-			prisma.customizationRequest.count({
-				where: { ...notDeleted, status: "PENDING" },
-			}),
-			// In Progress
-			prisma.customizationRequest.count({
-				where: { ...notDeleted, status: "IN_PROGRESS" },
-			}),
-			// Completed
-			prisma.customizationRequest.count({
-				where: { ...notDeleted, status: "COMPLETED" },
-			}),
-			// Open (non finalisés)
-			prisma.customizationRequest.count({
-				where: { ...notDeleted, status: { in: OPEN_STATUSES } },
-			}),
-			// Closed (finalisés)
-			prisma.customizationRequest.count({
-				where: { ...notDeleted, status: { in: CLOSED_STATUSES } },
-			}),
-			// This month
+			// This month needs a separate query (different where clause)
 			prisma.customizationRequest.count({
 				where: {
 					...notDeleted,
@@ -68,6 +51,19 @@ async function fetchCustomizationStats(): Promise<CustomizationStats> {
 				},
 			}),
 		]);
+
+		// Build counts from groupBy results
+		const countByStatus = Object.fromEntries(
+			statusGroups.map((g) => [g.status, g._count]),
+		) as Partial<Record<string, number>>;
+
+		const pending = countByStatus.PENDING ?? 0;
+		const inProgress = countByStatus.IN_PROGRESS ?? 0;
+		const completed = countByStatus.COMPLETED ?? 0;
+
+		const open = OPEN_STATUSES.reduce((sum, s) => sum + (countByStatus[s] ?? 0), 0);
+		const closed = CLOSED_STATUSES.reduce((sum, s) => sum + (countByStatus[s] ?? 0), 0);
+		const total = open + closed;
 
 		return {
 			total,
@@ -79,6 +75,7 @@ async function fetchCustomizationStats(): Promise<CustomizationStats> {
 			thisMonth,
 		};
 	} catch (error) {
+		Sentry.captureException(error);
 		logger.error("Failed to fetch customization stats", error, {
 			service: "fetchCustomizationStats",
 		});

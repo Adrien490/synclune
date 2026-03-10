@@ -6,7 +6,7 @@ import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
-import { stripe, CircuitBreakerError } from "@/shared/lib/stripe";
+import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
@@ -121,16 +121,18 @@ export async function initializePayment(
 			}
 
 			// Create Payment Intent
-			const paymentIntent = await stripe.paymentIntents.create({
-				amount: total,
-				currency: DEFAULT_CURRENCY.toLowerCase(),
-				automatic_payment_methods: { enabled: true },
-				...(stripeCustomerId && { customer: stripeCustomerId }),
-				metadata: {
-					userId: userId ?? "guest",
-					...(sessionId && { guestSessionId: sessionId }),
-				},
-			});
+			const paymentIntent = await withStripeCircuitBreaker(() =>
+				stripe.paymentIntents.create({
+					amount: total,
+					currency: DEFAULT_CURRENCY.toLowerCase(),
+					automatic_payment_methods: { enabled: true },
+					...(stripeCustomerId && { customer: stripeCustomerId }),
+					metadata: {
+						userId: userId ?? "guest",
+						...(sessionId && { guestSessionId: sessionId }),
+					},
+				}),
+			);
 
 			if (!paymentIntent.client_secret) {
 				throw new Error("Payment Intent created without client_secret");

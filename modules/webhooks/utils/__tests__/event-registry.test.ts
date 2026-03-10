@@ -146,13 +146,13 @@ describe("dispatchEvent - payment_intent handlers", () => {
 	it("should route payment_intent.succeeded to handlePaymentSuccess with payment intent object", async () => {
 		const paymentIntent = { id: "pi_test_1", metadata: { order_id: "order-1" } };
 		const event = makeEvent("payment_intent.succeeded", paymentIntent);
-		mockHandlePaymentSuccess.mockResolvedValue(undefined);
+		mockHandlePaymentSuccess.mockResolvedValue(mockResult);
 
 		const result = await dispatchEvent(event);
 
 		expect(mockHandlePaymentSuccess).toHaveBeenCalledOnce();
 		expect(mockHandlePaymentSuccess).toHaveBeenCalledWith(paymentIntent);
-		expect(result).toBeNull();
+		expect(result).toEqual(mockResult);
 	});
 
 	it("should route payment_intent.payment_failed to handlePaymentFailure with payment intent object", async () => {
@@ -363,31 +363,31 @@ describe("dispatchEvent - error propagation", () => {
 });
 
 // ============================================================================
-// dispatchEvent - payment_intent.succeeded returns null
+// dispatchEvent - payment_intent.succeeded returns handler result
 // ============================================================================
 
-describe("dispatchEvent - payment_intent.succeeded always returns null", () => {
+describe("dispatchEvent - payment_intent.succeeded returns handler result", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
 
-	it("should return null even when handler resolves successfully", async () => {
+	it("should return the handler result when handler resolves with a result", async () => {
 		const event = makeEvent("payment_intent.succeeded", { id: "pi_success" });
-		mockHandlePaymentSuccess.mockResolvedValue(undefined);
+		mockHandlePaymentSuccess.mockResolvedValue(mockResult);
 
 		const result = await dispatchEvent(event);
 
-		expect(result).toBeNull();
+		expect(result).toEqual(mockResult);
 	});
 
-	it("should return null regardless of what the handler returns", async () => {
+	it("should return whatever the handler returns", async () => {
 		const event = makeEvent("payment_intent.succeeded", { id: "pi_success_2" });
-		// Even if the handler somehow returns a result, the registry discards it and returns null
-		mockHandlePaymentSuccess.mockResolvedValue({ success: true, tasks: [] });
+		const handlerResult = { success: true, tasks: [] };
+		mockHandlePaymentSuccess.mockResolvedValue(handlerResult);
 
 		const result = await dispatchEvent(event);
 
-		expect(result).toBeNull();
+		expect(result).toEqual(handlerResult);
 	});
 });
 

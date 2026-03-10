@@ -105,28 +105,40 @@ export function WebVitalsReporter() {
 							{
 								debug_target: metric.attribution.largestShiftTarget,
 								largestShiftValue: metric.attribution.largestShiftValue,
+								loadState: metric.attribution.loadState,
 							},
 						);
 					},
 					{ reportAllChanges: process.env.NODE_ENV === "development" },
 				);
 
-				onINP((metric) => {
-					enqueueMetric(
-						metric.name,
-						metric.value,
-						metric.rating,
-						metric.delta,
-						metric.id,
-						metric.navigationType,
-						{
-							debug_target: metric.attribution.interactionTarget,
-							inputDelay: metric.attribution.inputDelay,
-							processingDuration: metric.attribution.processingDuration,
-							presentationDelay: metric.attribution.presentationDelay,
-						},
-					);
-				});
+				onINP(
+					(metric) => {
+						const longestScript = metric.attribution.longestScript;
+						enqueueMetric(
+							metric.name,
+							metric.value,
+							metric.rating,
+							metric.delta,
+							metric.id,
+							metric.navigationType,
+							{
+								debug_target: metric.attribution.interactionTarget,
+								inputDelay: metric.attribution.inputDelay,
+								processingDuration: metric.attribution.processingDuration,
+								presentationDelay: metric.attribution.presentationDelay,
+								loadState: metric.attribution.loadState,
+								...(longestScript && {
+									scriptInvokerType: longestScript.entry.invokerType,
+									scriptSourceURL: longestScript.entry.sourceURL,
+									scriptSourceFunctionName: longestScript.entry.sourceFunctionName,
+									scriptIntersectingDuration: longestScript.intersectingDuration,
+								}),
+							},
+						);
+					},
+					{ reportAllChanges: process.env.NODE_ENV === "development" },
+				);
 
 				onLCP((metric) => {
 					enqueueMetric(
@@ -141,6 +153,7 @@ export function WebVitalsReporter() {
 							resourceLoadDelay: metric.attribution.resourceLoadDelay,
 							resourceLoadDuration: metric.attribution.resourceLoadDuration,
 							elementRenderDelay: metric.attribution.elementRenderDelay,
+							url: metric.attribution.url,
 						},
 					);
 				});
@@ -156,6 +169,7 @@ export function WebVitalsReporter() {
 						{
 							timeToFirstByte: metric.attribution.timeToFirstByte,
 							firstByteToFCP: metric.attribution.firstByteToFCP,
+							loadState: metric.attribution.loadState,
 						},
 					);
 				});
@@ -172,6 +186,8 @@ export function WebVitalsReporter() {
 							dnsDuration: metric.attribution.dnsDuration,
 							connectionDuration: metric.attribution.connectionDuration,
 							requestDuration: metric.attribution.requestDuration,
+							waitingDuration: metric.attribution.waitingDuration,
+							cacheDuration: metric.attribution.cacheDuration,
 						},
 					);
 				});

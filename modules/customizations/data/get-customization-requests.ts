@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import {
@@ -100,6 +101,7 @@ async function fetchCustomizationRequests({
 		// Process results using shared helper
 		return processCursorResults(items, take, direction, cursor);
 	} catch (error) {
+		Sentry.captureException(error);
 		logger.error("Failed to fetch customization requests", error, {
 			service: "fetchCustomizationRequests",
 		});

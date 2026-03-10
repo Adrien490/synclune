@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
 		}
 
-		// 3. ANTI-REPLAY CHECK (Best Practice Stripe 2025)
+		// 3. ANTI-REPLAY CHECK (Best Practice Stripe 2026)
 		const eventAgeSeconds = Math.floor(Date.now() / 1000) - event.created;
 		if (eventAgeSeconds > ANTI_REPLAY_WINDOW_SECONDS) {
 			logger.warn("Event too old, rejecting for anti-replay", {

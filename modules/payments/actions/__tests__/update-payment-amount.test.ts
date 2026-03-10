@@ -74,6 +74,7 @@ vi.mock("@/shared/lib/stripe", () => ({
 			update: mockStripePaymentIntentsUpdate,
 		},
 	},
+	withStripeCircuitBreaker: (fn: () => Promise<unknown>) => fn(),
 	CircuitBreakerError: MockCircuitBreakerError,
 }));
 

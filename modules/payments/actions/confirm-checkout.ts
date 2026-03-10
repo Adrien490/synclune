@@ -7,7 +7,7 @@ import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
-import { stripe, CircuitBreakerError } from "@/shared/lib/stripe";
+import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
@@ -172,7 +172,9 @@ export async function confirmCheckout(
 			}
 
 			// 9. Verify PI is in a modifiable state and update with order metadata
-			const currentPi = await stripe.paymentIntents.retrieve(v.paymentIntentId);
+			const currentPi = await withStripeCircuitBreaker(() =>
+				stripe.paymentIntents.retrieve(v.paymentIntentId),
+			);
 			const NON_UPDATABLE_STATUSES = ["succeeded", "canceled"];
 			if (NON_UPDATABLE_STATUSES.includes(currentPi.status)) {
 				await cleanupFailedCheckout(order.id, orderDiscountCode);
@@ -185,16 +187,18 @@ export async function confirmCheckout(
 				};
 			}
 			try {
-				await stripe.paymentIntents.update(v.paymentIntentId, {
-					amount: order.total,
-					receipt_email: finalEmail,
-					metadata: {
-						orderId: order.id,
-						orderNumber: order.orderNumber,
-						userId: userId ?? "guest",
-						...(sessionId && { guestSessionId: sessionId }),
-					},
-				});
+				await withStripeCircuitBreaker(() =>
+					stripe.paymentIntents.update(v.paymentIntentId, {
+						amount: order.total,
+						receipt_email: finalEmail,
+						metadata: {
+							orderId: order.id,
+							orderNumber: order.orderNumber,
+							userId: userId ?? "guest",
+							...(sessionId && { guestSessionId: sessionId }),
+						},
+					}),
+				);
 			} catch (stripeError) {
 				// Cleanup orphan order on Stripe failure
 				await cleanupFailedCheckout(order.id, orderDiscountCode);

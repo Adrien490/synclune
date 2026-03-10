@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 
+import * as Sentry from "@sentry/nextjs";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
@@ -94,6 +95,7 @@ export async function updateCustomizationNotes(
 				: CUSTOMIZATION_SUCCESS_MESSAGES.NOTES_DELETED,
 		);
 	} catch (e) {
+		Sentry.captureException(e);
 		return handleActionError(e, CUSTOMIZATION_ERROR_MESSAGES.UPDATE_NOTES_ERROR);
 	}
 }
