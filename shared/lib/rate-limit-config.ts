@@ -100,7 +100,7 @@ export const CART_MERGE_LIMIT: RateLimitConfig = {
  * - Surcharge du système de commandes
  */
 export const CHECKOUT_CREATE_SESSION_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 sessions maximum
+	limit: 15, // 15 sessions maximum
 	windowMs: hours(1), // par heure
 };
 
