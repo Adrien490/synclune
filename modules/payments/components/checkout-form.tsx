@@ -134,20 +134,37 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	 * Builds ConfirmCheckoutData from the current form state.
 	 * Called by PayButton before submission.
 	 * Returns null if validation fails (triggers form errors).
+	 * Validates unapplied discount codes before submission.
 	 */
-	function getFormData(): ConfirmCheckoutData | null {
+	async function getFormData(): Promise<ConfirmCheckoutData | null> {
 		const values = form.state.values;
 		const s = values.shipping;
 
 		// Trigger validation
 		if (!form.state.canSubmit) return null;
 
-		const appliedDiscount = values._appliedDiscount as AppliedDiscount | null;
-
-		// If there's an unapplied discount code (typed but not blurred), use it directly
-		// The server will validate it in createOrderInTransaction
+		let appliedDiscount = values._appliedDiscount as AppliedDiscount | null;
 		const rawDiscountCode = (values.discountCode as string).trim().toUpperCase();
-		const discountCode = appliedDiscount?.code ?? (rawDiscountCode || undefined);
+
+		// If there's an unapplied discount code, validate it before submission
+		if (!appliedDiscount && rawDiscountCode) {
+			const result = await validateDiscountCode(rawDiscountCode, subtotal);
+			if (result.valid && result.discount) {
+				appliedDiscount = result.discount;
+				form.setFieldValue("_appliedDiscount", result.discount);
+				form.setFieldValue("discountCode", "");
+			} else {
+				// Open the discount section and show the error
+				form.setFieldValue("_discountOpen", true);
+				form.setFieldMeta("discountCode", (prev) => ({
+					...prev,
+					errors: [result.error ?? "Code invalide"],
+				}));
+				return null;
+			}
+		}
+
+		const discountCode = appliedDiscount?.code ?? undefined;
 
 		return {
 			cartItems,

@@ -3,40 +3,25 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 
 /**
  * Loading state for Checkout Success page
- * Structure : PageHeader + Card avec récapitulatif + prochaines étapes
+ * Structure matches: gradient bg + max-w-3xl + Card with articles + recap + address + steps
  */
 export default function CheckoutSuccessLoading() {
 	return (
-		<div className="min-h-screen">
-			{/* PageHeader skeleton */}
-			<div className="bg-background border-border relative border-b">
-				<div className="container mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-					{/* Breadcrumbs skeleton */}
-					<div className="mb-6 flex items-center gap-2">
-						<Skeleton className="bg-muted/40 h-4 w-12" />
-						<span className="text-muted-foreground">/</span>
-						<Skeleton className="bg-muted/40 h-4 w-16" />
-						<span className="text-muted-foreground">/</span>
-						<Skeleton className="bg-muted/40 h-4 w-24" />
-					</div>
+		<div className="relative min-h-screen">
+			{/* Decorative background (matches page) */}
+			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 
-					{/* Title skeleton */}
-					<Skeleton className="bg-muted/50 h-10 w-64" />
-				</div>
-			</div>
-
-			{/* Content skeleton */}
-			<section className="bg-background py-12">
+			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-					<Card className="border-primary/20 from-primary/5 to-background border-2 bg-linear-to-br">
+					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
-							{/* Icône succès */}
+							{/* Success icon */}
 							<Skeleton className="bg-primary/20 mx-auto h-16 w-16 rounded-full" />
 
-							{/* Titre */}
+							{/* Title */}
 							<Skeleton className="bg-muted/50 mx-auto h-8 w-80" />
 
-							{/* Description + numéro commande */}
+							{/* Description + order number */}
 							<div className="space-y-2">
 								<Skeleton className="bg-muted/30 mx-auto h-4 w-64" />
 								<Skeleton className="bg-muted/40 mx-auto h-6 w-48" />
@@ -44,8 +29,26 @@ export default function CheckoutSuccessLoading() {
 						</CardHeader>
 
 						<CardContent className="space-y-6">
-							{/* Récapitulatif */}
-							<div className="bg-muted/50 space-y-3 rounded-lg p-4">
+							{/* Articles commandés */}
+							<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
+								<Skeleton className="bg-muted/50 h-5 w-44" />
+								<div className="space-y-3">
+									{Array.from({ length: 2 }).map((_, i) => (
+										<div key={i} className="flex gap-3">
+											<Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
+											<div className="min-w-0 flex-1 space-y-1.5">
+												<Skeleton className="bg-muted/50 h-4 w-40" />
+												<Skeleton className="bg-muted/30 h-3 w-32" />
+												<Skeleton className="bg-muted/30 h-3 w-16" />
+											</div>
+											<Skeleton className="bg-muted/40 h-4 w-14 shrink-0" />
+										</div>
+									))}
+								</div>
+							</div>
+
+							{/* Récapitulatif montants */}
+							<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
 								<Skeleton className="bg-muted/50 h-5 w-32" />
 								<div className="space-y-2">
 									<div className="flex justify-between">
@@ -60,22 +63,20 @@ export default function CheckoutSuccessLoading() {
 										<Skeleton className="bg-muted/50 h-5 w-24" />
 										<Skeleton className="bg-muted/50 h-5 w-20" />
 									</div>
-									<Skeleton className="bg-muted/30 ml-auto h-3 w-32" />
 								</div>
 							</div>
 
 							{/* Adresse de livraison */}
-							<div className="bg-muted/50 space-y-2 rounded-lg p-4">
+							<div className="bg-muted/50 border-primary/5 space-y-2 rounded-xl border p-4">
 								<Skeleton className="bg-muted/50 h-5 w-48" />
 								<div className="space-y-1">
 									<Skeleton className="bg-muted/40 h-4 w-full max-w-xs" />
 									<Skeleton className="bg-muted/30 h-4 w-full max-w-md" />
 									<Skeleton className="bg-muted/30 h-4 w-full max-w-sm" />
-									<Skeleton className="bg-muted/30 mt-2 h-3 w-32" />
 								</div>
 							</div>
 
-							{/* Message personnalisé */}
+							{/* Message personnalisé (Alert) */}
 							<div className="space-y-2 rounded-lg border p-4">
 								<Skeleton className="bg-muted/50 h-5 w-56" />
 								<Skeleton className="bg-muted/30 h-4 w-full" />

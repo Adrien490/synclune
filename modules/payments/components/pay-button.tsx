@@ -13,7 +13,7 @@ interface PayButtonProps {
 	total: number;
 	disabled: boolean;
 	shippingUnavailable: boolean;
-	getFormData: () => ConfirmCheckoutData | null;
+	getFormData: () => Promise<ConfirmCheckoutData | null>;
 }
 
 /**
@@ -33,8 +33,8 @@ export function PayButton({ total, disabled, shippingUnavailable, getFormData }:
 		setError(null);
 
 		try {
-			// 1. Get form data from parent
-			const formData = getFormData();
+			// 1. Get form data from parent (may validate unapplied discount code)
+			const formData = await getFormData();
 			if (!formData) {
 				setIsProcessing(false);
 				return;

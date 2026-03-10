@@ -5,9 +5,9 @@ import { Separator } from "@/shared/components/ui/separator";
 /**
  * État de chargement pour la page checkout
  * Reflète la structure réelle de la page :
- * - Heading (h1 + soulignement + description)
+ * - Heading (h1 + soulignement) visible desktop only
  * - Grid [1fr_360px] avec récap en order-first sur mobile
- * - Step indicator + champs de formulaire
+ * - Sections: Contact, Livraison (champs), Code promo (lien), Paiement
  * - Récap collapsible sur mobile, sidebar sticky sur desktop
  */
 export default function CheckoutLoading() {
@@ -16,43 +16,30 @@ export default function CheckoutLoading() {
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-					{/* Heading skeleton */}
-					<div className="mb-6 sm:mb-8">
+					{/* Heading skeleton — hidden on mobile like the real page */}
+					<div className="mb-6 hidden sm:mb-8 sm:block">
 						<Skeleton className="h-8 w-56 sm:h-9 sm:w-72" />
 						<Skeleton className="mt-2 h-1 w-20 rounded-full" />
-						<Skeleton className="mt-3 h-4 w-52" />
 					</div>
 
 					{/* Grid matching CheckoutForm */}
 					<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
 						{/* Formulaire skeleton */}
 						<div className="space-y-6">
-							{/* Step indicator skeleton */}
-							<div className="mx-auto mb-6 w-full max-w-sm sm:mb-8">
-								<div className="flex w-full items-center">
-									<div className="flex items-center gap-2">
-										<Skeleton className="h-9 w-9 rounded-full" />
-										<Skeleton className="h-4 w-16" />
-									</div>
-									<Skeleton className="mx-3 h-0.5 flex-1 rounded-full" />
-									<div className="flex items-center gap-2">
-										<Skeleton className="h-9 w-9 rounded-full" />
-										<Skeleton className="h-4 w-16" />
-									</div>
-								</div>
-							</div>
-
-							{/* h2 "Adresse de livraison" */}
-							<Skeleton className="h-7 w-44" />
-
-							{/* Note champs obligatoires */}
-							<Skeleton className="h-4 w-72" />
+							{/* h2 "Contact" section */}
+							<Skeleton className="h-7 w-24" />
 
 							{/* Email */}
 							<div className="space-y-2">
 								<Skeleton className="h-4 w-28" />
 								<Skeleton className="h-10 w-full" />
 							</div>
+
+							{/* h2 "Livraison" section */}
+							<Skeleton className="h-7 w-28" />
+
+							{/* Note champs obligatoires */}
+							<Skeleton className="h-4 w-72" />
 
 							{/* Nom complet */}
 							<div className="space-y-2">
@@ -94,24 +81,37 @@ export default function CheckoutLoading() {
 								<Skeleton className="h-4 w-80" />
 							</div>
 
+							{/* h2 "Mode d'expédition" section */}
+							<Skeleton className="h-7 w-44" />
+							<Skeleton className="h-16 w-full rounded-xl" />
+
 							{/* Code promo — collapsed link state */}
 							<div className="-mx-3 px-3">
 								<Skeleton className="h-4 w-44" />
 							</div>
 
-							{/* CGV */}
-							<div className="flex items-start gap-3">
-								<Skeleton className="mt-0.5 h-5 w-5 shrink-0 rounded-sm" />
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-64" />
-									<Skeleton className="h-4 w-80" />
+							{/* h2 "Paiement" section */}
+							<Skeleton className="h-7 w-28" />
+							<Skeleton className="h-4 w-72" />
+							{/* Payment card icons */}
+							<div className="flex items-center gap-2">
+								<Skeleton className="h-6 w-10 rounded" />
+								<Skeleton className="h-6 w-10 rounded" />
+								<Skeleton className="h-6 w-10 rounded" />
+							</div>
+							{/* Stripe PaymentElement skeleton */}
+							<div className="space-y-4 rounded-2xl border p-4">
+								<Skeleton className="h-4 w-40" />
+								<Skeleton className="h-10 w-full" />
+								<div className="grid grid-cols-2 gap-4">
+									<Skeleton className="h-10" />
+									<Skeleton className="h-10" />
 								</div>
 							</div>
-
+							{/* Terms text */}
+							<Skeleton className="mx-auto h-4 w-80" />
 							{/* Bouton paiement */}
-							<div className="pt-2">
-								<Skeleton className="h-12 w-full rounded-md" />
-							</div>
+							<Skeleton className="h-12 w-full rounded-md" />
 						</div>
 
 						{/* Récapitulatif skeleton - order-first sur mobile */}
