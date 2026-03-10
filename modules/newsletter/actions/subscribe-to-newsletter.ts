@@ -1,6 +1,7 @@
 "use server";
 
 import { ajNewsletter } from "@/shared/lib/arcjet";
+import { getBaseUrl } from "@/shared/constants/urls";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { validateInput, handleActionError, success, error, conflict } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
@@ -19,7 +20,7 @@ export async function subscribeToNewsletter(
 		const userAgent = headersList.get("user-agent") ?? "unknown";
 
 		// Protection Arcjet : Shield + Bot Detection + Rate Limiting
-		const request = new Request("http://localhost/newsletter/subscribe", {
+		const request = new Request(`${getBaseUrl()}/newsletter/subscribe`, {
 			method: "POST",
 			headers: headersList,
 		});

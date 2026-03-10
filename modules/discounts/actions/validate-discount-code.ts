@@ -5,6 +5,7 @@ import { getClientIp } from "@/shared/lib/rate-limit";
 import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { ajDiscountValidation } from "@/shared/lib/arcjet";
+import { getBaseUrl } from "@/shared/constants/urls";
 import { headers } from "next/headers";
 import { validateDiscountCodeSchema } from "../schemas/discount.schemas";
 import {
@@ -131,7 +132,7 @@ export async function validateDiscountCode(
 	try {
 		// Arcjet: distributed rate limiting + shield + bot detection
 		const headersList = await headers();
-		const arcjetRequest = new Request("http://localhost/discount/validate", {
+		const arcjetRequest = new Request(`${getBaseUrl()}/discount/validate`, {
 			method: "POST",
 			headers: headersList,
 		});

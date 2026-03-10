@@ -7,7 +7,7 @@ export const stripeAppearance: Appearance = {
 		borderRadius: "0.75rem",
 		fontFamily:
 			'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-		fontSizeBase: "15px",
+		fontSizeBase: "16px",
 		spacingUnit: "4px",
 		colorBackground: "#ffffff",
 		colorText: "#1a1a2e",

@@ -1,4 +1,4 @@
-import { UTApi } from "uploadthing/server";
+import { utapi } from "@/shared/lib/uploadthing";
 import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key";
 import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
 import { logger } from "@/shared/lib/logger";
@@ -49,7 +49,6 @@ export async function deleteUploadThingFilesFromUrls(
 	}
 
 	try {
-		const utapi = new UTApi();
 		const result = await utapi.deleteFiles(fileKeys);
 
 		if (!result.success) {

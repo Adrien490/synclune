@@ -115,9 +115,6 @@ export default async function CheckoutPage() {
 							strokeWidth={1.5}
 							inView={false}
 						/>
-						<p className="text-muted-foreground mt-2 text-sm">
-							Paiement sécurisé et livraison soignée
-						</p>
 					</div>
 					<ErrorBoundary
 						errorMessage="Impossible de charger le formulaire de paiement"

@@ -8,6 +8,8 @@ import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
+import { ajPayment } from "@/shared/lib/arcjet";
+import { getBaseUrl } from "@/shared/constants/urls";
 import { headers } from "next/headers";
 import { logger } from "@/shared/lib/logger";
 
@@ -45,8 +47,21 @@ export async function updatePaymentAmount(
 			return { success: false, error: "Session invalide." };
 		}
 
-		// 2. Rate limiting
+		// 2a. Arcjet: distributed rate limiting + shield + bot detection
 		const headersList = await headers();
+		const arcjetRequest = new Request(`${getBaseUrl()}/payment/update-amount`, {
+			method: "POST",
+			headers: headersList,
+		});
+		const arcjetDecision = await ajPayment.protect(arcjetRequest, { requested: 1 });
+		if (arcjetDecision.isDenied()) {
+			return {
+				success: false,
+				error: "Trop de tentatives. Veuillez réessayer plus tard.",
+			};
+		}
+
+		// 2b. In-memory rate limiting (complementary, for burst protection)
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = userId
 			? `update-amount:user:${userId}`

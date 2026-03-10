@@ -14,6 +14,9 @@ export const UPLOADTHING_DOMAINS = [
 	"utfs.io",
 	"ufs.sh",
 	"uploadthing.com",
+	// Legacy S3 domain kept for backward-compat with files uploaded before v7.
+	// New uploads use *.ufs.sh. UploadThing may change storage providers,
+	// so do not rely on this domain for new files.
 	"uploadthing-prod.s3.us-west-2.amazonaws.com",
 ] as const;
 

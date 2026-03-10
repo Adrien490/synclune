@@ -1,6 +1,6 @@
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
-import { UTApi } from "uploadthing/server";
+import { utapi } from "@/shared/lib/uploadthing";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
 import {
 	BATCH_DEADLINE_MS,
@@ -28,7 +28,6 @@ export async function cleanupOrphanMedia(): Promise<{
 }> {
 	logger.info("Starting orphan media cleanup", { cronJob: "cleanup-orphan-media" });
 
-	const utapi = new UTApi();
 	let filesScanned = 0;
 	let orphansDeleted = 0;
 	let errors = 0;

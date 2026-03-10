@@ -1,5 +1,6 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterConfirm } from "@/shared/lib/arcjet";
+import { getBaseUrl } from "@/shared/constants/urls";
 import { sendNewsletterWelcomeEmail } from "@/modules/emails/services/newsletter-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -28,7 +29,7 @@ export async function confirmNewsletterSubscription(
 	try {
 		// Arcjet protection: Shield + Rate Limiting against brute-force
 		const headersList = await headers();
-		const request = new Request("http://localhost/newsletter/confirm", {
+		const request = new Request(`${getBaseUrl()}/newsletter/confirm`, {
 			method: "POST",
 			headers: headersList,
 		});

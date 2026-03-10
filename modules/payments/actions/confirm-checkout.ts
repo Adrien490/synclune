@@ -9,6 +9,8 @@ import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { updateTag } from "next/cache";
+import { ajPayment } from "@/shared/lib/arcjet";
+import { getBaseUrl } from "@/shared/constants/urls";
 import { headers } from "next/headers";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { parseFullName } from "@/modules/payments/utils/parse-full-name";
@@ -45,9 +47,22 @@ export async function confirmCheckout(
 
 			span.setAttribute("checkout.is_guest", !userId);
 
-			// 2. Rate limiting
-			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
+			// 2a. Arcjet: distributed rate limiting + shield + bot detection
 			const headersList = await headers();
+			const arcjetRequest = new Request(`${getBaseUrl()}/payment/confirm`, {
+				method: "POST",
+				headers: headersList,
+			});
+			const arcjetDecision = await ajPayment.protect(arcjetRequest, { requested: 1 });
+			if (arcjetDecision.isDenied()) {
+				return {
+					success: false,
+					error: "Trop de tentatives. Veuillez réessayer plus tard.",
+				};
+			}
+
+			// 2b. In-memory rate limiting (complementary, for burst protection)
+			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
 			const ipAddress = await getClientIp(headersList);
 			const rateLimitId = userId
 				? `user:${userId}`

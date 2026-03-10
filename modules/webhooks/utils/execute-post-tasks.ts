@@ -8,6 +8,7 @@ import {
 	sendAdminRefundFailedAlert,
 	sendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert,
+	sendAdminOrderProcessingFailedAlert,
 	sendWebhookFailedAlertEmail,
 } from "@/modules/emails/services/admin-emails";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
@@ -20,6 +21,7 @@ const CRITICAL_EMAIL_TASKS = new Set([
 	"ADMIN_NEW_ORDER_EMAIL",
 	"REFUND_CONFIRMATION_EMAIL",
 	"PAYMENT_FAILED_EMAIL",
+	"ADMIN_ORDER_PROCESSING_FAILED_ALERT",
 ]);
 
 export interface PostWebhookTasksResult {
@@ -56,6 +58,9 @@ export async function dispatchEmailTask(task: EmailTask): Promise<void> {
 			break;
 		case "ADMIN_INVOICE_FAILED_ALERT":
 			await sendAdminInvoiceFailedAlert(task.data);
+			break;
+		case "ADMIN_ORDER_PROCESSING_FAILED_ALERT":
+			await sendAdminOrderProcessingFailedAlert(task.data);
 			break;
 	}
 }

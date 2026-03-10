@@ -5,6 +5,7 @@ import type {
 	sendAdminRefundFailedAlert,
 	sendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert,
+	sendAdminOrderProcessingFailedAlert,
 } from "@/modules/emails/services/admin-emails";
 import type { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import type { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
@@ -57,6 +58,10 @@ export type PostWebhookTask =
 	| { type: "ADMIN_REFUND_FAILED_ALERT"; data: Parameters<typeof sendAdminRefundFailedAlert>[0] }
 	| { type: "ADMIN_DISPUTE_ALERT"; data: Parameters<typeof sendAdminDisputeAlert>[0] }
 	| { type: "ADMIN_INVOICE_FAILED_ALERT"; data: Parameters<typeof sendAdminInvoiceFailedAlert>[0] }
+	| {
+			type: "ADMIN_ORDER_PROCESSING_FAILED_ALERT";
+			data: Parameters<typeof sendAdminOrderProcessingFailedAlert>[0];
+	  }
 	| { type: "INVALIDATE_CACHE"; tags: string[] };
 
 /**

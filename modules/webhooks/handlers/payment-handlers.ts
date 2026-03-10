@@ -9,6 +9,7 @@ import {
 	initiateAutomaticRefund,
 	sendRefundFailureAlert,
 } from "../services/payment-intent.service";
+import { sendAdminOrderProcessingFailedAlert } from "@/modules/emails/services/admin-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -60,6 +61,26 @@ export async function handlePaymentSuccess(
 			logger.error(`❌ [WEBHOOK] Error processing PI flow for order ${orderId}:`, error, {
 				service: "webhook",
 			});
+			// Send immediate admin alert — payment was received but order processing failed
+			try {
+				const order = await prisma.order.findFirst({
+					where: { id: orderId },
+					select: { orderNumber: true, customerEmail: true, total: true },
+				});
+				if (order) {
+					await sendAdminOrderProcessingFailedAlert({
+						orderNumber: order.orderNumber,
+						customerEmail: order.customerEmail ?? "N/A",
+						total: order.total,
+						errorMessage: error instanceof Error ? error.message : String(error),
+						paymentIntentId: paymentIntent.id,
+					});
+				}
+			} catch (alertError) {
+				logger.error("Failed to send order processing failed alert", alertError, {
+					service: "webhook",
+				});
+			}
 			throw error;
 		}
 	}

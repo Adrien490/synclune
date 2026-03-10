@@ -72,6 +72,32 @@ export const ajNewsletter = arcjet({
 });
 
 /**
+ * Instance Arcjet pour les endpoints de paiement
+ *
+ * Protection contre les abus du flow de paiement :
+ * - Rate limiting : 5 tentatives par heure par IP (coherent avec PAYMENT_LIMITS.CREATE_SESSION)
+ * - Shield contre les attaques
+ * - Bot detection stricte
+ */
+export const ajPayment = arcjet({
+	key: process.env.ARCJET_KEY!,
+	rules: [
+		shield({ mode: "LIVE" }),
+		detectBot({
+			mode: "LIVE",
+			allow: [],
+		}),
+		tokenBucket({
+			mode: "LIVE",
+			characteristics: ["ip.src"],
+			refillRate: 5,
+			interval: 3600,
+			capacity: 5,
+		}),
+	],
+});
+
+/**
  * Instance Arcjet pour la confirmation d'inscription newsletter
  *
  * 🔐 Protection contre le brute-force des tokens de confirmation :

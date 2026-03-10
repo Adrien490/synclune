@@ -7,6 +7,7 @@ import {
 	buildPostCheckoutTasks,
 	cancelExpiredOrder,
 } from "../services/checkout.service";
+import { sendAdminOrderProcessingFailedAlert } from "@/modules/emails/services/admin-emails";
 import { prisma } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
@@ -95,6 +96,30 @@ export async function handleCheckoutSessionCompleted(
 		logger.error("❌ [WEBHOOK] Error handling checkout session completed:", error, {
 			service: "webhook",
 		});
+		// Send immediate admin alert — payment was received but order processing failed
+		try {
+			const order = await prisma.order.findFirst({
+				where: { id: orderId },
+				select: { orderNumber: true, customerEmail: true, total: true },
+			});
+			const piId =
+				typeof session.payment_intent === "string"
+					? session.payment_intent
+					: session.payment_intent?.id;
+			if (order && piId) {
+				await sendAdminOrderProcessingFailedAlert({
+					orderNumber: order.orderNumber,
+					customerEmail: order.customerEmail ?? "N/A",
+					total: order.total,
+					errorMessage: error instanceof Error ? error.message : String(error),
+					paymentIntentId: piId,
+				});
+			}
+		} catch (alertError) {
+			logger.error("Failed to send order processing failed alert", alertError, {
+				service: "webhook",
+			});
+		}
 		throw error;
 	}
 }

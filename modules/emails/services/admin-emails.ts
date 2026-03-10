@@ -4,6 +4,7 @@ import { AdminWebhookFailedEmail } from "@/emails/admin-webhook-failed-email";
 import { AdminInvoiceFailedEmail } from "@/emails/admin-invoice-failed-email";
 import { AdminCronFailedEmail } from "@/emails/admin-cron-failed-email";
 import { AdminCheckoutFailedEmail } from "@/emails/admin-checkout-failed-email";
+import { AdminOrderProcessingFailedEmail } from "@/emails/admin-order-processing-failed-email";
 import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email";
 import { EMAIL_ADMIN } from "../constants/email.constants";
 import { renderAndSend } from "./send-email";
@@ -178,6 +179,44 @@ export async function sendAdminCheckoutFailedAlert({
 		{
 			to: EMAIL_ADMIN,
 			subject: `[Admin] Échec checkout Stripe — ${orderNumber}`,
+			tags: [{ name: "category", value: "admin" }],
+		},
+	);
+}
+
+/**
+ * Alerte admin : Paiement recu mais traitement de commande echoue
+ * Envoyee quand processOrderTransaction ou processOrderFromPaymentIntent echoue
+ * apres un paiement reussi — intervention manuelle requise
+ */
+export async function sendAdminOrderProcessingFailedAlert({
+	orderNumber,
+	customerEmail,
+	total,
+	errorMessage,
+	paymentIntentId,
+}: {
+	orderNumber: string;
+	customerEmail: string;
+	total: number;
+	errorMessage: string;
+	paymentIntentId: string;
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin`;
+	const stripeDashboardUrl = `https://dashboard.stripe.com/payments/${paymentIntentId}`;
+	return renderAndSend(
+		AdminOrderProcessingFailedEmail({
+			orderNumber,
+			customerEmail,
+			total,
+			errorMessage,
+			paymentIntentId,
+			dashboardUrl,
+			stripeDashboardUrl,
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[URGENT] Paiement recu — Echec traitement commande ${orderNumber}`,
 			tags: [{ name: "category", value: "admin" }],
 		},
 	);
