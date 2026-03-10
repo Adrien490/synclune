@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
@@ -38,7 +38,6 @@ import { ShippingMethodSection } from "./shipping-method-section";
 import { PayButton } from "./pay-button";
 import { AddressSelector } from "./address-selector";
 import { StripeWordmark } from "./stripe-wordmark";
-import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
 import { validateDiscountCode } from "@/modules/discounts/actions/validate-discount-code";
 import { Button } from "@/shared/components/ui/button";
@@ -99,6 +98,7 @@ interface CheckoutFormProps {
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
 	const headingRef = useRef<HTMLHeadingElement>(null);
+	const [isPaymentReady, setIsPaymentReady] = useState(false);
 
 	const { form } = useCheckoutForm({ session, addresses });
 
@@ -690,14 +690,24 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 														Toutes les transactions sont sécurisées et chiffrées.
 													</p>
 
-													<div className="flex items-center gap-2">
-														<VisaIcon className="h-6 w-auto" />
-														<MastercardIcon className="h-6 w-auto" />
-														<CBIcon className="h-6 w-auto" />
-													</div>
-
-													<div className="bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm">
-														<PaymentElement />
+													{!isPaymentReady && (
+														<div className="animate-pulse space-y-4" aria-busy="true" role="status">
+															<span className="sr-only">Chargement du formulaire de paiement…</span>
+															<div className="bg-muted h-4 w-40 rounded" />
+															<div className="bg-muted h-10 w-full rounded" />
+															<div className="grid grid-cols-2 gap-4">
+																<div className="bg-muted h-10 rounded" />
+																<div className="bg-muted h-10 rounded" />
+															</div>
+														</div>
+													)}
+													<div
+														className={cn(
+															"bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm",
+															!isPaymentReady && "hidden",
+														)}
+													>
+														<PaymentElement onReady={() => setIsPaymentReady(true)} />
 													</div>
 
 													{/* Terms notice + Pay button */}
@@ -723,12 +733,24 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 															</Link>
 															.
 														</p>
-														<form.Subscribe selector={(s) => s.canSubmit}>
-															{(canSubmit) => (
+														<form.Subscribe
+															selector={(s) => ({
+																canSubmit: s.canSubmit,
+																email: s.values.email,
+																billingName: s.values.shipping.fullName,
+															})}
+														>
+															{({ canSubmit, email, billingName }) => (
 																<PayButton
 																	total={total}
 																	disabled={!canSubmit}
 																	shippingUnavailable={shippingUnavailable}
+																	email={
+																		isGuest
+																			? (email as string) || undefined
+																			: session.user.email || undefined
+																	}
+																	billingName={(billingName as string) || undefined}
 																	getFormData={getFormData}
 																/>
 															)}

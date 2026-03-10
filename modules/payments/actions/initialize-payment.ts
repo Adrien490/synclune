@@ -135,18 +135,28 @@ export async function initializePayment(
 				}
 			}
 
+			// Generate a stable cart hash for idempotency
+			const cartHash = params.cartItems
+				.map((i) => `${i.skuId}:${i.quantity}:${i.priceAtAdd}`)
+				.sort()
+				.join("|");
+			const idempotencyKey = `pi-init-${userId ?? sessionId}-${cartHash}`;
+
 			// Create Payment Intent
 			const paymentIntent = await withStripeCircuitBreaker(() =>
-				stripe.paymentIntents.create({
-					amount: total,
-					currency: DEFAULT_CURRENCY.toLowerCase(),
-					automatic_payment_methods: { enabled: true },
-					...(stripeCustomerId && { customer: stripeCustomerId }),
-					metadata: {
-						userId: userId ?? "guest",
-						...(sessionId && { guestSessionId: sessionId }),
+				stripe.paymentIntents.create(
+					{
+						amount: total,
+						currency: DEFAULT_CURRENCY.toLowerCase(),
+						payment_method_types: ["card"],
+						...(stripeCustomerId && { customer: stripeCustomerId }),
+						metadata: {
+							userId: userId ?? "guest",
+							...(sessionId && { guestSessionId: sessionId }),
+						},
 					},
-				}),
+					{ idempotencyKey },
+				),
 			);
 
 			if (!paymentIntent.client_secret) {

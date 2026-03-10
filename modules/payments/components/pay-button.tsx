@@ -13,6 +13,8 @@ interface PayButtonProps {
 	total: number;
 	disabled: boolean;
 	shippingUnavailable: boolean;
+	email?: string;
+	billingName?: string;
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
 }
 
@@ -20,7 +22,14 @@ interface PayButtonProps {
  * Payment button inside <Elements>.
  * Orchestrates: validate form → confirmCheckout server action → stripe.confirmPayment.
  */
-export function PayButton({ total, disabled, shippingUnavailable, getFormData }: PayButtonProps) {
+export function PayButton({
+	total,
+	disabled,
+	shippingUnavailable,
+	email,
+	billingName,
+	getFormData,
+}: PayButtonProps) {
 	const stripe = useStripe();
 	const elements = useElements();
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -61,6 +70,12 @@ export function PayButton({ total, disabled, shippingUnavailable, getFormData }:
 				elements,
 				confirmParams: {
 					return_url: `${window.location.origin}/paiement/retour?order_id=${result.orderId}`,
+					payment_method_data: {
+						billing_details: {
+							...(billingName && { name: billingName }),
+							...(email && { email }),
+						},
+					},
 				},
 			});
 

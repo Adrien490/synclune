@@ -32,5 +32,4 @@ export const getUserOrdersSchema = z.object({
 		GET_USER_ORDERS_MAX_RESULTS_PER_PAGE,
 	),
 	sortBy: userOrdersSortBySchema,
-	search: z.string().max(50).optional(),
 });

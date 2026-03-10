@@ -106,6 +106,24 @@ export function EmailLayout({
 								marginTop: "4px",
 							}}
 						>
+							Micro-entreprise — SIREN 839 183 027
+						</Text>
+						<Text
+							className="email-text-secondary"
+							style={{
+								...EMAIL_STYLES.text.tiny,
+								marginTop: "4px",
+							}}
+						>
+							TVA non applicable, article 293 B du CGI
+						</Text>
+						<Text
+							className="email-text-secondary"
+							style={{
+								...EMAIL_STYLES.text.tiny,
+								marginTop: "4px",
+							}}
+						>
 							<Link
 								href="https://synclune.fr/contact"
 								style={{

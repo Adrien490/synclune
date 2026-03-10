@@ -111,7 +111,8 @@ export async function updatePaymentAmount(
 		const shipping = shippingRaw ?? 0;
 		const shippingInfo = getShippingInfo(country as ShippingCountry, postalCode);
 
-		const newTotal = Math.max(0, subtotal - discountAmount + shipping);
+		const MIN_STRIPE_AMOUNT = 50; // 0.50€ minimum Stripe EUR
+		const newTotal = Math.max(MIN_STRIPE_AMOUNT, subtotal - discountAmount + shipping);
 
 		if (!shippingUnavailable) {
 			await withStripeCircuitBreaker(() =>

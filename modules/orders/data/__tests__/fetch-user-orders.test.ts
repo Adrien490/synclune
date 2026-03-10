@@ -149,23 +149,11 @@ describe("fetchUserOrders", () => {
 		);
 	});
 
-	it("does not add search filter when search is undefined", async () => {
-		await fetchUserOrders("user-1", { ...defaultParams, search: undefined });
+	it("does not add orderNumber filter", async () => {
+		await fetchUserOrders("user-1", defaultParams);
 
 		const call = mockPrisma.order.findMany.mock.calls[0]![0];
 		expect(call.where).not.toHaveProperty("orderNumber");
-	});
-
-	it("adds case-insensitive orderNumber search filter when search is provided", async () => {
-		await fetchUserOrders("user-1", { ...defaultParams, search: "ORD-001" });
-
-		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({
-					orderNumber: { contains: "ORD-001", mode: "insensitive" },
-				}),
-			}),
-		);
 	});
 
 	it("uses GET_USER_ORDERS_SELECT for the DB query", async () => {

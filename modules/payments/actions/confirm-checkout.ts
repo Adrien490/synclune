@@ -21,6 +21,7 @@ import { subscribeToNewsletterInternal } from "@/modules/newsletter/services/sub
 import { confirmCheckoutSchema, type ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { logger } from "@/shared/lib/logger";
+import Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
 
 interface ConfirmCheckoutResult {
@@ -185,21 +186,7 @@ export async function confirmCheckout(
 				updateTag(DISCOUNT_CACHE_TAGS.USAGE(appliedDiscountId));
 			}
 
-			// 9. Verify PI is in a modifiable state and update with order metadata
-			const currentPi = await withStripeCircuitBreaker(() =>
-				stripe.paymentIntents.retrieve(v.paymentIntentId),
-			);
-			const NON_UPDATABLE_STATUSES = ["succeeded", "canceled"];
-			if (NON_UPDATABLE_STATUSES.includes(currentPi.status)) {
-				await cleanupFailedCheckout(order.id, orderDiscountCode);
-				return {
-					success: false,
-					error:
-						currentPi.status === "succeeded"
-							? "Ce paiement a déjà été effectué."
-							: "Ce paiement a été annulé. Veuillez recommencer.",
-				};
-			}
+			// 9. Update PI with order metadata (single call, no retrieve race condition)
 			try {
 				await withStripeCircuitBreaker(() =>
 					stripe.paymentIntents.update(v.paymentIntentId, {
@@ -214,6 +201,19 @@ export async function confirmCheckout(
 					}),
 				);
 			} catch (stripeError) {
+				if (stripeError instanceof Stripe.errors.StripeInvalidRequestError) {
+					const isAlreadySucceeded = stripeError.message.includes("succeeded");
+					const isAlreadyCanceled = stripeError.message.includes("canceled");
+					if (isAlreadySucceeded || isAlreadyCanceled) {
+						await cleanupFailedCheckout(order.id, orderDiscountCode);
+						return {
+							success: false,
+							error: isAlreadySucceeded
+								? "Ce paiement a déjà été effectué."
+								: "Ce paiement a été annulé. Veuillez recommencer.",
+						};
+					}
+				}
 				// Cleanup orphan order on Stripe failure
 				await cleanupFailedCheckout(order.id, orderDiscountCode);
 				if (stripeError instanceof CircuitBreakerError) {
