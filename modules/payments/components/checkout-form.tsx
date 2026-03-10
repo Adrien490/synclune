@@ -140,8 +140,19 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		const values = form.state.values;
 		const s = values.shipping;
 
-		// Trigger validation
-		if (!form.state.canSubmit) return null;
+		// Trigger full form validation + increment submissionAttempts
+		await form.handleSubmit();
+
+		if (!form.state.canSubmit) {
+			// Scroll to error summary after render
+			requestAnimationFrame(() => {
+				const errorAlert = document.querySelector('[role="alert"]');
+				if (errorAlert) {
+					errorAlert.scrollIntoView({ behavior: "smooth", block: "center" });
+				}
+			});
+			return null;
+		}
 
 		let appliedDiscount = values._appliedDiscount as AppliedDiscount | null;
 		const rawDiscountCode = (values.discountCode as string).trim().toUpperCase();

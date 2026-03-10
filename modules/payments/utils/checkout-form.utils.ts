@@ -36,6 +36,9 @@ export function getCheckoutFormOptions(
 	};
 
 	return {
+		onSubmit: async () => {
+			// Validation-only — actual submission handled by PayButton
+		},
 		defaultValues: {
 			email: isGuest ? "" : session.user.email || "",
 

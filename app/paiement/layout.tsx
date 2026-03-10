@@ -16,7 +16,7 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 	return (
 		<div className="bg-background flex min-h-screen flex-col">
 			{/* Header minimal */}
-			<header className="bg-background/90 border-primary/10 border-b backdrop-blur-md">
+			<header className="bg-background/90 border-primary/10 border-b-0 backdrop-blur-md md:border-b">
 				{/* Decorative top line */}
 				<div className="from-primary/0 via-primary/40 to-primary/0 h-px bg-linear-to-r" />
 
