@@ -80,12 +80,6 @@ export default async function CGVPage() {
 								caractéristiques essentielles de chaque produit sont présentées sur la fiche produit
 								(matériaux, dimensions, poids, couleurs).
 							</p>
-							<p>
-								Les photographies sont non contractuelles. Des variations mineures peuvent exister
-								entre les photos et le produit final, liées à la nature artisanale de la
-								fabrication.
-							</p>
-
 							<h3 className="text-lg font-medium sm:text-xl">2.2 Disponibilité</h3>
 							<p>
 								Nos offres sont valables tant qu'elles sont visibles sur le site, dans la limite des
@@ -142,9 +136,9 @@ export default async function CGVPage() {
 
 							<h3 className="text-lg font-medium sm:text-xl">4.4 Facturation</h3>
 							<p>
-								Conformément à l'article L441-9 du Code de commerce, une facture est émise pour
-								chaque commande. Elle est accessible depuis votre espace client et jointe à l'email
-								de confirmation de commande.
+								Conformément à la réglementation en vigueur, une facture est émise pour chaque
+								commande. Elle est accessible depuis votre espace client et jointe à l'email de
+								confirmation de commande.
 							</p>
 						</section>
 
@@ -358,7 +352,7 @@ export default async function CGVPage() {
 								Synclune ne saurait être tenue responsable de l'inexécution du contrat en cas de :
 							</p>
 							<ul className="ml-4 list-inside list-disc space-y-2">
-								<li>Rupture de stock ou indisponibilité du produit</li>
+								<li>Perturbation du fonctionnement du site (maintenance, panne technique)</li>
 								<li>Force majeure (catastrophe naturelle, grève, etc.)</li>
 								<li>Erreur dans l'adresse de livraison fournie par le client</li>
 							</ul>
@@ -444,31 +438,7 @@ export default async function CGVPage() {
 							</p>
 
 							<h3 className="text-lg font-medium sm:text-xl">
-								11.3 Résolution en ligne des litiges
-							</h3>
-							<p>
-								Conformément au Règlement européen n°524/2013, la Commission Européenne met à
-								disposition une plateforme de résolution en ligne des litiges :{" "}
-								<a
-									href="https://ec.europa.eu/consumers/odr"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="underline"
-								>
-									https://ec.europa.eu/consumers/odr
-								</a>
-								.
-							</p>
-							<p>
-								Notre adresse email pour les réclamations :{" "}
-								<a href={`mailto:${contactEmail}`} className="underline">
-									{contactEmail}
-								</a>
-								.
-							</p>
-
-							<h3 className="text-lg font-medium sm:text-xl">
-								11.4 Droit applicable et juridiction
+								11.3 Droit applicable et juridiction
 							</h3>
 							<p>
 								Les présentes CGV sont régies par le droit français. À défaut de résolution amiable
@@ -498,7 +468,7 @@ export default async function CGVPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 13 février 2026
+							Dernière mise à jour : 10 mars 2026
 						</p>
 					</div>
 				</div>

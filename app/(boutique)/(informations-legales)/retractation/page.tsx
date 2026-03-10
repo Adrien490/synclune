@@ -249,10 +249,6 @@ export default async function RetractationPage() {
 										Les bijoux personnalisés ou confectionnés sur mesure selon les spécifications du
 										client
 									</li>
-									<li>
-										Les biens scellés pour des raisons d'hygiène ou de santé qui ont été descellés
-										après livraison
-									</li>
 								</ul>
 							</div>
 
@@ -312,7 +308,7 @@ export default async function RetractationPage() {
 							Formulaire conforme à l'annexe de l'article R221-1 du Code de la consommation
 						</p>
 						<p className="text-muted-foreground pt-2 text-center text-xs italic">
-							Dernière mise à jour : 13 février 2026
+							Dernière mise à jour : 10 mars 2026
 						</p>
 					</div>
 				</div>

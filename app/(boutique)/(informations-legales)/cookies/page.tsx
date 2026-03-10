@@ -176,6 +176,28 @@ export default async function CookiesPage() {
 									pour améliorer l'expérience utilisateur. Ces données sont anonymes et ne
 									permettent pas de vous identifier personnellement.
 								</li>
+								<li>
+									<strong>Vercel Speed Insights</strong> : Mesures de performance - Collecte des
+									métriques Web Vitals (temps de chargement, interactivité) pour optimiser la
+									rapidité du site. Ces données sont anonymes.
+								</li>
+							</ul>
+
+							<h3 className="mt-6 text-lg font-medium sm:text-xl">
+								Traceurs de monitoring (intérêt légitime)
+							</h3>
+							<p>
+								Ces traceurs sont utilisés sur la base de notre intérêt légitime pour assurer le bon
+								fonctionnement et la sécurité du site.
+							</p>
+							<ul className="ml-4 list-inside list-disc space-y-2">
+								<li>
+									<strong>Sentry</strong> : Monitoring d'erreurs et de performance - Collecte
+									automatiquement les erreurs techniques survenant sur le site (messages d'erreur,
+									pile d'appels, URL, navigateur, adresse IP anonymisée) afin de détecter et
+									corriger les dysfonctionnements. Ce traceur est nécessaire à la maintenance et à
+									la stabilité du service.
+								</li>
 							</ul>
 						</section>
 
@@ -247,7 +269,7 @@ export default async function CookiesPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 13 février 2026
+							Dernière mise à jour : 10 mars 2026
 						</p>
 					</div>
 				</div>

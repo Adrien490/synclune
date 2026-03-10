@@ -55,7 +55,7 @@ const nextConfig: NextConfig = {
 							"style-src 'self' 'unsafe-inline'",
 							"img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://images.unsplash.com data: blob:",
 							"font-src 'self'",
-							"connect-src 'self' https://*.stripe.com https://api.uploadthing.com https://*.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+							"connect-src 'self' https://*.stripe.com https://api.uploadthing.com https://*.ingest.uploadthing.com https://*.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
 							"frame-src https://*.stripe.com",
 							"worker-src 'self'",
 							"object-src 'none'",

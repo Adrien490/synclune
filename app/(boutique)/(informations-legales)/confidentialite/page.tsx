@@ -196,7 +196,8 @@ export default async function PrivacyPolicyPage() {
 										<li>Resend (envoi d'emails transactionnels et newsletters)</li>
 										<li>UploadThing (stockage des fichiers et images)</li>
 										<li>Arcjet (protection contre les abus et limitation de requêtes)</li>
-										<li>Google (authentification OAuth et polices de caractères)</li>
+										<li>Google (authentification OAuth)</li>
+										<li>Sentry (monitoring d'erreurs et performance)</li>
 									</ul>
 								</li>
 								<li>
@@ -206,9 +207,7 @@ export default async function PrivacyPolicyPage() {
 									<strong>Autorités compétentes :</strong> sur réquisition judiciaire
 								</li>
 							</ul>
-						</section>
 
-						<section className="space-y-4">
 							<h3 className="text-lg font-medium sm:text-xl">6.1 Transferts de données hors UE</h3>
 							<p>
 								Certains de nos prestataires techniques sont situés en dehors de l'Union Européenne
@@ -247,10 +246,15 @@ export default async function PrivacyPolicyPage() {
 									<strong>Clauses Contractuelles Types (CCT)</strong> conformément au RGPD.
 								</li>
 								<li>
-									<strong>Google (États-Unis) :</strong> authentification OAuth et polices de
-									caractères (Google Fonts) - Google participe au{" "}
-									<strong>Data Privacy Framework (DPF)</strong> UE-États-Unis et applique des
+									<strong>Google (États-Unis) :</strong> authentification OAuth - Google participe
+									au <strong>Data Privacy Framework (DPF)</strong> UE-États-Unis et applique des
 									garanties conformes au RGPD.
+								</li>
+								<li>
+									<strong>Sentry (États-Unis) :</strong> monitoring d'erreurs et performance -
+									Functional Software Inc., San Francisco. Sentry applique des{" "}
+									<strong>Clauses Contractuelles Types (CCT)</strong> et s'engage à protéger les
+									données conformément au RGPD.
 								</li>
 							</ul>
 							<p className="mt-2">
@@ -461,6 +465,10 @@ export default async function PrivacyPolicyPage() {
 									<strong>Vercel Analytics :</strong> statistiques anonymisées de navigation pour
 									améliorer le site
 								</li>
+								<li>
+									<strong>Vercel Speed Insights :</strong> mesures de performance (temps de
+									chargement, Web Vitals) pour optimiser la rapidité du site
+								</li>
 							</ul>
 
 							<h3 className="mt-4 text-lg font-medium sm:text-xl">9.4 Gestion des cookies</h3>
@@ -513,7 +521,7 @@ export default async function PrivacyPolicyPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 1 mars 2026
+							Dernière mise à jour : 10 mars 2026
 						</p>
 					</div>
 				</div>

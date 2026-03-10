@@ -3,7 +3,6 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { Check } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
-import Link from "next/link";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
@@ -289,10 +288,8 @@ export default async function AccessibilityPage() {
 										</a>
 									</li>
 									<li>
-										<strong>Formulaire de contact :</strong>{" "}
-										<Link href="/personnalisation" className="underline">
-											Page personnalisation
-										</Link>
+										<strong>Par courrier :</strong> Synclune, 77 Boulevard du Tertre, 44100 Nantes,
+										France
 									</li>
 								</ul>
 								<p className="text-muted-foreground mt-4 text-sm italic">
@@ -371,7 +368,7 @@ export default async function AccessibilityPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 13 février 2026
+							Dernière mise à jour : 10 mars 2026
 						</p>
 					</div>
 				</div>

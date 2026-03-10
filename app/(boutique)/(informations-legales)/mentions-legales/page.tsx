@@ -141,6 +141,16 @@ export default async function MentionsLegalesPage() {
 								>
 									vercel.com
 								</a>
+								<br />
+								Contact :{" "}
+								<a
+									href="https://vercel.com/help"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="underline"
+								>
+									vercel.com/help
+								</a>
 							</p>
 
 							<h3 className="text-lg font-medium sm:text-xl">3.2 Base de données</h3>
@@ -161,6 +171,16 @@ export default async function MentionsLegalesPage() {
 									className="underline"
 								>
 									neon.tech
+								</a>
+								<br />
+								Contact :{" "}
+								<a
+									href="https://neon.tech/contact"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="underline"
+								>
+									neon.tech/contact
 								</a>
 							</p>
 						</section>
@@ -263,7 +283,7 @@ export default async function MentionsLegalesPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 13 février 2026
+							Dernière mise à jour : 10 mars 2026
 						</p>
 					</div>
 				</div>
