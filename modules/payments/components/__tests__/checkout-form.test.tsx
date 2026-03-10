@@ -92,7 +92,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 				},
 				_appliedDiscount: null,
 				_selectedAddressId: null,
-				_showAddressLine2: false,
 				_discountOpen: false,
 				discountCode: "",
 			},
@@ -121,7 +120,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 						},
 						_appliedDiscount: null,
 						_selectedAddressId: null,
-						_showAddressLine2: false,
 						_discountOpen: false,
 						discountCode: "",
 					},
@@ -182,7 +180,7 @@ describe("CheckoutForm", () => {
 		it("shows address step by default", () => {
 			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
 
-			expect(screen.getByText("Adresse de livraison")).toBeInTheDocument();
+			expect(screen.getByText("Livraison")).toBeInTheDocument();
 			expect(screen.queryByTestId("payment-step")).toBeNull();
 		});
 

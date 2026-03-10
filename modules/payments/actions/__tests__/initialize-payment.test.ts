@@ -220,12 +220,12 @@ describe("initializePayment", () => {
 			);
 		});
 
-		it("should create Payment Intent with automatic_payment_methods enabled", async () => {
+		it("should create Payment Intent with card-only payment method", async () => {
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					automatic_payment_methods: { enabled: true },
+					payment_method_types: ["card"],
 				}),
 			);
 		});

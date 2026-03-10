@@ -125,7 +125,7 @@ export async function initializePayment(
 				stripe.paymentIntents.create({
 					amount: total,
 					currency: DEFAULT_CURRENCY.toLowerCase(),
-					automatic_payment_methods: { enabled: true },
+					payment_method_types: ["card"],
 					...(stripeCustomerId && { customer: stripeCustomerId }),
 					metadata: {
 						userId: userId ?? "guest",

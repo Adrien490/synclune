@@ -93,8 +93,8 @@ interface CheckoutFormProps {
 /**
  * Single-page checkout form (Shopify-style).
  *
- * All sections visible at once: shipping address, payment (PaymentElement),
- * and pay button. No multi-step flow.
+ * Sections: Contact, Livraison, Mode d'expédition, Code promo, Paiement.
+ * Card-only payment via Stripe PaymentElement.
  */
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
@@ -128,7 +128,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		form.setFieldValue("shipping.postalCode", address.postalCode);
 		form.setFieldValue("shipping.country", address.country);
 		form.setFieldValue("shipping.phoneNumber", address.phone);
-		if (address.address2) form.setFieldValue("_showAddressLine2", true);
 	}
 
 	/**
@@ -217,8 +216,73 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 								className="bg-muted/50 rounded-lg border p-8"
 							>
 								<div className="space-y-8">
-									{/* === SECTION 1: Shipping Address === */}
-									<CheckoutSection title="Adresse de livraison">
+									{/* === SECTION 1: Contact === */}
+									<CheckoutSection title="Contact">
+										<div className="space-y-5">
+											{/* Email (guests only) */}
+											{isGuest && (
+												<form.AppField
+													name="email"
+													validators={{
+														onChange: ({ value }: { value: string }) => {
+															if (!value) return "L'adresse email est requise";
+															if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+																return "Entrez une adresse email valide";
+															}
+															return undefined;
+														},
+													}}
+												>
+													{(field) => (
+														<div className="space-y-2">
+															<field.InputField
+																label="Adresse email"
+																type="email"
+																required
+																inputMode="email"
+																autoComplete="email"
+																enterKeyHint="next"
+																spellCheck={false}
+																autoCorrect="off"
+															/>
+															<div className="text-muted-foreground flex items-start gap-1.5 text-sm">
+																<Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+																<span>
+																	Vous avez déjà un compte ?{" "}
+																	<Link
+																		href="/connexion?callbackURL=/paiement"
+																		className="text-foreground font-medium underline hover:no-underline"
+																	>
+																		Connectez-vous
+																	</Link>{" "}
+																	pour accéder à vos adresses enregistrées
+																</span>
+															</div>
+														</div>
+													)}
+												</form.AppField>
+											)}
+
+											{/* Email display for logged-in users */}
+											{!isGuest && session.user.email && (
+												<div className="border-primary/10 bg-primary/3 flex items-center gap-2 rounded-xl border p-3.5 text-sm">
+													<Mail className="text-muted-foreground h-4 w-4" />
+													<span className="text-muted-foreground">Email :</span>
+													<span className="font-medium">{session.user.email}</span>
+												</div>
+											)}
+
+											{/* Newsletter opt-in */}
+											<form.AppField name="newsletterOptIn">
+												{(field) => (
+													<field.CheckboxField label="Je souhaite recevoir les offres et nouveautés par email" />
+												)}
+											</form.AppField>
+										</div>
+									</CheckoutSection>
+
+									{/* === SECTION 2: Shipping Address === */}
+									<CheckoutSection title="Livraison">
 										<fieldset className="space-y-5">
 											<p className="text-muted-foreground text-sm">
 												Les champs marqués d'un <span className="text-destructive">*</span> sont
@@ -287,59 +351,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 												}}
 											</form.Subscribe>
 
-											{/* Email (guests only) */}
-											{isGuest && (
-												<form.AppField
-													name="email"
-													validators={{
-														onChange: ({ value }: { value: string }) => {
-															if (!value) return "L'adresse email est requise";
-															if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-																return "Entrez une adresse email valide";
-															}
-															return undefined;
-														},
-													}}
-												>
-													{(field) => (
-														<div className="space-y-2">
-															<field.InputField
-																label="Adresse email"
-																type="email"
-																required
-																inputMode="email"
-																autoComplete="email"
-																enterKeyHint="next"
-																spellCheck={false}
-																autoCorrect="off"
-															/>
-															<div className="text-muted-foreground flex items-start gap-1.5 text-sm">
-																<Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-																<span>
-																	Vous avez déjà un compte ?{" "}
-																	<Link
-																		href="/connexion?callbackURL=/paiement"
-																		className="text-foreground font-medium underline hover:no-underline"
-																	>
-																		Connectez-vous
-																	</Link>{" "}
-																	pour accéder à vos adresses enregistrées
-																</span>
-															</div>
-														</div>
-													)}
-												</form.AppField>
-											)}
-
-											{/* Email display for logged-in users */}
-											{!isGuest && session.user.email && (
-												<div className="border-primary/10 bg-primary/3 flex items-center gap-2 rounded-xl border p-3.5 text-sm">
-													<Mail className="text-muted-foreground h-4 w-4" />
-													<span className="text-muted-foreground">Email :</span>
-													<span className="font-medium">{session.user.email}</span>
-												</div>
-											)}
-
 											{/* Address selector for logged-in users with multiple addresses */}
 											{!isGuest && addresses && addresses.length > 1 && (
 												<form.Subscribe selector={(s) => s.values._selectedAddressId}>
@@ -400,32 +411,17 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 												)}
 											</form.AppField>
 
-											<form.Subscribe selector={(s) => s.values._showAddressLine2}>
-												{(showAddressLine2) =>
-													showAddressLine2 ? (
-														<form.AppField name="shipping.addressLine2">
-															{(field) => (
-																<field.InputField
-																	label="Complément d'adresse"
-																	optional
-																	placeholder="Appartement, bâtiment, etc."
-																	autoComplete="address-line2"
-																	enterKeyHint="next"
-																/>
-															)}
-														</form.AppField>
-													) : (
-														<button
-															type="button"
-															aria-expanded={false}
-															className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mx-3 min-h-11 rounded-md px-3 text-left text-sm underline transition-colors hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-															onClick={() => form.setFieldValue("_showAddressLine2", true)}
-														>
-															+ Ajouter un complément d'adresse
-														</button>
-													)
-												}
-											</form.Subscribe>
+											<form.AppField name="shipping.addressLine2">
+												{(field) => (
+													<field.InputField
+														label="Complément d'adresse"
+														optional
+														placeholder="Appartement, bâtiment, etc."
+														autoComplete="address-line2"
+														enterKeyHint="next"
+													/>
+												)}
+											</form.AppField>
 
 											<div className="grid grid-cols-2 gap-3 sm:gap-6">
 												<form.AppField
@@ -517,11 +513,27 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 													</form.AppField>
 												)}
 											</form.Subscribe>
+
+											{/* Save info (logged-in users only) */}
+											{!isGuest && (
+												<form.AppField name="saveInfo">
+													{(field) => (
+														<field.CheckboxField label="Enregistrer mes informations pour mes prochaines commandes" />
+													)}
+												</form.AppField>
+											)}
+
+											{/* SMS opt-in */}
+											<form.AppField name="smsOptIn">
+												{(field) => (
+													<field.CheckboxField label="J'accepte de recevoir des notifications par SMS (suivi de commande)" />
+												)}
+											</form.AppField>
 										</fieldset>
 									</CheckoutSection>
 
-									{/* === SECTION 2: Shipping Method === */}
-									<CheckoutSection title="Livraison">
+									{/* === SECTION 3: Shipping Method === */}
+									<CheckoutSection title="Mode d'expédition">
 										<ShippingMethodSection
 											shipping={shipping}
 											shippingUnavailable={shippingUnavailable}
@@ -529,7 +541,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 										/>
 									</CheckoutSection>
 
-									{/* === SECTION 3: Discount Code === */}
+									{/* === SECTION 4: Discount Code === */}
 									<form.Subscribe selector={(s) => s.values._appliedDiscount}>
 										{(appliedDiscount) => {
 											if (appliedDiscount) {
@@ -665,25 +677,19 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 												}}
 											>
 												<div className="space-y-6">
+													<p className="text-muted-foreground text-sm">
+														Toutes les transactions sont sécurisées et chiffrées.
+													</p>
+
+													<div className="flex items-center gap-2">
+														<VisaIcon className="h-6 w-auto" />
+														<MastercardIcon className="h-6 w-auto" />
+														<CBIcon className="h-6 w-auto" />
+													</div>
+
 													<div className="bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm">
 														<PaymentElement />
 													</div>
-
-													{/* Save info (logged-in users only) */}
-													{!isGuest && (
-														<form.AppField name="saveInfo">
-															{(field) => (
-																<field.CheckboxField label="Enregistrer mes informations pour mes prochaines commandes" />
-															)}
-														</form.AppField>
-													)}
-
-													{/* Newsletter opt-in */}
-													<form.AppField name="newsletterOptIn">
-														{(field) => (
-															<field.CheckboxField label="Je souhaite recevoir les offres et nouveautés par email" />
-														)}
-													</form.AppField>
 
 													{/* Terms notice + Pay button */}
 													<div className="space-y-3">
@@ -726,14 +732,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 															<span className="inline-flex items-center gap-1">
 																<Lock className="h-3 w-3" />
 																Paiement sécurisé
-															</span>
-															<span aria-hidden="true" className="text-border hidden sm:inline">
-																|
-															</span>
-															<span className="inline-flex items-center gap-1.5">
-																<VisaIcon className="h-4 w-auto" />
-																<MastercardIcon className="h-4 w-auto" />
-																<CBIcon className="h-4 w-auto" />
 															</span>
 															<span aria-hidden="true" className="text-border hidden sm:inline">
 																|
